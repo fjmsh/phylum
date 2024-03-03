@@ -9,7 +9,7 @@ import (
 	webdav "github.com/emersion/go-webdav"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/phylumfs"
-	"github.com/shroff/phylum/server/internal/phylumsql"
+	"github.com/shroff/phylum/server/internal/sql"
 )
 
 type Pgfs struct {
@@ -127,6 +127,6 @@ func (p Pgfs) Move(ctx context.Context, name, dest string, options *webdav.MoveO
 	return false, nil
 }
 
-func (p Pgfs) resourceByPath(ctx context.Context, name string) (res *phylumsql.ResourceByPathRow, err error) {
+func (p Pgfs) resourceByPath(ctx context.Context, name string) (res *sql.ResourceByPathRow, err error) {
 	return p.p.ResourceByPath(ctx, strings.TrimPrefix(name, p.prefix+"/"))
 }

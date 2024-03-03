@@ -8,7 +8,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/phylumfs"
-	"github.com/shroff/phylum/server/internal/phylumsql"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -59,8 +58,7 @@ func Setup() {
 		if err != nil {
 			log.Fatal(fmt.Sprintf("Unable to connect to database: %v\n", err))
 		}
-		queries := *phylumsql.New(conn)
-		backend = phylumfs.New(queries)
+		backend = phylumfs.New(conn)
 	}
 
 	defer func() {

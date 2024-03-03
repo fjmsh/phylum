@@ -3,7 +3,7 @@
 //   sqlc v1.25.0
 // source: resources.sql
 
-package phylumsql
+package sql
 
 import (
 	"context"
