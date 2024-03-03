@@ -27,19 +27,19 @@ func New(q phylumsql.Queries, cs ContentStore, prefix string) Pgfs {
 }
 
 func (p Pgfs) Open(ctx context.Context, name string) (io.ReadCloser, error) {
-	resource, err := p.getResource(ctx, name)
+	resource, err := p.resourceByPath(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 	return p.cs.Open(resource.ID)
 }
 func (p Pgfs) Stat(ctx context.Context, name string) (*webdav.FileInfo, error) {
-	resource, err := p.getResource(ctx, name)
+	resource, err := p.resourceByPath(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 	val := &webdav.FileInfo{
-		Path:     string(resource.Path),
+		Path:     string(p.prefix + resource.Path),
 		Size:     int64(resource.Size.Int32),
 		ModTime:  resource.Modified.Time,
 		IsDir:    resource.Dir,
@@ -49,26 +49,23 @@ func (p Pgfs) Stat(ctx context.Context, name string) (*webdav.FileInfo, error) {
 	return val, nil
 }
 func (p Pgfs) ReadDir(ctx context.Context, name string, recursive bool) ([]webdav.FileInfo, error) {
-	dir, err := p.getResource(ctx, name)
+	dir, err := p.resourceByPath(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 	if !dir.Dir {
 		return nil, fs.ErrInvalid
 	}
-	maxDepth := 1
-	if recursive {
-		maxDepth = 1000
-	}
-	children, err := p.q.ReadDir(ctx, phylumsql.ReadDirParams{PathPrefix: dir.Path + "/", ID: dir.ID, MaxDepth: int32(maxDepth)})
+	children, err := p.q.ReadDir(ctx, phylumsql.ReadDirParams{ID: dir.ID, Recursive: recursive})
 	if err != nil {
 		return nil, err
 	}
 
 	result := make([]webdav.FileInfo, len(children))
+	prefix := p.prefix + dir.Path
 	for i, c := range children {
 		result[i] = webdav.FileInfo{
-			Path:     string(c.Path),
+			Path:     string(prefix + c.Path),
 			Size:     int64(c.Size.Int32),
 			ModTime:  c.Modified.Time,
 			IsDir:    c.Dir,
@@ -79,7 +76,7 @@ func (p Pgfs) ReadDir(ctx context.Context, name string, recursive bool) ([]webda
 	return result, nil
 }
 func (p Pgfs) Create(ctx context.Context, name string) (io.WriteCloser, error) {
-	resource, _ := p.getResource(ctx, name)
+	resource, _ := p.resourceByPath(ctx, name)
 	if resource != nil {
 		return p.cs.Create(resource.ID, func(h hash.Hash, err error) {
 			if err != nil {
@@ -96,7 +93,7 @@ func (p Pgfs) Create(ctx context.Context, name string) (io.WriteCloser, error) {
 	}
 	index := strings.LastIndex(name, "/")
 	parentPath := name[0:index]
-	parent, err := p.getResource(ctx, parentPath)
+	parent, err := p.resourceByPath(ctx, parentPath)
 	if err != nil {
 		return nil, fs.ErrNotExist
 	}
@@ -123,7 +120,7 @@ func (p Pgfs) Create(ctx context.Context, name string) (io.WriteCloser, error) {
 }
 
 func (p Pgfs) RemoveAll(ctx context.Context, name string) error {
-	resource, _ := p.getResource(ctx, name)
+	resource, _ := p.resourceByPath(ctx, name)
 	if resource == nil {
 		return fs.ErrNotExist
 	}
@@ -131,13 +128,13 @@ func (p Pgfs) RemoveAll(ctx context.Context, name string) error {
 }
 
 func (p Pgfs) Mkdir(ctx context.Context, name string) error {
-	resource, _ := p.getResource(ctx, name)
+	resource, _ := p.resourceByPath(ctx, name)
 	if resource != nil {
 		return fs.ErrExist
 	}
 	index := strings.LastIndex(name, "/")
 	parentPath := name[0:index]
-	parent, err := p.getResource(ctx, parentPath)
+	parent, err := p.resourceByPath(ctx, parentPath)
 	if err != nil {
 		return fs.ErrNotExist
 	}
@@ -154,7 +151,7 @@ func (p Pgfs) Move(ctx context.Context, name, dest string, options *webdav.MoveO
 	return false, nil
 }
 
-func (p Pgfs) getResource(ctx context.Context, name string) (*phylumsql.ResourceByPathRow, error) {
+func (p Pgfs) resourceByPath(ctx context.Context, name string) (*phylumsql.ResourceByPathRow, error) {
 	path := strings.TrimPrefix(name, p.prefix+"/")
 	segments := strings.Split(strings.TrimRight(path, "/"), "/")
 	if len(segments) == 0 {
@@ -167,7 +164,7 @@ func (p Pgfs) getResource(ctx context.Context, name string) (*phylumsql.Resource
 	}
 
 	//TODO: Permissions checks
-	res, err := p.q.ResourceByPath(ctx, phylumsql.ResourceByPathParams{PathPrefix: p.prefix + "/", Search: segments, Root: root.ID})
+	res, err := p.q.ResourceByPath(ctx, phylumsql.ResourceByPathParams{Search: segments, Root: root.ID})
 	if err != nil {
 		return nil, os.ErrNotExist
 	}

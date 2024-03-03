@@ -31,23 +31,21 @@ RETURNING *;
 
 
 -- name: ReadDir :many
--- SELECT * from resources WHERE deleted IS NULL AND parent = $1;
-
--- name: ReadDirRecursive :many
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 1, concat(@path_prefix::text || r.name)::text
-    FROM resources r WHERE r.parent = @id::uuid AND deleted IS NULL
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text
+    FROM resources r WHERE r.id = @id::uuid
   UNION ALL
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name)
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
-    AND depth < @max_depth::int
+    -- AND depth < @max_depth::int
+    AND depth < CASE WHEN @recursive::boolean THEN 1 ELSE 1000 END
 )
 SELECT * from nodes;
 
 -- name: ResourceByPath :one
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, search) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, concat(@path_prefix::text, r.name)::text, @search::text[]
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, concat('/', r.name)::text, @search::text[]
     FROM resources r WHERE r.id = @root::uuid
   UNION ALL
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search

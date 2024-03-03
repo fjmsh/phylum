@@ -144,23 +144,22 @@ func (q *Queries) FindRoot(ctx context.Context, name string) (Resource, error) {
 }
 
 const readDir = `-- name: ReadDir :many
-
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 1, concat($1::text || r.name)::text
-    FROM resources r WHERE r.parent = $2::uuid AND deleted IS NULL
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text
+    FROM resources r WHERE r.id = $1::uuid
   UNION ALL
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name)
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
-    AND depth < $3::int
+    -- AND depth < @max_depth::int
+    AND depth < CASE WHEN $2::boolean THEN 1000 ELSE 1 END
 )
 SELECT id, parent, name, dir, created, modified, size, etag, depth, path from nodes
 `
 
 type ReadDirParams struct {
-	PathPrefix string
-	ID         uuid.UUID
-	MaxDepth   int32
+	ID        uuid.UUID
+	Recursive bool
 }
 
 type ReadDirRow struct {
@@ -176,9 +175,8 @@ type ReadDirRow struct {
 	Path     string
 }
 
-// SELECT * from resources WHERE deleted IS NULL AND parent = $1;
 func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow, error) {
-	rows, err := q.db.Query(ctx, readDir, arg.PathPrefix, arg.ID, arg.MaxDepth)
+	rows, err := q.db.Query(ctx, readDir, arg.ID, arg.Recursive)
 	if err != nil {
 		return nil, err
 	}
@@ -210,8 +208,8 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 
 const resourceByPath = `-- name: ResourceByPath :one
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, search) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, concat($1::text, r.name)::text, $2::text[]
-    FROM resources r WHERE r.id = $3::uuid
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, concat('/', r.name)::text, $1::text[]
+    FROM resources r WHERE r.id = $2::uuid
   UNION ALL
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search
     FROM resources r JOIN nodes n on r.parent = n.id
@@ -222,9 +220,8 @@ SELECT id, parent, name, dir, created, modified, size, etag, depth, path, search
 `
 
 type ResourceByPathParams struct {
-	PathPrefix string
-	Search     []string
-	Root       uuid.UUID
+	Search []string
+	Root   uuid.UUID
 }
 
 type ResourceByPathRow struct {
@@ -242,7 +239,7 @@ type ResourceByPathRow struct {
 }
 
 func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) (ResourceByPathRow, error) {
-	row := q.db.QueryRow(ctx, resourceByPath, arg.PathPrefix, arg.Search, arg.Root)
+	row := q.db.QueryRow(ctx, resourceByPath, arg.Search, arg.Root)
 	var i ResourceByPathRow
 	err := row.Scan(
 		&i.ID,
