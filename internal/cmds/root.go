@@ -7,6 +7,7 @@ import (
 	"path"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/shroff/phylum/server/internal/phylumfs"
 	"github.com/shroff/phylum/server/internal/phylumsql"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -14,7 +15,7 @@ import (
 )
 
 var debugMode bool = false
-var queries phylumsql.Queries
+var backend phylumfs.PhylumFs
 
 func Setup() {
 	viper.SetEnvPrefix("phylum")
@@ -58,7 +59,8 @@ func Setup() {
 		if err != nil {
 			log.Fatal(fmt.Sprintf("Unable to connect to database: %v\n", err))
 		}
-		queries = *phylumsql.New(conn)
+		queries := *phylumsql.New(conn)
+		backend = phylumfs.New(queries)
 	}
 
 	defer func() {

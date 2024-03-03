@@ -54,12 +54,8 @@ func setupServeCommand() *cobra.Command {
 func setupWebdav(r *gin.RouterGroup) {
 	log.Info(fmt.Sprintf("Setting up WebDAV access at %s", r.BasePath()))
 
-	cs, err := pgfs.NewLocalFsContentStore("srv")
-	if err != nil {
-		panic(err)
-	}
 	webdavHandler := webdav.Handler{
-		FileSystem: pgfs.New(queries, cs, r.BasePath()),
+		FileSystem: pgfs.New(backend, r.BasePath()),
 	}
 	handler := func(c *gin.Context) {
 		webdavHandler.ServeHTTP(c.Writer, c.Request)
@@ -72,6 +68,7 @@ func setupWebdav(r *gin.RouterGroup) {
 	r.Handle("DELETE", "/*path", handler)
 	r.Handle("MOVE", "/*path", handler)
 	r.Handle("COPY", "/*path", handler)
+	r.Handle("MKCOL", "/*path", handler)
 	r.Handle("PROPFIND", "/*path", handler)
 	r.Handle("PROPPATCH", "/*path", handler)
 }

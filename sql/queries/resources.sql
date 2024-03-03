@@ -4,30 +4,20 @@ SELECT * from resources WHERE id = $1;
 -- name: FindRoot :one
 SELECT * from resources WHERE deleted IS NULL AND parent IS NULL AND name = $1;
 
--- name: CreateDirectory :one
+-- name: CreateResource :exec
 INSERT INTO resources(
     id, parent, name, dir, created, modified
 ) VALUES (
-    $1, $2, $3, true, NOW(), NOW()
-)
-RETURNING *;
+    $1, $2, $3, $4, NOW(), NOW()
+);
 
--- name: CreateFile :one
-INSERT INTO resources(
-    id, parent, name, dir, created, modified, size, etag
-) VALUES (
-    $1, $2, $3, false, NOW(), NOW(), $4, $5
-)
-RETURNING *;
-
--- name: UpdateResourceContents :one
+-- name: UpdateResourceContents :exec
 UPDATE resources
 SET
     size = $1,
     etag = $2,
     modified = NOW()
-WHERE id = $3
-RETURNING *;
+WHERE id = $3;
 
 
 -- name: ReadDir :many
@@ -38,8 +28,7 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name)
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
-    -- AND depth < @max_depth::int
-    AND depth < CASE WHEN @recursive::boolean THEN 1 ELSE 1000 END
+    AND CASE WHEN @recursive::boolean THEN true ELSE depth < 1 END
 )
 SELECT * from nodes;
 
@@ -55,7 +44,7 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
 )
 SELECT * FROM nodes WHERE cardinality(search) = depth + 1;
 
--- name: DeleteRecursive :exec
+-- name: DeleteRecursive :many
 WITH RECURSIVE nodes(id, parent) AS (
     SELECT r.id, r.parent
     FROM resources r WHERE r.id = @id::uuid
@@ -64,4 +53,7 @@ WITH RECURSIVE nodes(id, parent) AS (
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
 )
-UPDATE resources SET deleted = NOW() WHERE id in (SELECT id FROM nodes);
+UPDATE resources
+SET deleted = NOW()
+WHERE id in (SELECT id FROM nodes)
+RETURNING *;

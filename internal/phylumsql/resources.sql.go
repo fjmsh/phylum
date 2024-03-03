@@ -12,79 +12,32 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createDirectory = `-- name: CreateDirectory :one
+const createResource = `-- name: CreateResource :exec
 INSERT INTO resources(
     id, parent, name, dir, created, modified
 ) VALUES (
-    $1, $2, $3, true, NOW(), NOW()
+    $1, $2, $3, $4, NOW(), NOW()
 )
-RETURNING id, parent, name, dir, created, modified, deleted, size, etag
 `
 
-type CreateDirectoryParams struct {
+type CreateResourceParams struct {
 	ID     uuid.UUID
 	Parent *uuid.UUID
 	Name   string
+	Dir    bool
 }
 
-func (q *Queries) CreateDirectory(ctx context.Context, arg CreateDirectoryParams) (Resource, error) {
-	row := q.db.QueryRow(ctx, createDirectory, arg.ID, arg.Parent, arg.Name)
-	var i Resource
-	err := row.Scan(
-		&i.ID,
-		&i.Parent,
-		&i.Name,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.Size,
-		&i.Etag,
-	)
-	return i, err
-}
-
-const createFile = `-- name: CreateFile :one
-INSERT INTO resources(
-    id, parent, name, dir, created, modified, size, etag
-) VALUES (
-    $1, $2, $3, false, NOW(), NOW(), $4, $5
-)
-RETURNING id, parent, name, dir, created, modified, deleted, size, etag
-`
-
-type CreateFileParams struct {
-	ID     uuid.UUID
-	Parent *uuid.UUID
-	Name   string
-	Size   pgtype.Int4
-	Etag   pgtype.Text
-}
-
-func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) (Resource, error) {
-	row := q.db.QueryRow(ctx, createFile,
+func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) error {
+	_, err := q.db.Exec(ctx, createResource,
 		arg.ID,
 		arg.Parent,
 		arg.Name,
-		arg.Size,
-		arg.Etag,
+		arg.Dir,
 	)
-	var i Resource
-	err := row.Scan(
-		&i.ID,
-		&i.Parent,
-		&i.Name,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.Size,
-		&i.Etag,
-	)
-	return i, err
+	return err
 }
 
-const deleteRecursive = `-- name: DeleteRecursive :exec
+const deleteRecursive = `-- name: DeleteRecursive :many
 WITH RECURSIVE nodes(id, parent) AS (
     SELECT r.id, r.parent
     FROM resources r WHERE r.id = $1::uuid
@@ -93,12 +46,40 @@ WITH RECURSIVE nodes(id, parent) AS (
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
 )
-UPDATE resources SET deleted = NOW() WHERE id in (SELECT id FROM nodes)
+UPDATE resources
+SET deleted = NOW()
+WHERE id in (SELECT id FROM nodes)
+RETURNING id, parent, name, dir, created, modified, deleted, size, etag
 `
 
-func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteRecursive, id)
-	return err
+func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) ([]Resource, error) {
+	rows, err := q.db.Query(ctx, deleteRecursive, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Resource
+	for rows.Next() {
+		var i Resource
+		if err := rows.Scan(
+			&i.ID,
+			&i.Parent,
+			&i.Name,
+			&i.Dir,
+			&i.Created,
+			&i.Modified,
+			&i.Deleted,
+			&i.Size,
+			&i.Etag,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const findResource = `-- name: FindResource :one
@@ -151,8 +132,7 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name)
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
-    -- AND depth < @max_depth::int
-    AND depth < CASE WHEN $2::boolean THEN 1000 ELSE 1 END
+    AND CASE WHEN $2::boolean THEN true ELSE depth < 1 END
 )
 SELECT id, parent, name, dir, created, modified, size, etag, depth, path from nodes
 `
@@ -257,14 +237,13 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 	return i, err
 }
 
-const updateResourceContents = `-- name: UpdateResourceContents :one
+const updateResourceContents = `-- name: UpdateResourceContents :exec
 UPDATE resources
 SET
     size = $1,
     etag = $2,
     modified = NOW()
 WHERE id = $3
-RETURNING id, parent, name, dir, created, modified, deleted, size, etag
 `
 
 type UpdateResourceContentsParams struct {
@@ -273,19 +252,7 @@ type UpdateResourceContentsParams struct {
 	ID   uuid.UUID
 }
 
-func (q *Queries) UpdateResourceContents(ctx context.Context, arg UpdateResourceContentsParams) (Resource, error) {
-	row := q.db.QueryRow(ctx, updateResourceContents, arg.Size, arg.Etag, arg.ID)
-	var i Resource
-	err := row.Scan(
-		&i.ID,
-		&i.Parent,
-		&i.Name,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.Size,
-		&i.Etag,
-	)
-	return i, err
+func (q *Queries) UpdateResourceContents(ctx context.Context, arg UpdateResourceContentsParams) error {
+	_, err := q.db.Exec(ctx, updateResourceContents, arg.Size, arg.Etag, arg.ID)
+	return err
 }

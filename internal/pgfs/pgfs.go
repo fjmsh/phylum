@@ -2,28 +2,23 @@ package pgfs
 
 import (
 	"context"
-	"encoding/base64"
-	"hash"
 	"io"
 	"io/fs"
-	"os"
 	"strings"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/phylumsql"
-
 	webdav "github.com/emersion/go-webdav"
+	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/phylumfs"
+	"github.com/shroff/phylum/server/internal/phylumsql"
 )
 
 type Pgfs struct {
-	q      phylumsql.Queries
-	cs     ContentStore
+	p      phylumfs.PhylumFs
 	prefix string
 }
 
-func New(q phylumsql.Queries, cs ContentStore, prefix string) Pgfs {
-	return Pgfs{q: q, cs: cs, prefix: prefix}
+func New(p phylumfs.PhylumFs, prefix string) Pgfs {
+	return Pgfs{p: p, prefix: prefix}
 }
 
 func (p Pgfs) Open(ctx context.Context, name string) (io.ReadCloser, error) {
@@ -31,8 +26,9 @@ func (p Pgfs) Open(ctx context.Context, name string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return p.cs.Open(resource.ID)
+	return p.p.Open(resource.ID)
 }
+
 func (p Pgfs) Stat(ctx context.Context, name string) (*webdav.FileInfo, error) {
 	resource, err := p.resourceByPath(ctx, name)
 	if err != nil {
@@ -56,7 +52,7 @@ func (p Pgfs) ReadDir(ctx context.Context, name string, recursive bool) ([]webda
 	if !dir.Dir {
 		return nil, fs.ErrInvalid
 	}
-	children, err := p.q.ReadDir(ctx, phylumsql.ReadDirParams{ID: dir.ID, Recursive: recursive})
+	children, err := p.p.ReadDir(ctx, dir.ID, recursive)
 	if err != nil {
 		return nil, err
 	}
@@ -76,47 +72,25 @@ func (p Pgfs) ReadDir(ctx context.Context, name string, recursive bool) ([]webda
 	return result, nil
 }
 func (p Pgfs) Create(ctx context.Context, name string) (io.WriteCloser, error) {
-	resource, _ := p.resourceByPath(ctx, name)
-	if resource != nil {
-		return p.cs.Create(resource.ID, func(h hash.Hash, err error) {
-			if err != nil {
-				etag := base64.StdEncoding.EncodeToString(h.Sum(nil))
-				_, err = p.q.UpdateResourceContents(ctx, phylumsql.UpdateResourceContentsParams{
-					Size: pgtype.Int4{Int32: int32(h.Size()), Valid: true},
-					Etag: pgtype.Text{String: string(etag), Valid: true},
-				})
-			}
-			if err != nil {
-				p.cs.Delete(resource.ID)
-			}
-		})
+	var id uuid.UUID
+	if resource, err := p.resourceByPath(ctx, name); err == nil {
+		id = resource.ID
+	} else {
+		name = strings.TrimRight(name, "/")
+		index := strings.LastIndex(name, "/")
+		parentPath := name[0:index]
+		parent, err := p.resourceByPath(ctx, parentPath)
+		if err != nil {
+			return nil, fs.ErrNotExist
+		}
+		fileName := name[index+1:]
+		id = uuid.New()
+		if err = p.p.CreateResource(ctx, id, parent.ID, fileName, false); err != nil {
+			return nil, err
+		}
 	}
-	index := strings.LastIndex(name, "/")
-	parentPath := name[0:index]
-	parent, err := p.resourceByPath(ctx, parentPath)
-	if err != nil {
-		return nil, fs.ErrNotExist
-	}
-	fileName := name[index+1:]
-	id := uuid.New()
 
-	return p.cs.Create(id, func(h hash.Hash, err error) {
-		etag := base64.StdEncoding.EncodeToString(h.Sum(nil))
-		if err != nil {
-			_, err = p.q.CreateFile(
-				ctx,
-				phylumsql.CreateFileParams{
-					ID:     id,
-					Parent: &parent.ID,
-					Name:   fileName,
-					Size:   pgtype.Int4{Int32: int32(h.Size()), Valid: true},
-					Etag:   pgtype.Text{String: string(etag), Valid: true},
-				})
-		}
-		if err != nil {
-			p.cs.Delete(id)
-		}
-	})
+	return p.p.UpdateContents(ctx, id)
 }
 
 func (p Pgfs) RemoveAll(ctx context.Context, name string) error {
@@ -124,7 +98,8 @@ func (p Pgfs) RemoveAll(ctx context.Context, name string) error {
 	if resource == nil {
 		return fs.ErrNotExist
 	}
-	return p.q.DeleteRecursive(ctx, resource.ID)
+	err := p.p.DeleteRecursive(ctx, resource.ID)
+	return err
 }
 
 func (p Pgfs) Mkdir(ctx context.Context, name string) error {
@@ -132,6 +107,7 @@ func (p Pgfs) Mkdir(ctx context.Context, name string) error {
 	if resource != nil {
 		return fs.ErrExist
 	}
+	name = strings.TrimRight(name, "/")
 	index := strings.LastIndex(name, "/")
 	parentPath := name[0:index]
 	parent, err := p.resourceByPath(ctx, parentPath)
@@ -139,7 +115,7 @@ func (p Pgfs) Mkdir(ctx context.Context, name string) error {
 		return fs.ErrNotExist
 	}
 	dirName := name[index+1:]
-	_, err = p.q.CreateDirectory(ctx, phylumsql.CreateDirectoryParams{ID: uuid.New(), Parent: &parent.ID, Name: dirName})
+	err = p.p.CreateResource(ctx, uuid.New(), parent.ID, dirName, true)
 	return err
 }
 func (p Pgfs) Copy(ctx context.Context, name, dest string, options *webdav.CopyOptions) (created bool, err error) {
@@ -151,23 +127,6 @@ func (p Pgfs) Move(ctx context.Context, name, dest string, options *webdav.MoveO
 	return false, nil
 }
 
-func (p Pgfs) resourceByPath(ctx context.Context, name string) (*phylumsql.ResourceByPathRow, error) {
-	path := strings.TrimPrefix(name, p.prefix+"/")
-	segments := strings.Split(strings.TrimRight(path, "/"), "/")
-	if len(segments) == 0 {
-		return nil, os.ErrInvalid
-	}
-
-	root, err := p.q.FindRoot(ctx, segments[0])
-	if err != nil {
-		return nil, os.ErrNotExist
-	}
-
-	//TODO: Permissions checks
-	res, err := p.q.ResourceByPath(ctx, phylumsql.ResourceByPathParams{Search: segments, Root: root.ID})
-	if err != nil {
-		return nil, os.ErrNotExist
-	}
-
-	return &res, nil
+func (p Pgfs) resourceByPath(ctx context.Context, name string) (res *phylumsql.ResourceByPathRow, err error) {
+	return p.p.ResourceByPath(ctx, strings.TrimPrefix(name, p.prefix+"/"))
 }
