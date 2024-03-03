@@ -30,6 +30,11 @@ func New(conn *pgx.Conn) PhylumFs {
 	return PhylumFs{queries: queries, cs: cs}
 }
 
+func (p PhylumFs) FindRoot(ctx context.Context, name string) (sql.Resource, error) {
+	// TODO: Permissions checks
+	return p.queries.FindRoot(ctx, name)
+}
+
 func (p PhylumFs) Mkroot(ctx context.Context, id uuid.UUID, name string) error {
 	if _, err := p.queries.FindRoot(ctx, name); err == nil {
 		return fmt.Errorf("root directory already exists: %s", name)

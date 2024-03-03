@@ -1,7 +1,9 @@
 package cmds
 
 import (
+	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	webdav "github.com/emersion/go-webdav"
@@ -58,6 +60,22 @@ func setupWebdav(r *gin.RouterGroup) {
 		FileSystem: pgfs.New(backend, r.BasePath()),
 	}
 	handler := func(c *gin.Context) {
+		path := c.Params.ByName("path")
+		path = strings.TrimLeft(path, "/")
+		if path == "" {
+			// No path specified
+			c.Writer.WriteHeader(404)
+			return
+		}
+		index := strings.Index(path, "/")
+		if index != -1 {
+			path = path[0:index]
+		}
+		_, err := backend.FindRoot(context.Background(), path)
+		if err != nil {
+			c.Writer.WriteHeader(404)
+			return
+		}
 		webdavHandler.ServeHTTP(c.Writer, c.Request)
 	}
 	r.Handle("OPTIONS", "/*path", handler)
