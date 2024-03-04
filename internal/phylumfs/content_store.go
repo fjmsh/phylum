@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type ContentStore interface {
+type contentStore interface {
 	Open(id uuid.UUID) (io.ReadCloser, error)
 	Create(id uuid.UUID, callback func(hash.Hash, int, error)) (io.WriteCloser, error)
 	Delete(id uuid.UUID) error

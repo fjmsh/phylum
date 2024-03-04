@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type LocalContentStore string
+type localContentStore string
 
 type contentWriter struct {
 	file     *os.File
@@ -37,19 +37,19 @@ func (c contentWriter) Close() error {
 	return err
 }
 
-func NewLocalContentStore(root string) (ContentStore, error) {
+func newLocalContentStore(root string) (contentStore, error) {
 	err := os.MkdirAll(root, 0750)
 	if err != nil {
 		return nil, err
 	}
-	return LocalContentStore(root), nil
+	return localContentStore(root), nil
 }
 
-func (l LocalContentStore) Open(id uuid.UUID) (io.ReadCloser, error) {
+func (l localContentStore) Open(id uuid.UUID) (io.ReadCloser, error) {
 	return os.Open(l.path(id))
 }
 
-func (l LocalContentStore) Create(id uuid.UUID, callback func(hash.Hash, int, error)) (io.WriteCloser, error) {
+func (l localContentStore) Create(id uuid.UUID, callback func(hash.Hash, int, error)) (io.WriteCloser, error) {
 	file, err := os.Create(l.path(id))
 	if err != nil {
 		return nil, err
@@ -59,10 +59,10 @@ func (l LocalContentStore) Create(id uuid.UUID, callback func(hash.Hash, int, er
 	return contentWriter{file, md5.New(), &addr, callback}, nil
 }
 
-func (l LocalContentStore) Delete(id uuid.UUID) error {
+func (l localContentStore) Delete(id uuid.UUID) error {
 	return os.Remove(filepath.Join(string(l), id.String()))
 }
 
-func (l LocalContentStore) path(id uuid.UUID) string {
+func (l localContentStore) path(id uuid.UUID) string {
 	return filepath.Join(string(l), id.String())
 }

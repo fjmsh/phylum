@@ -1,9 +1,9 @@
-package pgfs
+package webdav
 
 import (
 	"context"
 	"io"
-	"io/fs"
+	iofs "io/fs"
 	"strings"
 
 	webdav "github.com/emersion/go-webdav"
@@ -12,24 +12,20 @@ import (
 	"github.com/shroff/phylum/server/internal/sql"
 )
 
-type Pgfs struct {
-	p      phylumfs.PhylumFs
+type adapter struct {
+	fs     phylumfs.Fs
 	prefix string
 }
 
-func New(p phylumfs.PhylumFs, prefix string) Pgfs {
-	return Pgfs{p: p, prefix: prefix}
-}
-
-func (p Pgfs) Open(ctx context.Context, name string) (io.ReadCloser, error) {
+func (p adapter) Open(ctx context.Context, name string) (io.ReadCloser, error) {
 	resource, err := p.resourceByPath(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	return p.p.Open(resource.ID)
+	return p.fs.Open(resource.ID)
 }
 
-func (p Pgfs) Stat(ctx context.Context, name string) (*webdav.FileInfo, error) {
+func (p adapter) Stat(ctx context.Context, name string) (*webdav.FileInfo, error) {
 	resource, err := p.resourceByPath(ctx, name)
 	if err != nil {
 		return nil, err
@@ -44,15 +40,15 @@ func (p Pgfs) Stat(ctx context.Context, name string) (*webdav.FileInfo, error) {
 	}
 	return val, nil
 }
-func (p Pgfs) ReadDir(ctx context.Context, name string, recursive bool) ([]webdav.FileInfo, error) {
+func (p adapter) ReadDir(ctx context.Context, name string, recursive bool) ([]webdav.FileInfo, error) {
 	dir, err := p.resourceByPath(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 	if !dir.Dir {
-		return nil, fs.ErrInvalid
+		return nil, iofs.ErrInvalid
 	}
-	children, err := p.p.ReadDir(ctx, dir.ID, recursive)
+	children, err := p.fs.ReadDir(ctx, dir.ID, recursive)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +67,7 @@ func (p Pgfs) ReadDir(ctx context.Context, name string, recursive bool) ([]webda
 	}
 	return result, nil
 }
-func (p Pgfs) Create(ctx context.Context, name string) (io.WriteCloser, error) {
+func (p adapter) Create(ctx context.Context, name string) (io.WriteCloser, error) {
 	var id uuid.UUID
 	if resource, err := p.resourceByPath(ctx, name); err == nil {
 		id = resource.ID
@@ -81,52 +77,52 @@ func (p Pgfs) Create(ctx context.Context, name string) (io.WriteCloser, error) {
 		parentPath := name[0:index]
 		parent, err := p.resourceByPath(ctx, parentPath)
 		if err != nil {
-			return nil, fs.ErrNotExist
+			return nil, iofs.ErrNotExist
 		}
 		fileName := name[index+1:]
 		id = uuid.New()
-		if err = p.p.CreateResource(ctx, id, parent.ID, fileName, false); err != nil {
+		if err = p.fs.CreateResource(ctx, id, parent.ID, fileName, false); err != nil {
 			return nil, err
 		}
 	}
 
-	return p.p.UpdateContents(ctx, id)
+	return p.fs.UpdateContents(ctx, id)
 }
 
-func (p Pgfs) RemoveAll(ctx context.Context, name string) error {
+func (p adapter) RemoveAll(ctx context.Context, name string) error {
 	resource, _ := p.resourceByPath(ctx, name)
 	if resource == nil {
-		return fs.ErrNotExist
+		return iofs.ErrNotExist
 	}
-	err := p.p.DeleteRecursive(ctx, resource.ID)
+	err := p.fs.DeleteRecursive(ctx, resource.ID)
 	return err
 }
 
-func (p Pgfs) Mkdir(ctx context.Context, name string) error {
+func (p adapter) Mkdir(ctx context.Context, name string) error {
 	resource, _ := p.resourceByPath(ctx, name)
 	if resource != nil {
-		return fs.ErrExist
+		return iofs.ErrExist
 	}
 	name = strings.TrimRight(name, "/")
 	index := strings.LastIndex(name, "/")
 	parentPath := name[0:index]
 	parent, err := p.resourceByPath(ctx, parentPath)
 	if err != nil {
-		return fs.ErrNotExist
+		return iofs.ErrNotExist
 	}
 	dirName := name[index+1:]
-	err = p.p.CreateResource(ctx, uuid.New(), parent.ID, dirName, true)
+	err = p.fs.CreateResource(ctx, uuid.New(), parent.ID, dirName, true)
 	return err
 }
-func (p Pgfs) Copy(ctx context.Context, name, dest string, options *webdav.CopyOptions) (created bool, err error) {
+func (p adapter) Copy(ctx context.Context, name, dest string, options *webdav.CopyOptions) (created bool, err error) {
 	// TODO: Implement
 	return false, nil
 }
-func (p Pgfs) Move(ctx context.Context, name, dest string, options *webdav.MoveOptions) (created bool, err error) {
+func (p adapter) Move(ctx context.Context, name, dest string, options *webdav.MoveOptions) (created bool, err error) {
 	// TODO: Implement
 	return false, nil
 }
 
-func (p Pgfs) resourceByPath(ctx context.Context, name string) (res *sql.ResourceByPathRow, err error) {
-	return p.p.ResourceByPath(ctx, strings.TrimPrefix(name, p.prefix+"/"))
+func (p adapter) resourceByPath(ctx context.Context, name string) (res *sql.ResourceByPathRow, err error) {
+	return p.fs.ResourceByPath(ctx, strings.TrimPrefix(name, p.prefix+"/"))
 }

@@ -1,16 +1,13 @@
 package cmds
 
 import (
-	"context"
 	"fmt"
-	"strings"
 	"time"
 
-	webdav "github.com/emersion/go-webdav"
 	"github.com/fvbock/endless"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/pgfs"
+	"github.com/shroff/phylum/server/internal/webdav"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -54,41 +51,18 @@ func setupServeCommand() *cobra.Command {
 }
 
 func setupWebdav(r *gin.RouterGroup) {
-	log.Info(fmt.Sprintf("Setting up WebDAV access at %s", r.BasePath()))
-
-	webdavHandler := webdav.Handler{
-		FileSystem: pgfs.New(backend, r.BasePath()),
-	}
-	handler := func(c *gin.Context) {
-		path := c.Params.ByName("path")
-		path = strings.TrimLeft(path, "/")
-		if path == "" {
-			// No path specified
-			c.Writer.WriteHeader(404)
-			return
-		}
-		index := strings.Index(path, "/")
-		if index != -1 {
-			path = path[0:index]
-		}
-		_, err := backend.FindRoot(context.Background(), path)
-		if err != nil {
-			c.Writer.WriteHeader(404)
-			return
-		}
-		webdavHandler.ServeHTTP(c.Writer, c.Request)
-	}
-	r.Handle("OPTIONS", "/*path", handler)
-	r.Handle("GET", "/*path", handler)
-	r.Handle("PUT", "/*path", handler)
-	r.Handle("HEAD", "/*path", handler)
-	r.Handle("POST", "/*path", handler)
-	r.Handle("DELETE", "/*path", handler)
-	r.Handle("MOVE", "/*path", handler)
-	r.Handle("COPY", "/*path", handler)
-	r.Handle("MKCOL", "/*path", handler)
-	r.Handle("PROPFIND", "/*path", handler)
-	r.Handle("PROPPATCH", "/*path", handler)
+	handler := webdav.NewHandler(backend, r.BasePath())
+	r.Handle("OPTIONS", "/*path", handler.HandleRequest)
+	r.Handle("GET", "/*path", handler.HandleRequest)
+	r.Handle("PUT", "/*path", handler.HandleRequest)
+	r.Handle("HEAD", "/*path", handler.HandleRequest)
+	r.Handle("POST", "/*path", handler.HandleRequest)
+	r.Handle("DELETE", "/*path", handler.HandleRequest)
+	r.Handle("MOVE", "/*path", handler.HandleRequest)
+	r.Handle("COPY", "/*path", handler.HandleRequest)
+	r.Handle("MKCOL", "/*path", handler.HandleRequest)
+	r.Handle("PROPFIND", "/*path", handler.HandleRequest)
+	r.Handle("PROPPATCH", "/*path", handler.HandleRequest)
 }
 
 func createEngine(corsEnabled bool, corsOrigins []string) *gin.Engine {

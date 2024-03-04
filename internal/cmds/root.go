@@ -14,7 +14,7 @@ import (
 )
 
 var debugMode bool = false
-var backend phylumfs.PhylumFs
+var backend phylumfs.Backend
 
 func Setup() {
 	viper.SetEnvPrefix("phylum")
@@ -51,9 +51,6 @@ func Setup() {
 		if err != nil {
 			log.Fatal(fmt.Sprintf("Unable to parse db connection String: %v\n", err))
 		}
-		if debugMode {
-			config.Tracer = phylumTracer{}
-		}
 		conn, err = pgx.ConnectConfig(context.Background(), config)
 		if err != nil {
 			log.Fatal(fmt.Sprintf("Unable to connect to database: %v\n", err))
@@ -70,15 +67,4 @@ func Setup() {
 
 	rootCmd.AddCommand([]*cobra.Command{setupServeCommand(), setupAdminCommand()}...)
 	rootCmd.Execute()
-}
-
-type phylumTracer struct {
-}
-
-func (p phylumTracer) TraceQueryStart(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
-	log.Trace(fmt.Sprintf("%+v\n", data))
-	return ctx
-}
-
-func (p phylumTracer) TraceQueryEnd(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryEndData) {
 }
