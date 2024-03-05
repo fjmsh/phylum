@@ -8,12 +8,12 @@ import (
 
 	webdav "github.com/emersion/go-webdav"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/phylumfs"
 	"github.com/shroff/phylum/server/internal/sql"
+	"github.com/shroff/phylum/server/internal/vfs"
 )
 
 type adapter struct {
-	fs     phylumfs.Fs
+	fs     *vfs.Vfs
 	prefix string
 }
 
@@ -90,17 +90,15 @@ func (p adapter) Create(ctx context.Context, name string) (io.WriteCloser, error
 }
 
 func (p adapter) RemoveAll(ctx context.Context, name string) error {
-	resource, _ := p.resourceByPath(ctx, name)
-	if resource == nil {
+	resource, err := p.resourceByPath(ctx, name)
+	if err != nil {
 		return iofs.ErrNotExist
 	}
-	err := p.fs.DeleteRecursive(ctx, resource.ID)
-	return err
+	return p.fs.DeleteRecursive(ctx, resource.ID)
 }
 
 func (p adapter) Mkdir(ctx context.Context, name string) error {
-	resource, _ := p.resourceByPath(ctx, name)
-	if resource != nil {
+	if _, err := p.resourceByPath(ctx, name); err == nil {
 		return iofs.ErrExist
 	}
 	name = strings.TrimRight(name, "/")
@@ -123,6 +121,6 @@ func (p adapter) Move(ctx context.Context, name, dest string, options *webdav.Mo
 	return false, nil
 }
 
-func (p adapter) resourceByPath(ctx context.Context, name string) (res *sql.ResourceByPathRow, err error) {
-	return p.fs.ResourceByPath(ctx, strings.TrimPrefix(name, p.prefix+"/"))
+func (p adapter) resourceByPath(ctx context.Context, name string) (res sql.ResourceByPathRow, err error) {
+	return p.fs.ResourceByPath(ctx, strings.TrimPrefix(name, p.prefix))
 }

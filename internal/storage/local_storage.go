@@ -1,4 +1,4 @@
-package phylumfs
+package storage
 
 import (
 	"crypto/md5"
@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type localContentStore string
+type localStorage string
 
 type contentWriter struct {
 	file     *os.File
@@ -37,19 +37,11 @@ func (c contentWriter) Close() error {
 	return err
 }
 
-func newLocalContentStore(root string) (contentStore, error) {
-	err := os.MkdirAll(root, 0750)
-	if err != nil {
-		return nil, err
-	}
-	return localContentStore(root), nil
-}
-
-func (l localContentStore) Open(id uuid.UUID) (io.ReadCloser, error) {
+func (l localStorage) Open(id uuid.UUID) (io.ReadCloser, error) {
 	return os.Open(l.path(id))
 }
 
-func (l localContentStore) Create(id uuid.UUID, callback func(hash.Hash, int, error)) (io.WriteCloser, error) {
+func (l localStorage) Create(id uuid.UUID, callback func(hash.Hash, int, error)) (io.WriteCloser, error) {
 	file, err := os.Create(l.path(id))
 	if err != nil {
 		return nil, err
@@ -59,10 +51,10 @@ func (l localContentStore) Create(id uuid.UUID, callback func(hash.Hash, int, er
 	return contentWriter{file, md5.New(), &addr, callback}, nil
 }
 
-func (l localContentStore) Delete(id uuid.UUID) error {
+func (l localStorage) Delete(id uuid.UUID) error {
 	return os.Remove(filepath.Join(string(l), id.String()))
 }
 
-func (l localContentStore) path(id uuid.UUID) string {
+func (l localStorage) path(id uuid.UUID) string {
 	return filepath.Join(string(l), id.String())
 }

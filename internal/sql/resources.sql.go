@@ -188,15 +188,15 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 
 const resourceByPath = `-- name: ResourceByPath :one
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, search) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, concat('/', r.name)::text, $1::text[]
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, $1::text[]
     FROM resources r WHERE r.id = $2::uuid
   UNION ALL
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
-    AND r.name = n.search[n.depth + 2]
+    AND r.name = n.search[n.depth + 1]
 )
-SELECT id, parent, name, dir, created, modified, size, etag, depth, path, search FROM nodes WHERE cardinality(search) = depth + 1
+SELECT id, parent, name, dir, created, modified, size, etag, depth, path, search FROM nodes WHERE cardinality(search) = depth
 `
 
 type ResourceByPathParams struct {

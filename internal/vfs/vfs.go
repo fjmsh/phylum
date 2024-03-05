@@ -1,4 +1,4 @@
-package phylumfs
+package vfs
 
 import (
 	"context"
@@ -11,48 +11,39 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/sql"
+	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
 )
 
-type Fs interface {
-	rootId() uuid.UUID
-	Open(id uuid.UUID) (io.ReadCloser, error)
-	ReadDir(ctx context.Context, id uuid.UUID, recursive bool) ([]sql.ReadDirRow, error)
-	DeleteRecursive(ctx context.Context, id uuid.UUID) error
-	CreateResource(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string, dir bool) error
-	UpdateContents(ctx context.Context, id uuid.UUID) (io.WriteCloser, error)
-	ResourceByPath(ctx context.Context, path string) (*sql.ResourceByPathRow, error)
-}
-
-type pgxFs struct {
+type Vfs struct {
 	queries sql.Queries
 	root    uuid.UUID
-	cs      contentStore
+	cs      storage.Storage
 }
 
-func (fs pgxFs) rootId() uuid.UUID {
+func (fs Vfs) rootId() uuid.UUID {
 	return fs.root
 }
 
-func (fs pgxFs) Open(id uuid.UUID) (io.ReadCloser, error) {
+func (fs Vfs) Open(id uuid.UUID) (io.ReadCloser, error) {
 	return fs.cs.Open(id)
 }
 
-func (fs pgxFs) ReadDir(ctx context.Context, id uuid.UUID, recursive bool) ([]sql.ReadDirRow, error) {
+func (fs Vfs) ReadDir(ctx context.Context, id uuid.UUID, recursive bool) ([]sql.ReadDirRow, error) {
 	return fs.queries.ReadDir(ctx, sql.ReadDirParams{ID: id, Recursive: recursive})
 }
 
-func (fs pgxFs) DeleteRecursive(ctx context.Context, id uuid.UUID) error {
+func (fs Vfs) DeleteRecursive(ctx context.Context, id uuid.UUID) error {
 	_, err := fs.queries.DeleteRecursive(ctx, id)
 	// TODO: Delete Contents
 	return err
 }
 
-func (fs pgxFs) CreateResource(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string, dir bool) error {
+func (fs Vfs) CreateResource(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string, dir bool) error {
 	return fs.queries.CreateResource(ctx, sql.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir})
 }
 
-func (fs pgxFs) UpdateContents(ctx context.Context, id uuid.UUID) (io.WriteCloser, error) {
+func (fs Vfs) UpdateContents(ctx context.Context, id uuid.UUID) (io.WriteCloser, error) {
 	return fs.cs.Create(id, func(h hash.Hash, len int, err error) {
 		if err == nil {
 			etag := base64.StdEncoding.EncodeToString(h.Sum(nil))
@@ -69,20 +60,22 @@ func (fs pgxFs) UpdateContents(ctx context.Context, id uuid.UUID) (io.WriteClose
 	})
 }
 
-func (fs pgxFs) ResourceByPath(ctx context.Context, path string) (*sql.ResourceByPathRow, error) {
+func (fs Vfs) ResourceByPath(ctx context.Context, path string) (sql.ResourceByPathRow, error) {
 	logrus.Trace("PhylumFs.ResourceByPath called with " + path)
-	segments := strings.Split(strings.Trim(path, "/"), "/")
-	if len(segments) == 0 {
-		return nil, iofs.ErrInvalid
+	path = strings.Trim(path, "/")
+	segments := strings.Split(path, "/")
+	if path == "" {
+		// Calling strings.Split on an empty string returns a slice of length 1. That breaks the query
+		segments = []string{}
 	}
 
 	res, err := fs.queries.ResourceByPath(ctx, sql.ResourceByPathParams{Search: segments, Root: fs.root})
 	if err != nil {
-		return nil, iofs.ErrNotExist
+		return sql.ResourceByPathRow{}, iofs.ErrNotExist
 	}
 	logrus.Trace(res)
 
 	//TODO: Permissions checks
 
-	return &res, nil
+	return res, nil
 }

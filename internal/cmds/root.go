@@ -7,14 +7,14 @@ import (
 	"path"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/phylumfs"
+	"github.com/shroff/phylum/server/internal/vfs"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var debugMode bool = false
-var backend phylumfs.Backend
+var vfsManager vfs.VfsManager
 
 func Setup() {
 	viper.SetEnvPrefix("phylum")
@@ -24,6 +24,9 @@ func Setup() {
 
 	flags.BoolP("debug", "d", false, "Debug mode")
 	viper.BindPFlag("debug", flags.Lookup("debug"))
+
+	flags.Bool("trace-sql", false, "Trace SQL Queries")
+	viper.BindPFlag("trace_sql", flags.Lookup("trace-sql"))
 
 	flags.StringP("working-dir", "W", ".", "Working Directory")
 	viper.BindPFlag("working_dir", flags.Lookup("working-dir"))
@@ -48,6 +51,11 @@ func Setup() {
 
 		dsn := viper.GetString("database_url")
 		config, err := pgx.ParseConfig(dsn)
+
+		if viper.GetBool("trace_sql") {
+			config.Tracer = phylumTracer{}
+		}
+
 		if err != nil {
 			log.Fatal(fmt.Sprintf("Unable to parse db connection String: %v\n", err))
 		}
@@ -55,7 +63,7 @@ func Setup() {
 		if err != nil {
 			log.Fatal(fmt.Sprintf("Unable to connect to database: %v\n", err))
 		}
-		backend = phylumfs.New(conn)
+		vfsManager = vfs.NewManager(conn)
 	}
 
 	defer func() {
@@ -67,4 +75,16 @@ func Setup() {
 
 	rootCmd.AddCommand([]*cobra.Command{setupServeCommand(), setupAdminCommand()}...)
 	rootCmd.Execute()
+}
+
+type phylumTracer struct {
+}
+
+func (p phylumTracer) TraceQueryStart(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
+	log.Trace(data)
+	return ctx
+}
+
+func (p phylumTracer) TraceQueryEnd(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryEndData) {
+	log.Trace(data)
 }

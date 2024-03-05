@@ -51,7 +51,7 @@ func setupServeCommand() *cobra.Command {
 }
 
 func setupWebdav(r *gin.RouterGroup) {
-	handler := webdav.NewHandler(backend, r.BasePath())
+	handler := webdav.NewHandler(vfsManager, r.BasePath())
 	r.Handle("OPTIONS", "/*path", handler.HandleRequest)
 	r.Handle("GET", "/*path", handler.HandleRequest)
 	r.Handle("PUT", "/*path", handler.HandleRequest)

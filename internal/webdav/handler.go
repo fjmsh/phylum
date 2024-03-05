@@ -6,36 +6,36 @@ import (
 
 	webdav "github.com/emersion/go-webdav"
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/phylumfs"
+	"github.com/shroff/phylum/server/internal/vfs"
 	"github.com/sirupsen/logrus"
 )
 
 type handler struct {
-	backend phylumfs.Backend
-	prefix  string
+	vfsManager vfs.VfsManager
+	prefix     string
 }
 
-func NewHandler(backend phylumfs.Backend, prefix string) *handler {
+func NewHandler(vfsManager vfs.VfsManager, prefix string) *handler {
 	logrus.Info("Setting up WebDAV access at " + prefix)
 	return &handler{
-		backend: backend,
-		prefix:  prefix,
+		vfsManager: vfsManager,
+		prefix:     prefix,
 	}
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
 	path := c.Params.ByName("path")
-	path = strings.TrimLeft(path, "/")
-	if path == "" {
+	vfsName := strings.TrimLeft(path, "/")
+	if vfsName == "" {
 		// No path specified
 		c.Writer.WriteHeader(404)
 		return
 	}
-	index := strings.Index(path, "/")
+	index := strings.Index(vfsName, "/")
 	if index != -1 {
-		path = path[0:index]
+		vfsName = vfsName[0:index]
 	}
-	root, err := h.backend.FindRoot(context.Background(), path)
+	vfs, err := h.vfsManager.GetVfs(context.Background(), vfsName)
 	if err != nil {
 		c.Writer.WriteHeader(404)
 		return
@@ -43,8 +43,8 @@ func (h *handler) HandleRequest(c *gin.Context) {
 
 	webdavHandler := webdav.Handler{
 		FileSystem: adapter{
-			fs:     root,
-			prefix: h.prefix,
+			fs:     vfs,
+			prefix: h.prefix + "/" + vfsName,
 		},
 	}
 	webdavHandler.ServeHTTP(c.Writer, c.Request)

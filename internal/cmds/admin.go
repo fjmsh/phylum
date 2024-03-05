@@ -27,7 +27,7 @@ func setupAdminMkrootCommand() *cobra.Command {
 		Short: "Create Root Folder",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := backend.Mkroot(context.Background(), uuid.New(), args[0]); err != nil {
+			if err := vfsManager.CreateVfs(context.Background(), uuid.New(), args[0]); err != nil {
 				log.Fatal(err)
 			}
 		},
@@ -40,7 +40,7 @@ func setupAdminRmrootCommand() *cobra.Command {
 		Short: "Delete Root Folder",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := backend.Rmroot(context.Background(), args[0]); err != nil {
+			if err := vfsManager.DeleteVfs(context.Background(), args[0]); err != nil {
 				log.Fatal(err)
 			}
 		},
