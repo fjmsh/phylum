@@ -124,6 +124,50 @@ func (q *Queries) FindRoot(ctx context.Context, name string) (Resource, error) {
 	return i, err
 }
 
+const hardDeleteRecursive = `-- name: HardDeleteRecursive :many
+WITH RECURSIVE nodes(id, parent) AS (
+    SELECT r.id, r.parent
+    FROM resources r WHERE r.id = $1::uuid
+  UNION ALL
+    SELECT r.id, r.parent
+    FROM resources r JOIN nodes n on r.parent = n.id
+    WHERE deleted IS NULL
+)
+DELETE FROM resources
+WHERE id in (SELECT id FROM nodes)
+RETURNING id, parent, name, dir, created, modified, deleted, size, etag
+`
+
+func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]Resource, error) {
+	rows, err := q.db.Query(ctx, hardDeleteRecursive, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Resource
+	for rows.Next() {
+		var i Resource
+		if err := rows.Scan(
+			&i.ID,
+			&i.Parent,
+			&i.Name,
+			&i.Dir,
+			&i.Created,
+			&i.Modified,
+			&i.Deleted,
+			&i.Size,
+			&i.Etag,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const readDir = `-- name: ReadDir :many
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path) AS (
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text

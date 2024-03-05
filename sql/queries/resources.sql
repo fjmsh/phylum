@@ -57,3 +57,16 @@ UPDATE resources
 SET deleted = NOW()
 WHERE id in (SELECT id FROM nodes)
 RETURNING *;
+
+-- name: HardDeleteRecursive :many
+WITH RECURSIVE nodes(id, parent) AS (
+    SELECT r.id, r.parent
+    FROM resources r WHERE r.id = @id::uuid
+  UNION ALL
+    SELECT r.id, r.parent
+    FROM resources r JOIN nodes n on r.parent = n.id
+    WHERE deleted IS NULL
+)
+DELETE FROM resources
+WHERE id in (SELECT id FROM nodes)
+RETURNING *;

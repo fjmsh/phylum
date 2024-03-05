@@ -29,9 +29,19 @@ func (fs Vfs) ReadDir(ctx context.Context, id uuid.UUID, recursive bool) ([]sql.
 	return fs.queries.ReadDir(ctx, sql.ReadDirParams{ID: id, Recursive: recursive})
 }
 
-func (fs Vfs) DeleteRecursive(ctx context.Context, id uuid.UUID) error {
-	_, err := fs.queries.DeleteRecursive(ctx, id)
-	// TODO: Delete Contents
+func (fs Vfs) DeleteRecursive(ctx context.Context, id uuid.UUID, hardDelete bool) error {
+	query := fs.queries.DeleteRecursive
+	if hardDelete {
+		query = fs.queries.HardDeleteRecursive
+	}
+	deleted, err := query(ctx, id)
+	if err == nil && hardDelete {
+		for _, res := range deleted {
+			if !res.Dir {
+				fs.cs.Delete(res.ID)
+			}
+		}
+	}
 	return err
 }
 

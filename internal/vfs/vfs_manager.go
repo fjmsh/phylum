@@ -44,7 +44,7 @@ func (b VfsManager) CreateVfs(ctx context.Context, id uuid.UUID, name string) er
 
 func (b VfsManager) DeleteVfs(ctx context.Context, name string) error {
 	if fs, err := b.GetVfs(ctx, name); err == nil {
-		return fs.DeleteRecursive(ctx, fs.root)
+		return fs.DeleteRecursive(ctx, fs.root, true)
 	} else {
 		return fmt.Errorf("root directory does not exist: %s", name)
 	}

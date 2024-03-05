@@ -52,7 +52,7 @@ func (l localStorage) Create(id uuid.UUID, callback func(hash.Hash, int, error))
 }
 
 func (l localStorage) Delete(id uuid.UUID) error {
-	return os.Remove(filepath.Join(string(l), id.String()))
+	return os.Remove(l.path(id))
 }
 
 func (l localStorage) path(id uuid.UUID) string {

@@ -94,7 +94,7 @@ func (p adapter) RemoveAll(ctx context.Context, name string) error {
 	if err != nil {
 		return iofs.ErrNotExist
 	}
-	return p.fs.DeleteRecursive(ctx, resource.ID)
+	return p.fs.DeleteRecursive(ctx, resource.ID, false)
 }
 
 func (p adapter) Mkdir(ctx context.Context, name string) error {
