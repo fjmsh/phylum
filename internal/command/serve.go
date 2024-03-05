@@ -1,14 +1,14 @@
 package command
 
 import (
-	"fmt"
+	"bytes"
 	"time"
 
 	"github.com/fvbock/endless"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/webdav"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -19,17 +19,17 @@ func setupServeCommand() *cobra.Command {
 		Short: "Run the server",
 		Run: func(cmd *cobra.Command, args []string) {
 			config := viper.GetViper()
-			engine := createEngine(config.GetBool("cors_enabled"), config.GetStringSlice("cors_origins"))
+			engine := createEngine(config.GetBool("log_body"), config.GetBool("cors_enabled"), config.GetStringSlice("cors_origins"))
 
 			setupWebdav(engine.Group(config.GetString("webdav_prefix")))
 
 			server := endless.NewServer(config.GetString("listen"), engine)
 			server.BeforeBegin = func(addr string) {
-				log.Info(fmt.Sprintf("Listening on %s\n", addr))
+				logrus.Info("Listening on " + addr)
 			}
 
 			if err := server.ListenAndServe(); err != nil {
-				log.Fatal(err.Error())
+				logrus.Fatal(err.Error())
 			}
 		},
 	}
@@ -38,7 +38,10 @@ func setupServeCommand() *cobra.Command {
 	flags.StringP("listen", "l", ":1234", "Listen Addres")
 	viper.BindPFlag("listen", flags.Lookup("listen"))
 
-	flags.Bool("cors-enabled", false, "CORS enabled")
+	flags.Bool("log-body", false, "Log Response Body (Must be used with --debug)")
+	viper.BindPFlag("log_body", flags.Lookup("log-body"))
+
+	flags.Bool("cors-enabled", false, "Enabled CORS")
 	viper.BindPFlag("cors_enabled", flags.Lookup("cors-enabled"))
 
 	flags.StringSlice("cors-origins", []string{"*"}, "CORS origins")
@@ -65,11 +68,14 @@ func setupWebdav(r *gin.RouterGroup) {
 	r.Handle("PROPPATCH", "/*path", handler.HandleRequest)
 }
 
-func createEngine(corsEnabled bool, corsOrigins []string) *gin.Engine {
+func createEngine(logBody bool, corsEnabled bool, corsOrigins []string) *gin.Engine {
 	if !debug {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	engine := gin.Default()
+	if debug && logBody {
+		engine.Use(logBodyMiddleware)
+	}
 
 	if corsEnabled {
 		engine.Use(cors.New(cors.Config{
@@ -84,4 +90,25 @@ func createEngine(corsEnabled bool, corsOrigins []string) *gin.Engine {
 	}
 
 	return engine
+}
+
+type logBodyWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w logBodyWriter) Write(b []byte) (int, error) {
+	w.body.Write(b)
+	return w.ResponseWriter.Write(b)
+}
+
+func logBodyMiddleware(c *gin.Context) {
+	logBodyWriter := &logBodyWriter{
+		ResponseWriter: c.Writer,
+		body:           bytes.NewBuffer(make([]byte, 0, 1024)),
+	}
+	c.Writer = logBodyWriter
+	c.Next()
+	logrus.Trace(c.Request.URL)
+	logrus.Trace(logBodyWriter.body.String())
 }
