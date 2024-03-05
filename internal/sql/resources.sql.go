@@ -281,6 +281,24 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 	return i, err
 }
 
+const updateParent = `-- name: UpdateParent :exec
+UPDATE resources
+SET
+    parent = $1,
+    modified = NOW()
+WHERE id = $2
+`
+
+type UpdateParentParams struct {
+	Parent *uuid.UUID
+	ID     uuid.UUID
+}
+
+func (q *Queries) UpdateParent(ctx context.Context, arg UpdateParentParams) error {
+	_, err := q.db.Exec(ctx, updateParent, arg.Parent, arg.ID)
+	return err
+}
+
 const updateResourceContents = `-- name: UpdateResourceContents :exec
 UPDATE resources
 SET

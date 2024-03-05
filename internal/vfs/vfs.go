@@ -49,6 +49,10 @@ func (fs Vfs) CreateResource(ctx context.Context, id uuid.UUID, parent uuid.UUID
 	return fs.queries.CreateResource(ctx, sql.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir})
 }
 
+func (fs Vfs) Move(ctx context.Context, id uuid.UUID, parent uuid.UUID) error {
+	return fs.queries.UpdateParent(ctx, sql.UpdateParentParams{ID: id, Parent: &parent})
+}
+
 func (fs Vfs) UpdateContents(ctx context.Context, id uuid.UUID) (io.WriteCloser, error) {
 	return fs.cs.Create(id, func(h hash.Hash, len int, err error) {
 		if err == nil {

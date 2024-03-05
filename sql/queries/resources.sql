@@ -19,6 +19,13 @@ SET
     modified = NOW()
 WHERE id = $3;
 
+-- name: UpdateParent :exec
+UPDATE resources
+SET
+    parent = $1,
+    modified = NOW()
+WHERE id = $2;
+
 
 -- name: ReadDir :many
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path) AS (

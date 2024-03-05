@@ -2,8 +2,10 @@ package webdav
 
 import (
 	"context"
+	"fmt"
 	"io"
 	iofs "io/fs"
+	"net/http"
 	"strings"
 
 	webdav "github.com/emersion/go-webdav"
@@ -114,11 +116,32 @@ func (p adapter) Mkdir(ctx context.Context, name string) error {
 }
 func (p adapter) Copy(ctx context.Context, name, dest string, options *webdav.CopyOptions) (created bool, err error) {
 	// TODO: Implement
-	return false, nil
+	return false, webdav.NewHTTPError(http.StatusMethodNotAllowed, fmt.Errorf("not implemented"))
 }
-func (p adapter) Move(ctx context.Context, name, dest string, options *webdav.MoveOptions) (created bool, err error) {
-	// TODO: Implement
-	return false, nil
+func (p adapter) Move(ctx context.Context, name, destName string, options *webdav.MoveOptions) (created bool, err error) {
+	src, err := p.resourceByPath(ctx, name)
+	if err != nil {
+		return false, iofs.ErrNotExist
+	}
+
+	_, err = p.resourceByPath(ctx, destName)
+	if err == nil && options.NoOverwrite {
+		return false, iofs.ErrExist
+	}
+
+	destName = strings.TrimRight(destName, "/")
+	index := strings.LastIndex(destName, "/")
+	parentPath := destName[0:index]
+	parent, err := p.resourceByPath(ctx, parentPath)
+
+	if err != nil {
+		return false, webdav.NewHTTPError(http.StatusConflict, nil)
+	}
+
+	if err = p.fs.Move(ctx, src.ID, parent.ID); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (p adapter) resourceByPath(ctx context.Context, name string) (res sql.ResourceByPathRow, err error) {
