@@ -16,7 +16,7 @@ type file struct {
 }
 
 func (f file) Seek(offset int64, whence int) (int64, error) {
-	return 0, fmt.Errorf("webdav: seek not supported")
+	return 0, fmt.Errorf("seek not supported")
 }
 func (f file) Read(p []byte) (n int, err error) {
 	return f.src.Read(p)
@@ -33,7 +33,7 @@ func (f file) Write(p []byte) (n int, err error) {
 
 func (f file) Readdir(count int) ([]fs.FileInfo, error) {
 	if !f.dir {
-		return nil, fmt.Errorf("webdav: not a collection")
+		return nil, fmt.Errorf("readdir not supported for non-collection resources")
 	}
 
 	children, err := f.fs.ReadDir(context.Background(), f.resourceID, false, false)

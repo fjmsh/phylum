@@ -138,12 +138,13 @@ func (p adapter) Move(ctx context.Context, name, destName string, options *webda
 	index := strings.LastIndex(destName, "/")
 	parentPath := destName[0:index]
 	parent, err := p.resourceByPath(ctx, parentPath)
+	destName = destName[index+1:]
 
 	if err != nil {
 		return false, webdav.NewHTTPError(http.StatusConflict, nil)
 	}
 
-	if err = p.fs.Move(ctx, src.ID, parent.ID); err != nil {
+	if err = p.fs.Move(ctx, src.ID, parent.ID, destName); err != nil {
 		return false, err
 	}
 	return true, nil

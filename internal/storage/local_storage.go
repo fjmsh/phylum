@@ -8,12 +8,16 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 type localStorage string
 
 func (l localStorage) Open(id uuid.UUID, flag int, closeCallback func(hash.Hash, int, error)) (file io.ReadWriteCloser, err error) {
 	file, err = os.OpenFile(l.path(id), flag, 0640)
+	if err != nil {
+		logrus.Fatal(err)
+	}
 	if closeCallback == nil {
 		return
 	}

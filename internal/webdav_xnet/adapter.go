@@ -2,11 +2,11 @@ package webdav
 
 import (
 	"context"
-	"fmt"
 	"io"
 	iofs "io/fs"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/sql"
@@ -35,23 +35,45 @@ func (p adapter) Stat(ctx context.Context, name string) (os.FileInfo, error) {
 
 func (p adapter) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (webdav.File, error) {
 	resource, err := p.resourceByPath(ctx, name)
+	resourceId := resource.ID
+	resourceName := resource.Name
+	size := resource.Size.Int32
+	modTime := resource.Modified.Time
+	dir := resource.Dir
 	if err != nil {
-		return nil, err
+		if flag&os.O_CREATE == 0 {
+			return nil, err
+		}
+		name = strings.TrimRight(name, "/")
+		index := strings.LastIndex(name, "/")
+		parentPath := name[0:index]
+		parent, err := p.resourceByPath(ctx, parentPath)
+		if err != nil {
+			return nil, iofs.ErrNotExist
+		}
+		resourceName := name[index+1:]
+		resourceId = uuid.New()
+		dir = false
+		modTime = time.Time{}
+		err = p.fs.CreateResource(ctx, resourceId, parent.ID, resourceName, dir)
+		if err != nil {
+			return nil, err
+		}
 	}
 	var src io.ReadWriteCloser
-	if flag != 0 {
-		src, err = p.fs.Open(resource.ID, flag)
+	if !dir {
+		src, err = p.fs.Open(resourceId, flag)
 		if err != nil {
 			return nil, err
 		}
 	}
 	return file{
 		fileInfo: fileInfo{
-			name:       resource.Name,
-			size:       int64(resource.Size.Int32),
-			modTime:    resource.Modified.Time,
-			dir:        resource.Dir,
-			resourceID: resource.ID,
+			name:       resourceName,
+			size:       int64(size),
+			modTime:    modTime,
+			dir:        dir,
+			resourceID: resourceId,
 		},
 		src: src,
 		fs:  p.fs,
@@ -122,10 +144,10 @@ func (p adapter) Rename(ctx context.Context, oldName, newName string) error {
 	newName = newName[index+1:]
 
 	if err != nil {
-		return fmt.Errorf("parent collection does not exist")
+		return iofs.ErrNotExist
 	}
 
-	if err = p.fs.Move(ctx, src.ID, parent.ID); err != nil {
+	if err = p.fs.Move(ctx, src.ID, parent.ID, newName); err != nil {
 		return err
 	}
 	return nil

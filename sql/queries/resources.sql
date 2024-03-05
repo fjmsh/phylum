@@ -19,12 +19,13 @@ SET
     modified = NOW()
 WHERE id = $3;
 
--- name: UpdateParent :exec
+-- name: Rename :exec
 UPDATE resources
 SET
-    parent = $1,
+    name = CASE WHEN (@name::text = '') THEN name ELSE @name::text END,
+    parent = @parent::uuid,
     modified = NOW()
-WHERE id = $2;
+WHERE id = @id::uuid;
 
 
 -- name: ReadDir :many

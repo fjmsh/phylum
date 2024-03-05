@@ -232,6 +232,26 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 	return items, nil
 }
 
+const rename = `-- name: Rename :exec
+UPDATE resources
+SET
+    name = CASE WHEN ($1::text = '') THEN name ELSE $1::text END,
+    parent = $2::uuid,
+    modified = NOW()
+WHERE id = $3::uuid
+`
+
+type RenameParams struct {
+	Name   string
+	Parent uuid.UUID
+	ID     uuid.UUID
+}
+
+func (q *Queries) Rename(ctx context.Context, arg RenameParams) error {
+	_, err := q.db.Exec(ctx, rename, arg.Name, arg.Parent, arg.ID)
+	return err
+}
+
 const resourceByPath = `-- name: ResourceByPath :one
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, search) AS (
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, $1::text[]
@@ -281,24 +301,6 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 		&i.Search,
 	)
 	return i, err
-}
-
-const updateParent = `-- name: UpdateParent :exec
-UPDATE resources
-SET
-    parent = $1,
-    modified = NOW()
-WHERE id = $2
-`
-
-type UpdateParentParams struct {
-	Parent *uuid.UUID
-	ID     uuid.UUID
-}
-
-func (q *Queries) UpdateParent(ctx context.Context, arg UpdateParentParams) error {
-	_, err := q.db.Exec(ctx, updateParent, arg.Parent, arg.ID)
-	return err
 }
 
 const updateResourceContents = `-- name: UpdateResourceContents :exec
