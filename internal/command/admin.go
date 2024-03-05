@@ -1,4 +1,4 @@
-package cmds
+package command
 
 import (
 	"context"
@@ -9,21 +9,32 @@ import (
 )
 
 func setupAdminCommand() *cobra.Command {
-	var cmdServe = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "admin",
 		Short: "Server Administration",
 	}
-	cmdServe.AddCommand([]*cobra.Command{
-		setupAdminMkrootCommand(),
-		setupAdminRmrootCommand(),
+	cmd.AddCommand([]*cobra.Command{
+		setupAdminVfsCommand(),
 	}...)
 
-	return cmdServe
+	return cmd
 }
 
-func setupAdminMkrootCommand() *cobra.Command {
+func setupAdminVfsCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "vfs",
+		Short: "VFS Management",
+	}
+	cmd.AddCommand([]*cobra.Command{
+		setupAdminVfsCreateCommand(),
+		setupAdminVfsDeleteCommand(),
+	}...)
+	return cmd
+}
+
+func setupAdminVfsCreateCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "mkroot name",
+		Use:   "create name",
 		Short: "Create Root Folder",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -34,9 +45,9 @@ func setupAdminMkrootCommand() *cobra.Command {
 	}
 }
 
-func setupAdminRmrootCommand() *cobra.Command {
+func setupAdminVfsDeleteCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "rmroot name",
+		Use:   "delete name",
 		Short: "Delete Root Folder",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

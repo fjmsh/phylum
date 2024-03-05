@@ -21,10 +21,6 @@ type Vfs struct {
 	cs      storage.Storage
 }
 
-func (fs Vfs) rootId() uuid.UUID {
-	return fs.root
-}
-
 func (fs Vfs) Open(id uuid.UUID) (io.ReadCloser, error) {
 	return fs.cs.Open(id)
 }

@@ -1,4 +1,4 @@
-package cmds
+package command
 
 import (
 	"fmt"
@@ -66,7 +66,7 @@ func setupWebdav(r *gin.RouterGroup) {
 }
 
 func createEngine(corsEnabled bool, corsOrigins []string) *gin.Engine {
-	if !debugMode {
+	if !debug {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	engine := gin.Default()

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/shroff/phylum/server/internal/cmds"
+	"github.com/shroff/phylum/server/internal/command"
 )
 
 func main() {
-	cmds.Setup()
+	command.SetupCommand()
 }
