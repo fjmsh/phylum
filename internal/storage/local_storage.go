@@ -12,43 +12,17 @@ import (
 
 type localStorage string
 
-type contentWriter struct {
-	file     *os.File
-	hash     hash.Hash
-	len      **int
-	callback func(hash.Hash, int, error)
-}
-
-func (c contentWriter) Write(p []byte) (n int, err error) {
-	n, err = c.file.Write(p)
-	len := **c.len + n
-	*c.len = &len
-	c.hash.Write(p)
-	return
-}
-
-func (c contentWriter) Close() error {
-	err := c.file.Sync()
-	if err != nil {
-		return err
+func (l localStorage) Open(id uuid.UUID, flag int, closeCallback func(hash.Hash, int, error)) (file io.ReadWriteCloser, err error) {
+	file, err = os.OpenFile(l.path(id), flag, 0640)
+	if closeCallback == nil {
+		return
 	}
-	err = c.file.Close()
-	c.callback(c.hash, **c.len, err)
-	return err
-}
-
-func (l localStorage) Open(id uuid.UUID) (io.ReadCloser, error) {
-	return os.Open(l.path(id))
-}
-
-func (l localStorage) Create(id uuid.UUID, callback func(hash.Hash, int, error)) (io.WriteCloser, error) {
-	file, err := os.Create(l.path(id))
 	if err != nil {
 		return nil, err
 	}
 	len := 0
 	addr := &len
-	return contentWriter{file, md5.New(), &addr, callback}, nil
+	return hasher{file, md5.New(), &addr, closeCallback}, nil
 }
 
 func (l localStorage) Delete(id uuid.UUID) error {

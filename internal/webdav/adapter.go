@@ -6,6 +6,7 @@ import (
 	"io"
 	iofs "io/fs"
 	"net/http"
+	"os"
 	"strings"
 
 	webdav "github.com/emersion/go-webdav"
@@ -24,7 +25,7 @@ func (p adapter) Open(ctx context.Context, name string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return p.fs.Open(resource.ID)
+	return p.fs.Open(resource.ID, os.O_RDONLY)
 }
 
 func (p adapter) Stat(ctx context.Context, name string) (*webdav.FileInfo, error) {
@@ -50,7 +51,7 @@ func (p adapter) ReadDir(ctx context.Context, name string, recursive bool) ([]we
 	if !dir.Dir {
 		return nil, iofs.ErrInvalid
 	}
-	children, err := p.fs.ReadDir(ctx, dir.ID, recursive)
+	children, err := p.fs.ReadDir(ctx, dir.ID, false, recursive)
 	if err != nil {
 		return nil, err
 	}
@@ -124,9 +125,13 @@ func (p adapter) Move(ctx context.Context, name, destName string, options *webda
 		return false, iofs.ErrNotExist
 	}
 
-	_, err = p.resourceByPath(ctx, destName)
-	if err == nil && options.NoOverwrite {
-		return false, iofs.ErrExist
+	existing, err := p.resourceByPath(ctx, destName)
+	if err == nil {
+		if options.NoOverwrite {
+			return false, iofs.ErrExist
+		} else {
+			p.fs.DeleteRecursive(ctx, existing.ID, false)
+		}
 	}
 
 	destName = strings.TrimRight(destName, "/")

@@ -6,6 +6,7 @@ import (
 	"hash"
 	"io"
 	iofs "io/fs"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -21,12 +22,12 @@ type Vfs struct {
 	cs      storage.Storage
 }
 
-func (fs Vfs) Open(id uuid.UUID) (io.ReadCloser, error) {
-	return fs.cs.Open(id)
+func (fs Vfs) Open(id uuid.UUID, flag int) (io.ReadWriteCloser, error) {
+	return fs.cs.Open(id, flag, nil)
 }
 
-func (fs Vfs) ReadDir(ctx context.Context, id uuid.UUID, recursive bool) ([]sql.ReadDirRow, error) {
-	return fs.queries.ReadDir(ctx, sql.ReadDirParams{ID: id, Recursive: recursive})
+func (fs Vfs) ReadDir(ctx context.Context, id uuid.UUID, includeRoot bool, recursive bool) ([]sql.ReadDirRow, error) {
+	return fs.queries.ReadDir(ctx, sql.ReadDirParams{ID: id, IncludeRoot: includeRoot, Recursive: recursive})
 }
 
 func (fs Vfs) DeleteRecursive(ctx context.Context, id uuid.UUID, hardDelete bool) error {
@@ -54,7 +55,7 @@ func (fs Vfs) Move(ctx context.Context, id uuid.UUID, parent uuid.UUID) error {
 }
 
 func (fs Vfs) UpdateContents(ctx context.Context, id uuid.UUID) (io.WriteCloser, error) {
-	return fs.cs.Create(id, func(h hash.Hash, len int, err error) {
+	return fs.cs.Open(id, os.O_CREATE|os.O_RDWR|os.O_TRUNC, func(h hash.Hash, len int, err error) {
 		if err == nil {
 			etag := base64.StdEncoding.EncodeToString(h.Sum(nil))
 			err = fs.queries.UpdateResourceContents(ctx, sql.UpdateResourceContentsParams{
@@ -71,7 +72,6 @@ func (fs Vfs) UpdateContents(ctx context.Context, id uuid.UUID) (io.WriteCloser,
 }
 
 func (fs Vfs) ResourceByPath(ctx context.Context, path string) (sql.ResourceByPathRow, error) {
-	logrus.Trace("PhylumFs.ResourceByPath called with " + path)
 	path = strings.Trim(path, "/")
 	segments := strings.Split(path, "/")
 	if path == "" {
@@ -83,7 +83,6 @@ func (fs Vfs) ResourceByPath(ctx context.Context, path string) (sql.ResourceByPa
 	if err != nil {
 		return sql.ResourceByPathRow{}, iofs.ErrNotExist
 	}
-	logrus.Trace(res)
 
 	//TODO: Permissions checks
 

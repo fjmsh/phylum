@@ -171,19 +171,21 @@ func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]Reso
 const readDir = `-- name: ReadDir :many
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path) AS (
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text
-    FROM resources r WHERE r.id = $1::uuid
+    FROM resources r WHERE r.id = $2::uuid
   UNION ALL
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name)
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
-    AND CASE WHEN $2::boolean THEN true ELSE depth < 1 END
+    AND CASE WHEN $3::boolean THEN true ELSE depth < 1 END
 )
 SELECT id, parent, name, dir, created, modified, size, etag, depth, path from nodes
+WHERE CASE WHEN $1::boolean THEN true ELSE depth > 0 END
 `
 
 type ReadDirParams struct {
-	ID        uuid.UUID
-	Recursive bool
+	IncludeRoot bool
+	ID          uuid.UUID
+	Recursive   bool
 }
 
 type ReadDirRow struct {
@@ -200,7 +202,7 @@ type ReadDirRow struct {
 }
 
 func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow, error) {
-	rows, err := q.db.Query(ctx, readDir, arg.ID, arg.Recursive)
+	rows, err := q.db.Query(ctx, readDir, arg.IncludeRoot, arg.ID, arg.Recursive)
 	if err != nil {
 		return nil, err
 	}

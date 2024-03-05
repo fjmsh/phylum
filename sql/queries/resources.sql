@@ -37,7 +37,8 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
     WHERE deleted IS NULL
     AND CASE WHEN @recursive::boolean THEN true ELSE depth < 1 END
 )
-SELECT * from nodes;
+SELECT * from nodes
+WHERE CASE WHEN @include_root::boolean THEN true ELSE depth > 0 END;
 
 -- name: ResourceByPath :one
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, search) AS (

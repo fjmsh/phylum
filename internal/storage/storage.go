@@ -9,8 +9,7 @@ import (
 )
 
 type Storage interface {
-	Open(id uuid.UUID) (io.ReadCloser, error)
-	Create(id uuid.UUID, callback func(hash.Hash, int, error)) (io.WriteCloser, error)
+	Open(id uuid.UUID, flag int, closeCallback func(hash.Hash, int, error)) (io.ReadWriteCloser, error)
 	Delete(id uuid.UUID) error
 }
 
