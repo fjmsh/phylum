@@ -2,7 +2,6 @@ package webdav
 
 import (
 	"context"
-	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -46,10 +45,6 @@ func (h *handler) HandleRequest(c *gin.Context) {
 		Prefix:     h.prefix + "/" + vfsName,
 		FileSystem: adapter{fs: vfs},
 		LockSystem: webdav.NewMemLS(),
-		Logger: func(request *http.Request, err error) {
-			logrus.Trace(request)
-			logrus.Trace(err)
-		},
 	}
 	webdavHandler.ServeHTTP(c.Writer, c.Request)
 }
