@@ -1,7 +1,7 @@
--- name: FindResource :one
+-- name: ResourceById :one
 SELECT * from resources WHERE id = $1;
 
--- name: FindRoot :one
+-- name: LibraryByName :one
 SELECT * from resources WHERE deleted IS NULL AND parent IS NULL AND name = $1;
 
 -- name: CreateResource :exec

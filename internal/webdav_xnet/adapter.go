@@ -3,23 +3,22 @@ package webdav
 import (
 	"context"
 	"io"
-	iofs "io/fs"
+	"io/fs"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/sql"
-	"github.com/shroff/phylum/server/internal/vfs"
+	"github.com/shroff/phylum/server/internal/library"
 	"golang.org/x/net/webdav"
 )
 
 type adapter struct {
-	fs *vfs.Vfs
+	lib *library.Library
 }
 
-func (p adapter) Stat(ctx context.Context, name string) (os.FileInfo, error) {
-	resource, err := p.resourceByPath(ctx, name)
+func (a adapter) Stat(ctx context.Context, name string) (os.FileInfo, error) {
+	resource, err := a.lib.ResourceByPath(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -33,8 +32,8 @@ func (p adapter) Stat(ctx context.Context, name string) (os.FileInfo, error) {
 	return val, nil
 }
 
-func (p adapter) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (webdav.File, error) {
-	resource, err := p.resourceByPath(ctx, name)
+func (a adapter) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (webdav.File, error) {
+	resource, err := a.lib.ResourceByPath(ctx, name)
 	resourceId := resource.ID
 	resourceName := resource.Name
 	size := resource.Size.Int32
@@ -47,22 +46,22 @@ func (p adapter) OpenFile(ctx context.Context, name string, flag int, perm os.Fi
 		name = strings.TrimRight(name, "/")
 		index := strings.LastIndex(name, "/")
 		parentPath := name[0:index]
-		parent, err := p.resourceByPath(ctx, parentPath)
+		parent, err := a.lib.ResourceByPath(ctx, parentPath)
 		if err != nil {
-			return nil, iofs.ErrNotExist
+			return nil, fs.ErrNotExist
 		}
 		resourceName := name[index+1:]
 		resourceId = uuid.New()
 		dir = false
 		modTime = time.Time{}
-		err = p.fs.CreateResource(ctx, resourceId, parent.ID, resourceName, dir)
+		err = a.lib.CreateResource(ctx, resourceId, parent.ID, resourceName, dir)
 		if err != nil {
 			return nil, err
 		}
 	}
 	var src io.ReadWriteCloser
 	if !dir {
-		src, err = p.fs.Open(resourceId, flag)
+		src, err = a.lib.Open(resourceId, flag)
 		if err != nil {
 			return nil, err
 		}
@@ -76,83 +75,79 @@ func (p adapter) OpenFile(ctx context.Context, name string, flag int, perm os.Fi
 			resourceID: resourceId,
 		},
 		src: src,
-		fs:  p.fs,
+		lib: a.lib,
 	}, nil
 }
 
-func (p adapter) Create(ctx context.Context, name string) (io.WriteCloser, error) {
+func (a adapter) Create(ctx context.Context, name string) (io.WriteCloser, error) {
 	var id uuid.UUID
-	if resource, err := p.resourceByPath(ctx, name); err == nil {
+	if resource, err := a.lib.ResourceByPath(ctx, name); err == nil {
 		id = resource.ID
 	} else {
 		name = strings.TrimRight(name, "/")
 		index := strings.LastIndex(name, "/")
 		parentPath := name[0:index]
-		parent, err := p.resourceByPath(ctx, parentPath)
+		parent, err := a.lib.ResourceByPath(ctx, parentPath)
 		if err != nil {
-			return nil, iofs.ErrNotExist
+			return nil, fs.ErrNotExist
 		}
 		fileName := name[index+1:]
 		id = uuid.New()
-		if err = p.fs.CreateResource(ctx, id, parent.ID, fileName, false); err != nil {
+		if err = a.lib.CreateResource(ctx, id, parent.ID, fileName, false); err != nil {
 			return nil, err
 		}
 	}
 
-	return p.fs.UpdateContents(ctx, id)
+	return a.lib.UpdateContents(ctx, id)
 }
 
-func (p adapter) RemoveAll(ctx context.Context, name string) error {
-	resource, err := p.resourceByPath(ctx, name)
+func (a adapter) RemoveAll(ctx context.Context, name string) error {
+	resource, err := a.lib.ResourceByPath(ctx, name)
 	if err != nil {
-		return iofs.ErrNotExist
+		return fs.ErrNotExist
 	}
-	return p.fs.DeleteRecursive(ctx, resource.ID, false)
+	return a.lib.DeleteRecursive(ctx, resource.ID, false)
 }
 
-func (p adapter) Mkdir(ctx context.Context, name string, mode iofs.FileMode) error {
-	if _, err := p.resourceByPath(ctx, name); err == nil {
-		return iofs.ErrExist
+func (a adapter) Mkdir(ctx context.Context, name string, mode fs.FileMode) error {
+	if _, err := a.lib.ResourceByPath(ctx, name); err == nil {
+		return fs.ErrExist
 	}
 	name = strings.TrimRight(name, "/")
 	index := strings.LastIndex(name, "/")
 	parentPath := name[0:index]
-	parent, err := p.resourceByPath(ctx, parentPath)
+	parent, err := a.lib.ResourceByPath(ctx, parentPath)
 	if err != nil {
-		return iofs.ErrNotExist
+		return fs.ErrNotExist
 	}
 	dirName := name[index+1:]
-	err = p.fs.CreateResource(ctx, uuid.New(), parent.ID, dirName, true)
+	err = a.lib.CreateResource(ctx, uuid.New(), parent.ID, dirName, true)
 	return err
 }
 
-func (p adapter) Rename(ctx context.Context, oldName, newName string) error {
-	src, err := p.resourceByPath(ctx, oldName)
+func (a adapter) Rename(ctx context.Context, oldName, newName string) error {
+	src, err := a.lib.ResourceByPath(ctx, oldName)
 	if err != nil {
-		return iofs.ErrNotExist
+		return fs.ErrNotExist
 	}
 
-	_, err = p.resourceByPath(ctx, newName)
+	_, err = a.lib.ResourceByPath(ctx, newName)
 	if err == nil {
-		return iofs.ErrExist
+		return fs.ErrExist
 	}
 
 	newName = strings.TrimRight(newName, "/")
 	index := strings.LastIndex(newName, "/")
 	parentPath := newName[0:index]
-	parent, err := p.resourceByPath(ctx, parentPath)
+	parent, err := a.lib.ResourceByPath(ctx, parentPath)
 	newName = newName[index+1:]
 
 	if err != nil {
-		return iofs.ErrNotExist
+		return fs.ErrNotExist
 	}
 
-	if err = p.fs.Move(ctx, src.ID, parent.ID, newName); err != nil {
+	if err = a.lib.Move(ctx, src.ID, parent.ID, newName); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (p adapter) resourceByPath(ctx context.Context, name string) (res sql.ResourceByPathRow, err error) {
-	return p.fs.ResourceByPath(ctx, name)
 }

@@ -1,4 +1,4 @@
-package vfs
+package library
 
 import (
 	"context"
@@ -10,41 +10,41 @@ import (
 	"github.com/shroff/phylum/server/internal/storage"
 )
 
-type VfsManager struct {
+type Manager struct {
 	queries sql.Queries
 	cs      storage.Storage
 }
 
-func NewManager(conn *pgx.Conn) VfsManager {
+func NewManager(conn *pgx.Conn) Manager {
 	queries := *sql.New(conn)
 	cs, err := storage.NewLocalStorage("srv")
 	if err != nil {
 		panic(err)
 	}
-	return VfsManager{queries: queries, cs: cs}
+	return Manager{queries: queries, cs: cs}
 }
 
-func (b VfsManager) GetVfs(ctx context.Context, name string) (*Vfs, error) {
+func (b Manager) Get(ctx context.Context, name string) (*Library, error) {
 	// TODO: Permissions checks
-	root, err := b.queries.FindRoot(ctx, name)
+	lib, err := b.queries.LibraryByName(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Vfs{queries: b.queries, root: root.ID, cs: b.cs}, nil
+	return &Library{queries: b.queries, root: lib.ID, cs: b.cs}, nil
 }
 
-func (b VfsManager) CreateVfs(ctx context.Context, id uuid.UUID, name string) error {
-	if _, err := b.queries.FindRoot(ctx, name); err == nil {
+func (b Manager) Create(ctx context.Context, id uuid.UUID, name string) error {
+	if _, err := b.queries.LibraryByName(ctx, name); err == nil {
 		return fmt.Errorf("root directory already exists: %s", name)
 	} else {
 		return b.queries.CreateResource(ctx, sql.CreateResourceParams{ID: id, Parent: nil, Name: name, Dir: true})
 	}
 }
 
-func (b VfsManager) DeleteVfs(ctx context.Context, name string) error {
-	if fs, err := b.GetVfs(ctx, name); err == nil {
-		return fs.DeleteRecursive(ctx, fs.root, true)
+func (b Manager) Delete(ctx context.Context, name string) error {
+	if lib, err := b.Get(ctx, name); err == nil {
+		return lib.DeleteRecursive(ctx, lib.root, true)
 	} else {
 		return fmt.Errorf("root directory does not exist: %s", name)
 	}

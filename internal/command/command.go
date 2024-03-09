@@ -6,14 +6,14 @@ import (
 	"path"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/vfs"
+	library "github.com/shroff/phylum/server/internal/library"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var debug bool = false
-var vfsManager vfs.VfsManager
+var libraryManager library.Manager
 
 func SetupCommand() {
 	viper.SetEnvPrefix("phylum")
@@ -62,7 +62,7 @@ func SetupCommand() {
 		if err != nil {
 			logrus.Fatal("Unable to connect to database: " + err.Error())
 		}
-		vfsManager = vfs.NewManager(conn)
+		libraryManager = library.NewManager(conn)
 	}
 
 	defer func() {

@@ -5,45 +5,45 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/vfs"
+	"github.com/shroff/phylum/server/internal/library"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/webdav"
 )
 
 type handler struct {
-	vfsManager vfs.VfsManager
-	prefix     string
+	libraryManager library.Manager
+	prefix         string
 }
 
-func NewHandler(vfsManager vfs.VfsManager, prefix string) *handler {
+func NewHandler(libraryManager library.Manager, prefix string) *handler {
 	logrus.Info("Setting up WebDAV access at " + prefix)
 	return &handler{
-		vfsManager: vfsManager,
-		prefix:     prefix,
+		libraryManager: libraryManager,
+		prefix:         prefix,
 	}
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
 	path := c.Params.ByName("path")
-	vfsName := strings.TrimLeft(path, "/")
-	if vfsName == "" {
+	libraryName := strings.TrimLeft(path, "/")
+	if libraryName == "" {
 		// No path specified
 		c.Writer.WriteHeader(404)
 		return
 	}
-	index := strings.Index(vfsName, "/")
+	index := strings.Index(libraryName, "/")
 	if index != -1 {
-		vfsName = vfsName[0:index]
+		libraryName = libraryName[0:index]
 	}
-	vfs, err := h.vfsManager.GetVfs(context.Background(), vfsName)
+	library, err := h.libraryManager.Get(context.Background(), libraryName)
 	if err != nil {
 		c.Writer.WriteHeader(404)
 		return
 	}
 
 	webdavHandler := webdav.Handler{
-		Prefix:     h.prefix + "/" + vfsName,
-		FileSystem: adapter{fs: vfs},
+		Prefix:     h.prefix + "/" + libraryName,
+		FileSystem: adapter{lib: library},
 		LockSystem: webdav.NewMemLS(),
 	}
 	webdavHandler.ServeHTTP(c.Writer, c.Request)

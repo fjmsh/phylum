@@ -82,48 +82,6 @@ func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) ([]Resource
 	return items, nil
 }
 
-const findResource = `-- name: FindResource :one
-SELECT id, parent, name, dir, created, modified, deleted, size, etag from resources WHERE id = $1
-`
-
-func (q *Queries) FindResource(ctx context.Context, id uuid.UUID) (Resource, error) {
-	row := q.db.QueryRow(ctx, findResource, id)
-	var i Resource
-	err := row.Scan(
-		&i.ID,
-		&i.Parent,
-		&i.Name,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.Size,
-		&i.Etag,
-	)
-	return i, err
-}
-
-const findRoot = `-- name: FindRoot :one
-SELECT id, parent, name, dir, created, modified, deleted, size, etag from resources WHERE deleted IS NULL AND parent IS NULL AND name = $1
-`
-
-func (q *Queries) FindRoot(ctx context.Context, name string) (Resource, error) {
-	row := q.db.QueryRow(ctx, findRoot, name)
-	var i Resource
-	err := row.Scan(
-		&i.ID,
-		&i.Parent,
-		&i.Name,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.Size,
-		&i.Etag,
-	)
-	return i, err
-}
-
 const hardDeleteRecursive = `-- name: HardDeleteRecursive :many
 WITH RECURSIVE nodes(id, parent) AS (
     SELECT r.id, r.parent
@@ -166,6 +124,27 @@ func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]Reso
 		return nil, err
 	}
 	return items, nil
+}
+
+const libraryByName = `-- name: LibraryByName :one
+SELECT id, parent, name, dir, created, modified, deleted, size, etag from resources WHERE deleted IS NULL AND parent IS NULL AND name = $1
+`
+
+func (q *Queries) LibraryByName(ctx context.Context, name string) (Resource, error) {
+	row := q.db.QueryRow(ctx, libraryByName, name)
+	var i Resource
+	err := row.Scan(
+		&i.ID,
+		&i.Parent,
+		&i.Name,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.Size,
+		&i.Etag,
+	)
+	return i, err
 }
 
 const readDir = `-- name: ReadDir :many
@@ -250,6 +229,27 @@ type RenameParams struct {
 func (q *Queries) Rename(ctx context.Context, arg RenameParams) error {
 	_, err := q.db.Exec(ctx, rename, arg.Name, arg.Parent, arg.ID)
 	return err
+}
+
+const resourceById = `-- name: ResourceById :one
+SELECT id, parent, name, dir, created, modified, deleted, size, etag from resources WHERE id = $1
+`
+
+func (q *Queries) ResourceById(ctx context.Context, id uuid.UUID) (Resource, error) {
+	row := q.db.QueryRow(ctx, resourceById, id)
+	var i Resource
+	err := row.Scan(
+		&i.ID,
+		&i.Parent,
+		&i.Name,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.Size,
+		&i.Etag,
+	)
+	return i, err
 }
 
 const resourceByPath = `-- name: ResourceByPath :one

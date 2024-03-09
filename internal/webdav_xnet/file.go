@@ -6,13 +6,13 @@ import (
 	"io"
 	"io/fs"
 
-	"github.com/shroff/phylum/server/internal/vfs"
+	"github.com/shroff/phylum/server/internal/library"
 )
 
 type file struct {
 	fileInfo
 	src io.ReadWriteCloser
-	fs  *vfs.Vfs
+	lib *library.Library
 }
 
 func (f file) Seek(offset int64, whence int) (int64, error) {
@@ -36,7 +36,7 @@ func (f file) Readdir(count int) ([]fs.FileInfo, error) {
 		return nil, fmt.Errorf("readdir not supported for non-collection resources")
 	}
 
-	children, err := f.fs.ReadDir(context.Background(), f.resourceID, false, false)
+	children, err := f.lib.ReadDir(context.Background(), f.resourceID, false, false)
 	if err != nil {
 		return nil, err
 	}

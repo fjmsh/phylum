@@ -4,37 +4,37 @@ import (
 	"context"
 	"fmt"
 	"io"
-	iofs "io/fs"
+	"io/fs"
 	"net/http"
 	"os"
 	"strings"
 
 	webdav "github.com/emersion/go-webdav"
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/library"
 	"github.com/shroff/phylum/server/internal/sql"
-	"github.com/shroff/phylum/server/internal/vfs"
 )
 
 type adapter struct {
-	fs     *vfs.Vfs
+	lib    *library.Library
 	prefix string
 }
 
-func (p adapter) Open(ctx context.Context, name string) (io.ReadCloser, error) {
-	resource, err := p.resourceByPath(ctx, name)
+func (a adapter) Open(ctx context.Context, name string) (io.ReadCloser, error) {
+	resource, err := a.resourceByPath(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	return p.fs.Open(resource.ID, os.O_RDONLY)
+	return a.lib.Open(resource.ID, os.O_RDONLY)
 }
 
-func (p adapter) Stat(ctx context.Context, name string) (*webdav.FileInfo, error) {
-	resource, err := p.resourceByPath(ctx, name)
+func (a adapter) Stat(ctx context.Context, name string) (*webdav.FileInfo, error) {
+	resource, err := a.resourceByPath(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 	val := &webdav.FileInfo{
-		Path:     string(p.prefix + resource.Path),
+		Path:     string(a.prefix + resource.Path),
 		Size:     int64(resource.Size.Int32),
 		ModTime:  resource.Modified.Time,
 		IsDir:    resource.Dir,
@@ -43,21 +43,21 @@ func (p adapter) Stat(ctx context.Context, name string) (*webdav.FileInfo, error
 	}
 	return val, nil
 }
-func (p adapter) ReadDir(ctx context.Context, name string, recursive bool) ([]webdav.FileInfo, error) {
-	dir, err := p.resourceByPath(ctx, name)
+func (a adapter) ReadDir(ctx context.Context, name string, recursive bool) ([]webdav.FileInfo, error) {
+	dir, err := a.resourceByPath(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 	if !dir.Dir {
-		return nil, iofs.ErrInvalid
+		return nil, fs.ErrInvalid
 	}
-	children, err := p.fs.ReadDir(ctx, dir.ID, false, recursive)
+	children, err := a.lib.ReadDir(ctx, dir.ID, false, recursive)
 	if err != nil {
 		return nil, err
 	}
 
 	result := make([]webdav.FileInfo, len(children))
-	prefix := p.prefix + dir.Path
+	prefix := a.prefix + dir.Path
 	for i, c := range children {
 		result[i] = webdav.FileInfo{
 			Path:     string(prefix + c.Path),
@@ -70,86 +70,86 @@ func (p adapter) ReadDir(ctx context.Context, name string, recursive bool) ([]we
 	}
 	return result, nil
 }
-func (p adapter) Create(ctx context.Context, name string) (io.WriteCloser, error) {
+func (a adapter) Create(ctx context.Context, name string) (io.WriteCloser, error) {
 	var id uuid.UUID
-	if resource, err := p.resourceByPath(ctx, name); err == nil {
+	if resource, err := a.resourceByPath(ctx, name); err == nil {
 		id = resource.ID
 	} else {
 		name = strings.TrimRight(name, "/")
 		index := strings.LastIndex(name, "/")
 		parentPath := name[0:index]
-		parent, err := p.resourceByPath(ctx, parentPath)
+		parent, err := a.resourceByPath(ctx, parentPath)
 		if err != nil {
-			return nil, iofs.ErrNotExist
+			return nil, fs.ErrNotExist
 		}
 		fileName := name[index+1:]
 		id = uuid.New()
-		if err = p.fs.CreateResource(ctx, id, parent.ID, fileName, false); err != nil {
+		if err = a.lib.CreateResource(ctx, id, parent.ID, fileName, false); err != nil {
 			return nil, err
 		}
 	}
 
-	return p.fs.UpdateContents(ctx, id)
+	return a.lib.UpdateContents(ctx, id)
 }
 
-func (p adapter) RemoveAll(ctx context.Context, name string) error {
-	resource, err := p.resourceByPath(ctx, name)
+func (a adapter) RemoveAll(ctx context.Context, name string) error {
+	resource, err := a.resourceByPath(ctx, name)
 	if err != nil {
-		return iofs.ErrNotExist
+		return fs.ErrNotExist
 	}
-	return p.fs.DeleteRecursive(ctx, resource.ID, false)
+	return a.lib.DeleteRecursive(ctx, resource.ID, false)
 }
 
-func (p adapter) Mkdir(ctx context.Context, name string) error {
-	if _, err := p.resourceByPath(ctx, name); err == nil {
-		return iofs.ErrExist
+func (a adapter) Mkdir(ctx context.Context, name string) error {
+	if _, err := a.resourceByPath(ctx, name); err == nil {
+		return fs.ErrExist
 	}
 	name = strings.TrimRight(name, "/")
 	index := strings.LastIndex(name, "/")
 	parentPath := name[0:index]
-	parent, err := p.resourceByPath(ctx, parentPath)
+	parent, err := a.resourceByPath(ctx, parentPath)
 	if err != nil {
-		return iofs.ErrNotExist
+		return fs.ErrNotExist
 	}
 	dirName := name[index+1:]
-	err = p.fs.CreateResource(ctx, uuid.New(), parent.ID, dirName, true)
+	err = a.lib.CreateResource(ctx, uuid.New(), parent.ID, dirName, true)
 	return err
 }
-func (p adapter) Copy(ctx context.Context, name, dest string, options *webdav.CopyOptions) (created bool, err error) {
+func (a adapter) Copy(ctx context.Context, name, dest string, options *webdav.CopyOptions) (created bool, err error) {
 	// TODO: Implement
 	return false, webdav.NewHTTPError(http.StatusMethodNotAllowed, fmt.Errorf("not implemented"))
 }
-func (p adapter) Move(ctx context.Context, name, destName string, options *webdav.MoveOptions) (created bool, err error) {
-	src, err := p.resourceByPath(ctx, name)
+func (a adapter) Move(ctx context.Context, name, destName string, options *webdav.MoveOptions) (created bool, err error) {
+	src, err := a.resourceByPath(ctx, name)
 	if err != nil {
-		return false, iofs.ErrNotExist
+		return false, fs.ErrNotExist
 	}
 
-	existing, err := p.resourceByPath(ctx, destName)
+	existing, err := a.resourceByPath(ctx, destName)
 	if err == nil {
 		if options.NoOverwrite {
-			return false, iofs.ErrExist
+			return false, fs.ErrExist
 		} else {
-			p.fs.DeleteRecursive(ctx, existing.ID, false)
+			a.lib.DeleteRecursive(ctx, existing.ID, false)
 		}
 	}
 
 	destName = strings.TrimRight(destName, "/")
 	index := strings.LastIndex(destName, "/")
 	parentPath := destName[0:index]
-	parent, err := p.resourceByPath(ctx, parentPath)
+	parent, err := a.resourceByPath(ctx, parentPath)
 	destName = destName[index+1:]
 
 	if err != nil {
 		return false, webdav.NewHTTPError(http.StatusConflict, nil)
 	}
 
-	if err = p.fs.Move(ctx, src.ID, parent.ID, destName); err != nil {
+	if err = a.lib.Move(ctx, src.ID, parent.ID, destName); err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-func (p adapter) resourceByPath(ctx context.Context, name string) (res sql.ResourceByPathRow, err error) {
-	return p.fs.ResourceByPath(ctx, strings.TrimPrefix(name, p.prefix))
+func (a adapter) resourceByPath(ctx context.Context, name string) (res sql.ResourceByPathRow, err error) {
+	return a.lib.ResourceByPath(ctx, strings.TrimPrefix(name, a.prefix))
 }
