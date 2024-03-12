@@ -20,3 +20,11 @@ type Resource struct {
 	Size     pgtype.Int4
 	Etag     pgtype.Text
 }
+
+type User struct {
+	ID           pgtype.Int4
+	DisplayName  string
+	Username     string
+	PasswordHash string
+	Deleted      pgtype.Timestamp
+}

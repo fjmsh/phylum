@@ -6,7 +6,8 @@ import (
 	"path"
 
 	"github.com/jackc/pgx/v5"
-	library "github.com/shroff/phylum/server/internal/library"
+	"github.com/shroff/phylum/server/internal/library"
+	"github.com/shroff/phylum/server/internal/user"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -14,6 +15,7 @@ import (
 
 var debug bool = false
 var libraryManager library.Manager
+var userManager user.Manager
 
 func SetupCommand() {
 	viper.SetEnvPrefix("phylum")
@@ -63,6 +65,7 @@ func SetupCommand() {
 			logrus.Fatal("Unable to connect to database: " + err.Error())
 		}
 		libraryManager = library.NewManager(conn)
+		userManager = user.NewManager(conn)
 	}
 
 	defer func() {
