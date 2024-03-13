@@ -21,7 +21,7 @@ func setupServeCommand() *cobra.Command {
 			config := viper.GetViper()
 			engine := createEngine(config.GetBool("log_body"), config.GetBool("cors_enabled"), config.GetStringSlice("cors_origins"))
 
-			setupWebdav(engine.Group(config.GetString("webdav_prefix")))
+			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")), libraryManager, userManager)
 
 			server := endless.NewServer(config.GetString("listen"), engine)
 			server.BeforeBegin = func(addr string) {
@@ -51,21 +51,6 @@ func setupServeCommand() *cobra.Command {
 	viper.BindPFlag("webdav_prefix", flags.Lookup("webdav-prefix"))
 
 	return cmdServe
-}
-
-func setupWebdav(r *gin.RouterGroup) {
-	handler := webdav.NewHandler(libraryManager, r.BasePath())
-	r.Handle("OPTIONS", "/*path", handler.HandleRequest)
-	r.Handle("GET", "/*path", handler.HandleRequest)
-	r.Handle("PUT", "/*path", handler.HandleRequest)
-	r.Handle("HEAD", "/*path", handler.HandleRequest)
-	r.Handle("POST", "/*path", handler.HandleRequest)
-	r.Handle("DELETE", "/*path", handler.HandleRequest)
-	r.Handle("MOVE", "/*path", handler.HandleRequest)
-	r.Handle("COPY", "/*path", handler.HandleRequest)
-	r.Handle("MKCOL", "/*path", handler.HandleRequest)
-	r.Handle("PROPFIND", "/*path", handler.HandleRequest)
-	r.Handle("PROPPATCH", "/*path", handler.HandleRequest)
 }
 
 func createEngine(logBody bool, corsEnabled bool, corsOrigins []string) *gin.Engine {
