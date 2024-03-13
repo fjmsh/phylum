@@ -6,6 +6,7 @@ import (
 
 	webdav "github.com/emersion/go-webdav"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/library"
 	"github.com/sirupsen/logrus"
 )
@@ -25,17 +26,24 @@ func NewHandler(libraryManager library.Manager, prefix string) *handler {
 
 func (h *handler) HandleRequest(c *gin.Context) {
 	path := c.Params.ByName("path")
-	libraryName := strings.TrimLeft(path, "/")
-	if libraryName == "" {
+	idStr := strings.TrimLeft(path, "/")
+	if idStr == "" {
 		// No path specified
 		c.Writer.WriteHeader(404)
 		return
 	}
-	index := strings.Index(libraryName, "/")
+	index := strings.Index(idStr, "/")
 	if index != -1 {
-		libraryName = libraryName[0:index]
+		idStr = idStr[0:index]
 	}
-	library, err := h.libraryManager.Get(context.Background(), libraryName)
+
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.Writer.WriteHeader(404)
+		return
+	}
+
+	library, err := h.libraryManager.Get(context.Background(), id)
 	if err != nil {
 		c.Writer.WriteHeader(404)
 		return
@@ -44,7 +52,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 	webdavHandler := webdav.Handler{
 		FileSystem: adapter{
 			lib:    library,
-			prefix: h.prefix + "/" + libraryName,
+			prefix: h.prefix + "/" + idStr,
 		},
 	}
 	webdavHandler.ServeHTTP(c.Writer, c.Request)

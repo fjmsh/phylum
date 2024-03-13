@@ -5,8 +5,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/library"
+	"github.com/shroff/phylum/server/internal/sql"
 	"github.com/shroff/phylum/server/internal/user"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -35,7 +35,7 @@ func SetupCommand() {
 	flags.String("database-url", "postgres://phylum:phylum@localhost:5432/phylum", "Database URL or DSN")
 	viper.BindPFlag("database_url", flags.Lookup("database-url"))
 
-	var conn *pgx.Conn
+	var db *sql.DbHandler
 
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		workDir := viper.GetString("working_dir")
@@ -51,27 +51,20 @@ func SetupCommand() {
 		}
 
 		dsn := viper.GetString("database_url")
-		config, err := pgx.ParseConfig(dsn)
 
-		if viper.GetBool("trace_sql") {
-			config.Tracer = phylumTracer{}
-		}
-
+		var err error
+		db, err = sql.NewDb(dsn, debug && viper.GetBool("trace_sql"))
 		if err != nil {
-			logrus.Fatal("Unable to parse db connection String: " + err.Error())
+			logrus.Fatal(err)
 		}
-		conn, err = pgx.ConnectConfig(context.Background(), config)
-		if err != nil {
-			logrus.Fatal("Unable to connect to database: " + err.Error())
-		}
-		libraryManager = library.NewManager(conn)
-		userManager = user.NewManager(conn)
+		libraryManager = library.NewManager(db)
+		userManager = user.NewManager(db)
 	}
 
 	defer func() {
-		if conn != nil {
+		if db != nil {
 			logrus.Info("Closing datbase connection")
-			conn.Close(context.Background())
+			db.Close(context.Background())
 		}
 	}()
 
@@ -80,16 +73,4 @@ func SetupCommand() {
 		setupAdminCommand(),
 	}...)
 	rootCmd.Execute()
-}
-
-type phylumTracer struct {
-}
-
-func (p phylumTracer) TraceQueryStart(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
-	logrus.Trace(data)
-	return ctx
-}
-
-func (p phylumTracer) TraceQueryEnd(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryEndData) {
-	logrus.Trace(data)
 }

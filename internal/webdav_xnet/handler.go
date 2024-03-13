@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/library"
 	"github.com/shroff/phylum/server/internal/user"
@@ -66,24 +67,30 @@ func SetupHandler(r *gin.RouterGroup, libraryManager library.Manager, userManage
 
 func (h *handler) HandleRequest(c *gin.Context) {
 	path := c.Params.ByName("path")
-	libraryName := strings.TrimLeft(path, "/")
-	if libraryName == "" {
+	idStr := strings.TrimLeft(path, "/")
+	if idStr == "" {
 		// No path specified
 		c.Writer.WriteHeader(404)
 		return
 	}
-	index := strings.Index(libraryName, "/")
+	index := strings.Index(idStr, "/")
 	if index != -1 {
-		libraryName = libraryName[0:index]
+		idStr = idStr[0:index]
 	}
-	library, err := h.libraryManager.Get(context.Background(), libraryName)
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.Writer.WriteHeader(404)
+		return
+	}
+
+	library, err := h.libraryManager.Get(context.Background(), id)
 	if err != nil {
 		c.Writer.WriteHeader(404)
 		return
 	}
 
 	webdavHandler := webdav.Handler{
-		Prefix:     h.prefix + "/" + libraryName,
+		Prefix:     h.prefix + "/" + idStr,
 		FileSystem: adapter{lib: library},
 		LockSystem: webdav.NewMemLS(),
 	}

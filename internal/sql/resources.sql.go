@@ -126,27 +126,6 @@ func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]Reso
 	return items, nil
 }
 
-const libraryByName = `-- name: LibraryByName :one
-SELECT id, parent, name, dir, created, modified, deleted, size, etag from resources WHERE deleted IS NULL AND parent IS NULL AND name = $1
-`
-
-func (q *Queries) LibraryByName(ctx context.Context, name string) (Resource, error) {
-	row := q.db.QueryRow(ctx, libraryByName, name)
-	var i Resource
-	err := row.Scan(
-		&i.ID,
-		&i.Parent,
-		&i.Name,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.Size,
-		&i.Etag,
-	)
-	return i, err
-}
-
 const readDir = `-- name: ReadDir :many
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path) AS (
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text

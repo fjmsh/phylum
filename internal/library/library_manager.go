@@ -5,47 +5,49 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/sql"
 	"github.com/shroff/phylum/server/internal/storage"
 )
 
 type Manager struct {
-	queries sql.Queries
-	cs      storage.Storage
+	db *sql.DbHandler
+	cs storage.Storage
 }
 
-func NewManager(conn *pgx.Conn) Manager {
-	queries := *sql.New(conn)
+func NewManager(db *sql.DbHandler) Manager {
 	cs, err := storage.NewLocalStorage("srv")
 	if err != nil {
 		panic(err)
 	}
-	return Manager{queries: queries, cs: cs}
+	return Manager{db: db, cs: cs}
 }
 
-func (b Manager) Get(ctx context.Context, name string) (*Library, error) {
+func (b Manager) Get(ctx context.Context, id uuid.UUID) (*Library, error) {
 	// TODO: Permissions checks
-	lib, err := b.queries.LibraryByName(ctx, name)
+	lib, err := b.db.Queries().LibraryById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Library{queries: b.queries, root: lib.ID, cs: b.cs}, nil
+	return &Library{db: b.db, root: lib.ID, cs: b.cs}, nil
 }
 
-func (b Manager) Create(ctx context.Context, id uuid.UUID, name string) error {
-	if _, err := b.queries.LibraryByName(ctx, name); err == nil {
-		return fmt.Errorf("root directory already exists: %s", name)
-	} else {
-		return b.queries.CreateResource(ctx, sql.CreateResourceParams{ID: id, Parent: nil, Name: name, Dir: true})
-	}
+func (b Manager) Create(ctx context.Context, id uuid.UUID, owner int32, displayName string) error {
+	return b.db.RunInTx(ctx, func(q *sql.Queries) error {
+		if err := q.CreateLibrary(ctx, sql.CreateLibraryParams{ID: id, Owner: owner, DisplayName: displayName}); err != nil {
+			return err
+		}
+		if err := q.CreateResource(ctx, sql.CreateResourceParams{ID: id, Dir: true}); err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
-func (b Manager) Delete(ctx context.Context, name string) error {
-	if lib, err := b.Get(ctx, name); err == nil {
+func (b Manager) Delete(ctx context.Context, id uuid.UUID) error {
+	if lib, err := b.Get(ctx, id); err == nil {
 		return lib.DeleteRecursive(ctx, lib.root, true)
 	} else {
-		return fmt.Errorf("root directory does not exist: %s", name)
+		return fmt.Errorf("library does not exist: %s", id)
 	}
 }

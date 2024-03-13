@@ -9,6 +9,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Library struct {
+	ID          uuid.UUID
+	Owner       int32
+	DisplayName string
+	Deleted     pgtype.Timestamp
+}
+
 type Resource struct {
 	ID       uuid.UUID
 	Parent   *uuid.UUID
@@ -22,7 +29,7 @@ type Resource struct {
 }
 
 type User struct {
-	ID           pgtype.Int4
+	ID           int32
 	DisplayName  string
 	Username     string
 	PasswordHash string
