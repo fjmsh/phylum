@@ -2,11 +2,10 @@ package storage
 
 import (
 	"hash"
-	"io"
 )
 
 type hasher struct {
-	rwc           io.ReadWriteCloser
+	rwc           ReadWriteSeekCloser
 	len           int
 	sum           hash.Hash
 	closeCallback func(int, hash.Hash, error) error
@@ -14,6 +13,10 @@ type hasher struct {
 
 func (c *hasher) Read(p []byte) (n int, err error) {
 	return c.rwc.Read(p)
+}
+
+func (c *hasher) Seek(offset int64, whence int) (int64, error) {
+	return c.rwc.Seek(offset, whence)
 }
 
 func (c *hasher) Write(p []byte) (n int, err error) {

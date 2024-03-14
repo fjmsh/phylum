@@ -2,7 +2,6 @@ package library
 
 import (
 	"context"
-	"io"
 	"io/fs"
 	"os"
 	"strings"
@@ -19,7 +18,7 @@ type Library struct {
 	cs   storage.Storage
 }
 
-func (l Library) Open(ctx context.Context, id uuid.UUID, flag int) (io.ReadWriteCloser, error) {
+func (l Library) Open(ctx context.Context, id uuid.UUID, flag int) (storage.ReadWriteSeekCloser, error) {
 	writeMode := flag&(os.O_RDWR|os.O_WRONLY) != 0
 	var callback func(int, string) error
 	if writeMode {

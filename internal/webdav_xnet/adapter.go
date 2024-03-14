@@ -2,7 +2,6 @@ package webdav
 
 import (
 	"context"
-	"io"
 	"io/fs"
 	"os"
 	"strings"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/library"
+	"github.com/shroff/phylum/server/internal/storage"
 	"golang.org/x/net/webdav"
 )
 
@@ -59,7 +59,7 @@ func (a adapter) OpenFile(ctx context.Context, name string, flag int, perm os.Fi
 			return nil, err
 		}
 	}
-	var src io.ReadWriteCloser
+	var src storage.ReadWriteSeekCloser
 	if !dir {
 		src, err = a.lib.Open(ctx, resourceId, flag)
 		if err != nil {

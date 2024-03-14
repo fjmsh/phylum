@@ -3,20 +3,20 @@ package webdav
 import (
 	"context"
 	"fmt"
-	"io"
 	"io/fs"
 
 	"github.com/shroff/phylum/server/internal/library"
+	"github.com/shroff/phylum/server/internal/storage"
 )
 
 type file struct {
 	fileInfo
-	src io.ReadWriteCloser
+	src storage.ReadWriteSeekCloser
 	lib *library.Library
 }
 
 func (f file) Seek(offset int64, whence int) (int64, error) {
-	return 0, fmt.Errorf("seek not supported")
+	return f.src.Seek(offset, whence)
 }
 func (f file) Read(p []byte) (n int, err error) {
 	return f.src.Read(p)
