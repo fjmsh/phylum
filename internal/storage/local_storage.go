@@ -2,6 +2,7 @@ package storage
 
 import (
 	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"hash"
 	"io"
@@ -9,7 +10,6 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 type localStorage string
@@ -25,20 +25,18 @@ func newLocalStorage(root string) (Storage, error) {
 	return localStorage(root), nil
 }
 
-func (l localStorage) Open(id uuid.UUID, flag int, closeCallback func(hash.Hash, int, error)) (file io.ReadWriteCloser, err error) {
+func (l localStorage) Open(id uuid.UUID, flag int, writeCallback func(int, string) error) (file io.ReadWriteCloser, err error) {
 	file, err = os.OpenFile(l.path(id), flag, 0640)
-	if err != nil {
-		logrus.Fatal(err)
-	}
-	if closeCallback == nil {
+	if err != nil || writeCallback == nil {
 		return
 	}
-	if err != nil {
-		return nil, err
-	}
-	len := 0
-	addr := &len
-	return hasher{file, md5.New(), &addr, closeCallback}, nil
+	return &hasher{rwc: file, sum: md5.New(), closeCallback: func(len int, sum hash.Hash, err error) error {
+		if err != nil {
+			return err
+		}
+		etag := hex.EncodeToString(sum.Sum(nil))
+		return writeCallback(len, etag)
+	}}, nil
 }
 
 func (l localStorage) Delete(id uuid.UUID) error {

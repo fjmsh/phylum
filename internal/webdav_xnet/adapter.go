@@ -61,7 +61,7 @@ func (a adapter) OpenFile(ctx context.Context, name string, flag int, perm os.Fi
 	}
 	var src io.ReadWriteCloser
 	if !dir {
-		src, err = a.lib.Open(resourceId, flag)
+		src, err = a.lib.Open(ctx, resourceId, flag)
 		if err != nil {
 			return nil, err
 		}
@@ -77,28 +77,6 @@ func (a adapter) OpenFile(ctx context.Context, name string, flag int, perm os.Fi
 		src: src,
 		lib: a.lib,
 	}, nil
-}
-
-func (a adapter) Create(ctx context.Context, name string) (io.WriteCloser, error) {
-	var id uuid.UUID
-	if resource, err := a.lib.ResourceByPath(ctx, name); err == nil {
-		id = resource.ID
-	} else {
-		name = strings.TrimRight(name, "/")
-		index := strings.LastIndex(name, "/")
-		parentPath := name[0:index]
-		parent, err := a.lib.ResourceByPath(ctx, parentPath)
-		if err != nil {
-			return nil, fs.ErrNotExist
-		}
-		fileName := name[index+1:]
-		id = uuid.New()
-		if err = a.lib.CreateResource(ctx, id, parent.ID, fileName, false); err != nil {
-			return nil, err
-		}
-	}
-
-	return a.lib.UpdateContents(ctx, id)
 }
 
 func (a adapter) RemoveAll(ctx context.Context, name string) error {
