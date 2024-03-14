@@ -10,10 +10,11 @@ import (
 )
 
 type Library struct {
-	ID          uuid.UUID
-	Owner       int32
-	DisplayName string
-	Deleted     pgtype.Timestamp
+	ID             uuid.UUID
+	Owner          int32
+	DisplayName    string
+	Deleted        pgtype.Timestamp
+	StorageBackend string
 }
 
 type Resource struct {
@@ -26,6 +27,12 @@ type Resource struct {
 	Deleted  pgtype.Timestamp
 	Size     pgtype.Int4
 	Etag     pgtype.Text
+}
+
+type StorageBackend struct {
+	Name   string
+	Driver string
+	Params map[string]string
 }
 
 type User struct {

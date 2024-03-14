@@ -15,11 +15,11 @@ import (
 )
 
 type handler struct {
-	libraryManager library.Manager
+	libraryManager *library.Manager
 	prefix         string
 }
 
-func SetupHandler(r *gin.RouterGroup, libraryManager library.Manager, userManager user.Manager) {
+func SetupHandler(r *gin.RouterGroup, libraryManager *library.Manager, userManager *user.Manager) {
 	logrus.Info("Setting up WebDAV access at " + r.BasePath())
 	handler := &handler{
 		libraryManager: libraryManager,

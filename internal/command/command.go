@@ -7,6 +7,7 @@ import (
 
 	"github.com/shroff/phylum/server/internal/library"
 	"github.com/shroff/phylum/server/internal/sql"
+	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/shroff/phylum/server/internal/user"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -14,8 +15,9 @@ import (
 )
 
 var debug bool = false
-var libraryManager library.Manager
-var userManager user.Manager
+var libraryManager *library.Manager
+var userManager *user.Manager
+var storageManager *storage.Manager
 
 func SetupCommand() {
 	viper.SetEnvPrefix("phylum")
@@ -57,8 +59,19 @@ func SetupCommand() {
 		if err != nil {
 			logrus.Fatal(err)
 		}
-		libraryManager = library.NewManager(db)
-		userManager = user.NewManager(db)
+
+		userManager, err = user.NewManager(db)
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		storageManager, err = storage.NewManager(db)
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		libraryManager, err = library.NewManager(db, storageManager)
+		if err != nil {
+			logrus.Fatal(err)
+		}
 	}
 
 	defer func() {

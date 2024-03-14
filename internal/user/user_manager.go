@@ -10,8 +10,8 @@ type Manager struct {
 	db *sql.DbHandler
 }
 
-func NewManager(db *sql.DbHandler) Manager {
-	return Manager{db: db}
+func NewManager(db *sql.DbHandler) (*Manager, error) {
+	return &Manager{db: db}, nil
 }
 
 func (m Manager) CreateUser(ctx context.Context, username, displayName, passwordHash string) error {

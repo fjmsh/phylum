@@ -10,8 +10,9 @@ func setupAdminCommand() *cobra.Command {
 		Short: "Server Administration",
 	}
 	cmd.AddCommand([]*cobra.Command{
-		setupLibraryCommand(),
+		setupStorageCommand(),
 		setupUserCommand(),
+		setupLibraryCommand(),
 	}...)
 
 	return cmd

@@ -13,25 +13,31 @@ import (
 
 const createLibrary = `-- name: CreateLibrary :exec
 INSERT INTO libraries(
-    id, owner, display_name
+    id, owner, display_name, storage_backend
 ) VALUES(
-    $1, $2, $3
+    $1, $2, $3, $4
 )
 `
 
 type CreateLibraryParams struct {
-	ID          uuid.UUID
-	Owner       int32
-	DisplayName string
+	ID             uuid.UUID
+	Owner          int32
+	DisplayName    string
+	StorageBackend string
 }
 
 func (q *Queries) CreateLibrary(ctx context.Context, arg CreateLibraryParams) error {
-	_, err := q.db.Exec(ctx, createLibrary, arg.ID, arg.Owner, arg.DisplayName)
+	_, err := q.db.Exec(ctx, createLibrary,
+		arg.ID,
+		arg.Owner,
+		arg.DisplayName,
+		arg.StorageBackend,
+	)
 	return err
 }
 
 const libraryById = `-- name: LibraryById :one
-SELECT id, owner, display_name, deleted from libraries where id = $1
+SELECT id, owner, display_name, deleted, storage_backend from libraries where id = $1
 `
 
 func (q *Queries) LibraryById(ctx context.Context, id uuid.UUID) (Library, error) {
@@ -42,6 +48,7 @@ func (q *Queries) LibraryById(ctx context.Context, id uuid.UUID) (Library, error
 		&i.Owner,
 		&i.DisplayName,
 		&i.Deleted,
+		&i.StorageBackend,
 	)
 	return i, err
 }

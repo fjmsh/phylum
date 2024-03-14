@@ -19,3 +19,6 @@ sql:
               import: "github.com/google/uuid"
               type: "UUID"
               pointer: true
+          - column: "storage_backends.params"
+            go_type:
+              type: "map[string]string"

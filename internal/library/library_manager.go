@@ -2,6 +2,7 @@ package library
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -10,16 +11,12 @@ import (
 )
 
 type Manager struct {
-	db *sql.DbHandler
-	cs storage.Storage
+	db             *sql.DbHandler
+	storageManager *storage.Manager
 }
 
-func NewManager(db *sql.DbHandler) Manager {
-	cs, err := storage.NewLocalStorage("srv")
-	if err != nil {
-		panic(err)
-	}
-	return Manager{db: db, cs: cs}
+func NewManager(db *sql.DbHandler, storageManager *storage.Manager) (*Manager, error) {
+	return &Manager{db: db, storageManager: storageManager}, nil
 }
 
 func (b Manager) Get(ctx context.Context, id uuid.UUID) (*Library, error) {
@@ -28,13 +25,22 @@ func (b Manager) Get(ctx context.Context, id uuid.UUID) (*Library, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs := b.storageManager.Find(lib.StorageBackend)
+	if cs == nil {
+		return nil, errors.New("storage backend not found: " + lib.StorageBackend)
+	}
 
-	return &Library{db: b.db, root: lib.ID, cs: b.cs}, nil
+	return &Library{db: b.db, root: lib.ID, cs: cs}, nil
 }
 
-func (b Manager) Create(ctx context.Context, id uuid.UUID, owner int32, displayName string) error {
+func (b Manager) Create(ctx context.Context, id uuid.UUID, storageBackend string, owner int32, displayName string) error {
 	return b.db.RunInTx(ctx, func(q *sql.Queries) error {
-		if err := q.CreateLibrary(ctx, sql.CreateLibraryParams{ID: id, Owner: owner, DisplayName: displayName}); err != nil {
+		if err := q.CreateLibrary(ctx, sql.CreateLibraryParams{
+			ID:             id,
+			StorageBackend: storageBackend,
+			Owner:          owner,
+			DisplayName:    displayName,
+		}); err != nil {
 			return err
 		}
 		if err := q.CreateResource(ctx, sql.CreateResourceParams{ID: id, Dir: true}); err != nil {
