@@ -24,17 +24,21 @@ func newLocalStorage(root string) (Storage, error) {
 	return localStorage(root), nil
 }
 
-func (l localStorage) Open(id uuid.UUID, flag int, writeCallback func(int, string) error) (file ReadWriteSeekCloser, err error) {
-	file, err = os.OpenFile(l.path(id), flag, 0640)
-	if err != nil || writeCallback == nil {
-		return
+func (l localStorage) Open(id uuid.UUID, write bool, callback func(int, string) error) (ReadWriteSeekCloser, error) {
+	if !write {
+		return os.OpenFile(l.path(id), os.O_RDONLY, 0640)
 	}
-	return &hasher{rwc: file, sum: md5.New(), closeCallback: func(len int, sum hash.Hash, err error) error {
+
+	file, err := os.OpenFile(l.path(id), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
+	if err != nil || callback == nil {
+		return file, err
+	}
+	return &hasher{dest: file, sum: md5.New(), closeCallback: func(len int, sum hash.Hash, err error) error {
 		if err != nil {
 			return err
 		}
 		etag := hex.EncodeToString(sum.Sum(nil))
-		return writeCallback(len, etag)
+		return callback(len, etag)
 	}}, nil
 }
 

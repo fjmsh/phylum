@@ -3,7 +3,6 @@ package library
 import (
 	"context"
 	"io/fs"
-	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -18,10 +17,9 @@ type Library struct {
 	cs   storage.Storage
 }
 
-func (l Library) Open(ctx context.Context, id uuid.UUID, flag int) (storage.ReadWriteSeekCloser, error) {
-	writeMode := flag&(os.O_RDWR|os.O_WRONLY) != 0
+func (l Library) Open(ctx context.Context, id uuid.UUID, write bool) (storage.ReadWriteSeekCloser, error) {
 	var callback func(int, string) error
-	if writeMode {
+	if write {
 		callback = func(len int, etag string) error {
 			return l.db.Queries().UpdateResourceContents(ctx, sql.UpdateResourceContentsParams{
 				ID:   id,
@@ -30,7 +28,7 @@ func (l Library) Open(ctx context.Context, id uuid.UUID, flag int) (storage.Read
 			})
 		}
 	}
-	return l.cs.Open(id, flag, callback)
+	return l.cs.Open(id, write, callback)
 }
 
 func (l Library) ReadDir(ctx context.Context, id uuid.UUID, includeRoot bool, recursive bool) ([]sql.ReadDirRow, error) {

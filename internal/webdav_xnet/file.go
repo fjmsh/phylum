@@ -18,17 +18,20 @@ type file struct {
 func (f file) Seek(offset int64, whence int) (int64, error) {
 	return f.src.Seek(offset, whence)
 }
+
 func (f file) Read(p []byte) (n int, err error) {
 	return f.src.Read(p)
 }
+
+func (f file) Write(p []byte) (n int, err error) {
+	return f.src.Write(p)
+}
+
 func (f file) Close() error {
-	if f.src == nil {
+	if f.dir {
 		return nil
 	}
 	return f.src.Close()
-}
-func (f file) Write(p []byte) (n int, err error) {
-	return f.src.Write(p)
 }
 
 func (f file) Readdir(count int) ([]fs.FileInfo, error) {

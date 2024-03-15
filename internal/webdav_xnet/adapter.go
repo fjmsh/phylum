@@ -61,7 +61,7 @@ func (a adapter) OpenFile(ctx context.Context, name string, flag int, perm os.Fi
 	}
 	var src storage.ReadWriteSeekCloser
 	if !dir {
-		src, err = a.lib.Open(ctx, resourceId, flag)
+		src, err = a.lib.Open(ctx, resourceId, flag&(os.O_RDWR|os.O_WRONLY) != 0)
 		if err != nil {
 			return nil, err
 		}
