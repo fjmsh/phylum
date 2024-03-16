@@ -6,10 +6,52 @@ import (
 	"io"
 	"net/http"
 	"net/textproto"
+	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
+
+var htmlReplacer = strings.NewReplacer(
+	"&", "&amp;",
+	"<", "&lt;",
+	">", "&gt;",
+	// "&#34;" is shorter than "&quot;".
+	`"`, "&#34;",
+	// "&#39;" is shorter than "&apos;" and apos was not in HTML until HTML5.
+	"'", "&#39;",
+)
+
+func serveCollection(w http.ResponseWriter, r *http.Request, ri ResourceInfo) {
+	if checkIfModifiedSince(r, ri) == condFalse {
+		writeNotModified(w)
+		return
+	}
+	w.Header().Set("Last-Modified", ri.ModTime().Format(http.TimeFormat))
+
+	files, err := ri.Readdir(r.Context())
+	if err != nil {
+		http.Error(w, "Error reading directory", http.StatusInternalServerError)
+		return
+	}
+	sort.Slice(files, func(i, j int) bool { return files[i].Name() < files[j].Name() })
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, "<pre>\n")
+	for _, f := range files {
+		name := f.Name()
+		if f.IsDir() {
+			name += "/"
+		}
+		// name may contain '?' or '#', which must be escaped to remain
+		// part of the URL path, and not indicate the start of a query
+		// string or fragment.
+		url := url.URL{Path: name}
+		fmt.Fprintf(w, "<a href=\"%s\">%s</a>\n", url.String(), htmlReplacer.Replace(name))
+	}
+	fmt.Fprintf(w, "</pre>\n")
+}
 
 func serveResource(w http.ResponseWriter, r *http.Request, ri ResourceInfo) {
 	w.Header().Set("Etag", ri.ETag())
@@ -52,6 +94,11 @@ func serveResource(w http.ResponseWriter, r *http.Request, ri ResourceInfo) {
 		reader, err = ri.OpenRead(r.Context(), 0, -1)
 	}
 
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Accept-Ranges", "bytes")
 	w.Header().Set("Content-Length", strconv.FormatInt(sendSize, 10))
 	w.WriteHeader(code)
@@ -68,13 +115,6 @@ type httpRange struct {
 
 func (r httpRange) contentRange(size int64) string {
 	return fmt.Sprintf("bytes %d-%d/%d", r.start, r.start+r.length-1, size)
-}
-
-func (r httpRange) mimeHeader(contentType string, size int64) textproto.MIMEHeader {
-	return textproto.MIMEHeader{
-		"Content-Range": {r.contentRange(size)},
-		"Content-Type":  {contentType},
-	}
 }
 
 // parseRange parses a Range header string as per RFC 7233.

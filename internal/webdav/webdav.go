@@ -204,10 +204,11 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 		return http.StatusNotFound, err
 	}
 	if fi.IsDir() {
-		return http.StatusMethodNotAllowed, nil
+		serveCollection(w, r, fi)
+	} else {
+		serveResource(w, r, fi)
 	}
 
-	serveResource(w, r, fi)
 	return 0, nil
 }
 
