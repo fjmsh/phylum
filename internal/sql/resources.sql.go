@@ -47,7 +47,7 @@ WITH RECURSIVE nodes(id, parent) AS (
     WHERE deleted IS NULL
 )
 UPDATE resources
-SET deleted = NOW()
+SET modified = NOW(), deleted = NOW()
 WHERE id in (SELECT id FROM nodes)
 RETURNING id, parent, name, dir, created, modified, deleted, size, etag
 `
@@ -299,5 +299,17 @@ type UpdateResourceContentsParams struct {
 
 func (q *Queries) UpdateResourceContents(ctx context.Context, arg UpdateResourceContentsParams) error {
 	_, err := q.db.Exec(ctx, updateResourceContents, arg.Size, arg.Etag, arg.ID)
+	return err
+}
+
+const updateResourceModified = `-- name: UpdateResourceModified :exec
+UPDATE resources
+SET
+    modified = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) UpdateResourceModified(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, updateResourceModified, id)
 	return err
 }

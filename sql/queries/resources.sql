@@ -16,6 +16,12 @@ SET
     modified = NOW()
 WHERE id = $3;
 
+-- name: UpdateResourceModified :exec
+UPDATE resources
+SET
+    modified = NOW()
+WHERE id = $1;
+
 -- name: Rename :exec
 UPDATE resources
 SET
@@ -60,7 +66,7 @@ WITH RECURSIVE nodes(id, parent) AS (
     WHERE deleted IS NULL
 )
 UPDATE resources
-SET deleted = NOW()
+SET modified = NOW(), deleted = NOW()
 WHERE id in (SELECT id FROM nodes)
 RETURNING *;
 

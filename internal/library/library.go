@@ -53,7 +53,16 @@ func (l Library) DeleteRecursive(ctx context.Context, id uuid.UUID, hardDelete b
 }
 
 func (l Library) CreateResource(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string, dir bool) error {
-	return l.db.Queries().CreateResource(ctx, sql.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir})
+	return l.db.RunInTx(ctx, func(q *sql.Queries) error {
+
+		if err := q.CreateResource(ctx, sql.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir}); err != nil {
+			return err
+		}
+		if err := q.UpdateResourceModified(ctx, parent); err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (l Library) Move(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string) error {

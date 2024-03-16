@@ -24,7 +24,7 @@ func (a adapter) Open(ctx context.Context, name string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return a.lib.Open(ctx, resource.ID, false)
+	return a.lib.OpenRead(ctx, resource.ID, 0, -1)
 }
 
 func (a adapter) Stat(ctx context.Context, name string) (*webdav.FileInfo, error) {
@@ -88,7 +88,7 @@ func (a adapter) Create(ctx context.Context, name string) (io.WriteCloser, error
 		}
 	}
 
-	return a.lib.Open(ctx, id, true)
+	return a.lib.OpenWrite(ctx, id)
 }
 
 func (a adapter) RemoveAll(ctx context.Context, name string) error {
