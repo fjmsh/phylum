@@ -37,31 +37,39 @@ func (l Library) ReadDir(ctx context.Context, id uuid.UUID, includeRoot bool, re
 }
 
 func (l Library) DeleteRecursive(ctx context.Context, id uuid.UUID, hardDelete bool) error {
-	query := l.db.Queries().DeleteRecursive
-	if hardDelete {
-		query = l.db.Queries().HardDeleteRecursive
-	}
-	deleted, err := query(ctx, id)
-	if err == nil && hardDelete {
-		for _, res := range deleted {
-			if !res.Dir {
-				l.cs.Delete(res.ID)
+	return l.db.RunInTx(ctx, func(q *sql.Queries) error {
+		p, err := q.ResourceById(ctx, id)
+		if err != nil {
+			return err
+		}
+
+		query := q.DeleteRecursive
+		if hardDelete {
+			query = q.HardDeleteRecursive
+		}
+		deleted, err := query(ctx, id)
+		if err == nil && hardDelete {
+			for _, res := range deleted {
+				if !res.Dir {
+					l.cs.Delete(res.ID)
+				}
 			}
 		}
-	}
-	return err
+
+		if p.Parent != nil {
+			return q.UpdateResourceModified(ctx, *p.Parent)
+		}
+		return nil
+	})
+
 }
 
 func (l Library) CreateResource(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string, dir bool) error {
 	return l.db.RunInTx(ctx, func(q *sql.Queries) error {
-
 		if err := q.CreateResource(ctx, sql.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir}); err != nil {
 			return err
 		}
-		if err := q.UpdateResourceModified(ctx, parent); err != nil {
-			return err
-		}
-		return nil
+		return q.UpdateResourceModified(ctx, parent)
 	})
 }
 
