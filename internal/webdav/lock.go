@@ -7,6 +7,7 @@ package webdav
 import (
 	"container/heap"
 	"errors"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -442,4 +443,13 @@ func parseTimeout(s string) (time.Duration, error) {
 		return 0, errInvalidTimeout
 	}
 	return time.Duration(n) * time.Second, nil
+}
+
+// slashClean is equivalent to but slightly more efficient than
+// path.Clean("/" + name).
+func slashClean(name string) string {
+	if name == "" || name[0] != '/' {
+		name = "/" + name
+	}
+	return path.Clean(name)
 }

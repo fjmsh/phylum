@@ -2,81 +2,64 @@ package webdav
 
 import (
 	"context"
+	"errors"
+	"io"
 	"io/fs"
-	"os"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/library"
-	"github.com/shroff/phylum/server/internal/storage"
-	"golang.org/x/net/webdav"
+	"github.com/shroff/phylum/server/internal/webdav"
 )
 
 type adapter struct {
 	lib *library.Library
 }
 
-func (a adapter) Stat(ctx context.Context, name string) (os.FileInfo, error) {
+func (a adapter) Stat(ctx context.Context, name string) (webdav.ResourceInfo, error) {
 	resource, err := a.lib.ResourceByPath(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	val := fileInfo{
+	val := resourceInfo{
+		lib:        a.lib,
 		name:       resource.Name,
 		size:       int64(resource.Size.Int32),
 		modTime:    resource.Modified.Time,
-		dir:        resource.Dir,
+		collection: resource.Dir,
 		resourceID: resource.ID,
+		etag:       resource.Etag.String,
 	}
 	return val, nil
 }
 
-func (a adapter) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (webdav.File, error) {
+func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, error) {
 	resource, err := a.lib.ResourceByPath(ctx, name)
 	resourceId := resource.ID
-	resourceName := resource.Name
-	size := resource.Size.Int32
-	modTime := resource.Modified.Time
-	dir := resource.Dir
+
 	if err != nil {
-		if flag&os.O_CREATE == 0 {
+		if err == fs.ErrNotExist {
+			// Try to create the resource if the parent collection exists
+			name = strings.TrimRight(name, "/")
+			index := strings.LastIndex(name, "/")
+			parentPath := name[0:index]
+			parent, err := a.lib.ResourceByPath(ctx, parentPath)
+			if err != nil {
+				return nil, fs.ErrNotExist
+			}
+			resourceName := name[index+1:]
+			resourceId = uuid.New()
+			err = a.lib.CreateResource(ctx, resourceId, parent.ID, resourceName, false)
+			if err != nil {
+				return nil, err
+			}
+		} else {
 			return nil, err
 		}
-		name = strings.TrimRight(name, "/")
-		index := strings.LastIndex(name, "/")
-		parentPath := name[0:index]
-		parent, err := a.lib.ResourceByPath(ctx, parentPath)
-		if err != nil {
-			return nil, fs.ErrNotExist
-		}
-		resourceName := name[index+1:]
-		resourceId = uuid.New()
-		dir = false
-		modTime = time.Time{}
-		err = a.lib.CreateResource(ctx, resourceId, parent.ID, resourceName, dir)
-		if err != nil {
-			return nil, err
-		}
+	} else if resource.Dir {
+		return nil, errors.New("cannot open collection for write")
 	}
-	var src storage.ReadWriteSeekCloser
-	if !dir {
-		src, err = a.lib.Open(ctx, resourceId, flag&(os.O_RDWR|os.O_WRONLY) != 0)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return file{
-		fileInfo: fileInfo{
-			name:       resourceName,
-			size:       int64(size),
-			modTime:    modTime,
-			dir:        dir,
-			resourceID: resourceId,
-		},
-		src: src,
-		lib: a.lib,
-	}, nil
+	return a.lib.Open(ctx, resourceId, true)
 }
 
 func (a adapter) RemoveAll(ctx context.Context, name string) error {
@@ -87,7 +70,7 @@ func (a adapter) RemoveAll(ctx context.Context, name string) error {
 	return a.lib.DeleteRecursive(ctx, resource.ID, false)
 }
 
-func (a adapter) Mkdir(ctx context.Context, name string, mode fs.FileMode) error {
+func (a adapter) Mkdir(ctx context.Context, name string) error {
 	if _, err := a.lib.ResourceByPath(ctx, name); err == nil {
 		return fs.ErrExist
 	}

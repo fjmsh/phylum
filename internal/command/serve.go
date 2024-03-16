@@ -7,7 +7,7 @@ import (
 	"github.com/fvbock/endless"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	webdav "github.com/shroff/phylum/server/internal/webdav_xnet"
+	webdav "github.com/shroff/phylum/server/internal/handler_webdav"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

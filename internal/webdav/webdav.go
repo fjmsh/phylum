@@ -199,29 +199,26 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 	}
 	// TODO: check locks for read-only access??
 	ctx := r.Context()
-	f, err := h.FileSystem.OpenFile(ctx, reqPath, os.O_RDONLY, 0)
-	if err != nil {
-		return http.StatusNotFound, err
-	}
-	defer f.Close()
-	fi, err := f.Stat()
+	fi, err := h.FileSystem.Stat(ctx, reqPath)
 	if err != nil {
 		return http.StatusNotFound, err
 	}
 	if fi.IsDir() {
 		return http.StatusMethodNotAllowed, nil
 	}
-	etag, err := findETag(ctx, h.FileSystem, h.LockSystem, reqPath, fi)
+
+	f, err := fi.OpenRead(ctx)
 	if err != nil {
-		return http.StatusInternalServerError, err
+		return http.StatusNotFound, err
 	}
-	w.Header().Set("ETag", etag)
-	// Let ServeContent determine the Content-Type header.
+	defer f.Close()
+	w.Header().Set("ETag", fi.ETag())
+	w.Header().Set("Content-Type", fi.ContentType())
 	http.ServeContent(w, r, reqPath, fi.ModTime(), f)
 	return 0, nil
 }
 
-func (h *Handler) handleDelete(w http.ResponseWriter, r *http.Request) (status int, err error) {
+func (h *Handler) handleDelete(_ http.ResponseWriter, r *http.Request) (status int, err error) {
 	reqPath, status, err := h.stripPrefix(r.URL.Path)
 	if err != nil {
 		return status, err
@@ -265,12 +262,12 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	// comments in http.checkEtag.
 	ctx := r.Context()
 
-	f, err := h.FileSystem.OpenFile(ctx, reqPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	f, err := h.FileSystem.OpenWrite(ctx, reqPath)
 	if err != nil {
 		return http.StatusNotFound, err
 	}
 	_, copyErr := io.Copy(f, r.Body)
-	fi, statErr := f.Stat()
+	fi, statErr := h.FileSystem.Stat(ctx, reqPath)
 	closeErr := f.Close()
 	// TODO(rost): Returning 405 Method Not Allowed might not be appropriate.
 	if copyErr != nil {
@@ -282,15 +279,12 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	if closeErr != nil {
 		return http.StatusMethodNotAllowed, closeErr
 	}
-	etag, err := findETag(ctx, h.FileSystem, h.LockSystem, reqPath, fi)
-	if err != nil {
-		return http.StatusInternalServerError, err
-	}
+	etag := fi.ETag()
 	w.Header().Set("ETag", etag)
 	return http.StatusCreated, nil
 }
 
-func (h *Handler) handleMkcol(w http.ResponseWriter, r *http.Request) (status int, err error) {
+func (h *Handler) handleMkcol(_ http.ResponseWriter, r *http.Request) (status int, err error) {
 	reqPath, status, err := h.stripPrefix(r.URL.Path)
 	if err != nil {
 		return status, err
@@ -306,7 +300,7 @@ func (h *Handler) handleMkcol(w http.ResponseWriter, r *http.Request) (status in
 	if r.ContentLength > 0 {
 		return http.StatusUnsupportedMediaType, nil
 	}
-	if err := h.FileSystem.Mkdir(ctx, reqPath, 0777); err != nil {
+	if err := h.FileSystem.Mkdir(ctx, reqPath); err != nil {
 		if os.IsNotExist(err) {
 			return http.StatusConflict, err
 		}
@@ -315,7 +309,7 @@ func (h *Handler) handleMkcol(w http.ResponseWriter, r *http.Request) (status in
 	return http.StatusCreated, nil
 }
 
-func (h *Handler) handleCopyMove(w http.ResponseWriter, r *http.Request) (status int, err error) {
+func (h *Handler) handleCopyMove(_ http.ResponseWriter, r *http.Request) (status int, err error) {
 	hdr := r.Header.Get("Destination")
 	if hdr == "" {
 		return http.StatusBadRequest, errInvalidDestination
@@ -459,7 +453,7 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 
 		// Create the resource if it didn't previously exist.
 		if _, err := h.FileSystem.Stat(ctx, reqPath); err != nil {
-			f, err := h.FileSystem.OpenFile(ctx, reqPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+			f, err := h.FileSystem.OpenWrite(ctx, reqPath)
 			if err != nil {
 				// TODO: detect missing intermediate dirs and return http.StatusConflict?
 				return http.StatusInternalServerError, err
@@ -484,7 +478,7 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 	return 0, nil
 }
 
-func (h *Handler) handleUnlock(w http.ResponseWriter, r *http.Request) (status int, err error) {
+func (h *Handler) handleUnlock(_ http.ResponseWriter, r *http.Request) (status int, err error) {
 	// http://www.webdav.org/specs/rfc4918.html#HEADER_Lock-Token says that the
 	// Lock-Token value is a Coded-URL. We strip its angle brackets.
 	t := r.Header.Get("Lock-Token")
@@ -534,7 +528,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 
 	mw := multistatusWriter{w: w}
 
-	walkFn := func(reqPath string, info os.FileInfo, err error) error {
+	walkFn := func(reqPath string, info ResourceInfo, err error) error {
 		if err != nil {
 			return handlePropfindError(err, info)
 		}
@@ -635,7 +629,7 @@ func makePropstatResponse(href string, pstats []Propstat) *response {
 	return &resp
 }
 
-func handlePropfindError(err error, info os.FileInfo) error {
+func handlePropfindError(err error, info ResourceInfo) error {
 	var skipResp error = nil
 	if info != nil && info.IsDir() {
 		skipResp = filepath.SkipDir

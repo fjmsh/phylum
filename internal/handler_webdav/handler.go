@@ -10,8 +10,8 @@ import (
 	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/library"
 	"github.com/shroff/phylum/server/internal/user"
+	"github.com/shroff/phylum/server/internal/webdav"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/net/webdav"
 )
 
 type handler struct {
