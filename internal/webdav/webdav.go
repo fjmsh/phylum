@@ -207,14 +207,7 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 		return http.StatusMethodNotAllowed, nil
 	}
 
-	f, err := fi.OpenRead(ctx)
-	if err != nil {
-		return http.StatusNotFound, err
-	}
-	defer f.Close()
-	w.Header().Set("ETag", fi.ETag())
-	w.Header().Set("Content-Type", fi.ContentType())
-	http.ServeContent(w, r, reqPath, fi.ModTime(), f)
+	serveResource(w, r, fi)
 	return 0, nil
 }
 

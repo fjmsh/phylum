@@ -59,7 +59,7 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 	} else if resource.Dir {
 		return nil, errors.New("cannot open collection for write")
 	}
-	return a.lib.Open(ctx, resourceId, true)
+	return a.lib.OpenWrite(ctx, resourceId)
 }
 
 func (a adapter) RemoveAll(ctx context.Context, name string) error {

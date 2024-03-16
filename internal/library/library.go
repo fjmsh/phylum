@@ -2,6 +2,7 @@ package library
 
 import (
 	"context"
+	"io"
 	"io/fs"
 	"strings"
 
@@ -17,18 +18,18 @@ type Library struct {
 	cs   storage.Storage
 }
 
-func (l Library) Open(ctx context.Context, id uuid.UUID, write bool) (storage.ReadWriteSeekCloser, error) {
-	var callback func(int, string) error
-	if write {
-		callback = func(len int, etag string) error {
-			return l.db.Queries().UpdateResourceContents(ctx, sql.UpdateResourceContentsParams{
-				ID:   id,
-				Size: pgtype.Int4{Int32: int32(len), Valid: true},
-				Etag: pgtype.Text{String: etag, Valid: true},
-			})
-		}
-	}
-	return l.cs.Open(id, write, callback)
+func (l Library) OpenRead(ctx context.Context, id uuid.UUID, start, length int64) (io.ReadCloser, error) {
+	return l.cs.OpenRead(id, start, length)
+}
+
+func (l Library) OpenWrite(ctx context.Context, id uuid.UUID) (io.WriteCloser, error) {
+	return l.cs.OpenWrite(id, func(len int, etag string) error {
+		return l.db.Queries().UpdateResourceContents(ctx, sql.UpdateResourceContentsParams{
+			ID:   id,
+			Size: pgtype.Int4{Int32: int32(len), Valid: true},
+			Etag: pgtype.Text{String: etag, Valid: true},
+		})
+	})
 }
 
 func (l Library) ReadDir(ctx context.Context, id uuid.UUID, includeRoot bool, recursive bool) ([]sql.ReadDirRow, error) {

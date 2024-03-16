@@ -43,8 +43,8 @@ func (ri resourceInfo) ContentType() string {
 	}
 	return "application/octet-stream"
 }
-func (ri resourceInfo) OpenRead(ctx context.Context) (io.ReadSeekCloser, error) {
-	return ri.lib.Open(ctx, ri.resourceID, false)
+func (ri resourceInfo) OpenRead(ctx context.Context, start, length int64) (io.ReadCloser, error) {
+	return ri.lib.OpenRead(ctx, ri.resourceID, start, length)
 }
 func (ri resourceInfo) Readdir(ctx context.Context) ([]webdav.ResourceInfo, error) {
 	if !ri.collection {

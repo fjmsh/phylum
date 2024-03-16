@@ -32,7 +32,7 @@ type ResourceInfo interface {
 	IsDir() bool         // abbreviation for Mode().IsDir()
 	ETag() string        // entity tag for efficient caching
 	ContentType() string // content type
-	OpenRead(ctx context.Context) (io.ReadSeekCloser, error)
+	OpenRead(ctx context.Context, start, length int64) (io.ReadCloser, error)
 	Readdir(ctx context.Context) ([]ResourceInfo, error)
 }
 
@@ -124,7 +124,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 		}
 
 	} else {
-		srcFile, err := srcStat.OpenRead(ctx)
+		srcFile, err := srcStat.OpenRead(ctx, 0, -1)
 		if err != nil {
 			if os.IsNotExist(err) {
 				return http.StatusNotFound, err

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"hash"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -24,11 +25,19 @@ func newLocalStorage(root string) (Storage, error) {
 	return localStorage(root), nil
 }
 
-func (l localStorage) Open(id uuid.UUID, write bool, callback func(int, string) error) (ReadWriteSeekCloser, error) {
-	if !write {
-		return os.OpenFile(l.path(id), os.O_RDONLY, 0640)
+func (l localStorage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error) {
+	file, err := os.OpenFile(l.path(id), os.O_RDONLY, 0640)
+	if err != nil {
+		return nil, err
 	}
+	_, err = file.Seek(start, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
+}
 
+func (l localStorage) OpenWrite(id uuid.UUID, callback func(int, string) error) (io.WriteCloser, error) {
 	file, err := os.OpenFile(l.path(id), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
 	if err != nil || callback == nil {
 		return file, err
