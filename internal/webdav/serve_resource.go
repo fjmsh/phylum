@@ -24,6 +24,10 @@ var htmlReplacer = strings.NewReplacer(
 )
 
 func serveCollection(w http.ResponseWriter, r *http.Request, ri ResourceInfo) {
+	if !strings.HasSuffix(r.URL.Path, "/") {
+		http.Redirect(w, r, r.URL.String()+"/", http.StatusMovedPermanently)
+		return
+	}
 	if checkIfModifiedSince(r, ri) == condFalse {
 		writeNotModified(w)
 		return
