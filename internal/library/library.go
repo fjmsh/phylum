@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/sql"
 	"github.com/shroff/phylum/server/internal/storage"
+	"github.com/sirupsen/logrus"
 )
 
 type Library struct {
@@ -43,15 +44,24 @@ func (l Library) DeleteRecursive(ctx context.Context, id uuid.UUID, hardDelete b
 			return err
 		}
 
-		query := q.DeleteRecursive
 		if hardDelete {
-			query = q.HardDeleteRecursive
+
+		} else {
+			_, err = q.DeleteRecursive(ctx, id)
+			if err != nil {
+				return err
+			}
 		}
-		deleted, err := query(ctx, id)
-		if err == nil && hardDelete {
-			for _, res := range deleted {
-				if !res.Dir {
-					l.cs.Delete(res.ID)
+
+		if hardDelete {
+			deleted, err := q.HardDeleteRecursive(ctx, id)
+			if err != nil {
+				return err
+			}
+			if hardDelete {
+				errors := l.cs.Delete(deleted)
+				for err := range errors {
+					logrus.Warn(err)
 				}
 			}
 		}
@@ -61,7 +71,6 @@ func (l Library) DeleteRecursive(ctx context.Context, id uuid.UUID, hardDelete b
 		}
 		return nil
 	})
-
 }
 
 func (l Library) CreateResource(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string, dir bool) error {

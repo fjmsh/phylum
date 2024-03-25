@@ -56,7 +56,7 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
 )
 SELECT * FROM nodes WHERE cardinality(search) = depth;
 
--- name: DeleteRecursive :many
+-- name: DeleteRecursive :exec
 WITH RECURSIVE nodes(id, parent) AS (
     SELECT r.id, r.parent
     FROM resources r WHERE r.id = @id::uuid
@@ -67,8 +67,7 @@ WITH RECURSIVE nodes(id, parent) AS (
 )
 UPDATE resources
 SET modified = NOW(), deleted = NOW()
-WHERE id in (SELECT id FROM nodes)
-RETURNING *;
+WHERE id in (SELECT id FROM nodes);
 
 -- name: HardDeleteRecursive :many
 WITH RECURSIVE nodes(id, parent) AS (
@@ -81,4 +80,4 @@ WITH RECURSIVE nodes(id, parent) AS (
 )
 DELETE FROM resources
 WHERE id in (SELECT id FROM nodes)
-RETURNING *;
+RETURNING id, dir;

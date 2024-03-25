@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/sql"
 )
 
 type localStorage string
@@ -51,8 +52,17 @@ func (l localStorage) OpenWrite(id uuid.UUID, callback func(int, string) error) 
 	}}, nil
 }
 
-func (l localStorage) Delete(id uuid.UUID) error {
-	return os.Remove(l.path(id))
+func (l localStorage) Delete(rows []sql.HardDeleteRecursiveRow) []error {
+	errs := make([]error, 0)
+	for _, row := range rows {
+		if !row.Dir {
+			err := os.Remove(l.path(row.ID))
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+	return errs
 }
 
 func (l localStorage) path(id uuid.UUID) string {

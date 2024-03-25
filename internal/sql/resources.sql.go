@@ -49,29 +49,24 @@ WITH RECURSIVE nodes(id, parent) AS (
 UPDATE resources
 SET modified = NOW(), deleted = NOW()
 WHERE id in (SELECT id FROM nodes)
-RETURNING id, parent, name, dir, created, modified, deleted, size, etag
+RETURNING id, dir
 `
 
-func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) ([]Resource, error) {
+type DeleteRecursiveRow struct {
+	ID  uuid.UUID
+	Dir bool
+}
+
+func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) ([]DeleteRecursiveRow, error) {
 	rows, err := q.db.Query(ctx, deleteRecursive, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Resource
+	var items []DeleteRecursiveRow
 	for rows.Next() {
-		var i Resource
-		if err := rows.Scan(
-			&i.ID,
-			&i.Parent,
-			&i.Name,
-			&i.Dir,
-			&i.Created,
-			&i.Modified,
-			&i.Deleted,
-			&i.Size,
-			&i.Etag,
-		); err != nil {
+		var i DeleteRecursiveRow
+		if err := rows.Scan(&i.ID, &i.Dir); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -93,29 +88,24 @@ WITH RECURSIVE nodes(id, parent) AS (
 )
 DELETE FROM resources
 WHERE id in (SELECT id FROM nodes)
-RETURNING id, parent, name, dir, created, modified, deleted, size, etag
+RETURNING id, dir
 `
 
-func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]Resource, error) {
+type HardDeleteRecursiveRow struct {
+	ID  uuid.UUID
+	Dir bool
+}
+
+func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]HardDeleteRecursiveRow, error) {
 	rows, err := q.db.Query(ctx, hardDeleteRecursive, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Resource
+	var items []HardDeleteRecursiveRow
 	for rows.Next() {
-		var i Resource
-		if err := rows.Scan(
-			&i.ID,
-			&i.Parent,
-			&i.Name,
-			&i.Dir,
-			&i.Created,
-			&i.Modified,
-			&i.Deleted,
-			&i.Size,
-			&i.Etag,
-		); err != nil {
+		var i HardDeleteRecursiveRow
+		if err := rows.Scan(&i.ID, &i.Dir); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
