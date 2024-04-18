@@ -11,29 +11,19 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"time"
+
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 // A FileSystem implements access to a collection of named files. The elements
 // in a file path are separated by slash ('/', U+002F) characters, regardless
 // of host operating system convention.
 type FileSystem interface {
+	Stat(ctx context.Context, name string) (core.File, error)
 	Mkdir(ctx context.Context, name string) error
 	RemoveAll(ctx context.Context, name string) error
 	Rename(ctx context.Context, oldName, newName string) error
-	Stat(ctx context.Context, name string) (ResourceInfo, error)
 	OpenWrite(ctx context.Context, name string) (io.WriteCloser, error)
-}
-
-type ResourceInfo interface {
-	Name() string        // base name of the file
-	Size() int64         // length in bytes for regular files; system-dependent for others
-	ModTime() time.Time  // modification time
-	IsDir() bool         // abbreviation for Mode().IsDir()
-	ETag() string        // entity tag for efficient caching
-	ContentType() string // content type
-	OpenRead(ctx context.Context, start, length int64) (io.ReadCloser, error)
-	Readdir(ctx context.Context) ([]ResourceInfo, error)
 }
 
 // moveFiles moves files and/or directories from src to dst.
@@ -107,7 +97,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 			return http.StatusForbidden, err
 		}
 		if depth == infiniteDepth {
-			children, err := srcStat.Readdir(ctx)
+			children, err := srcStat.ReadDir(ctx)
 			if err != nil {
 				return http.StatusForbidden, err
 			}
@@ -156,14 +146,14 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 	return http.StatusNoContent, nil
 }
 
-type WalkFunc func(path string, info ResourceInfo, err error) error
+type WalkFunc func(path string, info core.FileInfo, err error) error
 
 // walkFS traverses filesystem fs starting at name up to depth levels.
 //
 // Allowed values for depth are 0, 1 or infiniteDepth. For each visited node,
 // walkFS calls walkFn. If a visited file system node is a directory and
 // walkFn returns filepath.SkipDir, walkFS will skip traversal of this node.
-func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info ResourceInfo, walkFn WalkFunc) error {
+func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info core.FileInfo, walkFn WalkFunc) error {
 	// This implementation is based on Walk's code in the standard path/filepath package.
 	err := walkFn(name, info, nil)
 	if err != nil {
@@ -184,7 +174,7 @@ func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info Res
 	if err != nil {
 		return walkFn(name, info, err)
 	}
-	fileInfos, err := f.Readdir(ctx)
+	fileInfos, err := f.ReadDir(ctx)
 	if err != nil {
 		return walkFn(name, info, err)
 	}

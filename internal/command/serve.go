@@ -21,7 +21,7 @@ func setupServeCommand() *cobra.Command {
 			config := viper.GetViper()
 			engine := createEngine(config.GetBool("log_body"), config.GetBool("cors_enabled"), config.GetStringSlice("cors_origins"))
 
-			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")), libraryManager, userManager)
+			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")), fs, userManager)
 
 			server := endless.NewServer(config.GetString("listen"), engine)
 			server.BeforeBegin = func(addr string) {

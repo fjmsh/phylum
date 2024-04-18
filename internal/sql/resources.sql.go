@@ -37,7 +37,7 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 	return err
 }
 
-const deleteRecursive = `-- name: DeleteRecursive :many
+const deleteRecursive = `-- name: DeleteRecursive :exec
 WITH RECURSIVE nodes(id, parent) AS (
     SELECT r.id, r.parent
     FROM resources r WHERE r.id = $1::uuid
@@ -49,32 +49,11 @@ WITH RECURSIVE nodes(id, parent) AS (
 UPDATE resources
 SET modified = NOW(), deleted = NOW()
 WHERE id in (SELECT id FROM nodes)
-RETURNING id, dir
 `
 
-type DeleteRecursiveRow struct {
-	ID  uuid.UUID
-	Dir bool
-}
-
-func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) ([]DeleteRecursiveRow, error) {
-	rows, err := q.db.Query(ctx, deleteRecursive, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []DeleteRecursiveRow
-	for rows.Next() {
-		var i DeleteRecursiveRow
-		if err := rows.Scan(&i.ID, &i.Dir); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteRecursive, id)
+	return err
 }
 
 const hardDeleteRecursive = `-- name: HardDeleteRecursive :many
@@ -224,7 +203,7 @@ func (q *Queries) ResourceById(ctx context.Context, id uuid.UUID) (Resource, err
 const resourceByPath = `-- name: ResourceByPath :one
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, search) AS (
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, $1::text[]
-    FROM resources r WHERE r.id = $2::uuid
+    FROM resources r WHERE r.id = '00000000-0000-0000-0000-000000000000'::uuid
   UNION ALL
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search
     FROM resources r JOIN nodes n on r.parent = n.id
@@ -233,11 +212,6 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
 )
 SELECT id, parent, name, dir, created, modified, size, etag, depth, path, search FROM nodes WHERE cardinality(search) = depth
 `
-
-type ResourceByPathParams struct {
-	Search []string
-	Root   uuid.UUID
-}
 
 type ResourceByPathRow struct {
 	ID       uuid.UUID
@@ -253,8 +227,8 @@ type ResourceByPathRow struct {
 	Search   []string
 }
 
-func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) (ResourceByPathRow, error) {
-	row := q.db.QueryRow(ctx, resourceByPath, arg.Search, arg.Root)
+func (q *Queries) ResourceByPath(ctx context.Context, search []string) (ResourceByPathRow, error) {
+	row := q.db.QueryRow(ctx, resourceByPath, search)
 	var i ResourceByPathRow
 	err := row.Scan(
 		&i.ID,

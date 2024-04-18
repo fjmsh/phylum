@@ -16,6 +16,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 type Handler struct {
@@ -199,14 +201,14 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 	}
 	// TODO: check locks for read-only access??
 	ctx := r.Context()
-	fi, err := h.FileSystem.Stat(ctx, reqPath)
+	file, err := h.FileSystem.Stat(ctx, reqPath)
 	if err != nil {
 		return http.StatusNotFound, err
 	}
-	if fi.IsDir() {
-		serveCollection(w, r, fi)
+	if file.IsDir() {
+		serveCollection(w, r, file)
 	} else {
-		serveResource(w, r, fi)
+		serveResource(w, r, file)
 	}
 
 	return 0, nil
@@ -522,7 +524,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 
 	mw := multistatusWriter{w: w}
 
-	walkFn := func(reqPath string, info ResourceInfo, err error) error {
+	walkFn := func(reqPath string, info core.FileInfo, err error) error {
 		if err != nil {
 			return handlePropfindError(err, info)
 		}
@@ -623,9 +625,9 @@ func makePropstatResponse(href string, pstats []Propstat) *response {
 	return &resp
 }
 
-func handlePropfindError(err error, info ResourceInfo) error {
+func handlePropfindError(err error, info core.FileInfo) error {
 	var skipResp error = nil
-	if info != nil && info.IsDir() {
+	if info.IsDir() {
 		skipResp = filepath.SkipDir
 	}
 

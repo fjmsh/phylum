@@ -10,6 +10,8 @@ import (
 	"encoding/xml"
 	"net/http"
 	"strconv"
+
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 // Proppatch describes a property update instruction as defined in RFC 4918.
@@ -68,7 +70,7 @@ func makePropstats(x, y Propstat) []Propstat {
 var liveProps = map[xml.Name]struct {
 	// findFn implements the propfind function of this property. If nil,
 	// it indicates a hidden property.
-	findFn func(ResourceInfo) string
+	findFn func(core.FileInfo) string
 	// dir is true if the property applies to directories.
 	dir bool
 }{
@@ -263,34 +265,34 @@ func escapeXML(s string) string {
 	return s
 }
 
-func findResourceType(fi ResourceInfo) string {
+func findResourceType(fi core.FileInfo) string {
 	if fi.IsDir() {
 		return `<D:collection xmlns:D="DAV:"/>`
 	}
 	return ""
 }
 
-func findDisplayName(fi ResourceInfo) string {
+func findDisplayName(fi core.FileInfo) string {
 	return escapeXML(fi.Name())
 }
 
-func findContentLength(fi ResourceInfo) string {
+func findContentLength(fi core.FileInfo) string {
 	return strconv.FormatInt(fi.Size(), 10)
 }
 
-func findLastModified(fi ResourceInfo) string {
+func findLastModified(fi core.FileInfo) string {
 	return fi.ModTime().UTC().Format(http.TimeFormat)
 }
 
-func findContentType(fi ResourceInfo) string {
+func findContentType(fi core.FileInfo) string {
 	return fi.ContentType()
 }
 
-func findETag(fi ResourceInfo) string {
+func findETag(fi core.FileInfo) string {
 	return fi.ETag()
 }
 
-func findSupportedLock(fi ResourceInfo) string {
+func findSupportedLock(fi core.FileInfo) string {
 	return `` +
 		`<D:lockentry xmlns:D="DAV:">` +
 		`<D:lockscope><D:exclusive/></D:lockscope>` +

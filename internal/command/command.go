@@ -5,7 +5,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/shroff/phylum/server/internal/library"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/sql"
 	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/shroff/phylum/server/internal/user"
@@ -15,7 +15,7 @@ import (
 )
 
 var debug bool = false
-var libraryManager *library.Manager
+var fs *core.FileSystem
 var userManager *user.Manager
 var storageManager *storage.Manager
 
@@ -68,7 +68,7 @@ func SetupCommand() {
 		if err != nil {
 			logrus.Fatal(err)
 		}
-		libraryManager, err = library.NewManager(db, storageManager)
+		fs, err = core.OpenFileSystem(db, storageManager)
 		if err != nil {
 			logrus.Fatal(err)
 		}
