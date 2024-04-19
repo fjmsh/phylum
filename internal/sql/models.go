@@ -26,7 +26,7 @@ type Silo struct {
 	Created  pgtype.Timestamp
 	Modified pgtype.Timestamp
 	Deleted  pgtype.Timestamp
-	Owner    int32
+	Owner    string
 	Name     string
 	Storage  string
 }
@@ -38,9 +38,8 @@ type StorageBackend struct {
 }
 
 type User struct {
-	ID           int32
-	DisplayName  string
 	Username     string
+	DisplayName  string
 	PasswordHash string
 	Deleted      pgtype.Timestamp
 }

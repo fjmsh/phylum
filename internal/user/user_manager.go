@@ -22,10 +22,10 @@ func (m Manager) CreateUser(ctx context.Context, username, displayName, password
 	return nil
 }
 
-func (m Manager) FindUser(ctx context.Context, username string) (sql.User, error) {
-	return m.db.Queries().UserByUsername(ctx, username)
+func (m Manager) ListUsers(ctx context.Context) ([]sql.User, error) {
+	return m.db.Queries().ListUsers(ctx)
 }
 
-func (m Manager) UserById(ctx context.Context, id int32) (sql.User, error) {
-	return m.db.Queries().UserById(ctx, id)
+func (m Manager) FindUser(ctx context.Context, username string) (sql.User, error) {
+	return m.db.Queries().UserByUsername(ctx, username)
 }

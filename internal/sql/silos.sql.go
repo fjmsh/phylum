@@ -21,7 +21,7 @@ INSERT INTO silos(
 
 type CreateSiloParams struct {
 	ID      uuid.UUID
-	Owner   int32
+	Owner   string
 	Name    string
 	Storage string
 }

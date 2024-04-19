@@ -23,25 +23,26 @@ func setupSiloCommand() *cobra.Command {
 
 func setupSiloCreateCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "create storage-backend owner display-name",
+		Use:   "create owner storage name",
 		Short: "Create Silo",
 		Args:  cobra.ExactArgs(3),
 		Run: func(cmd *cobra.Command, args []string) {
 			id := uuid.New()
 
-			storageName := args[0]
+			username := args[0]
+			user, err := userManager.FindUser(context.Background(), username)
+			if err != nil {
+				logrus.Fatal("User not found: " + username)
+			}
+
+			storageName := args[1]
 			storage := storageManager.Find(storageName)
 			if storage == nil {
 				logrus.Fatal("Storage not found: " + storageName)
 			}
 
-			username := args[1]
-			user, err := userManager.FindUser(context.Background(), username)
-			if err != nil {
-				logrus.Fatal("User not found: " + username)
-			}
 			name := args[2]
-			if err := fs.CreateSilo(context.Background(), id, user.ID, storageName, name); err != nil {
+			if err := fs.CreateSilo(context.Background(), id, user.Username, storageName, name); err != nil {
 				logrus.Fatal(err)
 			}
 			logrus.Info("Created " + id.String())
@@ -63,11 +64,8 @@ func setupSiloListCommand() *cobra.Command {
 			for _, silo := range silos {
 				logrus.Infof("%-16s: %s\n", silo.Name, silo.ID.String())
 				logrus.Infof("  storage: %s\n", silo.Storage)
-				if owner, err := userManager.UserById(ctx, silo.Owner); err == nil {
-					logrus.Infof("  owner: %5d - %s\n", silo.Owner, owner.Username)
-				} else {
-					logrus.Infof("  owner not found: %5d\n", silo.Owner)
-				}
+				logrus.Infof("  owner: %s\n", silo.Owner)
+				logrus.Info()
 			}
 		},
 	}

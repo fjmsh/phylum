@@ -20,6 +20,7 @@ func setupUserCommand() *cobra.Command {
 	}
 	cmd.AddCommand([]*cobra.Command{
 		setupUserCreateCommand(),
+		setupUserListCommand(),
 		setupUserLoginCommand(),
 	}...)
 	return cmd
@@ -76,8 +77,24 @@ func setupUserCreateCommand() *cobra.Command {
 	return cmd
 }
 
+func setupUserListCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "list",
+		Short: "List Users",
+		Run: func(cmd *cobra.Command, args []string) {
+			users, err := userManager.ListUsers(context.Background())
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			for _, user := range users {
+				logrus.Infof("%16s: %s", user.Username, user.DisplayName)
+			}
+		},
+	}
+}
+
 func setupUserLoginCommand() *cobra.Command {
-	cmd := &cobra.Command{
+	return &cobra.Command{
 		Use:   "auth",
 		Short: "Authenticate user",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -113,5 +130,4 @@ func setupUserLoginCommand() *cobra.Command {
 			}
 		},
 	}
-	return cmd
 }

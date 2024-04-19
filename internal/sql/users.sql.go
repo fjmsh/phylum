@@ -11,60 +11,70 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users(
-    display_name, username, password_hash
+    username, display_name, password_hash
 ) VALUES (
     $1, $2, $3
 )
-RETURNING id, display_name, username, password_hash, deleted
+RETURNING username, display_name, password_hash, deleted
 `
 
 type CreateUserParams struct {
-	DisplayName  string
 	Username     string
+	DisplayName  string
 	PasswordHash string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.DisplayName, arg.Username, arg.PasswordHash)
+	row := q.db.QueryRow(ctx, createUser, arg.Username, arg.DisplayName, arg.PasswordHash)
 	var i User
 	err := row.Scan(
-		&i.ID,
-		&i.DisplayName,
 		&i.Username,
+		&i.DisplayName,
 		&i.PasswordHash,
 		&i.Deleted,
 	)
 	return i, err
 }
 
-const userById = `-- name: UserById :one
-SELECT id, display_name, username, password_hash, deleted from users WHERE id = $1
+const listUsers = `-- name: ListUsers :many
+SELECT username, display_name, password_hash, deleted from users WHERE deleted IS NULL
 `
 
-func (q *Queries) UserById(ctx context.Context, id int32) (User, error) {
-	row := q.db.QueryRow(ctx, userById, id)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.DisplayName,
-		&i.Username,
-		&i.PasswordHash,
-		&i.Deleted,
-	)
-	return i, err
+func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.Query(ctx, listUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.Username,
+			&i.DisplayName,
+			&i.PasswordHash,
+			&i.Deleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const userByUsername = `-- name: UserByUsername :one
-SELECT id, display_name, username, password_hash, deleted from users WHERE username = $1
+SELECT username, display_name, password_hash, deleted from users WHERE username = $1
 `
 
 func (q *Queries) UserByUsername(ctx context.Context, username string) (User, error) {
 	row := q.db.QueryRow(ctx, userByUsername, username)
 	var i User
 	err := row.Scan(
-		&i.ID,
-		&i.DisplayName,
 		&i.Username,
+		&i.DisplayName,
 		&i.PasswordHash,
 		&i.Deleted,
 	)

@@ -18,7 +18,7 @@ func OpenFileSystem(db *sql.DbHandler, storageManager *storage.Manager) *FileSys
 	return &FileSystem{db: db, storageManager: storageManager}
 }
 
-func (fs FileSystem) CreateSilo(ctx context.Context, id uuid.UUID, owner int32, storage string, name string) error {
+func (fs FileSystem) CreateSilo(ctx context.Context, id uuid.UUID, owner, storage, name string) error {
 	return fs.db.RunInTx(ctx, func(q *sql.Queries) error {
 		if err := q.CreateSilo(ctx, sql.CreateSiloParams{
 			ID:      id,

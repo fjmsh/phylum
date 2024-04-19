@@ -1,14 +1,13 @@
 -- name: CreateUser :one
 INSERT INTO users(
-    display_name, username, password_hash
+    username, display_name, password_hash
 ) VALUES (
     $1, $2, $3
 )
 RETURNING *;
 
-
 -- name: UserByUsername :one
 SELECT * from users WHERE username = $1;
 
--- name: UserById :one
-SELECT * from users WHERE id = $1;
+-- name: ListUsers :many
+SELECT * from users WHERE deleted IS NULL;
