@@ -9,14 +9,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Library struct {
-	ID             uuid.UUID
-	Owner          int32
-	DisplayName    string
-	Deleted        pgtype.Timestamp
-	StorageBackend string
-}
-
 type Resource struct {
 	ID       uuid.UUID
 	Parent   *uuid.UUID
@@ -27,6 +19,16 @@ type Resource struct {
 	Deleted  pgtype.Timestamp
 	Size     pgtype.Int4
 	Etag     pgtype.Text
+}
+
+type Silo struct {
+	ID       uuid.UUID
+	Created  pgtype.Timestamp
+	Modified pgtype.Timestamp
+	Deleted  pgtype.Timestamp
+	Owner    int32
+	Name     string
+	Storage  string
 }
 
 type StorageBackend struct {

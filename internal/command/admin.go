@@ -12,7 +12,7 @@ func setupAdminCommand() *cobra.Command {
 	cmd.AddCommand([]*cobra.Command{
 		setupStorageCommand(),
 		setupUserCommand(),
-		setupLibraryCommand(),
+		setupSiloCommand(),
 	}...)
 
 	return cmd

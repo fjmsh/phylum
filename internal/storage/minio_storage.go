@@ -104,8 +104,8 @@ func (s minioStorage) Delete(rows []sql.HardDeleteRecursiveRow) []error {
 	return errs
 }
 
-func (l minioStorage) String() string {
-	return fmt.Sprintf("minio (endpoint: %s, bucket: %s)", l.client.EndpointURL(), l.bucketName)
+func (s minioStorage) String() string {
+	return fmt.Sprintf("minio (endpoint: %s, bucket: %s, prefix: %s, tmp: %s)", s.client.EndpointURL(), s.bucketName, s.prefix, s.tmp)
 }
 
 type progressReader struct {

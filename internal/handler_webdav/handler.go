@@ -69,43 +69,47 @@ func SetupHandler(r *gin.RouterGroup, fs *core.FileSystem, userManager *user.Man
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
-	// path := c.Params.ByName("path")
-	// idStr := strings.TrimLeft(path, "/")
-	// if idStr == "" {
-	// 	// No path specified
-	// 	c.Writer.WriteHeader(404)
-	// 	return
-	// }
-	// index := strings.Index(idStr, "/")
-	// if index != -1 {
-	// 	idStr = idStr[0:index]
-	// }
-	// id, err := uuid.Parse(idStr)
-	// if err != nil {
-	// 	c.Writer.WriteHeader(404)
-	// 	return
-	// }
+	path := c.Params.ByName("path")
+	idStr := strings.TrimLeft(path, "/")
+	if idStr == "" {
+		// No path specified
+		c.Writer.WriteHeader(404)
+		return
+	}
+	index := strings.Index(idStr, "/")
+	if index != -1 {
+		idStr = idStr[0:index]
+	}
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		c.Writer.WriteHeader(404)
+		return
+	}
 
-	// library, err := h.libraryManager.Get(context.Background(), id)
-	// if err != nil {
-	// 	c.Writer.WriteHeader(404)
-	// 	return
-	// }
+	silo, err := h.fs.OpenSilo(context.Background(), id)
+	if err != nil {
+		c.Writer.WriteHeader(404)
+		return
+	}
 
 	webdavHandler := webdav.Handler{
-		Prefix:     h.prefix,
-		FileSystem: h,
+		Prefix:     h.prefix + "/" + id.String(),
+		FileSystem: adapter{silo},
 		LockSystem: webdav.NewMemLS(),
 	}
 	webdavHandler.ServeHTTP(c.Writer, c.Request)
 }
 
-func (a handler) Stat(ctx context.Context, name string) (core.File, error) {
-	return a.fs.ResourceByPath(ctx, name)
+type adapter struct {
+	*core.Silo
 }
 
-func (a handler) OpenWrite(ctx context.Context, name string) (io.WriteCloser, error) {
-	resource, err := a.fs.ResourceByPath(ctx, name)
+func (a adapter) Stat(ctx context.Context, name string) (core.File, error) {
+	return a.ResourceByPath(ctx, name)
+}
+
+func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, error) {
+	resource, err := a.ResourceByPath(ctx, name)
 	resourceId := resource.ID()
 
 	if err != nil {
@@ -114,13 +118,13 @@ func (a handler) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 			name = strings.TrimRight(name, "/")
 			index := strings.LastIndex(name, "/")
 			parentPath := name[0:index]
-			parent, err := a.fs.ResourceByPath(ctx, parentPath)
+			parent, err := a.ResourceByPath(ctx, parentPath)
 			if err != nil {
 				return nil, fs.ErrNotExist
 			}
 			resourceName := name[index+1:]
 			resourceId = uuid.New()
-			err = a.fs.CreateResource(ctx, resourceId, parent.ID(), resourceName, false)
+			err = a.CreateResource(ctx, resourceId, parent.ID(), resourceName, false)
 			if err != nil {
 				return nil, err
 			}
@@ -130,40 +134,40 @@ func (a handler) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 	} else if resource.IsDir() {
 		return nil, errors.New("cannot open collection for write")
 	}
-	return a.fs.OpenWrite(ctx, resourceId)
+	return a.Silo.OpenWrite(ctx, resourceId)
 }
 
-func (a handler) RemoveAll(ctx context.Context, name string) error {
-	resource, err := a.fs.ResourceByPath(ctx, name)
+func (a adapter) RemoveAll(ctx context.Context, name string) error {
+	resource, err := a.ResourceByPath(ctx, name)
 	if err != nil {
 		return fs.ErrNotExist
 	}
-	return a.fs.DeleteRecursive(ctx, resource.ID())
+	return a.DeleteRecursive(ctx, resource.ID(), false)
 }
 
-func (a handler) Mkdir(ctx context.Context, name string) error {
-	if _, err := a.fs.ResourceByPath(ctx, name); err == nil {
+func (a adapter) Mkdir(ctx context.Context, name string) error {
+	if _, err := a.ResourceByPath(ctx, name); err == nil {
 		return fs.ErrExist
 	}
 	name = strings.TrimRight(name, "/")
 	index := strings.LastIndex(name, "/")
 	parentPath := name[0:index]
-	parent, err := a.fs.ResourceByPath(ctx, parentPath)
+	parent, err := a.ResourceByPath(ctx, parentPath)
 	if err != nil {
 		return fs.ErrNotExist
 	}
 	dirName := name[index+1:]
-	err = a.fs.CreateResource(ctx, uuid.New(), parent.ID(), dirName, true)
+	err = a.CreateResource(ctx, uuid.New(), parent.ID(), dirName, true)
 	return err
 }
 
-func (a handler) Rename(ctx context.Context, oldName, newName string) error {
-	src, err := a.fs.ResourceByPath(ctx, oldName)
+func (a adapter) Rename(ctx context.Context, oldName, newName string) error {
+	src, err := a.ResourceByPath(ctx, oldName)
 	if err != nil {
 		return fs.ErrNotExist
 	}
 
-	_, err = a.fs.ResourceByPath(ctx, newName)
+	_, err = a.ResourceByPath(ctx, newName)
 	if err == nil {
 		return fs.ErrExist
 	}
@@ -171,14 +175,14 @@ func (a handler) Rename(ctx context.Context, oldName, newName string) error {
 	newName = strings.TrimRight(newName, "/")
 	index := strings.LastIndex(newName, "/")
 	parentPath := newName[0:index]
-	parent, err := a.fs.ResourceByPath(ctx, parentPath)
+	parent, err := a.ResourceByPath(ctx, parentPath)
 	newName = newName[index+1:]
 
 	if err != nil {
 		return fs.ErrNotExist
 	}
 
-	if err = a.fs.Move(ctx, src.ID(), parent.ID(), newName); err != nil {
+	if err = a.Move(ctx, src.ID(), parent.ID(), newName); err != nil {
 		return err
 	}
 	return nil

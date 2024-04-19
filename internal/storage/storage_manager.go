@@ -3,9 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
-	"io"
 
-	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/sql"
 )
 
@@ -47,23 +45,6 @@ func (m Manager) Create(name string, driver string, params map[string]string) er
 		return err
 	}
 	m.backends[name] = storage
-	return nil
-}
-
-func (m Manager) OpenRead(ctx context.Context, id uuid.UUID, start, length int64) (io.ReadCloser, error) {
-	return m.findStorage(id).OpenRead(id, start, length)
-}
-
-func (m Manager) OpenWrite(id uuid.UUID, callback func(int, string) error) (io.WriteCloser, error) {
-	return m.findStorage(id).OpenWrite(id, callback)
-}
-
-func (m Manager) Delete(rows []sql.HardDeleteRecursiveRow) []error {
-	// TODO: Not working
-	return nil
-}
-
-func (m Manager) findStorage(id uuid.UUID) Storage {
 	return nil
 }
 

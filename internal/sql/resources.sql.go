@@ -203,7 +203,7 @@ func (q *Queries) ResourceById(ctx context.Context, id uuid.UUID) (Resource, err
 const resourceByPath = `-- name: ResourceByPath :one
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, search) AS (
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, $1::text[]
-    FROM resources r WHERE r.id = '00000000-0000-0000-0000-000000000000'::uuid
+    FROM resources r WHERE r.id = $2::uuid
   UNION ALL
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search
     FROM resources r JOIN nodes n on r.parent = n.id
@@ -212,6 +212,11 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
 )
 SELECT id, parent, name, dir, created, modified, size, etag, depth, path, search FROM nodes WHERE cardinality(search) = depth
 `
+
+type ResourceByPathParams struct {
+	Search []string
+	Root   uuid.UUID
+}
 
 type ResourceByPathRow struct {
 	ID       uuid.UUID
@@ -227,8 +232,8 @@ type ResourceByPathRow struct {
 	Search   []string
 }
 
-func (q *Queries) ResourceByPath(ctx context.Context, search []string) (ResourceByPathRow, error) {
-	row := q.db.QueryRow(ctx, resourceByPath, search)
+func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) (ResourceByPathRow, error) {
+	row := q.db.QueryRow(ctx, resourceByPath, arg.Search, arg.Root)
 	var i ResourceByPathRow
 	err := row.Scan(
 		&i.ID,

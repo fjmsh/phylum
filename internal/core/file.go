@@ -38,7 +38,7 @@ type fileInfo struct {
 
 type file struct {
 	fileInfo
-	fs *FileSystem
+	silo *Silo
 }
 
 func (f fileInfo) ID() uuid.UUID { return f.id }
@@ -69,9 +69,9 @@ func (f fileInfo) ContentType() string {
 }
 
 func (f file) OpenRead(ctx context.Context, start, length int64) (io.ReadCloser, error) {
-	return f.fs.OpenRead(ctx, f.id, start, length)
+	return f.silo.OpenRead(ctx, f.id, start, length)
 }
 
 func (f file) ReadDir(ctx context.Context) ([]FileInfo, error) {
-	return f.fs.ReadDir(ctx, f.id, false, false)
+	return f.silo.ReadDir(ctx, f.id, false, false)
 }

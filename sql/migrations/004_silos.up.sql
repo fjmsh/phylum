@@ -1,0 +1,9 @@
+CREATE TABLE silos(
+    id       UUID   PRIMARY KEY,
+    created  TIMESTAMP NOT NULL,
+    modified TIMESTAMP NOT NULL,
+    deleted  TIMESTAMP,
+    owner    SERIAL NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    name     TEXT   NOT NULL,
+    storage  TEXT NOT NULL REFERENCES storage_backends(name) ON UPDATE CASCADE ON DELETE CASCADE
+);

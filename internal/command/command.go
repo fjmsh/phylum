@@ -68,10 +68,7 @@ func SetupCommand() {
 		if err != nil {
 			logrus.Fatal(err)
 		}
-		fs, err = core.OpenFileSystem(db, storageManager)
-		if err != nil {
-			logrus.Fatal(err)
-		}
+		fs = core.OpenFileSystem(db, storageManager)
 	}
 
 	defer func() {

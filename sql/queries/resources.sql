@@ -47,7 +47,7 @@ WHERE CASE WHEN @include_root::boolean THEN true ELSE depth > 0 END;
 -- name: ResourceByPath :one
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, search) AS (
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, @search::text[]
-    FROM resources r WHERE r.id = '00000000-0000-0000-0000-000000000000'::uuid
+    FROM resources r WHERE r.id = @root::uuid
   UNION ALL
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search
     FROM resources r JOIN nodes n on r.parent = n.id
