@@ -15,7 +15,8 @@ func setupSiloCommand() *cobra.Command {
 	}
 	cmd.AddCommand([]*cobra.Command{
 		setupSiloCreateCommand(),
-		setupLibraryDeleteCommand(),
+		setupSiloListCommand(),
+		setupSiloDeleteCommand(),
 	}...)
 	return cmd
 }
@@ -23,7 +24,7 @@ func setupSiloCommand() *cobra.Command {
 func setupSiloCreateCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "create storage-backend owner display-name",
-		Short: "Create Library",
+		Short: "Create Silo",
 		Args:  cobra.ExactArgs(3),
 		Run: func(cmd *cobra.Command, args []string) {
 			id := uuid.New()
@@ -48,7 +49,31 @@ func setupSiloCreateCommand() *cobra.Command {
 	}
 }
 
-func setupLibraryDeleteCommand() *cobra.Command {
+func setupSiloListCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "list",
+		Short: "List Silos",
+		Args:  cobra.ExactArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
+			silos, err := fs.ListSilos(ctx)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			for _, silo := range silos {
+				logrus.Infof("%-16s: %s\n", silo.Name, silo.ID.String())
+				logrus.Infof("  storage: %s\n", silo.Storage)
+				if owner, err := userManager.UserById(ctx, silo.Owner); err == nil {
+					logrus.Infof("  owner: %5d - %s\n", silo.Owner, owner.Username)
+				} else {
+					logrus.Infof("  owner not found: %5d\n", silo.Owner)
+				}
+			}
+		},
+	}
+}
+
+func setupSiloDeleteCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "delete id",
 		Short: "Delete Silo",

@@ -37,6 +37,10 @@ func (fs FileSystem) CreateSilo(ctx context.Context, id uuid.UUID, owner int32, 
 	})
 }
 
+func (fs FileSystem) ListSilos(ctx context.Context) ([]sql.Silo, error) {
+	return fs.db.Queries().ListSilos(ctx)
+}
+
 func (fs FileSystem) OpenSilo(ctx context.Context, id uuid.UUID) (*Silo, error) {
 	silo, err := fs.db.Queries().SiloById(ctx, id)
 	if err != nil {

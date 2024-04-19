@@ -25,3 +25,7 @@ func (m Manager) CreateUser(ctx context.Context, username, displayName, password
 func (m Manager) FindUser(ctx context.Context, username string) (sql.User, error) {
 	return m.db.Queries().UserByUsername(ctx, username)
 }
+
+func (m Manager) UserById(ctx context.Context, id int32) (sql.User, error) {
+	return m.db.Queries().UserById(ctx, id)
+}
