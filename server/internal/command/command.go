@@ -31,11 +31,14 @@ func SetupCommand() {
 	flags.Bool("trace-sql", false, "Trace SQL Queries")
 	viper.BindPFlag("trace_sql", flags.Lookup("trace-sql"))
 
-	flags.StringP("working-dir", "W", ".", "Working Directory")
+	flags.StringP("working-dir", "W", "data", "Working Directory")
 	viper.BindPFlag("working_dir", flags.Lookup("working-dir"))
 
 	flags.String("database-url", "postgres://phylum:phylum@localhost:5432/phylum", "Database URL or DSN")
 	viper.BindPFlag("database_url", flags.Lookup("database-url"))
+
+	flags.Bool("no-auto-migrate", false, "Do not automatically migrate databast schema")
+	viper.BindPFlag("no_auto_migrate", flags.Lookup("no-auto-migrate"))
 
 	var db *sql.DbHandler
 
@@ -55,7 +58,7 @@ func SetupCommand() {
 		dsn := viper.GetString("database_url")
 
 		var err error
-		db, err = sql.NewDb(dsn, debug && viper.GetBool("trace_sql"))
+		db, err = sql.NewDb(dsn, debug && viper.GetBool("trace_sql"), !viper.GetBool("no_auto_migrate"))
 		if err != nil {
 			logrus.Fatal(err)
 		}

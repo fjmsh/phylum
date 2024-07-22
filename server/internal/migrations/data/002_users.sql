@@ -4,3 +4,7 @@ CREATE TABLE users(
     password_hash TEXT NOT NULL,
     deleted       TIMESTAMP
 );
+
+---- create above / drop below ----
+
+DROP TABLE users;

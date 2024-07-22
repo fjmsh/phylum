@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/shroff/phylum/server/internal/migrations"
 	"github.com/sirupsen/logrus"
 )
 
@@ -14,7 +15,7 @@ type DbHandler struct {
 	queries *Queries
 }
 
-func NewDb(dsn string, trace bool) (*DbHandler, error) {
+func NewDb(dsn string, trace, autoMigrate bool) (*DbHandler, error) {
 	config, err := pgx.ParseConfig(dsn)
 	if err != nil {
 		return nil, errors.New("Unable to parse DSN: " + err.Error())
@@ -30,6 +31,25 @@ func NewDb(dsn string, trace bool) (*DbHandler, error) {
 	}
 
 	logrus.Info("Connected to " + config.Database + " at " + config.Host + ":" + fmt.Sprint(config.Port))
+
+	if migrator, err := migrations.NewMigrator(conn); err != nil {
+		panic(err)
+	} else {
+		version, err := migrator.GetCurrentVersion()
+		if err != nil {
+			panic(err)
+		}
+		latest := migrator.GetLatestVersion()
+		if version != latest {
+			if autoMigrate {
+				logrus.Info(fmt.Sprintf("Migrating database from version %d to %d", version, latest))
+				migrator.Migrate()
+			} else {
+				panic(fmt.Sprintf("Schema is not at latest version (current %d, latest %d)", version, latest))
+			}
+		}
+
+	}
 
 	return &DbHandler{
 		conn:    conn,

@@ -7,3 +7,7 @@ CREATE TABLE silos(
     name     TEXT   NOT NULL,
     storage  TEXT NOT NULL REFERENCES storage_backends(name) ON UPDATE CASCADE ON DELETE CASCADE
 );
+
+---- create above / drop below ----
+
+DROP TABLE silos

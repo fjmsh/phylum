@@ -11,4 +11,10 @@ CREATE TABLE resources (
   -- CONSTRAINT resource_parent FOREIGN KEY REFERENCES resources(id) ON UPDATE CASCADE ON DELETE CASCADE;
 );
 
-CREATE UNIQUE INDEX unique_member_resource ON resources(parent, name) WHERE deleted IS NULL;
+CREATE UNIQUE INDEX unique_member_resource_name ON resources(parent, name) WHERE deleted IS NULL;
+
+---- create above / drop below ----
+
+DROP INDEX unique_member_resource_name
+
+DROP TABLE resources
