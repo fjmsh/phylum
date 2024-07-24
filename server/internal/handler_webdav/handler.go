@@ -31,24 +31,24 @@ func SetupHandler(r *gin.RouterGroup, fs *core.FileSystem, userManager *user.Man
 	r.Use(func(c *gin.Context) {
 		username, pass, ok := c.Request.BasicAuth()
 		if !ok {
-			c.Header("WWW-Authenticate", "Basic realm=\"Authorization Required\"")
+			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 		user, err := userManager.FindUser(context.Background(), username)
 		if err != nil {
-			c.Header("WWW-Authenticate", "Basic realm=\"Incorrect Username or Password\"")
+			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 		ok, err = cryptutil.VerifyPassword(pass, user.PasswordHash)
 		if err != nil {
-			c.Header("WWW-Authenticate", "Basic realm=\"Incorrect Username or Password\"")
+			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 		if !ok {
-			c.Header("WWW-Authenticate", "Basic realm=\"Incorrect Username or Password\"")
+			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}

@@ -1,7 +1,6 @@
 package command
 
 import (
-	"context"
 	"os"
 	"path"
 
@@ -77,7 +76,7 @@ func SetupCommand() {
 	defer func() {
 		if db != nil {
 			logrus.Info("Closing datbase connection")
-			db.Close(context.Background())
+			db.Close()
 		}
 	}()
 

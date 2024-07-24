@@ -6,33 +6,34 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/shroff/phylum/server/internal/migrations"
 	"github.com/sirupsen/logrus"
 )
 
 type DbHandler struct {
-	conn    *pgx.Conn
+	pool    *pgxpool.Pool
 	queries *Queries
 }
 
 func NewDb(dsn string, trace, autoMigrate bool) (*DbHandler, error) {
-	config, err := pgx.ParseConfig(dsn)
+	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, errors.New("Unable to parse DSN: " + err.Error())
 	}
 
 	if trace {
-		config.Tracer = tracer{}
+		config.ConnConfig.Tracer = tracer{}
 	}
 
-	conn, err := pgx.ConnectConfig(context.Background(), config)
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, errors.New("Unable to connect to database: " + err.Error())
 	}
 
-	logrus.Info("Connected to " + config.Database + " at " + config.Host + ":" + fmt.Sprint(config.Port))
+	logrus.Info("Connected to " + config.ConnConfig.Database + " at " + config.ConnConfig.Host + ":" + fmt.Sprint(config.ConnConfig.Port))
 
-	if migrator, err := migrations.NewMigrator(conn); err != nil {
+	if migrator, err := migrations.NewMigrator(pool); err != nil {
 		panic(err)
 	} else {
 		version, err := migrator.GetCurrentVersion()
@@ -52,8 +53,8 @@ func NewDb(dsn string, trace, autoMigrate bool) (*DbHandler, error) {
 	}
 
 	return &DbHandler{
-		conn:    conn,
-		queries: &Queries{db: conn},
+		pool:    pool,
+		queries: &Queries{db: pool},
 	}, nil
 }
 
@@ -62,12 +63,12 @@ func (d DbHandler) Queries() *Queries {
 }
 
 func (d DbHandler) RunInTx(ctx context.Context, fn func(*Queries) error) error {
-	return pgx.BeginFunc(ctx, d.conn, func(tx pgx.Tx) error {
+	return pgx.BeginFunc(ctx, d.pool, func(tx pgx.Tx) error {
 		q := d.queries.WithTx(tx)
 		return fn(q)
 	})
 }
 
-func (d DbHandler) Close(ctx context.Context) {
-	d.conn.Close(ctx)
+func (d DbHandler) Close() {
+	d.pool.Close()
 }
