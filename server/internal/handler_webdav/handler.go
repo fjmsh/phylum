@@ -110,7 +110,6 @@ func (a adapter) Stat(ctx context.Context, name string) (core.File, error) {
 
 func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, error) {
 	resource, err := a.ResourceByPath(ctx, name)
-	resourceId := resource.ID()
 
 	if err != nil {
 		if err == fs.ErrNotExist {
@@ -123,18 +122,19 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 				return nil, fs.ErrNotExist
 			}
 			resourceName := name[index+1:]
-			resourceId = uuid.New()
+			resourceId := uuid.New()
 			err = a.CreateResource(ctx, resourceId, parent.ID(), resourceName, false)
 			if err != nil {
 				return nil, err
 			}
-		} else {
-			return nil, err
+			return a.Silo.OpenWrite(ctx, resourceId)
 		}
-	} else if resource.IsDir() {
+		return nil, err
+	}
+	if resource.IsDir() {
 		return nil, errors.New("cannot open collection for write")
 	}
-	return a.Silo.OpenWrite(ctx, resourceId)
+	return a.Silo.OpenWrite(ctx, resource.ID())
 }
 
 func (a adapter) RemoveAll(ctx context.Context, name string) error {
