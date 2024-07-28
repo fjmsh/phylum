@@ -13,6 +13,7 @@ func setupAdminCommand() *cobra.Command {
 		setupStorageCommand(),
 		setupUserCommand(),
 		setupSiloCommand(),
+		setupSchemaCommand(),
 	}...)
 
 	return cmd

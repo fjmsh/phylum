@@ -5,7 +5,7 @@ import (
 	"embed"
 	"io/fs"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/tern/v2/migrate"
 )
 
@@ -18,14 +18,9 @@ type Migrator struct {
 //go:embed data/*.sql
 var migrationFiles embed.FS
 
-func NewMigrator(pool *pgxpool.Pool) (Migrator, error) {
-	conn, err := pool.Acquire(context.Background())
-	if err != nil {
-		panic(err)
-	}
-	defer conn.Release()
+func NewMigrator(conn *pgx.Conn) (Migrator, error) {
 	migrator, err := migrate.NewMigratorEx(
-		context.Background(), conn.Conn(), versionTable,
+		context.Background(), conn, versionTable,
 		&migrate.MigratorOptions{
 			DisableTx: false,
 		})

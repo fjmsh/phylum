@@ -15,6 +15,7 @@ import (
 
 var debug bool = false
 var fs *core.FileSystem
+var db *sql.DbHandler
 var userManager *user.Manager
 var storageManager *storage.Manager
 
@@ -36,10 +37,8 @@ func SetupCommand() {
 	flags.String("database-url", "postgres://phylum:phylum@localhost:5432/phylum", "Database URL or DSN")
 	viper.BindPFlag("database_url", flags.Lookup("database-url"))
 
-	flags.Bool("no-auto-migrate", false, "Do not automatically migrate databast schema")
-	viper.BindPFlag("no_auto_migrate", flags.Lookup("no-auto-migrate"))
-
-	var db *sql.DbHandler
+	flags.Bool("auto-migrate", false, "Automatically migrate database schema")
+	viper.BindPFlag("auto_migrate", flags.Lookup("auto-migrate"))
 
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		workDir := viper.GetString("working_dir")
@@ -57,7 +56,7 @@ func SetupCommand() {
 		dsn := viper.GetString("database_url")
 
 		var err error
-		db, err = sql.NewDb(dsn, debug && viper.GetBool("trace_sql"), !viper.GetBool("no_auto_migrate"))
+		db, err = sql.NewDb(dsn, debug && viper.GetBool("trace_sql"), viper.GetBool("auto_migrate"))
 		if err != nil {
 			logrus.Fatal(err)
 		}

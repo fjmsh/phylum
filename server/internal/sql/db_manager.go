@@ -11,6 +11,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	ErrMigrationTargetTooLow  = errors.New("schema migration target cannot be less than 0")
+	ErrMigrationTargetTooHigh = errors.New("schema migration target cannot be greater than latest")
+)
+
+var currentSchemaVersion int
+var latestSchemaVersion int
+
 type DbHandler struct {
 	pool    *pgxpool.Pool
 	queries *Queries
@@ -33,29 +41,64 @@ func NewDb(dsn string, trace, autoMigrate bool) (*DbHandler, error) {
 
 	logrus.Info("Connected to " + config.ConnConfig.Database + " at " + config.ConnConfig.Host + ":" + fmt.Sprint(config.ConnConfig.Port))
 
-	if migrator, err := migrations.NewMigrator(pool); err != nil {
-		panic(err)
-	} else {
-		version, err := migrator.GetCurrentVersion()
-		if err != nil {
-			panic(err)
-		}
-		latest := migrator.GetLatestVersion()
-		if version != latest {
-			if autoMigrate {
-				logrus.Info(fmt.Sprintf("Migrating database from version %d to %d", version, latest))
-				migrator.Migrate()
-			} else {
-				panic(fmt.Sprintf("Schema is not at latest version (current %d, latest %d)", version, latest))
-			}
-		}
-
+	conn, err := pool.Acquire(context.Background())
+	if err != nil {
+		return nil, err
 	}
+	migrator, err := migrations.NewMigrator(conn.Conn())
+	if err != nil {
+		return nil, err
+	}
+	currentSchemaVersion, err = migrator.GetCurrentVersion()
+	if err != nil {
+		return nil, err
+	}
+	latestSchemaVersion = migrator.GetLatestVersion()
+	conn.Release()
 
-	return &DbHandler{
+	handler := &DbHandler{
 		pool:    pool,
 		queries: &Queries{db: pool},
-	}, nil
+	}
+
+	if currentSchemaVersion != latestSchemaVersion {
+		if autoMigrate {
+			logrus.Warn(fmt.Sprintf("Schema version %d (latest %d)", currentSchemaVersion, latestSchemaVersion))
+			if currentSchemaVersion > latestSchemaVersion {
+				logrus.Fatal("Will not auto-downgrade schema to prevent data loss")
+			}
+			if err := handler.Migrate(latestSchemaVersion); err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		logrus.Info(fmt.Sprintf("Schema version %d", currentSchemaVersion))
+	}
+
+	return handler, nil
+}
+
+func (d DbHandler) Migrate(version int) error {
+	conn, err := d.pool.Acquire(context.Background())
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+	if version < 0 {
+		return ErrMigrationTargetTooLow
+	}
+	if version > latestSchemaVersion {
+		return ErrMigrationTargetTooHigh
+	}
+	migrator, err := migrations.NewMigrator(conn.Conn())
+	if err != nil {
+		return err
+	}
+	logrus.Info(fmt.Sprintf("Migrating database from version %d to %d", currentSchemaVersion, version))
+	if err = migrator.MigrateTo(int32(version)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d DbHandler) Queries() *Queries {
