@@ -4,6 +4,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/shroff/phylum/server/internal/auth"
 	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/sql"
 	"github.com/shroff/phylum/server/internal/storage"
@@ -18,6 +19,7 @@ var fs *core.FileSystem
 var db *sql.DbHandler
 var userManager *user.Manager
 var storageManager *storage.Manager
+var sessionManager *auth.Manager
 
 func SetupCommand() {
 	viper.SetEnvPrefix("phylum")
@@ -65,6 +67,11 @@ func SetupCommand() {
 		if err != nil {
 			logrus.Fatal(err)
 		}
+		sessionManager, err = auth.NewManager(db, userManager)
+		if err != nil {
+			logrus.Fatal(err)
+		}
+
 		storageManager, err = storage.NewManager(db)
 		if err != nil {
 			logrus.Fatal(err)

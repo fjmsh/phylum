@@ -9,6 +9,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AccessToken struct {
+	ID       string
+	Created  pgtype.Timestamp
+	Expires  pgtype.Timestamp
+	Username string
+}
+
 type Resource struct {
 	ID       uuid.UUID
 	Parent   *uuid.UUID

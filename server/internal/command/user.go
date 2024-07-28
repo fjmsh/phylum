@@ -3,6 +3,7 @@ package command
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"syscall"
@@ -22,6 +23,7 @@ func setupUserCommand() *cobra.Command {
 		setupUserCreateCommand(),
 		setupUserListCommand(),
 		setupUserLoginCommand(),
+		setupUserVerifyTokenCommand(),
 	}...)
 	return cmd
 }
@@ -95,21 +97,11 @@ func setupUserListCommand() *cobra.Command {
 
 func setupUserLoginCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "auth",
+		Use:   "auth user",
 		Short: "Authenticate user",
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			os.Stdout.WriteString("Username: ")
-			reader := bufio.NewReader(os.Stdin)
-			username, err := reader.ReadString('\n')
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			username = strings.TrimSpace(username)
-
-			user, err := userManager.FindUser(context.Background(), username)
-			if err != nil {
-				logrus.Fatal(err)
-			}
+			username := strings.TrimSpace(args[0])
 
 			os.Stdout.WriteString("Password: ")
 			bytes, err := term.ReadPassword(syscall.Stdin)
@@ -119,15 +111,28 @@ func setupUserLoginCommand() *cobra.Command {
 			}
 			password := string(bytes)
 
-			res, err := cryptutil.VerifyPassword(password, user.PasswordHash)
+			accessToken, err := sessionManager.CreateAccessToken(username, password, "cmd")
 			if err != nil {
 				logrus.Fatal(err)
 			}
-			if res {
-				logrus.Info("Auth Succeeded")
-			} else {
-				logrus.Info("Auth Failed")
+			logrus.Info("Access Token: " + accessToken)
+		},
+	}
+}
+
+func setupUserVerifyTokenCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "verify-token token",
+		Short: "Verify access token",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			token := strings.TrimSpace(args[0])
+
+			session, err := sessionManager.VerifyAccessToken(token)
+			if err != nil {
+				logrus.Fatal(err)
 			}
+			logrus.Info(fmt.Sprintf("%+v\n", session))
 		},
 	}
 }

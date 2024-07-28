@@ -62,8 +62,8 @@ func NewDb(dsn string, trace, autoMigrate bool) (*DbHandler, error) {
 	}
 
 	if currentSchemaVersion != latestSchemaVersion {
+		logrus.Warn(fmt.Sprintf("Schema version %d (latest %d)", currentSchemaVersion, latestSchemaVersion))
 		if autoMigrate {
-			logrus.Warn(fmt.Sprintf("Schema version %d (latest %d)", currentSchemaVersion, latestSchemaVersion))
 			if currentSchemaVersion > latestSchemaVersion {
 				logrus.Fatal("Will not auto-downgrade schema to prevent data loss")
 			}
