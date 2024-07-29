@@ -3,6 +3,7 @@ package command
 import (
 	"strconv"
 
+	"github.com/shroff/phylum/server/internal/app"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +29,7 @@ func setupSchemaMigrateCommand() *cobra.Command {
 			if err != nil {
 				logrus.Fatal(err)
 			}
-			if err = db.Migrate(v); err != nil {
+			if err = app.Db.Migrate(v); err != nil {
 				logrus.Fatal(err)
 			}
 		},

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/app"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -30,19 +31,19 @@ func setupSiloCreateCommand() *cobra.Command {
 			id := uuid.New()
 
 			username := args[0]
-			user, err := userManager.FindUser(context.Background(), username)
+			user, err := app.UserManager.FindUser(context.Background(), username)
 			if err != nil {
 				logrus.Fatal("User not found: " + username)
 			}
 
 			storageName := args[1]
-			storage := storageManager.Find(storageName)
+			storage := app.StorageManager.Find(storageName)
 			if storage == nil {
 				logrus.Fatal("Storage not found: " + storageName)
 			}
 
 			name := args[2]
-			if err := fs.CreateSilo(context.Background(), id, user.Username, storageName, name); err != nil {
+			if err := app.Fs.CreateSilo(context.Background(), id, user.Username, storageName, name); err != nil {
 				logrus.Fatal(err)
 			}
 			logrus.Info("Created " + id.String())
@@ -57,7 +58,7 @@ func setupSiloListCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			silos, err := fs.ListSilos(ctx)
+			silos, err := app.Fs.ListSilos(ctx)
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -81,7 +82,7 @@ func setupSiloDeleteCommand() *cobra.Command {
 			if err != nil {
 				logrus.Fatal("Not an ID: " + args[0])
 			}
-			if err := fs.DeleteSilo(context.Background(), id); err != nil {
+			if err := app.Fs.DeleteSilo(context.Background(), id); err != nil {
 				logrus.Fatal(err)
 			}
 		},

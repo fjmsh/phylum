@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/sql"
 )
 
@@ -14,9 +15,10 @@ func NewManager(db *sql.DbHandler) (*Manager, error) {
 	return &Manager{db: db}, nil
 }
 
-func (m Manager) CreateUser(ctx context.Context, username, displayName, passwordHash string) error {
-	_, err := m.db.Queries().CreateUser(ctx, sql.CreateUserParams{Username: username, DisplayName: displayName, PasswordHash: passwordHash})
-	if err != nil {
+func (m Manager) CreateUser(ctx context.Context, username, displayName, password string) error {
+	if hash, err := cryptutil.GenerateArgon2EncodedHash(password, cryptutil.DefaultArgon2Params()); err != nil {
+		return err
+	} else if err = m.db.Queries().CreateUser(ctx, sql.CreateUserParams{Username: username, DisplayName: displayName, PasswordHash: hash}); err != nil {
 		return err
 	}
 	return nil

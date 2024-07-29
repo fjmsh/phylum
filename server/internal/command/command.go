@@ -4,22 +4,14 @@ import (
 	"os"
 	"path"
 
-	"github.com/shroff/phylum/server/internal/auth"
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/app"
 	"github.com/shroff/phylum/server/internal/sql"
-	"github.com/shroff/phylum/server/internal/storage"
-	"github.com/shroff/phylum/server/internal/user"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var debug bool = false
-var fs *core.FileSystem
-var db *sql.DbHandler
-var userManager *user.Manager
-var storageManager *storage.Manager
-var sessionManager *auth.Manager
 
 func SetupCommand() {
 	viper.SetEnvPrefix("phylum")
@@ -55,34 +47,18 @@ func SetupCommand() {
 			logrus.SetLevel(logrus.TraceLevel)
 		}
 
-		dsn := viper.GetString("database_url")
-
-		var err error
-		db, err = sql.NewDb(dsn, debug && viper.GetBool("trace_sql"), viper.GetBool("auto_migrate"))
-		if err != nil {
+		if db, err := sql.NewDb(viper.GetString("database_url"), debug && viper.GetBool("trace_sql"), viper.GetBool("auto_migrate")); err != nil {
+			logrus.Fatal(err)
+		} else if err := app.Initialize(db); err != nil {
 			logrus.Fatal(err)
 		}
 
-		userManager, err = user.NewManager(db)
-		if err != nil {
-			logrus.Fatal(err)
-		}
-		sessionManager, err = auth.NewManager(db, userManager)
-		if err != nil {
-			logrus.Fatal(err)
-		}
-
-		storageManager, err = storage.NewManager(db)
-		if err != nil {
-			logrus.Fatal(err)
-		}
-		fs = core.OpenFileSystem(db, storageManager)
 	}
 
 	defer func() {
-		if db != nil {
+		if app.Db != nil {
 			logrus.Info("Closing datbase connection")
-			db.Close()
+			app.Db.Close()
 		}
 	}()
 

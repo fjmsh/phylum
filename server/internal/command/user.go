@@ -8,7 +8,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shroff/phylum/server/internal/cryptutil"
+	"github.com/shroff/phylum/server/internal/app"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -68,12 +68,9 @@ func setupUserCreateCommand() *cobra.Command {
 				logrus.Fatal("Password does not match confirmation")
 			}
 
-			hash, err := cryptutil.GenerateArgon2EncodedHash(password, cryptutil.DefaultArgon2Params())
-			if err != nil {
+			if err := app.UserManager.CreateUser(context.Background(), username, displayName, password); err != nil {
 				logrus.Fatal(err)
 			}
-
-			userManager.CreateUser(context.Background(), username, displayName, hash)
 		},
 	}
 	return cmd
@@ -84,7 +81,7 @@ func setupUserListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List Users",
 		Run: func(cmd *cobra.Command, args []string) {
-			users, err := userManager.ListUsers(context.Background())
+			users, err := app.UserManager.ListUsers(context.Background())
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -111,7 +108,7 @@ func setupUserLoginCommand() *cobra.Command {
 			}
 			password := string(bytes)
 
-			accessToken, err := sessionManager.CreateAccessToken(username, password, "cmd")
+			accessToken, err := app.AuthManager.CreateAccessToken(username, password, "cmd")
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -128,7 +125,7 @@ func setupUserVerifyTokenCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			token := strings.TrimSpace(args[0])
 
-			session, err := sessionManager.VerifyAccessToken(token)
+			session, err := app.AuthManager.VerifyAccessToken(token)
 			if err != nil {
 				logrus.Fatal(err)
 			}
