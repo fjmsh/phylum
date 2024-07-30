@@ -29,7 +29,7 @@ func setupSchemaMigrateCommand() *cobra.Command {
 			if err != nil {
 				logrus.Fatal(err)
 			}
-			if err = app.Db.Migrate(v); err != nil {
+			if err = app.Default.Db.Migrate(v); err != nil {
 				logrus.Fatal(err)
 			}
 		},

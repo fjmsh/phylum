@@ -1,4 +1,4 @@
-package sql
+package db
 
 import (
 	"context"
@@ -8,12 +8,14 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/shroff/phylum/server/internal/migrations"
+	"github.com/shroff/phylum/server/internal/sql"
 	"github.com/sirupsen/logrus"
 )
 
 var (
-	ErrMigrationTargetTooLow  = errors.New("schema migration target cannot be less than 0")
-	ErrMigrationTargetTooHigh = errors.New("schema migration target cannot be greater than latest")
+	ErrMigrationTargetTooLow    = errors.New("schema migration target cannot be less than 0")
+	ErrMigrationTargetTooHigh   = errors.New("schema migration target cannot be greater than latest")
+	ErrMigrationNoAutoDowngrade = errors.New("will not auto-downgrade schema to prevent data loss")
 )
 
 var currentSchemaVersion int
@@ -21,7 +23,7 @@ var latestSchemaVersion int
 
 type DbHandler struct {
 	pool    *pgxpool.Pool
-	queries *Queries
+	queries *sql.Queries
 }
 
 func NewDb(dsn string, trace, autoMigrate bool) (*DbHandler, error) {
@@ -58,14 +60,14 @@ func NewDb(dsn string, trace, autoMigrate bool) (*DbHandler, error) {
 
 	handler := &DbHandler{
 		pool:    pool,
-		queries: &Queries{db: pool},
+		queries: sql.New(pool),
 	}
 
 	if currentSchemaVersion != latestSchemaVersion {
 		logrus.Warn(fmt.Sprintf("Schema version %d (latest %d)", currentSchemaVersion, latestSchemaVersion))
 		if autoMigrate {
 			if currentSchemaVersion > latestSchemaVersion {
-				logrus.Fatal("Will not auto-downgrade schema to prevent data loss")
+				return nil, ErrMigrationNoAutoDowngrade
 			}
 			if err := handler.Migrate(latestSchemaVersion); err != nil {
 				return nil, err
@@ -101,11 +103,11 @@ func (d DbHandler) Migrate(version int) error {
 	return nil
 }
 
-func (d DbHandler) Queries() *Queries {
+func (d DbHandler) Queries() *sql.Queries {
 	return d.queries
 }
 
-func (d DbHandler) RunInTx(ctx context.Context, fn func(*Queries) error) error {
+func (d DbHandler) RunInTx(ctx context.Context, fn func(*sql.Queries) error) error {
 	return pgx.BeginFunc(ctx, d.pool, func(tx pgx.Tx) error {
 		q := d.queries.WithTx(tx)
 		return fn(q)

@@ -10,22 +10,22 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/app"
 	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/cryptutil"
-	"github.com/shroff/phylum/server/internal/user"
 	"github.com/shroff/phylum/server/internal/webdav"
 	"github.com/sirupsen/logrus"
 )
 
 type handler struct {
-	fs     *core.FileSystem
+	app    *app.App
 	prefix string
 }
 
-func SetupHandler(r *gin.RouterGroup, fs *core.FileSystem, userManager *user.Manager) {
+func SetupHandler(r *gin.RouterGroup, app *app.App) {
 	logrus.Info("Setting up WebDAV access at " + r.BasePath())
 	handler := &handler{
-		fs:     fs,
+		app:    app,
 		prefix: r.BasePath(),
 	}
 	r.Use(func(c *gin.Context) {
@@ -35,7 +35,7 @@ func SetupHandler(r *gin.RouterGroup, fs *core.FileSystem, userManager *user.Man
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		user, err := userManager.FindUser(context.Background(), username)
+		user, err := app.FindUser(context.Background(), username)
 		if err != nil {
 			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
 			c.AbortWithStatus(http.StatusUnauthorized)
@@ -86,7 +86,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	silo, err := h.fs.OpenSilo(context.Background(), id)
+	silo, err := h.app.OpenSilo(context.Background(), id)
 	if err != nil {
 		c.Writer.WriteHeader(404)
 		return

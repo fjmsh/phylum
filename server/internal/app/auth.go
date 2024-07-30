@@ -1,4 +1,4 @@
-package auth
+package app
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/sql"
-	"github.com/shroff/phylum/server/internal/user"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/rand"
 )
@@ -25,17 +24,8 @@ var accessTokenValiditiy = pgtype.Interval{
 var ErrInvalidUsernamePassword = errors.New("invalid username or password")
 var ErrAccessTokenExpired = errors.New("access token expired")
 
-type Manager struct {
-	db          *sql.DbHandler
-	userManager *user.Manager
-}
-
-func NewManager(db *sql.DbHandler, userManager *user.Manager) (*Manager, error) {
-	return &Manager{db: db, userManager: userManager}, nil
-}
-
-func (m Manager) CreateAccessToken(username, password, deviceInfo string) (string, error) {
-	if user, err := m.userManager.FindUser(context.Background(), username); err != nil {
+func (a App) CreateAccessToken(username, password, deviceInfo string) (string, error) {
+	if user, err := a.FindUser(context.Background(), username); err != nil {
 		if err == pgx.ErrNoRows {
 			return "", ErrInvalidUsernamePassword
 		}
@@ -50,7 +40,7 @@ func (m Manager) CreateAccessToken(username, password, deviceInfo string) (strin
 		}
 	}
 	accessToken := GenerateRandomString(accessTokenLength)
-	if err := m.db.Queries().InsertAccessToken(context.Background(), sql.InsertAccessTokenParams{
+	if err := a.Db.Queries().InsertAccessToken(context.Background(), sql.InsertAccessTokenParams{
 		ID:       accessToken,
 		Validity: accessTokenValiditiy,
 		Username: username,
@@ -60,8 +50,8 @@ func (m Manager) CreateAccessToken(username, password, deviceInfo string) (strin
 	return accessToken, nil
 }
 
-func (m Manager) VerifyAccessToken(accessToken string) (string, error) {
-	token, err := m.db.Queries().AccessTokenById(context.Background(), accessToken)
+func (a App) VerifyAccessToken(accessToken string) (string, error) {
+	token, err := a.Db.Queries().AccessTokenById(context.Background(), accessToken)
 	if err != nil {
 		return "", err
 	}

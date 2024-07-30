@@ -8,15 +8,24 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/sql"
 	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
 )
 
 type Silo struct {
-	db      *sql.DbHandler
+	db      *db.DbHandler
 	storage storage.Storage
 	root    uuid.UUID
+}
+
+func NewSilo(db *db.DbHandler, storage storage.Storage, root uuid.UUID) *Silo {
+	return &Silo{
+		db:      db,
+		storage: storage,
+		root:    root,
+	}
 }
 
 func (s *Silo) OpenRead(ctx context.Context, id uuid.UUID, start, length int64) (io.ReadCloser, error) {

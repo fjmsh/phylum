@@ -68,7 +68,7 @@ func setupUserCreateCommand() *cobra.Command {
 				logrus.Fatal("Password does not match confirmation")
 			}
 
-			if err := app.UserManager.CreateUser(context.Background(), username, displayName, password); err != nil {
+			if err := app.Default.CreateUser(context.Background(), username, displayName, password); err != nil {
 				logrus.Fatal(err)
 			}
 		},
@@ -81,7 +81,7 @@ func setupUserListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List Users",
 		Run: func(cmd *cobra.Command, args []string) {
-			users, err := app.UserManager.ListUsers(context.Background())
+			users, err := app.Default.ListUsers(context.Background())
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -108,7 +108,7 @@ func setupUserLoginCommand() *cobra.Command {
 			}
 			password := string(bytes)
 
-			accessToken, err := app.AuthManager.CreateAccessToken(username, password, "cmd")
+			accessToken, err := app.Default.CreateAccessToken(username, password, "cmd")
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -125,7 +125,7 @@ func setupUserVerifyTokenCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			token := strings.TrimSpace(args[0])
 
-			session, err := app.AuthManager.VerifyAccessToken(token)
+			session, err := app.Default.VerifyAccessToken(token)
 			if err != nil {
 				logrus.Fatal(err)
 			}

@@ -5,7 +5,7 @@ import (
 	"path"
 
 	"github.com/shroff/phylum/server/internal/app"
-	"github.com/shroff/phylum/server/internal/sql"
+	"github.com/shroff/phylum/server/internal/db"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -47,19 +47,16 @@ func SetupCommand() {
 			logrus.SetLevel(logrus.TraceLevel)
 		}
 
-		if db, err := sql.NewDb(viper.GetString("database_url"), debug && viper.GetBool("trace_sql"), viper.GetBool("auto_migrate")); err != nil {
+		if db, err := db.NewDb(viper.GetString("database_url"), debug && viper.GetBool("trace_sql"), viper.GetBool("auto_migrate")); err != nil {
 			logrus.Fatal(err)
 		} else if err := app.Initialize(db); err != nil {
 			logrus.Fatal(err)
 		}
-
 	}
 
 	defer func() {
-		if app.Db != nil {
-			logrus.Info("Closing datbase connection")
-			app.Db.Close()
-		}
+		logrus.Info("Shutting Down App")
+		app.Default.Cleanup()
 	}()
 
 	rootCmd.AddCommand([]*cobra.Command{

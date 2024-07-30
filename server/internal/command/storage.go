@@ -31,7 +31,7 @@ func setupStorageCreateCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			name := args[0]
-			if app.StorageManager.Find(name) != nil {
+			if app.Default.FindStorageBackend(name) != nil {
 				logrus.Fatal("Storage backand already exists: " + name)
 			}
 
@@ -53,7 +53,7 @@ func setupStorageCreateCommand() *cobra.Command {
 				params[paramName] = val
 			}
 
-			if err := app.StorageManager.Create(name, driver, params); err != nil {
+			if err := app.Default.CreateStorageBackend(name, driver, params); err != nil {
 				logrus.Fatal(err)
 			}
 
@@ -68,7 +68,7 @@ func setupStorageListCommand() *cobra.Command {
 		Short: "List all storage backends",
 		Run: func(cmd *cobra.Command, args []string) {
 			logrus.Info("Available storage backends:")
-			for k, v := range app.StorageManager.All() {
+			for k, v := range app.Default.ListStorageBackends() {
 				logrus.Info(fmt.Sprintf("%s: %s", k, v))
 			}
 		},
