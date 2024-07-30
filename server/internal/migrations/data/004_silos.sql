@@ -8,6 +8,10 @@ CREATE TABLE silos(
     storage  TEXT NOT NULL REFERENCES storage_backends(name) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+CREATE UNIQUE INDEX silo_by_name ON silos(name);
+
 ---- create above / drop below ----
 
-DROP TABLE silos
+DROP INDEX silo_by_name;
+
+DROP TABLE silos;

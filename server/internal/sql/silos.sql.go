@@ -95,3 +95,22 @@ func (q *Queries) SiloById(ctx context.Context, id uuid.UUID) (Silo, error) {
 	)
 	return i, err
 }
+
+const siloByName = `-- name: SiloByName :one
+SELECT id, created, modified, deleted, owner, name, storage from silos where name = $1
+`
+
+func (q *Queries) SiloByName(ctx context.Context, name string) (Silo, error) {
+	row := q.db.QueryRow(ctx, siloByName, name)
+	var i Silo
+	err := row.Scan(
+		&i.ID,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.Owner,
+		&i.Name,
+		&i.Storage,
+	)
+	return i, err
+}

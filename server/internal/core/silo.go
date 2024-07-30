@@ -18,14 +18,24 @@ type Silo struct {
 	db      *db.DbHandler
 	storage storage.Storage
 	root    uuid.UUID
+	name    string
 }
 
-func NewSilo(db *db.DbHandler, storage storage.Storage, root uuid.UUID) *Silo {
+func NewSilo(db *db.DbHandler, storage storage.Storage, root uuid.UUID, name string) *Silo {
 	return &Silo{
 		db:      db,
 		storage: storage,
 		root:    root,
+		name:    name,
 	}
+}
+
+func (s *Silo) ID() uuid.UUID {
+	return s.root
+}
+
+func (s *Silo) Name() string {
+	return s.name
 }
 
 func (s *Silo) OpenRead(ctx context.Context, id uuid.UUID, start, length int64) (io.ReadCloser, error) {

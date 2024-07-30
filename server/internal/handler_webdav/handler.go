@@ -70,30 +70,30 @@ func SetupHandler(r *gin.RouterGroup, app *app.App) {
 
 func (h *handler) HandleRequest(c *gin.Context) {
 	path := c.Params.ByName("path")
-	idStr := strings.TrimLeft(path, "/")
-	if idStr == "" {
+	identifier := strings.TrimLeft(path, "/")
+	if identifier == "" {
 		// No path specified
-		c.Writer.WriteHeader(404)
+		c.JSON(404, gin.H{
+			"ERR_CODE": "err_silo_path_not_specified",
+		})
 		return
 	}
-	index := strings.Index(idStr, "/")
+	index := strings.Index(identifier, "/")
 	if index != -1 {
-		idStr = idStr[0:index]
+		identifier = identifier[0:index]
 	}
-	id, err := uuid.Parse(idStr)
+	silo, err := h.app.FindSilo(context.Background(), identifier)
 	if err != nil {
 		c.Writer.WriteHeader(404)
-		return
-	}
-
-	silo, err := h.app.OpenSilo(context.Background(), id)
-	if err != nil {
-		c.Writer.WriteHeader(404)
+		c.JSON(404, gin.H{
+			"ERR_CODE":    "err_silo_not_found",
+			"ERR_DETAILS": err.Error(),
+		})
 		return
 	}
 
 	webdavHandler := webdav.Handler{
-		Prefix:     h.prefix + "/" + id.String(),
+		Prefix:     h.prefix + "/" + identifier,
 		FileSystem: adapter{silo},
 		LockSystem: webdav.NewMemLS(),
 	}
