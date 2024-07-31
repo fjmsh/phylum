@@ -25,7 +25,7 @@ func setupServeCommand() *cobra.Command {
 
 			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")), app.Default)
 
-			api.Setup(engine.Group("/api/v1"))
+			api.Setup(engine.Group("/api/v1"), app.Default)
 
 			server := endless.NewServer(config.GetString("listen"), engine)
 			server.BeforeBegin = func(addr string) {

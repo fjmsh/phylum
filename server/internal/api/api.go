@@ -2,23 +2,15 @@ package api
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/app"
-	"github.com/sirupsen/logrus"
 )
 
-func Setup(r *gin.RouterGroup) {
+func Setup(r *gin.RouterGroup, app *app.App) {
 	setupAuthRoutes(r)
-	r.Use(func(c *gin.Context) {
-		authHeader := strings.Split(c.GetHeader("Authorization"), " ")
-		logrus.Info(authHeader)
-		rersponseObj := gin.H{
-			"ERR": "Unauthorized",
-		}
-		c.JSON(401, rersponseObj)
-	})
+	r.Use(auth.CreateBearerAuthHandler(app))
 	setupResourceRoutes(r)
 }
 
@@ -54,7 +46,7 @@ func handleLoginRoute(c *gin.Context) {
 	}
 
 	if token, err := app.Default.CreateAccessToken(username, password); err != nil {
-		if errors.Is(err, app.ErrInvalidUsernamePassword) {
+		if errors.Is(err, app.ErrCredentialsInvalid) {
 			c.AbortWithStatusJSON(401, gin.H{
 				"ERR_CODE": "invalid_username_or_password",
 			})
@@ -66,7 +58,7 @@ func handleLoginRoute(c *gin.Context) {
 	} else {
 		c.JSON(200, gin.H{
 			"access_token": token.ID,
-			"expires":      token.Expires.Time.String(),
+			"expires":      token.Expires,
 		})
 	}
 }

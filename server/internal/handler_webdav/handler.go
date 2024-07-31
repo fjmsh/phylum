@@ -5,14 +5,13 @@ import (
 	"errors"
 	"io"
 	"io/fs"
-	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/app"
 	"github.com/shroff/phylum/server/internal/core"
-	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/webdav"
 	"github.com/sirupsen/logrus"
 )
@@ -28,33 +27,7 @@ func SetupHandler(r *gin.RouterGroup, app *app.App) {
 		app:    app,
 		prefix: r.BasePath(),
 	}
-	r.Use(func(c *gin.Context) {
-		username, pass, ok := c.Request.BasicAuth()
-		if !ok {
-			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-		user, err := app.FindUser(context.Background(), username)
-		if err != nil {
-			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-		ok, err = cryptutil.VerifyPassword(pass, user.PasswordHash)
-		if err != nil {
-			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-		if !ok {
-			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-		c.Set("user", user)
-		c.Next()
-	})
+	r.Use(auth.CreateBasicAuthHandler(app))
 	r.Handle("OPTIONS", "/*path", handler.HandleRequest)
 	r.Handle("GET", "/*path", handler.HandleRequest)
 	r.Handle("PUT", "/*path", handler.HandleRequest)
