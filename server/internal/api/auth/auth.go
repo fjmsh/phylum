@@ -2,6 +2,12 @@ package auth
 
 import "github.com/gin-gonic/gin"
 
-func GetUsername(c *gin.Context) (any, bool) {
-	return c.Get(keyUsername)
+const keyUsername = "username"
+
+func GetUsername(c *gin.Context) string {
+	val, ok := c.Get(keyUsername)
+	if !ok {
+		return ""
+	}
+	return val.(string)
 }

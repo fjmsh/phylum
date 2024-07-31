@@ -9,8 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const keyUsername = "username"
-
 func CreateBearerAuthHandler(a *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")

@@ -17,10 +17,10 @@ type siloResponse struct {
 
 func setupSiloRoutes(r *gin.RouterGroup, a *app.App) {
 	group := r.Group("/silos")
-	group.GET("/list", createSilosListRouteHandler(a))
+	group.GET("/list", createSiloListRouteHandler(a))
 }
 
-func createSilosListRouteHandler(a *app.App) func(c *gin.Context) {
+func createSiloListRouteHandler(a *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		silos, err := a.ListSilos(context.Background())
 		if err != nil {
