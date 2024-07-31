@@ -18,6 +18,7 @@ import (
 )
 
 type minioStorage struct {
+	name       string
 	client     *minio.Client
 	tmp        string
 	bucketName string
@@ -25,6 +26,7 @@ type minioStorage struct {
 }
 
 func newMinioStorage(
+	name,
 	endpoint,
 	keyId,
 	accessKey,
@@ -57,7 +59,11 @@ func newMinioStorage(
 	if err != nil {
 		return nil, err
 	}
-	return minioStorage{client: client, tmp: tmp, bucketName: bucketName, prefix: prefix}, nil
+	return minioStorage{name: name, client: client, tmp: tmp, bucketName: bucketName, prefix: prefix}, nil
+}
+
+func (s minioStorage) Name() string {
+	return s.name
 }
 
 func (s minioStorage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error) {

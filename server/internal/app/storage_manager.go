@@ -15,7 +15,7 @@ func restoreStorageBackends(db *db.DbHandler) (map[string]storage.Storage, error
 	}
 	results := map[string]storage.Storage{}
 	for _, b := range backends {
-		store, err := storage.Open(b.Driver, b.Params)
+		store, err := storage.Open(b.Name, b.Driver, b.Params)
 		if err != nil {
 			return nil, err
 		}
@@ -25,7 +25,7 @@ func restoreStorageBackends(db *db.DbHandler) (map[string]storage.Storage, error
 }
 
 func (a App) CreateStorageBackend(name string, driver string, params map[string]string) error {
-	storage, err := storage.Open(driver, params)
+	storage, err := storage.Open(name, driver, params)
 	if err != nil {
 		return nil
 	}

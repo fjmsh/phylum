@@ -16,17 +16,19 @@ import (
 
 type Silo struct {
 	db      *db.DbHandler
-	storage storage.Storage
-	root    uuid.UUID
 	name    string
+	owner   string
+	root    uuid.UUID
+	storage storage.Storage
 }
 
-func NewSilo(db *db.DbHandler, storage storage.Storage, root uuid.UUID, name string) *Silo {
+func NewSilo(db *db.DbHandler, name, owner string, root uuid.UUID, storage storage.Storage) *Silo {
 	return &Silo{
 		db:      db,
-		storage: storage,
-		root:    root,
 		name:    name,
+		owner:   owner,
+		root:    root,
+		storage: storage,
 	}
 }
 
@@ -36,6 +38,14 @@ func (s *Silo) ID() uuid.UUID {
 
 func (s *Silo) Name() string {
 	return s.name
+}
+
+func (s *Silo) Owner() string {
+	return s.owner
+}
+
+func (s *Silo) StorageName() string {
+	return s.storage.Name()
 }
 
 func (s *Silo) OpenRead(ctx context.Context, id uuid.UUID, start, length int64) (io.ReadCloser, error) {

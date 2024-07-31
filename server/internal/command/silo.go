@@ -63,9 +63,9 @@ func setupSiloListCommand() *cobra.Command {
 				logrus.Fatal(err)
 			}
 			for _, silo := range silos {
-				logrus.Infof("%-16s: %s\n", silo.Name, silo.ID.String())
-				logrus.Infof("  storage: %s\n", silo.Storage)
-				logrus.Infof("  owner: %s\n", silo.Owner)
+				logrus.Infof("%-16s: %s\n", silo.Name(), silo.ID().String())
+				logrus.Infof("  storage: %s\n", silo.StorageName())
+				logrus.Infof("  owner: %s\n", silo.Owner())
 				logrus.Info()
 			}
 		},

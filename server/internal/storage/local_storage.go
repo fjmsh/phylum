@@ -13,9 +13,12 @@ import (
 	"github.com/shroff/phylum/server/internal/sql"
 )
 
-type localStorage string
+type localStorage struct {
+	name string
+	root string
+}
 
-func newLocalStorage(root string) (Storage, error) {
+func newLocalStorage(name, root string) (Storage, error) {
 	if root == "" {
 		return nil, errors.New("local storage root not provided")
 	}
@@ -23,7 +26,11 @@ func newLocalStorage(root string) (Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	return localStorage(root), nil
+	return localStorage{name: name, root: root}, nil
+}
+
+func (l localStorage) Name() string {
+	return l.name
 }
 
 func (l localStorage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error) {
@@ -66,9 +73,9 @@ func (l localStorage) Delete(rows []sql.HardDeleteRecursiveRow) []error {
 }
 
 func (l localStorage) path(id uuid.UUID) string {
-	return filepath.Join(string(l), id.String())
+	return filepath.Join(string(l.root), id.String())
 }
 
 func (l localStorage) String() string {
-	return "local (" + string(l) + ")"
+	return "local (" + string(l.root) + ")"
 }

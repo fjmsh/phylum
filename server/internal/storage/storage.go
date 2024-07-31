@@ -9,18 +9,20 @@ import (
 )
 
 type Storage interface {
+	Name() string
 	OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error)
 	OpenWrite(id uuid.UUID, callback func(int, string) error) (io.WriteCloser, error)
 	Delete(rows []sql.HardDeleteRecursiveRow) []error
 	String() string
 }
 
-func Open(driver string, params map[string]string) (Storage, error) {
+func Open(name string, driver string, params map[string]string) (Storage, error) {
 	switch driver {
 	case "local":
-		return newLocalStorage(params["root"])
+		return newLocalStorage(name, params["root"])
 	case "minio":
 		return newMinioStorage(
+			name,
 			params["endpoint"],
 			params["key_id"],
 			params["access_key"],
