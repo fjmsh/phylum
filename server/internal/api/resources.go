@@ -29,6 +29,51 @@ type resourceResponse struct {
 func setupResourceRoutes(r *gin.RouterGroup, a *app.App) {
 	group := r.Group("/resources")
 	group.GET("/:id/ls", createResourceLsRouteHandler(a))
+	group.GET("/:id/metadata", createResourceMetadataRouteHandler(a))
+}
+func createResourceMetadataRouteHandler(a *app.App) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		resourceId, err := uuid.Parse(c.Param("id"))
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+				"ERR_CODE": "resource_not_found",
+			})
+			return
+		}
+
+		resource, err := a.Db.Queries().ResourceById(context.Background(), resourceId)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				c.JSON(http.StatusNotFound, gin.H{
+					"ERR_CODE": "resource_not_found",
+				})
+			} else {
+				logrus.Warn(err)
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+					"ERR_CODE":    "unknown_error",
+					"ERR_DETAILS": err.Error(),
+				})
+			}
+			return
+		}
+
+		deleted := &resource.Deleted.Time
+		if !resource.Deleted.Valid {
+			deleted = nil
+		}
+		response := resourceResponse{
+			ID:       resource.ID,
+			Parent:   resource.Parent,
+			Name:     resource.Name,
+			Dir:      resource.Dir,
+			Created:  resource.Created.Time,
+			Modified: resource.Modified.Time,
+			Deleted:  deleted,
+			Size:     int(resource.Size.Int32),
+			Etag:     resource.Etag.String,
+		}
+		c.JSON(200, response)
+	}
 }
 
 func createResourceLsRouteHandler(a *app.App) func(c *gin.Context) {
