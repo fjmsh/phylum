@@ -27,12 +27,12 @@ func (q *Queries) AccessTokenById(ctx context.Context, id string) (AccessToken, 
 	return i, err
 }
 
-const insertAccessToken = `-- name: InsertAccessToken :exec
+const insertAccessToken = `-- name: InsertAccessToken :one
 INSERT INTO access_tokens(
     id, created, expires, username
 ) VALUES(
     $1::text, NOW(), NOW() + $2::interval, $3::text
-)
+) RETURNING id, created, expires, username
 `
 
 type InsertAccessTokenParams struct {
@@ -41,7 +41,14 @@ type InsertAccessTokenParams struct {
 	Username string
 }
 
-func (q *Queries) InsertAccessToken(ctx context.Context, arg InsertAccessTokenParams) error {
-	_, err := q.db.Exec(ctx, insertAccessToken, arg.ID, arg.Validity, arg.Username)
-	return err
+func (q *Queries) InsertAccessToken(ctx context.Context, arg InsertAccessTokenParams) (AccessToken, error) {
+	row := q.db.QueryRow(ctx, insertAccessToken, arg.ID, arg.Validity, arg.Username)
+	var i AccessToken
+	err := row.Scan(
+		&i.ID,
+		&i.Created,
+		&i.Expires,
+		&i.Username,
+	)
+	return i, err
 }

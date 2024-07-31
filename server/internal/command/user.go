@@ -108,11 +108,12 @@ func setupUserLoginCommand() *cobra.Command {
 			}
 			password := string(bytes)
 
-			accessToken, err := app.Default.CreateAccessToken(username, password, "cmd")
+			accessToken, err := app.Default.CreateAccessToken(username, password)
 			if err != nil {
 				logrus.Fatal(err)
 			}
-			logrus.Info("Access Token: " + accessToken)
+			logrus.Info("Access Token: " + accessToken.ID)
+			logrus.Info(" Valid Until: " + accessToken.Expires.Time.String())
 		},
 	}
 }

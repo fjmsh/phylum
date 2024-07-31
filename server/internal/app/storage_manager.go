@@ -8,10 +8,6 @@ import (
 	"github.com/shroff/phylum/server/internal/storage"
 )
 
-type storageManager struct {
-	db *db.DbHandler
-}
-
 func restoreStorageBackends(db *db.DbHandler) (map[string]storage.Storage, error) {
 	backends, err := db.Queries().AllStorageBackends(context.Background())
 	if err != nil {
