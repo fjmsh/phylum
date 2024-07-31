@@ -41,16 +41,30 @@ func createResourceLsRouteHandler(a *app.App) func(c *gin.Context) {
 			return
 		}
 		resource, err := a.Db.Queries().ResourceById(context.Background(), resourceId)
-		if errors.Is(err, pgx.ErrNoRows) {
-			c.JSON(http.StatusNotFound, gin.H{
-				"ERR_CODE": "resource_not_found",
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				c.JSON(http.StatusNotFound, gin.H{
+					"ERR_CODE": "resource_not_found",
+				})
+			} else {
+				logrus.Warn(err)
+				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+					"ERR_CODE":    "unknown_error",
+					"ERR_DETAILS": err.Error(),
+				})
+			}
+			return
+		}
+		if !resource.Dir {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+				"ERR_CODE": "resource_not_collection",
 			})
 			return
 		}
 		children, err := a.Db.Queries().ReadDir(context.Background(), sql.ReadDirParams{IncludeRoot: false, ID: resource.ID, Recursive: false})
 		if err != nil {
 			logrus.Warn(err)
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"ERR_CODE":    "unknown_error",
 				"ERR_DETAILS": err.Error(),
 			})
