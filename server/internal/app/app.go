@@ -31,3 +31,7 @@ func (a App) Cleanup() {
 		a.Db.Close()
 	}
 }
+
+func (a App) MigrateDb(version int) error {
+	return a.Db.Migrate(version)
+}
