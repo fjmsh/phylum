@@ -58,7 +58,7 @@ func setupSiloListCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			silos, err := app.Default.ListSilos(ctx)
+			silos, err := app.Default.AllSilos(ctx)
 			if err != nil {
 				logrus.Fatal(err)
 			}

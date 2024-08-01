@@ -28,8 +28,20 @@ func (a App) CreateSilo(ctx context.Context, id uuid.UUID, owner, storage, name 
 	})
 }
 
-func (a App) ListSilos(ctx context.Context) ([]core.Silo, error) {
-	silos, err := a.Db.Queries().ListSilos(ctx)
+func (a App) AllSilos(ctx context.Context) ([]core.Silo, error) {
+	silos, err := a.Db.Queries().ListAllSilos(ctx)
+	if err != nil {
+		return nil, err
+	}
+	results := make([]core.Silo, len(silos))
+	for i, s := range silos {
+		results[i] = core.NewSilo(a.Db, s.Name, s.Owner, s.ID, a.FindStorageBackend(s.Storage))
+	}
+	return results, nil
+}
+
+func (a App) SilosForUser(ctx context.Context, username string) ([]core.Silo, error) {
+	silos, err := a.Db.Queries().ListSilosForUser(ctx, username)
 	if err != nil {
 		return nil, err
 	}

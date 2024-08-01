@@ -14,5 +14,8 @@ INSERT INTO silos(
     $1, NOW(), NOW(), $2, $3, $4
 );
 
--- name: ListSilos :many
+-- name: ListAllSilos :many
 SELECT * from silos;
+
+-- name: ListSilosForUser :many
+SELECT * from silos where owner = @username::text;

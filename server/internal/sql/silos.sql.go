@@ -45,12 +45,44 @@ func (q *Queries) DeleteSilo(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const listSilos = `-- name: ListSilos :many
+const listAllSilos = `-- name: ListAllSilos :many
 SELECT id, created, modified, deleted, owner, name, storage from silos
 `
 
-func (q *Queries) ListSilos(ctx context.Context) ([]Silo, error) {
-	rows, err := q.db.Query(ctx, listSilos)
+func (q *Queries) ListAllSilos(ctx context.Context) ([]Silo, error) {
+	rows, err := q.db.Query(ctx, listAllSilos)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Silo
+	for rows.Next() {
+		var i Silo
+		if err := rows.Scan(
+			&i.ID,
+			&i.Created,
+			&i.Modified,
+			&i.Deleted,
+			&i.Owner,
+			&i.Name,
+			&i.Storage,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSilosForUser = `-- name: ListSilosForUser :many
+SELECT id, created, modified, deleted, owner, name, storage from silos where owner = $1::text
+`
+
+func (q *Queries) ListSilosForUser(ctx context.Context, username string) ([]Silo, error) {
+	rows, err := q.db.Query(ctx, listSilosForUser, username)
 	if err != nil {
 		return nil, err
 	}

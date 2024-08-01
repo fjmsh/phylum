@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/app"
 )
 
@@ -22,7 +23,7 @@ func SetupSiloRoutes(r *gin.RouterGroup, a *app.App) {
 
 func createSiloListRouteHandler(a *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		silos, err := a.ListSilos(context.Background())
+		silos, err := a.SilosForUser(context.Background(), auth.GetUsername(c))
 		if err != nil {
 			panic(err)
 		}
