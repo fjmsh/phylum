@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/shroff/phylum/server/internal/sql"
 )
 
@@ -32,7 +33,7 @@ func newMinioStorage(
 	accessKey,
 	tmp,
 	bucketName,
-	prefix string) (Storage, error) {
+	prefix string) (core.Storage, error) {
 	if endpoint == "" {
 		return nil, errors.New("minio endpoint not provided")
 	}

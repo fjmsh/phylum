@@ -10,20 +10,33 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/sql"
-	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
 )
 
-type Silo struct {
+type Silo interface {
+	ID() uuid.UUID
+	Name() string
+	Owner() string
+	StorageName() string
+	OpenRead(ctx context.Context, id uuid.UUID, start, length int64) (io.ReadCloser, error)
+	OpenWrite(ctx context.Context, id uuid.UUID) (io.WriteCloser, error)
+	ReadDir(ctx context.Context, id uuid.UUID, includeRoot bool, recursive bool) ([]FileInfo, error)
+	DeleteRecursive(ctx context.Context, id uuid.UUID, hardDelete bool) error
+	ResourceByPath(ctx context.Context, path string) (File, error)
+	Move(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string) error
+	CreateResource(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string, dir bool) error
+}
+
+type silo struct {
 	db      *db.DbHandler
 	name    string
 	owner   string
 	root    uuid.UUID
-	storage storage.Storage
+	storage Storage
 }
 
-func NewSilo(db *db.DbHandler, name, owner string, root uuid.UUID, storage storage.Storage) *Silo {
-	return &Silo{
+func NewSilo(db *db.DbHandler, name, owner string, root uuid.UUID, storage Storage) Silo {
+	return &silo{
 		db:      db,
 		name:    name,
 		owner:   owner,
@@ -32,27 +45,27 @@ func NewSilo(db *db.DbHandler, name, owner string, root uuid.UUID, storage stora
 	}
 }
 
-func (s *Silo) ID() uuid.UUID {
+func (s *silo) ID() uuid.UUID {
 	return s.root
 }
 
-func (s *Silo) Name() string {
+func (s *silo) Name() string {
 	return s.name
 }
 
-func (s *Silo) Owner() string {
+func (s *silo) Owner() string {
 	return s.owner
 }
 
-func (s *Silo) StorageName() string {
+func (s *silo) StorageName() string {
 	return s.storage.Name()
 }
 
-func (s *Silo) OpenRead(ctx context.Context, id uuid.UUID, start, length int64) (io.ReadCloser, error) {
+func (s *silo) OpenRead(ctx context.Context, id uuid.UUID, start, length int64) (io.ReadCloser, error) {
 	return s.storage.OpenRead(id, start, length)
 }
 
-func (s *Silo) OpenWrite(ctx context.Context, id uuid.UUID) (io.WriteCloser, error) {
+func (s *silo) OpenWrite(ctx context.Context, id uuid.UUID) (io.WriteCloser, error) {
 	return s.storage.OpenWrite(id, func(len int, etag string) error {
 		return s.db.Queries().UpdateResourceContents(ctx, sql.UpdateResourceContentsParams{
 			ID:   id,
@@ -62,7 +75,7 @@ func (s *Silo) OpenWrite(ctx context.Context, id uuid.UUID) (io.WriteCloser, err
 	})
 }
 
-func (s *Silo) ReadDir(ctx context.Context, id uuid.UUID, includeRoot bool, recursive bool) ([]FileInfo, error) {
+func (s *silo) ReadDir(ctx context.Context, id uuid.UUID, includeRoot bool, recursive bool) ([]FileInfo, error) {
 	children, err := s.db.Queries().ReadDir(ctx, sql.ReadDirParams{ID: id, IncludeRoot: includeRoot, Recursive: recursive})
 	if err != nil {
 		return nil, err
@@ -82,7 +95,7 @@ func (s *Silo) ReadDir(ctx context.Context, id uuid.UUID, includeRoot bool, recu
 	return result, nil
 }
 
-func (s *Silo) DeleteRecursive(ctx context.Context, id uuid.UUID, hardDelete bool) error {
+func (s *silo) DeleteRecursive(ctx context.Context, id uuid.UUID, hardDelete bool) error {
 	// TODO: versioning
 	return s.db.RunInTx(ctx, func(q *sql.Queries) error {
 		p, err := q.ResourceById(ctx, id)
@@ -112,7 +125,7 @@ func (s *Silo) DeleteRecursive(ctx context.Context, id uuid.UUID, hardDelete boo
 	})
 }
 
-func (s *Silo) CreateResource(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string, dir bool) error {
+func (s *silo) CreateResource(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string, dir bool) error {
 	return s.db.RunInTx(ctx, func(q *sql.Queries) error {
 		if err := q.CreateResource(ctx, sql.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir}); err != nil {
 			return err
@@ -121,11 +134,11 @@ func (s *Silo) CreateResource(ctx context.Context, id uuid.UUID, parent uuid.UUI
 	})
 }
 
-func (s *Silo) Move(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string) error {
+func (s *silo) Move(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string) error {
 	return s.db.Queries().Rename(ctx, sql.RenameParams{ID: id, Parent: parent, Name: name})
 }
 
-func (s *Silo) ResourceByPath(ctx context.Context, path string) (File, error) {
+func (s *silo) ResourceByPath(ctx context.Context, path string) (File, error) {
 	path = strings.Trim(path, "/")
 	segments := strings.Split(path, "/")
 	if path == "" {

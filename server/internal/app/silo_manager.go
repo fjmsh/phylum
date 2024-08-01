@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/shroff/phylum/server/internal/sql"
 )
 
@@ -28,19 +28,19 @@ func (a App) CreateSilo(ctx context.Context, id uuid.UUID, owner, storage, name 
 	})
 }
 
-func (a App) ListSilos(ctx context.Context) ([]*core.Silo, error) {
+func (a App) ListSilos(ctx context.Context) ([]core.Silo, error) {
 	silos, err := a.Db.Queries().ListSilos(ctx)
 	if err != nil {
 		return nil, err
 	}
-	results := make([]*core.Silo, len(silos))
+	results := make([]core.Silo, len(silos))
 	for i, s := range silos {
 		results[i] = core.NewSilo(a.Db, s.Name, s.Owner, s.ID, a.FindStorageBackend(s.Storage))
 	}
 	return results, nil
 }
 
-func (a App) FindSilo(ctx context.Context, idOrName string) (*core.Silo, error) {
+func (a App) FindSilo(ctx context.Context, idOrName string) (core.Silo, error) {
 	var silo sql.Silo
 
 	if id, err := uuid.Parse(idOrName); err == nil {

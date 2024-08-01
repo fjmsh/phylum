@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/app/core"
 )
 
 type Handler struct {

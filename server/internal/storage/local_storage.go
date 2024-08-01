@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/shroff/phylum/server/internal/sql"
 )
 
@@ -18,7 +19,7 @@ type localStorage struct {
 	root string
 }
 
-func newLocalStorage(name, root string) (Storage, error) {
+func newLocalStorage(name, root string) (core.Storage, error) {
 	if root == "" {
 		return nil, errors.New("local storage root not provided")
 	}

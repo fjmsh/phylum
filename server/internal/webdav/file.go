@@ -12,7 +12,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/app/core"
 )
 
 // A FileSystem implements access to a collection of named files. The elements

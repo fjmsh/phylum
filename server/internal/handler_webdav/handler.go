@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/app"
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/shroff/phylum/server/internal/webdav"
 	"github.com/sirupsen/logrus"
 )
@@ -74,15 +74,15 @@ func (h *handler) HandleRequest(c *gin.Context) {
 }
 
 type adapter struct {
-	*core.Silo
+	silo core.Silo
 }
 
 func (a adapter) Stat(ctx context.Context, name string) (core.File, error) {
-	return a.ResourceByPath(ctx, name)
+	return a.silo.ResourceByPath(ctx, name)
 }
 
 func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, error) {
-	resource, err := a.ResourceByPath(ctx, name)
+	resource, err := a.silo.ResourceByPath(ctx, name)
 
 	if err != nil {
 		if err == fs.ErrNotExist {
@@ -90,57 +90,57 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 			name = strings.TrimRight(name, "/")
 			index := strings.LastIndex(name, "/")
 			parentPath := name[0:index]
-			parent, err := a.ResourceByPath(ctx, parentPath)
+			parent, err := a.silo.ResourceByPath(ctx, parentPath)
 			if err != nil {
 				return nil, fs.ErrNotExist
 			}
 			resourceName := name[index+1:]
 			resourceId := uuid.New()
-			err = a.CreateResource(ctx, resourceId, parent.ID(), resourceName, false)
+			err = a.silo.CreateResource(ctx, resourceId, parent.ID(), resourceName, false)
 			if err != nil {
 				return nil, err
 			}
-			return a.Silo.OpenWrite(ctx, resourceId)
+			return a.silo.OpenWrite(ctx, resourceId)
 		}
 		return nil, err
 	}
 	if resource.IsDir() {
 		return nil, errors.New("cannot open collection for write")
 	}
-	return a.Silo.OpenWrite(ctx, resource.ID())
+	return a.silo.OpenWrite(ctx, resource.ID())
 }
 
 func (a adapter) RemoveAll(ctx context.Context, name string) error {
-	resource, err := a.ResourceByPath(ctx, name)
+	resource, err := a.silo.ResourceByPath(ctx, name)
 	if err != nil {
 		return fs.ErrNotExist
 	}
-	return a.DeleteRecursive(ctx, resource.ID(), false)
+	return a.silo.DeleteRecursive(ctx, resource.ID(), false)
 }
 
 func (a adapter) Mkdir(ctx context.Context, name string) error {
-	if _, err := a.ResourceByPath(ctx, name); err == nil {
+	if _, err := a.silo.ResourceByPath(ctx, name); err == nil {
 		return fs.ErrExist
 	}
 	name = strings.TrimRight(name, "/")
 	index := strings.LastIndex(name, "/")
 	parentPath := name[0:index]
-	parent, err := a.ResourceByPath(ctx, parentPath)
+	parent, err := a.silo.ResourceByPath(ctx, parentPath)
 	if err != nil {
 		return fs.ErrNotExist
 	}
 	dirName := name[index+1:]
-	err = a.CreateResource(ctx, uuid.New(), parent.ID(), dirName, true)
+	err = a.silo.CreateResource(ctx, uuid.New(), parent.ID(), dirName, true)
 	return err
 }
 
 func (a adapter) Rename(ctx context.Context, oldName, newName string) error {
-	src, err := a.ResourceByPath(ctx, oldName)
+	src, err := a.silo.ResourceByPath(ctx, oldName)
 	if err != nil {
 		return fs.ErrNotExist
 	}
 
-	_, err = a.ResourceByPath(ctx, newName)
+	_, err = a.silo.ResourceByPath(ctx, newName)
 	if err == nil {
 		return fs.ErrExist
 	}
@@ -148,14 +148,14 @@ func (a adapter) Rename(ctx context.Context, oldName, newName string) error {
 	newName = strings.TrimRight(newName, "/")
 	index := strings.LastIndex(newName, "/")
 	parentPath := newName[0:index]
-	parent, err := a.ResourceByPath(ctx, parentPath)
+	parent, err := a.silo.ResourceByPath(ctx, parentPath)
 	newName = newName[index+1:]
 
 	if err != nil {
 		return fs.ErrNotExist
 	}
 
-	if err = a.Move(ctx, src.ID(), parent.ID(), newName); err != nil {
+	if err = a.silo.Move(ctx, src.ID(), parent.ID(), newName); err != nil {
 		return err
 	}
 	return nil

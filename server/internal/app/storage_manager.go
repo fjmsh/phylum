@@ -3,17 +3,18 @@ package app
 import (
 	"context"
 
+	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/sql"
 	"github.com/shroff/phylum/server/internal/storage"
 )
 
-func restoreStorageBackends(db *db.DbHandler) (map[string]storage.Storage, error) {
+func restoreStorageBackends(db *db.DbHandler) (map[string]core.Storage, error) {
 	backends, err := db.Queries().AllStorageBackends(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	results := map[string]storage.Storage{}
+	results := map[string]core.Storage{}
 	for _, b := range backends {
 		store, err := storage.Open(b.Name, b.Driver, b.Params)
 		if err != nil {
@@ -41,10 +42,10 @@ func (a App) CreateStorageBackend(name string, driver string, params map[string]
 	return nil
 }
 
-func (a App) FindStorageBackend(name string) storage.Storage {
+func (a App) FindStorageBackend(name string) core.Storage {
 	return a.backends[name]
 }
 
-func (a App) ListStorageBackends() map[string]storage.Storage {
+func (a App) ListStorageBackends() map[string]core.Storage {
 	return a.backends
 }

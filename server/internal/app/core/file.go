@@ -38,7 +38,7 @@ type fileInfo struct {
 
 type file struct {
 	fileInfo
-	silo *Silo
+	silo Silo
 }
 
 func (f fileInfo) ID() uuid.UUID { return f.id }

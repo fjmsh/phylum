@@ -1,13 +1,13 @@
 package app
 
 import (
+	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/shroff/phylum/server/internal/db"
-	"github.com/shroff/phylum/server/internal/storage"
 )
 
 type App struct {
 	Db       *db.DbHandler
-	backends map[string]storage.Storage
+	backends map[string]core.Storage
 }
 
 var Default *App
