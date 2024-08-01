@@ -1,4 +1,4 @@
-package api
+package routes
 
 import (
 	"context"
@@ -15,7 +15,7 @@ type siloResponse struct {
 	Storage string    `json:"storage"`
 }
 
-func setupSiloRoutes(r *gin.RouterGroup, a *app.App) {
+func SetupSiloRoutes(r *gin.RouterGroup, a *app.App) {
 	group := r.Group("/silos")
 	group.GET("/list", createSiloListRouteHandler(a))
 }
@@ -24,10 +24,7 @@ func createSiloListRouteHandler(a *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		silos, err := a.ListSilos(context.Background())
 		if err != nil {
-			c.AbortWithStatusJSON(500, gin.H{
-				"ERR_DETAILS": err.Error(),
-			})
-			return
+			panic(err)
 		}
 		results := make([]siloResponse, len(silos))
 		for i, s := range silos {

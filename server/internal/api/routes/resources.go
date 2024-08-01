@@ -1,18 +1,21 @@
-package api
+package routes
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/shroff/phylum/server/internal/api/errors"
 	"github.com/shroff/phylum/server/internal/app"
 	"github.com/shroff/phylum/server/internal/sql"
-	"github.com/sirupsen/logrus"
 )
+
+const errCodeResourceNotFound = "resource_not_found"
+const errCodeResourceIdInvalid = "resource_id_invalid"
+const errCodeResourceNotCollection = "resource_not_collection"
 
 type resourceResponse struct {
 	ID       uuid.UUID  `json:"id"`
@@ -26,35 +29,25 @@ type resourceResponse struct {
 	Etag     string     `json:"etag"`
 }
 
-func setupResourceRoutes(r *gin.RouterGroup, a *app.App) {
+func SetupResourceRoutes(r *gin.RouterGroup, a *app.App) {
 	group := r.Group("/resources")
 	group.GET("/:id/ls", createResourceLsRouteHandler(a))
 	group.GET("/:id/metadata", createResourceMetadataRouteHandler(a))
 }
+
 func createResourceMetadataRouteHandler(a *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		resourceId, err := uuid.Parse(c.Param("id"))
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-				"ERR_CODE": "resource_not_found",
-			})
-			return
+			panic(errors.New(http.StatusBadRequest, errCodeResourceIdInvalid, ""))
 		}
 
 		resource, err := a.Db.Queries().ResourceById(context.Background(), resourceId)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				c.JSON(http.StatusNotFound, gin.H{
-					"ERR_CODE": "resource_not_found",
-				})
-			} else {
-				logrus.Warn(err)
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-					"ERR_CODE":    "unknown_error",
-					"ERR_DETAILS": err.Error(),
-				})
+				panic(errors.New(http.StatusNotFound, errCodeResourceNotFound, ""))
 			}
-			return
+			panic(err)
 		}
 
 		deleted := &resource.Deleted.Time
@@ -80,40 +73,21 @@ func createResourceLsRouteHandler(a *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		resourceId, err := uuid.Parse(c.Param("id"))
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-				"ERR_CODE": "resource_not_found",
-			})
-			return
+			panic(errors.New(http.StatusBadRequest, errCodeResourceIdInvalid, ""))
 		}
 		resource, err := a.Db.Queries().ResourceById(context.Background(), resourceId)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				c.JSON(http.StatusNotFound, gin.H{
-					"ERR_CODE": "resource_not_found",
-				})
-			} else {
-				logrus.Warn(err)
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-					"ERR_CODE":    "unknown_error",
-					"ERR_DETAILS": err.Error(),
-				})
+				panic(errors.New(http.StatusNotFound, errCodeResourceNotFound, ""))
 			}
-			return
+			panic(err)
 		}
 		if !resource.Dir {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-				"ERR_CODE": "resource_not_collection",
-			})
-			return
+			panic(errors.New(http.StatusBadRequest, errCodeResourceNotCollection, ""))
 		}
 		children, err := a.Db.Queries().ReadDir(context.Background(), sql.ReadDirParams{IncludeRoot: false, ID: resource.ID, Recursive: false})
 		if err != nil {
-			logrus.Warn(err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"ERR_CODE":    "unknown_error",
-				"ERR_DETAILS": err.Error(),
-			})
-			return
+			panic(err)
 		}
 		results := make([]resourceResponse, len(children))
 		for i, c := range children {

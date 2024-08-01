@@ -22,19 +22,19 @@ var accessTokenValiditiy = pgtype.Interval{
 }
 
 var ErrCredentialsInvalid = errors.New("credentials invalid")
-var ErrAccessTokenInvalid = errors.New("access token invalid")
-var ErrAccessTokenExpired = errors.New("access token expired")
+var ErrTokenInvalid = errors.New("token invalid")
+var ErrTokenExpired = errors.New("token expired")
 
 func (a App) CreateAccessToken(username, password string) (sql.AccessToken, error) {
 	if user, err := a.FindUser(context.Background(), username); err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return sql.AccessToken{}, ErrCredentialsInvalid
 		}
 		logrus.Info(err)
 		return sql.AccessToken{}, err
 	} else {
 		if b, err := cryptutil.VerifyPassword(password, user.PasswordHash); err != nil {
-			logrus.Info(err.Error())
+			logrus.Warn(err.Error())
 			return sql.AccessToken{}, err
 		} else if !b {
 			return sql.AccessToken{}, ErrCredentialsInvalid
@@ -54,12 +54,12 @@ func (a App) CreateAccessToken(username, password string) (sql.AccessToken, erro
 func (a App) VerifyAccessToken(accessToken string) (string, error) {
 	token, err := a.Db.Queries().AccessTokenById(context.Background(), accessToken)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return "", ErrAccessTokenInvalid
+		return "", ErrTokenInvalid
 	} else if err != nil {
 		return "", err
 	}
 	if time.Now().After(token.Expires.Time) {
-		return "", ErrAccessTokenExpired
+		return "", ErrTokenExpired
 	}
 	return token.Username, nil
 }

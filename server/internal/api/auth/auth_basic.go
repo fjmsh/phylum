@@ -14,24 +14,24 @@ func CreateBasicAuthHandler(app *app.App) func(c *gin.Context) {
 		username, pass, ok := c.Request.BasicAuth()
 		if !ok {
 			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.Status(http.StatusUnauthorized)
 			return
 		}
 		user, err := app.FindUser(context.Background(), username)
 		if err != nil {
 			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.Status(http.StatusUnauthorized)
 			return
 		}
 		ok, err = cryptutil.VerifyPassword(pass, user.PasswordHash)
 		if err != nil {
 			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.Status(http.StatusUnauthorized)
 			return
 		}
 		if !ok {
 			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.Status(http.StatusUnauthorized)
 			return
 		}
 		c.Set(keyUsername, user)

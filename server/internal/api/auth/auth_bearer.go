@@ -1,51 +1,36 @@
 package auth
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shroff/phylum/server/internal/api/errors"
 	"github.com/shroff/phylum/server/internal/app"
-	"github.com/sirupsen/logrus"
 )
+
+const errCodeAuthRequred = "auth_required"
+const errCodeTokenInvalid = "token_invalid"
 
 func CreateBearerAuthHandler(a *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.AbortWithStatusJSON(401, gin.H{
-				"ERR_CODE": "auth_required",
-			})
-			return
+			panic(errors.Err{Status: 401, Code: errCodeAuthRequred})
 		}
 		authParts := strings.Split(authHeader, " ")
 		if len(authParts) != 2 {
-			c.AbortWithStatusJSON(401, gin.H{
-				"ERR_CODE": "auth_malformed",
-			})
-			return
+			panic(errors.Err{Status: 401, Code: errCodeAuthRequred})
 		}
 		if authParts[0] != "bearer" {
-			c.AbortWithStatusJSON(401, gin.H{
-				"ERR_CODE": "auth_scheme_not_recognized",
-			})
-			return
+			panic(errors.Err{Status: 401, Code: errCodeAuthRequred})
 		}
 
 		username, err := a.VerifyAccessToken(authParts[1])
 		if err != nil {
-			if errors.Is(err, app.ErrAccessTokenExpired) || errors.Is(err, app.ErrAccessTokenInvalid) {
-				c.AbortWithStatusJSON(401, gin.H{
-					"ERR_CODE": "access_token_invalid",
-				})
-			} else {
-				logrus.Warn(err.Error())
-				c.AbortWithStatusJSON(500, gin.H{
-					"ERR_CODE":    "unknown_error",
-					"ERR_DETAILS": err.Error(),
-				})
+			if errors.Is(err, app.ErrTokenExpired) || errors.Is(err, app.ErrTokenInvalid) {
+				panic(errors.Err{Status: 401, Code: errCodeTokenInvalid})
 			}
-			return
+			panic(err)
 		}
 		c.Set(keyUsername, username)
 	}
