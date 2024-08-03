@@ -96,18 +96,18 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 			}
 			resourceName := name[index+1:]
 			resourceId := uuid.New()
-			err = a.silo.CreateResource(ctx, resourceId, parent.ID(), resourceName, false)
+			resource, err = parent.CreateMemberResource(ctx, resourceId, resourceName, false)
 			if err != nil {
 				return nil, err
 			}
-			return a.silo.OpenWrite(ctx, resourceId)
+			return resource.OpenWrite(ctx)
 		}
 		return nil, err
 	}
 	if resource.IsDir() {
 		return nil, errors.New("cannot open collection for write")
 	}
-	return a.silo.OpenWrite(ctx, resource.ID())
+	return resource.OpenWrite(ctx)
 }
 
 func (a adapter) RemoveAll(ctx context.Context, name string) error {
@@ -115,7 +115,7 @@ func (a adapter) RemoveAll(ctx context.Context, name string) error {
 	if err != nil {
 		return fs.ErrNotExist
 	}
-	return a.silo.DeleteRecursive(ctx, resource.ID(), false)
+	return resource.DeleteRecursive(ctx, false)
 }
 
 func (a adapter) Mkdir(ctx context.Context, name string) error {
@@ -130,7 +130,7 @@ func (a adapter) Mkdir(ctx context.Context, name string) error {
 		return fs.ErrNotExist
 	}
 	dirName := name[index+1:]
-	err = a.silo.CreateResource(ctx, uuid.New(), parent.ID(), dirName, true)
+	_, err = parent.CreateMemberResource(ctx, uuid.New(), dirName, true)
 	return err
 }
 

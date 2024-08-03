@@ -114,7 +114,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 		}
 
 	} else {
-		srcFile, err := srcStat.OpenRead(ctx, 0, -1)
+		srcFile, err := srcStat.OpenRead(0, -1)
 		if err != nil {
 			if os.IsNotExist(err) {
 				return http.StatusNotFound, err

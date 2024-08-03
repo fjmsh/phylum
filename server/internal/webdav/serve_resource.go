@@ -95,9 +95,9 @@ func serveResource(w http.ResponseWriter, r *http.Request, file core.Resource) {
 		sendSize = ra.length
 		code = http.StatusPartialContent
 		w.Header().Set("Content-Range", ra.contentRange(file.Size()))
-		reader, err = file.OpenRead(r.Context(), ra.start, ra.length)
+		reader, err = file.OpenRead(ra.start, ra.length)
 	} else {
-		reader, err = file.OpenRead(r.Context(), 0, -1)
+		reader, err = file.OpenRead(0, -1)
 	}
 
 	if err != nil {

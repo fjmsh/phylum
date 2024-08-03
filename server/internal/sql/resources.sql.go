@@ -12,12 +12,12 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createResource = `-- name: CreateResource :exec
+const createResource = `-- name: CreateResource :one
 INSERT INTO resources(
     id, parent, name, dir, created, modified
 ) VALUES (
     $1, $2, $3, $4, NOW(), NOW()
-)
+) RETURNING id, parent, name, dir, created, modified, deleted, size, etag
 `
 
 type CreateResourceParams struct {
@@ -27,14 +27,26 @@ type CreateResourceParams struct {
 	Dir    bool
 }
 
-func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) error {
-	_, err := q.db.Exec(ctx, createResource,
+func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) (Resource, error) {
+	row := q.db.QueryRow(ctx, createResource,
 		arg.ID,
 		arg.Parent,
 		arg.Name,
 		arg.Dir,
 	)
-	return err
+	var i Resource
+	err := row.Scan(
+		&i.ID,
+		&i.Parent,
+		&i.Name,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.Size,
+		&i.Etag,
+	)
+	return i, err
 }
 
 const deleteRecursive = `-- name: DeleteRecursive :exec

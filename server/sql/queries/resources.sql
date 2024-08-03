@@ -1,12 +1,12 @@
 -- name: ResourceById :one
 SELECT * from resources WHERE id = $1;
 
--- name: CreateResource :exec
+-- name: CreateResource :one
 INSERT INTO resources(
     id, parent, name, dir, created, modified
 ) VALUES (
     $1, $2, $3, $4, NOW(), NOW()
-);
+) RETURNING *;
 
 -- name: UpdateResourceContents :exec
 UPDATE resources
