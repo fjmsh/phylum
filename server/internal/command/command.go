@@ -56,7 +56,9 @@ func SetupCommand() {
 
 	defer func() {
 		logrus.Info("Shutting Down App")
-		app.Default.Cleanup()
+		if app.Default != nil {
+			app.Default.Cleanup()
+		}
 	}()
 
 	rootCmd.AddCommand([]*cobra.Command{

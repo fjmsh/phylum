@@ -16,6 +16,12 @@ type AccessToken struct {
 	Username string
 }
 
+type Permission struct {
+	ResourceID uuid.UUID
+	Username   string
+	Permission int32
+}
+
 type Resource struct {
 	ID       uuid.UUID
 	Parent   *uuid.UUID
