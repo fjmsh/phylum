@@ -19,7 +19,7 @@ import (
 // in a file path are separated by slash ('/', U+002F) characters, regardless
 // of host operating system convention.
 type FileSystem interface {
-	Stat(ctx context.Context, name string) (core.File, error)
+	Stat(ctx context.Context, name string) (core.Resource, error)
 	Mkdir(ctx context.Context, name string) error
 	RemoveAll(ctx context.Context, name string) error
 	Rename(ctx context.Context, oldName, newName string) error
@@ -146,14 +146,14 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 	return http.StatusNoContent, nil
 }
 
-type WalkFunc func(path string, info core.FileInfo, err error) error
+type WalkFunc func(path string, info core.Resource, err error) error
 
 // walkFS traverses filesystem fs starting at name up to depth levels.
 //
 // Allowed values for depth are 0, 1 or infiniteDepth. For each visited node,
 // walkFS calls walkFn. If a visited file system node is a directory and
 // walkFn returns filepath.SkipDir, walkFS will skip traversal of this node.
-func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info core.FileInfo, walkFn WalkFunc) error {
+func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info core.Resource, walkFn WalkFunc) error {
 	// This implementation is based on Walk's code in the standard path/filepath package.
 	err := walkFn(name, info, nil)
 	if err != nil {

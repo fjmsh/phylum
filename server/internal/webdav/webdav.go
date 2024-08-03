@@ -524,7 +524,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 
 	mw := multistatusWriter{w: w}
 
-	walkFn := func(reqPath string, info core.FileInfo, err error) error {
+	walkFn := func(reqPath string, info core.Resource, err error) error {
 		if err != nil {
 			return handlePropfindError(err, info)
 		}
@@ -625,7 +625,7 @@ func makePropstatResponse(href string, pstats []Propstat) *response {
 	return &resp
 }
 
-func handlePropfindError(err error, info core.FileInfo) error {
+func handlePropfindError(err error, info core.ResourceInfo) error {
 	var skipResp error = nil
 	if info.IsDir() {
 		skipResp = filepath.SkipDir

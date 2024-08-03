@@ -25,7 +25,7 @@ var htmlReplacer = strings.NewReplacer(
 	"'", "&#39;",
 )
 
-func serveCollection(w http.ResponseWriter, r *http.Request, file core.File) {
+func serveCollection(w http.ResponseWriter, r *http.Request, file core.Resource) {
 	if !strings.HasSuffix(r.URL.Path, "/") {
 		http.Redirect(w, r, r.URL.String()+"/", http.StatusMovedPermanently)
 		return
@@ -59,7 +59,7 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file core.File) {
 	fmt.Fprintf(w, "</pre>\n")
 }
 
-func serveResource(w http.ResponseWriter, r *http.Request, file core.File) {
+func serveResource(w http.ResponseWriter, r *http.Request, file core.Resource) {
 	w.Header().Set("Etag", file.ETag())
 	w.Header().Set("Last-Modified", file.ModTime().Format(http.TimeFormat))
 	w.Header().Set("Content-Type", file.ContentType())
@@ -206,7 +206,7 @@ func parseRange(s string, size int64) ([]httpRange, error) {
 
 // checkPreconditions evaluates request preconditions and reports whether a precondition
 // resulted in sending StatusNotModified or StatusPreconditionFailed.
-func checkPreconditions(w http.ResponseWriter, r *http.Request, ri core.FileInfo) (done bool, rangeHeader string) {
+func checkPreconditions(w http.ResponseWriter, r *http.Request, ri core.ResourceInfo) (done bool, rangeHeader string) {
 	// This function carefully follows RFC 7232 section 6.
 	ch := checkIfMatch(r, ri)
 	if ch == condNone {
@@ -289,7 +289,7 @@ const (
 	condFalse
 )
 
-func checkIfMatch(r *http.Request, ri core.FileInfo) condResult {
+func checkIfMatch(r *http.Request, ri core.ResourceInfo) condResult {
 	im := r.Header.Get("If-Match")
 	if im == "" {
 		return condNone
@@ -319,7 +319,7 @@ func checkIfMatch(r *http.Request, ri core.FileInfo) condResult {
 	return condFalse
 }
 
-func checkIfUnmodifiedSince(r *http.Request, ri core.FileInfo) condResult {
+func checkIfUnmodifiedSince(r *http.Request, ri core.ResourceInfo) condResult {
 	ius := r.Header.Get("If-Unmodified-Since")
 	if ius == "" || isZeroTime(ri.ModTime()) {
 		return condNone
@@ -338,7 +338,7 @@ func checkIfUnmodifiedSince(r *http.Request, ri core.FileInfo) condResult {
 	return condFalse
 }
 
-func checkIfNoneMatch(r *http.Request, ri core.FileInfo) condResult {
+func checkIfNoneMatch(r *http.Request, ri core.ResourceInfo) condResult {
 	inm := r.Header.Get("If-None-Match")
 	if inm == "" {
 		return condNone
@@ -368,7 +368,7 @@ func checkIfNoneMatch(r *http.Request, ri core.FileInfo) condResult {
 	return condTrue
 }
 
-func checkIfModifiedSince(r *http.Request, ri core.FileInfo) condResult {
+func checkIfModifiedSince(r *http.Request, ri core.ResourceInfo) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}
@@ -389,7 +389,7 @@ func checkIfModifiedSince(r *http.Request, ri core.FileInfo) condResult {
 	return condTrue
 }
 
-func checkIfRange(r *http.Request, ri core.FileInfo) condResult {
+func checkIfRange(r *http.Request, ri core.ResourceInfo) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}

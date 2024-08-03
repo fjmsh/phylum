@@ -70,7 +70,7 @@ func makePropstats(x, y Propstat) []Propstat {
 var liveProps = map[xml.Name]struct {
 	// findFn implements the propfind function of this property. If nil,
 	// it indicates a hidden property.
-	findFn func(core.FileInfo) string
+	findFn func(core.ResourceInfo) string
 	// dir is true if the property applies to directories.
 	dir bool
 }{
@@ -265,34 +265,34 @@ func escapeXML(s string) string {
 	return s
 }
 
-func findResourceType(fi core.FileInfo) string {
+func findResourceType(fi core.ResourceInfo) string {
 	if fi.IsDir() {
 		return `<D:collection xmlns:D="DAV:"/>`
 	}
 	return ""
 }
 
-func findDisplayName(fi core.FileInfo) string {
+func findDisplayName(fi core.ResourceInfo) string {
 	return escapeXML(fi.Name())
 }
 
-func findContentLength(fi core.FileInfo) string {
+func findContentLength(fi core.ResourceInfo) string {
 	return strconv.FormatInt(fi.Size(), 10)
 }
 
-func findLastModified(fi core.FileInfo) string {
+func findLastModified(fi core.ResourceInfo) string {
 	return fi.ModTime().UTC().Format(http.TimeFormat)
 }
 
-func findContentType(fi core.FileInfo) string {
+func findContentType(fi core.ResourceInfo) string {
 	return fi.ContentType()
 }
 
-func findETag(fi core.FileInfo) string {
+func findETag(fi core.ResourceInfo) string {
 	return fi.ETag()
 }
 
-func findSupportedLock(fi core.FileInfo) string {
+func findSupportedLock(fi core.ResourceInfo) string {
 	return `` +
 		`<D:lockentry xmlns:D="DAV:">` +
 		`<D:lockscope><D:exclusive/></D:lockscope>` +

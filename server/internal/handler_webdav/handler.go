@@ -77,7 +77,7 @@ type adapter struct {
 	silo core.Silo
 }
 
-func (a adapter) Stat(ctx context.Context, name string) (core.File, error) {
+func (a adapter) Stat(ctx context.Context, name string) (core.Resource, error) {
 	return a.silo.ResourceByPath(ctx, name)
 }
 

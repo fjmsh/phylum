@@ -20,9 +20,9 @@ type Silo interface {
 	StorageName() string
 	OpenRead(ctx context.Context, id uuid.UUID, start, length int64) (io.ReadCloser, error)
 	OpenWrite(ctx context.Context, id uuid.UUID) (io.WriteCloser, error)
-	ReadDir(ctx context.Context, id uuid.UUID, includeRoot bool, recursive bool) ([]FileInfo, error)
+	ReadDir(ctx context.Context, id uuid.UUID, includeRoot bool, recursive bool) ([]Resource, error)
 	DeleteRecursive(ctx context.Context, id uuid.UUID, hardDelete bool) error
-	ResourceByPath(ctx context.Context, path string) (File, error)
+	ResourceByPath(ctx context.Context, path string) (Resource, error)
 	Move(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string) error
 	CreateResource(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string, dir bool) error
 }
@@ -75,20 +75,22 @@ func (s *silo) OpenWrite(ctx context.Context, id uuid.UUID) (io.WriteCloser, err
 	})
 }
 
-func (s *silo) ReadDir(ctx context.Context, id uuid.UUID, includeRoot bool, recursive bool) ([]FileInfo, error) {
+func (s *silo) ReadDir(ctx context.Context, id uuid.UUID, includeRoot bool, recursive bool) ([]Resource, error) {
 	children, err := s.db.Queries().ReadDir(ctx, sql.ReadDirParams{ID: id, IncludeRoot: includeRoot, Recursive: recursive})
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]FileInfo, len(children))
+	result := make([]Resource, len(children))
 	for i, c := range children {
-		result[i] = fileInfo{
+		result[i] = resource{
+			silo:       s,
+			id:         c.ID,
+			parentID:   &id,
 			name:       c.Name,
 			size:       int64(c.Size.Int32),
 			modTime:    c.Modified.Time,
 			collection: c.Dir,
-			id:         c.ID,
 			etag:       c.Etag.String,
 		}
 	}
@@ -138,7 +140,7 @@ func (s *silo) Move(ctx context.Context, id uuid.UUID, parent uuid.UUID, name st
 	return s.db.Queries().Rename(ctx, sql.RenameParams{ID: id, Parent: parent, Name: name})
 }
 
-func (s *silo) ResourceByPath(ctx context.Context, path string) (File, error) {
+func (s *silo) ResourceByPath(ctx context.Context, path string) (Resource, error) {
 	path = strings.Trim(path, "/")
 	segments := strings.Split(path, "/")
 	if path == "" {
@@ -153,15 +155,14 @@ func (s *silo) ResourceByPath(ctx context.Context, path string) (File, error) {
 
 	//TODO: Permissions checks
 
-	return file{
-		fileInfo: fileInfo{
-			id:         res.ID,
-			name:       res.Name,
-			size:       int64(res.Size.Int32),
-			collection: res.Dir,
-			modTime:    res.Modified.Time,
-			etag:       res.Etag.String,
-		},
-		silo: s,
+	return resource{
+		silo:       s,
+		id:         res.ID,
+		parentID:   res.Parent,
+		name:       res.Name,
+		size:       int64(res.Size.Int32),
+		collection: res.Dir,
+		modTime:    res.Modified.Time,
+		etag:       res.Etag.String,
 	}, nil
 }
