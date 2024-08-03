@@ -65,24 +65,27 @@ func (h *handler) HandleRequest(c *gin.Context) {
 		return
 	}
 
+	username := auth.GetUsername(c)
+
 	webdavHandler := webdav.Handler{
 		Prefix:     h.prefix + "/" + identifier,
-		FileSystem: adapter{silo},
+		FileSystem: adapter{silo: silo, username: username},
 		LockSystem: webdav.NewMemLS(),
 	}
 	webdavHandler.ServeHTTP(c.Writer, c.Request)
 }
 
 type adapter struct {
-	silo core.Silo
+	silo     core.Silo
+	username string
 }
 
 func (a adapter) Stat(ctx context.Context, name string) (core.Resource, error) {
-	return a.silo.ResourceByPath(ctx, name)
+	return a.silo.ResourceByPath(ctx, name, a.username)
 }
 
 func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, error) {
-	resource, err := a.silo.ResourceByPath(ctx, name)
+	resource, err := a.Stat(ctx, name)
 
 	if err != nil {
 		if err == fs.ErrNotExist {
@@ -90,7 +93,7 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 			name = strings.TrimRight(name, "/")
 			index := strings.LastIndex(name, "/")
 			parentPath := name[0:index]
-			parent, err := a.silo.ResourceByPath(ctx, parentPath)
+			parent, err := a.Stat(ctx, parentPath)
 			if err != nil {
 				return nil, fs.ErrNotExist
 			}
@@ -111,7 +114,7 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 }
 
 func (a adapter) RemoveAll(ctx context.Context, name string) error {
-	resource, err := a.silo.ResourceByPath(ctx, name)
+	resource, err := a.Stat(ctx, name)
 	if err != nil {
 		return fs.ErrNotExist
 	}
@@ -119,13 +122,13 @@ func (a adapter) RemoveAll(ctx context.Context, name string) error {
 }
 
 func (a adapter) Mkdir(ctx context.Context, name string) error {
-	if _, err := a.silo.ResourceByPath(ctx, name); err == nil {
+	if _, err := a.Stat(ctx, name); err == nil {
 		return fs.ErrExist
 	}
 	name = strings.TrimRight(name, "/")
 	index := strings.LastIndex(name, "/")
 	parentPath := name[0:index]
-	parent, err := a.silo.ResourceByPath(ctx, parentPath)
+	parent, err := a.Stat(ctx, parentPath)
 	if err != nil {
 		return fs.ErrNotExist
 	}
@@ -135,12 +138,12 @@ func (a adapter) Mkdir(ctx context.Context, name string) error {
 }
 
 func (a adapter) Rename(ctx context.Context, oldName, newName string) error {
-	src, err := a.silo.ResourceByPath(ctx, oldName)
+	src, err := a.Stat(ctx, oldName)
 	if err != nil {
 		return fs.ErrNotExist
 	}
 
-	_, err = a.silo.ResourceByPath(ctx, newName)
+	_, err = a.Stat(ctx, newName)
 	if err == nil {
 		return fs.ErrExist
 	}
@@ -148,7 +151,7 @@ func (a adapter) Rename(ctx context.Context, oldName, newName string) error {
 	newName = strings.TrimRight(newName, "/")
 	index := strings.LastIndex(newName, "/")
 	parentPath := newName[0:index]
-	parent, err := a.silo.ResourceByPath(ctx, parentPath)
+	parent, err := a.Stat(ctx, parentPath)
 	newName = newName[index+1:]
 
 	if err != nil {

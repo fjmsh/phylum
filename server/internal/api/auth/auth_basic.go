@@ -34,6 +34,6 @@ func CreateBasicAuthHandler(app *app.App) func(c *gin.Context) {
 			c.Status(http.StatusUnauthorized)
 			return
 		}
-		c.Set(keyUsername, user)
+		c.Set(keyUsername, user.Username)
 	}
 }

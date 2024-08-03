@@ -15,7 +15,7 @@ type Silo interface {
 	Name() string
 	Owner() string
 	StorageName() string
-	ResourceByPath(ctx context.Context, path string) (Resource, error)
+	ResourceByPath(ctx context.Context, path, username string) (Resource, error)
 	Move(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string) error
 }
 
@@ -57,7 +57,7 @@ func (s *silo) Move(ctx context.Context, id uuid.UUID, parent uuid.UUID, name st
 	return s.db.Queries().Rename(ctx, sql.RenameParams{ID: id, Parent: parent, Name: name})
 }
 
-func (s *silo) ResourceByPath(ctx context.Context, path string) (Resource, error) {
+func (s *silo) ResourceByPath(ctx context.Context, path, username string) (Resource, error) {
 	path = strings.Trim(path, "/")
 	segments := strings.Split(path, "/")
 	if path == "" {
@@ -65,7 +65,7 @@ func (s *silo) ResourceByPath(ctx context.Context, path string) (Resource, error
 		segments = []string{}
 	}
 
-	res, err := s.db.Queries().ResourceByPath(ctx, sql.ResourceByPathParams{Root: s.root, Search: segments})
+	res, err := s.db.Queries().ResourceByPath(ctx, sql.ResourceByPathParams{Root: s.root, Search: segments, Username: username})
 	if err != nil {
 		return nil, fs.ErrNotExist
 	}
@@ -78,6 +78,7 @@ func (s *silo) ResourceByPath(ctx context.Context, path string) (Resource, error
 		db:         s.db,
 		storage:    s.storage,
 		id:         res.ID,
+		username:   username,
 		permission: int(res.Permission.Int32),
 		parentID:   res.Parent,
 		name:       res.Name,

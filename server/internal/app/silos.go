@@ -90,7 +90,7 @@ func (a App) DeleteSilo(ctx context.Context, id uuid.UUID) error {
 		}
 
 		silo := core.NewSilo(a.Db, result.Name, result.Owner, result.ID, storage)
-		resource, err := silo.ResourceByPath(ctx, "/")
+		resource, err := silo.ResourceByPath(ctx, "/", "admin")
 		if err != nil {
 			return err
 		}
