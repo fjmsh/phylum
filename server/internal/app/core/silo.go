@@ -70,12 +70,15 @@ func (s *silo) ResourceByPath(ctx context.Context, path string) (Resource, error
 		return nil, fs.ErrNotExist
 	}
 
-	//TODO: Permissions checks
+	if !res.Permission.Valid || res.Permission.Int32 == 0 {
+		return nil, ErrInsufficientPermissions
+	}
 
 	return resource{
 		db:         s.db,
 		storage:    s.storage,
 		id:         res.ID,
+		permission: int(res.Permission.Int32),
 		parentID:   res.Parent,
 		name:       res.Name,
 		size:       int64(res.Size.Int32),

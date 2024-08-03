@@ -123,11 +123,16 @@ func (r resource) ReadDir(ctx context.Context) ([]Resource, error) {
 
 	result := make([]Resource, len(children))
 	for i, c := range children {
+		permission := r.Permission()
+		if c.Permission.Valid && int(c.Permission.Int32) > permission {
+			permission = int(c.Permission.Int32)
+
+		}
 		result[i] = resource{
 			db:         r.db,
 			storage:    r.storage,
 			id:         c.ID,
-			permission: r.permission,
+			permission: permission,
 			parentID:   &r.id,
 			name:       c.Name,
 			size:       int64(c.Size.Int32),
@@ -140,6 +145,9 @@ func (r resource) ReadDir(ctx context.Context) ([]Resource, error) {
 }
 
 func (r resource) CreateMemberResource(ctx context.Context, id uuid.UUID, name string, dir bool) (Resource, error) {
+	if r.permission < PermissionReadWrite {
+		return nil, ErrInsufficientPermissions
+	}
 	if !r.collection {
 		return resource{}, ErrResourceNotCollection
 	}
@@ -169,6 +177,9 @@ func (r resource) CreateMemberResource(ctx context.Context, id uuid.UUID, name s
 }
 
 func (r resource) DeleteRecursive(ctx context.Context, hardDelete bool) error {
+	if r.permission < PermissionReadWrite {
+		return ErrInsufficientPermissions
+	}
 	// TODO: versioning
 	return r.db.RunInTx(ctx, func(q *sql.Queries) error {
 		if hardDelete {

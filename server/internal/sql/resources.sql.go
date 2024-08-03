@@ -108,40 +108,54 @@ func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]Hard
 }
 
 const readDir = `-- name: ReadDir :many
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text
-    FROM resources r WHERE r.id = $2::uuid
+WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, permission) AS (
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, p.permission
+    FROM resources r
+    LEFT JOIN permissions p
+    ON r.id = p.resource_id
+    AND p.username = $2::text
+    WHERE r.id = $3::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name)
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), CASE WHEN (p.permission IS NULL OR p.permission < n.permission) THEN n.permission ELSE p.permission END
     FROM resources r JOIN nodes n on r.parent = n.id
+    LEFT JOIN permissions p
+    ON r.id = p.resource_id 
+    AND p.username = $2::text
     WHERE deleted IS NULL
-    AND CASE WHEN $3::boolean THEN true ELSE depth < 1 END
+    AND CASE WHEN $4::boolean THEN true ELSE depth < 1 END
 )
-SELECT id, parent, name, dir, created, modified, size, etag, depth, path from nodes
+SELECT id, parent, name, dir, created, modified, size, etag, depth, path, permission from nodes
 WHERE CASE WHEN $1::boolean THEN true ELSE depth > 0 END
 `
 
 type ReadDirParams struct {
 	IncludeRoot bool
+	Username    string
 	ID          uuid.UUID
 	Recursive   bool
 }
 
 type ReadDirRow struct {
-	ID       uuid.UUID
-	Parent   *uuid.UUID
-	Name     string
-	Dir      bool
-	Created  pgtype.Timestamp
-	Modified pgtype.Timestamp
-	Size     pgtype.Int4
-	Etag     pgtype.Text
-	Depth    int32
-	Path     string
+	ID         uuid.UUID
+	Parent     *uuid.UUID
+	Name       string
+	Dir        bool
+	Created    pgtype.Timestamp
+	Modified   pgtype.Timestamp
+	Size       pgtype.Int4
+	Etag       pgtype.Text
+	Depth      int32
+	Path       string
+	Permission pgtype.Int4
 }
 
 func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow, error) {
-	rows, err := q.db.Query(ctx, readDir, arg.IncludeRoot, arg.ID, arg.Recursive)
+	rows, err := q.db.Query(ctx, readDir,
+		arg.IncludeRoot,
+		arg.Username,
+		arg.ID,
+		arg.Recursive,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -160,6 +174,7 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 			&i.Etag,
 			&i.Depth,
 			&i.Path,
+			&i.Permission,
 		); err != nil {
 			return nil, err
 		}
@@ -213,39 +228,49 @@ func (q *Queries) ResourceById(ctx context.Context, id uuid.UUID) (Resource, err
 }
 
 const resourceByPath = `-- name: ResourceByPath :one
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, search) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, $1::text[]
-    FROM resources r WHERE r.id = $2::uuid
+WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, search, permission) AS (
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, $1::text[], p.permission
+    FROM resources r
+    LEFT JOIN permissions p
+    ON r.id = p.resource_id 
+    AND p.username = $2::text
+    WHERE r.id = $3::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search
-    FROM resources r JOIN nodes n on r.parent = n.id
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search, CASE WHEN (p.permission IS NULL OR p.permission < n.permission) THEN n.permission ELSE p.permission END
+    FROM resources r
+    JOIN nodes n ON r.parent = n.id
+    LEFT JOIN permissions p
+    ON r.id = p.resource_id 
+    AND p.username = $2::text
     WHERE deleted IS NULL
     AND r.name = n.search[n.depth + 1]
 )
-SELECT id, parent, name, dir, created, modified, size, etag, depth, path, search FROM nodes WHERE cardinality(search) = depth
+SELECT id, parent, name, dir, created, modified, size, etag, depth, path, search, permission FROM nodes WHERE cardinality(search) = depth
 `
 
 type ResourceByPathParams struct {
-	Search []string
-	Root   uuid.UUID
+	Search   []string
+	Username string
+	Root     uuid.UUID
 }
 
 type ResourceByPathRow struct {
-	ID       uuid.UUID
-	Parent   *uuid.UUID
-	Name     string
-	Dir      bool
-	Created  pgtype.Timestamp
-	Modified pgtype.Timestamp
-	Size     pgtype.Int4
-	Etag     pgtype.Text
-	Depth    int32
-	Path     string
-	Search   []string
+	ID         uuid.UUID
+	Parent     *uuid.UUID
+	Name       string
+	Dir        bool
+	Created    pgtype.Timestamp
+	Modified   pgtype.Timestamp
+	Size       pgtype.Int4
+	Etag       pgtype.Text
+	Depth      int32
+	Path       string
+	Search     []string
+	Permission pgtype.Int4
 }
 
 func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) (ResourceByPathRow, error) {
-	row := q.db.QueryRow(ctx, resourceByPath, arg.Search, arg.Root)
+	row := q.db.QueryRow(ctx, resourceByPath, arg.Search, arg.Username, arg.Root)
 	var i ResourceByPathRow
 	err := row.Scan(
 		&i.ID,
@@ -259,6 +284,7 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 		&i.Depth,
 		&i.Path,
 		&i.Search,
+		&i.Permission,
 	)
 	return i, err
 }
