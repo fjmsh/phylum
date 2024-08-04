@@ -24,15 +24,16 @@ const (
 )
 
 var (
-	ErrInsufficientPermissions = errors.New("insufficient permissions")
-	ErrResourceNotCollection   = errors.New("cannot add member to non-collection resource")
+	ErrInsufficientPermissions    = errors.New("insufficient permissions")
+	ErrCannotGrantOwnerPermission = errors.New("cannot grant owner permission")
+	ErrResourceNotCollection      = errors.New("cannot add member to non-collection resource")
 )
 
 type ResourceInfo interface {
 	ID() uuid.UUID
 	Name() string
 	Size() int64
-	Permission() int
+	Permission() int32
 	ModTime() time.Time
 	IsDir() bool
 	ETag() string
@@ -56,7 +57,7 @@ type resource struct {
 	name       string
 	size       int64
 	userID     int32
-	permission int
+	permission int32
 	collection bool
 	modTime    time.Time
 	etag       string
@@ -64,7 +65,7 @@ type resource struct {
 
 func (r resource) ID() uuid.UUID { return r.id }
 
-func (r resource) Permission() int { return r.permission }
+func (r resource) Permission() int32 { return r.permission }
 
 func (r resource) ParentID() *uuid.UUID { return r.parentID }
 
@@ -107,7 +108,7 @@ func (r resource) OpenWrite(ctx context.Context) (io.WriteCloser, error) {
 	return r.storage.OpenWrite(r.id, func(len int, etag string) error {
 		return r.db.Queries().UpdateResourceContents(ctx, sql.UpdateResourceContentsParams{
 			ID:   r.id,
-			Size: pgtype.Int4{Int32: int32(len), Valid: true},
+			Size: pgtype.Int8{Int64: int64(len), Valid: true},
 			Etag: pgtype.Text{String: etag, Valid: true},
 		})
 	})
@@ -125,8 +126,8 @@ func (r resource) ReadDir(ctx context.Context) ([]Resource, error) {
 	result := make([]Resource, len(children))
 	for i, c := range children {
 		permission := r.Permission()
-		if c.Permission.Valid && int(c.Permission.Int32) > permission {
-			permission = int(c.Permission.Int32)
+		if c.Permission.Valid && c.Permission.Int32 > permission {
+			permission = c.Permission.Int32
 
 		}
 		result[i] = resource{
@@ -137,7 +138,7 @@ func (r resource) ReadDir(ctx context.Context) ([]Resource, error) {
 			permission: permission,
 			parentID:   &r.id,
 			name:       c.Name,
-			size:       int64(c.Size.Int32),
+			size:       c.Size.Int64,
 			modTime:    c.Modified.Time,
 			collection: c.Dir,
 			etag:       c.Etag.String,
@@ -204,5 +205,20 @@ func (r resource) DeleteRecursive(ctx context.Context, hardDelete bool) error {
 			return q.UpdateResourceModified(ctx, *r.parentID)
 		}
 		return nil
+	})
+}
+
+func (r resource) UpdatePermissions(ctx context.Context, userID int32, permission int32) error {
+	if r.permission < PermissionAdmin {
+		return ErrInsufficientPermissions
+	}
+	if permission > PermissionAdmin {
+		return ErrCannotGrantOwnerPermission
+	}
+
+	return r.db.Queries().UpdatePermissionsForResource(ctx, sql.UpdatePermissionsForResourceParams{
+		ResourceID: r.id,
+		UserID:     userID,
+		Permission: permission,
 	})
 }

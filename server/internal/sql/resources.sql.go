@@ -142,7 +142,7 @@ type ReadDirRow struct {
 	Dir        bool
 	Created    pgtype.Timestamp
 	Modified   pgtype.Timestamp
-	Size       pgtype.Int4
+	Size       pgtype.Int8
 	Etag       pgtype.Text
 	Depth      int32
 	Path       string
@@ -261,7 +261,7 @@ type ResourceByPathRow struct {
 	Dir        bool
 	Created    pgtype.Timestamp
 	Modified   pgtype.Timestamp
-	Size       pgtype.Int4
+	Size       pgtype.Int8
 	Etag       pgtype.Text
 	Depth      int32
 	Path       string
@@ -299,7 +299,7 @@ WHERE id = $3
 `
 
 type UpdateResourceContentsParams struct {
-	Size pgtype.Int4
+	Size pgtype.Int8
 	Etag pgtype.Text
 	ID   uuid.UUID
 }

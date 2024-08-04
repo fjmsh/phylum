@@ -25,7 +25,7 @@ type resourceResponse struct {
 	Created  time.Time  `json:"created"`
 	Modified time.Time  `json:"modified"`
 	Deleted  *time.Time `json:"deleted,omitempty"`
-	Size     int        `json:"size"`
+	Size     int64      `json:"size"`
 	Etag     string     `json:"etag"`
 }
 
@@ -62,7 +62,7 @@ func createResourceMetadataRouteHandler(a *app.App) func(c *gin.Context) {
 			Created:  resource.Created.Time,
 			Modified: resource.Modified.Time,
 			Deleted:  deleted,
-			Size:     int(resource.Size.Int32),
+			Size:     resource.Size.Int64,
 			Etag:     resource.Etag.String,
 		}
 		c.JSON(200, response)
@@ -98,7 +98,7 @@ func createResourceLsRouteHandler(a *app.App) func(c *gin.Context) {
 				Dir:      c.Dir,
 				Created:  c.Created.Time,
 				Modified: c.Modified.Time,
-				Size:     int(c.Size.Int32),
+				Size:     c.Size.Int64,
 				Etag:     c.Etag.String,
 			}
 		}

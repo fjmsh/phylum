@@ -19,13 +19,20 @@ func (a App) CreateSilo(ctx context.Context, id uuid.UUID, owner int32, storage,
 		}); err != nil {
 			return err
 		}
-		_, err := q.CreateResource(ctx, sql.CreateResourceParams{
+		if _, err := q.CreateResource(ctx, sql.CreateResourceParams{
 			ID:     id,
 			Parent: nil,
 			Name:   id.String(),
 			Dir:    true,
+		}); err != nil {
+			return err
+		}
+
+		err := q.UpdatePermissionsForResource(ctx, sql.UpdatePermissionsForResourceParams{
+			ResourceID: id,
+			UserID:     owner,
+			Permission: core.PermissionOwner,
 		})
-		// TODO: insert permissions
 
 		return err
 	})

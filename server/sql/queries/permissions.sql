@@ -8,3 +8,9 @@ WITH RECURSIVE nodes(id, parent, permission) AS (
     FROM resources r JOIN nodes n ON r.id = n.parent LEFT JOIN permissions p ON r.id = p.resource_id AND p.user_id = @user_id::int
 )
 SELECT * FROM nodes WHERE parent IS NULL;
+
+-- name: UpdatePermissionsForResource :exec
+INSERT INTO permissions(resource_id, user_id, permission)
+    VALUES(@resource_id::uuid, @user_id::int, @permission::int)
+    ON CONFLICT(resource_id, user_id) DO UPDATE SET permission = @permission::int;
+

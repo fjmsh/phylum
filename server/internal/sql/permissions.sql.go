@@ -40,3 +40,20 @@ func (q *Queries) PermissionsForResource(ctx context.Context, arg PermissionsFor
 	err := row.Scan(&i.ID, &i.Parent, &i.Permission)
 	return i, err
 }
+
+const updatePermissionsForResource = `-- name: UpdatePermissionsForResource :exec
+INSERT INTO permissions(resource_id, user_id, permission)
+    VALUES($1::uuid, $2::int, $3::int)
+    ON CONFLICT(resource_id, user_id) DO UPDATE SET permission = $3::int
+`
+
+type UpdatePermissionsForResourceParams struct {
+	ResourceID uuid.UUID
+	UserID     int32
+	Permission int32
+}
+
+func (q *Queries) UpdatePermissionsForResource(ctx context.Context, arg UpdatePermissionsForResourceParams) error {
+	_, err := q.db.Exec(ctx, updatePermissionsForResource, arg.ResourceID, arg.UserID, arg.Permission)
+	return err
+}

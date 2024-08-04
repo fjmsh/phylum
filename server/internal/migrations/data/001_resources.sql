@@ -6,7 +6,7 @@ CREATE TABLE resources (
   created  TIMESTAMP NOT NULL,
   modified TIMESTAMP NOT NULL,
   deleted  TIMESTAMP,
-  size     INT,
+  size     BIGINT,
   etag     TEXT
   -- CONSTRAINT resource_parent FOREIGN KEY REFERENCES resources(id) ON UPDATE CASCADE ON DELETE CASCADE;
 );

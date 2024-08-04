@@ -30,7 +30,7 @@ type Resource struct {
 	Created  pgtype.Timestamp
 	Modified pgtype.Timestamp
 	Deleted  pgtype.Timestamp
-	Size     pgtype.Int4
+	Size     pgtype.Int8
 	Etag     pgtype.Text
 }
 
