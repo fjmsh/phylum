@@ -15,6 +15,6 @@ CREATE UNIQUE INDEX unique_member_resource_name ON resources(parent, name) WHERE
 
 ---- create above / drop below ----
 
-DROP INDEX unique_member_resource_name
+DROP INDEX unique_member_resource_name;
 
-DROP TABLE resources
+DROP TABLE resources;

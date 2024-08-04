@@ -1,4 +1,4 @@
-package command
+package appcmd
 
 import (
 	"bytes"
@@ -58,11 +58,11 @@ func setupServeCommand() *cobra.Command {
 }
 
 func createEngine(logBody bool, corsEnabled bool, corsOrigins []string) *gin.Engine {
-	if !debug {
+	if !app.Default.Debug {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	engine := gin.Default()
-	if debug && logBody {
+	if app.Default.Debug && logBody {
 		engine.Use(logBodyMiddleware)
 	}
 

@@ -1,4 +1,4 @@
-package command
+package admincmd
 
 import (
 	"bufio"

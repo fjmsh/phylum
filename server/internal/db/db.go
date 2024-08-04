@@ -26,7 +26,7 @@ type DbHandler struct {
 	queries *sql.Queries
 }
 
-func NewDb(dsn string, trace, autoMigrate bool) (*DbHandler, error) {
+func NewDb(dsn string, trace bool) (*DbHandler, error) {
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, errors.New("Unable to parse DSN: " + err.Error())
@@ -63,21 +63,26 @@ func NewDb(dsn string, trace, autoMigrate bool) (*DbHandler, error) {
 		queries: sql.New(pool),
 	}
 
+	return handler, nil
+}
+
+func (d DbHandler) CheckVersion(autoMigrate bool) error {
+	logrus.Info(fmt.Sprintf("Schema version %d", currentSchemaVersion))
 	if currentSchemaVersion != latestSchemaVersion {
-		logrus.Warn(fmt.Sprintf("Schema version %d (latest %d)", currentSchemaVersion, latestSchemaVersion))
 		if autoMigrate {
 			if currentSchemaVersion > latestSchemaVersion {
-				return nil, ErrMigrationNoAutoDowngrade
+				return ErrMigrationNoAutoDowngrade
 			}
-			if err := handler.Migrate(latestSchemaVersion); err != nil {
-				return nil, err
+			if currentSchemaVersion == latestSchemaVersion {
+				return nil
 			}
+			return d.Migrate(latestSchemaVersion)
+		} else {
+			logrus.Warn(fmt.Sprintf("Schema version is not at latest (%d)", latestSchemaVersion))
+			return nil
 		}
-	} else {
-		logrus.Info(fmt.Sprintf("Schema version %d", currentSchemaVersion))
 	}
-
-	return handler, nil
+	return nil
 }
 
 func (d DbHandler) Migrate(version int) error {

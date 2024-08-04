@@ -1,10 +1,10 @@
-package command
+package admincmd
 
 import (
 	"github.com/spf13/cobra"
 )
 
-func setupAdminCommand() *cobra.Command {
+func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "admin",
 		Short: "Server Administration",
@@ -13,7 +13,6 @@ func setupAdminCommand() *cobra.Command {
 		setupStorageCommand(),
 		setupUserCommand(),
 		setupSiloCommand(),
-		setupSchemaCommand(),
 	}...)
 
 	return cmd

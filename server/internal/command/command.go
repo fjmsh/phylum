@@ -4,7 +4,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/shroff/phylum/server/internal/app"
+	"github.com/shroff/phylum/server/internal/command/appcmd"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -31,9 +31,7 @@ func SetupCommand() {
 	flags.String("database-url", "postgres://phylum:phylum@localhost:5432/phylum", "Database URL or DSN")
 	viper.BindPFlag("database_url", flags.Lookup("database-url"))
 
-	flags.Bool("auto-migrate", false, "Automatically migrate database schema")
-	viper.BindPFlag("auto_migrate", flags.Lookup("auto-migrate"))
-
+	var database *db.DbHandler
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		workDir := viper.GetString("working_dir")
 		if workDir != "." {
@@ -47,23 +45,20 @@ func SetupCommand() {
 			logrus.SetLevel(logrus.TraceLevel)
 		}
 
-		if db, err := db.NewDb(viper.GetString("database_url"), debug && viper.GetBool("trace_sql"), viper.GetBool("auto_migrate")); err != nil {
-			logrus.Fatal(err)
-		} else if err := app.Initialize(db); err != nil {
+		var err error
+		if database, err = db.NewDb(viper.GetString("database_url"), debug && viper.GetBool("trace_sql")); err != nil {
 			logrus.Fatal(err)
 		}
 	}
 
 	defer func() {
 		logrus.Info("Shutting Down App")
-		if app.Default != nil {
-			app.Default.Cleanup()
-		}
+		database.Close()
 	}()
 
 	rootCmd.AddCommand([]*cobra.Command{
-		setupServeCommand(),
-		setupAdminCommand(),
+		appcmd.SetupCommand(&database, debug),
+		setupSchemaCommand(&database),
 	}...)
 	rootCmd.Execute()
 }

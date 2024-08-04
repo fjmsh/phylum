@@ -6,32 +6,24 @@ import (
 )
 
 type App struct {
+	Debug    bool
 	Db       *db.DbHandler
 	backends map[string]core.Storage
 }
 
 var Default *App
 
-func Initialize(db *db.DbHandler) error {
+func Initialize(db *db.DbHandler, debug bool) error {
 	backends, err := restoreStorageBackends(db)
 	if err != nil {
 		return err
 	}
 
 	Default = &App{
+		Debug:    debug,
 		Db:       db,
 		backends: backends,
 	}
 
 	return nil
-}
-
-func (a App) Cleanup() {
-	if a.Db != nil {
-		a.Db.Close()
-	}
-}
-
-func (a App) MigrateDb(version int) error {
-	return a.Db.Migrate(version)
 }
