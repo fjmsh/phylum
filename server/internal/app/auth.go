@@ -25,43 +25,51 @@ var ErrCredentialsInvalid = errors.New("credentials invalid")
 var ErrTokenInvalid = errors.New("token invalid")
 var ErrTokenExpired = errors.New("token expired")
 
-func (a App) CreateAccessToken(username, password string) (sql.AccessToken, error) {
-	if user, err := a.FindUser(context.Background(), username); err != nil {
+func (a App) VerifyUserPassword(ctx context.Context, username, password string) (int32, error) {
+	if user, err := a.Db.Queries().UserByUsername(context.Background(), username); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return sql.AccessToken{}, ErrCredentialsInvalid
+			return 0, ErrCredentialsInvalid
 		}
 		logrus.Info(err)
-		return sql.AccessToken{}, err
+		return 0, err
 	} else {
 		if b, err := cryptutil.VerifyPassword(password, user.PasswordHash); err != nil {
 			logrus.Warn(err.Error())
-			return sql.AccessToken{}, err
+			return 0, err
 		} else if !b {
-			return sql.AccessToken{}, ErrCredentialsInvalid
+			return 0, ErrCredentialsInvalid
 		}
-	}
-	if token, err := a.Db.Queries().InsertAccessToken(context.Background(), sql.InsertAccessTokenParams{
-		ID:       GenerateRandomString(accessTokenLength),
-		Validity: accessTokenValiditiy,
-		Username: username,
-	}); err != nil {
-		return sql.AccessToken{}, err
-	} else {
-		return token, nil
+		return user.ID, nil
 	}
 }
 
-func (a App) VerifyAccessToken(accessToken string) (string, error) {
+func (a App) CreateAccessToken(username, password string) (sql.AccessToken, error) {
+	if userID, err := a.VerifyUserPassword(context.Background(), username, password); err != nil {
+		return sql.AccessToken{}, err
+	} else {
+		if token, err := a.Db.Queries().InsertAccessToken(context.Background(), sql.InsertAccessTokenParams{
+			ID:       GenerateRandomString(accessTokenLength),
+			Validity: accessTokenValiditiy,
+			UserID:   userID,
+		}); err != nil {
+			return sql.AccessToken{}, err
+		} else {
+			return token, nil
+		}
+	}
+}
+
+func (a App) VerifyAccessToken(accessToken string) (int32, error) {
 	token, err := a.Db.Queries().AccessTokenById(context.Background(), accessToken)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return "", ErrTokenInvalid
+		return 0, ErrTokenInvalid
 	} else if err != nil {
-		return "", err
+		return 0, err
 	}
 	if time.Now().After(token.Expires.Time) {
-		return "", ErrTokenExpired
+		return 0, ErrTokenExpired
 	}
-	return token.Username, nil
+	return token.UserID, nil
 }
 
 const (

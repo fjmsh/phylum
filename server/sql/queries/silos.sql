@@ -18,4 +18,4 @@ INSERT INTO silos(
 SELECT * from silos;
 
 -- name: ListSilosForUser :many
-SELECT * from silos where owner = @username::text;
+SELECT * from silos where owner = @user_id::int;

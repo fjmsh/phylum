@@ -12,7 +12,7 @@ import (
 type siloResponse struct {
 	ID      uuid.UUID `json:"id"`
 	Name    string    `json:"name"`
-	Owner   string    `json:"owner"`
+	Owner   int32     `json:"owner"`
 	Storage string    `json:"storage"`
 }
 
@@ -23,7 +23,7 @@ func SetupSiloRoutes(r *gin.RouterGroup, a *app.App) {
 
 func createSiloListRouteHandler(a *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		silos, err := a.SilosForUser(context.Background(), auth.GetUsername(c))
+		silos, err := a.SilosForUser(context.Background(), auth.GetUserID(c))
 		if err != nil {
 			panic(err)
 		}

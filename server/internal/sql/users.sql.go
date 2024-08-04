@@ -29,7 +29,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT username, display_name, password_hash, deleted from users WHERE deleted IS NULL
+SELECT id, username, display_name, password_hash, deleted from users WHERE deleted IS NULL
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
@@ -42,6 +42,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 	for rows.Next() {
 		var i User
 		if err := rows.Scan(
+			&i.ID,
 			&i.Username,
 			&i.DisplayName,
 			&i.PasswordHash,
@@ -58,13 +59,14 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 }
 
 const userByUsername = `-- name: UserByUsername :one
-SELECT username, display_name, password_hash, deleted from users WHERE username = $1
+SELECT id, username, display_name, password_hash, deleted from users WHERE username = $1
 `
 
 func (q *Queries) UserByUsername(ctx context.Context, username string) (User, error) {
 	row := q.db.QueryRow(ctx, userByUsername, username)
 	var i User
 	err := row.Scan(
+		&i.ID,
 		&i.Username,
 		&i.DisplayName,
 		&i.PasswordHash,

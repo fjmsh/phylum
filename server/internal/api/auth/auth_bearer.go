@@ -32,6 +32,6 @@ func CreateBearerAuthHandler(a *app.App) func(c *gin.Context) {
 			}
 			panic(err)
 		}
-		c.Set(keyUsername, username)
+		c.Set(keyUserID, username)
 	}
 }

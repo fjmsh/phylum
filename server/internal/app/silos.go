@@ -9,7 +9,7 @@ import (
 	"github.com/shroff/phylum/server/internal/sql"
 )
 
-func (a App) CreateSilo(ctx context.Context, id uuid.UUID, owner, storage, name string) error {
+func (a App) CreateSilo(ctx context.Context, id uuid.UUID, owner int32, storage, name string) error {
 	return a.Db.RunInTx(ctx, func(q *sql.Queries) error {
 		if err := q.CreateSilo(ctx, sql.CreateSiloParams{
 			ID:      id,
@@ -43,8 +43,8 @@ func (a App) AllSilos(ctx context.Context) ([]core.Silo, error) {
 	return results, nil
 }
 
-func (a App) SilosForUser(ctx context.Context, username string) ([]core.Silo, error) {
-	silos, err := a.Db.Queries().ListSilosForUser(ctx, username)
+func (a App) SilosForUser(ctx context.Context, userID int32) ([]core.Silo, error) {
+	silos, err := a.Db.Queries().ListSilosForUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (a App) DeleteSilo(ctx context.Context, id uuid.UUID) error {
 		}
 
 		silo := core.NewSilo(a.Db, result.Name, result.Owner, result.ID, storage)
-		resource, err := silo.ResourceByPath(ctx, "/", "admin")
+		resource, err := silo.ResourceByPath(ctx, "/", -1)
 		if err != nil {
 			return err
 		}

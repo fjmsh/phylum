@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/app"
-	"github.com/shroff/phylum/server/internal/cryptutil"
 )
 
 func CreateBasicAuthHandler(app *app.App) func(c *gin.Context) {
@@ -17,23 +16,13 @@ func CreateBasicAuthHandler(app *app.App) func(c *gin.Context) {
 			c.Status(http.StatusUnauthorized)
 			return
 		}
-		user, err := app.FindUser(context.Background(), username)
-		if err != nil {
+		if userID, err := app.VerifyUserPassword(context.Background(), username, pass); err != nil {
+
 			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
 			c.Status(http.StatusUnauthorized)
 			return
+		} else {
+			c.Set(keyUserID, userID)
 		}
-		ok, err = cryptutil.VerifyPassword(pass, user.PasswordHash)
-		if err != nil {
-			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			c.Status(http.StatusUnauthorized)
-			return
-		}
-		if !ok {
-			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			c.Status(http.StatusUnauthorized)
-			return
-		}
-		c.Set(keyUsername, user.Username)
 	}
 }

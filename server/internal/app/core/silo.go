@@ -13,21 +13,21 @@ import (
 type Silo interface {
 	ID() uuid.UUID
 	Name() string
-	Owner() string
+	Owner() int32
 	StorageName() string
-	ResourceByPath(ctx context.Context, path, username string) (Resource, error)
+	ResourceByPath(ctx context.Context, path string, userID int32) (Resource, error)
 	Move(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string) error
 }
 
 type silo struct {
 	db      *db.DbHandler
 	name    string
-	owner   string
+	owner   int32
 	root    uuid.UUID
 	storage Storage
 }
 
-func NewSilo(db *db.DbHandler, name, owner string, root uuid.UUID, storage Storage) Silo {
+func NewSilo(db *db.DbHandler, name string, owner int32, root uuid.UUID, storage Storage) Silo {
 	return &silo{
 		db:      db,
 		name:    name,
@@ -45,7 +45,7 @@ func (s *silo) Name() string {
 	return s.name
 }
 
-func (s *silo) Owner() string {
+func (s *silo) Owner() int32 {
 	return s.owner
 }
 
@@ -57,7 +57,7 @@ func (s *silo) Move(ctx context.Context, id uuid.UUID, parent uuid.UUID, name st
 	return s.db.Queries().Rename(ctx, sql.RenameParams{ID: id, Parent: parent, Name: name})
 }
 
-func (s *silo) ResourceByPath(ctx context.Context, path, username string) (Resource, error) {
+func (s *silo) ResourceByPath(ctx context.Context, path string, userID int32) (Resource, error) {
 	path = strings.Trim(path, "/")
 	segments := strings.Split(path, "/")
 	if path == "" {
@@ -65,7 +65,7 @@ func (s *silo) ResourceByPath(ctx context.Context, path, username string) (Resou
 		segments = []string{}
 	}
 
-	res, err := s.db.Queries().ResourceByPath(ctx, sql.ResourceByPathParams{Root: s.root, Search: segments, Username: username})
+	res, err := s.db.Queries().ResourceByPath(ctx, sql.ResourceByPathParams{Root: s.root, Search: segments, UserID: userID})
 	if err != nil {
 		return nil, fs.ErrNotExist
 	}
@@ -78,7 +78,7 @@ func (s *silo) ResourceByPath(ctx context.Context, path, username string) (Resou
 		db:         s.db,
 		storage:    s.storage,
 		id:         res.ID,
-		username:   username,
+		userID:     userID,
 		permission: int(res.Permission.Int32),
 		parentID:   res.Parent,
 		name:       res.Name,

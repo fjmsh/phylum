@@ -10,15 +10,15 @@ import (
 )
 
 type AccessToken struct {
-	ID       string
-	Created  pgtype.Timestamp
-	Expires  pgtype.Timestamp
-	Username string
+	ID      string
+	Created pgtype.Timestamp
+	Expires pgtype.Timestamp
+	UserID  int32
 }
 
 type Permission struct {
 	ResourceID uuid.UUID
-	Username   string
+	UserID     int32
 	Permission int32
 }
 
@@ -39,7 +39,7 @@ type Silo struct {
 	Created  pgtype.Timestamp
 	Modified pgtype.Timestamp
 	Deleted  pgtype.Timestamp
-	Owner    string
+	Owner    int32
 	Name     string
 	Storage  string
 }
@@ -51,6 +51,7 @@ type StorageBackend struct {
 }
 
 type User struct {
+	ID           int32
 	Username     string
 	DisplayName  string
 	PasswordHash string

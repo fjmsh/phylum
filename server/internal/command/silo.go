@@ -43,7 +43,7 @@ func setupSiloCreateCommand() *cobra.Command {
 			}
 
 			name := args[2]
-			if err := app.Default.CreateSilo(context.Background(), id, user.Username, storageName, name); err != nil {
+			if err := app.Default.CreateSilo(context.Background(), id, user.ID(), storageName, name); err != nil {
 				logrus.Fatal(err)
 			}
 			logrus.Info("Created " + id.String())
@@ -65,7 +65,7 @@ func setupSiloListCommand() *cobra.Command {
 			for _, silo := range silos {
 				logrus.Infof("%-16s: %s\n", silo.Name(), silo.ID().String())
 				// logrus.Infof("  storage: %s\n", silo.StorageName())
-				logrus.Infof("  owner: %s\n", silo.Owner())
+				logrus.Infof("  owner: %d\n", silo.Owner())
 				logrus.Info()
 			}
 		},

@@ -65,23 +65,23 @@ func (h *handler) HandleRequest(c *gin.Context) {
 		return
 	}
 
-	username := auth.GetUsername(c)
+	userID := auth.GetUserID(c)
 
 	webdavHandler := webdav.Handler{
 		Prefix:     h.prefix + "/" + identifier,
-		FileSystem: adapter{silo: silo, username: username},
+		FileSystem: adapter{silo: silo, userID: userID},
 		LockSystem: webdav.NewMemLS(),
 	}
 	webdavHandler.ServeHTTP(c.Writer, c.Request)
 }
 
 type adapter struct {
-	silo     core.Silo
-	username string
+	silo   core.Silo
+	userID int32
 }
 
 func (a adapter) Stat(ctx context.Context, name string) (core.Resource, error) {
-	return a.silo.ResourceByPath(ctx, name, a.username)
+	return a.silo.ResourceByPath(ctx, name, a.userID)
 }
 
 func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, error) {

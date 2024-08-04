@@ -12,7 +12,7 @@ import (
 )
 
 const accessTokenById = `-- name: AccessTokenById :one
-SELECT id, created, expires, username from access_tokens where id = $1
+SELECT id, created, expires, user_id from access_tokens where id = $1
 `
 
 func (q *Queries) AccessTokenById(ctx context.Context, id string) (AccessToken, error) {
@@ -22,33 +22,33 @@ func (q *Queries) AccessTokenById(ctx context.Context, id string) (AccessToken, 
 		&i.ID,
 		&i.Created,
 		&i.Expires,
-		&i.Username,
+		&i.UserID,
 	)
 	return i, err
 }
 
 const insertAccessToken = `-- name: InsertAccessToken :one
 INSERT INTO access_tokens(
-    id, created, expires, username
+    id, created, expires, user_id
 ) VALUES(
-    $1::text, NOW(), NOW() + $2::interval, $3::text
-) RETURNING id, created, expires, username
+    $1::text, NOW(), NOW() + $2::interval, $3::int
+) RETURNING id, created, expires, user_id
 `
 
 type InsertAccessTokenParams struct {
 	ID       string
 	Validity pgtype.Interval
-	Username string
+	UserID   int32
 }
 
 func (q *Queries) InsertAccessToken(ctx context.Context, arg InsertAccessTokenParams) (AccessToken, error) {
-	row := q.db.QueryRow(ctx, insertAccessToken, arg.ID, arg.Validity, arg.Username)
+	row := q.db.QueryRow(ctx, insertAccessToken, arg.ID, arg.Validity, arg.UserID)
 	var i AccessToken
 	err := row.Scan(
 		&i.ID,
 		&i.Created,
 		&i.Expires,
-		&i.Username,
+		&i.UserID,
 	)
 	return i, err
 }

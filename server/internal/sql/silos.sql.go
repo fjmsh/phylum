@@ -21,7 +21,7 @@ INSERT INTO silos(
 
 type CreateSiloParams struct {
 	ID      uuid.UUID
-	Owner   string
+	Owner   int32
 	Name    string
 	Storage string
 }
@@ -78,11 +78,11 @@ func (q *Queries) ListAllSilos(ctx context.Context) ([]Silo, error) {
 }
 
 const listSilosForUser = `-- name: ListSilosForUser :many
-SELECT id, created, modified, deleted, owner, name, storage from silos where owner = $1::text
+SELECT id, created, modified, deleted, owner, name, storage from silos where owner = $1::int
 `
 
-func (q *Queries) ListSilosForUser(ctx context.Context, username string) ([]Silo, error) {
-	rows, err := q.db.Query(ctx, listSilosForUser, username)
+func (q *Queries) ListSilosForUser(ctx context.Context, userID int32) ([]Silo, error) {
+	rows, err := q.db.Query(ctx, listSilosForUser, userID)
 	if err != nil {
 		return nil, err
 	}

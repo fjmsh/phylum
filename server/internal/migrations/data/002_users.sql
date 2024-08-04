@@ -1,5 +1,6 @@
 CREATE TABLE users(
-    username      TEXT NOT NULL PRIMARY KEY,
+    id            SERIAL PRIMARY KEY,
+    username      TEXT NOT NULL UNIQUE,
     display_name  TEXT NOT NULL,
     password_hash TEXT NOT NULL,
     deleted       TIMESTAMP

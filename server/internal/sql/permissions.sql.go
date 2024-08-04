@@ -15,17 +15,17 @@ import (
 const permissionsForResource = `-- name: PermissionsForResource :one
 WITH RECURSIVE nodes(id, parent, permission) AS (
     SELECT r.id, r.parent, p.permission
-    FROM resources r LEFT JOIN permissions p on r.id = p.resource_id WHERE r.id = $1::uuid AND p.username = $2::text
+    FROM resources r LEFT JOIN permissions p on r.id = p.resource_id WHERE r.id = $1::uuid AND p.user_id = $2::int
   UNION ALL
     SELECT r.id, r.parent, CASE WHEN (n.permission IS NULL OR p.permission > n.permission) THEN p.permission ELSE n.permission END
-    FROM resources r JOIN nodes n ON r.id = n.parent LEFT JOIN permissions p ON r.id = p.resource_id AND p.username = $2::text
+    FROM resources r JOIN nodes n ON r.id = n.parent LEFT JOIN permissions p ON r.id = p.resource_id AND p.user_id = $2::int
 )
 SELECT id, parent, permission FROM nodes WHERE parent IS NULL
 `
 
 type PermissionsForResourceParams struct {
 	ResourceID uuid.UUID
-	Username   string
+	UserID     int32
 }
 
 type PermissionsForResourceRow struct {
@@ -35,7 +35,7 @@ type PermissionsForResourceRow struct {
 }
 
 func (q *Queries) PermissionsForResource(ctx context.Context, arg PermissionsForResourceParams) (PermissionsForResourceRow, error) {
-	row := q.db.QueryRow(ctx, permissionsForResource, arg.ResourceID, arg.Username)
+	row := q.db.QueryRow(ctx, permissionsForResource, arg.ResourceID, arg.UserID)
 	var i PermissionsForResourceRow
 	err := row.Scan(&i.ID, &i.Parent, &i.Permission)
 	return i, err

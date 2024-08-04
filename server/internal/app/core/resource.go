@@ -55,7 +55,7 @@ type resource struct {
 	parentID   *uuid.UUID
 	name       string
 	size       int64
-	username   string
+	userID     int32
 	permission int
 	collection bool
 	modTime    time.Time
@@ -117,7 +117,7 @@ func (r resource) ReadDir(ctx context.Context) ([]Resource, error) {
 	if r.permission < PermissionReadOnly {
 		return nil, ErrInsufficientPermissions
 	}
-	children, err := r.db.Queries().ReadDir(ctx, sql.ReadDirParams{ID: r.id, Username: r.username, IncludeRoot: false, Recursive: false})
+	children, err := r.db.Queries().ReadDir(ctx, sql.ReadDirParams{ID: r.id, UserID: r.userID, IncludeRoot: false, Recursive: false})
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +133,7 @@ func (r resource) ReadDir(ctx context.Context) ([]Resource, error) {
 			db:         r.db,
 			storage:    r.storage,
 			id:         c.ID,
-			username:   r.username,
+			userID:     r.userID,
 			permission: permission,
 			parentID:   &r.id,
 			name:       c.Name,
@@ -169,7 +169,7 @@ func (r resource) CreateMemberResource(ctx context.Context, id uuid.UUID, name s
 		storage:    r.storage,
 		id:         id,
 		parentID:   &r.id,
-		username:   r.username,
+		userID:     r.userID,
 		permission: r.permission,
 		name:       result.Name,
 		size:       0,

@@ -11,8 +11,8 @@ import (
 
 var ErrResourceNotFound = errors.New("resource not found")
 
-func (a *App) LocateResource(id uuid.UUID, username string) (uuid.UUID, int, error) {
-	result, err := a.Db.Queries().PermissionsForResource(context.Background(), sql.PermissionsForResourceParams{ResourceID: id, Username: username})
+func (a *App) LocateResource(id uuid.UUID, userID int32) (uuid.UUID, int, error) {
+	result, err := a.Db.Queries().PermissionsForResource(context.Background(), sql.PermissionsForResourceParams{ResourceID: id, UserID: userID})
 	if err == pgx.ErrNoRows {
 		err = ErrResourceNotFound
 	}

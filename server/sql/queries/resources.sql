@@ -37,14 +37,14 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
     FROM resources r
     LEFT JOIN permissions p
     ON r.id = p.resource_id
-    AND p.username = @username::text
+    AND p.user_id = @user_id::int
     WHERE r.id = @id::uuid
   UNION ALL
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), CASE WHEN (p.permission IS NULL OR p.permission < n.permission) THEN n.permission ELSE p.permission END
     FROM resources r JOIN nodes n on r.parent = n.id
     LEFT JOIN permissions p
     ON r.id = p.resource_id 
-    AND p.username = @username::text
+    AND p.user_id = @user_id::int
     WHERE deleted IS NULL
     AND CASE WHEN @recursive::boolean THEN true ELSE depth < 1 END
 )
@@ -57,7 +57,7 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
     FROM resources r
     LEFT JOIN permissions p
     ON r.id = p.resource_id 
-    AND p.username = @username::text
+    AND p.user_id = @user_id::int
     WHERE r.id = @root::uuid
   UNION ALL
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search, CASE WHEN (p.permission IS NULL OR p.permission < n.permission) THEN n.permission ELSE p.permission END
@@ -65,7 +65,7 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
     JOIN nodes n ON r.parent = n.id
     LEFT JOIN permissions p
     ON r.id = p.resource_id 
-    AND p.username = @username::text
+    AND p.user_id = @user_id::int
     WHERE deleted IS NULL
     AND r.name = n.search[n.depth + 1]
 )
