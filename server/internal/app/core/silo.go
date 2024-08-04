@@ -16,7 +16,6 @@ type Silo interface {
 	Owner() int32
 	StorageName() string
 	ResourceByPath(ctx context.Context, path string, userID int32) (Resource, error)
-	Move(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string) error
 }
 
 type silo struct {
@@ -51,10 +50,6 @@ func (s *silo) Owner() int32 {
 
 func (s *silo) StorageName() string {
 	return s.storage.Name()
-}
-
-func (s *silo) Move(ctx context.Context, id uuid.UUID, parent uuid.UUID, name string) error {
-	return s.db.Queries().Rename(ctx, sql.RenameParams{ID: id, Parent: parent, Name: name})
 }
 
 func (s *silo) ResourceByPath(ctx context.Context, path string, userID int32) (Resource, error) {

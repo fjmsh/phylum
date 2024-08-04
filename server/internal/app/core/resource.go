@@ -27,10 +27,13 @@ var (
 	ErrInsufficientPermissions    = errors.New("insufficient permissions")
 	ErrCannotGrantOwnerPermission = errors.New("cannot grant owner permission")
 	ErrResourceNotCollection      = errors.New("cannot add member to non-collection resource")
+	ErrCannotReparentRootResource = errors.New("cannot reparent root resource")
+	ErrCannotReparentToRoot       = errors.New("cannot reparent resource to root")
 )
 
 type ResourceInfo interface {
 	ID() uuid.UUID
+	ParentID() *uuid.UUID
 	Name() string
 	Size() int64
 	Permission() int32
@@ -47,6 +50,9 @@ type Resource interface {
 	ReadDir(ctx context.Context) ([]Resource, error)
 	CreateMemberResource(ctx context.Context, id uuid.UUID, name string, dir bool) (Resource, error)
 	DeleteRecursive(ctx context.Context, hardDelete bool) error
+	UpdateName(ctx context.Context, name string) error
+	UpdateParent(ctx context.Context, parent uuid.UUID) error
+	UpdatePermissions(ctx context.Context, userID int32, permission int32) error
 }
 
 type resource struct {
@@ -206,6 +212,17 @@ func (r resource) DeleteRecursive(ctx context.Context, hardDelete bool) error {
 		}
 		return nil
 	})
+}
+
+func (r resource) UpdateName(ctx context.Context, name string) error {
+	return r.db.Queries().UpdateResourceName(ctx, sql.UpdateResourceNameParams{ID: r.id, Name: name})
+}
+
+func (r resource) UpdateParent(ctx context.Context, parent uuid.UUID) error {
+	if r.parentID == nil {
+		return ErrCannotReparentRootResource
+	}
+	return r.db.Queries().UpdateResourceParent(ctx, sql.UpdateResourceParentParams{ID: r.id, Parent: parent})
 }
 
 func (r resource) UpdatePermissions(ctx context.Context, userID int32, permission int32) error {

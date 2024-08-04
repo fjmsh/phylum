@@ -186,26 +186,6 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 	return items, nil
 }
 
-const rename = `-- name: Rename :exec
-UPDATE resources
-SET
-    name = CASE WHEN ($1::text = '') THEN name ELSE $1::text END,
-    parent = $2::uuid,
-    modified = NOW()
-WHERE id = $3::uuid
-`
-
-type RenameParams struct {
-	Name   string
-	Parent uuid.UUID
-	ID     uuid.UUID
-}
-
-func (q *Queries) Rename(ctx context.Context, arg RenameParams) error {
-	_, err := q.db.Exec(ctx, rename, arg.Name, arg.Parent, arg.ID)
-	return err
-}
-
 const resourceById = `-- name: ResourceById :one
 SELECT id, parent, name, dir, created, modified, deleted, size, etag from resources WHERE id = $1
 `
@@ -318,5 +298,41 @@ WHERE id = $1
 
 func (q *Queries) UpdateResourceModified(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, updateResourceModified, id)
+	return err
+}
+
+const updateResourceName = `-- name: UpdateResourceName :exec
+UPDATE resources
+SET
+    name = CASE WHEN ($1::text = '') THEN name ELSE $1::text END,
+    modified = NOW()
+WHERE id = $2::uuid
+`
+
+type UpdateResourceNameParams struct {
+	Name string
+	ID   uuid.UUID
+}
+
+func (q *Queries) UpdateResourceName(ctx context.Context, arg UpdateResourceNameParams) error {
+	_, err := q.db.Exec(ctx, updateResourceName, arg.Name, arg.ID)
+	return err
+}
+
+const updateResourceParent = `-- name: UpdateResourceParent :exec
+UPDATE resources
+SET
+    parent = $1::uuid,
+    modified = NOW()
+WHERE id = $2::uuid
+`
+
+type UpdateResourceParentParams struct {
+	Parent uuid.UUID
+	ID     uuid.UUID
+}
+
+func (q *Queries) UpdateResourceParent(ctx context.Context, arg UpdateResourceParentParams) error {
+	_, err := q.db.Exec(ctx, updateResourceParent, arg.Parent, arg.ID)
 	return err
 }

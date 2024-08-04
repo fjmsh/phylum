@@ -158,8 +158,15 @@ func (a adapter) Rename(ctx context.Context, oldName, newName string) error {
 		return fs.ErrNotExist
 	}
 
-	if err = a.silo.Move(ctx, src.ID(), parent.ID(), newName); err != nil {
-		return err
+	if src.ParentID() != nil && *src.ParentID() != parent.ID() {
+		if err = src.UpdateParent(ctx, parent.ID()); err != nil {
+			return err
+		}
+	}
+	if src.Name() != newName && newName != "" && newName != "/" {
+		if err = src.UpdateName(ctx, newName); err != nil {
+			return err
+		}
 	}
 	return nil
 }

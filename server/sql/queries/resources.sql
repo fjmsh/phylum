@@ -22,11 +22,17 @@ SET
     modified = NOW()
 WHERE id = $1;
 
--- name: Rename :exec
+-- name: UpdateResourceParent :exec
+UPDATE resources
+SET
+    parent = @parent::uuid,
+    modified = NOW()
+WHERE id = @id::uuid;
+
+-- name: UpdateResourceName :exec
 UPDATE resources
 SET
     name = CASE WHEN (@name::text = '') THEN name ELSE @name::text END,
-    parent = @parent::uuid,
     modified = NOW()
 WHERE id = @id::uuid;
 
