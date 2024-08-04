@@ -42,46 +42,52 @@ func SetupHandler(r *gin.RouterGroup, app *app.App) {
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
-	path := c.Params.ByName("path")
-	identifier := strings.TrimLeft(path, "/")
-	if identifier == "" {
-		// No path specified
-		c.JSON(404, gin.H{
-			"ERR_CODE": "err_silo_path_not_specified",
-		})
-		return
-	}
-	index := strings.Index(identifier, "/")
-	if index != -1 {
-		identifier = identifier[0:index]
-	}
-	silo, err := h.app.FindSilo(context.Background(), identifier)
-	if err != nil {
-		c.Writer.WriteHeader(404)
-		c.JSON(404, gin.H{
-			"ERR_CODE":    "err_silo_not_found",
-			"ERR_DETAILS": err.Error(),
-		})
-		return
-	}
+	// path := c.Params.ByName("path")
+	// identifier := strings.TrimLeft(path, "/")
+	// if identifier == "" {
+	// 	// No path specified
+	// 	c.JSON(404, gin.H{
+	// 		"ERR_CODE": "err_silo_path_not_specified",
+	// 	})
+	// 	return
+	// }
+	// index := strings.Index(identifier, "/")
+	// if index != -1 {
+	// 	identifier = identifier[0:index]
+	// }
 
-	userID := auth.GetUserID(c)
+	fs, err := h.app.OpenFileSystem(c.Request.Context(), auth.GetUserID(c))
+
+	// silo, err := h.app.FindSilo(context.Background(), identifier)
+	if err != nil {
+		c.AbortWithStatusJSON(404, gin.H{
+			"ERR_CODE": "err_silo_not_found",
+		})
+		return
+	}
 
 	webdavHandler := webdav.Handler{
-		Prefix:     h.prefix + "/" + identifier,
-		FileSystem: adapter{silo: silo, userID: userID},
+		Prefix:     h.prefix,
+		FileSystem: adapter{fs: fs},
 		LockSystem: webdav.NewMemLS(),
 	}
 	webdavHandler.ServeHTTP(c.Writer, c.Request)
 }
 
 type adapter struct {
-	silo   core.Silo
-	userID int32
+	fs core.FileSystem
 }
 
 func (a adapter) Stat(ctx context.Context, name string) (core.Resource, error) {
-	return a.silo.ResourceByPath(ctx, name, a.userID)
+	return a.fs.ResourceByPath(name)
+}
+
+func (a adapter) OpenRead(r core.Resource, start, len int64) (io.ReadCloser, error) {
+	return a.fs.OpenRead(r, start, len)
+}
+
+func (a adapter) ReadDir(r core.Resource) ([]core.Resource, error) {
+	return a.fs.ReadDir(r)
 }
 
 func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, error) {
@@ -99,18 +105,18 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 			}
 			resourceName := name[index+1:]
 			resourceId := uuid.New()
-			resource, err = parent.CreateMemberResource(ctx, resourceId, resourceName, false)
+			resource, err = a.fs.CreateMemberResource(parent, resourceId, resourceName, false)
 			if err != nil {
 				return nil, err
 			}
-			return resource.OpenWrite(ctx)
+			return a.fs.OpenWrite(resource)
 		}
 		return nil, err
 	}
 	if resource.IsDir() {
 		return nil, errors.New("cannot open collection for write")
 	}
-	return resource.OpenWrite(ctx)
+	return a.fs.OpenWrite(resource)
 }
 
 func (a adapter) RemoveAll(ctx context.Context, name string) error {
@@ -118,7 +124,7 @@ func (a adapter) RemoveAll(ctx context.Context, name string) error {
 	if err != nil {
 		return fs.ErrNotExist
 	}
-	return resource.DeleteRecursive(ctx, false)
+	return a.fs.DeleteRecursive(resource, false)
 }
 
 func (a adapter) Mkdir(ctx context.Context, name string) error {
@@ -133,7 +139,7 @@ func (a adapter) Mkdir(ctx context.Context, name string) error {
 		return fs.ErrNotExist
 	}
 	dirName := name[index+1:]
-	_, err = parent.CreateMemberResource(ctx, uuid.New(), dirName, true)
+	_, err = a.fs.CreateMemberResource(parent, uuid.New(), dirName, true)
 	return err
 }
 
@@ -158,13 +164,13 @@ func (a adapter) Rename(ctx context.Context, oldName, newName string) error {
 		return fs.ErrNotExist
 	}
 
-	if src.ParentID() != nil && *src.ParentID() != parent.ID() {
-		if err = src.UpdateParent(ctx, parent.ID()); err != nil {
+	if src.ParentID() != parent.ID() {
+		if err = a.fs.UpdateParent(src, parent.ID()); err != nil {
 			return err
 		}
 	}
 	if src.Name() != newName && newName != "" && newName != "/" {
-		if err = src.UpdateName(ctx, newName); err != nil {
+		if err = a.fs.UpdateName(src, newName); err != nil {
 			return err
 		}
 	}

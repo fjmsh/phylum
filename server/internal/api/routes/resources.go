@@ -19,7 +19,7 @@ const errCodeResourceNotCollection = "resource_not_collection"
 
 type resourceResponse struct {
 	ID       uuid.UUID  `json:"id"`
-	Parent   *uuid.UUID `json:"parent"`
+	Parent   uuid.UUID  `json:"parent"`
 	Name     string     `json:"name"`
 	Dir      bool       `json:"dir"`
 	Created  time.Time  `json:"created"`

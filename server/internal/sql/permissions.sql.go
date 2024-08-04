@@ -12,32 +12,68 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const permissionsForResource = `-- name: PermissionsForResource :one
+const resourceByIdWithPermissions = `-- name: ResourceByIdWithPermissions :one
 WITH RECURSIVE nodes(id, parent, permission) AS (
     SELECT r.id, r.parent, p.permission
-    FROM resources r LEFT JOIN permissions p on r.id = p.resource_id WHERE r.id = $1::uuid AND p.user_id = $2::int
+    FROM resources r
+    LEFT JOIN permissions p
+    on r.id = p.resource_id
+    AND p.user_id = $2::int
+    WHERE r.id = $3::uuid 
   UNION ALL
     SELECT r.id, r.parent, CASE WHEN (n.permission IS NULL OR p.permission > n.permission) THEN p.permission ELSE n.permission END
-    FROM resources r JOIN nodes n ON r.id = n.parent LEFT JOIN permissions p ON r.id = p.resource_id AND p.user_id = $2::int
+    FROM resources r
+    JOIN nodes n
+    ON r.id = n.parent
+    LEFT JOIN permissions p
+    ON r.id = p.resource_id AND p.user_id = $2::int
+    WHERE r.parent = $1::uuid
+    OR r.parent = '00000000-0000-0000-0000-000000000000'
 )
-SELECT id, parent, permission FROM nodes WHERE parent IS NULL
+SELECT n.id, n.parent, permission, r.id, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
+JOIN resources r
+ON n.id = r.id
+WHERE n.parent = $1::uuid
 `
 
-type PermissionsForResourceParams struct {
-	ResourceID uuid.UUID
+type ResourceByIdWithPermissionsParams struct {
+	Root       uuid.UUID
 	UserID     int32
+	ResourceID uuid.UUID
 }
 
-type PermissionsForResourceRow struct {
+type ResourceByIdWithPermissionsRow struct {
 	ID         uuid.UUID
-	Parent     *uuid.UUID
+	Parent     uuid.UUID
 	Permission pgtype.Int4
+	ID_2       uuid.UUID
+	Parent_2   uuid.UUID
+	Name       string
+	Dir        bool
+	Created    pgtype.Timestamp
+	Modified   pgtype.Timestamp
+	Deleted    pgtype.Timestamp
+	Size       pgtype.Int8
+	Etag       pgtype.Text
 }
 
-func (q *Queries) PermissionsForResource(ctx context.Context, arg PermissionsForResourceParams) (PermissionsForResourceRow, error) {
-	row := q.db.QueryRow(ctx, permissionsForResource, arg.ResourceID, arg.UserID)
-	var i PermissionsForResourceRow
-	err := row.Scan(&i.ID, &i.Parent, &i.Permission)
+func (q *Queries) ResourceByIdWithPermissions(ctx context.Context, arg ResourceByIdWithPermissionsParams) (ResourceByIdWithPermissionsRow, error) {
+	row := q.db.QueryRow(ctx, resourceByIdWithPermissions, arg.Root, arg.UserID, arg.ResourceID)
+	var i ResourceByIdWithPermissionsRow
+	err := row.Scan(
+		&i.ID,
+		&i.Parent,
+		&i.Permission,
+		&i.ID_2,
+		&i.Parent_2,
+		&i.Name,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.Size,
+		&i.Etag,
+	)
 	return i, err
 }
 

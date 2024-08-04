@@ -24,7 +24,7 @@ type Permission struct {
 
 type Resource struct {
 	ID       uuid.UUID
-	Parent   *uuid.UUID
+	Parent   uuid.UUID
 	Name     string
 	Dir      bool
 	Created  pgtype.Timestamp

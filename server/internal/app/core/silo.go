@@ -1,13 +1,8 @@
 package core
 
 import (
-	"context"
-	"io/fs"
-	"strings"
-
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/db"
-	"github.com/shroff/phylum/server/internal/sql"
 )
 
 type Silo interface {
@@ -15,7 +10,6 @@ type Silo interface {
 	Name() string
 	Owner() int32
 	StorageName() string
-	ResourceByPath(ctx context.Context, path string, userID int32) (Resource, error)
 }
 
 type silo struct {
@@ -50,36 +44,4 @@ func (s *silo) Owner() int32 {
 
 func (s *silo) StorageName() string {
 	return s.storage.Name()
-}
-
-func (s *silo) ResourceByPath(ctx context.Context, path string, userID int32) (Resource, error) {
-	path = strings.Trim(path, "/")
-	segments := strings.Split(path, "/")
-	if path == "" {
-		// Calling strings.Split on an empty string returns a slice of length 1. That breaks the query
-		segments = []string{}
-	}
-
-	res, err := s.db.Queries().ResourceByPath(ctx, sql.ResourceByPathParams{Root: s.root, Search: segments, UserID: userID})
-	if err != nil {
-		return nil, fs.ErrNotExist
-	}
-
-	if !res.Permission.Valid || res.Permission.Int32 == 0 {
-		return nil, ErrInsufficientPermissions
-	}
-
-	return resource{
-		db:         s.db,
-		storage:    s.storage,
-		id:         res.ID,
-		userID:     userID,
-		permission: res.Permission.Int32,
-		parentID:   res.Parent,
-		name:       res.Name,
-		size:       res.Size.Int64,
-		collection: res.Dir,
-		modTime:    res.Modified.Time,
-		etag:       res.Etag.String,
-	}, nil
 }

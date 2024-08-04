@@ -22,7 +22,7 @@ INSERT INTO resources(
 
 type CreateResourceParams struct {
 	ID     uuid.UUID
-	Parent *uuid.UUID
+	Parent uuid.UUID
 	Name   string
 	Dir    bool
 }
@@ -137,7 +137,7 @@ type ReadDirParams struct {
 
 type ReadDirRow struct {
 	ID         uuid.UUID
-	Parent     *uuid.UUID
+	Parent     uuid.UUID
 	Name       string
 	Dir        bool
 	Created    pgtype.Timestamp
@@ -236,7 +236,7 @@ type ResourceByPathParams struct {
 
 type ResourceByPathRow struct {
 	ID         uuid.UUID
-	Parent     *uuid.UUID
+	Parent     uuid.UUID
 	Name       string
 	Dir        bool
 	Created    pgtype.Timestamp

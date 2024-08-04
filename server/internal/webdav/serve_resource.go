@@ -25,7 +25,7 @@ var htmlReplacer = strings.NewReplacer(
 	"'", "&#39;",
 )
 
-func serveCollection(w http.ResponseWriter, r *http.Request, file core.Resource) {
+func serveCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file core.Resource) {
 	if !strings.HasSuffix(r.URL.Path, "/") {
 		http.Redirect(w, r, r.URL.String()+"/", http.StatusMovedPermanently)
 		return
@@ -36,7 +36,7 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file core.Resource)
 	}
 	w.Header().Set("Last-Modified", file.ModTime().Format(http.TimeFormat))
 
-	files, err := file.ReadDir(r.Context())
+	files, err := fs.ReadDir(file)
 	if err != nil {
 		http.Error(w, "Error reading directory", http.StatusInternalServerError)
 		return
@@ -59,7 +59,7 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file core.Resource)
 	fmt.Fprintf(w, "</pre>\n")
 }
 
-func serveResource(w http.ResponseWriter, r *http.Request, file core.Resource) {
+func serveResource(w http.ResponseWriter, r *http.Request, fs FileSystem, file core.Resource) {
 	w.Header().Set("Etag", file.ETag())
 	w.Header().Set("Last-Modified", file.ModTime().Format(http.TimeFormat))
 	w.Header().Set("Content-Type", file.ContentType())
@@ -95,9 +95,9 @@ func serveResource(w http.ResponseWriter, r *http.Request, file core.Resource) {
 		sendSize = ra.length
 		code = http.StatusPartialContent
 		w.Header().Set("Content-Range", ra.contentRange(file.Size()))
-		reader, err = file.OpenRead(ra.start, ra.length)
+		reader, err = fs.OpenRead(file, ra.start, ra.length)
 	} else {
-		reader, err = file.OpenRead(0, -1)
+		reader, err = fs.OpenRead(file, 0, -1)
 	}
 
 	if err != nil {
@@ -206,7 +206,7 @@ func parseRange(s string, size int64) ([]httpRange, error) {
 
 // checkPreconditions evaluates request preconditions and reports whether a precondition
 // resulted in sending StatusNotModified or StatusPreconditionFailed.
-func checkPreconditions(w http.ResponseWriter, r *http.Request, ri core.ResourceInfo) (done bool, rangeHeader string) {
+func checkPreconditions(w http.ResponseWriter, r *http.Request, ri core.Resource) (done bool, rangeHeader string) {
 	// This function carefully follows RFC 7232 section 6.
 	ch := checkIfMatch(r, ri)
 	if ch == condNone {
@@ -289,7 +289,7 @@ const (
 	condFalse
 )
 
-func checkIfMatch(r *http.Request, ri core.ResourceInfo) condResult {
+func checkIfMatch(r *http.Request, ri core.Resource) condResult {
 	im := r.Header.Get("If-Match")
 	if im == "" {
 		return condNone
@@ -319,7 +319,7 @@ func checkIfMatch(r *http.Request, ri core.ResourceInfo) condResult {
 	return condFalse
 }
 
-func checkIfUnmodifiedSince(r *http.Request, ri core.ResourceInfo) condResult {
+func checkIfUnmodifiedSince(r *http.Request, ri core.Resource) condResult {
 	ius := r.Header.Get("If-Unmodified-Since")
 	if ius == "" || isZeroTime(ri.ModTime()) {
 		return condNone
@@ -338,7 +338,7 @@ func checkIfUnmodifiedSince(r *http.Request, ri core.ResourceInfo) condResult {
 	return condFalse
 }
 
-func checkIfNoneMatch(r *http.Request, ri core.ResourceInfo) condResult {
+func checkIfNoneMatch(r *http.Request, ri core.Resource) condResult {
 	inm := r.Header.Get("If-None-Match")
 	if inm == "" {
 		return condNone
@@ -368,7 +368,7 @@ func checkIfNoneMatch(r *http.Request, ri core.ResourceInfo) condResult {
 	return condTrue
 }
 
-func checkIfModifiedSince(r *http.Request, ri core.ResourceInfo) condResult {
+func checkIfModifiedSince(r *http.Request, ri core.Resource) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}
@@ -389,7 +389,7 @@ func checkIfModifiedSince(r *http.Request, ri core.ResourceInfo) condResult {
 	return condTrue
 }
 
-func checkIfRange(r *http.Request, ri core.ResourceInfo) condResult {
+func checkIfRange(r *http.Request, ri core.Resource) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}

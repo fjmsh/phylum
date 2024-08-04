@@ -206,9 +206,9 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 		return http.StatusNotFound, err
 	}
 	if file.IsDir() {
-		serveCollection(w, r, file)
+		serveCollection(w, r, h.FileSystem, file)
 	} else {
-		serveResource(w, r, file)
+		serveResource(w, r, h.FileSystem, file)
 	}
 
 	return 0, nil
@@ -625,7 +625,7 @@ func makePropstatResponse(href string, pstats []Propstat) *response {
 	return &resp
 }
 
-func handlePropfindError(err error, info core.ResourceInfo) error {
+func handlePropfindError(err error, info core.Resource) error {
 	var skipResp error = nil
 	if info.IsDir() {
 		skipResp = filepath.SkipDir

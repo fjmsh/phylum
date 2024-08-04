@@ -21,7 +21,7 @@ func (a App) CreateSilo(ctx context.Context, id uuid.UUID, owner int32, storage,
 		}
 		if _, err := q.CreateResource(ctx, sql.CreateResourceParams{
 			ID:     id,
-			Parent: nil,
+			Parent: uuid.UUID{},
 			Name:   id.String(),
 			Dir:    true,
 		}); err != nil {
@@ -86,25 +86,26 @@ func (a App) FindSilo(ctx context.Context, idOrName string) (core.Silo, error) {
 }
 
 func (a App) DeleteSilo(ctx context.Context, id uuid.UUID) error {
-	return a.Db.RunInTx(ctx, func(q *sql.Queries) error {
-		result, err := q.SiloById(ctx, id)
-		if err != nil {
-			return err
-		}
-		storage := a.FindStorageBackend(result.Storage)
-		if storage == nil {
-			return errors.New("storage backend not found for " + id.String())
-		}
+	return nil
+	// return a.Db.RunInTx(ctx, func(q *sql.Queries) error {
+	// 	result, err := q.SiloById(ctx, id)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	storage := a.FindStorageBackend(result.Storage)
+	// 	if storage == nil {
+	// 		return errors.New("storage backend not found for " + id.String())
+	// 	}
 
-		silo := core.NewSilo(a.Db, result.Name, result.Owner, result.ID, storage)
-		resource, err := silo.ResourceByPath(ctx, "/", -1)
-		if err != nil {
-			return err
-		}
-		if err := resource.DeleteRecursive(ctx, true); err != nil {
-			return err
-		}
+	// 	silo := core.NewSilo(a.Db, result.Name, result.Owner, result.ID, storage)
+	// 	resource, err := silo.ResourceByPath(ctx, "/", -1)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	if err := resource.DeleteRecursive(ctx, true); err != nil {
+	// 		return err
+	// 	}
 
-		return q.DeleteSilo(ctx, id)
-	})
+	// 	return q.DeleteSilo(ctx, id)
+	// })
 }

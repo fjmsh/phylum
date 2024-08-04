@@ -23,6 +23,8 @@ type FileSystem interface {
 	Mkdir(ctx context.Context, name string) error
 	RemoveAll(ctx context.Context, name string) error
 	Rename(ctx context.Context, oldName, newName string) error
+	ReadDir(r core.Resource) ([]core.Resource, error)
+	OpenRead(r core.Resource, start, length int64) (io.ReadCloser, error)
 	OpenWrite(ctx context.Context, name string) (io.WriteCloser, error)
 }
 
@@ -97,7 +99,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 			return http.StatusForbidden, err
 		}
 		if depth == infiniteDepth {
-			children, err := srcStat.ReadDir(ctx)
+			children, err := fs.ReadDir(srcStat)
 			if err != nil {
 				return http.StatusForbidden, err
 			}
@@ -114,7 +116,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 		}
 
 	} else {
-		srcFile, err := srcStat.OpenRead(0, -1)
+		srcFile, err := fs.OpenRead(srcStat, 0, -1)
 		if err != nil {
 			if os.IsNotExist(err) {
 				return http.StatusNotFound, err
@@ -174,7 +176,7 @@ func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info cor
 	if err != nil {
 		return walkFn(name, info, err)
 	}
-	fileInfos, err := f.ReadDir(ctx)
+	fileInfos, err := fs.ReadDir(f)
 	if err != nil {
 		return walkFn(name, info, err)
 	}
