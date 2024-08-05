@@ -25,7 +25,7 @@ type storage struct {
 }
 
 func Open(db *db.DbHandler, contentDir string) (Storage, error) {
-	if backends, err := restoreBackends(db); err == nil {
+	if backends, err := restoreBackends(db); err != nil {
 		return nil, err
 	} else {
 		return storage{

@@ -2,6 +2,8 @@ package admincmd
 
 import (
 	"context"
+	"errors"
+	iofs "io/fs"
 	"strings"
 
 	"github.com/google/uuid"
@@ -17,6 +19,7 @@ func setupResourceCommand() *cobra.Command {
 	}
 	cmd.AddCommand([]*cobra.Command{
 		setupResourceMkdirCommand(),
+		setupResourceRmCommand(),
 		setupSiloListCommand(),
 		setupSiloDeleteCommand(),
 	}...)
@@ -56,6 +59,41 @@ func setupResourceMkdirCommand() *cobra.Command {
 			}
 		},
 	}
+}
+
+func setupResourceRmCommand() *cobra.Command {
+	cmd := cobra.Command{
+		Use:   "rm path",
+		Short: "Delete Resource",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			path := args[0]
+			fs, err := app.Default.OpenFileSystem(context.Background(), 0)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			r, err := fs.ResourceByPath(path)
+			if err != nil {
+				if errors.Is(err, iofs.ErrNotExist) {
+					logrus.Fatal("Resource not found: " + path)
+				} else {
+					logrus.Fatal(err.Error())
+				}
+			}
+
+			if r.IsDir() {
+				if recursive, err := cmd.Flags().GetBool("recursive"); err != nil || !recursive {
+					logrus.Fatal("Must use -r to delete collections")
+				}
+			}
+
+			fs.DeleteRecursive(r, true)
+		},
+	}
+	flags := cmd.Flags()
+	flags.BoolP("recursive", "r", false, "Recursively delete resource (required for collections)")
+
+	return &cmd
 }
 
 func setupSiloListCommand() *cobra.Command {
