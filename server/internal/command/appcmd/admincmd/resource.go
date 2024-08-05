@@ -3,11 +3,13 @@ package admincmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	iofs "io/fs"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/app"
+	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -23,6 +25,7 @@ func setupResourceCommand() *cobra.Command {
 	cmd.AddCommand([]*cobra.Command{
 		setupResourceMkdirCommand(),
 		setupResourceRmCommand(),
+		setupResourceLsCommand(),
 	}...)
 	return cmd
 }
@@ -102,6 +105,68 @@ func setupResourceRmCommand() *cobra.Command {
 	}
 	flags := cmd.Flags()
 	flags.BoolP("recursive", "r", false, "Recursively delete resource (required for collections)")
+	setupUsernameFlags(&cmd)
+
+	return &cmd
+}
+
+func setupResourceLsCommand() *cobra.Command {
+	details := func(r core.Resource, name string) string {
+		return fmt.Sprintf("%4d %s %s", r.Permission(), r.ID().String(), name)
+	}
+	cmd := cobra.Command{
+		Use:   "ls <path | uuid>",
+		Short: "List Resource Details",
+		Args:  cobra.ExactArgs(1),
+		PreRun: func(cmd *cobra.Command, args []string) {
+			readUserIDFromFlagsreadUsername(cmd)
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			path := args[0]
+			fs, err := app.Default.OpenFileSystem(context.Background(), userID)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			var r core.Resource
+			if path[0] != '/' {
+				var id uuid.UUID
+				var err error
+				if id, err = uuid.Parse(path); err != nil {
+					logrus.Fatal(err)
+				}
+
+				if r, err = fs.ResourceByID(id); err != nil {
+					if errors.Is(err, iofs.ErrNotExist) {
+						logrus.Fatal("Resource not found: " + path)
+					} else {
+						logrus.Fatal(err.Error())
+					}
+				}
+			} else {
+				var err error
+				if r, err = fs.ResourceByPath(path); err != nil {
+					if errors.Is(err, iofs.ErrNotExist) {
+						logrus.Fatal("Resource not found: " + path)
+					} else {
+						logrus.Fatal(err.Error())
+					}
+				}
+			}
+
+			if r.IsDir() {
+				children, err := fs.ReadDir(r)
+				if err != nil {
+					logrus.Fatal(err)
+				}
+				logrus.Info(details(r, "."))
+				for _, c := range children {
+					logrus.Info(details(c, c.Name()))
+				}
+			} else {
+				logrus.Info(details(r, r.Name()))
+			}
+		},
+	}
 	setupUsernameFlags(&cmd)
 
 	return &cmd
