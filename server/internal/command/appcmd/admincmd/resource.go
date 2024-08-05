@@ -12,28 +12,32 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var userID int32
+
 func setupResourceCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "resource",
 		Short: "Resource Management",
 	}
+
 	cmd.AddCommand([]*cobra.Command{
 		setupResourceMkdirCommand(),
 		setupResourceRmCommand(),
-		setupSiloListCommand(),
-		setupSiloDeleteCommand(),
 	}...)
 	return cmd
 }
 
 func setupResourceMkdirCommand() *cobra.Command {
-	return &cobra.Command{
+	cmd := cobra.Command{
 		Use:   "mkdir path",
 		Short: "Create Directory",
 		Args:  cobra.ExactArgs(1),
+		PreRun: func(cmd *cobra.Command, args []string) {
+			readUserIDFromFlagsreadUsername(cmd)
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			path := args[0]
-			fs, err := app.Default.OpenFileSystem(context.Background(), 0)
+			fs, err := app.Default.OpenFileSystem(context.Background(), userID)
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -59,6 +63,9 @@ func setupResourceMkdirCommand() *cobra.Command {
 			}
 		},
 	}
+	setupUsernameFlags(&cmd)
+
+	return &cmd
 }
 
 func setupResourceRmCommand() *cobra.Command {
@@ -66,9 +73,12 @@ func setupResourceRmCommand() *cobra.Command {
 		Use:   "rm path",
 		Short: "Delete Resource",
 		Args:  cobra.ExactArgs(1),
+		PreRun: func(cmd *cobra.Command, args []string) {
+			readUserIDFromFlagsreadUsername(cmd)
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			path := args[0]
-			fs, err := app.Default.OpenFileSystem(context.Background(), 0)
+			fs, err := app.Default.OpenFileSystem(context.Background(), userID)
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -92,26 +102,38 @@ func setupResourceRmCommand() *cobra.Command {
 	}
 	flags := cmd.Flags()
 	flags.BoolP("recursive", "r", false, "Recursively delete resource (required for collections)")
+	setupUsernameFlags(&cmd)
 
 	return &cmd
 }
 
-func setupSiloListCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "list",
-		Short: "List Silos",
-		Args:  cobra.ExactArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
-		},
+func readUserIDFromFlagsreadUsername(cmd *cobra.Command) {
+	if value, err := cmd.Flags().GetInt32("user"); err != nil {
+		logrus.Fatal(err)
+	} else if value != 0 {
+		if user, err := app.Default.UserByID(context.Background(), value); err != nil {
+			logrus.Fatal(err)
+		} else {
+			userID = user.ID()
+			return
+		}
 	}
+
+	if value, err := cmd.Flags().GetString("username"); err != nil {
+		logrus.Fatal(err)
+	} else {
+		if user, err := app.Default.UserByUsername(context.Background(), value); err != nil {
+			logrus.Fatal(err)
+		} else {
+			userID = user.ID()
+		}
+	}
+
 }
 
-func setupSiloDeleteCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "delete id",
-		Short: "Delete Silo",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-		},
-	}
+func setupUsernameFlags(cmd *cobra.Command) {
+	flags := cmd.Flags()
+	flags.Int32P("user", "u", 0, "Specify User ID for resource operations (cannot be used with -U)")
+	flags.StringP("username", "U", "root", "Specify Username for resource operations (cannot be used with -u)")
+
 }

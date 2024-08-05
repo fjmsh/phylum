@@ -2,10 +2,14 @@ package app
 
 import (
 	"context"
+	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/sql"
 )
+
+var ErrUserNotFound = errors.New("user not found")
 
 type User interface {
 	ID() int32
@@ -48,9 +52,27 @@ func (a App) ListUsers(ctx context.Context) ([]User, error) {
 	return users, nil
 }
 
-func (a App) FindUser(ctx context.Context, username string) (User, error) {
+func (a App) UserByUsername(ctx context.Context, username string) (User, error) {
 	result, err := a.Db.Queries().UserByUsername(ctx, username)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = ErrUserNotFound
+		}
+		return nil, err
+	}
+	return user{
+		id:          result.ID,
+		username:    result.Username,
+		displayName: result.DisplayName,
+	}, nil
+}
+
+func (a App) UserByID(ctx context.Context, userID int32) (User, error) {
+	result, err := a.Db.Queries().UserByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = ErrUserNotFound
+		}
 		return nil, err
 	}
 	return user{

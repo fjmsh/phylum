@@ -58,6 +58,23 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
+const userByID = `-- name: UserByID :one
+SELECT id, username, display_name, password_hash, deleted from users WHERE id = $1
+`
+
+func (q *Queries) UserByID(ctx context.Context, id int32) (User, error) {
+	row := q.db.QueryRow(ctx, userByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.DisplayName,
+		&i.PasswordHash,
+		&i.Deleted,
+	)
+	return i, err
+}
+
 const userByUsername = `-- name: UserByUsername :one
 SELECT id, username, display_name, password_hash, deleted from users WHERE username = $1
 `

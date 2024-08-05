@@ -8,5 +8,8 @@ INSERT INTO users(
 -- name: UserByUsername :one
 SELECT * from users WHERE username = $1;
 
+-- name: UserByID :one
+SELECT * from users WHERE id = $1;
+
 -- name: ListUsers :many
 SELECT * from users WHERE deleted IS NULL;
