@@ -19,35 +19,32 @@ WITH RECURSIVE nodes(id, parent, permission) AS (
     LEFT JOIN permissions p
     on r.id = p.resource_id
     AND p.user_id = $2::int
-    WHERE r.id = $3::uuid 
+    WHERE r.id = $1::uuid 
   UNION ALL
-    SELECT r.id, r.parent, CASE WHEN (n.permission IS NULL OR p.permission > n.permission) THEN p.permission ELSE n.permission END
+    SELECT r.id, r.parent, p.permission
     FROM resources r
     JOIN nodes n
     ON r.id = n.parent
     LEFT JOIN permissions p
     ON r.id = p.resource_id AND p.user_id = $2::int
-    WHERE r.parent = $1::uuid
-    OR r.parent = '00000000-0000-0000-0000-000000000000'
+    WHERE n.id != $3::uuid
 )
-SELECT n.id, n.parent, permission, r.id, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
+SELECT MAX(n.permission) AS permission, r.id, r.parent, r.name, r.dir, r.created, r.modified, r.deleted, r.size, r.etag FROM nodes n
 JOIN resources r
 ON n.id = r.id
-WHERE n.parent = $1::uuid
+WHERE n.id = $1::uuid
 `
 
 type ResourceByIdWithPermissionsParams struct {
-	Root       uuid.UUID
-	UserID     int32
 	ResourceID uuid.UUID
+	UserID     int32
+	Root       uuid.UUID
 }
 
 type ResourceByIdWithPermissionsRow struct {
+	Permission interface{}
 	ID         uuid.UUID
 	Parent     uuid.UUID
-	Permission pgtype.Int4
-	ID_2       uuid.UUID
-	Parent_2   uuid.UUID
 	Name       string
 	Dir        bool
 	Created    pgtype.Timestamp
@@ -58,14 +55,12 @@ type ResourceByIdWithPermissionsRow struct {
 }
 
 func (q *Queries) ResourceByIdWithPermissions(ctx context.Context, arg ResourceByIdWithPermissionsParams) (ResourceByIdWithPermissionsRow, error) {
-	row := q.db.QueryRow(ctx, resourceByIdWithPermissions, arg.Root, arg.UserID, arg.ResourceID)
+	row := q.db.QueryRow(ctx, resourceByIdWithPermissions, arg.ResourceID, arg.UserID, arg.Root)
 	var i ResourceByIdWithPermissionsRow
 	err := row.Scan(
+		&i.Permission,
 		&i.ID,
 		&i.Parent,
-		&i.Permission,
-		&i.ID_2,
-		&i.Parent_2,
 		&i.Name,
 		&i.Dir,
 		&i.Created,

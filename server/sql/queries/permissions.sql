@@ -14,13 +14,12 @@ WITH RECURSIVE nodes(id, parent, permission) AS (
     ON r.id = n.parent
     LEFT JOIN permissions p
     ON r.id = p.resource_id AND p.user_id = @user_id::int
-    WHERE r.parent = @root::uuid
-    OR r.parent = '00000000-0000-0000-0000-000000000000'
+    WHERE n.id != @root::uuid
 )
 SELECT * FROM nodes n
 JOIN resources r
 ON n.id = r.id
-WHERE n.parent = @root::uuid;
+WHERE n.id = @resource_id::uuid;
 
 -- name: UpdatePermissionsForResource :exec
 INSERT INTO permissions(resource_id, user_id, permission)
