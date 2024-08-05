@@ -14,10 +14,14 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 		Use:   "app",
 		Short: "Server Administration",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			c := cmd.Parent()
+			for ; c.Parent() != nil; c = c.Parent() {
+			}
+			c.PersistentPreRun(cmd, args)
 			if err := (*db).CheckVersion(!viper.GetBool("no_auto_migrate")); err != nil {
 				logrus.Fatal(err)
 			}
-			if err := app.Initialize(*db, debug); err != nil {
+			if err := app.Initialize(*db, viper.GetString("content-dir"), debug); err != nil {
 				logrus.Fatal(err)
 			}
 		},
@@ -25,6 +29,9 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 	flags := cmd.Flags()
 	flags.Bool("no-auto-migrate", false, "Do not automatically migrate database schema")
 	viper.BindPFlag("no_auto_migrate", flags.Lookup("auto-migrate"))
+
+	flags.StringP("content-dir", "C", "content", "Content Directory")
+	viper.BindPFlag("content_dir", flags.Lookup("content-dir"))
 
 	cmd.AddCommand([]*cobra.Command{
 		admincmd.SetupCommand(),

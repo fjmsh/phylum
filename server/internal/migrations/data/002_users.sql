@@ -6,6 +6,12 @@ CREATE TABLE users(
     deleted       TIMESTAMP
 );
 
+INSERT INTO users(username, display_name, password_hash) VALUES(
+    'root',
+    'Admin',
+    'CANNOT_LOG_IN'
+);
+
 ---- create above / drop below ----
 
 DROP TABLE users;

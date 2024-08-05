@@ -16,7 +16,6 @@ func Setup(r *gin.RouterGroup, a *app.App) {
 
 	// Authenticated routes
 	r.Use(auth.CreateBearerAuthHandler(a))
-	routes.SetupSiloRoutes(r, a)
 	routes.SetupResourceRoutes(r, a)
 }
 

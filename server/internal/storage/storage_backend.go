@@ -1,4 +1,4 @@
-package core
+package storage
 
 import (
 	"io"
@@ -7,7 +7,7 @@ import (
 	"github.com/shroff/phylum/server/internal/sql"
 )
 
-type Storage interface {
+type Backend interface {
 	Name() string
 	OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error)
 	OpenWrite(id uuid.UUID, callback func(int, string) error) (io.WriteCloser, error)

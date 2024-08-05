@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/sql"
+	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
 )
 
@@ -32,11 +33,12 @@ type FileSystem interface {
 type filesystem struct {
 	db   *db.DbHandler
 	ctx  context.Context
+	cs   storage.Storage
 	root Resource
 	user int32
 }
 
-func OpenFileSystem(db *db.DbHandler, ctx context.Context, root Resource, user int32) (FileSystem, error) {
+func OpenFileSystem(db *db.DbHandler, ctx context.Context, cs storage.Storage, root Resource, user int32) (FileSystem, error) {
 	if root == nil {
 		root = resource{
 			id:         uuid.UUID{},
@@ -52,6 +54,7 @@ func OpenFileSystem(db *db.DbHandler, ctx context.Context, root Resource, user i
 	return filesystem{
 		db:   db,
 		ctx:  ctx,
+		cs:   cs,
 		root: root,
 		user: user,
 	}, nil
@@ -61,6 +64,7 @@ func (f filesystem) OpenWithRoot(root Resource) FileSystem {
 	return filesystem{
 		db:   f.db,
 		ctx:  f.ctx,
+		cs:   f.cs,
 		root: root,
 		user: f.user,
 	}
@@ -119,16 +123,16 @@ func (f filesystem) OpenRead(r Resource, start, length int64) (io.ReadCloser, er
 	if r.Permission() < PermissionReadOnly {
 		return nil, ErrInsufficientPermissions
 	}
-	return r.storage.OpenRead(r.ID(), start, length)
+	return f.cs.OpenRead(r.ID(), start, length)
 }
 
 func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
 	if r.Permission() < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
 	}
-	return r.storage.OpenWrite(r.id, func(len int, etag string) error {
-		return r.db.Queries().UpdateResourceContents(f.ctx, sql.UpdateResourceContentsParams{
-			ID:   r.id,
+	return f.cs.OpenWrite(r.ID(), func(len int, etag string) error {
+		return f.db.Queries().UpdateResourceContents(f.ctx, sql.UpdateResourceContentsParams{
+			ID:   r.ID(),
 			Size: pgtype.Int8{Int64: int64(len), Valid: true},
 			Etag: pgtype.Text{String: etag, Valid: true},
 		})
@@ -206,7 +210,7 @@ func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
 			if err != nil {
 				return err
 			}
-			errors := r.storage.Delete(deleted)
+			errors := f.cs.Delete(deleted)
 			for err := range errors {
 				logrus.Warn(err)
 			}

@@ -34,16 +34,6 @@ type Resource struct {
 	Etag     pgtype.Text
 }
 
-type Silo struct {
-	ID       uuid.UUID
-	Created  pgtype.Timestamp
-	Modified pgtype.Timestamp
-	Deleted  pgtype.Timestamp
-	Owner    int32
-	Name     string
-	Storage  string
-}
-
 type StorageBackend struct {
 	Name   string
 	Driver string
