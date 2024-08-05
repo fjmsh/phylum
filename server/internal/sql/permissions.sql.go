@@ -13,37 +13,38 @@ import (
 )
 
 const resourceByIdWithPermissions = `-- name: ResourceByIdWithPermissions :one
-WITH RECURSIVE nodes(id, parent, permission) AS (
-    SELECT r.id, r.parent, p.permission
+WITH RECURSIVE nodes(resid, id, parent, permission) AS (
+    SELECT $2::uuid, r.id, r.parent, p.permission
     FROM resources r
     LEFT JOIN permissions p
     on r.id = p.resource_id
-    AND p.user_id = $2::int
-    WHERE r.id = $1::uuid 
+    AND p.user_id = $3::int
+    WHERE r.id = $2::uuid 
   UNION ALL
-    SELECT r.id, r.parent, p.permission
+    SELECT n.resid, r.id, r.parent, CASE WHEN (n.permission IS NULL OR p.permission > n.permission) THEN p.permission ELSE n.permission END
     FROM resources r
     JOIN nodes n
     ON r.id = n.parent
     LEFT JOIN permissions p
-    ON r.id = p.resource_id AND p.user_id = $2::int
-    WHERE n.id != $3::uuid
+    ON r.id = p.resource_id AND p.user_id = $3::int
+    WHERE n.id != $1::uuid
 )
-SELECT MAX(n.permission) AS permission, r.id, r.parent, r.name, r.dir, r.created, r.modified, r.deleted, r.size, r.etag FROM nodes n
+SELECT resid AS id, permission, r.id, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
 JOIN resources r
-ON n.id = r.id
+ON r.id = n.resid
 WHERE n.id = $1::uuid
 `
 
 type ResourceByIdWithPermissionsParams struct {
+	Root       uuid.UUID
 	ResourceID uuid.UUID
 	UserID     int32
-	Root       uuid.UUID
 }
 
 type ResourceByIdWithPermissionsRow struct {
-	Permission interface{}
 	ID         uuid.UUID
+	Permission pgtype.Int4
+	ID_2       uuid.UUID
 	Parent     uuid.UUID
 	Name       string
 	Dir        bool
@@ -55,11 +56,12 @@ type ResourceByIdWithPermissionsRow struct {
 }
 
 func (q *Queries) ResourceByIdWithPermissions(ctx context.Context, arg ResourceByIdWithPermissionsParams) (ResourceByIdWithPermissionsRow, error) {
-	row := q.db.QueryRow(ctx, resourceByIdWithPermissions, arg.ResourceID, arg.UserID, arg.Root)
+	row := q.db.QueryRow(ctx, resourceByIdWithPermissions, arg.Root, arg.ResourceID, arg.UserID)
 	var i ResourceByIdWithPermissionsRow
 	err := row.Scan(
-		&i.Permission,
 		&i.ID,
+		&i.Permission,
+		&i.ID_2,
 		&i.Parent,
 		&i.Name,
 		&i.Dir,

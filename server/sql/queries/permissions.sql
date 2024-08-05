@@ -1,14 +1,14 @@
 
 -- name: ResourceByIdWithPermissions :one
-WITH RECURSIVE nodes(id, parent, permission) AS (
-    SELECT r.id, r.parent, p.permission
+WITH RECURSIVE nodes(resid, id, parent, permission) AS (
+    SELECT @resource_id::uuid, r.id, r.parent, p.permission
     FROM resources r
     LEFT JOIN permissions p
     on r.id = p.resource_id
     AND p.user_id = @user_id::int
     WHERE r.id = @resource_id::uuid 
   UNION ALL
-    SELECT r.id, r.parent, CASE WHEN (n.permission IS NULL OR p.permission > n.permission) THEN p.permission ELSE n.permission END
+    SELECT n.resid, r.id, r.parent, CASE WHEN (n.permission IS NULL OR p.permission > n.permission) THEN p.permission ELSE n.permission END
     FROM resources r
     JOIN nodes n
     ON r.id = n.parent
@@ -16,10 +16,10 @@ WITH RECURSIVE nodes(id, parent, permission) AS (
     ON r.id = p.resource_id AND p.user_id = @user_id::int
     WHERE n.id != @root::uuid
 )
-SELECT * FROM nodes n
+SELECT resid AS id, permission, r.id, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
 JOIN resources r
-ON n.id = r.id
-WHERE n.id = @resource_id::uuid;
+ON r.id = n.resid
+WHERE n.id = @root::uuid;
 
 -- name: UpdatePermissionsForResource :exec
 INSERT INTO permissions(resource_id, user_id, permission)
