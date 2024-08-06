@@ -105,15 +105,11 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
         WHEN r.id = $1::uuid THEN true
         ELSE false
       END,
-      CASE
-        WHEN r.owner = $3::int THEN 127
-        WHEN p.permission IS NOT NULL THEN p.permission
-        ELSE 0
-      END
+      $3::int
     FROM resources r
     LEFT JOIN permissions p
     on r.id = p.resource_id
-    AND p.user_id = $3::int
+    AND p.user_id = $4::int
     WHERE r.id = $2::uuid 
   UNION ALL
     SELECT n.resid, r.id, r.parent,
@@ -124,7 +120,7 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
       END,
       CASE
         WHEN n.permission IS NOT NULL THEN n.permission
-        WHEN r.owner = $3::int THEN 127
+        WHEN r.owner = $4::int THEN 127
         WHEN p.permission IS NOT NULL THEN p.permission
         ELSE 0
       END
@@ -132,7 +128,7 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
     JOIN nodes n
     ON r.id = n.parent
     LEFT JOIN permissions p
-    ON r.id = p.resource_id AND p.user_id = $3::int
+    ON r.id = p.resource_id AND p.user_id = $4::int
     WHERE n.id != '00000000-0000-0000-0000-000000000000'::uuid
 )
 SELECT resid AS id, found, r.owner, permission, r.id, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
@@ -144,6 +140,7 @@ WHERE n.id = $1::uuid
 type ResourceByIdWithPermissionsParams struct {
 	Root       uuid.UUID
 	ResourceID uuid.UUID
+	Permission int32
 	UserID     int32
 }
 
@@ -164,7 +161,12 @@ type ResourceByIdWithPermissionsRow struct {
 }
 
 func (q *Queries) ResourceByIdWithPermissions(ctx context.Context, arg ResourceByIdWithPermissionsParams) (ResourceByIdWithPermissionsRow, error) {
-	row := q.db.QueryRow(ctx, resourceByIdWithPermissions, arg.Root, arg.ResourceID, arg.UserID)
+	row := q.db.QueryRow(ctx, resourceByIdWithPermissions,
+		arg.Root,
+		arg.ResourceID,
+		arg.Permission,
+		arg.UserID,
+	)
 	var i ResourceByIdWithPermissionsRow
 	err := row.Scan(
 		&i.ID,

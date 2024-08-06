@@ -46,11 +46,7 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
         WHEN r.id = @root::uuid THEN true
         ELSE false
       END,
-      CASE
-        WHEN r.owner = @user_id::int THEN 127
-        WHEN p.permission IS NOT NULL THEN p.permission
-        ELSE 0
-      END
+      @permission::int
     FROM resources r
     LEFT JOIN permissions p
     on r.id = p.resource_id

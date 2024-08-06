@@ -41,9 +41,10 @@ type filesystem struct {
 
 func OpenFileSystem(db *db.DbHandler, ctx context.Context, cs storage.Storage, root Resource, user int32) (FileSystem, error) {
 	if root == nil {
-		if res, err := db.Queries().RootResource(ctx, user); err != nil {
+		if res, err := db.Queries().RootResource(ctx, user); err == nil {
 			root = resource{
 				id:         rootUUID,
+				owner:      res.Owner,
 				permission: res.Permission,
 				parentID:   rootUUID,
 				name:       res.Name,
@@ -83,7 +84,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		segments = []string{}
 	}
 
-	res, err := f.db.Queries().ResourceByPath(f.ctx, sql.ResourceByPathParams{Root: f.root.ID(), Search: segments, UserID: f.user})
+	res, err := f.db.Queries().ResourceByPath(f.ctx, sql.ResourceByPathParams{Root: f.root.ID(), Permission: f.root.Permission(), Search: segments, UserID: f.user})
 	if err != nil {
 		return nil, fs.ErrNotExist
 	}
@@ -106,7 +107,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 }
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	res, err := f.db.Queries().ResourceByIdWithPermissions(f.ctx, sql.ResourceByIdWithPermissionsParams{Root: f.root.ID(), ResourceID: id, UserID: f.user})
+	res, err := f.db.Queries().ResourceByIdWithPermissions(f.ctx, sql.ResourceByIdWithPermissionsParams{Root: f.root.ID(), Permission: f.root.Permission(), ResourceID: id, UserID: f.user})
 	// TODO: check found
 	if err == pgx.ErrNoRows || !res.Found {
 		err = fs.ErrNotExist
