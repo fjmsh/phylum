@@ -22,7 +22,7 @@ func Setup(r *gin.RouterGroup, a *app.App) {
 func handleApiError(c *gin.Context) {
 	defer func() {
 		if err := recover(); err != nil {
-			if e, ok := err.(errors.Err); ok {
+			if e, ok := err.(*errors.Err); ok {
 				c.AbortWithStatusJSON(e.Status, e)
 			} else {
 				panic(err)
