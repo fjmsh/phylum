@@ -39,7 +39,7 @@ WITH RECURSIVE nodes(id, owner, parent, name, dir, created, modified, size, etag
 )
 SELECT * FROM nodes WHERE cardinality(search) = depth;
 
--- name: ResourceByIdWithPermissions :one
+-- name: ResourceByID :one
 WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
     SELECT @resource_id::uuid, r.id, r.parent,
       CASE

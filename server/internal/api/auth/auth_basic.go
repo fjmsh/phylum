@@ -1,28 +1,30 @@
 package auth
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/app"
+	"github.com/sirupsen/logrus"
 )
 
 func CreateBasicAuthHandler(app *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		username, pass, ok := c.Request.BasicAuth()
-		if !ok {
-			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			c.Status(http.StatusUnauthorized)
-			return
+		var userID int32
+		if username, pass, ok := c.Request.BasicAuth(); ok {
+			if res, err := app.VerifyUserPassword(c.Request.Context(), username, pass); err == nil {
+				userID = res
+			}
 		}
-		if userID, err := app.VerifyUserPassword(context.Background(), username, pass); err != nil {
-
+		if userID == 0 {
 			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
 			c.Status(http.StatusUnauthorized)
-			return
+		} else if fs, err := app.OpenFileSystem(c.Request.Context(), userID); err != nil {
+			logrus.Warn(err)
+			c.Status(http.StatusInternalServerError)
 		} else {
 			c.Set(keyUserID, userID)
+			c.Set(keyFileSystem, fs)
 		}
 	}
 }

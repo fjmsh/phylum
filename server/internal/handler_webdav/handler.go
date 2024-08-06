@@ -42,33 +42,9 @@ func SetupHandler(r *gin.RouterGroup, app *app.App) {
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
-	// path := c.Params.ByName("path")
-	// identifier := strings.TrimLeft(path, "/")
-	// if identifier == "" {
-	// 	// No path specified
-	// 	c.JSON(404, gin.H{
-	// 		"ERR_CODE": "err_silo_path_not_specified",
-	// 	})
-	// 	return
-	// }
-	// index := strings.Index(identifier, "/")
-	// if index != -1 {
-	// 	identifier = identifier[0:index]
-	// }
-
-	fs, err := h.app.OpenFileSystem(c.Request.Context(), auth.GetUserID(c))
-
-	// silo, err := h.app.FindSilo(context.Background(), identifier)
-	if err != nil {
-		c.AbortWithStatusJSON(404, gin.H{
-			"ERR_CODE": "err_silo_not_found",
-		})
-		return
-	}
-
 	webdavHandler := webdav.Handler{
 		Prefix:     h.prefix,
-		FileSystem: adapter{fs: fs},
+		FileSystem: adapter{fs: auth.GetFileSystem(c)},
 		LockSystem: webdav.NewMemLS(),
 	}
 	webdavHandler.ServeHTTP(c.Writer, c.Request)

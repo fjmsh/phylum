@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
@@ -24,10 +23,6 @@ func Initialize(db *db.DbHandler, contentDir string, debug bool) error {
 		return err
 	} else {
 		adminUserID = u.ID
-	}
-
-	if _, err := db.Queries().ResourceById(context.Background(), uuid.UUID{}); err != nil {
-		return err
 	}
 
 	if cs, err := storage.Open(db, contentDir); err != nil {

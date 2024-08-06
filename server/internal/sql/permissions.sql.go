@@ -98,7 +98,7 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 	return items, nil
 }
 
-const resourceByIdWithPermissions = `-- name: ResourceByIdWithPermissions :one
+const resourceByID = `-- name: ResourceByID :one
 WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
     SELECT $2::uuid, r.id, r.parent,
       CASE
@@ -137,14 +137,14 @@ ON r.id = n.resid
 WHERE n.id = $1::uuid
 `
 
-type ResourceByIdWithPermissionsParams struct {
+type ResourceByIDParams struct {
 	Root       uuid.UUID
 	ResourceID uuid.UUID
 	Permission int32
 	UserID     int32
 }
 
-type ResourceByIdWithPermissionsRow struct {
+type ResourceByIDRow struct {
 	ID         uuid.UUID
 	Found      bool
 	Owner      int32
@@ -160,14 +160,14 @@ type ResourceByIdWithPermissionsRow struct {
 	Etag       pgtype.Text
 }
 
-func (q *Queries) ResourceByIdWithPermissions(ctx context.Context, arg ResourceByIdWithPermissionsParams) (ResourceByIdWithPermissionsRow, error) {
-	row := q.db.QueryRow(ctx, resourceByIdWithPermissions,
+func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (ResourceByIDRow, error) {
+	row := q.db.QueryRow(ctx, resourceByID,
 		arg.Root,
 		arg.ResourceID,
 		arg.Permission,
 		arg.UserID,
 	)
-	var i ResourceByIdWithPermissionsRow
+	var i ResourceByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Found,
