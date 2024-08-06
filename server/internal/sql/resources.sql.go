@@ -122,6 +122,7 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
     ON r.id = p.resource_id 
     AND p.user_id = $2::int
     WHERE deleted IS NULL
+    AND r.id != $3
     AND CASE WHEN $4::boolean THEN true ELSE depth < 1 END
 )
 SELECT id, parent, name, dir, created, modified, size, etag, depth, path, permission from nodes

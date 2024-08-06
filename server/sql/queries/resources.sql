@@ -52,6 +52,7 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
     ON r.id = p.resource_id 
     AND p.user_id = @user_id::int
     WHERE deleted IS NULL
+    AND r.id != @id
     AND CASE WHEN @recursive::boolean THEN true ELSE depth < 1 END
 )
 SELECT * from nodes
