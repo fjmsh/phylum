@@ -1,11 +1,13 @@
 package auth
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/errors"
 	"github.com/shroff/phylum/server/internal/app"
+	"github.com/sirupsen/logrus"
 )
 
 const errCodeAuthRequred = "auth_required"
@@ -25,13 +27,19 @@ func CreateBearerAuthHandler(a *app.App) func(c *gin.Context) {
 			panic(errors.Err{Status: 401, Code: errCodeAuthRequred})
 		}
 
-		username, err := a.VerifyAccessToken(authParts[1])
+		userID, err := a.VerifyAccessToken(authParts[1])
 		if err != nil {
 			if errors.Is(err, app.ErrTokenExpired) || errors.Is(err, app.ErrTokenInvalid) {
 				panic(errors.Err{Status: 401, Code: errCodeTokenInvalid})
 			}
 			panic(err)
 		}
-		c.Set(keyUserID, username)
+		if fs, err := a.OpenFileSystem(c.Request.Context(), userID); err != nil {
+			logrus.Warn(err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+		} else {
+			c.Set(keyUserID, userID)
+			c.Set(keyFileSystem, fs)
+		}
 	}
 }

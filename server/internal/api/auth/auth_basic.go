@@ -18,10 +18,10 @@ func CreateBasicAuthHandler(app *app.App) func(c *gin.Context) {
 		}
 		if userID == 0 {
 			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			c.Status(http.StatusUnauthorized)
+			c.AbortWithStatus(http.StatusUnauthorized)
 		} else if fs, err := app.OpenFileSystem(c.Request.Context(), userID); err != nil {
 			logrus.Warn(err)
-			c.Status(http.StatusInternalServerError)
+			c.AbortWithStatus(http.StatusInternalServerError)
 		} else {
 			c.Set(keyUserID, userID)
 			c.Set(keyFileSystem, fs)
