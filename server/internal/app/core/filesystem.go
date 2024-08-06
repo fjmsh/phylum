@@ -101,7 +101,8 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	res, err := f.db.Queries().ResourceByIdWithPermissions(f.ctx, sql.ResourceByIdWithPermissionsParams{Root: f.root.ID(), ResourceID: id, UserID: f.user})
-	if err == pgx.ErrNoRows || res.Permission.Int32 == 0 {
+	// TODO: check found
+	if err == pgx.ErrNoRows || res.Permission.Int32 == 0 || !res.Found {
 		err = fs.ErrNotExist
 	}
 	if err != nil {
