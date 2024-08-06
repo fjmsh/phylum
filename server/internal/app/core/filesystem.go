@@ -198,7 +198,7 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	var result sql.Resource
 	err := f.db.RunInTx(f.ctx, func(q *sql.Queries) error {
 		var err error
-		if result, err = q.CreateResource(f.ctx, sql.CreateResourceParams{ID: id, Parent: r.ID(), Name: name, Dir: dir}); err != nil {
+		if result, err = q.CreateResource(f.ctx, sql.CreateResourceParams{ID: id, Owner: f.user, Parent: r.ID(), Name: name, Dir: dir}); err != nil {
 			return err
 		}
 		return q.UpdateResourceModified(f.ctx, r.ID())
@@ -208,6 +208,7 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	}
 	return resource{
 		id:         id,
+		owner:      r.Owner(),
 		parentID:   r.ID(),
 		permission: r.Permission(),
 		name:       result.Name,

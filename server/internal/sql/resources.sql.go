@@ -14,14 +14,15 @@ import (
 
 const createResource = `-- name: CreateResource :one
 INSERT INTO resources(
-    id, parent, name, dir, created, modified
+    id, owner, parent, name, dir, created, modified
 ) VALUES (
-    $1, $2, $3, $4, NOW(), NOW()
+    $1, $2, $3, $4, $5, NOW(), NOW()
 ) RETURNING id, owner, parent, name, dir, created, modified, deleted, size, etag
 `
 
 type CreateResourceParams struct {
 	ID     uuid.UUID
+	Owner  int32
 	Parent uuid.UUID
 	Name   string
 	Dir    bool
@@ -30,6 +31,7 @@ type CreateResourceParams struct {
 func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) (Resource, error) {
 	row := q.db.QueryRow(ctx, createResource,
 		arg.ID,
+		arg.Owner,
 		arg.Parent,
 		arg.Name,
 		arg.Dir,
