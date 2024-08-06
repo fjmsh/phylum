@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api"
 	"github.com/shroff/phylum/server/internal/app"
-	webdav "github.com/shroff/phylum/server/internal/handler_webdav"
+	"github.com/shroff/phylum/server/internal/webdav"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

@@ -38,7 +38,6 @@ func CreateBearerAuthHandler(a *app.App) func(c *gin.Context) {
 			logrus.Warn(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 		} else {
-			c.Set(keyUserID, userID)
 			c.Set(keyFileSystem, fs)
 		}
 	}

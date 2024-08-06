@@ -1,4 +1,4 @@
-package auth
+package webdav
 
 import (
 	"net/http"
@@ -8,7 +8,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func CreateBasicAuthHandler(app *app.App) func(c *gin.Context) {
+const keyFileSystem = "filesystem"
+
+func createBasicAuthHandler(app *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		var userID int32
 		if username, pass, ok := c.Request.BasicAuth(); ok {
@@ -23,7 +25,6 @@ func CreateBasicAuthHandler(app *app.App) func(c *gin.Context) {
 			logrus.Warn(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 		} else {
-			c.Set(keyUserID, userID)
 			c.Set(keyFileSystem, fs)
 		}
 	}

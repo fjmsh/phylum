@@ -5,14 +5,14 @@ import (
 	"errors"
 	"io"
 	"io/fs"
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/app"
 	"github.com/shroff/phylum/server/internal/app/core"
-	"github.com/shroff/phylum/server/internal/webdav"
+	webdav "github.com/shroff/phylum/server/internal/webdav/impl"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,7 +27,7 @@ func SetupHandler(r *gin.RouterGroup, app *app.App) {
 		app:    app,
 		prefix: r.BasePath(),
 	}
-	r.Use(auth.CreateBasicAuthHandler(app))
+	r.Use(createBasicAuthHandler(app))
 	r.Handle("OPTIONS", "/*path", handler.HandleRequest)
 	r.Handle("GET", "/*path", handler.HandleRequest)
 	r.Handle("PUT", "/*path", handler.HandleRequest)
@@ -42,9 +42,14 @@ func SetupHandler(r *gin.RouterGroup, app *app.App) {
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
+	fs, ok := c.Get(keyFileSystem)
+	if !ok {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 	webdavHandler := webdav.Handler{
 		Prefix:     h.prefix,
-		FileSystem: adapter{fs: auth.GetFileSystem(c)},
+		FileSystem: adapter{fs: fs.(core.FileSystem)},
 		LockSystem: webdav.NewMemLS(),
 	}
 	webdavHandler.ServeHTTP(c.Writer, c.Request)
