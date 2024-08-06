@@ -5,10 +5,6 @@ CREATE TABLE permissions(
     PRIMARY KEY(resource_id, user_id)
 );
 
-INSERT INTO permissions (
-    SELECT '00000000-0000-0000-0000-000000000000', id, 511 FROM users WHERE username = 'root'
-)
-
 ---- create above / drop below ----
 
 DROP TABLE permissions;

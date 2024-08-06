@@ -17,7 +17,7 @@ INSERT INTO resources(
     id, parent, name, dir, created, modified
 ) VALUES (
     $1, $2, $3, $4, NOW(), NOW()
-) RETURNING id, parent, name, dir, created, modified, deleted, size, etag
+) RETURNING id, owner, parent, name, dir, created, modified, deleted, size, etag
 `
 
 type CreateResourceParams struct {
@@ -37,6 +37,7 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 	var i Resource
 	err := row.Scan(
 		&i.ID,
+		&i.Owner,
 		&i.Parent,
 		&i.Name,
 		&i.Dir,
@@ -108,7 +109,7 @@ func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]Hard
 }
 
 const resourceById = `-- name: ResourceById :one
-SELECT id, parent, name, dir, created, modified, deleted, size, etag from resources WHERE id = $1
+SELECT id, owner, parent, name, dir, created, modified, deleted, size, etag from resources WHERE id = $1
 `
 
 func (q *Queries) ResourceById(ctx context.Context, id uuid.UUID) (Resource, error) {
@@ -116,6 +117,7 @@ func (q *Queries) ResourceById(ctx context.Context, id uuid.UUID) (Resource, err
 	var i Resource
 	err := row.Scan(
 		&i.ID,
+		&i.Owner,
 		&i.Parent,
 		&i.Name,
 		&i.Dir,

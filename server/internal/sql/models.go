@@ -24,6 +24,7 @@ type Permission struct {
 
 type Resource struct {
 	ID       uuid.UUID
+	Owner    int32
 	Parent   uuid.UUID
 	Name     string
 	Dir      bool

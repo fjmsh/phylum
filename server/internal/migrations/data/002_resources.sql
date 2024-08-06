@@ -1,5 +1,6 @@
 CREATE TABLE resources (
   id       uuid      PRIMARY KEY,
+  owner    INT       NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
   parent   uuid      NOT NULL REFERENCES resources(id) ON UPDATE CASCADE ON DELETE CASCADE,
   name     TEXT      NOT NULL,
   dir      BOOLEAN   NOT NULL,
@@ -8,12 +9,11 @@ CREATE TABLE resources (
   deleted  TIMESTAMP,
   size     BIGINT,
   etag     TEXT
-  -- CONSTRAINT resource_parent FOREIGN KEY REFERENCES resources(id) ON UPDATE CASCADE ON DELETE CASCADE;
 );
 
-INSERT INTO resources
-VALUES(
-  '00000000-0000-0000-0000-000000000000',
+INSERT INTO resources(
+SELECT '00000000-0000-0000-0000-000000000000',
+    id, 
   '00000000-0000-0000-0000-000000000000',
   'root',
   true,
@@ -22,7 +22,7 @@ VALUES(
   NULL,
   0,
   ''
-);
+FROM users where username = 'root');
 
 CREATE UNIQUE INDEX unique_member_resource_name ON resources(parent, name) WHERE deleted IS NULL;
 

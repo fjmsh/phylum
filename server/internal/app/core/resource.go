@@ -14,7 +14,6 @@ const (
 	PermissionReadOnly  = 1
 	PermissionReadWrite = 3
 	PermissionAdmin     = 127
-	PermissionOwner     = 255
 )
 
 var (
@@ -27,6 +26,7 @@ var (
 
 type Resource interface {
 	ID() uuid.UUID
+	Owner() int32
 	ParentID() uuid.UUID
 	Name() string
 	Size() int64
@@ -39,6 +39,7 @@ type Resource interface {
 
 type resource struct {
 	id         uuid.UUID
+	owner      int32
 	permission int32
 	parentID   uuid.UUID
 	name       string
@@ -49,6 +50,8 @@ type resource struct {
 }
 
 func (r resource) ID() uuid.UUID { return r.id }
+
+func (r resource) Owner() int32 { return r.owner }
 
 func (r resource) Permission() int32 { return r.permission }
 

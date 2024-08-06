@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/fs"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -30,6 +29,8 @@ type FileSystem interface {
 	UpdatePermissions(r Resource, userID int32, permission int32) error
 }
 
+var rootUUID = uuid.UUID{}
+
 type filesystem struct {
 	db   *db.DbHandler
 	ctx  context.Context
@@ -40,15 +41,19 @@ type filesystem struct {
 
 func OpenFileSystem(db *db.DbHandler, ctx context.Context, cs storage.Storage, root Resource, user int32) (FileSystem, error) {
 	if root == nil {
-		root = resource{
-			id:         uuid.UUID{},
-			permission: 0,
-			parentID:   uuid.UUID{},
-			name:       "root",
-			size:       0,
-			collection: true,
-			modTime:    time.Time{},
-			etag:       "",
+		if res, err := db.Queries().RootResource(ctx, user); err != nil {
+			root = resource{
+				id:         rootUUID,
+				permission: res.Permission,
+				parentID:   rootUUID,
+				name:       res.Name,
+				size:       0,
+				collection: true,
+				modTime:    res.Modified.Time,
+				etag:       "",
+			}
+		} else {
+			return nil, err
 		}
 	}
 	return filesystem{
@@ -83,13 +88,14 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		return nil, fs.ErrNotExist
 	}
 
-	if !res.Permission.Valid || res.Permission.Int32 == 0 {
+	if res.Permission == 0 {
 		return nil, ErrInsufficientPermissions
 	}
 
 	return resource{
 		id:         res.ID,
-		permission: res.Permission.Int32,
+		owner:      res.Owner,
+		permission: res.Permission,
 		parentID:   res.Parent,
 		name:       res.Name,
 		size:       res.Size.Int64,
@@ -111,6 +117,7 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 
 	return resource{
 		id:         res.ID,
+		owner:      res.Owner,
 		permission: res.Permission.Int32,
 		parentID:   res.Parent,
 		name:       res.Name,
@@ -144,22 +151,24 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 	if r.Permission() < PermissionReadOnly {
 		return nil, ErrInsufficientPermissions
 	}
-	children, err := f.db.Queries().ReadDir(f.ctx, sql.ReadDirParams{ID: r.ID(), UserID: f.user, IncludeRoot: false, Recursive: false})
+	children, err := f.db.Queries().ReadDir(f.ctx, sql.ReadDirParams{
+		ID:          r.ID(),
+		Permission:  r.Permission(),
+		UserID:      f.user,
+		IncludeRoot: false,
+		Recursive:   false,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	result := make([]Resource, len(children))
 	for i, c := range children {
-		permission := r.Permission()
-		if c.Permission.Valid && c.Permission.Int32 > permission {
-			permission = c.Permission.Int32
-
-		}
 		result[i] = resource{
 			id:         c.ID,
-			permission: permission,
-			parentID:   r.ID(),
+			owner:      c.Owner,
+			permission: c.Permission,
+			parentID:   r.ParentID(),
 			name:       c.Name,
 			size:       c.Size.Int64,
 			modTime:    c.Modified.Time,
