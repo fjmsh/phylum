@@ -182,6 +182,24 @@ func (q *Queries) UpdateResourceName(ctx context.Context, arg UpdateResourceName
 	return err
 }
 
+const updateResourceOwner = `-- name: UpdateResourceOwner :exec
+UPDATE resources
+SET
+    owner = $1::int,
+    modified = NOW()
+WHERE id = $2::uuid
+`
+
+type UpdateResourceOwnerParams struct {
+	Owner int32
+	ID    uuid.UUID
+}
+
+func (q *Queries) UpdateResourceOwner(ctx context.Context, arg UpdateResourceOwnerParams) error {
+	_, err := q.db.Exec(ctx, updateResourceOwner, arg.Owner, arg.ID)
+	return err
+}
+
 const updateResourceParent = `-- name: UpdateResourceParent :exec
 UPDATE resources
 SET

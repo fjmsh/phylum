@@ -29,6 +29,13 @@ SET
     modified = NOW()
 WHERE id = @id::uuid;
 
+-- name: UpdateResourceOwner :exec
+UPDATE resources
+SET
+    owner = @owner::int,
+    modified = NOW()
+WHERE id = @id::uuid;
+
 -- name: UpdateResourceName :exec
 UPDATE resources
 SET

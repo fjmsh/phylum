@@ -26,6 +26,7 @@ func setupResourceCommand() *cobra.Command {
 		setupResourceMkdirCommand(),
 		setupResourceRmCommand(),
 		setupResourceLsCommand(),
+		setupResourceChownCommand(),
 	}...)
 	return cmd
 }
@@ -172,6 +173,76 @@ func setupResourceLsCommand() *cobra.Command {
 			}
 		},
 	}
+	setupUsernameFlags(&cmd)
+
+	return &cmd
+}
+
+func setupResourceChownCommand() *cobra.Command {
+	cmd := cobra.Command{
+		Use:   "chown user <path | uuid>",
+		Short: "Change Resource Owner",
+		Args:  cobra.ExactArgs(2),
+		PreRun: func(cmd *cobra.Command, args []string) {
+			readUserIDFromFlagsreadUsername(cmd)
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			username := args[0]
+			var owner int32
+			if user, err := app.Default.UserByUsername(context.Background(), username); err != nil {
+				logrus.Fatal(err)
+			} else {
+				owner = user.ID()
+			}
+
+			path := args[1]
+			fs, err := app.Default.OpenFileSystem(context.Background(), userID)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			var r core.Resource
+			if path[0] != '/' {
+				var id uuid.UUID
+				var err error
+				if id, err = uuid.Parse(path); err != nil {
+					logrus.Fatal(err)
+				}
+
+				if r, err = fs.ResourceByID(id); err != nil {
+					if errors.Is(err, iofs.ErrNotExist) {
+						logrus.Fatal("Resource not found: " + path)
+					} else {
+						logrus.Fatal(err.Error())
+					}
+				}
+			} else {
+				var err error
+				if r, err = fs.ResourceByPath(path); err != nil {
+					if errors.Is(err, iofs.ErrNotExist) {
+						logrus.Fatal("Resource not found: " + path)
+					} else {
+						logrus.Fatal(err.Error())
+					}
+				}
+			}
+			if err := fs.UpdateOwner(r, owner); err != nil {
+				logrus.Fatal(err)
+			}
+
+			// if r.IsDir() {
+			// 	if recursive, err := cmd.Flags().GetBool("recursive"); err != nil {
+			// 		logrus.Fatal("Must use -r to delete collections")
+			// 	} else {
+			// 		if recursive {
+			// 		} else {
+			// 		}
+			// 	}
+			// }
+
+		},
+	}
+	// flags := cmd.Flags()
+	// flags.BoolP("recursive", "r", false, "Recursively change ownership")
 	setupUsernameFlags(&cmd)
 
 	return &cmd

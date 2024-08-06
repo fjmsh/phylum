@@ -28,6 +28,7 @@ type FileSystem interface {
 	UpdateName(r Resource, name string) error
 	UpdateParent(r Resource, parent uuid.UUID) error
 	UpdatePermissions(r Resource, userID int32, permission int32) error
+	UpdateOwner(r Resource, userID int32) error
 }
 
 var rootUUID = uuid.UUID{}
@@ -273,5 +274,16 @@ func (f filesystem) UpdatePermissions(r Resource, userID int32, permission int32
 		ResourceID: r.ID(),
 		UserID:     userID,
 		Permission: permission,
+	})
+}
+
+func (f filesystem) UpdateOwner(r Resource, userID int32) error {
+	if r.Owner() != f.user {
+		return ErrInsufficientPermissions
+	}
+
+	return f.db.Queries().UpdateResourceOwner(f.ctx, sql.UpdateResourceOwnerParams{
+		ID:    r.ID(),
+		Owner: userID,
 	})
 }
