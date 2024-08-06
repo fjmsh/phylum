@@ -32,6 +32,7 @@ type Resource interface {
 	Size() int64
 	Permission() int32
 	ModTime() time.Time
+	DelTime() *time.Time
 	IsDir() bool
 	ETag() string
 	ContentType() string
@@ -46,6 +47,7 @@ type resource struct {
 	size       int64
 	collection bool
 	modTime    time.Time
+	delTime    *time.Time
 	etag       string
 }
 
@@ -62,6 +64,8 @@ func (r resource) Name() string { return r.name }
 func (r resource) Size() int64 { return r.size }
 
 func (r resource) ModTime() time.Time { return r.modTime }
+
+func (r resource) DelTime() *time.Time { return r.delTime }
 
 func (r resource) IsDir() bool { return r.collection }
 

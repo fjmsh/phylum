@@ -1,16 +1,15 @@
 package routes
 
 import (
-	"context"
+	iofs "io/fs"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/api/errors"
 	"github.com/shroff/phylum/server/internal/app"
-	"github.com/shroff/phylum/server/internal/sql"
 )
 
 const errCodeResourceNotFound = "resource_not_found"
@@ -22,7 +21,6 @@ type resourceResponse struct {
 	Parent   uuid.UUID  `json:"parent"`
 	Name     string     `json:"name"`
 	Dir      bool       `json:"dir"`
-	Created  time.Time  `json:"created"`
 	Modified time.Time  `json:"modified"`
 	Deleted  *time.Time `json:"deleted,omitempty"`
 	Size     int64      `json:"size"`
@@ -42,28 +40,24 @@ func createResourceMetadataRouteHandler(a *app.App) func(c *gin.Context) {
 			panic(errors.New(http.StatusBadRequest, errCodeResourceIdInvalid, ""))
 		}
 
-		resource, err := a.Db.Queries().ResourceById(context.Background(), resourceId)
+		fs := auth.GetFileSystem(c)
+		resource, err := fs.ResourceByID(resourceId)
 		if err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				panic(errors.New(http.StatusNotFound, errCodeResourceNotFound, ""))
+			if errors.Is(err, iofs.ErrNotExist) {
+				err = errors.New(http.StatusNotFound, errCodeResourceNotFound, "")
 			}
 			panic(err)
 		}
 
-		deleted := &resource.Deleted.Time
-		if !resource.Deleted.Valid {
-			deleted = nil
-		}
 		response := resourceResponse{
-			ID:       resource.ID,
-			Parent:   resource.Parent,
-			Name:     resource.Name,
-			Dir:      resource.Dir,
-			Created:  resource.Created.Time,
-			Modified: resource.Modified.Time,
-			Deleted:  deleted,
-			Size:     resource.Size.Int64,
-			Etag:     resource.Etag.String,
+			ID:       resource.ID(),
+			Parent:   resource.ParentID(),
+			Name:     resource.Name(),
+			Dir:      resource.IsDir(),
+			Modified: resource.ModTime(),
+			Deleted:  resource.DelTime(),
+			Size:     resource.Size(),
+			Etag:     resource.ETag(),
 		}
 		c.JSON(200, response)
 	}
@@ -75,31 +69,33 @@ func createResourceLsRouteHandler(a *app.App) func(c *gin.Context) {
 		if err != nil {
 			panic(errors.New(http.StatusBadRequest, errCodeResourceIdInvalid, ""))
 		}
-		resource, err := a.Db.Queries().ResourceById(context.Background(), resourceId)
+
+		fs := auth.GetFileSystem(c)
+		resource, err := fs.ResourceByID(resourceId)
 		if err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				panic(errors.New(http.StatusNotFound, errCodeResourceNotFound, ""))
+			if errors.Is(err, iofs.ErrNotExist) {
+				err = errors.New(http.StatusNotFound, errCodeResourceNotFound, "")
 			}
 			panic(err)
 		}
-		if !resource.Dir {
+
+		if !resource.IsDir() {
 			panic(errors.New(http.StatusBadRequest, errCodeResourceNotCollection, ""))
 		}
-		children, err := a.Db.Queries().ReadDir(context.Background(), sql.ReadDirParams{IncludeRoot: false, ID: resource.ID, Recursive: false})
+		children, err := fs.ReadDir(resource)
 		if err != nil {
 			panic(err)
 		}
 		results := make([]resourceResponse, len(children))
 		for i, c := range children {
 			results[i] = resourceResponse{
-				ID:       c.ID,
-				Parent:   c.Parent,
-				Name:     c.Name,
-				Dir:      c.Dir,
-				Created:  c.Created.Time,
-				Modified: c.Modified.Time,
-				Size:     c.Size.Int64,
-				Etag:     c.Etag.String,
+				ID:       c.ID(),
+				Parent:   c.ParentID(),
+				Name:     c.Name(),
+				Dir:      c.IsDir(),
+				Modified: c.ModTime(),
+				Size:     c.Size(),
+				Etag:     c.ETag(),
 			}
 		}
 		c.JSON(200, results)

@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/fs"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -51,6 +52,7 @@ func OpenFileSystem(db *db.DbHandler, ctx context.Context, cs storage.Storage, r
 				size:       0,
 				collection: true,
 				modTime:    res.Modified.Time,
+				delTime:    nil,
 				etag:       "",
 			}
 		} else {
@@ -85,35 +87,8 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	}
 
 	res, err := f.db.Queries().ResourceByPath(f.ctx, sql.ResourceByPathParams{Root: f.root.ID(), Permission: f.root.Permission(), Search: segments, UserID: f.user})
-	if err != nil {
-		return nil, fs.ErrNotExist
-	}
-
-	if res.Permission == 0 {
-		return nil, ErrInsufficientPermissions
-	}
-
-	return resource{
-		id:         res.ID,
-		owner:      res.Owner,
-		permission: res.Permission,
-		parentID:   res.Parent,
-		name:       res.Name,
-		size:       res.Size.Int64,
-		collection: res.Dir,
-		modTime:    res.Modified.Time,
-		etag:       res.Etag.String,
-	}, nil
-}
-
-func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	res, err := f.db.Queries().ResourceByID(f.ctx, sql.ResourceByIDParams{Root: f.root.ID(), Permission: f.root.Permission(), ResourceID: id, UserID: f.user})
-	// TODO: check found
-	if err == pgx.ErrNoRows || !res.Found {
+	if err == pgx.ErrNoRows || res.Permission == 0 {
 		err = fs.ErrNotExist
-	}
-	if res.Permission == 0 {
-		err = ErrInsufficientPermissions
 	}
 	if err != nil {
 		return nil, err
@@ -128,6 +103,35 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 		size:       res.Size.Int64,
 		collection: res.Dir,
 		modTime:    res.Modified.Time,
+		delTime:    nil,
+		etag:       res.Etag.String,
+	}, nil
+}
+
+func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
+	res, err := f.db.Queries().ResourceByID(f.ctx, sql.ResourceByIDParams{Root: f.root.ID(), Permission: f.root.Permission(), ResourceID: id, UserID: f.user})
+	// TODO: check found
+	if err == pgx.ErrNoRows || !res.Found || res.Permission == 0 {
+		err = fs.ErrNotExist
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var delTime *time.Time
+	if res.Deleted.Valid {
+		delTime = &res.Deleted.Time
+	}
+	return resource{
+		id:         res.ID,
+		owner:      res.Owner,
+		permission: res.Permission,
+		parentID:   res.Parent,
+		name:       res.Name,
+		size:       res.Size.Int64,
+		collection: res.Dir,
+		modTime:    res.Modified.Time,
+		delTime:    delTime,
 		etag:       res.Etag.String,
 	}, nil
 }
@@ -176,6 +180,7 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 			name:       c.Name,
 			size:       c.Size.Int64,
 			modTime:    c.Modified.Time,
+			delTime:    nil,
 			collection: c.Dir,
 			etag:       c.Etag.String,
 		}
@@ -184,11 +189,11 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 }
 
 func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, dir bool) (Resource, error) {
+	if !r.IsDir() {
+		return nil, ErrResourceNotCollection
+	}
 	if r.Permission() < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
-	}
-	if !r.IsDir() {
-		return resource{}, ErrResourceNotCollection
 	}
 	var result sql.Resource
 	err := f.db.RunInTx(f.ctx, func(q *sql.Queries) error {
@@ -208,6 +213,7 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 		name:       result.Name,
 		size:       0,
 		modTime:    result.Modified.Time,
+		delTime:    nil,
 		collection: dir,
 		etag:       "",
 	}, nil
