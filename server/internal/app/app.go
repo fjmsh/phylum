@@ -10,7 +10,7 @@ import (
 
 type App struct {
 	Debug       bool
-	Db          *db.DbHandler
+	db          *db.DbHandler
 	Cs          storage.Storage
 	adminUserID int32
 }
@@ -30,7 +30,7 @@ func Initialize(db *db.DbHandler, contentDir string, debug bool) error {
 	} else {
 		Default = &App{
 			Debug:       debug,
-			Db:          db,
+			db:          db,
 			Cs:          cs,
 			adminUserID: adminUserID,
 		}
@@ -43,5 +43,5 @@ func (a App) OpenFileSystem(ctx context.Context, user int32) (core.FileSystem, e
 	if user <= 0 {
 		user = a.adminUserID
 	}
-	return core.OpenFileSystem(a.Db, ctx, a.Cs, nil, user)
+	return core.OpenFileSystem(a.db, ctx, a.Cs, nil, user)
 }
