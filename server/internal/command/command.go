@@ -22,8 +22,8 @@ func SetupCommand() {
 	flags.BoolP("debug", "d", false, "Debug mode")
 	viper.BindPFlag("debug", flags.Lookup("debug"))
 
-	flags.Bool("trace-sql", false, "Trace SQL Queries")
-	viper.BindPFlag("trace_sql", flags.Lookup("trace-sql"))
+	flags.Bool("trace-db", false, "Trace db Queries")
+	viper.BindPFlag("trace_sql", flags.Lookup("trace-db"))
 
 	flags.StringP("working-dir", "W", "data", "Working Directory")
 	viper.BindPFlag("working_dir", flags.Lookup("working-dir"))

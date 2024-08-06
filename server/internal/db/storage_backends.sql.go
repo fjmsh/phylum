@@ -3,7 +3,7 @@
 //   sqlc v1.26.0
 // source: storage_backends.sql
 
-package sql
+package db
 
 import (
 	"context"

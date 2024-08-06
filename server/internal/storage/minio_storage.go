@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/shroff/phylum/server/internal/sql"
+	"github.com/shroff/phylum/server/internal/db"
 )
 
 type minioStorage struct {
@@ -90,7 +90,7 @@ func (s minioStorage) OpenWrite(id uuid.UUID, callback func(int, string) error) 
 
 }
 
-func (s minioStorage) Delete(rows []sql.HardDeleteRecursiveRow) []error {
+func (s minioStorage) Delete(rows []db.HardDeleteRecursiveRow) []error {
 	objs := make(chan minio.ObjectInfo)
 	go func() {
 		defer close(objs)

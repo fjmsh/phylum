@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/cryptutil"
-	"github.com/shroff/phylum/server/internal/sql"
+	"github.com/shroff/phylum/server/internal/db"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/rand"
 )
@@ -43,16 +43,16 @@ func (a App) VerifyUserPassword(ctx context.Context, username, password string) 
 	}
 }
 
-func (a App) CreateAccessToken(username, password string) (sql.AccessToken, error) {
+func (a App) CreateAccessToken(username, password string) (db.AccessToken, error) {
 	if userID, err := a.VerifyUserPassword(context.Background(), username, password); err != nil {
-		return sql.AccessToken{}, err
+		return db.AccessToken{}, err
 	} else {
-		if token, err := a.db.Queries().InsertAccessToken(context.Background(), sql.InsertAccessTokenParams{
+		if token, err := a.db.Queries().InsertAccessToken(context.Background(), db.InsertAccessTokenParams{
 			ID:       GenerateRandomString(accessTokenLength),
 			Validity: accessTokenValiditiy,
 			UserID:   userID,
 		}); err != nil {
-			return sql.AccessToken{}, err
+			return db.AccessToken{}, err
 		} else {
 			return token, nil
 		}

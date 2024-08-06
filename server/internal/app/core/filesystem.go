@@ -11,7 +11,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/db"
-	"github.com/shroff/phylum/server/internal/sql"
 	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
 )
@@ -87,7 +86,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		segments = []string{}
 	}
 
-	res, err := f.db.Queries().ResourceByPath(f.ctx, sql.ResourceByPathParams{Root: f.root.ID(), Permission: f.root.Permission(), Search: segments, UserID: f.user})
+	res, err := f.db.Queries().ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.root.ID(), Permission: f.root.Permission(), Search: segments, UserID: f.user})
 	if err == pgx.ErrNoRows || res.Permission == 0 {
 		err = fs.ErrNotExist
 	}
@@ -110,7 +109,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 }
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	res, err := f.db.Queries().ResourceByID(f.ctx, sql.ResourceByIDParams{Root: f.root.ID(), Permission: f.root.Permission(), ResourceID: id, UserID: f.user})
+	res, err := f.db.Queries().ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.root.ID(), Permission: f.root.Permission(), ResourceID: id, UserID: f.user})
 	// TODO: check found
 	if err == pgx.ErrNoRows || !res.Found || res.Permission == 0 {
 		err = fs.ErrNotExist
@@ -148,7 +147,7 @@ func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
 		return nil, ErrInsufficientPermissions
 	}
 	return f.cs.OpenWrite(r.ID(), func(len int, etag string) error {
-		return f.db.Queries().UpdateResourceContents(f.ctx, sql.UpdateResourceContentsParams{
+		return f.db.Queries().UpdateResourceContents(f.ctx, db.UpdateResourceContentsParams{
 			ID:   r.ID(),
 			Size: pgtype.Int8{Int64: int64(len), Valid: true},
 			Etag: pgtype.Text{String: etag, Valid: true},
@@ -160,7 +159,7 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 	if r.Permission() < PermissionReadOnly {
 		return nil, ErrInsufficientPermissions
 	}
-	children, err := f.db.Queries().ReadDir(f.ctx, sql.ReadDirParams{
+	children, err := f.db.Queries().ReadDir(f.ctx, db.ReadDirParams{
 		ID:          r.ID(),
 		Permission:  r.Permission(),
 		UserID:      f.user,
@@ -196,10 +195,10 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	if r.Permission() < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
 	}
-	var result sql.Resource
-	err := f.db.RunInTx(f.ctx, func(q *sql.Queries) error {
+	var result db.Resource
+	err := f.db.RunInTx(f.ctx, func(q *db.Queries) error {
 		var err error
-		if result, err = q.CreateResource(f.ctx, sql.CreateResourceParams{ID: id, Owner: f.user, Parent: r.ID(), Name: name, Dir: dir}); err != nil {
+		if result, err = q.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Owner: f.user, Parent: r.ID(), Name: name, Dir: dir}); err != nil {
 			return err
 		}
 		return q.UpdateResourceModified(f.ctx, r.ID())
@@ -226,7 +225,7 @@ func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
 		return ErrInsufficientPermissions
 	}
 	// TODO: versioning
-	return f.db.RunInTx(f.ctx, func(q *sql.Queries) error {
+	return f.db.RunInTx(f.ctx, func(q *db.Queries) error {
 		if hardDelete {
 			deleted, err := q.HardDeleteRecursive(f.ctx, r.ID())
 			if err != nil {
@@ -251,7 +250,7 @@ func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
 }
 
 func (f filesystem) UpdateName(r Resource, name string) error {
-	return f.db.Queries().UpdateResourceName(f.ctx, sql.UpdateResourceNameParams{ID: r.ID(), Name: name})
+	return f.db.Queries().UpdateResourceName(f.ctx, db.UpdateResourceNameParams{ID: r.ID(), Name: name})
 }
 
 func (f filesystem) UpdateParent(r Resource, parent uuid.UUID) error {
@@ -259,7 +258,7 @@ func (f filesystem) UpdateParent(r Resource, parent uuid.UUID) error {
 	if r.ParentID() == emptyUUID {
 		return ErrCannotReparentRootResource
 	}
-	return f.db.Queries().UpdateResourceParent(f.ctx, sql.UpdateResourceParentParams{ID: r.ID(), Parent: parent})
+	return f.db.Queries().UpdateResourceParent(f.ctx, db.UpdateResourceParentParams{ID: r.ID(), Parent: parent})
 }
 
 func (f filesystem) UpdatePermissions(r Resource, userID int32, permission int32) error {
@@ -270,7 +269,7 @@ func (f filesystem) UpdatePermissions(r Resource, userID int32, permission int32
 		return ErrCannotGrantOwnerPermission
 	}
 
-	return f.db.Queries().UpdatePermissionsForResource(f.ctx, sql.UpdatePermissionsForResourceParams{
+	return f.db.Queries().UpdatePermissionsForResource(f.ctx, db.UpdatePermissionsForResourceParams{
 		ResourceID: r.ID(),
 		UserID:     userID,
 		Permission: permission,
@@ -282,7 +281,7 @@ func (f filesystem) UpdateOwner(r Resource, userID int32) error {
 		return ErrInsufficientPermissions
 	}
 
-	return f.db.Queries().UpdateResourceOwner(f.ctx, sql.UpdateResourceOwnerParams{
+	return f.db.Queries().UpdateResourceOwner(f.ctx, db.UpdateResourceOwnerParams{
 		ID:    r.ID(),
 		Owner: userID,
 	})

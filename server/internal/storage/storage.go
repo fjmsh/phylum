@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/db"
-	"github.com/shroff/phylum/server/internal/sql"
 )
 
 type Storage interface {
@@ -15,7 +14,7 @@ type Storage interface {
 	ListBackends() map[string]Backend
 	OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error)
 	OpenWrite(id uuid.UUID, callback func(int, string) error) (io.WriteCloser, error)
-	Delete(rows []sql.HardDeleteRecursiveRow) []error
+	Delete(rows []db.HardDeleteRecursiveRow) []error
 }
 
 type storage struct {
@@ -50,7 +49,7 @@ func (s storage) OpenWrite(id uuid.UUID, callback func(int, string) error) (io.W
 		return backend.OpenWrite(id, callback)
 	}
 }
-func (s storage) Delete(rows []sql.HardDeleteRecursiveRow) []error {
+func (s storage) Delete(rows []db.HardDeleteRecursiveRow) []error {
 	// TODO: implement
 	return nil
 
@@ -66,7 +65,7 @@ func (s storage) CreateBackend(name string, driver string, params map[string]str
 	if err != nil {
 		return nil
 	}
-	err = s.db.Queries().CreateStorageBackend(context.Background(), sql.CreateStorageBackendParams{
+	err = s.db.Queries().CreateStorageBackend(context.Background(), db.CreateStorageBackendParams{
 		Name:   name,
 		Driver: driver,
 		Params: params,

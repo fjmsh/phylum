@@ -6,7 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/cryptutil"
-	"github.com/shroff/phylum/server/internal/sql"
+	"github.com/shroff/phylum/server/internal/db"
 )
 
 var ErrUserNotFound = errors.New("user not found")
@@ -30,7 +30,7 @@ func (u user) DisplayName() string { return u.displayName }
 func (a App) CreateUser(ctx context.Context, username, displayName, password string) error {
 	if hash, err := cryptutil.GenerateArgon2EncodedHash(password, cryptutil.DefaultArgon2Params()); err != nil {
 		return err
-	} else if err = a.db.Queries().CreateUser(ctx, sql.CreateUserParams{Username: username, DisplayName: displayName, PasswordHash: hash}); err != nil {
+	} else if err = a.db.Queries().CreateUser(ctx, db.CreateUserParams{Username: username, DisplayName: displayName, PasswordHash: hash}); err != nil {
 		return err
 	}
 	return nil
