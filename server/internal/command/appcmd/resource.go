@@ -112,7 +112,12 @@ func setupResourceRmCommand() *cobra.Command {
 
 func setupResourceLsCommand() *cobra.Command {
 	details := func(r core.Resource, name string) string {
-		return fmt.Sprintf("%4d %s %s", r.Permission(), r.ID().String(), name)
+		if owner, err := app.Default.UserByID(context.Background(), r.Owner()); err != nil {
+			logrus.Fatal(err)
+			return ""
+		} else {
+			return fmt.Sprintf("%s %4d %-8.8s %s", r.ID().String(), r.Permission(), owner.Username(), name)
+		}
 	}
 	cmd := cobra.Command{
 		Use:   "ls <path | uuid>",
