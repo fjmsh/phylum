@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/api/errors"
-	"github.com/shroff/phylum/server/internal/app"
 )
 
 const errCodeResourceNotFound = "resource_not_found"
@@ -27,77 +26,73 @@ type resourceResponse struct {
 	Etag     string     `json:"etag"`
 }
 
-func SetupResourceRoutes(r *gin.RouterGroup, a *app.App) {
+func SetupResourceRoutes(r *gin.RouterGroup) {
 	group := r.Group("/resources")
-	group.GET("/:id/ls", createResourceLsRouteHandler(a))
-	group.GET("/:id/metadata", createResourceMetadataRouteHandler(a))
+	group.GET("/ls/:id", handleResourceLsRoute)
+	group.GET("/metadata/:id", handleResourceMetadataRoute)
 }
 
-func createResourceMetadataRouteHandler(a *app.App) func(c *gin.Context) {
-	return func(c *gin.Context) {
-		resourceId, err := uuid.Parse(c.Param("id"))
-		if err != nil {
-			panic(errors.New(http.StatusBadRequest, errCodeResourceIdInvalid, ""))
-		}
-
-		fs := auth.GetFileSystem(c)
-		resource, err := fs.ResourceByID(resourceId)
-		if err != nil {
-			if errors.Is(err, iofs.ErrNotExist) {
-				err = errors.New(http.StatusNotFound, errCodeResourceNotFound, "")
-			}
-			panic(err)
-		}
-
-		response := resourceResponse{
-			ID:       resource.ID(),
-			Parent:   resource.ParentID(),
-			Name:     resource.Name(),
-			Dir:      resource.IsDir(),
-			Modified: resource.ModTime(),
-			Deleted:  resource.DelTime(),
-			Size:     resource.Size(),
-			Etag:     resource.ETag(),
-		}
-		c.JSON(200, response)
+func handleResourceMetadataRoute(c *gin.Context) {
+	resourceId, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		panic(errors.New(http.StatusBadRequest, errCodeResourceIdInvalid, ""))
 	}
+
+	fs := auth.GetFileSystem(c)
+	resource, err := fs.ResourceByID(resourceId)
+	if err != nil {
+		if errors.Is(err, iofs.ErrNotExist) {
+			err = errors.New(http.StatusNotFound, errCodeResourceNotFound, "")
+		}
+		panic(err)
+	}
+
+	response := resourceResponse{
+		ID:       resource.ID(),
+		Parent:   resource.ParentID(),
+		Name:     resource.Name(),
+		Dir:      resource.IsDir(),
+		Modified: resource.ModTime(),
+		Deleted:  resource.DelTime(),
+		Size:     resource.Size(),
+		Etag:     resource.ETag(),
+	}
+	c.JSON(200, response)
 }
 
-func createResourceLsRouteHandler(a *app.App) func(c *gin.Context) {
-	return func(c *gin.Context) {
-		resourceId, err := uuid.Parse(c.Param("id"))
-		if err != nil {
-			panic(errors.New(http.StatusBadRequest, errCodeResourceIdInvalid, ""))
-		}
-
-		fs := auth.GetFileSystem(c)
-		resource, err := fs.ResourceByID(resourceId)
-		if err != nil {
-			if errors.Is(err, iofs.ErrNotExist) {
-				err = errors.New(http.StatusNotFound, errCodeResourceNotFound, "")
-			}
-			panic(err)
-		}
-
-		if !resource.IsDir() {
-			panic(errors.New(http.StatusBadRequest, errCodeResourceNotCollection, ""))
-		}
-		children, err := fs.ReadDir(resource)
-		if err != nil {
-			panic(err)
-		}
-		results := make([]resourceResponse, len(children))
-		for i, c := range children {
-			results[i] = resourceResponse{
-				ID:       c.ID(),
-				Parent:   c.ParentID(),
-				Name:     c.Name(),
-				Dir:      c.IsDir(),
-				Modified: c.ModTime(),
-				Size:     c.Size(),
-				Etag:     c.ETag(),
-			}
-		}
-		c.JSON(200, results)
+func handleResourceLsRoute(c *gin.Context) {
+	resourceId, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		panic(errors.New(http.StatusBadRequest, errCodeResourceIdInvalid, ""))
 	}
+
+	fs := auth.GetFileSystem(c)
+	resource, err := fs.ResourceByID(resourceId)
+	if err != nil {
+		if errors.Is(err, iofs.ErrNotExist) {
+			err = errors.New(http.StatusNotFound, errCodeResourceNotFound, "")
+		}
+		panic(err)
+	}
+
+	if !resource.IsDir() {
+		panic(errors.New(http.StatusBadRequest, errCodeResourceNotCollection, ""))
+	}
+	children, err := fs.ReadDir(resource)
+	if err != nil {
+		panic(err)
+	}
+	results := make([]resourceResponse, len(children))
+	for i, c := range children {
+		results[i] = resourceResponse{
+			ID:       c.ID(),
+			Parent:   c.ParentID(),
+			Name:     c.Name(),
+			Dir:      c.IsDir(),
+			Modified: c.ModTime(),
+			Size:     c.Size(),
+			Etag:     c.ETag(),
+		}
+	}
+	c.JSON(200, results)
 }
