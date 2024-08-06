@@ -69,4 +69,4 @@ WITH RECURSIVE nodes(id, parent) AS (
 )
 DELETE FROM resources
 WHERE id in (SELECT id FROM nodes)
-RETURNING id, dir;
+RETURNING id;

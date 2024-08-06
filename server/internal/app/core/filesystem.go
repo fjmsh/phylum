@@ -231,7 +231,7 @@ func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
 			if err != nil {
 				return err
 			}
-			errors := f.cs.Delete(deleted)
+			errors := f.cs.DeleteAll(deleted)
 			for err := range errors {
 				logrus.Warn(err)
 			}

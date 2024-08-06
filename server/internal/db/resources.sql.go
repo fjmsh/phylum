@@ -82,27 +82,22 @@ WITH RECURSIVE nodes(id, parent) AS (
 )
 DELETE FROM resources
 WHERE id in (SELECT id FROM nodes)
-RETURNING id, dir
+RETURNING id
 `
 
-type HardDeleteRecursiveRow struct {
-	ID  uuid.UUID
-	Dir bool
-}
-
-func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]HardDeleteRecursiveRow, error) {
+func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error) {
 	rows, err := q.db.Query(ctx, hardDeleteRecursive, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []HardDeleteRecursiveRow
+	var items []uuid.UUID
 	for rows.Next() {
-		var i HardDeleteRecursiveRow
-		if err := rows.Scan(&i.ID, &i.Dir); err != nil {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

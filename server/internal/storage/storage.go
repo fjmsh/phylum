@@ -14,7 +14,8 @@ type Storage interface {
 	ListBackends() map[string]Backend
 	OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error)
 	OpenWrite(id uuid.UUID, callback func(int, string) error) (io.WriteCloser, error)
-	Delete(rows []db.HardDeleteRecursiveRow) []error
+	Delete(id uuid.UUID) error
+	DeleteAll(ids uuid.UUIDs) []error
 }
 
 type storage struct {
@@ -49,10 +50,25 @@ func (s storage) OpenWrite(id uuid.UUID, callback func(int, string) error) (io.W
 		return backend.OpenWrite(id, callback)
 	}
 }
-func (s storage) Delete(rows []db.HardDeleteRecursiveRow) []error {
-	// TODO: implement
-	return nil
 
+func (s storage) Delete(id uuid.UUID) error {
+	if backend, err := s.findStorageBackend(id); err != nil {
+		return err
+	} else {
+		return backend.Delete(id)
+	}
+}
+
+func (s storage) DeleteAll(ids uuid.UUIDs) []error {
+	// TODO: Batch delete
+	errs := make([]error, 1)
+	for _, id := range ids {
+		err := s.Delete(id)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errs
 }
 
 func (s *storage) findStorageBackend(id uuid.UUID) (Backend, error) {
