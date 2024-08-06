@@ -37,46 +37,6 @@ SET
 WHERE id = @id::uuid;
 
 
--- name: ReadDir :many
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, permission) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, p.permission
-    FROM resources r
-    LEFT JOIN permissions p
-    ON r.id = p.resource_id
-    AND p.user_id = @user_id::int
-    WHERE r.id = @id::uuid
-  UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), CASE WHEN (p.permission IS NULL OR p.permission < n.permission) THEN n.permission ELSE p.permission END
-    FROM resources r JOIN nodes n on r.parent = n.id
-    LEFT JOIN permissions p
-    ON r.id = p.resource_id 
-    AND p.user_id = @user_id::int
-    WHERE deleted IS NULL
-    AND r.id != @id
-    AND CASE WHEN @recursive::boolean THEN true ELSE depth < 1 END
-)
-SELECT * from nodes
-WHERE CASE WHEN @include_root::boolean THEN true ELSE depth > 0 END;
-
--- name: ResourceByPath :one
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, search, permission) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, @search::text[], p.permission
-    FROM resources r
-    LEFT JOIN permissions p
-    ON r.id = p.resource_id 
-    AND p.user_id = @user_id::int
-    WHERE r.id = @root::uuid
-  UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search, CASE WHEN (p.permission IS NULL OR p.permission < n.permission) THEN n.permission ELSE p.permission END
-    FROM resources r
-    JOIN nodes n ON r.parent = n.id
-    LEFT JOIN permissions p
-    ON r.id = p.resource_id 
-    AND p.user_id = @user_id::int
-    WHERE deleted IS NULL
-    AND r.name = n.search[n.depth + 1]
-)
-SELECT * FROM nodes WHERE cardinality(search) = depth;
 
 -- name: DeleteRecursive :exec
 WITH RECURSIVE nodes(id, parent) AS (
