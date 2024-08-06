@@ -192,7 +192,12 @@ WITH RECURSIVE nodes(id, owner, parent, name, dir, created, modified, size, etag
     FROM resources r
     WHERE r.id = $3::uuid
   UNION ALL
-    SELECT r.id, r.owner, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search, CASE WHEN (p.permission IS NULL OR p.permission < n.permission) THEN n.permission ELSE p.permission END
+    SELECT r.id, r.owner, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search,
+      CASE
+        WHEN r.owner = $4::int THEN 127
+        WHEN p.permission IS NULL THEN n.permission
+        ELSE p.permission
+      END
     FROM resources r
     JOIN nodes n ON r.parent = n.id
     LEFT JOIN permissions p
