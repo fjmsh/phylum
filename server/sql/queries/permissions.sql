@@ -82,11 +82,17 @@ ON r.id = n.resid
 WHERE n.id = @root::uuid;
 
 -- name: RootResource :one
-SELECT r.name, r.owner, r.modified, p.permission
+SELECT r.name, r.owner, r.modified,
+  CASE
+    WHEN r.owner = @user_id::int THEN 127
+    WHEN p.permission IS NOT NULL THEN p.permission
+    ELSE 0
+  END AS permission
   FROM resources r
-  JOIN permissions p
+  LEFT JOIN permissions p
   ON p.resource_id = r.id
-  AND p.user_id = @user_id::int;
+  AND p.user_id = @user_id::int
+  WHERE r.id = '00000000-0000-0000-0000-000000000000'::uuid;
 
 -- name: UpdatePermissionsForResource :exec
 INSERT INTO permissions(resource_id, user_id, permission)

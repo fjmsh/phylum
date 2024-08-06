@@ -12,7 +12,6 @@ func SetupCommand() *cobra.Command {
 	cmd.AddCommand([]*cobra.Command{
 		setupStorageCommand(),
 		setupUserCommand(),
-		setupResourceCommand(),
 	}...)
 
 	return cmd

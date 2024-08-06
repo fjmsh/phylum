@@ -36,6 +36,7 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 	cmd.AddCommand([]*cobra.Command{
 		admincmd.SetupCommand(),
 		setupServeCommand(),
+		setupResourceCommand(),
 	}...)
 
 	return cmd

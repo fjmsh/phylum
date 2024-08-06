@@ -20,7 +20,7 @@ WITH RECURSIVE nodes(id, owner, parent, name, dir, created, modified, size, etag
   UNION ALL
     SELECT r.id, r.owner, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name),
       CASE
-        WHEN r.owner = $4::int THEN 255
+        WHEN r.owner = $4::int THEN 127
         WHEN p.permission IS NULL THEN n.permission
         ELSE p.permission
       END
@@ -100,14 +100,34 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 
 const resourceByIdWithPermissions = `-- name: ResourceByIdWithPermissions :one
 WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
-    SELECT $2::uuid, r.id, r.parent, CASE WHEN r.id = $1::uuid THEN true ELSE false END, p.permission
+    SELECT $2::uuid, r.id, r.parent,
+      CASE
+        WHEN r.id = $1::uuid THEN true
+        ELSE false
+      END,
+      CASE
+        WHEN r.owner = $3::int THEN 127
+        WHEN p.permission IS NOT NULL THEN p.permission
+        ELSE 0
+      END
     FROM resources r
     LEFT JOIN permissions p
     on r.id = p.resource_id
     AND p.user_id = $3::int
     WHERE r.id = $2::uuid 
   UNION ALL
-    SELECT n.resid, r.id, r.parent, CASE WHEN r.id = $1::uuid THEN true ELSE n.found END, CASE WHEN (n.permission IS NULL OR p.permission > n.permission) THEN p.permission ELSE n.permission END
+    SELECT n.resid, r.id, r.parent,
+      CASE
+        WHEN r.id = $1::uuid
+        THEN true
+        ELSE n.found
+      END,
+      CASE
+        WHEN n.permission IS NOT NULL THEN n.permission
+        WHEN r.owner = $3::int THEN 127
+        WHEN p.permission IS NOT NULL THEN p.permission
+        ELSE 0
+      END
     FROM resources r
     JOIN nodes n
     ON r.id = n.parent
@@ -131,7 +151,7 @@ type ResourceByIdWithPermissionsRow struct {
 	ID         uuid.UUID
 	Found      bool
 	Owner      int32
-	Permission pgtype.Int4
+	Permission int32
 	ID_2       uuid.UUID
 	Parent     uuid.UUID
 	Name       string
@@ -232,11 +252,17 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 }
 
 const rootResource = `-- name: RootResource :one
-SELECT r.name, r.owner, r.modified, p.permission
+SELECT r.name, r.owner, r.modified,
+  CASE
+    WHEN r.owner = $1::int THEN 127
+    WHEN p.permission IS NOT NULL THEN p.permission
+    ELSE 0
+  END AS permission
   FROM resources r
-  JOIN permissions p
+  LEFT JOIN permissions p
   ON p.resource_id = r.id
   AND p.user_id = $1::int
+  WHERE r.id = '00000000-0000-0000-0000-000000000000'::uuid
 `
 
 type RootResourceRow struct {
