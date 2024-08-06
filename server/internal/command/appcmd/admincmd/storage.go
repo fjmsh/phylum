@@ -6,25 +6,24 @@ import (
 	"os"
 	"strings"
 
-	"github.com/shroff/phylum/server/internal/app"
 	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-func setupStorageCommand() *cobra.Command {
+func setupStorageCommand(cs storage.Storage) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "storage",
 		Short: "Storage Management",
 	}
 	cmd.AddCommand([]*cobra.Command{
-		setupStorageCreateCommand(),
-		setupStorageListCommand(),
+		setupStorageCreateCommand(cs),
+		setupStorageListCommand(cs),
 	}...)
 	return cmd
 }
 
-func setupStorageCreateCommand() *cobra.Command {
+func setupStorageCreateCommand(cs storage.Storage) *cobra.Command {
 	return &cobra.Command{
 		Use:   "create name driver",
 		Short: "Create new storage backend",
@@ -49,7 +48,7 @@ func setupStorageCreateCommand() *cobra.Command {
 				params[paramName] = val
 			}
 
-			if err := app.Default.Cs.CreateBackend(name, driver, params); err != nil {
+			if err := cs.CreateBackend(name, driver, params); err != nil {
 				logrus.Fatal(err)
 			}
 
@@ -58,13 +57,13 @@ func setupStorageCreateCommand() *cobra.Command {
 	}
 }
 
-func setupStorageListCommand() *cobra.Command {
+func setupStorageListCommand(cs storage.Storage) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "List all storage backends",
 		Run: func(cmd *cobra.Command, args []string) {
 			logrus.Info("Available storage backends:")
-			for k, v := range app.Default.Cs.ListBackends() {
+			for k, v := range cs.ListBackends() {
 				logrus.Info(fmt.Sprintf("%s: %s", k, v))
 			}
 		},

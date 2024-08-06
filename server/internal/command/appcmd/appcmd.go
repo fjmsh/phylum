@@ -4,12 +4,14 @@ import (
 	"github.com/shroff/phylum/server/internal/app"
 	"github.com/shroff/phylum/server/internal/command/appcmd/admincmd"
 	"github.com/shroff/phylum/server/internal/db"
+	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
+	var cs storage.Storage
 	cmd := &cobra.Command{
 		Use:   "app",
 		Short: "Server Administration",
@@ -21,8 +23,14 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 			if err := (*db).CheckVersion(!viper.GetBool("no_auto_migrate")); err != nil {
 				logrus.Fatal(err)
 			}
-			if err := app.Initialize(*db, viper.GetString("content-dir"), debug); err != nil {
+
+			var err error
+			if cs, err = storage.Open(*db, viper.GetString("content-dir")); err != nil {
 				logrus.Fatal(err)
+			} else {
+				if err := app.Initialize(*db, cs, debug); err != nil {
+					logrus.Fatal(err)
+				}
 			}
 		},
 	}
@@ -34,7 +42,7 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 	viper.BindPFlag("content_dir", flags.Lookup("content-dir"))
 
 	cmd.AddCommand([]*cobra.Command{
-		admincmd.SetupCommand(),
+		admincmd.SetupCommand(cs),
 		setupServeCommand(),
 		setupResourceCommand(),
 	}...)
