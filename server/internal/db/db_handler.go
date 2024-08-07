@@ -107,6 +107,20 @@ func (d DbHandler) Migrate(version int) error {
 	return nil
 }
 
+func (d DbHandler) DeleteSchema() (e error) {
+	ctx := context.Background()
+	return pgx.BeginFunc(ctx, d.pool, func(tx pgx.Tx) error {
+		user := d.pool.Config().ConnConfig.User
+		_, err := tx.Exec(context.Background(), "DROP SCHEMA public CASCADE;"+
+			"CREATE SCHEMA public;"+
+			"GRANT ALL ON SCHEMA public TO "+user+";"+
+			"GRANT ALL ON SCHEMA public TO public;"+
+			"COMMENT ON SCHEMA public IS 'standard public schema';")
+
+		return err
+	})
+}
+
 func (d DbHandler) Queries() *Queries {
 	return d.queries
 }

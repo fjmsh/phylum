@@ -15,8 +15,21 @@ func setupSchemaCommand(db **db.DbHandler) *cobra.Command {
 	}
 	cmd.AddCommand([]*cobra.Command{
 		setupSchemaMigrateCommand(db),
+		setupSchemaResetCommand(db),
 	}...)
 	return cmd
+}
+
+func setupSchemaResetCommand(db **db.DbHandler) *cobra.Command {
+	return &cobra.Command{
+		Use:   "reset",
+		Short: "Reset Database Schema",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := (*db).DeleteSchema(); err != nil {
+				logrus.Fatal(err)
+			}
+		},
+	}
 }
 
 func setupSchemaMigrateCommand(db **db.DbHandler) *cobra.Command {
