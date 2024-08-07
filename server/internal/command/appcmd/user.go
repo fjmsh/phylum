@@ -1,4 +1,4 @@
-package admincmd
+package appcmd
 
 import (
 	"context"

@@ -2,7 +2,6 @@ package appcmd
 
 import (
 	"github.com/shroff/phylum/server/internal/app"
-	"github.com/shroff/phylum/server/internal/command/appcmd/admincmd"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
@@ -42,9 +41,10 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 	viper.BindPFlag("content_dir", flags.Lookup("content-dir"))
 
 	cmd.AddCommand([]*cobra.Command{
-		admincmd.SetupCommand(cs),
 		setupServeCommand(),
+		setupUserCommand(),
 		setupResourceCommand(),
+		setupStorageCommand(cs),
 	}...)
 
 	return cmd

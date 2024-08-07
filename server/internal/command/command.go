@@ -52,8 +52,10 @@ func SetupCommand() {
 	}
 
 	defer func() {
-		logrus.Info("Shutting Down App")
-		database.Close()
+		if database != nil {
+			logrus.Info("Shutting Down App")
+			database.Close()
+		}
 	}()
 
 	rootCmd.AddCommand([]*cobra.Command{
