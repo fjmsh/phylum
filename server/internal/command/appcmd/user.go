@@ -85,7 +85,7 @@ func setupUserChrootCommand() *cobra.Command {
 				logrus.Fatal(err)
 			} else {
 				var res core.Resource
-				if id, err := uuid.Parse(idOrPath); err != nil {
+				if id, err := uuid.Parse(idOrPath); err == nil {
 					if res, err = core.Default.Rootfs.ResourceByID(id); err != nil {
 						logrus.Fatal(err)
 					}

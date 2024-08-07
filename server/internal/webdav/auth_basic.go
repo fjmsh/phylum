@@ -14,6 +14,8 @@ const keyFileSystem = "filesystem"
 func createBasicAuthHandler(a *core.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		if username, pass, ok := c.Request.BasicAuth(); !ok {
+			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
+			c.AbortWithStatus(http.StatusUnauthorized)
 		} else if user, err := a.VerifyUserPassword(c.Request.Context(), username, pass); err != nil {
 			if errors.Is(err, core.ErrCredentialsInvalid) {
 				c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
