@@ -13,7 +13,7 @@ import (
 var ErrUserNotFound = errors.New("user not found")
 
 func (a App) CreateUser(ctx context.Context, username, displayName, password string, root *uuid.UUID) error {
-	var rootID = a.rootfs.Root().ID()
+	var rootID = a.Rootfs.Root().ID()
 	if root != nil {
 		rootID = *root
 	}
@@ -28,11 +28,11 @@ func (a App) CreateUser(ctx context.Context, username, displayName, password str
 			Home:         rootID,
 		}); err != nil {
 			return err
-		} else if home, err := a.rootfs.ResourceByPath("/home"); err != nil {
+		} else if home, err := a.Rootfs.ResourceByPath("/home"); err != nil {
 			return err
-		} else if userHome, err := a.rootfs.CreateMemberResource(home, uuid.New(), username, true); err != nil {
+		} else if userHome, err := a.Rootfs.CreateMemberResource(home, uuid.New(), username, true); err != nil {
 			return err
-		} else if err := a.rootfs.UpdateOwner(userHome, u.ID); err != nil {
+		} else if err := a.Rootfs.UpdateOwner(userHome, u.ID); err != nil {
 			return err
 		} else {
 			return q.UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: u.ID, Home: userHome.ID()})
@@ -52,6 +52,7 @@ func (a App) ListUsers(ctx context.Context) ([]User, error) {
 			username:    r.Username,
 			displayName: r.DisplayName,
 			root:        r.Root,
+			home:        r.Home,
 		}
 	}
 	return users, nil
@@ -70,6 +71,7 @@ func (a App) UserByUsername(ctx context.Context, username string) (User, error) 
 		username:    result.Username,
 		displayName: result.DisplayName,
 		root:        result.Root,
+		home:        result.Home,
 	}, nil
 }
 
@@ -86,5 +88,18 @@ func (a App) UserByID(ctx context.Context, userID int32) (User, error) {
 		username:    result.Username,
 		displayName: result.DisplayName,
 		root:        result.Root,
+		home:        result.Home,
 	}, nil
+}
+
+func (a App) UpdateUserRoot(ctx context.Context, user User, root uuid.UUID) error {
+	return a.db.Queries().UpdateUserRoot(ctx, db.UpdateUserRootParams{ID: user.ID(), Root: root})
+}
+
+func (a App) UpdateUserHome(ctx context.Context, user User, home uuid.UUID) error {
+	return a.db.Queries().UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: user.ID(), Home: home})
+}
+
+func (a App) UpdateUserDisplayName(ctx context.Context, user User, displayName string) error {
+	return a.db.Queries().UpdateUserDisplayName(ctx, db.UpdateUserDisplayNameParams{ID: user.ID(), DisplayName: displayName})
 }

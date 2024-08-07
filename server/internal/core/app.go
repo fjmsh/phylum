@@ -13,8 +13,10 @@ import (
 const defaultUserName = "phylum"
 
 type App struct {
-	Debug  bool
-	rootfs FileSystem
+	Debug bool
+	// TODO: Fix su should have access to all files
+	// but is currently subject to permissions which are baked in to ResourceByID and ResourceByPath
+	Rootfs FileSystem
 	db     *db.DbHandler
 	cs     storage.Storage
 }
@@ -41,7 +43,7 @@ func (a *App) setupAppData(ctx context.Context) error {
 		if fs, err := OpenFileSystem(a.db, ctx, a.cs, u.ID, u.Root); err != nil {
 			return err
 		} else {
-			a.rootfs = fs
+			a.Rootfs = fs
 		}
 	}
 	return err

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -19,6 +20,7 @@ func setupUserCommand() *cobra.Command {
 	}
 	cmd.AddCommand([]*cobra.Command{
 		setupUserAddCommand(),
+		setupUserChrootCommand(),
 		setupUserListCommand(),
 		setupUserLoginCommand(),
 	}...)
@@ -71,6 +73,36 @@ func setupUserAddCommand() *cobra.Command {
 	return cmd
 }
 
+func setupUserChrootCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "chroot username uuid",
+		Short: "Set User Root",
+		Args:  cobra.ExactArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			username := args[0]
+			idOrPath := args[1]
+			if user, err := core.Default.UserByUsername(context.Background(), username); err != nil {
+				logrus.Fatal(err)
+			} else {
+				var res core.Resource
+				if id, err := uuid.Parse(idOrPath); err != nil {
+					if res, err = core.Default.Rootfs.ResourceByID(id); err != nil {
+						logrus.Fatal(err)
+					}
+				} else {
+					if res, err = core.Default.Rootfs.ResourceByPath(idOrPath); err != nil {
+						logrus.Fatal(err)
+					}
+				}
+				core.Default.UpdateUserRoot(context.Background(), user, res.ID())
+			}
+		},
+	}
+	cmd.Flags().StringP("name", "n", "", "Full Name")
+	cmd.Flags().StringP("password", "p", "", "Password")
+	return cmd
+}
+
 func setupUserListCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
@@ -81,7 +113,9 @@ func setupUserListCommand() *cobra.Command {
 				logrus.Fatal(err)
 			}
 			for _, user := range users {
-				logrus.Infof("%d: %s (%s)", user.ID(), user.Username(), user.DisplayName())
+				logrus.Infof(" %3.3d: %s (%s)", user.ID(), user.Username(), user.DisplayName())
+				logrus.Infof("Root: %s", user.Root())
+				logrus.Infof("Home: %s", user.Home())
 			}
 		},
 	}
