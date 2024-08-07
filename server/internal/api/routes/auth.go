@@ -24,7 +24,7 @@ func createLoginRouteHandler(a *core.App) func(c *gin.Context) {
 			panic(errors.New(http.StatusBadRequest, "missing_password", ""))
 		}
 
-		if token, err := a.CreateAccessToken(username, password); err != nil {
+		if token, err := a.CreateAccessToken(c.Request.Context(), username, password); err != nil {
 			if errors.Is(err, core.ErrCredentialsInvalid) {
 				panic(errors.New(http.StatusUnauthorized, "credentials_invalid", ""))
 			}

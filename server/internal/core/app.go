@@ -21,20 +21,18 @@ type App struct {
 
 var Default *App
 
-func Create(db *db.DbHandler, cs storage.Storage, debug bool) error {
+func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage, debug bool) error {
 	Default = &App{
 		Debug: debug,
 		db:    db,
 		cs:    cs,
 	}
 
-	return Default.setupAppData()
+	return Default.setupAppData(ctx)
 }
 
-func (a App) setupAppData() error {
-	ctx := context.Background()
-
-	_, err := a.db.Queries().UserByUsername(context.Background(), defaultUserName)
+func (a App) setupAppData(ctx context.Context) error {
+	_, err := a.db.Queries().UserByUsername(ctx, defaultUserName)
 	// Root user found. We can assume that setup has been done before
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return err

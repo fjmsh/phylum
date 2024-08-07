@@ -25,7 +25,7 @@ type DbHandler struct {
 	queries *Queries
 }
 
-func NewDb(dsn string, trace bool) (*DbHandler, error) {
+func NewDb(ctx context.Context, dsn string, trace bool) (*DbHandler, error) {
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, errors.New("Unable to parse DSN: " + err.Error())
@@ -35,22 +35,22 @@ func NewDb(dsn string, trace bool) (*DbHandler, error) {
 		config.ConnConfig.Tracer = tracer{}
 	}
 
-	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		return nil, errors.New("Unable to connect to database: " + err.Error())
 	}
 
 	logrus.Info("Connected to " + config.ConnConfig.Database + " at " + config.ConnConfig.Host + ":" + fmt.Sprint(config.ConnConfig.Port))
 
-	conn, err := pool.Acquire(context.Background())
+	conn, err := pool.Acquire(ctx)
 	if err != nil {
 		return nil, err
 	}
-	migrator, err := migrations.NewMigrator(conn.Conn())
+	migrator, err := migrations.NewMigrator(ctx, conn.Conn())
 	if err != nil {
 		return nil, err
 	}
-	currentSchemaVersion, err = migrator.GetCurrentVersion()
+	currentSchemaVersion, err = migrator.GetCurrentVersion(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func NewDb(dsn string, trace bool) (*DbHandler, error) {
 	return handler, nil
 }
 
-func (d DbHandler) CheckVersion(autoMigrate bool) error {
+func (d DbHandler) CheckVersion(ctx context.Context, autoMigrate bool) error {
 	logrus.Info(fmt.Sprintf("Schema version %d", currentSchemaVersion))
 	if currentSchemaVersion != latestSchemaVersion {
 		if autoMigrate {
@@ -75,7 +75,7 @@ func (d DbHandler) CheckVersion(autoMigrate bool) error {
 			if currentSchemaVersion == latestSchemaVersion {
 				return nil
 			}
-			return d.Migrate(latestSchemaVersion)
+			return d.Migrate(ctx, latestSchemaVersion)
 		} else {
 			logrus.Warn(fmt.Sprintf("Schema version is not at latest (%d)", latestSchemaVersion))
 			return nil
@@ -84,8 +84,8 @@ func (d DbHandler) CheckVersion(autoMigrate bool) error {
 	return nil
 }
 
-func (d DbHandler) Migrate(version int) error {
-	conn, err := d.pool.Acquire(context.Background())
+func (d DbHandler) Migrate(ctx context.Context, version int) error {
+	conn, err := d.pool.Acquire(ctx)
 	if err != nil {
 		return err
 	}
@@ -96,22 +96,21 @@ func (d DbHandler) Migrate(version int) error {
 	if version > latestSchemaVersion {
 		return ErrMigrationTargetTooHigh
 	}
-	migrator, err := migrations.NewMigrator(conn.Conn())
+	migrator, err := migrations.NewMigrator(ctx, conn.Conn())
 	if err != nil {
 		return err
 	}
 	logrus.Info(fmt.Sprintf("Migrating database from version %d to %d", currentSchemaVersion, version))
-	if err = migrator.MigrateTo(int32(version)); err != nil {
+	if err = migrator.MigrateTo(ctx, int32(version)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d DbHandler) DeleteSchema() (e error) {
-	ctx := context.Background()
+func (d DbHandler) DeleteSchema(ctx context.Context) (e error) {
 	return pgx.BeginFunc(ctx, d.pool, func(tx pgx.Tx) error {
 		user := d.pool.Config().ConnConfig.User
-		_, err := tx.Exec(context.Background(), "DROP SCHEMA public CASCADE;"+
+		_, err := tx.Exec(ctx, "DROP SCHEMA public CASCADE;"+
 			"CREATE SCHEMA public;"+
 			"GRANT ALL ON SCHEMA public TO "+user+";"+
 			"GRANT ALL ON SCHEMA public TO public;"+

@@ -18,9 +18,9 @@ type Migrator struct {
 //go:embed data/*.sql
 var migrationFiles embed.FS
 
-func NewMigrator(conn *pgx.Conn) (Migrator, error) {
+func NewMigrator(ctx context.Context, conn *pgx.Conn) (Migrator, error) {
 	migrator, err := migrate.NewMigratorEx(
-		context.Background(), conn, versionTable,
+		ctx, conn, versionTable,
 		&migrate.MigratorOptions{
 			DisableTx: false,
 		})
@@ -40,8 +40,8 @@ func NewMigrator(conn *pgx.Conn) (Migrator, error) {
 	}, nil
 }
 
-func (m Migrator) GetCurrentVersion() (int, error) {
-	version, err := m.migrator.GetCurrentVersion(context.Background())
+func (m Migrator) GetCurrentVersion(ctx context.Context) (int, error) {
+	version, err := m.migrator.GetCurrentVersion(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -58,13 +58,13 @@ func (m Migrator) Migrations() []*migrate.Migration {
 }
 
 // Migrate migrates the DB to the most recent version of the schema.
-func (m Migrator) Migrate() error {
-	err := m.migrator.Migrate(context.Background())
+func (m Migrator) Migrate(ctx context.Context) error {
+	err := m.migrator.Migrate(ctx)
 	return err
 }
 
 // MigrateTo migrates to a specific version of the schema. Use '0' to undo all migrations.
-func (m Migrator) MigrateTo(ver int32) error {
-	err := m.migrator.MigrateTo(context.Background(), ver)
+func (m Migrator) MigrateTo(ctx context.Context, ver int32) error {
+	err := m.migrator.MigrateTo(ctx, ver)
 	return err
 }

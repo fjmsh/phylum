@@ -15,6 +15,7 @@ const errCodeTokenInvalid = "token_invalid"
 
 func CreateBearerAuthHandler(a *core.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
+		ctx := c.Request.Context()
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			panic(errors.Err{Status: 401, Code: errCodeAuthRequred})
@@ -27,14 +28,14 @@ func CreateBearerAuthHandler(a *core.App) func(c *gin.Context) {
 			panic(errors.Err{Status: 401, Code: errCodeAuthRequred})
 		}
 
-		userID, err := a.VerifyAccessToken(authParts[1])
+		userID, err := a.VerifyAccessToken(ctx, authParts[1])
 		if err != nil {
 			if errors.Is(err, core.ErrTokenExpired) || errors.Is(err, core.ErrTokenInvalid) {
 				panic(errors.Err{Status: 401, Code: errCodeTokenInvalid})
 			}
 			panic(err)
 		}
-		if fs, err := a.OpenFileSystem(c.Request.Context(), userID); err != nil {
+		if fs, err := a.OpenFileSystem(ctx, userID); err != nil {
 			logrus.Warn(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 		} else {

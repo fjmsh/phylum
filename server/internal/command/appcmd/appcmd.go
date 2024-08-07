@@ -1,6 +1,8 @@
 package appcmd
 
 import (
+	"context"
+
 	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
@@ -19,15 +21,15 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 			for ; c.Parent() != nil; c = c.Parent() {
 			}
 			c.PersistentPreRun(cmd, args)
-			if err := (*db).CheckVersion(!viper.GetBool("no_auto_migrate")); err != nil {
+			if err := (*db).CheckVersion(context.Background(), !viper.GetBool("no_auto_migrate")); err != nil {
 				logrus.Fatal(err)
 			}
 
 			var err error
-			if cs, err = storage.Open(*db, viper.GetString("content-dir")); err != nil {
+			if cs, err = storage.Open(*db, context.Background(), viper.GetString("content-dir")); err != nil {
 				logrus.Fatal(err)
 			} else {
-				if err := core.Create(*db, cs, debug); err != nil {
+				if err := core.Create(context.Background(), *db, cs, debug); err != nil {
 					logrus.Fatal(err)
 				}
 			}

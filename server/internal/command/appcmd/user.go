@@ -103,7 +103,7 @@ func setupUserLoginCommand() *cobra.Command {
 			}
 			password := string(bytes)
 
-			accessToken, err := core.Default.CreateAccessToken(username, password)
+			accessToken, err := core.Default.CreateAccessToken(context.Background(), username, password)
 			if err != nil {
 				logrus.Fatal(err)
 			}

@@ -2,6 +2,7 @@ package appcmd
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -48,7 +49,7 @@ func setupStorageCreateCommand(cs storage.Storage) *cobra.Command {
 				params[paramName] = val
 			}
 
-			if err := cs.CreateBackend(name, driver, params); err != nil {
+			if err := cs.CreateBackend(context.Background(), name, driver, params); err != nil {
 				logrus.Fatal(err)
 			}
 

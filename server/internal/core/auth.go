@@ -25,7 +25,7 @@ var ErrTokenInvalid = errors.New("token invalid")
 var ErrTokenExpired = errors.New("token expired")
 
 func (a App) VerifyUserPassword(ctx context.Context, username, password string) (User, error) {
-	if user, err := a.db.Queries().UserByUsername(context.Background(), username); err != nil {
+	if user, err := a.db.Queries().UserByUsername(ctx, username); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrCredentialsInvalid
 		}
@@ -36,7 +36,7 @@ func (a App) VerifyUserPassword(ctx context.Context, username, password string) 
 		} else if !b {
 			return nil, ErrCredentialsInvalid
 		}
-		if user, err := a.UserByID(context.Background(), user.ID); err != nil {
+		if user, err := a.UserByID(ctx, user.ID); err != nil {
 			return nil, err
 		} else {
 			return user, nil
@@ -44,11 +44,11 @@ func (a App) VerifyUserPassword(ctx context.Context, username, password string) 
 	}
 }
 
-func (a App) CreateAccessToken(username, password string) (db.AccessToken, error) {
-	if user, err := a.VerifyUserPassword(context.Background(), username, password); err != nil {
+func (a App) CreateAccessToken(ctx context.Context, username, password string) (db.AccessToken, error) {
+	if user, err := a.VerifyUserPassword(ctx, username, password); err != nil {
 		return db.AccessToken{}, err
 	} else {
-		if token, err := a.db.Queries().InsertAccessToken(context.Background(), db.InsertAccessTokenParams{
+		if token, err := a.db.Queries().InsertAccessToken(ctx, db.InsertAccessTokenParams{
 			ID:       GenerateRandomString(accessTokenLength),
 			Validity: accessTokenValiditiy,
 			UserID:   user.ID(),
@@ -60,8 +60,8 @@ func (a App) CreateAccessToken(username, password string) (db.AccessToken, error
 	}
 }
 
-func (a App) VerifyAccessToken(accessToken string) (User, error) {
-	token, err := a.db.Queries().AccessTokenById(context.Background(), accessToken)
+func (a App) VerifyAccessToken(ctx context.Context, accessToken string) (User, error) {
+	token, err := a.db.Queries().AccessTokenById(ctx, accessToken)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrTokenInvalid
 	} else if err != nil {
@@ -70,7 +70,7 @@ func (a App) VerifyAccessToken(accessToken string) (User, error) {
 	if time.Now().After(token.Expires.Time) {
 		return nil, ErrTokenExpired
 	}
-	if user, err := a.UserByID(context.Background(), token.UserID); err != nil {
+	if user, err := a.UserByID(ctx, token.UserID); err != nil {
 		return nil, err
 	} else {
 		return user, nil

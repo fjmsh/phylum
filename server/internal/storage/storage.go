@@ -10,7 +10,7 @@ import (
 )
 
 type Storage interface {
-	CreateBackend(name string, driver string, params map[string]string) error
+	CreateBackend(ctx context.Context, name string, driver string, params map[string]string) error
 	ListBackends() map[string]Backend
 	OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error)
 	OpenWrite(id uuid.UUID, callback func(int, string) error) (io.WriteCloser, error)
@@ -24,8 +24,8 @@ type storage struct {
 	defaultBackend Backend
 }
 
-func Open(db *db.DbHandler, contentDir string) (Storage, error) {
-	if backends, err := restoreBackends(db); err != nil {
+func Open(db *db.DbHandler, ctx context.Context, contentDir string) (Storage, error) {
+	if backends, err := restoreBackends(db, ctx); err != nil {
 		return nil, err
 	} else {
 		return storage{
@@ -76,12 +76,12 @@ func (s *storage) findStorageBackend(id uuid.UUID) (Backend, error) {
 	return s.defaultBackend, nil
 }
 
-func (s storage) CreateBackend(name string, driver string, params map[string]string) error {
+func (s storage) CreateBackend(ctx context.Context, name string, driver string, params map[string]string) error {
 	backend, err := openBackend(name, driver, params)
 	if err != nil {
 		return nil
 	}
-	err = s.db.Queries().CreateStorageBackend(context.Background(), db.CreateStorageBackendParams{
+	err = s.db.Queries().CreateStorageBackend(ctx, db.CreateStorageBackendParams{
 		Name:   name,
 		Driver: driver,
 		Params: params,
@@ -97,8 +97,8 @@ func (s storage) ListBackends() map[string]Backend {
 	return s.backends
 }
 
-func restoreBackends(db *db.DbHandler) (map[string]Backend, error) {
-	backends, err := db.Queries().AllStorageBackends(context.Background())
+func restoreBackends(db *db.DbHandler, ctx context.Context) (map[string]Backend, error) {
+	backends, err := db.Queries().AllStorageBackends(ctx)
 	if err != nil {
 		return nil, err
 	}

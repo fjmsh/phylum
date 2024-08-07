@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"os"
 	"path"
 
@@ -46,7 +47,7 @@ func SetupCommand() {
 		}
 
 		var err error
-		if database, err = db.NewDb(viper.GetString("database_url"), debug && viper.GetBool("trace_sql")); err != nil {
+		if database, err = db.NewDb(context.Background(), viper.GetString("database_url"), debug && viper.GetBool("trace_sql")); err != nil {
 			logrus.Fatal(err)
 		}
 	}
