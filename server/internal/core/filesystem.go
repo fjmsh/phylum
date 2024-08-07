@@ -16,7 +16,7 @@ import (
 )
 
 type FileSystem interface {
-	OpenWithRoot(Resource) FileSystem
+	WithDb(*db.DbHandler) FileSystem
 	Root() Resource
 	ResourceByPath(path string) (Resource, error)
 	ResourceByID(id uuid.UUID) (Resource, error)
@@ -41,7 +41,7 @@ type filesystem struct {
 
 func OpenFileSystem(dbh *db.DbHandler, ctx context.Context, cs storage.Storage, user int32, rootID uuid.UUID) (FileSystem, error) {
 	var root Resource
-	if res, err := dbh.Queries().ResourceByID(ctx, db.ResourceByIDParams{
+	if res, err := dbh.ResourceByID(ctx, db.ResourceByIDParams{
 		ResourceID: rootID,
 		UserID:     user,
 	}); err != nil {
@@ -73,12 +73,12 @@ func (f filesystem) Root() Resource {
 	return f.root
 }
 
-func (f filesystem) OpenWithRoot(root Resource) FileSystem {
+func (f filesystem) WithDb(db *db.DbHandler) FileSystem {
 	return filesystem{
-		db:   f.db,
+		db:   db,
 		ctx:  f.ctx,
 		cs:   f.cs,
-		root: root,
+		root: f.root,
 		user: f.user,
 	}
 }
@@ -91,7 +91,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		segments = []string{}
 	}
 
-	res, err := f.db.Queries().ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.root.ID(), Permission: f.root.Permission(), Search: segments, UserID: f.user})
+	res, err := f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.root.ID(), Permission: f.root.Permission(), Search: segments, UserID: f.user})
 	// TODO: Fix su should have access to all files
 	if err == pgx.ErrNoRows || res.Permission == 0 {
 		err = fs.ErrNotExist
@@ -115,7 +115,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 }
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	res, err := f.db.Queries().ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.root.ID(), ResourceID: id, UserID: f.user})
+	res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.root.ID(), ResourceID: id, UserID: f.user})
 	// TODO: verify found
 	// TODO: Fix su should have access to all files
 	if err == pgx.ErrNoRows || !res.Found || res.Permission == 0 {
@@ -154,7 +154,7 @@ func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
 		return nil, ErrInsufficientPermissions
 	}
 	return f.cs.OpenWrite(r.ID(), func(len int, etag string) error {
-		return f.db.Queries().UpdateResourceContents(f.ctx, db.UpdateResourceContentsParams{
+		return f.db.UpdateResourceContents(f.ctx, db.UpdateResourceContentsParams{
 			ID:   r.ID(),
 			Size: pgtype.Int8{Int64: int64(len), Valid: true},
 			Etag: pgtype.Text{String: etag, Valid: true},
@@ -166,7 +166,7 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 	if r.Permission() < PermissionReadOnly {
 		return nil, ErrInsufficientPermissions
 	}
-	children, err := f.db.Queries().ReadDir(f.ctx, db.ReadDirParams{
+	children, err := f.db.ReadDir(f.ctx, db.ReadDirParams{
 		ID:          r.ID(),
 		Permission:  r.Permission(),
 		UserID:      f.user,
@@ -203,13 +203,13 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 		return nil, ErrInsufficientPermissions
 	}
 	var result db.Resource
-	err := f.db.WithTx(f.ctx, func(q *db.Queries) error {
+	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 		var err error
 		parent := r.ID()
-		if result, err = q.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Owner: f.user, Parent: &parent, Name: name, Dir: dir}); err != nil {
+		if result, err = d.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Owner: f.user, Parent: &parent, Name: name, Dir: dir}); err != nil {
 			return err
 		}
-		return q.UpdateResourceModified(f.ctx, r.ID())
+		return d.UpdateResourceModified(f.ctx, r.ID())
 	})
 	if err != nil {
 		return nil, err
@@ -233,9 +233,9 @@ func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
 		return ErrInsufficientPermissions
 	}
 	// TODO: versioning
-	return f.db.WithTx(f.ctx, func(q *db.Queries) error {
+	return f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 		if hardDelete {
-			deleted, err := q.HardDeleteRecursive(f.ctx, r.ID())
+			deleted, err := d.HardDeleteRecursive(f.ctx, r.ID())
 			if err != nil {
 				return err
 			}
@@ -244,14 +244,14 @@ func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
 				logrus.Warn(err)
 			}
 		} else {
-			if err := q.DeleteRecursive(f.ctx, r.ID()); err != nil {
+			if err := d.DeleteRecursive(f.ctx, r.ID()); err != nil {
 				return err
 			}
 		}
 
 		parent := r.ParentID()
 		if parent != nil {
-			return q.UpdateResourceModified(f.ctx, *parent)
+			return d.UpdateResourceModified(f.ctx, *parent)
 		}
 		return nil
 	})
@@ -264,7 +264,7 @@ func (f filesystem) UpdateName(r Resource, name string) error {
 	if r.Permission() < PermissionReadWrite {
 		return ErrInsufficientPermissions
 	}
-	return f.db.Queries().UpdateResourceName(f.ctx, db.UpdateResourceNameParams{ID: r.ID(), Name: name})
+	return f.db.UpdateResourceName(f.ctx, db.UpdateResourceNameParams{ID: r.ID(), Name: name})
 }
 
 func (f filesystem) UpdateParent(r Resource, parent uuid.UUID) error {
@@ -288,7 +288,7 @@ func (f filesystem) UpdateParent(r Resource, parent uuid.UUID) error {
 	if newParent.Permission() < PermissionReadWrite {
 		return ErrInsufficientPermissions
 	}
-	return f.db.Queries().UpdateResourceParent(f.ctx, db.UpdateResourceParentParams{ID: r.ID(), Parent: parent})
+	return f.db.UpdateResourceParent(f.ctx, db.UpdateResourceParentParams{ID: r.ID(), Parent: parent})
 }
 
 func (f filesystem) UpdatePermissions(r Resource, userID int32, permission int32) error {
@@ -299,7 +299,7 @@ func (f filesystem) UpdatePermissions(r Resource, userID int32, permission int32
 		return ErrCannotGrantOwnerPermission
 	}
 
-	return f.db.Queries().UpdatePermissionsForResource(f.ctx, db.UpdatePermissionsForResourceParams{
+	return f.db.UpdatePermissionsForResource(f.ctx, db.UpdatePermissionsForResourceParams{
 		ResourceID: r.ID(),
 		UserID:     userID,
 		Permission: permission,
@@ -311,7 +311,7 @@ func (f filesystem) UpdateOwner(r Resource, userID int32) error {
 		return ErrInsufficientPermissions
 	}
 
-	return f.db.Queries().UpdateResourceOwner(f.ctx, db.UpdateResourceOwnerParams{
+	return f.db.UpdateResourceOwner(f.ctx, db.UpdateResourceOwnerParams{
 		ID:    r.ID(),
 		Owner: userID,
 	})

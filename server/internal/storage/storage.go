@@ -81,7 +81,7 @@ func (s storage) CreateBackend(ctx context.Context, name string, driver string, 
 	if err != nil {
 		return nil
 	}
-	err = s.db.Queries().CreateStorageBackend(ctx, db.CreateStorageBackendParams{
+	err = s.db.CreateStorageBackend(ctx, db.CreateStorageBackendParams{
 		Name:   name,
 		Driver: driver,
 		Params: params,
@@ -98,7 +98,7 @@ func (s storage) ListBackends() map[string]Backend {
 }
 
 func restoreBackends(db *db.DbHandler, ctx context.Context) (map[string]Backend, error) {
-	backends, err := db.Queries().AllStorageBackends(ctx)
+	backends, err := db.AllStorageBackends(ctx)
 	if err != nil {
 		return nil, err
 	}

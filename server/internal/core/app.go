@@ -34,7 +34,7 @@ func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage, debug boo
 }
 
 func (a *App) setupAppData(ctx context.Context) error {
-	u, err := a.db.Queries().UserByUsername(ctx, defaultUserName)
+	u, err := a.db.UserByUsername(ctx, defaultUserName)
 
 	if errors.Is(err, pgx.ErrNoRows) {
 		u, err = a.populateData(ctx)
@@ -50,11 +50,10 @@ func (a *App) setupAppData(ctx context.Context) error {
 }
 
 func (a *App) populateData(ctx context.Context) (user db.User, e error) {
-	e = a.db.RunInTx(ctx, func(tx pgx.Tx) error {
-		q := a.db.Queries().WithTx(tx)
+	e = a.db.WithTx(ctx, func(dbh *db.DbHandler) error {
 		// Create phylum user
 		var err error
-		user, err = q.CreateUser(ctx, db.CreateUserParams{
+		user, err = dbh.CreateUser(ctx, db.CreateUserParams{
 			Username:     defaultUserName,
 			DisplayName:  "Phylum",
 			PasswordHash: "",
@@ -64,7 +63,7 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 		}
 
 		// Create root folder
-		root, err := q.CreateResource(ctx, db.CreateResourceParams{
+		root, err := dbh.CreateResource(ctx, db.CreateResourceParams{
 			ID:    uuid.New(),
 			Owner: user.ID,
 			Name:  "Phylum Root",
@@ -75,7 +74,7 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 		}
 
 		// Create home folder
-		home, err := q.CreateResource(ctx, db.CreateResourceParams{
+		home, err := dbh.CreateResource(ctx, db.CreateResourceParams{
 			ID:     uuid.New(),
 			Owner:  user.ID,
 			Parent: &root.ID,
@@ -87,7 +86,7 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 		}
 
 		// Create user home folder
-		userHome, err := q.CreateResource(ctx, db.CreateResourceParams{
+		userHome, err := dbh.CreateResource(ctx, db.CreateResourceParams{
 			ID:     uuid.New(),
 			Owner:  user.ID,
 			Parent: &home.ID,
@@ -98,18 +97,21 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 			return err
 		}
 
-		if err := q.UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: user.ID, Home: userHome.ID}); err != nil {
+		if err := dbh.UpdateUserRoot(ctx, db.UpdateUserRootParams{ID: user.ID, Root: root.ID}); err != nil {
+			return err
+		}
+		if err := dbh.UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: user.ID, Home: userHome.ID}); err != nil {
 			return err
 		}
 		user.Root = root.ID
 		user.Home = userHome.ID
 
-		_, err = tx.Exec(ctx, "SET CONSTRAINTS user_root, user_home IMMEDIATE;")
+		err = dbh.Exec(ctx, "SET CONSTRAINTS user_root, user_home IMMEDIATE;")
 		if err != nil {
 			return err
 		}
 
-		_, err = tx.Exec(ctx, "ALTER TABLE users ALTER CONSTRAINT user_root NOT DEFERRABLE;"+
+		err = dbh.Exec(ctx, "ALTER TABLE users ALTER CONSTRAINT user_root NOT DEFERRABLE;"+
 			"ALTER TABLE users ALTER CONSTRAINT user_home NOT DEFERRABLE;",
 		)
 

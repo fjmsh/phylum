@@ -21,8 +21,8 @@ var currentSchemaVersion int
 var latestSchemaVersion int
 
 type DbHandler struct {
-	pool    *pgxpool.Pool
-	queries *Queries
+	Queries
+	pool *pgxpool.Pool
 }
 
 func NewDb(ctx context.Context, dsn string, trace bool) (*DbHandler, error) {
@@ -58,83 +58,26 @@ func NewDb(ctx context.Context, dsn string, trace bool) (*DbHandler, error) {
 	conn.Release()
 
 	handler := &DbHandler{
+		Queries: *New(pool),
 		pool:    pool,
-		queries: New(pool),
 	}
 
 	return handler, nil
 }
 
-func (d DbHandler) CheckVersion(ctx context.Context, autoMigrate bool) error {
-	logrus.Info(fmt.Sprintf("Schema version %d", currentSchemaVersion))
-	if currentSchemaVersion != latestSchemaVersion {
-		if autoMigrate {
-			if currentSchemaVersion > latestSchemaVersion {
-				return ErrMigrationNoAutoDowngrade
-			}
-			if currentSchemaVersion == latestSchemaVersion {
-				return nil
-			}
-			return d.Migrate(ctx, latestSchemaVersion)
-		} else {
-			logrus.Warn(fmt.Sprintf("Schema version is not at latest (%d)", latestSchemaVersion))
-			return nil
+func (d DbHandler) WithTx(ctx context.Context, fn func(*DbHandler) error) error {
+	return pgx.BeginFunc(ctx, d.pool, func(tx pgx.Tx) error {
+		d := DbHandler{
+			Queries: *d.Queries.WithTx(tx),
+			pool:    d.pool,
 		}
-	}
-	return nil
-}
-
-func (d DbHandler) Migrate(ctx context.Context, version int) error {
-	conn, err := d.pool.Acquire(ctx)
-	if err != nil {
-		return err
-	}
-	defer conn.Release()
-	if version < 0 {
-		return ErrMigrationTargetTooLow
-	}
-	if version > latestSchemaVersion {
-		return ErrMigrationTargetTooHigh
-	}
-	migrator, err := migrations.NewMigrator(ctx, conn.Conn())
-	if err != nil {
-		return err
-	}
-	logrus.Info(fmt.Sprintf("Migrating database from version %d to %d", currentSchemaVersion, version))
-	if err = migrator.MigrateTo(ctx, int32(version)); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (d DbHandler) DeleteSchema(ctx context.Context) (e error) {
-	return pgx.BeginFunc(ctx, d.pool, func(tx pgx.Tx) error {
-		user := d.pool.Config().ConnConfig.User
-		_, err := tx.Exec(ctx, "DROP SCHEMA public CASCADE;"+
-			"CREATE SCHEMA public;"+
-			"GRANT ALL ON SCHEMA public TO "+user+";"+
-			"GRANT ALL ON SCHEMA public TO public;"+
-			"COMMENT ON SCHEMA public IS 'standard public schema';")
-
-		return err
+		return fn(&d)
 	})
 }
 
-func (d DbHandler) Queries() *Queries {
-	return d.queries
-}
-
-func (d DbHandler) RunInTx(ctx context.Context, fn func(pgx.Tx) error) error {
-	return pgx.BeginFunc(ctx, d.pool, func(tx pgx.Tx) error {
-		return fn(tx)
-	})
-}
-
-func (d DbHandler) WithTx(ctx context.Context, fn func(*Queries) error) error {
-	return pgx.BeginFunc(ctx, d.pool, func(tx pgx.Tx) error {
-		q := d.queries.WithTx(tx)
-		return fn(q)
-	})
+func (d DbHandler) Exec(ctx context.Context, stmt string, args ...any) error {
+	_, err := d.Queries.db.Exec(ctx, stmt, args...)
+	return err
 }
 
 func (d DbHandler) Close() {
