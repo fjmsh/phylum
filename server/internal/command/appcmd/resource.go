@@ -247,10 +247,10 @@ func openFileSystemFromFlags(cmd *cobra.Command) {
 	if value, err := cmd.Flags().GetString("username"); err != nil {
 		logrus.Fatal(err)
 	} else {
-		if user, err := core.Default.UserByUsername(context.Background(), value); err != nil {
+		if u, err := core.Default.UserByUsername(context.Background(), value); err != nil {
 			logrus.Fatal(err)
 		} else {
-			user = user
+			user = u
 		}
 	}
 
