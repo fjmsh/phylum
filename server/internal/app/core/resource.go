@@ -27,7 +27,7 @@ var (
 type Resource interface {
 	ID() uuid.UUID
 	Owner() int32
-	ParentID() uuid.UUID
+	ParentID() *uuid.UUID
 	Name() string
 	Size() int64
 	Permission() int32
@@ -42,7 +42,7 @@ type resource struct {
 	id         uuid.UUID
 	owner      int32
 	permission int32
-	parentID   uuid.UUID
+	parentID   *uuid.UUID
 	name       string
 	size       int64
 	collection bool
@@ -57,7 +57,7 @@ func (r resource) Owner() int32 { return r.owner }
 
 func (r resource) Permission() int32 { return r.permission }
 
-func (r resource) ParentID() uuid.UUID { return r.parentID }
+func (r resource) ParentID() *uuid.UUID { return r.parentID }
 
 func (r resource) Name() string { return r.name }
 

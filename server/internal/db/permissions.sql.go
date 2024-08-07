@@ -47,7 +47,7 @@ type ReadDirParams struct {
 type ReadDirRow struct {
 	ID         uuid.UUID
 	Owner      int32
-	Parent     uuid.UUID
+	Parent     *uuid.UUID
 	Name       string
 	Dir        bool
 	Created    pgtype.Timestamp
@@ -129,7 +129,7 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
     ON r.id = n.parent
     LEFT JOIN permissions p
     ON r.id = p.resource_id AND p.user_id = $4::int
-    WHERE n.id != '00000000-0000-0000-0000-000000000000'::uuid
+    WHERE n.parent IS NOT NULL
 )
 SELECT resid AS id, found, r.owner, permission, r.id, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
 JOIN resources r
@@ -150,7 +150,7 @@ type ResourceByIDRow struct {
 	Owner      int32
 	Permission int32
 	ID_2       uuid.UUID
-	Parent     uuid.UUID
+	Parent     *uuid.UUID
 	Name       string
 	Dir        bool
 	Created    pgtype.Timestamp
@@ -219,7 +219,7 @@ type ResourceByPathParams struct {
 type ResourceByPathRow struct {
 	ID         uuid.UUID
 	Owner      int32
-	Parent     uuid.UUID
+	Parent     *uuid.UUID
 	Name       string
 	Dir        bool
 	Created    pgtype.Timestamp
@@ -269,7 +269,7 @@ SELECT r.name, r.owner, r.modified,
   LEFT JOIN permissions p
   ON p.resource_id = r.id
   AND p.user_id = $1::int
-  WHERE r.id = '00000000-0000-0000-0000-000000000000'::uuid
+  WHERE r.parent IS NULL
 `
 
 type RootResourceRow struct {

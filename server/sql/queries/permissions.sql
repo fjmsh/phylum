@@ -75,7 +75,7 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
     ON r.id = n.parent
     LEFT JOIN permissions p
     ON r.id = p.resource_id AND p.user_id = @user_id::int
-    WHERE n.id != '00000000-0000-0000-0000-000000000000'::uuid
+    WHERE n.parent IS NOT NULL
 )
 SELECT resid AS id, found, r.owner, permission, r.id, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
 JOIN resources r
@@ -93,7 +93,7 @@ SELECT r.name, r.owner, r.modified,
   LEFT JOIN permissions p
   ON p.resource_id = r.id
   AND p.user_id = @user_id::int
-  WHERE r.id = '00000000-0000-0000-0000-000000000000'::uuid;
+  WHERE r.parent IS NULL;
 
 -- name: UpdatePermissionsForResource :exec
 INSERT INTO permissions(resource_id, user_id, permission)

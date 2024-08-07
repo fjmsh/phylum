@@ -23,7 +23,7 @@ INSERT INTO resources(
 type CreateResourceParams struct {
 	ID     uuid.UUID
 	Owner  int32
-	Parent uuid.UUID
+	Parent *uuid.UUID
 	Name   string
 	Dir    bool
 }

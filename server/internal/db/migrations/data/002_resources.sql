@@ -1,7 +1,7 @@
 CREATE TABLE resources (
   id       uuid      PRIMARY KEY,
   owner    INT       NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
-  parent   uuid      NOT NULL REFERENCES resources(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  parent   uuid      REFERENCES resources(id) ON UPDATE CASCADE ON DELETE CASCADE,
   name     TEXT      NOT NULL,
   dir      BOOLEAN   NOT NULL,
   created  TIMESTAMP NOT NULL,
@@ -13,8 +13,8 @@ CREATE TABLE resources (
 
 INSERT INTO resources(
 SELECT '00000000-0000-0000-0000-000000000000',
-    id, 
-  '00000000-0000-0000-0000-000000000000',
+  id, 
+  NULL,
   'root',
   true,
   NOW(),
