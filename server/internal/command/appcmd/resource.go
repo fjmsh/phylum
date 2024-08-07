@@ -275,6 +275,6 @@ func readUserIDFromFlagsreadUsername(cmd *cobra.Command) {
 func setupUsernameFlags(cmd *cobra.Command) {
 	flags := cmd.Flags()
 	flags.Int32P("user", "u", 0, "Specify User ID for resource operations (cannot be used with -U)")
-	flags.StringP("username", "U", "root", "Specify Username for resource operations (cannot be used with -u)")
+	flags.StringP("username", "U", "phylum", "Specify Username for resource operations (cannot be used with -u)")
 
 }

@@ -17,6 +17,7 @@ import (
 
 type FileSystem interface {
 	OpenWithRoot(Resource) FileSystem
+	Root() Resource
 	ResourceByPath(path string) (Resource, error)
 	ResourceByID(id uuid.UUID) (Resource, error)
 	OpenRead(r Resource, start, length int64) (io.ReadCloser, error)
@@ -68,6 +69,10 @@ func OpenFileSystem(db *db.DbHandler, ctx context.Context, cs storage.Storage, r
 	}, nil
 }
 
+func (f filesystem) Root() Resource {
+	return f.root
+}
+
 func (f filesystem) OpenWithRoot(root Resource) FileSystem {
 	return filesystem{
 		db:   f.db,
@@ -110,7 +115,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	res, err := f.db.Queries().ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.root.ID(), Permission: f.root.Permission(), ResourceID: id, UserID: f.user})
-	// TODO: check found
+	// TODO: verify found
 	if err == pgx.ErrNoRows || !res.Found || res.Permission == 0 {
 		err = fs.ErrNotExist
 	}

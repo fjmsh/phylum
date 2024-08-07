@@ -1,9 +1,9 @@
--- name: CreateUser :exec
+-- name: CreateUser :one
 INSERT INTO users(
-    username, display_name, password_hash
+    username, created, modified, display_name, password_hash
 ) VALUES (
-    $1, $2, $3
-);
+    $1, NOW(), NOW(), $2, $3
+) RETURNING *;
 
 -- name: UserByUsername :one
 SELECT * from users WHERE username = $1;
@@ -13,3 +13,24 @@ SELECT * from users WHERE id = $1;
 
 -- name: ListUsers :many
 SELECT * from users WHERE deleted IS NULL;
+
+-- name: UpdateUserDisplayName :exec
+UPDATE users
+SET
+    display_name = $1,
+    modified = NOW()
+WHERE id = $2;
+
+-- name: UpdateUserPasswordHash :exec
+UPDATE users
+SET
+    password_hash = $1,
+    modified = NOW()
+WHERE id = $2;
+
+-- name: UpdateUserHome :exec
+UPDATE users
+SET
+    home = $1,
+    modified = NOW()
+WHERE id = $2;

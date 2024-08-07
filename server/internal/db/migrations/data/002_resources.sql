@@ -22,7 +22,7 @@ SELECT '00000000-0000-0000-0000-000000000000',
   NULL,
   0,
   ''
-FROM users where username = 'root');
+FROM users where username = 'phylum');
 
 CREATE UNIQUE INDEX unique_member_resource_name ON resources(parent, name) WHERE deleted IS NULL;
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/db"
@@ -30,10 +31,18 @@ func (u user) DisplayName() string { return u.displayName }
 func (a App) CreateUser(ctx context.Context, username, displayName, password string) error {
 	if hash, err := cryptutil.GenerateArgon2EncodedHash(password, cryptutil.DefaultArgon2Params()); err != nil {
 		return err
-	} else if err = a.db.Queries().CreateUser(ctx, db.CreateUserParams{Username: username, DisplayName: displayName, PasswordHash: hash}); err != nil {
+	} else if u, err := a.db.Queries().CreateUser(ctx, db.CreateUserParams{Username: username, DisplayName: displayName, PasswordHash: hash}); err != nil {
 		return err
+	} else if home, err := a.adminfs.ResourceByPath("/home"); err != nil {
+		return err
+	} else if home, err := a.adminfs.CreateMemberResource(home, uuid.New(), username, true); err != nil {
+		return err
+	} else if err := a.adminfs.UpdateOwner(home, u.ID); err != nil {
+		return err
+	} else {
+		homeID := home.ID()
+		return a.db.Queries().UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: u.ID, Home: &homeID})
 	}
-	return nil
 }
 
 func (a App) ListUsers(ctx context.Context) ([]User, error) {

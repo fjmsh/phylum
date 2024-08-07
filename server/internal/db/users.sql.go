@@ -7,14 +7,16 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
-const createUser = `-- name: CreateUser :exec
+const createUser = `-- name: CreateUser :one
 INSERT INTO users(
-    username, display_name, password_hash
+    username, created, modified, display_name, password_hash
 ) VALUES (
-    $1, $2, $3
-)
+    $1, NOW(), NOW(), $2, $3
+) RETURNING id, username, created, modified, display_name, password_hash, deleted, home
 `
 
 type CreateUserParams struct {
@@ -23,13 +25,24 @@ type CreateUserParams struct {
 	PasswordHash string
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
-	_, err := q.db.Exec(ctx, createUser, arg.Username, arg.DisplayName, arg.PasswordHash)
-	return err
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, createUser, arg.Username, arg.DisplayName, arg.PasswordHash)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Created,
+		&i.Modified,
+		&i.DisplayName,
+		&i.PasswordHash,
+		&i.Deleted,
+		&i.Home,
+	)
+	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, username, display_name, password_hash, deleted from users WHERE deleted IS NULL
+SELECT id, username, created, modified, display_name, password_hash, deleted, home from users WHERE deleted IS NULL
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
@@ -44,9 +57,12 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Username,
+			&i.Created,
+			&i.Modified,
 			&i.DisplayName,
 			&i.PasswordHash,
 			&i.Deleted,
+			&i.Home,
 		); err != nil {
 			return nil, err
 		}
@@ -58,8 +74,62 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
+const updateUserDisplayName = `-- name: UpdateUserDisplayName :exec
+UPDATE users
+SET
+    display_name = $1,
+    modified = NOW()
+WHERE id = $2
+`
+
+type UpdateUserDisplayNameParams struct {
+	DisplayName string
+	ID          int32
+}
+
+func (q *Queries) UpdateUserDisplayName(ctx context.Context, arg UpdateUserDisplayNameParams) error {
+	_, err := q.db.Exec(ctx, updateUserDisplayName, arg.DisplayName, arg.ID)
+	return err
+}
+
+const updateUserHome = `-- name: UpdateUserHome :exec
+UPDATE users
+SET
+    home = $1,
+    modified = NOW()
+WHERE id = $2
+`
+
+type UpdateUserHomeParams struct {
+	Home *uuid.UUID
+	ID   int32
+}
+
+func (q *Queries) UpdateUserHome(ctx context.Context, arg UpdateUserHomeParams) error {
+	_, err := q.db.Exec(ctx, updateUserHome, arg.Home, arg.ID)
+	return err
+}
+
+const updateUserPasswordHash = `-- name: UpdateUserPasswordHash :exec
+UPDATE users
+SET
+    password_hash = $1,
+    modified = NOW()
+WHERE id = $2
+`
+
+type UpdateUserPasswordHashParams struct {
+	PasswordHash string
+	ID           int32
+}
+
+func (q *Queries) UpdateUserPasswordHash(ctx context.Context, arg UpdateUserPasswordHashParams) error {
+	_, err := q.db.Exec(ctx, updateUserPasswordHash, arg.PasswordHash, arg.ID)
+	return err
+}
+
 const userByID = `-- name: UserByID :one
-SELECT id, username, display_name, password_hash, deleted from users WHERE id = $1
+SELECT id, username, created, modified, display_name, password_hash, deleted, home from users WHERE id = $1
 `
 
 func (q *Queries) UserByID(ctx context.Context, id int32) (User, error) {
@@ -68,15 +138,18 @@ func (q *Queries) UserByID(ctx context.Context, id int32) (User, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
+		&i.Created,
+		&i.Modified,
 		&i.DisplayName,
 		&i.PasswordHash,
 		&i.Deleted,
+		&i.Home,
 	)
 	return i, err
 }
 
 const userByUsername = `-- name: UserByUsername :one
-SELECT id, username, display_name, password_hash, deleted from users WHERE username = $1
+SELECT id, username, created, modified, display_name, password_hash, deleted, home from users WHERE username = $1
 `
 
 func (q *Queries) UserByUsername(ctx context.Context, username string) (User, error) {
@@ -85,9 +158,12 @@ func (q *Queries) UserByUsername(ctx context.Context, username string) (User, er
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
+		&i.Created,
+		&i.Modified,
 		&i.DisplayName,
 		&i.PasswordHash,
 		&i.Deleted,
+		&i.Home,
 	)
 	return i, err
 }

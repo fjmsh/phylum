@@ -44,7 +44,10 @@ type StorageBackend struct {
 type User struct {
 	ID           int32
 	Username     string
+	Created      pgtype.Timestamp
+	Modified     pgtype.Timestamp
 	DisplayName  string
 	PasswordHash string
 	Deleted      pgtype.Timestamp
+	Home         *uuid.UUID
 }
