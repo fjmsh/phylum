@@ -27,17 +27,17 @@ func SetupHandler(r *gin.RouterGroup, app *core.App) {
 		prefix: r.BasePath(),
 	}
 	r.Use(createBasicAuthHandler(app))
-	r.Handle("OPTIONS", "/*path", handler.HandleRequest)
-	r.Handle("GET", "/*path", handler.HandleRequest)
-	r.Handle("PUT", "/*path", handler.HandleRequest)
-	r.Handle("HEAD", "/*path", handler.HandleRequest)
-	r.Handle("POST", "/*path", handler.HandleRequest)
-	r.Handle("DELETE", "/*path", handler.HandleRequest)
-	r.Handle("MOVE", "/*path", handler.HandleRequest)
-	r.Handle("COPY", "/*path", handler.HandleRequest)
-	r.Handle("MKCOL", "/*path", handler.HandleRequest)
-	r.Handle("PROPFIND", "/*path", handler.HandleRequest)
-	r.Handle("PROPPATCH", "/*path", handler.HandleRequest)
+	r.Handle("OPTIONS", "*path", handler.HandleRequest)
+	r.Handle("GET", "*path", handler.HandleRequest)
+	r.Handle("PUT", "*path", handler.HandleRequest)
+	r.Handle("HEAD", "*path", handler.HandleRequest)
+	r.Handle("POST", "*path", handler.HandleRequest)
+	r.Handle("DELETE", "*path", handler.HandleRequest)
+	r.Handle("MOVE", "*path", handler.HandleRequest)
+	r.Handle("COPY", "*path", handler.HandleRequest)
+	r.Handle("MKCOL", "*path", handler.HandleRequest)
+	r.Handle("PROPFIND", "*path", handler.HandleRequest)
+	r.Handle("PROPPATCH", "*path", handler.HandleRequest)
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
