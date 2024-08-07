@@ -8,9 +8,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/db"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/rand"
 )
 
@@ -25,32 +25,34 @@ var ErrCredentialsInvalid = errors.New("credentials invalid")
 var ErrTokenInvalid = errors.New("token invalid")
 var ErrTokenExpired = errors.New("token expired")
 
-func (a App) VerifyUserPassword(ctx context.Context, username, password string) (int32, error) {
+func (a App) VerifyUserPassword(ctx context.Context, username, password string) (core.User, error) {
 	if user, err := a.db.Queries().UserByUsername(context.Background(), username); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, ErrCredentialsInvalid
+			return nil, ErrCredentialsInvalid
 		}
-		logrus.Info(err)
-		return 0, err
+		return nil, err
 	} else {
 		if b, err := cryptutil.VerifyPassword(password, user.PasswordHash); err != nil {
-			logrus.Warn(err.Error())
-			return 0, err
+			return nil, err
 		} else if !b {
-			return 0, ErrCredentialsInvalid
+			return nil, ErrCredentialsInvalid
 		}
-		return user.ID, nil
+		if user, err := a.UserByID(context.Background(), user.ID); err != nil {
+			return nil, err
+		} else {
+			return user, nil
+		}
 	}
 }
 
 func (a App) CreateAccessToken(username, password string) (db.AccessToken, error) {
-	if userID, err := a.VerifyUserPassword(context.Background(), username, password); err != nil {
+	if user, err := a.VerifyUserPassword(context.Background(), username, password); err != nil {
 		return db.AccessToken{}, err
 	} else {
 		if token, err := a.db.Queries().InsertAccessToken(context.Background(), db.InsertAccessTokenParams{
 			ID:       GenerateRandomString(accessTokenLength),
 			Validity: accessTokenValiditiy,
-			UserID:   userID,
+			UserID:   user.ID(),
 		}); err != nil {
 			return db.AccessToken{}, err
 		} else {
@@ -59,17 +61,21 @@ func (a App) CreateAccessToken(username, password string) (db.AccessToken, error
 	}
 }
 
-func (a App) VerifyAccessToken(accessToken string) (int32, error) {
+func (a App) VerifyAccessToken(accessToken string) (core.User, error) {
 	token, err := a.db.Queries().AccessTokenById(context.Background(), accessToken)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return 0, ErrTokenInvalid
+		return nil, ErrTokenInvalid
 	} else if err != nil {
-		return 0, err
+		return nil, err
 	}
 	if time.Now().After(token.Expires.Time) {
-		return 0, ErrTokenExpired
+		return nil, ErrTokenExpired
 	}
-	return token.UserID, nil
+	if user, err := a.UserByID(context.Background(), token.UserID); err != nil {
+		return nil, err
+	} else {
+		return user, nil
+	}
 }
 
 const (

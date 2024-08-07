@@ -6,62 +6,57 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/db"
 )
 
 var ErrUserNotFound = errors.New("user not found")
 
-type User interface {
-	ID() int32
-	Username() string
-	DisplayName() string
-}
-
-type user struct {
-	id          int32
-	username    string
-	displayName string
-}
-
-func (u user) ID() int32           { return u.id }
-func (u user) Username() string    { return u.username }
-func (u user) DisplayName() string { return u.displayName }
-
-func (a App) CreateUser(ctx context.Context, username, displayName, password string) error {
+func (a App) CreateUser(ctx context.Context, username, displayName, password string, root *uuid.UUID) error {
+	var rootID = a.rootfs.Root().ID()
+	if root != nil {
+		rootID = *root
+	}
 	if hash, err := cryptutil.GenerateArgon2EncodedHash(password, cryptutil.DefaultArgon2Params()); err != nil {
 		return err
-	} else if u, err := a.db.Queries().CreateUser(ctx, db.CreateUserParams{Username: username, DisplayName: displayName, PasswordHash: hash}); err != nil {
+	} else if u, err := a.db.Queries().CreateUser(ctx, db.CreateUserParams{
+		Username:     username,
+		DisplayName:  displayName,
+		PasswordHash: hash,
+		Root:         rootID,
+		Home:         rootID,
+	}); err != nil {
 		return err
-	} else if home, err := a.adminfs.ResourceByPath("/home"); err != nil {
+	} else if home, err := a.rootfs.ResourceByPath("/home"); err != nil {
 		return err
-	} else if home, err := a.adminfs.CreateMemberResource(home, uuid.New(), username, true); err != nil {
+	} else if home, err := a.rootfs.CreateMemberResource(home, uuid.New(), username, true); err != nil {
 		return err
-	} else if err := a.adminfs.UpdateOwner(home, u.ID); err != nil {
+	} else if err := a.rootfs.UpdateOwner(home, u.ID); err != nil {
 		return err
 	} else {
-		homeID := home.ID()
-		return a.db.Queries().UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: u.ID, Home: &homeID})
+		return a.db.Queries().UpdateUserDirs(ctx, db.UpdateUserDirsParams{ID: u.ID, Root: rootID, Home: home.ID()})
 	}
 }
 
-func (a App) ListUsers(ctx context.Context) ([]User, error) {
+func (a App) ListUsers(ctx context.Context) ([]core.User, error) {
 	results, err := a.db.Queries().ListUsers(ctx)
 	if err != nil {
 		return nil, err
 	}
-	users := make([]User, len(results))
+	users := make([]core.User, len(results))
 	for i, r := range results {
-		users[i] = user{
+		users[i] = core.user{
 			id:          r.ID,
 			username:    r.Username,
 			displayName: r.DisplayName,
+			root:        r.Root,
 		}
 	}
 	return users, nil
 }
 
-func (a App) UserByUsername(ctx context.Context, username string) (User, error) {
+func (a App) UserByUsername(ctx context.Context, username string) (core.User, error) {
 	result, err := a.db.Queries().UserByUsername(ctx, username)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -73,10 +68,11 @@ func (a App) UserByUsername(ctx context.Context, username string) (User, error) 
 		id:          result.ID,
 		username:    result.Username,
 		displayName: result.DisplayName,
+		root:        result.Root,
 	}, nil
 }
 
-func (a App) UserByID(ctx context.Context, userID int32) (User, error) {
+func (a App) UserByID(ctx context.Context, userID int32) (core.User, error) {
 	result, err := a.db.Queries().UserByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -88,5 +84,6 @@ func (a App) UserByID(ctx context.Context, userID int32) (User, error) {
 		id:          result.ID,
 		username:    result.Username,
 		displayName: result.DisplayName,
+		root:        result.Root,
 	}, nil
 }

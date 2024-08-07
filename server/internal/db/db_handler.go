@@ -125,7 +125,13 @@ func (d DbHandler) Queries() *Queries {
 	return d.queries
 }
 
-func (d DbHandler) RunInTx(ctx context.Context, fn func(*Queries) error) error {
+func (d DbHandler) RunInTx(ctx context.Context, fn func(pgx.Tx) error) error {
+	return pgx.BeginFunc(ctx, d.pool, func(tx pgx.Tx) error {
+		return fn(tx)
+	})
+}
+
+func (d DbHandler) WithTx(ctx context.Context, fn func(*Queries) error) error {
 	return pgx.BeginFunc(ctx, d.pool, func(tx pgx.Tx) error {
 		q := d.queries.WithTx(tx)
 		return fn(q)

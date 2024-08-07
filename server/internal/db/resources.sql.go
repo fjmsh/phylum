@@ -105,28 +105,6 @@ func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]uuid
 	return items, nil
 }
 
-const resourceById = `-- name: ResourceById :one
-SELECT id, owner, parent, name, dir, created, modified, deleted, size, etag from resources WHERE id = $1
-`
-
-func (q *Queries) ResourceById(ctx context.Context, id uuid.UUID) (Resource, error) {
-	row := q.db.QueryRow(ctx, resourceById, id)
-	var i Resource
-	err := row.Scan(
-		&i.ID,
-		&i.Owner,
-		&i.Parent,
-		&i.Name,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.Size,
-		&i.Etag,
-	)
-	return i, err
-}
-
 const updateResourceContents = `-- name: UpdateResourceContents :exec
 UPDATE resources
 SET

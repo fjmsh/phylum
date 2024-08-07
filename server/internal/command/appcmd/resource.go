@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var userID int32
+var fs core.FileSystem
 
 func setupResourceCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -37,14 +37,10 @@ func setupResourceMkdirCommand() *cobra.Command {
 		Short: "Create Directory",
 		Args:  cobra.ExactArgs(1),
 		PreRun: func(cmd *cobra.Command, args []string) {
-			readUserIDFromFlagsreadUsername(cmd)
+			openFileSystemFromFlags(cmd)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			path := args[0]
-			fs, err := app.Default.OpenFileSystem(context.Background(), userID)
-			if err != nil {
-				logrus.Fatal(err)
-			}
 			if _, err := fs.ResourceByPath(path); err == nil {
 				logrus.Fatal("Resource already exists: " + path)
 			}
@@ -78,14 +74,10 @@ func setupResourceRmCommand() *cobra.Command {
 		Short: "Delete Resource",
 		Args:  cobra.ExactArgs(1),
 		PreRun: func(cmd *cobra.Command, args []string) {
-			readUserIDFromFlagsreadUsername(cmd)
+			openFileSystemFromFlags(cmd)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			path := args[0]
-			fs, err := app.Default.OpenFileSystem(context.Background(), userID)
-			if err != nil {
-				logrus.Fatal(err)
-			}
 			r, err := fs.ResourceByPath(path)
 			if err != nil {
 				if errors.Is(err, iofs.ErrNotExist) {
@@ -125,14 +117,10 @@ func setupResourceLsCommand() *cobra.Command {
 		Short: "List Resource Details",
 		Args:  cobra.ExactArgs(1),
 		PreRun: func(cmd *cobra.Command, args []string) {
-			readUserIDFromFlagsreadUsername(cmd)
+			openFileSystemFromFlags(cmd)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			path := args[0]
-			fs, err := app.Default.OpenFileSystem(context.Background(), userID)
-			if err != nil {
-				logrus.Fatal(err)
-			}
 			var r core.Resource
 			if path[0] != '/' {
 				var id uuid.UUID
@@ -184,10 +172,11 @@ func setupResourceChownCommand() *cobra.Command {
 		Short: "Change Resource Owner",
 		Args:  cobra.ExactArgs(2),
 		PreRun: func(cmd *cobra.Command, args []string) {
-			readUserIDFromFlagsreadUsername(cmd)
+			openFileSystemFromFlags(cmd)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			username := args[0]
+			path := args[1]
 			var owner int32
 			if user, err := app.Default.UserByUsername(context.Background(), username); err != nil {
 				logrus.Fatal(err)
@@ -195,11 +184,6 @@ func setupResourceChownCommand() *cobra.Command {
 				owner = user.ID()
 			}
 
-			path := args[1]
-			fs, err := app.Default.OpenFileSystem(context.Background(), userID)
-			if err != nil {
-				logrus.Fatal(err)
-			}
 			var r core.Resource
 			if path[0] != '/' {
 				var id uuid.UUID
@@ -248,14 +232,15 @@ func setupResourceChownCommand() *cobra.Command {
 	return &cmd
 }
 
-func readUserIDFromFlagsreadUsername(cmd *cobra.Command) {
+func openFileSystemFromFlags(cmd *cobra.Command) {
+	var user core.User
 	if value, err := cmd.Flags().GetInt32("user"); err != nil {
 		logrus.Fatal(err)
 	} else if value != 0 {
 		if user, err := app.Default.UserByID(context.Background(), value); err != nil {
 			logrus.Fatal(err)
 		} else {
-			userID = user.ID()
+			user = user
 			return
 		}
 	}
@@ -266,8 +251,14 @@ func readUserIDFromFlagsreadUsername(cmd *cobra.Command) {
 		if user, err := app.Default.UserByUsername(context.Background(), value); err != nil {
 			logrus.Fatal(err)
 		} else {
-			userID = user.ID()
+			user = user
 		}
+	}
+
+	var err error
+	fs, err = app.Default.OpenFileSystem(context.Background(), user)
+	if err != nil {
+		logrus.Fatal(err)
 	}
 
 }

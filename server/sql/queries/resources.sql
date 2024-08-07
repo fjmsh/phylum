@@ -1,6 +1,3 @@
--- name: ResourceById :one
-SELECT * from resources WHERE id = $1;
-
 -- name: CreateResource :one
 INSERT INTO resources(
     id, owner, parent, name, dir, created, modified

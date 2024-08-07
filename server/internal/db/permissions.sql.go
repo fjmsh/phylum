@@ -105,22 +105,25 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
         WHEN r.id = $1::uuid THEN true
         ELSE false
       END,
-      $3::int
+      CASE
+        WHEN r.owner = $3::int THEN 127
+        WHEN p.permission IS NOT NULL THEN p.permission
+        ELSE 0
+      END
     FROM resources r
     LEFT JOIN permissions p
-    on r.id = p.resource_id
-    AND p.user_id = $4::int
+    ON p.resource_id = r.id
+    AND p.user_id = $3::int
     WHERE r.id = $2::uuid 
   UNION ALL
     SELECT n.resid, r.id, r.parent,
       CASE
-        WHEN r.id = $1::uuid
-        THEN true
+        WHEN r.id = $1::uuid THEN true
         ELSE n.found
       END,
       CASE
         WHEN n.permission IS NOT NULL THEN n.permission
-        WHEN r.owner = $4::int THEN 127
+        WHEN r.owner = $3::int THEN 127
         WHEN p.permission IS NOT NULL THEN p.permission
         ELSE 0
       END
@@ -128,10 +131,10 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
     JOIN nodes n
     ON r.id = n.parent
     LEFT JOIN permissions p
-    ON r.id = p.resource_id AND p.user_id = $4::int
+    ON r.id = p.resource_id AND p.user_id = $3::int
     WHERE n.parent IS NOT NULL
 )
-SELECT resid AS id, found, r.owner, permission, r.id, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
+SELECT resid AS id, found, r.owner, permission, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
 JOIN resources r
 ON r.id = n.resid
 WHERE n.id = $1::uuid
@@ -140,7 +143,6 @@ WHERE n.id = $1::uuid
 type ResourceByIDParams struct {
 	Root       uuid.UUID
 	ResourceID uuid.UUID
-	Permission int32
 	UserID     int32
 }
 
@@ -149,7 +151,6 @@ type ResourceByIDRow struct {
 	Found      bool
 	Owner      int32
 	Permission int32
-	ID_2       uuid.UUID
 	Parent     *uuid.UUID
 	Name       string
 	Dir        bool
@@ -161,19 +162,13 @@ type ResourceByIDRow struct {
 }
 
 func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (ResourceByIDRow, error) {
-	row := q.db.QueryRow(ctx, resourceByID,
-		arg.Root,
-		arg.ResourceID,
-		arg.Permission,
-		arg.UserID,
-	)
+	row := q.db.QueryRow(ctx, resourceByID, arg.Root, arg.ResourceID, arg.UserID)
 	var i ResourceByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Found,
 		&i.Owner,
 		&i.Permission,
-		&i.ID_2,
 		&i.Parent,
 		&i.Name,
 		&i.Dir,
@@ -259,7 +254,7 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 }
 
 const rootResource = `-- name: RootResource :one
-SELECT r.name, r.owner, r.modified,
+SELECT r.id, r.name, r.owner, r.modified,
   CASE
     WHEN r.owner = $1::int THEN 127
     WHEN p.permission IS NOT NULL THEN p.permission
@@ -273,6 +268,7 @@ SELECT r.name, r.owner, r.modified,
 `
 
 type RootResourceRow struct {
+	ID         uuid.UUID
 	Name       string
 	Owner      int32
 	Modified   pgtype.Timestamp
@@ -283,6 +279,7 @@ func (q *Queries) RootResource(ctx context.Context, userID int32) (RootResourceR
 	row := q.db.QueryRow(ctx, rootResource, userID)
 	var i RootResourceRow
 	err := row.Scan(
+		&i.ID,
 		&i.Name,
 		&i.Owner,
 		&i.Modified,

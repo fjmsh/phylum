@@ -61,7 +61,7 @@ func setupUserAddCommand() *cobra.Command {
 				}
 			}
 
-			if err := app.Default.CreateUser(context.Background(), username, displayName, password); err != nil {
+			if err := app.Default.CreateUser(context.Background(), username, displayName, password, nil); err != nil {
 				logrus.Fatal(err)
 			}
 		},

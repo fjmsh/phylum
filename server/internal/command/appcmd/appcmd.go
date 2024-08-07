@@ -27,7 +27,7 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 			if cs, err = storage.Open(*db, viper.GetString("content-dir")); err != nil {
 				logrus.Fatal(err)
 			} else {
-				if err := app.Initialize(*db, cs, debug); err != nil {
+				if err := app.Create(*db, cs, debug); err != nil {
 					logrus.Fatal(err)
 				}
 			}

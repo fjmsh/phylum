@@ -49,5 +49,6 @@ type User struct {
 	DisplayName  string
 	PasswordHash string
 	Deleted      pgtype.Timestamp
-	Home         *uuid.UUID
+	Root         uuid.UUID
+	Home         uuid.UUID
 }

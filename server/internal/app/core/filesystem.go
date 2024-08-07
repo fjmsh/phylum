@@ -31,8 +31,6 @@ type FileSystem interface {
 	UpdateOwner(r Resource, userID int32) error
 }
 
-var rootUUID = uuid.UUID{}
-
 type filesystem struct {
 	db   *db.DbHandler
 	ctx  context.Context
@@ -41,31 +39,33 @@ type filesystem struct {
 	user int32
 }
 
-func OpenFileSystem(db *db.DbHandler, ctx context.Context, cs storage.Storage, root Resource, user int32) (FileSystem, error) {
-	if root == nil {
-		if res, err := db.Queries().RootResource(ctx, user); err == nil {
-			root = resource{
-				id:         rootUUID,
-				owner:      res.Owner,
-				permission: res.Permission,
-				parentID:   nil,
-				name:       res.Name,
-				size:       0,
-				collection: true,
-				modTime:    res.Modified.Time,
-				delTime:    nil,
-				etag:       "",
-			}
-		} else {
-			return nil, err
+func OpenFileSystem(dbh *db.DbHandler, ctx context.Context, cs storage.Storage, user User) (FileSystem, error) {
+	var root Resource
+	if res, err := dbh.Queries().ResourceByID(ctx, db.ResourceByIDParams{
+		ResourceID: user.Root(),
+		UserID:     user.ID(),
+	}); err != nil {
+		return nil, err
+	} else {
+		root = resource{
+			id:         res.ID,
+			owner:      res.Owner,
+			permission: res.Permission,
+			parentID:   nil,
+			name:       res.Name,
+			size:       0,
+			collection: true,
+			modTime:    res.Modified.Time,
+			delTime:    nil,
+			etag:       "",
 		}
 	}
 	return filesystem{
-		db:   db,
+		db:   dbh,
 		ctx:  ctx,
 		cs:   cs,
 		root: root,
-		user: user,
+		user: user.ID(),
 	}, nil
 }
 
@@ -114,7 +114,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 }
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	res, err := f.db.Queries().ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.root.ID(), Permission: f.root.Permission(), ResourceID: id, UserID: f.user})
+	res, err := f.db.Queries().ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.root.ID(), ResourceID: id, UserID: f.user})
 	// TODO: verify found
 	if err == pgx.ErrNoRows || !res.Found || res.Permission == 0 {
 		err = fs.ErrNotExist
@@ -201,7 +201,7 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 		return nil, ErrInsufficientPermissions
 	}
 	var result db.Resource
-	err := f.db.RunInTx(f.ctx, func(q *db.Queries) error {
+	err := f.db.WithTx(f.ctx, func(q *db.Queries) error {
 		var err error
 		parent := r.ID()
 		if result, err = q.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Owner: f.user, Parent: &parent, Name: name, Dir: dir}); err != nil {
@@ -231,7 +231,7 @@ func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
 		return ErrInsufficientPermissions
 	}
 	// TODO: versioning
-	return f.db.RunInTx(f.ctx, func(q *db.Queries) error {
+	return f.db.WithTx(f.ctx, func(q *db.Queries) error {
 		if hardDelete {
 			deleted, err := q.HardDeleteRecursive(f.ctx, r.ID())
 			if err != nil {

@@ -1,8 +1,8 @@
 -- name: CreateUser :one
 INSERT INTO users(
-    username, created, modified, display_name, password_hash
+    username, created, modified, display_name, password_hash, root, home
 ) VALUES (
-    $1, NOW(), NOW(), $2, $3
+    $1, NOW(), NOW(), $2, $3, $4, $5
 ) RETURNING *;
 
 -- name: UserByUsername :one
@@ -28,9 +28,11 @@ SET
     modified = NOW()
 WHERE id = $2;
 
--- name: UpdateUserHome :exec
+
+-- name: UpdateUserDirs :exec
 UPDATE users
 SET
-    home = $1,
+    root = $1,
+    home = $2,
     modified = NOW()
-WHERE id = $2;
+WHERE id = $3;

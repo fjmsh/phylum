@@ -13,20 +13,28 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users(
-    username, created, modified, display_name, password_hash
+    username, created, modified, display_name, password_hash, root, home
 ) VALUES (
-    $1, NOW(), NOW(), $2, $3
-) RETURNING id, username, created, modified, display_name, password_hash, deleted, home
+    $1, NOW(), NOW(), $2, $3, $4, $5
+) RETURNING id, username, created, modified, display_name, password_hash, deleted, root, home
 `
 
 type CreateUserParams struct {
 	Username     string
 	DisplayName  string
 	PasswordHash string
+	Root         uuid.UUID
+	Home         uuid.UUID
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Username, arg.DisplayName, arg.PasswordHash)
+	row := q.db.QueryRow(ctx, createUser,
+		arg.Username,
+		arg.DisplayName,
+		arg.PasswordHash,
+		arg.Root,
+		arg.Home,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -36,13 +44,14 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.DisplayName,
 		&i.PasswordHash,
 		&i.Deleted,
+		&i.Root,
 		&i.Home,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, username, created, modified, display_name, password_hash, deleted, home from users WHERE deleted IS NULL
+SELECT id, username, created, modified, display_name, password_hash, deleted, root, home from users WHERE deleted IS NULL
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
@@ -62,6 +71,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 			&i.DisplayName,
 			&i.PasswordHash,
 			&i.Deleted,
+			&i.Root,
 			&i.Home,
 		); err != nil {
 			return nil, err
@@ -72,6 +82,26 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateUserDirs = `-- name: UpdateUserDirs :exec
+UPDATE users
+SET
+    root = $1,
+    home = $2,
+    modified = NOW()
+WHERE id = $3
+`
+
+type UpdateUserDirsParams struct {
+	Root uuid.UUID
+	Home uuid.UUID
+	ID   int32
+}
+
+func (q *Queries) UpdateUserDirs(ctx context.Context, arg UpdateUserDirsParams) error {
+	_, err := q.db.Exec(ctx, updateUserDirs, arg.Root, arg.Home, arg.ID)
+	return err
 }
 
 const updateUserDisplayName = `-- name: UpdateUserDisplayName :exec
@@ -89,24 +119,6 @@ type UpdateUserDisplayNameParams struct {
 
 func (q *Queries) UpdateUserDisplayName(ctx context.Context, arg UpdateUserDisplayNameParams) error {
 	_, err := q.db.Exec(ctx, updateUserDisplayName, arg.DisplayName, arg.ID)
-	return err
-}
-
-const updateUserHome = `-- name: UpdateUserHome :exec
-UPDATE users
-SET
-    home = $1,
-    modified = NOW()
-WHERE id = $2
-`
-
-type UpdateUserHomeParams struct {
-	Home *uuid.UUID
-	ID   int32
-}
-
-func (q *Queries) UpdateUserHome(ctx context.Context, arg UpdateUserHomeParams) error {
-	_, err := q.db.Exec(ctx, updateUserHome, arg.Home, arg.ID)
 	return err
 }
 
@@ -129,7 +141,7 @@ func (q *Queries) UpdateUserPasswordHash(ctx context.Context, arg UpdateUserPass
 }
 
 const userByID = `-- name: UserByID :one
-SELECT id, username, created, modified, display_name, password_hash, deleted, home from users WHERE id = $1
+SELECT id, username, created, modified, display_name, password_hash, deleted, root, home from users WHERE id = $1
 `
 
 func (q *Queries) UserByID(ctx context.Context, id int32) (User, error) {
@@ -143,13 +155,14 @@ func (q *Queries) UserByID(ctx context.Context, id int32) (User, error) {
 		&i.DisplayName,
 		&i.PasswordHash,
 		&i.Deleted,
+		&i.Root,
 		&i.Home,
 	)
 	return i, err
 }
 
 const userByUsername = `-- name: UserByUsername :one
-SELECT id, username, created, modified, display_name, password_hash, deleted, home from users WHERE username = $1
+SELECT id, username, created, modified, display_name, password_hash, deleted, root, home from users WHERE username = $1
 `
 
 func (q *Queries) UserByUsername(ctx context.Context, username string) (User, error) {
@@ -163,6 +176,7 @@ func (q *Queries) UserByUsername(ctx context.Context, username string) (User, er
 		&i.DisplayName,
 		&i.PasswordHash,
 		&i.Deleted,
+		&i.Root,
 		&i.Home,
 	)
 	return i, err

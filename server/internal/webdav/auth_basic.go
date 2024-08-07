@@ -1,6 +1,7 @@
 package webdav
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,18 +11,18 @@ import (
 
 const keyFileSystem = "filesystem"
 
-func createBasicAuthHandler(app *app.App) func(c *gin.Context) {
+func createBasicAuthHandler(a *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		var userID int32
-		if username, pass, ok := c.Request.BasicAuth(); ok {
-			if res, err := app.VerifyUserPassword(c.Request.Context(), username, pass); err == nil {
-				userID = res
+		if username, pass, ok := c.Request.BasicAuth(); !ok {
+		} else if user, err := a.VerifyUserPassword(c.Request.Context(), username, pass); err != nil {
+			if errors.Is(err, app.ErrCredentialsInvalid) {
+				c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
+				c.AbortWithStatus(http.StatusUnauthorized)
+			} else {
+				logrus.Warn(err)
+				c.AbortWithStatus(http.StatusInternalServerError)
 			}
-		}
-		if userID == 0 {
-			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			c.AbortWithStatus(http.StatusUnauthorized)
-		} else if fs, err := app.OpenFileSystem(c.Request.Context(), userID); err != nil {
+		} else if fs, err := a.OpenFileSystem(c.Request.Context(), user); err != nil {
 			logrus.Warn(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 		} else {

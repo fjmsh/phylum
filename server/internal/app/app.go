@@ -2,44 +2,118 @@ package app
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 )
 
+const defaultUserName = "phylum"
+
 type App struct {
-	Debug   bool
-	adminfs core.FileSystem
-	db      *db.DbHandler
-	cs      storage.Storage
+	Debug  bool
+	rootfs core.FileSystem
+	db     *db.DbHandler
+	cs     storage.Storage
 }
 
 var Default *App
 
-func Initialize(db *db.DbHandler, cs storage.Storage, debug bool) error {
+func Create(db *db.DbHandler, cs storage.Storage, debug bool) error {
 	Default = &App{
 		Debug: debug,
 		db:    db,
 		cs:    cs,
 	}
 
-	if root, err := Default.UserByUsername(context.Background(), "phylum"); err != nil {
-		return err
-	} else if fs, err := Default.OpenFileSystem(context.Background(), root.ID()); err != nil {
-		return err
-	} else {
-		Default.adminfs = fs
-		if _, err := fs.ResourceByPath("/home"); err != nil {
-			_, err := fs.CreateMemberResource(fs.Root(), uuid.New(), "home", true)
-			return err
-		}
-	}
-
-	return nil
+	// if root, err := Default.UserByUsername(context.Background(), "phylum"); err != nil {
+	// 	return err
+	// } else if fs, err := Default.OpenFileSystem(context.Background(), root.ID()); err != nil {
+	// 	return err
+	// } else {
+	// 	Default.rootfs = fs
+	// 	if _, err := fs.ResourceByPath("/home"); err != nil {
+	// 		_, err := fs.CreateMemberResource(fs.Root(), uuid.New(), "home", true)
+	// 		return err
+	// 	}
+	// }
+	return Default.setupAppData()
 }
 
-func (a App) OpenFileSystem(ctx context.Context, user int32) (core.FileSystem, error) {
-	return core.OpenFileSystem(a.db, ctx, a.cs, nil, user)
+func (a App) setupAppData() error {
+	ctx := context.Background()
+
+	_, err := a.db.Queries().UserByUsername(context.Background(), defaultUserName)
+	// Root user found. We can assume that setup has been done before
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return err
+	}
+	return a.db.RunInTx(ctx, func(tx pgx.Tx) error {
+		q := a.db.Queries().WithTx(tx)
+		// Create phylum user
+		user, err := q.CreateUser(ctx, db.CreateUserParams{
+			Username:     defaultUserName,
+			DisplayName:  "Phylum",
+			PasswordHash: "",
+		})
+		if err != nil {
+			return err
+		}
+
+		// Create root folder
+		root, err := q.CreateResource(ctx, db.CreateResourceParams{
+			ID:    uuid.New(),
+			Owner: user.ID,
+			Name:  "Phylum Root",
+			Dir:   true,
+		})
+		if err != nil {
+			return err
+		}
+
+		// Create home folder
+		home, err := q.CreateResource(ctx, db.CreateResourceParams{
+			ID:     uuid.New(),
+			Owner:  user.ID,
+			Parent: &root.ID,
+			Name:   "home",
+			Dir:    true,
+		})
+		if err != nil {
+			return err
+		}
+
+		// Create personal home folder
+		phylumHome, err := q.CreateResource(ctx, db.CreateResourceParams{
+			ID:     uuid.New(),
+			Owner:  user.ID,
+			Parent: &home.ID,
+			Name:   user.Username,
+			Dir:    true,
+		})
+		if err != nil {
+			return err
+		}
+
+		if err := q.UpdateUserDirs(ctx, db.UpdateUserDirsParams{ID: user.ID, Root: root.ID, Home: phylumHome.ID}); err != nil {
+			return err
+		}
+		_, err = tx.Exec(ctx, "SET CONSTRAINTS user_root, user_home IMMEDIATE;")
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.Exec(ctx, "ALTER TABLE users ALTER CONSTRAINT user_root NOT DEFERRABLE;"+
+			"ALTER TABLE users ALTER CONSTRAINT user_home NOT DEFERRABLE;",
+		)
+
+		return err
+	})
+}
+
+func (a App) OpenFileSystem(ctx context.Context, user core.User) (core.FileSystem, error) {
+	return core.OpenFileSystem(a.db, ctx, a.cs, user)
 }

@@ -51,17 +51,20 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
         WHEN r.id = @root::uuid THEN true
         ELSE false
       END,
-      @permission::int
+      CASE
+        WHEN r.owner = @user_id::int THEN 127
+        WHEN p.permission IS NOT NULL THEN p.permission
+        ELSE 0
+      END
     FROM resources r
     LEFT JOIN permissions p
-    on r.id = p.resource_id
+    ON p.resource_id = r.id
     AND p.user_id = @user_id::int
     WHERE r.id = @resource_id::uuid 
   UNION ALL
     SELECT n.resid, r.id, r.parent,
       CASE
-        WHEN r.id = @root::uuid
-        THEN true
+        WHEN r.id = @root::uuid THEN true
         ELSE n.found
       END,
       CASE
@@ -77,13 +80,13 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
     ON r.id = p.resource_id AND p.user_id = @user_id::int
     WHERE n.parent IS NOT NULL
 )
-SELECT resid AS id, found, r.owner, permission, r.id, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
+SELECT resid AS id, found, r.owner, permission, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
 JOIN resources r
 ON r.id = n.resid
 WHERE n.id = @root::uuid;
 
 -- name: RootResource :one
-SELECT r.name, r.owner, r.modified,
+SELECT r.id, r.name, r.owner, r.modified,
   CASE
     WHEN r.owner = @user_id::int THEN 127
     WHEN p.permission IS NOT NULL THEN p.permission
