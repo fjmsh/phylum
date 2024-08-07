@@ -1,9 +1,7 @@
 package admincmd
 
 import (
-	"bufio"
 	"context"
-	"fmt"
 	"os"
 	"strings"
 	"syscall"
@@ -20,52 +18,47 @@ func setupUserCommand() *cobra.Command {
 		Short: "User Management",
 	}
 	cmd.AddCommand([]*cobra.Command{
-		setupUserCreateCommand(),
+		setupUserAddCommand(),
 		setupUserListCommand(),
 		setupUserLoginCommand(),
-		setupUserVerifyTokenCommand(),
 	}...)
 	return cmd
 }
 
-func setupUserCreateCommand() *cobra.Command {
+func setupUserAddCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: "Create User",
+		Use:   "add username",
+		Short: "Add User",
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			os.Stdout.WriteString("Full Name: ")
-			reader := bufio.NewReader(os.Stdin)
-			displayName, err := reader.ReadString('\n')
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			displayName = strings.TrimSpace(displayName)
+			username := args[0]
 
-			os.Stdout.WriteString("Username: ")
-			username, err := reader.ReadString('\n')
-			if err != nil {
-				logrus.Fatal(err)
+			displayName, _ := cmd.Flags().GetString("name")
+			if displayName == "" {
+				displayName = username
 			}
-			username = strings.TrimSpace(username)
 
-			os.Stdout.WriteString("Password: ")
-			bytes, err := term.ReadPassword(syscall.Stdin)
-			os.Stdout.WriteString("\n")
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			password := string(bytes)
+			password, _ := cmd.Flags().GetString("password")
+			if password == "" {
+				os.Stdout.WriteString("Password: ")
+				bytes, err := term.ReadPassword(syscall.Stdin)
+				os.Stdout.WriteString("\n")
+				if err != nil {
+					logrus.Fatal(err)
+				}
+				password = string(bytes)
 
-			os.Stdout.WriteString("Confirm Password: ")
-			bytes, err = term.ReadPassword(syscall.Stdin)
-			os.Stdout.WriteString("\n")
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			passwordConf := string(bytes)
+				os.Stdout.WriteString("Confirm Password: ")
+				bytes, err = term.ReadPassword(syscall.Stdin)
+				os.Stdout.WriteString("\n")
+				if err != nil {
+					logrus.Fatal(err)
+				}
+				passwordConf := string(bytes)
 
-			if password != passwordConf {
-				logrus.Fatal("Password does not match confirmation")
+				if password != passwordConf {
+					logrus.Fatal("Password does not match confirmation")
+				}
 			}
 
 			if err := app.Default.CreateUser(context.Background(), username, displayName, password); err != nil {
@@ -73,6 +66,8 @@ func setupUserCreateCommand() *cobra.Command {
 			}
 		},
 	}
+	cmd.Flags().StringP("name", "n", "", "Full Name")
+	cmd.Flags().StringP("password", "p", "", "Password")
 	return cmd
 }
 
@@ -114,23 +109,6 @@ func setupUserLoginCommand() *cobra.Command {
 			}
 			logrus.Info("Access Token: " + accessToken.ID)
 			logrus.Info(" Valid Until: " + accessToken.Expires.Time.String())
-		},
-	}
-}
-
-func setupUserVerifyTokenCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "verify-token token",
-		Short: "Verify access token",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			token := strings.TrimSpace(args[0])
-
-			session, err := app.Default.VerifyAccessToken(token)
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			logrus.Info(fmt.Sprintf("%+v\n", session))
 		},
 	}
 }
