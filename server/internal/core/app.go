@@ -31,16 +31,28 @@ func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage, debug boo
 	return Default.setupAppData(ctx)
 }
 
-func (a App) setupAppData(ctx context.Context) error {
-	_, err := a.db.Queries().UserByUsername(ctx, defaultUserName)
-	// Root user found. We can assume that setup has been done before
-	if !errors.Is(err, pgx.ErrNoRows) {
-		return err
+func (a *App) setupAppData(ctx context.Context) error {
+	u, err := a.db.Queries().UserByUsername(ctx, defaultUserName)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		u, err = a.populateData(ctx)
 	}
-	return a.db.RunInTx(ctx, func(tx pgx.Tx) error {
+	if err == nil {
+		if fs, err := OpenFileSystem(a.db, ctx, a.cs, u.ID, u.Root); err != nil {
+			return err
+		} else {
+			a.rootfs = fs
+		}
+	}
+	return err
+}
+
+func (a *App) populateData(ctx context.Context) (user db.User, e error) {
+	e = a.db.RunInTx(ctx, func(tx pgx.Tx) error {
 		q := a.db.Queries().WithTx(tx)
 		// Create phylum user
-		user, err := q.CreateUser(ctx, db.CreateUserParams{
+		var err error
+		user, err = q.CreateUser(ctx, db.CreateUserParams{
 			Username:     defaultUserName,
 			DisplayName:  "Phylum",
 			PasswordHash: "",
@@ -72,8 +84,8 @@ func (a App) setupAppData(ctx context.Context) error {
 			return err
 		}
 
-		// Create personal home folder
-		phylumHome, err := q.CreateResource(ctx, db.CreateResourceParams{
+		// Create user home folder
+		userHome, err := q.CreateResource(ctx, db.CreateResourceParams{
 			ID:     uuid.New(),
 			Owner:  user.ID,
 			Parent: &home.ID,
@@ -84,9 +96,12 @@ func (a App) setupAppData(ctx context.Context) error {
 			return err
 		}
 
-		if err := q.UpdateUserDirs(ctx, db.UpdateUserDirsParams{ID: user.ID, Root: root.ID, Home: phylumHome.ID}); err != nil {
+		if err := q.UpdateUserDirs(ctx, db.UpdateUserDirsParams{ID: user.ID, Root: root.ID, Home: userHome.ID}); err != nil {
 			return err
 		}
+		user.Root = root.ID
+		user.Home = userHome.ID
+
 		_, err = tx.Exec(ctx, "SET CONSTRAINTS user_root, user_home IMMEDIATE;")
 		if err != nil {
 			return err
@@ -98,8 +113,9 @@ func (a App) setupAppData(ctx context.Context) error {
 
 		return err
 	})
+	return
 }
 
 func (a App) OpenFileSystem(ctx context.Context, user User) (FileSystem, error) {
-	return OpenFileSystem(a.db, ctx, a.cs, user)
+	return OpenFileSystem(a.db, ctx, a.cs, user.ID(), user.Root())
 }

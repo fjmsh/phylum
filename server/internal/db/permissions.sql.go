@@ -100,9 +100,9 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 
 const resourceByID = `-- name: ResourceByID :one
 WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
-    SELECT $2::uuid, r.id, r.parent,
+    SELECT $1::uuid, r.id, r.parent,
       CASE
-        WHEN r.id = $1::uuid THEN true
+        WHEN r.id = $2::uuid THEN true
         ELSE false
       END,
       CASE
@@ -114,11 +114,11 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
     LEFT JOIN permissions p
     ON p.resource_id = r.id
     AND p.user_id = $3::int
-    WHERE r.id = $2::uuid 
+    WHERE r.id = $1::uuid 
   UNION ALL
     SELECT n.resid, r.id, r.parent,
       CASE
-        WHEN r.id = $1::uuid THEN true
+        WHEN r.id = $2::uuid THEN true
         ELSE n.found
       END,
       CASE
@@ -137,12 +137,12 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
 SELECT resid AS id, found, r.owner, permission, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
 JOIN resources r
 ON r.id = n.resid
-WHERE n.id = $1::uuid
+WHERE n.parent IS NULL
 `
 
 type ResourceByIDParams struct {
-	Root       uuid.UUID
 	ResourceID uuid.UUID
+	Root       uuid.UUID
 	UserID     int32
 }
 
@@ -162,7 +162,7 @@ type ResourceByIDRow struct {
 }
 
 func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (ResourceByIDRow, error) {
-	row := q.db.QueryRow(ctx, resourceByID, arg.Root, arg.ResourceID, arg.UserID)
+	row := q.db.QueryRow(ctx, resourceByID, arg.ResourceID, arg.Root, arg.UserID)
 	var i ResourceByIDRow
 	err := row.Scan(
 		&i.ID,

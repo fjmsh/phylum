@@ -83,7 +83,7 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
 SELECT resid AS id, found, r.owner, permission, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
 JOIN resources r
 ON r.id = n.resid
-WHERE n.id = @root::uuid;
+WHERE n.parent IS NULL;
 
 -- name: RootResource :one
 SELECT r.id, r.name, r.owner, r.modified,

@@ -39,11 +39,11 @@ type filesystem struct {
 	user int32
 }
 
-func OpenFileSystem(dbh *db.DbHandler, ctx context.Context, cs storage.Storage, user User) (FileSystem, error) {
+func OpenFileSystem(dbh *db.DbHandler, ctx context.Context, cs storage.Storage, user int32, rootID uuid.UUID) (FileSystem, error) {
 	var root Resource
 	if res, err := dbh.Queries().ResourceByID(ctx, db.ResourceByIDParams{
-		ResourceID: user.Root(),
-		UserID:     user.ID(),
+		ResourceID: rootID,
+		UserID:     user,
 	}); err != nil {
 		return nil, err
 	} else {
@@ -65,7 +65,7 @@ func OpenFileSystem(dbh *db.DbHandler, ctx context.Context, cs storage.Storage, 
 		ctx:  ctx,
 		cs:   cs,
 		root: root,
-		user: user.ID(),
+		user: user,
 	}, nil
 }
 
