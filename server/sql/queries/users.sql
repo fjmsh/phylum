@@ -29,10 +29,16 @@ SET
 WHERE id = $2;
 
 
--- name: UpdateUserDirs :exec
+-- name: UpdateUserRoot :exec
 UPDATE users
 SET
     root = $1,
-    home = $2,
     modified = NOW()
-WHERE id = $3;
+WHERE id = $2;
+
+-- name: UpdateUserHome :exec
+UPDATE users
+SET
+    home = $1,
+    modified = NOW()
+WHERE id = $2;

@@ -96,7 +96,7 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 			return err
 		}
 
-		if err := q.UpdateUserDirs(ctx, db.UpdateUserDirsParams{ID: user.ID, Root: root.ID, Home: userHome.ID}); err != nil {
+		if err := q.UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: user.ID, Home: userHome.ID}); err != nil {
 			return err
 		}
 		user.Root = root.ID

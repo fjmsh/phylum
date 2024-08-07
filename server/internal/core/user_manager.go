@@ -17,25 +17,27 @@ func (a App) CreateUser(ctx context.Context, username, displayName, password str
 	if root != nil {
 		rootID = *root
 	}
-	if hash, err := cryptutil.GenerateArgon2EncodedHash(password, cryptutil.DefaultArgon2Params()); err != nil {
-		return err
-	} else if u, err := a.db.Queries().CreateUser(ctx, db.CreateUserParams{
-		Username:     username,
-		DisplayName:  displayName,
-		PasswordHash: hash,
-		Root:         rootID,
-		Home:         rootID,
-	}); err != nil {
-		return err
-	} else if home, err := a.rootfs.ResourceByPath("/home"); err != nil {
-		return err
-	} else if home, err := a.rootfs.CreateMemberResource(home, uuid.New(), username, true); err != nil {
-		return err
-	} else if err := a.rootfs.UpdateOwner(home, u.ID); err != nil {
-		return err
-	} else {
-		return a.db.Queries().UpdateUserDirs(ctx, db.UpdateUserDirsParams{ID: u.ID, Root: rootID, Home: home.ID()})
-	}
+	return a.db.WithTx(ctx, func(q *db.Queries) error {
+		if hash, err := cryptutil.GenerateArgon2EncodedHash(password, cryptutil.DefaultArgon2Params()); err != nil {
+			return err
+		} else if u, err := q.CreateUser(ctx, db.CreateUserParams{
+			Username:     username,
+			DisplayName:  displayName,
+			PasswordHash: hash,
+			Root:         rootID,
+			Home:         rootID,
+		}); err != nil {
+			return err
+		} else if home, err := a.rootfs.ResourceByPath("/home"); err != nil {
+			return err
+		} else if userHome, err := a.rootfs.CreateMemberResource(home, uuid.New(), username, true); err != nil {
+			return err
+		} else if err := a.rootfs.UpdateOwner(userHome, u.ID); err != nil {
+			return err
+		} else {
+			return q.UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: u.ID, Home: userHome.ID()})
+		}
+	})
 }
 
 func (a App) ListUsers(ctx context.Context) ([]User, error) {

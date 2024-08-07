@@ -84,26 +84,6 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
-const updateUserDirs = `-- name: UpdateUserDirs :exec
-UPDATE users
-SET
-    root = $1,
-    home = $2,
-    modified = NOW()
-WHERE id = $3
-`
-
-type UpdateUserDirsParams struct {
-	Root uuid.UUID
-	Home uuid.UUID
-	ID   int32
-}
-
-func (q *Queries) UpdateUserDirs(ctx context.Context, arg UpdateUserDirsParams) error {
-	_, err := q.db.Exec(ctx, updateUserDirs, arg.Root, arg.Home, arg.ID)
-	return err
-}
-
 const updateUserDisplayName = `-- name: UpdateUserDisplayName :exec
 UPDATE users
 SET
@@ -122,6 +102,24 @@ func (q *Queries) UpdateUserDisplayName(ctx context.Context, arg UpdateUserDispl
 	return err
 }
 
+const updateUserHome = `-- name: UpdateUserHome :exec
+UPDATE users
+SET
+    home = $1,
+    modified = NOW()
+WHERE id = $2
+`
+
+type UpdateUserHomeParams struct {
+	Home uuid.UUID
+	ID   int32
+}
+
+func (q *Queries) UpdateUserHome(ctx context.Context, arg UpdateUserHomeParams) error {
+	_, err := q.db.Exec(ctx, updateUserHome, arg.Home, arg.ID)
+	return err
+}
+
 const updateUserPasswordHash = `-- name: UpdateUserPasswordHash :exec
 UPDATE users
 SET
@@ -137,6 +135,24 @@ type UpdateUserPasswordHashParams struct {
 
 func (q *Queries) UpdateUserPasswordHash(ctx context.Context, arg UpdateUserPasswordHashParams) error {
 	_, err := q.db.Exec(ctx, updateUserPasswordHash, arg.PasswordHash, arg.ID)
+	return err
+}
+
+const updateUserRoot = `-- name: UpdateUserRoot :exec
+UPDATE users
+SET
+    root = $1,
+    modified = NOW()
+WHERE id = $2
+`
+
+type UpdateUserRootParams struct {
+	Root uuid.UUID
+	ID   int32
+}
+
+func (q *Queries) UpdateUserRoot(ctx context.Context, arg UpdateUserRootParams) error {
+	_, err := q.db.Exec(ctx, updateUserRoot, arg.Root, arg.ID)
 	return err
 }
 
