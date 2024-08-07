@@ -5,17 +5,17 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/app"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/sirupsen/logrus"
 )
 
 const keyFileSystem = "filesystem"
 
-func createBasicAuthHandler(a *app.App) func(c *gin.Context) {
+func createBasicAuthHandler(a *core.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		if username, pass, ok := c.Request.BasicAuth(); !ok {
 		} else if user, err := a.VerifyUserPassword(c.Request.Context(), username, pass); err != nil {
-			if errors.Is(err, app.ErrCredentialsInvalid) {
+			if errors.Is(err, core.ErrCredentialsInvalid) {
 				c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
 				c.AbortWithStatus(http.StatusUnauthorized)
 			} else {

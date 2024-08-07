@@ -1,4 +1,4 @@
-package app
+package core
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/db"
 )
@@ -39,14 +38,14 @@ func (a App) CreateUser(ctx context.Context, username, displayName, password str
 	}
 }
 
-func (a App) ListUsers(ctx context.Context) ([]core.User, error) {
+func (a App) ListUsers(ctx context.Context) ([]User, error) {
 	results, err := a.db.Queries().ListUsers(ctx)
 	if err != nil {
 		return nil, err
 	}
-	users := make([]core.User, len(results))
+	users := make([]User, len(results))
 	for i, r := range results {
-		users[i] = core.user{
+		users[i] = user{
 			id:          r.ID,
 			username:    r.Username,
 			displayName: r.DisplayName,
@@ -56,7 +55,7 @@ func (a App) ListUsers(ctx context.Context) ([]core.User, error) {
 	return users, nil
 }
 
-func (a App) UserByUsername(ctx context.Context, username string) (core.User, error) {
+func (a App) UserByUsername(ctx context.Context, username string) (User, error) {
 	result, err := a.db.Queries().UserByUsername(ctx, username)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -72,7 +71,7 @@ func (a App) UserByUsername(ctx context.Context, username string) (core.User, er
 	}, nil
 }
 
-func (a App) UserByID(ctx context.Context, userID int32) (core.User, error) {
+func (a App) UserByID(ctx context.Context, userID int32) (User, error) {
 	result, err := a.db.Queries().UserByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

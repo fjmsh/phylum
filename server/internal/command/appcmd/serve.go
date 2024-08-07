@@ -8,7 +8,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api"
-	"github.com/shroff/phylum/server/internal/app"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/webdav"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -23,9 +23,9 @@ func setupServeCommand() *cobra.Command {
 			config := viper.GetViper()
 			engine := createEngine(config.GetBool("log_body"), config.GetBool("cors_enabled"), config.GetStringSlice("cors_origins"))
 
-			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")), app.Default)
+			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")), core.Default)
 
-			api.Setup(engine.Group("/api/v1"), app.Default)
+			api.Setup(engine.Group("/api/v1"), core.Default)
 
 			server := endless.NewServer(config.GetString("listen"), engine)
 			server.BeforeBegin = func(addr string) {
@@ -58,11 +58,11 @@ func setupServeCommand() *cobra.Command {
 }
 
 func createEngine(logBody bool, corsEnabled bool, corsOrigins []string) *gin.Engine {
-	if !app.Default.Debug {
+	if !core.Default.Debug {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	engine := gin.Default()
-	if app.Default.Debug && logBody {
+	if core.Default.Debug && logBody {
 		engine.Use(logBodyMiddleware)
 	}
 

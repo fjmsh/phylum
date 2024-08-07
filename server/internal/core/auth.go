@@ -1,4 +1,4 @@
-package app
+package core
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/db"
 	"golang.org/x/exp/rand"
@@ -25,7 +24,7 @@ var ErrCredentialsInvalid = errors.New("credentials invalid")
 var ErrTokenInvalid = errors.New("token invalid")
 var ErrTokenExpired = errors.New("token expired")
 
-func (a App) VerifyUserPassword(ctx context.Context, username, password string) (core.User, error) {
+func (a App) VerifyUserPassword(ctx context.Context, username, password string) (User, error) {
 	if user, err := a.db.Queries().UserByUsername(context.Background(), username); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrCredentialsInvalid
@@ -61,7 +60,7 @@ func (a App) CreateAccessToken(username, password string) (db.AccessToken, error
 	}
 }
 
-func (a App) VerifyAccessToken(accessToken string) (core.User, error) {
+func (a App) VerifyAccessToken(accessToken string) (User, error) {
 	token, err := a.db.Queries().AccessTokenById(context.Background(), accessToken)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrTokenInvalid

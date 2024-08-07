@@ -1,7 +1,7 @@
 package appcmd
 
 import (
-	"github.com/shroff/phylum/server/internal/app"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
@@ -27,7 +27,7 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 			if cs, err = storage.Open(*db, viper.GetString("content-dir")); err != nil {
 				logrus.Fatal(err)
 			} else {
-				if err := app.Create(*db, cs, debug); err != nil {
+				if err := core.Create(*db, cs, debug); err != nil {
 					logrus.Fatal(err)
 				}
 			}

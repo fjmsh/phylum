@@ -6,7 +6,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/shroff/phylum/server/internal/app"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -61,7 +61,7 @@ func setupUserAddCommand() *cobra.Command {
 				}
 			}
 
-			if err := app.Default.CreateUser(context.Background(), username, displayName, password, nil); err != nil {
+			if err := core.Default.CreateUser(context.Background(), username, displayName, password, nil); err != nil {
 				logrus.Fatal(err)
 			}
 		},
@@ -76,7 +76,7 @@ func setupUserListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List Users",
 		Run: func(cmd *cobra.Command, args []string) {
-			users, err := app.Default.ListUsers(context.Background())
+			users, err := core.Default.ListUsers(context.Background())
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -103,7 +103,7 @@ func setupUserLoginCommand() *cobra.Command {
 			}
 			password := string(bytes)
 
-			accessToken, err := app.Default.CreateAccessToken(username, password)
+			accessToken, err := core.Default.CreateAccessToken(username, password)
 			if err != nil {
 				logrus.Fatal(err)
 			}

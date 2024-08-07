@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/shroff/phylum/server/internal/app/core"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 var htmlReplacer = strings.NewReplacer(

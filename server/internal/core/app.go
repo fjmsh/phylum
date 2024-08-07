@@ -1,4 +1,4 @@
-package app
+package core
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/app/core"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 )
@@ -15,7 +14,7 @@ const defaultUserName = "phylum"
 
 type App struct {
 	Debug  bool
-	rootfs core.FileSystem
+	rootfs FileSystem
 	db     *db.DbHandler
 	cs     storage.Storage
 }
@@ -29,17 +28,6 @@ func Create(db *db.DbHandler, cs storage.Storage, debug bool) error {
 		cs:    cs,
 	}
 
-	// if root, err := Default.UserByUsername(context.Background(), "phylum"); err != nil {
-	// 	return err
-	// } else if fs, err := Default.OpenFileSystem(context.Background(), root.ID()); err != nil {
-	// 	return err
-	// } else {
-	// 	Default.rootfs = fs
-	// 	if _, err := fs.ResourceByPath("/home"); err != nil {
-	// 		_, err := fs.CreateMemberResource(fs.Root(), uuid.New(), "home", true)
-	// 		return err
-	// 	}
-	// }
 	return Default.setupAppData()
 }
 
@@ -114,6 +102,6 @@ func (a App) setupAppData() error {
 	})
 }
 
-func (a App) OpenFileSystem(ctx context.Context, user core.User) (core.FileSystem, error) {
-	return core.OpenFileSystem(a.db, ctx, a.cs, user)
+func (a App) OpenFileSystem(ctx context.Context, user User) (FileSystem, error) {
+	return OpenFileSystem(a.db, ctx, a.cs, user)
 }

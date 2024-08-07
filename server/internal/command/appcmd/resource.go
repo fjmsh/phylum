@@ -8,8 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/app"
-	"github.com/shroff/phylum/server/internal/app/core"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -105,7 +104,7 @@ func setupResourceRmCommand() *cobra.Command {
 
 func setupResourceLsCommand() *cobra.Command {
 	details := func(r core.Resource, name string) string {
-		if owner, err := app.Default.UserByID(context.Background(), r.Owner()); err != nil {
+		if owner, err := core.Default.UserByID(context.Background(), r.Owner()); err != nil {
 			logrus.Fatal(err)
 			return ""
 		} else {
@@ -178,7 +177,7 @@ func setupResourceChownCommand() *cobra.Command {
 			username := args[0]
 			path := args[1]
 			var owner int32
-			if user, err := app.Default.UserByUsername(context.Background(), username); err != nil {
+			if user, err := core.Default.UserByUsername(context.Background(), username); err != nil {
 				logrus.Fatal(err)
 			} else {
 				owner = user.ID()
@@ -237,7 +236,7 @@ func openFileSystemFromFlags(cmd *cobra.Command) {
 	if value, err := cmd.Flags().GetInt32("user"); err != nil {
 		logrus.Fatal(err)
 	} else if value != 0 {
-		if user, err := app.Default.UserByID(context.Background(), value); err != nil {
+		if user, err := core.Default.UserByID(context.Background(), value); err != nil {
 			logrus.Fatal(err)
 		} else {
 			user = user
@@ -248,7 +247,7 @@ func openFileSystemFromFlags(cmd *cobra.Command) {
 	if value, err := cmd.Flags().GetString("username"); err != nil {
 		logrus.Fatal(err)
 	} else {
-		if user, err := app.Default.UserByUsername(context.Background(), value); err != nil {
+		if user, err := core.Default.UserByUsername(context.Background(), value); err != nil {
 			logrus.Fatal(err)
 		} else {
 			user = user
@@ -256,7 +255,7 @@ func openFileSystemFromFlags(cmd *cobra.Command) {
 	}
 
 	var err error
-	fs, err = app.Default.OpenFileSystem(context.Background(), user)
+	fs, err = core.Default.OpenFileSystem(context.Background(), user)
 	if err != nil {
 		logrus.Fatal(err)
 	}

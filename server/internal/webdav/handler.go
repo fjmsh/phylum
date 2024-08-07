@@ -10,18 +10,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/app"
-	"github.com/shroff/phylum/server/internal/app/core"
+	"github.com/shroff/phylum/server/internal/core"
 	webdav "github.com/shroff/phylum/server/internal/webdav/impl"
 	"github.com/sirupsen/logrus"
 )
 
 type handler struct {
-	app    *app.App
+	app    *core.App
 	prefix string
 }
 
-func SetupHandler(r *gin.RouterGroup, app *app.App) {
+func SetupHandler(r *gin.RouterGroup, app *core.App) {
 	logrus.Info("Setting up WebDAV access at " + r.BasePath())
 	handler := &handler{
 		app:    app,

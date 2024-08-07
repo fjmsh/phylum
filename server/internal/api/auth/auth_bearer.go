@@ -6,14 +6,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/errors"
-	"github.com/shroff/phylum/server/internal/app"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/sirupsen/logrus"
 )
 
 const errCodeAuthRequred = "auth_required"
 const errCodeTokenInvalid = "token_invalid"
 
-func CreateBearerAuthHandler(a *app.App) func(c *gin.Context) {
+func CreateBearerAuthHandler(a *core.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -29,7 +29,7 @@ func CreateBearerAuthHandler(a *app.App) func(c *gin.Context) {
 
 		userID, err := a.VerifyAccessToken(authParts[1])
 		if err != nil {
-			if errors.Is(err, app.ErrTokenExpired) || errors.Is(err, app.ErrTokenInvalid) {
+			if errors.Is(err, core.ErrTokenExpired) || errors.Is(err, core.ErrTokenInvalid) {
 				panic(errors.Err{Status: 401, Code: errCodeTokenInvalid})
 			}
 			panic(err)

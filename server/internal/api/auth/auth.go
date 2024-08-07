@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/app/core"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 const keyFileSystem = "filesystem"

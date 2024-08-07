@@ -5,10 +5,10 @@ import (
 	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/api/errors"
 	"github.com/shroff/phylum/server/internal/api/routes"
-	"github.com/shroff/phylum/server/internal/app"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
-func Setup(r *gin.RouterGroup, a *app.App) {
+func Setup(r *gin.RouterGroup, a *core.App) {
 	r.Use(handleApiError)
 
 	// Unauthenticated routes
