@@ -27,7 +27,7 @@ type FileSystem interface {
 	DeleteRecursive(r Resource, hardDelete bool) error
 	UpdateName(r Resource, name string) error
 	UpdateParent(r Resource, parent uuid.UUID) error
-	UpdatePermissions(r Resource, userID int32, permission int32) error
+	UpdatePermissions(r Resource, userID int32, permission Permission) error
 }
 
 type filesystem struct {
@@ -285,12 +285,12 @@ func (f filesystem) UpdateParent(r Resource, parent uuid.UUID) error {
 	return f.db.UpdateResourceParent(f.ctx, db.UpdateResourceParentParams{ID: r.ID(), Parent: parent})
 }
 
-func (f filesystem) UpdatePermissions(r Resource, userID int32, permission int32) error {
-	if r.Permission() < PermissionAdmin {
+func (f filesystem) UpdatePermissions(r Resource, userID int32, permission Permission) error {
+	if r.Permission() < PermissionReadWriteShare {
 		return ErrInsufficientPermissions
 	}
-	if permission > PermissionAdmin {
-		permission = PermissionAdmin
+	if permission > PermissionReadWriteShare {
+		permission = PermissionReadWriteShare
 	}
 
 	return f.db.UpdatePermissionsForResource(f.ctx, db.UpdatePermissionsForResourceParams{

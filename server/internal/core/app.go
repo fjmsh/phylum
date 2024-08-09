@@ -78,7 +78,7 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 		userHome, err := dbh.CreateResource(ctx, db.CreateResourceParams{
 			ID:     uuid.New(),
 			Parent: &home.ID,
-			Name:   user.Username,
+			Name:   defaultUserName,
 			Dir:    true,
 		})
 		if err != nil {
@@ -92,6 +92,15 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 			PasswordHash: "",
 			Root:         root.ID,
 			Home:         userHome.ID,
+		})
+		if err != nil {
+			return err
+		}
+
+		dbh.UpdatePermissionsForResource(ctx, db.UpdatePermissionsForResourceParams{
+			ResourceID: root.ID,
+			UserID:     user.ID,
+			Permission: PermissionReadWriteShare,
 		})
 		if err != nil {
 			return err

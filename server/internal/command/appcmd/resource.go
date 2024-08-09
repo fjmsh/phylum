@@ -25,7 +25,7 @@ func setupResourceCommand() *cobra.Command {
 		setupResourceMkdirCommand(),
 		setupResourceRmCommand(),
 		setupResourceLsCommand(),
-		setupResourceChownCommand(),
+		setupResourceChpermCommand(),
 	}...)
 	return cmd
 }
@@ -103,8 +103,8 @@ func setupResourceRmCommand() *cobra.Command {
 }
 
 func setupResourceLsCommand() *cobra.Command {
-	details := func(r core.Resource, name string) string {
-		return fmt.Sprintf("%s %4d %s", r.ID().String(), r.Permission(), name)
+	details := func(r core.Resource) string {
+		return fmt.Sprintf("%s %4d %s", r.ID().String(), r.Permission(), r.Name())
 	}
 	cmd := cobra.Command{
 		Use:   "ls <path | uuid>",
@@ -141,17 +141,19 @@ func setupResourceLsCommand() *cobra.Command {
 				}
 			}
 
+			logrus.Info("Name: " + r.Name())
+			logrus.Info("  ID: " + r.ID().String())
+			logrus.Info("Perm: " + core.PermissionString(r.Permission()))
 			if r.IsDir() {
 				children, err := fs.ReadDir(r)
 				if err != nil {
 					logrus.Fatal(err)
 				}
-				logrus.Info(details(r, "."))
+				logrus.Info("")
+				logrus.Info("Children:")
 				for _, c := range children {
-					logrus.Info(details(c, c.Name()))
+					logrus.Info(details(c))
 				}
-			} else {
-				logrus.Info(details(r, r.Name()))
 			}
 		},
 	}
@@ -160,25 +162,24 @@ func setupResourceLsCommand() *cobra.Command {
 	return &cmd
 }
 
-func setupResourceChownCommand() *cobra.Command {
+func setupResourceChpermCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "chown user <path | uuid>",
-		Short: "Change Resource Owner",
-		Args:  cobra.ExactArgs(2),
+		Use:   "chperm user <path | uuid> [ none | read | write | share ]",
+		Short: "Change Resource Permissions",
+		Args:  cobra.ExactArgs(3),
 		PreRun: func(cmd *cobra.Command, args []string) {
 			openFileSystemFromFlags(cmd)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			username := args[0]
-			path := args[1]
-			var owner int32
-			if user, err := core.Default.UserByUsername(context.Background(), username); err != nil {
+			var user int32
+			if u, err := core.Default.UserByUsername(context.Background(), args[0]); err != nil {
 				logrus.Fatal(err)
 			} else {
-				owner = user.ID()
+				user = u.ID()
 			}
 
 			var r core.Resource
+			path := args[1]
 			if path[0] != '/' {
 				var id uuid.UUID
 				var err error
@@ -203,24 +204,25 @@ func setupResourceChownCommand() *cobra.Command {
 					}
 				}
 			}
-			if err := fs.UpdateOwner(r, owner); err != nil {
-				logrus.Fatal(err)
+
+			permission := core.PermissionNone
+			switch args[2] {
+			case "none":
+			case "read":
+				permission = core.PermissionReadOnly
+			case "write":
+				permission = core.PermissionReadWrite
+			case "share":
+				permission = core.PermissionReadWriteShare
+			default:
+				logrus.Fatal("Unrecognized premission: " + args[2])
 			}
 
-			// if r.IsDir() {
-			// 	if recursive, err := cmd.Flags().GetBool("recursive"); err != nil {
-			// 		logrus.Fatal("Must use -r to delete collections")
-			// 	} else {
-			// 		if recursive {
-			// 		} else {
-			// 		}
-			// 	}
-			// }
-
+			if err := fs.UpdatePermissions(r, user, permission); err != nil {
+				logrus.Fatal(err)
+			}
 		},
 	}
-	// flags := cmd.Flags()
-	// flags.BoolP("recursive", "r", false, "Recursively change ownership")
 	setupUsernameFlags(&cmd)
 
 	return &cmd
@@ -228,18 +230,7 @@ func setupResourceChownCommand() *cobra.Command {
 
 func openFileSystemFromFlags(cmd *cobra.Command) {
 	var user core.User
-	if value, err := cmd.Flags().GetInt32("user"); err != nil {
-		logrus.Fatal(err)
-	} else if value != 0 {
-		if user, err := core.Default.UserByID(context.Background(), value); err != nil {
-			logrus.Fatal(err)
-		} else {
-			user = user
-			return
-		}
-	}
-
-	if value, err := cmd.Flags().GetString("username"); err != nil {
+	if value, err := cmd.Flags().GetString("user"); err != nil {
 		logrus.Fatal(err)
 	} else {
 		if u, err := core.Default.UserByUsername(context.Background(), value); err != nil {
@@ -259,7 +250,6 @@ func openFileSystemFromFlags(cmd *cobra.Command) {
 
 func setupUsernameFlags(cmd *cobra.Command) {
 	flags := cmd.Flags()
-	flags.Int32P("user", "u", 0, "Specify User ID for resource operations (cannot be used with -U)")
-	flags.StringP("username", "U", "phylum", "Specify Username for resource operations (cannot be used with -u)")
+	flags.StringP("user", "u", "phylum", "Specify Username for resource operations (cannot be used with -u)")
 
 }

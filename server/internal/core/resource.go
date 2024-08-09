@@ -10,12 +10,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	PermissionReadOnly  = 1
-	PermissionReadWrite = 3
-	PermissionAdmin     = 127
-)
-
 var (
 	ErrInsufficientPermissions    = errors.New("insufficient permissions")
 	ErrCannotGrantOwnerPermission = errors.New("cannot grant owner permission")
