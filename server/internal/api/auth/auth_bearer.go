@@ -28,17 +28,18 @@ func CreateBearerAuthHandler(a *core.App) func(c *gin.Context) {
 			panic(errors.ApiErr{Status: 401, Code: errCodeAuthRequred})
 		}
 
-		userID, err := a.VerifyAccessToken(ctx, authParts[1])
+		user, err := a.VerifyAccessToken(ctx, authParts[1])
 		if err != nil {
 			if errors.Is(err, core.ErrTokenExpired) || errors.Is(err, core.ErrTokenInvalid) {
 				panic(errors.ApiErr{Status: 401, Code: errCodeTokenInvalid})
 			}
 			panic(err)
 		}
-		if fs, err := a.OpenFileSystem(ctx, userID); err != nil {
+		if fs, err := a.OpenFileSystem(ctx, user); err != nil {
 			logrus.Warn(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 		} else {
+			c.Set(keyUser, user)
 			c.Set(keyFileSystem, fs)
 		}
 	}
