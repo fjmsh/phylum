@@ -16,13 +16,6 @@ const errCodeResourceNotFound = "resource_not_found"
 const errCodeResourceIdInvalid = "resource_id_invalid"
 const errCodeResourceNotCollection = "resource_not_collection"
 
-type resourceInfoResponse struct {
-	Metadata             resourceResponse          `json:"metadata"`
-	Children             []resourceResponse        `json:"children"`
-	InheritedPermissions map[int32]core.Permission `json:"inherited"`
-	LocalPermissions     map[int32]core.Permission `json:"local"`
-}
-
 type resourceResponse struct {
 	ID       uuid.UUID  `json:"id"`
 	Parent   *uuid.UUID `json:"parent"`
@@ -34,11 +27,18 @@ type resourceResponse struct {
 	Etag     string     `json:"etag"`
 }
 
+type resourceDetailResponse struct {
+	Metadata             resourceResponse          `json:"metadata"`
+	Children             []resourceResponse        `json:"children"`
+	InheritedPermissions map[int32]core.Permission `json:"inherited"`
+	LocalPermissions     map[int32]core.Permission `json:"local"`
+}
+
 func SetupResourceRoutes(r *gin.RouterGroup) {
 	group := r.Group("/resources")
 	group.GET("/ls/:id", handleResourceLsRoute)
 	group.GET("/metadata/:id", handleResourceMetadataRoute)
-	group.GET("/info/:id", handleResourceInfoRoute)
+	group.GET("/details/:id", handleResourceDetailsRoute)
 }
 
 func handleResourceMetadataRoute(c *gin.Context) {
@@ -83,20 +83,12 @@ func handleResourceLsRoute(c *gin.Context) {
 	}
 	results := make([]resourceResponse, len(children))
 	for i, c := range children {
-		results[i] = resourceResponse{
-			ID:       c.ID(),
-			Parent:   c.ParentID(),
-			Name:     c.Name(),
-			Dir:      c.IsDir(),
-			Modified: c.ModTime(),
-			Size:     c.Size(),
-			Etag:     c.ETag(),
-		}
+		results[i] = responseFromResource(c)
 	}
 	c.JSON(200, results)
 }
 
-func handleResourceInfoRoute(c *gin.Context) {
+func handleResourceDetailsRoute(c *gin.Context) {
 	resourceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		panic(errors.New(http.StatusBadRequest, errCodeResourceIdInvalid, ""))
@@ -111,7 +103,11 @@ func handleResourceInfoRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	response := resourceInfoResponse{}
+	c.JSON(200, detailedResponseFromResource(fs, r))
+}
+
+func detailedResponseFromResource(fs core.FileSystem, r core.Resource) resourceDetailResponse {
+	response := resourceDetailResponse{}
 	response.Metadata = responseFromResource(r)
 	if r.IsDir() {
 		children, err := fs.ReadDir(r)
@@ -135,7 +131,7 @@ func handleResourceInfoRoute(c *gin.Context) {
 			response.LocalPermissions = p
 		}
 	}
-	c.JSON(200, response)
+	return response
 }
 
 func responseFromResource(r core.Resource) resourceResponse {

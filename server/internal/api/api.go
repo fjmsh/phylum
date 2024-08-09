@@ -15,4 +15,5 @@ func Setup(r *gin.RouterGroup, a *core.App) {
 	r.Use(auth.CreateBearerAuthHandler(a))
 	routes.SetupResourceRoutes(r)
 	routes.SetupUserRoutes(r)
+	routes.SetupMobileRoutes(r)
 }
