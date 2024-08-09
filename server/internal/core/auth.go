@@ -44,6 +44,7 @@ func (a App) VerifyUserPassword(ctx context.Context, username, password string) 
 	}
 }
 
+// TODO: don't return db types
 func (a App) CreateAccessToken(ctx context.Context, username, password string) (db.AccessToken, error) {
 	if user, err := a.VerifyUserPassword(ctx, username, password); err != nil {
 		return db.AccessToken{}, err

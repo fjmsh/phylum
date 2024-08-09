@@ -44,7 +44,7 @@ SELECT * FROM nodes WHERE cardinality(search) = depth;
 
 -- name: ResourceByID :one
 WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
-    SELECT @resource_id::uuid, r.id, r.parent,
+  SELECT @resource_id::uuid, r.id, r.parent,
       CASE
         WHEN r.id = @root::uuid THEN true
         ELSE false
@@ -73,7 +73,6 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
     ON r.id = n.parent
     LEFT JOIN permissions p
     ON r.id = p.resource_id AND p.user_id = @user_id::int
-    WHERE n.parent IS NOT NULL
 )
 SELECT resid AS id, found, permission, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
 JOIN resources r
@@ -85,3 +84,26 @@ INSERT INTO permissions(resource_id, user_id, permission)
     VALUES(@resource_id::uuid, @user_id::int, @permission::int)
     ON CONFLICT(resource_id, user_id) DO UPDATE SET permission = @permission::int;
 
+-- name: GetPermissionsForResourceSpecific :many
+SELECT p.user_id, CAST(p.permission AS INT) AS permission
+  FROM permissions p
+  WHERE p.resource_id = @resource_id::uuid;
+
+
+-- name: GetPermissionsForResourceInherited :many
+WITH RECURSIVE nodes(id, parent) AS (
+  SELECT r.id, r.parent
+    FROM resources r
+    WHERE r.id = @resource_id::uuid
+  UNION ALL (
+    SELECT r.id, r.parent
+     FROM resources r
+     JOIN nodes n
+     ON r.id = n.parent
+  )
+)
+SELECT p.user_id, CAST(MAX(p.permission) AS INT) AS permission
+  FROM permissions p
+  JOIN nodes n
+  ON n.id = p.resource_id
+  GROUP BY p.user_id;

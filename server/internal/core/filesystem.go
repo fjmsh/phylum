@@ -28,6 +28,10 @@ type FileSystem interface {
 	UpdateName(r Resource, name string) error
 	UpdateParent(r Resource, parent uuid.UUID) error
 	UpdatePermissions(r Resource, userID int32, permission Permission) error
+	// TODO: don't return db types
+	GetPermissionsSpecific(r Resource) ([]db.GetPermissionsForResourceSpecificRow, error)
+	// TODO: don't return db types
+	GetPermissionsInherited(r Resource) ([]db.GetPermissionsForResourceInheritedRow, error)
 }
 
 type filesystem struct {
@@ -298,4 +302,19 @@ func (f filesystem) UpdatePermissions(r Resource, userID int32, permission Permi
 		UserID:     userID,
 		Permission: permission,
 	})
+}
+
+func (f filesystem) GetPermissionsSpecific(r Resource) ([]db.GetPermissionsForResourceSpecificRow, error) {
+	return f.db.GetPermissionsForResourceSpecific(f.ctx, r.ID())
+}
+
+func (f filesystem) GetPermissionsInherited(r Resource) ([]db.GetPermissionsForResourceInheritedRow, error) {
+	if r.Permission() < PermissionReadWriteShare {
+		return nil, ErrInsufficientPermissions
+	}
+	if r.ParentID() == nil {
+		return nil, nil
+	}
+
+	return f.db.GetPermissionsForResourceInherited(f.ctx, *r.ParentID())
 }

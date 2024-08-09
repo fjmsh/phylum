@@ -141,15 +141,49 @@ func setupResourceLsCommand() *cobra.Command {
 				}
 			}
 
+			specificPermissions, err := fs.GetPermissionsSpecific(r)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			inheritedPermissions, err := fs.GetPermissionsInherited(r)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+
 			logrus.Info("Name: " + r.Name())
 			logrus.Info("  ID: " + r.ID().String())
 			logrus.Info("Perm: " + core.PermissionString(r.Permission()))
+
+			if specificPermissions != nil {
+				logrus.Info()
+				logrus.Info("Specific Permissions:")
+				for _, row := range specificPermissions {
+					user, err := core.Default.UserByID(context.Background(), row.UserID)
+					if err != nil {
+						logrus.Fatal(err)
+					}
+					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Username(), user.ID(), core.PermissionString(row.Permission)))
+				}
+			}
+
+			if inheritedPermissions != nil {
+				logrus.Info()
+				logrus.Info("Inherited Permissions:")
+				for _, row := range inheritedPermissions {
+					user, err := core.Default.UserByID(context.Background(), row.UserID)
+					if err != nil {
+						logrus.Fatal(err)
+					}
+					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Username(), user.ID(), core.PermissionString(row.Permission)))
+				}
+			}
+
 			if r.IsDir() {
 				children, err := fs.ReadDir(r)
 				if err != nil {
 					logrus.Fatal(err)
 				}
-				logrus.Info("")
+				logrus.Info()
 				logrus.Info("Children:")
 				for _, c := range children {
 					logrus.Info(details(c))

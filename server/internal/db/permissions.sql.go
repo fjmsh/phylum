@@ -12,6 +12,81 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getPermissionsForResourceInherited = `-- name: GetPermissionsForResourceInherited :many
+WITH RECURSIVE nodes(id, parent) AS (
+  SELECT r.id, r.parent
+    FROM resources r
+    WHERE r.id = $1::uuid
+  UNION ALL (
+    SELECT r.id, r.parent
+     FROM resources r
+     JOIN nodes n
+     ON r.id = n.parent
+  )
+)
+SELECT p.user_id, CAST(MAX(p.permission) AS INT) AS permission
+  FROM permissions p
+  JOIN nodes n
+  ON n.id = p.resource_id
+  GROUP BY p.user_id
+`
+
+type GetPermissionsForResourceInheritedRow struct {
+	UserID     int32
+	Permission int32
+}
+
+func (q *Queries) GetPermissionsForResourceInherited(ctx context.Context, resourceID uuid.UUID) ([]GetPermissionsForResourceInheritedRow, error) {
+	rows, err := q.db.Query(ctx, getPermissionsForResourceInherited, resourceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPermissionsForResourceInheritedRow
+	for rows.Next() {
+		var i GetPermissionsForResourceInheritedRow
+		if err := rows.Scan(&i.UserID, &i.Permission); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPermissionsForResourceSpecific = `-- name: GetPermissionsForResourceSpecific :many
+SELECT p.user_id, CAST(p.permission AS INT) AS permission
+  FROM permissions p
+  WHERE p.resource_id = $1::uuid
+`
+
+type GetPermissionsForResourceSpecificRow struct {
+	UserID     int32
+	Permission int32
+}
+
+func (q *Queries) GetPermissionsForResourceSpecific(ctx context.Context, resourceID uuid.UUID) ([]GetPermissionsForResourceSpecificRow, error) {
+	rows, err := q.db.Query(ctx, getPermissionsForResourceSpecific, resourceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPermissionsForResourceSpecificRow
+	for rows.Next() {
+		var i GetPermissionsForResourceSpecificRow
+		if err := rows.Scan(&i.UserID, &i.Permission); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const readDir = `-- name: ReadDir :many
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, permission) AS (
     SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, $2::int
@@ -97,7 +172,7 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 
 const resourceByID = `-- name: ResourceByID :one
 WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
-    SELECT $1::uuid, r.id, r.parent,
+  SELECT $1::uuid, r.id, r.parent,
       CASE
         WHEN r.id = $2::uuid THEN true
         ELSE false
@@ -126,7 +201,6 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
     ON r.id = n.parent
     LEFT JOIN permissions p
     ON r.id = p.resource_id AND p.user_id = $3::int
-    WHERE n.parent IS NOT NULL
 )
 SELECT resid AS id, found, permission, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
 JOIN resources r
