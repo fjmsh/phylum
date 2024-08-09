@@ -2,7 +2,6 @@ package core
 
 import (
 	"errors"
-	"fmt"
 	"mime"
 	"path/filepath"
 	"time"
@@ -60,12 +59,7 @@ func (r resource) DelTime() *time.Time { return r.delTime }
 func (r resource) IsDir() bool { return r.collection }
 
 func (r resource) ETag() string {
-	if r.etag != "" {
-		return r.etag
-	}
-	// The Apache http 2.4 web server by default concatenates the
-	// modification time and size of a file.
-	return fmt.Sprintf(`"%x%x"`, r.modTime.UnixMilli(), r.size)
+	return r.etag
 }
 
 func (r resource) ContentType() string {

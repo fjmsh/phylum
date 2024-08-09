@@ -9,11 +9,19 @@ import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/api/errors"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 const errCodeResourceNotFound = "resource_not_found"
 const errCodeResourceIdInvalid = "resource_id_invalid"
 const errCodeResourceNotCollection = "resource_not_collection"
+
+type resourceInfoResponse struct {
+	Metadata             resourceResponse          `json:"metadata"`
+	Children             []resourceResponse        `json:"children"`
+	InheritedPermissions map[int32]core.Permission `json:"inherited"`
+	LocalPermissions     map[int32]core.Permission `json:"local"`
+}
 
 type resourceResponse struct {
 	ID       uuid.UUID  `json:"id"`
@@ -30,6 +38,7 @@ func SetupResourceRoutes(r *gin.RouterGroup) {
 	group := r.Group("/resources")
 	group.GET("/ls/:id", handleResourceLsRoute)
 	group.GET("/metadata/:id", handleResourceMetadataRoute)
+	group.GET("/info/:id", handleResourceInfoRoute)
 }
 
 func handleResourceMetadataRoute(c *gin.Context) {
@@ -47,17 +56,7 @@ func handleResourceMetadataRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	response := resourceResponse{
-		ID:       resource.ID(),
-		Parent:   resource.ParentID(),
-		Name:     resource.Name(),
-		Dir:      resource.IsDir(),
-		Modified: resource.ModTime(),
-		Deleted:  resource.DelTime(),
-		Size:     resource.Size(),
-		Etag:     resource.ETag(),
-	}
-	c.JSON(200, response)
+	c.JSON(200, responseFromResource(resource))
 }
 
 func handleResourceLsRoute(c *gin.Context) {
@@ -95,4 +94,59 @@ func handleResourceLsRoute(c *gin.Context) {
 		}
 	}
 	c.JSON(200, results)
+}
+
+func handleResourceInfoRoute(c *gin.Context) {
+	resourceID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		panic(errors.New(http.StatusBadRequest, errCodeResourceIdInvalid, ""))
+	}
+
+	fs := auth.GetFileSystem(c)
+	r, err := fs.ResourceByID(resourceID)
+	if err != nil {
+		if errors.Is(err, iofs.ErrNotExist) {
+			err = errors.New(http.StatusNotFound, errCodeResourceNotFound, "")
+		}
+		panic(err)
+	}
+
+	response := resourceInfoResponse{}
+	response.Metadata = responseFromResource(r)
+	if r.IsDir() {
+		children, err := fs.ReadDir(r)
+		if err != nil {
+			panic(err)
+		}
+		response.Children = make([]resourceResponse, len(children))
+		for i, c := range children {
+			response.Children[i] = responseFromResource(c)
+		}
+	}
+	if r.Permission() >= core.PermissionReadWriteShare {
+		if p, err := fs.GetPermissionsInherited(r); err != nil {
+			panic(p)
+		} else {
+			response.InheritedPermissions = p
+		}
+		if p, err := fs.GetPermissionsLocal(r); err != nil {
+			panic(p)
+		} else {
+			response.LocalPermissions = p
+		}
+	}
+	c.JSON(200, response)
+}
+
+func responseFromResource(r core.Resource) resourceResponse {
+	return resourceResponse{
+		ID:       r.ID(),
+		Parent:   r.ParentID(),
+		Name:     r.Name(),
+		Dir:      r.IsDir(),
+		Modified: r.ModTime(),
+		Deleted:  r.DelTime(),
+		Size:     r.Size(),
+		Etag:     r.ETag(),
+	}
 }
