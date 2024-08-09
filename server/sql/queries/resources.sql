@@ -1,8 +1,8 @@
 -- name: CreateResource :one
 INSERT INTO resources(
-    id, owner, parent, name, dir, created, modified
+    id, parent, name, dir, created, modified
 ) VALUES (
-    $1, $2, $3, $4, $5, NOW(), NOW()
+    $1, $2, $3, $4, NOW(), NOW()
 ) RETURNING *;
 
 -- name: UpdateResourceContents :exec
@@ -23,13 +23,6 @@ WHERE id = $1;
 UPDATE resources
 SET
     parent = @parent::uuid,
-    modified = NOW()
-WHERE id = @id::uuid;
-
--- name: UpdateResourceOwner :exec
-UPDATE resources
-SET
-    owner = @owner::int,
     modified = NOW()
 WHERE id = @id::uuid;
 

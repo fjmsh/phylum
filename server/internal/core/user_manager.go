@@ -33,7 +33,7 @@ func (a App) CreateUser(ctx context.Context, username, displayName, password str
 			return err
 		} else if userHome, err := fs.CreateMemberResource(home, uuid.New(), username, true); err != nil {
 			return err
-		} else if err := fs.UpdateOwner(userHome, u.ID); err != nil {
+		} else if err := fs.UpdatePermissions(userHome, u.ID, PermissionAdmin); err != nil {
 			return err
 		} else {
 			return d.UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: u.ID, Home: userHome.ID()})

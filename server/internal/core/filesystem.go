@@ -28,7 +28,6 @@ type FileSystem interface {
 	UpdateName(r Resource, name string) error
 	UpdateParent(r Resource, parent uuid.UUID) error
 	UpdatePermissions(r Resource, userID int32, permission int32) error
-	UpdateOwner(r Resource, userID int32) error
 }
 
 type filesystem struct {
@@ -49,7 +48,6 @@ func OpenFileSystem(dbh *db.DbHandler, ctx context.Context, cs storage.Storage, 
 	} else {
 		root = resource{
 			id:         res.ID,
-			owner:      res.Owner,
 			permission: res.Permission,
 			parentID:   nil,
 			name:       res.Name,
@@ -102,7 +100,6 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 
 	return resource{
 		id:         res.ID,
-		owner:      res.Owner,
 		permission: res.Permission,
 		parentID:   res.Parent,
 		name:       res.Name,
@@ -131,7 +128,6 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	}
 	return resource{
 		id:         res.ID,
-		owner:      res.Owner,
 		permission: res.Permission,
 		parentID:   res.Parent,
 		name:       res.Name,
@@ -181,7 +177,6 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 	for i, c := range children {
 		result[i] = resource{
 			id:         c.ID,
-			owner:      c.Owner,
 			permission: c.Permission,
 			parentID:   r.ParentID(),
 			name:       c.Name,
@@ -206,7 +201,7 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 		var err error
 		parent := r.ID()
-		if result, err = d.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Owner: f.user, Parent: &parent, Name: name, Dir: dir}); err != nil {
+		if result, err = d.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir}); err != nil {
 			return err
 		}
 		return d.UpdateResourceModified(f.ctx, r.ID())
@@ -216,7 +211,6 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	}
 	return resource{
 		id:         id,
-		owner:      r.Owner(),
 		parentID:   result.Parent,
 		permission: r.Permission(),
 		name:       result.Name,
@@ -296,23 +290,12 @@ func (f filesystem) UpdatePermissions(r Resource, userID int32, permission int32
 		return ErrInsufficientPermissions
 	}
 	if permission > PermissionAdmin {
-		return ErrCannotGrantOwnerPermission
+		permission = PermissionAdmin
 	}
 
 	return f.db.UpdatePermissionsForResource(f.ctx, db.UpdatePermissionsForResourceParams{
 		ResourceID: r.ID(),
 		UserID:     userID,
 		Permission: permission,
-	})
-}
-
-func (f filesystem) UpdateOwner(r Resource, userID int32) error {
-	if r.Owner() != f.user {
-		return ErrInsufficientPermissions
-	}
-
-	return f.db.UpdateResourceOwner(f.ctx, db.UpdateResourceOwnerParams{
-		ID:    r.ID(),
-		Owner: userID,
 	})
 }

@@ -14,15 +14,14 @@ import (
 
 const createResource = `-- name: CreateResource :one
 INSERT INTO resources(
-    id, owner, parent, name, dir, created, modified
+    id, parent, name, dir, created, modified
 ) VALUES (
-    $1, $2, $3, $4, $5, NOW(), NOW()
-) RETURNING id, owner, parent, name, dir, created, modified, deleted, size, etag
+    $1, $2, $3, $4, NOW(), NOW()
+) RETURNING id, parent, name, dir, created, modified, deleted, size, etag
 `
 
 type CreateResourceParams struct {
 	ID     uuid.UUID
-	Owner  int32
 	Parent *uuid.UUID
 	Name   string
 	Dir    bool
@@ -31,7 +30,6 @@ type CreateResourceParams struct {
 func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) (Resource, error) {
 	row := q.db.QueryRow(ctx, createResource,
 		arg.ID,
-		arg.Owner,
 		arg.Parent,
 		arg.Name,
 		arg.Dir,
@@ -39,7 +37,6 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 	var i Resource
 	err := row.Scan(
 		&i.ID,
-		&i.Owner,
 		&i.Parent,
 		&i.Name,
 		&i.Dir,
@@ -152,24 +149,6 @@ type UpdateResourceNameParams struct {
 
 func (q *Queries) UpdateResourceName(ctx context.Context, arg UpdateResourceNameParams) error {
 	_, err := q.db.Exec(ctx, updateResourceName, arg.Name, arg.ID)
-	return err
-}
-
-const updateResourceOwner = `-- name: UpdateResourceOwner :exec
-UPDATE resources
-SET
-    owner = $1::int,
-    modified = NOW()
-WHERE id = $2::uuid
-`
-
-type UpdateResourceOwnerParams struct {
-	Owner int32
-	ID    uuid.UUID
-}
-
-func (q *Queries) UpdateResourceOwner(ctx context.Context, arg UpdateResourceOwnerParams) error {
-	_, err := q.db.Exec(ctx, updateResourceOwner, arg.Owner, arg.ID)
 	return err
 }
 

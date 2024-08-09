@@ -51,23 +51,13 @@ func (a *App) setupAppData(ctx context.Context) error {
 
 func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 	e = a.db.WithTx(ctx, func(dbh *db.DbHandler) error {
-		// Create phylum user
 		var err error
-		user, err = dbh.CreateUser(ctx, db.CreateUserParams{
-			Username:     defaultUserName,
-			DisplayName:  "Phylum",
-			PasswordHash: "",
-		})
-		if err != nil {
-			return err
-		}
 
 		// Create root folder
 		root, err := dbh.CreateResource(ctx, db.CreateResourceParams{
-			ID:    uuid.New(),
-			Owner: user.ID,
-			Name:  "Phylum Root",
-			Dir:   true,
+			ID:   uuid.New(),
+			Name: "Phylum Root",
+			Dir:  true,
 		})
 		if err != nil {
 			return err
@@ -76,7 +66,6 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 		// Create home folder
 		home, err := dbh.CreateResource(ctx, db.CreateResourceParams{
 			ID:     uuid.New(),
-			Owner:  user.ID,
 			Parent: &root.ID,
 			Name:   "home",
 			Dir:    true,
@@ -88,7 +77,6 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 		// Create user home folder
 		userHome, err := dbh.CreateResource(ctx, db.CreateResourceParams{
 			ID:     uuid.New(),
-			Owner:  user.ID,
 			Parent: &home.ID,
 			Name:   user.Username,
 			Dir:    true,
@@ -97,23 +85,17 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 			return err
 		}
 
-		if err := dbh.UpdateUserRoot(ctx, db.UpdateUserRootParams{ID: user.ID, Root: root.ID}); err != nil {
-			return err
-		}
-		if err := dbh.UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: user.ID, Home: userHome.ID}); err != nil {
-			return err
-		}
-		user.Root = root.ID
-		user.Home = userHome.ID
-
-		err = dbh.Exec(ctx, "SET CONSTRAINTS user_root, user_home IMMEDIATE;")
+		// Create phylum user
+		user, err = dbh.CreateUser(ctx, db.CreateUserParams{
+			Username:     defaultUserName,
+			DisplayName:  "Phylum",
+			PasswordHash: "",
+			Root:         root.ID,
+			Home:         userHome.ID,
+		})
 		if err != nil {
 			return err
 		}
-
-		err = dbh.Exec(ctx, "ALTER TABLE users ALTER CONSTRAINT user_root NOT DEFERRABLE;"+
-			"ALTER TABLE users ALTER CONSTRAINT user_home NOT DEFERRABLE;",
-		)
 
 		return err
 	})
