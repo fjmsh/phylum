@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const getPermissionsForResourceInherited = `-- name: GetPermissionsForResourceInherited :many
+const getInheritedPermissionsForResource = `-- name: GetInheritedPermissionsForResource :many
 WITH RECURSIVE nodes(id, parent) AS (
   SELECT r.id, r.parent
     FROM resources r
@@ -31,20 +31,20 @@ SELECT p.user_id, CAST(MAX(p.permission) AS INT) AS permission
   GROUP BY p.user_id
 `
 
-type GetPermissionsForResourceInheritedRow struct {
+type GetInheritedPermissionsForResourceRow struct {
 	UserID     int32
 	Permission int32
 }
 
-func (q *Queries) GetPermissionsForResourceInherited(ctx context.Context, resourceID uuid.UUID) ([]GetPermissionsForResourceInheritedRow, error) {
-	rows, err := q.db.Query(ctx, getPermissionsForResourceInherited, resourceID)
+func (q *Queries) GetInheritedPermissionsForResource(ctx context.Context, resourceID uuid.UUID) ([]GetInheritedPermissionsForResourceRow, error) {
+	rows, err := q.db.Query(ctx, getInheritedPermissionsForResource, resourceID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetPermissionsForResourceInheritedRow
+	var items []GetInheritedPermissionsForResourceRow
 	for rows.Next() {
-		var i GetPermissionsForResourceInheritedRow
+		var i GetInheritedPermissionsForResourceRow
 		if err := rows.Scan(&i.UserID, &i.Permission); err != nil {
 			return nil, err
 		}
@@ -56,26 +56,26 @@ func (q *Queries) GetPermissionsForResourceInherited(ctx context.Context, resour
 	return items, nil
 }
 
-const getPermissionsForResourceSpecific = `-- name: GetPermissionsForResourceSpecific :many
+const getLocalPermissionsForResource = `-- name: GetLocalPermissionsForResource :many
 SELECT p.user_id, CAST(p.permission AS INT) AS permission
   FROM permissions p
   WHERE p.resource_id = $1::uuid
 `
 
-type GetPermissionsForResourceSpecificRow struct {
+type GetLocalPermissionsForResourceRow struct {
 	UserID     int32
 	Permission int32
 }
 
-func (q *Queries) GetPermissionsForResourceSpecific(ctx context.Context, resourceID uuid.UUID) ([]GetPermissionsForResourceSpecificRow, error) {
-	rows, err := q.db.Query(ctx, getPermissionsForResourceSpecific, resourceID)
+func (q *Queries) GetLocalPermissionsForResource(ctx context.Context, resourceID uuid.UUID) ([]GetLocalPermissionsForResourceRow, error) {
+	rows, err := q.db.Query(ctx, getLocalPermissionsForResource, resourceID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetPermissionsForResourceSpecificRow
+	var items []GetLocalPermissionsForResourceRow
 	for rows.Next() {
-		var i GetPermissionsForResourceSpecificRow
+		var i GetLocalPermissionsForResourceRow
 		if err := rows.Scan(&i.UserID, &i.Permission); err != nil {
 			return nil, err
 		}

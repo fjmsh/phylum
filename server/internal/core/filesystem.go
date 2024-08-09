@@ -29,9 +29,9 @@ type FileSystem interface {
 	UpdateParent(r Resource, parent uuid.UUID) error
 	UpdatePermissions(r Resource, userID int32, permission Permission) error
 	// TODO: don't return db types
-	GetPermissionsSpecific(r Resource) ([]db.GetPermissionsForResourceSpecificRow, error)
+	GetPermissionsLocal(r Resource) (map[int32]Permission, error)
 	// TODO: don't return db types
-	GetPermissionsInherited(r Resource) ([]db.GetPermissionsForResourceInheritedRow, error)
+	GetPermissionsInherited(r Resource) (map[int32]Permission, error)
 }
 
 type filesystem struct {
@@ -304,11 +304,22 @@ func (f filesystem) UpdatePermissions(r Resource, userID int32, permission Permi
 	})
 }
 
-func (f filesystem) GetPermissionsSpecific(r Resource) ([]db.GetPermissionsForResourceSpecificRow, error) {
-	return f.db.GetPermissionsForResourceSpecific(f.ctx, r.ID())
+func (f filesystem) GetPermissionsLocal(r Resource) (map[int32]Permission, error) {
+	if r.Permission() < PermissionReadWriteShare {
+		return nil, ErrInsufficientPermissions
+	}
+	p, err := f.db.GetLocalPermissionsForResource(f.ctx, r.ID())
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[int32]Permission, len(p))
+	for _, p := range p {
+		res[p.UserID] = p.Permission
+	}
+	return res, nil
 }
 
-func (f filesystem) GetPermissionsInherited(r Resource) ([]db.GetPermissionsForResourceInheritedRow, error) {
+func (f filesystem) GetPermissionsInherited(r Resource) (map[int32]Permission, error) {
 	if r.Permission() < PermissionReadWriteShare {
 		return nil, ErrInsufficientPermissions
 	}
@@ -316,5 +327,13 @@ func (f filesystem) GetPermissionsInherited(r Resource) ([]db.GetPermissionsForR
 		return nil, nil
 	}
 
-	return f.db.GetPermissionsForResourceInherited(f.ctx, *r.ParentID())
+	p, err := f.db.GetInheritedPermissionsForResource(f.ctx, *r.ParentID())
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[int32]Permission, len(p))
+	for _, p := range p {
+		res[p.UserID] = p.Permission
+	}
+	return res, nil
 }

@@ -141,7 +141,7 @@ func setupResourceLsCommand() *cobra.Command {
 				}
 			}
 
-			specificPermissions, err := fs.GetPermissionsSpecific(r)
+			specificPermissions, err := fs.GetPermissionsLocal(r)
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -157,24 +157,24 @@ func setupResourceLsCommand() *cobra.Command {
 			if specificPermissions != nil {
 				logrus.Info()
 				logrus.Info("Specific Permissions:")
-				for _, row := range specificPermissions {
-					user, err := core.Default.UserByID(context.Background(), row.UserID)
+				for id, p := range specificPermissions {
+					user, err := core.Default.UserByID(context.Background(), id)
 					if err != nil {
 						logrus.Fatal(err)
 					}
-					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Username(), user.ID(), core.PermissionString(row.Permission)))
+					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Username(), user.ID(), core.PermissionString(p)))
 				}
 			}
 
 			if inheritedPermissions != nil {
 				logrus.Info()
 				logrus.Info("Inherited Permissions:")
-				for _, row := range inheritedPermissions {
-					user, err := core.Default.UserByID(context.Background(), row.UserID)
+				for id, p := range inheritedPermissions {
+					user, err := core.Default.UserByID(context.Background(), id)
 					if err != nil {
 						logrus.Fatal(err)
 					}
-					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Username(), user.ID(), core.PermissionString(row.Permission)))
+					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Username(), user.ID(), core.PermissionString(p)))
 				}
 			}
 

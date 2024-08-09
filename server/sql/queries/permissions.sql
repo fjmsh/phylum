@@ -84,13 +84,13 @@ INSERT INTO permissions(resource_id, user_id, permission)
     VALUES(@resource_id::uuid, @user_id::int, @permission::int)
     ON CONFLICT(resource_id, user_id) DO UPDATE SET permission = @permission::int;
 
--- name: GetPermissionsForResourceSpecific :many
+-- name: GetLocalPermissionsForResource :many
 SELECT p.user_id, CAST(p.permission AS INT) AS permission
   FROM permissions p
   WHERE p.resource_id = @resource_id::uuid;
 
 
--- name: GetPermissionsForResourceInherited :many
+-- name: GetInheritedPermissionsForResource :many
 WITH RECURSIVE nodes(id, parent) AS (
   SELECT r.id, r.parent
     FROM resources r
