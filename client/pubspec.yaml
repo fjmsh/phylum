@@ -14,19 +14,21 @@ dependencies:
   hive:
   http:
   offtheline:
-    git:
-      url: https://github.com/shroff/offtheline.git
-      ref: 4d7cc0438b25e5c97a7b8bd6b77f6e34121c43aa
+    path: ../../offtheline
   state_notifier:
   path:
   path_provider:
   provider:
   uri:
+  drift: ^2.19.1+1
+  drift_flutter: ^0.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  drift_dev: ^2.19.1
+  build_runner: ^2.4.12
 
 flutter:
   uses-material-design: true

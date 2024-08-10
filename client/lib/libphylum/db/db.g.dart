@@ -1,0 +1,582 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'db.dart';
+
+// ignore_for_file: type=lint
+class $ResourcesTable extends Resources
+    with TableInfo<$ResourcesTable, Resource> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ResourcesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _parentMeta = const VerificationMeta('parent');
+  @override
+  late final GeneratedColumn<String> parent = GeneratedColumn<String>(
+      'parent', aliasedName, true,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES resources (id)'));
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _dirMeta = const VerificationMeta('dir');
+  @override
+  late final GeneratedColumn<bool> dir = GeneratedColumn<bool>(
+      'dir', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("dir" IN (0, 1))'));
+  static const VerificationMeta _modifiedMeta =
+      const VerificationMeta('modified');
+  @override
+  late final GeneratedColumn<DateTime> modified = GeneratedColumn<DateTime>(
+      'modified', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _sizeMeta = const VerificationMeta('size');
+  @override
+  late final GeneratedColumn<int> size = GeneratedColumn<int>(
+      'size', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _etagMeta = const VerificationMeta('etag');
+  @override
+  late final GeneratedColumn<String> etag = GeneratedColumn<String>(
+      'etag', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, parent, name, dir, modified, size, etag];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'resources';
+  @override
+  VerificationContext validateIntegrity(Insertable<Resource> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('parent')) {
+      context.handle(_parentMeta,
+          parent.isAcceptableOrUnknown(data['parent']!, _parentMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('dir')) {
+      context.handle(
+          _dirMeta, dir.isAcceptableOrUnknown(data['dir']!, _dirMeta));
+    } else if (isInserting) {
+      context.missing(_dirMeta);
+    }
+    if (data.containsKey('modified')) {
+      context.handle(_modifiedMeta,
+          modified.isAcceptableOrUnknown(data['modified']!, _modifiedMeta));
+    } else if (isInserting) {
+      context.missing(_modifiedMeta);
+    }
+    if (data.containsKey('size')) {
+      context.handle(
+          _sizeMeta, size.isAcceptableOrUnknown(data['size']!, _sizeMeta));
+    } else if (isInserting) {
+      context.missing(_sizeMeta);
+    }
+    if (data.containsKey('etag')) {
+      context.handle(
+          _etagMeta, etag.isAcceptableOrUnknown(data['etag']!, _etagMeta));
+    } else if (isInserting) {
+      context.missing(_etagMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+        {parent, name},
+      ];
+  @override
+  Resource map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Resource(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      parent: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}parent']),
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      dir: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}dir'])!,
+      modified: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}modified'])!,
+      size: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}size'])!,
+      etag: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}etag'])!,
+    );
+  }
+
+  @override
+  $ResourcesTable createAlias(String alias) {
+    return $ResourcesTable(attachedDatabase, alias);
+  }
+}
+
+class Resource extends DataClass implements Insertable<Resource> {
+  final String id;
+  final String? parent;
+  final String name;
+  final bool dir;
+  final DateTime modified;
+  final int size;
+  final String etag;
+  const Resource(
+      {required this.id,
+      this.parent,
+      required this.name,
+      required this.dir,
+      required this.modified,
+      required this.size,
+      required this.etag});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    if (!nullToAbsent || parent != null) {
+      map['parent'] = Variable<String>(parent);
+    }
+    map['name'] = Variable<String>(name);
+    map['dir'] = Variable<bool>(dir);
+    map['modified'] = Variable<DateTime>(modified);
+    map['size'] = Variable<int>(size);
+    map['etag'] = Variable<String>(etag);
+    return map;
+  }
+
+  ResourcesCompanion toCompanion(bool nullToAbsent) {
+    return ResourcesCompanion(
+      id: Value(id),
+      parent:
+          parent == null && nullToAbsent ? const Value.absent() : Value(parent),
+      name: Value(name),
+      dir: Value(dir),
+      modified: Value(modified),
+      size: Value(size),
+      etag: Value(etag),
+    );
+  }
+
+  factory Resource.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Resource(
+      id: serializer.fromJson<String>(json['id']),
+      parent: serializer.fromJson<String?>(json['parent']),
+      name: serializer.fromJson<String>(json['name']),
+      dir: serializer.fromJson<bool>(json['dir']),
+      modified: serializer.fromJson<DateTime>(json['modified']),
+      size: serializer.fromJson<int>(json['size']),
+      etag: serializer.fromJson<String>(json['etag']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'parent': serializer.toJson<String?>(parent),
+      'name': serializer.toJson<String>(name),
+      'dir': serializer.toJson<bool>(dir),
+      'modified': serializer.toJson<DateTime>(modified),
+      'size': serializer.toJson<int>(size),
+      'etag': serializer.toJson<String>(etag),
+    };
+  }
+
+  Resource copyWith(
+          {String? id,
+          Value<String?> parent = const Value.absent(),
+          String? name,
+          bool? dir,
+          DateTime? modified,
+          int? size,
+          String? etag}) =>
+      Resource(
+        id: id ?? this.id,
+        parent: parent.present ? parent.value : this.parent,
+        name: name ?? this.name,
+        dir: dir ?? this.dir,
+        modified: modified ?? this.modified,
+        size: size ?? this.size,
+        etag: etag ?? this.etag,
+      );
+  Resource copyWithCompanion(ResourcesCompanion data) {
+    return Resource(
+      id: data.id.present ? data.id.value : this.id,
+      parent: data.parent.present ? data.parent.value : this.parent,
+      name: data.name.present ? data.name.value : this.name,
+      dir: data.dir.present ? data.dir.value : this.dir,
+      modified: data.modified.present ? data.modified.value : this.modified,
+      size: data.size.present ? data.size.value : this.size,
+      etag: data.etag.present ? data.etag.value : this.etag,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Resource(')
+          ..write('id: $id, ')
+          ..write('parent: $parent, ')
+          ..write('name: $name, ')
+          ..write('dir: $dir, ')
+          ..write('modified: $modified, ')
+          ..write('size: $size, ')
+          ..write('etag: $etag')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, parent, name, dir, modified, size, etag);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Resource &&
+          other.id == this.id &&
+          other.parent == this.parent &&
+          other.name == this.name &&
+          other.dir == this.dir &&
+          other.modified == this.modified &&
+          other.size == this.size &&
+          other.etag == this.etag);
+}
+
+class ResourcesCompanion extends UpdateCompanion<Resource> {
+  final Value<String> id;
+  final Value<String?> parent;
+  final Value<String> name;
+  final Value<bool> dir;
+  final Value<DateTime> modified;
+  final Value<int> size;
+  final Value<String> etag;
+  final Value<int> rowid;
+  const ResourcesCompanion({
+    this.id = const Value.absent(),
+    this.parent = const Value.absent(),
+    this.name = const Value.absent(),
+    this.dir = const Value.absent(),
+    this.modified = const Value.absent(),
+    this.size = const Value.absent(),
+    this.etag = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ResourcesCompanion.insert({
+    required String id,
+    this.parent = const Value.absent(),
+    required String name,
+    required bool dir,
+    required DateTime modified,
+    required int size,
+    required String etag,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        name = Value(name),
+        dir = Value(dir),
+        modified = Value(modified),
+        size = Value(size),
+        etag = Value(etag);
+  static Insertable<Resource> custom({
+    Expression<String>? id,
+    Expression<String>? parent,
+    Expression<String>? name,
+    Expression<bool>? dir,
+    Expression<DateTime>? modified,
+    Expression<int>? size,
+    Expression<String>? etag,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (parent != null) 'parent': parent,
+      if (name != null) 'name': name,
+      if (dir != null) 'dir': dir,
+      if (modified != null) 'modified': modified,
+      if (size != null) 'size': size,
+      if (etag != null) 'etag': etag,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ResourcesCompanion copyWith(
+      {Value<String>? id,
+      Value<String?>? parent,
+      Value<String>? name,
+      Value<bool>? dir,
+      Value<DateTime>? modified,
+      Value<int>? size,
+      Value<String>? etag,
+      Value<int>? rowid}) {
+    return ResourcesCompanion(
+      id: id ?? this.id,
+      parent: parent ?? this.parent,
+      name: name ?? this.name,
+      dir: dir ?? this.dir,
+      modified: modified ?? this.modified,
+      size: size ?? this.size,
+      etag: etag ?? this.etag,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (parent.present) {
+      map['parent'] = Variable<String>(parent.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (dir.present) {
+      map['dir'] = Variable<bool>(dir.value);
+    }
+    if (modified.present) {
+      map['modified'] = Variable<DateTime>(modified.value);
+    }
+    if (size.present) {
+      map['size'] = Variable<int>(size.value);
+    }
+    if (etag.present) {
+      map['etag'] = Variable<String>(etag.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ResourcesCompanion(')
+          ..write('id: $id, ')
+          ..write('parent: $parent, ')
+          ..write('name: $name, ')
+          ..write('dir: $dir, ')
+          ..write('modified: $modified, ')
+          ..write('size: $size, ')
+          ..write('etag: $etag, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+abstract class _$AppDatabase extends GeneratedDatabase {
+  _$AppDatabase(QueryExecutor e) : super(e);
+  $AppDatabaseManager get managers => $AppDatabaseManager(this);
+  late final $ResourcesTable resources = $ResourcesTable(this);
+  @override
+  Iterable<TableInfo<Table, Object?>> get allTables =>
+      allSchemaEntities.whereType<TableInfo<Table, Object?>>();
+  @override
+  List<DatabaseSchemaEntity> get allSchemaEntities => [resources];
+}
+
+typedef $$ResourcesTableCreateCompanionBuilder = ResourcesCompanion Function({
+  required String id,
+  Value<String?> parent,
+  required String name,
+  required bool dir,
+  required DateTime modified,
+  required int size,
+  required String etag,
+  Value<int> rowid,
+});
+typedef $$ResourcesTableUpdateCompanionBuilder = ResourcesCompanion Function({
+  Value<String> id,
+  Value<String?> parent,
+  Value<String> name,
+  Value<bool> dir,
+  Value<DateTime> modified,
+  Value<int> size,
+  Value<String> etag,
+  Value<int> rowid,
+});
+
+class $$ResourcesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ResourcesTable,
+    Resource,
+    $$ResourcesTableFilterComposer,
+    $$ResourcesTableOrderingComposer,
+    $$ResourcesTableCreateCompanionBuilder,
+    $$ResourcesTableUpdateCompanionBuilder> {
+  $$ResourcesTableTableManager(_$AppDatabase db, $ResourcesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          filteringComposer:
+              $$ResourcesTableFilterComposer(ComposerState(db, table)),
+          orderingComposer:
+              $$ResourcesTableOrderingComposer(ComposerState(db, table)),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String?> parent = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<bool> dir = const Value.absent(),
+            Value<DateTime> modified = const Value.absent(),
+            Value<int> size = const Value.absent(),
+            Value<String> etag = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ResourcesCompanion(
+            id: id,
+            parent: parent,
+            name: name,
+            dir: dir,
+            modified: modified,
+            size: size,
+            etag: etag,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            Value<String?> parent = const Value.absent(),
+            required String name,
+            required bool dir,
+            required DateTime modified,
+            required int size,
+            required String etag,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ResourcesCompanion.insert(
+            id: id,
+            parent: parent,
+            name: name,
+            dir: dir,
+            modified: modified,
+            size: size,
+            etag: etag,
+            rowid: rowid,
+          ),
+        ));
+}
+
+class $$ResourcesTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $ResourcesTable> {
+  $$ResourcesTableFilterComposer(super.$state);
+  ColumnFilters<String> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get name => $state.composableBuilder(
+      column: $state.table.name,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<bool> get dir => $state.composableBuilder(
+      column: $state.table.dir,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<DateTime> get modified => $state.composableBuilder(
+      column: $state.table.modified,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get size => $state.composableBuilder(
+      column: $state.table.size,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get etag => $state.composableBuilder(
+      column: $state.table.etag,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  $$ResourcesTableFilterComposer get parent {
+    final $$ResourcesTableFilterComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.parent,
+        referencedTable: $state.db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder, parentComposers) =>
+            $$ResourcesTableFilterComposer(ComposerState(
+                $state.db, $state.db.resources, joinBuilder, parentComposers)));
+    return composer;
+  }
+}
+
+class $$ResourcesTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $ResourcesTable> {
+  $$ResourcesTableOrderingComposer(super.$state);
+  ColumnOrderings<String> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get name => $state.composableBuilder(
+      column: $state.table.name,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<bool> get dir => $state.composableBuilder(
+      column: $state.table.dir,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<DateTime> get modified => $state.composableBuilder(
+      column: $state.table.modified,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get size => $state.composableBuilder(
+      column: $state.table.size,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get etag => $state.composableBuilder(
+      column: $state.table.etag,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  $$ResourcesTableOrderingComposer get parent {
+    final $$ResourcesTableOrderingComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.parent,
+        referencedTable: $state.db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder, parentComposers) =>
+            $$ResourcesTableOrderingComposer(ComposerState(
+                $state.db, $state.db.resources, joinBuilder, parentComposers)));
+    return composer;
+  }
+}
+
+class $AppDatabaseManager {
+  final _$AppDatabase _db;
+  $AppDatabaseManager(this._db);
+  $$ResourcesTableTableManager get resources =>
+      $$ResourcesTableTableManager(_db, _db.resources);
+}

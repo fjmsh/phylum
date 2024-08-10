@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/phylum_datastore.dart';
 
 const _persistKeyAccessToken = 'accessToken';
 const _persistKeyUserEmail = 'userEmail';
@@ -8,6 +9,8 @@ const _persistKeyUserName = 'userName';
 const _persistKeyUserHome = 'userHome';
 
 class PhylumAccount extends Account<Map<String, dynamic>> {
+  final PhylumDatastore datastore = PhylumDatastore();
+
   String? get accessToken => getPersisted(_persistKeyAccessToken);
   set _accessToken(String? value) {
     if (value != accessToken) {
@@ -38,6 +41,8 @@ class PhylumAccount extends Account<Map<String, dynamic>> {
     await super.initialize();
     // Set Authorization header
     _accessToken = accessToken;
+
+    await registerListener(datastore);
   }
 
   static Future<PhylumAccount> createFromLoginResponse(Map<String, dynamic> response) async {
