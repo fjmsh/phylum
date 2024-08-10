@@ -44,20 +44,15 @@ func (a App) VerifyUserPassword(ctx context.Context, username, password string) 
 	}
 }
 
-// TODO: don't return db types
-func (a App) CreateAccessToken(ctx context.Context, username, password string) (db.AccessToken, error) {
-	if user, err := a.VerifyUserPassword(ctx, username, password); err != nil {
-		return db.AccessToken{}, err
+func (a App) CreateAccessToken(ctx context.Context, userID int32) (string, error) {
+	if token, err := a.db.InsertAccessToken(ctx, db.InsertAccessTokenParams{
+		ID:       GenerateRandomString(accessTokenLength),
+		Validity: accessTokenValiditiy,
+		UserID:   userID,
+	}); err != nil {
+		return "", err
 	} else {
-		if token, err := a.db.InsertAccessToken(ctx, db.InsertAccessTokenParams{
-			ID:       GenerateRandomString(accessTokenLength),
-			Validity: accessTokenValiditiy,
-			UserID:   user.ID(),
-		}); err != nil {
-			return db.AccessToken{}, err
-		} else {
-			return token, nil
-		}
+		return token.ID, nil
 	}
 }
 

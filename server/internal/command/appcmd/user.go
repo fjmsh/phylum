@@ -3,7 +3,6 @@ package appcmd
 import (
 	"context"
 	"os"
-	"strings"
 	"syscall"
 
 	"github.com/google/uuid"
@@ -22,7 +21,6 @@ func setupUserCommand() *cobra.Command {
 		setupUserAddCommand(),
 		setupUserChrootCommand(),
 		setupUserListCommand(),
-		setupUserLoginCommand(),
 	}...)
 	return cmd
 }
@@ -117,32 +115,6 @@ func setupUserListCommand() *cobra.Command {
 				logrus.Infof("Root: %s", user.Root())
 				logrus.Infof("Home: %s", user.Home())
 			}
-		},
-	}
-}
-
-func setupUserLoginCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "auth user",
-		Short: "Authenticate user",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			username := strings.TrimSpace(args[0])
-
-			os.Stdout.WriteString("Password: ")
-			bytes, err := term.ReadPassword(syscall.Stdin)
-			os.Stdout.WriteString("\n")
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			password := string(bytes)
-
-			accessToken, err := core.Default.CreateAccessToken(context.Background(), username, password)
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			logrus.Info("Access Token: " + accessToken.ID)
-			logrus.Info(" Valid Until: " + accessToken.Expires.Time.String())
 		},
 	}
 }

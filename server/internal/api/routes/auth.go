@@ -8,6 +8,11 @@ import (
 	"github.com/shroff/phylum/server/internal/core"
 )
 
+type loginResponse struct {
+	AccessToken string       `json:"access_token"`
+	User        userResponse `json:"user"`
+}
+
 func SetupAuthRoutes(r *gin.RouterGroup, a *core.App) {
 	group := r.Group("/auth")
 	group.POST("/login", createLoginRouteHandler(a))
@@ -24,16 +29,21 @@ func createLoginRouteHandler(a *core.App) func(c *gin.Context) {
 			panic(errors.New(http.StatusBadRequest, "missing_password", ""))
 		}
 
-		if token, err := a.CreateAccessToken(c.Request.Context(), username, password); err != nil {
+		if user, err := a.VerifyUserPassword(c.Request.Context(), username, password); err != nil {
 			if errors.Is(err, core.ErrCredentialsInvalid) {
 				panic(errors.New(http.StatusUnauthorized, "credentials_invalid", ""))
 			}
 			panic(err)
 		} else {
-			c.JSON(200, gin.H{
-				"access_token": token.ID,
-				"expires":      token.Expires,
-			})
+			if token, err := a.CreateAccessToken(c.Request.Context(), user.ID()); err != nil {
+				panic(err)
+			} else {
+				c.JSON(200, loginResponse{
+					AccessToken: token,
+					User:        responseFromUser(user),
+				})
+			}
 		}
+
 	}
 }

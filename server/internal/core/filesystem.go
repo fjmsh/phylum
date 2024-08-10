@@ -28,9 +28,7 @@ type FileSystem interface {
 	UpdateName(r Resource, name string) error
 	UpdateParent(r Resource, parent uuid.UUID) error
 	UpdatePermissions(r Resource, userID int32, permission Permission) error
-	// TODO: don't return db types
 	GetPermissionsLocal(r Resource) (map[int32]Permission, error)
-	// TODO: don't return db types
 	GetPermissionsInherited(r Resource) (map[int32]Permission, error)
 }
 
@@ -94,7 +92,6 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	}
 
 	res, err := f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.root.ID(), Permission: f.root.Permission(), Search: segments, UserID: f.user})
-	// TODO: Fix su should have access to all files
 	if err == pgx.ErrNoRows || res.Permission == 0 {
 		err = fs.ErrNotExist
 	}
@@ -118,7 +115,6 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.root.ID(), ResourceID: id, UserID: f.user})
 	// TODO: verify found
-	// TODO: Fix su should have access to all files
 	if err == pgx.ErrNoRows || !res.Found || res.Permission == 0 {
 		err = fs.ErrNotExist
 	}

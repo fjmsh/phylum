@@ -13,9 +13,7 @@ import (
 const defaultUserName = "phylum"
 
 type App struct {
-	Debug bool
-	// TODO: Fix su should have access to all files
-	// but is currently subject to permissions which are baked in to ResourceByID and ResourceByPath
+	Debug  bool
 	Rootfs FileSystem
 	db     *db.DbHandler
 	cs     storage.Storage
