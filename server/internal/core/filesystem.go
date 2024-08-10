@@ -178,7 +178,7 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 		result[i] = resource{
 			id:         c.ID,
 			permission: c.Permission,
-			parentID:   r.ParentID(),
+			parentID:   c.Parent,
 			name:       c.Name,
 			size:       c.Size.Int64,
 			modTime:    c.Modified.Time,
