@@ -10,6 +10,8 @@ CREATE TABLE resources (
   etag     TEXT
 );
 
+CREATE UNIQUE INDEX unique_member_resource_name ON resources(parent, name) WHERE deleted IS NULL;
+
 ---- create above / drop below ----
 
 DROP TABLE resources;
