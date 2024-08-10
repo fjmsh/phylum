@@ -8,8 +8,7 @@ import (
 )
 
 type userResponse struct {
-	UserID      int32     `json:"id"`
-	Username    string    `json:"username"`
+	Email       string    `json:"email"`
 	DisplayName string    `json:"name"`
 	Home        uuid.UUID `json:"home"`
 }
@@ -25,8 +24,7 @@ func handleUserMeRoute(c *gin.Context) {
 
 func responseFromUser(user core.User) userResponse {
 	return userResponse{
-		UserID:      user.ID(),
-		Username:    user.Username(),
+		Email:       user.Email(),
 		DisplayName: user.DisplayName(),
 		Home:        user.Home(),
 	}

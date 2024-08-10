@@ -27,15 +27,15 @@ func setupUserCommand() *cobra.Command {
 
 func setupUserAddCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add username",
+		Use:   "add email",
 		Short: "Add User",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			username := args[0]
+			email := args[0]
 
 			displayName, _ := cmd.Flags().GetString("name")
 			if displayName == "" {
-				displayName = username
+				displayName = email
 			}
 
 			password, _ := cmd.Flags().GetString("password")
@@ -61,7 +61,7 @@ func setupUserAddCommand() *cobra.Command {
 				}
 			}
 
-			if err := core.Default.CreateUser(context.Background(), username, displayName, password, nil); err != nil {
+			if err := core.Default.CreateUser(context.Background(), email, displayName, password, nil); err != nil {
 				logrus.Fatal(err)
 			}
 		},
@@ -73,13 +73,13 @@ func setupUserAddCommand() *cobra.Command {
 
 func setupUserChrootCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "chroot username uuid",
+		Use:   "chroot email uuid",
 		Short: "Set User Root",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			username := args[0]
+			email := args[0]
 			idOrPath := args[1]
-			if user, err := core.Default.UserByUsername(context.Background(), username); err != nil {
+			if user, err := core.Default.UserByEmail(context.Background(), email); err != nil {
 				logrus.Fatal(err)
 			} else {
 				var res core.Resource
@@ -111,7 +111,7 @@ func setupUserListCommand() *cobra.Command {
 				logrus.Fatal(err)
 			}
 			for _, user := range users {
-				logrus.Infof(" %3.3d: %s (%s)", user.ID(), user.Username(), user.DisplayName())
+				logrus.Infof(" %3.3d: %s (%s)", user.ID(), user.Email(), user.DisplayName())
 				logrus.Infof("Root: %s", user.Root())
 				logrus.Infof("Home: %s", user.Home())
 			}

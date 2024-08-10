@@ -10,7 +10,7 @@ import (
 	"github.com/shroff/phylum/server/internal/storage"
 )
 
-const defaultUserName = "phylum"
+const defaultUserEmail = "admin@phylum"
 
 type App struct {
 	Debug  bool
@@ -32,7 +32,7 @@ func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage, debug boo
 }
 
 func (a *App) setupAppData(ctx context.Context) error {
-	u, err := a.db.UserByUsername(ctx, defaultUserName)
+	u, err := a.db.UserByEmail(ctx, defaultUserEmail)
 
 	if errors.Is(err, pgx.ErrNoRows) {
 		u, err = a.populateData(ctx)
@@ -76,7 +76,7 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 		userHome, err := dbh.CreateResource(ctx, db.CreateResourceParams{
 			ID:     uuid.New(),
 			Parent: &home.ID,
-			Name:   defaultUserName,
+			Name:   defaultUserEmail,
 			Dir:    true,
 		})
 		if err != nil {
@@ -85,7 +85,7 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 
 		// Create phylum user
 		user, err = dbh.CreateUser(ctx, db.CreateUserParams{
-			Username:     defaultUserName,
+			Email:        defaultUserEmail,
 			DisplayName:  "Phylum",
 			PasswordHash: "",
 			Root:         root.ID,

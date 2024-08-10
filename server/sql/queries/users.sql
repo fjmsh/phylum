@@ -1,12 +1,12 @@
 -- name: CreateUser :one
 INSERT INTO users(
-    username, created, modified, display_name, password_hash, root, home
+    email, created, modified, display_name, password_hash, root, home
 ) VALUES (
     $1, NOW(), NOW(), $2, $3, $4, $5
 ) RETURNING *;
 
--- name: UserByUsername :one
-SELECT * from users WHERE username = $1;
+-- name: UserByEmail :one
+SELECT * from users WHERE email = $1;
 
 -- name: UserByID :one
 SELECT * from users WHERE id = $1;

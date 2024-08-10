@@ -62,7 +62,7 @@ func setupResourceMkdirCommand() *cobra.Command {
 			}
 		},
 	}
-	setupUsernameFlags(&cmd)
+	setupUserFlags(&cmd)
 
 	return &cmd
 }
@@ -97,7 +97,7 @@ func setupResourceRmCommand() *cobra.Command {
 	}
 	flags := cmd.Flags()
 	flags.BoolP("recursive", "r", false, "Recursively delete resource (required for collections)")
-	setupUsernameFlags(&cmd)
+	setupUserFlags(&cmd)
 
 	return &cmd
 }
@@ -162,7 +162,7 @@ func setupResourceLsCommand() *cobra.Command {
 					if err != nil {
 						logrus.Fatal(err)
 					}
-					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Username(), user.ID(), core.PermissionString(p)))
+					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Email(), user.ID(), core.PermissionString(p)))
 				}
 			}
 
@@ -174,7 +174,7 @@ func setupResourceLsCommand() *cobra.Command {
 					if err != nil {
 						logrus.Fatal(err)
 					}
-					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Username(), user.ID(), core.PermissionString(p)))
+					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Email(), user.ID(), core.PermissionString(p)))
 				}
 			}
 
@@ -191,7 +191,7 @@ func setupResourceLsCommand() *cobra.Command {
 			}
 		},
 	}
-	setupUsernameFlags(&cmd)
+	setupUserFlags(&cmd)
 
 	return &cmd
 }
@@ -206,7 +206,7 @@ func setupResourceChpermCommand() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			var user int32
-			if u, err := core.Default.UserByUsername(context.Background(), args[0]); err != nil {
+			if u, err := core.Default.UserByEmail(context.Background(), args[0]); err != nil {
 				logrus.Fatal(err)
 			} else {
 				user = u.ID()
@@ -257,7 +257,7 @@ func setupResourceChpermCommand() *cobra.Command {
 			}
 		},
 	}
-	setupUsernameFlags(&cmd)
+	setupUserFlags(&cmd)
 
 	return &cmd
 }
@@ -267,7 +267,7 @@ func openFileSystemFromFlags(cmd *cobra.Command) {
 	if value, err := cmd.Flags().GetString("user"); err != nil {
 		logrus.Fatal(err)
 	} else {
-		if u, err := core.Default.UserByUsername(context.Background(), value); err != nil {
+		if u, err := core.Default.UserByEmail(context.Background(), value); err != nil {
 			logrus.Fatal(err)
 		} else {
 			user = u
@@ -282,8 +282,8 @@ func openFileSystemFromFlags(cmd *cobra.Command) {
 
 }
 
-func setupUsernameFlags(cmd *cobra.Command) {
+func setupUserFlags(cmd *cobra.Command) {
 	flags := cmd.Flags()
-	flags.StringP("user", "u", "phylum", "Specify Username for resource operations (cannot be used with -u)")
+	flags.StringP("user", "u", "phylum", "Specify user for resource operations")
 
 }

@@ -12,7 +12,7 @@ import (
 
 var ErrUserNotFound = errors.New("user not found")
 
-func (a App) CreateUser(ctx context.Context, username, displayName, password string, root *uuid.UUID) error {
+func (a App) CreateUser(ctx context.Context, email, displayName, password string, root *uuid.UUID) error {
 	var rootID = a.Rootfs.Root().ID()
 	if root != nil {
 		rootID = *root
@@ -22,7 +22,7 @@ func (a App) CreateUser(ctx context.Context, username, displayName, password str
 		if hash, err := cryptutil.GenerateArgon2EncodedHash(password, cryptutil.DefaultArgon2Params()); err != nil {
 			return err
 		} else if u, err := d.CreateUser(ctx, db.CreateUserParams{
-			Username:     username,
+			Email:        email,
 			DisplayName:  displayName,
 			PasswordHash: hash,
 			Root:         rootID,
@@ -31,7 +31,7 @@ func (a App) CreateUser(ctx context.Context, username, displayName, password str
 			return err
 		} else if home, err := fs.ResourceByPath("/home"); err != nil {
 			return err
-		} else if userHome, err := fs.CreateMemberResource(home, uuid.New(), username, true); err != nil {
+		} else if userHome, err := fs.CreateMemberResource(home, uuid.New(), email, true); err != nil {
 			return err
 		} else if err := fs.UpdatePermissions(userHome, u.ID, PermissionReadWriteShare); err != nil {
 			return err
@@ -50,7 +50,7 @@ func (a App) ListUsers(ctx context.Context) ([]User, error) {
 	for i, r := range results {
 		users[i] = user{
 			id:          r.ID,
-			username:    r.Username,
+			email:       r.Email,
 			displayName: r.DisplayName,
 			root:        r.Root,
 			home:        r.Home,
@@ -59,8 +59,8 @@ func (a App) ListUsers(ctx context.Context) ([]User, error) {
 	return users, nil
 }
 
-func (a App) UserByUsername(ctx context.Context, username string) (User, error) {
-	result, err := a.db.UserByUsername(ctx, username)
+func (a App) UserByEmail(ctx context.Context, email string) (User, error) {
+	result, err := a.db.UserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrUserNotFound
@@ -69,7 +69,7 @@ func (a App) UserByUsername(ctx context.Context, username string) (User, error) 
 	}
 	return user{
 		id:          result.ID,
-		username:    result.Username,
+		email:       result.Email,
 		displayName: result.DisplayName,
 		root:        result.Root,
 		home:        result.Home,
@@ -86,7 +86,7 @@ func (a App) UserByID(ctx context.Context, userID int32) (User, error) {
 	}
 	return user{
 		id:          result.ID,
-		username:    result.Username,
+		email:       result.Email,
 		displayName: result.DisplayName,
 		root:        result.Root,
 		home:        result.Home,

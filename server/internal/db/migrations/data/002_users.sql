@@ -1,6 +1,6 @@
 CREATE TABLE users(
     id            SERIAL PRIMARY KEY,
-    username      TEXT NOT NULL UNIQUE,
+    email      TEXT NOT NULL UNIQUE,
     created       TIMESTAMP NOT NULL,
     modified      TIMESTAMP NOT NULL,
     display_name  TEXT NOT NULL,

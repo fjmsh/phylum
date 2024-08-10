@@ -24,8 +24,8 @@ var ErrCredentialsInvalid = errors.New("credentials invalid")
 var ErrTokenInvalid = errors.New("token invalid")
 var ErrTokenExpired = errors.New("token expired")
 
-func (a App) VerifyUserPassword(ctx context.Context, username, password string) (User, error) {
-	if user, err := a.db.UserByUsername(ctx, username); err != nil {
+func (a App) VerifyUserPassword(ctx context.Context, email, password string) (User, error) {
+	if user, err := a.db.UserByEmail(ctx, email); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrCredentialsInvalid
 		}
