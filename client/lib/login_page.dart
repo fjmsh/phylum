@@ -23,11 +23,11 @@ class _LoginPageState extends State<LoginPage> {
   final Client _client = Client();
   String _email = '';
   String _password = '';
-  Uri? apiBase;
+  Uri? serverUrl;
   String? urlError;
   String? emailError;
 
-  bool get apiBaseValid => kIsWeb || (apiBase?.hasScheme == true && apiBase?.hasAuthority == true);
+  bool get serverUrlValid => kIsWeb || (serverUrl?.hasScheme == true && serverUrl?.hasAuthority == true);
 
   @override
   void initState() {
@@ -35,20 +35,22 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _performLogin(BuildContext context, String email, String password) async {
-    final apiBaseUrl = apiBase;
-    if (!apiBaseValid) return;
+    final serverUrl = this.serverUrl;
+    if (!serverUrlValid) return;
+    final builder = serverUrl == null ? UriBuilder() : UriBuilder.fromUri(serverUrl);
+    final path = builder.path.split('/').where((s) => s.isNotEmpty).join('/');
+    builder.path = '$path/api';
+    final apiUrl = builder.build();
 
     showProgressDialog(
       context,
       barrierDismissible: false,
       title: 'Logging in...',
     );
-    final baseUri = apiBaseUrl == null ? UriBuilder() : UriBuilder.fromUri(apiBaseUrl);
-    final path = baseUri.path.split('/').where((s) => s.isNotEmpty).join('/');
-    baseUri.path = '$path/api/v1/auth/login';
-    baseUri.queryParameters['email'] = email;
-    baseUri.queryParameters['password'] = password;
-    final request = Request('post', baseUri.build());
+    builder.path = '${builder.path}/v1/auth/login';
+    builder.queryParameters['email'] = email;
+    builder.queryParameters['password'] = password;
+    final request = Request('post', builder.build());
 
     try {
       final response = await _client.send(request);
@@ -67,6 +69,7 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           final accountManager = context.read<AccountManager<PhylumAccount>>();
           final account = await PhylumAccount.createFromLoginResponse(json.cast<String, dynamic>());
+          account.api.apiBaseUrl = apiUrl;
           accountManager.addAccount(account);
         }
       }
@@ -115,8 +118,8 @@ class _LoginPageState extends State<LoginPage> {
                     keyboardType: TextInputType.url,
                     onChanged: (value) {
                       setState(() {
-                        apiBase = Uri.tryParse(value);
-                        urlError = apiBase == null ? 'Invalid URL' : null;
+                        serverUrl = Uri.tryParse(value);
+                        urlError = serverUrl == null ? 'Invalid URL' : null;
                       });
                     },
                   ),
@@ -149,7 +152,7 @@ class _LoginPageState extends State<LoginPage> {
                 Padding(
                   padding: const EdgeInsets.only(top: 16.0),
                   child: ElevatedButton(
-                    onPressed: apiBaseValid && _email.isNotEmpty
+                    onPressed: serverUrlValid && _email.isNotEmpty
                         ? () async {
                             _performLogin(context, _email, _password);
                           }
