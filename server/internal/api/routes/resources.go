@@ -12,9 +12,11 @@ import (
 	"github.com/shroff/phylum/server/internal/core"
 )
 
-const errCodeResourceNotFound = "resource_not_found"
-const errCodeResourceIdInvalid = "resource_id_invalid"
-const errCodeResourceNotCollection = "resource_not_collection"
+var (
+	errResourceIdInvalid    = errors.New(http.StatusBadRequest, "resource_id_invalid", "Invalid UUID")
+	errResourceNotFound     = errors.New(http.StatusNotFound, "resource_not_found", "Resource Not Found")
+	errResourceNotDirectory = errors.New(http.StatusMethodNotAllowed, "resource_not_directory", "Resource Not Directory")
+)
 
 type resourceResponse struct {
 	ID       uuid.UUID  `json:"id"`
@@ -44,14 +46,14 @@ func SetupResourceRoutes(r *gin.RouterGroup) {
 func handleResourceMetadataRoute(c *gin.Context) {
 	resourceId, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		panic(errors.New(http.StatusBadRequest, errCodeResourceIdInvalid, ""))
+		panic(errResourceIdInvalid)
 	}
 
 	fs := auth.GetFileSystem(c)
 	resource, err := fs.ResourceByID(resourceId)
 	if err != nil {
 		if errors.Is(err, iofs.ErrNotExist) {
-			err = errors.New(http.StatusNotFound, errCodeResourceNotFound, "")
+			err = errResourceNotFound
 		}
 		panic(err)
 	}
@@ -62,20 +64,20 @@ func handleResourceMetadataRoute(c *gin.Context) {
 func handleResourceLsRoute(c *gin.Context) {
 	resourceId, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		panic(errors.New(http.StatusBadRequest, errCodeResourceIdInvalid, ""))
+		panic(errResourceIdInvalid)
 	}
 
 	fs := auth.GetFileSystem(c)
 	resource, err := fs.ResourceByID(resourceId)
 	if err != nil {
 		if errors.Is(err, iofs.ErrNotExist) {
-			err = errors.New(http.StatusNotFound, errCodeResourceNotFound, "")
+			err = errResourceNotFound
 		}
 		panic(err)
 	}
 
 	if !resource.IsDir() {
-		panic(errors.New(http.StatusBadRequest, errCodeResourceNotCollection, ""))
+		panic(errResourceNotDirectory)
 	}
 	children, err := fs.ReadDir(resource)
 	if err != nil {
@@ -91,14 +93,14 @@ func handleResourceLsRoute(c *gin.Context) {
 func handleResourceDetailsRoute(c *gin.Context) {
 	resourceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		panic(errors.New(http.StatusBadRequest, errCodeResourceIdInvalid, ""))
+		panic(errResourceIdInvalid)
 	}
 
 	fs := auth.GetFileSystem(c)
 	r, err := fs.ResourceByID(resourceID)
 	if err != nil {
 		if errors.Is(err, iofs.ErrNotExist) {
-			err = errors.New(http.StatusNotFound, errCodeResourceNotFound, "")
+			err = errResourceNotFound
 		}
 		panic(err)
 	}

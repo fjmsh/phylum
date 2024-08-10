@@ -22,16 +22,16 @@ func createLoginRouteHandler(a *core.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		username, ok := c.GetQuery("username")
 		if !ok {
-			panic(errors.New(http.StatusBadRequest, "missing_username", ""))
+			panic(errors.New(http.StatusBadRequest, "missing_username", "Username Not Specified"))
 		}
 		password, ok := c.GetQuery("password")
 		if !ok {
-			panic(errors.New(http.StatusBadRequest, "missing_password", ""))
+			panic(errors.New(http.StatusBadRequest, "missing_password", "Password Not Specified"))
 		}
 
 		if user, err := a.VerifyUserPassword(c.Request.Context(), username, password); err != nil {
 			if errors.Is(err, core.ErrCredentialsInvalid) {
-				panic(errors.New(http.StatusUnauthorized, "credentials_invalid", ""))
+				panic(errors.New(http.StatusUnauthorized, "credentials_invalid", "Invalid Credentials"))
 			}
 			panic(err)
 		} else {

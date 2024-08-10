@@ -2,7 +2,6 @@ package routes
 
 import (
 	iofs "io/fs"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
@@ -25,7 +24,7 @@ func handleMobileHomeRoute(c *gin.Context) {
 	r, err := fs.ResourceByID(user.Home())
 	if err != nil {
 		if errors.Is(err, iofs.ErrNotExist) {
-			err = errors.New(http.StatusNotFound, errCodeResourceNotFound, "")
+			err = errResourceNotFound
 		}
 		panic(err)
 	}

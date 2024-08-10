@@ -2,6 +2,7 @@ package appcmd
 
 import (
 	"bytes"
+	"net/http"
 	"time"
 
 	"github.com/fvbock/endless"
@@ -63,7 +64,13 @@ func createEngine(logBody bool, corsEnabled bool, corsOrigins []string) *gin.Eng
 	if !core.Default.Debug {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	engine := gin.Default()
+	engine := gin.New()
+	engine.Use(gin.Logger(), gin.CustomRecovery(func(c *gin.Context, err any) {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"code": "internal_server_error",
+			"msg":  "Internal Server Error",
+		})
+	}))
 	if core.Default.Debug && logBody {
 		engine.Use(logBodyMiddleware)
 	}

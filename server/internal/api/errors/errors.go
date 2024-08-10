@@ -10,19 +10,19 @@ import (
 type ApiErr struct {
 	Status  int    `json:"status"`
 	Code    string `json:"code"`
-	Details string `json:"details"`
+	Message string `json:"msg"`
 }
 
-func New(httpStatus int, code, details string) error {
+func New(httpStatus int, code, msg string) error {
 	return &ApiErr{
 		Status:  httpStatus,
 		Code:    code,
-		Details: details,
+		Message: msg,
 	}
 }
 
 func (e *ApiErr) Error() string {
-	return fmt.Sprintf("%d %s (%s)", e.Status, e.Code, e.Details)
+	return fmt.Sprintf("%d %s (%s)", e.Status, e.Code, e.Message)
 }
 
 func Is(err, target error) bool {
