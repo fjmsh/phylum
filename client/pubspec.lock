@@ -41,14 +41,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.18.0"
-  cupertino_icons:
-    dependency: "direct main"
+  crypto:
+    dependency: transitive
     description:
-      name: cupertino_icons
-      sha256: ba631d1c7f7bef6b729a622b7b752645a2d076dba9976925b8f25725a30e1ee6
+      name: crypto
+      sha256: ff625774173754681d66daaf4a448684fb04b78f902da9cb3d308c19cc5e8bab
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.8"
+    version: "3.0.3"
   fake_async:
     dependency: transitive
     description:
@@ -75,6 +75,30 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  hive:
+    dependency: transitive
+    description:
+      name: hive
+      sha256: "8dcf6db979d7933da8217edcec84e9df1bdb4e4edc7fc77dbd5aa74356d6d941"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.3"
+  http:
+    dependency: "direct main"
+    description:
+      name: http
+      sha256: b9c29a161230ee03d3ccf545097fccd9b87a5264228c5d348202e0f0c28f9010
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.2"
+  http_parser:
+    dependency: transitive
+    description:
+      name: http_parser
+      sha256: "2aa08ce0341cc9b354a498388e30986515406668dbcc4f7c950c3e715496693b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.2"
   leak_tracker:
     dependency: transitive
     description:
@@ -107,6 +131,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
+  logger:
+    dependency: transitive
+    description:
+      name: logger
+      sha256: "697d067c60c20999686a0add96cf6aba723b3aa1f83ecf806a8097231529ec32"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.0"
   matcher:
     dependency: transitive
     description:
@@ -131,6 +163,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.15.0"
+  offtheline:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: "4d7cc0438b25e5c97a7b8bd6b77f6e34121c43aa"
+      resolved-ref: "4d7cc0438b25e5c97a7b8bd6b77f6e34121c43aa"
+      url: "https://github.com/shroff/offtheline.git"
+    source: git
+    version: "0.12.0"
   path:
     dependency: transitive
     description:
@@ -139,6 +180,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.0"
+  quiver:
+    dependency: transitive
+    description:
+      name: quiver
+      sha256: b1c1ac5ce6688d77f65f3375a9abb9319b3cb32486bdc7a1e0fdf004d7ba4e47
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.1"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -160,6 +209,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.11.1"
+  state_notifier:
+    dependency: transitive
+    description:
+      name: state_notifier
+      sha256: b8677376aa54f2d7c58280d5a007f9e8774f1968d1fb1c096adcb4792fba29bb
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   stream_channel:
     dependency: transitive
     description:
@@ -192,6 +249,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.2"
+  typed_data:
+    dependency: transitive
+    description:
+      name: typed_data
+      sha256: facc8d6582f16042dd49f2463ff1bd6e2c9ef9f3d5da3d9b087e244a7b564b3c
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.3.2"
+  uri:
+    dependency: "direct main"
+    description:
+      name: uri
+      sha256: "889eea21e953187c6099802b7b4cf5219ba8f3518f604a1033064d45b1b8268a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   vector_math:
     dependency: transitive
     description:
@@ -208,6 +281,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "14.2.4"
+  web:
+    dependency: transitive
+    description:
+      name: web
+      sha256: d43c1d6b787bf0afad444700ae7f4db8827f701bc61c255ac8d328c6f4d52062
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
 sdks:
   dart: ">=3.5.0 <4.0.0"
   flutter: ">=3.18.0-18.0.pre.54"
