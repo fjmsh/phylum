@@ -9,11 +9,18 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_state_notifier:
+  go_router:
+  hive:
   http:
   offtheline:
     git:
       url: https://github.com/shroff/offtheline.git
       ref: 4d7cc0438b25e5c97a7b8bd6b77f6e34121c43aa
+  state_notifier:
+  path:
+  path_provider:
+  provider:
   uri:
 
 dev_dependencies:

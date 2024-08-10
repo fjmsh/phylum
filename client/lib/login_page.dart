@@ -4,7 +4,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
 typedef AuthRequestBuilder = Future<Request?> Function(BuildContext, UriBuilder);
@@ -43,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
     final baseUri = apiBaseUrl == null ? UriBuilder() : UriBuilder.fromUri(apiBaseUrl);
     final path = baseUri.path.split('/').where((s) => s.isNotEmpty).join('/');
     baseUri.path = '$path/api/v1/auth/login';
-    baseUri.queryParameters['username'] = email;
+    baseUri.queryParameters['email'] = email;
     baseUri.queryParameters['password'] = password;
     final request = Request('post', baseUri.build());
 
@@ -62,12 +65,9 @@ class _LoginPageState extends State<LoginPage> {
             message: json['msg'],
           );
         } else {
-          showAlertDialog(
-            context,
-            barrierDismissible: false,
-            title: 'Login Successful',
-            message: responseString,
-          );
+          final accountManager = context.read<AccountManager<PhylumAccount>>();
+          final account = await PhylumAccount.createFromLoginResponse(json.cast<String, dynamic>());
+          accountManager.addAccount(account);
         }
       }
     } on SocketException {
