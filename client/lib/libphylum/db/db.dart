@@ -12,9 +12,6 @@ class AppDatabase extends _$AppDatabase {
   int get schemaVersion => 1;
 
   Future insertResources(Iterable<Insertable<Resource>> list) async {
-    for (final i in list) {
-      print(i);
-    }
     await batch((batch) {
       batch.insertAll(resources, list, mode: InsertMode.insertOrReplace);
     });
