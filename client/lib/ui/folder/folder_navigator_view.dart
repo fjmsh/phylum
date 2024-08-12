@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:phylum/ui/common/expandable_fab.dart';
 import 'package:phylum/ui/folder/folder_contents_view.dart';
 import 'package:provider/provider.dart';
 
@@ -30,6 +31,19 @@ class FolderScaffold extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Phylum'),
         leading: nav.isRoot ? null : BackButton(onPressed: context.read<FolderNavigatorStack>().pop),
+      ),
+      floatingActionButton: ExpandableFab(
+        distance: 112,
+        children: [
+          ActionButton(
+            icon: const Icon(Icons.folder),
+            onPressed: () {},
+          ),
+          ActionButton(
+            icon: const Icon(Icons.insert_drive_file),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: FolderContentsView(key: ValueKey(folderId), id: folderId),
     );
