@@ -43,7 +43,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
                           leading: r.getIcon(),
                           title: Text(r.name),
                           trailing: r.dir ? null : Text(r.getSizeString()),
-                          onTap: () => context.read<FolderNavigatorStack>().push('/dir/${r.id}'),
+                          onTap: () => context.read<FolderNavigatorStack>().push(r.id),
                         ),
                   ],
                 )),
