@@ -15,6 +15,8 @@ var (
 	ErrResourceNotCollection      = errors.New("cannot add member to non-collection resource")
 	ErrCannotReparentRootResource = errors.New("cannot reparent root resource")
 	ErrCannotReparentToRoot       = errors.New("cannot reparent resource to root")
+	ErrIDNotSpecified             = errors.New("resource id not specified")
+	ErrNameInvalid                = errors.New("resource name invalid")
 )
 
 type Resource interface {

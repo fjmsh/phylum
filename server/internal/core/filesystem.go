@@ -197,6 +197,12 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	if r.Permission() < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
 	}
+	if id == uuid.Nil {
+		return nil, ErrIDNotSpecified
+	}
+	if name == "" {
+		return nil, ErrNameInvalid
+	}
 	var result db.Resource
 	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 		var err error
@@ -255,7 +261,14 @@ func (f filesystem) UpdateName(r Resource, name string) error {
 	if r.Name() == name {
 		return nil
 	}
-	if r.Permission() < PermissionReadWrite {
+	if r.ParentID() == nil {
+		return ErrInsufficientPermissions
+	}
+	parent, err := f.ResourceByID(*r.ParentID())
+	if err != nil {
+		return err
+	}
+	if parent.Permission() < PermissionReadWrite {
 		return ErrInsufficientPermissions
 	}
 	return f.db.UpdateResourceName(f.ctx, db.UpdateResourceNameParams{ID: r.ID(), Name: name})

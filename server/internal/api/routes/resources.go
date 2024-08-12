@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"encoding/json"
+	"io"
 	iofs "io/fs"
 	"net/http"
 	"time"
@@ -36,11 +38,17 @@ type resourceDetailResponse struct {
 	LocalPermissions     map[int32]core.Permission `json:"local"`
 }
 
+type resourceMkdirParams struct {
+	Name string    `json:"name"`
+	ID   uuid.UUID `json:"uuid"`
+}
+
 func SetupResourceRoutes(r *gin.RouterGroup) {
 	group := r.Group("/resources")
 	group.GET("/ls/:id", handleResourceLsRoute)
 	group.GET("/metadata/:id", handleResourceMetadataRoute)
 	group.GET("/details/:id", handleResourceDetailsRoute)
+	group.POST("/mkdir/:id", handleResourceMkdirRoute)
 }
 
 func handleResourceMetadataRoute(c *gin.Context) {
@@ -106,6 +114,35 @@ func handleResourceDetailsRoute(c *gin.Context) {
 	}
 
 	c.JSON(200, detailedResponseFromResource(fs, r))
+}
+
+func handleResourceMkdirRoute(c *gin.Context) {
+	resourceID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		panic(errResourceIdInvalid)
+	}
+
+	fs := auth.GetFileSystem(c)
+	r, err := fs.ResourceByID(resourceID)
+	if err != nil {
+		if errors.Is(err, iofs.ErrNotExist) {
+			err = errResourceNotFound
+		}
+		panic(err)
+	}
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		panic(err)
+	}
+	var params resourceMkdirParams
+	json.Unmarshal(body, &params)
+
+	res, err := fs.CreateMemberResource(r, params.ID, params.Name, true)
+	if err != nil {
+		panic(err)
+	}
+
+	c.JSON(200, detailedResponseFromResource(fs, res))
 }
 
 func detailedResponseFromResource(fs core.FileSystem, r core.Resource) resourceDetailResponse {
