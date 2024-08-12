@@ -8,7 +8,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:phylum/app.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/login_page.dart';
+import 'package:phylum/ui/login_page.dart';
 import 'package:provider/provider.dart';
 
 const storageDir = String.fromEnvironment("STORAGE_DIR");

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/folder_view.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/folder/folder_navigator_view.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
