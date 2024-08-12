@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
@@ -42,6 +43,7 @@ class _FolderViewState extends State<FolderView> {
                         leading: r.getIcon(),
                         title: Text(r.name),
                         trailing: r.dir ? null : Text(r.getSizeString()),
+                        onTap: () => context.go('/dir/${r.id}'),
                       ),
                 ],
               );
