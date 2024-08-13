@@ -39,8 +39,8 @@ type resourceDetailResponse struct {
 }
 
 type resourceMkdirParams struct {
-	Name string    `json:"name"`
-	ID   uuid.UUID `json:"uuid"`
+	Name     string    `json:"name"`
+	ParentID uuid.UUID `json:"parent_id"`
 }
 
 func SetupResourceRoutes(r *gin.RouterGroup) {
@@ -117,19 +117,6 @@ func handleResourceDetailsRoute(c *gin.Context) {
 }
 
 func handleResourceMkdirRoute(c *gin.Context) {
-	resourceID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		panic(errResourceIdInvalid)
-	}
-
-	fs := auth.GetFileSystem(c)
-	r, err := fs.ResourceByID(resourceID)
-	if err != nil {
-		if errors.Is(err, iofs.ErrNotExist) {
-			err = errResourceNotFound
-		}
-		panic(err)
-	}
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		panic(err)
@@ -137,7 +124,21 @@ func handleResourceMkdirRoute(c *gin.Context) {
 	var params resourceMkdirParams
 	json.Unmarshal(body, &params)
 
-	res, err := fs.CreateMemberResource(r, params.ID, params.Name, true)
+	resourceID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		panic(errResourceIdInvalid)
+	}
+
+	fs := auth.GetFileSystem(c)
+	parent, err := fs.ResourceByID(params.ParentID)
+	if err != nil {
+		if errors.Is(err, iofs.ErrNotExist) {
+			err = errResourceNotFound
+		}
+		panic(err)
+	}
+
+	res, err := fs.CreateMemberResource(parent, resourceID, params.Name, true)
 	if err != nil {
 		panic(err)
 	}
