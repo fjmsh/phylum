@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"encoding/json"
-	"io"
 	iofs "io/fs"
 	"net/http"
 	"time"
@@ -39,8 +37,8 @@ type resourceDetailResponse struct {
 }
 
 type resourceMkdirParams struct {
-	Name     string    `json:"name"`
-	ParentID uuid.UUID `json:"parent_id"`
+	Name     string    `json:"name", binding:"required"`
+	ParentID uuid.UUID `json:"parent_id", binding:"required"`
 }
 
 func SetupResourceRoutes(r *gin.RouterGroup) {
@@ -117,12 +115,11 @@ func handleResourceDetailsRoute(c *gin.Context) {
 }
 
 func handleResourceMkdirRoute(c *gin.Context) {
-	body, err := io.ReadAll(c.Request.Body)
+	var params resourceMkdirParams
+	err := c.ShouldBindJSON(params)
 	if err != nil {
 		panic(err)
 	}
-	var params resourceMkdirParams
-	json.Unmarshal(body, &params)
 
 	resourceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
