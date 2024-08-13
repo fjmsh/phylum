@@ -10,12 +10,16 @@ import (
 	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/api/errors"
 	"github.com/shroff/phylum/server/internal/core"
+	"github.com/sirupsen/logrus"
 )
 
 var (
-	errResourceIdInvalid    = errors.New(http.StatusBadRequest, "resource_id_invalid", "Invalid UUID")
+	errResourceIDInvalid    = errors.New(http.StatusBadRequest, "resource_id_invalid", "Invalid UUID")
+	errResourceIDConflict   = errors.New(http.StatusBadRequest, "resource_id_conflict", "ID already in use")
 	errResourceNotFound     = errors.New(http.StatusNotFound, "resource_not_found", "Resource Not Found")
 	errResourceNotDirectory = errors.New(http.StatusMethodNotAllowed, "resource_not_directory", "Resource Not Directory")
+	errInvalidParams        = errors.New(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
+	errResourceNameConflict = errors.New(http.StatusConflict, "name_conflict", "Resource Name Conflict")
 )
 
 type resourceResponse struct {
@@ -52,7 +56,7 @@ func SetupResourceRoutes(r *gin.RouterGroup) {
 func handleResourceMetadataRoute(c *gin.Context) {
 	resourceId, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		panic(errResourceIdInvalid)
+		panic(errResourceIDInvalid)
 	}
 
 	fs := auth.GetFileSystem(c)
@@ -70,7 +74,7 @@ func handleResourceMetadataRoute(c *gin.Context) {
 func handleResourceLsRoute(c *gin.Context) {
 	resourceId, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		panic(errResourceIdInvalid)
+		panic(errResourceIDInvalid)
 	}
 
 	fs := auth.GetFileSystem(c)
@@ -99,7 +103,7 @@ func handleResourceLsRoute(c *gin.Context) {
 func handleResourceDetailsRoute(c *gin.Context) {
 	resourceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		panic(errResourceIdInvalid)
+		panic(errResourceIDInvalid)
 	}
 
 	fs := auth.GetFileSystem(c)
@@ -116,17 +120,18 @@ func handleResourceDetailsRoute(c *gin.Context) {
 
 func handleResourceMkdirRoute(c *gin.Context) {
 	var params resourceMkdirParams
-	err := c.ShouldBindJSON(params)
+	err := c.ShouldBindJSON(&params)
 	if err != nil {
-		panic(err)
+		panic(errInvalidParams)
 	}
 
 	resourceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		panic(errResourceIdInvalid)
+		panic(errResourceIDInvalid)
 	}
 
 	fs := auth.GetFileSystem(c)
+	logrus.Info(params)
 	parent, err := fs.ResourceByID(params.ParentID)
 	if err != nil {
 		if errors.Is(err, iofs.ErrNotExist) {
@@ -137,6 +142,12 @@ func handleResourceMkdirRoute(c *gin.Context) {
 
 	res, err := fs.CreateMemberResource(parent, resourceID, params.Name, true)
 	if err != nil {
+		if err == core.ErrResourceNameConflict {
+			err = errResourceNameConflict
+		}
+		if err == core.ErrResourceIDConflict {
+			err = errResourceIDConflict
+		}
 		panic(err)
 	}
 

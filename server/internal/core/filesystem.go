@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"errors"
 	"io"
 	"io/fs"
 	"strings"
@@ -13,6 +14,18 @@ import (
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
+)
+
+var (
+	ErrInsufficientPermissions    = errors.New("insufficient permissions")
+	ErrCannotGrantOwnerPermission = errors.New("cannot grant owner permission")
+	ErrResourceNotCollection      = errors.New("cannot add member to non-collection resource")
+	ErrCannotReparentRootResource = errors.New("cannot reparent root resource")
+	ErrCannotReparentToRoot       = errors.New("cannot reparent resource to root")
+	ErrIDNotSpecified             = errors.New("resource id not specified")
+	ErrNameInvalid                = errors.New("name invalid")
+	ErrResourceNameConflict       = errors.New("name conflict")
+	ErrResourceIDConflict         = errors.New("id conflict")
 )
 
 type FileSystem interface {
@@ -208,6 +221,12 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 		var err error
 		parent := r.ID()
 		if result, err = d.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir}); err != nil {
+			if strings.Contains(err.Error(), "unique_member_resource_name") {
+				return ErrResourceNameConflict
+			}
+			if strings.Contains(err.Error(), "resources_pkey") {
+				return ErrResourceIDConflict
+			}
 			return err
 		}
 		return d.UpdateResourceModified(f.ctx, r.ID())
