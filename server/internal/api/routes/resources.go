@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"io"
 	iofs "io/fs"
 	"net/http"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/api/errors"
 	"github.com/shroff/phylum/server/internal/core"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -41,8 +41,8 @@ type resourceDetailResponse struct {
 }
 
 type resourceMkdirParams struct {
-	Name     string    `json:"name", binding:"required"`
-	ParentID uuid.UUID `json:"parent_id", binding:"required"`
+	Name     string    `json:"name" binding:"required"`
+	ParentID uuid.UUID `json:"parent_id" binding:"required"`
 }
 
 func SetupResourceRoutes(r *gin.RouterGroup) {
@@ -51,6 +51,7 @@ func SetupResourceRoutes(r *gin.RouterGroup) {
 	group.GET("/metadata/:id", handleResourceMetadataRoute)
 	group.GET("/details/:id", handleResourceDetailsRoute)
 	group.POST("/mkdir/:id", handleResourceMkdirRoute)
+	group.PUT("/upload/:id", handleResourceUploadRoute)
 }
 
 func handleResourceMetadataRoute(c *gin.Context) {
@@ -121,7 +122,7 @@ func handleResourceDetailsRoute(c *gin.Context) {
 func handleResourceMkdirRoute(c *gin.Context) {
 	var params resourceMkdirParams
 	err := c.ShouldBindJSON(&params)
-	if err != nil {
+	if err != nil || params.Name == "" {
 		panic(errInvalidParams)
 	}
 
@@ -131,7 +132,6 @@ func handleResourceMkdirRoute(c *gin.Context) {
 	}
 
 	fs := auth.GetFileSystem(c)
-	logrus.Info(params)
 	parent, err := fs.ResourceByID(params.ParentID)
 	if err != nil {
 		if errors.Is(err, iofs.ErrNotExist) {
@@ -152,6 +152,76 @@ func handleResourceMkdirRoute(c *gin.Context) {
 	}
 
 	c.JSON(200, detailedResponseFromResource(fs, res))
+}
+
+func handleResourceUploadRoute(c *gin.Context) {
+	resourceID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		panic(errResourceIDInvalid)
+	}
+
+	name := c.Request.FormValue("name")
+	parentID, err := uuid.Parse(c.Request.FormValue("parent_id"))
+	if err != nil || name == "" {
+		panic(errInvalidParams)
+	}
+	// TODO: Calculate and verify sha sum
+	// c.Request.FormValue("sha256sum")
+
+	f := auth.GetFileSystem(c)
+	err = f.RunInTx(func(fs core.FileSystem) error {
+		parent, err := fs.ResourceByID(parentID)
+		if err != nil {
+			if errors.Is(err, iofs.ErrNotExist) {
+				return errResourceNotFound
+			}
+			return err
+		}
+
+		res, err := fs.CreateMemberResource(parent, resourceID, name, false)
+		if err != nil {
+			if err == core.ErrResourceNameConflict {
+				return errResourceNameConflict
+			}
+			if err == core.ErrResourceIDConflict {
+				return errResourceIDConflict
+			}
+			return err
+		}
+
+		file, err := c.FormFile("contents")
+		if err != nil {
+			if err == http.ErrMissingFile {
+				return errInvalidParams
+			}
+			return err
+		}
+
+		src, err := file.Open()
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		out, err := fs.OpenWrite(res)
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+
+		_, err = io.Copy(out, src)
+		return err
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	// TODO: Avoid reading from db again if we can update size and etag
+	res, err := f.ResourceByID(resourceID)
+	if err != nil {
+		panic(err)
+	}
+	c.JSON(200, detailedResponseFromResource(f, res))
 }
 
 func detailedResponseFromResource(fs core.FileSystem, r core.Resource) resourceDetailResponse {

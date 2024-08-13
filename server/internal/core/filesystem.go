@@ -30,6 +30,7 @@ var (
 
 type FileSystem interface {
 	WithDb(*db.DbHandler) FileSystem
+	RunInTx(fn func(FileSystem) error) error
 	Root() Resource
 	ResourceByPath(path string) (Resource, error)
 	ResourceByID(id uuid.UUID) (Resource, error)
@@ -94,6 +95,12 @@ func (f filesystem) WithDb(db *db.DbHandler) FileSystem {
 		root: f.root,
 		user: f.user,
 	}
+}
+
+func (f filesystem) RunInTx(fn func(FileSystem) error) error {
+	return f.db.WithTx(f.ctx, func(db *db.DbHandler) error {
+		return fn(f.WithDb(db))
+	})
 }
 
 func (f filesystem) ResourceByPath(path string) (Resource, error) {
