@@ -95,16 +95,11 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 			return err
 		}
 
-		dbh.UpdatePermissionsForResource(ctx, db.UpdatePermissionsForResourceParams{
+		return dbh.UpdatePermissionsForResource(ctx, db.UpdatePermissionsForResourceParams{
 			ResourceID: root.ID,
 			UserID:     user.ID,
 			Permission: PermissionReadWriteShare,
 		})
-		if err != nil {
-			return err
-		}
-
-		return err
 	})
 	return
 }
