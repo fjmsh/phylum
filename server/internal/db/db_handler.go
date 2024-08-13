@@ -22,6 +22,9 @@ var latestSchemaVersion int
 
 type DbHandler struct {
 	Queries
+	tx interface {
+		Begin(context.Context) (pgx.Tx, error)
+	}
 	pool *pgxpool.Pool
 }
 
@@ -59,6 +62,7 @@ func NewDb(ctx context.Context, dsn string, trace bool) (*DbHandler, error) {
 
 	handler := &DbHandler{
 		Queries: *New(pool),
+		tx:      pool,
 		pool:    pool,
 	}
 
@@ -66,9 +70,10 @@ func NewDb(ctx context.Context, dsn string, trace bool) (*DbHandler, error) {
 }
 
 func (d DbHandler) WithTx(ctx context.Context, fn func(*DbHandler) error) error {
-	return pgx.BeginFunc(ctx, d.pool, func(tx pgx.Tx) error {
+	return pgx.BeginFunc(ctx, d.tx, func(tx pgx.Tx) error {
 		d := DbHandler{
 			Queries: *d.Queries.WithTx(tx),
+			tx:      tx,
 			pool:    d.pool,
 		}
 		return fn(&d)
