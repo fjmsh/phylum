@@ -20,37 +20,37 @@ class ResourceMkdirAction extends ApiAction<PhylumAccount> with JsonApiAction {
 
   final String id;
   final String parent;
-  final String dirName;
+  final String resourceName;
 
   ResourceMkdirAction._({
     required this.id,
     required this.parent,
-    required this.dirName,
+    required this.resourceName,
   });
 
   ResourceMkdirAction({
     required String parent,
-    required String dirName,
-  }) : this._(id: (const Uuid()).v4(), parent: parent, dirName: dirName);
+    required String resourceName,
+  }) : this._(id: (const Uuid()).v4(), parent: parent, resourceName: resourceName);
 
   static ResourceMkdirAction fromMap(Map<String, dynamic> map, dynamic data) {
     return ResourceMkdirAction._(
       id: map['id'],
       parent: map['parent'],
-      dirName: map['dirName'],
+      resourceName: map['resourceName'],
     );
   }
 
   @override
   String generateDescription(PhylumAccount account) {
-    return "Creating Directory $dirName";
+    return "Creating Directory $resourceName";
   }
 
   @override
   Map<String, dynamic>? generateRequestBody() {
     return {
       'parent_id': parent,
-      'name': dirName,
+      'name': resourceName,
     };
   }
 
@@ -63,7 +63,7 @@ class ResourceMkdirAction extends ApiAction<PhylumAccount> with JsonApiAction {
   @override
   Map<String, dynamic> toMap() => {
         'id': id,
-        'dirName': dirName,
+        'resourceName': resourceName,
         'parent': parent,
       };
 }

@@ -1,7 +1,7 @@
-import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/resource_mkdir_action.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/actions/resource_upload_action.dart';
 
-const actionDeserializers = <String, ApiActionDeserializer<PhylumAccount>>{
+const actionDeserializers = {
   ResourceMkdirAction.actionName: ResourceMkdirAction.fromMap,
+  ResourceUploadAction.actionName: ResourceUploadAction.fromMap,
 };

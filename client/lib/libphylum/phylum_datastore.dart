@@ -22,7 +22,9 @@ class PhylumDatastore with AccountListener<Map<String, dynamic>> {
 
   Future parseResourceDetails(Map<String, dynamic> data) async {
     final details = parseResourceMetadata(data['metadata']);
-    final children = (data['children'] as List).cast<Map>().map((c) => parseResourceMetadata(c.cast<String, dynamic>()));
+    final children = data.containsKey('children')
+        ? (data['children'] as List).cast<Map>().map((c) => parseResourceMetadata(c.cast<String, dynamic>()))
+        : <ResourcesCompanion>[];
     return db.insertResources([details, ...children]);
   }
 
