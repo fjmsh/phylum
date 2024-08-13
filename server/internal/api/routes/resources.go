@@ -35,9 +35,9 @@ type resourceResponse struct {
 
 type resourceDetailResponse struct {
 	Metadata             resourceResponse          `json:"metadata"`
-	Children             []resourceResponse        `json:"children"`
-	InheritedPermissions map[int32]core.Permission `json:"inherited"`
-	LocalPermissions     map[int32]core.Permission `json:"local"`
+	Children             []resourceResponse        `json:"children,omitempty"`
+	InheritedPermissions map[int32]core.Permission `json:"inherited,omitempty"`
+	LocalPermissions     map[int32]core.Permission `json:"local,omitempty"`
 }
 
 type resourceMkdirParams struct {
