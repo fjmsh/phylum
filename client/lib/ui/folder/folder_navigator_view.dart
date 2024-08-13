@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:phylum/libphylum/actions/resource_mkdir_action.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/expandable_fab.dart';
 import 'package:phylum/ui/folder/folder_contents_view.dart';
+import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
 import 'folder_navigator_stack.dart';
@@ -37,7 +40,12 @@ class FolderScaffold extends StatelessWidget {
         children: [
           ActionButton(
             icon: const Icon(Icons.folder),
-            onPressed: () {},
+            onPressed: () async {
+              final account = context.read<PhylumAccount>();
+              final dirName = await showInputDialog(context, title: 'Create New Folder', labelText: 'Folder Name');
+              if (dirName == null || dirName == "") return;
+              account.addAction(ResourceMkdirAction(parent: folderId, dirName: dirName));
+            },
           ),
           ActionButton(
             icon: const Icon(Icons.insert_drive_file),

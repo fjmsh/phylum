@@ -7,6 +7,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:phylum/app.dart';
+import 'package:phylum/libphylum/actions/deserializers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/login_page.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,7 @@ void main() async {
 
   await appDir.create();
   Hive.init(appDir.path);
+  Hive.registerAdapter(ApiActionTypeAdapter(actionDeserializers));
 
   final accountManager = await AccountManager.restore((id) async {
     final account = PhylumAccount(id: id);

@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  drift: ^2.19.1+1
+  drift_flutter: ^0.1.0
   flutter_state_notifier:
   go_router:
   hive:
@@ -20,8 +22,7 @@ dependencies:
   path_provider:
   provider:
   uri:
-  drift: ^2.19.1+1
-  drift_flutter: ^0.1.0
+  uuid:
 
 dev_dependencies:
   flutter_test:

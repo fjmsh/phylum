@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 Future showProgressDialog(
   BuildContext context, {
@@ -71,5 +72,67 @@ Future<bool?> showAlertDialog(
         ),
       ],
     ),
+  );
+}
+
+Future<String?> showInputDialog(
+  BuildContext context, {
+  String? title,
+  String? labelText,
+  String? hintText,
+  String? preset,
+  TextCapitalization capitalization = TextCapitalization.sentences,
+  int minLines = 1,
+  int maxLines = 1,
+  bool autocorrect = false,
+  TextInputType keyboardType = TextInputType.text,
+  bool Function(String)? validate,
+  List<TextInputFormatter>? formatters,
+}) {
+  TextEditingController controller = TextEditingController()..text = (preset ?? '');
+  return showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => StatefulBuilder(builder: (context, setState) {
+      return AlertDialog(
+        title: (title == null) ? null : Text(title),
+        content: SizedBox(
+          width: 360,
+          child: TextField(
+            decoration: InputDecoration(
+              labelText: labelText,
+              hintText: hintText,
+            ),
+            autofocus: true,
+            controller: controller,
+            textCapitalization: capitalization,
+            autocorrect: autocorrect,
+            minLines: minLines,
+            maxLines: maxLines,
+            keyboardType: keyboardType,
+            inputFormatters: formatters,
+            onChanged: (value) {
+              setState(() {});
+            },
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('CANCEL'),
+            onPressed: () {
+              Navigator.of(context).pop(null);
+            },
+          ),
+          ElevatedButton(
+            onPressed: (validate == null || validate(controller.text))
+                ? () {
+                    Navigator.of(context).pop(controller.text);
+                  }
+                : null,
+            child: const Text('OK'),
+          )
+        ],
+      );
+    }),
   );
 }
