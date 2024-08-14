@@ -162,7 +162,7 @@ func setupResourceLsCommand() *cobra.Command {
 					if err != nil {
 						logrus.Fatal(err)
 					}
-					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Email(), user.ID(), core.PermissionString(p)))
+					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Email, user.ID, core.PermissionString(p)))
 				}
 			}
 
@@ -174,7 +174,7 @@ func setupResourceLsCommand() *cobra.Command {
 					if err != nil {
 						logrus.Fatal(err)
 					}
-					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Email(), user.ID(), core.PermissionString(p)))
+					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Email, user.ID, core.PermissionString(p)))
 				}
 			}
 
@@ -209,7 +209,7 @@ func setupResourceChpermCommand() *cobra.Command {
 			if u, err := core.Default.UserByEmail(context.Background(), args[0]); err != nil {
 				logrus.Fatal(err)
 			} else {
-				user = u.ID()
+				user = u.ID
 			}
 
 			var r core.Resource

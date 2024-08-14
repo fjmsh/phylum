@@ -28,7 +28,7 @@ func CreateBearerAuthHandler(a *core.App) func(c *gin.Context) {
 			panic(errors.ApiErr{Status: 401, Code: errCodeAuthRequred})
 		}
 
-		user, err := a.VerifyAccessToken(ctx, authParts[1])
+		user, err := a.ReadAccessToken(ctx, authParts[1])
 		if err != nil {
 			if errors.Is(err, core.ErrTokenExpired) || errors.Is(err, core.ErrTokenInvalid) {
 				panic(errors.ApiErr{Status: 401, Code: errCodeTokenInvalid})

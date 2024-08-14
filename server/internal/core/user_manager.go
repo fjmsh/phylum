@@ -48,12 +48,12 @@ func (a App) ListUsers(ctx context.Context) ([]User, error) {
 	}
 	users := make([]User, len(results))
 	for i, r := range results {
-		users[i] = user{
-			id:          r.ID,
-			email:       r.Email,
-			displayName: r.DisplayName,
-			root:        r.Root,
-			home:        r.Home,
+		users[i] = User{
+			ID:          r.ID,
+			Email:       r.Email,
+			DisplayName: r.DisplayName,
+			Root:        r.Root,
+			Home:        r.Home,
 		}
 	}
 	return users, nil
@@ -65,14 +65,14 @@ func (a App) UserByEmail(ctx context.Context, email string) (User, error) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrUserNotFound
 		}
-		return nil, err
+		return User{}, err
 	}
-	return user{
-		id:          result.ID,
-		email:       result.Email,
-		displayName: result.DisplayName,
-		root:        result.Root,
-		home:        result.Home,
+	return User{
+		ID:          result.ID,
+		Email:       result.Email,
+		DisplayName: result.DisplayName,
+		Root:        result.Root,
+		Home:        result.Home,
 	}, nil
 }
 
@@ -82,25 +82,25 @@ func (a App) UserByID(ctx context.Context, userID int32) (User, error) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrUserNotFound
 		}
-		return nil, err
+		return User{}, err
 	}
-	return user{
-		id:          result.ID,
-		email:       result.Email,
-		displayName: result.DisplayName,
-		root:        result.Root,
-		home:        result.Home,
+	return User{
+		ID:          result.ID,
+		Email:       result.Email,
+		DisplayName: result.DisplayName,
+		Root:        result.Root,
+		Home:        result.Home,
 	}, nil
 }
 
 func (a App) UpdateUserRoot(ctx context.Context, user User, root uuid.UUID) error {
-	return a.db.UpdateUserRoot(ctx, db.UpdateUserRootParams{ID: user.ID(), Root: root})
+	return a.db.UpdateUserRoot(ctx, db.UpdateUserRootParams{ID: user.ID, Root: root})
 }
 
 func (a App) UpdateUserHome(ctx context.Context, user User, home uuid.UUID) error {
-	return a.db.UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: user.ID(), Home: home})
+	return a.db.UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: user.ID, Home: home})
 }
 
 func (a App) UpdateUserDisplayName(ctx context.Context, user User, displayName string) error {
-	return a.db.UpdateUserDisplayName(ctx, db.UpdateUserDisplayNameParams{ID: user.ID(), DisplayName: displayName})
+	return a.db.UpdateUserDisplayName(ctx, db.UpdateUserDisplayNameParams{ID: user.ID, DisplayName: displayName})
 }

@@ -27,20 +27,22 @@ var ErrTokenExpired = errors.New("token expired")
 func (a App) VerifyUserPassword(ctx context.Context, email, password string) (User, error) {
 	if user, err := a.db.UserByEmail(ctx, email); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrCredentialsInvalid
+			return User{}, ErrCredentialsInvalid
 		}
-		return nil, err
+		return User{}, err
 	} else {
 		if b, err := cryptutil.VerifyPassword(password, user.PasswordHash); err != nil {
-			return nil, err
+			return User{}, err
 		} else if !b {
-			return nil, ErrCredentialsInvalid
+			return User{}, ErrCredentialsInvalid
 		}
-		if user, err := a.UserByID(ctx, user.ID); err != nil {
-			return nil, err
-		} else {
-			return user, nil
-		}
+		return User{
+			ID:          user.ID,
+			Email:       user.Email,
+			DisplayName: user.DisplayName,
+			Root:        user.Root,
+			Home:        user.Home,
+		}, nil
 	}
 }
 
@@ -56,21 +58,23 @@ func (a App) CreateAccessToken(ctx context.Context, userID int32) (string, error
 	}
 }
 
-func (a App) VerifyAccessToken(ctx context.Context, accessToken string) (User, error) {
+func (a App) ReadAccessToken(ctx context.Context, accessToken string) (User, error) {
 	token, err := a.db.AccessTokenById(ctx, accessToken)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrTokenInvalid
+		return User{}, ErrTokenInvalid
 	} else if err != nil {
-		return nil, err
+		return User{}, err
 	}
 	if time.Now().After(token.Expires.Time) {
-		return nil, ErrTokenExpired
+		return User{}, ErrTokenExpired
 	}
-	if user, err := a.UserByID(ctx, token.UserID); err != nil {
-		return nil, err
-	} else {
-		return user, nil
-	}
+	return User{
+		ID:          token.UserID,
+		Email:       token.Email,
+		DisplayName: token.DisplayName,
+		Root:        token.Root,
+		Home:        token.Home,
+	}, nil
 }
 
 const (

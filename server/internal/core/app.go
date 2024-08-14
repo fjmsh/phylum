@@ -105,5 +105,5 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 }
 
 func (a App) OpenFileSystem(ctx context.Context, user User) (FileSystem, error) {
-	return OpenFileSystem(a.db, ctx, a.cs, user.ID(), user.Root())
+	return OpenFileSystem(a.db, ctx, a.cs, user.ID, user.Root)
 }

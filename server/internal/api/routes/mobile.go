@@ -21,7 +21,7 @@ func SetupMobileRoutes(r *gin.RouterGroup) {
 func handleMobileHomeRoute(c *gin.Context) {
 	user := auth.GetUser(c)
 	fs := auth.GetFileSystem(c)
-	r, err := fs.ResourceByID(user.Home())
+	r, err := fs.ResourceByID(user.Home)
 	if err != nil {
 		if errors.Is(err, iofs.ErrNotExist) {
 			err = errResourceNotFound

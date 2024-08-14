@@ -11,7 +11,7 @@ const keyFileSystem = "filesystem"
 func GetUser(c *gin.Context) core.User {
 	val, ok := c.Get(keyUser)
 	if !ok {
-		return nil
+		return core.User{}
 	}
 	return val.(core.User)
 }

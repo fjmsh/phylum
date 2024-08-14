@@ -24,8 +24,8 @@ func handleUserMeRoute(c *gin.Context) {
 
 func responseFromUser(user core.User) userResponse {
 	return userResponse{
-		Email:       user.Email(),
-		DisplayName: user.DisplayName(),
-		Home:        user.Home(),
+		Email:       user.Email,
+		DisplayName: user.DisplayName,
+		Home:        user.Home,
 	}
 }

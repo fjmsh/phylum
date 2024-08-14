@@ -8,21 +8,47 @@ package db
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const accessTokenById = `-- name: AccessTokenById :one
-SELECT id, created, expires, user_id from access_tokens where id = $1
+SELECT t.id, t.created, expires, user_id, u.id, email, u.created, modified, display_name, password_hash, deleted, root, home FROM access_tokens t JOIN users u ON t.user_id = u.id WHERE t.id = $1
 `
 
-func (q *Queries) AccessTokenById(ctx context.Context, id string) (AccessToken, error) {
+type AccessTokenByIdRow struct {
+	ID           string
+	Created      pgtype.Timestamp
+	Expires      pgtype.Timestamp
+	UserID       int32
+	ID_2         int32
+	Email        string
+	Created_2    pgtype.Timestamp
+	Modified     pgtype.Timestamp
+	DisplayName  string
+	PasswordHash string
+	Deleted      pgtype.Timestamp
+	Root         uuid.UUID
+	Home         uuid.UUID
+}
+
+func (q *Queries) AccessTokenById(ctx context.Context, id string) (AccessTokenByIdRow, error) {
 	row := q.db.QueryRow(ctx, accessTokenById, id)
-	var i AccessToken
+	var i AccessTokenByIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.Created,
 		&i.Expires,
 		&i.UserID,
+		&i.ID_2,
+		&i.Email,
+		&i.Created_2,
+		&i.Modified,
+		&i.DisplayName,
+		&i.PasswordHash,
+		&i.Deleted,
+		&i.Root,
+		&i.Home,
 	)
 	return i, err
 }

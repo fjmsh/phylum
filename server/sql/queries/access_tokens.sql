@@ -1,5 +1,5 @@
 -- name: AccessTokenById :one
-SELECT * from access_tokens where id = $1;
+SELECT * FROM access_tokens t JOIN users u ON t.user_id = u.id WHERE t.id = $1;
 
 -- name: InsertAccessToken :one
 INSERT INTO access_tokens(

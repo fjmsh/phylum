@@ -35,7 +35,7 @@ func createLoginRouteHandler(a *core.App) func(c *gin.Context) {
 			}
 			panic(err)
 		} else {
-			if token, err := a.CreateAccessToken(c.Request.Context(), user.ID()); err != nil {
+			if token, err := a.CreateAccessToken(c.Request.Context(), user.ID); err != nil {
 				panic(err)
 			} else {
 				c.JSON(200, loginResponse{
@@ -44,6 +44,5 @@ func createLoginRouteHandler(a *core.App) func(c *gin.Context) {
 				})
 			}
 		}
-
 	}
 }
