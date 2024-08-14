@@ -49,7 +49,7 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 	return i, err
 }
 
-const deleteRecursive = `-- name: DeleteRecursive :exec
+const deleteRecursive = `-- name: DeleteRecursive :many
 WITH RECURSIVE nodes(id, parent) AS (
     SELECT r.id, r.parent
     FROM resources r WHERE r.id = $1::uuid
@@ -61,11 +61,27 @@ WITH RECURSIVE nodes(id, parent) AS (
 UPDATE resources
 SET modified = NOW(), deleted = NOW()
 WHERE id in (SELECT id FROM nodes)
+RETURNING id
 `
 
-func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteRecursive, id)
-	return err
+func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, deleteRecursive, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const hardDeleteRecursive = `-- name: HardDeleteRecursive :many

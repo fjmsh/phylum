@@ -38,7 +38,7 @@ type FileSystem interface {
 	OpenWrite(r Resource) (io.WriteCloser, error)
 	ReadDir(r Resource) ([]Resource, error)
 	CreateMemberResource(r Resource, id uuid.UUID, name string, dir bool) (Resource, error)
-	DeleteRecursive(r Resource, hardDelete bool) error
+	DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error)
 	UpdateName(r Resource, name string) error
 	UpdateParent(r Resource, parent uuid.UUID) error
 	UpdatePermissions(r Resource, userID int32, permission Permission) error
@@ -254,23 +254,25 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	}, nil
 }
 
-func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
+func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error) {
 	if r.Permission() < PermissionReadWrite {
-		return ErrInsufficientPermissions
+		return nil, ErrInsufficientPermissions
 	}
 	// TODO: versioning
-	return f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
+	var ids uuid.UUIDs
+	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
+		var err error
 		if hardDelete {
-			deleted, err := d.HardDeleteRecursive(f.ctx, r.ID())
+			ids, err = d.HardDeleteRecursive(f.ctx, r.ID())
 			if err != nil {
 				return err
 			}
-			errors := f.cs.DeleteAll(deleted)
+			errors := f.cs.DeleteAll(ids)
 			for err := range errors {
 				logrus.Warn(err)
 			}
 		} else {
-			if err := d.DeleteRecursive(f.ctx, r.ID()); err != nil {
+			if ids, err = d.DeleteRecursive(f.ctx, r.ID()); err != nil {
 				return err
 			}
 		}
@@ -281,6 +283,12 @@ func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
 		}
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ids, nil
 }
 
 func (f filesystem) UpdateName(r Resource, name string) error {

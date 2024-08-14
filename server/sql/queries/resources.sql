@@ -35,7 +35,7 @@ WHERE id = @id::uuid;
 
 
 
--- name: DeleteRecursive :exec
+-- name: DeleteRecursive :many
 WITH RECURSIVE nodes(id, parent) AS (
     SELECT r.id, r.parent
     FROM resources r WHERE r.id = @id::uuid
@@ -46,7 +46,8 @@ WITH RECURSIVE nodes(id, parent) AS (
 )
 UPDATE resources
 SET modified = NOW(), deleted = NOW()
-WHERE id in (SELECT id FROM nodes);
+WHERE id in (SELECT id FROM nodes)
+RETURNING id;
 
 -- name: HardDeleteRecursive :many
 WITH RECURSIVE nodes(id, parent) AS (

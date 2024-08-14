@@ -52,6 +52,7 @@ func SetupResourceRoutes(r *gin.RouterGroup) {
 	group.GET("/details/:id", handleResourceDetailsRoute)
 	group.POST("/mkdir/:id", handleResourceMkdirRoute)
 	group.PUT("/upload/:id", handleResourceUploadRoute)
+	group.DELETE("/delete/:id", handleResourceDeleteRoute)
 }
 
 func handleResourceMetadataRoute(c *gin.Context) {
@@ -222,6 +223,28 @@ func handleResourceUploadRoute(c *gin.Context) {
 		panic(err)
 	}
 	c.JSON(200, detailedResponseFromResource(f, res))
+}
+
+func handleResourceDeleteRoute(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		panic(errResourceIDInvalid)
+	}
+
+	fs := auth.GetFileSystem(c)
+	r, err := fs.ResourceByID(id)
+	if err != nil {
+		if errors.Is(err, iofs.ErrNotExist) {
+			err = errResourceNotFound
+		}
+		panic(err)
+	}
+	ids, err := fs.DeleteRecursive(r, false)
+	if err != nil {
+		panic(err)
+	}
+
+	c.JSON(200, gin.H{"ids": ids})
 }
 
 func detailedResponseFromResource(fs core.FileSystem, r core.Resource) resourceDetailResponse {
