@@ -1,11 +1,11 @@
 
 -- name: ReadDir :many
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, permission) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, @permission::int
+WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, permission) AS (
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, @permission::int
     FROM resources r
     WHERE r.id = @id::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name),
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name),
       CASE
         WHEN p.permission > n.permission THEN p.permission
         ELSE n.permission
@@ -22,12 +22,12 @@ SELECT * from nodes
 WHERE CASE WHEN @include_root::boolean THEN true ELSE depth > 0 END;
 
 -- name: ResourceByPath :one
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, search, permission) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, @search::text[], @permission::int
+WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, search, permission) AS (
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, @search::text[], @permission::int
     FROM resources r
     WHERE r.id = @root::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search,
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name), n.search,
       CASE
         WHEN p.permission > n.permission THEN p.permission
         ELSE n.permission
@@ -74,7 +74,7 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
     LEFT JOIN permissions p
     ON r.id = p.resource_id AND p.user_id = @user_id::int
 )
-SELECT resid AS id, found, permission, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
+SELECT resid AS id, found, permission, r.parent, name, dir, created, modified, deleted, size, sha256sum FROM nodes n
 JOIN resources r
 ON r.id = n.resid
 WHERE n.parent IS NULL;

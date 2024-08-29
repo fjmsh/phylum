@@ -23,15 +23,15 @@ type Permission struct {
 }
 
 type Resource struct {
-	ID       uuid.UUID
-	Parent   *uuid.UUID
-	Name     string
-	Dir      bool
-	Created  pgtype.Timestamp
-	Modified pgtype.Timestamp
-	Deleted  pgtype.Timestamp
-	Size     pgtype.Int8
-	Etag     pgtype.Text
+	ID        uuid.UUID
+	Parent    *uuid.UUID
+	Name      string
+	Dir       bool
+	Created   pgtype.Timestamp
+	Modified  pgtype.Timestamp
+	Deleted   pgtype.Timestamp
+	Size      pgtype.Int8
+	Sha256sum pgtype.Text
 }
 
 type StorageBackend struct {

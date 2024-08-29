@@ -30,7 +30,7 @@ type resource struct {
 	collection bool
 	modTime    time.Time
 	delTime    *time.Time
-	etag       string
+	sha256sum  string
 }
 
 func (r resource) ID() uuid.UUID { return r.id }
@@ -50,7 +50,7 @@ func (r resource) DelTime() *time.Time { return r.delTime }
 func (r resource) IsDir() bool { return r.collection }
 
 func (r resource) ETag() string {
-	return r.etag
+	return r.sha256sum
 }
 
 func (r resource) ContentType() string {

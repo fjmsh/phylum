@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"hash"
 	"io"
 
 	"github.com/google/uuid"
@@ -13,7 +14,7 @@ type Storage interface {
 	CreateBackend(ctx context.Context, name string, driver string, params map[string]string) error
 	ListBackends() map[string]Backend
 	OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error)
-	OpenWrite(id uuid.UUID, callback func(int, string) error) (io.WriteCloser, error)
+	OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string) error) (io.WriteCloser, error)
 	Delete(id uuid.UUID) error
 	DeleteAll(ids uuid.UUIDs) []error
 }
@@ -43,11 +44,11 @@ func (s storage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, err
 		return backend.OpenRead(id, start, length)
 	}
 }
-func (s storage) OpenWrite(id uuid.UUID, callback func(int, string) error) (io.WriteCloser, error) {
+func (s storage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string) error) (io.WriteCloser, error) {
 	if backend, err := s.findStorageBackend(id); err != nil {
 		return nil, err
 	} else {
-		return backend.OpenWrite(id, callback)
+		return backend.OpenWrite(id, h, callback)
 	}
 }
 

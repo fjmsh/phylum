@@ -17,7 +17,7 @@ INSERT INTO resources(
     id, parent, name, dir, created, modified
 ) VALUES (
     $1, $2, $3, $4, NOW(), NOW()
-) RETURNING id, parent, name, dir, created, modified, deleted, size, etag
+) RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum
 `
 
 type CreateResourceParams struct {
@@ -44,7 +44,7 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 		&i.Modified,
 		&i.Deleted,
 		&i.Size,
-		&i.Etag,
+		&i.Sha256sum,
 	)
 	return i, err
 }
@@ -122,19 +122,19 @@ const updateResourceContents = `-- name: UpdateResourceContents :exec
 UPDATE resources
 SET
     size = $1,
-    etag = $2,
+    sha256sum = $2,
     modified = NOW()
 WHERE id = $3
 `
 
 type UpdateResourceContentsParams struct {
-	Size pgtype.Int8
-	Etag pgtype.Text
-	ID   uuid.UUID
+	Size      pgtype.Int8
+	Sha256sum pgtype.Text
+	ID        uuid.UUID
 }
 
 func (q *Queries) UpdateResourceContents(ctx context.Context, arg UpdateResourceContentsParams) error {
-	_, err := q.db.Exec(ctx, updateResourceContents, arg.Size, arg.Etag, arg.ID)
+	_, err := q.db.Exec(ctx, updateResourceContents, arg.Size, arg.Sha256sum, arg.ID)
 	return err
 }
 

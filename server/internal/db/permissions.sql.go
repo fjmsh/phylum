@@ -88,12 +88,12 @@ func (q *Queries) GetLocalPermissionsForResource(ctx context.Context, resourceID
 }
 
 const readDir = `-- name: ReadDir :many
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, permission) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, $2::int
+WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, permission) AS (
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, $2::int
     FROM resources r
     WHERE r.id = $3::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name),
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name),
       CASE
         WHEN p.permission > n.permission THEN p.permission
         ELSE n.permission
@@ -106,7 +106,7 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
     AND r.id != $3::uuid
     AND CASE WHEN $5::boolean THEN true ELSE depth < 1 END
 )
-SELECT id, parent, name, dir, created, modified, size, etag, depth, path, permission from nodes
+SELECT id, parent, name, dir, created, modified, size, sha256sum, depth, path, permission from nodes
 WHERE CASE WHEN $1::boolean THEN true ELSE depth > 0 END
 `
 
@@ -126,7 +126,7 @@ type ReadDirRow struct {
 	Created    pgtype.Timestamp
 	Modified   pgtype.Timestamp
 	Size       pgtype.Int8
-	Etag       pgtype.Text
+	Sha256sum  pgtype.Text
 	Depth      int32
 	Path       string
 	Permission int32
@@ -155,7 +155,7 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 			&i.Created,
 			&i.Modified,
 			&i.Size,
-			&i.Etag,
+			&i.Sha256sum,
 			&i.Depth,
 			&i.Path,
 			&i.Permission,
@@ -202,7 +202,7 @@ WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
     LEFT JOIN permissions p
     ON r.id = p.resource_id AND p.user_id = $3::int
 )
-SELECT resid AS id, found, permission, r.parent, name, dir, created, modified, deleted, size, etag FROM nodes n
+SELECT resid AS id, found, permission, r.parent, name, dir, created, modified, deleted, size, sha256sum FROM nodes n
 JOIN resources r
 ON r.id = n.resid
 WHERE n.parent IS NULL
@@ -225,7 +225,7 @@ type ResourceByIDRow struct {
 	Modified   pgtype.Timestamp
 	Deleted    pgtype.Timestamp
 	Size       pgtype.Int8
-	Etag       pgtype.Text
+	Sha256sum  pgtype.Text
 }
 
 func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (ResourceByIDRow, error) {
@@ -242,18 +242,18 @@ func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (Res
 		&i.Modified,
 		&i.Deleted,
 		&i.Size,
-		&i.Etag,
+		&i.Sha256sum,
 	)
 	return i, err
 }
 
 const resourceByPath = `-- name: ResourceByPath :one
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth, path, search, permission) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, 0, ''::text, $1::text[], $2::int
+WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, search, permission) AS (
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, $1::text[], $2::int
     FROM resources r
     WHERE r.id = $3::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.etag, n.depth + 1, concat(n.path, '/', r.name), n.search,
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name), n.search,
       CASE
         WHEN p.permission > n.permission THEN p.permission
         ELSE n.permission
@@ -266,7 +266,7 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, etag, depth
     WHERE deleted IS NULL
     AND r.name = n.search[n.depth + 1]
 )
-SELECT id, parent, name, dir, created, modified, size, etag, depth, path, search, permission FROM nodes WHERE cardinality(search) = depth
+SELECT id, parent, name, dir, created, modified, size, sha256sum, depth, path, search, permission FROM nodes WHERE cardinality(search) = depth
 `
 
 type ResourceByPathParams struct {
@@ -284,7 +284,7 @@ type ResourceByPathRow struct {
 	Created    pgtype.Timestamp
 	Modified   pgtype.Timestamp
 	Size       pgtype.Int8
-	Etag       pgtype.Text
+	Sha256sum  pgtype.Text
 	Depth      int32
 	Path       string
 	Search     []string
@@ -307,7 +307,7 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 		&i.Created,
 		&i.Modified,
 		&i.Size,
-		&i.Etag,
+		&i.Sha256sum,
 		&i.Depth,
 		&i.Path,
 		&i.Search,

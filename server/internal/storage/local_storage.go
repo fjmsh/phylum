@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"crypto/md5"
 	"encoding/hex"
 	"errors"
 	"hash"
@@ -45,12 +44,12 @@ func (l localStorage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser
 	return file, nil
 }
 
-func (l localStorage) OpenWrite(id uuid.UUID, callback func(int, string) error) (io.WriteCloser, error) {
+func (l localStorage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string) error) (io.WriteCloser, error) {
 	file, err := os.OpenFile(l.path(id), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
 	if err != nil || callback == nil {
 		return file, err
 	}
-	return &hasher{dest: file, sum: md5.New(), closeCallback: func(len int, sum hash.Hash, err error) error {
+	return &hasher{dest: file, sum: h(), closeCallback: func(len int, sum hash.Hash, err error) error {
 		if err != nil {
 			return err
 		}

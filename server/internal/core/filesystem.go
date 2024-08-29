@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"io"
 	"io/fs"
@@ -71,7 +72,7 @@ func OpenFileSystem(dbh *db.DbHandler, ctx context.Context, cs storage.Storage, 
 			collection: true,
 			modTime:    res.Modified.Time,
 			delTime:    nil,
-			etag:       "",
+			sha256sum:  "",
 		}
 	}
 	return filesystem{
@@ -128,7 +129,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		collection: res.Dir,
 		modTime:    res.Modified.Time,
 		delTime:    nil,
-		etag:       res.Etag.String,
+		sha256sum:  res.Sha256sum.String,
 	}, nil
 }
 
@@ -155,7 +156,7 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 		collection: res.Dir,
 		modTime:    res.Modified.Time,
 		delTime:    delTime,
-		etag:       res.Etag.String,
+		sha256sum:  res.Sha256sum.String,
 	}, nil
 }
 func (f filesystem) OpenRead(r Resource, start, length int64) (io.ReadCloser, error) {
@@ -169,11 +170,11 @@ func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
 	if r.Permission() < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
 	}
-	return f.cs.OpenWrite(r.ID(), func(len int, etag string) error {
+	return f.cs.OpenWrite(r.ID(), sha256.New, func(len int, sum string) error {
 		return f.db.UpdateResourceContents(f.ctx, db.UpdateResourceContentsParams{
-			ID:   r.ID(),
-			Size: pgtype.Int8{Int64: int64(len), Valid: true},
-			Etag: pgtype.Text{String: etag, Valid: true},
+			ID:        r.ID(),
+			Size:      pgtype.Int8{Int64: int64(len), Valid: true},
+			Sha256sum: pgtype.Text{String: sum, Valid: true},
 		})
 	})
 }
@@ -204,7 +205,7 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 			modTime:    c.Modified.Time,
 			delTime:    nil,
 			collection: c.Dir,
-			etag:       c.Etag.String,
+			sha256sum:  c.Sha256sum.String,
 		}
 	}
 	return result, nil
@@ -250,7 +251,7 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 		modTime:    result.Modified.Time,
 		delTime:    nil,
 		collection: dir,
-		etag:       "",
+		sha256sum:  "",
 	}, nil
 }
 

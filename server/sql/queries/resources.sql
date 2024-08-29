@@ -9,7 +9,7 @@ INSERT INTO resources(
 UPDATE resources
 SET
     size = $1,
-    etag = $2,
+    sha256sum = $2,
     modified = NOW()
 WHERE id = $3;
 

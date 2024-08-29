@@ -2,7 +2,7 @@ package storage
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -70,13 +70,13 @@ func (s minioStorage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser
 	return s.client.GetObject(context.Background(), s.bucketName, s.prefix+id.String(), minio.GetObjectOptions{})
 }
 
-func (s minioStorage) OpenWrite(id uuid.UUID, callback func(int, string) error) (io.WriteCloser, error) {
+func (s minioStorage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string) error) (io.WriteCloser, error) {
 	path := filepath.Join(s.tmp, id.String())
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
 	if err != nil {
 		return nil, err
 	}
-	return &hasher{dest: file, sum: md5.New(), closeCallback: func(len int, sum hash.Hash, err error) error {
+	return &hasher{dest: file, sum: sha256.New(), closeCallback: func(len int, sum hash.Hash, err error) error {
 		if err != nil {
 			return err
 		}
