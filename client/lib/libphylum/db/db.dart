@@ -9,13 +9,22 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(String id) : super(_openConnection(id));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
 
   Future insertResources(Iterable<Insertable<Resource>> list) async {
     await batch((batch) {
       batch.insertAll(resources, list, mode: InsertMode.insertOrReplace);
     });
   }
+
+  MigrationStrategy get migration => MigrationStrategy(
+      onCreate: (m) => m.createAll(),
+      onUpgrade: (m, from, to) async {
+        if (from == 1) {
+          await m.drop(resources);
+          await m.create(resources);
+        }
+      });
 
   static QueryExecutor _openConnection(String id) {
     // TODO: Don't depend on flutter

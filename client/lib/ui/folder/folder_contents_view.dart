@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/actions/resource_rename_action.dart';
+import 'package:phylum/libphylum/actions/action_resource_delete.dart';
+import 'package:phylum/libphylum/actions/action_resource_rename.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
@@ -37,7 +38,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
       onRefresh: _refresh,
       child: Center(
         child: StreamBuilder(
-            stream: account.datastore.db.managers.resources.filter((f) => f.parent.id.equals(widget.id)).watch(),
+            stream: account.datastore.db.managers.resources.filter((f) => f.parent.id.equals(widget.id) & f.deleted.equals(false)).watch(),
             builder: (context, snapshot) => ListView(
                   children: [
                     if (snapshot.hasData)
@@ -67,6 +68,11 @@ class _FolderContentsViewState extends State<FolderContentsView> {
         final name = await showInputDialog(context, title: 'Rename', preset: r.name);
         if (name != null) {
           account.api.sendRequest(ResourceRenameAction(r: r, name: name));
+        }
+      case ResourceOption.delete:
+        final confirm = await showAlertDialog(context, title: 'Delete ${r.name}?', positiveText: 'YES', negativeText: 'NO') ?? false;
+        if (confirm) {
+          account.api.sendRequest(ResourceDeleteAction(r: r));
         }
     }
   }

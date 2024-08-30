@@ -1,8 +1,8 @@
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:phylum/libphylum/actions/resource_mkdir_action.dart';
-import 'package:phylum/libphylum/actions/resource_upload_action.dart';
+import 'package:phylum/libphylum/actions/action_resource_mkdir.dart';
+import 'package:phylum/libphylum/actions/action_resource_upload.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/expandable_fab.dart';
 import 'package:phylum/ui/folder/folder_contents_view.dart';
