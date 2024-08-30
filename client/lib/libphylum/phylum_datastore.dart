@@ -22,9 +22,14 @@ class PhylumDatastore with AccountListener<Map<String, dynamic>> {
 
   Future parseResourceDetails(Map<String, dynamic> data) async {
     final details = parseResourceMetadata(data['metadata']);
+    final existing = Set.from(await db.managers.resources.filter((f) => f.parent.id.equals(data['metadata']['id'])).map((r) => r.id).get());
     final children = data.containsKey('children')
-        ? (data['children'] as List).cast<Map>().map((c) => parseResourceMetadata(c.cast<String, dynamic>()))
+        ? (data['children'] as List).cast<Map>().map((c) {
+            existing.remove(c['id']);
+            return parseResourceMetadata(c.cast<String, dynamic>());
+          })
         : <ResourcesCompanion>[];
+    await db.resources.deleteWhere((o) => o.id.isIn(List.from(existing)));
     return db.insertResources([details, ...children]);
   }
 

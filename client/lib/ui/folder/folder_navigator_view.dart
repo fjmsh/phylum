@@ -46,7 +46,7 @@ class FolderScaffold extends StatelessWidget {
               final account = context.read<PhylumAccount>();
               final dirName = await showInputDialog(context, title: 'Create New Folder', labelText: 'Folder Name');
               if (dirName == null || dirName == "") return;
-              account.addAction(ResourceMkdirAction(parent: folderId, resourceName: dirName));
+              account.api.sendRequest(ResourceMkdirAction(parent: folderId, resourceName: dirName));
             },
           ),
           ActionButton(
