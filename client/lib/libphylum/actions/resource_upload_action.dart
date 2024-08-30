@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:drift/drift.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -26,19 +28,31 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
   final String parent;
   final String resourceName;
   final String path;
+  final int size;
 
   ResourceUploadAction._({
     required this.id,
     required this.parent,
     required this.resourceName,
     required this.path,
+    required this.size,
   });
 
-  ResourceUploadAction({
+  static Future<ResourceUploadAction> fromPath({
     required String parent,
     required String resourceName,
     required String path,
-  }) : this._(id: (const Uuid()).v4(), parent: parent, resourceName: resourceName, path: path);
+  }) async {
+    final f = File(path);
+    final size = await f.length();
+    return ResourceUploadAction._(
+      id: (const Uuid()).v4(),
+      parent: parent,
+      resourceName: resourceName,
+      path: path,
+      size: size,
+    );
+  }
 
   static ResourceUploadAction fromMap(Map<String, dynamic> map, dynamic data) {
     return ResourceUploadAction._(
@@ -46,6 +60,7 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
       parent: map['parent'],
       resourceName: map['dirName'],
       path: map['path'],
+      size: map['size'],
     );
   }
 
@@ -55,10 +70,22 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
   }
 
   @override
-  FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {}
+  FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
+    account.datastore.db.managers.resources.create((o) => o(
+          dir: true,
+          etag: "",
+          size: size,
+          id: id,
+          parent: Value(parent),
+          modified: DateTime.now(),
+          name: resourceName,
+        ));
+  }
 
   @override
-  FutureOr<void> revertOptimisticUpdate(PhylumAccount account) {}
+  FutureOr<void> revertOptimisticUpdate(PhylumAccount account) {
+    account.datastore.db.managers.resources.filter((f) => f.id.equals(id)).delete();
+  }
 
   @override
   Map<String, dynamic> toMap() => {
@@ -66,6 +93,7 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
         'parent': parent,
         'resourceName': resourceName,
         'path': path,
+        'size': size,
       };
 
   @override

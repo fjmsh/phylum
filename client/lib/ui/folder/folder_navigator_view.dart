@@ -55,7 +55,8 @@ class FolderScaffold extends StatelessWidget {
               final account = context.read<PhylumAccount>();
               final files = await openFiles();
               for (final file in files) {
-                final error = await account.api.sendRequest(ResourceUploadAction(parent: folderId, resourceName: file.name, path: file.path));
+                final action = await ResourceUploadAction.fromPath(parent: folderId, resourceName: file.name, path: file.path);
+                final error = await account.api.sendRequest(action);
                 if (error != null) {
                   debugPrint(error.message);
                 }
