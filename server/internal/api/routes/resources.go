@@ -14,12 +14,13 @@ import (
 )
 
 var (
-	errResourceIDInvalid    = errors.New(http.StatusBadRequest, "resource_id_invalid", "Invalid UUID")
-	errResourceIDConflict   = errors.New(http.StatusBadRequest, "resource_id_conflict", "ID already in use")
-	errResourceNotFound     = errors.New(http.StatusNotFound, "resource_not_found", "Resource Not Found")
-	errResourceNotDirectory = errors.New(http.StatusMethodNotAllowed, "resource_not_directory", "Resource Not Directory")
-	errInvalidParams        = errors.New(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
-	errResourceNameConflict = errors.New(http.StatusConflict, "name_conflict", "Resource Name Conflict")
+	errInsufficientPermissions = errors.New(http.StatusBadRequest, "insufficient_permissions", "Insufficient Permissions")
+	errResourceIDInvalid       = errors.New(http.StatusBadRequest, "resource_id_invalid", "Invalid UUID")
+	errResourceIDConflict      = errors.New(http.StatusBadRequest, "resource_id_conflict", "ID already in use")
+	errResourceNotFound        = errors.New(http.StatusNotFound, "resource_not_found", "Resource Not Found")
+	errResourceNotDirectory    = errors.New(http.StatusMethodNotAllowed, "resource_not_directory", "Resource Not Directory")
+	errInvalidParams           = errors.New(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
+	errResourceNameConflict    = errors.New(http.StatusConflict, "name_conflict", "Resource Name Conflict")
 )
 
 type resourceResponse struct {
@@ -45,12 +46,17 @@ type resourceMkdirParams struct {
 	ParentID uuid.UUID `json:"parent_id" binding:"required"`
 }
 
+type resourceRenameParams struct {
+	Name string `json:"name" binding:"required"`
+}
+
 func SetupResourceRoutes(r *gin.RouterGroup) {
 	group := r.Group("/resources")
 	group.GET("/ls/:id", handleResourceLsRoute)
 	group.GET("/metadata/:id", handleResourceMetadataRoute)
 	group.GET("/details/:id", handleResourceDetailsRoute)
 	group.POST("/mkdir/:id", handleResourceMkdirRoute)
+	group.POST("/rename/:id", handleResourceRenameRoute)
 	group.PUT("/upload/:id", handleResourceUploadRoute)
 	group.DELETE("/delete/:id", handleResourceDeleteRoute)
 }
@@ -88,11 +94,11 @@ func handleResourceLsRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	if !resource.IsDir() {
-		panic(errResourceNotDirectory)
-	}
 	children, err := fs.ReadDir(resource)
 	if err != nil {
+		if errors.Is(err, core.ErrResourceNotCollection) {
+			panic(errResourceNotDirectory)
+		}
 		panic(err)
 	}
 	results := make([]resourceResponse, len(children))
@@ -143,16 +149,51 @@ func handleResourceMkdirRoute(c *gin.Context) {
 
 	res, err := fs.CreateMemberResource(parent, resourceID, params.Name, true)
 	if err != nil {
-		if err == core.ErrResourceNameConflict {
-			err = errResourceNameConflict
+		if errors.Is(err, core.ErrInsufficientPermissions) {
+			panic(errInsufficientPermissions)
 		}
-		if err == core.ErrResourceIDConflict {
-			err = errResourceIDConflict
+		if errors.Is(err, core.ErrResourceNotCollection) {
+			panic(errResourceNotDirectory)
+		}
+		if errors.Is(err, core.ErrResourceNameConflict) {
+			panic(errResourceNameConflict)
+		}
+		if errors.Is(err, core.ErrResourceIDConflict) {
+			panic(errResourceIDConflict)
 		}
 		panic(err)
 	}
 
 	c.JSON(200, detailedResponseFromResource(fs, res))
+}
+
+func handleResourceRenameRoute(c *gin.Context) {
+	var params resourceRenameParams
+	err := c.ShouldBindJSON(&params)
+	if err != nil || params.Name == "" {
+		panic(errInvalidParams)
+	}
+
+	resourceID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		panic(errResourceIDInvalid)
+	}
+
+	fs := auth.GetFileSystem(c)
+	r, err := fs.ResourceByID(resourceID)
+	if err != nil {
+		if errors.Is(err, iofs.ErrNotExist) {
+			panic(errResourceNotFound)
+		}
+		panic(err)
+	}
+	if err := fs.UpdateName(r, params.Name); err != nil {
+		if errors.Is(err, core.ErrInsufficientPermissions) {
+			panic(errInsufficientPermissions)
+		}
+		panic(err)
+	}
+	c.JSON(200, gin.H{})
 }
 
 func handleResourceUploadRoute(c *gin.Context) {
@@ -181,11 +222,17 @@ func handleResourceUploadRoute(c *gin.Context) {
 
 		res, err := fs.CreateMemberResource(parent, resourceID, name, false)
 		if err != nil {
-			if err == core.ErrResourceNameConflict {
-				return errResourceNameConflict
+			if errors.Is(err, core.ErrInsufficientPermissions) {
+				panic(errInsufficientPermissions)
 			}
-			if err == core.ErrResourceIDConflict {
-				return errResourceIDConflict
+			if errors.Is(err, core.ErrResourceNotCollection) {
+				panic(errResourceNotDirectory)
+			}
+			if errors.Is(err, core.ErrResourceNameConflict) {
+				panic(errResourceNameConflict)
+			}
+			if errors.Is(err, core.ErrResourceIDConflict) {
+				panic(errResourceIDConflict)
 			}
 			return err
 		}

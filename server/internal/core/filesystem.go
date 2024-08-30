@@ -183,6 +183,9 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 	if r.Permission() < PermissionReadOnly {
 		return nil, ErrInsufficientPermissions
 	}
+	if !r.IsDir() {
+		return nil, ErrResourceNotCollection
+	}
 	children, err := f.db.ReadDir(f.ctx, db.ReadDirParams{
 		ID:          r.ID(),
 		Permission:  r.Permission(),
