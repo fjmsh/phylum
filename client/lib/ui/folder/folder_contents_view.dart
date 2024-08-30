@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/actions/resource_rename_action.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
+import 'package:phylum/ui/folder/resource_options_dialog.dart';
+import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
 import 'folder_navigator_stack.dart';
@@ -42,13 +45,30 @@ class _FolderContentsViewState extends State<FolderContentsView> {
                         ListTile(
                           leading: r.getIcon(),
                           title: Text(r.name),
-                          trailing: r.dir ? null : Text(r.getSizeString()),
-                          onTap: () => context.read<FolderNavigatorStack>().push(r.id),
+                          subtitle: r.dir ? const Text('Folder') : Text(r.getSizeString()),
+                          trailing: IconButton(icon: Icon(Icons.adaptive.more), onPressed: () => showResourceOptions(account, r)),
+                          onTap: r.dir ? () => context.read<FolderNavigatorStack>().push(r.id) : null,
+                          onLongPress: () => showResourceOptions(account, r),
                         ),
                   ],
                 )),
       ),
     );
+  }
+
+  void showResourceOptions(PhylumAccount account, Resource r) async {
+    final context = this.context;
+    final option = await showModalBottomSheet(context: context, builder: (context) => const ResourceOptionsList());
+    if (!context.mounted) {
+      return;
+    }
+    switch (option) {
+      case ResourceOption.rename:
+        final name = await showInputDialog(context, title: 'Rename', preset: r.name);
+        if (name != null) {
+          account.api.sendRequest(ResourceRenameAction(r: r, name: name));
+        }
+    }
   }
 }
 
