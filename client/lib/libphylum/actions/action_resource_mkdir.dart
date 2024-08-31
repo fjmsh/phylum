@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:uuid/uuid.dart';
 
 class ResourceMkdirAction extends ApiAction<PhylumAccount> with JsonApiAction {
   static const actionName = 'resourceMkdir';
@@ -23,19 +22,14 @@ class ResourceMkdirAction extends ApiAction<PhylumAccount> with JsonApiAction {
   final String parent;
   final String resourceName;
 
-  ResourceMkdirAction._({
+  ResourceMkdirAction({
     required this.id,
     required this.parent,
     required this.resourceName,
   });
 
-  ResourceMkdirAction({
-    required String parent,
-    required String resourceName,
-  }) : this._(id: (const Uuid()).v4(), parent: parent, resourceName: resourceName);
-
   static ResourceMkdirAction fromMap(Map<String, dynamic> map, dynamic data) {
-    return ResourceMkdirAction._(
+    return ResourceMkdirAction(
       id: map['id'],
       parent: map['parent'],
       resourceName: map['resourceName'],

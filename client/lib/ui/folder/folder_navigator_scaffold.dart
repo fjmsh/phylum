@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:path/path.dart' as p;
 import 'package:phylum/libphylum/actions/action_resource_mkdir.dart';
 import 'package:phylum/libphylum/actions/action_resource_upload.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -13,8 +14,11 @@ import 'package:phylum/ui/folder/folder_contents_view.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 
 import 'folder_navigator_stack.dart';
+
+const uuid = Uuid();
 
 class FolderNavigatorView extends StatelessWidget {
   final String root;
@@ -59,7 +63,7 @@ class FolderScaffoldDrawer extends StatelessWidget {
               final account = context.read<PhylumAccount>();
               final dirName = await showInputDialog(context, title: 'Create New Folder', labelText: 'Folder Name');
               if (dirName == null || dirName == "") return;
-              account.api.sendRequest(ResourceMkdirAction(parent: folderId, resourceName: dirName));
+              account.addAction(ResourceMkdirAction(id: uuid.v4(), parent: folderId, resourceName: dirName));
             },
           ),
           ActionButton(
@@ -69,17 +73,14 @@ class FolderScaffoldDrawer extends StatelessWidget {
               final files = await openFiles();
               for (final file in files) {
                 final action = await ResourceUploadAction.fromPath(parent: folderId, resourceName: file.name, path: file.path);
-                final error = await account.api.sendRequest(action);
-                if (error != null) {
-                  debugPrint(error.message);
-                }
+                await account.addAction(action);
               }
             },
           ),
           ActionButton(
             icon: const Icon(Icons.drive_folder_upload_outlined),
             onPressed: () async {
-              // final account = context.read<PhylumAccount>();
+              final account = context.read<PhylumAccount>();
               final path = await getDirectoryPath();
               if (path == null) return;
               if (!context.mounted) return;
@@ -98,13 +99,19 @@ class FolderScaffoldDrawer extends StatelessWidget {
                   ) ??
                   false;
               if (!confirm || !context.mounted) return;
-              // for (final file in files) {
-              //   final action = await ResourceUploadAction.fromPath(parent: folderId, resourceName: file.name, path: file.path);
-              //   final error = await account.api.sendRequest(action);
-              //   if (error != null) {
-              //     debugPrint(error.message);
-              //   }
-              // }
+              final dirIds = <String, String>{};
+              dirIds[path] = uuid.v4();
+              account.addAction(ResourceMkdirAction(id: dirIds[path]!, parent: folderId, resourceName: p.basename(path)));
+              for (final dir in tree.dirs) {
+                dirIds[dir] = uuid.v4();
+                final parent = p.dirname(dir);
+                account.addAction(ResourceMkdirAction(id: dirIds[dir]!, parent: dirIds[parent]!, resourceName: p.basename(dir)));
+              }
+              for (final file in tree.files) {
+                final parent = p.dirname(file);
+                final action = await ResourceUploadAction.fromPath(parent: dirIds[parent]!, resourceName: p.basename(file), path: file);
+                await account.addAction(action);
+              }
             },
           ),
         ],
@@ -130,7 +137,7 @@ class DirTree {
   });
 
   static Future<DirTree> stat(String path) {
-    final dir = Directory(path).absolute;
+    final dir = Directory(path);
     final completer = Completer<DirTree>();
     final files = <String>[];
     final dirs = <String>[];
