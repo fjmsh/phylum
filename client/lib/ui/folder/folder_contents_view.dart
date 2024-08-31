@@ -6,6 +6,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
 import 'package:phylum/ui/folder/resource_options_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/file_size.dart';
 import 'package:provider/provider.dart';
 
 import 'folder_navigator_stack.dart';
@@ -46,7 +47,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
                         ListTile(
                           leading: r.getIcon(),
                           title: Text(r.name),
-                          subtitle: r.dir ? const Text('Folder') : Text(r.getSizeString()),
+                          subtitle: r.dir ? const Text('Folder') : Text(r.size.getHumanString()),
                           trailing: IconButton(icon: Icon(Icons.adaptive.more), onPressed: () => showResourceOptions(account, r)),
                           onTap: r.dir ? () => context.read<FolderNavigatorStack>().push(r.id) : null,
                           onLongPress: () => showResourceOptions(account, r),
@@ -90,17 +91,5 @@ extension ResourceViewExtensions on Resource {
       'txt' || 'csv' => const Icon(Icons.article),
       _ => const Icon(Icons.insert_drive_file),
     };
-  }
-
-  String getSizeString() {
-    const suffixes = ['B', 'K', 'M', 'G'];
-    var sz = size;
-    for (var i = 0; i < suffixes.length; i++) {
-      if (sz < 1000) {
-        return '$sz ${suffixes[i]}';
-      }
-      sz ~/= 1024;
-    }
-    return '$sz T';
   }
 }

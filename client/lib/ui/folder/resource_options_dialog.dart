@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 enum ResourceOption {
-  rename(Icons.edit, 'Rename'),
+  rename(Icons.drive_file_rename_outline, 'Rename'),
   delete(Icons.delete, 'Delete');
 
   const ResourceOption(this.icon, this.text);
