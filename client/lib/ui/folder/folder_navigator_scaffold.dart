@@ -5,6 +5,7 @@ import 'package:phylum/libphylum/actions/action_resource_mkdir.dart';
 import 'package:phylum/libphylum/actions/action_resource_upload.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/expandable_fab.dart';
+import 'package:phylum/ui/folder/nav_list.dart';
 import 'package:phylum/ui/folder/folder_contents_view.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
@@ -20,28 +21,36 @@ class FolderNavigatorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return StateNotifierProvider<FolderNavigatorStack, FolderNavigatorState>(
       create: (context) => FolderNavigatorStack(root),
-      builder: (context, child) => const FolderScaffold(),
+      builder: (context, child) => const FolderScaffoldResponsive(),
     );
   }
 }
 
-class FolderScaffold extends StatelessWidget {
-  const FolderScaffold({super.key});
+class FolderScaffoldResponsive extends StatelessWidget {
+  const FolderScaffoldResponsive({super.key});
 
   @override
   Widget build(BuildContext context) {
     final nav = context.watch<FolderNavigatorState>();
     final folderId = nav.folderId;
+    return MediaQuery.of(context).size.width < 800 ? FolderScaffoldDrawer(folderId: folderId) : FolderScaffoldSidebar(folderId: folderId);
+  }
+}
+
+class FolderScaffoldDrawer extends StatelessWidget {
+  final String folderId;
+  FolderScaffoldDrawer({required this.folderId}) : super(key: ValueKey(folderId));
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Phylum'),
-        leading: nav.isRoot ? null : BackButton(onPressed: context.read<FolderNavigatorStack>().pop),
-      ),
+      appBar: AppBar(title: const Text('Phylum')),
+      drawer: const Drawer(child: NavList(showFab: false)),
       floatingActionButton: ExpandableFab(
         distance: 112,
         children: [
           ActionButton(
-            icon: const Icon(Icons.folder),
+            icon: const Icon(Icons.create_new_folder),
             onPressed: () async {
               final account = context.read<PhylumAccount>();
               final dirName = await showInputDialog(context, title: 'Create New Folder', labelText: 'Folder Name');
@@ -65,7 +74,28 @@ class FolderScaffold extends StatelessWidget {
           ),
         ],
       ),
-      body: FolderContentsView(key: ValueKey(folderId), id: folderId),
+      body: FolderContentsView(id: folderId),
+    );
+  }
+}
+
+class FolderScaffoldSidebar extends StatelessWidget {
+  final String folderId;
+  FolderScaffoldSidebar({required this.folderId}) : super(key: ValueKey(folderId));
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      drawer: const NavList(showFab: false),
+      body: Row(
+        children: [
+          SizedBox.fromSize(
+            size: const Size.fromWidth(240),
+            child: const NavList(showFab: true),
+          ),
+          Expanded(child: FolderContentsView(id: folderId)),
+        ],
+      ),
     );
   }
 }
