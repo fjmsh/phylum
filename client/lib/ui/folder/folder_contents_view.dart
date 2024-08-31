@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/actions/action_resource_delete.dart';
-import 'package:phylum/libphylum/actions/action_resource_rename.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
 import 'package:phylum/ui/folder/resource_options_dialog.dart';
-import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:provider/provider.dart';
 
@@ -48,34 +45,13 @@ class _FolderContentsViewState extends State<FolderContentsView> {
                           leading: r.getIcon(),
                           title: Text(r.name),
                           subtitle: r.dir ? const Text('Folder') : Text(r.size.getHumanString()),
-                          trailing: IconButton(icon: Icon(Icons.adaptive.more), onPressed: () => showResourceOptions(account, r)),
+                          trailing: ResourceOptionsButton(r: r),
                           onTap: r.dir ? () => context.read<FolderNavigatorStack>().push(r.id) : null,
-                          onLongPress: () => showResourceOptions(account, r),
                         ),
                   ],
                 )),
       ),
     );
-  }
-
-  void showResourceOptions(PhylumAccount account, Resource r) async {
-    final context = this.context;
-    final option = await showModalBottomSheet(context: context, builder: (context) => const ResourceOptionsList());
-    if (!context.mounted) {
-      return;
-    }
-    switch (option) {
-      case ResourceOption.rename:
-        final name = await showInputDialog(context, title: 'Rename', preset: r.name);
-        if (name != null) {
-          account.addAction(ResourceRenameAction(r: r, name: name));
-        }
-      case ResourceOption.delete:
-        final confirm = await showAlertDialog(context, title: 'Delete ${r.name}?', positiveText: 'YES', negativeText: 'NO') ?? false;
-        if (confirm) {
-          account.addAction(ResourceDeleteAction(r: r));
-        }
-    }
   }
 }
 

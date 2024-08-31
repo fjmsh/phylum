@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/actions/action_resource_delete.dart';
+import 'package:phylum/libphylum/actions/action_resource_rename.dart';
+import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/util/dialogs.dart';
+import 'package:provider/provider.dart';
 
 enum ResourceOption {
   rename(Icons.drive_file_rename_outline, 'Rename'),
@@ -8,6 +14,55 @@ enum ResourceOption {
 
   final IconData icon;
   final String text;
+}
+
+class ResourceOptionsButton extends StatelessWidget {
+  final Resource r;
+
+  const ResourceOptionsButton({super.key, required this.r});
+
+  @override
+  Widget build(BuildContext context) {
+    final account = context.read<PhylumAccount>();
+    return MediaQuery.of(context).size.width < 800
+        ? IconButton(icon: Icon(Icons.adaptive.more), onPressed: () => showResourceOptions(context, account))
+        : PopupMenuButton(
+            itemBuilder: (context) => [
+              for (final o in ResourceOption.values)
+                PopupMenuItem(
+                    value: o,
+                    child: ListTile(
+                      title: Text(o.text),
+                      leading: Icon(o.icon),
+                      visualDensity: VisualDensity.compact,
+                    )),
+            ],
+            onSelected: (o) => handleResourceOption(context, account, o),
+          );
+  }
+
+  void showResourceOptions(BuildContext context, PhylumAccount account) async {
+    final option = await showModalBottomSheet(context: context, builder: (context) => const ResourceOptionsList());
+    if (!context.mounted) {
+      return;
+    }
+    handleResourceOption(context, account, option);
+  }
+
+  void handleResourceOption(BuildContext context, final PhylumAccount account, ResourceOption option) async {
+    switch (option) {
+      case ResourceOption.rename:
+        final name = await showInputDialog(context, title: 'Rename', preset: r.name);
+        if (name != null) {
+          account.addAction(ResourceRenameAction(r: r, name: name));
+        }
+      case ResourceOption.delete:
+        final confirm = await showAlertDialog(context, title: 'Delete ${r.name}?', positiveText: 'YES', negativeText: 'NO') ?? false;
+        if (confirm) {
+          account.addAction(ResourceDeleteAction(r: r));
+        }
+    }
+  }
 }
 
 class ResourceOptionsList extends StatelessWidget {
