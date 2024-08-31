@@ -68,12 +68,12 @@ class _FolderContentsViewState extends State<FolderContentsView> {
       case ResourceOption.rename:
         final name = await showInputDialog(context, title: 'Rename', preset: r.name);
         if (name != null) {
-          account.api.sendRequest(ResourceRenameAction(r: r, name: name));
+          account.addAction(ResourceRenameAction(r: r, name: name));
         }
       case ResourceOption.delete:
         final confirm = await showAlertDialog(context, title: 'Delete ${r.name}?', positiveText: 'YES', negativeText: 'NO') ?? false;
         if (confirm) {
-          account.api.sendRequest(ResourceDeleteAction(r: r));
+          account.addAction(ResourceDeleteAction(r: r));
         }
     }
   }
