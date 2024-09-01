@@ -46,7 +46,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
                           title: Text(r.name),
                           subtitle: r.dir ? const Text('Folder') : Text(r.size.getHumanString()),
                           trailing: ResourceOptionsButton(r: r),
-                          onTap: r.dir ? () => context.read<FolderNavigatorStack>().push(r.id) : null,
+                          onTap: r.dir ? () => context.read<FolderNavigatorStack>().push(r.id, r.name) : null,
                         ),
                   ],
                 )),

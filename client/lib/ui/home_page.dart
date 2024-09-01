@@ -18,6 +18,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return FolderNavigatorView(root: context.read<PhylumAccount>().userHome);
+    return FolderNavigatorView(root: context.read<PhylumAccount>().userHome, name: 'Home');
   }
 }
