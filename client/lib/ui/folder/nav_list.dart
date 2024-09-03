@@ -34,56 +34,58 @@ class NavList extends StatelessWidget {
       return _SyncState.done;
     });
 
-    return ListView(
-      children: [
-        if (_fabFolderId != null)
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('New'),
-              onPressed: () async {
-                final selected = await showMenu(
-                  context: context,
-                  position: const RelativeRect.fromLTRB(0, 0, 0, 0),
-                  items: [
-                    const PopupMenuItem(value: _NewActions.createFolder, child: Text('Create Folder')),
-                    const PopupMenuItem(enabled: false, height: 16, child: Divider()),
-                    const PopupMenuItem(value: _NewActions.uploadFiles, child: Text('Upload File(s)')),
-                    const PopupMenuItem(value: _NewActions.uploadFolder, child: Text('Upload Folder')),
-                  ],
-                );
-                if (!context.mounted) return;
+    return ExcludeFocusTraversal(
+      child: ListView(
+        children: [
+          if (_fabFolderId != null)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('New'),
+                onPressed: () async {
+                  final selected = await showMenu(
+                    context: context,
+                    position: const RelativeRect.fromLTRB(0, 0, 0, 0),
+                    items: [
+                      const PopupMenuItem(value: _NewActions.createFolder, child: Text('Create Folder')),
+                      const PopupMenuItem(enabled: false, height: 16, child: Divider()),
+                      const PopupMenuItem(value: _NewActions.uploadFiles, child: Text('Upload File(s)')),
+                      const PopupMenuItem(value: _NewActions.uploadFolder, child: Text('Upload Folder')),
+                    ],
+                  );
+                  if (!context.mounted) return;
 
-                switch (selected) {
-                  case _NewActions.createFolder:
-                    createDirectory(context, _fabFolderId);
-                  case _NewActions.uploadFiles:
-                    pickAndUploadFiles(context, _fabFolderId);
-                  case _NewActions.uploadFolder:
-                    pickAndUploadDirectory(context, _fabFolderId);
-                }
-              },
+                  switch (selected) {
+                    case _NewActions.createFolder:
+                      createDirectory(context, _fabFolderId);
+                    case _NewActions.uploadFiles:
+                      pickAndUploadFiles(context, _fabFolderId);
+                    case _NewActions.uploadFolder:
+                      pickAndUploadDirectory(context, _fabFolderId);
+                  }
+                },
+              ),
             ),
+          ListTile(
+            leading: const Icon(Icons.home),
+            title: const Text('Home'),
+            onTap: () {},
           ),
-        ListTile(
-          leading: const Icon(Icons.home),
-          title: const Text('Home'),
-          onTap: () {},
-        ),
-        const Divider(),
-        ListTile(
-          leading: Icon(qState.icon),
-          title: const Text('Sync'),
-          subtitle: Text(qState.text),
-          onTap: () {},
-        ),
-        ListTile(
-          leading: const Icon(Icons.settings),
-          title: const Text('Settings'),
-          onTap: () {},
-        ),
-      ],
+          const Divider(),
+          ListTile(
+            leading: Icon(qState.icon),
+            title: const Text('Sync'),
+            subtitle: Text(qState.text),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
+            onTap: () {},
+          ),
+        ],
+      ),
     );
   }
 }

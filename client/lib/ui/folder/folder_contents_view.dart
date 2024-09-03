@@ -91,6 +91,9 @@ class _FolderContentsViewState extends State<FolderContentsView> {
                   return Actions(
                     actions: {
                       FocusUpIntent: CallbackAction<FocusUpIntent>(onInvoke: (i) {
+                        if (focusIndex == -1) {
+                          focusIndex = resources!.length;
+                        }
                         focusIndex = focusIndex > 0 ? focusIndex - 1 : 0;
                         getFocusNode(resources![focusIndex]).requestFocus();
                         return null;
@@ -141,7 +144,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
   }
 
   FocusNode getFocusNode(Resource r) {
-    return nodes.putIfAbsent(r.id, () => FocusNode());
+    return nodes.putIfAbsent(r.id, () => FocusNode(descendantsAreTraversable: false));
   }
 }
 
