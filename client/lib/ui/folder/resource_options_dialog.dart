@@ -7,14 +7,23 @@ import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
 enum ResourceOption {
-  rename(Icons.drive_file_rename_outline, 'Rename'),
-  delete(Icons.delete, 'Delete');
+  rename(Icons.drive_file_rename_outline, 'Rename', canRename),
+  copy(Icons.copy, 'Copy', canCopy),
+  move(Icons.drive_file_move, 'Move', all),
+  delete(Icons.delete, 'Delete', all);
 
-  const ResourceOption(this.icon, this.text);
+  const ResourceOption(this.icon, this.text, this.filter);
 
   final IconData icon;
   final String text;
+  final bool Function(List<Resource> resources) filter;
 }
+
+bool canRename(List<Resource> resources) => resources.length == 1;
+
+bool canCopy(List<Resource> resources) => !resources.any((r) => r.dir);
+
+bool all(List<Resource> resources) => true;
 
 class ResourceOptionsButton extends StatelessWidget {
   final Resource r;
@@ -28,7 +37,7 @@ class ResourceOptionsButton extends StatelessWidget {
         ? IconButton(icon: Icon(Icons.adaptive.more), onPressed: () => showResourceOptions(context, account))
         : PopupMenuButton(
             itemBuilder: (context) => [
-              for (final o in ResourceOption.values)
+              for (final o in ResourceOption.values.where((o) => o.filter([r])))
                 PopupMenuItem(
                     value: o,
                     child: ListTile(
@@ -56,11 +65,17 @@ class ResourceOptionsButton extends StatelessWidget {
         if (name != null) {
           account.addAction(ResourceRenameAction(r: r, name: name));
         }
+        break;
       case ResourceOption.delete:
         final confirm = await showAlertDialog(context, title: 'Delete ${r.name}?', positiveText: 'YES', negativeText: 'NO') ?? false;
         if (confirm) {
           account.addAction(ResourceDeleteAction(r: r));
         }
+        break;
+      case ResourceOption.move:
+        break;
+      case ResourceOption.copy:
+        break;
     }
   }
 }
