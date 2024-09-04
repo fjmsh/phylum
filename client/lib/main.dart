@@ -56,7 +56,7 @@ class AccountSelector extends StatelessWidget {
             if (account == null) {
               return buildLoginPage(context);
             }
-            return PhylumApp(key: ValueKey(account.id), accountId: account.id);
+            return PhylumApp(accountId: account.id);
           });
 
   Widget buildLoginPage(BuildContext context) => MaterialApp(

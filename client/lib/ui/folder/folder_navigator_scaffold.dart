@@ -3,7 +3,7 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/common/expandable_fab.dart';
 import 'package:phylum/ui/folder/folder_heriarchy_view.dart';
 import 'package:phylum/ui/folder/nav_list.dart';
-import 'package:phylum/ui/folder/folder_contents_view.dart';
+import 'package:phylum/ui/folder/folder_view.dart';
 import 'package:phylum/ui/folder/upload_utils.dart';
 import 'package:provider/provider.dart';
 
@@ -84,7 +84,7 @@ class FolderScaffoldResponsive extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const FolderHeriarchyView(),
-        Expanded(child: FolderContentsView(id: folderId)),
+        Expanded(child: FolderView(id: folderId)),
       ],
     );
   }

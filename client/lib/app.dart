@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:go_router/go_router.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/app_shortcut_manager.dart';
 import 'package:phylum/ui/home_page.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
@@ -19,7 +20,7 @@ final _router = GoRouter(
 class PhylumApp extends StatelessWidget {
   final String accountId;
 
-  const PhylumApp({super.key, required this.accountId});
+  PhylumApp({required this.accountId}) : super(key: ValueKey(accountId));
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +47,7 @@ class _AppContent extends StatelessWidget {
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
       darkTheme: ThemeData.dark(),
       routerConfig: _router,
+      shortcuts: getAppShortcuts(),
     );
   }
 }
