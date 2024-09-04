@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phylum/app_shortcut_manager.dart';
+import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/ui/folder/folder_navigator_stack.dart';
 import 'package:phylum/ui/folder/folder_selection_manager.dart';
@@ -66,6 +66,14 @@ class _FolderContentsViewState extends State<FolderContentsView> {
         }),
         ToggleSelectionIntent: CallbackAction<ToggleSelectionIntent>(onInvoke: (i) {
           toggleSelection();
+          return null;
+        }),
+        SelectAllIntent: CallbackAction<SelectAllIntent>(onInvoke: (i) {
+          context.read<FolderSelectionManager>().setSelected(Set.of(resources.map((r) => r.id)));
+          return null;
+        }),
+        ClearSelectionIntent: CallbackAction<ClearSelectionIntent>(onInvoke: (i) {
+          context.read<FolderSelectionManager>().setSelected(const {});
           return null;
         }),
         OpenIntent: CallbackAction<OpenIntent>(onInvoke: (i) {

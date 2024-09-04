@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:go_router/go_router.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/app_shortcut_manager.dart';
+import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/ui/home_page.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';

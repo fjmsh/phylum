@@ -21,6 +21,14 @@ class ToggleSelectionIntent extends Intent {
   const ToggleSelectionIntent();
 }
 
+class ClearSelectionIntent extends Intent {
+  const ClearSelectionIntent();
+}
+
+class SelectAllIntent extends Intent {
+  const SelectAllIntent();
+}
+
 class OpenIntent extends Intent {
   const OpenIntent();
 }
@@ -40,5 +48,7 @@ Map<ShortcutActivator, Intent> getAppShortcuts() {
     SingleActivator(LogicalKeyboardKey.space, control: true): ToggleSelectionIntent(),
     SingleActivator(LogicalKeyboardKey.enter): OpenIntent(),
     SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
+    SingleActivator(LogicalKeyboardKey.escape): ClearSelectionIntent(),
+    SingleActivator(LogicalKeyboardKey.keyA, control: true): SelectAllIntent(),
   };
 }
