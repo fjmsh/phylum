@@ -33,6 +33,10 @@ class OpenIntent extends Intent {
   const OpenIntent();
 }
 
+class DeleteIntent extends Intent {
+  const DeleteIntent();
+}
+
 class NavUpIntent extends Intent {
   const NavUpIntent();
 }
@@ -46,9 +50,10 @@ Map<ShortcutActivator, Intent> getAppShortcuts() {
     SingleActivator(LogicalKeyboardKey.arrowDown, shift: true): FocusDownIntent(SelectionMode.range),
     SingleActivator(LogicalKeyboardKey.arrowDown, control: true): FocusDownIntent(SelectionMode.multi),
     SingleActivator(LogicalKeyboardKey.space, control: true): ToggleSelectionIntent(),
-    SingleActivator(LogicalKeyboardKey.enter): OpenIntent(),
-    SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
     SingleActivator(LogicalKeyboardKey.escape): ClearSelectionIntent(),
     SingleActivator(LogicalKeyboardKey.keyA, control: true): SelectAllIntent(),
+    SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
+    SingleActivator(LogicalKeyboardKey.enter): OpenIntent(),
+    SingleActivator(LogicalKeyboardKey.delete): DeleteIntent(),
   };
 }

@@ -53,12 +53,12 @@ class ResourceRenameAction extends ApiAction<PhylumAccount> with JsonApiAction {
 
   @override
   FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
-    account.datastore.db.managers.resources.update((o) => o(name: Value(newName)));
+    account.datastore.db.managers.resources.filter((f) => f.id.equals(id)).update((o) => o(name: Value(newName)));
   }
 
   @override
   FutureOr<void> revertOptimisticUpdate(PhylumAccount account) {
-    account.datastore.db.managers.resources.update((o) => o(name: Value(oldName)));
+    account.datastore.db.managers.resources.filter((f) => f.id.equals(id)).update((o) => o(name: Value(oldName)));
   }
 
   @override
