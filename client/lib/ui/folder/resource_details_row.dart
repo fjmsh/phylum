@@ -18,29 +18,17 @@ class ResourceDetailsRow extends StatelessWidget {
     final selected = context.select<FolderSelectionState, bool>((state) => state.isSelected(r.id));
 
     final theme = Theme.of(context);
-    final border = focussed
-        ? Border.fromBorderSide(BorderSide(color: theme.colorScheme.primary, width: 2.0))
-        : const Border.fromBorderSide(BorderSide(color: Colors.transparent, width: 2.0));
-    final background = selected ? theme.colorScheme.primaryContainer : null;
+    final border = focussed ? BorderSide(color: theme.colorScheme.primary, width: 2.0) : const BorderSide(color: Colors.transparent, width: 2.0);
     return GestureDetector(
         onTapDown: (details) => onTap?.call(),
         onDoubleTap: () => onDoubleTap?.call(),
         onSecondaryTap: () => onSecondaryTap?.call(),
-        child: Container(
-          decoration: BoxDecoration(border: border, color: background),
-          padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
-          child: Row(
-            children: [
-              r.getIcon(),
-              const SizedBox(width: 8.0),
-              Expanded(
-                  child: Text(
-                r.name,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: selected ? theme.colorScheme.onPrimaryContainer : null),
-              )),
-              ResourceOptionsButton(r: r)
-            ],
-          ),
+        child: ListTile(
+          leading: r.getIcon(),
+          title: Text(r.name),
+          trailing: ResourceOptionsButton(r: r),
+          shape: RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(4.0)),
+          selected: selected,
         ));
   }
 }

@@ -30,6 +30,7 @@ class _FolderViewState extends State<FolderView> {
   @override
   Widget build(BuildContext context) {
     final account = context.read<PhylumAccount>();
+    final theme = Theme.of(context);
 
     return Focus(
       onKeyEvent: (node, event) {
@@ -39,7 +40,10 @@ class _FolderViewState extends State<FolderView> {
         return KeyEventResult.ignored;
       },
       child: ListTileTheme(
-        data: const ListTileThemeData(mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.basic)),
+        data: ListTileThemeData(
+          mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.basic),
+          selectedTileColor: theme.colorScheme.primaryContainer,
+        ),
         child: RefreshIndicator(
           onRefresh: _refresh,
           child: StateNotifierProvider<FolderSelectionManager, FolderSelectionState>(
