@@ -45,7 +45,11 @@ class _FolderViewState extends State<FolderView> {
           child: StateNotifierProvider<FolderSelectionManager, FolderSelectionState>(
             create: (context) => FolderSelectionManager(),
             child: StreamBuilder(
-                stream: account.datastore.db.managers.resources.filter((f) => f.parent.id.equals(widget.id) & f.deleted.equals(false)).watch(),
+                stream: account.datastore.db.managers.resources
+                    .filter((f) => f.parent.id.equals(widget.id) & f.deleted.equals(false))
+                    .orderBy((o) => o.dir.desc())
+                    .orderBy((o) => o.name.asc())
+                    .watch(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Container();
