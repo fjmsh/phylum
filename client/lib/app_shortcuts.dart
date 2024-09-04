@@ -37,6 +37,22 @@ class DeleteIntent extends Intent {
   const DeleteIntent();
 }
 
+class RenameIntent extends Intent {
+  const RenameIntent();
+}
+
+class NewFolderIntent extends Intent {
+  const NewFolderIntent();
+}
+
+class UploadFilesIntent extends Intent {
+  const UploadFilesIntent();
+}
+
+class UploadFolderIntent extends Intent {
+  const UploadFolderIntent();
+}
+
 class NavUpIntent extends Intent {
   const NavUpIntent();
 }
@@ -55,5 +71,8 @@ Map<ShortcutActivator, Intent> getAppShortcuts() {
     SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
     SingleActivator(LogicalKeyboardKey.enter): OpenIntent(),
     SingleActivator(LogicalKeyboardKey.delete): DeleteIntent(),
+    SingleActivator(LogicalKeyboardKey.keyN, control: true): NewFolderIntent(),
+    SingleActivator(LogicalKeyboardKey.keyU, control: true): UploadFilesIntent(),
+    SingleActivator(LogicalKeyboardKey.keyU, control: true, shift: true): UploadFolderIntent(),
   };
 }

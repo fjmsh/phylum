@@ -65,10 +65,11 @@ Future<bool?> showAlertDialog(
             },
           ),
         ElevatedButton(
-          child: Text(positiveText),
+          autofocus: true,
           onPressed: () {
             Navigator.of(context).pop(true);
           },
+          child: Text(positiveText),
         ),
       ],
     ),
