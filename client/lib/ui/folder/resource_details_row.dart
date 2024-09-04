@@ -14,20 +14,32 @@ class ResourceDetailsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool selected = context.select<FolderSelectionState, bool>((state) => state.isSelected(r.id));
+    final focussed = Focus.isAt(context);
+    final selected = context.select<FolderSelectionState, bool>((state) => state.isSelected(r.id));
+
+    final theme = Theme.of(context);
+    final border = focussed
+        ? Border.fromBorderSide(BorderSide(color: theme.colorScheme.primary, width: 2.0))
+        : const Border.fromBorderSide(BorderSide(color: Colors.transparent, width: 2.0));
+    final background = selected ? theme.colorScheme.primaryContainer : null;
     return GestureDetector(
         onTapDown: (details) => onTap?.call(),
         onDoubleTap: () => onDoubleTap?.call(),
         onSecondaryTap: () => onSecondaryTap?.call(),
         child: Container(
-          decoration: Focus.isAt(context)
-              ? BoxDecoration(
-                  border: const Border.fromBorderSide(BorderSide(color: Colors.blue, width: 2.0)), color: selected ? Colors.lightBlue : null)
-              : BoxDecoration(
-                  border: const Border.fromBorderSide(BorderSide(color: Colors.transparent, width: 2.0)), color: selected ? Colors.lightBlue : null),
+          decoration: BoxDecoration(border: border, color: background),
           padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
           child: Row(
-            children: [r.getIcon(), Expanded(child: Text(r.name)), ResourceOptionsButton(r: r)],
+            children: [
+              r.getIcon(),
+              const SizedBox(width: 8.0),
+              Expanded(
+                  child: Text(
+                r.name,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: selected ? theme.colorScheme.onPrimaryContainer : null),
+              )),
+              ResourceOptionsButton(r: r)
+            ],
           ),
         ));
   }
