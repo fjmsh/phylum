@@ -1,9 +1,13 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
-import 'package:phylum/ui/folder/resource_options_dialog.dart';
+import 'package:phylum/ui/folder/folder_selection_manager.dart';
+import 'package:phylum/ui/folder/folder_shortcuts_manager.dart';
+import 'package:phylum/ui/folder/resource_details_row.dart';
 import 'package:provider/provider.dart';
 
 import 'folder_navigator_stack.dart';
@@ -17,35 +21,22 @@ class FolderContentsView extends StatefulWidget {
   State<FolderContentsView> createState() => _FolderContentsViewState();
 }
 
-class FolderShortcutManager extends ShortcutManager {
-  FolderShortcutManager()
-      : super(shortcuts: const {
-          SingleActivator(LogicalKeyboardKey.arrowUp): FocusUpIntent(),
-          SingleActivator(LogicalKeyboardKey.keyK): FocusUpIntent(),
-          SingleActivator(LogicalKeyboardKey.arrowDown): FocusDownIntent(),
-          SingleActivator(LogicalKeyboardKey.enter): OpenIntent(),
-          SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
-        });
-
-  @override
-  KeyEventResult handleKeypress(BuildContext context, KeyEvent event) {
-    if ((event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight)) {
-      if (event is KeyDownEvent) {
-        print('Shift Pressed');
-      } else if (event is KeyUpEvent) {
-        print('Shift Released');
-      }
-    }
-    return super.handleKeypress(context, event);
-  }
-}
-
 class _FolderContentsViewState extends State<FolderContentsView> {
   late final FocusNode _node;
-  final shortcutManager = FolderShortcutManager();
+  late final shortcutManager = FolderShortcutManager(
+    shiftListener: (state) {
+      shiftDown = state;
+    },
+    controlListener: (state) {
+      controlDown = state;
+    },
+  );
   final Map<String, FocusNode> nodes = {};
   int focusIndex = -1;
+  int selectionStartIndex = -1;
   List<Resource>? resources;
+  bool shiftDown = false;
+  bool controlDown = false;
 
   @override
   void initState() {
@@ -81,58 +72,122 @@ class _FolderContentsViewState extends State<FolderContentsView> {
         child: RefreshIndicator(
           onRefresh: _refresh,
           child: Center(
-            child: StreamBuilder(
-                stream: account.datastore.db.managers.resources.filter((f) => f.parent.id.equals(widget.id) & f.deleted.equals(false)).watch(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return Container();
-                  }
-                  resources = snapshot.data!;
-                  return Actions(
-                    actions: {
-                      FocusUpIntent: CallbackAction<FocusUpIntent>(onInvoke: (i) {
-                        if (focusIndex == -1) {
-                          focusIndex = resources!.length;
-                        }
-                        focusIndex = focusIndex > 0 ? focusIndex - 1 : 0;
-                        getFocusNode(resources![focusIndex]).requestFocus();
-                        return null;
-                      }),
-                      FocusDownIntent: CallbackAction<FocusDownIntent>(onInvoke: (i) {
-                        focusIndex = focusIndex < resources!.length - 1 ? focusIndex + 1 : resources!.length - 1;
-                        getFocusNode(resources![focusIndex]).requestFocus();
-                        return null;
-                      }),
-                      OpenIntent: CallbackAction<OpenIntent>(onInvoke: (i) {
-                        open(resources![focusIndex]);
-                        return null;
-                      }),
-                      NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) {
-                        context.read<FolderNavigatorStack>().pop();
-                        return null;
-                      }),
-                    },
-                    child: Focus(
-                      autofocus: true,
-                      focusNode: _node,
-                      child: ListView(
-                        children: [
-                          for (final r in resources!.indexed)
-                            Focus(
-                              focusNode: getFocusNode(r.$2),
-                              child: ResourceListTile(
-                                  r: r.$2,
-                                  onTap: () {
-                                    focusIndex = r.$1;
-                                    getFocusNode(r.$2).requestFocus();
-                                  },
-                                  onDoubleTap: () => open(r.$2)),
-                            ),
-                        ],
+            child: StateNotifierProvider<FolderSelectionManager, FolderSelectionState>(
+              create: (context) => FolderSelectionManager(),
+              child: StreamBuilder(
+                  stream: account.datastore.db.managers.resources.filter((f) => f.parent.id.equals(widget.id) & f.deleted.equals(false)).watch(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return Container();
+                    }
+                    resources = snapshot.data!;
+                    return Actions(
+                      actions: {
+                        FocusUpIntent: CallbackAction<FocusUpIntent>(onInvoke: (i) {
+                          if (resources!.isEmpty) return;
+                          final newIndex = focusIndex == -1
+                              ? resources!.length
+                              : focusIndex > 0
+                                  ? focusIndex - 1
+                                  : 0;
+                          final selectedResource = resources![newIndex];
+                          getFocusNode(selectedResource).requestFocus();
+                          switch (i.mode) {
+                            case SelectionMode.range:
+                              if (selectionStartIndex == -1) {
+                                selectionStartIndex = newIndex;
+                              }
+                              final selected = Set.of(
+                                  resources!.getRange(min(selectionStartIndex, newIndex), max(selectionStartIndex, newIndex) + 1).map((r) => r.id));
+                              context.read<FolderSelectionManager>().setSelected(selected);
+                            case SelectionMode.single:
+                              context.read<FolderSelectionManager>().setSelected({selectedResource.id});
+                              selectionStartIndex = newIndex;
+                              break;
+                            case SelectionMode.multi:
+                              break;
+                          }
+                          focusIndex = newIndex;
+                          return null;
+                        }),
+                        FocusDownIntent: CallbackAction<FocusDownIntent>(onInvoke: (i) {
+                          if (resources!.isEmpty) return;
+                          final newIndex = focusIndex < resources!.length - 1 ? focusIndex + 1 : resources!.length - 1;
+                          final selectedResource = resources![newIndex];
+                          getFocusNode(selectedResource).requestFocus();
+                          switch (i.mode) {
+                            case SelectionMode.range:
+                              if (selectionStartIndex == -1) {
+                                selectionStartIndex = newIndex;
+                              }
+                              final selected = Set.of(
+                                  resources!.getRange(min(selectionStartIndex, newIndex), max(selectionStartIndex, newIndex) + 1).map((r) => r.id));
+                              context.read<FolderSelectionManager>().setSelected(selected);
+                            case SelectionMode.single:
+                              context.read<FolderSelectionManager>().setSelected({selectedResource.id});
+                              selectionStartIndex = newIndex;
+                              break;
+                            case SelectionMode.multi:
+                              break;
+                          }
+                          focusIndex = newIndex;
+                          return null;
+                        }),
+                        ToggleSelectionIntent: CallbackAction<ToggleSelectionIntent>(onInvoke: (i) {
+                          final selectedResource = resources![focusIndex];
+                          selectionStartIndex = context.read<FolderSelectionManager>().toggleSelected(selectedResource.id) ? focusIndex : -1;
+                          return null;
+                        }),
+                        OpenIntent: CallbackAction<OpenIntent>(onInvoke: (i) {
+                          open(resources![focusIndex]);
+                          return null;
+                        }),
+                        NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) {
+                          context.read<FolderNavigatorStack>().pop();
+                          return null;
+                        }),
+                      },
+                      child: Focus(
+                        autofocus: true,
+                        focusNode: _node,
+                        onFocusChange: (hasFocus) {
+                          shiftDown = false;
+                          controlDown = false;
+                        },
+                        child: ListView(
+                          children: [
+                            for (final r in resources!.indexed)
+                              Focus(
+                                focusNode: getFocusNode(r.$2),
+                                child: ResourceDetailsRow(
+                                    r: r.$2,
+                                    onTap: () {
+                                      final newIndex = r.$1;
+                                      if (controlDown) {
+                                        selectionStartIndex = context.read<FolderSelectionManager>().toggleSelected(r.$2.id) ? newIndex : -1;
+                                      } else if (shiftDown) {
+                                        if (selectionStartIndex == -1) {
+                                          selectionStartIndex = newIndex;
+                                        }
+                                        final selected = Set.of(resources!
+                                            .getRange(min(selectionStartIndex, newIndex), max(selectionStartIndex, newIndex) + 1)
+                                            .map((r) => r.id));
+                                        context.read<FolderSelectionManager>().setSelected(selected);
+                                      } else {
+                                        selectionStartIndex = r.$1;
+                                        context.read<FolderSelectionManager>().setSelected({r.$2.id});
+                                      }
+                                      getFocusNode(r.$2).requestFocus();
+                                      focusIndex = newIndex;
+                                    },
+                                    onDoubleTap: () => open(r.$2)),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+            ),
           ),
         ),
       ),
@@ -145,62 +200,5 @@ class _FolderContentsViewState extends State<FolderContentsView> {
 
   FocusNode getFocusNode(Resource r) {
     return nodes.putIfAbsent(r.id, () => FocusNode(descendantsAreTraversable: false));
-  }
-}
-
-class FocusUpIntent extends Intent {
-  const FocusUpIntent();
-}
-
-class FocusDownIntent extends Intent {
-  const FocusDownIntent();
-}
-
-class OpenIntent extends Intent {
-  const OpenIntent();
-}
-
-class NavUpIntent extends Intent {
-  const NavUpIntent();
-}
-
-class ResourceListTile extends StatelessWidget {
-  final Resource r;
-  final Function()? onTap;
-  final Function()? onDoubleTap;
-  final Function()? onSecondaryTap;
-
-  ResourceListTile({required this.r, this.onTap, this.onDoubleTap, this.onSecondaryTap}) : super(key: ValueKey(r.id));
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-        onTap: () => onTap?.call(),
-        onDoubleTap: () => onDoubleTap?.call(),
-        onSecondaryTap: () => onSecondaryTap?.call(),
-        child: Container(
-          decoration: Focus.isAt(context)
-              ? const BoxDecoration(border: Border.fromBorderSide(BorderSide(color: Colors.blue, width: 2.0)))
-              : const BoxDecoration(border: Border.fromBorderSide(BorderSide(color: Colors.transparent, width: 2.0))),
-          padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
-          child: Row(
-            children: [r.getIcon(), Expanded(child: Text(r.name)), ResourceOptionsButton(r: r)],
-          ),
-        ));
-  }
-}
-
-extension ResourceViewExtensions on Resource {
-  Icon getIcon() {
-    if (dir) return const Icon(Icons.folder);
-    final index = name.lastIndexOf('.');
-    final ext = index > 0 ? name.substring(index + 1).toLowerCase() : '';
-    return switch (ext) {
-      'bmp' || 'png' || 'jpg' || 'jpeg' || 'gif' || 'webp' || 'heic' || 'heif' || 'svg' => const Icon(Icons.image),
-      'webm' || 'avi' || 'mp4' || 'mov' => const Icon(Icons.movie),
-      'mp3' || 'mp4' || 'm4a' || 'ogg' || 'oga' => const Icon(Icons.headphones),
-      'txt' || 'csv' => const Icon(Icons.article),
-      _ => const Icon(Icons.insert_drive_file),
-    };
   }
 }
