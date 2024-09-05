@@ -150,12 +150,13 @@ func (q *Queries) UpdateResourceModified(ctx context.Context, id uuid.UUID) erro
 	return err
 }
 
-const updateResourceName = `-- name: UpdateResourceName :exec
+const updateResourceName = `-- name: UpdateResourceName :one
 UPDATE resources
 SET
     name = CASE WHEN ($1::text = '') THEN name ELSE $1::text END,
     modified = NOW()
 WHERE id = $2::uuid
+RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum
 `
 
 type UpdateResourceNameParams struct {
@@ -163,17 +164,30 @@ type UpdateResourceNameParams struct {
 	ID   uuid.UUID
 }
 
-func (q *Queries) UpdateResourceName(ctx context.Context, arg UpdateResourceNameParams) error {
-	_, err := q.db.Exec(ctx, updateResourceName, arg.Name, arg.ID)
-	return err
+func (q *Queries) UpdateResourceName(ctx context.Context, arg UpdateResourceNameParams) (Resource, error) {
+	row := q.db.QueryRow(ctx, updateResourceName, arg.Name, arg.ID)
+	var i Resource
+	err := row.Scan(
+		&i.ID,
+		&i.Parent,
+		&i.Name,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.Size,
+		&i.Sha256sum,
+	)
+	return i, err
 }
 
-const updateResourceParent = `-- name: UpdateResourceParent :exec
+const updateResourceParent = `-- name: UpdateResourceParent :one
 UPDATE resources
 SET
     parent = $1::uuid,
     modified = NOW()
 WHERE id = $2::uuid
+RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum
 `
 
 type UpdateResourceParentParams struct {
@@ -181,7 +195,19 @@ type UpdateResourceParentParams struct {
 	ID     uuid.UUID
 }
 
-func (q *Queries) UpdateResourceParent(ctx context.Context, arg UpdateResourceParentParams) error {
-	_, err := q.db.Exec(ctx, updateResourceParent, arg.Parent, arg.ID)
-	return err
+func (q *Queries) UpdateResourceParent(ctx context.Context, arg UpdateResourceParentParams) (Resource, error) {
+	row := q.db.QueryRow(ctx, updateResourceParent, arg.Parent, arg.ID)
+	var i Resource
+	err := row.Scan(
+		&i.ID,
+		&i.Parent,
+		&i.Name,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.Size,
+		&i.Sha256sum,
+	)
+	return i, err
 }

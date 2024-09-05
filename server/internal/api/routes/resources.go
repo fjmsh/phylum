@@ -192,14 +192,14 @@ func handleResourceRenameRoute(c *gin.Context) {
 		}
 		panic(err)
 	}
-	if err := fs.UpdateName(r, params.Name); err != nil {
+	if r, err := fs.UpdateName(r, params.Name); err != nil {
 		if errors.Is(err, core.ErrInsufficientPermissions) {
 			panic(errInsufficientPermissions)
 		}
 		panic(err)
+	} else {
+		c.JSON(200, responseFromResource(r))
 	}
-	// TODO: Send response
-	c.JSON(200, gin.H{})
 }
 
 func handleResourceMoveRoute(c *gin.Context) {
@@ -223,14 +223,14 @@ func handleResourceMoveRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	if err := fs.UpdateParent(r, params.ParentID); err != nil {
+	if r, err := fs.UpdateParent(r, params.ParentID); err != nil {
 		if errors.Is(err, core.ErrInsufficientPermissions) {
 			panic(errInsufficientPermissions)
 		}
 		panic(err)
+	} else {
+		c.JSON(200, responseFromResource(r))
 	}
-	// TODO: Send response
-	c.JSON(200, gin.H{})
 }
 
 func handleResourceUploadRoute(c *gin.Context) {
