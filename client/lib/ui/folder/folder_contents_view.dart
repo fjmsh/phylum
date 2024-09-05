@@ -78,7 +78,11 @@ class _FolderContentsViewState extends State<FolderContentsView> {
           return null;
         }),
         DismissIntent: CallbackAction<DismissIntent>(onInvoke: (i) {
-          context.read<FolderSelectionManager>().setSelected(const {});
+          if (focusIndex >= 0) {
+            context.read<FolderSelectionManager>().setSelected({resources[min(focusIndex, resources.length)].id});
+          } else {
+            context.read<FolderSelectionManager>().setSelected(const {});
+          }
           return null;
         }),
         NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) {
