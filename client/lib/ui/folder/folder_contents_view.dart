@@ -24,7 +24,6 @@ class FolderContentsView extends StatefulWidget {
 class _FolderContentsViewState extends State<FolderContentsView> {
   final Map<String, FocusNode> nodes = {};
   late List<Resource> resources;
-  int focusIndex = -1;
   int selectionStartIndex = -1;
 
   @override
@@ -55,33 +54,37 @@ class _FolderContentsViewState extends State<FolderContentsView> {
         PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
         FocusUpIntent: CallbackAction<FocusUpIntent>(onInvoke: (i) {
           if (resources.isEmpty) return;
+          int focusIndex = context.read<FolderSelectionState>().focusIndex;
           final index = focusIndex == -1
               ? resources.length
               : focusIndex > 0
                   ? min(focusIndex - 1, resources.length)
                   : 0;
-          updateFocus(index, i.mode);
+          updateSelection(index, i.mode, true);
           return null;
         }),
         FocusDownIntent: CallbackAction<FocusDownIntent>(onInvoke: (i) {
           if (resources.isEmpty) return;
+          int focusIndex = context.read<FolderSelectionState>().focusIndex;
           final index = min(focusIndex + 1, resources.length - 1);
-          updateFocus(index, i.mode);
+          updateSelection(index, i.mode, true);
           return null;
         }),
         ToggleSelectionIntent: CallbackAction<ToggleSelectionIntent>(onInvoke: (i) {
-          toggleSelection();
+          final focusIndex = context.read<FolderSelectionState>().focusIndex;
+          updateSelection(focusIndex, SelectionMode.toggle, true);
           return null;
         }),
         SelectAllIntent: CallbackAction<SelectAllIntent>(onInvoke: (i) {
-          context.read<FolderSelectionManager>().setSelected(Set.of(resources.map((r) => r.id)));
+          context.read<FolderSelectionManager>().update(selected: Set.of(resources.map((r) => r.id)), showFocus: true);
           return null;
         }),
         DismissIntent: CallbackAction<DismissIntent>(onInvoke: (i) {
+          int focusIndex = context.read<FolderSelectionState>().focusIndex;
           if (focusIndex >= 0) {
-            context.read<FolderSelectionManager>().setSelected({resources[min(focusIndex, resources.length)].id});
+            updateSelection(focusIndex, SelectionMode.single, true);
           } else {
-            context.read<FolderSelectionManager>().setSelected(const {});
+            context.read<FolderSelectionManager>().update(selected: const {}, showFocus: true);
           }
           return null;
         }),
@@ -90,6 +93,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
           return null;
         }),
         ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) {
+          int focusIndex = context.read<FolderSelectionState>().focusIndex;
           open(resources[focusIndex]);
           return null;
         }),
@@ -100,55 +104,65 @@ class _FolderContentsViewState extends State<FolderContentsView> {
       },
       child: Focus(
         autofocus: true,
+        descendantsAreFocusable: false,
         child: ListView.builder(
           itemCount: resources.length,
           itemBuilder: (context, index) {
             final r = resources[index];
-            return Focus(
-              focusNode: getFocusNode(r),
-              child: ResourceDetailsRow(
-                  r: r,
-                  onTap: () {
-                    final mode = HardwareKeyboard.instance.isControlPressed
-                        ? SelectionMode.multi
-                        : HardwareKeyboard.instance.isShiftPressed
-                            ? SelectionMode.range
-                            : SelectionMode.single;
-                    updateFocus(index, mode);
-                    if (mode == SelectionMode.multi) {
-                      toggleSelection();
-                    }
-                  },
-                  onDoubleTap: () => open(r)),
-            );
+            bool deferHandling = false;
+            return ResourceDetailsRow(
+                r: r,
+                onTapDown: (details) {
+                  final mode = HardwareKeyboard.instance.isControlPressed
+                      ? SelectionMode.toggle
+                      : HardwareKeyboard.instance.isShiftPressed
+                          ? SelectionMode.range
+                          : SelectionMode.single;
+                  if (context.read<FolderSelectionState>().isSelected(r.id) && mode == SelectionMode.single) {
+                    deferHandling = true;
+                  } else {
+                    deferHandling = false;
+                    updateSelection(index, mode, false);
+                  }
+                },
+                onTap: () {
+                  if (deferHandling) {
+                    updateSelection(index, SelectionMode.single, false);
+                  }
+                },
+                onDoubleTap: () => open(r));
           },
         ),
       ),
     );
   }
 
-  void updateFocus(int index, SelectionMode mode) {
+  void updateSelection(int index, SelectionMode mode, bool highlight) {
+    Set<String>? selected;
     switch (mode) {
       case SelectionMode.range:
         if (selectionStartIndex == -1) {
           selectionStartIndex = index;
         }
-        final selected = Set.of(resources.getRange(min(selectionStartIndex, index), max(selectionStartIndex, index) + 1).map((r) => r.id));
-        context.read<FolderSelectionManager>().setSelected(selected);
+        selected = Set.of(resources.getRange(min(selectionStartIndex, index), max(selectionStartIndex, index) + 1).map((r) => r.id));
         break;
       case SelectionMode.single:
-        context.read<FolderSelectionManager>().setSelected({resources[index].id});
+        selected = {resources[index].id};
+        selectionStartIndex = index;
+        break;
+      case SelectionMode.toggle:
+        selected = Set.of(context.read<FolderSelectionState>().selected);
+        if (!selected.add(resources[index].id)) {
+          selected.remove(resources[index].id);
+        }
         selectionStartIndex = index;
         break;
       case SelectionMode.multi:
         break;
     }
-    getFocusNode(resources[index]).requestFocus();
-    focusIndex = index;
-  }
-
-  void toggleSelection() {
-    selectionStartIndex = context.read<FolderSelectionManager>().toggleSelected(resources[focusIndex].id) ? focusIndex : -1;
+    context
+        .read<FolderSelectionManager>()
+        .update(selected: selected, focusId: index < resources.length ? resources[index].id : null, focusIndex: index, showFocus: highlight);
   }
 
   void open(Resource r) {
@@ -168,9 +182,5 @@ class _FolderContentsViewState extends State<FolderContentsView> {
     for (final r in selected) {
       account.addAction(ResourceDeleteAction(r: r));
     }
-  }
-
-  FocusNode getFocusNode(Resource r) {
-    return nodes.putIfAbsent(r.id, () => FocusNode(descendantsAreTraversable: false));
   }
 }

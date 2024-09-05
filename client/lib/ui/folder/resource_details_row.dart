@@ -6,11 +6,12 @@ import 'package:provider/provider.dart';
 
 class ResourceDetailsRow extends StatelessWidget {
   final Resource r;
+  final Function(TapDownDetails)? onTapDown;
   final Function()? onTap;
   final Function()? onDoubleTap;
   final Function()? onSecondaryTap;
 
-  ResourceDetailsRow({required this.r, this.onTap, this.onDoubleTap, this.onSecondaryTap}) : super(key: ValueKey(r.id));
+  ResourceDetailsRow({required this.r, this.onTapDown, this.onTap, this.onDoubleTap, this.onSecondaryTap}) : super(key: ValueKey(r.id));
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +30,7 @@ class ResourceDetailsRow extends StatelessWidget {
   }
 
   Widget buildRow(BuildContext context) {
-    final focussed = Focus.isAt(context);
+    final focussed = context.select<FolderSelectionState, bool>((state) => state.focusId == r.id && state.showFocus);
     final selected = context.select<FolderSelectionState, bool>((state) => state.isSelected(r.id));
 
     return Draggable(
@@ -51,14 +52,11 @@ class ResourceDetailsRow extends StatelessWidget {
           ),
         );
       }),
-      childWhenDragging: Builder(builder: (context) {
-        return Opacity(opacity: 0.5, child: buildListTile(context, focussed, selected));
-      }),
       child: GestureDetector(
-        onTapDown: selected ? null : (details) => onTap?.call(),
-        onTap: selected ? () => onTap?.call() : null,
-        onDoubleTap: () => onDoubleTap?.call(),
-        onSecondaryTap: () => onSecondaryTap?.call(),
+        onTapDown: onTapDown,
+        onTap: onTap,
+        onDoubleTap: onDoubleTap,
+        onSecondaryTap: onSecondaryTap,
         child: buildListTile(context, focussed, selected),
       ),
     );

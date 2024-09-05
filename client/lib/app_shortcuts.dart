@@ -5,6 +5,7 @@ enum SelectionMode {
   single,
   range,
   multi,
+  toggle,
 }
 
 class FocusUpIntent extends Intent {
