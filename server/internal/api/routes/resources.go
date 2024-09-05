@@ -50,6 +50,10 @@ type resourceRenameParams struct {
 	Name string `json:"name" binding:"required"`
 }
 
+type resourceMoveParams struct {
+	ParentID uuid.UUID `json:"parent_id" binding:"required"`
+}
+
 func SetupResourceRoutes(r *gin.RouterGroup) {
 	group := r.Group("/resources")
 	group.GET("/ls/:id", handleResourceLsRoute)
@@ -57,6 +61,7 @@ func SetupResourceRoutes(r *gin.RouterGroup) {
 	group.GET("/details/:id", handleResourceDetailsRoute)
 	group.POST("/mkdir/:id", handleResourceMkdirRoute)
 	group.POST("/rename/:id", handleResourceRenameRoute)
+	group.POST("/MOVE/:id", handleResourceMoveRoute)
 	group.PUT("/upload/:id", handleResourceUploadRoute)
 	group.DELETE("/delete/:id", handleResourceDeleteRoute)
 }
@@ -193,6 +198,38 @@ func handleResourceRenameRoute(c *gin.Context) {
 		}
 		panic(err)
 	}
+	// TODO: Send response
+	c.JSON(200, gin.H{})
+}
+
+func handleResourceMoveRoute(c *gin.Context) {
+	var params resourceMoveParams
+	err := c.ShouldBindJSON(&params)
+	if err != nil || params.ParentID == uuid.Nil {
+		panic(errInvalidParams)
+	}
+
+	resourceID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		panic(errResourceIDInvalid)
+	}
+
+	fs := auth.GetFileSystem(c)
+	r, err := fs.ResourceByID(resourceID)
+	if err != nil {
+		if errors.Is(err, iofs.ErrNotExist) {
+			panic(errResourceNotFound)
+		}
+		panic(err)
+	}
+
+	if err := fs.UpdateParent(r, params.ParentID); err != nil {
+		if errors.Is(err, core.ErrInsufficientPermissions) {
+			panic(errInsufficientPermissions)
+		}
+		panic(err)
+	}
+	// TODO: Send response
 	c.JSON(200, gin.H{})
 }
 
