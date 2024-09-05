@@ -61,7 +61,7 @@ func SetupResourceRoutes(r *gin.RouterGroup) {
 	group.GET("/details/:id", handleResourceDetailsRoute)
 	group.POST("/mkdir/:id", handleResourceMkdirRoute)
 	group.POST("/rename/:id", handleResourceRenameRoute)
-	group.POST("/MOVE/:id", handleResourceMoveRoute)
+	group.POST("/move/:id", handleResourceMoveRoute)
 	group.PUT("/upload/:id", handleResourceUploadRoute)
 	group.DELETE("/delete/:id", handleResourceDeleteRoute)
 }
