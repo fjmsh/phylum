@@ -45,10 +45,10 @@ class _FolderContentsViewState extends State<FolderContentsView> {
 
     // selection.
     focusIndex = widget.resources.indexWhere((r) => r.id == selection.focusId);
-    context.read<FolderSelectionManager>().update(
+    WidgetsBinding.instance.addPostFrameCallback((duration) => context.read<FolderSelectionManager>().update(
           focusId: focusIndex == -1 ? "" : null,
           selected: selected,
-        );
+        ));
 
     setState(() => resources = widget.resources);
   }

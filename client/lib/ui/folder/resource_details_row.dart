@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/folder/folder_selection_manager.dart';
@@ -37,12 +38,14 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
             onLeave: (data) {
               dropTargetActive = false;
             },
-            onAcceptWithDetails: (details) {
+            onAcceptWithDetails: (details) async {
               if (details.data == _draggableDataSelected) {
                 final account = context.read<PhylumAccount>();
                 final selectedIds = context.read<FolderSelectionState>().selected;
-                final selected = account.datastore.db.managers.resources.filter((f) => f.id.isIn(selectedIds));
-                // account.addAction()
+                final selected = await account.datastore.db.managers.resources.filter((f) => f.id.isIn(selectedIds)).get();
+                for (final res in selected) {
+                  account.addAction(ResourceMoveAction(r: res, parent: widget.r));
+                }
               }
               dropTargetActive = false;
             },

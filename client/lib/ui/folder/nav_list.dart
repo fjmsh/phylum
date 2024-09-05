@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/ui/folder/upload_utils.dart';
+import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
 enum _SyncState {
@@ -77,7 +78,12 @@ class NavList extends StatelessWidget {
             leading: Icon(qState.icon),
             title: const Text('Sync'),
             subtitle: Text(qState.text),
-            onTap: () {},
+            onTap: () {
+              final state = context.read<ApiActionQueueState>();
+              if (state.error != null) {
+                showAlertDialog(context, message: state.error?.message.toString());
+              }
+            },
           ),
           ListTile(
             leading: const Icon(Icons.settings),
