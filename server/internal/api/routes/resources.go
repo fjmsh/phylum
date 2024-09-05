@@ -198,7 +198,7 @@ func handleResourceRenameRoute(c *gin.Context) {
 		}
 		panic(err)
 	} else {
-		c.JSON(200, responseFromResource(r))
+		c.JSON(200, detailedResponseFromResource(fs, r))
 	}
 }
 
@@ -229,7 +229,7 @@ func handleResourceMoveRoute(c *gin.Context) {
 		}
 		panic(err)
 	} else {
-		c.JSON(200, responseFromResource(r))
+		c.JSON(200, detailedResponseFromResource(fs, r))
 	}
 }
 
