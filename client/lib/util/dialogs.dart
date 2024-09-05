@@ -82,6 +82,7 @@ Future<String?> showInputDialog(
   String? labelText,
   String? hintText,
   String? preset,
+  bool barrierDismissable = true,
   TextCapitalization capitalization = TextCapitalization.sentences,
   int minLines = 1,
   int maxLines = 1,
@@ -93,7 +94,7 @@ Future<String?> showInputDialog(
   TextEditingController controller = TextEditingController()..text = (preset ?? '');
   return showDialog(
     context: context,
-    barrierDismissible: false,
+    barrierDismissible: barrierDismissable,
     builder: (context) => StatefulBuilder(builder: (context, setState) {
       return AlertDialog(
         title: (title == null) ? null : Text(title),
