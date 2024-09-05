@@ -25,6 +25,18 @@ class SelectAllIntent extends Intent {
   const SelectAllIntent();
 }
 
+class CutToClipboardIntent extends Intent {
+  const CutToClipboardIntent();
+}
+
+class CopyToClipboardIntent extends Intent {
+  const CopyToClipboardIntent();
+}
+
+class PasteFromClipboardIntent extends Intent {
+  const PasteFromClipboardIntent();
+}
+
 class DeleteIntent extends Intent {
   const DeleteIntent();
 }
@@ -69,5 +81,8 @@ Map<ShortcutActivator, Intent> getAppShortcuts() {
     SingleActivator(LogicalKeyboardKey.keyN, control: true): NewFolderIntent(),
     SingleActivator(LogicalKeyboardKey.keyU, control: true): UploadFilesIntent(),
     SingleActivator(LogicalKeyboardKey.keyU, control: true, shift: true): UploadFolderIntent(),
+    SingleActivator(LogicalKeyboardKey.keyC, control: true): CopyToClipboardIntent(),
+    SingleActivator(LogicalKeyboardKey.keyX, control: true): CutToClipboardIntent(),
+    SingleActivator(LogicalKeyboardKey.keyV, control: true): PasteFromClipboardIntent(),
   };
 }
