@@ -24,6 +24,7 @@ class FolderContentsView extends StatefulWidget {
 class _FolderContentsViewState extends State<FolderContentsView> {
   final Map<String, FocusNode> nodes = {};
   late List<Resource> resources;
+  int focusIndex = -1;
   int selectionStartIndex = -1;
 
   @override
@@ -35,6 +36,20 @@ class _FolderContentsViewState extends State<FolderContentsView> {
   @override
   void didUpdateWidget(covariant FolderContentsView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final selection = context.read<FolderSelectionState>();
+
+    final extras = Set.of(selection.selected);
+    extras.removeAll(widget.resources);
+    final selected = Set.of(selection.selected);
+    selected.removeAll(extras);
+
+    // selection.
+    focusIndex = widget.resources.indexWhere((r) => r.id == selection.focusId);
+    context.read<FolderSelectionManager>().update(
+          focusId: focusIndex == -1 ? "" : null,
+          selected: selected,
+        );
+
     setState(() => resources = widget.resources);
   }
 
@@ -54,7 +69,6 @@ class _FolderContentsViewState extends State<FolderContentsView> {
         PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
         FocusUpIntent: CallbackAction<FocusUpIntent>(onInvoke: (i) {
           if (resources.isEmpty) return;
-          int focusIndex = context.read<FolderSelectionState>().focusIndex;
           final index = focusIndex == -1
               ? resources.length
               : focusIndex > 0
@@ -65,13 +79,11 @@ class _FolderContentsViewState extends State<FolderContentsView> {
         }),
         FocusDownIntent: CallbackAction<FocusDownIntent>(onInvoke: (i) {
           if (resources.isEmpty) return;
-          int focusIndex = context.read<FolderSelectionState>().focusIndex;
           final index = min(focusIndex + 1, resources.length - 1);
           updateSelection(index, i.mode, true);
           return null;
         }),
         ToggleSelectionIntent: CallbackAction<ToggleSelectionIntent>(onInvoke: (i) {
-          final focusIndex = context.read<FolderSelectionState>().focusIndex;
           updateSelection(focusIndex, SelectionMode.toggle, true);
           return null;
         }),
@@ -80,7 +92,6 @@ class _FolderContentsViewState extends State<FolderContentsView> {
           return null;
         }),
         DismissIntent: CallbackAction<DismissIntent>(onInvoke: (i) {
-          int focusIndex = context.read<FolderSelectionState>().focusIndex;
           if (focusIndex >= 0) {
             updateSelection(focusIndex, SelectionMode.single, true);
           } else {
@@ -93,7 +104,6 @@ class _FolderContentsViewState extends State<FolderContentsView> {
           return null;
         }),
         ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) {
-          int focusIndex = context.read<FolderSelectionState>().focusIndex;
           open(resources[focusIndex]);
           return null;
         }),
@@ -120,7 +130,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
                           : SelectionMode.single;
                   if (context.read<FolderSelectionState>().isSelected(r.id) && mode == SelectionMode.single) {
                     deferHandling = true;
-                    context.read<FolderSelectionManager>().update(focusId: r.id, focusIndex: index, showFocus: false);
+                    context.read<FolderSelectionManager>().update(focusId: r.id, showFocus: false);
                   } else {
                     deferHandling = false;
                     updateSelection(index, mode, false);
@@ -161,9 +171,10 @@ class _FolderContentsViewState extends State<FolderContentsView> {
       case SelectionMode.multi:
         break;
     }
+    focusIndex = index;
     context
         .read<FolderSelectionManager>()
-        .update(selected: selected, focusId: index < resources.length ? resources[index].id : null, focusIndex: index, showFocus: highlight);
+        .update(selected: selected, focusId: index < resources.length ? resources[index].id : null, showFocus: highlight);
   }
 
   void open(Resource r) {
