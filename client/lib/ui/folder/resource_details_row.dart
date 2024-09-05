@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/folder/folder_selection_manager.dart';
 import 'package:phylum/ui/folder/resource_options_dialog.dart';
 import 'package:provider/provider.dart';
+
+const _draggableDataSelected = '__selected';
 
 class ResourceDetailsRow extends StatefulWidget {
   final Resource r;
@@ -25,6 +28,9 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
         ? DragTarget(
             builder: (context, candidate, rejected) => buildRow(context),
             onWillAcceptWithDetails: (details) {
+              if (details.data == _draggableDataSelected && context.read<FolderSelectionState>().selected.contains(widget.r.id)) {
+                return false;
+              }
               dropTargetActive = true;
               return true;
             },
@@ -32,8 +38,13 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
               dropTargetActive = false;
             },
             onAcceptWithDetails: (details) {
+              if (details.data == _draggableDataSelected) {
+                final account = context.read<PhylumAccount>();
+                final selectedIds = context.read<FolderSelectionState>().selected;
+                final selected = account.datastore.db.managers.resources.filter((f) => f.id.isIn(selectedIds));
+                // account.addAction()
+              }
               dropTargetActive = false;
-              print(details.data);
             },
           )
         : buildRow(context);
@@ -41,7 +52,7 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
 
   Widget buildRow(BuildContext context) {
     return Draggable(
-      data: widget.r,
+      data: _draggableDataSelected,
       dragAnchorStrategy: pointerDragAnchorStrategy,
       onDragStarted: () {
         context.read<FolderSelectionManager>().update(dragging: true);
@@ -88,17 +99,15 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
             ? BorderSide(color: theme.colorScheme.primary, width: 2.0)
             : const BorderSide(color: Colors.transparent, width: 2.0);
 
-    return Opacity(
-      opacity: dim ? 0.6 : 1.0,
-      child: ListTile(
-        leading: widget.r.getIcon(),
-        title: Text(widget.r.name),
-        trailing: ResourceOptionsButton(r: widget.r),
-        shape: RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(4.0)),
-        selected: highlight,
-        selectedTileColor: dim ? theme.colorScheme.surfaceDim : null,
-        tileColor: dropTargetActive ? theme.colorScheme.secondaryContainer : null,
-      ),
+    return ListTile(
+      leading: widget.r.getIcon(),
+      title: Text(widget.r.name),
+      trailing: ResourceOptionsButton(r: widget.r),
+      shape: RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(4.0)),
+      selected: highlight,
+      selectedColor: dim ? theme.colorScheme.primary.withOpacity(0.75) : null,
+      selectedTileColor: dim ? theme.colorScheme.primaryContainer.withOpacity(0.75) : null,
+      tileColor: dropTargetActive ? theme.colorScheme.secondaryContainer : null,
     );
   }
 }
