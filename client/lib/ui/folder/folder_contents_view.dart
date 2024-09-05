@@ -56,14 +56,14 @@ class _FolderContentsViewState extends State<FolderContentsView> {
           final index = focusIndex == -1
               ? resources.length
               : focusIndex > 0
-                  ? focusIndex - 1
+                  ? min(focusIndex - 1, resources.length)
                   : 0;
           updateFocus(index, i.mode);
           return null;
         }),
         FocusDownIntent: CallbackAction<FocusDownIntent>(onInvoke: (i) {
           if (resources.isEmpty) return;
-          final index = focusIndex < resources.length - 1 ? focusIndex + 1 : resources.length - 1;
+          final index = min(focusIndex + 1, resources.length - 1);
           updateFocus(index, i.mode);
           return null;
         }),
