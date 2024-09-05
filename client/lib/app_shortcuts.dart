@@ -21,16 +21,8 @@ class ToggleSelectionIntent extends Intent {
   const ToggleSelectionIntent();
 }
 
-class ClearSelectionIntent extends Intent {
-  const ClearSelectionIntent();
-}
-
 class SelectAllIntent extends Intent {
   const SelectAllIntent();
-}
-
-class OpenIntent extends Intent {
-  const OpenIntent();
 }
 
 class DeleteIntent extends Intent {
@@ -59,6 +51,8 @@ class NavUpIntent extends Intent {
 
 Map<ShortcutActivator, Intent> getAppShortcuts() {
   return const {
+    SingleActivator(LogicalKeyboardKey.tab): NextFocusIntent(),
+    SingleActivator(LogicalKeyboardKey.tab, shift: true): PreviousFocusIntent(),
     SingleActivator(LogicalKeyboardKey.arrowUp): FocusUpIntent(SelectionMode.single),
     SingleActivator(LogicalKeyboardKey.arrowUp, shift: true): FocusUpIntent(SelectionMode.range),
     SingleActivator(LogicalKeyboardKey.arrowUp, control: true): FocusUpIntent(SelectionMode.multi),
@@ -66,10 +60,11 @@ Map<ShortcutActivator, Intent> getAppShortcuts() {
     SingleActivator(LogicalKeyboardKey.arrowDown, shift: true): FocusDownIntent(SelectionMode.range),
     SingleActivator(LogicalKeyboardKey.arrowDown, control: true): FocusDownIntent(SelectionMode.multi),
     SingleActivator(LogicalKeyboardKey.space, control: true): ToggleSelectionIntent(),
-    SingleActivator(LogicalKeyboardKey.escape): ClearSelectionIntent(),
+    SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
     SingleActivator(LogicalKeyboardKey.keyA, control: true): SelectAllIntent(),
     SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
-    SingleActivator(LogicalKeyboardKey.enter): OpenIntent(),
+    SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+    SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
     SingleActivator(LogicalKeyboardKey.delete): DeleteIntent(),
     SingleActivator(LogicalKeyboardKey.keyN, control: true): NewFolderIntent(),
     SingleActivator(LogicalKeyboardKey.keyU, control: true): UploadFilesIntent(),

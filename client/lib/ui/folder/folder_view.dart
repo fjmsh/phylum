@@ -32,35 +32,27 @@ class _FolderViewState extends State<FolderView> {
     final account = context.read<PhylumAccount>();
     final theme = Theme.of(context);
 
-    return Focus(
-      onKeyEvent: (node, event) {
-        if (event.logicalKey == LogicalKeyboardKey.tab) {
-          return KeyEventResult.skipRemainingHandlers;
-        }
-        return KeyEventResult.ignored;
-      },
-      child: ListTileTheme(
-        data: ListTileThemeData(
-          mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.basic),
-          selectedTileColor: theme.colorScheme.primaryContainer,
-        ),
-        child: RefreshIndicator(
-          onRefresh: _refresh,
-          child: StateNotifierProvider<FolderSelectionManager, FolderSelectionState>(
-            create: (context) => FolderSelectionManager(),
-            child: StreamBuilder(
-                stream: account.datastore.db.managers.resources
-                    .filter((f) => f.parent.id.equals(widget.id) & f.deleted.equals(false))
-                    .orderBy((o) => o.dir.desc())
-                    .orderBy((o) => o.name.asc())
-                    .watch(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return Container();
-                  }
-                  return FolderContentsView(resources: snapshot.data!);
-                }),
-          ),
+    return ListTileTheme(
+      data: ListTileThemeData(
+        mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.basic),
+        selectedTileColor: theme.colorScheme.primaryContainer,
+      ),
+      child: RefreshIndicator(
+        onRefresh: _refresh,
+        child: StateNotifierProvider<FolderSelectionManager, FolderSelectionState>(
+          create: (context) => FolderSelectionManager(),
+          child: StreamBuilder(
+              stream: account.datastore.db.managers.resources
+                  .filter((f) => f.parent.id.equals(widget.id) & f.deleted.equals(false))
+                  .orderBy((o) => o.dir.desc())
+                  .orderBy((o) => o.name.asc())
+                  .watch(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Container();
+                }
+                return FolderContentsView(resources: snapshot.data!);
+              }),
         ),
       ),
     );
