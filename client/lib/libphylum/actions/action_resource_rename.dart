@@ -16,6 +16,9 @@ class ResourceRenameAction extends ApiAction<PhylumAccount> with JsonApiAction {
   @override
   String get endpoint => '/v1/resources/rename/$id';
 
+  @override
+  get tag => 'resourceDetails';
+
   final String id;
   final String newName;
   final String oldName;

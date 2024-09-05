@@ -16,6 +16,9 @@ class ResourceMoveAction extends ApiAction<PhylumAccount> with JsonApiAction {
   @override
   String get endpoint => '/v1/resources/move/$id';
 
+  @override
+  get tag => 'resourceDetails';
+
   final String id;
   final String parent;
   final String? oldParent;
