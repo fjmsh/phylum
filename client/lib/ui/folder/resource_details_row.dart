@@ -4,7 +4,7 @@ import 'package:phylum/ui/folder/folder_selection_manager.dart';
 import 'package:phylum/ui/folder/resource_options_dialog.dart';
 import 'package:provider/provider.dart';
 
-class ResourceDetailsRow extends StatelessWidget {
+class ResourceDetailsRow extends StatefulWidget {
   final Resource r;
   final Function(TapDownDetails)? onTapDown;
   final Function()? onTap;
@@ -14,15 +14,25 @@ class ResourceDetailsRow extends StatelessWidget {
   ResourceDetailsRow({required this.r, this.onTapDown, this.onTap, this.onDoubleTap, this.onSecondaryTap}) : super(key: ValueKey(r.id));
 
   @override
+  State<ResourceDetailsRow> createState() => _ResourceDetailsRowState();
+}
+
+class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
+  bool dropTargetActive = false;
+  @override
   Widget build(BuildContext context) {
-    return r.dir
+    return widget.r.dir
         ? DragTarget(
             builder: (context, candidate, rejected) => buildRow(context),
             onWillAcceptWithDetails: (details) {
+              dropTargetActive = true;
               return true;
             },
-            onLeave: (data) {},
+            onLeave: (data) {
+              dropTargetActive = false;
+            },
             onAcceptWithDetails: (details) {
+              dropTargetActive = false;
               print(details.data);
             },
           )
@@ -30,14 +40,18 @@ class ResourceDetailsRow extends StatelessWidget {
   }
 
   Widget buildRow(BuildContext context) {
-    final focussed = context.select<FolderSelectionState, bool>((state) => state.focusId == r.id && state.showFocus);
-    final selected = context.select<FolderSelectionState, bool>((state) => state.isSelected(r.id));
-
     return Draggable(
-      data: r,
+      data: widget.r,
       dragAnchorStrategy: pointerDragAnchorStrategy,
-      feedback: Builder(builder: (context) {
+      onDragStarted: () {
+        context.read<FolderSelectionManager>().update(dragging: true);
+      },
+      onDragEnd: (details) {
+        context.read<FolderSelectionManager>().update(dragging: false);
+      },
+      feedback: Builder(builder: (ctx) {
         final theme = Theme.of(context);
+        final count = context.read<FolderSelectionState>().selected.length;
         return Card(
           shape: RoundedRectangleBorder(side: BorderSide(color: theme.colorScheme.primary), borderRadius: BorderRadius.circular(4.0)),
           elevation: 16.0,
@@ -46,32 +60,45 @@ class ResourceDetailsRow extends StatelessWidget {
             width: 240,
             height: 48,
             child: ListTile(
-              leading: r.getIcon(),
-              title: Text(r.name),
+              leading: widget.r.getIcon(),
+              title: Text(widget.r.name),
+              trailing: count == 1 ? null : Badge(label: Text(count.toString(), style: const TextStyle(fontSize: 14))),
             ),
           ),
         );
       }),
       child: GestureDetector(
-        onTapDown: onTapDown,
-        onTap: onTap,
-        onDoubleTap: onDoubleTap,
-        onSecondaryTap: onSecondaryTap,
-        child: buildListTile(context, focussed, selected),
+        onTapDown: widget.onTapDown,
+        onTap: widget.onTap,
+        onDoubleTap: widget.onDoubleTap,
+        onSecondaryTap: widget.onSecondaryTap,
+        child: buildListTile(context),
       ),
     );
   }
 
-  Widget buildListTile(BuildContext context, bool showBorder, bool highlight) {
+  Widget buildListTile(BuildContext context) {
+    final showBorder = context.select<FolderSelectionState, bool>((state) => state.focusId == widget.r.id && state.showFocus);
+    final highlight = context.select<FolderSelectionState, bool>((state) => state.isSelected(widget.r.id));
+    final dim = context.select<FolderSelectionState, bool>((state) => state.isSelected(widget.r.id) && state.dragging);
     final theme = Theme.of(context);
-    final border = showBorder ? BorderSide(color: theme.colorScheme.primary, width: 2.0) : const BorderSide(color: Colors.transparent, width: 2.0);
+    final border = dropTargetActive
+        ? BorderSide(color: theme.colorScheme.secondary, width: 2.0)
+        : showBorder
+            ? BorderSide(color: theme.colorScheme.primary, width: 2.0)
+            : const BorderSide(color: Colors.transparent, width: 2.0);
 
-    return ListTile(
-      leading: r.getIcon(),
-      title: Text(r.name),
-      trailing: ResourceOptionsButton(r: r),
-      shape: RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(4.0)),
-      selected: highlight,
+    return Opacity(
+      opacity: dim ? 0.6 : 1.0,
+      child: ListTile(
+        leading: widget.r.getIcon(),
+        title: Text(widget.r.name),
+        trailing: ResourceOptionsButton(r: widget.r),
+        shape: RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(4.0)),
+        selected: highlight,
+        selectedTileColor: dim ? theme.colorScheme.surfaceDim : null,
+        tileColor: dropTargetActive ? theme.colorScheme.secondaryContainer : null,
+      ),
     );
   }
 }

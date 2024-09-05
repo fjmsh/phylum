@@ -120,6 +120,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
                           : SelectionMode.single;
                   if (context.read<FolderSelectionState>().isSelected(r.id) && mode == SelectionMode.single) {
                     deferHandling = true;
+                    context.read<FolderSelectionManager>().update(focusId: r.id, focusIndex: index, showFocus: false);
                   } else {
                     deferHandling = false;
                     updateSelection(index, mode, false);
