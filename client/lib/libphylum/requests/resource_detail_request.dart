@@ -12,7 +12,7 @@ class ResourceDetailRequest extends ApiRequest {
 
   @override
   BaseRequest createRequest(ApiClient api) {
-    final uri = api.createUriBuilder('/v1/resources/details/$resourceId');
+    final uri = api.createUriBuilder('/api/v1/resources/details/$resourceId');
     return Request('get', uri.build());
   }
 }

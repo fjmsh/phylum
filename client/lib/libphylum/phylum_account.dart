@@ -37,12 +37,12 @@ class PhylumAccount extends Account<Map<String, dynamic>> {
   PhylumAccount({super.id}) : super(api: ApiClient(transformResponse: (response) => jsonDecode(response) as Map<String, dynamic>?));
 
   @override
-  Future<void> initialize() async {
+  Future<String?> initialize() async {
     await super.initialize();
     // Set Authorization header
     _accessToken = accessToken;
 
-    await registerListener(datastore);
+    return await registerListener(datastore);
   }
 
   static Future<PhylumAccount> createFromLoginResponse(Map<String, dynamic> response) async {

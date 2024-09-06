@@ -9,10 +9,11 @@ class PhylumDatastore with AccountListener<Map<String, dynamic>> {
   late final AppDatabase db;
 
   @override
-  Future<void> initialize(Account<Map<String, dynamic>> account) async {
+  Future<String?> initialize(Account<Map<String, dynamic>> account) async {
     super.initialize(account);
     db = AppDatabase(account.id);
     account.api.addResponseListener(processResponse);
+    return null;
   }
 
   Future<void> processResponse(Map<String, dynamic>? data, dynamic tag) async {

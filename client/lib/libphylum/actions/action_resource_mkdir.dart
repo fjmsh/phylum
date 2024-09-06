@@ -14,7 +14,7 @@ class ResourceMkdirAction extends ApiAction<PhylumAccount> with JsonApiAction {
   String get method => 'POST';
 
   @override
-  String get endpoint => '/v1/resources/mkdir/$id';
+  String get endpoint => '/api/v1/resources/mkdir/$id';
 
   @override
   get tag => resourceSummaryResponse;

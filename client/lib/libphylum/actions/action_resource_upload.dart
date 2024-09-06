@@ -17,7 +17,7 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
   String get method => 'PUT';
 
   @override
-  String get endpoint => '/v1/resources/upload/$id';
+  String get endpoint => '/api/v1/resources/upload/$id';
 
   @override
   get tag => resourceSummaryResponse;

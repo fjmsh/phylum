@@ -38,16 +38,15 @@ class _LoginPageState extends State<LoginPage> {
     final serverUrl = this.serverUrl;
     if (!serverUrlValid) return;
     final builder = serverUrl == null ? UriBuilder() : UriBuilder.fromUri(serverUrl);
-    final path = builder.path.split('/').where((s) => s.isNotEmpty).join('/');
-    builder.path = '$path/api';
-    final apiUrl = builder.build();
+    builder.path = builder.path.split('/').where((s) => s.isNotEmpty).join('/');
+    final cleanServerUrl = builder.build();
 
     showProgressDialog(
       context,
       barrierDismissible: false,
       title: 'Logging in...',
     );
-    builder.path = '${builder.path}/v1/auth/login';
+    builder.path = '${builder.path}/api/v1/auth/login';
     builder.queryParameters['email'] = email;
     builder.queryParameters['password'] = password;
     final request = Request('post', builder.build());
@@ -69,7 +68,7 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           final accountManager = context.read<AccountManager<PhylumAccount>>();
           final account = await PhylumAccount.createFromLoginResponse(json.cast<String, dynamic>());
-          account.api.apiBaseUrl = apiUrl;
+          account.api.serverUri = cleanServerUrl;
           accountManager.addAccount(account);
         }
       }

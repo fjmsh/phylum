@@ -22,7 +22,7 @@ void main() async {
       ? Directory(path.join((await getApplicationSupportDirectory()).path, storageDir.isNotEmpty ? storageDir : 'data'))
       : await getApplicationDocumentsDirectory();
 
-  OTL.logger = Logger();
+  OTL.logger = Logger(level: Level.info);
 
   await appDir.create();
   Hive.init(appDir.path);
@@ -30,7 +30,10 @@ void main() async {
 
   final accountManager = await AccountManager.restore((id) async {
     final account = PhylumAccount(id: id);
-    await account.initialized;
+    final err = await account.initialized;
+    if (err != null) {
+      OTL.logger?.e("Unable to restore account: $err");
+    }
     return account;
   });
 
