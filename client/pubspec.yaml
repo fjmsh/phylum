@@ -1,5 +1,5 @@
 name: phylum
-description: "Self-hosted file storage"
+description: Self-hosted file storage
 publish_to: 'none'
 version: 0.0.1+1
 
@@ -11,19 +11,21 @@ dependencies:
     sdk: flutter
   drift: ^2.19.1+1
   drift_flutter: ^0.1.0
+  file_selector: ^1.0.3
   flutter_state_notifier:
   go_router:
   hive:
   http:
+  logger:
   offtheline:
     path: ../../offtheline
   state_notifier:
   path:
   path_provider:
   provider:
+  super_clipboard:
   uri:
   uuid:
-  file_selector: ^1.0.3
 
 dev_dependencies:
   flutter_test:

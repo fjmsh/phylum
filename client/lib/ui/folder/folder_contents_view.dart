@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -9,8 +10,10 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/folder/folder_navigator_stack.dart';
 import 'package:phylum/ui/folder/folder_selection_manager.dart';
 import 'package:phylum/ui/folder/resource_details_row.dart';
+import 'package:phylum/util/upload_utils.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
+import 'package:super_clipboard/super_clipboard.dart';
 
 class FolderContentsView extends StatefulWidget {
   final List<Resource> resources;
@@ -109,6 +112,28 @@ class _FolderContentsViewState extends State<FolderContentsView> {
         }),
         DeleteIntent: CallbackAction<DeleteIntent>(onInvoke: (i) {
           deleteSelected();
+          return null;
+        }),
+        PasteFromClipboardIntent: CallbackAction<PasteFromClipboardIntent>(onInvoke: (i) async {
+          final clipboard = SystemClipboard.instance;
+          if (clipboard == null) {
+            return;
+          }
+          final reader = await clipboard.read();
+          final files = reader.items.where((item) => item.canProvide(Formats.fileUri));
+          final paths = <String>[];
+          if (files.isNotEmpty) {
+            for (final item in reader.items) {
+              final c = Completer<String?>();
+              item.getValue(Formats.fileUri, (value) => c.complete(value?.toFilePath()), onError: (value) => c.complete(null));
+              final path = await c.future;
+              if (path != null) {
+                paths.add(path);
+              }
+            }
+            if (!context.mounted) return;
+            uploadFilesAndDirs(context, context.read<FolderNavigatorState>().folderId, paths);
+          }
           return null;
         }),
       },

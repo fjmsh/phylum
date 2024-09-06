@@ -5,7 +5,7 @@ import 'package:phylum/ui/common/expandable_fab.dart';
 import 'package:phylum/ui/folder/folder_heriarchy_view.dart';
 import 'package:phylum/ui/folder/nav_list.dart';
 import 'package:phylum/ui/folder/folder_view.dart';
-import 'package:phylum/ui/folder/upload_utils.dart';
+import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 
 import 'folder_navigator_stack.dart';

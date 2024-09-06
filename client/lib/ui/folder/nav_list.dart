@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/ui/folder/upload_utils.dart';
+import 'package:phylum/util/upload_utils.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 

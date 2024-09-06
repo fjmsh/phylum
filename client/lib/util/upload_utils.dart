@@ -22,27 +22,31 @@ void createDirectory(BuildContext context, String folderId) async {
 }
 
 void pickAndUploadFiles(BuildContext context, String folderId) async {
-  final account = context.read<PhylumAccount>();
   final files = await openFiles();
-  for (final file in files) {
-    final action = await ResourceUploadAction.fromPath(parent: folderId, resourceName: file.name, path: file.path);
-    await account.addAction(action);
-  }
+  if (!context.mounted) return;
+  uploadFilesAndDirs(context, folderId, files.map((f) => f.path));
 }
 
 void pickAndUploadDirectory(BuildContext context, String folderId) async {
-  final account = context.read<PhylumAccount>();
   final path = await getDirectoryPath();
-  if (path == null) return;
-  if (!context.mounted) return;
-  showProgressDialog(context, message: 'Counting Files');
-  final tree = await DirTree.stat(path);
+  if (path == null || !context.mounted) return;
+  uploadFilesAndDirs(context, folderId, [path]);
+}
 
-  if (!context.mounted) return;
+Future<void> uploadFilesAndDirs(BuildContext context, String folderId, Iterable<String> paths) async {
+  final account = context.read<PhylumAccount>();
+  showProgressDialog(context, message: 'Counting Files');
+  DirTree? tree;
+  for (final path in paths) {
+    final stat = await DirTree.stat(path);
+    tree = tree?.mergeWith(stat) ?? stat;
+  }
+
+  if (tree == null || !context.mounted) return;
   Navigator.of(context).pop();
   final confirm = await showAlertDialog(
         context,
-        title: 'Upload Folder?',
+        title: 'Upload Files?',
         message: 'Found ${tree.files.length} files and ${tree.dirs.length} directories.\n\nTotal Upload Size: ${tree.totalSize.getHumanString()}',
         positiveText: 'YES',
         negativeText: 'NO',
@@ -50,12 +54,10 @@ void pickAndUploadDirectory(BuildContext context, String folderId) async {
       false;
   if (!confirm || !context.mounted) return;
   final dirIds = <String, String>{};
-  dirIds[path] = uuid.v4();
-  account.addAction(ResourceMkdirAction(id: dirIds[path]!, parent: folderId, resourceName: p.basename(path)));
   for (final dir in tree.dirs) {
     dirIds[dir] = uuid.v4();
     final parent = p.dirname(dir);
-    account.addAction(ResourceMkdirAction(id: dirIds[dir]!, parent: dirIds[parent]!, resourceName: p.basename(dir)));
+    account.addAction(ResourceMkdirAction(id: dirIds[dir]!, parent: dirIds[parent] ?? folderId, resourceName: p.basename(dir)));
   }
   for (final file in tree.files) {
     final parent = p.dirname(file);
@@ -79,11 +81,21 @@ class DirTree {
     required this.dirs,
   });
 
+  DirTree mergeWith(DirTree other) {
+    return DirTree(
+      numFiles: numFiles + other.numFiles,
+      numDirs: numDirs + other.numDirs,
+      totalSize: totalSize + other.totalSize,
+      files: files..addAll(other.files),
+      dirs: dirs..addAll(other.dirs),
+    );
+  }
+
   static Future<DirTree> stat(String path) {
     final dir = Directory(path);
     final completer = Completer<DirTree>();
     final files = <String>[];
-    final dirs = <String>[];
+    final dirs = <String>[path];
     int numFiles = 0;
     int numDirs = 0;
     int totalSize = 0;

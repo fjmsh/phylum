@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:hive/hive.dart';
+import 'package:logger/logger.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -20,6 +21,8 @@ void main() async {
   final appDir = (Platform.isLinux)
       ? Directory(path.join((await getApplicationSupportDirectory()).path, storageDir.isNotEmpty ? storageDir : 'data'))
       : await getApplicationDocumentsDirectory();
+
+  OTL.logger = Logger();
 
   await appDir.create();
   Hive.init(appDir.path);
