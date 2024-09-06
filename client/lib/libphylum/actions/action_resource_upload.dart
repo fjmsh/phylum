@@ -59,7 +59,7 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
     return ResourceUploadAction._(
       id: map['id'],
       parent: map['parent'],
-      resourceName: map['dirName'],
+      resourceName: map['resourceName'],
       path: map['path'],
       size: map['size'],
     );
@@ -73,7 +73,7 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
   @override
   FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
     account.datastore.db.managers.resources.create((o) => o(
-          dir: true,
+          dir: false,
           etag: "",
           size: size,
           id: id,
