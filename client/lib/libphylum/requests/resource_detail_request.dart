@@ -1,9 +1,10 @@
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/phylum_datastore.dart';
 
 class ResourceDetailRequest extends ApiRequest {
   @override
-  get tag => "resourceDetails";
+  get tag => resourceDetailsResponse;
 
   final String resourceId;
 

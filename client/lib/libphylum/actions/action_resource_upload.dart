@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/phylum_datastore.dart';
 import 'package:uuid/uuid.dart';
 
 class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAction {
@@ -19,7 +20,7 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
   String get endpoint => '/v1/resources/upload/$id';
 
   @override
-  dynamic get tag => 'resourceDetails';
+  get tag => resourceSummaryResponse;
 
   @override
   Future<MultipartFile> get file => MultipartFile.fromPath('contents', path, filename: resourceName);

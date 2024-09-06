@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/phylum_datastore.dart';
 
 class ResourceMkdirAction extends ApiAction<PhylumAccount> with JsonApiAction {
   static const actionName = 'resourceMkdir';
@@ -16,7 +17,7 @@ class ResourceMkdirAction extends ApiAction<PhylumAccount> with JsonApiAction {
   String get endpoint => '/v1/resources/mkdir/$id';
 
   @override
-  dynamic get tag => 'resourceDetails';
+  get tag => resourceSummaryResponse;
 
   final String id;
   final String parent;
