@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
+import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/folder/folder_navigator_stack.dart';
@@ -16,9 +17,10 @@ import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
 class FolderContentsView extends StatefulWidget {
+  final String folderId;
   final List<Resource> resources;
 
-  const FolderContentsView({super.key, required this.resources});
+  FolderContentsView({required this.folderId, required this.resources}) : super(key: ValueKey(folderId));
 
   @override
   State<FolderContentsView> createState() => _FolderContentsViewState();
@@ -114,26 +116,70 @@ class _FolderContentsViewState extends State<FolderContentsView> {
           deleteSelected();
           return null;
         }),
+        CopyToClipboardIntent: CallbackAction<CopyToClipboardIntent>(onInvoke: (i) async {
+          final account = context.read<PhylumAccount>();
+          final selectedIds = context.read<FolderSelectionState>().selected;
+          if (selectedIds.isEmpty) return;
+          final selected = resources.where((r) => selectedIds.contains(r.id)).toList(growable: false);
+          final items = selected.map((r) {
+            final uri = account.api.createUriBuilder('/open');
+            uri.queryParameters['id'] = r.id;
+            if (i.cut) {
+              uri.queryParameters['cut'] = 'y';
+            }
+            final uriData = Formats.uri(NamedUri(uri.build(), name: r.name));
+            return DataWriterItem(suggestedName: r.name)..add(uriData);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${items.length} items ${i.cut ? 'cut' : 'copied'} to clipboard')));
+          await SystemClipboard.instance?.write(items);
+          return null;
+        }),
         PasteFromClipboardIntent: CallbackAction<PasteFromClipboardIntent>(onInvoke: (i) async {
+          final account = context.read<PhylumAccount>();
+          final openUri = account.api.createUri('/open');
           final clipboard = SystemClipboard.instance;
           if (clipboard == null) {
             return;
           }
           final reader = await clipboard.read();
-          final files = reader.items.where((item) => item.canProvide(Formats.fileUri));
           final paths = <String>[];
-          if (files.isNotEmpty) {
-            for (final item in reader.items) {
-              final c = Completer<String?>();
-              item.getValue(Formats.fileUri, (value) => c.complete(value?.toFilePath()), onError: (value) => c.complete(null));
-              final path = await c.future;
-              if (path != null) {
-                paths.add(path);
+          final cutResources = <Resource>[];
+          final copyResources = <Resource>[];
+          for (final item in reader.items) {
+            final c = Completer<String?>();
+            item.getValue(Formats.fileUri, (value) => c.complete(value?.toFilePath()), onError: (value) => c.complete(null));
+            final filePath = await c.future;
+            if (filePath != null) {
+              paths.add(filePath);
+            } else {
+              final c = Completer<Uri?>();
+              item.getValue(Formats.uri, (value) {
+                c.complete(value?.uri);
+              }, onError: (value) => c.complete(null));
+              final uri = await c.future;
+              if (uri != null) {
+                if (uri.authority == openUri.authority && uri.path == openUri.path && uri.queryParameters.containsKey('id')) {
+                  final resourceId = uri.queryParameters['id']!;
+                  final cut = uri.queryParameters.containsKey('cut');
+                  final resource = await account.datastore.db.managers.resources.filter((f) => f.id.equals(resourceId)).getSingleOrNull();
+                  if (resource != null) {
+                    (cut ? cutResources : copyResources).add(resource);
+                  }
+                }
               }
             }
-            if (!context.mounted) return;
-            uploadRecursive(context, context.read<FolderNavigatorState>().folderId, paths);
           }
+          if (!context.mounted) return;
+          uploadRecursive(context, widget.folderId, paths);
+          final parent = await account.datastore.db.managers.resources.filter((f) => f.id.equals(widget.folderId)).getSingleOrNull();
+          if (parent != null) {
+            for (final r in cutResources) {
+              account.addAction(ResourceMoveAction(r: r, parent: parent));
+            }
+          }
+
+          await SystemClipboard.instance?.write([]);
+
           return null;
         }),
       },

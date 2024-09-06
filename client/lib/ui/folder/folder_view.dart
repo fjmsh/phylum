@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
@@ -50,7 +49,7 @@ class _FolderViewState extends State<FolderView> {
                 if (!snapshot.hasData) {
                   return Container();
                 }
-                return FolderContentsView(resources: snapshot.data!);
+                return FolderContentsView(folderId: widget.id, resources: snapshot.data!);
               }),
         ),
       ),

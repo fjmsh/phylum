@@ -42,8 +42,10 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
     tree = tree?.mergeWith(stat) ?? stat;
   }
 
-  if (tree == null || !context.mounted) return;
+  if (!context.mounted) return;
   Navigator.of(context).pop();
+
+  if (tree == null) return;
   final confirm = await showAlertDialog(
         context,
         title: 'Upload Files?',
