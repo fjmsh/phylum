@@ -132,7 +132,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
               }
             }
             if (!context.mounted) return;
-            uploadFilesAndDirs(context, context.read<FolderNavigatorState>().folderId, paths);
+            uploadRecursive(context, context.read<FolderNavigatorState>().folderId, paths);
           }
           return null;
         }),

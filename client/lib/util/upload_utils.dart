@@ -24,16 +24,16 @@ void createDirectory(BuildContext context, String folderId) async {
 void pickAndUploadFiles(BuildContext context, String folderId) async {
   final files = await openFiles();
   if (!context.mounted) return;
-  uploadFilesAndDirs(context, folderId, files.map((f) => f.path));
+  uploadRecursive(context, folderId, files.map((f) => f.path));
 }
 
 void pickAndUploadDirectory(BuildContext context, String folderId) async {
   final path = await getDirectoryPath();
   if (path == null || !context.mounted) return;
-  uploadFilesAndDirs(context, folderId, [path]);
+  uploadRecursive(context, folderId, [path]);
 }
 
-Future<void> uploadFilesAndDirs(BuildContext context, String folderId, Iterable<String> paths) async {
+Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<String> paths) async {
   final account = context.read<PhylumAccount>();
   showProgressDialog(context, message: 'Counting Files');
   DirTree? tree;
@@ -61,7 +61,7 @@ Future<void> uploadFilesAndDirs(BuildContext context, String folderId, Iterable<
   }
   for (final file in tree.files) {
     final parent = p.dirname(file);
-    final action = await ResourceUploadAction.fromPath(parent: dirIds[parent]!, resourceName: p.basename(file), path: file);
+    final action = await ResourceUploadAction.fromPath(parent: dirIds[parent] ?? folderId, resourceName: p.basename(file), path: file);
     await account.addAction(action);
   }
 }
@@ -92,6 +92,16 @@ class DirTree {
   }
 
   static Future<DirTree> stat(String path) {
+    final s = FileStat.statSync(path);
+    if (s.type == FileSystemEntityType.file) {
+      return Future.value(DirTree(
+        numFiles: 1,
+        numDirs: 0,
+        totalSize: s.size,
+        files: [path],
+        dirs: const [],
+      ));
+    }
     final dir = Directory(path);
     final completer = Completer<DirTree>();
     final files = <String>[];
