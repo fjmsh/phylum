@@ -169,7 +169,7 @@ func handleResourceMkdirRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	c.JSON(200, detailedResponseFromResource(fs, res))
+	c.JSON(200, responseFromResource(res))
 }
 
 func handleResourceRenameRoute(c *gin.Context) {
@@ -198,7 +198,7 @@ func handleResourceRenameRoute(c *gin.Context) {
 		}
 		panic(err)
 	} else {
-		c.JSON(200, detailedResponseFromResource(fs, r))
+		c.JSON(200, responseFromResource(r))
 	}
 }
 
@@ -229,7 +229,7 @@ func handleResourceMoveRoute(c *gin.Context) {
 		}
 		panic(err)
 	} else {
-		c.JSON(200, detailedResponseFromResource(fs, r))
+		c.JSON(200, responseFromResource(r))
 	}
 }
 
@@ -306,7 +306,7 @@ func handleResourceUploadRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	c.JSON(200, detailedResponseFromResource(f, res))
+	c.JSON(200, responseFromResource(res))
 }
 
 func handleResourceDeleteRoute(c *gin.Context) {
