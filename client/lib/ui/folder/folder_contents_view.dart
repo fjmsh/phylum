@@ -70,8 +70,6 @@ class _FolderContentsViewState extends State<FolderContentsView> {
   Widget build(BuildContext context) {
     return Actions(
       actions: {
-        NextFocusIntent: CallbackAction<NextFocusIntent>(onInvoke: (i) => null),
-        PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
         FocusUpIntent: CallbackAction<FocusUpIntent>(onInvoke: (i) {
           if (resources.isEmpty) return;
           final index = focusIndex == -1
@@ -102,10 +100,6 @@ class _FolderContentsViewState extends State<FolderContentsView> {
           } else {
             context.read<FolderSelectionManager>().update(selected: const {}, showFocus: true);
           }
-          return null;
-        }),
-        NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) {
-          context.read<FolderNavigatorStack>().pop();
           return null;
         }),
         ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) {

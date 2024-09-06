@@ -28,7 +28,7 @@ class PhylumDatastore with AccountListener<Map<String, dynamic>> {
   }
 
   Future parseResourceDetails(Map<String, dynamic> data) async {
-    final details = parseResourceSummary(data['metadata']);
+    final details = parseResourceSummary(data['metadata']).copyWith(lastFetch: Value(DateTime.now()));
     final existing = Set.from(await db.managers.resources.filter((f) => f.parent.id.equals(data['metadata']['id'])).map((r) => r.id).get());
     final children = data.containsKey('children')
         ? (data['children'] as List).cast<Map>().map((c) {

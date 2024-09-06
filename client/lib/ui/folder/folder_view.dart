@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
 import 'package:phylum/ui/folder/folder_contents_view.dart';
+import 'package:phylum/ui/folder/folder_navigator_stack.dart';
 import 'package:phylum/ui/folder/folder_selection_manager.dart';
 import 'package:provider/provider.dart';
 
@@ -31,26 +33,70 @@ class _FolderViewState extends State<FolderView> {
     final account = context.read<PhylumAccount>();
     final theme = Theme.of(context);
 
-    return ListTileTheme(
-      data: ListTileThemeData(
-        mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.basic),
-        selectedTileColor: theme.colorScheme.primaryContainer,
-      ),
-      child: RefreshIndicator(
-        onRefresh: _refresh,
+    return Actions(
+      actions: {
+        NextFocusIntent: CallbackAction<NextFocusIntent>(onInvoke: (i) => null),
+        PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
+        NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) {
+          context.read<FolderNavigatorStack>().pop();
+          return null;
+        }),
+      },
+      child: ListTileTheme(
+        data: ListTileThemeData(
+          mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.basic),
+          selectedTileColor: theme.colorScheme.primaryContainer,
+        ),
         child: StateNotifierProvider<FolderSelectionManager, FolderSelectionState>(
           create: (context) => FolderSelectionManager(),
           child: StreamBuilder(
-              stream: account.datastore.db.managers.resources
-                  .filter((f) => f.parent.id.equals(widget.id) & f.deleted.equals(false))
-                  .orderBy((o) => o.dir.desc() & o.name.asc())
-                  .watch(),
+              stream: account.datastore.db.managers.resources.filter((f) => f.id.equals(widget.id)).watchSingleOrNull(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return Container();
+                final folder = snapshot.data;
+                if (folder?.lastFetch == null) {
+                  return buildEmptyView('Loading');
                 }
-                return FolderContentsView(folderId: widget.id, resources: snapshot.data!);
+                return StreamBuilder(
+                    stream: account.datastore.db.managers.resources
+                        .filter((f) => f.parent.id.equals(widget.id) & f.deleted.equals(false))
+                        .orderBy((o) => o.dir.desc() & o.name.asc())
+                        .watch(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return Container();
+                      }
+                      if (snapshot.data!.isEmpty) {
+                        return buildEmptyView('Nothing here');
+                      }
+                      return RefreshIndicator(
+                          onRefresh: _refresh,
+                          child: FolderContentsView(
+                            folderId: widget.id,
+                            resources: snapshot.data!,
+                          ));
+                    });
               }),
+        ),
+      ),
+    );
+  }
+
+  Widget buildEmptyView(String text) {
+    return Focus(
+      autofocus: true,
+      child: LayoutBuilder(
+        builder: (context, constraints) => RefreshIndicator(
+          onRefresh: _refresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: constraints.maxWidth,
+                minHeight: constraints.maxHeight,
+              ),
+              child: Center(child: Text(text)),
+            ),
+          ),
         ),
       ),
     );

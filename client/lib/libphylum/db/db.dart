@@ -13,7 +13,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(String id) : super(_openConnection(id));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   Future insertResources(Iterable<Insertable<Resource>> list) async {
     await batch((batch) {
@@ -25,10 +25,8 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration => MigrationStrategy(
       onCreate: (m) => m.createAll(),
       onUpgrade: (m, from, to) async {
-        if (from == 1) {
-          await m.drop(resources);
-          await m.create(resources);
-        }
+        await m.drop(resources);
+        await m.createAll();
       });
 
   static QueryExecutor _openConnection(String id) {

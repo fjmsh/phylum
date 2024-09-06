@@ -9,6 +9,7 @@ class Resources extends Table {
   IntColumn get size => integer()();
   TextColumn get etag => text()();
   BoolColumn get deleted => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get lastFetch => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

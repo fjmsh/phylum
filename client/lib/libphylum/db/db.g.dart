@@ -61,9 +61,15 @@ class $ResourcesTable extends Resources
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("deleted" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _lastFetchMeta =
+      const VerificationMeta('lastFetch');
+  @override
+  late final GeneratedColumn<DateTime> lastFetch = GeneratedColumn<DateTime>(
+      'last_fetch', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, parent, name, dir, modified, size, etag, deleted];
+      [id, parent, name, dir, modified, size, etag, deleted, lastFetch];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -117,6 +123,10 @@ class $ResourcesTable extends Resources
       context.handle(_deletedMeta,
           deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta));
     }
+    if (data.containsKey('last_fetch')) {
+      context.handle(_lastFetchMeta,
+          lastFetch.isAcceptableOrUnknown(data['last_fetch']!, _lastFetchMeta));
+    }
     return context;
   }
 
@@ -146,6 +156,8 @@ class $ResourcesTable extends Resources
           .read(DriftSqlType.string, data['${effectivePrefix}etag'])!,
       deleted: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}deleted'])!,
+      lastFetch: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_fetch']),
     );
   }
 
@@ -164,6 +176,7 @@ class Resource extends DataClass implements Insertable<Resource> {
   final int size;
   final String etag;
   final bool deleted;
+  final DateTime? lastFetch;
   const Resource(
       {required this.id,
       this.parent,
@@ -172,7 +185,8 @@ class Resource extends DataClass implements Insertable<Resource> {
       required this.modified,
       required this.size,
       required this.etag,
-      required this.deleted});
+      required this.deleted,
+      this.lastFetch});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -186,6 +200,9 @@ class Resource extends DataClass implements Insertable<Resource> {
     map['size'] = Variable<int>(size);
     map['etag'] = Variable<String>(etag);
     map['deleted'] = Variable<bool>(deleted);
+    if (!nullToAbsent || lastFetch != null) {
+      map['last_fetch'] = Variable<DateTime>(lastFetch);
+    }
     return map;
   }
 
@@ -200,6 +217,9 @@ class Resource extends DataClass implements Insertable<Resource> {
       size: Value(size),
       etag: Value(etag),
       deleted: Value(deleted),
+      lastFetch: lastFetch == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastFetch),
     );
   }
 
@@ -215,6 +235,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       size: serializer.fromJson<int>(json['size']),
       etag: serializer.fromJson<String>(json['etag']),
       deleted: serializer.fromJson<bool>(json['deleted']),
+      lastFetch: serializer.fromJson<DateTime?>(json['lastFetch']),
     );
   }
   @override
@@ -229,6 +250,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       'size': serializer.toJson<int>(size),
       'etag': serializer.toJson<String>(etag),
       'deleted': serializer.toJson<bool>(deleted),
+      'lastFetch': serializer.toJson<DateTime?>(lastFetch),
     };
   }
 
@@ -240,7 +262,8 @@ class Resource extends DataClass implements Insertable<Resource> {
           DateTime? modified,
           int? size,
           String? etag,
-          bool? deleted}) =>
+          bool? deleted,
+          Value<DateTime?> lastFetch = const Value.absent()}) =>
       Resource(
         id: id ?? this.id,
         parent: parent.present ? parent.value : this.parent,
@@ -250,6 +273,7 @@ class Resource extends DataClass implements Insertable<Resource> {
         size: size ?? this.size,
         etag: etag ?? this.etag,
         deleted: deleted ?? this.deleted,
+        lastFetch: lastFetch.present ? lastFetch.value : this.lastFetch,
       );
   Resource copyWithCompanion(ResourcesCompanion data) {
     return Resource(
@@ -261,6 +285,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       size: data.size.present ? data.size.value : this.size,
       etag: data.etag.present ? data.etag.value : this.etag,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
+      lastFetch: data.lastFetch.present ? data.lastFetch.value : this.lastFetch,
     );
   }
 
@@ -274,14 +299,15 @@ class Resource extends DataClass implements Insertable<Resource> {
           ..write('modified: $modified, ')
           ..write('size: $size, ')
           ..write('etag: $etag, ')
-          ..write('deleted: $deleted')
+          ..write('deleted: $deleted, ')
+          ..write('lastFetch: $lastFetch')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, parent, name, dir, modified, size, etag, deleted);
+  int get hashCode => Object.hash(
+      id, parent, name, dir, modified, size, etag, deleted, lastFetch);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -293,7 +319,8 @@ class Resource extends DataClass implements Insertable<Resource> {
           other.modified == this.modified &&
           other.size == this.size &&
           other.etag == this.etag &&
-          other.deleted == this.deleted);
+          other.deleted == this.deleted &&
+          other.lastFetch == this.lastFetch);
 }
 
 class ResourcesCompanion extends UpdateCompanion<Resource> {
@@ -305,6 +332,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   final Value<int> size;
   final Value<String> etag;
   final Value<bool> deleted;
+  final Value<DateTime?> lastFetch;
   final Value<int> rowid;
   const ResourcesCompanion({
     this.id = const Value.absent(),
@@ -315,6 +343,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.size = const Value.absent(),
     this.etag = const Value.absent(),
     this.deleted = const Value.absent(),
+    this.lastFetch = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ResourcesCompanion.insert({
@@ -326,6 +355,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     required int size,
     required String etag,
     this.deleted = const Value.absent(),
+    this.lastFetch = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         name = Value(name),
@@ -342,6 +372,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     Expression<int>? size,
     Expression<String>? etag,
     Expression<bool>? deleted,
+    Expression<DateTime>? lastFetch,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -353,6 +384,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       if (size != null) 'size': size,
       if (etag != null) 'etag': etag,
       if (deleted != null) 'deleted': deleted,
+      if (lastFetch != null) 'last_fetch': lastFetch,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -366,6 +398,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       Value<int>? size,
       Value<String>? etag,
       Value<bool>? deleted,
+      Value<DateTime?>? lastFetch,
       Value<int>? rowid}) {
     return ResourcesCompanion(
       id: id ?? this.id,
@@ -376,6 +409,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       size: size ?? this.size,
       etag: etag ?? this.etag,
       deleted: deleted ?? this.deleted,
+      lastFetch: lastFetch ?? this.lastFetch,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -407,6 +441,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     if (deleted.present) {
       map['deleted'] = Variable<bool>(deleted.value);
     }
+    if (lastFetch.present) {
+      map['last_fetch'] = Variable<DateTime>(lastFetch.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -424,6 +461,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
           ..write('size: $size, ')
           ..write('etag: $etag, ')
           ..write('deleted: $deleted, ')
+          ..write('lastFetch: $lastFetch, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -450,6 +488,7 @@ typedef $$ResourcesTableCreateCompanionBuilder = ResourcesCompanion Function({
   required int size,
   required String etag,
   Value<bool> deleted,
+  Value<DateTime?> lastFetch,
   Value<int> rowid,
 });
 typedef $$ResourcesTableUpdateCompanionBuilder = ResourcesCompanion Function({
@@ -461,6 +500,7 @@ typedef $$ResourcesTableUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<int> size,
   Value<String> etag,
   Value<bool> deleted,
+  Value<DateTime?> lastFetch,
   Value<int> rowid,
 });
 
@@ -489,6 +529,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
             Value<int> size = const Value.absent(),
             Value<String> etag = const Value.absent(),
             Value<bool> deleted = const Value.absent(),
+            Value<DateTime?> lastFetch = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               ResourcesCompanion(
@@ -500,6 +541,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
             size: size,
             etag: etag,
             deleted: deleted,
+            lastFetch: lastFetch,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -511,6 +553,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
             required int size,
             required String etag,
             Value<bool> deleted = const Value.absent(),
+            Value<DateTime?> lastFetch = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               ResourcesCompanion.insert(
@@ -522,6 +565,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
             size: size,
             etag: etag,
             deleted: deleted,
+            lastFetch: lastFetch,
             rowid: rowid,
           ),
         ));
@@ -562,6 +606,11 @@ class $$ResourcesTableFilterComposer
 
   ColumnFilters<bool> get deleted => $state.composableBuilder(
       column: $state.table.deleted,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<DateTime> get lastFetch => $state.composableBuilder(
+      column: $state.table.lastFetch,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -613,6 +662,11 @@ class $$ResourcesTableOrderingComposer
 
   ColumnOrderings<bool> get deleted => $state.composableBuilder(
       column: $state.table.deleted,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<DateTime> get lastFetch => $state.composableBuilder(
+      column: $state.table.lastFetch,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
