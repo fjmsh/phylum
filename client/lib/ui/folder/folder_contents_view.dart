@@ -70,9 +70,9 @@ class _FolderContentsViewState extends State<FolderContentsView> {
         FocusUpIntent: CallbackAction<FocusUpIntent>(onInvoke: (i) {
           if (resources.isEmpty) return;
           final index = focusIndex == -1
-              ? resources.length
+              ? (resources.length - 1)
               : focusIndex > 0
-                  ? min(focusIndex - 1, resources.length)
+                  ? min(focusIndex - 1, resources.length - 1)
                   : 0;
           updateSelection(index, i.mode, true);
           return null;
