@@ -9,6 +9,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:phylum/app.dart';
 import 'package:phylum/libphylum/actions/deserializers.dart';
+import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/login_page.dart';
 import 'package:provider/provider.dart';
@@ -18,11 +19,13 @@ const storageDir = String.fromEnvironment("STORAGE_DIR");
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  OTL.logger = Logger(level: Level.info);
+
   final appDir = (Platform.isLinux)
       ? Directory(path.join((await getApplicationSupportDirectory()).path, storageDir.isNotEmpty ? storageDir : 'data'))
       : await getApplicationDocumentsDirectory();
-
-  OTL.logger = Logger(level: Level.info);
+  AppDatabase.storageDir = appDir.path;
+  AppDatabase.tmpDir = (await getTemporaryDirectory()).path;
 
   await appDir.create();
   Hive.init(appDir.path);

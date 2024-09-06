@@ -26,6 +26,7 @@ dependencies:
   super_clipboard:
   uri:
   uuid:
+  sqlite3: ^2.4.6
 
 dev_dependencies:
   flutter_test:
