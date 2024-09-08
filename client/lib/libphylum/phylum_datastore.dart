@@ -16,13 +16,17 @@ class PhylumDatastore with AccountListener<PhylumApiResponse, PhylumApiErrorResp
     account.api.addResponseListener(processResponse);
   }
 
-  Future<void> processResponse(Map<String, dynamic>? data, dynamic tag) async {
+  Future<void> processResponse(Map<String, dynamic> data, dynamic tag) {
+    return db.transaction(() => _processResponse(data, tag));
+  }
+
+  Future<void> _processResponse(Map<String, dynamic> data, dynamic tag) async {
     switch (tag) {
       case resourceDetailsResponse:
-        parseResourceDetails(data!);
+        parseResourceDetails(data);
         break;
       case resourceSummaryResponse:
-        parseResourceSummary(data!);
+        parseResourceSummary(data);
         break;
     }
   }
