@@ -23,11 +23,11 @@ class _LoginPageState extends State<LoginPage> {
   final Client _client = Client();
   String _email = '';
   String _password = '';
-  Uri? serverUrl;
+  Uri? serverUrl = kIsWeb ? Uri() : null;
   String? urlError;
   String? emailError;
 
-  bool get serverUrlValid => kIsWeb || (serverUrl?.hasScheme == true && serverUrl?.hasAuthority == true);
+  bool get serverUrlValid => (kIsWeb && serverUrl == Uri()) || (serverUrl?.hasScheme == true && serverUrl?.hasAuthority == true);
 
   @override
   void initState() {
@@ -67,8 +67,7 @@ class _LoginPageState extends State<LoginPage> {
           );
         } else {
           final accountManager = context.read<AccountManager<PhylumAccount>>();
-          final account = await PhylumAccount.createFromLoginResponse(json.cast<String, dynamic>());
-          account.api.serverUri = cleanServerUrl;
+          final account = await PhylumAccount.createFromLoginResponse(cleanServerUrl, json.cast<String, dynamic>());
           accountManager.addAccount(account);
         }
       }
@@ -107,21 +106,20 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                if (!kIsWeb)
-                  TextField(
-                    decoration: InputDecoration(
-                      label: const Text('Server URL'),
-                      hintText: 'http://localhost:1234/',
-                      errorText: urlError,
-                    ),
-                    keyboardType: TextInputType.url,
-                    onChanged: (value) {
-                      setState(() {
-                        serverUrl = Uri.tryParse(value);
-                        urlError = serverUrl == null ? 'Invalid URL' : null;
-                      });
-                    },
+                TextField(
+                  decoration: InputDecoration(
+                    label: const Text('Server URL'),
+                    hintText: 'http://localhost:1234/',
+                    errorText: urlError,
                   ),
+                  keyboardType: TextInputType.url,
+                  onChanged: (value) {
+                    setState(() {
+                      serverUrl = kIsWeb && value == '' ? Uri() : Uri.tryParse(value);
+                      urlError = serverUrl == null ? 'Invalid URL' : null;
+                    });
+                  },
+                ),
                 TextField(
                   decoration: const InputDecoration(
                     label: Text('Username'),

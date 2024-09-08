@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:hive/hive.dart';
@@ -21,21 +22,26 @@ void main() async {
 
   OTL.logger = Logger(level: Level.info);
 
-  final appDir = (Platform.isLinux)
-      ? Directory(path.join((await getApplicationSupportDirectory()).path, storageDir.isNotEmpty ? storageDir : 'data'))
-      : await getApplicationDocumentsDirectory();
-  AppDatabase.storageDir = appDir.path;
-  AppDatabase.tmpDir = (await getTemporaryDirectory()).path;
+  if (kIsWeb) {
+    Hive.init(null, backendPreference: HiveStorageBackendPreference.webWorker);
+  } else {
+    final appDir = (Platform.isLinux)
+        ? Directory(path.join((await getApplicationSupportDirectory()).path, storageDir.isNotEmpty ? storageDir : 'data'))
+        : await getApplicationDocumentsDirectory();
+    AppDatabase.storageDir = appDir.path;
+    AppDatabase.tmpDir = (await getTemporaryDirectory()).path;
 
-  await appDir.create();
-  Hive.init(appDir.path);
+    await appDir.create();
+    Hive.init(appDir.path);
+  }
   Hive.registerAdapter(ApiActionTypeAdapter(actionDeserializers));
 
   final accountManager = await AccountManager.restore((id) async {
-    final account = PhylumAccount(id: id);
+    final account = PhylumAccount.restore(id: id);
     final err = await account.initialized;
     if (err != null) {
       OTL.logger?.e("Unable to restore account: $err");
+      return null;
     }
     return account;
   });

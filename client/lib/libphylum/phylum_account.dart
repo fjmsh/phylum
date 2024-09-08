@@ -8,8 +8,25 @@ const _persistKeyUserEmail = 'userEmail';
 const _persistKeyUserName = 'userName';
 const _persistKeyUserHome = 'userHome';
 
-class PhylumAccount extends Account<Map<String, dynamic>> {
-  final PhylumDatastore datastore = PhylumDatastore();
+typedef PhylumApiResponse = Map<String, dynamic>;
+
+class PhylumApiErrorResponse {
+  final String code;
+  final String message;
+
+  PhylumApiErrorResponse._({required this.code, required this.message});
+
+  factory PhylumApiErrorResponse.fromResponseString(String response) {
+    final map = (jsonDecode(response) as Map<String, dynamic>?) ?? const {};
+    return PhylumApiErrorResponse._(code: map['code'] ?? 'server_error', message: map['msg'] ?? 'Server Error');
+  }
+}
+
+Map<String, dynamic> _tansformResponse(String response) => (jsonDecode(response) as Map<String, dynamic>?) ?? const {};
+
+class PhylumAccount extends Account<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> {
+  final datastore = PhylumDatastore();
+  final actionQueue = ApiActionQueue<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount>();
 
   String? get accessToken => getPersisted(_persistKeyAccessToken);
   set _accessToken(String? value) {
@@ -34,19 +51,34 @@ class PhylumAccount extends Account<Map<String, dynamic>> {
     persist(_persistKeyUserHome, value);
   }
 
-  PhylumAccount({super.id}) : super(api: ApiClient(transformResponse: (response) => jsonDecode(response) as Map<String, dynamic>?));
+  PhylumAccount.create({required Uri serverUri})
+      : super(
+          transformResponse: _tansformResponse,
+          serverUri: serverUri,
+          transformErrorResponse: PhylumApiErrorResponse.fromResponseString,
+        );
+  PhylumAccount.restore({required super.id})
+      : super(
+          transformResponse: _tansformResponse,
+          transformErrorResponse: PhylumApiErrorResponse.fromResponseString,
+        );
 
   @override
-  Future<String?> initialize() async {
+  Future<void> initialize() async {
     await super.initialize();
     // Set Authorization header
     _accessToken = accessToken;
 
-    return await registerListener(datastore);
+    await registerListener(datastore);
+    await registerListener(actionQueue);
   }
 
-  static Future<PhylumAccount> createFromLoginResponse(Map<String, dynamic> response) async {
-    final account = PhylumAccount();
+  Future<void> addAction(ApiAction<PhylumAccount> action) async {
+    return actionQueue.addAction(action);
+  }
+
+  static Future<PhylumAccount> createFromLoginResponse(Uri serverUri, Map<String, dynamic> response) async {
+    final account = PhylumAccount.create(serverUri: serverUri);
     await account.initialized;
     account._accessToken = response['access_token'];
 

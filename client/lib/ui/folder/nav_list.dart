@@ -81,7 +81,7 @@ class NavList extends StatelessWidget {
             onTap: () {
               final state = context.read<ApiActionQueueState>();
               if (state.error != null) {
-                showAlertDialog(context, message: state.error?.message.toString());
+                showAlertDialog(context, message: state.error!.description);
               }
             },
           ),

@@ -1,19 +1,19 @@
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 
 const resourceDetailsResponse = 'resourceDetails';
 const resourceSummaryResponse = 'resourceSummary';
 
-class PhylumDatastore with AccountListener<Map<String, dynamic>> {
+class PhylumDatastore with AccountListener<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> {
   late final AppDatabase db;
 
   @override
-  Future<String?> initialize(Account<Map<String, dynamic>> account) async {
+  Future<void> initialize(PhylumAccount account) async {
     super.initialize(account);
     db = AppDatabase(account.id);
     account.api.addResponseListener(processResponse);
-    return null;
   }
 
   Future<void> processResponse(Map<String, dynamic>? data, dynamic tag) async {

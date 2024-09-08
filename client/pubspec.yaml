@@ -18,7 +18,9 @@ dependencies:
   http:
   logger:
   offtheline:
-    path: ../../offtheline
+    git:
+      url: https://codeberg.org/shroff/offtheline.git
+      ref: 7e4457c8e7f86662cd6d8424383423ceec7c06bb
   state_notifier:
   path:
   path_provider:
