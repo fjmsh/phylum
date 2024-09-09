@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -15,17 +17,15 @@ class PhylumDatastore with AccountListener<PhylumApiResponse, PhylumApiErrorResp
 
   Future<void> processResponse(Map<String, dynamic> data, dynamic tag) {
     final db = account.db;
-    return db.transaction(() => _processResponse(data, tag, db));
+    return db.transaction(() async => await _processResponse(data, tag, db));
   }
 
-  Future<void> _processResponse(Map<String, dynamic> data, dynamic tag, AppDatabase db) async {
+  FutureOr _processResponse(Map<String, dynamic> data, dynamic tag, AppDatabase db) {
     switch (tag) {
       case resourceDetailsResponse:
-        parseResourceDetails(data, db);
-        break;
+        return parseResourceDetails(data, db);
       case resourceSummaryResponse:
-        parseResourceSummary(data, db);
-        break;
+        return parseResourceSummary(data, db);
     }
   }
 
@@ -39,7 +39,9 @@ class PhylumDatastore with AccountListener<PhylumApiResponse, PhylumApiErrorResp
           })
         : <ResourcesCompanion>[];
     await db.resources.deleteWhere((o) => o.id.isIn(List.from(existing)));
-    return db.insertResources([details, ...children]);
+    return db.batch((batch) {
+      batch.insertAll(db.resources, [details, ...children], mode: InsertMode.insertOrReplace);
+    });
   }
 
   ResourcesCompanion parseResourceSummary(Map<String, dynamic> data, AppDatabase db) {

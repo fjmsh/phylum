@@ -15,12 +15,6 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 4;
 
-  Future insertResources(Iterable<Insertable<Resource>> list) async {
-    await batch((batch) {
-      batch.insertAll(resources, list, mode: InsertMode.insertOrReplace);
-    });
-  }
-
   @override
   MigrationStrategy get migration => MigrationStrategy(
       onCreate: (m) => m.createAll(),
