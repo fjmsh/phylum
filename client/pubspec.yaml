@@ -25,6 +25,7 @@ dependencies:
   path:
   path_provider:
   provider:
+  stream_transform:
   super_clipboard:
   uri:
   uuid:
