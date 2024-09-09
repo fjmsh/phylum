@@ -7,44 +7,42 @@ const resourceDetailsResponse = 'resourceDetails';
 const resourceSummaryResponse = 'resourceSummary';
 
 class PhylumDatastore with AccountListener<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> {
-  late final AppDatabase db;
-
   @override
   Future<void> initialize(PhylumAccount account) async {
     super.initialize(account);
-    db = AppDatabase(account.id);
     account.api.addResponseListener(processResponse);
   }
 
   Future<void> processResponse(Map<String, dynamic> data, dynamic tag) {
-    return db.transaction(() => _processResponse(data, tag));
+    final db = account.db;
+    return db.transaction(() => _processResponse(data, tag, db));
   }
 
-  Future<void> _processResponse(Map<String, dynamic> data, dynamic tag) async {
+  Future<void> _processResponse(Map<String, dynamic> data, dynamic tag, AppDatabase db) async {
     switch (tag) {
       case resourceDetailsResponse:
-        parseResourceDetails(data);
+        parseResourceDetails(data, db);
         break;
       case resourceSummaryResponse:
-        parseResourceSummary(data);
+        parseResourceSummary(data, db);
         break;
     }
   }
 
-  Future parseResourceDetails(Map<String, dynamic> data) async {
-    final details = parseResourceSummary(data['metadata']).copyWith(lastFetch: Value(DateTime.now()));
+  Future parseResourceDetails(Map<String, dynamic> data, AppDatabase db) async {
+    final details = parseResourceSummary(data['metadata'], db).copyWith(lastFetch: Value(DateTime.now()));
     final existing = Set.from(await db.managers.resources.filter((f) => f.parent.id.equals(data['metadata']['id'])).map((r) => r.id).get());
     final children = data.containsKey('children')
         ? (data['children'] as List).cast<Map>().map((c) {
             existing.remove(c['id']);
-            return parseResourceSummary(c.cast<String, dynamic>());
+            return parseResourceSummary(c.cast<String, dynamic>(), db);
           })
         : <ResourcesCompanion>[];
     await db.resources.deleteWhere((o) => o.id.isIn(List.from(existing)));
     return db.insertResources([details, ...children]);
   }
 
-  ResourcesCompanion parseResourceSummary(Map<String, dynamic> data) {
+  ResourcesCompanion parseResourceSummary(Map<String, dynamic> data, AppDatabase db) {
     return ResourcesCompanion.insert(
       id: data['id'],
       parent: Value(data['parent']),

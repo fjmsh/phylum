@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:drift/drift.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -72,20 +71,12 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
 
   @override
   FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
-    account.datastore.db.managers.resources.create((o) => o(
-          dir: false,
-          etag: "",
-          size: size,
-          id: id,
-          parent: Value(parent),
-          modified: DateTime.now(),
-          name: resourceName,
-        ));
+    account.resourceRepository.createResource(id, true, parent, resourceName);
   }
 
   @override
   FutureOr<void> revertOptimisticUpdate(PhylumAccount account) {
-    account.datastore.db.managers.resources.filter((f) => f.id.equals(id)).delete();
+    account.resourceRepository.deleteResource(id);
   }
 
   @override

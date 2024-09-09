@@ -47,12 +47,12 @@ class ResourceDeleteAction extends ApiAction<PhylumAccount> with JsonApiAction {
 
   @override
   FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
-    account.datastore.db.managers.resources.filter((f) => f.id.equals(id)).update((o) => o(deleted: const Value(true)));
+    account.resourceRepository.updateResource(id, (o) => o(deleted: const Value(true)));
   }
 
   @override
   FutureOr<void> revertOptimisticUpdate(PhylumAccount account) {
-    account.datastore.db.managers.resources.filter((f) => f.id.equals(id)).update((o) => o(deleted: const Value(false)));
+    account.resourceRepository.updateResource(id, (o) => o(deleted: const Value(false)));
   }
 
   @override

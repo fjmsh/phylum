@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/requests/resource_detail_request.dart';
 import 'package:phylum/ui/folder/folder_contents_view.dart';
 import 'package:phylum/ui/folder/folder_navigator_stack.dart';
 import 'package:phylum/ui/folder/folder_selection_manager.dart';
@@ -24,8 +23,9 @@ class _FolderViewState extends State<FolderView> {
     _refresh();
   }
 
-  Future<void> _refresh() async {
-    await context.read<PhylumAccount>().api.sendRequest(ResourceDetailRequest(widget.id));
+  Future _refresh() {
+    debugPrint('Requesting ${widget.id}');
+    return context.read<PhylumAccount>().resourceRepository.requestResource(widget.id);
   }
 
   @override
@@ -50,17 +50,14 @@ class _FolderViewState extends State<FolderView> {
         child: StateNotifierProvider<FolderSelectionManager, FolderSelectionState>(
           create: (context) => FolderSelectionManager(),
           child: StreamBuilder(
-              stream: account.datastore.db.managers.resources.filter((f) => f.id.equals(widget.id)).watchSingleOrNull(),
+              stream: account.resourceRepository.watchResource(widget.id),
               builder: (context, snapshot) {
                 final folder = snapshot.data;
                 if (folder?.lastFetch == null) {
                   return buildEmptyView('Loading');
                 }
                 return StreamBuilder(
-                    stream: account.datastore.db.managers.resources
-                        .filter((f) => f.parent.id.equals(widget.id) & f.deleted.equals(false))
-                        .orderBy((o) => o.dir.desc() & o.name.asc())
-                        .watch(),
+                    stream: account.resourceRepository.watchChildren(widget.id),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return Container();

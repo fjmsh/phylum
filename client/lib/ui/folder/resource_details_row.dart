@@ -42,7 +42,7 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
               if (details.data == _draggableDataSelected) {
                 final account = context.read<PhylumAccount>();
                 final selectedIds = context.read<FolderSelectionState>().selected;
-                final selected = await account.datastore.db.managers.resources.filter((f) => f.id.isIn(selectedIds)).get();
+                final selected = await account.resourceRepository.getResources(selectedIds);
                 for (final res in selected) {
                   account.addAction(ResourceMoveAction(r: res, parent: widget.r));
                 }

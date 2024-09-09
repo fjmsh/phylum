@@ -50,12 +50,12 @@ class ResourceMoveAction extends ApiAction<PhylumAccount> with JsonApiAction {
 
   @override
   FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
-    account.datastore.db.managers.resources.filter((f) => f.id.equals(id)).update((o) => o(parent: Value(parent)));
+    account.resourceRepository.updateResource(id, (o) => o(parent: Value(parent)));
   }
 
   @override
   FutureOr<void> revertOptimisticUpdate(PhylumAccount account) {
-    account.datastore.db.managers.resources.filter((f) => f.id.equals(id)).update((o) => o(parent: Value(oldParent)));
+    account.resourceRepository.updateResource(id, (o) => o(parent: Value(oldParent)));
   }
 
   @override

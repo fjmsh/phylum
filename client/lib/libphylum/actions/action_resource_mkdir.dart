@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_datastore.dart';
@@ -52,20 +51,12 @@ class ResourceMkdirAction extends ApiAction<PhylumAccount> with JsonApiAction {
 
   @override
   FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
-    account.datastore.db.managers.resources.create((o) => o(
-          dir: true,
-          etag: "",
-          size: 0,
-          id: id,
-          parent: Value(parent),
-          modified: DateTime.now(),
-          name: resourceName,
-        ));
+    account.resourceRepository.createResource(id, true, parent, resourceName);
   }
 
   @override
   FutureOr<void> revertOptimisticUpdate(PhylumAccount account) {
-    account.datastore.db.managers.resources.filter((f) => f.id.equals(id)).delete();
+    account.resourceRepository.deleteResource(id);
   }
 
   @override

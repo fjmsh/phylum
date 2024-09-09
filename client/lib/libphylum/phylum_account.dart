@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_datastore.dart';
+import 'package:phylum/libphylum/repositories/resource_repository.dart';
 
 const _persistKeyAccessToken = 'accessToken';
 const _persistKeyUserEmail = 'userEmail';
@@ -25,6 +27,8 @@ class PhylumApiErrorResponse {
 Map<String, dynamic> _tansformResponse(String response) => (jsonDecode(response) as Map<String, dynamic>?) ?? const {};
 
 class PhylumAccount extends Account<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> {
+  late final db = AppDatabase(id);
+  late final resourceRepository = ResourceRepository(account: this);
   final datastore = PhylumDatastore();
   final actionQueue = ApiActionQueue<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount>();
 

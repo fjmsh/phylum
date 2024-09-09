@@ -155,7 +155,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
                 if (uri.authority == openUri.authority && uri.path == openUri.path && uri.queryParameters.containsKey('id')) {
                   final resourceId = uri.queryParameters['id']!;
                   final cut = uri.queryParameters.containsKey('cut');
-                  final resource = await account.datastore.db.managers.resources.filter((f) => f.id.equals(resourceId)).getSingleOrNull();
+                  final resource = await account.resourceRepository.getResource(resourceId);
                   if (resource != null) {
                     (cut ? cutResources : copyResources).add(resource);
                   }
@@ -165,7 +165,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
           }
           if (!context.mounted) return;
           uploadRecursive(context, widget.folderId, paths);
-          final parent = await account.datastore.db.managers.resources.filter((f) => f.id.equals(widget.folderId)).getSingleOrNull();
+          final parent = await account.resourceRepository.getResource(widget.folderId);
           if (parent != null) {
             for (final r in cutResources) {
               account.addAction(ResourceMoveAction(r: r, parent: parent));
