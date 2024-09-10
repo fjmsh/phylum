@@ -2,19 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/folder/folder_contents_view.dart';
 import 'package:phylum/ui/folder/folder_empty_view.dart';
-import 'package:phylum/ui/folder/folder_navigator_stack.dart';
 import 'package:phylum/ui/folder/folder_selection_manager.dart';
+import 'package:phylum/ui/app/nav_history.dart';
 import 'package:provider/provider.dart';
 
 class FolderView extends StatelessWidget {
-  final String id;
-
-  FolderView({required this.id}) : super(key: ValueKey(id));
+  const FolderView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,33 +22,39 @@ class FolderView extends StatelessWidget {
         actions: {
           NextFocusIntent: CallbackAction<NextFocusIntent>(onInvoke: (i) => null),
           PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
-          NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) {
-            context.read<FolderNavigatorStack>().pop();
-            return null;
-          }),
         },
         child: ListTileTheme(
           data: ListTileThemeData(
             mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.basic),
             selectedTileColor: theme.colorScheme.primaryContainer,
           ),
-          child: FolderContentListener(id: id),
+          child: const FolderWatcher(),
         ),
       ),
     );
   }
 }
 
-class FolderContentListener extends StatefulWidget {
-  final String id;
-
-  FolderContentListener({required this.id}) : super(key: ValueKey(id));
+class FolderWatcher extends StatelessWidget {
+  const FolderWatcher({super.key});
 
   @override
-  State<FolderContentListener> createState() => _FolderContentListenerState();
+  Widget build(BuildContext context) {
+    final folderId = context.select<NavHistoryState, String>((s) => s.folderId);
+    return FolderContentsListener(id: folderId);
+  }
 }
 
-class _FolderContentListenerState extends State<FolderContentListener> {
+class FolderContentsListener extends StatefulWidget {
+  final String id;
+
+  FolderContentsListener({required this.id}) : super(key: ValueKey(id));
+
+  @override
+  State<FolderContentsListener> createState() => _FolderContentsListenerState();
+}
+
+class _FolderContentsListenerState extends State<FolderContentsListener> {
   Resource? resource;
   List<Resource> children = const [];
   StreamSubscription<Resource?>? resourceSubscription;

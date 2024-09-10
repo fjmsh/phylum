@@ -1,0 +1,91 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:phylum/app_shortcuts.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/app_actions.dart';
+import 'package:phylum/ui/common/expandable_fab.dart';
+import 'package:phylum/ui/app/nav_list.dart';
+import 'package:phylum/ui/folder/folder_view.dart';
+import 'package:phylum/ui/app/nav_history.dart';
+import 'package:provider/provider.dart';
+
+class AppScaffold extends StatelessWidget {
+  final String? initialDirectory;
+  const AppScaffold({super.key, this.initialDirectory});
+
+  @override
+  Widget build(BuildContext context) {
+    return StateNotifierProvider<NavHistoryManager, NavHistoryState>(
+      create: (context) => NavHistoryManager(initialDirectory ?? context.read<PhylumAccount>().userHome),
+      builder: (context, child) => const AppActions(),
+    );
+  }
+}
+
+class AppLayout extends StatelessWidget {
+  const AppLayout({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final expandedLayout = MediaQuery.of(context).size.width > 800;
+
+    return Scaffold(
+      appBar: expandedLayout ? null : AppBar(title: const Text('Phylum')),
+      drawer: expandedLayout
+          ? null
+          : const Drawer(
+              child: NavList(
+              showFab: false,
+            )),
+      floatingActionButton: expandedLayout
+          ? null
+          : ExpandableFab(
+              distance: 112,
+              children: [
+                ActionButton(
+                  icon: const Icon(Icons.create_new_folder),
+                  onPressed: () async {
+                    Actions.maybeInvoke(context, const NewFolderIntent());
+                  },
+                ),
+                ActionButton(
+                  icon: const Icon(Icons.upload_file),
+                  onPressed: () async {
+                    Actions.maybeInvoke(context, const UploadFilesIntent());
+                  },
+                ),
+                ActionButton(
+                  icon: const Icon(Icons.drive_folder_upload_outlined),
+                  onPressed: () {
+                    Actions.maybeInvoke(context, const UploadFolderIntent());
+                  },
+                ),
+              ],
+            ),
+      body: expandedLayout ? buildExpandedBody() : buildContents(),
+    );
+  }
+
+  Widget buildExpandedBody() {
+    return Row(
+      children: [
+        const SizedBox(
+          width: 240,
+          child: NavList(showFab: true),
+        ),
+        Expanded(child: buildContents()),
+      ],
+    );
+  }
+
+  Widget buildContents() {
+    return const Column(
+      mainAxisSize: MainAxisSize.max,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // FolderHeriarchyView(),
+        Expanded(child: FolderView()),
+      ],
+    );
+  }
+}

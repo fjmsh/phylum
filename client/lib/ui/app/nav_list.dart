@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/util/upload_utils.dart';
+import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
@@ -23,8 +23,8 @@ enum _NewActions {
 }
 
 class NavList extends StatelessWidget {
-  final String? _fabFolderId;
-  const NavList({super.key, String? fabFolderId}) : _fabFolderId = fabFolderId;
+  final bool showFab;
+  const NavList({super.key, required this.showFab});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,7 @@ class NavList extends StatelessWidget {
     return ExcludeFocusTraversal(
       child: ListView(
         children: [
-          if (_fabFolderId != null)
+          if (showFab)
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton.icon(
@@ -59,11 +59,11 @@ class NavList extends StatelessWidget {
 
                   switch (selected) {
                     case _NewActions.createFolder:
-                      createDirectory(context, _fabFolderId);
+                      Actions.maybeInvoke(context, const NewFolderIntent());
                     case _NewActions.uploadFiles:
-                      pickAndUploadFiles(context, _fabFolderId);
+                      Actions.maybeInvoke(context, const UploadFilesIntent());
                     case _NewActions.uploadFolder:
-                      pickAndUploadDirectory(context, _fabFolderId);
+                      Actions.maybeInvoke(context, const UploadFolderIntent());
                   }
                 },
               ),

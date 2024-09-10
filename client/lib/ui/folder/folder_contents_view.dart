@@ -8,9 +8,9 @@ import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/folder/folder_navigator_stack.dart';
 import 'package:phylum/ui/folder/folder_selection_manager.dart';
 import 'package:phylum/ui/folder/resource_details_row.dart';
+import 'package:phylum/ui/app/nav_history.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
@@ -129,6 +129,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
           return null;
         }),
         PasteFromClipboardIntent: CallbackAction<PasteFromClipboardIntent>(onInvoke: (i) async {
+          // TODO: Move to top-level nav
           final account = context.read<PhylumAccount>();
           final openUri = account.api.createUri('/open');
           final clipboard = SystemClipboard.instance;
@@ -243,7 +244,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
   }
 
   void open(Resource r) {
-    if (r.dir) context.read<FolderNavigatorStack>().push(r.id, r.name);
+    if (r.dir) context.read<NavHistoryManager>().go(r.id);
   }
 
   void deleteSelected() async {

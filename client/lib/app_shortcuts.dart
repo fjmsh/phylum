@@ -59,10 +59,22 @@ class NavUpIntent extends Intent {
   const NavUpIntent();
 }
 
+class NavBackIntent extends Intent {
+  const NavBackIntent();
+}
+
+class NavForwardIntent extends Intent {
+  const NavForwardIntent();
+}
+
 Map<ShortcutActivator, Intent> getAppShortcuts() {
   return const {
+    // General
     SingleActivator(LogicalKeyboardKey.tab): NextFocusIntent(),
     SingleActivator(LogicalKeyboardKey.tab, shift: true): PreviousFocusIntent(),
+    SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
+
+    // Focus / Selection
     SingleActivator(LogicalKeyboardKey.arrowUp): FocusUpIntent(SelectionMode.single),
     SingleActivator(LogicalKeyboardKey.arrowUp, shift: true): FocusUpIntent(SelectionMode.range),
     SingleActivator(LogicalKeyboardKey.arrowUp, control: true): FocusUpIntent(SelectionMode.multi),
@@ -70,17 +82,24 @@ Map<ShortcutActivator, Intent> getAppShortcuts() {
     SingleActivator(LogicalKeyboardKey.arrowDown, shift: true): FocusDownIntent(SelectionMode.range),
     SingleActivator(LogicalKeyboardKey.arrowDown, control: true): FocusDownIntent(SelectionMode.multi),
     SingleActivator(LogicalKeyboardKey.space, control: true): ToggleSelectionIntent(),
-    SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
     SingleActivator(LogicalKeyboardKey.keyA, control: true): SelectAllIntent(),
-    SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
+
+    // Actions for selection
     SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
     SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
     SingleActivator(LogicalKeyboardKey.delete): DeleteIntent(),
+    SingleActivator(LogicalKeyboardKey.keyC, control: true): CopyToClipboardIntent(false),
+    SingleActivator(LogicalKeyboardKey.keyX, control: true): CopyToClipboardIntent(true),
+
+    // Actions for folder
     SingleActivator(LogicalKeyboardKey.keyN, control: true): NewFolderIntent(),
     SingleActivator(LogicalKeyboardKey.keyU, control: true): UploadFilesIntent(),
     SingleActivator(LogicalKeyboardKey.keyU, control: true, shift: true): UploadFolderIntent(),
-    SingleActivator(LogicalKeyboardKey.keyC, control: true): CopyToClipboardIntent(false),
-    SingleActivator(LogicalKeyboardKey.keyX, control: true): CopyToClipboardIntent(true),
     SingleActivator(LogicalKeyboardKey.keyV, control: true): PasteFromClipboardIntent(),
+
+    // Top-level Navigation
+    SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
+    SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): NavBackIntent(),
+    SingleActivator(LogicalKeyboardKey.arrowRight, alt: true): NavForwardIntent(),
   };
 }
