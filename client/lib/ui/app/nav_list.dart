@@ -16,12 +16,6 @@ enum _SyncState {
   final String text;
 }
 
-enum _NewActions {
-  createFolder,
-  uploadFiles,
-  uploadFolder;
-}
-
 class NavList extends StatelessWidget {
   final bool showFab;
   const NavList({super.key, required this.showFab});
@@ -44,27 +38,17 @@ class NavList extends StatelessWidget {
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.add),
                 label: const Text('New'),
-                onPressed: () async {
-                  final selected = await showMenu(
+                onPressed: () {
+                  showMenu(
                     context: context,
                     position: const RelativeRect.fromLTRB(0, 0, 0, 0),
                     items: [
-                      const PopupMenuItem(value: _NewActions.createFolder, child: Text('Create Folder')),
+                      PopupMenuItem(child: const Text('Create Folder'), onTap: () => Actions.maybeInvoke(context, const NewFolderIntent())),
                       const PopupMenuItem(enabled: false, height: 16, child: Divider()),
-                      const PopupMenuItem(value: _NewActions.uploadFiles, child: Text('Upload File(s)')),
-                      const PopupMenuItem(value: _NewActions.uploadFolder, child: Text('Upload Folder')),
+                      PopupMenuItem(child: const Text('Upload File(s)'), onTap: () => Actions.maybeInvoke(context, const UploadFilesIntent())),
+                      PopupMenuItem(child: const Text('Upload Folder'), onTap: () => Actions.maybeInvoke(context, const UploadFolderIntent())),
                     ],
                   );
-                  if (!context.mounted) return;
-
-                  switch (selected) {
-                    case _NewActions.createFolder:
-                      Actions.maybeInvoke(context, const NewFolderIntent());
-                    case _NewActions.uploadFiles:
-                      Actions.maybeInvoke(context, const UploadFilesIntent());
-                    case _NewActions.uploadFolder:
-                      Actions.maybeInvoke(context, const UploadFolderIntent());
-                  }
                 },
               ),
             ),
