@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -99,7 +100,7 @@ Map<ShortcutActivator, Intent> getAppShortcuts() {
 
     // Top-level Navigation
     SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
-    SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): NavBackIntent(),
-    SingleActivator(LogicalKeyboardKey.arrowRight, alt: true): NavForwardIntent(),
+    if (!kIsWeb) SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): NavBackIntent(),
+    if (!kIsWeb) SingleActivator(LogicalKeyboardKey.arrowRight, alt: true): NavForwardIntent(),
   };
 }

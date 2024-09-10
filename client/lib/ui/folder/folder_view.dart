@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/app_layout.dart';
 import 'package:phylum/ui/folder/folder_contents_view.dart';
 import 'package:phylum/ui/folder/folder_empty_view.dart';
 import 'package:phylum/ui/folder/folder_selection_manager.dart';
-import 'package:phylum/ui/app/nav_history.dart';
 import 'package:provider/provider.dart';
 
 class FolderView extends StatelessWidget {
@@ -39,10 +39,7 @@ class FolderWatcher extends StatelessWidget {
   const FolderWatcher({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final folderId = context.select<NavHistoryState, String>((s) => s.folderId);
-    return FolderContentsListener(id: folderId);
-  }
+  Widget build(BuildContext context) => FolderContentsListener(id: context.watch<CurrentLocation>().folderId);
 }
 
 class FolderContentsListener extends StatefulWidget {

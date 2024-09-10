@@ -1,23 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/app_shortcuts.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/common/expandable_fab.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/folder/folder_view.dart';
-import 'package:phylum/ui/app/nav_history.dart';
 import 'package:provider/provider.dart';
 
+class CurrentLocation {
+  final String folderId;
+
+  CurrentLocation({required this.folderId});
+}
+
 class AppScaffold extends StatelessWidget {
-  final String? initialDirectory;
-  const AppScaffold({super.key, this.initialDirectory});
+  final String folderId;
+
+  const AppScaffold({super.key, required this.folderId});
 
   @override
   Widget build(BuildContext context) {
-    return StateNotifierProvider<NavHistoryManager, NavHistoryState>(
-      create: (context) => NavHistoryManager(initialDirectory ?? context.read<PhylumAccount>().userHome),
-      builder: (context, child) => const AppActions(),
+    return Provider<CurrentLocation>(
+      key: ValueKey(folderId),
+      create: (context) => CurrentLocation(folderId: folderId),
+      builder: (context, child) => AppActions(child: child!),
+      child: const AppLayout(),
     );
   }
 }

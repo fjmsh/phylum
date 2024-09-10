@@ -7,29 +7,18 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_layout.dart';
 import 'package:provider/provider.dart';
 
-final _router = GoRouter(
-  routes: [
-    GoRoute(
-      name: 'home',
-      path: '/',
-      builder: (context, state) => const AppScaffold(),
-    ),
-  ],
-);
-
 class PhylumApp extends StatelessWidget {
-  final String accountId;
+  final PhylumAccount account;
 
-  PhylumApp({required this.accountId}) : super(key: ValueKey(accountId));
+  PhylumApp({required this.account}) : super(key: ValueKey(account.id));
 
   @override
   Widget build(BuildContext context) {
-    final account = context.select<AccountManagerState<PhylumAccount>, PhylumAccount?>((state) => state.accounts[accountId]);
-    if (account == null) return Container();
     return MultiProvider(
       providers: [
         Provider.value(value: account),
         StateNotifierProvider<ApiActionQueue, ApiActionQueueState>.value(value: account.actionQueue),
+        // StateNotifierProvider<NavHistoryManager, NavHistoryState>.value(value: routerConfig.historyManager),
       ],
       child: MaterialApp.router(
         key: ValueKey(account),
@@ -37,9 +26,29 @@ class PhylumApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
         darkTheme: ThemeData.dark(),
-        routerConfig: _router,
+        routerConfig: createRouter(account),
         shortcuts: getAppShortcuts(),
       ),
     );
   }
+
+  GoRouter createRouter(PhylumAccount account) => GoRouter(
+        routes: [
+          GoRoute(
+            name: 'root',
+            path: '/',
+            redirect: (context, state) => '/home',
+          ),
+          GoRoute(
+            name: 'home',
+            path: '/home',
+            pageBuilder: (context, state) => NoTransitionPage(child: AppScaffold(folderId: account.userHome)),
+          ),
+          GoRoute(
+            name: 'folder',
+            path: '/folders/:id',
+            pageBuilder: (context, state) => NoTransitionPage(child: AppScaffold(folderId: state.pathParameters['id']!)),
+          ),
+        ],
+      );
 }

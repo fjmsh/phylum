@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
@@ -10,7 +11,6 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/folder/folder_selection_manager.dart';
 import 'package:phylum/ui/folder/resource_details_row.dart';
-import 'package:phylum/ui/app/nav_history.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
@@ -244,7 +244,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
   }
 
   void open(Resource r) {
-    if (r.dir) context.read<NavHistoryManager>().go(r.id);
+    if (r.dir) context.goNamed('folder', pathParameters: {'id': r.id});
   }
 
   void deleteSelected() async {
