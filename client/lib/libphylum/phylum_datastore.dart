@@ -53,6 +53,7 @@ class PhylumDatastore with AccountListener<PhylumApiResponse, PhylumApiErrorResp
       modified: DateTime.parse(data['modified']),
       size: data['size'],
       etag: data['etag'],
+      contentType: data['ctype'] ?? '',
     );
   }
 }

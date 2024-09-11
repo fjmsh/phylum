@@ -51,6 +51,12 @@ class $ResourcesTable extends Resources
   late final GeneratedColumn<String> etag = GeneratedColumn<String>(
       'etag', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _contentTypeMeta =
+      const VerificationMeta('contentType');
+  @override
+  late final GeneratedColumn<String> contentType = GeneratedColumn<String>(
+      'content_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _deletedMeta =
       const VerificationMeta('deleted');
   @override
@@ -68,8 +74,18 @@ class $ResourcesTable extends Resources
       'last_fetch', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, parent, name, dir, modified, size, etag, deleted, lastFetch];
+  List<GeneratedColumn> get $columns => [
+        id,
+        parent,
+        name,
+        dir,
+        modified,
+        size,
+        etag,
+        contentType,
+        deleted,
+        lastFetch
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -119,6 +135,14 @@ class $ResourcesTable extends Resources
     } else if (isInserting) {
       context.missing(_etagMeta);
     }
+    if (data.containsKey('content_type')) {
+      context.handle(
+          _contentTypeMeta,
+          contentType.isAcceptableOrUnknown(
+              data['content_type']!, _contentTypeMeta));
+    } else if (isInserting) {
+      context.missing(_contentTypeMeta);
+    }
     if (data.containsKey('deleted')) {
       context.handle(_deletedMeta,
           deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta));
@@ -154,6 +178,8 @@ class $ResourcesTable extends Resources
           .read(DriftSqlType.int, data['${effectivePrefix}size'])!,
       etag: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}etag'])!,
+      contentType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}content_type'])!,
       deleted: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}deleted'])!,
       lastFetch: attachedDatabase.typeMapping
@@ -175,6 +201,7 @@ class Resource extends DataClass implements Insertable<Resource> {
   final DateTime modified;
   final int size;
   final String etag;
+  final String contentType;
   final bool deleted;
   final DateTime? lastFetch;
   const Resource(
@@ -185,6 +212,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       required this.modified,
       required this.size,
       required this.etag,
+      required this.contentType,
       required this.deleted,
       this.lastFetch});
   @override
@@ -199,6 +227,7 @@ class Resource extends DataClass implements Insertable<Resource> {
     map['modified'] = Variable<DateTime>(modified);
     map['size'] = Variable<int>(size);
     map['etag'] = Variable<String>(etag);
+    map['content_type'] = Variable<String>(contentType);
     map['deleted'] = Variable<bool>(deleted);
     if (!nullToAbsent || lastFetch != null) {
       map['last_fetch'] = Variable<DateTime>(lastFetch);
@@ -216,6 +245,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       modified: Value(modified),
       size: Value(size),
       etag: Value(etag),
+      contentType: Value(contentType),
       deleted: Value(deleted),
       lastFetch: lastFetch == null && nullToAbsent
           ? const Value.absent()
@@ -234,6 +264,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       modified: serializer.fromJson<DateTime>(json['modified']),
       size: serializer.fromJson<int>(json['size']),
       etag: serializer.fromJson<String>(json['etag']),
+      contentType: serializer.fromJson<String>(json['contentType']),
       deleted: serializer.fromJson<bool>(json['deleted']),
       lastFetch: serializer.fromJson<DateTime?>(json['lastFetch']),
     );
@@ -249,6 +280,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       'modified': serializer.toJson<DateTime>(modified),
       'size': serializer.toJson<int>(size),
       'etag': serializer.toJson<String>(etag),
+      'contentType': serializer.toJson<String>(contentType),
       'deleted': serializer.toJson<bool>(deleted),
       'lastFetch': serializer.toJson<DateTime?>(lastFetch),
     };
@@ -262,6 +294,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           DateTime? modified,
           int? size,
           String? etag,
+          String? contentType,
           bool? deleted,
           Value<DateTime?> lastFetch = const Value.absent()}) =>
       Resource(
@@ -272,6 +305,7 @@ class Resource extends DataClass implements Insertable<Resource> {
         modified: modified ?? this.modified,
         size: size ?? this.size,
         etag: etag ?? this.etag,
+        contentType: contentType ?? this.contentType,
         deleted: deleted ?? this.deleted,
         lastFetch: lastFetch.present ? lastFetch.value : this.lastFetch,
       );
@@ -284,6 +318,8 @@ class Resource extends DataClass implements Insertable<Resource> {
       modified: data.modified.present ? data.modified.value : this.modified,
       size: data.size.present ? data.size.value : this.size,
       etag: data.etag.present ? data.etag.value : this.etag,
+      contentType:
+          data.contentType.present ? data.contentType.value : this.contentType,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
       lastFetch: data.lastFetch.present ? data.lastFetch.value : this.lastFetch,
     );
@@ -299,6 +335,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           ..write('modified: $modified, ')
           ..write('size: $size, ')
           ..write('etag: $etag, ')
+          ..write('contentType: $contentType, ')
           ..write('deleted: $deleted, ')
           ..write('lastFetch: $lastFetch')
           ..write(')'))
@@ -306,8 +343,8 @@ class Resource extends DataClass implements Insertable<Resource> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, parent, name, dir, modified, size, etag, deleted, lastFetch);
+  int get hashCode => Object.hash(id, parent, name, dir, modified, size, etag,
+      contentType, deleted, lastFetch);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -319,6 +356,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           other.modified == this.modified &&
           other.size == this.size &&
           other.etag == this.etag &&
+          other.contentType == this.contentType &&
           other.deleted == this.deleted &&
           other.lastFetch == this.lastFetch);
 }
@@ -331,6 +369,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   final Value<DateTime> modified;
   final Value<int> size;
   final Value<String> etag;
+  final Value<String> contentType;
   final Value<bool> deleted;
   final Value<DateTime?> lastFetch;
   final Value<int> rowid;
@@ -342,6 +381,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.modified = const Value.absent(),
     this.size = const Value.absent(),
     this.etag = const Value.absent(),
+    this.contentType = const Value.absent(),
     this.deleted = const Value.absent(),
     this.lastFetch = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -354,6 +394,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     required DateTime modified,
     required int size,
     required String etag,
+    required String contentType,
     this.deleted = const Value.absent(),
     this.lastFetch = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -362,7 +403,8 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
         dir = Value(dir),
         modified = Value(modified),
         size = Value(size),
-        etag = Value(etag);
+        etag = Value(etag),
+        contentType = Value(contentType);
   static Insertable<Resource> custom({
     Expression<String>? id,
     Expression<String>? parent,
@@ -371,6 +413,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     Expression<DateTime>? modified,
     Expression<int>? size,
     Expression<String>? etag,
+    Expression<String>? contentType,
     Expression<bool>? deleted,
     Expression<DateTime>? lastFetch,
     Expression<int>? rowid,
@@ -383,6 +426,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       if (modified != null) 'modified': modified,
       if (size != null) 'size': size,
       if (etag != null) 'etag': etag,
+      if (contentType != null) 'content_type': contentType,
       if (deleted != null) 'deleted': deleted,
       if (lastFetch != null) 'last_fetch': lastFetch,
       if (rowid != null) 'rowid': rowid,
@@ -397,6 +441,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       Value<DateTime>? modified,
       Value<int>? size,
       Value<String>? etag,
+      Value<String>? contentType,
       Value<bool>? deleted,
       Value<DateTime?>? lastFetch,
       Value<int>? rowid}) {
@@ -408,6 +453,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       modified: modified ?? this.modified,
       size: size ?? this.size,
       etag: etag ?? this.etag,
+      contentType: contentType ?? this.contentType,
       deleted: deleted ?? this.deleted,
       lastFetch: lastFetch ?? this.lastFetch,
       rowid: rowid ?? this.rowid,
@@ -438,6 +484,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     if (etag.present) {
       map['etag'] = Variable<String>(etag.value);
     }
+    if (contentType.present) {
+      map['content_type'] = Variable<String>(contentType.value);
+    }
     if (deleted.present) {
       map['deleted'] = Variable<bool>(deleted.value);
     }
@@ -460,6 +509,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
           ..write('modified: $modified, ')
           ..write('size: $size, ')
           ..write('etag: $etag, ')
+          ..write('contentType: $contentType, ')
           ..write('deleted: $deleted, ')
           ..write('lastFetch: $lastFetch, ')
           ..write('rowid: $rowid')
@@ -487,6 +537,7 @@ typedef $$ResourcesTableCreateCompanionBuilder = ResourcesCompanion Function({
   required DateTime modified,
   required int size,
   required String etag,
+  required String contentType,
   Value<bool> deleted,
   Value<DateTime?> lastFetch,
   Value<int> rowid,
@@ -499,6 +550,7 @@ typedef $$ResourcesTableUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<DateTime> modified,
   Value<int> size,
   Value<String> etag,
+  Value<String> contentType,
   Value<bool> deleted,
   Value<DateTime?> lastFetch,
   Value<int> rowid,
@@ -528,6 +580,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
             Value<DateTime> modified = const Value.absent(),
             Value<int> size = const Value.absent(),
             Value<String> etag = const Value.absent(),
+            Value<String> contentType = const Value.absent(),
             Value<bool> deleted = const Value.absent(),
             Value<DateTime?> lastFetch = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -540,6 +593,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
             modified: modified,
             size: size,
             etag: etag,
+            contentType: contentType,
             deleted: deleted,
             lastFetch: lastFetch,
             rowid: rowid,
@@ -552,6 +606,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
             required DateTime modified,
             required int size,
             required String etag,
+            required String contentType,
             Value<bool> deleted = const Value.absent(),
             Value<DateTime?> lastFetch = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -564,6 +619,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
             modified: modified,
             size: size,
             etag: etag,
+            contentType: contentType,
             deleted: deleted,
             lastFetch: lastFetch,
             rowid: rowid,
@@ -601,6 +657,11 @@ class $$ResourcesTableFilterComposer
 
   ColumnFilters<String> get etag => $state.composableBuilder(
       column: $state.table.etag,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get contentType => $state.composableBuilder(
+      column: $state.table.contentType,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -657,6 +718,11 @@ class $$ResourcesTableOrderingComposer
 
   ColumnOrderings<String> get etag => $state.composableBuilder(
       column: $state.table.etag,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get contentType => $state.composableBuilder(
+      column: $state.table.contentType,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 

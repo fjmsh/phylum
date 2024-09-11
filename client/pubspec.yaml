@@ -17,19 +17,21 @@ dependencies:
   hive:
   http:
   logger:
+  mime:
   offtheline:
     git:
       url: https://codeberg.org/shroff/offtheline.git
       ref: 7e4457c8e7f86662cd6d8424383423ceec7c06bb
-  state_notifier:
   path:
   path_provider:
   provider:
+  state_notifier:
   stream_transform:
   super_clipboard:
   uri:
   uuid:
   sqlite3: ^2.4.6
+  http_parser: ^4.0.2
 
 dev_dependencies:
   flutter_test:

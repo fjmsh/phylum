@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:http/http.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_datastore.dart';
@@ -22,21 +24,17 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
   get tag => resourceSummaryResponse;
 
   @override
-  Future<MultipartFile> get file => MultipartFile.fromPath('contents', path, filename: resourceName);
+  Future<MultipartFile> get file => MultipartFile.fromPath('contents', path, filename: resourceName, contentType: MediaType.parse(contentType));
 
   final String id;
   final String parent;
   final String resourceName;
   final String path;
   final int size;
+  final String contentType;
 
-  ResourceUploadAction._({
-    required this.id,
-    required this.parent,
-    required this.resourceName,
-    required this.path,
-    required this.size,
-  });
+  ResourceUploadAction._(
+      {required this.id, required this.parent, required this.resourceName, required this.path, required this.size, required this.contentType});
 
   static Future<ResourceUploadAction> fromPath({
     required String parent,
@@ -51,6 +49,7 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
       resourceName: resourceName,
       path: path,
       size: size,
+      contentType: lookupMimeType(path) ?? 'application/octet-stream',
     );
   }
 
@@ -61,6 +60,7 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
       resourceName: map['resourceName'],
       path: map['path'],
       size: map['size'],
+      contentType: map['contentType'],
     );
   }
 
@@ -71,7 +71,7 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
 
   @override
   FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
-    account.resourceRepository.createResource(id, true, parent, resourceName);
+    account.resourceRepository.createResource(id, true, parent, resourceName, contentType);
   }
 
   @override
@@ -86,6 +86,7 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
         'resourceName': resourceName,
         'path': path,
         'size': size,
+        'contentType': contentType,
       };
 
   @override

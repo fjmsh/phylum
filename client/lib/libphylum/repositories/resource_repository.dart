@@ -41,7 +41,7 @@ class ResourceRepository {
     return account.db.resources.select()..where((f) => f.id.isIn(ids));
   }
 
-  Future<int> createResource(String id, bool dir, String parent, String name) {
+  Future<int> createResource(String id, bool dir, String parent, String name, String contentType) {
     return account.db.resources.insertOne(ResourcesCompanion.insert(
       id: id,
       name: name,
@@ -50,6 +50,7 @@ class ResourceRepository {
       modified: DateTime.now(),
       size: 0,
       etag: "",
+      contentType: contentType,
     ));
   }
 
