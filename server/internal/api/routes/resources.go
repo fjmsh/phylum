@@ -24,14 +24,15 @@ var (
 )
 
 type resourceResponse struct {
-	ID       uuid.UUID  `json:"id"`
-	Parent   *uuid.UUID `json:"parent"`
-	Name     string     `json:"name"`
-	Dir      bool       `json:"dir"`
-	Modified time.Time  `json:"modified"`
-	Deleted  *time.Time `json:"deleted,omitempty"`
-	Size     int64      `json:"size"`
-	Etag     string     `json:"etag"`
+	ID          uuid.UUID  `json:"id"`
+	Parent      *uuid.UUID `json:"parent"`
+	Name        string     `json:"name"`
+	Dir         bool       `json:"dir"`
+	Modified    time.Time  `json:"modified"`
+	Deleted     *time.Time `json:"deleted,omitempty"`
+	ContentType string     `json:"ctype,omitEmpty"`
+	Size        int64      `json:"size"`
+	Etag        string     `json:"etag"`
 }
 
 type resourceDetailResponse struct {
@@ -361,13 +362,14 @@ func detailedResponseFromResource(fs core.FileSystem, r core.Resource) resourceD
 
 func responseFromResource(r core.Resource) resourceResponse {
 	return resourceResponse{
-		ID:       r.ID(),
-		Parent:   r.ParentID(),
-		Name:     r.Name(),
-		Dir:      r.IsDir(),
-		Modified: r.ModTime(),
-		Deleted:  r.DelTime(),
-		Size:     r.Size(),
-		Etag:     r.ETag(),
+		ID:          r.ID(),
+		Parent:      r.ParentID(),
+		Name:        r.Name(),
+		Dir:         r.IsDir(),
+		Modified:    r.ModTime(),
+		Deleted:     r.DelTime(),
+		Size:        r.Size(),
+		Etag:        r.ETag(),
+		ContentType: r.ContentType(),
 	}
 }
