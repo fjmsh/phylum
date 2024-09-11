@@ -3,6 +3,8 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
 
+const maxPreviewSize = 5 * 1024 * 1024;
+
 class ResourcePreview extends StatefulWidget {
   final String resourceId;
 
@@ -55,6 +57,26 @@ class _ResourcePreviewState extends State<ResourcePreview> {
   }
 
   Widget buildPreview(Resource r) {
-    return const Text('Unable to display preview', style: TextStyle(fontSize: 18));
+    if (r.size > maxPreviewSize) {
+      return const Text(
+        'File too large to preview',
+        style: TextStyle(fontSize: 18),
+      );
+    }
+    return switch (r.contentType) {
+      'image/jpeg' || 'image/webp' || 'image/png' || 'image/gif' => buildImagePreview(r),
+      _ => const Text('Unable to display preview', style: TextStyle(fontSize: 18)),
+    };
+  }
+
+  Widget buildImagePreview(Resource r) {
+    final api = context.read<PhylumAccount>().api;
+    return SizedBox(
+      width: 800,
+      child: Image.network(
+        context.read<PhylumAccount>().api.createUri('/api/v1/resources/contents/${r.id}').toString(),
+        headers: api.requestHeaders,
+      ),
+    );
   }
 }
