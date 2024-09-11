@@ -5,34 +5,44 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_layout.dart';
+import 'package:phylum/ui/app/nav_forward.dart';
 import 'package:provider/provider.dart';
 
-class PhylumApp extends StatelessWidget {
+class PhylumApp extends StatefulWidget {
   final PhylumAccount account;
 
   PhylumApp({required this.account}) : super(key: ValueKey(account.id));
 
   @override
+  State<PhylumApp> createState() => _PhylumAppState();
+}
+
+class _PhylumAppState extends State<PhylumApp> {
+  final historyManager = NavForwardManager();
+  final navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider.value(value: account),
-        StateNotifierProvider<ApiActionQueue, ApiActionQueueState>.value(value: account.actionQueue),
-        // StateNotifierProvider<NavHistoryManager, NavHistoryState>.value(value: routerConfig.historyManager),
+        Provider.value(value: widget.account),
+        StateNotifierProvider<ApiActionQueue, ApiActionQueueState>.value(key: ValueKey(widget.account.id), value: widget.account.actionQueue),
+        StateNotifierProvider<NavForwardManager, NavForwardState>.value(key: ValueKey(widget.account.id), value: historyManager),
       ],
       child: MaterialApp.router(
-        key: ValueKey(account),
+        key: ValueKey(widget.account),
         title: 'Phylum',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
         darkTheme: ThemeData.dark(),
-        routerConfig: createRouter(account),
+        routerConfig: createRouter(widget.account),
         shortcuts: getAppShortcuts(),
       ),
     );
   }
 
   GoRouter createRouter(PhylumAccount account) => GoRouter(
+        navigatorKey: navigatorKey,
         routes: [
           GoRoute(
             name: 'root',
@@ -42,13 +52,24 @@ class PhylumApp extends StatelessWidget {
           GoRoute(
             name: 'home',
             path: '/home',
-            pageBuilder: (context, state) => NoTransitionPage(child: AppScaffold(folderId: account.userHome)),
+            pageBuilder: (context, state) => NoTransitionPage(
+              name: state.name,
+              child: AppScaffold(folderId: account.userHome),
+              arguments: account.userHome,
+            ),
           ),
           GoRoute(
             name: 'folder',
             path: '/folders/:id',
-            pageBuilder: (context, state) => NoTransitionPage(child: AppScaffold(folderId: state.pathParameters['id']!)),
+            pageBuilder: (context, state) => NoTransitionPage(
+              name: state.name,
+              child: AppScaffold(folderId: state.pathParameters['id']!),
+              arguments: state.pathParameters['id'],
+            ),
           ),
+        ],
+        observers: [
+          historyManager.navObserver,
         ],
       );
 }

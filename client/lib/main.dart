@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:offtheline/offtheline.dart';
@@ -21,6 +22,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   OTL.logger = Logger(level: Level.info);
+  GoRouter.optionURLReflectsImperativeAPIs = true;
 
   if (kIsWeb) {
     Hive.init(null, backendPreference: HiveStorageBackendPreference.webWorker);

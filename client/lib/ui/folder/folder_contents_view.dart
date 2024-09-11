@@ -244,7 +244,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
   }
 
   void open(Resource r) {
-    if (r.dir) context.goNamed('folder', pathParameters: {'id': r.id});
+    if (r.dir) context.pushNamed('folder', pathParameters: {'id': r.id});
   }
 
   void deleteSelected() async {
