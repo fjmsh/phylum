@@ -18,20 +18,20 @@ func CreateBearerAuthHandler(a *core.App) func(c *gin.Context) {
 		ctx := c.Request.Context()
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			panic(errors.ApiErr{Status: 401, Code: errCodeAuthRequred})
+			panic(errors.New(401, errCodeAuthRequred, "Authorization Header Required"))
 		}
 		authParts := strings.Split(authHeader, " ")
 		if len(authParts) != 2 {
-			panic(errors.ApiErr{Status: 401, Code: errCodeAuthRequred})
+			panic(errors.New(401, errCodeAuthRequred, "Authorization Header Malformed"))
 		}
 		if authParts[0] != "bearer" {
-			panic(errors.ApiErr{Status: 401, Code: errCodeAuthRequred})
+			panic(errors.New(401, errCodeAuthRequred, "Authorization Type Not Recognized"))
 		}
 
 		user, err := a.ReadAccessToken(ctx, authParts[1])
 		if err != nil {
 			if errors.Is(err, core.ErrTokenExpired) || errors.Is(err, core.ErrTokenInvalid) {
-				panic(errors.ApiErr{Status: 401, Code: errCodeTokenInvalid})
+				panic(errors.New(401, errCodeTokenInvalid, "Authorization Token Invalid"))
 			}
 			panic(err)
 		}
