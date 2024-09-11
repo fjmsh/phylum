@@ -13,7 +13,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(String id) : super(_openConnection(id));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

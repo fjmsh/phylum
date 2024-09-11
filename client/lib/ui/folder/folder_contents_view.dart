@@ -11,6 +11,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/folder/folder_selection_manager.dart';
 import 'package:phylum/ui/folder/resource_details_row.dart';
+import 'package:phylum/ui/preview/resource_preview.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
@@ -244,7 +245,11 @@ class _FolderContentsViewState extends State<FolderContentsView> {
   }
 
   void open(Resource r) {
-    if (r.dir) context.pushNamed('folder', pathParameters: {'id': r.id});
+    if (r.dir) {
+      context.pushNamed('folder', pathParameters: {'id': r.id});
+    } else {
+      ResourcePreview.showPreview(context, r.id);
+    }
   }
 
   void deleteSelected() async {
