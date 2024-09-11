@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/net/serve"
 )
 
 type Handler struct {
@@ -206,9 +207,9 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 		return http.StatusNotFound, err
 	}
 	if file.IsDir() {
-		serveCollection(w, r, h.FileSystem, file)
+		serve.ServeCollection(w, r, h.FileSystem, file)
 	} else {
-		serveResource(w, r, h.FileSystem, file)
+		serve.ServeResource(w, r, h.FileSystem, file)
 	}
 
 	return 0, nil

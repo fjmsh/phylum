@@ -11,6 +11,7 @@ import (
 	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/api/errors"
 	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/net/serve"
 )
 
 var (
@@ -60,6 +61,7 @@ func SetupResourceRoutes(r *gin.RouterGroup) {
 	group.GET("/ls/:id", handleResourceLsRoute)
 	group.GET("/metadata/:id", handleResourceMetadataRoute)
 	group.GET("/details/:id", handleResourceDetailsRoute)
+	group.GET("/contents/:id", handleResourceContentsRoute)
 	group.POST("/mkdir/:id", handleResourceMkdirRoute)
 	group.POST("/rename/:id", handleResourceRenameRoute)
 	group.POST("/move/:id", handleResourceMoveRoute)
@@ -130,6 +132,23 @@ func handleResourceDetailsRoute(c *gin.Context) {
 	}
 
 	c.JSON(200, detailedResponseFromResource(fs, r))
+}
+
+func handleResourceContentsRoute(c *gin.Context) {
+	resourceID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		panic(errResourceIDInvalid)
+	}
+
+	fs := auth.GetFileSystem(c)
+	r, err := fs.ResourceByID(resourceID)
+	if err != nil {
+		if errors.Is(err, iofs.ErrNotExist) {
+			err = errResourceNotFound
+		}
+		panic(err)
+	}
+	serve.ServeResource(c.Writer, c.Request, fs, r)
 }
 
 func handleResourceMkdirRoute(c *gin.Context) {

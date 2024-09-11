@@ -1,4 +1,4 @@
-package webdav
+package serve
 
 import (
 	"errors"
@@ -25,7 +25,12 @@ var htmlReplacer = strings.NewReplacer(
 	"'", "&#39;",
 )
 
-func serveCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file core.Resource) {
+type FileSystem interface {
+	ReadDir(r core.Resource) ([]core.Resource, error)
+	OpenRead(r core.Resource, start, length int64) (io.ReadCloser, error)
+}
+
+func ServeCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file core.Resource) {
 	if !strings.HasSuffix(r.URL.Path, "/") {
 		http.Redirect(w, r, r.URL.String()+"/", http.StatusMovedPermanently)
 		return
@@ -59,7 +64,7 @@ func serveCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file
 	fmt.Fprintf(w, "</pre>\n")
 }
 
-func serveResource(w http.ResponseWriter, r *http.Request, fs FileSystem, file core.Resource) {
+func ServeResource(w http.ResponseWriter, r *http.Request, fs FileSystem, file core.Resource) {
 	w.Header().Set("Etag", file.ETag())
 	w.Header().Set("Last-Modified", file.ModTime().Format(http.TimeFormat))
 	w.Header().Set("Content-Type", file.ContentType())

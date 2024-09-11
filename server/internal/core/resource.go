@@ -54,6 +54,9 @@ func (r resource) ETag() string {
 }
 
 func (r resource) ContentType() string {
+	if r.IsDir() {
+		return ""
+	}
 	mimeType := mime.TypeByExtension(filepath.Ext(r.name))
 	if mimeType != "" {
 		return mimeType
