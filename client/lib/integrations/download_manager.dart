@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart' as p;
 import 'package:phylum/integrations/directories.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -9,8 +10,8 @@ import 'package:phylum/libphylum/requests/resource_contents_request.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 class DownloadManagerState {
-  final List<DownloadTask> tasks;
-  const DownloadManagerState([this.tasks = const []]);
+  final List<DownloadTask> running;
+  const DownloadManagerState([this.running = const []]);
 }
 
 class DownloadManager extends StateNotifier<DownloadManagerState> {
@@ -18,41 +19,55 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
 
   DownloadManager(this.account) : super(const DownloadManagerState());
 
-  void downloadResource(Resource r) async {
-    final output = _createDownloadFile(PhylumDirectories.instance.downloads!, r.name);
-    if (output == null) {
-      return;
-    }
-    final task = DownloadTask(resourceId: r.id, resourceName: r.name, savePath: output.path, contentLength: r.size);
-    state = DownloadManagerState([...state.tasks, task]);
-    IOSink? sink;
-    sink = output.openWrite();
-    final response = await account.api.sendRequestRaw(ResourceContentsRequest(r.id));
-    if (response == null) return;
-    final length = response.contentLength ?? r.size;
-    int received = 0;
-    response.stream
-        .map((s) {
-          received += s.length;
-          task._status.value = DownloadStatusRunning(received, length);
-          return s;
-        })
-        .pipe(sink)
-        .whenComplete(() => task._status.value = const DownloadStatusFinished())
-        .onError((err, _) {
-          task._status.value = DownloadStatusError(err.toString());
-          return null;
-        });
-
+  Future<void> downloadResource(Resource r) async {
+    final task = DownloadTask(resourceId: r.id, resourceName: r.name, contentLength: r.size);
     l() {
       final status = task._status.value;
-      debugPrint(status.toString());
       if (status is DownloadStatusError || status is DownloadStatusFinished) {
         task._status.removeListener(l);
       }
     }
 
     task._status.addListener(l);
+
+    state = DownloadManagerState([...state.running, task]);
+    final apiResponse = await account.api.sendRequestRaw(ResourceContentsRequest(r.id));
+    if (apiResponse.error != null) {
+      final msg = switch (apiResponse.error) {
+        const ApiClosedError() => 'Api closed',
+        const ApiOfflineError() => 'Cannot reach server',
+        ApiUnknownError(ex: dynamic ex) => 'Unknown Error - $ex',
+        ApiRequestError(err: PhylumApiErrorResponse err) => 'Request Error - ${err.message}',
+        _ => '',
+      };
+      task._status.value = DownloadStatusError(msg);
+      return;
+    } else {
+      final output = _createDownloadFile(PhylumDirectories.instance.downloads!, r.name);
+      if (output == null) {
+        task._status.value = const DownloadStatusError('Unable to open output file');
+        return;
+      }
+      final sink = output.openWrite();
+
+      final httpResponse = apiResponse.result!;
+      final length = httpResponse.contentLength ?? r.size;
+      int received = 0;
+      final stream = httpResponse.stream.map((s) {
+        received += s.length;
+        task._status.value = DownloadStatusRunning(received, length);
+        return s;
+      });
+      sink.addStream(stream).then((err) {
+        sink.close();
+        if (err == null) {
+          task._status.value = DownloadStatusFinished(output.path);
+        } else {
+          task._status.value = DownloadStatusError(err.toString());
+          output.deleteSync();
+        }
+      });
+    }
   }
 
   File? _createDownloadFile(Directory dir, String name) {
@@ -79,7 +94,6 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
 class DownloadTask {
   final String resourceId;
   final String resourceName;
-  final String savePath;
   final int contentLength;
   final ValueNotifier<DownloadStatus> _status = ValueNotifier(const DownloadStatusEnqueued());
   ValueListenable<DownloadStatus> get status => _status;
@@ -87,7 +101,6 @@ class DownloadTask {
   DownloadTask({
     required this.resourceId,
     required this.resourceName,
-    required this.savePath,
     required this.contentLength,
   });
 }
@@ -114,10 +127,12 @@ class DownloadStatusRunning extends DownloadStatus {
 }
 
 class DownloadStatusFinished extends DownloadStatus {
-  const DownloadStatusFinished();
+  final String path;
+
+  const DownloadStatusFinished(this.path);
 
   @override
-  String toString() => "Download Finished";
+  String toString() => "Download Finished: $path";
 }
 
 class DownloadStatusError extends DownloadStatus {

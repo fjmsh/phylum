@@ -10,7 +10,7 @@ class ResourceRepository {
   ResourceRepository({required this.account});
 
   Future<ApiError<PhylumApiErrorResponse>?> requestResource(String id) {
-    return account.api.sendRequest(ResourceDetailRequest(id));
+    return account.api.sendRequest(ResourceDetailRequest(id)).then((r) => r.error);
   }
 
   Future<Resource?> getResource(String id) {

@@ -19,7 +19,9 @@ dependencies:
   logger:
   mime:
   offtheline:
-    path: ../../offtheline
+    git:
+      url: https://codeberg.org/shroff/offtheline.git
+      ref: 251b706d69174474d7f8d13095f994d1c135c9b9
   open_file:
   path:
   path_provider:
