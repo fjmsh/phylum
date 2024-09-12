@@ -10,6 +10,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:phylum/app.dart';
+import 'package:phylum/integrations/directories.dart';
 import 'package:phylum/libphylum/actions/deserializers.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -21,6 +22,7 @@ const storageDir = String.fromEnvironment("STORAGE_DIR");
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  PhylumDirectories.instance.initialize();
   OTL.logger = Logger(level: Level.info);
   GoRouter.optionURLReflectsImperativeAPIs = true;
 

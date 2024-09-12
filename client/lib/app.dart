@@ -3,6 +3,7 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:go_router/go_router.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/app_shortcuts.dart';
+import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_layout.dart';
 import 'package:phylum/ui/app/nav_forward.dart';
@@ -28,6 +29,7 @@ class _PhylumAppState extends State<PhylumApp> {
         Provider.value(value: widget.account),
         StateNotifierProvider<ApiActionQueue, ApiActionQueueState>.value(key: ValueKey(widget.account.id), value: widget.account.actionQueue),
         StateNotifierProvider<NavForwardManager, NavForwardState>.value(key: ValueKey(widget.account.id), value: historyManager),
+        StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(widget.account))
       ],
       child: MaterialApp.router(
         key: ValueKey(widget.account),

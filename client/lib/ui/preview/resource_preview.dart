@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
@@ -33,7 +34,7 @@ class _ResourcePreviewState extends State<ResourcePreview> {
 
   @override
   Widget build(BuildContext context) {
-    final resource = this.resource;
+    final r = resource;
     return Theme(
       data: ThemeData.dark(),
       child: Scaffold(
@@ -42,21 +43,27 @@ class _ResourcePreviewState extends State<ResourcePreview> {
           leading: CloseButton(
             onPressed: () => Navigator.of(context).pop(),
           ),
-          actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.download))],
-          title: (resource != null) ? Text(resource.name) : null,
+          actions: [IconButton(onPressed: (r == null || r.dir) ? null : () => downloadResource(r), icon: const Icon(Icons.download))],
+          title: (r != null) ? Text(r.name) : null,
           backgroundColor: Colors.transparent,
         ),
         body: Center(
             child: loading
                 ? const CircularProgressIndicator()
-                : resource == null
+                : r == null
                     ? const Text('Error loading details', style: TextStyle(fontSize: 18))
-                    : buildPreview(resource)),
+                    : buildPreview(r)),
       ),
     );
   }
 
   Widget buildPreview(Resource r) {
+    if (r.dir) {
+      return const Text(
+        'Cannot preview directory',
+        style: TextStyle(fontSize: 18),
+      );
+    }
     if (r.size > maxPreviewSize) {
       return const Text(
         'File too large to preview',
@@ -78,5 +85,9 @@ class _ResourcePreviewState extends State<ResourcePreview> {
         headers: api.requestHeaders,
       ),
     );
+  }
+
+  void downloadResource(Resource r) async {
+    context.read<DownloadManager>().downloadResource(r);
   }
 }
