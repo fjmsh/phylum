@@ -11,7 +11,13 @@ import 'package:state_notifier/state_notifier.dart';
 
 class DownloadManagerState {
   final List<DownloadTask> running;
-  const DownloadManagerState([this.running = const []]);
+  final List<DownloadTask> finished;
+
+  const DownloadManagerState([this.running = const [], this.finished = const []]);
+
+  DownloadManagerState copyWith({List<DownloadTask>? running, List<DownloadTask>? finished}) {
+    return DownloadManagerState(running ?? this.running, finished ?? this.finished);
+  }
 }
 
 class DownloadManager extends StateNotifier<DownloadManagerState> {
@@ -20,17 +26,19 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
   DownloadManager(this.account) : super(const DownloadManagerState());
 
   Future<void> downloadResource(Resource r) async {
-    final task = DownloadTask(resourceId: r.id, resourceName: r.name, contentLength: r.size);
+    final task = DownloadTask(resourceId: r.id, resourceName: r.name, expectedSize: r.size);
     l() {
       final status = task._status.value;
       if (status is DownloadStatusError || status is DownloadStatusFinished) {
         task._status.removeListener(l);
+        final running = List.of(state.running)..remove(task);
+        state = DownloadManagerState(running, [...state.finished, task]);
       }
     }
 
     task._status.addListener(l);
 
-    state = DownloadManagerState([...state.running, task]);
+    state = state.copyWith(running: [...state.running, task]);
     final apiResponse = await account.api.sendRequestRaw(ResourceContentsRequest(r.id));
     if (apiResponse.error != null) {
       final msg = switch (apiResponse.error) {
@@ -80,7 +88,7 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
     final basename = p.basename(name);
     final ext = p.extension(name);
     for (int i = 1; i < 1000; i++) {
-      final file = File(p.join(dir.path, '$basename ($i).$ext'));
+      final file = File(p.join(dir.path, '$basename ($i)$ext'));
       if (!file.existsSync()) {
         file.createSync();
         return file;
@@ -94,26 +102,18 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
 class DownloadTask {
   final String resourceId;
   final String resourceName;
-  final int contentLength;
-  final ValueNotifier<DownloadStatus> _status = ValueNotifier(const DownloadStatusEnqueued());
+  late final ValueNotifier<DownloadStatus> _status;
   ValueListenable<DownloadStatus> get status => _status;
 
   DownloadTask({
     required this.resourceId,
     required this.resourceName,
-    required this.contentLength,
-  });
+    required int expectedSize,
+  }) : _status = ValueNotifier(DownloadStatusRunning(0, expectedSize));
 }
 
 sealed class DownloadStatus {
   const DownloadStatus();
-}
-
-class DownloadStatusEnqueued extends DownloadStatus {
-  const DownloadStatusEnqueued();
-
-  @override
-  String toString() => "Download Enqueued";
 }
 
 class DownloadStatusRunning extends DownloadStatus {

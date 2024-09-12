@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/app_shortcuts.dart';
+import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
@@ -22,13 +25,6 @@ class NavList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final qState = context.select<ApiActionQueueState, _SyncState>((state) {
-      if (state.submitting) return _SyncState.syncing;
-      if (state.error != null) return _SyncState.error;
-      if (state.paused) return _SyncState.paused;
-      return _SyncState.done;
-    });
-
     return ExcludeFocusTraversal(
       child: ListView(
         children: [
@@ -58,17 +54,8 @@ class NavList extends StatelessWidget {
             onTap: () {},
           ),
           const Divider(),
-          ListTile(
-            leading: Icon(qState.icon),
-            title: const Text('Sync'),
-            subtitle: Text(qState.text),
-            onTap: () {
-              final state = context.read<ApiActionQueueState>();
-              if (state.error != null) {
-                showAlertDialog(context, message: state.error!.description);
-              }
-            },
-          ),
+          const DownloadButton(),
+          const SyncButton(),
           ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('Settings'),
@@ -76,6 +63,109 @@ class NavList extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class DownloadButton extends StatefulWidget {
+  const DownloadButton({super.key});
+
+  @override
+  State<DownloadButton> createState() => _DownloadButtonState();
+}
+
+class _DownloadButtonState extends State<DownloadButton> {
+  final listeners = <DownloadTask, void Function()>{};
+  final lastStatus = <DownloadTask, DownloadStatus>{};
+  late final StreamSubscription _subscription;
+  int ongoing = 0;
+  int received = 0;
+  int total = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _subscription = context.read<DownloadManager>().stream.listen((state) {
+      for (final task in state.running) {
+        if (!listeners.containsKey(task)) {
+          l() {
+            final last = (lastStatus[task] as DownloadStatusRunning);
+            final status = task.status.value;
+            if (status is DownloadStatusRunning) {
+              lastStatus[task] = status;
+              setState(() {
+                received += status.received - last.received;
+                total += status.total - last.total;
+              });
+            } else {
+              setState(() {
+                ongoing--;
+                received -= last.received;
+                total -= last.total;
+              });
+              listeners.remove(task);
+              lastStatus.remove(task);
+              task.status.removeListener(l);
+            }
+          }
+
+          final status = task.status.value;
+          if (status is DownloadStatusRunning) {
+            task.status.addListener(l);
+            listeners[task] = l;
+            lastStatus[task] = status;
+            setState(() {
+              ongoing++;
+              received += status.received;
+              total += status.total;
+            });
+          }
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: ongoing == 0 ? const Icon(Icons.download) : const Icon(Icons.downloading),
+      title: ongoing == 0 ? const Text('Downloads') : Text('Downloading $ongoing files'),
+      subtitle: ongoing == 0
+          ? null
+          : LinearProgressIndicator(
+              value: (received * 1.0 / total),
+            ),
+    );
+  }
+}
+
+class SyncButton extends StatelessWidget {
+  const SyncButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final qState = context.select<ApiActionQueueState, _SyncState>((state) {
+      if (state.submitting) return _SyncState.syncing;
+      if (state.error != null) return _SyncState.error;
+      if (state.paused) return _SyncState.paused;
+      return _SyncState.done;
+    });
+    return ListTile(
+      leading: Icon(qState.icon),
+      title: const Text('Sync'),
+      subtitle: Text(qState.text),
+      onTap: () {
+        final state = context.read<ApiActionQueueState>();
+        if (state.error != null) {
+          showAlertDialog(context, message: state.error!.description);
+        }
+      },
     );
   }
 }
