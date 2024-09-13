@@ -29,6 +29,7 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
     final task = DownloadTask(resourceId: r.id, resourceName: r.name, expectedSize: r.size);
     l() {
       final status = task._status.value;
+      debugPrint(status.toString());
       if (status is DownloadStatusError || status is DownloadStatusFinished) {
         task._status.removeListener(l);
         final running = List.of(state.running)..remove(task);
@@ -66,15 +67,12 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
         task._status.value = DownloadStatusRunning(received, length);
         return s;
       });
-      sink.addStream(stream).then((err) {
+      sink.addStream(stream).onError((err, _) {
+        debugPrint(err.toString());
         sink.close();
-        if (err == null) {
-          task._status.value = DownloadStatusFinished(output.path);
-        } else {
-          task._status.value = DownloadStatusError(err.toString());
-          output.deleteSync();
-        }
-      });
+        task._status.value = DownloadStatusError(err.toString());
+        output.deleteSync();
+      }).whenComplete(() => task._status.value = DownloadStatusFinished(output.path));
     }
   }
 
