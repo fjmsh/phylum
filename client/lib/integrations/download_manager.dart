@@ -86,7 +86,7 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
     final basename = p.basename(name);
     final ext = p.extension(name);
     for (int i = 1; i < 1000; i++) {
-      final file = File(p.join(dir.path, '$basename ($i).$ext'));
+      final file = File(p.join(dir.path, '$basename ($i)$ext'));
       if (!file.existsSync()) {
         file.createSync();
         return file;
