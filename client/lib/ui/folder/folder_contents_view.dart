@@ -28,7 +28,6 @@ class FolderContentsView extends StatefulWidget {
 }
 
 class _FolderContentsViewState extends State<FolderContentsView> {
-  final Map<String, FocusNode> nodes = {};
   late List<Resource> resources;
   int focusIndex = -1;
   int selectionStartIndex = -1;
@@ -61,9 +60,6 @@ class _FolderContentsViewState extends State<FolderContentsView> {
 
   @override
   void dispose() {
-    for (final n in nodes.values) {
-      n.dispose();
-    }
     super.dispose();
   }
 
@@ -190,6 +186,7 @@ class _FolderContentsViewState extends State<FolderContentsView> {
             return ResourceDetailsRow(
                 r: r,
                 onTapDown: (details) {
+                  Focus.maybeOf(context)?.requestFocus();
                   final mode = HardwareKeyboard.instance.isControlPressed
                       ? SelectionMode.toggle
                       : HardwareKeyboard.instance.isShiftPressed

@@ -4,14 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/app/app_layout.dart';
 import 'package:phylum/ui/folder/folder_contents_view.dart';
 import 'package:phylum/ui/folder/folder_empty_view.dart';
 import 'package:phylum/ui/folder/folder_selection_manager.dart';
 import 'package:provider/provider.dart';
 
 class FolderView extends StatelessWidget {
-  const FolderView({super.key});
+  final String folderId;
+
+  const FolderView({super.key, required this.folderId});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +29,7 @@ class FolderView extends StatelessWidget {
             mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.basic),
             selectedTileColor: theme.colorScheme.primaryContainer,
           ),
-          child: const FolderWatcher(),
+          child: FolderWatcher(folderId: folderId),
         ),
       ),
     );
@@ -36,16 +37,18 @@ class FolderView extends StatelessWidget {
 }
 
 class FolderWatcher extends StatelessWidget {
-  const FolderWatcher({super.key});
+  final String folderId;
+
+  const FolderWatcher({super.key, required this.folderId});
 
   @override
-  Widget build(BuildContext context) => FolderContentsListener(id: context.watch<CurrentLocation>().folderId);
+  Widget build(BuildContext context) => FolderContentsListener(folderId: folderId);
 }
 
 class FolderContentsListener extends StatefulWidget {
-  final String id;
+  final String folderId;
 
-  FolderContentsListener({required this.id}) : super(key: ValueKey(id));
+  FolderContentsListener({required this.folderId}) : super(key: ValueKey(folderId));
 
   @override
   State<FolderContentsListener> createState() => _FolderContentsListenerState();
@@ -62,8 +65,8 @@ class _FolderContentsListenerState extends State<FolderContentsListener> {
     super.initState();
     _refresh();
     final account = context.read<PhylumAccount>();
-    resourceSubscription = account.resourceRepository.watchResource(widget.id).listen((e) => setState(() => resource = e));
-    childrenSubscription = account.resourceRepository.watchChildren(widget.id).listen((e) => setState(() => children = e));
+    resourceSubscription = account.resourceRepository.watchResource(widget.folderId).listen((e) => setState(() => resource = e));
+    childrenSubscription = account.resourceRepository.watchChildren(widget.folderId).listen((e) => setState(() => children = e));
   }
 
   @override
@@ -74,7 +77,7 @@ class _FolderContentsListenerState extends State<FolderContentsListener> {
   }
 
   Future _refresh() {
-    return context.read<PhylumAccount>().resourceRepository.requestResource(widget.id);
+    return context.read<PhylumAccount>().resourceRepository.requestResource(widget.folderId);
   }
 
   @override
@@ -88,7 +91,7 @@ class _FolderContentsListenerState extends State<FolderContentsListener> {
     return RefreshIndicator(
         onRefresh: _refresh,
         child: FolderContentsView(
-          folderId: widget.id,
+          folderId: widget.folderId,
           resources: children,
         ));
   }
