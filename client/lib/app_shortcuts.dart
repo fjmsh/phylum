@@ -68,6 +68,10 @@ class NavForwardIntent extends Intent {
   const NavForwardIntent();
 }
 
+class NavHomeIntent extends Intent {
+  const NavHomeIntent();
+}
+
 Map<ShortcutActivator, Intent> getAppShortcuts() {
   return const {
     // General
@@ -91,6 +95,8 @@ Map<ShortcutActivator, Intent> getAppShortcuts() {
     SingleActivator(LogicalKeyboardKey.delete): DeleteIntent(),
     SingleActivator(LogicalKeyboardKey.keyC, control: true): CopyToClipboardIntent(false),
     SingleActivator(LogicalKeyboardKey.keyX, control: true): CopyToClipboardIntent(true),
+    SingleActivator(LogicalKeyboardKey.keyE, control: true): RenameIntent(),
+    SingleActivator(LogicalKeyboardKey.f2): RenameIntent(),
 
     // Actions for folder
     SingleActivator(LogicalKeyboardKey.keyN, control: true): NewFolderIntent(),
@@ -100,6 +106,7 @@ Map<ShortcutActivator, Intent> getAppShortcuts() {
 
     // Top-level Navigation
     SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
+    SingleActivator(LogicalKeyboardKey.keyH, alt: true): NavHomeIntent(),
     if (!kIsWeb) SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): NavBackIntent(),
     if (!kIsWeb) SingleActivator(LogicalKeyboardKey.arrowRight, alt: true): NavForwardIntent(),
   };

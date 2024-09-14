@@ -51,7 +51,7 @@ class NavList extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.home),
             title: const Text('Home'),
-            onTap: () {},
+            onTap: () => Actions.maybeInvoke(context, const NavHomeIntent()),
           ),
           const Divider(),
           const DownloadButton(),

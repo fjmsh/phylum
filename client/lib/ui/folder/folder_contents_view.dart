@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
+import 'package:phylum/libphylum/actions/action_resource_rename.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/folder/folder_selection_manager.dart';
@@ -105,6 +106,18 @@ class _FolderContentsViewState extends State<FolderContentsView> {
         }),
         DeleteIntent: CallbackAction<DeleteIntent>(onInvoke: (i) {
           deleteSelected();
+          return null;
+        }),
+        RenameIntent: CallbackAction<RenameIntent>(onInvoke: (i) async {
+          final account = context.read<PhylumAccount>();
+          final selectedIds = context.read<FolderSelectionState>().selected;
+          if (selectedIds.length != 1) return;
+          final selected = resources.where((r) => selectedIds.contains(r.id)).firstOrNull;
+          if (selected == null) return;
+          final name = await showInputDialog(context, title: 'Rename', preset: selected.name);
+          if (name != null) {
+            account.addAction(ResourceRenameAction(r: selected, name: name));
+          }
           return null;
         }),
         CopyToClipboardIntent: CallbackAction<CopyToClipboardIntent>(onInvoke: (i) async {

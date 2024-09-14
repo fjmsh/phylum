@@ -38,6 +38,10 @@ class AppActions extends StatelessWidget {
           }
           return null;
         }),
+        NavHomeIntent: CallbackAction<NavHomeIntent>(onInvoke: (i) {
+          context.pushNamed('home');
+          return null;
+        }),
         NavForwardIntent: CallbackAction<NavForwardIntent>(onInvoke: (i) {
           context.read<NavForwardManager>().goForward(context);
           return null;
