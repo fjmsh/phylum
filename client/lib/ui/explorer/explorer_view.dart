@@ -35,8 +35,11 @@ class ExplorerView extends StatelessWidget {
   Widget build(BuildContext context) {
     final type = context.select<ExplorerViewState, FolderEmptyViewType?>((state) {
       if (state.resources.isEmpty) {
-        if (state.folder?.lastFetch == null) {
+        if (state.refreshing) {
           return FolderEmptyViewType.loading;
+        }
+        if (state.refreshError) {
+          return FolderEmptyViewType.error;
         }
         return FolderEmptyViewType.noData;
       }
