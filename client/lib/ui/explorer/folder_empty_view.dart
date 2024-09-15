@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'explorer_view_controller.dart';
 
 enum FolderEmptyViewType {
   loading,
@@ -8,9 +11,8 @@ enum FolderEmptyViewType {
 
 class FolderEmptyView extends StatelessWidget {
   final FolderEmptyViewType type;
-  final Future<void> Function() onRefresh;
 
-  const FolderEmptyView({super.key, required this.type, required this.onRefresh});
+  const FolderEmptyView({super.key, required this.type});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +20,7 @@ class FolderEmptyView extends StatelessWidget {
       autofocus: true,
       child: LayoutBuilder(
         builder: (context, constraints) => RefreshIndicator(
-          onRefresh: onRefresh,
+          onRefresh: context.read<ExplorerViewController>().refresh,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: ConstrainedBox(

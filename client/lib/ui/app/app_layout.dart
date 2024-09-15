@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/ui/app/app_actions.dart';
-import 'package:phylum/ui/common/expandable_fab.dart';
 import 'package:phylum/ui/app/nav_list.dart';
-import 'package:phylum/ui/folder/folder_view.dart';
+import 'package:phylum/ui/common/expandable_fab.dart';
+import 'package:phylum/ui/explorer/explorer_view.dart';
 
 class AppLayout extends StatelessWidget {
   final String folderId;
@@ -72,7 +72,7 @@ class AppLayout extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // FolderHeriarchyView(),
-        Expanded(child: FolderView(folderId: folderId)),
+        Expanded(child: ExplorerView.create(folderId)),
       ],
     );
   }

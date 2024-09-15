@@ -25,10 +25,11 @@ class _PhylumAppState extends State<PhylumApp> {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
+      key: ValueKey(widget.account.id),
       providers: [
         Provider.value(value: widget.account),
-        StateNotifierProvider<ApiActionQueue, ApiActionQueueState>.value(key: ValueKey(widget.account.id), value: widget.account.actionQueue),
-        StateNotifierProvider<NavForwardManager, NavForwardState>.value(key: ValueKey(widget.account.id), value: historyManager),
+        StateNotifierProvider<ApiActionQueue, ApiActionQueueState>.value(value: widget.account.actionQueue),
+        StateNotifierProvider<NavForwardManager, NavForwardState>.value(value: historyManager),
         StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(widget.account))
       ],
       child: MaterialApp.router(

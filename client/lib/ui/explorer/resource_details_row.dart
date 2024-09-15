@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/folder/folder_selection_manager.dart';
-import 'package:phylum/ui/folder/resource_options_dialog.dart';
 import 'package:provider/provider.dart';
+
+import 'explorer_view_controller.dart';
+import 'resource_options_dialog.dart';
 
 const _draggableDataSelected = '__selected';
 
@@ -29,7 +30,7 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
         ? DragTarget(
             builder: (context, candidate, rejected) => buildRow(context),
             onWillAcceptWithDetails: (details) {
-              if (details.data == _draggableDataSelected && context.read<FolderSelectionState>().selected.contains(widget.r.id)) {
+              if (details.data == _draggableDataSelected && context.read<ExplorerViewState>().selectedIds.contains(widget.r.id)) {
                 return false;
               }
               dropTargetActive = true;
@@ -41,8 +42,7 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
             onAcceptWithDetails: (details) async {
               if (details.data == _draggableDataSelected) {
                 final account = context.read<PhylumAccount>();
-                final selectedIds = context.read<FolderSelectionState>().selected;
-                final selected = await account.resourceRepository.getResources(selectedIds);
+                final selected = context.read<ExplorerViewState>().selected;
                 for (final res in selected) {
                   account.addAction(ResourceMoveAction(r: res, parent: widget.r));
                 }
@@ -58,14 +58,14 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
       data: _draggableDataSelected,
       dragAnchorStrategy: pointerDragAnchorStrategy,
       onDragStarted: () {
-        context.read<FolderSelectionManager>().update(dragging: true);
+        context.read<ExplorerViewController>().setDragging(true);
       },
       onDragEnd: (details) {
-        context.read<FolderSelectionManager>().update(dragging: false);
+        context.read<ExplorerViewController>().setDragging(false);
       },
       feedback: Builder(builder: (ctx) {
         final theme = Theme.of(context);
-        final count = context.read<FolderSelectionState>().selected.length;
+        final count = context.read<ExplorerViewState>().selectedIds.length;
         return Card(
           shape: RoundedRectangleBorder(side: BorderSide(color: theme.colorScheme.primary), borderRadius: BorderRadius.circular(4.0)),
           elevation: 16.0,
@@ -92,9 +92,9 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
   }
 
   Widget buildListTile(BuildContext context) {
-    final showBorder = context.select<FolderSelectionState, bool>((state) => state.focusId == widget.r.id && state.showFocus);
-    final highlight = context.select<FolderSelectionState, bool>((state) => state.isSelected(widget.r.id));
-    final dim = context.select<FolderSelectionState, bool>((state) => state.isSelected(widget.r.id) && state.dragging);
+    final showBorder = context.select<ExplorerViewState, bool>((state) => state.focusId == widget.r.id && state.showFocus);
+    final highlight = context.select<ExplorerViewState, bool>((state) => state.isSelected(widget.r.id));
+    final dim = context.select<ExplorerViewState, bool>((state) => state.isSelected(widget.r.id) && state.dragging);
     final theme = Theme.of(context);
     final border = dropTargetActive
         ? BorderSide(color: theme.colorScheme.secondary, width: 2.0)
