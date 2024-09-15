@@ -149,7 +149,7 @@ class ExplorerActions extends StatelessWidget {
     final account = context.read<PhylumAccount>();
     // TOOD: #folderconfirmation
     final confirm =
-        await showAlertDialog(context, title: 'Delete selected files?', barrierDismissible: true, positiveText: 'YES', negativeText: 'NO') ?? false;
+        await showAlertDialog(context, title: 'Delete selected items?', barrierDismissible: true, positiveText: 'YES', negativeText: 'NO') ?? false;
 
     if (!confirm) return;
     for (final r in resources) {

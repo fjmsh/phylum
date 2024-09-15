@@ -14,6 +14,7 @@ class ExplorerViewState {
   final bool showFocus;
   final int selectionStartIndex;
   final bool dragging;
+  final bool refreshing;
 
   String get focusId => (focusIndex < 0 || focusIndex >= resources.length) ? '' : resources[focusIndex].id;
   Iterable<Resource> get selected => resources.where((r) => selectedIds.contains(r.id));
@@ -27,6 +28,7 @@ class ExplorerViewState {
     this.showFocus = false,
     this.selectionStartIndex = -1,
     this.dragging = false,
+    this.refreshing = false,
   });
 
   ExplorerViewState copyWith({
@@ -37,6 +39,7 @@ class ExplorerViewState {
     bool? showFocus,
     int? selectionStartIndex,
     bool? dragging,
+    bool? refreshing,
   }) =>
       ExplorerViewState(
         folder: folder ?? this.folder,
@@ -45,6 +48,7 @@ class ExplorerViewState {
         focusIndex: focusIndex ?? this.focusIndex,
         showFocus: showFocus ?? this.showFocus,
         selectionStartIndex: selectionStartIndex ?? this.selectionStartIndex,
+        refreshing: refreshing ?? this.refreshing,
       );
 
   bool isSelected(String id) {
@@ -61,6 +65,7 @@ class ExplorerViewController extends StateNotifier<ExplorerViewState> {
   ExplorerViewController({required this.account, required this.folderId}) : super(const ExplorerViewState()) {
     folderSubscription = account.resourceRepository.watchResource(folderId).listen((e) => state = state.copyWith(folder: e));
     childrenSubscription = account.resourceRepository.watchChildren(folderId).listen((e) => _updateResourceList(e));
+    refresh();
   }
 
   void _updateResourceList(List<Resource> resources) {
@@ -128,6 +133,8 @@ class ExplorerViewController extends StateNotifier<ExplorerViewState> {
   }
 
   Future refresh() {
-    return account.resourceRepository.requestResource(folderId);
+    if (state.refreshing) return Future.value(state);
+    state = state.copyWith(refreshing: true);
+    return account.resourceRepository.requestResource(folderId).then((_) => state = state.copyWith(refreshing: false));
   }
 }

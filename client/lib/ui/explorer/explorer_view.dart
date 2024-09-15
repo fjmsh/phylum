@@ -43,7 +43,10 @@ class ExplorerView extends StatelessWidget {
       return null;
     });
     if (type != null) {
-      return FolderEmptyView(type: type);
+      return FolderEmptyView(
+        type: type,
+        onRefresh: context.read<ExplorerViewController>().refresh,
+      );
     }
     return RefreshIndicator(
       onRefresh: context.read<ExplorerViewController>().refresh,
