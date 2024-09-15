@@ -131,6 +131,7 @@ class ExplorerViewController extends StateNotifier<ExplorerViewState> {
     }
     state = state.copyWith(
       selectedIds: selectedIds,
+      selectionStartIndex: selectionStartIndex,
       focusIndex: index,
       showFocus: highlight,
     );
