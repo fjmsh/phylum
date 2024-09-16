@@ -34,13 +34,13 @@ type resourceResponse struct {
 	ContentType string     `json:"ctype,omitEmpty"`
 	Size        int64      `json:"size"`
 	Etag        string     `json:"etag"`
+	Permissions string     `json:"permissions,omitempty"`
 }
 
 type resourceDetailResponse struct {
-	Metadata             resourceResponse          `json:"metadata"`
-	Children             []resourceResponse        `json:"children,omitempty"`
-	InheritedPermissions map[int32]core.Permission `json:"inherited,omitempty"`
-	LocalPermissions     map[int32]core.Permission `json:"local,omitempty"`
+	Metadata             resourceResponse   `json:"metadata"`
+	Children             []resourceResponse `json:"children,omitempty"`
+	InheritedPermissions string             `json:"inherited,omitempty"`
 }
 
 type resourceMkdirParams struct {
@@ -364,18 +364,7 @@ func detailedResponseFromResource(fs core.FileSystem, r core.Resource) resourceD
 			response.Children[i] = responseFromResource(c)
 		}
 	}
-	// if r.Permission() >= core.PermissionReadWriteShare {
-	// 	if p, err := fs.GetPermissionsInherited(r); err != nil {
-	// 		panic(p)
-	// 	} else {
-	// 		response.InheritedPermissions = p
-	// 	}
-	// 	if p, err := fs.GetPermissionsLocal(r); err != nil {
-	// 		panic(p)
-	// 	} else {
-	// 		response.LocalPermissions = p
-	// 	}
-	// }
+	response.InheritedPermissions = r.InheritedPermissions()
 	return response
 }
 
@@ -390,5 +379,6 @@ func responseFromResource(r core.Resource) resourceResponse {
 		Size:        r.Size(),
 		Etag:        r.ETag(),
 		ContentType: r.ContentType(),
+		Permissions: r.Permissions(),
 	}
 }

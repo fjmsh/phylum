@@ -226,6 +226,7 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 		delTime:        nil,
 		collection:     dir,
 		sha256sum:      "",
+		permissions:    result.Permissions,
 	}, nil
 }
 
@@ -293,6 +294,7 @@ func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
 			delTime:        &r.Deleted.Time,
 			collection:     r.Dir,
 			sha256sum:      r.Sha256sum.String,
+			permissions:    r.Permissions,
 		}, nil
 	}
 }
@@ -331,6 +333,7 @@ func (f filesystem) UpdateParent(r Resource, parent uuid.UUID) (Resource, error)
 			delTime:        &r.Deleted.Time,
 			collection:     r.Dir,
 			sha256sum:      r.Sha256sum.String,
+			permissions:    r.Permissions,
 		}, nil
 	}
 }
