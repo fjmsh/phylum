@@ -104,7 +104,7 @@ func setupResourceRmCommand() *cobra.Command {
 
 func setupResourceLsCommand() *cobra.Command {
 	details := func(r core.Resource) string {
-		return fmt.Sprintf("%s %4d %s", r.ID().String(), r.Permission(), r.Name())
+		return fmt.Sprintf("%s %4d %s", r.ID().String(), r.UserPermission(), r.Name())
 	}
 	cmd := cobra.Command{
 		Use:   "ls <path | uuid>",
@@ -152,7 +152,7 @@ func setupResourceLsCommand() *cobra.Command {
 
 			logrus.Info("Name: " + r.Name())
 			logrus.Info("  ID: " + r.ID().String())
-			logrus.Info("Perm: " + core.PermissionString(r.Permission()))
+			logrus.Info("Perm: " + core.PermissionString(r.UserPermission()))
 
 			// if specificPermissions != nil {
 			// 	logrus.Info()

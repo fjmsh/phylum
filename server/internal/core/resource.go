@@ -13,29 +13,31 @@ type Resource interface {
 	ParentID() *uuid.UUID
 	Name() string
 	Size() int64
-	Permission() int32
 	ModTime() time.Time
 	DelTime() *time.Time
 	IsDir() bool
 	ETag() string
 	ContentType() string
+	UserPermission() int32
+	Permissions() string
+	InheritedPermissions() string
 }
 
 type resource struct {
-	id         uuid.UUID
-	permission int32
-	parentID   *uuid.UUID
-	name       string
-	size       int64
-	collection bool
-	modTime    time.Time
-	delTime    *time.Time
-	sha256sum  string
+	id                   uuid.UUID
+	parentID             *uuid.UUID
+	name                 string
+	size                 int64
+	collection           bool
+	modTime              time.Time
+	delTime              *time.Time
+	sha256sum            string
+	userPermission       int32
+	permissions          []byte
+	inheritedPermissions []byte
 }
 
 func (r resource) ID() uuid.UUID { return r.id }
-
-func (r resource) Permission() int32 { return r.permission }
 
 func (r resource) ParentID() *uuid.UUID { return r.parentID }
 
@@ -63,3 +65,9 @@ func (r resource) ContentType() string {
 	}
 	return "application/octet-stream"
 }
+
+func (r resource) UserPermission() int32 { return r.userPermission }
+
+func (r resource) Permissions() string { return string(r.permissions) }
+
+func (r resource) InheritedPermissions() string { return string(r.inheritedPermissions) }

@@ -118,26 +118,28 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 		delTime = &res.Deleted.Time
 	}
 	return resource{
-		id:         res.ID,
-		permission: res.UserPermission,
-		parentID:   res.Parent,
-		name:       res.Name,
-		size:       res.Size.Int64,
-		collection: res.Dir,
-		modTime:    res.Modified.Time,
-		delTime:    delTime,
-		sha256sum:  res.Sha256sum.String,
+		id:                   res.ID,
+		userPermission:       res.UserPermission,
+		parentID:             res.Parent,
+		name:                 res.Name,
+		size:                 res.Size.Int64,
+		collection:           res.Dir,
+		modTime:              res.Modified.Time,
+		delTime:              delTime,
+		sha256sum:            res.Sha256sum.String,
+		permissions:          res.Permissions,
+		inheritedPermissions: res.InheritedPermissions,
 	}, nil
 }
 func (f filesystem) OpenRead(r Resource, start, length int64) (io.ReadCloser, error) {
-	if r.Permission() < PermissionReadOnly {
+	if r.UserPermission() < PermissionReadOnly {
 		return nil, ErrInsufficientPermissions
 	}
 	return f.cs.OpenRead(r.ID(), start, length)
 }
 
 func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
-	if r.Permission() < PermissionReadWrite {
+	if r.UserPermission() < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
 	}
 	return f.cs.OpenWrite(r.ID(), sha256.New, func(len int, sum string) error {
@@ -150,7 +152,7 @@ func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
 }
 
 func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
-	if r.Permission() < PermissionReadOnly {
+	if r.UserPermission() < PermissionReadOnly {
 		return nil, ErrInsufficientPermissions
 	}
 	if !r.IsDir() {
@@ -168,15 +170,16 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 	result := make([]Resource, len(children))
 	for i, c := range children {
 		result[i] = resource{
-			id:         c.ID,
-			permission: 0, // not needed
-			parentID:   c.Parent,
-			name:       c.Name,
-			size:       c.Size.Int64,
-			modTime:    c.Modified.Time,
-			delTime:    nil,
-			collection: c.Dir,
-			sha256sum:  c.Sha256sum.String,
+			id:             c.ID,
+			parentID:       c.Parent,
+			name:           c.Name,
+			size:           c.Size.Int64,
+			modTime:        c.Modified.Time,
+			delTime:        nil,
+			collection:     c.Dir,
+			sha256sum:      c.Sha256sum.String,
+			userPermission: 0, // Not part of the query since it is never needed
+			permissions:    c.Permissions,
 		}
 	}
 	return result, nil
@@ -186,7 +189,7 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	if !r.IsDir() {
 		return nil, ErrResourceNotCollection
 	}
-	if r.Permission() < PermissionReadWrite {
+	if r.UserPermission() < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
 	}
 	if id == uuid.Nil {
@@ -214,20 +217,20 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 		return nil, err
 	}
 	return resource{
-		id:         id,
-		parentID:   result.Parent,
-		permission: r.Permission(),
-		name:       result.Name,
-		size:       0,
-		modTime:    result.Modified.Time,
-		delTime:    nil,
-		collection: dir,
-		sha256sum:  "",
+		id:             id,
+		parentID:       result.Parent,
+		userPermission: r.UserPermission(),
+		name:           result.Name,
+		size:           0,
+		modTime:        result.Modified.Time,
+		delTime:        nil,
+		collection:     dir,
+		sha256sum:      "",
 	}, nil
 }
 
 func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error) {
-	if r.Permission() < PermissionReadWrite {
+	if r.UserPermission() < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
 	}
 	// TODO: versioning
@@ -274,22 +277,22 @@ func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-	if parent.Permission() < PermissionReadWrite {
+	if parent.UserPermission() < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
 	}
 	if r, err := f.db.UpdateResourceName(f.ctx, db.UpdateResourceNameParams{ID: r.ID(), Name: name}); err != nil {
 		return nil, err
 	} else {
 		return resource{
-			id:         r.ID,
-			parentID:   r.Parent,
-			permission: 0, // TODO: set correctly
-			name:       r.Name,
-			size:       r.Size.Int64,
-			modTime:    r.Modified.Time,
-			delTime:    &r.Deleted.Time,
-			collection: r.Dir,
-			sha256sum:  r.Sha256sum.String,
+			id:             r.ID,
+			parentID:       r.Parent,
+			userPermission: 0, // TODO: set correctly
+			name:           r.Name,
+			size:           r.Size.Int64,
+			modTime:        r.Modified.Time,
+			delTime:        &r.Deleted.Time,
+			collection:     r.Dir,
+			sha256sum:      r.Sha256sum.String,
 		}, nil
 	}
 }
@@ -305,35 +308,35 @@ func (f filesystem) UpdateParent(r Resource, parent uuid.UUID) (Resource, error)
 	if err != nil {
 		return nil, err
 	}
-	if oldParent.Permission() < PermissionReadWrite {
+	if oldParent.UserPermission() < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
 	}
 	newParent, err := f.ResourceByID(parent)
 	if err != nil {
 		return nil, err
 	}
-	if newParent.Permission() < PermissionReadWrite {
+	if newParent.UserPermission() < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
 	}
 	if r, err := f.db.UpdateResourceParent(f.ctx, db.UpdateResourceParentParams{ID: r.ID(), Parent: parent}); err != nil {
 		return nil, err
 	} else {
 		return resource{
-			id:         r.ID,
-			parentID:   r.Parent,
-			permission: 0, // TODO: set correctly
-			name:       r.Name,
-			size:       r.Size.Int64,
-			modTime:    r.Modified.Time,
-			delTime:    &r.Deleted.Time,
-			collection: r.Dir,
-			sha256sum:  r.Sha256sum.String,
+			id:             r.ID,
+			parentID:       r.Parent,
+			userPermission: 0, // TODO: set correctly
+			name:           r.Name,
+			size:           r.Size.Int64,
+			modTime:        r.Modified.Time,
+			delTime:        &r.Deleted.Time,
+			collection:     r.Dir,
+			sha256sum:      r.Sha256sum.String,
 		}, nil
 	}
 }
 
 func (f filesystem) UpdatePermissions(r Resource, userID int32, permission Permission) error {
-	if r.Permission() < PermissionReadWriteShare {
+	if r.UserPermission() < PermissionReadWriteShare {
 		return ErrInsufficientPermissions
 	}
 	if permission > PermissionReadWriteShare {
