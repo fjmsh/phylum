@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/core"
 	webdav "github.com/shroff/phylum/server/internal/webdav/impl"
 	"github.com/sirupsen/logrus"
@@ -26,7 +27,7 @@ func SetupHandler(r *gin.RouterGroup, app *core.App) {
 		app:    app,
 		prefix: r.BasePath(),
 	}
-	r.Use(createBasicAuthHandler(app))
+	r.Use(auth.CreateBasicAuthHandler(app))
 	r.Handle("OPTIONS", "*path", handler.HandleRequest)
 	r.Handle("GET", "*path", handler.HandleRequest)
 	r.Handle("PUT", "*path", handler.HandleRequest)
@@ -41,8 +42,8 @@ func SetupHandler(r *gin.RouterGroup, app *core.App) {
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
-	fs, ok := c.Get(keyFileSystem)
-	if !ok {
+	fs := auth.GetFileSystem(c)
+	if fs == nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

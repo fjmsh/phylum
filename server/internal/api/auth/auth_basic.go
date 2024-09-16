@@ -1,4 +1,4 @@
-package webdav
+package auth
 
 import (
 	"errors"
@@ -9,9 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const keyFileSystem = "filesystem"
-
-func createBasicAuthHandler(a *core.App) func(c *gin.Context) {
+func CreateBasicAuthHandler(a *core.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		if username, pass, ok := c.Request.BasicAuth(); !ok {
 			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
@@ -28,6 +26,7 @@ func createBasicAuthHandler(a *core.App) func(c *gin.Context) {
 			logrus.Warn(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 		} else {
+			c.Set(keyUser, user)
 			c.Set(keyFileSystem, fs)
 		}
 	}
