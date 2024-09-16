@@ -364,18 +364,18 @@ func detailedResponseFromResource(fs core.FileSystem, r core.Resource) resourceD
 			response.Children[i] = responseFromResource(c)
 		}
 	}
-	if r.Permission() >= core.PermissionReadWriteShare {
-		if p, err := fs.GetPermissionsInherited(r); err != nil {
-			panic(p)
-		} else {
-			response.InheritedPermissions = p
-		}
-		if p, err := fs.GetPermissionsLocal(r); err != nil {
-			panic(p)
-		} else {
-			response.LocalPermissions = p
-		}
-	}
+	// if r.Permission() >= core.PermissionReadWriteShare {
+	// 	if p, err := fs.GetPermissionsInherited(r); err != nil {
+	// 		panic(p)
+	// 	} else {
+	// 		response.InheritedPermissions = p
+	// 	}
+	// 	if p, err := fs.GetPermissionsLocal(r); err != nil {
+	// 		panic(p)
+	// 	} else {
+	// 		response.LocalPermissions = p
+	// 	}
+	// }
 	return response
 }
 

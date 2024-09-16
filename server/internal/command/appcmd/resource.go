@@ -141,42 +141,42 @@ func setupResourceLsCommand() *cobra.Command {
 				}
 			}
 
-			specificPermissions, err := fs.GetPermissionsLocal(r)
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			inheritedPermissions, err := fs.GetPermissionsInherited(r)
-			if err != nil {
-				logrus.Fatal(err)
-			}
+			// specificPermissions, err := fs.GetPermissionsLocal(r)
+			// if err != nil {
+			// 	logrus.Fatal(err)
+			// }
+			// inheritedPermissions, err := fs.GetPermissionsInherited(r)
+			// if err != nil {
+			// 	logrus.Fatal(err)
+			// }
 
 			logrus.Info("Name: " + r.Name())
 			logrus.Info("  ID: " + r.ID().String())
 			logrus.Info("Perm: " + core.PermissionString(r.Permission()))
 
-			if specificPermissions != nil {
-				logrus.Info()
-				logrus.Info("Specific Permissions:")
-				for id, p := range specificPermissions {
-					user, err := core.Default.UserByID(context.Background(), id)
-					if err != nil {
-						logrus.Fatal(err)
-					}
-					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Email, user.ID, core.PermissionString(p)))
-				}
-			}
+			// if specificPermissions != nil {
+			// 	logrus.Info()
+			// 	logrus.Info("Specific Permissions:")
+			// 	for id, p := range specificPermissions {
+			// 		user, err := core.Default.UserByID(context.Background(), id)
+			// 		if err != nil {
+			// 			logrus.Fatal(err)
+			// 		}
+			// 		logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Email, user.ID, core.PermissionString(p)))
+			// 	}
+			// }
 
-			if inheritedPermissions != nil {
-				logrus.Info()
-				logrus.Info("Inherited Permissions:")
-				for id, p := range inheritedPermissions {
-					user, err := core.Default.UserByID(context.Background(), id)
-					if err != nil {
-						logrus.Fatal(err)
-					}
-					logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Email, user.ID, core.PermissionString(p)))
-				}
-			}
+			// if inheritedPermissions != nil {
+			// 	logrus.Info()
+			// 	logrus.Info("Inherited Permissions:")
+			// 	for id, p := range inheritedPermissions {
+			// 		user, err := core.Default.UserByID(context.Background(), id)
+			// 		if err != nil {
+			// 			logrus.Fatal(err)
+			// 		}
+			// 		logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Email, user.ID, core.PermissionString(p)))
+			// 	}
+			// }
 
 			if r.IsDir() {
 				children, err := fs.ReadDir(r)

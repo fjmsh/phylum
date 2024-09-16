@@ -17,7 +17,7 @@ INSERT INTO resources(
     id, parent, name, dir, created, modified
 ) VALUES (
     $1, $2, $3, $4, NOW(), NOW()
-) RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum
+) RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum, permissions
 `
 
 type CreateResourceParams struct {
@@ -45,6 +45,7 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 		&i.Deleted,
 		&i.Size,
 		&i.Sha256sum,
+		&i.Permissions,
 	)
 	return i, err
 }
@@ -156,7 +157,7 @@ SET
     name = CASE WHEN ($1::text = '') THEN name ELSE $1::text END,
     modified = NOW()
 WHERE id = $2::uuid
-RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum
+RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum, permissions
 `
 
 type UpdateResourceNameParams struct {
@@ -177,6 +178,7 @@ func (q *Queries) UpdateResourceName(ctx context.Context, arg UpdateResourceName
 		&i.Deleted,
 		&i.Size,
 		&i.Sha256sum,
+		&i.Permissions,
 	)
 	return i, err
 }
@@ -187,7 +189,7 @@ SET
     parent = $1::uuid,
     modified = NOW()
 WHERE id = $2::uuid
-RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum
+RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum, permissions
 `
 
 type UpdateResourceParentParams struct {
@@ -208,6 +210,7 @@ func (q *Queries) UpdateResourceParent(ctx context.Context, arg UpdateResourcePa
 		&i.Deleted,
 		&i.Size,
 		&i.Sha256sum,
+		&i.Permissions,
 	)
 	return i, err
 }

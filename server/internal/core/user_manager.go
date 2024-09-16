@@ -13,7 +13,7 @@ import (
 var ErrUserNotFound = errors.New("user not found")
 
 func (a App) CreateUser(ctx context.Context, email, displayName, password string, root *uuid.UUID) error {
-	var rootID = a.Rootfs.Root().ID()
+	var rootID = a.Rootfs.RootID()
 	if root != nil {
 		rootID = *root
 	}

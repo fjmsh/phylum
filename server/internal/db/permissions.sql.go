@@ -12,134 +12,44 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const getInheritedPermissionsForResource = `-- name: GetInheritedPermissionsForResource :many
-WITH RECURSIVE nodes(id, parent) AS (
-  SELECT r.id, r.parent
-    FROM resources r
-    WHERE r.id = $1::uuid
-  UNION ALL (
-    SELECT r.id, r.parent
-     FROM resources r
-     JOIN nodes n
-     ON r.id = n.parent
-  )
-)
-SELECT p.user_id, CAST(MAX(p.permission) AS INT) AS permission
-  FROM permissions p
-  JOIN nodes n
-  ON n.id = p.resource_id
-  GROUP BY p.user_id
-`
-
-type GetInheritedPermissionsForResourceRow struct {
-	UserID     int32
-	Permission int32
-}
-
-func (q *Queries) GetInheritedPermissionsForResource(ctx context.Context, resourceID uuid.UUID) ([]GetInheritedPermissionsForResourceRow, error) {
-	rows, err := q.db.Query(ctx, getInheritedPermissionsForResource, resourceID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetInheritedPermissionsForResourceRow
-	for rows.Next() {
-		var i GetInheritedPermissionsForResourceRow
-		if err := rows.Scan(&i.UserID, &i.Permission); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getLocalPermissionsForResource = `-- name: GetLocalPermissionsForResource :many
-SELECT p.user_id, CAST(p.permission AS INT) AS permission
-  FROM permissions p
-  WHERE p.resource_id = $1::uuid
-`
-
-type GetLocalPermissionsForResourceRow struct {
-	UserID     int32
-	Permission int32
-}
-
-func (q *Queries) GetLocalPermissionsForResource(ctx context.Context, resourceID uuid.UUID) ([]GetLocalPermissionsForResourceRow, error) {
-	rows, err := q.db.Query(ctx, getLocalPermissionsForResource, resourceID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetLocalPermissionsForResourceRow
-	for rows.Next() {
-		var i GetLocalPermissionsForResourceRow
-		if err := rows.Scan(&i.UserID, &i.Permission); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const readDir = `-- name: ReadDir :many
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, permission) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, $2::int
+WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, permissions) AS (
+  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, r.permissions
     FROM resources r
-    WHERE r.id = $3::uuid
+    WHERE r.id = $2::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name),
-      CASE
-        WHEN p.permission > n.permission THEN p.permission
-        ELSE n.permission
-      END
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name), r.permissions
     FROM resources r JOIN nodes n on r.parent = n.id
-    LEFT JOIN permissions p
-    ON r.id = p.resource_id 
-    AND p.user_id = $4::int
     WHERE deleted IS NULL
-    AND r.id != $3::uuid
-    AND CASE WHEN $5::boolean THEN true ELSE depth < 1 END
+    AND r.id != $2::uuid
+    AND CASE WHEN $3::boolean THEN true ELSE depth < 1 END
 )
-SELECT id, parent, name, dir, created, modified, size, sha256sum, depth, path, permission from nodes
+SELECT id, parent, name, dir, created, modified, size, sha256sum, depth, path, permissions from nodes
 WHERE CASE WHEN $1::boolean THEN true ELSE depth > 0 END
 `
 
 type ReadDirParams struct {
 	IncludeRoot bool
-	Permission  int32
 	ID          uuid.UUID
-	UserID      int32
 	Recursive   bool
 }
 
 type ReadDirRow struct {
-	ID         uuid.UUID
-	Parent     *uuid.UUID
-	Name       string
-	Dir        bool
-	Created    pgtype.Timestamp
-	Modified   pgtype.Timestamp
-	Size       pgtype.Int8
-	Sha256sum  pgtype.Text
-	Depth      int32
-	Path       string
-	Permission int32
+	ID          uuid.UUID
+	Parent      *uuid.UUID
+	Name        string
+	Dir         bool
+	Created     pgtype.Timestamp
+	Modified    pgtype.Timestamp
+	Size        pgtype.Int8
+	Sha256sum   pgtype.Text
+	Depth       int32
+	Path        string
+	Permissions []byte
 }
 
 func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow, error) {
-	rows, err := q.db.Query(ctx, readDir,
-		arg.IncludeRoot,
-		arg.Permission,
-		arg.ID,
-		arg.UserID,
-		arg.Recursive,
-	)
+	rows, err := q.db.Query(ctx, readDir, arg.IncludeRoot, arg.ID, arg.Recursive)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +68,7 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 			&i.Sha256sum,
 			&i.Depth,
 			&i.Path,
-			&i.Permission,
+			&i.Permissions,
 		); err != nil {
 			return nil, err
 		}
@@ -171,70 +81,61 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 }
 
 const resourceByID = `-- name: ResourceByID :one
-WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
-  SELECT $1::uuid, r.id, r.parent,
+WITH RECURSIVE nodes(resid, id, parent, inherited_permissions, found) AS (
+  SELECT $2::uuid, r.id, r.parent, '{}'::jsonb,
       CASE
-        WHEN r.id = $2::uuid THEN true
+        WHEN r.id = $3::uuid THEN true
         ELSE false
-      END,
-      CASE
-        WHEN p.permission IS NOT NULL THEN p.permission
-        ELSE 0
       END
     FROM resources r
-    LEFT JOIN permissions p
-    ON p.resource_id = r.id
-    AND p.user_id = $3::int
-    WHERE r.id = $1::uuid 
+    WHERE r.id = $2::uuid 
   UNION ALL
-    SELECT n.resid, r.id, r.parent,
+    SELECT n.resid, r.id, r.parent, jsonb_bitwise_or(r.permissions, n.inherited_permissions),
       CASE
-        WHEN r.id = $2::uuid THEN true
+        WHEN r.id = $3::uuid THEN true
         ELSE n.found
-      END,
-      CASE
-        WHEN p.permission > n.permission THEN p.permission
-        ELSE n.permission
       END
     FROM resources r
     JOIN nodes n
     ON r.id = n.parent
-    LEFT JOIN permissions p
-    ON r.id = p.resource_id AND p.user_id = $3::int
 )
-SELECT resid AS id, found, permission, r.parent, name, dir, created, modified, deleted, size, sha256sum FROM nodes n
+SELECT resid AS id, r.permissions, n.inherited_permissions, COALESCE((jsonb_bitwise_or(r.permissions, n.inherited_permissions)->(($1::int)::text))::int, 0)::int AS user_permission, found, r.parent, name, dir, created, modified, deleted, size, sha256sum FROM nodes n
 JOIN resources r
 ON r.id = n.resid
 WHERE n.parent IS NULL
 `
 
 type ResourceByIDParams struct {
+	UserID     int32
 	ResourceID uuid.UUID
 	Root       uuid.UUID
-	UserID     int32
 }
 
 type ResourceByIDRow struct {
-	ID         uuid.UUID
-	Found      bool
-	Permission int32
-	Parent     *uuid.UUID
-	Name       string
-	Dir        bool
-	Created    pgtype.Timestamp
-	Modified   pgtype.Timestamp
-	Deleted    pgtype.Timestamp
-	Size       pgtype.Int8
-	Sha256sum  pgtype.Text
+	ID                   uuid.UUID
+	Permissions          []byte
+	InheritedPermissions []byte
+	UserPermission       int32
+	Found                bool
+	Parent               *uuid.UUID
+	Name                 string
+	Dir                  bool
+	Created              pgtype.Timestamp
+	Modified             pgtype.Timestamp
+	Deleted              pgtype.Timestamp
+	Size                 pgtype.Int8
+	Sha256sum            pgtype.Text
 }
 
 func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (ResourceByIDRow, error) {
-	row := q.db.QueryRow(ctx, resourceByID, arg.ResourceID, arg.Root, arg.UserID)
+	row := q.db.QueryRow(ctx, resourceByID, arg.UserID, arg.ResourceID, arg.Root)
 	var i ResourceByIDRow
 	err := row.Scan(
 		&i.ID,
+		&i.Permissions,
+		&i.InheritedPermissions,
+		&i.UserPermission,
 		&i.Found,
-		&i.Permission,
 		&i.Parent,
 		&i.Name,
 		&i.Dir,
@@ -248,56 +149,55 @@ func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (Res
 }
 
 const resourceByPath = `-- name: ResourceByPath :one
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, search, permission) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, $1::text[], $2::int
+WITH RECURSIVE root(resid, id, parent, inherited_permissions) AS (
+  SELECT $2::uuid, r.id, r.parent, '{}'::jsonb
     FROM resources r
-    WHERE r.id = $3::uuid
+    WHERE r.id = $2::uuid 
   UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name), n.search,
-      CASE
-        WHEN p.permission > n.permission THEN p.permission
-        ELSE n.permission
-      END
+    SELECT n.resid, r.id, r.parent, jsonb_bitwise_or(r.permissions, n.permissions)
+    FROM resources r
+    JOIN nodes n
+    ON r.id = n.parent
+), nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, search, permissions, inherited_permissions) AS (
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, $3::text[], r.permissions, root.inherited_permissions
+    FROM resources r
+    JOIN root
+    ON r.id = n.resid WHERE parent IS NULL
+  UNION ALL
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name), n.search, r.permissions, jsonb_bitwise_or(r.permissions, n.permissions)
     FROM resources r
     JOIN nodes n ON r.parent = n.id
-    LEFT JOIN permissions p
-    ON r.id = p.resource_id 
-    AND p.user_id = $4::int
     WHERE deleted IS NULL
     AND r.name = n.search[n.depth + 1]
 )
-SELECT id, parent, name, dir, created, modified, size, sha256sum, depth, path, search, permission FROM nodes WHERE cardinality(search) = depth
+SELECT id, parent, name, dir, created, modified, size, sha256sum, depth, path, search, permissions, inherited_permissions, COALESCE((jsonb_bitwise_or(permissions, inherited_permissions)->(($1::int)::text))::int, 0)::int AS user_permission FROM nodes WHERE cardinality(search) = depth
 `
 
 type ResourceByPathParams struct {
-	Search     []string
-	Permission int32
-	Root       uuid.UUID
-	UserID     int32
+	UserID int32
+	Root   uuid.UUID
+	Search []string
 }
 
 type ResourceByPathRow struct {
-	ID         uuid.UUID
-	Parent     *uuid.UUID
-	Name       string
-	Dir        bool
-	Created    pgtype.Timestamp
-	Modified   pgtype.Timestamp
-	Size       pgtype.Int8
-	Sha256sum  pgtype.Text
-	Depth      int32
-	Path       string
-	Search     []string
-	Permission int32
+	ID                   uuid.UUID
+	Parent               *uuid.UUID
+	Name                 string
+	Dir                  bool
+	Created              pgtype.Timestamp
+	Modified             pgtype.Timestamp
+	Size                 pgtype.Int8
+	Sha256sum            pgtype.Text
+	Depth                int32
+	Path                 string
+	Search               []string
+	Permissions          []byte
+	InheritedPermissions []byte
+	UserPermission       int32
 }
 
 func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) (ResourceByPathRow, error) {
-	row := q.db.QueryRow(ctx, resourceByPath,
-		arg.Search,
-		arg.Permission,
-		arg.Root,
-		arg.UserID,
-	)
+	row := q.db.QueryRow(ctx, resourceByPath, arg.UserID, arg.Root, arg.Search)
 	var i ResourceByPathRow
 	err := row.Scan(
 		&i.ID,
@@ -311,24 +211,24 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 		&i.Depth,
 		&i.Path,
 		&i.Search,
-		&i.Permission,
+		&i.Permissions,
+		&i.InheritedPermissions,
+		&i.UserPermission,
 	)
 	return i, err
 }
 
 const updatePermissionsForResource = `-- name: UpdatePermissionsForResource :exec
-INSERT INTO permissions(resource_id, user_id, permission)
-    VALUES($1::uuid, $2::int, $3::int)
-    ON CONFLICT(resource_id, user_id) DO UPDATE SET permission = $3::int
+UPDATE resources SET permissions[$1::integer] = $2::int WHERE id = $3::uuid
 `
 
 type UpdatePermissionsForResourceParams struct {
-	ResourceID uuid.UUID
 	UserID     int32
 	Permission int32
+	ResourceID uuid.UUID
 }
 
 func (q *Queries) UpdatePermissionsForResource(ctx context.Context, arg UpdatePermissionsForResourceParams) error {
-	_, err := q.db.Exec(ctx, updatePermissionsForResource, arg.ResourceID, arg.UserID, arg.Permission)
+	_, err := q.db.Exec(ctx, updatePermissionsForResource, arg.UserID, arg.Permission, arg.ResourceID)
 	return err
 }

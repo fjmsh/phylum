@@ -16,22 +16,17 @@ type AccessToken struct {
 	UserID  int32
 }
 
-type Permission struct {
-	ResourceID uuid.UUID
-	UserID     int32
-	Permission int32
-}
-
 type Resource struct {
-	ID        uuid.UUID
-	Parent    *uuid.UUID
-	Name      string
-	Dir       bool
-	Created   pgtype.Timestamp
-	Modified  pgtype.Timestamp
-	Deleted   pgtype.Timestamp
-	Size      pgtype.Int8
-	Sha256sum pgtype.Text
+	ID          uuid.UUID
+	Parent      *uuid.UUID
+	Name        string
+	Dir         bool
+	Created     pgtype.Timestamp
+	Modified    pgtype.Timestamp
+	Deleted     pgtype.Timestamp
+	Size        pgtype.Int8
+	Sha256sum   pgtype.Text
+	Permissions []byte
 }
 
 type StorageBackend struct {

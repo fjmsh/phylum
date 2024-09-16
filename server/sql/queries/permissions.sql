@@ -1,19 +1,12 @@
 
 -- name: ReadDir :many
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, permission) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, @permission::int
+WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, permissions) AS (
+  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, r.permissions
     FROM resources r
     WHERE r.id = @id::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name),
-      CASE
-        WHEN p.permission > n.permission THEN p.permission
-        ELSE n.permission
-      END
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name), r.permissions
     FROM resources r JOIN nodes n on r.parent = n.id
-    LEFT JOIN permissions p
-    ON r.id = p.resource_id 
-    AND p.user_id = @user_id::int
     WHERE deleted IS NULL
     AND r.id != @id::uuid
     AND CASE WHEN @recursive::boolean THEN true ELSE depth < 1 END
@@ -22,88 +15,76 @@ SELECT * from nodes
 WHERE CASE WHEN @include_root::boolean THEN true ELSE depth > 0 END;
 
 -- name: ResourceByPath :one
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, search, permission) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, @search::text[], @permission::int
+WITH RECURSIVE root(resid, id, parent, inherited_permissions) AS (
+  SELECT @root::uuid, r.id, r.parent, '{}'::jsonb
     FROM resources r
-    WHERE r.id = @root::uuid
+    WHERE r.id = @root::uuid 
   UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name), n.search,
-      CASE
-        WHEN p.permission > n.permission THEN p.permission
-        ELSE n.permission
-      END
+    SELECT n.resid, r.id, r.parent, jsonb_bitwise_or(r.permissions, n.permissions)
+    FROM resources r
+    JOIN nodes n
+    ON r.id = n.parent
+), nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, search, permissions, inherited_permissions) AS (
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, @search::text[], r.permissions, root.inherited_permissions
+    FROM resources r
+    JOIN root
+    ON r.id = n.resid WHERE parent IS NULL
+  UNION ALL
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name), n.search, r.permissions, jsonb_bitwise_or(r.permissions, n.permissions)
     FROM resources r
     JOIN nodes n ON r.parent = n.id
-    LEFT JOIN permissions p
-    ON r.id = p.resource_id 
-    AND p.user_id = @user_id::int
     WHERE deleted IS NULL
     AND r.name = n.search[n.depth + 1]
 )
-SELECT * FROM nodes WHERE cardinality(search) = depth;
+SELECT *, COALESCE((jsonb_bitwise_or(permissions, inherited_permissions)->((@user_id::int)::text))::int, 0)::int AS user_permission FROM nodes WHERE cardinality(search) = depth;
 
 -- name: ResourceByID :one
-WITH RECURSIVE nodes(resid, id, parent, found, permission) AS (
-  SELECT @resource_id::uuid, r.id, r.parent,
+WITH RECURSIVE nodes(resid, id, parent, inherited_permissions, found) AS (
+  SELECT @resource_id::uuid, r.id, r.parent, '{}'::jsonb,
       CASE
         WHEN r.id = @root::uuid THEN true
         ELSE false
-      END,
-      CASE
-        WHEN p.permission IS NOT NULL THEN p.permission
-        ELSE 0
       END
     FROM resources r
-    LEFT JOIN permissions p
-    ON p.resource_id = r.id
-    AND p.user_id = @user_id::int
     WHERE r.id = @resource_id::uuid 
   UNION ALL
-    SELECT n.resid, r.id, r.parent,
+    SELECT n.resid, r.id, r.parent, jsonb_bitwise_or(r.permissions, n.inherited_permissions),
       CASE
         WHEN r.id = @root::uuid THEN true
         ELSE n.found
-      END,
-      CASE
-        WHEN p.permission > n.permission THEN p.permission
-        ELSE n.permission
       END
     FROM resources r
     JOIN nodes n
     ON r.id = n.parent
-    LEFT JOIN permissions p
-    ON r.id = p.resource_id AND p.user_id = @user_id::int
 )
-SELECT resid AS id, found, permission, r.parent, name, dir, created, modified, deleted, size, sha256sum FROM nodes n
+SELECT resid AS id, r.permissions, n.inherited_permissions, COALESCE((jsonb_bitwise_or(r.permissions, n.inherited_permissions)->((@user_id::int)::text))::int, 0)::int AS user_permission, found, r.parent, name, dir, created, modified, deleted, size, sha256sum FROM nodes n
 JOIN resources r
 ON r.id = n.resid
 WHERE n.parent IS NULL;
 
 -- name: UpdatePermissionsForResource :exec
-INSERT INTO permissions(resource_id, user_id, permission)
-    VALUES(@resource_id::uuid, @user_id::int, @permission::int)
-    ON CONFLICT(resource_id, user_id) DO UPDATE SET permission = @permission::int;
+UPDATE resources SET permissions[@user_id::integer] = @permission::int WHERE id = @resource_id::uuid;
 
--- name: GetLocalPermissionsForResource :many
-SELECT p.user_id, CAST(p.permission AS INT) AS permission
-  FROM permissions p
-  WHERE p.resource_id = @resource_id::uuid;
+-- -- name: GetLocalPermissionsForResource :many
+-- SELECT p.user_id, CAST(p.permission AS INT) AS permission
+--   FROM permissions p
+--   WHERE p.resource_id = @resource_id::uuid;
 
 
--- name: GetInheritedPermissionsForResource :many
-WITH RECURSIVE nodes(id, parent) AS (
-  SELECT r.id, r.parent
-    FROM resources r
-    WHERE r.id = @resource_id::uuid
-  UNION ALL (
-    SELECT r.id, r.parent
-     FROM resources r
-     JOIN nodes n
-     ON r.id = n.parent
-  )
-)
-SELECT p.user_id, CAST(MAX(p.permission) AS INT) AS permission
-  FROM permissions p
-  JOIN nodes n
-  ON n.id = p.resource_id
-  GROUP BY p.user_id;
+-- -- name: GetInheritedPermissionsForResource :many
+-- WITH RECURSIVE nodes(id, parent) AS (
+--   SELECT r.id, r.parent
+--     FROM resources r
+--     WHERE r.id = @resource_id::uuid
+--   UNION ALL (
+--     SELECT r.id, r.parent
+--      FROM resources r
+--      JOIN nodes n
+--      ON r.id = n.parent
+--   )
+-- )
+-- SELECT p.user_id, CAST(MAX(p.permission) AS INT) AS permission
+--   FROM permissions p
+--   JOIN nodes n
+--   ON n.id = p.resource_id
+--   GROUP BY p.user_id;

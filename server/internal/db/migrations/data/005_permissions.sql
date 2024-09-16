@@ -1,10 +1,30 @@
-CREATE TABLE permissions(
-    resource_id  uuid NOT NULL,
-    user_id      INTEGER NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    permission   INT NOT NULL DEFAULT 0,
-    PRIMARY KEY(resource_id, user_id)
+ALTER TABLE resources
+ADD permissions JSONB
+DEFAULT '{}';
+
+CREATE OR REPLACE FUNCTION jsonb_bitwise_or(a JSONB, b JSONB)
+RETURNS JSONB LANGUAGE SQL AS $$
+    SELECT 
+        jsonb_object_agg(
+            COALESCE(ka, kb), 
+            CASE
+                WHEN va ISNULL THEN vb::integer 
+                WHEN vb ISNULL THEN va::integer 
+                ELSE va::integer | vb::integer 
+            END
+        )
+    FROM jsonb_each(a) e1(ka, va)
+    FULL JOIN jsonb_each(b) e2(kb, vb) ON ka = kb
+$$;
+
+CREATE AGGREGATE agg_jsonb_bitwise_or(JSONB) (
+    SFUNC = jsonb_bitwise_or,
+    STYPE = JSONB,
+    INITCOND = '{}'
 );
 
 ---- create above / drop below ----
 
-DROP TABLE permissions;
+DROP AGGREGATE agg_jsonb_bitwise_or(JSONB)
+
+DROP FUNCTION jsonb_bitwise_or;
