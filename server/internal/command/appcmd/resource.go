@@ -263,23 +263,15 @@ func setupResourceChpermCommand() *cobra.Command {
 }
 
 func openFileSystemFromFlags(cmd *cobra.Command) {
-	var user core.User
 	if value, err := cmd.Flags().GetString("user"); err != nil {
 		logrus.Fatal(err)
 	} else {
-		if u, err := core.Default.UserByEmail(context.Background(), value); err != nil {
+		if user, err := core.Default.UserByEmail(context.Background(), value); err != nil {
 			logrus.Fatal(err)
 		} else {
-			user = u
+			fs = core.Default.OpenFileSystem(context.Background(), user)
 		}
 	}
-
-	var err error
-	fs, err = core.Default.OpenFileSystem(context.Background(), user)
-	if err != nil {
-		logrus.Fatal(err)
-	}
-
 }
 
 func setupUserFlags(cmd *cobra.Command) {

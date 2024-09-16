@@ -10,7 +10,7 @@ import (
 	"github.com/shroff/phylum/server/internal/storage"
 )
 
-const defaultUserEmail = "admin@phylum"
+const defaultUserEmail = "phylum"
 
 type App struct {
 	Debug  bool
@@ -38,11 +38,7 @@ func (a *App) setupAppData(ctx context.Context) error {
 		u, err = a.populateData(ctx)
 	}
 	if err == nil {
-		if fs, err := OpenFileSystem(a.db, ctx, a.cs, u.ID, u.Root); err != nil {
-			return err
-		} else {
-			a.Rootfs = fs
-		}
+		a.Rootfs = OpenFileSystem(a.db, ctx, a.cs, u.ID, u.Root)
 	}
 	return err
 }
@@ -104,6 +100,6 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 	return
 }
 
-func (a App) OpenFileSystem(ctx context.Context, user User) (FileSystem, error) {
+func (a App) OpenFileSystem(ctx context.Context, user User) FileSystem {
 	return OpenFileSystem(a.db, ctx, a.cs, user.ID, user.Root)
 }

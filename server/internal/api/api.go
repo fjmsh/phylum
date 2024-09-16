@@ -12,7 +12,7 @@ func Setup(r *gin.RouterGroup, a *core.App) {
 	routes.SetupAuthRoutes(r, a)
 
 	// Authenticated routes
-	r.Use(auth.CreateBearerAuthHandler(a))
+	r.Use(auth.CreateApiAuthHandler(a))
 	routes.SetupResourceRoutes(r)
 	routes.SetupUserRoutes(r)
 	routes.SetupMobileRoutes(r)

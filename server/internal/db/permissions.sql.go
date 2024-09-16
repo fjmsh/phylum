@@ -188,7 +188,7 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 }
 
 const updatePermissionsForResource = `-- name: UpdatePermissionsForResource :exec
-UPDATE resources SET permissions[$1::integer] = $2::int WHERE id = $3::uuid
+UPDATE resources SET permissions[$1::int] = to_json($2::int) WHERE id = $3::uuid
 `
 
 type UpdatePermissionsForResourceParams struct {

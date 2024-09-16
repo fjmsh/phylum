@@ -53,28 +53,4 @@ ON r.id = n.resid
 WHERE n.parent IS NULL;
 
 -- name: UpdatePermissionsForResource :exec
-UPDATE resources SET permissions[@user_id::integer] = @permission::int WHERE id = @resource_id::uuid;
-
--- -- name: GetLocalPermissionsForResource :many
--- SELECT p.user_id, CAST(p.permission AS INT) AS permission
---   FROM permissions p
---   WHERE p.resource_id = @resource_id::uuid;
-
-
--- -- name: GetInheritedPermissionsForResource :many
--- WITH RECURSIVE nodes(id, parent) AS (
---   SELECT r.id, r.parent
---     FROM resources r
---     WHERE r.id = @resource_id::uuid
---   UNION ALL (
---     SELECT r.id, r.parent
---      FROM resources r
---      JOIN nodes n
---      ON r.id = n.parent
---   )
--- )
--- SELECT p.user_id, CAST(MAX(p.permission) AS INT) AS permission
---   FROM permissions p
---   JOIN nodes n
---   ON n.id = p.resource_id
---   GROUP BY p.user_id;
+UPDATE resources SET permissions[@user_id::int] = to_json(@permission::int) WHERE id = @resource_id::uuid;

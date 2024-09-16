@@ -55,14 +55,14 @@ type filesystem struct {
 	user   int32
 }
 
-func OpenFileSystem(dbh *db.DbHandler, ctx context.Context, cs storage.Storage, user int32, rootID uuid.UUID) (FileSystem, error) {
+func OpenFileSystem(dbh *db.DbHandler, ctx context.Context, cs storage.Storage, user int32, rootID uuid.UUID) FileSystem {
 	return filesystem{
 		db:     dbh,
 		ctx:    ctx,
 		cs:     cs,
 		rootID: rootID,
 		user:   user,
-	}, nil
+	}
 }
 
 func (f filesystem) RootID() uuid.UUID {
