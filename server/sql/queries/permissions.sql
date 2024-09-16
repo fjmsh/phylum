@@ -15,28 +15,18 @@ SELECT * from nodes
 WHERE CASE WHEN @include_root::boolean THEN true ELSE depth > 0 END;
 
 -- name: ResourceByPath :one
-WITH RECURSIVE root(resid, id, parent, inherited_permissions) AS (
-  SELECT @root::uuid, r.id, r.parent, '{}'::jsonb
+WITH RECURSIVE nodes(id, parent, search, depth) AS (
+    SELECT r.id, r.parent, @search::text[], 0
     FROM resources r
-    WHERE r.id = @root::uuid 
+    WHERE r.id = @root::uuid
   UNION ALL
-    SELECT n.resid, r.id, r.parent, jsonb_bitwise_or(r.permissions, n.permissions)
-    FROM resources r
-    JOIN nodes n
-    ON r.id = n.parent
-), nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, search, permissions, inherited_permissions) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, @search::text[], r.permissions, root.inherited_permissions
-    FROM resources r
-    JOIN root
-    ON r.id = n.resid WHERE parent IS NULL
-  UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name), n.search, r.permissions, jsonb_bitwise_or(r.permissions, n.permissions)
+    SELECT r.id, r.parent, n.search, n.depth + 1
     FROM resources r
     JOIN nodes n ON r.parent = n.id
     WHERE deleted IS NULL
     AND r.name = n.search[n.depth + 1]
 )
-SELECT *, COALESCE((jsonb_bitwise_or(permissions, inherited_permissions)->((@user_id::int)::text))::int, 0)::int AS user_permission FROM nodes WHERE cardinality(search) = depth;
+SELECT * FROM nodes WHERE cardinality(search) = depth;
 
 -- name: ResourceByID :one
 WITH RECURSIVE nodes(resid, id, parent, inherited_permissions, found) AS (

@@ -149,71 +149,40 @@ func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (Res
 }
 
 const resourceByPath = `-- name: ResourceByPath :one
-WITH RECURSIVE root(resid, id, parent, inherited_permissions) AS (
-  SELECT $2::uuid, r.id, r.parent, '{}'::jsonb
+WITH RECURSIVE nodes(id, parent, search, depth) AS (
+    SELECT r.id, r.parent, $1::text[], 0
     FROM resources r
-    WHERE r.id = $2::uuid 
+    WHERE r.id = $2::uuid
   UNION ALL
-    SELECT n.resid, r.id, r.parent, jsonb_bitwise_or(r.permissions, n.permissions)
-    FROM resources r
-    JOIN nodes n
-    ON r.id = n.parent
-), nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, search, permissions, inherited_permissions) AS (
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, $3::text[], r.permissions, root.inherited_permissions
-    FROM resources r
-    JOIN root
-    ON r.id = n.resid WHERE parent IS NULL
-  UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name), n.search, r.permissions, jsonb_bitwise_or(r.permissions, n.permissions)
+    SELECT r.id, r.parent, n.search, n.depth + 1
     FROM resources r
     JOIN nodes n ON r.parent = n.id
     WHERE deleted IS NULL
     AND r.name = n.search[n.depth + 1]
 )
-SELECT id, parent, name, dir, created, modified, size, sha256sum, depth, path, search, permissions, inherited_permissions, COALESCE((jsonb_bitwise_or(permissions, inherited_permissions)->(($1::int)::text))::int, 0)::int AS user_permission FROM nodes WHERE cardinality(search) = depth
+SELECT id, parent, search, depth FROM nodes WHERE cardinality(search) = depth
 `
 
 type ResourceByPathParams struct {
-	UserID int32
-	Root   uuid.UUID
 	Search []string
+	Root   uuid.UUID
 }
 
 type ResourceByPathRow struct {
-	ID                   uuid.UUID
-	Parent               *uuid.UUID
-	Name                 string
-	Dir                  bool
-	Created              pgtype.Timestamp
-	Modified             pgtype.Timestamp
-	Size                 pgtype.Int8
-	Sha256sum            pgtype.Text
-	Depth                int32
-	Path                 string
-	Search               []string
-	Permissions          []byte
-	InheritedPermissions []byte
-	UserPermission       int32
+	ID     uuid.UUID
+	Parent *uuid.UUID
+	Search []string
+	Depth  int32
 }
 
 func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) (ResourceByPathRow, error) {
-	row := q.db.QueryRow(ctx, resourceByPath, arg.UserID, arg.Root, arg.Search)
+	row := q.db.QueryRow(ctx, resourceByPath, arg.Search, arg.Root)
 	var i ResourceByPathRow
 	err := row.Scan(
 		&i.ID,
 		&i.Parent,
-		&i.Name,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Size,
-		&i.Sha256sum,
-		&i.Depth,
-		&i.Path,
 		&i.Search,
-		&i.Permissions,
-		&i.InheritedPermissions,
-		&i.UserPermission,
+		&i.Depth,
 	)
 	return i, err
 }

@@ -93,25 +93,14 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		segments = []string{}
 	}
 
-	res, err := f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.rootID, Search: segments, UserID: f.user})
-	if err == pgx.ErrNoRows || res.UserPermission == 0 {
+	res, err := f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.rootID, Search: segments})
+	if err == pgx.ErrNoRows {
 		err = fs.ErrNotExist
 	}
 	if err != nil {
 		return nil, err
 	}
-
-	return resource{
-		id:         res.ID,
-		permission: res.UserPermission,
-		parentID:   res.Parent,
-		name:       res.Name,
-		size:       res.Size.Int64,
-		collection: res.Dir,
-		modTime:    res.Modified.Time,
-		delTime:    nil,
-		sha256sum:  res.Sha256sum.String,
-	}, nil
+	return f.ResourceByID(res.ID)
 }
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
