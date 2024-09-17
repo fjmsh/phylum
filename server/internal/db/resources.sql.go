@@ -119,6 +119,46 @@ func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]uuid
 	return items, nil
 }
 
+const sharedResources = `-- name: SharedResources :many
+SELECT id, parent, name, dir, created, modified, deleted, size, sha256sum, permissions FROM resources where permissions ? ($1::int)::text AND id <> $2::uuid
+`
+
+type SharedResourcesParams struct {
+	UserID   int32
+	UserHome uuid.UUID
+}
+
+func (q *Queries) SharedResources(ctx context.Context, arg SharedResourcesParams) ([]Resource, error) {
+	rows, err := q.db.Query(ctx, sharedResources, arg.UserID, arg.UserHome)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Resource
+	for rows.Next() {
+		var i Resource
+		if err := rows.Scan(
+			&i.ID,
+			&i.Parent,
+			&i.Name,
+			&i.Dir,
+			&i.Created,
+			&i.Modified,
+			&i.Deleted,
+			&i.Size,
+			&i.Sha256sum,
+			&i.Permissions,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateResourceContents = `-- name: UpdateResourceContents :exec
 UPDATE resources
 SET

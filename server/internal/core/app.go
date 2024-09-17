@@ -103,3 +103,25 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 func (a App) OpenFileSystem(ctx context.Context, user User) FileSystem {
 	return OpenFileSystem(a.db, ctx, a.cs, user.ID, user.Root)
 }
+
+func (a App) GetSharedResources(ctx context.Context, user User) (result []Resource, err error) {
+	res, err := a.db.Queries.SharedResources(ctx, db.SharedResourcesParams{UserID: user.ID, UserHome: user.Home})
+	if err != nil {
+		return
+	}
+
+	result = make([]Resource, len(res))
+	for i, r := range res {
+		result[i] = resource{
+			id:          r.ID,
+			parentID:    r.Parent,
+			name:        r.Name,
+			size:        r.Size.Int64,
+			collection:  r.Dir,
+			modTime:     r.Modified.Time,
+			sha256sum:   r.Sha256sum.String,
+			permissions: r.Permissions,
+		}
+	}
+	return
+}

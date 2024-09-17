@@ -63,3 +63,6 @@ WITH RECURSIVE nodes(id, parent) AS (
 DELETE FROM resources
 WHERE id in (SELECT id FROM nodes)
 RETURNING id;
+
+-- name: SharedResources :many
+SELECT * FROM resources where permissions ? (@user_id::int)::text AND id <> @user_home::uuid AND deleted IS NULL;
