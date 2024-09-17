@@ -1,8 +1,8 @@
 -- name: CreateResource :one
 INSERT INTO resources(
-    id, parent, name, dir, created, modified
+    id, parent, name, dir
 ) VALUES (
-    $1, $2, $3, $4, NOW(), NOW()
+    $1, $2, $3, $4
 ) RETURNING *;
 
 -- name: UpdateResourceContents :exec
@@ -65,4 +65,4 @@ WHERE id in (SELECT id FROM nodes)
 RETURNING id;
 
 -- name: SharedResources :many
-SELECT * FROM resources where permissions ? (@user_id::int)::text AND id <> @user_home::uuid AND deleted IS NULL;
+SELECT * FROM resources where permissions ? @username::text AND id <> @user_home::uuid AND deleted IS NULL;

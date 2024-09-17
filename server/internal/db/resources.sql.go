@@ -14,9 +14,9 @@ import (
 
 const createResource = `-- name: CreateResource :one
 INSERT INTO resources(
-    id, parent, name, dir, created, modified
+    id, parent, name, dir
 ) VALUES (
-    $1, $2, $3, $4, NOW(), NOW()
+    $1, $2, $3, $4
 ) RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum, permissions
 `
 
@@ -120,16 +120,16 @@ func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]uuid
 }
 
 const sharedResources = `-- name: SharedResources :many
-SELECT id, parent, name, dir, created, modified, deleted, size, sha256sum, permissions FROM resources where permissions ? ($1::int)::text AND id <> $2::uuid
+SELECT id, parent, name, dir, created, modified, deleted, size, sha256sum, permissions FROM resources where permissions ? $1::text AND id <> $2::uuid AND deleted IS NULL
 `
 
 type SharedResourcesParams struct {
-	UserID   int32
+	Username string
 	UserHome uuid.UUID
 }
 
 func (q *Queries) SharedResources(ctx context.Context, arg SharedResourcesParams) ([]Resource, error) {
-	rows, err := q.db.Query(ctx, sharedResources, arg.UserID, arg.UserHome)
+	rows, err := q.db.Query(ctx, sharedResources, arg.Username, arg.UserHome)
 	if err != nil {
 		return nil, err
 	}

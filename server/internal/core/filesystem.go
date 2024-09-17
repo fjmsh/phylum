@@ -42,26 +42,24 @@ type FileSystem interface {
 	DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error)
 	UpdateName(r Resource, name string) (Resource, error)
 	UpdateParent(r Resource, parent uuid.UUID) (Resource, error)
-	UpdatePermissions(r Resource, userID int32, permission Permission) error
-	// GetPermissionsLocal(r Resource) (map[int32]Permission, error)
-	// GetPermissionsInherited(r Resource) (map[int32]Permission, error)
+	UpdatePermissions(r Resource, username string, permission Permission) error
 }
 
 type filesystem struct {
-	db     *db.DbHandler
-	ctx    context.Context
-	cs     storage.Storage
-	rootID uuid.UUID
-	user   int32
+	db       *db.DbHandler
+	ctx      context.Context
+	cs       storage.Storage
+	rootID   uuid.UUID
+	username string
 }
 
-func OpenFileSystem(dbh *db.DbHandler, ctx context.Context, cs storage.Storage, user int32, rootID uuid.UUID) FileSystem {
+func OpenFileSystem(dbh *db.DbHandler, ctx context.Context, cs storage.Storage, username string, rootID uuid.UUID) FileSystem {
 	return filesystem{
-		db:     dbh,
-		ctx:    ctx,
-		cs:     cs,
-		rootID: rootID,
-		user:   user,
+		db:       dbh,
+		ctx:      ctx,
+		cs:       cs,
+		rootID:   rootID,
+		username: username,
 	}
 }
 
@@ -71,11 +69,11 @@ func (f filesystem) RootID() uuid.UUID {
 
 func (f filesystem) WithDb(db *db.DbHandler) FileSystem {
 	return filesystem{
-		db:     db,
-		ctx:    f.ctx,
-		cs:     f.cs,
-		rootID: f.rootID,
-		user:   f.user,
+		db:       db,
+		ctx:      f.ctx,
+		cs:       f.cs,
+		rootID:   f.rootID,
+		username: f.username,
 	}
 }
 
@@ -104,7 +102,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 }
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.rootID, ResourceID: id, UserID: f.user})
+	res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.rootID, ResourceID: id, Username: f.username})
 	// TODO: verify found
 	if err == pgx.ErrNoRows || !res.Found || res.UserPermission == 0 {
 		err = fs.ErrNotExist
@@ -338,7 +336,7 @@ func (f filesystem) UpdateParent(r Resource, parent uuid.UUID) (Resource, error)
 	}
 }
 
-func (f filesystem) UpdatePermissions(r Resource, userID int32, permission Permission) error {
+func (f filesystem) UpdatePermissions(r Resource, username string, permission Permission) error {
 	if r.UserPermission() < PermissionReadWriteShare {
 		return ErrInsufficientPermissions
 	}
@@ -348,41 +346,7 @@ func (f filesystem) UpdatePermissions(r Resource, userID int32, permission Permi
 
 	return f.db.UpdatePermissionsForResource(f.ctx, db.UpdatePermissionsForResourceParams{
 		ResourceID: r.ID(),
-		UserID:     userID,
+		Username:   username,
 		Permission: permission,
 	})
 }
-
-// func (f filesystem) GetPermissionsLocal(r Resource) (map[int32]Permission, error) {
-// 	if r.Permission() < PermissionReadWriteShare {
-// 		return nil, ErrInsufficientPermissions
-// 	}
-// 	p, err := f.db.GetLocalPermissionsForResource(f.ctx, r.ID())
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	res := make(map[int32]Permission, len(p))
-// 	for _, p := range p {
-// 		res[p.UserID] = p.Permission
-// 	}
-// 	return res, nil
-// }
-
-// func (f filesystem) GetPermissionsInherited(r Resource) (map[int32]Permission, error) {
-// 	if r.Permission() < PermissionReadWriteShare {
-// 		return nil, ErrInsufficientPermissions
-// 	}
-// 	if r.ParentID() == nil {
-// 		return nil, nil
-// 	}
-
-// 	p, err := f.db.GetInheritedPermissionsForResource(f.ctx, *r.ParentID())
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	res := make(map[int32]Permission, len(p))
-// 	for _, p := range p {
-// 		res[p.UserID] = p.Permission
-// 	}
-// 	return res, nil
-// }

@@ -1,8 +1,7 @@
 CREATE TABLE users(
-    id            SERIAL PRIMARY KEY,
-    email      TEXT NOT NULL UNIQUE,
-    created       TIMESTAMP NOT NULL,
-    modified      TIMESTAMP NOT NULL,
+    username      TEXT PRIMARY KEY,
+    created       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    modified      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     display_name  TEXT NOT NULL,
     password_hash TEXT NOT NULL,
     deleted       TIMESTAMP,

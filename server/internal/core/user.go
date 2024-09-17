@@ -3,8 +3,7 @@ package core
 import "github.com/google/uuid"
 
 type User struct {
-	ID          int32
-	Email       string
+	Username    string
 	DisplayName string
 	Root        uuid.UUID
 	Home        uuid.UUID

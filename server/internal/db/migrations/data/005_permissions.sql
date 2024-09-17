@@ -25,6 +25,6 @@ CREATE AGGREGATE agg_jsonb_bitwise_or(JSONB) (
 
 ---- create above / drop below ----
 
-DROP AGGREGATE agg_jsonb_bitwise_or(JSONB)
+DROP AGGREGATE agg_jsonb_bitwise_or(JSONB);
 
 DROP FUNCTION jsonb_bitwise_or;

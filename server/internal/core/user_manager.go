@@ -12,7 +12,7 @@ import (
 
 var ErrUserNotFound = errors.New("user not found")
 
-func (a App) CreateUser(ctx context.Context, email, displayName, password string, root *uuid.UUID) error {
+func (a App) CreateUser(ctx context.Context, username, displayName, password string, root *uuid.UUID) error {
 	var rootID = a.Rootfs.RootID()
 	if root != nil {
 		rootID = *root
@@ -22,7 +22,7 @@ func (a App) CreateUser(ctx context.Context, email, displayName, password string
 		if hash, err := cryptutil.GenerateArgon2EncodedHash(password, cryptutil.DefaultArgon2Params()); err != nil {
 			return err
 		} else if u, err := d.CreateUser(ctx, db.CreateUserParams{
-			Email:        email,
+			Username:     username,
 			DisplayName:  displayName,
 			PasswordHash: hash,
 			Root:         rootID,
@@ -31,12 +31,12 @@ func (a App) CreateUser(ctx context.Context, email, displayName, password string
 			return err
 		} else if home, err := fs.ResourceByPath("/home"); err != nil {
 			return err
-		} else if userHome, err := fs.CreateMemberResource(home, uuid.New(), email, true); err != nil {
+		} else if userHome, err := fs.CreateMemberResource(home, uuid.New(), username, true); err != nil {
 			return err
-		} else if err := fs.UpdatePermissions(userHome, u.ID, PermissionReadWriteShare); err != nil {
+		} else if err := fs.UpdatePermissions(userHome, u.Username, PermissionReadWriteShare); err != nil {
 			return err
 		} else {
-			return d.UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: u.ID, Home: userHome.ID()})
+			return d.UpdateUserHome(ctx, db.UpdateUserHomeParams{Username: u.Username, Home: userHome.ID()})
 		}
 	})
 }
@@ -49,8 +49,7 @@ func (a App) ListUsers(ctx context.Context) ([]User, error) {
 	users := make([]User, len(results))
 	for i, r := range results {
 		users[i] = User{
-			ID:          r.ID,
-			Email:       r.Email,
+			Username:    r.Username,
 			DisplayName: r.DisplayName,
 			Root:        r.Root,
 			Home:        r.Home,
@@ -60,7 +59,7 @@ func (a App) ListUsers(ctx context.Context) ([]User, error) {
 }
 
 func (a App) UserByEmail(ctx context.Context, email string) (User, error) {
-	result, err := a.db.UserByEmail(ctx, email)
+	result, err := a.db.UserByUsername(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrUserNotFound
@@ -68,25 +67,7 @@ func (a App) UserByEmail(ctx context.Context, email string) (User, error) {
 		return User{}, err
 	}
 	return User{
-		ID:          result.ID,
-		Email:       result.Email,
-		DisplayName: result.DisplayName,
-		Root:        result.Root,
-		Home:        result.Home,
-	}, nil
-}
-
-func (a App) UserByID(ctx context.Context, userID int32) (User, error) {
-	result, err := a.db.UserByID(ctx, userID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			err = ErrUserNotFound
-		}
-		return User{}, err
-	}
-	return User{
-		ID:          result.ID,
-		Email:       result.Email,
+		Username:    result.Username,
 		DisplayName: result.DisplayName,
 		Root:        result.Root,
 		Home:        result.Home,
@@ -94,13 +75,13 @@ func (a App) UserByID(ctx context.Context, userID int32) (User, error) {
 }
 
 func (a App) UpdateUserRoot(ctx context.Context, user User, root uuid.UUID) error {
-	return a.db.UpdateUserRoot(ctx, db.UpdateUserRootParams{ID: user.ID, Root: root})
+	return a.db.UpdateUserRoot(ctx, db.UpdateUserRootParams{Username: user.Username, Root: root})
 }
 
 func (a App) UpdateUserHome(ctx context.Context, user User, home uuid.UUID) error {
-	return a.db.UpdateUserHome(ctx, db.UpdateUserHomeParams{ID: user.ID, Home: home})
+	return a.db.UpdateUserHome(ctx, db.UpdateUserHomeParams{Username: user.Username, Home: home})
 }
 
 func (a App) UpdateUserDisplayName(ctx context.Context, user User, displayName string) error {
-	return a.db.UpdateUserDisplayName(ctx, db.UpdateUserDisplayNameParams{ID: user.ID, DisplayName: displayName})
+	return a.db.UpdateUserDisplayName(ctx, db.UpdateUserDisplayNameParams{Username: user.Username, DisplayName: displayName})
 }

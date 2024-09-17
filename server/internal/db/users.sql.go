@@ -13,14 +13,14 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users(
-    email, created, modified, display_name, password_hash, root, home
+    username, display_name, password_hash, root, home
 ) VALUES (
-    $1, NOW(), NOW(), $2, $3, $4, $5
-) RETURNING id, email, created, modified, display_name, password_hash, deleted, root, home
+    $1, $2, $3, $4, $5
+) RETURNING username, created, modified, display_name, password_hash, deleted, root, home
 `
 
 type CreateUserParams struct {
-	Email        string
+	Username     string
 	DisplayName  string
 	PasswordHash string
 	Root         uuid.UUID
@@ -29,7 +29,7 @@ type CreateUserParams struct {
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, createUser,
-		arg.Email,
+		arg.Username,
 		arg.DisplayName,
 		arg.PasswordHash,
 		arg.Root,
@@ -37,8 +37,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	)
 	var i User
 	err := row.Scan(
-		&i.ID,
-		&i.Email,
+		&i.Username,
 		&i.Created,
 		&i.Modified,
 		&i.DisplayName,
@@ -51,7 +50,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, email, created, modified, display_name, password_hash, deleted, root, home from users WHERE deleted IS NULL
+SELECT username, created, modified, display_name, password_hash, deleted, root, home from users WHERE deleted IS NULL
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
@@ -64,8 +63,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 	for rows.Next() {
 		var i User
 		if err := rows.Scan(
-			&i.ID,
-			&i.Email,
+			&i.Username,
 			&i.Created,
 			&i.Modified,
 			&i.DisplayName,
@@ -89,16 +87,16 @@ UPDATE users
 SET
     display_name = $1,
     modified = NOW()
-WHERE id = $2
+WHERE username = $2
 `
 
 type UpdateUserDisplayNameParams struct {
 	DisplayName string
-	ID          int32
+	Username    string
 }
 
 func (q *Queries) UpdateUserDisplayName(ctx context.Context, arg UpdateUserDisplayNameParams) error {
-	_, err := q.db.Exec(ctx, updateUserDisplayName, arg.DisplayName, arg.ID)
+	_, err := q.db.Exec(ctx, updateUserDisplayName, arg.DisplayName, arg.Username)
 	return err
 }
 
@@ -107,16 +105,16 @@ UPDATE users
 SET
     home = $1,
     modified = NOW()
-WHERE id = $2
+WHERE username = $2
 `
 
 type UpdateUserHomeParams struct {
-	Home uuid.UUID
-	ID   int32
+	Home     uuid.UUID
+	Username string
 }
 
 func (q *Queries) UpdateUserHome(ctx context.Context, arg UpdateUserHomeParams) error {
-	_, err := q.db.Exec(ctx, updateUserHome, arg.Home, arg.ID)
+	_, err := q.db.Exec(ctx, updateUserHome, arg.Home, arg.Username)
 	return err
 }
 
@@ -125,16 +123,16 @@ UPDATE users
 SET
     password_hash = $1,
     modified = NOW()
-WHERE id = $2
+WHERE username = $2
 `
 
 type UpdateUserPasswordHashParams struct {
 	PasswordHash string
-	ID           int32
+	Username     string
 }
 
 func (q *Queries) UpdateUserPasswordHash(ctx context.Context, arg UpdateUserPasswordHashParams) error {
-	_, err := q.db.Exec(ctx, updateUserPasswordHash, arg.PasswordHash, arg.ID)
+	_, err := q.db.Exec(ctx, updateUserPasswordHash, arg.PasswordHash, arg.Username)
 	return err
 }
 
@@ -143,50 +141,28 @@ UPDATE users
 SET
     root = $1,
     modified = NOW()
-WHERE id = $2
+WHERE username = $2
 `
 
 type UpdateUserRootParams struct {
-	Root uuid.UUID
-	ID   int32
+	Root     uuid.UUID
+	Username string
 }
 
 func (q *Queries) UpdateUserRoot(ctx context.Context, arg UpdateUserRootParams) error {
-	_, err := q.db.Exec(ctx, updateUserRoot, arg.Root, arg.ID)
+	_, err := q.db.Exec(ctx, updateUserRoot, arg.Root, arg.Username)
 	return err
 }
 
-const userByEmail = `-- name: UserByEmail :one
-SELECT id, email, created, modified, display_name, password_hash, deleted, root, home from users WHERE email = $1
+const userByUsername = `-- name: UserByUsername :one
+SELECT username, created, modified, display_name, password_hash, deleted, root, home from users WHERE username = $1
 `
 
-func (q *Queries) UserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRow(ctx, userByEmail, email)
+func (q *Queries) UserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRow(ctx, userByUsername, username)
 	var i User
 	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.Created,
-		&i.Modified,
-		&i.DisplayName,
-		&i.PasswordHash,
-		&i.Deleted,
-		&i.Root,
-		&i.Home,
-	)
-	return i, err
-}
-
-const userByID = `-- name: UserByID :one
-SELECT id, email, created, modified, display_name, password_hash, deleted, root, home from users WHERE id = $1
-`
-
-func (q *Queries) UserByID(ctx context.Context, id int32) (User, error) {
-	row := q.db.QueryRow(ctx, userByID, id)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
+		&i.Username,
 		&i.Created,
 		&i.Modified,
 		&i.DisplayName,

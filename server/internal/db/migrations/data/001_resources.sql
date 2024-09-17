@@ -3,8 +3,8 @@ CREATE TABLE resources (
   parent        uuid      REFERENCES resources(id) ON UPDATE CASCADE ON DELETE CASCADE,
   name          TEXT      NOT NULL,
   dir           BOOLEAN   NOT NULL,
-  created       TIMESTAMP NOT NULL,
-  modified      TIMESTAMP NOT NULL,
+  created       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  modified      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   deleted       TIMESTAMP,
   size          BIGINT,
   sha256sum     TEXT

@@ -1,9 +1,9 @@
 -- name: AccessTokenById :one
-SELECT * FROM access_tokens t JOIN users u ON t.user_id = u.id WHERE t.id = $1;
+SELECT * FROM access_tokens t JOIN users u ON t.username = u.username WHERE t.id = $1;
 
 -- name: InsertAccessToken :one
 INSERT INTO access_tokens(
-    id, created, expires, user_id
+    id, expires, username
 ) VALUES(
-    @id::text, NOW(), NOW() + @validity::interval, @user_id::int
+    @id::text, NOW() + @validity::interval, @username::text
 ) RETURNING *;

@@ -205,11 +205,9 @@ func setupResourceChpermCommand() *cobra.Command {
 			openFileSystemFromFlags(cmd)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			var user int32
-			if u, err := core.Default.UserByEmail(context.Background(), args[0]); err != nil {
+			var user string
+			if _, err := core.Default.UserByEmail(context.Background(), args[0]); err != nil {
 				logrus.Fatal(err)
-			} else {
-				user = u.ID
 			}
 
 			var r core.Resource

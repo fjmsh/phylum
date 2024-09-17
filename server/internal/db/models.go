@@ -10,10 +10,10 @@ import (
 )
 
 type AccessToken struct {
-	ID      string
-	Created pgtype.Timestamp
-	Expires pgtype.Timestamp
-	UserID  int32
+	ID       string
+	Created  pgtype.Timestamp
+	Expires  pgtype.Timestamp
+	Username string
 }
 
 type Resource struct {
@@ -36,8 +36,7 @@ type StorageBackend struct {
 }
 
 type User struct {
-	ID           int32
-	Email        string
+	Username     string
 	Created      pgtype.Timestamp
 	Modified     pgtype.Timestamp
 	DisplayName  string

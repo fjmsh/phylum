@@ -5,12 +5,12 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 )
 
-const defaultUserEmail = "phylum"
+const defaultUserUsername = "phylum"
+const defaultUserDisplayName = "Phylum"
 
 type App struct {
 	Debug  bool
@@ -32,18 +32,18 @@ func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage, debug boo
 }
 
 func (a *App) setupAppData(ctx context.Context) error {
-	u, err := a.db.UserByEmail(ctx, defaultUserEmail)
+	u, err := a.UserByEmail(ctx, defaultUserUsername)
 
-	if errors.Is(err, pgx.ErrNoRows) {
+	if errors.Is(err, ErrUserNotFound) {
 		u, err = a.populateData(ctx)
 	}
 	if err == nil {
-		a.Rootfs = OpenFileSystem(a.db, ctx, a.cs, u.ID, u.Root)
+		a.Rootfs = OpenFileSystem(a.db, ctx, a.cs, u.Username, u.Root)
 	}
 	return err
 }
 
-func (a *App) populateData(ctx context.Context) (user db.User, e error) {
+func (a *App) populateData(ctx context.Context) (user User, e error) {
 	e = a.db.WithTx(ctx, func(dbh *db.DbHandler) error {
 		var err error
 
@@ -72,7 +72,7 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 		userHome, err := dbh.CreateResource(ctx, db.CreateResourceParams{
 			ID:     uuid.New(),
 			Parent: &home.ID,
-			Name:   defaultUserEmail,
+			Name:   defaultUserUsername,
 			Dir:    true,
 		})
 		if err != nil {
@@ -80,20 +80,26 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 		}
 
 		// Create phylum user
-		user, err = dbh.CreateUser(ctx, db.CreateUserParams{
-			Email:        defaultUserEmail,
-			DisplayName:  "Phylum",
-			PasswordHash: "",
+		u, err := dbh.CreateUser(ctx, db.CreateUserParams{
+			Username:     defaultUserUsername,
+			DisplayName:  defaultUserDisplayName,
+			PasswordHash: "CANNOT LOG IN",
 			Root:         root.ID,
 			Home:         userHome.ID,
 		})
 		if err != nil {
 			return err
 		}
+		user = User{
+			Username:    u.Username,
+			DisplayName: u.DisplayName,
+			Root:        u.Root,
+			Home:        u.Home,
+		}
 
 		return dbh.UpdatePermissionsForResource(ctx, db.UpdatePermissionsForResourceParams{
 			ResourceID: root.ID,
-			UserID:     user.ID,
+			Username:   user.Username,
 			Permission: PermissionReadWriteShare,
 		})
 	})
@@ -101,11 +107,11 @@ func (a *App) populateData(ctx context.Context) (user db.User, e error) {
 }
 
 func (a App) OpenFileSystem(ctx context.Context, user User) FileSystem {
-	return OpenFileSystem(a.db, ctx, a.cs, user.ID, user.Root)
+	return OpenFileSystem(a.db, ctx, a.cs, user.Username, user.Root)
 }
 
 func (a App) GetSharedResources(ctx context.Context, user User) (result []Resource, err error) {
-	res, err := a.db.Queries.SharedResources(ctx, db.SharedResourcesParams{UserID: user.ID, UserHome: user.Home})
+	res, err := a.db.Queries.SharedResources(ctx, db.SharedResourcesParams{Username: user.Username, UserHome: user.Home})
 	if err != nil {
 		return
 	}

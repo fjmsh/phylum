@@ -99,14 +99,14 @@ WITH RECURSIVE nodes(resid, id, parent, inherited_permissions, found) AS (
     JOIN nodes n
     ON r.id = n.parent
 )
-SELECT resid AS id, r.permissions, n.inherited_permissions, COALESCE((jsonb_bitwise_or(r.permissions, n.inherited_permissions)->(($1::int)::text))::int, 0)::int AS user_permission, found, r.parent, name, dir, created, modified, deleted, size, sha256sum FROM nodes n
+SELECT resid AS id, r.permissions, n.inherited_permissions, COALESCE((jsonb_bitwise_or(r.permissions, n.inherited_permissions)->($1::text))::int, 0)::int AS user_permission, found, r.parent, name, dir, created, modified, deleted, size, sha256sum FROM nodes n
 JOIN resources r
 ON r.id = n.resid
 WHERE n.parent IS NULL
 `
 
 type ResourceByIDParams struct {
-	UserID     int32
+	Username   string
 	ResourceID uuid.UUID
 	Root       uuid.UUID
 }
@@ -128,7 +128,7 @@ type ResourceByIDRow struct {
 }
 
 func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (ResourceByIDRow, error) {
-	row := q.db.QueryRow(ctx, resourceByID, arg.UserID, arg.ResourceID, arg.Root)
+	row := q.db.QueryRow(ctx, resourceByID, arg.Username, arg.ResourceID, arg.Root)
 	var i ResourceByIDRow
 	err := row.Scan(
 		&i.ID,
@@ -188,16 +188,16 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 }
 
 const updatePermissionsForResource = `-- name: UpdatePermissionsForResource :exec
-UPDATE resources SET permissions[$1::int] = to_json($2::int) WHERE id = $3::uuid
+UPDATE resources SET permissions[$1::text] = to_json($2::int) WHERE id = $3::uuid
 `
 
 type UpdatePermissionsForResourceParams struct {
-	UserID     int32
+	Username   string
 	Permission int32
 	ResourceID uuid.UUID
 }
 
 func (q *Queries) UpdatePermissionsForResource(ctx context.Context, arg UpdatePermissionsForResourceParams) error {
-	_, err := q.db.Exec(ctx, updatePermissionsForResource, arg.UserID, arg.Permission, arg.ResourceID)
+	_, err := q.db.Exec(ctx, updatePermissionsForResource, arg.Username, arg.Permission, arg.ResourceID)
 	return err
 }

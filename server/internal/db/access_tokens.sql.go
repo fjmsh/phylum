@@ -13,16 +13,15 @@ import (
 )
 
 const accessTokenById = `-- name: AccessTokenById :one
-SELECT t.id, t.created, expires, user_id, u.id, email, u.created, modified, display_name, password_hash, deleted, root, home FROM access_tokens t JOIN users u ON t.user_id = u.id WHERE t.id = $1
+SELECT id, t.created, expires, t.username, u.username, u.created, modified, display_name, password_hash, deleted, root, home FROM access_tokens t JOIN users u ON t.username = u.username WHERE t.id = $1
 `
 
 type AccessTokenByIdRow struct {
 	ID           string
 	Created      pgtype.Timestamp
 	Expires      pgtype.Timestamp
-	UserID       int32
-	ID_2         int32
-	Email        string
+	Username     string
+	Username_2   string
 	Created_2    pgtype.Timestamp
 	Modified     pgtype.Timestamp
 	DisplayName  string
@@ -39,9 +38,8 @@ func (q *Queries) AccessTokenById(ctx context.Context, id string) (AccessTokenBy
 		&i.ID,
 		&i.Created,
 		&i.Expires,
-		&i.UserID,
-		&i.ID_2,
-		&i.Email,
+		&i.Username,
+		&i.Username_2,
 		&i.Created_2,
 		&i.Modified,
 		&i.DisplayName,
@@ -55,26 +53,26 @@ func (q *Queries) AccessTokenById(ctx context.Context, id string) (AccessTokenBy
 
 const insertAccessToken = `-- name: InsertAccessToken :one
 INSERT INTO access_tokens(
-    id, created, expires, user_id
+    id, expires, username
 ) VALUES(
-    $1::text, NOW(), NOW() + $2::interval, $3::int
-) RETURNING id, created, expires, user_id
+    $1::text, NOW() + $2::interval, $3::text
+) RETURNING id, created, expires, username
 `
 
 type InsertAccessTokenParams struct {
 	ID       string
 	Validity pgtype.Interval
-	UserID   int32
+	Username string
 }
 
 func (q *Queries) InsertAccessToken(ctx context.Context, arg InsertAccessTokenParams) (AccessToken, error) {
-	row := q.db.QueryRow(ctx, insertAccessToken, arg.ID, arg.Validity, arg.UserID)
+	row := q.db.QueryRow(ctx, insertAccessToken, arg.ID, arg.Validity, arg.Username)
 	var i AccessToken
 	err := row.Scan(
 		&i.ID,
 		&i.Created,
 		&i.Expires,
-		&i.UserID,
+		&i.Username,
 	)
 	return i, err
 }

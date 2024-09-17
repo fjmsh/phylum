@@ -1,8 +1,8 @@
 CREATE TABLE access_tokens(
     id          TEXT NOT NULL PRIMARY KEY,
-    created     TIMESTAMP NOT NULL,
+    created     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires     TIMESTAMP NOT NULL,
-    user_id     INTEGER NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
+    username    TEXT NOT NULL REFERENCES users(username) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 ---- create above / drop below ----

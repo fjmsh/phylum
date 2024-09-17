@@ -111,9 +111,10 @@ func setupUserListCommand() *cobra.Command {
 				logrus.Fatal(err)
 			}
 			for _, user := range users {
-				logrus.Infof(" %3.3d: %s (%s)", user.ID, user.Email, user.DisplayName)
-				logrus.Infof("Root: %s", user.Root)
-				logrus.Infof("Home: %s", user.Home)
+				logrus.Infof("%s", user.Username)
+				logrus.Infof("    Name: %s", user.DisplayName)
+				logrus.Infof("    Root: %s", user.Root)
+				logrus.Infof("    Home: %s", user.Home)
 			}
 		},
 	}
