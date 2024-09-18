@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:phylum/libphylum/db/resources.dart';
 
@@ -7,10 +9,11 @@ part 'db.g.dart';
 
 @DriftDatabase(tables: [Resources])
 class AppDatabase extends _$AppDatabase {
-  static String storageDir = '';
-  static String tmpDir = '';
+  static Directory? storageDir;
+  static Directory? tmpDir;
+  final String id;
 
-  AppDatabase(String id) : super(_openConnection(id));
+  AppDatabase({required this.id}) : super(_openConnection(id));
 
   @override
   int get schemaVersion => 5;
@@ -23,7 +26,12 @@ class AppDatabase extends _$AppDatabase {
         await m.createAll();
       });
 
+  Future<void> dropDatabase() async {
+    await super.close();
+    await deleteDatabase(storageDir: storageDir, id: id);
+  }
+
   static QueryExecutor _openConnection(String id) {
-    return openDatabase(storageDir: storageDir, tmpDir: tmpDir, name: '$id-drift');
+    return openDatabase(storageDir: storageDir, tmpDir: tmpDir, id: id);
   }
 }

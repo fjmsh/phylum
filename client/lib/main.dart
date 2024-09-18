@@ -37,8 +37,8 @@ void main() async {
     final appDir = (Platform.isLinux)
         ? Directory(path.join((await getApplicationSupportDirectory()).path, storageDir.isNotEmpty ? storageDir : 'data'))
         : await getApplicationDocumentsDirectory();
-    AppDatabase.storageDir = appDir.path;
-    AppDatabase.tmpDir = (await getTemporaryDirectory()).path;
+    AppDatabase.storageDir = appDir;
+    AppDatabase.tmpDir = await getTemporaryDirectory();
 
     await appDir.create();
     Hive.init(appDir.path);

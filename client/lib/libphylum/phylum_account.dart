@@ -27,7 +27,7 @@ class PhylumApiErrorResponse {
 Map<String, dynamic> _tansformResponse(String response) => (jsonDecode(response) as Map<String, dynamic>?) ?? const {};
 
 class PhylumAccount extends Account<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> {
-  late final db = AppDatabase(id);
+  late final db = AppDatabase(id: id);
   late final resourceRepository = ResourceRepository(account: this);
   final datastore = PhylumDatastore();
   final actionQueue = ApiActionQueue<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount>();
@@ -78,7 +78,8 @@ class PhylumAccount extends Account<PhylumApiResponse, PhylumApiErrorResponse, P
 
   @override
   Future<void> clearData() async {
-    return db.close();
+    await super.clearData();
+    await db.dropDatabase();
   }
 
   Future<void> addAction(ApiAction<PhylumAccount> action) async {

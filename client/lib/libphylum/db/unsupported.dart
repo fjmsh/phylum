@@ -1,8 +1,16 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 
 QueryExecutor openDatabase({
-  required String storageDir,
-  required String tmpDir,
-  required String name,
+  required Directory? storageDir,
+  required Directory? tmpDir,
+  required String id,
+}) =>
+    throw UnimplementedError();
+
+Future<void> deleteDatabase({
+  required Directory? storageDir,
+  required String id,
 }) =>
     throw UnimplementedError();

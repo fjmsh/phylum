@@ -6,14 +6,25 @@ import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
 
 QueryExecutor openDatabase({
-  required String storageDir,
-  required String tmpDir,
-  required String name,
+  required Directory? storageDir,
+  required Directory? tmpDir,
+  required String id,
 }) {
   return LazyDatabase(() async {
-    final file = File(p.join(storageDir, '$name.sqlite'));
-    sqlite3.tempDirectory = tmpDir;
+    final file = _dbFile(storageDir, id);
+    sqlite3.tempDirectory = tmpDir!.path;
 
     return NativeDatabase.createInBackground(file);
   });
+}
+
+Future<void> deleteDatabase({
+  required Directory? storageDir,
+  required String id,
+}) {
+  return _dbFile(storageDir, id).delete();
+}
+
+File _dbFile(Directory? storageDir, String id) {
+  return File(p.join(storageDir!.path, '$id-phylum.db'));
 }

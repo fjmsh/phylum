@@ -1,14 +1,16 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift/wasm.dart';
 
 QueryExecutor openDatabase({
-  required String storageDir,
-  required String tmpDir,
-  required String name,
+  required Directory? storageDir,
+  required Directory? tmpDir,
+  required String id,
 }) {
   return DatabaseConnection.delayed(Future(() async {
     final result = await WasmDatabase.open(
-      databaseName: name,
+      databaseName: _dbName(id),
       sqlite3Uri: Uri.parse('sqlite3.wasm'),
       driftWorkerUri: Uri.parse('drift_worker.js'),
     );
@@ -23,4 +25,22 @@ QueryExecutor openDatabase({
 
     return result.resolvedExecutor;
   }));
+}
+
+Future<void> deleteDatabase({
+  required Directory? storageDir,
+  required String id,
+}) async {
+  final probe = await WasmDatabase.probe(
+    sqlite3Uri: Uri.parse('sqlite3.wasm'),
+    driftWorkerUri: Uri.parse('drift_worker.js'),
+    databaseName: _dbName(id),
+  );
+  for (final db in probe.existingDatabases) {
+    await probe.deleteDatabase(db);
+  }
+}
+
+String _dbName(String id) {
+  return '$id-phylum.db';
 }
