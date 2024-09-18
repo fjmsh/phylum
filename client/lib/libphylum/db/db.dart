@@ -24,6 +24,6 @@ class AppDatabase extends _$AppDatabase {
       });
 
   static QueryExecutor _openConnection(String id) {
-    return openDatabase(storageDir: storageDir, tmpDir: tmpDir, name: 'phylum-$id.db');
+    return openDatabase(storageDir: storageDir, tmpDir: tmpDir, name: '$id-drift');
   }
 }

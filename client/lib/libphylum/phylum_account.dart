@@ -77,6 +77,11 @@ class PhylumAccount extends Account<PhylumApiResponse, PhylumApiErrorResponse, P
     await registerListener(actionQueue);
   }
 
+  @override
+  Future<void> clearData() async {
+    return db.close();
+  }
+
   Future<void> addAction(ApiAction<PhylumAccount> action) async {
     return actionQueue.addAction(action);
   }
@@ -87,7 +92,7 @@ class PhylumAccount extends Account<PhylumApiResponse, PhylumApiErrorResponse, P
     account._accessToken = response['access_token'];
 
     final userMap = response['user'];
-    account.userEmail = userMap['email'];
+    account.userEmail = userMap['username'];
     account.userName = userMap['name'];
     account.userHome = userMap['home'];
 

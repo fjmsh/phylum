@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
@@ -15,6 +16,7 @@ import 'package:phylum/libphylum/actions/deserializers.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/login_page.dart';
+import 'package:phylum/util/logging.dart';
 import 'package:provider/provider.dart';
 
 const storageDir = String.fromEnvironment("STORAGE_DIR");
@@ -23,8 +25,11 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   PhylumDirectories.instance.initialize();
-  OTL.logger = Logger(level: Level.info);
+  logger = Logger(level: Level.info);
+  OTL.logger = logger;
   GoRouter.optionURLReflectsImperativeAPIs = true;
+  // We use multiple distinct databases for different accounts, so this is expected behavior
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
   if (kIsWeb) {
     Hive.init(null, backendPreference: HiveStorageBackendPreference.webWorker);
