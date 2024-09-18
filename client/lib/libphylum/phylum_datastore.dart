@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/util/logging.dart';
 
 const resourceDetailsResponse = 'resourceDetails';
 const resourceSummaryResponse = 'resourceSummary';
@@ -12,15 +13,16 @@ class PhylumDatastore with AccountListener<PhylumApiResponse, PhylumApiErrorResp
   @override
   Future<void> initialize(PhylumAccount account) async {
     super.initialize(account);
-    account.api.addResponseListener(processResponse);
+    account.api.addResponseListener((data, tag) => account.db.transaction(() async => await _processResponse(data, tag, account.db)));
+    account.api.addErrorResponseListener((errorResponse) {
+      if (errorResponse.code == "credentials_invalid") {
+        logger.i('Invalid Credentials - Logging out');
+        account.logOut();
+      }
+    });
   }
 
-  Future<void> processResponse(Map<String, dynamic> data, dynamic tag) {
-    final db = account.db;
-    return db.transaction(() async => await _processResponse(data, tag, db));
-  }
-
-  FutureOr _processResponse(Map<String, dynamic> data, dynamic tag, AppDatabase db) {
+  FutureOr _processResponse(PhylumApiResponse data, dynamic tag, AppDatabase db) {
     switch (tag) {
       case resourceDetailsResponse:
         return parseResourceDetails(data, db);

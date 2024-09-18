@@ -8,34 +8,12 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_layout.dart';
 import 'package:phylum/ui/app/app_logout.dart';
 import 'package:phylum/ui/app/nav_forward.dart';
-import 'package:phylum/util/logging.dart';
 import 'package:provider/provider.dart';
 
-class PhylumApp extends StatefulWidget {
+class PhylumApp extends StatelessWidget {
   final PhylumAccount account;
   final NavigatorObserver observer;
 
-  PhylumApp._({required this.account, required this.observer}) : super(key: ValueKey(account.id));
-
-  static Widget create(PhylumAccount account) => MultiProvider(
-        key: ValueKey(account.id),
-        providers: [
-          StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
-          StateNotifierProvider<ApiActionQueue, ApiActionQueueState>.value(value: account.actionQueue),
-          StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(account)),
-          StateNotifierProvider<NavForwardManager, NavForwardState>.value(value: NavForwardManager()),
-        ],
-        builder: (context, child) => PhylumApp._(
-          account: context.read<PhylumAccount>(),
-          observer: context.read<NavForwardManager>().navObserver,
-        ),
-      );
-
-  @override
-  State<PhylumApp> createState() => _PhylumAppState();
-}
-
-class _PhylumAppState extends State<PhylumApp> {
   late final _appRouter = GoRouter(
     routes: [
       GoRoute(
@@ -66,27 +44,32 @@ class _PhylumAppState extends State<PhylumApp> {
       ),
     ],
     observers: [
-      widget.observer,
+      observer,
     ],
   );
 
-  @override
-  void initState() {
-    super.initState();
-    widget.account.api.addErrorResponseListener((e) {
-      if (e.code == "credentials_invalid") {
-        logger.i('Invalid Credentials - Logging out');
-        context.read<PhylumAccount>().logOut();
-      }
-    });
-  }
+  PhylumApp._({required this.account, required this.observer}) : super(key: ValueKey(account.id));
+
+  static Widget create(PhylumAccount account) => MultiProvider(
+        key: ValueKey(account.id),
+        providers: [
+          StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
+          StateNotifierProvider<ApiActionQueue, ApiActionQueueState>.value(value: account.actionQueue),
+          StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(account)),
+          StateNotifierProvider<NavForwardManager, NavForwardState>.value(value: NavForwardManager()),
+        ],
+        builder: (context, child) => PhylumApp._(
+          account: context.read<PhylumAccount>(),
+          observer: context.read<NavForwardManager>().navObserver,
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
     final ready = context.select<AccountState, bool>((state) => state == AccountState.ready);
     if (ready) {
       return MaterialApp.router(
-        key: ValueKey(widget.account.id),
+        key: ValueKey(account.id),
         title: 'Phylum',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
@@ -96,7 +79,7 @@ class _PhylumAppState extends State<PhylumApp> {
       );
     }
     return MaterialApp.router(
-      key: ValueKey('${widget.account.id}-notready'),
+      key: ValueKey('${account.id}-notready'),
       title: 'Phylum',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
@@ -112,7 +95,7 @@ class _PhylumAppState extends State<PhylumApp> {
       );
 
   MaterialApp createRouter(RouterConfig<Object> router) => MaterialApp.router(
-        key: ValueKey(widget.account),
+        key: ValueKey(account),
         title: 'Phylum',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
