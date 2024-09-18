@@ -49,7 +49,7 @@ void main() async {
     final account = PhylumAccount.restore(id: id);
     final err = await account.initialized;
     if (err != null) {
-      OTL.logger?.e("Unable to restore account: $err");
+      logger.e("Unable to restore account: $err");
       return null;
     }
     return account;

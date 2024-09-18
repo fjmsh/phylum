@@ -55,14 +55,13 @@ class PhylumAccount extends Account<PhylumApiResponse, PhylumApiErrorResponse, P
     persist(_persistKeyUserHome, value);
   }
 
-  PhylumAccount.create({required Uri serverUri})
-      : super(
+  PhylumAccount.create({required super.serverUri})
+      : super.create(
           transformResponse: _tansformResponse,
-          serverUri: serverUri,
           transformErrorResponse: PhylumApiErrorResponse.fromResponseString,
         );
   PhylumAccount.restore({required super.id})
-      : super(
+      : super.restore(
           transformResponse: _tansformResponse,
           transformErrorResponse: PhylumApiErrorResponse.fromResponseString,
         );

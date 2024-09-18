@@ -38,7 +38,10 @@ class AppLogout extends StatelessWidget {
   Widget buildLoggedOutView(BuildContext context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('You have been logged out'),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 16.0),
+            child: Text('You have been logged out'),
+          ),
           ElevatedButton(
             onPressed: () {
               final accountId = context.read<PhylumAccount>().id;
