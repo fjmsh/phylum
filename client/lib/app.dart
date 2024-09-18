@@ -13,19 +13,30 @@ import 'package:provider/provider.dart';
 
 class PhylumApp extends StatefulWidget {
   final PhylumAccount account;
+  final NavigatorObserver observer;
 
-  PhylumApp({required this.account}) : super(key: ValueKey(account.id));
+  PhylumApp._({required this.account, required this.observer}) : super(key: ValueKey(account.id));
+
+  static Widget create(PhylumAccount account) => MultiProvider(
+        key: ValueKey(account.id),
+        providers: [
+          StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
+          StateNotifierProvider<ApiActionQueue, ApiActionQueueState>.value(value: account.actionQueue),
+          StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(account)),
+          StateNotifierProvider<NavForwardManager, NavForwardState>.value(value: NavForwardManager()),
+        ],
+        builder: (context, child) => PhylumApp._(
+          account: context.read<PhylumAccount>(),
+          observer: context.read<NavForwardManager>().navObserver,
+        ),
+      );
 
   @override
   State<PhylumApp> createState() => _PhylumAppState();
 }
 
 class _PhylumAppState extends State<PhylumApp> {
-  final historyManager = NavForwardManager();
-  final navigatorKey = GlobalKey<NavigatorState>();
-
   late final _appRouter = GoRouter(
-    navigatorKey: navigatorKey,
     routes: [
       GoRoute(
         name: 'root',
@@ -55,7 +66,7 @@ class _PhylumAppState extends State<PhylumApp> {
       ),
     ],
     observers: [
-      historyManager.navObserver,
+      widget.observer,
     ],
   );
 
@@ -72,37 +83,26 @@ class _PhylumAppState extends State<PhylumApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      key: ValueKey(widget.account.id),
-      providers: [
-        StateNotifierProvider<PhylumAccount, AccountState>.value(value: widget.account),
-        StateNotifierProvider<ApiActionQueue, ApiActionQueueState>.value(value: widget.account.actionQueue),
-        StateNotifierProvider<NavForwardManager, NavForwardState>.value(value: historyManager),
-        StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(widget.account))
-      ],
-      builder: (context, child) {
-        final ready = context.select<AccountState, bool>((state) => state == AccountState.ready);
-        if (ready) {
-          return MaterialApp.router(
-            key: ValueKey(widget.account.id),
-            title: 'Phylum',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
-            darkTheme: ThemeData.dark(),
-            routerConfig: _appRouter,
-            shortcuts: getAppShortcuts(),
-          );
-        }
-        return MaterialApp.router(
-          key: ValueKey('${widget.account.id}-notready'),
-          title: 'Phylum',
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
-          darkTheme: ThemeData.dark(),
-          routerConfig: createLogoutRouter(),
-          shortcuts: getAppShortcuts(),
-        );
-      },
+    final ready = context.select<AccountState, bool>((state) => state == AccountState.ready);
+    if (ready) {
+      return MaterialApp.router(
+        key: ValueKey(widget.account.id),
+        title: 'Phylum',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
+        darkTheme: ThemeData.dark(),
+        routerConfig: _appRouter,
+        shortcuts: getAppShortcuts(),
+      );
+    }
+    return MaterialApp.router(
+      key: ValueKey('${widget.account.id}-notready'),
+      title: 'Phylum',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
+      darkTheme: ThemeData.dark(),
+      routerConfig: createLogoutRouter(),
+      shortcuts: getAppShortcuts(),
     );
   }
 

@@ -80,7 +80,7 @@ class AccountSelector extends StatelessWidget {
             if (account == null) {
               return buildLoginPage(context);
             }
-            return PhylumApp(account: account);
+            return PhylumApp.create(account);
           });
 
   Widget buildLoginPage(BuildContext context) => MaterialApp(
