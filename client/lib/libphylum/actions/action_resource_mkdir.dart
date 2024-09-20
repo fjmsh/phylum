@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/phylum_datastore.dart';
+import 'package:phylum/libphylum/phylum_api_response.dart';
 
-class ResourceMkdirAction extends ApiAction<PhylumAccount> with JsonApiAction {
+class ResourceMkdirAction extends ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> with JsonApiAction {
   static const actionName = 'resourceMkdir';
   @override
   String get name => actionName;
@@ -14,9 +14,6 @@ class ResourceMkdirAction extends ApiAction<PhylumAccount> with JsonApiAction {
 
   @override
   String get endpoint => '/api/v1/resources/mkdir/$id';
-
-  @override
-  get tag => resourceSummaryResponse;
 
   final String id;
   final String parent;
@@ -65,4 +62,11 @@ class ResourceMkdirAction extends ApiAction<PhylumAccount> with JsonApiAction {
         'resourceName': resourceName,
         'parent': parent,
       };
+
+  @override
+  FutureOr<void> processResponse(PhylumAccount account, ApiResponse<PhylumApiResponse, PhylumApiErrorResponse> response) async {
+    if (response is ApiSuccessResponse<PhylumApiResponse, PhylumApiErrorResponse>) {
+      await account.resourceRepository.parseResourceSummaryResponse(response.result);
+    }
+  }
 }

@@ -6,10 +6,10 @@ import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/phylum_datastore.dart';
+import 'package:phylum/libphylum/phylum_api_response.dart';
 import 'package:uuid/uuid.dart';
 
-class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAction {
+class ResourceUploadAction extends ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> with FileUploadApiAction {
   static const actionName = 'resourceUpload';
   @override
   String get name => actionName;
@@ -19,9 +19,6 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
 
   @override
   String get endpoint => '/api/v1/resources/upload/$id';
-
-  @override
-  get tag => resourceSummaryResponse;
 
   @override
   Future<MultipartFile> get file => MultipartFile.fromPath('contents', path, filename: resourceName, contentType: MediaType.parse(contentType));
@@ -95,5 +92,12 @@ class ResourceUploadAction extends ApiAction<PhylumAccount> with FileUploadApiAc
       'parent_id': parent,
       'name': resourceName,
     };
+  }
+
+  @override
+  FutureOr<void> processResponse(PhylumAccount account, ApiResponse<PhylumApiResponse, PhylumApiErrorResponse> response) async {
+    if (response is ApiSuccessResponse<PhylumApiResponse, PhylumApiErrorResponse>) {
+      await account.resourceRepository.parseResourceSummaryResponse(response.result);
+    }
   }
 }

@@ -4,9 +4,9 @@ import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/phylum_datastore.dart';
+import 'package:phylum/libphylum/phylum_api_response.dart';
 
-class ResourceRenameAction extends ApiAction<PhylumAccount> with JsonApiAction {
+class ResourceRenameAction extends ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> with JsonApiAction {
   static const actionName = 'resourceRename';
   @override
   String get name => actionName;
@@ -16,9 +16,6 @@ class ResourceRenameAction extends ApiAction<PhylumAccount> with JsonApiAction {
 
   @override
   String get endpoint => '/api/v1/resources/rename/$id';
-
-  @override
-  get tag => resourceSummaryResponse;
 
   final String id;
   final String newName;
@@ -71,4 +68,11 @@ class ResourceRenameAction extends ApiAction<PhylumAccount> with JsonApiAction {
         'newName': newName,
         'oldName': oldName,
       };
+
+  @override
+  FutureOr<void> processResponse(PhylumAccount account, ApiResponse<PhylumApiResponse, PhylumApiErrorResponse> response) async {
+    if (response is ApiSuccessResponse<PhylumApiResponse, PhylumApiErrorResponse>) {
+      await account.resourceRepository.parseResourceSummaryResponse(response.result);
+    }
+  }
 }

@@ -70,7 +70,7 @@ class ExplorerActions extends StatelessWidget {
           final account = context.read<PhylumAccount>();
           final selected = context.read<ExplorerViewState>().selected;
           final items = selected.map((r) {
-            final uri = account.api.createUriBuilder('/open');
+            final uri = account.apiClient.createUriBuilder('/open');
             uri.queryParameters['id'] = r.id;
             if (i.cut) {
               uri.queryParameters['cut'] = 'y';
@@ -86,7 +86,7 @@ class ExplorerActions extends StatelessWidget {
           // TODO: Move to top-level nav
           final account = context.read<PhylumAccount>();
           final folderId = context.read<ExplorerViewController>().folderId;
-          final openUri = account.api.createUri('/open');
+          final openUri = account.apiClient.createUri('/open');
           final clipboard = SystemClipboard.instance;
           if (clipboard == null) {
             return;

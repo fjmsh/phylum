@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:phylum/integrations/directories.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/phylum_api_response.dart';
 import 'package:phylum/libphylum/requests/resource_contents_request.dart';
 import 'package:state_notifier/state_notifier.dart';
 
@@ -40,18 +41,13 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
     task._status.addListener(l);
 
     state = state.copyWith(running: [...state.running, task]);
-    final apiResponse = await account.api.sendRequestRaw(ResourceContentsRequest(r.id));
-    if (apiResponse.error != null) {
-      final msg = switch (apiResponse.error) {
-        const ApiClosedError() => 'Api closed',
-        const ApiOfflineError() => 'Cannot reach server',
-        ApiUnknownError(ex: dynamic ex) => 'Unknown Error - $ex',
-        ApiRequestError(err: PhylumApiErrorResponse err) => 'Request Error - ${err.message}',
-        _ => '',
-      };
-      task._status.value = DownloadStatusError(msg);
-      return;
-    } else {
+    try {
+      final response = await account.apiClient.dispatchRequestRaw(ResourceContentsRequest(r.id));
+      if (response.statusCode < 200 || response.statusCode > 300) {
+        final error = PhylumApiErrorResponse.fromResponseString(await response.bodyString());
+        task._status.value = DownloadStatusError(error.message);
+        return;
+      }
       final output = _createDownloadFile(PhylumDirectories.instance.downloads!, r.name);
       if (output == null) {
         task._status.value = const DownloadStatusError('Unable to open output file');
@@ -59,10 +55,9 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
       }
       final sink = output.openWrite();
 
-      final httpResponse = apiResponse.result!;
-      final length = httpResponse.contentLength ?? r.size;
+      final length = response.contentLength ?? r.size;
       int received = 0;
-      final stream = httpResponse.stream.map((s) {
+      final stream = response.stream.map((s) {
         received += s.length;
         task._status.value = DownloadStatusRunning(received, length);
         return s;
@@ -73,6 +68,10 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
         task._status.value = DownloadStatusError(err.toString());
         output.deleteSync();
       }).whenComplete(() => task._status.value = DownloadStatusFinished(output.path));
+    } on SocketException {
+      task._status.value = const DownloadStatusError('Cannot reach server');
+    } catch (e) {
+      task._status.value = DownloadStatusError('Unknown Error - $e');
     }
   }
 

@@ -4,8 +4,9 @@ import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/phylum_api_response.dart';
 
-class ResourceDeleteAction extends ApiAction<PhylumAccount> with JsonApiAction {
+class ResourceDeleteAction extends ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> with JsonApiAction {
   static const actionName = 'resourceDelete';
   @override
   String get name => actionName;
