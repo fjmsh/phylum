@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_response.dart';
@@ -29,7 +30,7 @@ class ResourceDeleteAction extends ApiAction<PhylumApiResponse, PhylumApiErrorRe
     required Resource r,
   }) : this._(id: r.id, resourceName: r.name);
 
-  static ResourceDeleteAction fromMap(Map<String, dynamic> map, dynamic data) {
+  static ResourceDeleteAction fromMap(Map<String, dynamic> map) {
     return ResourceDeleteAction._(
       id: map['id'],
       resourceName: map['resourceName'],
@@ -61,4 +62,8 @@ class ResourceDeleteAction extends ApiAction<PhylumApiResponse, PhylumApiErrorRe
         'id': id,
         'resourceName': resourceName,
       };
+
+  @override
+  bool dependsOn(ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> action) =>
+      action is ResourceCreateAction && action.resourceId == id;
 }

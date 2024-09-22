@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_response.dart';
@@ -29,8 +30,13 @@ class ResourceMoveAction extends ApiAction<PhylumApiResponse, PhylumApiErrorResp
     required Resource parent,
   }) : this._(id: r.id, parent: parent.id, oldParent: r.parent, description: 'Moving ${r.name} to ${parent.name}');
 
-  static ResourceMoveAction fromMap(Map<String, dynamic> map, dynamic data) {
-    return ResourceMoveAction._(id: map['id'], parent: map['parent'], oldParent: map['oldParent'], description: map['description']);
+  static ResourceMoveAction fromMap(Map<String, dynamic> map) {
+    return ResourceMoveAction._(
+      id: map['id'],
+      parent: map['parent'],
+      oldParent: map['oldParent'],
+      description: map['description'],
+    );
   }
 
   @override
@@ -69,4 +75,8 @@ class ResourceMoveAction extends ApiAction<PhylumApiResponse, PhylumApiErrorResp
       await account.resourceRepository.parseResourceSummaryResponse(response.result);
     }
   }
+
+  @override
+  bool dependsOn(ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> action) =>
+      (action is ResourceCreateAction && action.resourceId == id) || (action is ResourceCreateAction && action.resourceId == parent);
 }

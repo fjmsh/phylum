@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
@@ -151,8 +152,8 @@ class SyncButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qState = context.select<ApiActionQueueState, _SyncState>((state) {
-      if (state.submitting) return _SyncState.syncing;
-      if (state.error != null) return _SyncState.error;
+      if (state.submitting > 0) return _SyncState.syncing;
+      if (state.error) return _SyncState.error;
       if (state.paused) return _SyncState.paused;
       return _SyncState.done;
     });
@@ -162,9 +163,7 @@ class SyncButton extends StatelessWidget {
       subtitle: Text(qState.text),
       onTap: () {
         final state = context.read<ApiActionQueueState>();
-        if (state.error != null) {
-          showAlertDialog(context, message: state.error!.description);
-        }
+        showAlertDialog(context, message: state.toDetailedString(context.read<PhylumAccount>()));
       },
     );
   }

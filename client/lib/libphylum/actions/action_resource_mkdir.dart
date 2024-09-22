@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_response.dart';
 
-class ResourceMkdirAction extends ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> with JsonApiAction {
+class ResourceMkdirAction extends ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> with JsonApiAction, ResourceCreateAction {
   static const actionName = 'resourceMkdir';
   @override
   String get name => actionName;
@@ -13,21 +14,22 @@ class ResourceMkdirAction extends ApiAction<PhylumApiResponse, PhylumApiErrorRes
   String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/resources/mkdir/$id';
+  String get endpoint => '/api/v1/resources/mkdir/$resourceId';
 
-  final String id;
+  @override
+  final String resourceId;
   final String parent;
   final String resourceName;
 
   ResourceMkdirAction({
-    required this.id,
+    required this.resourceId,
     required this.parent,
     required this.resourceName,
   });
 
-  static ResourceMkdirAction fromMap(Map<String, dynamic> map, dynamic data) {
+  static ResourceMkdirAction fromMap(Map<String, dynamic> map) {
     return ResourceMkdirAction(
-      id: map['id'],
+      resourceId: map['resourceId'],
       parent: map['parent'],
       resourceName: map['resourceName'],
     );
@@ -48,17 +50,17 @@ class ResourceMkdirAction extends ApiAction<PhylumApiResponse, PhylumApiErrorRes
 
   @override
   FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
-    account.resourceRepository.createResource(id, true, parent, resourceName, '');
+    account.resourceRepository.createResource(resourceId, true, parent, resourceName, '');
   }
 
   @override
   FutureOr<void> revertOptimisticUpdate(PhylumAccount account) {
-    account.resourceRepository.deleteResource(id);
+    account.resourceRepository.deleteResource(resourceId);
   }
 
   @override
   Map<String, dynamic> toMap() => {
-        'id': id,
+        'resourceId': resourceId,
         'resourceName': resourceName,
         'parent': parent,
       };
@@ -69,4 +71,8 @@ class ResourceMkdirAction extends ApiAction<PhylumApiResponse, PhylumApiErrorRes
       await account.resourceRepository.parseResourceSummaryResponse(response.result);
     }
   }
+
+  @override
+  bool dependsOn(ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> action) =>
+      action is ResourceMkdirAction && action.resourceId == parent;
 }

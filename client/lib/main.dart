@@ -25,7 +25,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   PhylumDirectories.instance.initialize();
-  logger = Logger(level: Level.info);
+  logger = Logger(level: Level.info, printer: PrettyPrinter(methodCount: 0, noBoxingByDefault: true));
   OTL.logger = logger;
   GoRouter.optionURLReflectsImperativeAPIs = true;
   // We use multiple distinct databases for different accounts, so this is expected behavior

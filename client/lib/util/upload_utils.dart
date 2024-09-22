@@ -14,11 +14,13 @@ import 'package:uuid/uuid.dart';
 
 const uuid = Uuid();
 
+String generateId() => uuid.v4();
+
 void createDirectory(BuildContext context, String folderId) async {
   final account = context.read<PhylumAccount>();
   final dirName = await showInputDialog(context, title: 'Create New Folder', labelText: 'Folder Name');
   if (dirName == null || dirName == "") return;
-  account.addAction(ResourceMkdirAction(id: uuid.v4(), parent: folderId, resourceName: dirName));
+  account.addAction(ResourceMkdirAction(resourceId: generateId(), parent: folderId, resourceName: dirName));
 }
 
 void pickAndUploadFiles(BuildContext context, String folderId) async {
@@ -57,9 +59,9 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
   if (!confirm || !context.mounted) return;
   final dirIds = <String, String>{};
   for (final dir in tree.dirs) {
-    dirIds[dir] = uuid.v4();
+    dirIds[dir] = generateId();
     final parent = p.dirname(dir);
-    account.addAction(ResourceMkdirAction(id: dirIds[dir]!, parent: dirIds[parent] ?? folderId, resourceName: p.basename(dir)));
+    account.addAction(ResourceMkdirAction(resourceId: dirIds[dir]!, parent: dirIds[parent] ?? folderId, resourceName: p.basename(dir)));
   }
   for (final file in tree.files) {
     final parent = p.dirname(file);

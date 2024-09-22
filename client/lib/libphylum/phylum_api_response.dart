@@ -15,6 +15,11 @@ class PhylumApiErrorResponse {
     final map = (jsonDecode(response) as Map<String, dynamic>?) ?? const {};
     return PhylumApiErrorResponse._(code: map['code'] ?? 'server_error', message: map['msg'] ?? 'Server Error');
   }
+
+  @override
+  String toString() {
+    return 'PhylumApiErrorResponse ($code - $message)';
+  }
 }
 
 Future<ApiResponse<PhylumApiResponse, PhylumApiErrorResponse>> transformApiResponse(ApiRequest _, StreamedResponse response) async {

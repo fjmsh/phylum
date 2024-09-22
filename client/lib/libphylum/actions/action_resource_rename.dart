@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_response.dart';
@@ -32,7 +33,7 @@ class ResourceRenameAction extends ApiAction<PhylumApiResponse, PhylumApiErrorRe
     required String name,
   }) : this._(id: r.id, newName: name, oldName: r.name);
 
-  static ResourceRenameAction fromMap(Map<String, dynamic> map, dynamic data) {
+  static ResourceRenameAction fromMap(Map<String, dynamic> map) {
     return ResourceRenameAction._(
       id: map['id'],
       newName: map['newName'],
@@ -75,4 +76,8 @@ class ResourceRenameAction extends ApiAction<PhylumApiResponse, PhylumApiErrorRe
       await account.resourceRepository.parseResourceSummaryResponse(response.result);
     }
   }
+
+  @override
+  bool dependsOn(ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> action) =>
+      (action is ResourceCreateAction && action.resourceId == id);
 }
