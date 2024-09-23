@@ -7,11 +7,10 @@ import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/phylum_api_response.dart';
+import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:uuid/uuid.dart';
 
-class ResourceUploadAction extends ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount>
-    with FileUploadApiAction, ResourceCreateAction {
+class ResourceUploadAction extends PhylumApiAction with FileUploadApiAction, ResourceCreateAction {
   static const actionName = 'resourceUpload';
   @override
   String get name => actionName;

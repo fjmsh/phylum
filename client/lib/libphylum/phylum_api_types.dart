@@ -2,6 +2,13 @@ import 'dart:convert';
 
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
+
+typedef PhylumApiAction = ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount>;
+typedef PhylumApiActionQueue = ApiActionQueue<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount>;
+typedef PhylumApiActionQueueState = ApiActionQueueState<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount>;
+typedef PhylumApiActionStatus = ActionState<PhylumApiResponse, PhylumApiErrorResponse>;
+typedef PhylumApiActionStatusError = ActionStateError<PhylumApiResponse, PhylumApiErrorResponse>;
 
 typedef PhylumApiResponse = Map<String, dynamic>;
 

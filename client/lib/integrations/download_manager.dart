@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:phylum/integrations/directories.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/phylum_api_response.dart';
+import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/requests/resource_contents_request.dart';
 import 'package:state_notifier/state_notifier.dart';
 

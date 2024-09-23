@@ -5,9 +5,9 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/phylum_api_response.dart';
+import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class ResourceRenameAction extends ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> with JsonApiAction {
+class ResourceRenameAction extends PhylumApiAction with JsonApiAction {
   static const actionName = 'resourceRename';
   @override
   String get name => actionName;

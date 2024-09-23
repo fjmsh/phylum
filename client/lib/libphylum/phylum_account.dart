@@ -1,6 +1,6 @@
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/phylum_api_response.dart';
+import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/util/logging.dart';
 

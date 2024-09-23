@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/phylum_api_response.dart';
+import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class ResourceMkdirAction extends ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> with JsonApiAction, ResourceCreateAction {
+class ResourceMkdirAction extends PhylumApiAction with JsonApiAction, ResourceCreateAction {
   static const actionName = 'resourceMkdir';
   @override
   String get name => actionName;

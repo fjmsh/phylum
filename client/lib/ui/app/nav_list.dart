@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:offtheline/offtheline.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
+import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/sync/sync_dialog.dart';
 import 'package:provider/provider.dart';
 
@@ -150,7 +150,7 @@ class SyncButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final qState = context.select<ApiActionQueueState, _SyncState>((state) {
+    final qState = context.select<PhylumApiActionQueueState, _SyncState>((state) {
       if (state.submitting > 0) return _SyncState.syncing;
       if (state.error) return _SyncState.error;
       if (state.paused) return _SyncState.paused;

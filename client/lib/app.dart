@@ -5,6 +5,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/app/app_layout.dart';
 import 'package:phylum/ui/app/app_logout.dart';
 import 'package:phylum/ui/app/nav_forward.dart';
@@ -54,7 +55,7 @@ class PhylumApp extends StatelessWidget {
         key: ValueKey(account.id),
         providers: [
           StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
-          StateNotifierProvider<ApiActionQueue, ApiActionQueueState>.value(value: account.actionQueue),
+          StateNotifierProvider<PhylumApiActionQueue, PhylumApiActionQueueState>.value(value: account.actionQueue),
           StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(account)),
           StateNotifierProvider<NavForwardManager, NavForwardState>.value(value: NavForwardManager()),
         ],
