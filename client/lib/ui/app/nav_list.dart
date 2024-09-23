@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/ui/sync/sync_dialog.dart';
 import 'package:provider/provider.dart';
 
 enum _SyncState {
@@ -162,8 +161,7 @@ class SyncButton extends StatelessWidget {
       title: const Text('Sync'),
       subtitle: Text(qState.text),
       onTap: () {
-        final state = context.read<ApiActionQueueState>();
-        showAlertDialog(context, message: state.toDetailedString(context.read<PhylumAccount>()));
+        SyncDialog.show(context);
       },
     );
   }
