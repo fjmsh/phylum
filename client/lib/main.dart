@@ -68,20 +68,16 @@ class AccountSelector extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => MultiProvider(
-          providers: [
-            StateNotifierProvider<AccountManager<PhylumAccount>, AccountManagerState<PhylumAccount>>.value(
-              value: accountManager,
-            ),
-          ],
-          builder: (context, child) {
-            final account = context.select<AccountManagerState<PhylumAccount>, PhylumAccount?>((state) => state.selectedAccount);
+  Widget build(BuildContext context) => StateNotifierProvider<AccountManager<PhylumAccount>, AccountManagerState<PhylumAccount>>.value(
+      value: accountManager,
+      builder: (context, child) {
+        final account = context.select<AccountManagerState<PhylumAccount>, PhylumAccount?>((state) => state.selectedAccount);
 
-            if (account == null) {
-              return buildLoginPage(context);
-            }
-            return PhylumApp.create(account);
-          });
+        if (account == null) {
+          return buildLoginPage(context);
+        }
+        return PhylumApp.create(account);
+      });
 
   Widget buildLoginPage(BuildContext context) => MaterialApp(
         key: _loginAppKey,

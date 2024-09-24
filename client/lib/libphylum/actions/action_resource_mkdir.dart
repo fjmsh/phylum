@@ -5,7 +5,7 @@ import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class ResourceMkdirAction extends PhylumApiAction with JsonApiAction, ResourceCreateAction {
+class ResourceMkdirAction extends PhylumAction with JsonApiAction, ResourceCreateAction {
   static const actionName = 'resourceMkdir';
   @override
   String get name => actionName;
@@ -66,13 +66,12 @@ class ResourceMkdirAction extends PhylumApiAction with JsonApiAction, ResourceCr
       };
 
   @override
-  FutureOr<void> processResponse(PhylumAccount account, ApiResponse<PhylumApiResponse, PhylumApiErrorResponse> response) async {
-    if (response is ApiSuccessResponse<PhylumApiResponse, PhylumApiErrorResponse>) {
-      await account.resourceRepository.parseResourceSummaryResponse(response.result);
+  FutureOr<void> processResponse(PhylumAccount account, PhylumApiResponse response) async {
+    if (response is PhylumApiSuccessResponse) {
+      await account.resourceRepository.parseResourceSummaryResponse(response.response);
     }
   }
 
   @override
-  bool dependsOn(ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> action) =>
-      action is ResourceMkdirAction && action.resourceId == parent;
+  bool dependsOn(PhylumAction action) => action is ResourceMkdirAction && action.resourceId == parent;
 }

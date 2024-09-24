@@ -10,7 +10,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:uuid/uuid.dart';
 
-class ResourceUploadAction extends PhylumApiAction with FileUploadApiAction, ResourceCreateAction {
+class ResourceUploadAction extends PhylumAction with FileUploadApiAction, ResourceCreateAction {
   static const actionName = 'resourceUpload';
   @override
   String get name => actionName;
@@ -75,7 +75,7 @@ class ResourceUploadAction extends PhylumApiAction with FileUploadApiAction, Res
 
   @override
   FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
-    account.resourceRepository.createResource(resourceId, true, parent, resourceName, contentType);
+    account.resourceRepository.createResource(resourceId, false, parent, resourceName, contentType);
   }
 
   @override
@@ -102,13 +102,12 @@ class ResourceUploadAction extends PhylumApiAction with FileUploadApiAction, Res
   }
 
   @override
-  FutureOr<void> processResponse(PhylumAccount account, ApiResponse<PhylumApiResponse, PhylumApiErrorResponse> response) async {
-    if (response is ApiSuccessResponse<PhylumApiResponse, PhylumApiErrorResponse>) {
-      await account.resourceRepository.parseResourceSummaryResponse(response.result);
+  FutureOr<void> processResponse(PhylumAccount account, PhylumApiResponse response) async {
+    if (response is PhylumApiSuccessResponse) {
+      await account.resourceRepository.parseResourceSummaryResponse(response.response);
     }
   }
 
   @override
-  bool dependsOn(ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> action) =>
-      (action is ResourceCreateAction && action.resourceId == parent);
+  bool dependsOn(PhylumAction action) => (action is ResourceCreateAction && action.resourceId == parent);
 }

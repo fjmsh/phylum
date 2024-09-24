@@ -55,7 +55,7 @@ class PhylumApp extends StatelessWidget {
         key: ValueKey(account.id),
         providers: [
           StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
-          StateNotifierProvider<PhylumApiActionQueue, PhylumApiActionQueueState>.value(value: account.actionQueue),
+          StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
           StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(account)),
           StateNotifierProvider<NavForwardManager, NavForwardState>.value(value: NavForwardManager()),
         ],

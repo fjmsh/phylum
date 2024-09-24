@@ -9,7 +9,7 @@ class ActionQueueList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final queue = context.select<PhylumApiActionQueueState, Iterable<PhylumApiAction>>((state) => state.actions.keys).toList(growable: false);
+    final queue = context.select<PhylumActionQueueState, Iterable<PhylumAction>>((state) => state.actions.keys).toList(growable: false);
     return ListView.builder(
       shrinkWrap: true,
       itemCount: queue.length,
@@ -22,35 +22,34 @@ class ActionQueueList extends StatelessWidget {
 }
 
 class ActionView extends StatelessWidget {
-  final PhylumApiAction action;
+  final PhylumAction action;
   ActionView({required this.action}) : super(key: ValueKey(action.key));
 
   @override
   Widget build(BuildContext context) {
-    final state = context.select<PhylumApiActionQueueState, PhylumApiActionStatus>((state) => state.actions[action]!);
+    final state = context.select<PhylumActionQueueState, PhylumActionStatus>((state) => state.actions[action]!);
     return switch (state) {
-      ActionStateWaiting() || ActionStateReady() || ActionStateSubmitting() || ActionStateDone() => buildSimpleInfoTile(context, state),
-      PhylumApiActionStatusError(error: final error) => buildErrorInfoTile(context, error),
+      ActionStatusWaiting() || ActionStatusReady() || ActionStatusSubmitting() || ActionStatusDone() => buildSimpleInfoTile(context, state),
+      PhylumActionStatusError(error: final error) => buildErrorInfoTile(context, error),
     };
   }
 
-  Widget buildSimpleInfoTile(BuildContext context, ActionState status) {
+  Widget buildSimpleInfoTile(BuildContext context, PhylumActionStatus status) {
     final account = context.read<PhylumAccount>();
     return ListTile(
       title: Text(action.generateDescription(account)),
       subtitle: Text(status.toString()),
-      trailing: status is ActionStateSubmitting
+      trailing: status is ActionStatusSubmitting
           ? null
           : IconButton(onPressed: () => context.read<ApiActionQueue>().deleteAction(action), icon: const Icon(Icons.delete)),
     );
   }
 
-  Widget buildErrorInfoTile(BuildContext context, ApiResult<PhylumApiResponse, PhylumApiErrorResponse> error) {
+  Widget buildErrorInfoTile(BuildContext context, ApiResult<PhylumApiResponse> error) {
     final account = context.read<PhylumAccount>();
     String description = error.description;
-    if (error is ApiErrorResponse<PhylumApiResponse, PhylumApiErrorResponse>) {
-      final err = error.err;
-      if (err.code == "name_conflict") {
+    if (error is PhylumApiErrorResponse) {
+      if (error.code == "name_conflict") {
         description = 'Error: Another resource with this name already exists on the server.';
       }
     }
@@ -60,8 +59,8 @@ class ActionView extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: () => context.read<PhylumApiActionQueue>().retryAction(action)),
-          IconButton(icon: const Icon(Icons.delete), onPressed: () => context.read<PhylumApiActionQueue>().deleteAction(action)),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: () => context.read<PhylumActionQueue>().retryAction(action)),
+          IconButton(icon: const Icon(Icons.delete), onPressed: () => context.read<PhylumActionQueue>().deleteAction(action)),
         ],
       ),
     );

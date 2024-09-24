@@ -7,7 +7,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class ResourceRenameAction extends PhylumApiAction with JsonApiAction {
+class ResourceRenameAction extends PhylumAction with JsonApiAction {
   static const actionName = 'resourceRename';
   @override
   String get name => actionName;
@@ -71,13 +71,12 @@ class ResourceRenameAction extends PhylumApiAction with JsonApiAction {
       };
 
   @override
-  FutureOr<void> processResponse(PhylumAccount account, ApiResponse<PhylumApiResponse, PhylumApiErrorResponse> response) async {
-    if (response is ApiSuccessResponse<PhylumApiResponse, PhylumApiErrorResponse>) {
-      await account.resourceRepository.parseResourceSummaryResponse(response.result);
+  FutureOr<void> processResponse(PhylumAccount account, PhylumApiResponse response) async {
+    if (response is PhylumApiSuccessResponse) {
+      await account.resourceRepository.parseResourceSummaryResponse(response.response);
     }
   }
 
   @override
-  bool dependsOn(ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> action) =>
-      (action is ResourceCreateAction && action.resourceId == id);
+  bool dependsOn(PhylumAction action) => (action is ResourceCreateAction && action.resourceId == id);
 }

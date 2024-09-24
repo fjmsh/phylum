@@ -9,11 +9,11 @@ const _persistKeyUserEmail = 'userEmail';
 const _persistKeyUserName = 'userName';
 const _persistKeyUserHome = 'userHome';
 
-class PhylumAccount extends Account<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> {
+class PhylumAccount extends Account<PhylumApiResponse, PhylumAccount> {
   late final db = AppDatabase(id: id);
   late final resourceRepository = ResourceRepository(account: this);
 
-  late final _dispatcher = HttpClientDispatcher();
+  late final _dispatcher = SimulatedBadNetworkDispatcher.good(dropRate: 0);
   @override
   Dispatcher get dispatcher => _dispatcher;
 
@@ -52,8 +52,8 @@ class PhylumAccount extends Account<PhylumApiResponse, PhylumApiErrorResponse, P
 
     void Function()? l;
     l = apiClient.addResponseListener((request, errorResponse) {
-      if (errorResponse is ApiErrorResponse<PhylumApiResponse, PhylumApiErrorResponse>) {
-        if (errorResponse.err.code == "credentials_invalid") {
+      if (errorResponse is PhylumApiErrorResponse) {
+        if (errorResponse.code == "credentials_invalid") {
           logger.i('Invalid Credentials - Logging out');
           logOut();
           l?.call();

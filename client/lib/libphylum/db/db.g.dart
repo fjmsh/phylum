@@ -556,75 +556,22 @@ typedef $$ResourcesTableUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<int> rowid,
 });
 
-class $$ResourcesTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $ResourcesTable,
-    Resource,
-    $$ResourcesTableFilterComposer,
-    $$ResourcesTableOrderingComposer,
-    $$ResourcesTableCreateCompanionBuilder,
-    $$ResourcesTableUpdateCompanionBuilder> {
-  $$ResourcesTableTableManager(_$AppDatabase db, $ResourcesTable table)
-      : super(TableManagerState(
-          db: db,
-          table: table,
-          filteringComposer:
-              $$ResourcesTableFilterComposer(ComposerState(db, table)),
-          orderingComposer:
-              $$ResourcesTableOrderingComposer(ComposerState(db, table)),
-          updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
-            Value<String?> parent = const Value.absent(),
-            Value<String> name = const Value.absent(),
-            Value<bool> dir = const Value.absent(),
-            Value<DateTime> modified = const Value.absent(),
-            Value<int> size = const Value.absent(),
-            Value<String> etag = const Value.absent(),
-            Value<String> contentType = const Value.absent(),
-            Value<bool> deleted = const Value.absent(),
-            Value<DateTime?> lastFetch = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              ResourcesCompanion(
-            id: id,
-            parent: parent,
-            name: name,
-            dir: dir,
-            modified: modified,
-            size: size,
-            etag: etag,
-            contentType: contentType,
-            deleted: deleted,
-            lastFetch: lastFetch,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String id,
-            Value<String?> parent = const Value.absent(),
-            required String name,
-            required bool dir,
-            required DateTime modified,
-            required int size,
-            required String etag,
-            required String contentType,
-            Value<bool> deleted = const Value.absent(),
-            Value<DateTime?> lastFetch = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              ResourcesCompanion.insert(
-            id: id,
-            parent: parent,
-            name: name,
-            dir: dir,
-            modified: modified,
-            size: size,
-            etag: etag,
-            contentType: contentType,
-            deleted: deleted,
-            lastFetch: lastFetch,
-            rowid: rowid,
-          ),
-        ));
+final class $$ResourcesTableReferences
+    extends BaseReferences<_$AppDatabase, $ResourcesTable, Resource> {
+  $$ResourcesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ResourcesTable _parentTable(_$AppDatabase db) => db.resources
+      .createAlias($_aliasNameGenerator(db.resources.parent, db.resources.id));
+
+  $$ResourcesTableProcessedTableManager? get parent {
+    if ($_item.parent == null) return null;
+    final manager = $$ResourcesTableTableManager($_db, $_db.resources)
+        .filter((f) => f.id($_item.parent!));
+    final item = $_typedResult.readTableOrNull(_parentTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
 }
 
 class $$ResourcesTableFilterComposer
@@ -748,6 +695,132 @@ class $$ResourcesTableOrderingComposer
     return composer;
   }
 }
+
+class $$ResourcesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ResourcesTable,
+    Resource,
+    $$ResourcesTableFilterComposer,
+    $$ResourcesTableOrderingComposer,
+    $$ResourcesTableCreateCompanionBuilder,
+    $$ResourcesTableUpdateCompanionBuilder,
+    (Resource, $$ResourcesTableReferences),
+    Resource,
+    PrefetchHooks Function({bool parent})> {
+  $$ResourcesTableTableManager(_$AppDatabase db, $ResourcesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          filteringComposer:
+              $$ResourcesTableFilterComposer(ComposerState(db, table)),
+          orderingComposer:
+              $$ResourcesTableOrderingComposer(ComposerState(db, table)),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String?> parent = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<bool> dir = const Value.absent(),
+            Value<DateTime> modified = const Value.absent(),
+            Value<int> size = const Value.absent(),
+            Value<String> etag = const Value.absent(),
+            Value<String> contentType = const Value.absent(),
+            Value<bool> deleted = const Value.absent(),
+            Value<DateTime?> lastFetch = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ResourcesCompanion(
+            id: id,
+            parent: parent,
+            name: name,
+            dir: dir,
+            modified: modified,
+            size: size,
+            etag: etag,
+            contentType: contentType,
+            deleted: deleted,
+            lastFetch: lastFetch,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            Value<String?> parent = const Value.absent(),
+            required String name,
+            required bool dir,
+            required DateTime modified,
+            required int size,
+            required String etag,
+            required String contentType,
+            Value<bool> deleted = const Value.absent(),
+            Value<DateTime?> lastFetch = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ResourcesCompanion.insert(
+            id: id,
+            parent: parent,
+            name: name,
+            dir: dir,
+            modified: modified,
+            size: size,
+            etag: etag,
+            contentType: contentType,
+            deleted: deleted,
+            lastFetch: lastFetch,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$ResourcesTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({parent = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (parent) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.parent,
+                    referencedTable:
+                        $$ResourcesTableReferences._parentTable(db),
+                    referencedColumn:
+                        $$ResourcesTableReferences._parentTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$ResourcesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ResourcesTable,
+    Resource,
+    $$ResourcesTableFilterComposer,
+    $$ResourcesTableOrderingComposer,
+    $$ResourcesTableCreateCompanionBuilder,
+    $$ResourcesTableUpdateCompanionBuilder,
+    (Resource, $$ResourcesTableReferences),
+    Resource,
+    PrefetchHooks Function({bool parent})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;

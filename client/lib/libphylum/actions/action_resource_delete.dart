@@ -7,7 +7,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class ResourceDeleteAction extends PhylumApiAction with JsonApiAction {
+class ResourceDeleteAction extends PhylumAction with JsonApiAction {
   static const actionName = 'resourceDelete';
   @override
   String get name => actionName;
@@ -64,6 +64,5 @@ class ResourceDeleteAction extends PhylumApiAction with JsonApiAction {
       };
 
   @override
-  bool dependsOn(ApiAction<PhylumApiResponse, PhylumApiErrorResponse, PhylumAccount> action) =>
-      action is ResourceCreateAction && action.resourceId == id;
+  bool dependsOn(PhylumAction action) => action is ResourceCreateAction && action.resourceId == id;
 }

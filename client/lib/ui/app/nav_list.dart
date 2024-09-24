@@ -150,7 +150,7 @@ class SyncButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final qState = context.select<PhylumApiActionQueueState, _SyncState>((state) {
+    final qState = context.select<PhylumActionQueueState, _SyncState>((state) {
       if (state.submitting > 0) return _SyncState.syncing;
       if (state.error) return _SyncState.error;
       if (state.paused) return _SyncState.paused;
