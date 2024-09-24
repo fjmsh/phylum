@@ -4,25 +4,20 @@ import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 
-typedef PhylumAction = OfflineAction<PhylumApiResponse, PhylumAccount>;
-typedef PhylumActionStatus = ActionStatus<PhylumApiResponse>;
-typedef PhylumActionStatusError = ActionStatusError<PhylumApiResponse>;
+typedef PhylumAction = OfflineAction<PhylumAccount>;
+typedef PhylumActionQueue = ApiActionQueue<PhylumAccount>;
+typedef PhylumActionQueueState = ApiActionQueueState<PhylumAccount>;
 
-typedef PhylumActionQueue = ApiActionQueue<PhylumApiResponse, PhylumAccount>;
-typedef PhylumActionQueueState = ApiActionQueueState<PhylumApiResponse, PhylumAccount>;
-
-abstract class PhylumApiResponse extends ApiResponse<PhylumApiResponse> {}
-
-class PhylumApiSuccessResponse extends PhylumApiResponse {
-  final Map<String, dynamic> response;
+class PhylumApiSuccessResponse extends ApiResponse {
+  final Map<String, dynamic> data;
 
   @override
   String get description => 'Success';
 
-  PhylumApiSuccessResponse(this.response);
+  PhylumApiSuccessResponse(this.data);
 }
 
-class PhylumApiErrorResponse extends PhylumApiResponse {
+class PhylumApiErrorResponse extends ApiResponse {
   final int httpStatusCode;
   final String code;
   final String message;
@@ -45,7 +40,7 @@ class PhylumApiErrorResponse extends PhylumApiResponse {
   }
 }
 
-Future<PhylumApiResponse> transformApiResponse(ApiRequest _, StreamedResponse response) async {
+Future<ApiResponse> transformApiResponse(ApiRequest _, StreamedResponse response) async {
   final body = await response.bodyString();
   if (response.statusCode >= 200 && response.statusCode < 300) {
     final apiResponse = (jsonDecode(body) as Map<String, dynamic>?) ?? const {};

@@ -66,9 +66,9 @@ class ResourceMkdirAction extends PhylumAction with JsonApiAction, ResourceCreat
       };
 
   @override
-  FutureOr<void> processResponse(PhylumAccount account, PhylumApiResponse response) async {
+  FutureOr<void> processResponse(PhylumAccount account, ApiResponse response) async {
     if (response is PhylumApiSuccessResponse) {
-      await account.resourceRepository.parseResourceSummaryResponse(response.response);
+      await account.resourceRepository.parseResourceSummaryResponse(response.data);
     }
   }
 

@@ -71,9 +71,9 @@ class ResourceRenameAction extends PhylumAction with JsonApiAction {
       };
 
   @override
-  FutureOr<void> processResponse(PhylumAccount account, PhylumApiResponse response) async {
+  FutureOr<void> processResponse(PhylumAccount account, ApiResponse response) async {
     if (response is PhylumApiSuccessResponse) {
-      await account.resourceRepository.parseResourceSummaryResponse(response.response);
+      await account.resourceRepository.parseResourceSummaryResponse(response.data);
     }
   }
 

@@ -14,7 +14,6 @@ class ActionQueueList extends StatelessWidget {
       shrinkWrap: true,
       itemCount: queue.length,
       itemBuilder: (context, i) {
-        print(queue[i]);
         return ActionView(action: queue[i]);
       },
     );
@@ -27,14 +26,14 @@ class ActionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.select<PhylumActionQueueState, PhylumActionStatus>((state) => state.actions[action]!);
+    final state = context.select<PhylumActionQueueState, ActionStatus>((state) => state.actions[action]!);
     return switch (state) {
       ActionStatusWaiting() || ActionStatusReady() || ActionStatusSubmitting() || ActionStatusDone() => buildSimpleInfoTile(context, state),
-      PhylumActionStatusError(error: final error) => buildErrorInfoTile(context, error),
+      ActionStatusError(error: final error) => buildErrorInfoTile(context, error),
     };
   }
 
-  Widget buildSimpleInfoTile(BuildContext context, PhylumActionStatus status) {
+  Widget buildSimpleInfoTile(BuildContext context, ActionStatus status) {
     final account = context.read<PhylumAccount>();
     return ListTile(
       title: Text(action.generateDescription(account)),
@@ -45,7 +44,7 @@ class ActionView extends StatelessWidget {
     );
   }
 
-  Widget buildErrorInfoTile(BuildContext context, ApiResult<PhylumApiResponse> error) {
+  Widget buildErrorInfoTile(BuildContext context, ApiResult error) {
     final account = context.read<PhylumAccount>();
     String description = error.description;
     if (error is PhylumApiErrorResponse) {

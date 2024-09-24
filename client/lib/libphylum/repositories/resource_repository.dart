@@ -10,10 +10,10 @@ class ResourceRepository {
 
   ResourceRepository({required this.account});
 
-  Future<ApiResult<PhylumApiResponse>?> requestResource(String id) async {
+  Future<ApiResult?> requestResource(String id) async {
     final response = await account.apiClient.sendRequest(ResourceDetailRequest(id));
     if (response is PhylumApiSuccessResponse) {
-      await parseResourceDetailsResponse(response.response);
+      await parseResourceDetailsResponse(response.data);
       return null;
     }
     return response;

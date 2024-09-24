@@ -9,7 +9,7 @@ const _persistKeyUserEmail = 'userEmail';
 const _persistKeyUserName = 'userName';
 const _persistKeyUserHome = 'userHome';
 
-class PhylumAccount extends Account<PhylumApiResponse, PhylumAccount> {
+class PhylumAccount extends Account<PhylumAccount> {
   late final db = AppDatabase(id: id);
   late final resourceRepository = ResourceRepository(account: this);
 
