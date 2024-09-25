@@ -10,11 +10,33 @@ class SyncDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pending Actions'),
-      ),
-      body: const ActionQueueList(),
-    );
+    final size = MediaQuery.sizeOf(context);
+    if (size.width < 600) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Sync'),
+        ),
+        body: const ActionQueueList(),
+      );
+    } else {
+      return Center(
+        child: SizedBox(
+          width: 800,
+          child: Card(
+            margin: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                AppBar(title: const Text('Sync'), leading: const CloseButton(), backgroundColor: Colors.transparent),
+                // ListTile(
+                //   leading: IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close)),
+                //   title: const Text('Pending Actions'),
+                // ),
+                const Expanded(child: ActionQueueList()),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
   }
 }
