@@ -21,7 +21,7 @@ dependencies:
   offtheline:
     git:
       url: https://codeberg.org/shroff/offtheline.git
-      ref: a88e0a2a8dc7647b394fe769014120b132cbba5a
+      ref: ca3cee7c1b313785b98ef59ff6e75ec9046e2ffc
   open_file:
   path:
   path_provider:
@@ -40,10 +40,6 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   drift_dev: ^2.19.1
   build_runner: ^2.4.12
-
-dependency_overrides:
-  offtheline:
-    path: ../../offtheline
 
 flutter:
   uses-material-design: true

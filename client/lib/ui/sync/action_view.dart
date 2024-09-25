@@ -19,7 +19,8 @@ class ActionView extends StatelessWidget {
 
   Widget buildTile(BuildContext context, ActionStatus status) {
     return switch (status) {
-      ActionStatusWaiting() || ActionStatusReady() || ActionStatusSubmitting() || ActionStatusDone() => buildSimpleInfoTile(context, status),
+      ActionStatusWaiting _ || ActionStatusReady _ || ActionStatusDone _ => buildSimpleInfoTile(context, status),
+      ActionStatusUploading(done: int done, length: int length) => buildProgressTile(context, done, length),
       ActionStatusError(error: final error) => buildErrorInfoTile(context, error),
     };
   }
@@ -29,10 +30,17 @@ class ActionView extends StatelessWidget {
     return ListTile(
       title: Text(action.action.generateDescription(account)),
       subtitle: Text(status.toString()),
-      trailing: status is ActionStatusSubmitting
-          ? null
-          : IconButton(onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id), icon: const Icon(Icons.delete)),
+      trailing: IconButton(onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id), icon: const Icon(Icons.delete)),
     );
+  }
+
+  Widget buildProgressTile(BuildContext context, int done, int total) {
+    final account = context.read<PhylumAccount>();
+    return ListTile(
+        title: Text(action.action.generateDescription(account)),
+        subtitle: LinearProgressIndicator(
+          value: total == 0 ? null : (done * 1.0 / total),
+        ));
   }
 
   Widget buildErrorInfoTile(BuildContext context, ApiResult error) {

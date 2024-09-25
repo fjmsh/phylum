@@ -32,7 +32,7 @@ class _ServerStatusButtonState extends State<ServerStatusButton> {
 
   List<QueuedAction<PhylumAccount>>? last;
   late final RemoveListener removeListener;
-  int get submitting => _count<ActionStatusSubmitting>();
+  int get submitting => _count<ActionStatusUploading>();
   int get error => _count<ActionStatusError>();
   bool paused = false;
   bool unreachable = false;
