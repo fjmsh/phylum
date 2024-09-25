@@ -13,14 +13,9 @@ import 'package:state_notifier/state_notifier.dart';
 const _keyDownloadTaskId = 'downloadTaskId';
 
 class DownloadManagerState {
-  final List<DownloadTask> running;
-  final List<DownloadTask> finished;
+  final List<DownloadTask> tasks;
 
-  const DownloadManagerState([this.running = const [], this.finished = const []]);
-
-  DownloadManagerState copyWith({List<DownloadTask>? running, List<DownloadTask>? finished}) {
-    return DownloadManagerState(running ?? this.running, finished ?? this.finished);
-  }
+  const DownloadManagerState([this.tasks = const []]);
 }
 
 class DownloadManager extends StateNotifier<DownloadManagerState> {
@@ -38,13 +33,11 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
       if (status is DownloadStatusError || status is DownloadStatusFinished) {
         Future.microtask(() {
           remove?.call();
-          final running = List.of(state.running)..remove(task);
-          state = DownloadManagerState(running, [...state.finished, task]);
         });
       }
     });
 
-    state = state.copyWith(running: [...state.running, task]);
+    state = DownloadManagerState([...state.tasks, task]);
     try {
       task.status = const DownloadStatusStarting();
       final response = await account.apiClient.dispatchRequestRaw(ResourceContentsRequest(r.id));

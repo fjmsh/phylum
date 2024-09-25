@@ -24,7 +24,7 @@ class _DownloadButtonState extends State<DownloadButton> {
   void initState() {
     super.initState();
     _subscription = context.read<DownloadManager>().stream.listen((state) {
-      for (final task in state.running) {
+      for (final task in state.tasks) {
         if (!listeners.containsKey(task)) {
           final status = task.status;
           if (status is DownloadStatusRunning) {
