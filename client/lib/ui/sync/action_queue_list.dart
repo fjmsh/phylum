@@ -9,26 +9,44 @@ class ActionQueueList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final queue = context.select<PhylumActionQueueState, Iterable<PhylumAction>>((state) => state.actions.keys).toList(growable: false);
-    return ListView.builder(
-      shrinkWrap: true,
-      itemCount: queue.length,
-      itemBuilder: (context, i) {
-        return ActionView(action: queue[i]);
-      },
+    final actions = context.select<PhylumActionQueueState, List<QueuedAction<PhylumAccount>>>((state) => state.actions);
+    return CustomScrollView(
+      slivers: [
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, i) {
+              if (i == 0) {
+                return const ListTile(
+                  dense: true,
+                  title: Text('Actions'),
+                );
+              }
+              return ActionView(action: actions[i - 1]);
+            },
+            childCount: actions.length + 1,
+          ),
+        ),
+      ],
     );
   }
 }
 
 class ActionView extends StatelessWidget {
-  final PhylumAction action;
-  ActionView({required this.action}) : super(key: ValueKey(action.key));
+  final QueuedAction<PhylumAccount> action;
+  ActionView({required this.action}) : super(key: ValueKey(action.id));
 
   @override
   Widget build(BuildContext context) {
-    final state = context.select<PhylumActionQueueState, ActionStatus>((state) => state.actions[action]!);
-    return switch (state) {
-      ActionStatusWaiting() || ActionStatusReady() || ActionStatusSubmitting() || ActionStatusDone() => buildSimpleInfoTile(context, state),
+    return StreamBuilder(
+      stream: action.statusNotifier.stream,
+      initialData: action.status,
+      builder: (context, snapshot) => buildTile(context, snapshot.data!),
+    );
+  }
+
+  Widget buildTile(BuildContext context, ActionStatus status) {
+    return switch (status) {
+      ActionStatusWaiting() || ActionStatusReady() || ActionStatusSubmitting() || ActionStatusDone() => buildSimpleInfoTile(context, status),
       ActionStatusError(error: final error) => buildErrorInfoTile(context, error),
     };
   }
@@ -36,11 +54,11 @@ class ActionView extends StatelessWidget {
   Widget buildSimpleInfoTile(BuildContext context, ActionStatus status) {
     final account = context.read<PhylumAccount>();
     return ListTile(
-      title: Text(action.generateDescription(account)),
+      title: Text(action.action.generateDescription(account)),
       subtitle: Text(status.toString()),
       trailing: status is ActionStatusSubmitting
           ? null
-          : IconButton(onPressed: () => context.read<ApiActionQueue>().deleteAction(action), icon: const Icon(Icons.delete)),
+          : IconButton(onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id), icon: const Icon(Icons.delete)),
     );
   }
 
@@ -53,13 +71,13 @@ class ActionView extends StatelessWidget {
       }
     }
     return ListTile(
-      title: Text(action.generateDescription(account), overflow: TextOverflow.fade),
+      title: Text(action.action.generateDescription(account), overflow: TextOverflow.fade),
       subtitle: Text(description),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: () => context.read<PhylumActionQueue>().retryAction(action)),
-          IconButton(icon: const Icon(Icons.delete), onPressed: () => context.read<PhylumActionQueue>().deleteAction(action)),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: () => context.read<PhylumActionQueue>().retryAction(action.id)),
+          IconButton(icon: const Icon(Icons.delete), onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id)),
         ],
       ),
     );

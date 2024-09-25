@@ -267,7 +267,7 @@ func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, er
 
 func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
 	if r.Name() == name {
-		return nil, nil
+		return r, nil
 	}
 	if r.ParentID() == nil {
 		return nil, ErrInsufficientPermissions

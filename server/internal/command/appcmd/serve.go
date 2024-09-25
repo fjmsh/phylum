@@ -67,8 +67,9 @@ func createEngine(logBody bool, corsEnabled bool, corsOrigins []string) *gin.Eng
 	engine := gin.New()
 	engine.Use(gin.Logger(), gin.CustomRecovery(func(c *gin.Context, err any) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"code": "internal_server_error",
-			"msg":  "Internal Server Error",
+			"status": 500,
+			"code":   "internal_server_error",
+			"msg":    "Internal Server Error",
 		})
 	}))
 	if core.Default.Debug && logBody {
