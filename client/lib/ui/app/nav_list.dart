@@ -3,21 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
-import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:phylum/ui/sync/sync_dialog.dart';
+import 'package:phylum/ui/app/sync_button.dart';
 import 'package:provider/provider.dart';
-
-enum _SyncState {
-  done(Icons.cloud_outlined, 'Up-to-date'),
-  paused(Icons.sync_disabled, 'Paused'),
-  syncing(Icons.cloud_sync, 'Saving'),
-  error(Icons.sync_problem, 'Error');
-
-  const _SyncState(this.icon, this.text);
-
-  final IconData icon;
-  final String text;
-}
 
 class NavList extends StatelessWidget {
   final bool showFab;
@@ -141,28 +128,6 @@ class _DownloadButtonState extends State<DownloadButton> {
           : LinearProgressIndicator(
               value: (received * 1.0 / total),
             ),
-    );
-  }
-}
-
-class SyncButton extends StatelessWidget {
-  const SyncButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final qState = context.select<PhylumActionQueueState, _SyncState>((state) {
-      if (state.error > 0) return _SyncState.error;
-      if (state.submitting > 0) return _SyncState.syncing;
-      if (state.paused) return _SyncState.paused;
-      return _SyncState.done;
-    });
-    return ListTile(
-      leading: Icon(qState.icon),
-      title: const Text('Sync'),
-      subtitle: Text(qState.text),
-      onTap: () {
-        SyncDialog.show(context);
-      },
     );
   }
 }
