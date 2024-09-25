@@ -4,29 +4,22 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:provider/provider.dart';
 
-class ActionQueueList extends StatelessWidget {
-  const ActionQueueList({super.key});
+class ActionQueueSliver extends StatelessWidget {
+  const ActionQueueSliver({super.key});
 
   @override
   Widget build(BuildContext context) {
     final actions = context.select<PhylumActionQueueState, List<QueuedAction<PhylumAccount>>>((state) => state.actions);
-    return CustomScrollView(
-      slivers: [
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, i) {
-              if (i == 0) {
-                return const ListTile(
-                  dense: true,
-                  title: Text('Actions'),
-                );
-              }
-              return ActionView(action: actions[i - 1]);
-            },
-            childCount: actions.length + 1,
-          ),
-        ),
-      ],
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, i) {
+          if (i == 0) {
+            return const ListTile(dense: true, title: Text('Actions'));
+          }
+          return ActionView(action: actions[i - 1]);
+        },
+        childCount: actions.length + 1,
+      ),
     );
   }
 }

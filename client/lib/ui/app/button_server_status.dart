@@ -6,27 +6,27 @@ import 'package:phylum/ui/sync/sync_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-enum _SyncState {
+enum _ServerStatus {
   done(Icons.sync, 'Up-to-date'),
-  paused(Icons.sync_disabled, 'Paused'),
-  syncing(Icons.cloud_sync, 'Saving'),
+  paused(Icons.sync_disabled, 'Sync Paused'),
+  syncing(Icons.cloud_sync, 'Syncing'),
   error(Icons.sync_problem, 'Error'),
-  unreachable(Icons.cloud_off, 'Server Unreachable');
+  unreachable(Icons.cloud_off, 'Unreachable');
 
-  const _SyncState(this.icon, this.text);
+  const _ServerStatus(this.icon, this.text);
 
   final IconData icon;
   final String text;
 }
 
-class SyncButton extends StatefulWidget {
-  const SyncButton({super.key});
+class ServerStatusButton extends StatefulWidget {
+  const ServerStatusButton({super.key});
 
   @override
-  State<SyncButton> createState() => _SyncButtonState();
+  State<ServerStatusButton> createState() => _ServerStatusButtonState();
 }
 
-class _SyncButtonState extends State<SyncButton> {
+class _ServerStatusButtonState extends State<ServerStatusButton> {
   final Map<StateNotifier<ActionStatus>, RemoveListener> _listeners = {};
   final Map<StateNotifier<ActionStatus>, ActionStatus> _statusMap = {};
 
@@ -80,14 +80,14 @@ class _SyncButtonState extends State<SyncButton> {
 
   @override
   Widget build(BuildContext context) {
-    _SyncState state = _SyncState.done;
-    if (unreachable) state = _SyncState.unreachable;
-    if (error > 0) state = _SyncState.error;
-    if (submitting > 0) state = _SyncState.syncing;
-    if (paused) state = _SyncState.paused;
+    _ServerStatus state = _ServerStatus.done;
+    if (unreachable) state = _ServerStatus.unreachable;
+    if (error > 0) state = _ServerStatus.error;
+    if (submitting > 0) state = _ServerStatus.syncing;
+    if (paused) state = _ServerStatus.paused;
     return ListTile(
       leading: Icon(state.icon),
-      title: const Text('Sync'),
+      title: const Text('Server Status'),
       subtitle: Text(state.text),
       onTap: () {
         SyncDialog.show(context);

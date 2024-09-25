@@ -10,6 +10,8 @@ import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/requests/resource_contents_request.dart';
 import 'package:state_notifier/state_notifier.dart';
 
+const _keyDownloadTaskId = 'downloadTaskId';
+
 class DownloadManagerState {
   final List<DownloadTask> running;
   final List<DownloadTask> finished;
@@ -27,30 +29,33 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
   DownloadManager(this.account) : super(const DownloadManagerState());
 
   Future<void> downloadResource(Resource r) async {
-    final task = DownloadTask(resourceId: r.id, resourceName: r.name, expectedSize: r.size);
-    l() {
-      final status = task._status.value;
-      debugPrint(status.toString());
-      if (status is DownloadStatusError || status is DownloadStatusFinished) {
-        task._status.removeListener(l);
-        final running = List.of(state.running)..remove(task);
-        state = DownloadManagerState(running, [...state.finished, task]);
-      }
-    }
+    int id = account.getPersisted<int>(_keyDownloadTaskId) ?? 1;
+    await account.persist(_keyDownloadTaskId, id + 1);
+    final task = DownloadTask(id: id, resourceId: r.id, resourceName: r.name, expectedSize: r.size);
 
-    task._status.addListener(l);
+    RemoveListener? remove;
+    remove = task._statusNotifier.addListener((status) {
+      if (status is DownloadStatusError || status is DownloadStatusFinished) {
+        Future.microtask(() {
+          remove?.call();
+          final running = List.of(state.running)..remove(task);
+          state = DownloadManagerState(running, [...state.finished, task]);
+        });
+      }
+    });
 
     state = state.copyWith(running: [...state.running, task]);
     try {
+      task.status = const DownloadStatusStarting();
       final response = await account.apiClient.dispatchRequestRaw(ResourceContentsRequest(r.id));
       if (response.statusCode < 200 || response.statusCode > 300) {
         final error = PhylumApiErrorResponse.fromResponseString(await response.bodyString());
-        task._status.value = DownloadStatusError(error.message);
+        task.status = DownloadStatusError(error.message);
         return;
       }
       final output = _createDownloadFile(PhylumDirectories.instance.downloads!, r.name);
       if (output == null) {
-        task._status.value = const DownloadStatusError('Unable to open output file');
+        task.status = const DownloadStatusError('Unable to open output file');
         return;
       }
       final sink = output.openWrite();
@@ -59,19 +64,19 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
       int received = 0;
       final stream = response.stream.map((s) {
         received += s.length;
-        task._status.value = DownloadStatusRunning(received, length);
+        task.status = DownloadStatusRunning(received, length);
         return s;
       });
       sink.addStream(stream).onError((err, _) {
         debugPrint(err.toString());
         sink.close();
-        task._status.value = DownloadStatusError(err.toString());
+        task.status = DownloadStatusError(err.toString());
         output.deleteSync();
-      }).whenComplete(() => task._status.value = DownloadStatusFinished(output.path));
+      }).whenComplete(() => task.status = DownloadStatusFinished(output.path));
     } on SocketException {
-      task._status.value = const DownloadStatusError('Cannot reach server');
+      task.status = const DownloadStatusError('Cannot reach server');
     } catch (e) {
-      task._status.value = DownloadStatusError('Unknown Error - $e');
+      task.status = DownloadStatusError('Unknown Error - $e');
     }
   }
 
@@ -96,31 +101,58 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
   }
 }
 
+class DownloadStatusNotifier extends StateNotifier<DownloadStatus> {
+  DownloadStatus get value => state;
+  set value(DownloadStatus status) => state = status;
+
+  DownloadStatusNotifier() : super(const DownloadStatusWaiting());
+}
+
 class DownloadTask {
+  final int id;
   final String resourceId;
   final String resourceName;
-  late final ValueNotifier<DownloadStatus> _status;
-  ValueListenable<DownloadStatus> get status => _status;
+  final int expectedSize;
+  late final DownloadStatusNotifier _statusNotifier;
+  StateNotifier<DownloadStatus> get statusNotifier => _statusNotifier;
+
+  DownloadStatus get status => _statusNotifier.value;
+  set status(DownloadStatus status) => _statusNotifier.value = status;
 
   DownloadTask({
+    required this.id,
     required this.resourceId,
     required this.resourceName,
-    required int expectedSize,
-  }) : _status = ValueNotifier(DownloadStatusRunning(0, expectedSize));
+    required this.expectedSize,
+  }) : _statusNotifier = DownloadStatusNotifier();
 }
 
 sealed class DownloadStatus {
   const DownloadStatus();
 }
 
-class DownloadStatusRunning extends DownloadStatus {
-  final int received;
-  final int total;
-
-  const DownloadStatusRunning(this.received, this.total);
+class DownloadStatusWaiting extends DownloadStatus {
+  const DownloadStatusWaiting();
 
   @override
-  String toString() => "Download Running: $received / $total (${received / total * 100} %)";
+  String toString() => 'Waiting';
+}
+
+class DownloadStatusStarting extends DownloadStatus {
+  const DownloadStatusStarting();
+
+  @override
+  String toString() => 'Starting';
+}
+
+class DownloadStatusRunning extends DownloadStatus {
+  final int received;
+  final int size;
+
+  const DownloadStatusRunning(this.received, this.size);
+
+  @override
+  String toString() => 'Running: $received / $size (${received / size * 100} %)';
 }
 
 class DownloadStatusFinished extends DownloadStatus {
@@ -129,7 +161,7 @@ class DownloadStatusFinished extends DownloadStatus {
   const DownloadStatusFinished(this.path);
 
   @override
-  String toString() => "Download Finished: $path";
+  String toString() => 'Finished: $path';
 }
 
 class DownloadStatusError extends DownloadStatus {
@@ -138,5 +170,5 @@ class DownloadStatusError extends DownloadStatus {
   const DownloadStatusError(this.error);
 
   @override
-  String toString() => "Download Error: $error";
+  String toString() => 'Error: $error';
 }
