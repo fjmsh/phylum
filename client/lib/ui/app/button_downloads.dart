@@ -14,7 +14,7 @@ class DownloadButton extends StatefulWidget {
 
 class _DownloadButtonState extends State<DownloadButton> {
   final listeners = <DownloadTask, RemoveListener>{};
-  final lastStatus = <DownloadTask, DownloadStatusRunning>{};
+  final lastStatus = <DownloadTask, DownloadStatus>{};
   late final StreamSubscription _subscription;
   int ongoing = 0;
   int received = 0;
@@ -27,33 +27,36 @@ class _DownloadButtonState extends State<DownloadButton> {
       for (final task in state.tasks) {
         if (!listeners.containsKey(task)) {
           final status = task.status;
-          if (status is DownloadStatusRunning) {
-            lastStatus[task] = status;
+          if (status is! DownloadStatusFinished && status is! DownloadStatusError) {
             listeners[task] = task.statusNotifier.addListener((status) {
-              final last = lastStatus[task]!;
+              int ongoing = this.ongoing;
+              int received = this.received;
+              int total = this.total;
+              final last = lastStatus[task];
+              lastStatus[task] = status;
+              if (last == null) {
+                ongoing++;
+              } else if (last is DownloadStatusRunning) {
+                received -= last.received;
+                total -= last.size;
+              }
+
               if (status is DownloadStatusRunning) {
-                setState(() {
-                  received += status.received - last.received;
-                  total += status.size - last.size;
-                });
-                lastStatus[task] = status;
-              } else {
-                setState(() {
-                  ongoing--;
-                  received -= last.received;
-                  total -= last.size;
-                });
+                received += status.received;
+                total += status.size;
+              } else if (status is DownloadStatusFinished || status is DownloadStatusError) {
+                ongoing--;
                 Future.microtask(() {
                   listeners.remove(task)?.call();
                   lastStatus.remove(task);
                 });
               }
-            });
-            setState(() {
-              ongoing++;
-              received += status.received;
-              total += status.size;
-            });
+              setState(() {
+                this.ongoing = ongoing;
+                this.received = received;
+                this.total = total;
+              });
+            }, fireImmediately: true);
           }
         }
       }
@@ -74,7 +77,7 @@ class _DownloadButtonState extends State<DownloadButton> {
       subtitle: ongoing == 0
           ? null
           : LinearProgressIndicator(
-              value: (received * 1.0 / total),
+              value: total == 0 ? null : (received * 1.0 / total),
             ),
     );
   }

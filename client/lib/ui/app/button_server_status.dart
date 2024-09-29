@@ -49,7 +49,8 @@ class _ServerStatusButtonState extends State<ServerStatusButton> {
           final notifier = action.statusNotifier;
           if (!_listeners.containsKey(notifier)) {
             _listeners[notifier] = notifier.addListener((status) {
-              if (_statusMap[notifier] != status) {
+              // Ignore progress updates
+              if (_statusMap[notifier].runtimeType != status.runtimeType) {
                 _statusMap[notifier] = status;
                 if (status is ActionStatusDone) {
                   Future.microtask(() {
