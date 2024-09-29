@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
-import 'package:phylum/libphylum/actions/action_resource_rename.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/preview/resource_preview.dart';
@@ -62,7 +61,7 @@ class ExplorerActions extends StatelessWidget {
           if (r == null) return;
           final name = await showInputDialog(context, title: 'Rename', preset: r.name);
           if (name != null) {
-            account.addAction(ResourceRenameAction(r: r, name: name));
+            account.addAction(ResourceMoveAction(r: r, name: name));
           }
           return null;
         }),

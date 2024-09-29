@@ -16,24 +16,43 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
   String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/resources/move/$id';
+  String get endpoint => '/api/v1/resources/move/$resourceId';
 
-  final String id;
-  final String parent;
-  final String? oldParent;
+  final String resourceId;
+  final String? parent;
+  final String oldParent;
+  final String? resourceName;
+  final String oldName;
   final String description;
 
-  ResourceMoveAction._({required this.id, required this.parent, required this.oldParent, required this.description});
+  ResourceMoveAction._({
+    required this.resourceId,
+    required this.resourceName,
+    required this.parent,
+    required this.oldName,
+    required this.oldParent,
+    required this.description,
+  }) : assert(resourceName != null || parent != null);
 
   ResourceMoveAction({
     required Resource r,
-    required Resource parent,
-  }) : this._(id: r.id, parent: parent.id, oldParent: r.parent, description: 'Moving ${r.name} to ${parent.name}');
+    Resource? parent,
+    String? name,
+  }) : this._(
+          resourceId: r.id,
+          resourceName: name,
+          parent: parent?.id,
+          oldName: r.name,
+          oldParent: r.parent!,
+          description: name == null ? 'Moving ${r.name}' : 'Renaming ${r.name} to $name',
+        );
 
   static ResourceMoveAction fromMap(Map<String, dynamic> map) {
     return ResourceMoveAction._(
-      id: map['id'],
+      resourceId: map['resourceId'],
+      resourceName: map['resourceName'],
       parent: map['parent'],
+      oldName: map['oldName'],
       oldParent: map['oldParent'],
       description: map['description'],
     );
@@ -47,24 +66,33 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
   @override
   Map<String, dynamic>? generateRequestBody() {
     return {
+      'name': resourceName,
       'parent_id': parent,
     };
   }
 
   @override
   FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
-    account.resourceRepository.updateResource(id, (o) => o(parent: Value(parent)));
+    account.resourceRepository.updateResource(
+      resourceId,
+      (o) => o(
+        name: Value.absentIfNull(resourceName),
+        parent: Value.absentIfNull(parent),
+      ),
+    );
   }
 
   @override
   FutureOr<void> revertOptimisticUpdate(PhylumAccount account) {
-    account.resourceRepository.updateResource(id, (o) => o(parent: Value(oldParent)));
+    account.resourceRepository.updateResource(resourceId, (o) => o(parent: Value(oldParent)));
   }
 
   @override
   Map<String, dynamic> toMap() => {
-        'id': id,
+        'resourceId': resourceId,
+        'resourceName': resourceName,
         'parent': parent,
+        'oldName': oldName,
         'oldParent': oldParent,
         'description': description,
       };
@@ -78,5 +106,7 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
 
   @override
   bool dependsOn(PhylumAction action) =>
-      (action is ResourceCreateAction && action.resourceId == id) || (action is ResourceCreateAction && action.resourceId == parent);
+      (action is ResourceCreateAction && action.resourceId == resourceId) ||
+      (action is ResourceCreateAction && action.resourceId == parent) ||
+      (action is ResourceMoveAction && action.resourceId == resourceId);
 }

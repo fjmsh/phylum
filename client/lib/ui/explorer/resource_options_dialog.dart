@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
-import 'package:phylum/libphylum/actions/action_resource_rename.dart';
+import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -63,7 +63,7 @@ class ResourceOptionsButton extends StatelessWidget {
       case ResourceOption.rename:
         final name = await showInputDialog(context, title: 'Rename', preset: r.name);
         if (name != null) {
-          account.addAction(ResourceRenameAction(r: r, name: name));
+          account.addAction(ResourceMoveAction(r: r, name: name));
         }
         break;
       case ResourceOption.delete:
