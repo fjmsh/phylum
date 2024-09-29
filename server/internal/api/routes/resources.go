@@ -213,6 +213,9 @@ func handleResourceMoveRoute(c *gin.Context) {
 		if errors.Is(err, core.ErrInsufficientPermissions) {
 			panic(errInsufficientPermissions)
 		}
+		if errors.Is(err, core.ErrResourceNameConflict) {
+			panic(errResourceNameConflict)
+		}
 		panic(err)
 	} else {
 		c.JSON(200, responseFromResource(r))

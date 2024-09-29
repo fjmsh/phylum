@@ -312,6 +312,9 @@ func (f filesystem) UpdateNameParent(r Resource, name string, parent *uuid.UUID)
 		}
 	}
 	if r, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID(), Name: name, Parent: parent}); err != nil {
+		if strings.Contains(err.Error(), "unique_member_resource_name") {
+			return nil, ErrResourceNameConflict
+		}
 		return nil, err
 	} else {
 		return resource{
