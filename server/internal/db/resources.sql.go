@@ -223,6 +223,40 @@ func (q *Queries) UpdateResourceName(ctx context.Context, arg UpdateResourceName
 	return i, err
 }
 
+const updateResourceNameParent = `-- name: UpdateResourceNameParent :one
+UPDATE resources
+SET
+    name = CASE WHEN ($1::text = '') THEN name ELSE $1::text END,
+    parent = COALESCE($2, parent),
+    modified = NOW()
+WHERE id = $3::uuid
+RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum, permissions
+`
+
+type UpdateResourceNameParentParams struct {
+	Name   string
+	Parent *uuid.UUID
+	ID     uuid.UUID
+}
+
+func (q *Queries) UpdateResourceNameParent(ctx context.Context, arg UpdateResourceNameParentParams) (Resource, error) {
+	row := q.db.QueryRow(ctx, updateResourceNameParent, arg.Name, arg.Parent, arg.ID)
+	var i Resource
+	err := row.Scan(
+		&i.ID,
+		&i.Parent,
+		&i.Name,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.Size,
+		&i.Sha256sum,
+		&i.Permissions,
+	)
+	return i, err
+}
+
 const updateResourceParent = `-- name: UpdateResourceParent :one
 UPDATE resources
 SET

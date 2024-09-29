@@ -40,8 +40,7 @@ type FileSystem interface {
 	ReadDir(r Resource) ([]Resource, error)
 	CreateMemberResource(r Resource, id uuid.UUID, name string, dir bool) (Resource, error)
 	DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error)
-	UpdateName(r Resource, name string) (Resource, error)
-	UpdateParent(r Resource, parent uuid.UUID) (Resource, error)
+	UpdateNameParent(r Resource, name string, parent *uuid.UUID) (Resource, error)
 	UpdatePermissions(r Resource, username string, permission Permission) error
 }
 
@@ -266,19 +265,6 @@ func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, er
 }
 
 func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
-	if r.Name() == name {
-		return r, nil
-	}
-	if r.ParentID() == nil {
-		return nil, ErrInsufficientPermissions
-	}
-	parent, err := f.ResourceByID(*r.ParentID())
-	if err != nil {
-		return nil, err
-	}
-	if parent.UserPermission() < PermissionReadWrite {
-		return nil, ErrInsufficientPermissions
-	}
 	if r, err := f.db.UpdateResourceName(f.ctx, db.UpdateResourceNameParams{ID: r.ID(), Name: name}); err != nil {
 		return nil, err
 	} else {
@@ -297,13 +283,17 @@ func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
 	}
 }
 
-func (f filesystem) UpdateParent(r Resource, parent uuid.UUID) (Resource, error) {
+func (f filesystem) UpdateNameParent(r Resource, name string, parent *uuid.UUID) (Resource, error) {
 	if r.ParentID() == nil {
 		return nil, ErrInsufficientPermissions
 	}
-	if *r.ParentID() == parent {
-		return nil, nil
+	if name == r.Name() {
+		name = ""
 	}
+	if parent == r.ParentID() {
+		parent = nil
+	}
+
 	oldParent, err := f.ResourceByID(*r.ParentID())
 	if err != nil {
 		return nil, err
@@ -311,14 +301,17 @@ func (f filesystem) UpdateParent(r Resource, parent uuid.UUID) (Resource, error)
 	if oldParent.UserPermission() < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
 	}
-	newParent, err := f.ResourceByID(parent)
-	if err != nil {
-		return nil, err
+
+	if parent != nil {
+		newParent, err := f.ResourceByID(*parent)
+		if err != nil {
+			return nil, err
+		}
+		if newParent.UserPermission() < PermissionReadWrite {
+			return nil, ErrInsufficientPermissions
+		}
 	}
-	if newParent.UserPermission() < PermissionReadWrite {
-		return nil, ErrInsufficientPermissions
-	}
-	if r, err := f.db.UpdateResourceParent(f.ctx, db.UpdateResourceParentParams{ID: r.ID(), Parent: parent}); err != nil {
+	if r, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID(), Name: name, Parent: parent}); err != nil {
 		return nil, err
 	} else {
 		return resource{

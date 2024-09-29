@@ -48,12 +48,9 @@ type resourceMkdirParams struct {
 	ParentID uuid.UUID `json:"parent_id" binding:"required"`
 }
 
-type resourceRenameParams struct {
-	Name string `json:"name" binding:"required"`
-}
-
 type resourceMoveParams struct {
-	ParentID uuid.UUID `json:"parent_id" binding:"required"`
+	ParentID *uuid.UUID `json:"parent_id"`
+	Name     string     `json:"name"`
 }
 
 func SetupResourceRoutes(r *gin.RouterGroup) {
@@ -63,7 +60,6 @@ func SetupResourceRoutes(r *gin.RouterGroup) {
 	group.GET("/details/:id", handleResourceDetailsRoute)
 	group.GET("/contents/:id", handleResourceContentsRoute)
 	group.POST("/mkdir/:id", handleResourceMkdirRoute)
-	group.POST("/rename/:id", handleResourceRenameRoute)
 	group.POST("/move/:id", handleResourceMoveRoute)
 	group.PUT("/upload/:id", handleResourceUploadRoute)
 	group.DELETE("/delete/:id", handleResourceDeleteRoute)
@@ -192,40 +188,10 @@ func handleResourceMkdirRoute(c *gin.Context) {
 	c.JSON(200, responseFromResource(res))
 }
 
-func handleResourceRenameRoute(c *gin.Context) {
-	var params resourceRenameParams
-	err := c.ShouldBindJSON(&params)
-	if err != nil || params.Name == "" {
-		panic(errInvalidParams)
-	}
-
-	resourceID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		panic(errResourceIDInvalid)
-	}
-
-	fs := auth.GetFileSystem(c)
-	r, err := fs.ResourceByID(resourceID)
-	if err != nil {
-		if errors.Is(err, iofs.ErrNotExist) {
-			panic(errResourceNotFound)
-		}
-		panic(err)
-	}
-	if r, err := fs.UpdateName(r, params.Name); err != nil {
-		if errors.Is(err, core.ErrInsufficientPermissions) {
-			panic(errInsufficientPermissions)
-		}
-		panic(err)
-	} else {
-		c.JSON(200, responseFromResource(r))
-	}
-}
-
 func handleResourceMoveRoute(c *gin.Context) {
 	var params resourceMoveParams
 	err := c.ShouldBindJSON(&params)
-	if err != nil || params.ParentID == uuid.Nil {
+	if err != nil || (params.ParentID == nil && params.Name == "") {
 		panic(errInvalidParams)
 	}
 
@@ -243,7 +209,7 @@ func handleResourceMoveRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	if r, err := fs.UpdateParent(r, params.ParentID); err != nil {
+	if r, err := fs.UpdateNameParent(r, params.Name, params.ParentID); err != nil {
 		if errors.Is(err, core.ErrInsufficientPermissions) {
 			panic(errInsufficientPermissions)
 		}

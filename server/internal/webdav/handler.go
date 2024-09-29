@@ -146,15 +146,9 @@ func (a adapter) Rename(ctx context.Context, oldName, newName string) error {
 		return fs.ErrNotExist
 	}
 
-	if *src.ParentID() != parent.ID() {
-		if _, err = a.fs.UpdateParent(src, parent.ID()); err != nil {
-			return err
-		}
-	}
-	if src.Name() != newName && newName != "" && newName != "/" {
-		if _, err = a.fs.UpdateName(src, newName); err != nil {
-			return err
-		}
+	parentID := parent.ID()
+	if _, err = a.fs.UpdateNameParent(src, newName, &parentID); err != nil {
+		return err
 	}
 	return nil
 }

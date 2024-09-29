@@ -35,6 +35,15 @@ SET
 WHERE id = @id::uuid
 RETURNING *;
 
+-- name: UpdateResourceNameParent :one
+UPDATE resources
+SET
+    name = CASE WHEN (@name::text = '') THEN name ELSE @name::text END,
+    parent = COALESCE(sqlc.narg('parent'), parent),
+    modified = NOW()
+WHERE id = @id::uuid
+RETURNING *;
+
 
 
 -- name: DeleteRecursive :many
