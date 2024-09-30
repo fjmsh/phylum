@@ -49,13 +49,13 @@ class ResourceMkdirAction extends PhylumAction with JsonApiAction, ResourceCreat
   }
 
   @override
-  FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
-    account.resourceRepository.createResource(resourceId, true, parent, resourceName, '');
+  FutureOr applyOptimisticUpdate(PhylumAccount account) {
+    return account.resourceRepository.createResource(resourceId, true, parent, resourceName, '');
   }
 
   @override
-  FutureOr<void> revertOptimisticUpdate(PhylumAccount account) {
-    account.resourceRepository.deleteResource(resourceId);
+  FutureOr revertOptimisticUpdate(PhylumAccount account) {
+    return account.resourceRepository.deleteResource(resourceId);
   }
 
   @override

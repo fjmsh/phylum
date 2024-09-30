@@ -72,8 +72,8 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
   }
 
   @override
-  FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
-    account.resourceRepository.updateResource(
+  FutureOr applyOptimisticUpdate(PhylumAccount account) {
+    return account.resourceRepository.updateResource(
       resourceId,
       (o) => o(
         name: Value.absentIfNull(resourceName),
@@ -83,8 +83,8 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
   }
 
   @override
-  FutureOr<void> revertOptimisticUpdate(PhylumAccount account) {
-    account.resourceRepository.updateResource(resourceId, (o) => o(parent: Value(oldParent)));
+  FutureOr revertOptimisticUpdate(PhylumAccount account) {
+    return account.resourceRepository.updateResource(resourceId, (o) => o(parent: Value(oldParent)));
   }
 
   @override

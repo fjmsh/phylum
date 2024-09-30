@@ -74,13 +74,13 @@ class ResourceUploadAction extends PhylumAction with FileUploadApiAction, Resour
   }
 
   @override
-  FutureOr<void> applyOptimisticUpdate(PhylumAccount account) {
-    account.resourceRepository.createResource(resourceId, false, parent, resourceName, contentType);
+  FutureOr applyOptimisticUpdate(PhylumAccount account) {
+    return account.resourceRepository.createResource(resourceId, false, parent, resourceName, contentType);
   }
 
   @override
-  FutureOr<void> revertOptimisticUpdate(PhylumAccount account) {
-    account.resourceRepository.deleteResource(resourceId);
+  FutureOr revertOptimisticUpdate(PhylumAccount account) {
+    return account.resourceRepository.deleteResource(resourceId);
   }
 
   @override
