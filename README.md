@@ -24,10 +24,22 @@ Self-hosted cloud file storage
         [ ] Thumbnails
 [ ] Sync Manager
     [x] View List of pending actions
-    [ ] Retry / Edit / Delete failed actions
-    [ ] Retry / Edit / Delete failed downloads
-    [ ] View in-progress downloads
+    [x] View failed actions
+        [ ] Actions for failed actions
+            [x] Delete
+            [x] Retry
+            [ ] Edit
+    [x] View in-progress downloads
         [ ] View transfer rate and ETA
+    [ ] View finished downloads (in current session)
+        [ ] Actions for completed downloads 
+            [ ] Open
+            [ ] Open Folder
+        [ ] Actions for failed downloads
+            [ ] Delete
+            [ ] Retry
+            [ ] Edit
+    [ ] View all past downloads
 [ ] Public access
     [ ] Download files
     [ ] View folders

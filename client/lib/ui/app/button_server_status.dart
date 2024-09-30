@@ -43,8 +43,8 @@ class _ServerStatusButtonState extends State<ServerStatusButton> {
     final notifier = context.watch<ActionQueueStatusNotifier>();
     _ServerStatus state = _ServerStatus.done;
     if (notifier.unreachable) state = _ServerStatus.unreachable;
-    if (notifier.error > 0) state = _ServerStatus.error;
-    if (notifier.submitting > 0) state = _ServerStatus.syncing;
+    if (notifier.errorCount > 0) state = _ServerStatus.error;
+    if (notifier.submittingCount > 0) state = _ServerStatus.syncing;
     if (notifier.paused) state = _ServerStatus.paused;
     return ListTile(
       leading: Icon(state.icon),

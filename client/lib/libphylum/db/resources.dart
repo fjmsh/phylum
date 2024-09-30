@@ -15,8 +15,8 @@ class Resources extends Table {
   @override
   Set<Column> get primaryKey => {id};
 
-  @override
-  List<Set<Column<Object>>>? get uniqueKeys => [
-        {parent, name}
-      ];
+  // @override
+  // List<Set<Column<Object>>>? get uniqueKeys => [
+  //       {parent, name}
+  //     ];
 }

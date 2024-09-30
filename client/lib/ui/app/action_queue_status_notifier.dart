@@ -6,32 +6,39 @@ import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 class ActionQueueStatusNotifier extends ChangeNotifier {
-  final Map<StateNotifier<ActionStatus>, RemoveListener> _listeners = {};
-  final Map<StateNotifier<ActionStatus>, ActionStatus> _statusMap = {};
+  final Map<QueuedAction<PhylumAccount>, RemoveListener> _listeners = {};
+  final Map<QueuedAction<PhylumAccount>, ActionStatus> _statusMap = {};
   List<QueuedAction<PhylumAccount>>? last;
   late final RemoveListener removeListenerCallback;
   bool paused = false;
   bool unreachable = false;
 
-  int get submitting => _count<ActionStatusUploading>();
-  int get error => _count<ActionStatusError>();
+  int get submittingCount => _count<ActionStatusUploading>();
+  int get errorCount => _count<ActionStatusError>();
   int _count<T extends ActionStatus>() => _statusMap.values.fold(0, (acc, status) => status is T ? acc + 1 : acc);
+  List<QueuedAction<PhylumAccount>>? _failedActions;
+  List<QueuedAction<PhylumAccount>> get failedActions {
+    _failedActions ??= List.of(_statusMap.entries.where((e) => e.value is ActionStatusError).map((e) => e.key), growable: false);
+    return _failedActions!;
+  }
 
   ActionQueueStatusNotifier(BuildContext context) {
     removeListenerCallback = context.read<PhylumActionQueue>().addListener((state) {
       if (state.actions != last) {
         for (final action in state.actions) {
-          final notifier = action.statusNotifier;
-          if (!_listeners.containsKey(notifier)) {
-            _listeners[notifier] = notifier.addListener((status) {
+          if (!_listeners.containsKey(action)) {
+            _listeners[action] = action.statusNotifier.addListener((status) {
               // Ignore progress updates
-              if (_statusMap[notifier].runtimeType != status.runtimeType) {
-                _statusMap[notifier] = status;
+              if (_statusMap[action].runtimeType != status.runtimeType) {
+                if (status is ActionStatusError || _statusMap[action] is ActionStatusError) {
+                  _failedActions = null;
+                }
+                _statusMap[action] = status;
                 if (status is ActionStatusDone) {
                   Future.microtask(() {
-                    _listeners[notifier]?.call();
-                    _listeners.remove(notifier);
-                    _statusMap.remove(notifier);
+                    _listeners[action]?.call();
+                    _listeners.remove(action);
+                    _statusMap.remove(action);
                   });
                 }
                 notifyListeners();
