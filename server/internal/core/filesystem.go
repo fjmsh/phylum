@@ -21,12 +21,11 @@ var (
 	ErrInsufficientPermissions    = errors.New("insufficient permissions")
 	ErrCannotGrantOwnerPermission = errors.New("cannot grant owner permission")
 	ErrResourceNotCollection      = errors.New("cannot add member to non-collection resource")
-	ErrCannotReparentRootResource = errors.New("cannot reparent root resource")
-	ErrCannotReparentToRoot       = errors.New("cannot reparent resource to root")
 	ErrIDNotSpecified             = errors.New("resource id not specified")
 	ErrNameInvalid                = errors.New("name invalid")
 	ErrResourceNameConflict       = errors.New("name conflict")
 	ErrResourceIDConflict         = errors.New("id conflict")
+	ErrMoveTargetSubdirectory     = errors.New("move target subdirectory")
 )
 
 type FileSystem interface {
@@ -40,7 +39,7 @@ type FileSystem interface {
 	ReadDir(r Resource) ([]Resource, error)
 	CreateMemberResource(r Resource, id uuid.UUID, name string, dir bool) (Resource, error)
 	DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error)
-	UpdateNameParent(r Resource, name string, parent *uuid.UUID) (Resource, error)
+	Move(r Resource, name string, parent *uuid.UUID) (Resource, error)
 	UpdatePermissions(r Resource, username string, permission Permission) error
 }
 
@@ -192,7 +191,7 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	if id == uuid.Nil {
 		return nil, ErrIDNotSpecified
 	}
-	if name == "" {
+	if name == "" || checkNameInvalid(name) {
 		return nil, ErrNameInvalid
 	}
 	var result db.Resource
@@ -283,17 +282,21 @@ func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
 	}
 }
 
-func (f filesystem) UpdateNameParent(r Resource, name string, parent *uuid.UUID) (Resource, error) {
+func (f filesystem) Move(r Resource, name string, parent *uuid.UUID) (Resource, error) {
 	if r.ParentID() == nil {
 		return nil, ErrInsufficientPermissions
 	}
 	if name == r.Name() {
 		name = ""
 	}
+	if checkNameInvalid(name) {
+		return nil, ErrNameInvalid
+	}
 	if parent == r.ParentID() {
 		parent = nil
 	}
 
+	// Check source directory permissions
 	oldParent, err := f.ResourceByID(*r.ParentID())
 	if err != nil {
 		return nil, err
@@ -302,6 +305,7 @@ func (f filesystem) UpdateNameParent(r Resource, name string, parent *uuid.UUID)
 		return nil, ErrInsufficientPermissions
 	}
 
+	// Check target directory permissions (if applicable)
 	if parent != nil {
 		newParent, err := f.ResourceByID(*parent)
 		if err != nil {
@@ -309,6 +313,10 @@ func (f filesystem) UpdateNameParent(r Resource, name string, parent *uuid.UUID)
 		}
 		if newParent.UserPermission() < PermissionReadWrite {
 			return nil, ErrInsufficientPermissions
+		}
+
+		if res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: r.ID(), ResourceID: *parent, Username: f.username}); err != nil || res.Found {
+			return nil, ErrMoveTargetSubdirectory
 		}
 	}
 	if r, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID(), Name: name, Parent: parent}); err != nil {
@@ -344,5 +352,11 @@ func (f filesystem) UpdatePermissions(r Resource, username string, permission Pe
 		ResourceID: r.ID(),
 		Username:   username,
 		Permission: permission,
+	})
+}
+
+func checkNameInvalid(s string) bool {
+	return strings.ContainsFunc(s, func(r rune) bool {
+		return r == 0 || r == '/'
 	})
 }

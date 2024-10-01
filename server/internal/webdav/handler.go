@@ -147,7 +147,7 @@ func (a adapter) Rename(ctx context.Context, oldName, newName string) error {
 	}
 
 	parentID := parent.ID()
-	if _, err = a.fs.UpdateNameParent(src, newName, &parentID); err != nil {
+	if _, err = a.fs.Move(src, newName, &parentID); err != nil {
 		return err
 	}
 	return nil

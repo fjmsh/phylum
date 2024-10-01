@@ -22,6 +22,7 @@ var (
 	errResourceNotDirectory    = errors.New(http.StatusMethodNotAllowed, "resource_not_directory", "Resource Not Directory")
 	errInvalidParams           = errors.New(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
 	errResourceNameConflict    = errors.New(http.StatusConflict, "name_conflict", "Resource Name Conflict")
+	errMoveTargetSubdirectory  = errors.New(http.StatusBadRequest, "move_target_subdirectory", "Move Target Subdirectory")
 )
 
 type resourceResponse struct {
@@ -209,12 +210,15 @@ func handleResourceMoveRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	if r, err := fs.UpdateNameParent(r, params.Name, params.ParentID); err != nil {
+	if r, err := fs.Move(r, params.Name, params.ParentID); err != nil {
 		if errors.Is(err, core.ErrInsufficientPermissions) {
 			panic(errInsufficientPermissions)
 		}
 		if errors.Is(err, core.ErrResourceNameConflict) {
 			panic(errResourceNameConflict)
+		}
+		if errors.Is(err, core.ErrMoveTargetSubdirectory) {
+			panic(errMoveTargetSubdirectory)
 		}
 		panic(err)
 	} else {
