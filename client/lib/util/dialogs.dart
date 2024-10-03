@@ -113,6 +113,8 @@ Future<String?> showInputDialog(
             maxLines: maxLines,
             keyboardType: keyboardType,
             inputFormatters: formatters,
+            textInputAction: TextInputAction.go,
+            onSubmitted: (value) => (validate == null || validate(value)) ? Navigator.of(context).pop(value) : null,
             onChanged: (value) {
               setState(() {});
             },

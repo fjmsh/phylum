@@ -12,13 +12,23 @@ import 'package:phylum/util/file_size.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
-const uuid = Uuid();
+String generateId() => const Uuid().v4();
+final slashChar = '/'.runes.first;
+final illegalChars = <int>{
+  ...'\\/:*?"<>|'.runes,
+};
 
-String generateId() => uuid.v4();
+bool validateName(String name) =>
+    !name.startsWith(' ') && name != '.' && name != '..' && name.trim().isNotEmpty && !name.runes.any((c) => c < 31 || illegalChars.contains(c));
 
 void createDirectory(BuildContext context, String folderId) async {
   final account = context.read<PhylumAccount>();
-  final dirName = await showInputDialog(context, title: 'Create New Folder', labelText: 'Folder Name');
+  final dirName = await showInputDialog(
+    context,
+    title: 'Create New Folder',
+    labelText: 'Folder Name',
+    validate: validateName,
+  );
   if (dirName == null || dirName == "") return;
   account.addAction(ResourceMkdirAction(resourceId: generateId(), parent: folderId, resourceName: dirName));
 }
