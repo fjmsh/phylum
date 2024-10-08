@@ -9,6 +9,7 @@ Self-hosted cloud file storage
     [x] Rename
     [x] Move (cut-paste)
     [ ] Copy (copy-paste)
+    [ ] Merge (move/copy)
     [x] Download files
     [ ] Notifications for completed/failed downloads
     [ ] Download folders / multiple files as zip
@@ -29,6 +30,8 @@ Self-hosted cloud file storage
             [x] Delete
             [x] Retry
             [ ] Edit
+                [ ] Rename
+                [ ] Overwrite
     [x] View in-progress downloads
         [ ] View transfer rate and ETA
     [ ] View finished downloads (in current session)
