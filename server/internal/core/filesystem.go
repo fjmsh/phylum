@@ -28,6 +28,13 @@ var (
 	ErrMoveTargetSubdirectory     = errors.New("move target subdirectory")
 )
 
+type DiskUsageInfo struct {
+	TotalSize int64
+	Entities  int64
+	Files     int64
+	Dirs      int64
+}
+
 type FileSystem interface {
 	WithDb(*db.DbHandler) FileSystem
 	RunInTx(fn func(FileSystem) error) error
@@ -41,6 +48,7 @@ type FileSystem interface {
 	DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error)
 	Move(r Resource, name string, parent *uuid.UUID) (Resource, error)
 	UpdatePermissions(r Resource, username string, permission Permission) error
+	DiskUsage(r Resource) (DiskUsageInfo, error)
 }
 
 type filesystem struct {
@@ -336,6 +344,19 @@ func (f filesystem) Move(r Resource, name string, parent *uuid.UUID) (Resource, 
 			collection:     r.Dir,
 			sha256sum:      r.Sha256sum.String,
 			permissions:    r.Permissions,
+		}, nil
+	}
+}
+
+func (f filesystem) DiskUsage(r Resource) (DiskUsageInfo, error) {
+	if info, err := f.db.DiskUsage(f.ctx, r.ID()); err != nil {
+		return DiskUsageInfo{}, err
+	} else {
+		return DiskUsageInfo{
+			TotalSize: info.Size,
+			Entities:  info.Entities,
+			Files:     info.Files,
+			Dirs:      info.Dirs,
 		}, nil
 	}
 }

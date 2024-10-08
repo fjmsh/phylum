@@ -38,6 +38,12 @@ type resourceResponse struct {
 	Permissions string     `json:"permissions,omitempty"`
 }
 
+type diskUsageResponse struct {
+	TotalSize int64 `json:"size"`
+	Files     int64 `json:"files"`
+	Dirs      int64 `json:"dirs"`
+}
+
 type resourceDetailResponse struct {
 	Metadata             resourceResponse   `json:"metadata"`
 	Children             []resourceResponse `json:"children,omitempty"`
@@ -57,6 +63,7 @@ type resourceMoveParams struct {
 func SetupResourceRoutes(r *gin.RouterGroup) {
 	group := r.Group("/resources")
 	group.GET("/ls/:id", handleResourceLsRoute)
+	group.GET("/du/:id", handleResourceDiskUsageRoute)
 	group.GET("/metadata/:id", handleResourceMetadataRoute)
 	group.GET("/details/:id", handleResourceDetailsRoute)
 	group.GET("/contents/:id", handleResourceContentsRoute)
@@ -111,6 +118,32 @@ func handleResourceLsRoute(c *gin.Context) {
 		results[i] = responseFromResource(c)
 	}
 	c.JSON(200, results)
+}
+
+func handleResourceDiskUsageRoute(c *gin.Context) {
+	resourceId, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		panic(errResourceIDInvalid)
+	}
+
+	fs := auth.GetFileSystem(c)
+	resource, err := fs.ResourceByID(resourceId)
+	if err != nil {
+		if errors.Is(err, iofs.ErrNotExist) {
+			err = errResourceNotFound
+		}
+		panic(err)
+	}
+
+	info, err := fs.DiskUsage(resource)
+	if err != nil {
+		panic(err)
+	}
+	c.JSON(200, diskUsageResponse{
+		TotalSize: info.TotalSize,
+		Files:     info.Files,
+		Dirs:      info.Dirs,
+	})
 }
 
 func handleResourceDetailsRoute(c *gin.Context) {

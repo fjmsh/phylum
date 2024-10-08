@@ -85,6 +85,42 @@ func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) ([]uuid.UUI
 	return items, nil
 }
 
+const diskUsage = `-- name: DiskUsage :one
+WITH RECURSIVE nodes(id, parent, size, dir) AS (
+    SELECT r.id, r.parent, r.size, r.dir
+    FROM resources r WHERE r.id = $1::uuid
+  UNION ALL
+    SELECT r.id, r.parent, r.size, r.dir
+    FROM resources r JOIN nodes n on r.parent = n.id
+    WHERE deleted IS NULL
+)
+SELECT
+  SUM(size) AS size,
+  COUNT(*) AS entities,
+  COUNT(CASE dir WHEN true THEN 1 ELSE NULL END) AS dirs,
+  COUNT(CASE dir WHEN false THEN 1 ELSE NULL END) AS files
+FROM nodes
+`
+
+type DiskUsageRow struct {
+	Size     int64
+	Entities int64
+	Dirs     int64
+	Files    int64
+}
+
+func (q *Queries) DiskUsage(ctx context.Context, id uuid.UUID) (DiskUsageRow, error) {
+	row := q.db.QueryRow(ctx, diskUsage, id)
+	var i DiskUsageRow
+	err := row.Scan(
+		&i.Size,
+		&i.Entities,
+		&i.Dirs,
+		&i.Files,
+	)
+	return i, err
+}
+
 const hardDeleteRecursive = `-- name: HardDeleteRecursive :many
 WITH RECURSIVE nodes(id, parent) AS (
     SELECT r.id, r.parent
