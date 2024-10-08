@@ -16,7 +16,7 @@ type myHomeResponse struct {
 }
 
 type mySharedResponse struct {
-	Shared []fs.ResourceResponse `json:"shared"`
+	Shared []fs.ResourceMetadata `json:"shared"`
 }
 
 func SetupMyRoutes(r *gin.RouterGroup, a *core.App) {
@@ -27,8 +27,8 @@ func SetupMyRoutes(r *gin.RouterGroup, a *core.App) {
 
 func handleMyHomeRoute(c *gin.Context) {
 	user := auth.GetUser(c)
-	fs := auth.GetFileSystem(c)
-	r, err := fs.ResourceByID(user.Home)
+	f := auth.GetFileSystem(c)
+	r, err := f.ResourceByID(user.Home)
 	if err != nil {
 		if errors.Is(err, iofs.ErrNotExist) {
 			err = errResourceNotFound
@@ -38,7 +38,7 @@ func handleMyHomeRoute(c *gin.Context) {
 
 	c.JSON(200, myHomeResponse{
 		User: responseFromUser(user),
-		Home: detailedResponseFromResource(fs, r),
+		Home: fs.DetailedResponseFromResource(f, r),
 	})
 }
 
@@ -50,9 +50,9 @@ func createMySharedRouteHandler(a *core.App) func(*gin.Context) {
 			panic(err)
 		}
 
-		result := make([]resourceResponse, len(shared))
+		result := make([]fs.ResourceMetadata, len(shared))
 		for i, r := range shared {
-			result[i] = responseFromResource(r)
+			result[i] = fs.ResponseFromResource(r)
 		}
 		c.JSON(200, mySharedResponse{Shared: result})
 	}

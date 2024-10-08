@@ -4,7 +4,6 @@ import (
 	"io"
 	iofs "io/fs"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -24,31 +23,6 @@ var (
 	errResourceNameConflict    = errors.New(http.StatusConflict, "name_conflict", "Resource Name Conflict")
 	errMoveTargetSubdirectory  = errors.New(http.StatusBadRequest, "move_target_subdirectory", "Move Target Subdirectory")
 )
-
-type ResourceResponse struct {
-	ID          uuid.UUID  `json:"id"`
-	Parent      *uuid.UUID `json:"parent"`
-	Name        string     `json:"name"`
-	Dir         bool       `json:"dir"`
-	Modified    time.Time  `json:"modified"`
-	Deleted     *time.Time `json:"deleted,omitempty"`
-	ContentType string     `json:"ctype,omitEmpty"`
-	Size        int64      `json:"size"`
-	Etag        string     `json:"etag"`
-	Permissions string     `json:"permissions,omitempty"`
-}
-
-type DiskUsageResponse struct {
-	TotalSize int64 `json:"size"`
-	Files     int64 `json:"files"`
-	Dirs      int64 `json:"dirs"`
-}
-
-type ResourceDetailResponse struct {
-	Metadata             ResourceResponse   `json:"metadata"`
-	Children             []ResourceResponse `json:"children,omitempty"`
-	InheritedPermissions string             `json:"inherited,omitempty"`
-}
 
 type resourceMkdirParams struct {
 	Name     string    `json:"name" binding:"required"`
@@ -88,7 +62,7 @@ func handleResourceMetadataRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	c.JSON(200, responseFromResource(resource))
+	c.JSON(200, ResponseFromResource(resource))
 }
 
 func handleResourceLsRoute(c *gin.Context) {
@@ -113,9 +87,9 @@ func handleResourceLsRoute(c *gin.Context) {
 		}
 		panic(err)
 	}
-	results := make([]ResourceResponse, len(children))
+	results := make([]ResourceMetadata, len(children))
 	for i, c := range children {
-		results[i] = responseFromResource(c)
+		results[i] = ResponseFromResource(c)
 	}
 	c.JSON(200, results)
 }
@@ -161,7 +135,7 @@ func handleResourceDetailsRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	c.JSON(200, detailedResponseFromResource(fs, r))
+	c.JSON(200, DetailedResponseFromResource(fs, r))
 }
 
 func handleResourceContentsRoute(c *gin.Context) {
@@ -219,7 +193,7 @@ func handleResourceMkdirRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	c.JSON(200, responseFromResource(res))
+	c.JSON(200, ResponseFromResource(res))
 }
 
 func handleResourceMoveRoute(c *gin.Context) {
@@ -255,7 +229,7 @@ func handleResourceMoveRoute(c *gin.Context) {
 		}
 		panic(err)
 	} else {
-		c.JSON(200, responseFromResource(r))
+		c.JSON(200, ResponseFromResource(r))
 	}
 }
 
@@ -332,7 +306,7 @@ func handleResourceUploadRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	c.JSON(200, responseFromResource(res))
+	c.JSON(200, ResponseFromResource(res))
 }
 
 func handleResourceDeleteRoute(c *gin.Context) {
@@ -355,36 +329,4 @@ func handleResourceDeleteRoute(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{"ids": ids})
-}
-
-func detailedResponseFromResource(fs core.FileSystem, r core.Resource) ResourceDetailResponse {
-	response := ResourceDetailResponse{}
-	response.Metadata = responseFromResource(r)
-	if r.IsDir() {
-		children, err := fs.ReadDir(r)
-		if err != nil {
-			panic(err)
-		}
-		response.Children = make([]ResourceResponse, len(children))
-		for i, c := range children {
-			response.Children[i] = responseFromResource(c)
-		}
-	}
-	response.InheritedPermissions = r.InheritedPermissions()
-	return response
-}
-
-func responseFromResource(r core.Resource) ResourceResponse {
-	return ResourceResponse{
-		ID:          r.ID(),
-		Parent:      r.ParentID(),
-		Name:        r.Name(),
-		Dir:         r.IsDir(),
-		Modified:    r.ModTime(),
-		Deleted:     r.DelTime(),
-		Size:        r.Size(),
-		Etag:        r.ETag(),
-		ContentType: r.ContentType(),
-		Permissions: r.Permissions(),
-	}
 }
