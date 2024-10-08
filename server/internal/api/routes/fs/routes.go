@@ -1,4 +1,4 @@
-package routes
+package fs
 
 import (
 	"io"
@@ -25,7 +25,7 @@ var (
 	errMoveTargetSubdirectory  = errors.New(http.StatusBadRequest, "move_target_subdirectory", "Move Target Subdirectory")
 )
 
-type resourceResponse struct {
+type ResourceResponse struct {
 	ID          uuid.UUID  `json:"id"`
 	Parent      *uuid.UUID `json:"parent"`
 	Name        string     `json:"name"`
@@ -38,15 +38,15 @@ type resourceResponse struct {
 	Permissions string     `json:"permissions,omitempty"`
 }
 
-type diskUsageResponse struct {
+type DiskUsageResponse struct {
 	TotalSize int64 `json:"size"`
 	Files     int64 `json:"files"`
 	Dirs      int64 `json:"dirs"`
 }
 
-type resourceDetailResponse struct {
-	Metadata             resourceResponse   `json:"metadata"`
-	Children             []resourceResponse `json:"children,omitempty"`
+type ResourceDetailResponse struct {
+	Metadata             ResourceResponse   `json:"metadata"`
+	Children             []ResourceResponse `json:"children,omitempty"`
 	InheritedPermissions string             `json:"inherited,omitempty"`
 }
 
@@ -60,7 +60,7 @@ type resourceMoveParams struct {
 	Name     string     `json:"name"`
 }
 
-func SetupResourceRoutes(r *gin.RouterGroup) {
+func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/resources")
 	group.GET("/ls/:id", handleResourceLsRoute)
 	group.GET("/du/:id", handleResourceDiskUsageRoute)
@@ -113,7 +113,7 @@ func handleResourceLsRoute(c *gin.Context) {
 		}
 		panic(err)
 	}
-	results := make([]resourceResponse, len(children))
+	results := make([]ResourceResponse, len(children))
 	for i, c := range children {
 		results[i] = responseFromResource(c)
 	}
@@ -139,7 +139,7 @@ func handleResourceDiskUsageRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	c.JSON(200, diskUsageResponse{
+	c.JSON(200, DiskUsageResponse{
 		TotalSize: info.TotalSize,
 		Files:     info.Files,
 		Dirs:      info.Dirs,
@@ -357,15 +357,15 @@ func handleResourceDeleteRoute(c *gin.Context) {
 	c.JSON(200, gin.H{"ids": ids})
 }
 
-func detailedResponseFromResource(fs core.FileSystem, r core.Resource) resourceDetailResponse {
-	response := resourceDetailResponse{}
+func detailedResponseFromResource(fs core.FileSystem, r core.Resource) ResourceDetailResponse {
+	response := ResourceDetailResponse{}
 	response.Metadata = responseFromResource(r)
 	if r.IsDir() {
 		children, err := fs.ReadDir(r)
 		if err != nil {
 			panic(err)
 		}
-		response.Children = make([]resourceResponse, len(children))
+		response.Children = make([]ResourceResponse, len(children))
 		for i, c := range children {
 			response.Children[i] = responseFromResource(c)
 		}
@@ -374,8 +374,8 @@ func detailedResponseFromResource(fs core.FileSystem, r core.Resource) resourceD
 	return response
 }
 
-func responseFromResource(r core.Resource) resourceResponse {
-	return resourceResponse{
+func responseFromResource(r core.Resource) ResourceResponse {
+	return ResourceResponse{
 		ID:          r.ID(),
 		Parent:      r.ParentID(),
 		Name:        r.Name(),

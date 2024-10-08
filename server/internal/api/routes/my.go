@@ -6,16 +6,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/api/errors"
+	"github.com/shroff/phylum/server/internal/api/routes/fs"
 	"github.com/shroff/phylum/server/internal/core"
 )
 
 type myHomeResponse struct {
-	User userResponse           `json:"user"`
-	Home resourceDetailResponse `json:"home"`
+	User userResponse              `json:"user"`
+	Home fs.ResourceDetailResponse `json:"home"`
 }
 
 type mySharedResponse struct {
-	Shared []resourceResponse `json:"shared"`
+	Shared []fs.ResourceResponse `json:"shared"`
 }
 
 func SetupMyRoutes(r *gin.RouterGroup, a *core.App) {
