@@ -36,7 +36,7 @@ func (a App) CreateUser(ctx context.Context, username, displayName, password str
 		} else if err := fs.UpdatePermissions(userHome, u.Username, PermissionReadWriteShare); err != nil {
 			return err
 		} else {
-			return d.UpdateUserHome(ctx, db.UpdateUserHomeParams{Username: u.Username, Home: userHome.ID()})
+			return d.UpdateUserHome(ctx, db.UpdateUserHomeParams{Username: u.Username, Home: userHome.ID})
 		}
 	})
 }

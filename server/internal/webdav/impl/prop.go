@@ -138,7 +138,7 @@ func props(ctx context.Context, fs FileSystem, ls LockSystem, name string, pname
 	if err != nil {
 		return nil, err
 	}
-	isDir := fi.IsDir()
+	isDir := fi.Dir
 
 	pstatOK := Propstat{Status: http.StatusOK}
 	pstatNotFound := Propstat{Status: http.StatusNotFound}
@@ -165,7 +165,7 @@ func propnames(ctx context.Context, fs FileSystem, ls LockSystem, name string) (
 	if err != nil {
 		return nil, err
 	}
-	isDir := fi.IsDir()
+	isDir := fi.Dir
 
 	pnames := make([]xml.Name, 0, len(liveProps))
 	for pn, prop := range liveProps {
@@ -266,30 +266,30 @@ func escapeXML(s string) string {
 }
 
 func findResourceType(fi core.Resource) string {
-	if fi.IsDir() {
+	if fi.Dir {
 		return `<D:collection xmlns:D="DAV:"/>`
 	}
 	return ""
 }
 
 func findDisplayName(fi core.Resource) string {
-	return escapeXML(fi.Name())
+	return escapeXML(fi.Name)
 }
 
 func findContentLength(fi core.Resource) string {
-	return strconv.FormatInt(fi.Size(), 10)
+	return strconv.FormatInt(fi.Size, 10)
 }
 
 func findLastModified(fi core.Resource) string {
-	return fi.ModTime().UTC().Format(http.TimeFormat)
+	return fi.Modified.UTC().Format(http.TimeFormat)
 }
 
 func findContentType(fi core.Resource) string {
-	return fi.ContentType()
+	return fi.ContentType
 }
 
 func findETag(fi core.Resource) string {
-	return fi.ETag()
+	return fi.ETag
 }
 
 func findSupportedLock(fi core.Resource) string {

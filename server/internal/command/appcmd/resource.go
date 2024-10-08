@@ -86,7 +86,7 @@ func setupResourceRmCommand() *cobra.Command {
 				}
 			}
 
-			if r.IsDir() {
+			if r.Dir {
 				if recursive, err := cmd.Flags().GetBool("recursive"); err != nil || !recursive {
 					logrus.Fatal("Must use -r to delete collections")
 				}
@@ -104,7 +104,7 @@ func setupResourceRmCommand() *cobra.Command {
 
 func setupResourceLsCommand() *cobra.Command {
 	details := func(r core.Resource) string {
-		return fmt.Sprintf("%s %4d %s", r.ID().String(), r.UserPermission(), r.Name())
+		return fmt.Sprintf("%s %4d %s", r.ID.String(), r.UserPermissions, r.Name)
 	}
 	cmd := cobra.Command{
 		Use:   "ls <path | uuid>",
@@ -141,44 +141,11 @@ func setupResourceLsCommand() *cobra.Command {
 				}
 			}
 
-			// specificPermissions, err := fs.GetPermissionsLocal(r)
-			// if err != nil {
-			// 	logrus.Fatal(err)
-			// }
-			// inheritedPermissions, err := fs.GetPermissionsInherited(r)
-			// if err != nil {
-			// 	logrus.Fatal(err)
-			// }
+			logrus.Info("Name: " + r.Name)
+			logrus.Info("  ID: " + r.ID.String())
+			logrus.Info("Perm: " + core.PermissionString(r.UserPermissions))
 
-			logrus.Info("Name: " + r.Name())
-			logrus.Info("  ID: " + r.ID().String())
-			logrus.Info("Perm: " + core.PermissionString(r.UserPermission()))
-
-			// if specificPermissions != nil {
-			// 	logrus.Info()
-			// 	logrus.Info("Specific Permissions:")
-			// 	for id, p := range specificPermissions {
-			// 		user, err := core.Default.UserByID(context.Background(), id)
-			// 		if err != nil {
-			// 			logrus.Fatal(err)
-			// 		}
-			// 		logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Email, user.ID, core.PermissionString(p)))
-			// 	}
-			// }
-
-			// if inheritedPermissions != nil {
-			// 	logrus.Info()
-			// 	logrus.Info("Inherited Permissions:")
-			// 	for id, p := range inheritedPermissions {
-			// 		user, err := core.Default.UserByID(context.Background(), id)
-			// 		if err != nil {
-			// 			logrus.Fatal(err)
-			// 		}
-			// 		logrus.Info(fmt.Sprintf("%8.8s (%3.3d): %s", user.Email, user.ID, core.PermissionString(p)))
-			// 	}
-			// }
-
-			if r.IsDir() {
+			if r.Dir {
 				children, err := fs.ReadDir(r)
 				if err != nil {
 					logrus.Fatal(err)

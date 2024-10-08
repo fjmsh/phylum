@@ -92,7 +92,7 @@ func setupUserChrootCommand() *cobra.Command {
 						logrus.Fatal(err)
 					}
 				}
-				core.Default.UpdateUserRoot(context.Background(), user, res.ID())
+				core.Default.UpdateUserRoot(context.Background(), user, res.ID)
 			}
 		},
 	}

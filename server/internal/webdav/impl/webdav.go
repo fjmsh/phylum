@@ -181,7 +181,7 @@ func (h *Handler) handleOptions(w http.ResponseWriter, r *http.Request) (status 
 	ctx := r.Context()
 	allow := "OPTIONS, LOCK, PUT, MKCOL"
 	if fi, err := h.FileSystem.Stat(ctx, reqPath); err == nil {
-		if fi.IsDir() {
+		if fi.Dir {
 			allow = "OPTIONS, LOCK, DELETE, PROPPATCH, COPY, MOVE, UNLOCK, PROPFIND"
 		} else {
 			allow = "OPTIONS, LOCK, GET, HEAD, POST, DELETE, PROPPATCH, COPY, MOVE, UNLOCK, PROPFIND, PUT"
@@ -206,7 +206,7 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 	if err != nil {
 		return http.StatusNotFound, err
 	}
-	if file.IsDir() {
+	if file.Dir {
 		serve.ServeCollection(w, r, h.FileSystem, file)
 	} else {
 		serve.ServeResource(w, r, h.FileSystem, file)
@@ -276,8 +276,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	if closeErr != nil {
 		return http.StatusMethodNotAllowed, closeErr
 	}
-	etag := fi.ETag()
-	w.Header().Set("ETag", etag)
+	w.Header().Set("ETag", fi.ETag)
 	return http.StatusCreated, nil
 }
 
@@ -550,7 +549,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 			return handlePropfindError(err, info)
 		}
 		href := path.Join(h.Prefix, reqPath)
-		if href != "/" && info.IsDir() {
+		if href != "/" && info.Dir {
 			href += "/"
 		}
 		return mw.write(makePropstatResponse(href, pstats))
@@ -628,7 +627,7 @@ func makePropstatResponse(href string, pstats []Propstat) *response {
 
 func handlePropfindError(err error, info core.Resource) error {
 	var skipResp error = nil
-	if info.IsDir() {
+	if info.Dir {
 		skipResp = filepath.SkipDir
 	}
 

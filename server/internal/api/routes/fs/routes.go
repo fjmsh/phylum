@@ -62,7 +62,7 @@ func handleResourceMetadataRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	c.JSON(200, ResponseFromResource(resource))
+	c.JSON(200, resource)
 }
 
 func handleResourceLsRoute(c *gin.Context) {
@@ -87,11 +87,7 @@ func handleResourceLsRoute(c *gin.Context) {
 		}
 		panic(err)
 	}
-	results := make([]ResourceMetadata, len(children))
-	for i, c := range children {
-		results[i] = ResponseFromResource(c)
-	}
-	c.JSON(200, results)
+	c.JSON(200, children)
 }
 
 func handleResourceDiskUsageRoute(c *gin.Context) {
@@ -176,7 +172,7 @@ func handleResourceMkdirRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	res, err := fs.CreateMemberResource(parent, resourceID, params.Name, true)
+	r, err := fs.CreateMemberResource(parent, resourceID, params.Name, true)
 	if err != nil {
 		if errors.Is(err, core.ErrInsufficientPermissions) {
 			panic(errInsufficientPermissions)
@@ -193,7 +189,7 @@ func handleResourceMkdirRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	c.JSON(200, ResponseFromResource(res))
+	c.JSON(200, r)
 }
 
 func handleResourceMoveRoute(c *gin.Context) {
@@ -229,7 +225,7 @@ func handleResourceMoveRoute(c *gin.Context) {
 		}
 		panic(err)
 	} else {
-		c.JSON(200, ResponseFromResource(r))
+		c.JSON(200, r)
 	}
 }
 
@@ -302,11 +298,11 @@ func handleResourceUploadRoute(c *gin.Context) {
 	}
 
 	// TODO: Avoid reading from db again if we can update size and etag
-	res, err := f.ResourceByID(resourceID)
+	r, err := f.ResourceByID(resourceID)
 	if err != nil {
 		panic(err)
 	}
-	c.JSON(200, ResponseFromResource(res))
+	c.JSON(200, r)
 }
 
 func handleResourceDeleteRoute(c *gin.Context) {

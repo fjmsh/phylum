@@ -13,11 +13,11 @@ type ResourceMetadata struct {
 	Name        string     `json:"name"`
 	Dir         bool       `json:"dir"`
 	Modified    time.Time  `json:"modified"`
-	Deleted     *time.Time `json:"deleted,omitempty"`
-	ContentType string     `json:"ctype,omitEmpty"`
+	Deleted     *time.Time `json:"deleted"`
+	ContentType string     `json:"ctype"`
 	Size        int64      `json:"size"`
 	Etag        string     `json:"etag"`
-	Permissions string     `json:"permissions,omitempty"`
+	Permissions string     `json:"permissions"`
 }
 
 type DiskUsageResponse struct {
@@ -27,39 +27,24 @@ type DiskUsageResponse struct {
 }
 
 type ResourceDetailResponse struct {
-	Metadata             ResourceMetadata   `json:"metadata"`
-	Children             []ResourceMetadata `json:"children,omitempty"`
-	InheritedPermissions string             `json:"inherited,omitempty"`
+	Metadata             core.Resource   `json:"metadata"`
+	Children             []core.Resource `json:"children,omitempty"`
+	InheritedPermissions string          `json:"inherited,omitempty"`
 }
 
 func DetailedResponseFromResource(fs core.FileSystem, r core.Resource) ResourceDetailResponse {
 	response := ResourceDetailResponse{}
-	response.Metadata = ResponseFromResource(r)
-	if r.IsDir() {
+	response.Metadata = r
+	if r.Dir {
 		children, err := fs.ReadDir(r)
 		if err != nil {
 			panic(err)
 		}
-		response.Children = make([]ResourceMetadata, len(children))
+		response.Children = make([]core.Resource, len(children))
 		for i, c := range children {
-			response.Children[i] = ResponseFromResource(c)
+			response.Children[i] = c
 		}
 	}
-	response.InheritedPermissions = r.InheritedPermissions()
+	response.InheritedPermissions = r.InheritedPermissions
 	return response
-}
-
-func ResponseFromResource(r core.Resource) ResourceMetadata {
-	return ResourceMetadata{
-		ID:          r.ID(),
-		Parent:      r.ParentID(),
-		Name:        r.Name(),
-		Dir:         r.IsDir(),
-		Modified:    r.ModTime(),
-		Deleted:     r.DelTime(),
-		Size:        r.Size(),
-		Etag:        r.ETag(),
-		ContentType: r.ContentType(),
-		Permissions: r.Permissions(),
-	}
 }

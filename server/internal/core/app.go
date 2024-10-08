@@ -118,15 +118,16 @@ func (a App) GetSharedResources(ctx context.Context, user User) (result []Resour
 
 	result = make([]Resource, len(res))
 	for i, r := range res {
-		result[i] = resource{
-			id:          r.ID,
-			parentID:    r.Parent,
-			name:        r.Name,
-			size:        r.Size.Int64,
-			collection:  r.Dir,
-			modTime:     r.Modified.Time,
-			sha256sum:   r.Sha256sum.String,
-			permissions: r.Permissions,
+		result[i] = Resource{
+			ID:          r.ID,
+			ParentID:    r.Parent,
+			Name:        r.Name,
+			Size:        r.Size.Int64,
+			Dir:         r.Dir,
+			Modified:    r.Modified.Time,
+			Deleted:     &r.Deleted.Time,
+			ETag:        r.Sha256sum.String,
+			Permissions: string(r.Permissions),
 		}
 	}
 	return

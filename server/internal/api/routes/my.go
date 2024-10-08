@@ -1,11 +1,8 @@
 package routes
 
 import (
-	iofs "io/fs"
-
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
-	"github.com/shroff/phylum/server/internal/api/errors"
 	"github.com/shroff/phylum/server/internal/api/routes/fs"
 	"github.com/shroff/phylum/server/internal/core"
 )
@@ -16,7 +13,7 @@ type myHomeResponse struct {
 }
 
 type mySharedResponse struct {
-	Shared []fs.ResourceMetadata `json:"shared"`
+	Shared []core.Resource `json:"shared"`
 }
 
 func SetupMyRoutes(r *gin.RouterGroup, a *core.App) {
@@ -30,9 +27,9 @@ func handleMyHomeRoute(c *gin.Context) {
 	f := auth.GetFileSystem(c)
 	r, err := f.ResourceByID(user.Home)
 	if err != nil {
-		if errors.Is(err, iofs.ErrNotExist) {
-			err = errResourceNotFound
-		}
+		// if errors.Is(err, iofs.ErrNotExist) {
+		// 	err = errResourceNotFound
+		// }
 		panic(err)
 	}
 
@@ -49,11 +46,6 @@ func createMySharedRouteHandler(a *core.App) func(*gin.Context) {
 		if err != nil {
 			panic(err)
 		}
-
-		result := make([]fs.ResourceMetadata, len(shared))
-		for i, r := range shared {
-			result[i] = fs.ResponseFromResource(r)
-		}
-		c.JSON(200, mySharedResponse{Shared: result})
+		c.JSON(200, mySharedResponse{Shared: shared})
 	}
 }

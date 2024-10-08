@@ -94,7 +94,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 		}
 	}
 
-	if srcStat.IsDir() {
+	if srcStat.Dir {
 		if err := fs.Mkdir(ctx, dst); err != nil {
 			return http.StatusForbidden, err
 		}
@@ -104,7 +104,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 				return http.StatusForbidden, err
 			}
 			for _, c := range children {
-				name := c.Name()
+				name := c.Name
 				s := path.Join(src, name)
 				d := path.Join(dst, name)
 				cStatus, cErr := copyFiles(ctx, fs, s, d, overwrite, depth, recursion)
@@ -159,12 +159,12 @@ func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info cor
 	// This implementation is based on Walk's code in the standard path/filepath package.
 	err := walkFn(name, info, nil)
 	if err != nil {
-		if info.IsDir() && err == filepath.SkipDir {
+		if info.Dir && err == filepath.SkipDir {
 			return nil
 		}
 		return err
 	}
-	if !info.IsDir() || depth == 0 {
+	if !info.Dir || depth == 0 {
 		return nil
 	}
 	if depth == 1 {
@@ -182,7 +182,7 @@ func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info cor
 	}
 
 	for _, fileInfo := range fileInfos {
-		filename := path.Join(name, fileInfo.Name())
+		filename := path.Join(name, fileInfo.Name)
 		fileInfo, err := fs.Stat(ctx, filename)
 		if err != nil {
 			if err := walkFn(filename, fileInfo, err); err != nil && err != filepath.SkipDir {
@@ -191,7 +191,7 @@ func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info cor
 		} else {
 			err = walkFS(ctx, fs, depth, filename, fileInfo, walkFn)
 			if err != nil {
-				if !fileInfo.IsDir() || err != filepath.SkipDir {
+				if !fileInfo.Dir || err != filepath.SkipDir {
 					return err
 				}
 			}

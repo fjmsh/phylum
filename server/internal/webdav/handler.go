@@ -94,7 +94,7 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 		}
 		return nil, err
 	}
-	if resource.IsDir() {
+	if resource.Dir {
 		return nil, errors.New("cannot open collection for write")
 	}
 	return a.fs.OpenWrite(resource)
@@ -146,7 +146,7 @@ func (a adapter) Rename(ctx context.Context, oldName, newName string) error {
 		return fs.ErrNotExist
 	}
 
-	parentID := parent.ID()
+	parentID := parent.ID
 	if _, err = a.fs.Move(src, newName, &parentID); err != nil {
 		return err
 	}
