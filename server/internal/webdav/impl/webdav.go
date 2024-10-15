@@ -360,7 +360,7 @@ func (h *Handler) handleCopyMove(_ http.ResponseWriter, r *http.Request) (status
 				return http.StatusBadRequest, errInvalidDepth
 			}
 		}
-		return copyFiles(ctx, h.FileSystem, src, dst, r.Header.Get("Overwrite") != "F", depth, 0)
+		return copyFiles(ctx, h.FileSystem, src, dst, r.Header.Get("Overwrite") != "F", depth)
 	}
 
 	release, status, err := h.confirmLocks(r, src, dst)

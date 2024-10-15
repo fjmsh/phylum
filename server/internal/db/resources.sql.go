@@ -11,6 +11,34 @@ import (
 	"github.com/google/uuid"
 )
 
+const childResourceByName = `-- name: ChildResourceByName :one
+SELECT id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions FROM resources WHERE parent == $1::uuid AND name = $2::text AND deleted IS NULL
+`
+
+type ChildResourceByNameParams struct {
+	Parent uuid.UUID
+	Name   string
+}
+
+func (q *Queries) ChildResourceByName(ctx context.Context, arg ChildResourceByNameParams) (Resource, error) {
+	row := q.db.QueryRow(ctx, childResourceByName, arg.Parent, arg.Name)
+	var i Resource
+	err := row.Scan(
+		&i.ID,
+		&i.Parent,
+		&i.Name,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.ContentSize,
+		&i.ContentType,
+		&i.ContentSha256,
+		&i.Permissions,
+	)
+	return i, err
+}
+
 const createResource = `-- name: CreateResource :one
 INSERT INTO resources(
     id, parent, name, dir
@@ -156,7 +184,7 @@ func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]uuid
 }
 
 const sharedResources = `-- name: SharedResources :many
-SELECT id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions FROM resources where permissions ? $1::text AND id <> $2::uuid AND deleted IS NULL
+SELECT id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions FROM resources WHERE permissions ? $1::text AND id <> $2::uuid AND deleted IS NULL
 `
 
 type SharedResourcesParams struct {
@@ -272,7 +300,7 @@ const updateResourceNameParent = `-- name: UpdateResourceNameParent :one
 UPDATE resources
 SET
     name = CASE WHEN ($1::text = '') THEN name ELSE $1::text END,
-    parent = COALESCE($2, parent),
+    parent = $2::uuid,
     modified = NOW()
 WHERE id = $3::uuid
 RETURNING id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions
@@ -280,7 +308,7 @@ RETURNING id, parent, name, dir, created, modified, deleted, content_size, conte
 
 type UpdateResourceNameParentParams struct {
 	Name   string
-	Parent *uuid.UUID
+	Parent uuid.UUID
 	ID     uuid.UUID
 }
 

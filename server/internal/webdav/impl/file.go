@@ -64,15 +64,7 @@ func moveFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 // copyFiles copies files and/or directories from src to dst.
 //
 // See section 9.8.5 for when various HTTP status codes apply.
-func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bool, depth int, recursion int) (status int, err error) {
-	if recursion == 1000 {
-		return http.StatusInternalServerError, errRecursionTooDeep
-	}
-	recursion++
-
-	// TODO: section 9.8.3 says that "Note that an infinite-depth COPY of /A/
-	// into /A/B/ could lead to infinite recursion if not handled correctly."
-
+func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bool, depth int) (status int, err error) {
 	srcStat, err := fs.Stat(ctx, src)
 	if err != nil {
 		if errors.Is(err, core.ErrResourceNotFound) {
@@ -110,7 +102,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 				name := c.Name
 				s := path.Join(src, name)
 				d := path.Join(dst, name)
-				cStatus, cErr := copyFiles(ctx, fs, s, d, overwrite, depth, recursion)
+				cStatus, cErr := copyFiles(ctx, fs, s, d, overwrite, depth)
 				if cErr != nil {
 					// TODO: MultiStatus.
 					return cStatus, cErr

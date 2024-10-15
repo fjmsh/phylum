@@ -23,8 +23,9 @@ type resourceMkdirParams struct {
 }
 
 type resourceMoveParams struct {
-	ParentID *uuid.UUID `json:"parent_id"`
-	Name     string     `json:"name"`
+	ParentID  uuid.UUID `json:"parent_id"`
+	Name      string    `json:"name"`
+	Overwrite bool      `json:"overwrite"`
 }
 
 func SetupRoutes(r *gin.RouterGroup) {
@@ -155,7 +156,7 @@ func handleResourceMkdirRoute(c *gin.Context) {
 func handleResourceMoveRoute(c *gin.Context) {
 	var params resourceMoveParams
 	err := c.ShouldBindJSON(&params)
-	if err != nil || (params.ParentID == nil && params.Name == "") {
+	if err != nil || (params.ParentID == uuid.Nil && params.Name == "") {
 		panic(errInvalidParams)
 	}
 
@@ -170,7 +171,7 @@ func handleResourceMoveRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	if r, err := fs.Move(r, params.Name, params.ParentID); err != nil {
+	if r, err := fs.Move(r, params.Name, params.ParentID, params.Overwrite); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, r)

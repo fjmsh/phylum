@@ -22,7 +22,6 @@ type DiskUsageInfo struct {
 }
 
 type FileSystem interface {
-	WithDb(*db.DbHandler) FileSystem
 	RunInTx(fn func(FileSystem) error) error
 	RootID() uuid.UUID
 	ResourceByPath(path string) (Resource, error)
@@ -31,8 +30,9 @@ type FileSystem interface {
 	OpenWrite(r Resource) (io.WriteCloser, error)
 	ReadDir(r Resource) ([]Resource, error)
 	CreateMemberResource(r Resource, id uuid.UUID, name string, dir bool) (Resource, error)
+	DeleteChildRecursive(r Resource, name string, hardDelete bool) error
 	DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error)
-	Move(r Resource, name string, parent *uuid.UUID) (Resource, error)
+	Move(r Resource, name string, parent uuid.UUID, overwrite bool) (Resource, error)
 	UpdatePermissions(r Resource, username string, permission Permission) error
 	DiskUsage(r Resource) (DiskUsageInfo, error)
 }
@@ -59,7 +59,7 @@ func (f filesystem) RootID() uuid.UUID {
 	return f.rootID
 }
 
-func (f filesystem) WithDb(db *db.DbHandler) FileSystem {
+func (f filesystem) withDb(db *db.DbHandler) filesystem {
 	return filesystem{
 		db:       db,
 		ctx:      f.ctx,
@@ -71,7 +71,7 @@ func (f filesystem) WithDb(db *db.DbHandler) FileSystem {
 
 func (f filesystem) RunInTx(fn func(FileSystem) error) error {
 	return f.db.WithTx(f.ctx, func(db *db.DbHandler) error {
-		return fn(f.WithDb(db))
+		return fn(f.withDb(db))
 	})
 }
 
@@ -124,6 +124,7 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 		InheritedPermissions: string(r.InheritedPermissions),
 	}, nil
 }
+
 func (f filesystem) OpenRead(r Resource, start, length int64) (io.ReadCloser, error) {
 	if r.UserPermissions < PermissionReadOnly {
 		return nil, ErrInsufficientPermissions
@@ -229,6 +230,31 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	}, nil
 }
 
+func (f filesystem) DeleteChildRecursive(r Resource, name string, hardDelete bool) error {
+	if result, err := f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: r.ID, Name: name}); err != nil {
+		return err
+	} else {
+		child := Resource{
+			ID:              result.ID,
+			ParentID:        result.Parent,
+			Name:            result.Name,
+			Dir:             result.Dir,
+			Created:         result.Created.Time,
+			Modified:        result.Modified.Time,
+			Deleted:         nil,
+			ContentType:     result.ContentType,
+			ContentSize:     result.ContentSize,
+			ContentSHA256:   result.ContentSha256,
+			Permissions:     string(result.Permissions),
+			UserPermissions: r.UserPermissions,
+			// Not Needed
+			// InheritedPermissions: "",
+		}
+		_, err := f.DeleteRecursive(child, hardDelete)
+		return err
+	}
+}
+
 func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error) {
 	if r.UserPermissions < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
@@ -293,22 +319,17 @@ func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
 	}
 }
 
-func (f filesystem) Move(r Resource, name string, parent *uuid.UUID) (Resource, error) {
+func (f filesystem) Move(r Resource, name string, parentID uuid.UUID, overwrite bool) (Resource, error) {
 	if r.ParentID == nil {
 		return Resource{}, ErrInsufficientPermissions
-	}
-	if name == r.Name {
-		name = ""
 	}
 	if checkNameInvalid(name) {
 		return Resource{}, ErrResourceNameInvalid
 	}
-	if parent == r.ParentID {
-		parent = nil
-	}
 
 	// Check source directory permissions
 	oldParent, err := f.ResourceByID(*r.ParentID)
+	var parent = oldParent
 	if err != nil {
 		return Resource{}, err
 	}
@@ -317,46 +338,54 @@ func (f filesystem) Move(r Resource, name string, parent *uuid.UUID) (Resource, 
 	}
 
 	// Check target directory permissions (if applicable)
-	if parent != nil {
-		newParent, err := f.ResourceByID(*parent)
+	if parentID != *r.ParentID {
+		parent, err = f.ResourceByID(parentID)
 		if err != nil {
 			return Resource{}, err
 		}
-		if newParent.UserPermissions < PermissionReadWrite {
+		if parent.UserPermissions < PermissionReadWrite {
 			return Resource{}, ErrInsufficientPermissions
 		}
-
-		if res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: r.ID, ResourceID: *parent, Username: f.username}); err != nil || res.Found {
+		if res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: r.ID, ResourceID: parentID, Username: f.username}); err != nil || res.Found {
 			return Resource{}, ErrResourceMoveTargetSubdirectory
 		}
 	}
-	if r, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID, Name: name, Parent: parent}); err != nil {
-		if strings.Contains(err.Error(), "unique_member_resource_name") {
-			return Resource{}, ErrResourceNameConflict
+	result := Resource{}
+
+	return result, f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
+		f = f.withDb(dbh)
+		if overwrite {
+			f.DeleteChildRecursive(parent, name, false)
 		}
-		return Resource{}, err
-	} else {
-		var deleted *time.Time
-		if r.Deleted.Valid {
-			deleted = &r.Deleted.Time
+		if r, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID, Name: name, Parent: parentID}); err != nil {
+			if strings.Contains(err.Error(), "unique_member_resource_name") {
+				return ErrResourceNameConflict
+			}
+			return err
+		} else {
+			var deleted *time.Time
+			if r.Deleted.Valid {
+				deleted = &r.Deleted.Time
+			}
+			result = Resource{
+				ID:            r.ID,
+				ParentID:      r.Parent,
+				Name:          r.Name,
+				Created:       r.Created.Time,
+				Modified:      r.Modified.Time,
+				Deleted:       deleted,
+				Dir:           r.Dir,
+				ContentSize:   r.ContentSize,
+				ContentType:   r.ContentType,
+				ContentSHA256: r.ContentSha256,
+				Permissions:   string(r.Permissions),
+				// Not Needed
+				// UserPermissions:      0,
+				// InheritedPermissions: "",
+			}
+			return nil
 		}
-		return Resource{
-			ID:            r.ID,
-			ParentID:      r.Parent,
-			Name:          r.Name,
-			Created:       r.Created.Time,
-			Modified:      r.Modified.Time,
-			Deleted:       deleted,
-			Dir:           r.Dir,
-			ContentSize:   r.ContentSize,
-			ContentType:   r.ContentType,
-			ContentSHA256: r.ContentSha256,
-			Permissions:   string(r.Permissions),
-			// Not Needed
-			// UserPermissions:      0,
-			// InheritedPermissions: "",
-		}, nil
-	}
+	})
 }
 
 func (f filesystem) DiskUsage(r Resource) (DiskUsageInfo, error) {

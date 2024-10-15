@@ -40,7 +40,7 @@ RETURNING *;
 UPDATE resources
 SET
     name = CASE WHEN (@name::text = '') THEN name ELSE @name::text END,
-    parent = COALESCE(sqlc.narg('parent'), parent),
+    parent = @parent::uuid,
     modified = NOW()
 WHERE id = @id::uuid
 RETURNING *;
@@ -90,4 +90,7 @@ WHERE id in (SELECT id FROM nodes)
 RETURNING id;
 
 -- name: SharedResources :many
-SELECT * FROM resources where permissions ? @username::text AND id <> @user_home::uuid AND deleted IS NULL;
+SELECT * FROM resources WHERE permissions ? @username::text AND id <> @user_home::uuid AND deleted IS NULL;
+
+-- name: ChildResourceByName :one
+SELECT * FROM resources WHERE parent == @parent::uuid AND name = @name::text AND deleted IS NULL;
