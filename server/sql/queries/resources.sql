@@ -8,10 +8,11 @@ INSERT INTO resources(
 -- name: UpdateResourceContents :exec
 UPDATE resources
 SET
-    size = $1,
-    sha256sum = $2,
+    content_size = $1,
+    content_type = $2, 
+    content_sha256 = $3,
     modified = NOW()
-WHERE id = $3;
+WHERE id = $4;
 
 -- name: UpdateResourceModified :exec
 UPDATE resources
@@ -45,16 +46,16 @@ WHERE id = @id::uuid
 RETURNING *;
 
 -- name: DiskUsage :one
-WITH RECURSIVE nodes(id, parent, size, dir) AS (
-    SELECT r.id, r.parent, r.size, r.dir
+WITH RECURSIVE nodes(id, parent, content_size, dir) AS (
+    SELECT r.id, r.parent, r.content_size, r.dir
     FROM resources r WHERE r.id = @id::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.size, r.dir
+    SELECT r.id, r.parent, r.content_size, r.dir
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
 )
 SELECT
-  SUM(size) AS size,
+  SUM(content_size) AS size,
   COUNT(*) AS entities,
   COUNT(CASE dir WHEN true THEN 1 ELSE NULL END) AS dirs,
   COUNT(CASE dir WHEN false THEN 1 ELSE NULL END) AS files

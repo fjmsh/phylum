@@ -65,7 +65,7 @@ func ServeCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file
 }
 
 func ServeResource(w http.ResponseWriter, r *http.Request, fs FileSystem, file core.Resource) {
-	w.Header().Set("Etag", file.ETag)
+	w.Header().Set("Etag", file.ContentSHA256)
 	w.Header().Set("Last-Modified", file.Modified.Format(http.TimeFormat))
 	w.Header().Set("Content-Type", file.ContentType)
 
@@ -75,10 +75,10 @@ func ServeResource(w http.ResponseWriter, r *http.Request, fs FileSystem, file c
 	}
 
 	code := http.StatusOK
-	sendSize := file.Size
-	ranges, err := parseRange(rangeReq, file.Size)
+	sendSize := file.ContentSize
+	ranges, err := parseRange(rangeReq, file.ContentSize)
 	if err != nil {
-		w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", file.Size))
+		w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", file.ContentSize))
 		http.Error(w, err.Error(), http.StatusRequestedRangeNotSatisfiable)
 		return
 	}
@@ -99,7 +99,7 @@ func ServeResource(w http.ResponseWriter, r *http.Request, fs FileSystem, file c
 		ra := ranges[0]
 		sendSize = ra.length
 		code = http.StatusPartialContent
-		w.Header().Set("Content-Range", ra.contentRange(file.Size))
+		w.Header().Set("Content-Range", ra.contentRange(file.ContentSize))
 		reader, err = fs.OpenRead(file, ra.start, ra.length)
 	} else {
 		reader, err = fs.OpenRead(file, 0, -1)
@@ -315,7 +315,7 @@ func checkIfMatch(r *http.Request, ri core.Resource) condResult {
 		if etag == "" {
 			break
 		}
-		if etagStrongMatch(etag, ri.ETag) {
+		if etagStrongMatch(etag, ri.ContentSHA256) {
 			return condTrue
 		}
 		im = remain
@@ -365,7 +365,7 @@ func checkIfNoneMatch(r *http.Request, ri core.Resource) condResult {
 		if etag == "" {
 			break
 		}
-		if etagWeakMatch(etag, ri.ETag) {
+		if etagWeakMatch(etag, ri.ContentSHA256) {
 			return condFalse
 		}
 		buf = remain
@@ -404,7 +404,7 @@ func checkIfRange(r *http.Request, ri core.Resource) condResult {
 	}
 	etag, _ := scanETag(ir)
 	if etag != "" {
-		if etagStrongMatch(etag, ri.ETag) {
+		if etagStrongMatch(etag, ri.ContentSHA256) {
 			return condTrue
 		} else {
 			return condFalse

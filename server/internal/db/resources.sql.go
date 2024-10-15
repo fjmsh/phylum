@@ -9,7 +9,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createResource = `-- name: CreateResource :one
@@ -17,7 +16,7 @@ INSERT INTO resources(
     id, parent, name, dir
 ) VALUES (
     $1, $2, $3, $4
-) RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum, permissions
+) RETURNING id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions
 `
 
 type CreateResourceParams struct {
@@ -43,8 +42,9 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 		&i.Created,
 		&i.Modified,
 		&i.Deleted,
-		&i.Size,
-		&i.Sha256sum,
+		&i.ContentSize,
+		&i.ContentType,
+		&i.ContentSha256,
 		&i.Permissions,
 	)
 	return i, err
@@ -86,16 +86,16 @@ func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) ([]uuid.UUI
 }
 
 const diskUsage = `-- name: DiskUsage :one
-WITH RECURSIVE nodes(id, parent, size, dir) AS (
-    SELECT r.id, r.parent, r.size, r.dir
+WITH RECURSIVE nodes(id, parent, content_size, dir) AS (
+    SELECT r.id, r.parent, r.content_size, r.dir
     FROM resources r WHERE r.id = $1::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.size, r.dir
+    SELECT r.id, r.parent, r.content_size, r.dir
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
 )
 SELECT
-  SUM(size) AS size,
+  SUM(content_size) AS size,
   COUNT(*) AS entities,
   COUNT(CASE dir WHEN true THEN 1 ELSE NULL END) AS dirs,
   COUNT(CASE dir WHEN false THEN 1 ELSE NULL END) AS files
@@ -156,7 +156,7 @@ func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]uuid
 }
 
 const sharedResources = `-- name: SharedResources :many
-SELECT id, parent, name, dir, created, modified, deleted, size, sha256sum, permissions FROM resources where permissions ? $1::text AND id <> $2::uuid AND deleted IS NULL
+SELECT id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions FROM resources where permissions ? $1::text AND id <> $2::uuid AND deleted IS NULL
 `
 
 type SharedResourcesParams struct {
@@ -181,8 +181,9 @@ func (q *Queries) SharedResources(ctx context.Context, arg SharedResourcesParams
 			&i.Created,
 			&i.Modified,
 			&i.Deleted,
-			&i.Size,
-			&i.Sha256sum,
+			&i.ContentSize,
+			&i.ContentType,
+			&i.ContentSha256,
 			&i.Permissions,
 		); err != nil {
 			return nil, err
@@ -198,20 +199,27 @@ func (q *Queries) SharedResources(ctx context.Context, arg SharedResourcesParams
 const updateResourceContents = `-- name: UpdateResourceContents :exec
 UPDATE resources
 SET
-    size = $1,
-    sha256sum = $2,
+    content_size = $1,
+    content_type = $2, 
+    content_sha256 = $3,
     modified = NOW()
-WHERE id = $3
+WHERE id = $4
 `
 
 type UpdateResourceContentsParams struct {
-	Size      pgtype.Int8
-	Sha256sum pgtype.Text
-	ID        uuid.UUID
+	ContentSize   int64
+	ContentType   string
+	ContentSha256 string
+	ID            uuid.UUID
 }
 
 func (q *Queries) UpdateResourceContents(ctx context.Context, arg UpdateResourceContentsParams) error {
-	_, err := q.db.Exec(ctx, updateResourceContents, arg.Size, arg.Sha256sum, arg.ID)
+	_, err := q.db.Exec(ctx, updateResourceContents,
+		arg.ContentSize,
+		arg.ContentType,
+		arg.ContentSha256,
+		arg.ID,
+	)
 	return err
 }
 
@@ -233,7 +241,7 @@ SET
     name = CASE WHEN ($1::text = '') THEN name ELSE $1::text END,
     modified = NOW()
 WHERE id = $2::uuid
-RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum, permissions
+RETURNING id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions
 `
 
 type UpdateResourceNameParams struct {
@@ -252,8 +260,9 @@ func (q *Queries) UpdateResourceName(ctx context.Context, arg UpdateResourceName
 		&i.Created,
 		&i.Modified,
 		&i.Deleted,
-		&i.Size,
-		&i.Sha256sum,
+		&i.ContentSize,
+		&i.ContentType,
+		&i.ContentSha256,
 		&i.Permissions,
 	)
 	return i, err
@@ -266,7 +275,7 @@ SET
     parent = COALESCE($2, parent),
     modified = NOW()
 WHERE id = $3::uuid
-RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum, permissions
+RETURNING id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions
 `
 
 type UpdateResourceNameParentParams struct {
@@ -286,8 +295,9 @@ func (q *Queries) UpdateResourceNameParent(ctx context.Context, arg UpdateResour
 		&i.Created,
 		&i.Modified,
 		&i.Deleted,
-		&i.Size,
-		&i.Sha256sum,
+		&i.ContentSize,
+		&i.ContentType,
+		&i.ContentSha256,
 		&i.Permissions,
 	)
 	return i, err
@@ -299,7 +309,7 @@ SET
     parent = $1::uuid,
     modified = NOW()
 WHERE id = $2::uuid
-RETURNING id, parent, name, dir, created, modified, deleted, size, sha256sum, permissions
+RETURNING id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions
 `
 
 type UpdateResourceParentParams struct {
@@ -318,8 +328,9 @@ func (q *Queries) UpdateResourceParent(ctx context.Context, arg UpdateResourcePa
 		&i.Created,
 		&i.Modified,
 		&i.Deleted,
-		&i.Size,
-		&i.Sha256sum,
+		&i.ContentSize,
+		&i.ContentType,
+		&i.ContentSha256,
 		&i.Permissions,
 	)
 	return i, err

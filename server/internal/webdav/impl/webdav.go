@@ -276,7 +276,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	if closeErr != nil {
 		return http.StatusMethodNotAllowed, closeErr
 	}
-	w.Header().Set("ETag", fi.ETag)
+	w.Header().Set("ETag", fi.ContentSHA256)
 	return http.StatusCreated, nil
 }
 

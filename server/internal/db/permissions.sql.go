@@ -13,18 +13,18 @@ import (
 )
 
 const readDir = `-- name: ReadDir :many
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, permissions) AS (
-  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, r.permissions
+WITH RECURSIVE nodes(id, parent, name, dir, created, modified, content_size, content_type, content_sha256, depth, path, permissions) AS (
+  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, 0, ''::text, r.permissions
     FROM resources r
     WHERE r.id = $2::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name), r.permissions
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, n.depth + 1, concat(n.path, '/', r.name), r.permissions
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
     AND r.id != $2::uuid
     AND CASE WHEN $3::boolean THEN true ELSE depth < 1 END
 )
-SELECT id, parent, name, dir, created, modified, size, sha256sum, depth, path, permissions from nodes
+SELECT id, parent, name, dir, created, modified, content_size, content_type, content_sha256, depth, path, permissions from nodes
 WHERE CASE WHEN $1::boolean THEN true ELSE depth > 0 END
 `
 
@@ -35,17 +35,18 @@ type ReadDirParams struct {
 }
 
 type ReadDirRow struct {
-	ID          uuid.UUID
-	Parent      *uuid.UUID
-	Name        string
-	Dir         bool
-	Created     pgtype.Timestamp
-	Modified    pgtype.Timestamp
-	Size        pgtype.Int8
-	Sha256sum   pgtype.Text
-	Depth       int32
-	Path        string
-	Permissions []byte
+	ID            uuid.UUID
+	Parent        *uuid.UUID
+	Name          string
+	Dir           bool
+	Created       pgtype.Timestamp
+	Modified      pgtype.Timestamp
+	ContentSize   int64
+	ContentType   string
+	ContentSha256 string
+	Depth         int32
+	Path          string
+	Permissions   []byte
 }
 
 func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow, error) {
@@ -64,8 +65,9 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 			&i.Dir,
 			&i.Created,
 			&i.Modified,
-			&i.Size,
-			&i.Sha256sum,
+			&i.ContentSize,
+			&i.ContentType,
+			&i.ContentSha256,
 			&i.Depth,
 			&i.Path,
 			&i.Permissions,
@@ -99,7 +101,7 @@ WITH RECURSIVE nodes(resid, id, parent, inherited_permissions, found) AS (
     JOIN nodes n
     ON r.id = n.parent
 )
-SELECT resid AS id, r.permissions, n.inherited_permissions, COALESCE((jsonb_bitwise_or(r.permissions, n.inherited_permissions)->($1::text))::int, 0)::int AS user_permission, found, r.parent, name, dir, created, modified, deleted, size, sha256sum FROM nodes n
+SELECT resid AS id, r.permissions, n.inherited_permissions, COALESCE((jsonb_bitwise_or(r.permissions, n.inherited_permissions)->($1::text))::int, 0)::int AS user_permission, found, r.parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256 FROM nodes n
 JOIN resources r
 ON r.id = n.resid
 WHERE n.parent IS NULL
@@ -123,8 +125,9 @@ type ResourceByIDRow struct {
 	Created              pgtype.Timestamp
 	Modified             pgtype.Timestamp
 	Deleted              pgtype.Timestamp
-	Size                 pgtype.Int8
-	Sha256sum            pgtype.Text
+	ContentSize          int64
+	ContentType          string
+	ContentSha256        string
 }
 
 func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (ResourceByIDRow, error) {
@@ -142,8 +145,9 @@ func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (Res
 		&i.Created,
 		&i.Modified,
 		&i.Deleted,
-		&i.Size,
-		&i.Sha256sum,
+		&i.ContentSize,
+		&i.ContentType,
+		&i.ContentSha256,
 	)
 	return i, err
 }

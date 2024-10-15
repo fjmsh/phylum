@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
@@ -109,15 +108,16 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 		delTime = &res.Deleted.Time
 	}
 	return Resource{
-		ID:          res.ID,
-		ParentID:    res.Parent,
-		Name:        res.Name,
-		Size:        res.Size.Int64,
-		Dir:         res.Dir,
-		Modified:    res.Modified.Time,
-		Deleted:     delTime,
-		ETag:        res.Sha256sum.String,
-		Permissions: string(res.Permissions),
+		ID:            res.ID,
+		ParentID:      res.Parent,
+		Name:          res.Name,
+		Dir:           res.Dir,
+		Modified:      res.Modified.Time,
+		Deleted:       delTime,
+		ContentSize:   res.ContentSize,
+		ContentType:   res.ContentType,
+		ContentSHA256: res.ContentSha256,
+		Permissions:   string(res.Permissions),
 		// Definitely Needed
 		UserPermissions:      res.UserPermission,
 		InheritedPermissions: string(res.InheritedPermissions),
@@ -136,9 +136,10 @@ func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
 	}
 	return f.cs.OpenWrite(r.ID, sha256.New, func(len int, sum string) error {
 		return f.db.UpdateResourceContents(f.ctx, db.UpdateResourceContentsParams{
-			ID:        r.ID,
-			Size:      pgtype.Int8{Int64: int64(len), Valid: true},
-			Sha256sum: pgtype.Text{String: sum, Valid: true},
+			ID:            r.ID,
+			ContentType:   "",
+			ContentSize:   int64(len),
+			ContentSha256: sum,
 		})
 	})
 }
@@ -162,15 +163,16 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 	result := make([]Resource, len(children))
 	for i, c := range children {
 		result[i] = Resource{
-			ID:          c.ID,
-			ParentID:    c.Parent,
-			Name:        c.Name,
-			Size:        c.Size.Int64,
-			Modified:    c.Modified.Time,
-			Deleted:     nil,
-			Dir:         c.Dir,
-			ETag:        c.Sha256sum.String,
-			Permissions: string(c.Permissions),
+			ID:            c.ID,
+			ParentID:      c.Parent,
+			Name:          c.Name,
+			Modified:      c.Modified.Time,
+			Deleted:       nil,
+			Dir:           c.Dir,
+			ContentSize:   c.ContentSize,
+			ContentType:   c.ContentType,
+			ContentSHA256: c.ContentSha256,
+			Permissions:   string(c.Permissions),
 			// Not Needed
 			// UserPermissions: 0,
 			// InheritedPermissions: "",
@@ -212,10 +214,10 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 		ParentID:        result.Parent,
 		Name:            result.Name,
 		Dir:             dir,
-		Size:            0,
+		ContentSize:     0,
 		Modified:        result.Modified.Time,
 		Deleted:         nil,
-		ETag:            "",
+		ContentSHA256:   "",
 		Permissions:     string(result.Permissions),
 		UserPermissions: r.UserPermissions,
 		// Not Needed
@@ -265,15 +267,16 @@ func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
 		return Resource{}, err
 	} else {
 		return Resource{
-			ID:          r.ID,
-			ParentID:    r.Parent,
-			Name:        r.Name,
-			Size:        r.Size.Int64,
-			Modified:    r.Modified.Time,
-			Deleted:     &r.Deleted.Time,
-			Dir:         r.Dir,
-			ETag:        r.Sha256sum.String,
-			Permissions: string(r.Permissions),
+			ID:            r.ID,
+			ParentID:      r.Parent,
+			Name:          r.Name,
+			Modified:      r.Modified.Time,
+			Deleted:       &r.Deleted.Time,
+			Dir:           r.Dir,
+			ContentSize:   r.ContentSize,
+			ContentType:   r.ContentType,
+			ContentSHA256: r.ContentSha256,
+			Permissions:   string(r.Permissions),
 			// Not Needed
 			// UserPermissions: 0,
 			// InheritedPermissions: "",
@@ -325,15 +328,16 @@ func (f filesystem) Move(r Resource, name string, parent *uuid.UUID) (Resource, 
 		return Resource{}, err
 	} else {
 		return Resource{
-			ID:          r.ID,
-			ParentID:    r.Parent,
-			Name:        r.Name,
-			Size:        r.Size.Int64,
-			Modified:    r.Modified.Time,
-			Deleted:     &r.Deleted.Time,
-			Dir:         r.Dir,
-			ETag:        r.Sha256sum.String,
-			Permissions: string(r.Permissions),
+			ID:            r.ID,
+			ParentID:      r.Parent,
+			Name:          r.Name,
+			Modified:      r.Modified.Time,
+			Deleted:       &r.Deleted.Time,
+			Dir:           r.Dir,
+			ContentSize:   r.ContentSize,
+			ContentType:   r.ContentType,
+			ContentSHA256: r.ContentSha256,
+			Permissions:   string(r.Permissions),
 			// Not Needed
 			// UserPermissions:      0,
 			// InheritedPermissions: "",

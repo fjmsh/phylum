@@ -1,11 +1,11 @@
 
 -- name: ReadDir :many
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, size, sha256sum, depth, path, permissions) AS (
-  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, 0, ''::text, r.permissions
+WITH RECURSIVE nodes(id, parent, name, dir, created, modified, content_size, content_type, content_sha256, depth, path, permissions) AS (
+  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, 0, ''::text, r.permissions
     FROM resources r
     WHERE r.id = @id::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.size, r.sha256sum, n.depth + 1, concat(n.path, '/', r.name), r.permissions
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, n.depth + 1, concat(n.path, '/', r.name), r.permissions
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
     AND r.id != @id::uuid
@@ -47,7 +47,7 @@ WITH RECURSIVE nodes(resid, id, parent, inherited_permissions, found) AS (
     JOIN nodes n
     ON r.id = n.parent
 )
-SELECT resid AS id, r.permissions, n.inherited_permissions, COALESCE((jsonb_bitwise_or(r.permissions, n.inherited_permissions)->(@username::text))::int, 0)::int AS user_permission, found, r.parent, name, dir, created, modified, deleted, size, sha256sum FROM nodes n
+SELECT resid AS id, r.permissions, n.inherited_permissions, COALESCE((jsonb_bitwise_or(r.permissions, n.inherited_permissions)->(@username::text))::int, 0)::int AS user_permission, found, r.parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256 FROM nodes n
 JOIN resources r
 ON r.id = n.resid
 WHERE n.parent IS NULL;

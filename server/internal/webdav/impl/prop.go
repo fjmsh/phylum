@@ -277,7 +277,7 @@ func findDisplayName(fi core.Resource) string {
 }
 
 func findContentLength(fi core.Resource) string {
-	return strconv.FormatInt(fi.Size, 10)
+	return strconv.FormatInt(fi.ContentSize, 10)
 }
 
 func findLastModified(fi core.Resource) string {
@@ -289,7 +289,7 @@ func findContentType(fi core.Resource) string {
 }
 
 func findETag(fi core.Resource) string {
-	return fi.ETag
+	return fi.ContentSHA256
 }
 
 func findSupportedLock(fi core.Resource) string {
