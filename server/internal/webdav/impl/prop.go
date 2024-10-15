@@ -98,7 +98,7 @@ var liveProps = map[xml.Name]struct {
 		dir: true,
 	},
 	{Space: "DAV:", Local: "creationdate"}: {
-		findFn: nil,
+		findFn: findCreationDate,
 		dir:    false,
 	},
 	{Space: "DAV:", Local: "getcontentlanguage"}: {
@@ -278,6 +278,10 @@ func findDisplayName(fi core.Resource) string {
 
 func findContentLength(fi core.Resource) string {
 	return strconv.FormatInt(fi.ContentSize, 10)
+}
+
+func findCreationDate(fi core.Resource) string {
+	return fi.Created.UTC().Format(http.TimeFormat)
 }
 
 func findLastModified(fi core.Resource) string {
