@@ -94,9 +94,9 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 }
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.rootID, ResourceID: id, Username: f.username})
+	r, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.rootID, ResourceID: id, Username: f.username})
 	// TODO: verify found
-	if err == pgx.ErrNoRows || !res.Found || res.UserPermission == 0 {
+	if err == pgx.ErrNoRows || !r.Found || r.UserPermission == 0 {
 		err = ErrResourceNotFound
 	}
 	if err != nil {
@@ -104,23 +104,24 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	}
 
 	var delTime *time.Time
-	if res.Deleted.Valid {
-		delTime = &res.Deleted.Time
+	if r.Deleted.Valid {
+		delTime = &r.Deleted.Time
 	}
 	return Resource{
-		ID:            res.ID,
-		ParentID:      res.Parent,
-		Name:          res.Name,
-		Dir:           res.Dir,
-		Modified:      res.Modified.Time,
+		ID:            r.ID,
+		ParentID:      r.Parent,
+		Name:          r.Name,
+		Dir:           r.Dir,
+		Created:       r.Created.Time,
+		Modified:      r.Modified.Time,
 		Deleted:       delTime,
-		ContentSize:   res.ContentSize,
-		ContentType:   res.ContentType,
-		ContentSHA256: res.ContentSha256,
-		Permissions:   string(res.Permissions),
+		ContentSize:   r.ContentSize,
+		ContentType:   r.ContentType,
+		ContentSHA256: r.ContentSha256,
+		Permissions:   string(r.Permissions),
 		// Definitely Needed
-		UserPermissions:      res.UserPermission,
-		InheritedPermissions: string(res.InheritedPermissions),
+		UserPermissions:      r.UserPermission,
+		InheritedPermissions: string(r.InheritedPermissions),
 	}, nil
 }
 func (f filesystem) OpenRead(r Resource, start, length int64) (io.ReadCloser, error) {
@@ -166,8 +167,9 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 			ID:            c.ID,
 			ParentID:      c.Parent,
 			Name:          c.Name,
+			Created:       c.Created.Time,
 			Modified:      c.Modified.Time,
-			Deleted:       nil,
+			Deleted:       nil, // Query will not return deleted results
 			Dir:           c.Dir,
 			ContentSize:   c.ContentSize,
 			ContentType:   c.ContentType,
@@ -210,14 +212,16 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 		return Resource{}, err
 	}
 	return Resource{
-		ID:              id,
+		ID:              result.ID,
 		ParentID:        result.Parent,
 		Name:            result.Name,
-		Dir:             dir,
-		ContentSize:     0,
+		Dir:             result.Dir,
+		Created:         result.Created.Time,
 		Modified:        result.Modified.Time,
-		Deleted:         nil,
-		ContentSHA256:   "",
+		Deleted:         nil, // Cannot be deleted when created
+		ContentType:     result.ContentType,
+		ContentSize:     result.ContentSize,
+		ContentSHA256:   result.ContentSha256,
 		Permissions:     string(result.Permissions),
 		UserPermissions: r.UserPermissions,
 		// Not Needed
@@ -266,12 +270,17 @@ func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
 	if r, err := f.db.UpdateResourceName(f.ctx, db.UpdateResourceNameParams{ID: r.ID, Name: name}); err != nil {
 		return Resource{}, err
 	} else {
+		var deleted *time.Time
+		if r.Deleted.Valid {
+			deleted = &r.Deleted.Time
+		}
 		return Resource{
 			ID:            r.ID,
 			ParentID:      r.Parent,
 			Name:          r.Name,
+			Created:       r.Created.Time,
 			Modified:      r.Modified.Time,
-			Deleted:       &r.Deleted.Time,
+			Deleted:       deleted,
 			Dir:           r.Dir,
 			ContentSize:   r.ContentSize,
 			ContentType:   r.ContentType,
@@ -327,12 +336,17 @@ func (f filesystem) Move(r Resource, name string, parent *uuid.UUID) (Resource, 
 		}
 		return Resource{}, err
 	} else {
+		var deleted *time.Time
+		if r.Deleted.Valid {
+			deleted = &r.Deleted.Time
+		}
 		return Resource{
 			ID:            r.ID,
 			ParentID:      r.Parent,
 			Name:          r.Name,
+			Created:       r.Created.Time,
 			Modified:      r.Modified.Time,
-			Deleted:       &r.Deleted.Time,
+			Deleted:       deleted,
 			Dir:           r.Dir,
 			ContentSize:   r.ContentSize,
 			ContentType:   r.ContentType,

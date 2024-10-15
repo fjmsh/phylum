@@ -11,6 +11,7 @@ type Resource struct {
 	ParentID             *uuid.UUID `json:"parent"`
 	Name                 string     `json:"name"`
 	Dir                  bool       `json:"dir"`
+	Created              time.Time  `json:"created"`
 	Modified             time.Time  `json:"modified"`
 	Deleted              *time.Time `json:"deleted"`
 	ContentSize          int64      `json:"csize"`

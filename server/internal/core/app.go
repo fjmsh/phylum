@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/db"
@@ -118,13 +119,18 @@ func (a App) GetSharedResources(ctx context.Context, user User) (result []Resour
 
 	result = make([]Resource, len(res))
 	for i, r := range res {
+		var deleted *time.Time
+		if r.Deleted.Valid {
+			deleted = &r.Deleted.Time
+		}
 		result[i] = Resource{
 			ID:            r.ID,
 			ParentID:      r.Parent,
 			Name:          r.Name,
 			Dir:           r.Dir,
+			Created:       r.Created.Time,
 			Modified:      r.Modified.Time,
-			Deleted:       &r.Deleted.Time,
+			Deleted:       deleted,
 			ContentSize:   r.ContentSize,
 			ContentType:   r.ContentType,
 			ContentSHA256: r.ContentSha256,
