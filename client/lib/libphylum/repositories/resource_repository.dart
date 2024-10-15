@@ -70,18 +70,17 @@ class ResourceRepository {
   Future parseResourceDetailsResponse(Map<String, dynamic> data) async {
     final db = account.db;
     final details = parseResourceSummaryObject(data['metadata']).copyWith(lastFetch: Value(DateTime.now()));
-    final existing = Set.from(await db.managers.resources.filter((f) => f.parent.id.equals(data['metadata']['id'])).map((r) => r.id).get());
+    final existing = Set.of(await (db.select(db.resources)..where((t) => t.parent.equals(data['metadata']['id']))).map((r) => r.id).get());
+    // final existing = Set.from(await db.managers.resources.filter((f) => f.parent.id.equals(data['metadata']['id'])).map((r) => r.id).get());
     final children = data.containsKey('children')
         ? (data['children'] as List).cast<Map>().map((c) {
             existing.remove(c['id']);
             return parseResourceSummaryObject(c.cast<String, dynamic>());
           })
         : <ResourcesCompanion>[];
-    return db.transaction(() async {
-      await db.resources.deleteWhere((o) => o.id.isIn(List.from(existing)));
-      await db.batch((batch) {
-        batch.insertAll(db.resources, [details, ...children], mode: InsertMode.insertOrReplace);
-      });
+    await db.resources.deleteWhere((o) => o.id.isIn(List.from(existing)));
+    await db.batch((batch) {
+      batch.insertAll(db.resources, [details, ...children], mode: InsertMode.insertOrReplace);
     });
   }
 

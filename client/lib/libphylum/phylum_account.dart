@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
@@ -60,6 +62,11 @@ class PhylumAccount extends Account<PhylumAccount> {
         }
       }
     });
+  }
+
+  @override
+  Future<void> transaction(Future<void> Function() fn) {
+    return db.transaction(fn);
   }
 
   @override
