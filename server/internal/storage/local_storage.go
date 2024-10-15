@@ -1,9 +1,7 @@
 package storage
 
 import (
-	"encoding/hex"
 	"errors"
-	"hash"
 	"io"
 	"io/fs"
 	"os"
@@ -44,18 +42,8 @@ func (l localStorage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser
 	return file, nil
 }
 
-func (l localStorage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string) error) (io.WriteCloser, error) {
-	file, err := os.OpenFile(l.path(id), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
-	if err != nil || callback == nil {
-		return file, err
-	}
-	return &hasher{dest: file, sum: h(), closeCallback: func(len int, sum hash.Hash, err error) error {
-		if err != nil {
-			return err
-		}
-		etag := hex.EncodeToString(sum.Sum(nil))
-		return callback(len, etag)
-	}}, nil
+func (l localStorage) OpenWrite(id uuid.UUID) (io.WriteCloser, error) {
+	return os.OpenFile(l.path(id), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
 }
 
 func (l localStorage) Delete(id uuid.UUID) error {

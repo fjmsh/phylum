@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"hash"
 	"io"
@@ -47,8 +48,13 @@ func (s storage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, err
 func (s storage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string) error) (io.WriteCloser, error) {
 	if backend, err := s.findStorageBackend(id); err != nil {
 		return nil, err
+	} else if out, err := backend.OpenWrite(id); err != nil {
+		return nil, err
 	} else {
-		return backend.OpenWrite(id, h, callback)
+		return &hasher{dest: out, sum: h(), closeCallback: func(len int, sum hash.Hash) error {
+			etag := hex.EncodeToString(sum.Sum(nil))
+			return callback(len, etag)
+		}}, nil
 	}
 }
 
