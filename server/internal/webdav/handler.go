@@ -2,8 +2,8 @@ package webdav
 
 import (
 	"context"
+	"errors"
 	"io"
-	"io/fs"
 	"net/http"
 	"strings"
 
@@ -102,22 +102,28 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 func (a adapter) RemoveAll(ctx context.Context, name string) error {
 	resource, err := a.Stat(ctx, name)
 	if err != nil {
-		return fs.ErrNotExist
+		return err
 	}
 	_, err = a.fs.DeleteRecursive(resource, false)
 	return err
 }
 
 func (a adapter) Mkdir(ctx context.Context, name string) error {
-	if _, err := a.Stat(ctx, name); err == nil {
-		return fs.ErrExist
+	if _, err := a.Stat(ctx, name); !errors.Is(err, core.ErrResourceNotFound) {
+		if err == nil {
+			return core.ErrResourceNameConflict
+		}
+		return err
 	}
 	name = strings.TrimRight(name, "/")
 	index := strings.LastIndex(name, "/")
 	parentPath := name[0:index]
 	parent, err := a.Stat(ctx, parentPath)
 	if err != nil {
-		return fs.ErrNotExist
+		if errors.Is(err, core.ErrResourceNotFound) {
+			return core.ErrParentNotFound
+		}
+		return err
 	}
 	dirName := name[index+1:]
 	_, err = a.fs.CreateMemberResource(parent, uuid.New(), dirName, true)
@@ -127,22 +133,25 @@ func (a adapter) Mkdir(ctx context.Context, name string) error {
 func (a adapter) Rename(ctx context.Context, oldName, newName string) error {
 	src, err := a.Stat(ctx, oldName)
 	if err != nil {
-		return fs.ErrNotExist
+		return core.ErrResourceNotFound
 	}
 
 	_, err = a.Stat(ctx, newName)
 	if err == nil {
-		return fs.ErrExist
+		return core.ErrResourceNameConflict
 	}
 
 	newName = strings.TrimRight(newName, "/")
 	index := strings.LastIndex(newName, "/")
 	parentPath := newName[0:index]
-	parent, err := a.Stat(ctx, parentPath)
 	newName = newName[index+1:]
 
+	parent, err := a.Stat(ctx, parentPath)
 	if err != nil {
-		return fs.ErrNotExist
+		if errors.Is(err, core.ErrResourceNotFound) {
+			return core.ErrParentNotFound
+		}
+		return err
 	}
 
 	parentID := parent.ID

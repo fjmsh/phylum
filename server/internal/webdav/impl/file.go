@@ -6,13 +6,12 @@ package webdav
 
 import (
 	"context"
-	"errors"
 	"io"
 	"net/http"
-	"os"
 	"path"
 	"path/filepath"
 
+	"github.com/shroff/phylum/server/internal/api/errors"
 	"github.com/shroff/phylum/server/internal/core"
 )
 
@@ -35,7 +34,10 @@ type FileSystem interface {
 func moveFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bool) (status int, err error) {
 	created := false
 	if _, err := fs.Stat(ctx, dst); err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
+		if !errors.Is(err, core.ErrResourceNotFound) {
+			if e, ok := err.(errors.ApiErr); ok {
+				return e.Status, e
+			}
 			return http.StatusForbidden, err
 		}
 		created = true
@@ -48,7 +50,7 @@ func moveFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 			return http.StatusForbidden, err
 		}
 	} else {
-		return http.StatusPreconditionFailed, os.ErrExist
+		return http.StatusPreconditionFailed, core.ErrResourceNameConflict
 	}
 	if err := fs.Rename(ctx, src, dst); err != nil {
 		return http.StatusForbidden, err
@@ -73,7 +75,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 
 	srcStat, err := fs.Stat(ctx, src)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
+		if errors.Is(err, core.ErrResourceNotFound) {
 			return http.StatusNotFound, err
 		}
 		return http.StatusInternalServerError, err
@@ -81,16 +83,16 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 
 	created := false
 	if _, err := fs.Stat(ctx, dst); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
+		if errors.Is(err, core.ErrResourceNotFound) {
 			created = true
 		} else {
 			return http.StatusForbidden, err
 		}
 	} else {
 		if !overwrite {
-			return http.StatusPreconditionFailed, os.ErrExist
+			return http.StatusPreconditionFailed, core.ErrResourceNameConflict
 		}
-		if err := fs.RemoveAll(ctx, dst); err != nil && !errors.Is(err, os.ErrNotExist) {
+		if err := fs.RemoveAll(ctx, dst); err != nil && !errors.Is(err, core.ErrResourceNotFound) {
 			return http.StatusForbidden, err
 		}
 	}
@@ -119,7 +121,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 	} else {
 		srcFile, err := fs.OpenRead(srcStat, 0, -1)
 		if err != nil {
-			if errors.Is(err, os.ErrNotExist) {
+			if errors.Is(err, core.ErrResourceNotFound) {
 				return http.StatusNotFound, err
 			}
 			return http.StatusInternalServerError, err
@@ -127,7 +129,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 		defer srcFile.Close()
 		dstFile, err := fs.OpenWrite(ctx, dst)
 		if err != nil {
-			if errors.Is(err, os.ErrNotExist) {
+			if errors.Is(err, core.ErrResourceNotFound) {
 				return http.StatusConflict, err
 			}
 			return http.StatusForbidden, err

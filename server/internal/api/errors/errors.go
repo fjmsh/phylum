@@ -21,7 +21,7 @@ func New(httpStatus int, code, msg string) error {
 	}
 }
 
-func (e *ApiErr) Error() string {
+func (e ApiErr) Error() string {
 	return fmt.Sprintf("%d %s (%s)", e.Status, e.Code, e.Message)
 }
 
