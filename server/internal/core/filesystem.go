@@ -3,9 +3,7 @@ package core
 import (
 	"context"
 	"crypto/sha256"
-	"errors"
 	"io"
-	"io/fs"
 	"strings"
 	"time"
 
@@ -15,17 +13,6 @@ import (
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
-)
-
-var (
-	ErrInsufficientPermissions    = errors.New("insufficient permissions")
-	ErrCannotGrantOwnerPermission = errors.New("cannot grant owner permission")
-	ErrResourceNotCollection      = errors.New("cannot add member to non-collection resource")
-	ErrIDNotSpecified             = errors.New("resource id not specified")
-	ErrNameInvalid                = errors.New("name invalid")
-	ErrResourceNameConflict       = errors.New("name conflict")
-	ErrResourceIDConflict         = errors.New("id conflict")
-	ErrMoveTargetSubdirectory     = errors.New("move target subdirectory")
 )
 
 type DiskUsageInfo struct {
@@ -99,7 +86,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 
 	res, err := f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.rootID, Search: segments})
 	if err == pgx.ErrNoRows {
-		err = fs.ErrNotExist
+		err = ErrResourceNotFound
 	}
 	if err != nil {
 		return Resource{}, err
@@ -111,7 +98,7 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.rootID, ResourceID: id, Username: f.username})
 	// TODO: verify found
 	if err == pgx.ErrNoRows || !res.Found || res.UserPermission == 0 {
-		err = fs.ErrNotExist
+		err = ErrResourceNotFound
 	}
 	if err != nil {
 		return Resource{}, err
@@ -199,11 +186,8 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	if r.UserPermissions < PermissionReadWrite {
 		return Resource{}, ErrInsufficientPermissions
 	}
-	if id == uuid.Nil {
-		return Resource{}, ErrIDNotSpecified
-	}
 	if name == "" || checkNameInvalid(name) {
-		return Resource{}, ErrNameInvalid
+		return Resource{}, ErrResourceNameInvalid
 	}
 	var result db.Resource
 	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
@@ -224,17 +208,17 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 		return Resource{}, err
 	}
 	return Resource{
-		ID:          id,
-		ParentID:    result.Parent,
-		Name:        result.Name,
-		Dir:         dir,
-		Size:        0,
-		Modified:    result.Modified.Time,
-		Deleted:     nil,
-		ETag:        "",
-		Permissions: string(result.Permissions),
+		ID:              id,
+		ParentID:        result.Parent,
+		Name:            result.Name,
+		Dir:             dir,
+		Size:            0,
+		Modified:        result.Modified.Time,
+		Deleted:         nil,
+		ETag:            "",
+		Permissions:     string(result.Permissions),
+		UserPermissions: r.UserPermissions,
 		// Not Needed
-		// UserPermissions: r.UserPermissions,
 		// InheritedPermissions: "",
 	}, nil
 }
@@ -305,7 +289,7 @@ func (f filesystem) Move(r Resource, name string, parent *uuid.UUID) (Resource, 
 		name = ""
 	}
 	if checkNameInvalid(name) {
-		return Resource{}, ErrNameInvalid
+		return Resource{}, ErrResourceNameInvalid
 	}
 	if parent == r.ParentID {
 		parent = nil
@@ -331,7 +315,7 @@ func (f filesystem) Move(r Resource, name string, parent *uuid.UUID) (Resource, 
 		}
 
 		if res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: r.ID, ResourceID: *parent, Username: f.username}); err != nil || res.Found {
-			return Resource{}, ErrMoveTargetSubdirectory
+			return Resource{}, ErrResourceMoveTargetSubdirectory
 		}
 	}
 	if r, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID, Name: name, Parent: parent}); err != nil {

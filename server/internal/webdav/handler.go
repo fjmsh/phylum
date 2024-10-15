@@ -2,7 +2,6 @@ package webdav
 
 import (
 	"context"
-	"errors"
 	"io"
 	"io/fs"
 	"net/http"
@@ -75,14 +74,14 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 	resource, err := a.Stat(ctx, name)
 
 	if err != nil {
-		if err == fs.ErrNotExist {
+		if err == core.ErrResourceNotFound {
 			// Try to create the resource if the parent collection exists
 			name = strings.TrimRight(name, "/")
 			index := strings.LastIndex(name, "/")
 			parentPath := name[0:index]
 			parent, err := a.Stat(ctx, parentPath)
 			if err != nil {
-				return nil, fs.ErrNotExist
+				return nil, err
 			}
 			resourceName := name[index+1:]
 			resourceId := uuid.New()
@@ -95,7 +94,7 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 		return nil, err
 	}
 	if resource.Dir {
-		return nil, errors.New("cannot open collection for write")
+		return nil, core.ErrResourceCollection
 	}
 	return a.fs.OpenWrite(resource)
 }

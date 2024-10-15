@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	iofs "io/fs"
 	"strings"
 
 	"github.com/google/uuid"
@@ -79,7 +78,7 @@ func setupResourceRmCommand() *cobra.Command {
 			path := args[0]
 			r, err := fs.ResourceByPath(path)
 			if err != nil {
-				if errors.Is(err, iofs.ErrNotExist) {
+				if errors.Is(err, core.ErrResourceNotFound) {
 					logrus.Fatal("Resource not found: " + path)
 				} else {
 					logrus.Fatal(err.Error())
@@ -124,7 +123,7 @@ func setupResourceLsCommand() *cobra.Command {
 				}
 
 				if r, err = fs.ResourceByID(id); err != nil {
-					if errors.Is(err, iofs.ErrNotExist) {
+					if errors.Is(err, core.ErrResourceNotFound) {
 						logrus.Fatal("Resource not found: " + path)
 					} else {
 						logrus.Fatal(err.Error())
@@ -133,7 +132,7 @@ func setupResourceLsCommand() *cobra.Command {
 			} else {
 				var err error
 				if r, err = fs.ResourceByPath(path); err != nil {
-					if errors.Is(err, iofs.ErrNotExist) {
+					if errors.Is(err, core.ErrResourceNotFound) {
 						logrus.Fatal("Resource not found: " + path)
 					} else {
 						logrus.Fatal(err.Error())
@@ -187,7 +186,7 @@ func setupResourceChpermCommand() *cobra.Command {
 				}
 
 				if r, err = fs.ResourceByID(id); err != nil {
-					if errors.Is(err, iofs.ErrNotExist) {
+					if errors.Is(err, core.ErrResourceNotFound) {
 						logrus.Fatal("Resource not found: " + path)
 					} else {
 						logrus.Fatal(err.Error())
@@ -196,7 +195,7 @@ func setupResourceChpermCommand() *cobra.Command {
 			} else {
 				var err error
 				if r, err = fs.ResourceByPath(path); err != nil {
-					if errors.Is(err, iofs.ErrNotExist) {
+					if errors.Is(err, core.ErrResourceNotFound) {
 						logrus.Fatal("Resource not found: " + path)
 					} else {
 						logrus.Fatal(err.Error())

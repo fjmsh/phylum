@@ -10,8 +10,6 @@ import (
 	"github.com/shroff/phylum/server/internal/db"
 )
 
-var ErrUserNotFound = errors.New("user not found")
-
 func (a App) CreateUser(ctx context.Context, username, displayName, password string, root *uuid.UUID) error {
 	var rootID = a.Rootfs.RootID()
 	if root != nil {

@@ -27,9 +27,6 @@ func handleMyHomeRoute(c *gin.Context) {
 	f := auth.GetFileSystem(c)
 	r, err := f.ResourceByID(user.Home)
 	if err != nil {
-		// if errors.Is(err, iofs.ErrNotExist) {
-		// 	err = errResourceNotFound
-		// }
 		panic(err)
 	}
 
