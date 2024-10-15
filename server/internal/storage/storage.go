@@ -15,7 +15,7 @@ type Storage interface {
 	CreateBackend(ctx context.Context, name string, driver string, params map[string]string) error
 	ListBackends() map[string]Backend
 	OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error)
-	OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string) error) (io.WriteCloser, error)
+	OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string, string) error) (io.WriteCloser, error)
 	Delete(id uuid.UUID) error
 	DeleteAll(ids uuid.UUIDs) []error
 }
@@ -45,15 +45,15 @@ func (s storage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, err
 		return backend.OpenRead(id, start, length)
 	}
 }
-func (s storage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string) error) (io.WriteCloser, error) {
+func (s storage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string, string) error) (io.WriteCloser, error) {
 	if backend, err := s.findStorageBackend(id); err != nil {
 		return nil, err
 	} else if out, err := backend.OpenWrite(id); err != nil {
 		return nil, err
 	} else {
-		return &hasher{dest: out, sum: h(), closeCallback: func(len int, sum hash.Hash) error {
+		return &hasher{dest: out, sum: h(), contents: make([]byte, 0, 10*1024), closeCallback: func(len int, sum hash.Hash, mime string) error {
 			etag := hex.EncodeToString(sum.Sum(nil))
-			return callback(len, etag)
+			return callback(len, etag, mime)
 		}}, nil
 	}
 }

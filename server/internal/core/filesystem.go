@@ -134,10 +134,10 @@ func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
 	if r.UserPermissions < PermissionReadWrite {
 		return nil, ErrInsufficientPermissions
 	}
-	return f.cs.OpenWrite(r.ID, sha256.New, func(len int, sum string) error {
+	return f.cs.OpenWrite(r.ID, sha256.New, func(len int, sum, mime string) error {
 		return f.db.UpdateResourceContents(f.ctx, db.UpdateResourceContentsParams{
 			ID:            r.ID,
-			ContentType:   "",
+			ContentType:   mime,
 			ContentSize:   int64(len),
 			ContentSha256: sum,
 		})
