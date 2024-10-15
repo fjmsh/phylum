@@ -54,7 +54,7 @@ class ResourceRepository {
       dir: dir,
       modified: DateTime.now(),
       size: 0,
-      etag: "",
+      sha256: "",
       contentType: contentType,
     ));
   }
@@ -95,8 +95,8 @@ class ResourceRepository {
       name: data['name'],
       dir: data['dir'],
       modified: DateTime.parse(data['modified']),
-      size: data['size'],
-      etag: data['etag'],
+      size: data['csize'],
+      sha256: data['csha256'],
       contentType: data['ctype'] ?? '',
     );
   }

@@ -7,7 +7,7 @@ class Resources extends Table {
   BoolColumn get dir => boolean()();
   DateTimeColumn get modified => dateTime()();
   IntColumn get size => integer()();
-  TextColumn get etag => text()();
+  TextColumn get sha256 => text()();
   TextColumn get contentType => text()();
   BoolColumn get deleted => boolean().withDefault(const Constant(false))();
   DateTimeColumn get lastFetch => dateTime().nullable()();

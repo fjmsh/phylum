@@ -46,10 +46,10 @@ class $ResourcesTable extends Resources
   late final GeneratedColumn<int> size = GeneratedColumn<int>(
       'size', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
-  static const VerificationMeta _etagMeta = const VerificationMeta('etag');
+  static const VerificationMeta _sha256Meta = const VerificationMeta('sha256');
   @override
-  late final GeneratedColumn<String> etag = GeneratedColumn<String>(
-      'etag', aliasedName, false,
+  late final GeneratedColumn<String> sha256 = GeneratedColumn<String>(
+      'sha256', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _contentTypeMeta =
       const VerificationMeta('contentType');
@@ -81,7 +81,7 @@ class $ResourcesTable extends Resources
         dir,
         modified,
         size,
-        etag,
+        sha256,
         contentType,
         deleted,
         lastFetch
@@ -129,11 +129,11 @@ class $ResourcesTable extends Resources
     } else if (isInserting) {
       context.missing(_sizeMeta);
     }
-    if (data.containsKey('etag')) {
-      context.handle(
-          _etagMeta, etag.isAcceptableOrUnknown(data['etag']!, _etagMeta));
+    if (data.containsKey('sha256')) {
+      context.handle(_sha256Meta,
+          sha256.isAcceptableOrUnknown(data['sha256']!, _sha256Meta));
     } else if (isInserting) {
-      context.missing(_etagMeta);
+      context.missing(_sha256Meta);
     }
     if (data.containsKey('content_type')) {
       context.handle(
@@ -172,8 +172,8 @@ class $ResourcesTable extends Resources
           .read(DriftSqlType.dateTime, data['${effectivePrefix}modified'])!,
       size: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}size'])!,
-      etag: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}etag'])!,
+      sha256: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sha256'])!,
       contentType: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}content_type'])!,
       deleted: attachedDatabase.typeMapping
@@ -196,7 +196,7 @@ class Resource extends DataClass implements Insertable<Resource> {
   final bool dir;
   final DateTime modified;
   final int size;
-  final String etag;
+  final String sha256;
   final String contentType;
   final bool deleted;
   final DateTime? lastFetch;
@@ -207,7 +207,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       required this.dir,
       required this.modified,
       required this.size,
-      required this.etag,
+      required this.sha256,
       required this.contentType,
       required this.deleted,
       this.lastFetch});
@@ -222,7 +222,7 @@ class Resource extends DataClass implements Insertable<Resource> {
     map['dir'] = Variable<bool>(dir);
     map['modified'] = Variable<DateTime>(modified);
     map['size'] = Variable<int>(size);
-    map['etag'] = Variable<String>(etag);
+    map['sha256'] = Variable<String>(sha256);
     map['content_type'] = Variable<String>(contentType);
     map['deleted'] = Variable<bool>(deleted);
     if (!nullToAbsent || lastFetch != null) {
@@ -240,7 +240,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       dir: Value(dir),
       modified: Value(modified),
       size: Value(size),
-      etag: Value(etag),
+      sha256: Value(sha256),
       contentType: Value(contentType),
       deleted: Value(deleted),
       lastFetch: lastFetch == null && nullToAbsent
@@ -259,7 +259,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       dir: serializer.fromJson<bool>(json['dir']),
       modified: serializer.fromJson<DateTime>(json['modified']),
       size: serializer.fromJson<int>(json['size']),
-      etag: serializer.fromJson<String>(json['etag']),
+      sha256: serializer.fromJson<String>(json['sha256']),
       contentType: serializer.fromJson<String>(json['contentType']),
       deleted: serializer.fromJson<bool>(json['deleted']),
       lastFetch: serializer.fromJson<DateTime?>(json['lastFetch']),
@@ -275,7 +275,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       'dir': serializer.toJson<bool>(dir),
       'modified': serializer.toJson<DateTime>(modified),
       'size': serializer.toJson<int>(size),
-      'etag': serializer.toJson<String>(etag),
+      'sha256': serializer.toJson<String>(sha256),
       'contentType': serializer.toJson<String>(contentType),
       'deleted': serializer.toJson<bool>(deleted),
       'lastFetch': serializer.toJson<DateTime?>(lastFetch),
@@ -289,7 +289,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           bool? dir,
           DateTime? modified,
           int? size,
-          String? etag,
+          String? sha256,
           String? contentType,
           bool? deleted,
           Value<DateTime?> lastFetch = const Value.absent()}) =>
@@ -300,7 +300,7 @@ class Resource extends DataClass implements Insertable<Resource> {
         dir: dir ?? this.dir,
         modified: modified ?? this.modified,
         size: size ?? this.size,
-        etag: etag ?? this.etag,
+        sha256: sha256 ?? this.sha256,
         contentType: contentType ?? this.contentType,
         deleted: deleted ?? this.deleted,
         lastFetch: lastFetch.present ? lastFetch.value : this.lastFetch,
@@ -313,7 +313,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       dir: data.dir.present ? data.dir.value : this.dir,
       modified: data.modified.present ? data.modified.value : this.modified,
       size: data.size.present ? data.size.value : this.size,
-      etag: data.etag.present ? data.etag.value : this.etag,
+      sha256: data.sha256.present ? data.sha256.value : this.sha256,
       contentType:
           data.contentType.present ? data.contentType.value : this.contentType,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
@@ -330,7 +330,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           ..write('dir: $dir, ')
           ..write('modified: $modified, ')
           ..write('size: $size, ')
-          ..write('etag: $etag, ')
+          ..write('sha256: $sha256, ')
           ..write('contentType: $contentType, ')
           ..write('deleted: $deleted, ')
           ..write('lastFetch: $lastFetch')
@@ -339,7 +339,7 @@ class Resource extends DataClass implements Insertable<Resource> {
   }
 
   @override
-  int get hashCode => Object.hash(id, parent, name, dir, modified, size, etag,
+  int get hashCode => Object.hash(id, parent, name, dir, modified, size, sha256,
       contentType, deleted, lastFetch);
   @override
   bool operator ==(Object other) =>
@@ -351,7 +351,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           other.dir == this.dir &&
           other.modified == this.modified &&
           other.size == this.size &&
-          other.etag == this.etag &&
+          other.sha256 == this.sha256 &&
           other.contentType == this.contentType &&
           other.deleted == this.deleted &&
           other.lastFetch == this.lastFetch);
@@ -364,7 +364,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   final Value<bool> dir;
   final Value<DateTime> modified;
   final Value<int> size;
-  final Value<String> etag;
+  final Value<String> sha256;
   final Value<String> contentType;
   final Value<bool> deleted;
   final Value<DateTime?> lastFetch;
@@ -376,7 +376,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.dir = const Value.absent(),
     this.modified = const Value.absent(),
     this.size = const Value.absent(),
-    this.etag = const Value.absent(),
+    this.sha256 = const Value.absent(),
     this.contentType = const Value.absent(),
     this.deleted = const Value.absent(),
     this.lastFetch = const Value.absent(),
@@ -389,7 +389,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     required bool dir,
     required DateTime modified,
     required int size,
-    required String etag,
+    required String sha256,
     required String contentType,
     this.deleted = const Value.absent(),
     this.lastFetch = const Value.absent(),
@@ -399,7 +399,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
         dir = Value(dir),
         modified = Value(modified),
         size = Value(size),
-        etag = Value(etag),
+        sha256 = Value(sha256),
         contentType = Value(contentType);
   static Insertable<Resource> custom({
     Expression<String>? id,
@@ -408,7 +408,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     Expression<bool>? dir,
     Expression<DateTime>? modified,
     Expression<int>? size,
-    Expression<String>? etag,
+    Expression<String>? sha256,
     Expression<String>? contentType,
     Expression<bool>? deleted,
     Expression<DateTime>? lastFetch,
@@ -421,7 +421,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       if (dir != null) 'dir': dir,
       if (modified != null) 'modified': modified,
       if (size != null) 'size': size,
-      if (etag != null) 'etag': etag,
+      if (sha256 != null) 'sha256': sha256,
       if (contentType != null) 'content_type': contentType,
       if (deleted != null) 'deleted': deleted,
       if (lastFetch != null) 'last_fetch': lastFetch,
@@ -436,7 +436,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       Value<bool>? dir,
       Value<DateTime>? modified,
       Value<int>? size,
-      Value<String>? etag,
+      Value<String>? sha256,
       Value<String>? contentType,
       Value<bool>? deleted,
       Value<DateTime?>? lastFetch,
@@ -448,7 +448,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       dir: dir ?? this.dir,
       modified: modified ?? this.modified,
       size: size ?? this.size,
-      etag: etag ?? this.etag,
+      sha256: sha256 ?? this.sha256,
       contentType: contentType ?? this.contentType,
       deleted: deleted ?? this.deleted,
       lastFetch: lastFetch ?? this.lastFetch,
@@ -477,8 +477,8 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     if (size.present) {
       map['size'] = Variable<int>(size.value);
     }
-    if (etag.present) {
-      map['etag'] = Variable<String>(etag.value);
+    if (sha256.present) {
+      map['sha256'] = Variable<String>(sha256.value);
     }
     if (contentType.present) {
       map['content_type'] = Variable<String>(contentType.value);
@@ -504,7 +504,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
           ..write('dir: $dir, ')
           ..write('modified: $modified, ')
           ..write('size: $size, ')
-          ..write('etag: $etag, ')
+          ..write('sha256: $sha256, ')
           ..write('contentType: $contentType, ')
           ..write('deleted: $deleted, ')
           ..write('lastFetch: $lastFetch, ')
@@ -532,7 +532,7 @@ typedef $$ResourcesTableCreateCompanionBuilder = ResourcesCompanion Function({
   required bool dir,
   required DateTime modified,
   required int size,
-  required String etag,
+  required String sha256,
   required String contentType,
   Value<bool> deleted,
   Value<DateTime?> lastFetch,
@@ -545,7 +545,7 @@ typedef $$ResourcesTableUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<bool> dir,
   Value<DateTime> modified,
   Value<int> size,
-  Value<String> etag,
+  Value<String> sha256,
   Value<String> contentType,
   Value<bool> deleted,
   Value<DateTime?> lastFetch,
@@ -598,8 +598,8 @@ class $$ResourcesTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  ColumnFilters<String> get etag => $state.composableBuilder(
-      column: $state.table.etag,
+  ColumnFilters<String> get sha256 => $state.composableBuilder(
+      column: $state.table.sha256,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -659,8 +659,8 @@ class $$ResourcesTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  ColumnOrderings<String> get etag => $state.composableBuilder(
-      column: $state.table.etag,
+  ColumnOrderings<String> get sha256 => $state.composableBuilder(
+      column: $state.table.sha256,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
@@ -718,7 +718,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
             Value<bool> dir = const Value.absent(),
             Value<DateTime> modified = const Value.absent(),
             Value<int> size = const Value.absent(),
-            Value<String> etag = const Value.absent(),
+            Value<String> sha256 = const Value.absent(),
             Value<String> contentType = const Value.absent(),
             Value<bool> deleted = const Value.absent(),
             Value<DateTime?> lastFetch = const Value.absent(),
@@ -731,7 +731,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
             dir: dir,
             modified: modified,
             size: size,
-            etag: etag,
+            sha256: sha256,
             contentType: contentType,
             deleted: deleted,
             lastFetch: lastFetch,
@@ -744,7 +744,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
             required bool dir,
             required DateTime modified,
             required int size,
-            required String etag,
+            required String sha256,
             required String contentType,
             Value<bool> deleted = const Value.absent(),
             Value<DateTime?> lastFetch = const Value.absent(),
@@ -757,7 +757,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
             dir: dir,
             modified: modified,
             size: size,
-            etag: etag,
+            sha256: sha256,
             contentType: contentType,
             deleted: deleted,
             lastFetch: lastFetch,
