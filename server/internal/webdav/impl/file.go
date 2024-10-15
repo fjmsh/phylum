@@ -6,6 +6,7 @@ package webdav
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -34,7 +35,7 @@ type FileSystem interface {
 func moveFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bool) (status int, err error) {
 	created := false
 	if _, err := fs.Stat(ctx, dst); err != nil {
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, os.ErrNotExist) {
 			return http.StatusForbidden, err
 		}
 		created = true
@@ -72,7 +73,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 
 	srcStat, err := fs.Stat(ctx, src)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return http.StatusNotFound, err
 		}
 		return http.StatusInternalServerError, err
@@ -80,7 +81,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 
 	created := false
 	if _, err := fs.Stat(ctx, dst); err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			created = true
 		} else {
 			return http.StatusForbidden, err
@@ -89,7 +90,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 		if !overwrite {
 			return http.StatusPreconditionFailed, os.ErrExist
 		}
-		if err := fs.RemoveAll(ctx, dst); err != nil && !os.IsNotExist(err) {
+		if err := fs.RemoveAll(ctx, dst); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return http.StatusForbidden, err
 		}
 	}
@@ -118,7 +119,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 	} else {
 		srcFile, err := fs.OpenRead(srcStat, 0, -1)
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, os.ErrNotExist) {
 				return http.StatusNotFound, err
 			}
 			return http.StatusInternalServerError, err
@@ -126,7 +127,7 @@ func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bo
 		defer srcFile.Close()
 		dstFile, err := fs.OpenWrite(ctx, dst)
 		if err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, os.ErrNotExist) {
 				return http.StatusConflict, err
 			}
 			return http.StatusForbidden, err
