@@ -30,49 +30,13 @@ type resourceMoveParams struct {
 
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/resources")
-	group.GET("/ls/:id", handleResourceLsRoute)
 	group.GET("/du/:id", handleResourceDiskUsageRoute)
-	group.GET("/metadata/:id", handleResourceMetadataRoute)
-	group.GET("/details/:id", handleResourceDetailsRoute)
+	group.GET("/ls/:id", handleResourceLsRoute)
 	group.GET("/contents/:id", handleResourceContentsRoute)
 	group.POST("/mkdir/:id", handleResourceMkdirRoute)
 	group.POST("/move/:id", handleResourceMoveRoute)
 	group.PUT("/upload/:id", handleResourceUploadRoute)
 	group.DELETE("/delete/:id", handleResourceDeleteRoute)
-}
-
-func handleResourceMetadataRoute(c *gin.Context) {
-	resourceId, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		panic(errResourceIDInvalid)
-	}
-
-	fs := auth.GetFileSystem(c)
-	resource, err := fs.ResourceByID(resourceId)
-	if err != nil {
-		panic(err)
-	}
-
-	c.JSON(200, resource)
-}
-
-func handleResourceLsRoute(c *gin.Context) {
-	resourceId, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		panic(errResourceIDInvalid)
-	}
-
-	fs := auth.GetFileSystem(c)
-	resource, err := fs.ResourceByID(resourceId)
-	if err != nil {
-		panic(err)
-	}
-
-	children, err := fs.ReadDir(resource)
-	if err != nil {
-		panic(err)
-	}
-	c.JSON(200, children)
 }
 
 func handleResourceDiskUsageRoute(c *gin.Context) {
@@ -96,21 +60,6 @@ func handleResourceDiskUsageRoute(c *gin.Context) {
 		Files:     info.Files,
 		Dirs:      info.Dirs,
 	})
-}
-
-func handleResourceDetailsRoute(c *gin.Context) {
-	resourceID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		panic(errResourceIDInvalid)
-	}
-
-	fs := auth.GetFileSystem(c)
-	r, err := fs.ResourceByID(resourceID)
-	if err != nil {
-		panic(err)
-	}
-
-	c.JSON(200, DetailedResponseFromResource(fs, r))
 }
 
 func handleResourceContentsRoute(c *gin.Context) {

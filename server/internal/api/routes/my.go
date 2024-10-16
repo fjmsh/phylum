@@ -8,8 +8,8 @@ import (
 )
 
 type myHomeResponse struct {
-	User userResponse              `json:"user"`
-	Home fs.ResourceDetailResponse `json:"home"`
+	User userResponse          `json:"user"`
+	Home fs.ResourceLsResponse `json:"home"`
 }
 
 type mySharedResponse struct {
@@ -32,7 +32,7 @@ func handleMyHomeRoute(c *gin.Context) {
 
 	c.JSON(200, myHomeResponse{
 		User: responseFromUser(user),
-		Home: fs.DetailedResponseFromResource(f, r),
+		Home: fs.LsResponseFromResource(f, r),
 	})
 }
 
