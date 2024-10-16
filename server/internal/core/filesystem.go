@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"crypto/sha256"
-	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -400,28 +399,18 @@ func (f filesystem) Move(r Resource, parentID uuid.UUID, name string, overwrite 
 }
 
 func (f filesystem) Copy(src Resource, destID uuid.UUID, destParentID uuid.UUID, destName string, recursive, overwrite bool) (dest Resource, e error) {
-	logrus.Info(fmt.Printf("Copying %s to %s as %s (%s): %b, %b", src.ID.String(), destParentID, destName, destID.String(), recursive, overwrite))
-	if src.ParentID == nil {
-		e = ErrInsufficientPermissions
-		return
-	}
 	if checkNameInvalid(destName) {
 		e = ErrResourceNameInvalid
 		return
 	}
 
 	// Check source directory permissions
-	srcParent, e := f.ResourceByID(*src.ParentID)
-	if e != nil {
-		return
-	}
-	if srcParent.UserPermissions < PermissionReadOnly {
+	if src.UserPermissions < PermissionReadOnly {
 		e = ErrInsufficientPermissions
 		return
 	}
-	logrus.Info("CP1")
 
-	// Check dest directory exists
+	// Check dest directory permissions
 	destParent, err := f.ResourceByID(destParentID)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
@@ -429,7 +418,10 @@ func (f filesystem) Copy(src Resource, destID uuid.UUID, destParentID uuid.UUID,
 		}
 		return Resource{}, err
 	}
-	logrus.Info("CP2")
+	if destParent.UserPermissions < PermissionReadWrite {
+		e = ErrInsufficientPermissions
+		return
+	}
 
 	copy := make(map[uuid.UUID]uuid.UUID)
 
@@ -440,45 +432,40 @@ func (f filesystem) Copy(src Resource, destID uuid.UUID, destParentID uuid.UUID,
 				return err
 			}
 		}
+		var tree []db.ReadDirRow
+		if recursive && src.Dir {
+			tree, err = f.db.ReadDir(f.ctx, db.ReadDirParams{ID: src.ID, IncludeRoot: false, Recursive: true})
+			if err != nil {
+				return err
+			}
+		}
 		dest, err = f.CreateMemberResource(destParent, destID, destName, src.Dir)
 		if err != nil {
 			return err
 		}
-		logrus.Info("CP3")
 		if !src.Dir {
 			copy[dest.ID] = src.ID
 		}
 
-		if recursive && src.Dir {
-			tree, err := f.db.ReadDir(f.ctx, db.ReadDirParams{ID: src.ID, IncludeRoot: false, Recursive: true})
-			if err != nil {
+		ids := make(map[string]uuid.UUID)
+		ids[""] = dest.ID
+		for _, src := range tree {
+			id := uuid.New()
+			parent := ids[src.Path[0:strings.LastIndex(src.Path, "/")]]
+
+			if _, err := dbh.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: src.Name, Dir: src.Dir}); err != nil {
+				if strings.Contains(err.Error(), "unique_member_resource_name") {
+					return ErrResourceNameConflict
+				}
+				if strings.Contains(err.Error(), "resources_pkey") {
+					return ErrResourceIDConflict
+				}
 				return err
-			}
-
-			ids := make(map[string]uuid.UUID)
-			ids[""] = dest.ID
-			logrus.Info(fmt.Printf("Copying %d child entities", len(tree)))
-			for _, src := range tree {
-				id := uuid.New()
-				logrus.Info(fmt.Printf("Copying %s (%s) as %s ", id.String(), src.Path, id))
-				parent := ids[src.Path[0:strings.LastIndex(src.Path, "/")]]
-				logrus.Info(parent)
-
-				if _, err := dbh.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: destName, Dir: src.Dir}); err != nil {
-					logrus.Info(err.Error())
-					if strings.Contains(err.Error(), "unique_member_resource_name") {
-						return ErrResourceNameConflict
-					}
-					if strings.Contains(err.Error(), "resources_pkey") {
-						return ErrResourceIDConflict
-					}
-					return err
+			} else {
+				if src.Dir {
+					ids[src.Path] = id
 				} else {
-					if src.Dir {
-						ids[src.Path] = id
-					} else {
-						copy[src.ID] = id
-					}
+					copy[src.ID] = id
 				}
 			}
 		}
