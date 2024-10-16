@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -103,8 +104,19 @@ func setupResourceRmCommand() *cobra.Command {
 }
 
 func setupResourceLsCommand() *cobra.Command {
+	formatSize := func(size int64) string {
+		suffix := []string{"", "K", "M", "G", "T"}
+		si := 0
+		for ; size >= 1000 && si < len(suffix); si, size = si+1, size/1000 {
+		}
+		return fmt.Sprintf("%4d%s", size, suffix[si])
+	}
 	details := func(r core.Resource) string {
-		return fmt.Sprintf("%s %4d %s", r.ID.String(), r.UserPermissions, r.Name)
+		name := r.Name
+		if r.Dir {
+			name += "/"
+		}
+		return fmt.Sprintf("%s %s %s %s", r.ID.String(), formatSize(r.ContentSize), name, r.Permissions)
 	}
 	cmd := cobra.Command{
 		Use:   "ls <path | uuid>",
@@ -141,9 +153,10 @@ func setupResourceLsCommand() *cobra.Command {
 				}
 			}
 
-			logrus.Info("Name: " + r.Name)
-			logrus.Info("  ID: " + r.ID.String())
-			logrus.Info("Perm: " + core.PermissionString(r.UserPermissions))
+			logrus.Info("         Name: " + r.Name)
+			logrus.Info("           ID: " + r.ID.String())
+			logrus.Info("  Permissions: " + r.Permissions)
+			logrus.Info("    Inherited: " + r.InheritedPermissions)
 
 			if r.Dir {
 				children, err := fs.ReadDir(r)
@@ -152,9 +165,26 @@ func setupResourceLsCommand() *cobra.Command {
 				}
 				logrus.Info()
 				logrus.Info("Children:")
+				sort.Slice(children, func(i, j int) bool {
+					a := children[i]
+					b := children[j]
+					if a.Dir != b.Dir {
+						if a.Dir {
+							return true
+						}
+					}
+					return strings.Compare(strings.ToLower(a.Name), strings.ToLower((b.Name))) <= 0
+				})
+				// children = sort.Slice(children, func(a core.Resource, b core.Resource) bool {
+				// 	return true
+				// })
 				for _, c := range children {
 					logrus.Info(details(c))
 				}
+			} else {
+				logrus.Info(fmt.Sprintf("         Size: %d", r.ContentSize))
+				logrus.Info(" Content Type: " + r.ContentType)
+				logrus.Info("   SHA256 Sum: " + r.ContentSHA256)
 			}
 		},
 	}
