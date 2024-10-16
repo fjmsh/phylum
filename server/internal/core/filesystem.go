@@ -347,6 +347,9 @@ func (f filesystem) Move(r Resource, parentID uuid.UUID, name string, overwrite 
 	}
 
 	// Check destParent directory permissions (if applicable)
+	if parentID == uuid.Nil {
+		parentID = *r.ParentID
+	}
 	destParent, err := f.ResourceByID(parentID)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
