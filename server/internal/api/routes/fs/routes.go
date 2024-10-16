@@ -171,7 +171,7 @@ func handleResourceMoveRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	if r, err := fs.Move(r, params.Name, params.ParentID, params.Overwrite); err != nil {
+	if r, err := fs.Move(r, params.ParentID, params.Name, params.Overwrite); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, r)

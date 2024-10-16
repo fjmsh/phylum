@@ -3,9 +3,12 @@ package core
 import (
 	"context"
 	"crypto/sha256"
+	"fmt"
 	"io"
 	"strings"
 	"time"
+
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -22,6 +25,7 @@ type DiskUsageInfo struct {
 }
 
 type FileSystem interface {
+	WithDb(db *db.DbHandler) FileSystem
 	RunInTx(fn func(FileSystem) error) error
 	RootID() uuid.UUID
 	ResourceByPath(path string) (Resource, error)
@@ -32,7 +36,8 @@ type FileSystem interface {
 	CreateMemberResource(r Resource, id uuid.UUID, name string, dir bool) (Resource, error)
 	DeleteChildRecursive(r Resource, name string, hardDelete bool) error
 	DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error)
-	Move(r Resource, name string, parent uuid.UUID, overwrite bool) (Resource, error)
+	Move(r Resource, parentID uuid.UUID, name string, overwrite bool) (Resource, error)
+	Copy(r Resource, ID uuid.UUID, parentID uuid.UUID, name string, recursive, overwrite bool) (Resource, error)
 	UpdatePermissions(r Resource, username string, permission Permission) error
 	DiskUsage(r Resource) (DiskUsageInfo, error)
 }
@@ -59,6 +64,9 @@ func (f filesystem) RootID() uuid.UUID {
 	return f.rootID
 }
 
+func (f filesystem) WithDb(db *db.DbHandler) FileSystem {
+	return f.withDb(db)
+}
 func (f filesystem) withDb(db *db.DbHandler) filesystem {
 	return filesystem{
 		db:       db,
@@ -71,7 +79,7 @@ func (f filesystem) withDb(db *db.DbHandler) filesystem {
 
 func (f filesystem) RunInTx(fn func(FileSystem) error) error {
 	return f.db.WithTx(f.ctx, func(db *db.DbHandler) error {
-		return fn(f.withDb(db))
+		return fn(f.WithDb(db))
 	})
 }
 
@@ -232,6 +240,9 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 
 func (f filesystem) DeleteChildRecursive(r Resource, name string, hardDelete bool) error {
 	if result, err := f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: r.ID, Name: name}); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
 		return err
 	} else {
 		child := Resource{
@@ -319,7 +330,7 @@ func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
 	}
 }
 
-func (f filesystem) Move(r Resource, name string, parentID uuid.UUID, overwrite bool) (Resource, error) {
+func (f filesystem) Move(r Resource, parentID uuid.UUID, name string, overwrite bool) (Resource, error) {
 	if r.ParentID == nil {
 		return Resource{}, ErrInsufficientPermissions
 	}
@@ -328,34 +339,34 @@ func (f filesystem) Move(r Resource, name string, parentID uuid.UUID, overwrite 
 	}
 
 	// Check source directory permissions
-	oldParent, err := f.ResourceByID(*r.ParentID)
-	var parent = oldParent
+	parent, err := f.ResourceByID(*r.ParentID)
 	if err != nil {
 		return Resource{}, err
 	}
-	if oldParent.UserPermissions < PermissionReadWrite {
+	if parent.UserPermissions < PermissionReadWrite {
 		return Resource{}, ErrInsufficientPermissions
 	}
 
-	// Check target directory permissions (if applicable)
-	if parentID != *r.ParentID {
-		parent, err = f.ResourceByID(parentID)
-		if err != nil {
-			return Resource{}, err
+	// Check destParent directory permissions (if applicable)
+	destParent, err := f.ResourceByID(parentID)
+	if err != nil {
+		if errors.Is(err, ErrResourceNotFound) {
+			err = ErrParentNotFound
 		}
-		if parent.UserPermissions < PermissionReadWrite {
-			return Resource{}, ErrInsufficientPermissions
-		}
-		if res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: r.ID, ResourceID: parentID, Username: f.username}); err != nil || res.Found {
-			return Resource{}, ErrResourceMoveTargetSubdirectory
-		}
+		return Resource{}, err
+	}
+	if destParent.UserPermissions < PermissionReadWrite {
+		return Resource{}, ErrInsufficientPermissions
+	}
+	if res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: r.ID, ResourceID: parentID, Username: f.username}); err != nil || res.Found {
+		return Resource{}, ErrResourceMoveTargetSubdirectory
 	}
 	result := Resource{}
 
 	return result, f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
 		f = f.withDb(dbh)
 		if overwrite {
-			f.DeleteChildRecursive(parent, name, false)
+			f.DeleteChildRecursive(destParent, name, false)
 		}
 		if r, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID, Name: name, Parent: parentID}); err != nil {
 			if strings.Contains(err.Error(), "unique_member_resource_name") {
@@ -386,6 +397,96 @@ func (f filesystem) Move(r Resource, name string, parentID uuid.UUID, overwrite 
 			return nil
 		}
 	})
+}
+
+func (f filesystem) Copy(src Resource, destID uuid.UUID, destParentID uuid.UUID, destName string, recursive, overwrite bool) (dest Resource, e error) {
+	logrus.Info(fmt.Printf("Copying %s to %s as %s (%s): %b, %b", src.ID.String(), destParentID, destName, destID.String(), recursive, overwrite))
+	if src.ParentID == nil {
+		e = ErrInsufficientPermissions
+		return
+	}
+	if checkNameInvalid(destName) {
+		e = ErrResourceNameInvalid
+		return
+	}
+
+	// Check source directory permissions
+	srcParent, e := f.ResourceByID(*src.ParentID)
+	if e != nil {
+		return
+	}
+	if srcParent.UserPermissions < PermissionReadOnly {
+		e = ErrInsufficientPermissions
+		return
+	}
+	logrus.Info("CP1")
+
+	// Check dest directory exists
+	destParent, err := f.ResourceByID(destParentID)
+	if err != nil {
+		if errors.Is(err, ErrResourceNotFound) {
+			err = ErrParentNotFound
+		}
+		return Resource{}, err
+	}
+	logrus.Info("CP2")
+
+	copy := make(map[uuid.UUID]uuid.UUID)
+
+	e = f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
+		f = f.withDb(dbh)
+		if overwrite {
+			if err = f.DeleteChildRecursive(destParent, destName, false); err != nil && !errors.Is(err, ErrResourceNotFound) {
+				return err
+			}
+		}
+		dest, err = f.CreateMemberResource(destParent, destID, destName, src.Dir)
+		if err != nil {
+			return err
+		}
+		logrus.Info("CP3")
+		if !src.Dir {
+			copy[dest.ID] = src.ID
+		}
+
+		if recursive && src.Dir {
+			tree, err := f.db.ReadDir(f.ctx, db.ReadDirParams{ID: src.ID, IncludeRoot: false, Recursive: true})
+			if err != nil {
+				return err
+			}
+
+			ids := make(map[string]uuid.UUID)
+			ids[""] = dest.ID
+			logrus.Info(fmt.Printf("Copying %d child entities", len(tree)))
+			for _, src := range tree {
+				id := uuid.New()
+				logrus.Info(fmt.Printf("Copying %s (%s) as %s ", id.String(), src.Path, id))
+				parent := ids[src.Path[0:strings.LastIndex(src.Path, "/")]]
+				logrus.Info(parent)
+
+				if _, err := dbh.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: destName, Dir: src.Dir}); err != nil {
+					logrus.Info(err.Error())
+					if strings.Contains(err.Error(), "unique_member_resource_name") {
+						return ErrResourceNameConflict
+					}
+					if strings.Contains(err.Error(), "resources_pkey") {
+						return ErrResourceIDConflict
+					}
+					return err
+				} else {
+					if src.Dir {
+						ids[src.Path] = id
+					} else {
+						copy[src.ID] = id
+					}
+				}
+			}
+		}
+
+		return nil
+	})
+
+	return
 }
 
 func (f filesystem) DiskUsage(r Resource) (DiskUsageInfo, error) {
