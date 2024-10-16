@@ -14,7 +14,7 @@ class ResourceMkdirAction extends PhylumAction with JsonApiAction, ResourceCreat
   String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/resources/mkdir/$resourceId';
+  String get endpoint => '/api/v1/fs/mkdir/$resourceId';
 
   @override
   final String resourceId;

@@ -16,7 +16,7 @@ class ResourceDeleteAction extends PhylumAction with JsonApiAction {
   String get method => 'DELETE';
 
   @override
-  String get endpoint => '/api/v1/resources/delete/$id';
+  String get endpoint => '/api/v1/fs/rm/$id';
 
   final String id;
   final String resourceName;

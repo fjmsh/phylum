@@ -19,7 +19,7 @@ class ResourceUploadAction extends PhylumAction with FileUploadApiAction, Resour
   String get method => 'PUT';
 
   @override
-  String get endpoint => '/api/v1/resources/upload/$resourceId';
+  String get endpoint => '/api/v1/fs/upload/$resourceId';
 
   @override
   Future<MultipartFile> get file => MultipartFile.fromPath('contents', path, filename: resourceName, contentType: MediaType.parse(contentType));

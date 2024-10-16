@@ -81,7 +81,7 @@ class _ResourcePreviewState extends State<ResourcePreview> {
     return SizedBox(
       width: 800,
       child: Image.network(
-        context.read<PhylumAccount>().apiClient.createUri('/api/v1/resources/contents/${r.id}').toString(),
+        context.read<PhylumAccount>().apiClient.createUri('/api/v1/fs/cat/${r.id}').toString(),
         headers: api.requestHeaders,
       ),
     );

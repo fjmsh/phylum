@@ -16,7 +16,7 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
   String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/resources/move/$resourceId';
+  String get endpoint => '/api/v1/fs/mv/$resourceId';
 
   final String resourceId;
   final String? parent;
