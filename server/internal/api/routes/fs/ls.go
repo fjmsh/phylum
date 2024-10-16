@@ -13,7 +13,7 @@ type ResourceLsResponse struct {
 	InheritedPermissions string          `json:"inherited,omitempty"`
 }
 
-func handleResourceLsRoute(c *gin.Context) {
+func handleLsRequest(c *gin.Context) {
 	resourceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		panic(errResourceIDInvalid)
