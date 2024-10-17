@@ -32,7 +32,6 @@ func SetupCommand() {
 	flags.String("database-url", "postgres://phylum:phylum@localhost:5432/phylum", "Database URL or DSN")
 	viper.BindPFlag("database_url", flags.Lookup("database-url"))
 
-	var database *db.DbHandler
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		workDir := viper.GetString("working_dir")
 		if workDir != "." {
@@ -47,21 +46,21 @@ func SetupCommand() {
 		}
 
 		var err error
-		if database, err = db.NewDb(context.Background(), viper.GetString("database_url"), debug && viper.GetBool("trace_sql")); err != nil {
+		if err = db.Create(context.Background(), viper.GetString("database_url"), debug && viper.GetBool("trace_sql")); err != nil {
 			logrus.Fatal(err)
 		}
 	}
 
 	defer func() {
-		if database != nil {
+		if db.Default != nil {
 			logrus.Info("Shutting Down App")
-			database.Close()
+			db.Default.Close()
 		}
 	}()
 
 	rootCmd.AddCommand([]*cobra.Command{
-		appcmd.SetupCommand(&database, debug),
-		setupSchemaCommand(&database),
+		appcmd.SetupCommand(debug),
+		setupSchemaCommand(),
 	}...)
 	rootCmd.Execute()
 }

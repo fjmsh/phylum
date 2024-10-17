@@ -20,6 +20,8 @@ var (
 var currentSchemaVersion int
 var latestSchemaVersion int
 
+var Default *DbHandler
+
 type DbHandler struct {
 	Queries
 	tx interface {
@@ -28,10 +30,10 @@ type DbHandler struct {
 	pool *pgxpool.Pool
 }
 
-func NewDb(ctx context.Context, dsn string, trace bool) (*DbHandler, error) {
+func Create(ctx context.Context, dsn string, trace bool) error {
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		return nil, errors.New("Unable to parse DSN: " + err.Error())
+		return errors.New("Unable to parse DSN: " + err.Error())
 	}
 
 	if trace {
@@ -40,33 +42,33 @@ func NewDb(ctx context.Context, dsn string, trace bool) (*DbHandler, error) {
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		return nil, errors.New("Unable to connect to database: " + err.Error())
+		return errors.New("Unable to connect to database: " + err.Error())
 	}
 
 	logrus.Info("Connected to " + config.ConnConfig.Database + " at " + config.ConnConfig.Host + ":" + fmt.Sprint(config.ConnConfig.Port))
 
 	conn, err := pool.Acquire(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	migrator, err := migrations.NewMigrator(ctx, conn.Conn())
 	if err != nil {
-		return nil, err
+		return err
 	}
 	currentSchemaVersion, err = migrator.GetCurrentVersion(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	latestSchemaVersion = migrator.GetLatestVersion()
 	conn.Release()
 
-	handler := &DbHandler{
+	Default = &DbHandler{
 		Queries: *New(pool),
 		tx:      pool,
 		pool:    pool,
 	}
 
-	return handler, nil
+	return nil
 }
 
 func (d DbHandler) WithTx(ctx context.Context, fn func(*DbHandler) error) error {

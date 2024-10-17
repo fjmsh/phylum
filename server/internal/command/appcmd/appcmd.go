@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
+func SetupCommand(debug bool) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "app",
 		Short: "Server Administration",
@@ -20,14 +20,14 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 			for ; c.Parent() != nil; c = c.Parent() {
 			}
 			c.PersistentPreRun(cmd, args)
-			if err := (*db).CheckVersion(context.Background(), !viper.GetBool("no_auto_migrate")); err != nil {
+			if err := db.Default.CheckVersion(context.Background(), !viper.GetBool("no_auto_migrate")); err != nil {
 				logrus.Fatal(err)
 			}
 
-			if err := storage.Create(context.Background(), *db, viper.GetString("default_storage_dir")); err != nil {
+			if err := storage.Create(context.Background(), db.Default, viper.GetString("default_storage_dir")); err != nil {
 				logrus.Fatal(err)
 			}
-			if err := core.Create(context.Background(), *db, storage.Default, debug); err != nil {
+			if err := core.Create(context.Background(), db.Default, storage.Default, debug); err != nil {
 				logrus.Fatal(err)
 			}
 		},
