@@ -12,8 +12,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-var debug bool = false
-
 func SetupCommand() {
 	viper.SetEnvPrefix("phylum")
 
@@ -39,7 +37,7 @@ func SetupCommand() {
 			os.Mkdir(workDir, 0750)
 			os.Chdir(workDir)
 		}
-		debug = viper.GetBool("debug")
+		debug := viper.GetBool("debug")
 		if debug {
 			logrus.Info("Running in debug mode")
 			logrus.SetLevel(logrus.TraceLevel)
@@ -59,7 +57,7 @@ func SetupCommand() {
 	}()
 
 	rootCmd.AddCommand([]*cobra.Command{
-		appcmd.SetupCommand(debug),
+		appcmd.SetupCommand(),
 		setupSchemaCommand(),
 	}...)
 	rootCmd.Execute()

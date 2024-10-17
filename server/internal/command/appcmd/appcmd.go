@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func SetupCommand(debug bool) *cobra.Command {
+func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "app",
 		Short: "Server Administration",
@@ -27,7 +27,7 @@ func SetupCommand(debug bool) *cobra.Command {
 			if err := storage.Create(context.Background(), db.Default, viper.GetString("default_storage_dir")); err != nil {
 				logrus.Fatal(err)
 			}
-			if err := core.Create(context.Background(), db.Default, storage.Default, debug); err != nil {
+			if err := core.Create(context.Background(), db.Default, storage.Default); err != nil {
 				logrus.Fatal(err)
 			}
 		},

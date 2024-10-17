@@ -14,7 +14,6 @@ const defaultUserUsername = "phylum"
 const defaultUserDisplayName = "Phylum"
 
 type App struct {
-	Debug  bool
 	Rootfs FileSystem
 	db     *db.DbHandler
 	cs     storage.Storage
@@ -22,11 +21,10 @@ type App struct {
 
 var Default *App
 
-func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage, debug bool) error {
+func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage) error {
 	Default = &App{
-		Debug: debug,
-		db:    db,
-		cs:    cs,
+		db: db,
+		cs: cs,
 	}
 
 	return Default.setupAppData(ctx)

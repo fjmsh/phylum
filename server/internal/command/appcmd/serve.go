@@ -23,7 +23,7 @@ func setupServeCommand() *cobra.Command {
 		Short: "Run the server",
 		Run: func(cmd *cobra.Command, args []string) {
 			config := viper.GetViper()
-			engine := createEngine(config.GetBool("log_body"), config.GetBool("cors_enabled"), config.GetStringSlice("cors_origins"))
+			engine := createEngine(config.GetBool("debug"), config.GetBool("log_body"), config.GetBool("cors_enabled"), config.GetStringSlice("cors_origins"))
 			engine.Use(errors.RecoverApiError)
 
 			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")), core.Default)
@@ -60,8 +60,8 @@ func setupServeCommand() *cobra.Command {
 	return cmdServe
 }
 
-func createEngine(logBody bool, corsEnabled bool, corsOrigins []string) *gin.Engine {
-	if !core.Default.Debug {
+func createEngine(debug, logBody bool, corsEnabled bool, corsOrigins []string) *gin.Engine {
+	if !debug {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	engine := gin.New()
@@ -72,7 +72,7 @@ func createEngine(logBody bool, corsEnabled bool, corsOrigins []string) *gin.Eng
 			"msg":    "Internal Server Error",
 		})
 	}))
-	if core.Default.Debug && logBody {
+	if debug && logBody {
 		engine.Use(logBodyMiddleware)
 	}
 
