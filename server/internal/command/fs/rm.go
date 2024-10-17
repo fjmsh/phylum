@@ -1,35 +1,32 @@
 package fs
 
 import (
-	"errors"
+	"fmt"
+	"os"
 
-	"github.com/shroff/phylum/server/internal/core"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 func setupRmCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "rm path",
+		Use:   "rm <path | uuid>",
 		Short: "Delete Resource",
 		Args:  cobra.ExactArgs(1),
 		PreRun: func(cmd *cobra.Command, args []string) {
 			openFileSystemFromFlags(cmd)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			path := args[0]
-			r, err := fs.ResourceByPath(path)
+			pathOrUuid := args[0]
+			r, err := resourceByPathOrUuid(pathOrUuid)
 			if err != nil {
-				if errors.Is(err, core.ErrResourceNotFound) {
-					logrus.Fatal("Resource not found: " + path)
-				} else {
-					logrus.Fatal(err.Error())
-				}
+				fmt.Println("cannot remove '" + pathOrUuid + "': " + err.Error())
+				os.Exit(1)
 			}
 
 			if r.Dir {
 				if recursive, err := cmd.Flags().GetBool("recursive"); err != nil || !recursive {
-					logrus.Fatal("Must use -r to delete directories")
+					fmt.Println("cannot remove '" + pathOrUuid + "': Is a directory. Try again with '-r'")
+					os.Exit(1)
 				}
 			}
 

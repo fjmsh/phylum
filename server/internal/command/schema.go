@@ -2,10 +2,11 @@ package command
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/shroff/phylum/server/internal/db"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +28,8 @@ func setupSchemaResetCommand() *cobra.Command {
 		Short: "Reset Database Schema",
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := db.Default.DeleteSchema(context.Background()); err != nil {
-				logrus.Fatal(err)
+				fmt.Println(err.Error())
+				os.Exit(1)
 			}
 		},
 	}
@@ -42,16 +44,17 @@ func setupSchemaMigrateCommand() *cobra.Command {
 			ctx := context.Background()
 			if args[0] == "auto" || args[0] == "latest" {
 				if err := db.Default.CheckVersion(ctx, true); err != nil {
-					logrus.Fatal(err)
+					fmt.Println(err.Error())
+					os.Exit(2)
 				}
 			} else {
 				db.Default.CheckVersion(ctx, false)
-				v, err := strconv.Atoi(args[0])
-				if err != nil {
-					logrus.Fatal(err)
-				}
-				if err = db.Default.Migrate(ctx, v); err != nil {
-					logrus.Fatal(err)
+				if v, err := strconv.Atoi(args[0]); err != nil {
+					fmt.Println(err.Error())
+					os.Exit(3)
+				} else if err := db.Default.Migrate(ctx, v); err != nil {
+					fmt.Println(err.Error())
+					os.Exit(4)
 				}
 			}
 		},

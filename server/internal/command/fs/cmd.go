@@ -2,11 +2,12 @@ package fs
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -25,13 +26,16 @@ func SetupCommand() *cobra.Command {
 			c.PersistentPreRun(cmd, args)
 
 			if err := db.Default.CheckVersion(context.Background(), !viper.GetBool("no_auto_migrate")); err != nil {
-				logrus.Fatal(err)
+				fmt.Println("could not migrate database schema: " + err.Error())
+				os.Exit(1)
 			}
 			if err := storage.Create(context.Background(), db.Default, viper.GetString("default_storage_dir")); err != nil {
-				logrus.Fatal(err)
+				fmt.Println("could not open storage: " + err.Error())
+				os.Exit(1)
 			}
 			if err := core.Create(context.Background(), db.Default, storage.Default); err != nil {
-				logrus.Fatal(err)
+				fmt.Println("could not initialized app: " + err.Error())
+				os.Exit(1)
 			}
 		},
 	}
@@ -57,10 +61,12 @@ func SetupCommand() *cobra.Command {
 
 func openFileSystemFromFlags(cmd *cobra.Command) {
 	if value, err := cmd.Flags().GetString("user"); err != nil {
-		logrus.Fatal(err)
+		fmt.Println("could not read user: " + err.Error())
+		os.Exit(1)
 	} else {
 		if user, err := core.Default.UserByEmail(context.Background(), value); err != nil {
-			logrus.Fatal(err)
+			fmt.Println("could not find user '" + value + "': " + err.Error())
+			os.Exit(1)
 		} else {
 			fs = core.Default.OpenFileSystem(context.Background(), user)
 		}
