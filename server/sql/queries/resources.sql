@@ -1,8 +1,10 @@
 -- name: CreateResource :one
 INSERT INTO resources(
-    id, parent, name, dir
+    id, parent, name, dir, content_type, content_sha256
 ) VALUES (
-    $1, $2, $3, $4
+    @id::uuid, sqlc.narg('parent')::uuid, @name::text, @dir::boolean,
+      CASE @dir WHEN TRUE THEN '' ELSE 'text/plain' END,
+      CASE @dir WhEN TRUE THEN '' ELSE 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' END
 ) RETURNING *;
 
 -- name: UpdateResourceContents :exec
@@ -93,4 +95,4 @@ RETURNING id;
 SELECT * FROM resources WHERE permissions ? @username::text AND id <> @user_home::uuid AND deleted IS NULL;
 
 -- name: ChildResourceByName :one
-SELECT * FROM resources WHERE parent == @parent::uuid AND name = @name::text AND deleted IS NULL;
+SELECT * FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;

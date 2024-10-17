@@ -12,7 +12,7 @@ import (
 )
 
 const childResourceByName = `-- name: ChildResourceByName :one
-SELECT id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions FROM resources WHERE parent == $1::uuid AND name = $2::text AND deleted IS NULL
+SELECT id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions FROM resources WHERE parent = $1::uuid AND name = $2::text AND deleted IS NULL
 `
 
 type ChildResourceByNameParams struct {
@@ -41,9 +41,11 @@ func (q *Queries) ChildResourceByName(ctx context.Context, arg ChildResourceByNa
 
 const createResource = `-- name: CreateResource :one
 INSERT INTO resources(
-    id, parent, name, dir
+    id, parent, name, dir, content_type, content_sha256
 ) VALUES (
-    $1, $2, $3, $4
+    $1::uuid, $2::uuid, $3::text, $4::boolean,
+      CASE $4 WHEN TRUE THEN '' ELSE 'text/plain' END,
+      CASE $4 WhEN TRUE THEN '' ELSE 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' END
 ) RETURNING id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions
 `
 
