@@ -45,7 +45,7 @@ func Create(ctx context.Context, dsn string, trace bool) error {
 		return errors.New("Unable to connect to database: " + err.Error())
 	}
 
-	logrus.Info("Connected to " + config.ConnConfig.Database + " at " + config.ConnConfig.Host + ":" + fmt.Sprint(config.ConnConfig.Port))
+	logrus.Debug("Connected to " + config.ConnConfig.Database + " at " + config.ConnConfig.Host + ":" + fmt.Sprint(config.ConnConfig.Port))
 
 	conn, err := pool.Acquire(ctx)
 	if err != nil {

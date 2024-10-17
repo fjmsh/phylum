@@ -1,8 +1,8 @@
 package fs
 
 import (
-	"errors"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -28,6 +28,18 @@ func formatResourceSummary(r core.Resource) string {
 	return fmt.Sprintf("%s %s %s %s", r.ID.String(), formatSize(r.ContentSize), name, r.Permissions)
 }
 
+func resourceByPathOrUuid(pathOrUuid string) (core.Resource, error) {
+	if pathOrUuid[0] == '/' {
+		return fs.ResourceByPath(pathOrUuid)
+	}
+	if id, err := uuid.Parse(pathOrUuid); err != nil {
+		return core.Resource{}, err
+	} else {
+		return fs.ResourceByID(id)
+	}
+
+}
+
 func setupLsCommand() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "ls <path | uuid>",
@@ -37,45 +49,25 @@ func setupLsCommand() *cobra.Command {
 			openFileSystemFromFlags(cmd)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			path := args[0]
-			var r core.Resource
-			if path[0] != '/' {
-				var id uuid.UUID
-				var err error
-				if id, err = uuid.Parse(path); err != nil {
-					logrus.Fatal(err)
-				}
-
-				if r, err = fs.ResourceByID(id); err != nil {
-					if errors.Is(err, core.ErrResourceNotFound) {
-						logrus.Fatal("Resource not found: " + path)
-					} else {
-						logrus.Fatal(err.Error())
-					}
-				}
-			} else {
-				var err error
-				if r, err = fs.ResourceByPath(path); err != nil {
-					if errors.Is(err, core.ErrResourceNotFound) {
-						logrus.Fatal("Resource not found: " + path)
-					} else {
-						logrus.Fatal(err.Error())
-					}
-				}
+			pathOrUuid := args[0]
+			r, err := resourceByPathOrUuid(pathOrUuid)
+			if err != nil {
+				fmt.Println("cannot access '" + pathOrUuid + "': " + err.Error())
+				os.Exit(1)
 			}
 
-			logrus.Info("         Name: " + r.Name)
-			logrus.Info("           ID: " + r.ID.String())
-			logrus.Info("  Permissions: " + r.Permissions)
-			logrus.Info("    Inherited: " + r.InheritedPermissions)
+			fmt.Println("         Name: " + r.Name)
+			fmt.Println("           ID: " + r.ID.String())
+			fmt.Println("  Permissions: " + r.Permissions)
+			fmt.Println("    Inherited: " + r.InheritedPermissions)
 
 			if r.Dir {
 				children, err := fs.ReadDir(r)
 				if err != nil {
 					logrus.Fatal(err)
 				}
-				logrus.Info()
-				logrus.Info("Children:")
+				fmt.Println()
+				fmt.Println("Children:")
 				sort.Slice(children, func(i, j int) bool {
 					a := children[i]
 					b := children[j]
@@ -90,12 +82,12 @@ func setupLsCommand() *cobra.Command {
 				// 	return true
 				// })
 				for _, c := range children {
-					logrus.Info(formatResourceSummary(c))
+					fmt.Println(formatResourceSummary(c))
 				}
 			} else {
-				logrus.Info(fmt.Sprintf("         Size: %d", r.ContentSize))
-				logrus.Info(" Content Type: " + r.ContentType)
-				logrus.Info("   SHA256 Sum: " + r.ContentSHA256)
+				fmt.Printf("         Size: %d\n", r.ContentSize)
+				fmt.Println(" Content Type: " + r.ContentType)
+				fmt.Println("   SHA256 Sum: " + r.ContentSHA256)
 			}
 		},
 	}

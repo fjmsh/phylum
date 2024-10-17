@@ -21,7 +21,7 @@ type handler struct {
 }
 
 func SetupHandler(r *gin.RouterGroup, app *core.App) {
-	logrus.Info("Setting up WebDAV access at " + r.BasePath())
+	logrus.Debug("Setting up WebDAV access at " + r.BasePath())
 	handler := &handler{
 		app:    app,
 		prefix: r.BasePath(),

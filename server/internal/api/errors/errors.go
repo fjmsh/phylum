@@ -2,7 +2,6 @@ package errors
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,7 +21,7 @@ func New(httpStatus int, code, msg string) error {
 }
 
 func (e ApiErr) Error() string {
-	return fmt.Sprintf("%d %s (%s)", e.Status, e.Code, e.Message)
+	return e.Message
 }
 
 func Is(err, target error) bool {

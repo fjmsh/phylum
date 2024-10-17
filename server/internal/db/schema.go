@@ -9,7 +9,7 @@ import (
 )
 
 func (d DbHandler) CheckVersion(ctx context.Context, autoMigrate bool) error {
-	logrus.Info(fmt.Sprintf("Schema version %d", currentSchemaVersion))
+	logrus.Debug(fmt.Sprintf("Schema version %d", currentSchemaVersion))
 	if currentSchemaVersion != latestSchemaVersion {
 		if autoMigrate {
 			if currentSchemaVersion > latestSchemaVersion {
@@ -20,7 +20,7 @@ func (d DbHandler) CheckVersion(ctx context.Context, autoMigrate bool) error {
 			}
 			return d.Migrate(ctx, latestSchemaVersion)
 		} else {
-			logrus.Warn(fmt.Sprintf("Schema version is not at latest (%d)", latestSchemaVersion))
+			logrus.Warn(fmt.Sprintf("Schema version is not at latest (%d / %d)", currentSchemaVersion, latestSchemaVersion))
 			return nil
 		}
 	}
@@ -43,7 +43,7 @@ func (d DbHandler) Migrate(ctx context.Context, version int) error {
 	if err != nil {
 		return err
 	}
-	logrus.Info(fmt.Sprintf("Migrating database from version %d to %d", currentSchemaVersion, version))
+	logrus.Debug(fmt.Sprintf("Migrating database from version %d to %d", currentSchemaVersion, version))
 	if err = migrator.MigrateTo(ctx, int32(version)); err != nil {
 		return err
 	}

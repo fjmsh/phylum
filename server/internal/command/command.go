@@ -32,16 +32,17 @@ func SetupCommand() {
 	viper.BindPFlag("database_url", flags.Lookup("database-url"))
 
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
-		workDir := viper.GetString("working_dir")
-		if workDir != "." {
-			logrus.Info("Setting working directory to " + workDir)
-			os.Mkdir(workDir, 0750)
-			os.Chdir(workDir)
-		}
 		debug := viper.GetBool("debug")
 		if debug {
-			logrus.Info("Running in debug mode")
 			logrus.SetLevel(logrus.TraceLevel)
+			logrus.Debug("Running in debug mode")
+		}
+
+		workDir := viper.GetString("working_dir")
+		if workDir != "." {
+			logrus.Debug("Setting working directory to " + workDir)
+			os.Mkdir(workDir, 0750)
+			os.Chdir(workDir)
 		}
 
 		var err error
@@ -52,7 +53,7 @@ func SetupCommand() {
 
 	defer func() {
 		if db.Default != nil {
-			logrus.Info("Shutting Down App")
+			logrus.Debug("Shutting Down App")
 			db.Default.Close()
 		}
 	}()
