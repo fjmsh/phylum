@@ -24,7 +24,7 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 				logrus.Fatal(err)
 			}
 
-			if err := storage.Create(context.Background(), *db, viper.GetString("content-dir")); err != nil {
+			if err := storage.Create(context.Background(), *db, viper.GetString("default_storage_dir")); err != nil {
 				logrus.Fatal(err)
 			}
 			if err := core.Create(context.Background(), *db, storage.Default, debug); err != nil {
@@ -36,8 +36,8 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 	flags.Bool("no-auto-migrate", false, "Do not automatically migrate database schema")
 	viper.BindPFlag("no_auto_migrate", flags.Lookup("no-auto-migrate"))
 
-	flags.StringP("content-dir", "C", "content", "Content Directory")
-	viper.BindPFlag("content_dir", flags.Lookup("content-dir"))
+	flags.StringP("default-storage-dir", "S", "storage/default", "Default Storage Directory")
+	viper.BindPFlag("default_storage_dir", flags.Lookup("default-storage-dir"))
 
 	cmd.AddCommand([]*cobra.Command{
 		setupServeCommand(),

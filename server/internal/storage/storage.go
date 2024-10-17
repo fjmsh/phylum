@@ -28,14 +28,16 @@ type storage struct {
 
 var Default Storage
 
-func Create(ctx context.Context, db *db.DbHandler, contentDir string) error {
+func Create(ctx context.Context, db *db.DbHandler, defaultStorageDir string) error {
 	if backends, err := restoreBackends(db, ctx); err != nil {
+		return err
+	} else if defaultBackend, err := newLocalStorage("<default>", defaultStorageDir); err != nil {
 		return err
 	} else {
 		Default = storage{
 			db:             db,
 			backends:       backends,
-			defaultBackend: localStorage{name: "<default>", root: contentDir},
+			defaultBackend: defaultBackend,
 		}
 		return nil
 	}
