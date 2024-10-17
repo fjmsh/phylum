@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 )
@@ -32,18 +31,6 @@ func formatResourceSummary(r core.Resource) string {
 		name += "/"
 	}
 	return formatRow(r.ID.String(), formatSize(r.ContentSize), r.ContentSHA256, name, r.Permissions)
-}
-
-func resourceByPathOrUuid(pathOrUuid string) (core.Resource, error) {
-	if pathOrUuid[0] == '/' {
-		return fs.ResourceByPath(pathOrUuid)
-	}
-	if id, err := uuid.Parse(pathOrUuid); err != nil {
-		return core.Resource{}, err
-	} else {
-		return fs.ResourceByID(id)
-	}
-
 }
 
 func setupLsCommand() *cobra.Command {

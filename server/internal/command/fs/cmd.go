@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
@@ -70,5 +72,42 @@ func openFileSystemFromFlags(cmd *cobra.Command) {
 		} else {
 			fs = core.Default.OpenFileSystem(context.Background(), user)
 		}
+	}
+}
+
+func resourceByPathOrUuid(pathOrUuid string) (core.Resource, error) {
+	if pathOrUuid[0] == '/' {
+		return fs.ResourceByPath(pathOrUuid)
+	}
+	if id, err := uuid.Parse(pathOrUuid); err != nil {
+		return core.Resource{}, err
+	} else {
+		return fs.ResourceByID(id)
+	}
+}
+
+func targetResourceByPathOrUuid(pathOrUuid string) (core.Resource, string, error) {
+	if pathOrUuid[0] == '/' {
+		path := strings.TrimRight(pathOrUuid, "/")
+		if dest, err := fs.ResourceByPath(path); err == nil {
+			return dest, "", nil
+		} else {
+			index := strings.LastIndex(path, "/")
+			name := path[index+1:]
+			path = path[0:index]
+			if parent, err := fs.ResourceByPath(path); err != nil {
+				return core.Resource{}, "", err
+			} else {
+				return parent, name, nil
+			}
+		}
+	}
+	index := strings.Index(pathOrUuid, "/")
+	if id, err := uuid.Parse(pathOrUuid[0:index]); err != nil {
+		return core.Resource{}, "", err
+	} else if parent, err := fs.ResourceByID(id); err != nil {
+		return core.Resource{}, "", err
+	} else {
+		return parent, pathOrUuid[:index+1], nil
 	}
 }

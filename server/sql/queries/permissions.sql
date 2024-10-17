@@ -1,7 +1,7 @@
 
 -- name: ReadDir :many
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, content_size, content_type, content_sha256, depth, path, permissions) AS (
-  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, 0, '/'::text, r.permissions
+  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, 0, ''::text, r.permissions
     FROM resources r
     WHERE r.id = @id::uuid
   UNION ALL

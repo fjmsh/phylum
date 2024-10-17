@@ -36,7 +36,7 @@ type FileSystem interface {
 	DeleteChildRecursive(r Resource, name string, hardDelete bool) error
 	DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error)
 	Move(r Resource, parentID uuid.UUID, name string, overwrite bool) (Resource, error)
-	Copy(r Resource, ID uuid.UUID, parentID uuid.UUID, name string, recursive, overwrite bool) (Resource, error)
+	Copy(r Resource, target Resource, ID uuid.UUID, name string, recursive, overwrite bool) (Resource, error)
 	UpdatePermissions(r Resource, username string, permission Permission) error
 	DiskUsage(r Resource) (DiskUsageInfo, error)
 }
@@ -401,7 +401,7 @@ func (f filesystem) Move(r Resource, parentID uuid.UUID, name string, overwrite 
 	})
 }
 
-func (f filesystem) Copy(src Resource, destID uuid.UUID, destParentID uuid.UUID, destName string, recursive, overwrite bool) (dest Resource, e error) {
+func (f filesystem) Copy(src, target Resource, id uuid.UUID, destName string, recursive, overwrite bool) (dest Resource, e error) {
 	if checkNameInvalid(destName) {
 		e = ErrResourceNameInvalid
 		return
@@ -414,14 +414,7 @@ func (f filesystem) Copy(src Resource, destID uuid.UUID, destParentID uuid.UUID,
 	}
 
 	// Check dest directory permissions
-	destParent, err := f.ResourceByID(destParentID)
-	if err != nil {
-		if errors.Is(err, ErrResourceNotFound) {
-			err = ErrParentNotFound
-		}
-		return Resource{}, err
-	}
-	if destParent.UserPermissions < PermissionReadWrite {
+	if target.UserPermissions < PermissionReadWrite {
 		e = ErrInsufficientPermissions
 		return
 	}
@@ -431,18 +424,19 @@ func (f filesystem) Copy(src Resource, destID uuid.UUID, destParentID uuid.UUID,
 	e = f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
 		f = f.withDb(dbh)
 		if overwrite {
-			if err = f.DeleteChildRecursive(destParent, destName, false); err != nil && !errors.Is(err, ErrResourceNotFound) {
+			if err := f.DeleteChildRecursive(target, destName, false); err != nil && !errors.Is(err, ErrResourceNotFound) {
 				return err
 			}
 		}
 		var tree []db.ReadDirRow
 		if recursive && src.Dir {
+			var err error
 			tree, err = f.db.ReadDir(f.ctx, db.ReadDirParams{ID: src.ID, IncludeRoot: false, Recursive: true})
 			if err != nil {
 				return err
 			}
 		}
-		dest, err = f.CreateMemberResource(destParent, destID, destName, src.Dir)
+		dest, err := f.CreateMemberResource(target, id, destName, src.Dir)
 		if err != nil {
 			return err
 		}
