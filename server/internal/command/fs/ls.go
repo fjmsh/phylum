@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +16,14 @@ func formatSize(size int64) string {
 	si := 0
 	for ; size >= 1000 && si < len(suffix); si, size = si+1, size/1000 {
 	}
-	return fmt.Sprintf("%4d%s", size, suffix[si])
+	return fmt.Sprintf("%d%s", size, suffix[si])
+}
+
+func formatRow(id, size, sha256, name, permissions string) string {
+	if sha256 == "" {
+		sha256 = "dir     "
+	}
+	return fmt.Sprintf("%s %5s %s %-24s %s", id, size, sha256[0:8], name, permissions)
 }
 
 func formatResourceSummary(r core.Resource) string {
@@ -25,7 +31,7 @@ func formatResourceSummary(r core.Resource) string {
 	if r.Dir {
 		name += "/"
 	}
-	return fmt.Sprintf("%s %s %s %s", r.ID.String(), formatSize(r.ContentSize), name, r.Permissions)
+	return formatRow(r.ID.String(), formatSize(r.ContentSize), r.ContentSHA256, name, r.Permissions)
 }
 
 func resourceByPathOrUuid(pathOrUuid string) (core.Resource, error) {
@@ -56,18 +62,15 @@ func setupLsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			fmt.Println("         Name: " + r.Name)
-			fmt.Println("           ID: " + r.ID.String())
-			fmt.Println("  Permissions: " + r.Permissions)
-			fmt.Println("    Inherited: " + r.InheritedPermissions)
+			fmt.Println(formatRow(r.ParentID.String(), formatSize(0), "", "..", r.InheritedPermissions))
+			fmt.Println(formatRow(r.ID.String(), formatSize(0), r.ContentSHA256, ".("+r.Name+")", r.Permissions))
 
 			if r.Dir {
 				children, err := fs.ReadDir(r)
 				if err != nil {
-					logrus.Fatal(err)
+					fmt.Println("cannot access '" + pathOrUuid + "': " + err.Error())
+					os.Exit(1)
 				}
-				fmt.Println()
-				fmt.Println("Children:")
 				sort.Slice(children, func(i, j int) bool {
 					a := children[i]
 					b := children[j]
@@ -78,16 +81,9 @@ func setupLsCommand() *cobra.Command {
 					}
 					return strings.Compare(strings.ToLower(a.Name), strings.ToLower((b.Name))) <= 0
 				})
-				// children = sort.Slice(children, func(a core.Resource, b core.Resource) bool {
-				// 	return true
-				// })
 				for _, c := range children {
 					fmt.Println(formatResourceSummary(c))
 				}
-			} else {
-				fmt.Printf("         Size: %d\n", r.ContentSize)
-				fmt.Println(" Content Type: " + r.ContentType)
-				fmt.Println("   SHA256 Sum: " + r.ContentSHA256)
 			}
 		},
 	}
