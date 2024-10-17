@@ -52,5 +52,8 @@ JOIN resources r
 ON r.id = n.resid
 WHERE n.parent IS NULL;
 
--- name: UpdatePermissionsForResource :exec
+-- name: UpdateUserPermissionsForResource :exec
 UPDATE resources SET permissions[@username::text] = to_json(@permission::int) WHERE id = @resource_id::uuid;
+
+-- name: RemoveUserPermissionForResource :exec
+UPDATE resources SET permissions = permissions - @username::text WHERE id = @resource_id::uuid;

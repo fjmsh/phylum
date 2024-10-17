@@ -14,7 +14,7 @@ import (
 
 const readDir = `-- name: ReadDir :many
 WITH RECURSIVE nodes(id, parent, name, dir, created, modified, content_size, content_type, content_sha256, depth, path, permissions) AS (
-  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, 0, ''::text, r.permissions
+  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, 0, '/'::text, r.permissions
     FROM resources r
     WHERE r.id = $2::uuid
   UNION ALL
@@ -80,6 +80,20 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 		return nil, err
 	}
 	return items, nil
+}
+
+const removeUserPermissionForResource = `-- name: RemoveUserPermissionForResource :exec
+UPDATE resources SET permissions = permissions - $1::text WHERE id = $2::uuid
+`
+
+type RemoveUserPermissionForResourceParams struct {
+	Username   string
+	ResourceID uuid.UUID
+}
+
+func (q *Queries) RemoveUserPermissionForResource(ctx context.Context, arg RemoveUserPermissionForResourceParams) error {
+	_, err := q.db.Exec(ctx, removeUserPermissionForResource, arg.Username, arg.ResourceID)
+	return err
 }
 
 const resourceByID = `-- name: ResourceByID :one
@@ -191,17 +205,17 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 	return i, err
 }
 
-const updatePermissionsForResource = `-- name: UpdatePermissionsForResource :exec
+const updateUserPermissionsForResource = `-- name: UpdateUserPermissionsForResource :exec
 UPDATE resources SET permissions[$1::text] = to_json($2::int) WHERE id = $3::uuid
 `
 
-type UpdatePermissionsForResourceParams struct {
+type UpdateUserPermissionsForResourceParams struct {
 	Username   string
 	Permission int32
 	ResourceID uuid.UUID
 }
 
-func (q *Queries) UpdatePermissionsForResource(ctx context.Context, arg UpdatePermissionsForResourceParams) error {
-	_, err := q.db.Exec(ctx, updatePermissionsForResource, arg.Username, arg.Permission, arg.ResourceID)
+func (q *Queries) UpdateUserPermissionsForResource(ctx context.Context, arg UpdateUserPermissionsForResourceParams) error {
+	_, err := q.db.Exec(ctx, updateUserPermissionsForResource, arg.Username, arg.Permission, arg.ResourceID)
 	return err
 }

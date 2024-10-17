@@ -96,7 +96,7 @@ func (a *App) populateData(ctx context.Context) (user User, e error) {
 			Home:        u.Home,
 		}
 
-		return dbh.UpdatePermissionsForResource(ctx, db.UpdatePermissionsForResourceParams{
+		return dbh.UpdateUserPermissionsForResource(ctx, db.UpdateUserPermissionsForResourceParams{
 			ResourceID: root.ID,
 			Username:   user.Username,
 			Permission: PermissionReadWriteShare,

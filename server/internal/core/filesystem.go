@@ -500,7 +500,13 @@ func (f filesystem) UpdatePermissions(r Resource, username string, permission Pe
 		permission = PermissionReadWriteShare
 	}
 
-	return f.db.UpdatePermissionsForResource(f.ctx, db.UpdatePermissionsForResourceParams{
+	if permission == 0 {
+		return f.db.RemoveUserPermissionForResource(f.ctx, db.RemoveUserPermissionForResourceParams{
+			ResourceID: r.ID,
+			Username:   username,
+		})
+	}
+	return f.db.UpdateUserPermissionsForResource(f.ctx, db.UpdateUserPermissionsForResourceParams{
 		ResourceID: r.ID,
 		Username:   username,
 		Permission: permission,
