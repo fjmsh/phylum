@@ -12,19 +12,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setupStorageCommand(cs storage.Storage) *cobra.Command {
+func setupStorageCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "storage",
 		Short: "Storage Management",
 	}
 	cmd.AddCommand([]*cobra.Command{
-		setupStorageCreateCommand(cs),
-		setupStorageListCommand(cs),
+		setupStorageCreateCommand(),
+		setupStorageListCommand(),
 	}...)
 	return cmd
 }
 
-func setupStorageCreateCommand(cs storage.Storage) *cobra.Command {
+func setupStorageCreateCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "create name driver",
 		Short: "Create new storage backend",
@@ -49,7 +49,7 @@ func setupStorageCreateCommand(cs storage.Storage) *cobra.Command {
 				params[paramName] = val
 			}
 
-			if err := cs.CreateBackend(context.Background(), name, driver, params); err != nil {
+			if err := storage.Default.CreateBackend(context.Background(), name, driver, params); err != nil {
 				logrus.Fatal(err)
 			}
 
@@ -58,13 +58,13 @@ func setupStorageCreateCommand(cs storage.Storage) *cobra.Command {
 	}
 }
 
-func setupStorageListCommand(cs storage.Storage) *cobra.Command {
+func setupStorageListCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "List all storage backends",
 		Run: func(cmd *cobra.Command, args []string) {
 			logrus.Info("Available storage backends:")
-			for k, v := range cs.ListBackends() {
+			for k, v := range storage.Default.ListBackends() {
 				logrus.Info(fmt.Sprintf("%s: %s", k, v))
 			}
 		},

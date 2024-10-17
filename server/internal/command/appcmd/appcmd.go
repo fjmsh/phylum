@@ -12,7 +12,6 @@ import (
 )
 
 func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
-	var cs storage.Storage
 	cmd := &cobra.Command{
 		Use:   "app",
 		Short: "Server Administration",
@@ -25,19 +24,17 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 				logrus.Fatal(err)
 			}
 
-			var err error
-			if cs, err = storage.Open(*db, context.Background(), viper.GetString("content-dir")); err != nil {
+			if err := storage.Create(context.Background(), *db, viper.GetString("content-dir")); err != nil {
 				logrus.Fatal(err)
-			} else {
-				if err := core.Create(context.Background(), *db, cs, debug); err != nil {
-					logrus.Fatal(err)
-				}
+			}
+			if err := core.Create(context.Background(), *db, storage.Default, debug); err != nil {
+				logrus.Fatal(err)
 			}
 		},
 	}
 	flags := cmd.Flags()
 	flags.Bool("no-auto-migrate", false, "Do not automatically migrate database schema")
-	viper.BindPFlag("no_auto_migrate", flags.Lookup("auto-migrate"))
+	viper.BindPFlag("no_auto_migrate", flags.Lookup("no-auto-migrate"))
 
 	flags.StringP("content-dir", "C", "content", "Content Directory")
 	viper.BindPFlag("content_dir", flags.Lookup("content-dir"))
@@ -46,7 +43,7 @@ func SetupCommand(db **db.DbHandler, debug bool) *cobra.Command {
 		setupServeCommand(),
 		setupUserCommand(),
 		setupResourceCommand(),
-		setupStorageCommand(cs),
+		setupStorageCommand(),
 	}...)
 
 	return cmd
