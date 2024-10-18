@@ -118,14 +118,16 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
 extension ResourceViewExtensions on Resource {
   Icon getIcon() {
     if (dir) return const Icon(Icons.folder);
-    final index = name.lastIndexOf('.');
-    final ext = index > 0 ? name.substring(index + 1).toLowerCase() : '';
-    return switch (ext) {
-      'bmp' || 'png' || 'jpg' || 'jpeg' || 'gif' || 'webp' || 'heic' || 'heif' || 'svg' => const Icon(Icons.image),
-      'webm' || 'avi' || 'mp4' || 'mov' => const Icon(Icons.movie),
-      'mp3' || 'mp4' || 'm4a' || 'ogg' || 'oga' => const Icon(Icons.headphones),
-      'txt' || 'csv' => const Icon(Icons.article),
-      _ => const Icon(Icons.insert_drive_file),
-    };
+
+    if (contentType.startsWith("image")) {
+      return const Icon(Icons.image);
+    } else if (contentType.startsWith("video")) {
+      return const Icon(Icons.movie);
+    } else if (contentType.startsWith("audio")) {
+      return const Icon(Icons.headphones);
+    } else if (contentType.startsWith("text")) {
+      return const Icon(Icons.article);
+    }
+    return const Icon(Icons.insert_drive_file);
   }
 }
