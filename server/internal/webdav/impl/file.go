@@ -23,6 +23,7 @@ type FileSystem interface {
 	Mkdir(ctx context.Context, name string) error
 	RemoveAll(ctx context.Context, name string) error
 	Move(ctx context.Context, r core.Resource, target string, overwrite bool) error
+	Copy(ctx context.Context, r core.Resource, target string, recursive, overwrite bool) error
 	ReadDir(r core.Resource) ([]core.Resource, error)
 	OpenRead(r core.Resource, start, length int64) (io.ReadCloser, error)
 	OpenWrite(ctx context.Context, name string) (io.WriteCloser, error)
@@ -36,7 +37,7 @@ func moveFiles(ctx context.Context, fs FileSystem, srcPath, dstPath string, over
 		if e, ok := err.(errors.ApiErr); ok {
 			return e.Status, e
 		}
-		return http.StatusForbidden, err
+		return http.StatusInternalServerError, err
 	} else {
 		if err := fs.Move(ctx, src, dstPath, overwrite); err != nil {
 			if e, ok := err.(errors.ApiErr); ok {
@@ -52,83 +53,22 @@ func moveFiles(ctx context.Context, fs FileSystem, srcPath, dstPath string, over
 // copyFiles copies files and/or directories from src to dst.
 //
 // See section 9.8.5 for when various HTTP status codes apply.
-func copyFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bool, depth int) (status int, err error) {
-	srcStat, err := fs.Stat(ctx, src)
-	if err != nil {
-		if errors.Is(err, core.ErrResourceNotFound) {
-			return http.StatusNotFound, err
+func copyFiles(ctx context.Context, fs FileSystem, srcPath, dstPath string, overwrite bool, depth int) (status int, err error) {
+	if src, err := fs.Stat(ctx, srcPath); err != nil {
+		if e, ok := err.(errors.ApiErr); ok {
+			return e.Status, e
 		}
 		return http.StatusInternalServerError, err
-	}
-
-	created := false
-	if _, err := fs.Stat(ctx, dst); err != nil {
-		if errors.Is(err, core.ErrResourceNotFound) {
-			created = true
-		} else {
-			return http.StatusForbidden, err
-		}
 	} else {
-		if !overwrite {
-			return http.StatusPreconditionFailed, core.ErrResourceNameConflict
-		}
-		if err := fs.RemoveAll(ctx, dst); err != nil && !errors.Is(err, core.ErrResourceNotFound) {
-			return http.StatusForbidden, err
-		}
-	}
-
-	if srcStat.Dir {
-		if err := fs.Mkdir(ctx, dst); err != nil {
-			return http.StatusForbidden, err
-		}
-		if depth == infiniteDepth {
-			children, err := fs.ReadDir(srcStat)
-			if err != nil {
-				return http.StatusForbidden, err
-			}
-			for _, c := range children {
-				name := c.Name
-				s := path.Join(src, name)
-				d := path.Join(dst, name)
-				cStatus, cErr := copyFiles(ctx, fs, s, d, overwrite, depth)
-				if cErr != nil {
-					// TODO: MultiStatus.
-					return cStatus, cErr
-				}
-			}
-		}
-
-	} else {
-		srcFile, err := fs.OpenRead(srcStat, 0, -1)
-		if err != nil {
-			if errors.Is(err, core.ErrResourceNotFound) {
-				return http.StatusNotFound, err
-			}
-			return http.StatusInternalServerError, err
-		}
-		defer srcFile.Close()
-		dstFile, err := fs.OpenWrite(ctx, dst)
-		if err != nil {
-			if errors.Is(err, core.ErrResourceNotFound) {
-				return http.StatusConflict, err
+		if err := fs.Copy(ctx, src, dstPath, depth != 0, overwrite); err != nil {
+			if e, ok := err.(errors.ApiErr); ok {
+				return e.Status, e
 			}
 			return http.StatusForbidden, err
-
 		}
-		_, copyErr := io.Copy(dstFile, srcFile)
-		closeErr := dstFile.Close()
-		if copyErr != nil {
-			return http.StatusInternalServerError, copyErr
-		}
-		if closeErr != nil {
-			return http.StatusInternalServerError, closeErr
-		}
-	}
-
-	if created {
 		return http.StatusCreated, nil
+		// TODO: should return http.StatusNoContent if the target already existed before
 	}
-	return http.StatusNoContent, nil
 }
 
 type WalkFunc func(path string, info core.Resource, err error) error

@@ -136,3 +136,9 @@ func (a adapter) Move(ctx context.Context, src core.Resource, target string, ove
 	}
 	return nil
 }
+func (a adapter) Copy(ctx context.Context, src core.Resource, target string, recursive, overwrite bool) error {
+	if _, err := a.fs.Copy(src, target, uuid.New(), recursive, overwrite); err != nil {
+		return err
+	}
+	return nil
+}
