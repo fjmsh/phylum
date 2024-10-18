@@ -134,7 +134,7 @@ var liveProps = map[xml.Name]struct {
 // Each Propstat has a unique status and each property name will only be part
 // of one Propstat element.
 func props(ctx context.Context, fs FileSystem, ls LockSystem, name string, pnames []xml.Name) ([]Propstat, error) {
-	fi, err := fs.Stat(ctx, name)
+	fi, err := fs.ResourceByPath(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func props(ctx context.Context, fs FileSystem, ls LockSystem, name string, pname
 
 // propnames returns the property names defined for resource name.
 func propnames(ctx context.Context, fs FileSystem, ls LockSystem, name string) ([]xml.Name, error) {
-	fi, err := fs.Stat(ctx, name)
+	fi, err := fs.ResourceByPath(ctx, name)
 	if err != nil {
 		return nil, err
 	}

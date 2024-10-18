@@ -6,26 +6,11 @@ package webdav
 
 import (
 	"context"
-	"io"
 	"path"
 	"path/filepath"
 
 	"github.com/shroff/phylum/server/internal/core"
 )
-
-// A FileSystem implements access to a collection of named files. The elements
-// in a file path are separated by slash ('/', U+002F) characters, regardless
-// of host operating system convention.
-type FileSystem interface {
-	Stat(ctx context.Context, name string) (core.Resource, error)
-	Mkdir(ctx context.Context, name string) error
-	RemoveAll(ctx context.Context, name string) error
-	Move(ctx context.Context, r core.Resource, target string, overwrite bool) error
-	Copy(ctx context.Context, r core.Resource, target string, recursive, overwrite bool) error
-	ReadDir(r core.Resource) ([]core.Resource, error)
-	OpenRead(r core.Resource, start, length int64) (io.ReadCloser, error)
-	OpenWrite(ctx context.Context, name string) (io.WriteCloser, error)
-}
 
 type WalkFunc func(path string, info core.Resource, err error) error
 
@@ -51,7 +36,7 @@ func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info cor
 	}
 
 	// Read directory names.
-	f, err := fs.Stat(ctx, name)
+	f, err := fs.ResourceByPath(ctx, name)
 	if err != nil {
 		return walkFn(name, info, err)
 	}
@@ -62,7 +47,7 @@ func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info cor
 
 	for _, fileInfo := range fileInfos {
 		filename := path.Join(name, fileInfo.Name)
-		fileInfo, err := fs.Stat(ctx, filename)
+		fileInfo, err := fs.ResourceByPath(ctx, filename)
 		if err != nil {
 			if err := walkFn(filename, fileInfo, err); err != nil && err != filepath.SkipDir {
 				return err

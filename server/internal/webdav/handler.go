@@ -48,7 +48,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 	}
 	webdavHandler := webdav.Handler{
 		Prefix:     h.prefix,
-		FileSystem: adapter{fs: fs.(core.FileSystem)},
+		FileSystem: adapter{fs: fs},
 		LockSystem: webdav.NewMemLS(),
 	}
 	webdavHandler.ServeHTTP(c.Writer, c.Request)
@@ -58,7 +58,7 @@ type adapter struct {
 	fs core.FileSystem
 }
 
-func (a adapter) Stat(ctx context.Context, name string) (core.Resource, error) {
+func (a adapter) ResourceByPath(ctx context.Context, name string) (core.Resource, error) {
 	return a.fs.ResourceByPath(name)
 }
 
@@ -71,7 +71,7 @@ func (a adapter) ReadDir(r core.Resource) ([]core.Resource, error) {
 }
 
 func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, error) {
-	resource, err := a.Stat(ctx, name)
+	resource, err := a.ResourceByPath(ctx, name)
 
 	if err != nil {
 		if err == core.ErrResourceNotFound {
@@ -79,7 +79,7 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 			name = strings.TrimRight(name, "/")
 			index := strings.LastIndex(name, "/")
 			parentPath := name[0:index]
-			parent, err := a.Stat(ctx, parentPath)
+			parent, err := a.ResourceByPath(ctx, parentPath)
 			if err != nil {
 				return nil, err
 			}
@@ -100,7 +100,7 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 }
 
 func (a adapter) RemoveAll(ctx context.Context, name string) error {
-	resource, err := a.Stat(ctx, name)
+	resource, err := a.ResourceByPath(ctx, name)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (a adapter) RemoveAll(ctx context.Context, name string) error {
 }
 
 func (a adapter) Mkdir(ctx context.Context, name string) error {
-	if _, err := a.Stat(ctx, name); !errors.Is(err, core.ErrResourceNotFound) {
+	if _, err := a.ResourceByPath(ctx, name); !errors.Is(err, core.ErrResourceNotFound) {
 		if err == nil {
 			return core.ErrResourceNameConflict
 		}
@@ -118,7 +118,7 @@ func (a adapter) Mkdir(ctx context.Context, name string) error {
 	name = strings.TrimRight(name, "/")
 	index := strings.LastIndex(name, "/")
 	parentPath := name[0:index]
-	parent, err := a.Stat(ctx, parentPath)
+	parent, err := a.ResourceByPath(ctx, parentPath)
 	if err != nil {
 		if errors.Is(err, core.ErrResourceNotFound) {
 			return core.ErrParentNotFound
@@ -130,15 +130,9 @@ func (a adapter) Mkdir(ctx context.Context, name string) error {
 	return err
 }
 
-func (a adapter) Move(ctx context.Context, src core.Resource, target string, overwrite bool) error {
-	if _, err := a.fs.Move(src, target, overwrite); err != nil {
-		return err
-	}
-	return nil
+func (a adapter) Move(ctx context.Context, src core.Resource, target string, overwrite bool) (core.Resource, error) {
+	return a.fs.Move(src, target, overwrite)
 }
-func (a adapter) Copy(ctx context.Context, src core.Resource, target string, recursive, overwrite bool) error {
-	if _, err := a.fs.Copy(src, target, uuid.New(), recursive, overwrite); err != nil {
-		return err
-	}
-	return nil
+func (a adapter) Copy(ctx context.Context, src core.Resource, target string, recursive, overwrite bool) (core.Resource, error) {
+	return a.fs.Copy(src, target, uuid.New(), recursive, overwrite)
 }
