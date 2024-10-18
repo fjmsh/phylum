@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/api/errors"
 	"github.com/shroff/phylum/server/internal/core"
 )
 
@@ -19,8 +18,9 @@ const (
 	authHeaderBearer  = 2
 )
 
-const errCodeAuthRequred = "auth_required"
-const errCodeCredentialsInvalid = "credentials_invalid"
+var (
+	errAuthRequired = core.New(http.StatusUnauthorized, "auth_required", "authorization required")
+)
 
 func CreateApiAuthHandler(a *core.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
@@ -36,13 +36,11 @@ func CreateApiAuthHandler(a *core.App) func(c *gin.Context) {
 
 func extractUserDetails(a *core.App, c *gin.Context) (core.User, error) {
 	if header := c.Request.Header.Get("Authorization"); header == "" {
-		return core.User{}, errors.New(http.StatusUnauthorized, errCodeAuthRequred, "Authorization Required")
+		return core.User{}, errAuthRequired
 	} else if auth, ok := checkAuthHeader(header, "basic"); ok {
 		if username, password, ok := decodeBasicAuth(auth); ok {
 			if user, err := a.VerifyUserPassword(c.Request.Context(), username, password); err == nil {
 				return user, nil
-			} else if errors.Is(err, core.ErrCredentialsInvalid) {
-				return core.User{}, errors.New(http.StatusUnauthorized, errCodeCredentialsInvalid, "Invalid Credentials")
 			} else {
 				return core.User{}, err
 			}
@@ -50,13 +48,11 @@ func extractUserDetails(a *core.App, c *gin.Context) (core.User, error) {
 	} else if token, ok := checkAuthHeader(header, "bearer"); ok {
 		if user, err := a.ReadAccessToken(c.Request.Context(), token); err == nil {
 			return user, nil
-		} else if errors.Is(err, core.ErrTokenExpired) || errors.Is(err, core.ErrTokenInvalid) {
-			return core.User{}, errors.New(http.StatusUnauthorized, errCodeCredentialsInvalid, "Invalid Credentials")
 		} else {
 			return core.User{}, err
 		}
 	}
-	return core.User{}, errors.New(http.StatusUnauthorized, errCodeAuthRequred, "Authorization scheme not recognized")
+	return core.User{}, errAuthRequired
 }
 
 func checkAuthHeader(header, prefix string) (string, bool) {

@@ -9,7 +9,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api"
-	"github.com/shroff/phylum/server/internal/api/errors"
 	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/webdav"
 	"github.com/sirupsen/logrus"
@@ -24,7 +23,19 @@ func setupServeCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			config := viper.GetViper()
 			engine := createEngine(config.GetBool("debug"), config.GetBool("log_body"), config.GetBool("cors_enabled"), config.GetStringSlice("cors_origins"))
-			engine.Use(errors.RecoverApiError)
+			engine.Use(func(c *gin.Context) {
+				defer func() {
+					if err := recover(); err != nil {
+						if e, ok := err.(*core.Error); ok {
+							c.AbortWithStatusJSON(e.Status, e)
+						} else {
+							// This will be caught by the regular gin error recovery handler
+							panic(err)
+						}
+					}
+				}()
+				c.Next()
+			})
 
 			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")), core.Default)
 

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/shroff/phylum/server/internal/api/errors"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 func (h *Handler) handleCopyMove(_ http.ResponseWriter, r *http.Request) (status int, err error) {
@@ -87,13 +87,13 @@ func (h *Handler) handleCopyMove(_ http.ResponseWriter, r *http.Request) (status
 // See section 9.9.4 for when various HTTP status codes apply.
 func moveFiles(ctx context.Context, fs FileSystem, srcPath, dstPath string, overwrite bool) (status int, err error) {
 	if src, err := fs.Stat(ctx, srcPath); err != nil {
-		if e, ok := err.(errors.ApiErr); ok {
+		if e, ok := err.(core.Error); ok {
 			return e.Status, e
 		}
 		return http.StatusInternalServerError, err
 	} else {
 		if err := fs.Move(ctx, src, dstPath, overwrite); err != nil {
-			if e, ok := err.(errors.ApiErr); ok {
+			if e, ok := err.(core.Error); ok {
 				return e.Status, e
 			}
 			return http.StatusForbidden, err
@@ -108,13 +108,13 @@ func moveFiles(ctx context.Context, fs FileSystem, srcPath, dstPath string, over
 // See section 9.8.5 for when various HTTP status codes apply.
 func copyFiles(ctx context.Context, fs FileSystem, srcPath, dstPath string, overwrite bool, depth int) (status int, err error) {
 	if src, err := fs.Stat(ctx, srcPath); err != nil {
-		if e, ok := err.(errors.ApiErr); ok {
+		if e, ok := err.(core.Error); ok {
 			return e.Status, e
 		}
 		return http.StatusInternalServerError, err
 	} else {
 		if err := fs.Copy(ctx, src, dstPath, depth != 0, overwrite); err != nil {
-			if e, ok := err.(errors.ApiErr); ok {
+			if e, ok := err.(core.Error); ok {
 				return e.Status, e
 			}
 			return http.StatusForbidden, err

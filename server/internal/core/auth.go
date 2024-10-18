@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
 	"unsafe"
 
@@ -20,9 +21,7 @@ var accessTokenValiditiy = pgtype.Interval{
 	Valid: true,
 }
 
-var ErrCredentialsInvalid = errors.New("credentials invalid")
-var ErrTokenInvalid = errors.New("token invalid")
-var ErrTokenExpired = errors.New("token expired")
+var ErrCredentialsInvalid = New(http.StatusUnauthorized, "credentials_invalid", "invalid Credentials")
 
 func (a App) VerifyUserPassword(ctx context.Context, email, password string) (User, error) {
 	if user, err := a.db.UserByUsername(ctx, email); err != nil {
@@ -60,12 +59,12 @@ func (a App) CreateAccessToken(ctx context.Context, username string) (string, er
 func (a App) ReadAccessToken(ctx context.Context, accessToken string) (User, error) {
 	token, err := a.db.AccessTokenById(ctx, accessToken)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return User{}, ErrTokenInvalid
+		return User{}, ErrCredentialsInvalid
 	} else if err != nil {
 		return User{}, err
 	}
 	if time.Now().After(token.Expires.Time) {
-		return User{}, ErrTokenExpired
+		return User{}, ErrCredentialsInvalid
 	}
 	return User{
 		Username:    token.Username,
