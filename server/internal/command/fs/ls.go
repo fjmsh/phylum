@@ -43,7 +43,7 @@ func setupLsCommand() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			pathOrUuid := args[0]
-			r, err := resourceByPathOrUuid(pathOrUuid)
+			r, err := fs.ResourceByPathOrUuid(pathOrUuid)
 			if err != nil {
 				fmt.Println("cannot access '" + pathOrUuid + "': " + err.Error())
 				os.Exit(1)

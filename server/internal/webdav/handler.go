@@ -130,32 +130,8 @@ func (a adapter) Mkdir(ctx context.Context, name string) error {
 	return err
 }
 
-func (a adapter) Rename(ctx context.Context, oldName, newName string) error {
-	src, err := a.Stat(ctx, oldName)
-	if err != nil {
-		return core.ErrResourceNotFound
-	}
-
-	_, err = a.Stat(ctx, newName)
-	if err == nil {
-		return core.ErrResourceNameConflict
-	}
-
-	newName = strings.TrimRight(newName, "/")
-	index := strings.LastIndex(newName, "/")
-	parentPath := newName[0:index]
-	newName = newName[index+1:]
-
-	parent, err := a.Stat(ctx, parentPath)
-	if err != nil {
-		if errors.Is(err, core.ErrResourceNotFound) {
-			return core.ErrParentNotFound
-		}
-		return err
-	}
-
-	parentID := parent.ID
-	if _, err = a.fs.Move(src, parentID, newName, false); err != nil {
+func (a adapter) Move(ctx context.Context, src core.Resource, target string, overwrite bool) error {
+	if _, err := a.fs.Move(src, target, overwrite); err != nil {
 		return err
 	}
 	return nil

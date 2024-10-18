@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 )
 
@@ -19,24 +18,10 @@ func setupCpCommand() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			srcPathOrUuid := args[0]
-			src, err := resourceByPathOrUuid(srcPathOrUuid)
+			src, err := fs.ResourceByPathOrUuid(srcPathOrUuid)
 			if err != nil {
 				fmt.Println("cannot copy'" + srcPathOrUuid + "': " + err.Error())
 				os.Exit(1)
-			}
-
-			var target core.Resource
-			var name string
-			if target, name, err = targetResourceByPathOrUuid(args[1]); err != nil {
-				fmt.Println("cannot copy'" + srcPathOrUuid + "' to '" + args[1] + "': " + err.Error())
-				os.Exit(1)
-			}
-			if src.Dir && !target.Dir {
-				fmt.Println("cannot copy'" + srcPathOrUuid + "' to '" + args[1] + "': target is not a directory")
-				os.Exit(1)
-			}
-			if name == "" {
-				name = src.Name
 			}
 
 			force, _ := cmd.Flags().GetBool("force")
@@ -47,7 +32,7 @@ func setupCpCommand() *cobra.Command {
 				}
 			}
 
-			if _, err := fs.Copy(src, target, uuid.New(), name, true, force); err != nil {
+			if _, err := fs.Copy(src, args[1], uuid.New(), true, force); err != nil {
 				fmt.Println("cannot copy'" + srcPathOrUuid + "' to '" + args[1] + "': " + err.Error())
 				os.Exit(1)
 			}

@@ -7,15 +7,14 @@ import (
 )
 
 type mvParams struct {
-	ParentID  uuid.UUID `json:"parent_id"`
-	Name      string    `json:"name"`
-	Overwrite bool      `json:"overwrite"`
+	Target    string `json:"target"`
+	Overwrite bool   `json:"overwrite"`
 }
 
 func handleMvRequest(c *gin.Context) {
 	var params mvParams
 	err := c.ShouldBindJSON(&params)
-	if err != nil || (params.ParentID == uuid.Nil && params.Name == "") {
+	if err != nil {
 		panic(errInvalidParams)
 	}
 
@@ -30,7 +29,7 @@ func handleMvRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	if r, err := fs.Move(r, params.ParentID, params.Name, params.Overwrite); err != nil {
+	if r, err := fs.Move(r, params.Target, params.Overwrite); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, r)

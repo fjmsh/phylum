@@ -22,7 +22,7 @@ type FileSystem interface {
 	Stat(ctx context.Context, name string) (core.Resource, error)
 	Mkdir(ctx context.Context, name string) error
 	RemoveAll(ctx context.Context, name string) error
-	Rename(ctx context.Context, oldName, newName string) error
+	Move(ctx context.Context, r core.Resource, target string, overwrite bool) error
 	ReadDir(r core.Resource) ([]core.Resource, error)
 	OpenRead(r core.Resource, start, length int64) (io.ReadCloser, error)
 	OpenWrite(ctx context.Context, name string) (io.WriteCloser, error)
@@ -31,34 +31,22 @@ type FileSystem interface {
 // moveFiles moves files and/or directories from src to dst.
 //
 // See section 9.9.4 for when various HTTP status codes apply.
-func moveFiles(ctx context.Context, fs FileSystem, src, dst string, overwrite bool) (status int, err error) {
-	created := false
-	if _, err := fs.Stat(ctx, dst); err != nil {
-		if !errors.Is(err, core.ErrResourceNotFound) {
+func moveFiles(ctx context.Context, fs FileSystem, srcPath, dstPath string, overwrite bool) (status int, err error) {
+	if src, err := fs.Stat(ctx, srcPath); err != nil {
+		if e, ok := err.(errors.ApiErr); ok {
+			return e.Status, e
+		}
+		return http.StatusForbidden, err
+	} else {
+		if err := fs.Move(ctx, src, dstPath, overwrite); err != nil {
 			if e, ok := err.(errors.ApiErr); ok {
 				return e.Status, e
 			}
 			return http.StatusForbidden, err
 		}
-		created = true
-	} else if overwrite {
-		// Section 9.9.3 says that "If a resource exists at the destination
-		// and the Overwrite header is "T", then prior to performing the move,
-		// the server must perform a DELETE with "Depth: infinity" on the
-		// destination resource.
-		if err := fs.RemoveAll(ctx, dst); err != nil {
-			return http.StatusForbidden, err
-		}
-	} else {
-		return http.StatusPreconditionFailed, core.ErrResourceNameConflict
-	}
-	if err := fs.Rename(ctx, src, dst); err != nil {
-		return http.StatusForbidden, err
-	}
-	if created {
 		return http.StatusCreated, nil
+		// TODO: should return http.StatusNoContent if the target already existed before
 	}
-	return http.StatusNoContent, nil
 }
 
 // copyFiles copies files and/or directories from src to dst.
