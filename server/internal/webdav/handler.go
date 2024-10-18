@@ -1,7 +1,6 @@
 package webdav
 
 import (
-	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -58,7 +57,7 @@ type adapter struct {
 	fs core.FileSystem
 }
 
-func (a adapter) ResourceByPath(ctx context.Context, name string) (core.Resource, error) {
+func (a adapter) ResourceByPath(name string) (core.Resource, error) {
 	return a.fs.ResourceByPath(name)
 }
 
@@ -70,8 +69,8 @@ func (a adapter) ReadDir(r core.Resource) ([]core.Resource, error) {
 	return a.fs.ReadDir(r)
 }
 
-func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, error) {
-	resource, err := a.ResourceByPath(ctx, name)
+func (a adapter) OpenWrite(name string) (io.WriteCloser, error) {
+	resource, err := a.ResourceByPath(name)
 
 	if err != nil {
 		if err == core.ErrResourceNotFound {
@@ -79,7 +78,7 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 			name = strings.TrimRight(name, "/")
 			index := strings.LastIndex(name, "/")
 			parentPath := name[0:index]
-			parent, err := a.ResourceByPath(ctx, parentPath)
+			parent, err := a.ResourceByPath(parentPath)
 			if err != nil {
 				return nil, err
 			}
@@ -99,8 +98,8 @@ func (a adapter) OpenWrite(ctx context.Context, name string) (io.WriteCloser, er
 	return a.fs.OpenWrite(resource)
 }
 
-func (a adapter) RemoveAll(ctx context.Context, name string) error {
-	resource, err := a.ResourceByPath(ctx, name)
+func (a adapter) RemoveAll(name string) error {
+	resource, err := a.ResourceByPath(name)
 	if err != nil {
 		return err
 	}
@@ -108,8 +107,8 @@ func (a adapter) RemoveAll(ctx context.Context, name string) error {
 	return err
 }
 
-func (a adapter) Mkdir(ctx context.Context, name string) error {
-	if _, err := a.ResourceByPath(ctx, name); !errors.Is(err, core.ErrResourceNotFound) {
+func (a adapter) Mkdir(name string) error {
+	if _, err := a.ResourceByPath(name); !errors.Is(err, core.ErrResourceNotFound) {
 		if err == nil {
 			return core.ErrResourceNameConflict
 		}
@@ -118,7 +117,7 @@ func (a adapter) Mkdir(ctx context.Context, name string) error {
 	name = strings.TrimRight(name, "/")
 	index := strings.LastIndex(name, "/")
 	parentPath := name[0:index]
-	parent, err := a.ResourceByPath(ctx, parentPath)
+	parent, err := a.ResourceByPath(parentPath)
 	if err != nil {
 		if errors.Is(err, core.ErrResourceNotFound) {
 			return core.ErrParentNotFound
@@ -130,9 +129,9 @@ func (a adapter) Mkdir(ctx context.Context, name string) error {
 	return err
 }
 
-func (a adapter) Move(ctx context.Context, src core.Resource, target string, overwrite bool) (core.Resource, error) {
+func (a adapter) Move(src core.Resource, target string, overwrite bool) (core.Resource, error) {
 	return a.fs.Move(src, target, overwrite)
 }
-func (a adapter) Copy(ctx context.Context, src core.Resource, target string, recursive, overwrite bool) (core.Resource, error) {
+func (a adapter) Copy(src core.Resource, target string, recursive, overwrite bool) (core.Resource, error) {
 	return a.fs.Copy(src, target, uuid.New(), recursive, overwrite)
 }

@@ -6,7 +6,6 @@ package webdav
 
 import (
 	"bytes"
-	"context"
 	"encoding/xml"
 	"net/http"
 	"strconv"
@@ -133,8 +132,8 @@ var liveProps = map[xml.Name]struct {
 //
 // Each Propstat has a unique status and each property name will only be part
 // of one Propstat element.
-func props(ctx context.Context, fs FileSystem, ls LockSystem, name string, pnames []xml.Name) ([]Propstat, error) {
-	fi, err := fs.ResourceByPath(ctx, name)
+func props(fs FileSystem, ls LockSystem, name string, pnames []xml.Name) ([]Propstat, error) {
+	fi, err := fs.ResourceByPath(name)
 	if err != nil {
 		return nil, err
 	}
@@ -160,8 +159,8 @@ func props(ctx context.Context, fs FileSystem, ls LockSystem, name string, pname
 }
 
 // propnames returns the property names defined for resource name.
-func propnames(ctx context.Context, fs FileSystem, ls LockSystem, name string) ([]xml.Name, error) {
-	fi, err := fs.ResourceByPath(ctx, name)
+func propnames(fs FileSystem, ls LockSystem, name string) ([]xml.Name, error) {
+	fi, err := fs.ResourceByPath(name)
 	if err != nil {
 		return nil, err
 	}
@@ -184,8 +183,8 @@ func propnames(ctx context.Context, fs FileSystem, ls LockSystem, name string) (
 // returned if they are named in 'include'.
 //
 // See http://www.webdav.org/specs/rfc4918.html#METHOD_PROPFIND
-func allprop(ctx context.Context, fs FileSystem, ls LockSystem, name string, include []xml.Name) ([]Propstat, error) {
-	pnames, err := propnames(ctx, fs, ls, name)
+func allprop(fs FileSystem, ls LockSystem, name string, include []xml.Name) ([]Propstat, error) {
+	pnames, err := propnames(fs, ls, name)
 	if err != nil {
 		return nil, err
 	}
@@ -199,12 +198,12 @@ func allprop(ctx context.Context, fs FileSystem, ls LockSystem, name string, inc
 			pnames = append(pnames, pn)
 		}
 	}
-	return props(ctx, fs, ls, name, pnames)
+	return props(fs, ls, name, pnames)
 }
 
 // patch patches the properties of resource name. The return values are
 // constrained in the same manner as DeadPropsHolder.Patch.
-func patch(ctx context.Context, fs FileSystem, ls LockSystem, name string, patches []Proppatch) ([]Propstat, error) {
+func patch(fs FileSystem, ls LockSystem, name string, patches []Proppatch) ([]Propstat, error) {
 	conflict := false
 loop:
 	for _, patch := range patches {

@@ -5,7 +5,6 @@
 package webdav
 
 import (
-	"context"
 	"path"
 	"path/filepath"
 
@@ -19,7 +18,7 @@ type WalkFunc func(path string, info core.Resource, err error) error
 // Allowed values for depth are 0, 1 or infiniteDepth. For each visited node,
 // walkFS calls walkFn. If a visited file system node is a directory and
 // walkFn returns filepath.SkipDir, walkFS will skip traversal of this node.
-func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info core.Resource, walkFn WalkFunc) error {
+func walkFS(fs FileSystem, depth int, name string, info core.Resource, walkFn WalkFunc) error {
 	// This implementation is based on Walk's code in the standard path/filepath package.
 	err := walkFn(name, info, nil)
 	if err != nil {
@@ -36,7 +35,7 @@ func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info cor
 	}
 
 	// Read directory names.
-	f, err := fs.ResourceByPath(ctx, name)
+	f, err := fs.ResourceByPath(name)
 	if err != nil {
 		return walkFn(name, info, err)
 	}
@@ -47,13 +46,13 @@ func walkFS(ctx context.Context, fs FileSystem, depth int, name string, info cor
 
 	for _, fileInfo := range fileInfos {
 		filename := path.Join(name, fileInfo.Name)
-		fileInfo, err := fs.ResourceByPath(ctx, filename)
+		fileInfo, err := fs.ResourceByPath(filename)
 		if err != nil {
 			if err := walkFn(filename, fileInfo, err); err != nil && err != filepath.SkipDir {
 				return err
 			}
 		} else {
-			err = walkFS(ctx, fs, depth, filename, fileInfo, walkFn)
+			err = walkFS(fs, depth, filename, fileInfo, walkFn)
 			if err != nil {
 				if !fileInfo.Dir || err != filepath.SkipDir {
 					return err

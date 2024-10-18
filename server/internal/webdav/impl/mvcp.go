@@ -1,7 +1,6 @@
 package webdav
 
 import (
-	"context"
 	"net/http"
 	"net/url"
 
@@ -43,8 +42,6 @@ func (h *Handler) handleCopyMove(_ http.ResponseWriter, r *http.Request) (status
 		depth = parseDepth(hdr)
 	}
 
-	ctx := r.Context()
-
 	if r.Method == "COPY" {
 		// Section 7.5.1 says that a COPY only needs to lock the destination,
 		// not both destination and source. Strictly speaking, this is racy,
@@ -64,7 +61,7 @@ func (h *Handler) handleCopyMove(_ http.ResponseWriter, r *http.Request) (status
 			// COPY on a collection with a value of "0" or "infinity"."
 			return http.StatusBadRequest, errInvalidDepth
 		}
-		return copyFiles(ctx, h.FileSystem, src, dst, r.Header.Get("Overwrite") != "F", depth)
+		return copyFiles(h.FileSystem, src, dst, r.Header.Get("Overwrite") != "F", depth)
 	}
 
 	release, status, err := h.confirmLocks(r, src, dst)
@@ -79,20 +76,20 @@ func (h *Handler) handleCopyMove(_ http.ResponseWriter, r *http.Request) (status
 	if depth != infiniteDepth {
 		return http.StatusBadRequest, errInvalidDepth
 	}
-	return moveFiles(ctx, h.FileSystem, src, dst, r.Header.Get("Overwrite") == "T")
+	return moveFiles(h.FileSystem, src, dst, r.Header.Get("Overwrite") == "T")
 }
 
 // moveFiles moves files and/or directories from src to dst.
 //
 // See section 9.9.4 for when various HTTP status codes apply.
-func moveFiles(ctx context.Context, fs FileSystem, srcPath, dstPath string, overwrite bool) (status int, err error) {
-	if src, err := fs.ResourceByPath(ctx, srcPath); err != nil {
+func moveFiles(fs FileSystem, srcPath, dstPath string, overwrite bool) (status int, err error) {
+	if src, err := fs.ResourceByPath(srcPath); err != nil {
 		if e, ok := err.(core.Error); ok {
 			return e.Status, e
 		}
 		return http.StatusInternalServerError, err
 	} else {
-		if _, err := fs.Move(ctx, src, dstPath, overwrite); err != nil {
+		if _, err := fs.Move(src, dstPath, overwrite); err != nil {
 			if e, ok := err.(core.Error); ok {
 				return e.Status, e
 			}
@@ -106,14 +103,14 @@ func moveFiles(ctx context.Context, fs FileSystem, srcPath, dstPath string, over
 // copyFiles copies files and/or directories from src to dst.
 //
 // See section 9.8.5 for when various HTTP status codes apply.
-func copyFiles(ctx context.Context, fs FileSystem, srcPath, dstPath string, overwrite bool, depth int) (status int, err error) {
-	if src, err := fs.ResourceByPath(ctx, srcPath); err != nil {
+func copyFiles(fs FileSystem, srcPath, dstPath string, overwrite bool, depth int) (status int, err error) {
+	if src, err := fs.ResourceByPath(srcPath); err != nil {
 		if e, ok := err.(core.Error); ok {
 			return e.Status, e
 		}
 		return http.StatusInternalServerError, err
 	} else {
-		if _, err := fs.Copy(ctx, src, dstPath, depth != 0, overwrite); err != nil {
+		if _, err := fs.Copy(src, dstPath, depth != 0, overwrite); err != nil {
 			if e, ok := err.(core.Error); ok {
 				return e.Status, e
 			}
