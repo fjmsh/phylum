@@ -19,9 +19,9 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
   String get endpoint => '/api/v1/fs/mv/$resourceId';
 
   final String resourceId;
-  final String? parent;
+  final String parent;
   final String oldParent;
-  final String? resourceName;
+  final String resourceName;
   final String oldName;
   final String description;
 
@@ -32,7 +32,7 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
     required this.oldName,
     required this.oldParent,
     required this.description,
-  }) : assert(resourceName != null || parent != null);
+  });
 
   ResourceMoveAction({
     required Resource r,
@@ -40,8 +40,8 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
     String? name,
   }) : this._(
           resourceId: r.id,
-          resourceName: name,
-          parent: parent?.id,
+          resourceName: name ?? r.name,
+          parent: parent?.id ?? r.parent!,
           oldName: r.name,
           oldParent: r.parent!,
           description: name == null ? 'Moving ${r.name}' : 'Renaming ${r.name} to $name',
@@ -66,8 +66,7 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
   @override
   Map<String, dynamic>? generateRequestBody() {
     return {
-      'name': resourceName,
-      'parent_id': parent,
+      'target': '$parent/$resourceName',
     };
   }
 
