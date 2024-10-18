@@ -221,7 +221,7 @@ loop:
 			XMLError: `<D:cannot-modify-protected-property xmlns:D="DAV:"/>`,
 		}
 		pstatFailedDep := Propstat{
-			Status: StatusFailedDependency,
+			Status: http.StatusFailedDependency,
 		}
 		for _, patch := range patches {
 			for _, p := range patch.Props {

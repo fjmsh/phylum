@@ -77,7 +77,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if status != 0 {
 		w.WriteHeader(status)
 		if status != http.StatusNoContent {
-			w.Write([]byte(StatusText(status)))
+			w.Write([]byte(http.StatusText(status)))
 		}
 	}
 	if h.Logger != nil {
@@ -93,7 +93,7 @@ func (h *Handler) lock(now time.Time, root string) (token string, status int, er
 	})
 	if err != nil {
 		if err == ErrLocked {
-			return "", StatusLocked, err
+			return "", http.StatusLocked, err
 		}
 		return "", http.StatusInternalServerError, err
 	}
@@ -362,7 +362,7 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 		token, err = h.LockSystem.Create(now, ld)
 		if err != nil {
 			if err == ErrLocked {
-				return StatusLocked, err
+				return http.StatusLocked, err
 			}
 			return http.StatusInternalServerError, err
 		}
@@ -414,7 +414,7 @@ func (h *Handler) handleUnlock(_ http.ResponseWriter, r *http.Request) (status i
 	case ErrForbidden:
 		return http.StatusForbidden, err
 	case ErrLocked:
-		return StatusLocked, err
+		return http.StatusLocked, err
 	case ErrNoSuchLock:
 		return http.StatusConflict, err
 	default:
@@ -541,7 +541,7 @@ func makePropstatResponse(href string, pstats []Propstat) *response {
 			xmlErr = &xmlError{InnerXML: []byte(p.XMLError)}
 		}
 		resp.Propstat = append(resp.Propstat, propstat{
-			Status:              fmt.Sprintf("HTTP/1.1 %d %s", p.Status, StatusText(p.Status)),
+			Status:              fmt.Sprintf("HTTP/1.1 %d %s", p.Status, http.StatusText(p.Status)),
 			Prop:                p.Props,
 			ResponseDescription: p.ResponseDescription,
 			Error:               xmlErr,
@@ -602,31 +602,6 @@ func parseDepth(s string) int {
 		return infiniteDepth
 	}
 	return invalidDepth
-}
-
-// http://www.webdav.org/specs/rfc4918.html#status.code.extensions.to.http11
-const (
-	StatusMulti               = 207
-	StatusUnprocessableEntity = 422
-	StatusLocked              = 423
-	StatusFailedDependency    = 424
-	StatusInsufficientStorage = 507
-)
-
-func StatusText(code int) string {
-	switch code {
-	case StatusMulti:
-		return "Multi-Status"
-	case StatusUnprocessableEntity:
-		return "Unprocessable Entity"
-	case StatusLocked:
-		return "Locked"
-	case StatusFailedDependency:
-		return "Failed Dependency"
-	case StatusInsufficientStorage:
-		return "Insufficient Storage"
-	}
-	return http.StatusText(code)
 }
 
 var (

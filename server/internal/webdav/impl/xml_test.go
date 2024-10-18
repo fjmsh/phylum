@@ -402,7 +402,7 @@ func TestMultistatusWriter(t *testing.T) {
 			`  <responsedescription>Copyright Owner cannot be deleted or altered.</responsedescription>` +
 			`</response>` +
 			`</multistatus>`,
-		wantCode: StatusMulti,
+		wantCode: http.StatusMultiStatus,
 	}, {
 		desc: "section 9.6.2 (lock-token-submitted)",
 		responses: []response{{
@@ -421,7 +421,7 @@ func TestMultistatusWriter(t *testing.T) {
 			`    <error><lock-token-submitted xmlns="DAV:"/></error>` +
 			`  </response>` +
 			`</multistatus>`,
-		wantCode: StatusMulti,
+		wantCode: http.StatusMultiStatus,
 	}, {
 		desc: "section 9.1.3",
 		responses: []response{{
@@ -475,7 +475,7 @@ func TestMultistatusWriter(t *testing.T) {
 			`  </response>` +
 			`  <responsedescription>There has been an access violation error.</responsedescription>` +
 			`</multistatus>`,
-		wantCode: StatusMulti,
+		wantCode: http.StatusMultiStatus,
 	}, {
 		desc: "no response written",
 		// default of http.responseWriter
@@ -489,7 +489,7 @@ func TestMultistatusWriter(t *testing.T) {
 		desc:        "empty multistatus with header",
 		writeHeader: true,
 		wantXML:     `<multistatus xmlns="DAV:"></multistatus>`,
-		wantCode:    StatusMulti,
+		wantCode:    http.StatusMultiStatus,
 	}, {
 		desc: "bad: no href",
 		responses: []response{{

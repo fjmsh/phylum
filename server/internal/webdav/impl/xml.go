@@ -353,7 +353,7 @@ func (w *multistatusWriter) writeHeader() error {
 		return nil
 	}
 	w.w.Header().Add("Content-Type", "text/xml; charset=utf-8")
-	w.w.WriteHeader(StatusMulti)
+	w.w.WriteHeader(http.StatusMultiStatus)
 	_, err := fmt.Fprintf(w.w, `<?xml version="1.0" encoding="UTF-8"?>`)
 	if err != nil {
 		return err
