@@ -50,7 +50,7 @@ func setupLsCommand() *cobra.Command {
 			}
 
 			fmt.Println(formatRow(r.ParentID.String(), formatSize(0), "", "..", r.InheritedPermissions))
-			fmt.Println(formatRow(r.ID.String(), formatSize(0), r.ContentSHA256, ".("+r.Name+")", r.Permissions))
+			fmt.Println(formatRow(r.ID.String(), formatSize(r.ContentSize), r.ContentSHA256, ".("+r.Name+")", r.Permissions))
 
 			if r.Dir {
 				children, err := fs.ReadDir(r)

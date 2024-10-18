@@ -489,7 +489,7 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 	copy := make(map[uuid.UUID]uuid.UUID)
 
 	e = f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
-		f = f.withDb(dbh)
+		f := f.withDb(dbh)
 		if overwrite {
 			if err := f.DeleteChildRecursive(destParent, destName, false); err != nil && !errors.Is(err, ErrResourceNotFound) {
 				return err
@@ -503,12 +503,13 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 				return err
 			}
 		}
-		dest, err := f.CreateMemberResource(destParent, id, destName, src.Dir)
+		dest, err = f.CreateMemberResource(destParent, id, destName, src.Dir)
 		if err != nil {
 			return err
 		}
 		if !src.Dir {
-			copy[dest.ID] = src.ID
+			logrus.Info("Added for copy: " + src.ID.String())
+			copy[src.ID] = id
 		}
 
 		ids := make(map[string]uuid.UUID)
@@ -536,6 +537,36 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 
 		return nil
 	})
+
+	if e == nil {
+		for k, v := range copy {
+			src, err := f.ResourceByID(k)
+			if err != nil {
+				logrus.Warn("Unable to get " + k.String() + ": " + err.Error())
+				continue
+			}
+			dest, err := f.ResourceByID(v)
+			if err != nil {
+				logrus.Warn("Unable to get " + v.String() + ": " + err.Error())
+				continue
+			}
+			in, err := f.OpenRead(src, 0, -1)
+			if err != nil {
+				logrus.Warn("Unable to open " + k.String() + ": " + err.Error())
+				continue
+			}
+			out, err := f.OpenWrite(dest)
+			if err != nil {
+				logrus.Warn("Unable to open " + v.String() + ": " + err.Error())
+				continue
+			}
+			if _, err := io.Copy(out, in); err != nil {
+				logrus.Warn("Unable to copy " + k.String() + " to " + v.String() + ": " + err.Error())
+			}
+		}
+	} else {
+		logrus.Warn(e)
+	}
 
 	return
 }
