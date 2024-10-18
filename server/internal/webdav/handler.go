@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -73,18 +72,8 @@ func (a adapter) OpenWrite(name string) (io.WriteCloser, error) {
 	resource, err := a.ResourceByPath(name)
 
 	if err != nil {
-		if err == core.ErrResourceNotFound {
-			// Try to create the resource if the parent collection exists
-			name = strings.TrimRight(name, "/")
-			index := strings.LastIndex(name, "/")
-			parentPath := name[0:index]
-			parent, err := a.ResourceByPath(parentPath)
-			if err != nil {
-				return nil, err
-			}
-			resourceName := name[index+1:]
-			resourceId := uuid.New()
-			resource, err = a.fs.CreateMemberResource(parent, resourceId, resourceName, false)
+		if errors.Is(err, core.ErrResourceNotFound) {
+			resource, err = a.fs.CreateResourceByPath(name, false)
 			if err != nil {
 				return nil, err
 			}
@@ -98,35 +87,12 @@ func (a adapter) OpenWrite(name string) (io.WriteCloser, error) {
 	return a.fs.OpenWrite(resource)
 }
 
-func (a adapter) RemoveAll(name string) error {
-	resource, err := a.ResourceByPath(name)
-	if err != nil {
-		return err
-	}
-	_, err = a.fs.DeleteRecursive(resource, false)
-	return err
+func (a adapter) RemoveAll(r core.Resource) (uuid.UUIDs, error) {
+	return a.fs.DeleteRecursive(r, false)
 }
 
-func (a adapter) Mkdir(name string) error {
-	if _, err := a.ResourceByPath(name); !errors.Is(err, core.ErrResourceNotFound) {
-		if err == nil {
-			return core.ErrResourceNameConflict
-		}
-		return err
-	}
-	name = strings.TrimRight(name, "/")
-	index := strings.LastIndex(name, "/")
-	parentPath := name[0:index]
-	parent, err := a.ResourceByPath(parentPath)
-	if err != nil {
-		if errors.Is(err, core.ErrResourceNotFound) {
-			return core.ErrParentNotFound
-		}
-		return err
-	}
-	dirName := name[index+1:]
-	_, err = a.fs.CreateMemberResource(parent, uuid.New(), dirName, true)
-	return err
+func (a adapter) Mkdir(name string) (core.Resource, error) {
+	return a.fs.CreateResourceByPath(name, true)
 }
 
 func (a adapter) Move(src core.Resource, target string, overwrite bool) (core.Resource, error) {

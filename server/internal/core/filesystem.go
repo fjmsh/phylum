@@ -29,6 +29,7 @@ type FileSystem interface {
 	RootID() uuid.UUID
 	ResourceByID(id uuid.UUID) (Resource, error)
 	ResourceByPath(path string) (Resource, error)
+	CreateResourceByPath(path string, dir bool) (Resource, error)
 	ResourceByPathOrUuid(pathOrUuid string) (Resource, error)
 	OpenRead(r Resource, start, length int64) (io.ReadCloser, error)
 	OpenWrite(r Resource) (io.WriteCloser, error)
@@ -245,6 +246,20 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 		}
 	}
 	return result, nil
+}
+func (f filesystem) CreateResourceByPath(path string, dir bool) (Resource, error) {
+	path = strings.TrimRight(path, "/")
+	index := strings.LastIndex(path, "/")
+	name := path[index+1:]
+	parentPath := path[0:index]
+	parent, err := f.ResourceByPath(parentPath)
+	if err != nil {
+		if errors.Is(err, ErrResourceNotFound) {
+			err = ErrParentNotFound
+		}
+		return Resource{}, err
+	}
+	return f.CreateMemberResource(parent, uuid.New(), name, true)
 }
 
 func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, dir bool) (Resource, error) {

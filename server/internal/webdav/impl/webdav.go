@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/net/serve"
 )
@@ -38,8 +39,8 @@ type Handler struct {
 // of host operating system convention.
 type FileSystem interface {
 	ResourceByPath(name string) (core.Resource, error)
-	Mkdir(name string) error
-	RemoveAll(name string) error
+	Mkdir(name string) (core.Resource, error)
+	RemoveAll(r core.Resource) (uuid.UUIDs, error)
 	Move(r core.Resource, target string, overwrite bool) (core.Resource, error)
 	Copy(r core.Resource, target string, recursive, overwrite bool) (core.Resource, error)
 	ReadDir(r core.Resource) ([]core.Resource, error)
@@ -238,18 +239,12 @@ func (h *Handler) handleDelete(_ http.ResponseWriter, r *http.Request) (status i
 	}
 	defer release()
 
-	// TODO: return MultiStatus where appropriate.
-
-	// "godoc os RemoveAll" says that "If the path does not exist, RemoveAll
-	// returns nil (no error)." WebDAV semantics are that it should return a
-	// "404 Not Found". We therefore have to Stat before we RemoveAll.
-	if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
+	if r, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
 		if errors.Is(err, core.ErrResourceNotFound) {
 			return http.StatusNotFound, err
 		}
 		return http.StatusMethodNotAllowed, err
-	}
-	if err := h.FileSystem.RemoveAll(reqPath); err != nil {
+	} else if _, err := h.FileSystem.RemoveAll(r); err != nil {
 		return http.StatusMethodNotAllowed, err
 	}
 	return http.StatusNoContent, nil
@@ -303,7 +298,7 @@ func (h *Handler) handleMkcol(_ http.ResponseWriter, r *http.Request) (status in
 	if r.ContentLength > 0 {
 		return http.StatusUnsupportedMediaType, nil
 	}
-	if err := h.FileSystem.Mkdir(reqPath); err != nil {
+	if _, err := h.FileSystem.Mkdir(reqPath); err != nil {
 		if errors.Is(err, core.ErrResourceNameConflict) {
 			return http.StatusConflict, err
 		}
