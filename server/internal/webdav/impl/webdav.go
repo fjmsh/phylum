@@ -39,13 +39,13 @@ type Handler struct {
 // of host operating system convention.
 type FileSystem interface {
 	ResourceByPath(name string) (core.Resource, error)
-	Mkdir(name string) (core.Resource, error)
-	RemoveAll(r core.Resource) (uuid.UUIDs, error)
+	CreateResourceByPath(name string, dir bool) (core.Resource, error)
+	DeleteRecursive(r core.Resource, hardDelete bool) (uuid.UUIDs, error)
 	Move(r core.Resource, target string, overwrite bool) (core.Resource, error)
-	Copy(r core.Resource, target string, recursive, overwrite bool) (core.Resource, error)
+	Copy(r core.Resource, target string, id uuid.UUID, recursive, overwrite bool) (core.Resource, error)
 	ReadDir(r core.Resource) ([]core.Resource, error)
 	OpenRead(r core.Resource, start, length int64) (io.ReadCloser, error)
-	OpenWrite(name string) (io.WriteCloser, error)
+	OpenWriteTouch(name string) (io.WriteCloser, error)
 }
 
 func (h *Handler) stripPrefix(p string) (string, int, error) {
@@ -244,7 +244,7 @@ func (h *Handler) handleDelete(_ http.ResponseWriter, r *http.Request) (status i
 			return http.StatusNotFound, err
 		}
 		return http.StatusMethodNotAllowed, err
-	} else if _, err := h.FileSystem.RemoveAll(r); err != nil {
+	} else if _, err := h.FileSystem.DeleteRecursive(r, false); err != nil {
 		return http.StatusMethodNotAllowed, err
 	}
 	return http.StatusNoContent, nil
@@ -263,7 +263,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	// TODO(rost): Support the If-Match, If-None-Match headers? See bradfitz'
 	// comments in http.checkEtag.
 
-	f, err := h.FileSystem.OpenWrite(reqPath)
+	f, err := h.FileSystem.OpenWriteTouch(reqPath)
 	if err != nil {
 		return http.StatusNotFound, err
 	}
@@ -298,7 +298,7 @@ func (h *Handler) handleMkcol(_ http.ResponseWriter, r *http.Request) (status in
 	if r.ContentLength > 0 {
 		return http.StatusUnsupportedMediaType, nil
 	}
-	if _, err := h.FileSystem.Mkdir(reqPath); err != nil {
+	if _, err := h.FileSystem.CreateResourceByPath(reqPath, true); err != nil {
 		if errors.Is(err, core.ErrResourceNameConflict) {
 			return http.StatusConflict, err
 		}
@@ -375,7 +375,7 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 
 		// Create the resource if it didn't previously exist.
 		if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-			f, err := h.FileSystem.OpenWrite(reqPath)
+			f, err := h.FileSystem.OpenWriteTouch(reqPath)
 			if err != nil {
 				// TODO: detect missing intermediate dirs and return http.StatusConflict?
 				return http.StatusInternalServerError, err

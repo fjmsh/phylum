@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core"
 )
 
@@ -110,7 +111,7 @@ func copyFiles(fs FileSystem, srcPath, dstPath string, overwrite bool, depth int
 		}
 		return http.StatusInternalServerError, err
 	} else {
-		if _, err := fs.Copy(src, dstPath, depth != 0, overwrite); err != nil {
+		if _, err := fs.Copy(src, dstPath, uuid.New(), depth != 0, overwrite); err != nil {
 			if e, ok := err.(core.Error); ok {
 				return e.Status, e
 			}
