@@ -7,11 +7,9 @@ package webdav
 import (
 	"context"
 	"io"
-	"net/http"
 	"path"
 	"path/filepath"
 
-	"github.com/shroff/phylum/server/internal/api/errors"
 	"github.com/shroff/phylum/server/internal/core"
 )
 
@@ -27,48 +25,6 @@ type FileSystem interface {
 	ReadDir(r core.Resource) ([]core.Resource, error)
 	OpenRead(r core.Resource, start, length int64) (io.ReadCloser, error)
 	OpenWrite(ctx context.Context, name string) (io.WriteCloser, error)
-}
-
-// moveFiles moves files and/or directories from src to dst.
-//
-// See section 9.9.4 for when various HTTP status codes apply.
-func moveFiles(ctx context.Context, fs FileSystem, srcPath, dstPath string, overwrite bool) (status int, err error) {
-	if src, err := fs.Stat(ctx, srcPath); err != nil {
-		if e, ok := err.(errors.ApiErr); ok {
-			return e.Status, e
-		}
-		return http.StatusInternalServerError, err
-	} else {
-		if err := fs.Move(ctx, src, dstPath, overwrite); err != nil {
-			if e, ok := err.(errors.ApiErr); ok {
-				return e.Status, e
-			}
-			return http.StatusForbidden, err
-		}
-		return http.StatusCreated, nil
-		// TODO: should return http.StatusNoContent if the target already existed before
-	}
-}
-
-// copyFiles copies files and/or directories from src to dst.
-//
-// See section 9.8.5 for when various HTTP status codes apply.
-func copyFiles(ctx context.Context, fs FileSystem, srcPath, dstPath string, overwrite bool, depth int) (status int, err error) {
-	if src, err := fs.Stat(ctx, srcPath); err != nil {
-		if e, ok := err.(errors.ApiErr); ok {
-			return e.Status, e
-		}
-		return http.StatusInternalServerError, err
-	} else {
-		if err := fs.Copy(ctx, src, dstPath, depth != 0, overwrite); err != nil {
-			if e, ok := err.(errors.ApiErr); ok {
-				return e.Status, e
-			}
-			return http.StatusForbidden, err
-		}
-		return http.StatusCreated, nil
-		// TODO: should return http.StatusNoContent if the target already existed before
-	}
 }
 
 type WalkFunc func(path string, info core.Resource, err error) error
