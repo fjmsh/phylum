@@ -508,7 +508,6 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 			return err
 		}
 		if !src.Dir {
-			logrus.Info("Added for copy: " + src.ID.String())
 			copy[src.ID] = id
 		}
 
@@ -539,36 +538,42 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 	})
 
 	if e == nil {
-		for k, v := range copy {
-			src, err := f.ResourceByID(k)
-			if err != nil {
-				logrus.Warn("Unable to get " + k.String() + ": " + err.Error())
-				continue
+		func() {
+			for k, v := range copy {
+				if _, err := f.copyContents(k, v); err != nil {
+					logrus.Warn("unable to copy " + k.String() + " to " + v.String() + ": " + err.Error())
+				}
 			}
-			dest, err := f.ResourceByID(v)
-			if err != nil {
-				logrus.Warn("Unable to get " + v.String() + ": " + err.Error())
-				continue
-			}
-			in, err := f.OpenRead(src, 0, -1)
-			if err != nil {
-				logrus.Warn("Unable to open " + k.String() + ": " + err.Error())
-				continue
-			}
-			out, err := f.OpenWrite(dest)
-			if err != nil {
-				logrus.Warn("Unable to open " + v.String() + ": " + err.Error())
-				continue
-			}
-			if _, err := io.Copy(out, in); err != nil {
-				logrus.Warn("Unable to copy " + k.String() + " to " + v.String() + ": " + err.Error())
-			}
-		}
+
+		}()
 	} else {
 		logrus.Warn(e)
 	}
 
 	return
+}
+
+func (f filesystem) copyContents(k, v uuid.UUID) (int64, error) {
+	src, err := f.ResourceByID(k)
+	if err != nil {
+		return 0, errors.New("unable to get " + k.String() + ": " + err.Error())
+	}
+	dest, err := f.ResourceByID(v)
+	if err != nil {
+		return 0, errors.New("unable to get " + v.String() + ": " + err.Error())
+	}
+	in, err := f.OpenRead(src, 0, -1)
+	if err != nil {
+		return 0, errors.New("Unable to open " + k.String() + ": " + err.Error())
+	}
+	defer in.Close()
+	out, err := f.OpenWrite(dest)
+	if err != nil {
+		return 0, errors.New("Unable to open " + v.String() + ": " + err.Error())
+	}
+	defer out.Close()
+
+	return io.Copy(out, in)
 }
 
 func (f filesystem) DiskUsage(r Resource) (DiskUsageInfo, error) {
