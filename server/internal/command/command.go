@@ -7,6 +7,7 @@ import (
 
 	"github.com/shroff/phylum/server/internal/command/appcmd"
 	"github.com/shroff/phylum/server/internal/command/fs"
+	"github.com/shroff/phylum/server/internal/command/schema"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -61,7 +62,7 @@ func SetupCommand() {
 	rootCmd.AddCommand([]*cobra.Command{
 		appcmd.SetupCommand(),
 		fs.SetupCommand(),
-		setupSchemaCommand(),
+		schema.SetupCommand(),
 	}...)
 	rootCmd.Execute()
 }

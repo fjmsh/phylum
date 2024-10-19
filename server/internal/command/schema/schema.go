@@ -1,4 +1,4 @@
-package command
+package schema
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setupSchemaCommand() *cobra.Command {
+func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "schema",
 		Short: "Database Schema Management",

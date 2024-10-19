@@ -7,13 +7,10 @@ import (
 
 	"github.com/shroff/phylum/server/internal/core/app"
 	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-var f fs.FileSystem
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -38,7 +35,6 @@ func SetupCommand() *cobra.Command {
 				fmt.Println("could not initialized app: " + err.Error())
 				os.Exit(1)
 			}
-			openFileSystemFromFlags(cmd)
 		},
 	}
 	flags := cmd.PersistentFlags()
@@ -59,18 +55,4 @@ func SetupCommand() *cobra.Command {
 	)
 
 	return cmd
-}
-
-func openFileSystemFromFlags(cmd *cobra.Command) {
-	if value, err := cmd.Flags().GetString("user"); err != nil {
-		fmt.Println("could not read user: " + err.Error())
-		os.Exit(1)
-	} else {
-		if user, err := app.Default.UserByEmail(context.Background(), value); err != nil {
-			fmt.Println("could not find user '" + value + "': " + err.Error())
-			os.Exit(1)
-		} else {
-			f = app.Default.OpenFileSystem(context.Background(), user)
-		}
-	}
 }

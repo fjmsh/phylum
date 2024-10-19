@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/command/util"
 	"github.com/spf13/cobra"
 )
 
@@ -13,10 +14,13 @@ func setupCpCommand() *cobra.Command {
 		Use:   "cp [<src-path> | <src-uuid>] [<dest-path> | <dest-uuid>/<dest-name>]",
 		Short: "Copy Resource",
 		Args:  cobra.ExactArgs(2),
-		PreRun: func(cmd *cobra.Command, args []string) {
-			openFileSystemFromFlags(cmd)
-		},
 		Run: func(cmd *cobra.Command, args []string) {
+			f, err := util.OpenFileSystemFromFlags(cmd)
+			if err != nil {
+				fmt.Println("could not open filesystem: " + err.Error())
+				os.Exit(1)
+			}
+
 			srcPathOrUuid := args[0]
 			src, err := f.ResourceByPathOrUuid(srcPathOrUuid)
 			if err != nil {
