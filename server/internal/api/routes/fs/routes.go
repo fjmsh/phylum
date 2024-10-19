@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	errResourceIDInvalid = core.New(http.StatusBadRequest, "resource_id_invalid", "Invalid UUID")
-	errInvalidParams     = core.New(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
+	errResourceIDInvalid = core.NewError(http.StatusBadRequest, "resource_id_invalid", "Invalid UUID")
+	errInvalidParams     = core.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
 )
 
 func SetupRoutes(r *gin.RouterGroup) {

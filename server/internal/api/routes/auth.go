@@ -21,11 +21,11 @@ func createLoginRouteHandler(a *core.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		email, ok := c.GetQuery("email")
 		if !ok {
-			panic(core.New(http.StatusBadRequest, "missing_email", "Email Not Specified"))
+			panic(core.NewError(http.StatusBadRequest, "missing_email", "Email Not Specified"))
 		}
 		password, ok := c.GetQuery("password")
 		if !ok {
-			panic(core.New(http.StatusBadRequest, "missing_password", "Password Not Specified"))
+			panic(core.NewError(http.StatusBadRequest, "missing_password", "Password Not Specified"))
 		}
 
 		if user, err := a.VerifyUserPassword(c.Request.Context(), email, password); err != nil {

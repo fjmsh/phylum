@@ -21,7 +21,7 @@ var accessTokenValiditiy = pgtype.Interval{
 	Valid: true,
 }
 
-var ErrCredentialsInvalid = New(http.StatusUnauthorized, "credentials_invalid", "invalid Credentials")
+var ErrCredentialsInvalid = NewError(http.StatusUnauthorized, "credentials_invalid", "invalid Credentials")
 
 func (a App) VerifyUserPassword(ctx context.Context, email, password string) (User, error) {
 	if user, err := a.db.UserByUsername(ctx, email); err != nil {

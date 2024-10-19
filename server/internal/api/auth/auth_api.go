@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	errAuthRequired = core.New(http.StatusUnauthorized, "auth_required", "authorization required")
+	errAuthRequired = core.NewError(http.StatusUnauthorized, "auth_required", "authorization required")
 )
 
 func CreateApiAuthHandler(a *core.App) func(c *gin.Context) {
