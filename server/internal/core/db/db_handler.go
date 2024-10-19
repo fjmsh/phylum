@@ -7,7 +7,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/shroff/phylum/server/internal/core/db/migrations"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,9 +15,6 @@ var (
 	ErrMigrationTargetTooHigh   = errors.New("schema migration target cannot be greater than latest")
 	ErrMigrationNoAutoDowngrade = errors.New("will not auto-downgrade schema to prevent data loss")
 )
-
-var currentSchemaVersion int
-var latestSchemaVersion int
 
 var Default *DbHandler
 
@@ -30,7 +26,10 @@ type DbHandler struct {
 	pool *pgxpool.Pool
 }
 
-func Create(ctx context.Context, dsn string, trace bool) error {
+func Initialize(ctx context.Context, dsn string, autoMigrate, trace bool) error {
+	if Default != nil {
+		return nil
+	}
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return errors.New("Unable to parse DSN: " + err.Error())
@@ -47,26 +46,13 @@ func Create(ctx context.Context, dsn string, trace bool) error {
 
 	logrus.Debug("Connected to " + config.ConnConfig.Database + " at " + config.ConnConfig.Host + ":" + fmt.Sprint(config.ConnConfig.Port))
 
-	conn, err := pool.Acquire(ctx)
-	if err != nil {
-		return err
-	}
-	migrator, err := migrations.NewMigrator(ctx, conn.Conn())
-	if err != nil {
-		return err
-	}
-	currentSchemaVersion, err = migrator.GetCurrentVersion(ctx)
-	if err != nil {
-		return err
-	}
-	latestSchemaVersion = migrator.GetLatestVersion()
-	conn.Release()
-
 	Default = &DbHandler{
 		Queries: *New(pool),
 		tx:      pool,
 		pool:    pool,
 	}
+
+	Default.checkVersion(ctx, autoMigrate)
 
 	return nil
 }

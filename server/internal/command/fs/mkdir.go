@@ -1,12 +1,9 @@
 package fs
 
 import (
-	"fmt"
-	"os"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/command/util"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -17,12 +14,6 @@ func setupMkdirCommand() *cobra.Command {
 		Short: "Create Directory",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			f, err := util.OpenFileSystemFromFlags(cmd)
-			if err != nil {
-				fmt.Println("could not open filesystem: " + err.Error())
-				os.Exit(1)
-			}
-
 			path := args[0]
 			if _, err := f.ResourceByPath(path); err == nil {
 				logrus.Fatal("Resource already exists: " + path)

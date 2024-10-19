@@ -22,7 +22,10 @@ type App struct {
 
 var Default *App
 
-func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage) error {
+func Initialize(ctx context.Context, db *db.DbHandler, cs storage.Storage) error {
+	if Default != nil {
+		return nil
+	}
 	Default = &App{
 		db: db,
 		cs: cs,

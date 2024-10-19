@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shroff/phylum/server/internal/command/util"
 	"github.com/shroff/phylum/server/internal/core/app"
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/spf13/cobra"
@@ -17,11 +16,6 @@ func setupChpermCommand() *cobra.Command {
 		Short: "Change Permissions",
 		Args:  cobra.ExactArgs(3),
 		Run: func(cmd *cobra.Command, args []string) {
-			f, err := util.OpenFileSystemFromFlags(cmd)
-			if err != nil {
-				fmt.Println("could not open filesystem: " + err.Error())
-				os.Exit(1)
-			}
 			pathOrUuid := args[0]
 			r, err := f.ResourceByPathOrUuid(pathOrUuid)
 			if err != nil {

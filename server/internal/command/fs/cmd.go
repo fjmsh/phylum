@@ -2,15 +2,18 @@ package fs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
+	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/app"
-	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/storage"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+var f fs.FileSystem
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -23,18 +26,11 @@ func SetupCommand() *cobra.Command {
 			}
 			c.PersistentPreRun(cmd, args)
 
-			if err := db.Default.CheckVersion(context.Background(), !viper.GetBool("no_auto_migrate")); err != nil {
-				fmt.Println("could not migrate database schema: " + err.Error())
-				os.Exit(1)
+			if viper.GetBool("no_auto_migrate") {
+				common.MustInitializeDB(false)
 			}
-			if err := storage.Create(context.Background(), db.Default, viper.GetString("default_storage_dir")); err != nil {
-				fmt.Println("could not open storage: " + err.Error())
-				os.Exit(1)
-			}
-			if err := app.Create(context.Background(), db.Default, storage.Default); err != nil {
-				fmt.Println("could not initialized app: " + err.Error())
-				os.Exit(1)
-			}
+			common.MustInitializeApp()
+			mustOpenFileSystemFromFlags(cmd)
 		},
 	}
 	flags := cmd.PersistentFlags()
@@ -55,4 +51,25 @@ func SetupCommand() *cobra.Command {
 	)
 
 	return cmd
+}
+
+func mustOpenFileSystemFromFlags(cmd *cobra.Command) {
+	var err error
+	f, err = openFileSystemFromFlags(cmd)
+	if err != nil {
+		fmt.Println("could not open filesystem: " + err.Error())
+		os.Exit(4)
+	}
+}
+
+func openFileSystemFromFlags(cmd *cobra.Command) (fs.FileSystem, error) {
+	if value, err := cmd.Flags().GetString("user"); err != nil {
+		return nil, errors.New("could not read user: " + err.Error())
+	} else {
+		if user, err := app.Default.UserByEmail(context.Background(), value); err != nil {
+			return nil, errors.New("could not find user '" + value + "': " + err.Error())
+		} else {
+			return app.Default.OpenFileSystem(context.Background(), user), nil
+		}
+	}
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +29,7 @@ func setupSchemaResetCommand() *cobra.Command {
 		Short: "Reset Database Schema",
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := db.Default.DeleteSchema(context.Background()); err != nil {
-				fmt.Println(err.Error())
+				fmt.Println("unable to delete databse schema: " + err.Error())
 				os.Exit(1)
 			}
 		},
@@ -43,12 +44,9 @@ func setupSchemaMigrateCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
 			if args[0] == "auto" || args[0] == "latest" {
-				if err := db.Default.CheckVersion(ctx, true); err != nil {
-					fmt.Println(err.Error())
-					os.Exit(2)
-				}
+				common.MustInitializeDB(true)
 			} else {
-				db.Default.CheckVersion(ctx, false)
+				common.MustInitializeDB(false)
 				if v, err := strconv.Atoi(args[0]); err != nil {
 					fmt.Println(err.Error())
 					os.Exit(3)

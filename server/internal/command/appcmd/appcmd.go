@@ -1,13 +1,7 @@
 package appcmd
 
 import (
-	"context"
-	"fmt"
-	"os"
-
-	"github.com/shroff/phylum/server/internal/core/app"
-	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/storage"
+	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -21,21 +15,14 @@ func SetupCommand() *cobra.Command {
 			for ; c.Parent() != nil; c = c.Parent() {
 			}
 			c.PersistentPreRun(cmd, args)
-			if err := db.Default.CheckVersion(context.Background(), !viper.GetBool("no_auto_migrate")); err != nil {
-				fmt.Println(err.Error())
-				os.Exit(1)
+
+			if viper.GetBool("no_auto_migrate") {
+				common.MustInitializeDB(false)
 			}
-			if err := storage.Create(context.Background(), db.Default, viper.GetString("default_storage_dir")); err != nil {
-				fmt.Println(err.Error())
-				os.Exit(1)
-			}
-			if err := app.Create(context.Background(), db.Default, storage.Default); err != nil {
-				fmt.Println(err.Error())
-				os.Exit(1)
-			}
+			common.MustInitializeApp()
 		},
 	}
-	flags := cmd.Flags()
+	flags := cmd.PersistentFlags()
 	flags.Bool("no-auto-migrate", false, "Do not automatically migrate database schema")
 	viper.BindPFlag("no_auto_migrate", flags.Lookup("no-auto-migrate"))
 

@@ -1,7 +1,6 @@
 package command
 
 import (
-	"context"
 	"os"
 	"path"
 
@@ -44,11 +43,6 @@ func SetupCommand() {
 			logrus.Debug("Setting working directory to " + workDir)
 			os.Mkdir(workDir, 0750)
 			os.Chdir(workDir)
-		}
-
-		var err error
-		if err = db.Create(context.Background(), viper.GetString("database_url"), debug && viper.GetBool("trace_sql")); err != nil {
-			logrus.Fatal(err)
 		}
 	}
 
