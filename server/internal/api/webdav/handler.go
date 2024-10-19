@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
+	webdav "github.com/shroff/phylum/server/internal/api/webdav/impl"
 	"github.com/shroff/phylum/server/internal/core/app"
 	"github.com/shroff/phylum/server/internal/core/fs"
-	webdav "github.com/shroff/phylum/server/internal/webdav/impl"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,6 +19,24 @@ type handler struct {
 	lockSystem webdav.LockSystem
 }
 
+func createBasicAuthHandler(a *app.App) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		authSuccess := false
+		if username, pass, ok := c.Request.BasicAuth(); ok {
+			if user, err := a.VerifyUserPassword(c.Request.Context(), username, pass); err == nil {
+				auth.Set(c, user, a.OpenFileSystem(c.Request.Context(), user))
+				authSuccess = true
+			} else if !errors.Is(err, app.ErrCredentialsInvalid) {
+				panic(err)
+			}
+		}
+		if !authSuccess {
+			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
+			panic(auth.ErrRequired)
+		}
+	}
+}
+
 func SetupHandler(r *gin.RouterGroup, app *app.App) {
 	logrus.Debug("Setting up WebDAV access at " + r.BasePath())
 	handler := &handler{
@@ -26,7 +44,7 @@ func SetupHandler(r *gin.RouterGroup, app *app.App) {
 		prefix:     r.BasePath(),
 		lockSystem: webdav.NewMemLS(),
 	}
-	r.Use(auth.CreateBasicAuthHandler(app))
+	r.Use(createBasicAuthHandler(app))
 	r.Handle("OPTIONS", "*path", handler.HandleRequest)
 	r.Handle("GET", "*path", handler.HandleRequest)
 	r.Handle("PUT", "*path", handler.HandleRequest)

@@ -8,10 +8,10 @@ import (
 	"github.com/fvbock/endless"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/api"
+	apiv1 "github.com/shroff/phylum/server/internal/api/v1"
+	"github.com/shroff/phylum/server/internal/api/webdav"
 	"github.com/shroff/phylum/server/internal/core/app"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/webdav"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -40,7 +40,7 @@ func setupServeCommand() *cobra.Command {
 
 			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")), app.Default)
 
-			api.Setup(engine.Group("/api/v1"), app.Default)
+			apiv1.Setup(engine.Group("/api/v1"), app.Default)
 
 			server := endless.NewServer(config.GetString("listen"), engine)
 			server.BeforeBegin = func(addr string) {

@@ -18,8 +18,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/fs"
-	"github.com/shroff/phylum/server/internal/net/serve"
 )
 
 type Handler struct {

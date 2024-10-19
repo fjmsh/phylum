@@ -3,8 +3,8 @@ package my
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
-	fsapi "github.com/shroff/phylum/server/internal/api/fs"
-	"github.com/shroff/phylum/server/internal/api/users"
+	fsapi "github.com/shroff/phylum/server/internal/api/v1/fs"
+	"github.com/shroff/phylum/server/internal/api/v1/users"
 	"github.com/shroff/phylum/server/internal/core/app"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
