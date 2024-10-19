@@ -80,6 +80,15 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 	return i, err
 }
 
+type CreateResourcesParams struct {
+	ID            uuid.UUID
+	Parent        uuid.UUID
+	Name          string
+	Dir           bool
+	ContentType   string
+	ContentSha256 string
+}
+
 const deleteRecursive = `-- name: DeleteRecursive :many
 WITH RECURSIVE nodes(id, parent) AS (
     SELECT r.id, r.parent

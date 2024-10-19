@@ -7,6 +7,13 @@ INSERT INTO resources(
       CASE @dir WhEN TRUE THEN '' ELSE 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' END
 ) RETURNING *;
 
+-- name: CreateResources :copyfrom
+INSERT INTO resources(
+    id, parent, name, dir, content_type, content_sha256
+) VALUES (
+    @id::uuid, @parent::uuid, @name::text, @dir::boolean, @content_type::text, @content_sha256::text
+);
+
 -- name: UpdateResourceContents :exec
 UPDATE resources
 SET

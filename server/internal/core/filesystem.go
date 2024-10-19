@@ -486,7 +486,42 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 		return
 	}
 
+	var tree []db.ReadDirRow
+	if recursive && src.Dir {
+		var err error
+		tree, err = f.db.ReadDir(f.ctx, db.ReadDirParams{ID: src.ID, IncludeRoot: false, Recursive: true})
+		if err != nil {
+			return Resource{}, err
+		}
+	}
+	create := make([]db.CreateResourcesParams, 0, len(tree))
 	copy := make(map[uuid.UUID]uuid.UUID)
+	ids := make(map[string]uuid.UUID)
+	if src.Dir {
+		ids[""] = id
+	} else {
+		copy[src.ID] = id
+	}
+
+	for _, src := range tree {
+		id := uuid.New()
+		parent := ids[src.Path[0:strings.LastIndex(src.Path, "/")]]
+
+		create = append(create, db.CreateResourcesParams{
+			ID:            id,
+			Parent:        parent,
+			Name:          src.Name,
+			Dir:           src.Dir,
+			ContentType:   src.ContentType,
+			ContentSha256: src.ContentSha256,
+		})
+
+		if src.Dir {
+			ids[src.Path] = id
+		} else {
+			copy[src.ID] = id
+		}
+	}
 
 	e = f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
 		f := f.withDb(dbh)
@@ -495,46 +530,12 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 				return err
 			}
 		}
-		var tree []db.ReadDirRow
-		if recursive && src.Dir {
-			var err error
-			tree, err = f.db.ReadDir(f.ctx, db.ReadDirParams{ID: src.ID, IncludeRoot: false, Recursive: true})
-			if err != nil {
-				return err
-			}
-		}
 		dest, err = f.CreateMemberResource(destParent, id, destName, src.Dir)
 		if err != nil {
 			return err
 		}
-		if !src.Dir {
-			copy[src.ID] = id
-		}
-
-		ids := make(map[string]uuid.UUID)
-		ids[""] = dest.ID
-		for _, src := range tree {
-			id := uuid.New()
-			parent := ids[src.Path[0:strings.LastIndex(src.Path, "/")]]
-
-			if _, err := dbh.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: src.Name, Dir: src.Dir}); err != nil {
-				if strings.Contains(err.Error(), "unique_member_resource_name") {
-					return ErrResourceNameConflict
-				}
-				if strings.Contains(err.Error(), "resources_pkey") {
-					return ErrResourceIDConflict
-				}
-				return err
-			} else {
-				if src.Dir {
-					ids[src.Path] = id
-				} else {
-					copy[src.ID] = id
-				}
-			}
-		}
-
-		return nil
+		_, err := dbh.CreateResources(f.ctx, create)
+		return err
 	})
 
 	if e == nil {
