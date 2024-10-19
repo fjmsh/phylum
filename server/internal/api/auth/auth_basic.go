@@ -4,10 +4,10 @@ import (
 	"errors"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/app"
 )
 
-func CreateBasicAuthHandler(a *core.App) func(c *gin.Context) {
+func CreateBasicAuthHandler(a *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		authSuccess := false
 		if username, pass, ok := c.Request.BasicAuth(); ok {
@@ -15,7 +15,7 @@ func CreateBasicAuthHandler(a *core.App) func(c *gin.Context) {
 				c.Set(keyUser, user)
 				c.Set(keyFileSystem, a.OpenFileSystem(c.Request.Context(), user))
 				authSuccess = true
-			} else if !errors.Is(err, core.ErrCredentialsInvalid) {
+			} else if !errors.Is(err, app.ErrCredentialsInvalid) {
 				panic(err)
 			}
 		}

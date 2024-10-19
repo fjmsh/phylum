@@ -17,7 +17,7 @@ func setupRmCommand() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			pathOrUuid := args[0]
-			r, err := fs.ResourceByPathOrUuid(pathOrUuid)
+			r, err := f.ResourceByPathOrUuid(pathOrUuid)
 			if err != nil {
 				fmt.Println("cannot remove '" + pathOrUuid + "': " + err.Error())
 				os.Exit(1)
@@ -30,7 +30,7 @@ func setupRmCommand() *cobra.Command {
 				}
 			}
 
-			fs.DeleteRecursive(r, true)
+			f.DeleteRecursive(r, true)
 		},
 	}
 	cmd.Flags().BoolP("recursive", "r", false, "Recursive (required for directories)")

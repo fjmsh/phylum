@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/app"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var fs core.FileSystem
+var f fs.FileSystem
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -33,10 +34,11 @@ func SetupCommand() *cobra.Command {
 				fmt.Println("could not open storage: " + err.Error())
 				os.Exit(1)
 			}
-			if err := core.Create(context.Background(), db.Default, storage.Default); err != nil {
+			if err := app.Create(context.Background(), db.Default, storage.Default); err != nil {
 				fmt.Println("could not initialized app: " + err.Error())
 				os.Exit(1)
 			}
+			openFileSystemFromFlags(cmd)
 		},
 	}
 	flags := cmd.PersistentFlags()
@@ -64,11 +66,11 @@ func openFileSystemFromFlags(cmd *cobra.Command) {
 		fmt.Println("could not read user: " + err.Error())
 		os.Exit(1)
 	} else {
-		if user, err := core.Default.UserByEmail(context.Background(), value); err != nil {
+		if user, err := app.Default.UserByEmail(context.Background(), value); err != nil {
 			fmt.Println("could not find user '" + value + "': " + err.Error())
 			os.Exit(1)
 		} else {
-			fs = core.Default.OpenFileSystem(context.Background(), user)
+			f = app.Default.OpenFileSystem(context.Background(), user)
 		}
 	}
 }

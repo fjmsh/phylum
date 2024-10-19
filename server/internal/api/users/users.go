@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/app"
 )
 
 type UserResponse struct {
@@ -22,7 +22,7 @@ func handleUserMeRoute(c *gin.Context) {
 	c.JSON(200, ResponseFromUser(auth.GetUser(c)))
 }
 
-func ResponseFromUser(user core.User) UserResponse {
+func ResponseFromUser(user app.User) UserResponse {
 	return UserResponse{
 		Username:    user.Username,
 		DisplayName: user.DisplayName,

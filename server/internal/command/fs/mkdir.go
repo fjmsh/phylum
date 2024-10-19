@@ -18,14 +18,14 @@ func setupMkdirCommand() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			path := args[0]
-			if _, err := fs.ResourceByPath(path); err == nil {
+			if _, err := f.ResourceByPath(path); err == nil {
 				logrus.Fatal("Resource already exists: " + path)
 			}
 			// TODO: Streamline with WebDAV mkcol request handling
 			path = strings.TrimRight(path, "/")
 			index := strings.LastIndex(path, "/")
 			parentPath := path[0:index]
-			parent, err := fs.ResourceByPath(parentPath)
+			parent, err := f.ResourceByPath(parentPath)
 
 			if err != nil {
 				logrus.Fatal("Parent resource does not exist: " + parentPath)
@@ -33,7 +33,7 @@ func setupMkdirCommand() *cobra.Command {
 
 			id := uuid.New()
 			name := path[index+1:]
-			if _, err = fs.CreateMemberResource(parent, id, name, true); err != nil {
+			if _, err = f.CreateMemberResource(parent, id, name, true); err != nil {
 				logrus.Fatal(err)
 			} else {
 				logrus.Info("Created directory " + path + " (" + id.String() + ")")

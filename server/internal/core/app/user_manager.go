@@ -1,14 +1,18 @@
-package core
+package app
 
 import (
 	"context"
-	"errors"
+	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/shroff/phylum/server/internal/core/errors"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/db"
 )
+
+var ErrUserNotFound = errors.NewError(http.StatusNotFound, "user_not_found", "no such user")
 
 func (a App) CreateUser(ctx context.Context, username, displayName, password string, root *uuid.UUID) error {
 	var rootID = a.Rootfs.RootID()
@@ -16,7 +20,7 @@ func (a App) CreateUser(ctx context.Context, username, displayName, password str
 		rootID = *root
 	}
 	return a.db.WithTx(ctx, func(d *db.DbHandler) error {
-		fs := a.Rootfs.WithDb(d)
+		f := a.Rootfs.WithDb(d)
 		if hash, err := cryptutil.GenerateArgon2EncodedHash(password, cryptutil.DefaultArgon2Params()); err != nil {
 			return err
 		} else if u, err := d.CreateUser(ctx, db.CreateUserParams{
@@ -27,11 +31,11 @@ func (a App) CreateUser(ctx context.Context, username, displayName, password str
 			Home:         rootID,
 		}); err != nil {
 			return err
-		} else if home, err := fs.ResourceByPath("/home"); err != nil {
+		} else if home, err := f.ResourceByPath("/home"); err != nil {
 			return err
-		} else if userHome, err := fs.CreateMemberResource(home, uuid.New(), username, true); err != nil {
+		} else if userHome, err := f.CreateMemberResource(home, uuid.New(), username, true); err != nil {
 			return err
-		} else if err := fs.UpdatePermissions(userHome, u.Username, PermissionReadWriteShare); err != nil {
+		} else if err := f.UpdatePermissions(userHome, u.Username, fs.PermissionReadWriteShare); err != nil {
 			return err
 		} else {
 			return d.UpdateUserHome(ctx, db.UpdateUserHomeParams{Username: u.Username, Home: userHome.ID})

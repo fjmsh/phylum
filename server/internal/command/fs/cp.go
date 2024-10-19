@@ -18,7 +18,7 @@ func setupCpCommand() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			srcPathOrUuid := args[0]
-			src, err := fs.ResourceByPathOrUuid(srcPathOrUuid)
+			src, err := f.ResourceByPathOrUuid(srcPathOrUuid)
 			if err != nil {
 				fmt.Println("cannot copy'" + srcPathOrUuid + "': " + err.Error())
 				os.Exit(1)
@@ -32,7 +32,7 @@ func setupCpCommand() *cobra.Command {
 				}
 			}
 
-			if _, err := fs.Copy(src, args[1], uuid.New(), true, force); err != nil {
+			if _, err := f.Copy(src, args[1], uuid.New(), true, force); err != nil {
 				fmt.Println("cannot copy'" + srcPathOrUuid + "' to '" + args[1] + "': " + err.Error())
 				os.Exit(1)
 			}

@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/errors"
 )
 
 var (
-	errResourceIDInvalid = core.NewError(http.StatusBadRequest, "resource_id_invalid", "Invalid UUID")
-	errInvalidParams     = core.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
+	errResourceIDInvalid = errors.NewError(http.StatusBadRequest, "resource_id_invalid", "Invalid UUID")
+	errInvalidParams     = errors.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
 )
 
 func SetupRoutes(r *gin.RouterGroup) {

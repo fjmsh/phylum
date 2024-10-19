@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/net/serve"
 )
 
@@ -38,13 +38,13 @@ type Handler struct {
 // in a file path are separated by slash ('/', U+002F) characters, regardless
 // of host operating system convention.
 type FileSystem interface {
-	ResourceByPath(name string) (core.Resource, error)
-	CreateResourceByPath(name string, dir bool) (core.Resource, error)
-	DeleteRecursive(r core.Resource, hardDelete bool) (uuid.UUIDs, error)
-	Move(r core.Resource, target string, overwrite bool) (core.Resource, error)
-	Copy(r core.Resource, target string, id uuid.UUID, recursive, overwrite bool) (core.Resource, error)
-	ReadDir(r core.Resource) ([]core.Resource, error)
-	OpenRead(r core.Resource, start, length int64) (io.ReadCloser, error)
+	ResourceByPath(name string) (fs.Resource, error)
+	CreateResourceByPath(name string, dir bool) (fs.Resource, error)
+	DeleteRecursive(r fs.Resource, hardDelete bool) (uuid.UUIDs, error)
+	Move(r fs.Resource, target string, overwrite bool) (fs.Resource, error)
+	Copy(r fs.Resource, target string, id uuid.UUID, recursive, overwrite bool) (fs.Resource, error)
+	ReadDir(r fs.Resource) ([]fs.Resource, error)
+	OpenRead(r fs.Resource, start, length int64) (io.ReadCloser, error)
 	OpenWriteTouch(name string) (io.WriteCloser, error)
 }
 
@@ -240,7 +240,7 @@ func (h *Handler) handleDelete(_ http.ResponseWriter, r *http.Request) (status i
 	defer release()
 
 	if r, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-		if errors.Is(err, core.ErrResourceNotFound) {
+		if errors.Is(err, fs.ErrResourceNotFound) {
 			return http.StatusNotFound, err
 		}
 		return http.StatusMethodNotAllowed, err
@@ -299,7 +299,7 @@ func (h *Handler) handleMkcol(_ http.ResponseWriter, r *http.Request) (status in
 		return http.StatusUnsupportedMediaType, nil
 	}
 	if _, err := h.FileSystem.CreateResourceByPath(reqPath, true); err != nil {
-		if errors.Is(err, core.ErrResourceNameConflict) {
+		if errors.Is(err, fs.ErrResourceNameConflict) {
 			return http.StatusConflict, err
 		}
 		return http.StatusMethodNotAllowed, err
@@ -430,7 +430,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 	}
 	fi, err := h.FileSystem.ResourceByPath(reqPath)
 	if err != nil {
-		if errors.Is(err, core.ErrResourceNotFound) {
+		if errors.Is(err, fs.ErrResourceNotFound) {
 			return http.StatusNotFound, err
 		}
 		return http.StatusMethodNotAllowed, err
@@ -449,7 +449,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 
 	mw := multistatusWriter{w: w}
 
-	walkFn := func(reqPath string, info core.Resource, err error) error {
+	walkFn := func(reqPath string, info fs.Resource, err error) error {
 		if err != nil {
 			return handlePropfindError(err, info)
 		}
@@ -503,7 +503,7 @@ func (h *Handler) handleProppatch(w http.ResponseWriter, r *http.Request) (statu
 	defer release()
 
 	if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-		if errors.Is(err, core.ErrResourceNotFound) {
+		if errors.Is(err, fs.ErrResourceNotFound) {
 			return http.StatusNotFound, err
 		}
 		return http.StatusMethodNotAllowed, err
@@ -548,7 +548,7 @@ func makePropstatResponse(href string, pstats []Propstat) *response {
 	return &resp
 }
 
-func handlePropfindError(err error, info core.Resource) error {
+func handlePropfindError(err error, info fs.Resource) error {
 	var skipResp error = nil
 	if info.Dir {
 		skipResp = filepath.SkipDir

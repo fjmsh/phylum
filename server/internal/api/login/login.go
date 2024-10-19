@@ -5,7 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/users"
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/app"
+	"github.com/shroff/phylum/server/internal/core/errors"
 )
 
 type loginResponse struct {
@@ -13,20 +14,20 @@ type loginResponse struct {
 	User        users.UserResponse `json:"user"`
 }
 
-func SetupRoutes(r *gin.RouterGroup, a *core.App) {
+func SetupRoutes(r *gin.RouterGroup, a *app.App) {
 	group := r.Group("/login")
 	group.POST("/password", createLoginRouteHandler(a))
 }
 
-func createLoginRouteHandler(a *core.App) func(c *gin.Context) {
+func createLoginRouteHandler(a *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		email, ok := c.GetQuery("email")
 		if !ok {
-			panic(core.NewError(http.StatusBadRequest, "missing_email", "Email Not Specified"))
+			panic(errors.NewError(http.StatusBadRequest, "missing_email", "Email Not Specified"))
 		}
 		password, ok := c.GetQuery("password")
 		if !ok {
-			panic(core.NewError(http.StatusBadRequest, "missing_password", "Password Not Specified"))
+			panic(errors.NewError(http.StatusBadRequest, "missing_password", "Password Not Specified"))
 		}
 
 		if user, err := a.VerifyUserPassword(c.Request.Context(), email, password); err != nil {

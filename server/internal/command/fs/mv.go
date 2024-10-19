@@ -17,7 +17,7 @@ func setupMvCommand() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			srcPathOrUuid := args[0]
-			src, err := fs.ResourceByPathOrUuid(srcPathOrUuid)
+			src, err := f.ResourceByPathOrUuid(srcPathOrUuid)
 			if err != nil {
 				fmt.Println("cannot move'" + srcPathOrUuid + "': " + err.Error())
 				os.Exit(1)
@@ -25,7 +25,7 @@ func setupMvCommand() *cobra.Command {
 
 			force, _ := cmd.Flags().GetBool("force")
 
-			if _, err := fs.Move(src, args[1], force); err != nil {
+			if _, err := f.Move(src, args[1], force); err != nil {
 				fmt.Println("cannot move'" + srcPathOrUuid + "' to '" + args[1] + "': " + err.Error())
 				os.Exit(1)
 			}

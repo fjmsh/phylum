@@ -5,8 +5,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/app"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -61,7 +60,7 @@ func setupUserAddCommand() *cobra.Command {
 				}
 			}
 
-			if err := core.Default.CreateUser(context.Background(), email, displayName, password, nil); err != nil {
+			if err := app.Default.CreateUser(context.Background(), email, displayName, password, nil); err != nil {
 				logrus.Fatal(err)
 			}
 		},
@@ -79,20 +78,14 @@ func setupUserChrootCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]
 			idOrPath := args[1]
-			if user, err := core.Default.UserByEmail(context.Background(), email); err != nil {
+			if user, err := app.Default.UserByEmail(context.Background(), email); err != nil {
 				logrus.Fatal(err)
 			} else {
-				var res core.Resource
-				if id, err := uuid.Parse(idOrPath); err == nil {
-					if res, err = core.Default.Rootfs.ResourceByID(id); err != nil {
-						logrus.Fatal(err)
-					}
+				if res, err := app.Default.Rootfs.ResourceByPathOrUuid(idOrPath); err != nil {
+					logrus.Fatal(err)
 				} else {
-					if res, err = core.Default.Rootfs.ResourceByPath(idOrPath); err != nil {
-						logrus.Fatal(err)
-					}
+					app.Default.UpdateUserRoot(context.Background(), user, res.ID)
 				}
-				core.Default.UpdateUserRoot(context.Background(), user, res.ID)
 			}
 		},
 	}
@@ -106,7 +99,7 @@ func setupUserListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List Users",
 		Run: func(cmd *cobra.Command, args []string) {
-			users, err := core.Default.ListUsers(context.Background())
+			users, err := app.Default.ListUsers(context.Background())
 			if err != nil {
 				logrus.Fatal(err)
 			}

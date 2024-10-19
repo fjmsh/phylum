@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/app"
+	"github.com/shroff/phylum/server/internal/core/errors"
 )
 
 type authHeaderType = int
@@ -19,10 +20,10 @@ const (
 )
 
 var (
-	errAuthRequired = core.NewError(http.StatusUnauthorized, "auth_required", "authorization required")
+	errAuthRequired = errors.NewError(http.StatusUnauthorized, "auth_required", "authorization required")
 )
 
-func CreateApiAuthHandler(a *core.App) func(c *gin.Context) {
+func CreateApiAuthHandler(a *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		if user, err := extractUserDetails(a, c); err != nil {
@@ -34,25 +35,25 @@ func CreateApiAuthHandler(a *core.App) func(c *gin.Context) {
 	}
 }
 
-func extractUserDetails(a *core.App, c *gin.Context) (core.User, error) {
+func extractUserDetails(a *app.App, c *gin.Context) (app.User, error) {
 	if header := c.Request.Header.Get("Authorization"); header == "" {
-		return core.User{}, errAuthRequired
+		return app.User{}, errAuthRequired
 	} else if auth, ok := checkAuthHeader(header, "basic"); ok {
 		if username, password, ok := decodeBasicAuth(auth); ok {
 			if user, err := a.VerifyUserPassword(c.Request.Context(), username, password); err == nil {
 				return user, nil
 			} else {
-				return core.User{}, err
+				return app.User{}, err
 			}
 		}
 	} else if token, ok := checkAuthHeader(header, "bearer"); ok {
 		if user, err := a.ReadAccessToken(c.Request.Context(), token); err == nil {
 			return user, nil
 		} else {
-			return core.User{}, err
+			return app.User{}, err
 		}
 	}
-	return core.User{}, errAuthRequired
+	return app.User{}, errAuthRequired
 }
 
 func checkAuthHeader(header, prefix string) (string, bool) {

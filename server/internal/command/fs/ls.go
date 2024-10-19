@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +25,7 @@ func formatRow(id, size, sha256, name, permissions string) string {
 	return fmt.Sprintf("%s %5s %s %-24s %s", id, size, sha256[0:8], name, permissions)
 }
 
-func formatResourceSummary(r core.Resource) string {
+func formatResourceSummary(r fs.Resource) string {
 	name := r.Name
 	if r.Dir {
 		name += "/"
@@ -38,12 +38,9 @@ func setupLsCommand() *cobra.Command {
 		Use:   "ls <path | uuid>",
 		Short: "List Resource Details",
 		Args:  cobra.ExactArgs(1),
-		PreRun: func(cmd *cobra.Command, args []string) {
-			openFileSystemFromFlags(cmd)
-		},
 		Run: func(cmd *cobra.Command, args []string) {
 			pathOrUuid := args[0]
-			r, err := fs.ResourceByPathOrUuid(pathOrUuid)
+			r, err := f.ResourceByPathOrUuid(pathOrUuid)
 			if err != nil {
 				fmt.Println("cannot access '" + pathOrUuid + "': " + err.Error())
 				os.Exit(1)
@@ -53,7 +50,7 @@ func setupLsCommand() *cobra.Command {
 			fmt.Println(formatRow(r.ID.String(), formatSize(r.ContentSize), r.ContentSHA256, ".("+r.Name+")", r.Permissions))
 
 			if r.Dir {
-				children, err := fs.ReadDir(r)
+				children, err := f.ReadDir(r)
 				if err != nil {
 					fmt.Println("cannot access '" + pathOrUuid + "': " + err.Error())
 					os.Exit(1)

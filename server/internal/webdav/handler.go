@@ -7,18 +7,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/app"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	webdav "github.com/shroff/phylum/server/internal/webdav/impl"
 	"github.com/sirupsen/logrus"
 )
 
 type handler struct {
-	app        *core.App
+	app        *app.App
 	prefix     string
 	lockSystem webdav.LockSystem
 }
 
-func SetupHandler(r *gin.RouterGroup, app *core.App) {
+func SetupHandler(r *gin.RouterGroup, app *app.App) {
 	logrus.Debug("Setting up WebDAV access at " + r.BasePath())
 	handler := &handler{
 		app:        app,
@@ -54,13 +55,13 @@ func (h *handler) HandleRequest(c *gin.Context) {
 }
 
 type adapter struct {
-	core.FileSystem
+	fs.FileSystem
 }
 
 func (a adapter) OpenWriteTouch(name string) (io.WriteCloser, error) {
 	resource, err := a.ResourceByPath(name)
 
-	if errors.Is(err, core.ErrResourceNotFound) {
+	if errors.Is(err, fs.ErrResourceNotFound) {
 		resource, err = a.CreateResourceByPath(name, false)
 		if err != nil {
 			return nil, err
@@ -68,7 +69,7 @@ func (a adapter) OpenWriteTouch(name string) (io.WriteCloser, error) {
 	} else if err != nil {
 		return nil, err
 	} else if resource.Dir {
-		return nil, core.ErrResourceCollection
+		return nil, fs.ErrResourceCollection
 	}
 
 	return a.OpenWrite(resource)

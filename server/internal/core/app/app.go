@@ -1,4 +1,4 @@
-package core
+package app
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 )
@@ -14,7 +15,7 @@ const defaultUserUsername = "phylum"
 const defaultUserDisplayName = "Phylum"
 
 type App struct {
-	Rootfs FileSystem
+	Rootfs fs.FileSystem
 	db     *db.DbHandler
 	cs     storage.Storage
 }
@@ -37,7 +38,7 @@ func (a *App) setupAppData(ctx context.Context) error {
 		u, err = a.populateData(ctx)
 	}
 	if err == nil {
-		a.Rootfs = OpenFileSystem(a.db, ctx, a.cs, u.Username, u.Root)
+		a.Rootfs = fs.OpenFileSystem(a.db, ctx, a.cs, u.Username, u.Root)
 	}
 	return err
 }
@@ -99,29 +100,29 @@ func (a *App) populateData(ctx context.Context) (user User, e error) {
 		return dbh.UpdateUserPermissionsForResource(ctx, db.UpdateUserPermissionsForResourceParams{
 			ResourceID: root.ID,
 			Username:   user.Username,
-			Permission: PermissionReadWriteShare,
+			Permission: fs.PermissionReadWriteShare,
 		})
 	})
 	return
 }
 
-func (a App) OpenFileSystem(ctx context.Context, user User) FileSystem {
-	return OpenFileSystem(a.db, ctx, a.cs, user.Username, user.Root)
+func (a App) OpenFileSystem(ctx context.Context, user User) fs.FileSystem {
+	return fs.OpenFileSystem(a.db, ctx, a.cs, user.Username, user.Root)
 }
 
-func (a App) GetSharedResources(ctx context.Context, user User) (result []Resource, err error) {
+func (a App) GetSharedResources(ctx context.Context, user User) (result []fs.Resource, err error) {
 	res, err := a.db.Queries.SharedResources(ctx, db.SharedResourcesParams{Username: user.Username, UserHome: user.Home})
 	if err != nil {
 		return
 	}
 
-	result = make([]Resource, len(res))
+	result = make([]fs.Resource, len(res))
 	for i, r := range res {
 		var deleted *time.Time
 		if r.Deleted.Valid {
 			deleted = &r.Deleted.Time
 		}
-		result[i] = Resource{
+		result[i] = fs.Resource{
 			ID:            r.ID,
 			ParentID:      r.Parent,
 			Name:          r.Name,

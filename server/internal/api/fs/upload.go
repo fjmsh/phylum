@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 func handleUploadRequest(c *gin.Context) {
@@ -25,13 +25,13 @@ func handleUploadRequest(c *gin.Context) {
 	// c.Request.FormValue("sha256sum")
 
 	f := auth.GetFileSystem(c)
-	err = f.RunInTx(func(fs core.FileSystem) error {
-		parent, err := fs.ResourceByID(parentID)
+	err = f.RunInTx(func(f fs.FileSystem) error {
+		parent, err := f.ResourceByID(parentID)
 		if err != nil {
 			return err
 		}
 
-		res, err := fs.CreateMemberResource(parent, resourceID, name, false)
+		res, err := f.CreateMemberResource(parent, resourceID, name, false)
 		if err != nil {
 			return err
 		}
@@ -50,7 +50,7 @@ func handleUploadRequest(c *gin.Context) {
 		}
 		defer src.Close()
 
-		out, err := fs.OpenWrite(res)
+		out, err := f.OpenWrite(res)
 		if err != nil {
 			return err
 		}

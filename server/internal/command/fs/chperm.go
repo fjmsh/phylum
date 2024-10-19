@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/app"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/spf13/cobra"
 )
 
@@ -14,38 +15,35 @@ func setupChpermCommand() *cobra.Command {
 		Use:   "chperm <path | uuid> <user> [ none | read | write | share ]",
 		Short: "Change Permissions",
 		Args:  cobra.ExactArgs(3),
-		PreRun: func(cmd *cobra.Command, args []string) {
-			openFileSystemFromFlags(cmd)
-		},
 		Run: func(cmd *cobra.Command, args []string) {
 			pathOrUuid := args[0]
-			r, err := fs.ResourceByPathOrUuid(pathOrUuid)
+			r, err := f.ResourceByPathOrUuid(pathOrUuid)
 			if err != nil {
 				fmt.Println("cannot update permissions for '" + pathOrUuid + "': " + err.Error())
 				os.Exit(1)
 			}
 
 			user := args[1]
-			if _, err := core.Default.UserByEmail(context.Background(), user); err != nil {
+			if _, err := app.Default.UserByEmail(context.Background(), user); err != nil {
 				fmt.Println("cannot update permissions for user '" + user + "': " + err.Error())
 				os.Exit(1)
 			}
 
-			permission := core.PermissionNone
+			permission := fs.PermissionNone
 			switch args[2] {
 			case "none":
 			case "read":
-				permission = core.PermissionReadOnly
+				permission = fs.PermissionReadOnly
 			case "write":
-				permission = core.PermissionReadWrite
+				permission = fs.PermissionReadWrite
 			case "share":
-				permission = core.PermissionReadWriteShare
+				permission = fs.PermissionReadWriteShare
 			default:
 				fmt.Println("cannot update permissions for '" + pathOrUuid + "': unrecognized permission: " + args[2])
 				os.Exit(1)
 			}
 
-			if err := fs.UpdatePermissions(r, user, permission); err != nil {
+			if err := f.UpdatePermissions(r, user, permission); err != nil {
 				fmt.Println("cannot update permissions for '" + pathOrUuid + "': " + err.Error())
 				os.Exit(1)
 			}

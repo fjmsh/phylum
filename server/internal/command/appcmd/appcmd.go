@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/app"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/spf13/cobra"
@@ -29,7 +29,7 @@ func SetupCommand() *cobra.Command {
 				fmt.Println(err.Error())
 				os.Exit(1)
 			}
-			if err := core.Create(context.Background(), db.Default, storage.Default); err != nil {
+			if err := app.Create(context.Background(), db.Default, storage.Default); err != nil {
 				fmt.Println(err.Error())
 				os.Exit(1)
 			}

@@ -1,14 +1,14 @@
-package core
+package app
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"time"
 	"unsafe"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/db"
 	"golang.org/x/exp/rand"
@@ -21,7 +21,7 @@ var accessTokenValiditiy = pgtype.Interval{
 	Valid: true,
 }
 
-var ErrCredentialsInvalid = NewError(http.StatusUnauthorized, "credentials_invalid", "invalid Credentials")
+var ErrCredentialsInvalid = errors.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid Credentials")
 
 func (a App) VerifyUserPassword(ctx context.Context, email, password string) (User, error) {
 	if user, err := a.db.UserByUsername(ctx, email); err != nil {

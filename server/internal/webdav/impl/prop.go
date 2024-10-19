@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 // Proppatch describes a property update instruction as defined in RFC 4918.
@@ -69,7 +69,7 @@ func makePropstats(x, y Propstat) []Propstat {
 var liveProps = map[xml.Name]struct {
 	// findFn implements the propfind function of this property. If nil,
 	// it indicates a hidden property.
-	findFn func(core.Resource) string
+	findFn func(fs.Resource) string
 	// dir is true if the property applies to directories.
 	dir bool
 }{
@@ -264,38 +264,38 @@ func escapeXML(s string) string {
 	return s
 }
 
-func findResourceType(fi core.Resource) string {
+func findResourceType(fi fs.Resource) string {
 	if fi.Dir {
 		return `<D:collection xmlns:D="DAV:"/>`
 	}
 	return ""
 }
 
-func findDisplayName(fi core.Resource) string {
+func findDisplayName(fi fs.Resource) string {
 	return escapeXML(fi.Name)
 }
 
-func findContentLength(fi core.Resource) string {
+func findContentLength(fi fs.Resource) string {
 	return strconv.FormatInt(fi.ContentSize, 10)
 }
 
-func findCreationDate(fi core.Resource) string {
+func findCreationDate(fi fs.Resource) string {
 	return fi.Created.UTC().Format(http.TimeFormat)
 }
 
-func findLastModified(fi core.Resource) string {
+func findLastModified(fi fs.Resource) string {
 	return fi.Modified.UTC().Format(http.TimeFormat)
 }
 
-func findContentType(fi core.Resource) string {
+func findContentType(fi fs.Resource) string {
 	return fi.ContentType
 }
 
-func findETag(fi core.Resource) string {
+func findETag(fi fs.Resource) string {
 	return fi.ContentSHA256
 }
 
-func findSupportedLock(fi core.Resource) string {
+func findSupportedLock(fi fs.Resource) string {
 	return `` +
 		`<D:lockentry xmlns:D="DAV:">` +
 		`<D:lockscope><D:exclusive/></D:lockscope>` +

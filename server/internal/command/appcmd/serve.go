@@ -9,7 +9,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api"
-	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/core/app"
+	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/webdav"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -26,7 +27,7 @@ func setupServeCommand() *cobra.Command {
 			engine.Use(func(c *gin.Context) {
 				defer func() {
 					if err := recover(); err != nil {
-						if e, ok := err.(*core.Error); ok {
+						if e, ok := err.(*errors.Error); ok {
 							c.AbortWithStatusJSON(e.Status, e)
 						} else {
 							// This will be caught by the regular gin error recovery handler
@@ -37,9 +38,9 @@ func setupServeCommand() *cobra.Command {
 				c.Next()
 			})
 
-			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")), core.Default)
+			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")), app.Default)
 
-			api.Setup(engine.Group("/api/v1"), core.Default)
+			api.Setup(engine.Group("/api/v1"), app.Default)
 
 			server := endless.NewServer(config.GetString("listen"), engine)
 			server.BeforeBegin = func(addr string) {
