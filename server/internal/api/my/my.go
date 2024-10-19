@@ -1,14 +1,15 @@
-package routes
+package my
 
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
-	"github.com/shroff/phylum/server/internal/api/routes/fs"
+	"github.com/shroff/phylum/server/internal/api/fs"
+	"github.com/shroff/phylum/server/internal/api/users"
 	"github.com/shroff/phylum/server/internal/core"
 )
 
 type myHomeResponse struct {
-	User userResponse          `json:"user"`
+	User users.UserResponse    `json:"user"`
 	Home fs.ResourceLsResponse `json:"home"`
 }
 
@@ -16,7 +17,7 @@ type mySharedResponse struct {
 	Shared []core.Resource `json:"shared"`
 }
 
-func SetupMyRoutes(r *gin.RouterGroup, a *core.App) {
+func SetupRoutes(r *gin.RouterGroup, a *core.App) {
 	group := r.Group("/my")
 	group.GET("/home", handleMyHomeRoute)
 	group.GET("/shared", createMySharedRouteHandler(a))
@@ -31,7 +32,7 @@ func handleMyHomeRoute(c *gin.Context) {
 	}
 
 	c.JSON(200, myHomeResponse{
-		User: responseFromUser(user),
+		User: users.ResponseFromUser(user),
 		Home: fs.LsResponseFromResource(f, r),
 	})
 }

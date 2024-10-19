@@ -1,4 +1,4 @@
-package routes
+package users
 
 import (
 	"github.com/gin-gonic/gin"
@@ -7,7 +7,7 @@ import (
 	"github.com/shroff/phylum/server/internal/core"
 )
 
-type userResponse struct {
+type UserResponse struct {
 	Username    string    `json:"username"`
 	DisplayName string    `json:"name"`
 	Home        uuid.UUID `json:"home"`
@@ -19,11 +19,11 @@ func SetupUserRoutes(r *gin.RouterGroup) {
 }
 
 func handleUserMeRoute(c *gin.Context) {
-	c.JSON(200, responseFromUser(auth.GetUser(c)))
+	c.JSON(200, ResponseFromUser(auth.GetUser(c)))
 }
 
-func responseFromUser(user core.User) userResponse {
-	return userResponse{
+func ResponseFromUser(user core.User) UserResponse {
+	return UserResponse{
 		Username:    user.Username,
 		DisplayName: user.DisplayName,
 		Home:        user.Home,

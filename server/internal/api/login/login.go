@@ -1,20 +1,21 @@
-package routes
+package login
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shroff/phylum/server/internal/api/users"
 	"github.com/shroff/phylum/server/internal/core"
 )
 
 type loginResponse struct {
-	AccessToken string       `json:"access_token"`
-	User        userResponse `json:"user"`
+	AccessToken string             `json:"access_token"`
+	User        users.UserResponse `json:"user"`
 }
 
-func SetupAuthRoutes(r *gin.RouterGroup, a *core.App) {
-	group := r.Group("/auth")
-	group.POST("/login", createLoginRouteHandler(a))
+func SetupRoutes(r *gin.RouterGroup, a *core.App) {
+	group := r.Group("/login")
+	group.POST("/password", createLoginRouteHandler(a))
 }
 
 func createLoginRouteHandler(a *core.App) func(c *gin.Context) {
@@ -36,7 +37,7 @@ func createLoginRouteHandler(a *core.App) func(c *gin.Context) {
 			} else {
 				c.JSON(200, loginResponse{
 					AccessToken: token,
-					User:        responseFromUser(user),
+					User:        users.ResponseFromUser(user),
 				})
 			}
 		}
