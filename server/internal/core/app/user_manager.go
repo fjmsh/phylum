@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/fs"
-	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/db"
 )
 
@@ -21,7 +20,7 @@ func (a App) CreateUser(ctx context.Context, username, displayName, password str
 	}
 	return a.db.WithTx(ctx, func(d *db.DbHandler) error {
 		f := a.Rootfs.WithDb(d)
-		if hash, err := cryptutil.GenerateArgon2EncodedHash(password, cryptutil.DefaultArgon2Params()); err != nil {
+		if hash, err := generateArgon2EncodedHash(password, defaultArgon2Params()); err != nil {
 			return err
 		} else if u, err := d.CreateUser(ctx, db.CreateUserParams{
 			Username:     username,

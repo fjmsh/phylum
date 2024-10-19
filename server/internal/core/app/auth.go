@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/cryptutil"
 	"github.com/shroff/phylum/server/internal/db"
 	"golang.org/x/exp/rand"
 )
@@ -30,7 +29,7 @@ func (a App) VerifyUserPassword(ctx context.Context, email, password string) (Us
 		}
 		return User{}, err
 	} else {
-		if b, err := cryptutil.VerifyPassword(password, user.PasswordHash); err != nil {
+		if b, err := verifyPassword(password, user.PasswordHash); err != nil {
 			return User{}, err
 		} else if !b {
 			return User{}, ErrCredentialsInvalid
