@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/shroff/phylum/server/internal/db/migrations"
+	"github.com/shroff/phylum/server/internal/core/db/migrations"
 	"github.com/sirupsen/logrus"
 )
 

@@ -7,7 +7,7 @@ import (
 
 	"github.com/shroff/phylum/server/internal/command/appcmd"
 	"github.com/shroff/phylum/server/internal/command/fs"
-	"github.com/shroff/phylum/server/internal/db"
+	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

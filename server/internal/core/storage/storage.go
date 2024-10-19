@@ -8,7 +8,7 @@ import (
 	"io"
 
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/db"
+	"github.com/shroff/phylum/server/internal/core/db"
 )
 
 type Storage interface {

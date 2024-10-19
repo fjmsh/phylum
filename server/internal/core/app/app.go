@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
-	"github.com/shroff/phylum/server/internal/db"
-	"github.com/shroff/phylum/server/internal/storage"
+	"github.com/shroff/phylum/server/internal/core/storage"
 )
 
 const defaultUserUsername = "phylum"

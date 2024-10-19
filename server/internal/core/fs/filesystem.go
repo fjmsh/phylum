@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/db"
-	"github.com/shroff/phylum/server/internal/storage"
+	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/sirupsen/logrus"
 )
 

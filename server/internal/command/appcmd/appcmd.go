@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/shroff/phylum/server/internal/core/app"
-	"github.com/shroff/phylum/server/internal/db"
-	"github.com/shroff/phylum/server/internal/storage"
+	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
