@@ -46,7 +46,17 @@ func ServeCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file
 		http.Error(w, "Error reading directory", http.StatusInternalServerError)
 		return
 	}
-	sort.Slice(files, func(i, j int) bool { return files[i].Name < files[j].Name })
+	// sort.Slice(files, func(i, j int) bool { return files[i].Name < files[j].Name })
+	sort.Slice(files, func(i, j int) bool {
+		a := files[i]
+		b := files[j]
+		if a.Dir != b.Dir {
+			if a.Dir {
+				return true
+			}
+		}
+		return strings.Compare(strings.ToLower(a.Name), strings.ToLower((b.Name))) <= 0
+	})
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(w, "<pre>\n")
