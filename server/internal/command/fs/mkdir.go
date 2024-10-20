@@ -1,11 +1,10 @@
 package fs
 
 import (
-	"strings"
+	"fmt"
+	"os"
 
-	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -17,25 +16,9 @@ func setupMkdirCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			path := args[0]
-			if _, err := f.ResourceByPath(path); err == nil {
-				logrus.Fatal("Resource already exists: " + path)
-			}
-			// TODO: Streamline with WebDAV mkcol request handling
-			path = strings.TrimRight(path, "/")
-			index := strings.LastIndex(path, "/")
-			parentPath := path[0:index]
-			parent, err := f.ResourceByPath(parentPath)
-
-			if err != nil {
-				logrus.Fatal("Parent resource does not exist: " + parentPath)
-			}
-
-			id := uuid.New()
-			name := path[index+1:]
-			if _, err = f.CreateMemberResource(parent, id, name, true); err != nil {
-				logrus.Fatal(err)
-			} else {
-				logrus.Info("Created directory " + path + " (" + id.String() + ")")
+			if _, err := f.CreateResourceByPath(path, true); err != nil {
+				fmt.Println("could not create directory: " + err.Error())
+				os.Exit(1)
 			}
 		},
 	}
