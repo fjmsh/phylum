@@ -56,6 +56,8 @@ func SetupHandler(r *gin.RouterGroup, app *app.App) {
 	r.Handle("MKCOL", "*path", handler.HandleRequest)
 	r.Handle("PROPFIND", "*path", handler.HandleRequest)
 	r.Handle("PROPPATCH", "*path", handler.HandleRequest)
+	r.Handle("LOCK", "*path", handler.HandleRequest)
+	r.Handle("UNLOCK", "*path", handler.HandleRequest)
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
