@@ -85,13 +85,13 @@ func (h *Handler) handleCopyMove(_ http.ResponseWriter, r *http.Request) (status
 // See section 9.9.4 for when various HTTP status codes apply.
 func moveFiles(fs FileSystem, srcPath, dstPath string, overwrite bool) (status int, err error) {
 	if src, err := fs.ResourceByPath(srcPath); err != nil {
-		if e, ok := err.(errors.Error); ok {
+		if e, ok := err.(*errors.Error); ok {
 			return e.Status, e
 		}
 		return http.StatusInternalServerError, err
 	} else {
 		if _, err := fs.Move(src, dstPath, overwrite); err != nil {
-			if e, ok := err.(errors.Error); ok {
+			if e, ok := err.(*errors.Error); ok {
 				return e.Status, e
 			}
 			return http.StatusForbidden, err
@@ -106,13 +106,13 @@ func moveFiles(fs FileSystem, srcPath, dstPath string, overwrite bool) (status i
 // See section 9.8.5 for when various HTTP status codes apply.
 func copyFiles(fs FileSystem, srcPath, dstPath string, overwrite bool, depth int) (status int, err error) {
 	if src, err := fs.ResourceByPath(srcPath); err != nil {
-		if e, ok := err.(errors.Error); ok {
+		if e, ok := err.(*errors.Error); ok {
 			return e.Status, e
 		}
 		return http.StatusInternalServerError, err
 	} else {
 		if _, err := fs.Copy(src, dstPath, uuid.New(), depth != 0, overwrite); err != nil {
-			if e, ok := err.(errors.Error); ok {
+			if e, ok := err.(*errors.Error); ok {
 				return e.Status, e
 			}
 			return http.StatusForbidden, err

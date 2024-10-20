@@ -158,8 +158,6 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 			}
 
 		}()
-	} else {
-		logrus.Warn(e)
 	}
 
 	return
