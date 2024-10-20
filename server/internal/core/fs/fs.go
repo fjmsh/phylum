@@ -28,7 +28,7 @@ type FileSystem interface {
 	// open.go
 	OpenRead(r Resource, start, length int64) (io.ReadCloser, error)
 	OpenWrite(r Resource) (io.WriteCloser, error)
-	ReadDir(r Resource) ([]Resource, error)
+	ReadDir(r Resource, recursive bool) ([]Resource, error)
 
 	// delete.go
 	DeleteChildRecursive(r Resource, name string, hardDelete bool) error

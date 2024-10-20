@@ -34,7 +34,7 @@ func LsResponseFromResource(f fs.FileSystem, r fs.Resource) ResourceLsResponse {
 		InheritedPermissions: r.InheritedPermissions,
 	}
 	if r.Dir {
-		children, err := f.ReadDir(r)
+		children, err := f.ReadDir(r, false)
 		if err != nil {
 			panic(err)
 		}

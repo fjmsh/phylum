@@ -28,7 +28,7 @@ func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
 	})
 }
 
-func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
+func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
 	if r.UserPermissions < PermissionReadOnly {
 		return nil, ErrInsufficientPermissions
 	}
@@ -38,7 +38,7 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 	children, err := f.db.ReadDir(f.ctx, db.ReadDirParams{
 		ID:          r.ID,
 		IncludeRoot: false,
-		Recursive:   false,
+		Recursive:   recursive,
 	})
 	if err != nil {
 		return nil, err

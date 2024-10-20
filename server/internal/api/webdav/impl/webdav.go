@@ -11,9 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -43,7 +41,7 @@ type FileSystem interface {
 	DeleteRecursive(r fs.Resource, hardDelete bool) (uuid.UUIDs, error)
 	Move(r fs.Resource, target string, overwrite bool) (fs.Resource, bool, error)
 	Copy(r fs.Resource, target string, id uuid.UUID, recursive, overwrite bool) (fs.Resource, bool, error)
-	ReadDir(r fs.Resource) ([]fs.Resource, error)
+	ReadDir(r fs.Resource, recursive bool) ([]fs.Resource, error)
 	OpenRead(r fs.Resource, start, length int64) (io.ReadCloser, error)
 	OpenWriteTouch(name string) (io.WriteCloser, error)
 }
@@ -458,16 +456,12 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 
 	mw := multistatusWriter{w: w}
 
-	walkFn := func(reqPath string, info fs.Resource, err error) error {
-		if err != nil {
-			return handlePropfindError(err, info)
-		}
-
+	walkFn := func(r fs.Resource) error {
 		var pstats []Propstat
 		if pf.Propname != nil {
-			pnames, err := propnames(h.FileSystem, h.LockSystem, reqPath)
+			pnames, err := propnames(h.FileSystem, h.LockSystem, r.Path)
 			if err != nil {
-				return handlePropfindError(err, info)
+				return err
 			}
 			pstat := Propstat{Status: http.StatusOK}
 			for _, xmlname := range pnames {
@@ -475,21 +469,21 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 			}
 			pstats = append(pstats, pstat)
 		} else if pf.Allprop != nil {
-			pstats, err = allprop(h.FileSystem, h.LockSystem, reqPath, pf.Prop)
+			pstats, err = allprop(h.FileSystem, h.LockSystem, r.Path, pf.Prop)
 		} else {
-			pstats, err = props(h.FileSystem, h.LockSystem, reqPath, pf.Prop)
+			pstats, err = props(h.FileSystem, h.LockSystem, r.Path, pf.Prop)
 		}
 		if err != nil {
-			return handlePropfindError(err, info)
+			return err
 		}
-		href := path.Join(h.Prefix, reqPath)
-		if href != "/" && info.Dir {
+		href := path.Join(h.Prefix, r.Path)
+		if href != "/" && r.Dir {
 			href += "/"
 		}
 		return mw.write(makePropstatResponse(href, pstats))
 	}
 
-	walkErr := walkFS(h.FileSystem, depth, reqPath, fi, walkFn)
+	walkErr := walkFS(h.FileSystem, depth, fi, walkFn)
 	closeErr := mw.close()
 	if walkErr != nil {
 		return http.StatusInternalServerError, walkErr
@@ -555,33 +549,6 @@ func makePropstatResponse(href string, pstats []Propstat) *response {
 		})
 	}
 	return &resp
-}
-
-func handlePropfindError(err error, info fs.Resource) error {
-	var skipResp error = nil
-	if info.Dir {
-		skipResp = filepath.SkipDir
-	}
-
-	if errors.Is(err, os.ErrPermission) {
-		// If the server cannot recurse into a directory because it is not allowed,
-		// then there is nothing more to say about it. Just skip sending anything.
-		return skipResp
-	}
-
-	if _, ok := err.(*os.PathError); ok {
-		// If the file is just bad, it couldn't be a proper WebDAV resource. Skip it.
-		return skipResp
-	}
-
-	// We need to be careful with other errors: there is no way to abort the xml stream
-	// part way through while returning a valid PROPFIND response. Returning only half
-	// the data would be misleading, but so would be returning results tainted by errors.
-	// The current behaviour by returning an error here leads to the stream being aborted,
-	// and the parent http server complaining about writing a spurious header. We should
-	// consider further enhancing this error handling to more gracefully fail, or perhaps
-	// buffer the entire response until we've walked the tree.
-	return err
 }
 
 const (

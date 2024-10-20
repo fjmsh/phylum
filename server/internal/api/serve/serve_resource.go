@@ -26,7 +26,7 @@ var htmlReplacer = strings.NewReplacer(
 )
 
 type FileSystem interface {
-	ReadDir(r fs.Resource) ([]fs.Resource, error)
+	ReadDir(r fs.Resource, recursive bool) ([]fs.Resource, error)
 	OpenRead(r fs.Resource, start, length int64) (io.ReadCloser, error)
 }
 
@@ -41,7 +41,7 @@ func ServeCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file
 	}
 	w.Header().Set("Last-Modified", file.Modified.Format(http.TimeFormat))
 
-	files, err := fs.ReadDir(file)
+	files, err := fs.ReadDir(file, false)
 	if err != nil {
 		http.Error(w, "Error reading directory", http.StatusInternalServerError)
 		return
