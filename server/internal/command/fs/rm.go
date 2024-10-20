@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/spf13/cobra"
 )
 
@@ -13,6 +14,7 @@ func setupRmCommand() *cobra.Command {
 		Short: "Delete Resource",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			f := common.UserFileSystem(cmd)
 			pathOrUuid := args[0]
 			r, err := f.ResourceByPathOrUuid(pathOrUuid)
 			if err != nil {

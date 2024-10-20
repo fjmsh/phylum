@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/spf13/cobra"
 )
 
@@ -13,6 +14,7 @@ func setupMvCommand() *cobra.Command {
 		Short: "Move Resource",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
+			f := common.UserFileSystem(cmd)
 			srcPathOrUuid := args[0]
 			src, err := f.ResourceByPathOrUuid(srcPathOrUuid)
 			if err != nil {

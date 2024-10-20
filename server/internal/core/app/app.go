@@ -20,30 +20,21 @@ type App struct {
 	cs     storage.Storage
 }
 
-var Default *App
-
-func Initialize(ctx context.Context, db *db.DbHandler, cs storage.Storage) error {
-	if Default != nil {
-		return nil
-	}
-	Default = &App{
+func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage) (*App, error) {
+	app := &App{
 		db: db,
 		cs: cs,
 	}
-
-	return Default.setupAppData(ctx)
-}
-
-func (a *App) setupAppData(ctx context.Context) error {
-	u, err := a.UserByEmail(ctx, defaultUserUsername)
+	u, err := app.UserByEmail(ctx, defaultUserUsername)
 
 	if errors.Is(err, ErrUserNotFound) {
-		u, err = a.populateData(ctx)
+		u, err = app.populateData(ctx)
 	}
-	if err == nil {
-		a.Rootfs = fs.OpenFileSystem(a.db, ctx, a.cs, u.Username, u.Root)
+	if err != nil {
+		return nil, err
 	}
-	return err
+	app.Rootfs = fs.OpenFileSystem(db, ctx, cs, u.Username, u.Root)
+	return app, nil
 }
 
 func (a *App) populateData(ctx context.Context) (user User, e error) {

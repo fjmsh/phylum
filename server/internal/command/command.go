@@ -5,9 +5,9 @@ import (
 	"path"
 
 	"github.com/shroff/phylum/server/internal/command/appcmd"
+	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/command/fs"
 	"github.com/shroff/phylum/server/internal/command/schema"
-	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -22,8 +22,8 @@ func SetupCommand() {
 	flags.BoolP("debug", "d", false, "Debug mode")
 	viper.BindPFlag("debug", flags.Lookup("debug"))
 
-	flags.Bool("trace-db", false, "Trace db Queries")
-	viper.BindPFlag("trace_sql", flags.Lookup("trace-db"))
+	flags.Bool("trace-sql", false, "Trace SQL Queries")
+	viper.BindPFlag("trace_sql", flags.Lookup("trace-sql"))
 
 	flags.StringP("working-dir", "W", "data", "Working Directory")
 	viper.BindPFlag("working_dir", flags.Lookup("working-dir"))
@@ -32,8 +32,7 @@ func SetupCommand() {
 	viper.BindPFlag("database_url", flags.Lookup("database-url"))
 
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
-		debug := viper.GetBool("debug")
-		if debug {
+		if viper.GetBool("debug") {
 			logrus.SetLevel(logrus.TraceLevel)
 			logrus.Debug("Running in debug mode")
 		}
@@ -47,10 +46,8 @@ func SetupCommand() {
 	}
 
 	defer func() {
-		if db.Default != nil {
-			logrus.Debug("Shutting Down App")
-			db.Default.Close()
-		}
+		logrus.Debug("Shutting Down App")
+		common.DB().Close()
 	}()
 
 	rootCmd.AddCommand([]*cobra.Command{

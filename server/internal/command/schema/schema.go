@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func SetupCommand() *cobra.Command {
@@ -28,7 +28,8 @@ func setupSchemaResetCommand() *cobra.Command {
 		Use:   "reset",
 		Short: "Reset Database Schema",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := db.Default.DeleteSchema(context.Background()); err != nil {
+			viper.Set("auto_migrate", false)
+			if err := common.DB().DeleteSchema(context.Background()); err != nil {
 				fmt.Println("unable to delete databse schema: " + err.Error())
 				os.Exit(1)
 			}
@@ -44,13 +45,14 @@ func setupSchemaMigrateCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
 			if args[0] == "auto" || args[0] == "latest" {
-				common.MustInitializeDB(true)
+				viper.Set("auto_migrate", true)
+				common.DB()
 			} else {
-				common.MustInitializeDB(false)
+				viper.Set("auto_migrate", false)
 				if v, err := strconv.Atoi(args[0]); err != nil {
 					fmt.Println(err.Error())
 					os.Exit(3)
-				} else if err := db.Default.Migrate(ctx, v); err != nil {
+				} else if err := common.DB().Migrate(ctx, v); err != nil {
 					fmt.Println(err.Error())
 					os.Exit(4)
 				}

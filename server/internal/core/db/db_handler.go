@@ -16,8 +16,6 @@ var (
 	ErrMigrationNoAutoDowngrade = errors.New("will not auto-downgrade schema to prevent data loss")
 )
 
-var Default *DbHandler
-
 type DbHandler struct {
 	Queries
 	tx interface {
@@ -26,35 +24,32 @@ type DbHandler struct {
 	pool *pgxpool.Pool
 }
 
-func Initialize(ctx context.Context, dsn string, autoMigrate, trace bool) error {
-	if Default != nil {
-		return nil
-	}
+func Create(ctx context.Context, dsn string, traceSQL, autoMigrate bool) (*DbHandler, error) {
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		return errors.New("Unable to parse DSN: " + err.Error())
+		return nil, errors.New("Unable to parse DSN: " + err.Error())
 	}
 
-	if trace {
+	if traceSQL {
 		config.ConnConfig.Tracer = tracer{}
 	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		return errors.New("Unable to connect to database: " + err.Error())
+		return nil, errors.New("Unable to connect to database: " + err.Error())
 	}
 
 	logrus.Debug("Connected to " + config.ConnConfig.Database + " at " + config.ConnConfig.Host + ":" + fmt.Sprint(config.ConnConfig.Port))
 
-	Default = &DbHandler{
+	d := DbHandler{
 		Queries: *New(pool),
 		tx:      pool,
 		pool:    pool,
 	}
 
-	Default.checkVersion(ctx, autoMigrate)
+	d.checkVersion(ctx, autoMigrate)
 
-	return nil
+	return &d, nil
 }
 
 func (d DbHandler) WithTx(ctx context.Context, fn func(*DbHandler) error) error {

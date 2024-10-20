@@ -62,6 +62,7 @@ func (d DbHandler) Migrate(ctx context.Context, version int) error {
 	if version < 0 {
 		version = latestSchemaVersion
 	} else if version == 0 {
+		logrus.Info("Deleting database schema")
 		return d.DeleteSchema(ctx)
 	} else if version > latestSchemaVersion {
 		return ErrMigrationTargetTooHigh
