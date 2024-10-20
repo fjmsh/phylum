@@ -52,7 +52,7 @@ type LockSystem interface {
 	// to try any other set of locks presented (a WebDAV HTTP request can
 	// present more than one set of locks). If it returns any other non-nil
 	// error, the Handler will write a "500 Internal Server Error" HTTP status.
-	Confirm(now time.Time, name0, name1 string, conditions ...Condition) (release func(), err error)
+	Confirm(now time.Time, name0, name1 string, confirmETag func(string, string) (bool, error), conditions ...Condition) (release func(), err error)
 
 	// Create creates a lock with the given depth, duration, owner and root
 	// (name). The depth will either be negative (meaning infinite) or zero.
@@ -145,42 +145,41 @@ func (m *memLS) collectExpiredNodes(now time.Time) {
 	}
 }
 
-func (m *memLS) Confirm(now time.Time, name0, name1 string, conditions ...Condition) (func(), error) {
+func (m *memLS) Confirm(now time.Time, name0, name1 string, confirmETag func(string, string) (bool, error), conditions ...Condition) (func(), error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.collectExpiredNodes(now)
 
-	var n0, n1 *memLSNode
+	var lockedNodes []*memLSNode
 	if name0 != "" {
-		if n0 = m.lookup(slashClean(name0), conditions...); n0 == nil {
+		if ok, nodes := m.lookup(slashClean(name0), confirmETag, conditions...); !ok {
 			return nil, ErrConfirmationFailed
+		} else {
+			for _, n := range nodes {
+				m.hold(n)
+			}
+			lockedNodes = nodes
 		}
 	}
 	if name1 != "" {
-		if n1 = m.lookup(slashClean(name1), conditions...); n1 == nil {
+		if ok, nodes := m.lookup(slashClean(name1), confirmETag, conditions...); !ok {
+			for _, n := range lockedNodes {
+				m.unhold(n)
+			}
 			return nil, ErrConfirmationFailed
+		} else {
+			for _, n := range nodes {
+				m.hold(n)
+				lockedNodes = append(lockedNodes, n)
+			}
 		}
 	}
 
-	// Don't hold the same node twice.
-	if n1 == n0 {
-		n1 = nil
-	}
-
-	if n0 != nil {
-		m.hold(n0)
-	}
-	if n1 != nil {
-		m.hold(n1)
-	}
 	return func() {
 		m.mu.Lock()
 		defer m.mu.Unlock()
-		if n1 != nil {
-			m.unhold(n1)
-		}
-		if n0 != nil {
-			m.unhold(n0)
+		for _, n := range lockedNodes {
+			m.unhold(n)
 		}
 	}, nil
 }
@@ -190,24 +189,29 @@ func (m *memLS) Confirm(now time.Time, name0, name1 string, conditions ...Condit
 // another party. Otherwise, it returns nil.
 //
 // n may be a parent of the named resource, if n is an infinite depth lock.
-func (m *memLS) lookup(name string, conditions ...Condition) (n *memLSNode) {
-	// TODO: support Condition.Not and Condition.ETag.
+func (m *memLS) lookup(name string, confirmETag func(string, string) (bool, error), conditions ...Condition) (bool, []*memLSNode) {
+	var nodes []*memLSNode
 	for _, c := range conditions {
-		n = m.byToken[c.Token]
-		if n == nil || n.held {
-			continue
-		}
-		if name == n.details.Root {
-			return n
-		}
-		if n.details.ZeroDepth {
-			continue
-		}
-		if n.details.Root == "/" || strings.HasPrefix(name, n.details.Root+"/") {
-			return n
+		if c.ETag != "" {
+			if ok, _ := confirmETag(name, c.ETag); ok == c.Not {
+				return false, nil
+			}
+		} else {
+			n := m.byToken[c.Token]
+			if n == nil {
+				return false, nil
+			}
+			if n.held {
+				continue
+			}
+			match := name == n.details.Root || (!n.details.ZeroDepth && n.details.Root == "/" || strings.HasPrefix(name, n.details.Root+"/"))
+			if match == c.Not {
+				return false, nil
+			}
+			nodes = append(nodes, n)
 		}
 	}
-	return nil
+	return true, nodes
 }
 
 func (m *memLS) hold(n *memLSNode) {

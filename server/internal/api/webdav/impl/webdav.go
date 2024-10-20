@@ -172,7 +172,13 @@ func (h *Handler) confirmLocks(r *http.Request, src, dst string) (release func()
 				return nil, status, err
 			}
 		}
-		release, err = h.LockSystem.Confirm(time.Now(), lsrc, dst, l.conditions...)
+		release, err = h.LockSystem.Confirm(time.Now(), lsrc, dst, func(path, etag string) (bool, error) {
+			if res, err := h.FileSystem.ResourceByPath(path); err != nil {
+				return false, err
+			} else {
+				return res.ContentSHA256 == etag, nil
+			}
+		}, l.conditions...)
 		if err == ErrConfirmationFailed {
 			continue
 		}
