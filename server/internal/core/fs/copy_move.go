@@ -165,48 +165,61 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 	return
 }
 
+// targetByPathOrUuid splits a target path or uuid into its constituent components
+// `pathOrUuid` can be of the following formats:
+// 1. absolute path beginning with '/'
+// 2. uuid+name separated by ':'
+// For the latter, if either uuid or name is not provided then it is filled in from `src`
 func (f filesystem) targetByPathOrUuid(src Resource, pathOrUuid string) (Resource, string, error) {
-	if pathOrUuid[0] == '/' {
-		path := strings.TrimRight(pathOrUuid, "/")
-		if dest, err := f.ResourceByPath(path); err == nil {
-			return dest, src.Name, nil
-		} else {
-			index := strings.LastIndex(path, "/")
-			name := path[index+1:]
-			path = path[0:index]
-			if parent, err := f.ResourceByPath(path); err != nil {
-				if errors.Is(err, ErrResourceNotFound) {
-					err = ErrParentNotFound
-				}
-				return Resource{}, "", err
-			} else if checkNameInvalid(name) {
-				return Resource{}, "", ErrResourceNameInvalid
-			} else {
-				return parent, name, nil
-			}
-		}
-	}
-	index := strings.Index(pathOrUuid, "/")
+	index := strings.Index(pathOrUuid, ":")
 	if index == -1 {
-		return src, pathOrUuid, nil
-	}
-	if id, err := uuid.Parse(pathOrUuid[0:index]); err != nil {
-		return Resource{}, "", err
-	} else if parent, err := f.ResourceByID(id); err != nil {
-		if errors.Is(err, ErrResourceNotFound) {
-			err = ErrParentNotFound
+		if pathOrUuid[0] != '/' {
+			return Resource{}, "", ErrResourcePathInvalid
 		}
-		return Resource{}, "", err
-	} else {
-		name := pathOrUuid[index+1:]
-		if name == "" {
-			name = src.Name
-		}
-		if checkNameInvalid(name) {
+		path := strings.TrimRight(pathOrUuid, "/")
+		// if dest, err := f.ResourceByPath(path); err == nil {
+		// 	return dest, src.Name, nil
+		// } else {
+		index := strings.LastIndex(path, "/")
+		name := path[index+1:]
+		path = path[0:index]
+		if parent, err := f.ResourceByPath(path); err != nil {
+			if errors.Is(err, ErrResourceNotFound) {
+				err = ErrParentNotFound
+			}
+			return Resource{}, "", err
+		} else if checkNameInvalid(name) {
 			return Resource{}, "", ErrResourceNameInvalid
+		} else {
+			return parent, name, nil
 		}
-		return parent, name, nil
+		// }
 	}
+	var parent Resource
+	if index == 0 {
+		parent = src
+	} else {
+		if id, err := uuid.Parse(pathOrUuid[0:index]); err != nil {
+			return Resource{}, "", err
+		} else if res, err := f.ResourceByID(id); err != nil {
+			if errors.Is(err, ErrResourceNotFound) {
+				err = ErrParentNotFound
+			}
+			return Resource{}, "", err
+		} else {
+			parent = res
+		}
+
+	}
+
+	name := pathOrUuid[index+1:]
+	if name == "" {
+		name = src.Name
+	} else if checkNameInvalid(name) {
+		return Resource{}, "", ErrResourceNameInvalid
+	}
+
+	return parent, name, nil
 }
 
 func (f filesystem) copyContents(k, v uuid.UUID) (int64, error) {
