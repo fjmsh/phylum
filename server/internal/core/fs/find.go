@@ -54,6 +54,7 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 		ContentSHA256: r.ContentSha256,
 		Permissions:   string(r.Permissions),
 		// Definitely Needed
+		Path:                 r.Path,
 		UserPermissions:      r.UserPermission,
 		InheritedPermissions: string(r.InheritedPermissions),
 	}, nil

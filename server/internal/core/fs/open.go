@@ -58,6 +58,7 @@ func (f filesystem) ReadDir(r Resource) ([]Resource, error) {
 			ContentType:   c.ContentType,
 			ContentSHA256: c.ContentSha256,
 			Permissions:   string(c.Permissions),
+			Path:          r.Path + c.Path,
 			// Not Needed
 			// UserPermissions: 0,
 			// InheritedPermissions: "",

@@ -111,8 +111,8 @@ func (q *Queries) RemoveUserPermissionForResource(ctx context.Context, arg Remov
 }
 
 const resourceByID = `-- name: ResourceByID :one
-WITH RECURSIVE nodes(resid, id, parent, inherited_permissions, found) AS (
-  SELECT $2::uuid, r.id, r.parent, '{}'::jsonb,
+WITH RECURSIVE nodes(resid, id, parent, inherited_permissions, name, path, found) AS (
+  SELECT $2::uuid, r.id, r.parent, '{}'::jsonb, r.name, ''::text,
       CASE
         WHEN r.id = $3::uuid THEN true
         ELSE false
@@ -120,7 +120,11 @@ WITH RECURSIVE nodes(resid, id, parent, inherited_permissions, found) AS (
     FROM resources r
     WHERE r.id = $2::uuid 
   UNION ALL
-    SELECT n.resid, r.id, r.parent, jsonb_bitwise_or(r.permissions, n.inherited_permissions),
+    SELECT n.resid, r.id, r.parent, jsonb_bitwise_or(r.permissions, n.inherited_permissions), r.name,
+      CASE n.path 
+        WHEN '' THEN n.name
+        ELSE concat(n.name, '/', n.path)
+      END,
       CASE
         WHEN r.id = $3::uuid THEN true
         ELSE n.found
@@ -129,7 +133,7 @@ WITH RECURSIVE nodes(resid, id, parent, inherited_permissions, found) AS (
     JOIN nodes n
     ON r.id = n.parent
 )
-SELECT resid AS id, r.permissions, n.inherited_permissions, COALESCE((jsonb_bitwise_or(r.permissions, n.inherited_permissions)->($1::text))::int, 0)::int AS user_permission, found, r.parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256 FROM nodes n
+SELECT resid AS id, r.permissions, n.inherited_permissions, COALESCE((jsonb_bitwise_or(r.permissions, n.inherited_permissions)->($1::text))::int, 0)::int AS user_permission, found, r.parent, r.name, concat('/', n.path)::text AS path, dir, created, modified, deleted, content_size, content_type, content_sha256 FROM nodes n
 JOIN resources r
 ON r.id = n.resid
 WHERE n.parent IS NULL
@@ -149,6 +153,7 @@ type ResourceByIDRow struct {
 	Found                bool
 	Parent               *uuid.UUID
 	Name                 string
+	Path                 string
 	Dir                  bool
 	Created              pgtype.Timestamp
 	Modified             pgtype.Timestamp
@@ -169,6 +174,7 @@ func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (Res
 		&i.Found,
 		&i.Parent,
 		&i.Name,
+		&i.Path,
 		&i.Dir,
 		&i.Created,
 		&i.Modified,

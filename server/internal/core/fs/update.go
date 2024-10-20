@@ -27,6 +27,7 @@ func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
 			ContentSHA256: r.ContentSha256,
 			Permissions:   string(r.Permissions),
 			// Not Needed
+			// Path: r.Path,
 			// UserPermissions: 0,
 			// InheritedPermissions: "",
 		}, nil
@@ -75,6 +76,7 @@ func (f filesystem) UpdatePermissions(r Resource, username string, permission Pe
 		ContentSHA256: res.ContentSha256,
 		Permissions:   string(res.Permissions),
 		// Not Needed
+		// Path: r.Path,
 		// UserPermissions: 0,
 		// InheritedPermissions: "",
 	}, nil

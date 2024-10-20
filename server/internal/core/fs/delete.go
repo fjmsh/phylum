@@ -29,6 +29,7 @@ func (f filesystem) DeleteChildRecursive(r Resource, name string, hardDelete boo
 			ContentSHA256:   result.ContentSha256,
 			Permissions:     string(result.Permissions),
 			UserPermissions: r.UserPermissions,
+			Path:            r.Path,
 			// Not Needed
 			// InheritedPermissions: "",
 		}

@@ -129,6 +129,10 @@ func (a App) GetSharedResources(ctx context.Context, user User) (result []fs.Res
 			ContentType:   r.ContentType,
 			ContentSHA256: r.ContentSha256,
 			Permissions:   string(r.Permissions),
+			// Not Needed
+			// Path:                 "",
+			// UserPermissions:      0,
+			// InheritedPermissions: "",
 		}
 	}
 	return

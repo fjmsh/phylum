@@ -74,6 +74,7 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, b
 				ContentSHA256: r.ContentSha256,
 				Permissions:   string(r.Permissions),
 				// Not Needed
+				// Path:                 "",
 				// UserPermissions:      0,
 				// InheritedPermissions: "",
 			}

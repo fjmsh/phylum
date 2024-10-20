@@ -23,14 +23,19 @@ func setupCatCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
+			if r.Dir {
+				fmt.Println("cannot read'" + pathOrUUID + "': is a directory")
+				os.Exit(2)
+			}
+
 			in, err := f.OpenRead(r, 0, -1)
 			if err != nil {
 				fmt.Println("cannot read'" + pathOrUUID + "': " + err.Error())
-				os.Exit(2)
+				os.Exit(3)
 			}
 			if _, err := io.Copy(os.Stdout, in); err != nil {
 				fmt.Println("cannot output'" + pathOrUUID + "': " + err.Error())
-				os.Exit(2)
+				os.Exit(4)
 			}
 		},
 	}
