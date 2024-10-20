@@ -15,17 +15,17 @@ func setupMvCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
-			srcPathOrUuid := args[0]
-			src, err := f.ResourceByPathOrUuid(srcPathOrUuid)
+			srcPathOrUUID := args[0]
+			src, err := f.ResourceByPathOrUUID(srcPathOrUUID)
 			if err != nil {
-				fmt.Println("cannot move'" + srcPathOrUuid + "': " + err.Error())
+				fmt.Println("cannot move'" + srcPathOrUUID + "': " + err.Error())
 				os.Exit(1)
 			}
 
 			force, _ := cmd.Flags().GetBool("force")
 
 			if _, err := f.Move(src, args[1], force); err != nil {
-				fmt.Println("cannot move'" + srcPathOrUuid + "' to '" + args[1] + "': " + err.Error())
+				fmt.Println("cannot move'" + srcPathOrUUID + "' to '" + args[1] + "': " + err.Error())
 				os.Exit(1)
 			}
 		},

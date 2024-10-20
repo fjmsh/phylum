@@ -17,10 +17,10 @@ func setupChpermCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(3),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
-			pathOrUuid := args[0]
-			r, err := f.ResourceByPathOrUuid(pathOrUuid)
+			pathOrUUID := args[0]
+			r, err := f.ResourceByPathOrUUID(pathOrUUID)
 			if err != nil {
-				fmt.Println("cannot update permissions for '" + pathOrUuid + "': " + err.Error())
+				fmt.Println("cannot update permissions for '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)
 			}
 
@@ -40,12 +40,12 @@ func setupChpermCommand() *cobra.Command {
 			case "share":
 				permission = fs.PermissionReadWriteShare
 			default:
-				fmt.Println("cannot update permissions for '" + pathOrUuid + "': unrecognized permission: " + args[2])
+				fmt.Println("cannot update permissions for '" + pathOrUUID + "': unrecognized permission: " + args[2])
 				os.Exit(1)
 			}
 
 			if err := f.UpdatePermissions(r, user, permission); err != nil {
-				fmt.Println("cannot update permissions for '" + pathOrUuid + "': " + err.Error())
+				fmt.Println("cannot update permissions for '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)
 			}
 		},

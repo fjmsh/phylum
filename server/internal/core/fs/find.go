@@ -59,11 +59,11 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	}, nil
 }
 
-func (f filesystem) ResourceByPathOrUuid(pathOrUuid string) (Resource, error) {
-	if pathOrUuid[0] == '/' {
-		return f.ResourceByPath(pathOrUuid)
+func (f filesystem) ResourceByPathOrUUID(pathOrUUID string) (Resource, error) {
+	if pathOrUUID[0] == '/' {
+		return f.ResourceByPath(pathOrUUID)
 	}
-	if id, err := uuid.Parse(pathOrUuid); err != nil {
+	if id, err := uuid.Parse(pathOrUUID); err != nil {
 		return Resource{}, err
 	} else {
 		return f.ResourceByID(id)

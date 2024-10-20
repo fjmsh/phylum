@@ -23,7 +23,7 @@ type FileSystem interface {
 	// find.go
 	ResourceByID(id uuid.UUID) (Resource, error)
 	ResourceByPath(path string) (Resource, error)
-	ResourceByPathOrUuid(pathOrUuid string) (Resource, error)
+	ResourceByPathOrUUID(pathOrUUID string) (Resource, error)
 
 	// open.go
 	OpenRead(r Resource, start, length int64) (io.ReadCloser, error)

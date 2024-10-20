@@ -15,16 +15,16 @@ func setupRmCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
-			pathOrUuid := args[0]
-			r, err := f.ResourceByPathOrUuid(pathOrUuid)
+			pathOrUUID := args[0]
+			r, err := f.ResourceByPathOrUUID(pathOrUUID)
 			if err != nil {
-				fmt.Println("cannot remove '" + pathOrUuid + "': " + err.Error())
+				fmt.Println("cannot remove '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)
 			}
 
 			if r.Dir {
 				if recursive, err := cmd.Flags().GetBool("recursive"); err != nil || !recursive {
-					fmt.Println("cannot remove '" + pathOrUuid + "': Is a directory. Try again with '-r'")
+					fmt.Println("cannot remove '" + pathOrUUID + "': Is a directory. Try again with '-r'")
 					os.Exit(1)
 				}
 			}

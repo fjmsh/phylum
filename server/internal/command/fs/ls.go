@@ -18,10 +18,10 @@ func setupLsCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
-			pathOrUuid := args[0]
-			r, err := f.ResourceByPathOrUuid(pathOrUuid)
+			pathOrUUID := args[0]
+			r, err := f.ResourceByPathOrUUID(pathOrUUID)
 			if err != nil {
-				fmt.Println("cannot access '" + pathOrUuid + "': " + err.Error())
+				fmt.Println("cannot access '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)
 			}
 
@@ -31,7 +31,7 @@ func setupLsCommand() *cobra.Command {
 			if r.Dir {
 				children, err := f.ReadDir(r)
 				if err != nil {
-					fmt.Println("cannot access '" + pathOrUuid + "': " + err.Error())
+					fmt.Println("cannot access '" + pathOrUUID + "': " + err.Error())
 					os.Exit(1)
 				}
 				sort.Slice(children, func(i, j int) bool {

@@ -26,7 +26,7 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, e
 	}
 
 	// Check destParent directory permissions (if applicable)
-	destParent, destName, err := f.targetByPathOrUuid(r, target)
+	destParent, destName, err := f.targetByPathOrUUID(r, target)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
@@ -85,7 +85,7 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 	}
 
 	// Check dest directory permissions
-	destParent, destName, err := f.targetByPathOrUuid(src, target)
+	destParent, destName, err := f.targetByPathOrUUID(src, target)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
@@ -165,18 +165,18 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 	return
 }
 
-// targetByPathOrUuid splits a target path or uuid into its constituent components
-// `pathOrUuid` can be of the following formats:
+// targetByPathOrUUID splits a target path or uuid into its constituent components
+// `pathOrUUID` can be of the following formats:
 // 1. absolute path beginning with '/'
 // 2. uuid+name separated by ':'
 // For the latter, if either uuid or name is not provided then it is filled in from `src`
-func (f filesystem) targetByPathOrUuid(src Resource, pathOrUuid string) (Resource, string, error) {
-	index := strings.Index(pathOrUuid, ":")
+func (f filesystem) targetByPathOrUUID(src Resource, pathOrUUID string) (Resource, string, error) {
+	index := strings.Index(pathOrUUID, ":")
 	if index == -1 {
-		if pathOrUuid[0] != '/' {
+		if pathOrUUID[0] != '/' {
 			return Resource{}, "", ErrResourcePathInvalid
 		}
-		path := strings.TrimRight(pathOrUuid, "/")
+		path := strings.TrimRight(pathOrUUID, "/")
 		// if dest, err := f.ResourceByPath(path); err == nil {
 		// 	return dest, src.Name, nil
 		// } else {
@@ -199,7 +199,7 @@ func (f filesystem) targetByPathOrUuid(src Resource, pathOrUuid string) (Resourc
 	if index == 0 {
 		parent = src
 	} else {
-		if id, err := uuid.Parse(pathOrUuid[0:index]); err != nil {
+		if id, err := uuid.Parse(pathOrUUID[0:index]); err != nil {
 			return Resource{}, "", err
 		} else if res, err := f.ResourceByID(id); err != nil {
 			if errors.Is(err, ErrResourceNotFound) {
@@ -212,7 +212,7 @@ func (f filesystem) targetByPathOrUuid(src Resource, pathOrUuid string) (Resourc
 
 	}
 
-	name := pathOrUuid[index+1:]
+	name := pathOrUUID[index+1:]
 	if name == "" {
 		name = src.Name
 	} else if checkNameInvalid(name) {
