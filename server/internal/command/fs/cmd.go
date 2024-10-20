@@ -20,11 +20,13 @@ func SetupCommand() *cobra.Command {
 	flags.StringP("user", "u", "phylum", "Specify user for resource operations")
 
 	cmd.AddCommand(
+		setupCatCommand(),
+		setupChpermCommand(),
+		setupCpCommand(),
 		setupLsCommand(),
 		setupMkdirCommand(),
+		setupMvCommand(),
 		setupRmCommand(),
-		setupCpCommand(),
-		setupChpermCommand(),
 	)
 
 	return cmd
