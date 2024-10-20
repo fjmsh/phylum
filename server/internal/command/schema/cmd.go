@@ -30,7 +30,11 @@ func setupSchemaResetCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			viper.Set("auto_migrate", false)
 			if err := common.DB().DeleteSchema(context.Background()); err != nil {
-				fmt.Println("unable to delete databse schema: " + err.Error())
+				fmt.Println("unable to delete database schema: " + err.Error())
+				os.Exit(1)
+			}
+			if err := common.DB().Migrate(context.Background(), -1); err != nil {
+				fmt.Println("unable to migrate database schema: " + err.Error())
 				os.Exit(1)
 			}
 		},

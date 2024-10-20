@@ -1,17 +1,10 @@
 package serve
 
 import (
-	"bytes"
-	"net/http"
-	"time"
-
 	"github.com/fvbock/endless"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	apiv1 "github.com/shroff/phylum/server/internal/api/v1"
 	"github.com/shroff/phylum/server/internal/api/webdav"
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -24,19 +17,6 @@ func SetupCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			config := viper.GetViper()
 			engine := createEngine(config.GetBool("debug"), config.GetBool("log_body"), config.GetBool("cors_enabled"), config.GetStringSlice("cors_origins"))
-			engine.Use(func(c *gin.Context) {
-				defer func() {
-					if err := recover(); err != nil {
-						if e, ok := err.(*errors.Error); ok {
-							c.AbortWithStatusJSON(e.Status, e)
-						} else {
-							// This will be caught by the regular gin error recovery handler
-							panic(err)
-						}
-					}
-				}()
-				c.Next()
-			})
 
 			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")), common.App())
 			apiv1.Setup(engine.Group("/api/v1"), common.App())
@@ -75,56 +55,4 @@ func SetupCommand() *cobra.Command {
 	viper.BindPFlag("webdav_prefix", flags.Lookup("webdav-prefix"))
 
 	return cmd
-}
-
-func createEngine(debug, logBody bool, corsEnabled bool, corsOrigins []string) *gin.Engine {
-	if !debug {
-		gin.SetMode(gin.ReleaseMode)
-	}
-	engine := gin.New()
-	engine.Use(gin.Logger(), gin.CustomRecovery(func(c *gin.Context, err any) {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"status": 500,
-			"code":   "internal_server_error",
-			"msg":    "Internal Server Error",
-		})
-	}))
-	if debug && logBody {
-		engine.Use(logBodyMiddleware)
-	}
-
-	if corsEnabled {
-		engine.Use(cors.New(cors.Config{
-			AllowOrigins:     corsOrigins,
-			AllowHeaders:     []string{"Origin", "Authorization", "Accept", "Accept-Language", "Content-Type"},
-			AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "PROPFIND", "PROPPATCH", "COPY", "MOVE"},
-			ExposeHeaders:    []string{"Content-Length"},
-			AllowWebSockets:  true,
-			AllowCredentials: true,
-			MaxAge:           24 * time.Hour,
-		}))
-	}
-
-	return engine
-}
-
-type logBodyWriter struct {
-	gin.ResponseWriter
-	body *bytes.Buffer
-}
-
-func (w logBodyWriter) Write(b []byte) (int, error) {
-	w.body.Write(b)
-	return w.ResponseWriter.Write(b)
-}
-
-func logBodyMiddleware(c *gin.Context) {
-	logBodyWriter := &logBodyWriter{
-		ResponseWriter: c.Writer,
-		body:           bytes.NewBuffer(make([]byte, 0, 1024)),
-	}
-	c.Writer = logBodyWriter
-	c.Next()
-	logrus.Trace(c.Request.URL)
-	logrus.Trace(logBodyWriter.body.String())
 }

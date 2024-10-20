@@ -1,4 +1,4 @@
-package appcmd
+package user
 
 import (
 	"context"
@@ -8,10 +8,11 @@ import (
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"golang.org/x/term"
 )
 
-func setupUserCommand() *cobra.Command {
+func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "user",
 		Short: "User Management",
@@ -21,6 +22,11 @@ func setupUserCommand() *cobra.Command {
 		setupUserChrootCommand(),
 		setupUserListCommand(),
 	}...)
+
+	flags := cmd.PersistentFlags()
+	flags.Bool("auto-migrate", true, "Automatically migrate database schema")
+	viper.BindPFlag("auto_migrate", flags.Lookup("auto-migrate"))
+
 	return cmd
 }
 

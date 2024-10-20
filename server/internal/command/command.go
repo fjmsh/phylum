@@ -4,11 +4,12 @@ import (
 	"os"
 	"path"
 
-	"github.com/shroff/phylum/server/internal/command/appcmd"
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/command/fs"
 	"github.com/shroff/phylum/server/internal/command/schema"
 	"github.com/shroff/phylum/server/internal/command/serve"
+	"github.com/shroff/phylum/server/internal/command/storage"
+	"github.com/shroff/phylum/server/internal/command/user"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -52,8 +53,9 @@ func SetupCommand() {
 	}()
 
 	rootCmd.AddCommand([]*cobra.Command{
-		appcmd.SetupCommand(),
 		schema.SetupCommand(),
+		user.SetupCommand(),
+		storage.SetupCommand(),
 		fs.SetupCommand(),
 		serve.SetupCommand(),
 	}...)
