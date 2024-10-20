@@ -64,8 +64,8 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 		ContentSHA256:   result.ContentSha256,
 		Permissions:     string(result.Permissions),
 		UserPermissions: r.UserPermissions,
-		Path:            r.Path + "/" + result.Name,
 		// Not Needed
+		// Path: r.Path + "/" + result.Name,
 		// InheritedPermissions: "",
 	}, nil
 }

@@ -96,6 +96,10 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 		}
 		return Resource{}, false, err
 	}
+	if !destParent.Dir {
+		return Resource{}, false, ErrResourceNotCollection
+
+	}
 	if destParent.UserPermissions < PermissionReadWrite {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
@@ -108,7 +112,7 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 			return Resource{}, false, err
 		}
 	}
-	create := make([]db.CreateResourcesParams, 0, len(tree))
+	create := make([]db.CreateResourcesParams, 0, len(tree)+1)
 	copy := make(map[uuid.UUID]uuid.UUID)
 	ids := make(map[string]uuid.UUID)
 	if src.Dir {
@@ -117,6 +121,15 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 		copy[src.ID] = id
 	}
 
+	create = append(create, db.CreateResourcesParams{
+		ID:            id,
+		Parent:        destParent.ID,
+		Name:          destName,
+		Dir:           src.Dir,
+		ContentSize:   src.ContentSize,
+		ContentType:   src.ContentType,
+		ContentSha256: src.ContentSHA256,
+	})
 	for _, src := range tree {
 		id := uuid.New()
 		parent := ids[src.Path[0:strings.LastIndex(src.Path, "/")]]
@@ -138,7 +151,6 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 		}
 	}
 
-	var dest Resource
 	var deleted = false
 	err = f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
 		f := f.withDb(dbh)
@@ -149,12 +161,13 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 				return err
 			}
 		}
-		dest, err = f.CreateMemberResource(destParent, id, destName, src.Dir)
-		if err != nil {
+		if _, err := dbh.CreateResources(f.ctx, create); err != nil {
+			if strings.Contains(err.Error(), "unique_member_resource_name") {
+				return ErrResourceNameConflict
+			}
 			return err
 		}
-		_, err := dbh.CreateResources(f.ctx, create)
-		return err
+		return dbh.UpdateResourceModified(f.ctx, destParent.ID)
 	})
 
 	if err == nil {
@@ -168,6 +181,23 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 		}()
 	}
 
+	var dest = Resource{
+		ID:            id,
+		ParentID:      &destParent.ID,
+		Name:          destName,
+		Dir:           src.Dir,
+		Created:       time.Now(),
+		Modified:      time.Now(),
+		Deleted:       nil,
+		ContentSize:   src.ContentSize,
+		ContentType:   src.ContentType,
+		ContentSHA256: src.ContentSHA256,
+		Permissions:   "{}",
+		// Not Needed
+		// UserPermissions:      src.UserPermissions,
+		// InheritedPermissions: src.InheritedPermissions,
+		// Path:                 src.Path + "/" + destName,
+	}
 	return dest, deleted, err
 }
 
