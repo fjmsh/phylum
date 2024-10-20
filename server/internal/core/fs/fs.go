@@ -33,7 +33,7 @@ type FileSystem interface {
 
 	// delete.go
 	DeleteChildRecursive(r Resource, name string, hardDelete bool) error
-	DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error)
+	DeleteRecursive(r Resource, hardDelete bool) error
 
 	// copy_move.go
 	Move(r Resource, target string, overwrite bool) (Resource, bool, error)

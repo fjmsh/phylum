@@ -91,33 +91,38 @@ type CreateResourcesParams struct {
 }
 
 const deleteRecursive = `-- name: DeleteRecursive :many
-WITH RECURSIVE nodes(id, parent) AS (
-    SELECT r.id, r.parent
+WITH RECURSIVE nodes(id, parent, dir) AS (
+    SELECT r.id, r.parent, r.dir
     FROM resources r WHERE r.id = $1::uuid
   UNION ALL
-    SELECT r.id, r.parent
+    SELECT r.id, r.parent, r.dir
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
 )
 UPDATE resources
 SET modified = NOW(), deleted = NOW()
 WHERE id in (SELECT id FROM nodes)
-RETURNING id
+RETURNING id, dir
 `
 
-func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error) {
+type DeleteRecursiveRow struct {
+	ID  uuid.UUID
+	Dir bool
+}
+
+func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) ([]DeleteRecursiveRow, error) {
 	rows, err := q.db.Query(ctx, deleteRecursive, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []uuid.UUID
+	var items []DeleteRecursiveRow
 	for rows.Next() {
-		var id uuid.UUID
-		if err := rows.Scan(&id); err != nil {
+		var i DeleteRecursiveRow
+		if err := rows.Scan(&i.ID, &i.Dir); err != nil {
 			return nil, err
 		}
-		items = append(items, id)
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -159,40 +164,6 @@ func (q *Queries) DiskUsage(ctx context.Context, id uuid.UUID) (DiskUsageRow, er
 		&i.Files,
 	)
 	return i, err
-}
-
-const hardDeleteRecursive = `-- name: HardDeleteRecursive :many
-WITH RECURSIVE nodes(id, parent) AS (
-    SELECT r.id, r.parent
-    FROM resources r WHERE r.id = $1::uuid
-  UNION ALL
-    SELECT r.id, r.parent
-    FROM resources r JOIN nodes n on r.parent = n.id
-    WHERE deleted IS NULL
-)
-DELETE FROM resources
-WHERE id in (SELECT id FROM nodes)
-RETURNING id
-`
-
-func (q *Queries) HardDeleteRecursive(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error) {
-	rows, err := q.db.Query(ctx, hardDeleteRecursive, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []uuid.UUID
-	for rows.Next() {
-		var id uuid.UUID
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		items = append(items, id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const sharedResources = `-- name: SharedResources :many

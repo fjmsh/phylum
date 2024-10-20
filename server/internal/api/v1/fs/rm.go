@@ -17,10 +17,9 @@ func handleRmRequest(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	ids, err := fs.DeleteRecursive(r, false)
-	if err != nil {
+	if err := fs.DeleteRecursive(r, true); err != nil {
 		panic(err)
 	}
 
-	c.JSON(200, gin.H{"ids": ids})
+	c.JSON(200, gin.H{})
 }

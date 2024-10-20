@@ -3,7 +3,6 @@ package fs
 import (
 	"errors"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/sirupsen/logrus"
@@ -33,32 +32,20 @@ func (f filesystem) DeleteChildRecursive(r Resource, name string, hardDelete boo
 			// Not Needed
 			// InheritedPermissions: "",
 		}
-		_, err := f.DeleteRecursive(child, hardDelete)
-		return err
+		return f.DeleteRecursive(child, hardDelete)
 	}
 }
 
-func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error) {
+func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
 	if r.UserPermissions < PermissionReadWrite {
-		return nil, ErrInsufficientPermissions
+		return ErrInsufficientPermissions
 	}
 	// TODO: versioning
-	var ids uuid.UUIDs
+	var deleted []db.DeleteRecursiveRow
 	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 		var err error
-		if hardDelete {
-			ids, err = d.HardDeleteRecursive(f.ctx, r.ID)
-			if err != nil {
-				return err
-			}
-			errors := f.cs.DeleteAll(ids)
-			for err := range errors {
-				logrus.Warn(err)
-			}
-		} else {
-			if ids, err = d.DeleteRecursive(f.ctx, r.ID); err != nil {
-				return err
-			}
+		if deleted, err = d.DeleteRecursive(f.ctx, r.ID); err != nil {
+			return err
 		}
 
 		parent := r.ParentID
@@ -68,9 +55,13 @@ func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, er
 		return nil
 	})
 
-	if err != nil {
-		return nil, err
+	if err == nil && hardDelete {
+		errors := f.cs.DeleteAll(deleted)
+		for _, err := range errors {
+			logrus.Warn(err)
+		}
+
 	}
 
-	return ids, nil
+	return err
 }

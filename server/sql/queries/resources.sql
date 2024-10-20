@@ -72,31 +72,18 @@ FROM nodes;
 
 
 -- name: DeleteRecursive :many
-WITH RECURSIVE nodes(id, parent) AS (
-    SELECT r.id, r.parent
+WITH RECURSIVE nodes(id, parent, dir) AS (
+    SELECT r.id, r.parent, r.dir
     FROM resources r WHERE r.id = @id::uuid
   UNION ALL
-    SELECT r.id, r.parent
+    SELECT r.id, r.parent, r.dir
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
 )
 UPDATE resources
 SET modified = NOW(), deleted = NOW()
 WHERE id in (SELECT id FROM nodes)
-RETURNING id;
-
--- name: HardDeleteRecursive :many
-WITH RECURSIVE nodes(id, parent) AS (
-    SELECT r.id, r.parent
-    FROM resources r WHERE r.id = @id::uuid
-  UNION ALL
-    SELECT r.id, r.parent
-    FROM resources r JOIN nodes n on r.parent = n.id
-    WHERE deleted IS NULL
-)
-DELETE FROM resources
-WHERE id in (SELECT id FROM nodes)
-RETURNING id;
+RETURNING id, dir;
 
 -- name: SharedResources :many
 SELECT * FROM resources WHERE permissions ? @username::text AND id <> @user_home::uuid AND deleted IS NULL;
