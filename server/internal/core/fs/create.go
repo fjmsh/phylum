@@ -20,7 +20,7 @@ func (f filesystem) CreateResourceByPath(path string, dir bool) (Resource, error
 		}
 		return Resource{}, err
 	}
-	return f.CreateMemberResource(parent, uuid.New(), name, true)
+	return f.CreateMemberResource(parent, uuid.New(), name, dir)
 }
 
 func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, dir bool) (Resource, error) {
