@@ -46,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
       barrierDismissible: false,
       title: 'Logging in...',
     );
-    builder.path = '${builder.path}/api/v1/auth/login';
+    builder.path = '${builder.path}/api/v1/login/password';
     builder.queryParameters['email'] = email;
     builder.queryParameters['password'] = password;
     final request = Request('post', builder.build());
