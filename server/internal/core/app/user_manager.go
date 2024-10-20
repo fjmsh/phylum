@@ -34,7 +34,7 @@ func (a App) CreateUser(ctx context.Context, username, displayName, password str
 			return err
 		} else if userHome, err := f.CreateMemberResource(home, uuid.New(), username, true); err != nil {
 			return err
-		} else if err := f.UpdatePermissions(userHome, u.Username, fs.PermissionReadWriteShare); err != nil {
+		} else if _, err := f.UpdatePermissions(userHome, u.Username, fs.PermissionReadWriteShare); err != nil {
 			return err
 		} else {
 			return d.UpdateUserHome(ctx, db.UpdateUserHomeParams{Username: u.Username, Home: userHome.ID})
