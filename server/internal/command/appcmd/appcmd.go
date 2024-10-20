@@ -18,7 +18,6 @@ func SetupCommand() *cobra.Command {
 	viper.BindPFlag("default_storage_dir", flags.Lookup("default-storage-dir"))
 
 	cmd.AddCommand([]*cobra.Command{
-		setupServeCommand(),
 		setupUserCommand(),
 		setupStorageCommand(),
 	}...)

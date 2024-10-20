@@ -8,6 +8,7 @@ import (
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/command/fs"
 	"github.com/shroff/phylum/server/internal/command/schema"
+	"github.com/shroff/phylum/server/internal/command/serve"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -52,8 +53,9 @@ func SetupCommand() {
 
 	rootCmd.AddCommand([]*cobra.Command{
 		appcmd.SetupCommand(),
-		fs.SetupCommand(),
 		schema.SetupCommand(),
+		fs.SetupCommand(),
+		serve.SetupCommand(),
 	}...)
 	rootCmd.Execute()
 }

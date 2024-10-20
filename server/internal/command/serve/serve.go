@@ -1,4 +1,4 @@
-package appcmd
+package serve
 
 import (
 	"bytes"
@@ -17,8 +17,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-func setupServeCommand() *cobra.Command {
-	var cmdServe = &cobra.Command{
+func SetupCommand() *cobra.Command {
+	var cmd = &cobra.Command{
 		Use:   "serve",
 		Short: "Run the server",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -51,7 +51,13 @@ func setupServeCommand() *cobra.Command {
 			}
 		},
 	}
-	flags := cmdServe.Flags()
+	flags := cmd.Flags()
+
+	flags.Bool("auto-migrate", true, "Automatically migrate database schema")
+	viper.BindPFlag("auto_migrate", flags.Lookup("auto-migrate"))
+
+	flags.StringP("default-storage-dir", "S", "storage/default", "Default Storage Directory")
+	viper.BindPFlag("default_storage_dir", flags.Lookup("default-storage-dir"))
 
 	flags.StringP("listen", "l", ":1234", "Listen Addres")
 	viper.BindPFlag("listen", flags.Lookup("listen"))
@@ -68,7 +74,7 @@ func setupServeCommand() *cobra.Command {
 	flags.String("webdav-prefix", "/webdav", "Listen Addres")
 	viper.BindPFlag("webdav_prefix", flags.Lookup("webdav-prefix"))
 
-	return cmdServe
+	return cmd
 }
 
 func createEngine(debug, logBody bool, corsEnabled bool, corsOrigins []string) *gin.Engine {
