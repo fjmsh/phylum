@@ -66,3 +66,25 @@ func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
 	}
 	return result, nil
 }
+
+func (f filesystem) ProcessResources(r Resource, depth int, fn func(Resource) error) error {
+	err := fn(r)
+	if err != nil {
+		return err
+	}
+	if !r.Dir || depth <= 0 {
+		return nil
+	}
+
+	children, err := f.ReadDir(r, depth > 1)
+	if err != nil {
+		return err
+	}
+
+	for _, c := range children {
+		if err := fn(c); err != nil {
+			return err
+		}
+	}
+	return nil
+}

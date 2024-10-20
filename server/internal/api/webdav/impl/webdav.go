@@ -42,6 +42,7 @@ type FileSystem interface {
 	Move(r fs.Resource, target string, overwrite bool) (fs.Resource, bool, error)
 	Copy(r fs.Resource, target string, id uuid.UUID, recursive, overwrite bool) (fs.Resource, bool, error)
 	ReadDir(r fs.Resource, recursive bool) ([]fs.Resource, error)
+	ProcessResources(r fs.Resource, depth int, fn func(r fs.Resource) error) error
 	OpenRead(r fs.Resource, start, length int64) (io.ReadCloser, error)
 	OpenWriteTouch(name string) (io.WriteCloser, error)
 }
@@ -456,7 +457,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 
 	mw := multistatusWriter{w: w}
 
-	walkFn := func(r fs.Resource) error {
+	writePropStat := func(r fs.Resource) error {
 		var pstats []Propstat
 		if pf.Propname != nil {
 			pnames, err := propnames(h.FileSystem, h.LockSystem, r.Path)
@@ -483,7 +484,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 		return mw.write(makePropstatResponse(href, pstats))
 	}
 
-	walkErr := walkFS(h.FileSystem, depth, fi, walkFn)
+	walkErr := h.FileSystem.ProcessResources(fi, depth, writePropStat)
 	closeErr := mw.close()
 	if walkErr != nil {
 		return http.StatusInternalServerError, walkErr
