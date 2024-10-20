@@ -90,13 +90,18 @@ func moveFiles(fs FileSystem, srcPath, dstPath string, overwrite bool) (status i
 		}
 		return http.StatusInternalServerError, err
 	} else {
-		if _, err := fs.Move(src, dstPath, overwrite); err != nil {
+		if _, deleted, err := fs.Move(src, dstPath, overwrite); err != nil {
 			if e, ok := err.(*errors.Error); ok {
 				return e.Status, e
 			}
 			return http.StatusForbidden, err
+		} else {
+			status = http.StatusCreated
+			if deleted {
+				status = http.StatusNoContent
+			}
+			return status, nil
 		}
-		return http.StatusCreated, nil
 		// TODO: should return http.StatusNoContent if the target already existed before
 	}
 }
@@ -111,13 +116,18 @@ func copyFiles(fs FileSystem, srcPath, dstPath string, overwrite bool, depth int
 		}
 		return http.StatusInternalServerError, err
 	} else {
-		if _, err := fs.Copy(src, dstPath, uuid.New(), depth != 0, overwrite); err != nil {
+		if _, deleted, err := fs.Copy(src, dstPath, uuid.New(), depth != 0, overwrite); err != nil {
 			if e, ok := err.(*errors.Error); ok {
 				return e.Status, e
 			}
 			return http.StatusForbidden, err
+		} else {
+			status = http.StatusCreated
+			if deleted {
+				status = http.StatusNoContent
+			}
+			return status, nil
 		}
-		return http.StatusCreated, nil
 		// TODO: should return http.StatusNoContent if the target already existed before
 	}
 }

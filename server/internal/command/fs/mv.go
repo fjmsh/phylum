@@ -24,7 +24,7 @@ func setupMvCommand() *cobra.Command {
 
 			force, _ := cmd.Flags().GetBool("force")
 
-			if _, err := f.Move(src, args[1], force); err != nil {
+			if _, _, err := f.Move(src, args[1], force); err != nil {
 				fmt.Println("cannot move'" + srcPathOrUUID + "' to '" + args[1] + "': " + err.Error())
 				os.Exit(1)
 			}

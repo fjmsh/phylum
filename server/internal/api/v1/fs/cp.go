@@ -30,7 +30,7 @@ func handleCpRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	if r, err := fs.Copy(r, params.Target, params.ID, true, params.Overwrite); err != nil {
+	if r, _, err := fs.Copy(r, params.Target, params.ID, true, params.Overwrite); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, r)

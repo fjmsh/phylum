@@ -35,8 +35,8 @@ type FileSystem interface {
 	DeleteRecursive(r Resource, hardDelete bool) (uuid.UUIDs, error)
 
 	// copy_move.go
-	Move(r Resource, target string, overwrite bool) (Resource, error)
-	Copy(r Resource, target string, id uuid.UUID, recursive, overwrite bool) (Resource, error)
+	Move(r Resource, target string, overwrite bool) (Resource, bool, error)
+	Copy(r Resource, target string, id uuid.UUID, recursive, overwrite bool) (Resource, bool, error)
 
 	// update.go
 	UpdateName(r Resource, name string) (Resource, error)

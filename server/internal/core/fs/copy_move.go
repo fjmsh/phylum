@@ -11,18 +11,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, error) {
+func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, bool, error) {
 	if r.ParentID == nil {
-		return Resource{}, ErrInsufficientPermissions
+		return Resource{}, false, ErrInsufficientPermissions
 	}
 
 	// Check source directory permissions
 	parent, err := f.ResourceByID(*r.ParentID)
 	if err != nil {
-		return Resource{}, err
+		return Resource{}, false, err
 	}
 	if parent.UserPermissions < PermissionReadWrite {
-		return Resource{}, ErrInsufficientPermissions
+		return Resource{}, false, ErrInsufficientPermissions
 	}
 
 	// Check destParent directory permissions (if applicable)
@@ -31,20 +31,25 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, e
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
 		}
-		return Resource{}, err
+		return Resource{}, false, err
 	}
 	if destParent.UserPermissions < PermissionReadWrite {
-		return Resource{}, ErrInsufficientPermissions
+		return Resource{}, false, ErrInsufficientPermissions
 	}
 	if res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: r.ID, ResourceID: destParent.ID, Username: f.username}); err != nil || res.Found {
-		return Resource{}, ErrResourceMoveTargetSubdirectory
+		return Resource{}, false, ErrResourceMoveTargetSubdirectory
 	}
-	result := Resource{}
 
-	return result, f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
+	var result Resource
+	var deleted = false
+	return result, deleted, f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
 		f = f.withDb(dbh)
 		if overwrite {
-			f.DeleteChildRecursive(destParent, destName, false)
+			if err := f.DeleteChildRecursive(destParent, destName, false); err == nil {
+				deleted = true
+			} else if !errors.Is(err, ErrResourceNotFound) {
+				return err
+			}
 		}
 		if r, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID, Name: destName, Parent: destParent.ID}); err != nil {
 			if strings.Contains(err.Error(), "unique_member_resource_name") {
@@ -77,11 +82,10 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, e
 	})
 }
 
-func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, overwrite bool) (dest Resource, e error) {
+func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, overwrite bool) (Resource, bool, error) {
 	// Check source directory permissions
 	if src.UserPermissions < PermissionReadOnly {
-		e = ErrInsufficientPermissions
-		return
+		return Resource{}, false, ErrInsufficientPermissions
 	}
 
 	// Check dest directory permissions
@@ -90,11 +94,10 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
 		}
-		return Resource{}, err
+		return Resource{}, false, err
 	}
 	if destParent.UserPermissions < PermissionReadWrite {
-		e = ErrInsufficientPermissions
-		return
+		return Resource{}, false, ErrInsufficientPermissions
 	}
 
 	var tree []db.ReadDirRow
@@ -102,7 +105,7 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 		var err error
 		tree, err = f.db.ReadDir(f.ctx, db.ReadDirParams{ID: src.ID, IncludeRoot: false, Recursive: true})
 		if err != nil {
-			return Resource{}, err
+			return Resource{}, false, err
 		}
 	}
 	create := make([]db.CreateResourcesParams, 0, len(tree))
@@ -134,10 +137,14 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 		}
 	}
 
-	e = f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
+	var dest Resource
+	var deleted = false
+	err = f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
 		f := f.withDb(dbh)
 		if overwrite {
-			if err := f.DeleteChildRecursive(destParent, destName, false); err != nil && !errors.Is(err, ErrResourceNotFound) {
+			if err := f.DeleteChildRecursive(destParent, destName, false); err == nil {
+				deleted = true
+			} else if !errors.Is(err, ErrResourceNotFound) {
 				return err
 			}
 		}
@@ -149,7 +156,7 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 		return err
 	})
 
-	if e == nil {
+	if err == nil {
 		func() {
 			for k, v := range copy {
 				if _, err := f.copyContents(k, v); err != nil {
@@ -160,7 +167,7 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 		}()
 	}
 
-	return
+	return dest, deleted, err
 }
 
 // targetByPathOrUUID splits a target path or uuid into its constituent components
