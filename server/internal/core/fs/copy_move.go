@@ -2,7 +2,6 @@ package fs
 
 import (
 	"errors"
-	"io"
 	"strings"
 	"time"
 
@@ -127,6 +126,7 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 			Parent:        parent,
 			Name:          src.Name,
 			Dir:           src.Dir,
+			ContentSize:   src.ContentSize,
 			ContentType:   src.ContentType,
 			ContentSha256: src.ContentSha256,
 		})
@@ -160,7 +160,7 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 	if err == nil {
 		func() {
 			for k, v := range copy {
-				if _, err := f.copyContents(k, v); err != nil {
+				if err := f.cs.CopyContents(k, v); err != nil {
 					logrus.Warn("unable to copy " + k.String() + " to " + v.String() + ": " + err.Error())
 				}
 			}
@@ -226,27 +226,4 @@ func (f filesystem) targetByPathOrUUID(src Resource, pathOrUUID string) (Resourc
 	}
 
 	return parent, name, nil
-}
-
-func (f filesystem) copyContents(k, v uuid.UUID) (int64, error) {
-	src, err := f.ResourceByID(k)
-	if err != nil {
-		return 0, errors.New("unable to get " + k.String() + ": " + err.Error())
-	}
-	dest, err := f.ResourceByID(v)
-	if err != nil {
-		return 0, errors.New("unable to get " + v.String() + ": " + err.Error())
-	}
-	in, err := f.OpenRead(src, 0, -1)
-	if err != nil {
-		return 0, errors.New("Unable to open " + k.String() + ": " + err.Error())
-	}
-	defer in.Close()
-	out, err := f.OpenWrite(dest)
-	if err != nil {
-		return 0, errors.New("Unable to open " + v.String() + ": " + err.Error())
-	}
-	defer out.Close()
-
-	return io.Copy(out, in)
 }

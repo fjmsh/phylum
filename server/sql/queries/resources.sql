@@ -9,9 +9,9 @@ INSERT INTO resources(
 
 -- name: CreateResources :copyfrom
 INSERT INTO resources(
-    id, parent, name, dir, content_type, content_sha256
+    id, parent, name, dir, content_size, content_type, content_sha256
 ) VALUES (
-    @id::uuid, @parent::uuid, @name::text, @dir::boolean, @content_type::text, @content_sha256::text
+    @id::uuid, @parent::uuid, @name::text, @dir::boolean, @content_size::bigint, @content_type::text, @content_sha256::text
 );
 
 -- name: UpdateResourceContents :exec

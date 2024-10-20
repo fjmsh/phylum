@@ -85,6 +85,7 @@ type CreateResourcesParams struct {
 	Parent        uuid.UUID
 	Name          string
 	Dir           bool
+	ContentSize   int64
 	ContentType   string
 	ContentSha256 string
 }

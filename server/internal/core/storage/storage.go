@@ -16,6 +16,7 @@ type Storage interface {
 	ListBackends() map[string]Backend
 	OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error)
 	OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string, string) error) (io.WriteCloser, error)
+	CopyContents(src, dest uuid.UUID) error
 	Delete(id uuid.UUID) error
 	DeleteAll(ids uuid.UUIDs) []error
 }
@@ -52,12 +53,31 @@ func (s storage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, 
 		return nil, err
 	} else if out, err := backend.OpenWrite(id); err != nil {
 		return nil, err
+	} else if callback == nil {
+		return out, nil
 	} else {
 		return &hasher{dest: out, sum: h(), contents: make([]byte, 0, 10*1024), closeCallback: func(len int, sum hash.Hash, mime string) error {
 			etag := hex.EncodeToString(sum.Sum(nil))
 			return callback(len, etag, mime)
 		}}, nil
 	}
+}
+
+func (s storage) CopyContents(src, dest uuid.UUID) error {
+	in, err := s.OpenRead(src, 0, -1)
+	if err != nil {
+		return errors.New("Unable to open " + src.String() + ": " + err.Error())
+	}
+	defer in.Close()
+	out, err := s.OpenWrite(dest, nil, nil)
+	if err != nil {
+		return errors.New("Unable to open " + dest.String() + ": " + err.Error())
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	return err
+
 }
 
 func (s storage) Delete(id uuid.UUID) error {

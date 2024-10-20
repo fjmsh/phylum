@@ -17,8 +17,10 @@ type hasher struct {
 
 func (c *hasher) Write(p []byte) (n int, err error) {
 	n, err = c.dest.Write(p)
-	c.sum.Write(p)
 	c.len += n
+	if c.sum != nil {
+		c.sum.Write(p)
+	}
 	remain := min(cap(c.contents)-len(c.contents), len(p))
 	if remain > 0 {
 		c.contents = append(c.contents, p[:remain]...)
