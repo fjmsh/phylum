@@ -190,11 +190,12 @@ func TestMemLSLookup(t *testing.T) {
 					continue
 				}
 
-				got := m.lookup(name, Condition{Token: token})
+				_, n := m.lookup(name, func(string, string) (bool, error) { return false, nil }, Condition{Token: token})
 				want := base
 				if token == badToken {
 					want = nil
 				}
+				got := n[0]
 				if got != want {
 					t.Errorf("name=%-20qtoken=%q (bad=%t): got %p, want %p",
 						name, token, token == badToken, got, want)
@@ -229,7 +230,7 @@ func TestMemLSConfirm(t *testing.T) {
 	}
 
 	// Test a mismatch between name and condition.
-	_, err = m.Confirm(now, "/tweedle/dee", "", Condition{Token: alice})
+	_, err = m.Confirm(now, "/tweedle/dee", "", func(string, string) (bool, error) { return false, nil }, Condition{Token: alice})
 	if err != ErrConfirmationFailed {
 		t.Fatalf("Confirm (mismatch): got %v, want ErrConfirmationFailed", err)
 	}
@@ -238,7 +239,7 @@ func TestMemLSConfirm(t *testing.T) {
 	}
 
 	// Test two names (that fall under the same lock) in the one Confirm call.
-	release, err := m.Confirm(now, "/tweedle/dee", "/tweedle/dum", Condition{Token: tweedle})
+	release, err := m.Confirm(now, "/tweedle/dee", "/tweedle/dum", func(string, string) (bool, error) { return false, nil }, Condition{Token: tweedle})
 	if err != nil {
 		t.Fatalf("Confirm (twins): %v", err)
 	}
@@ -251,7 +252,7 @@ func TestMemLSConfirm(t *testing.T) {
 	}
 
 	// Test the same two names in overlapping Confirm / release calls.
-	releaseDee, err := m.Confirm(now, "/tweedle/dee", "", Condition{Token: tweedle})
+	releaseDee, err := m.Confirm(now, "/tweedle/dee", "", func(s1, s2 string) (bool, error) { return false, nil }, Condition{Token: tweedle})
 	if err != nil {
 		t.Fatalf("Confirm (sequence #0): %v", err)
 	}
@@ -259,7 +260,7 @@ func TestMemLSConfirm(t *testing.T) {
 		t.Fatalf("Confirm (sequence #0): inconsistent state: %v", err)
 	}
 
-	_, err = m.Confirm(now, "/tweedle/dum", "", Condition{Token: tweedle})
+	_, err = m.Confirm(now, "/tweedle/dum", "", func(string, string) (bool, error) { return false, nil }, Condition{Token: tweedle})
 	if err != ErrConfirmationFailed {
 		t.Fatalf("Confirm (sequence #1): got %v, want ErrConfirmationFailed", err)
 	}
@@ -272,7 +273,7 @@ func TestMemLSConfirm(t *testing.T) {
 		t.Fatalf("release (sequence #2): inconsistent state: %v", err)
 	}
 
-	releaseDum, err := m.Confirm(now, "/tweedle/dum", "", Condition{Token: tweedle})
+	releaseDum, err := m.Confirm(now, "/tweedle/dum", "", func(string, string) (bool, error) { return false, nil }, Condition{Token: tweedle})
 	if err != nil {
 		t.Fatalf("Confirm (sequence #3): %v", err)
 	}
@@ -470,7 +471,7 @@ func TestMemLS(t *testing.T) {
 			case 0:
 				confirmed = true
 				nConfirm++
-				release, err := m.Confirm(now, name, "", Condition{Token: token})
+				release, err := m.Confirm(now, name, "", func(string, string) (bool, error) { return false, nil }, Condition{Token: token})
 				if err != nil {
 					t.Fatalf("iteration #%d: Confirm %q: %v", i, name, err)
 				}
