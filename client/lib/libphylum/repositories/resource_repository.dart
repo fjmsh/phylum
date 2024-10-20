@@ -47,16 +47,19 @@ class ResourceRepository {
   }
 
   Future<int> createResource(String id, bool dir, String parent, String name, String contentType) {
-    return account.db.resources.insertOne(ResourcesCompanion.insert(
-      id: id,
-      name: name,
-      parent: Value(parent),
-      dir: dir,
-      modified: DateTime.now(),
-      size: 0,
-      sha256: "",
-      contentType: contentType,
-    ));
+    return account.db.resources.insertOne(
+      ResourcesCompanion.insert(
+        id: id,
+        name: name,
+        parent: Value(parent),
+        dir: dir,
+        modified: DateTime.now(),
+        size: 0,
+        sha256: "",
+        contentType: contentType,
+      ),
+      mode: InsertMode.insertOrReplace,
+    );
   }
 
   Future<int> updateResource(String id, Insertable<Resource> Function($$ResourcesTableUpdateCompanionBuilder o) fn) {

@@ -1,3 +1,4 @@
+import 'package:phylum/libphylum/actions/action_resource_copy.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_mkdir.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
@@ -8,4 +9,5 @@ const actionDeserializers = {
   ResourceMkdirAction.actionName: ResourceMkdirAction.fromMap,
   ResourceMoveAction.actionName: ResourceMoveAction.fromMap,
   ResourceUploadAction.actionName: ResourceUploadAction.fromMap,
+  ResourceCopyAction.actionName: ResourceCopyAction.fromMap,
 };

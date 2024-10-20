@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/app_shortcuts.dart';
+import 'package:phylum/libphylum/actions/action_resource_copy.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -72,6 +73,14 @@ class ExplorerView extends StatelessWidget {
                 if (parent != null) {
                   for (final r in cutResources) {
                     account.addAction(ResourceMoveAction(r: r, parent: parent));
+                  }
+                  for (final r in copyResources) {
+                    account.addAction(ResourceCopyAction(
+                      src: r,
+                      resourceId: generateId(),
+                      resourceName: r.name,
+                      parentId: parent.id,
+                    ));
                   }
                 }
 
