@@ -294,6 +294,9 @@ func (d *Decoder) Token() (t Token, err error) {
 		// to the other attribute names, so process
 		// the translations first.
 		for _, a := range t1.Attr {
+			if a.Value == "" {
+				err = errors.New("invalid namespace")
+			}
 			if a.Name.Space == "xmlns" {
 				v, ok := d.ns[a.Name.Local]
 				d.pushNs(a.Name.Local, v, ok)
