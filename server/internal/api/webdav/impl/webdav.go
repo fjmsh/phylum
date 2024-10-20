@@ -265,6 +265,9 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 
 	f, err := h.FileSystem.OpenWriteTouch(reqPath)
 	if err != nil {
+		if errors.Is(err, fs.ErrParentNotFound) {
+			return http.StatusConflict, err
+		}
 		return http.StatusNotFound, err
 	}
 	_, copyErr := io.Copy(f, r.Body)
@@ -299,7 +302,7 @@ func (h *Handler) handleMkcol(_ http.ResponseWriter, r *http.Request) (status in
 		return http.StatusUnsupportedMediaType, nil
 	}
 	if _, err := h.FileSystem.CreateResourceByPath(reqPath, true); err != nil {
-		if errors.Is(err, fs.ErrResourceNameConflict) {
+		if errors.Is(err, fs.ErrParentNotFound) {
 			return http.StatusConflict, err
 		}
 		return http.StatusMethodNotAllowed, err
