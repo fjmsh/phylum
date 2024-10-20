@@ -1,8 +1,9 @@
 Self-hosted cloud file storage
 
+[x] WebDAV compatible
 [x] Cross-platform (Mobile, Desktop, Web)
 [x] Offline
-[?] File Explorer
+[x] File Explorer
     [x] Upload files
     [x] Upload folders
     [x] Create folders
@@ -11,9 +12,9 @@ Self-hosted cloud file storage
     [ ] Copy (copy-paste)
     [ ] Merge (move/copy)
     [x] Download files
-    [ ] Notifications for completed/failed downloads
+        [ ] Notifications for completed/failed downloads
     [ ] Download folders / multiple files as zip
-    [?] Preview files
+    [x] Preview files
         [x] Images
         [ ] Text
         [ ] Audio
@@ -23,7 +24,7 @@ Self-hosted cloud file storage
     [ ] Table View
     [ ] Grid View
         [ ] Thumbnails
-[ ] Sync Manager
+[x] Sync Manager
     [x] View List of pending actions
     [x] View failed actions
         [ ] Actions for failed actions
@@ -50,7 +51,7 @@ Self-hosted cloud file storage
     [ ] Max Duration
     [ ] Max Accesses (single-file only?)
 [ ] Sharing folders
-    [x] Server support for permissions
+    [x] Server support for sharing permissions
     [ ] View permissions
     [ ] Edit permissions
     [ ] Shared With Me
