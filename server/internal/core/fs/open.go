@@ -45,7 +45,12 @@ func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
 	}
 
 	result := make([]Resource, len(children))
+
 	for i, c := range children {
+		path := r.Path + c.Path
+		if r.Path == "/" {
+			path = c.Path
+		}
 		result[i] = Resource{
 			ID:            c.ID,
 			ParentID:      c.Parent,
@@ -58,7 +63,7 @@ func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
 			ContentType:   c.ContentType,
 			ContentSHA256: c.ContentSha256,
 			Permissions:   string(c.Permissions),
-			Path:          r.Path + c.Path,
+			Path:          path,
 			// Not Needed
 			// UserPermissions: 0,
 			// InheritedPermissions: "",

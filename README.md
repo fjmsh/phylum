@@ -9,7 +9,7 @@ Self-hosted cloud file storage
     [x] Create folders
     [x] Rename
     [x] Move (cut-paste)
-    [ ] Copy (copy-paste)
+    [x] Copy (copy-paste)
     [ ] Merge (move/copy)
     [x] Download files
         [ ] Notifications for completed/failed downloads
