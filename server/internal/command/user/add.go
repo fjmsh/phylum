@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/shroff/phylum/server/internal/core/app"
+	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/spf13/cobra"
@@ -59,12 +59,14 @@ func setupUserAddCommand() *cobra.Command {
 					os.Exit(1)
 				}
 			}
-			root := common.App().Rootfs.RootID()
+
+			rootFS := common.RootFileSystem()
+			root := rootFS.RootID()
 			if rootPathOrUUID, err := cmd.Flags().GetString("chroot"); err != nil {
 				fmt.Println("invalid value for flag 'chroot': " + err.Error())
 				os.Exit(2)
 			} else if rootPathOrUUID != "" {
-				if r, err := common.App().Rootfs.ResourceByPathOrUUID(rootPathOrUUID); err != nil {
+				if r, err := rootFS.ResourceByPathOrUUID(rootPathOrUUID); err != nil {
 					fmt.Println("invalid value for flag 'chroot': " + err.Error())
 					os.Exit(1)
 				} else {
@@ -93,8 +95,8 @@ func setupUserAddCommand() *cobra.Command {
 			fmt.Println(homePath)
 
 			ctx := context.Background()
-			err = common.App().RunInTx(ctx, func(a app.App) error {
-				userManager := a.OpenUserManager(ctx)
+			err = common.App().RunInTx(ctx, func(db *db.DbHandler) error {
+				userManager := common.App().OpenUserManager(ctx).WithDb(db)
 				var u user.User
 				if user, err := userManager.CreateUser(username, displayName, password, root); err != nil {
 					return err
@@ -103,12 +105,12 @@ func setupUserAddCommand() *cobra.Command {
 				}
 
 				if homePath != "" {
-					f := a.Rootfs.WithRoot(root)
-					home, err := f.CreateResourceByPath(homePath, true, true)
+					rootFS = rootFS.WithDb(db)
+					home, err := rootFS.CreateResourceByPath(homePath, true, true)
 					if err != nil {
 						return err
 					}
-					if _, err := f.UpdatePermissions(home, u.Username, fs.PermissionReadWriteShare); err != nil {
+					if _, err := rootFS.UpdatePermissions(home, u.Username, fs.PermissionReadWriteShare); err != nil {
 						return err
 					}
 					return userManager.UpdateUserHome(u, home.ID)

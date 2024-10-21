@@ -9,6 +9,7 @@ import (
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/storage"
+	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -55,6 +56,18 @@ func App() *app.App {
 		}
 	}
 	return a
+}
+
+func RootFileSystem() fs.FileSystem {
+	var rootUser user.User
+	if user, err := App().OpenUserManager(context.Background()).UserByEmail(user.DefaultUserUsername); err != nil {
+		fmt.Println("unable to find root user: " + err.Error())
+		os.Exit(1)
+	} else {
+		rootUser = user
+	}
+
+	return App().OpenFileSystem(context.Background(), rootUser)
 }
 
 func UserFileSystem(cmd *cobra.Command) fs.FileSystem {

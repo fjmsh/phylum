@@ -11,13 +11,9 @@ import (
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
-const defaultUserUsername = "phylum"
-const defaultUserDisplayName = "Phylum"
-
 type App struct {
-	Rootfs fs.FileSystem
-	db     *db.DbHandler
-	cs     storage.Storage
+	db *db.DbHandler
+	cs storage.Storage
 }
 
 func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage) (*App, error) {
@@ -26,30 +22,28 @@ func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage) (*App, er
 		cs: cs,
 	}
 	userManager := user.CreateManager(ctx, db)
-	u, err := userManager.UserByEmail(defaultUserUsername)
+	if _, err := userManager.UserByEmail(user.DefaultUserUsername); err != nil {
+		if errors.Is(err, user.ErrNotFound) {
+			_, err = app.populateData(ctx)
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
 
-	if errors.Is(err, user.ErrNotFound) {
-		u, err = app.populateData(ctx)
-	}
-	if err != nil {
-		return nil, err
-	}
-	app.Rootfs = fs.OpenFileSystem(db, ctx, cs, u.Username, u.Root)
 	return app, nil
 }
 
-func (a App) WithDb(db *db.DbHandler) App {
-	return App{
-		db:     db,
-		Rootfs: a.Rootfs.WithDb(db),
-		cs:     a.cs.WithDb(db),
-	}
+func (a App) RunInTx(ctx context.Context, fn func(*db.DbHandler) error) error {
+	return a.db.WithTx(ctx, fn)
 }
 
-func (a App) RunInTx(ctx context.Context, fn func(App) error) error {
-	return a.db.WithTx(ctx, func(db *db.DbHandler) error {
-		return fn(a.WithDb(db))
-	})
+func (a App) OpenFileSystem(ctx context.Context, u user.User) fs.FileSystem {
+	return fs.OpenFileSystem(a.db, ctx, a.cs, u.Username, u.Root)
+}
+
+func (a App) OpenUserManager(ctx context.Context) user.Manager {
+	return user.CreateManager(ctx, a.db)
 }
 
 func (a *App) populateData(ctx context.Context) (u user.User, e error) {
@@ -81,7 +75,7 @@ func (a *App) populateData(ctx context.Context) (u user.User, e error) {
 		userHome, err := dbh.CreateResource(ctx, db.CreateResourceParams{
 			ID:     uuid.New(),
 			Parent: &home.ID,
-			Name:   defaultUserUsername,
+			Name:   user.DefaultUserUsername,
 			Dir:    true,
 		})
 		if err != nil {
@@ -90,8 +84,8 @@ func (a *App) populateData(ctx context.Context) (u user.User, e error) {
 
 		// Create phylum user
 		u, err := dbh.CreateUser(ctx, db.CreateUserParams{
-			Username:     defaultUserUsername,
-			DisplayName:  defaultUserDisplayName,
+			Username:     user.DefaultUserUsername,
+			DisplayName:  user.DefaultUserDisplayName,
 			PasswordHash: "CANNOT LOG IN",
 			Root:         root.ID,
 			Home:         userHome.ID,
@@ -114,12 +108,4 @@ func (a *App) populateData(ctx context.Context) (u user.User, e error) {
 		return err
 	})
 	return
-}
-
-func (a App) OpenFileSystem(ctx context.Context, u user.User) fs.FileSystem {
-	return fs.OpenFileSystem(a.db, ctx, a.cs, u.Username, u.Root)
-}
-
-func (a App) OpenUserManager(ctx context.Context) user.Manager {
-	return user.CreateManager(ctx, a.db)
 }

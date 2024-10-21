@@ -39,7 +39,7 @@ func setupUserChrootCommand() *cobra.Command {
 			if user, err := userManager.UserByEmail(email); err != nil {
 				logrus.Fatal(err)
 			} else {
-				if res, err := common.App().Rootfs.ResourceByPathOrUUID(idOrPath); err != nil {
+				if res, err := common.RootFileSystem().ResourceByPathOrUUID(idOrPath); err != nil {
 					logrus.Fatal(err)
 				} else {
 					userManager.UpdateUserRoot(user, res.ID)
