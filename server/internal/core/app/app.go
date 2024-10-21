@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
@@ -123,37 +122,4 @@ func (a App) OpenFileSystem(ctx context.Context, u user.User) fs.FileSystem {
 
 func (a App) OpenUserManager(ctx context.Context) user.Manager {
 	return user.CreateManager(ctx, a.db)
-}
-
-func (a App) GetSharedResources(ctx context.Context, u user.User) (result []fs.Resource, err error) {
-	res, err := a.db.Queries.SharedResources(ctx, db.SharedResourcesParams{Username: u.Username, UserHome: u.Home})
-	if err != nil {
-		return
-	}
-
-	result = make([]fs.Resource, len(res))
-	for i, r := range res {
-		var deleted *time.Time
-		if r.Deleted.Valid {
-			deleted = &r.Deleted.Time
-		}
-		result[i] = fs.Resource{
-			ID:            r.ID,
-			ParentID:      r.Parent,
-			Name:          r.Name,
-			Dir:           r.Dir,
-			Created:       r.Created.Time,
-			Modified:      r.Modified.Time,
-			Deleted:       deleted,
-			ContentSize:   r.ContentSize,
-			ContentType:   r.ContentType,
-			ContentSHA256: r.ContentSha256,
-			Permissions:   string(r.Permissions),
-			// Not Needed
-			// Path:                 "",
-			// UserPermissions:      0,
-			// InheritedPermissions: "",
-		}
-	}
-	return
 }

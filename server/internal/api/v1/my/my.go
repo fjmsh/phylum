@@ -41,7 +41,7 @@ func handleMyHomeRoute(c *gin.Context) {
 func createMySharedRouteHandler(a *app.App) func(*gin.Context) {
 	return func(c *gin.Context) {
 		user := auth.GetUser(c)
-		shared, err := a.GetSharedResources(c.Request.Context(), user)
+		shared, err := a.OpenUserManager(c.Request.Context()).GetSharedResources(user)
 		if err != nil {
 			panic(err)
 		}
