@@ -16,11 +16,19 @@ func setupMkdirCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			path := args[0]
-			if _, err := f.CreateResourceByPath(path, true); err != nil {
+			var recursive bool
+			if b, err := cmd.Flags().GetBool("parents"); err != nil {
+				fmt.Println("could not read flag 'parents': " + err.Error())
+				os.Exit(1)
+			} else {
+				recursive = b
+			}
+			if _, err := f.CreateResourceByPath(path, true, recursive); err != nil {
 				fmt.Println("could not create directory: " + err.Error())
 				os.Exit(1)
 			}
 		},
 	}
+	cmd.Flags().BoolP("parents", "p", false, "Make intermediate parents as needed")
 	return &cmd
 }

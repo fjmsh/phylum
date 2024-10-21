@@ -82,7 +82,7 @@ func (a adapter) OpenWriteTouch(name string) (io.WriteCloser, error) {
 	resource, err := a.ResourceByPath(name)
 
 	if errors.Is(err, fs.ErrResourceNotFound) {
-		resource, err = a.CreateResourceByPath(name, false)
+		resource, err = a.CreateResourceByPath(name, false, false)
 		if err != nil {
 			return nil, err
 		}

@@ -13,11 +13,12 @@ import (
 type FileSystem interface {
 	// filesystem.go
 	RootID() uuid.UUID
+	WithRoot(uuid.UUID) FileSystem
 	WithDb(db *db.DbHandler) FileSystem
 	RunInTx(fn func(FileSystem) error) error
 
 	// create.go
-	CreateResourceByPath(path string, dir bool) (Resource, error)
+	CreateResourceByPath(path string, dir, recursive bool) (Resource, error)
 	CreateMemberResource(r Resource, id uuid.UUID, name string, dir bool) (Resource, error)
 
 	// find.go

@@ -20,9 +20,24 @@ func (f filesystem) RootID() uuid.UUID {
 	return f.rootID
 }
 
+func (f filesystem) WithRoot(id uuid.UUID) FileSystem {
+	return f.withRoot(id)
+}
+
+func (f filesystem) withRoot(id uuid.UUID) filesystem {
+	return filesystem{
+		db:       f.db,
+		ctx:      f.ctx,
+		cs:       f.cs,
+		rootID:   id,
+		username: f.username,
+	}
+}
+
 func (f filesystem) WithDb(db *db.DbHandler) FileSystem {
 	return f.withDb(db)
 }
+
 func (f filesystem) withDb(db *db.DbHandler) filesystem {
 	return filesystem{
 		db:       db,

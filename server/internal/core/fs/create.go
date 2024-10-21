@@ -8,7 +8,7 @@ import (
 	"github.com/shroff/phylum/server/internal/core/db"
 )
 
-func (f filesystem) CreateResourceByPath(path string, dir bool) (Resource, error) {
+func (f filesystem) CreateResourceByPath(path string, dir, recursive bool) (Resource, error) {
 	path = strings.TrimRight(path, "/")
 	index := strings.LastIndex(path, "/")
 	name := path[index+1:]
@@ -16,9 +16,16 @@ func (f filesystem) CreateResourceByPath(path string, dir bool) (Resource, error
 	parent, err := f.ResourceByPath(parentPath)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
-			err = ErrParentNotFound
+			if recursive {
+				// TODO: this is very inefficient. Fix it
+				parent, err = f.CreateResourceByPath(parentPath, true, true)
+			} else {
+				err = ErrParentNotFound
+			}
 		}
-		return Resource{}, err
+		if err != nil {
+			return Resource{}, err
+		}
 	}
 	return f.CreateMemberResource(parent, uuid.New(), name, dir)
 }

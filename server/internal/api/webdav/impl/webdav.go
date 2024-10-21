@@ -37,7 +37,7 @@ type Handler struct {
 // of host operating system convention.
 type FileSystem interface {
 	ResourceByPath(name string) (fs.Resource, error)
-	CreateResourceByPath(name string, dir bool) (fs.Resource, error)
+	CreateResourceByPath(name string, dir, recursive bool) (fs.Resource, error)
 	DeleteRecursive(r fs.Resource, hardDelete bool) error
 	Move(r fs.Resource, target string, overwrite bool) (fs.Resource, bool, error)
 	Copy(r fs.Resource, target string, id uuid.UUID, recursive, overwrite bool) (fs.Resource, bool, error)
@@ -306,7 +306,7 @@ func (h *Handler) handleMkcol(_ http.ResponseWriter, r *http.Request) (status in
 	if r.ContentLength > 0 {
 		return http.StatusUnsupportedMediaType, nil
 	}
-	if _, err := h.FileSystem.CreateResourceByPath(reqPath, true); err != nil {
+	if _, err := h.FileSystem.CreateResourceByPath(reqPath, true, false); err != nil {
 		if errors.Is(err, fs.ErrParentNotFound) {
 			return http.StatusConflict, err
 		}
