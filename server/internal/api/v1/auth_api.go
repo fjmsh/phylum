@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/core/app"
+	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 type authHeaderType = int
@@ -29,25 +30,26 @@ func CreateApiAuthHandler(a *app.App) func(c *gin.Context) {
 	}
 }
 
-func extractUserDetails(a *app.App, c *gin.Context) (app.User, error) {
+func extractUserDetails(a *app.App, c *gin.Context) (user.User, error) {
+	userManager := a.OpenUserManager(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
-		return app.User{}, auth.ErrRequired
+		return user.User{}, auth.ErrRequired
 	} else if auth, ok := checkAuthHeader(header, "basic"); ok {
 		if username, password, ok := decodeBasicAuth(auth); ok {
-			if user, err := a.VerifyUserPassword(c.Request.Context(), username, password); err == nil {
-				return user, nil
+			if u, err := userManager.VerifyUserPassword(username, password); err == nil {
+				return u, nil
 			} else {
-				return app.User{}, err
+				return user.User{}, err
 			}
 		}
 	} else if token, ok := checkAuthHeader(header, "bearer"); ok {
-		if user, err := a.ReadAccessToken(c.Request.Context(), token); err == nil {
-			return user, nil
+		if u, err := userManager.ReadAccessToken(token); err == nil {
+			return u, nil
 		} else {
-			return app.User{}, err
+			return user.User{}, err
 		}
 	}
-	return app.User{}, auth.ErrRequired
+	return user.User{}, auth.ErrRequired
 }
 
 func checkAuthHeader(header, prefix string) (string, bool) {

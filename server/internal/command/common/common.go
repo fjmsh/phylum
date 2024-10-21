@@ -63,7 +63,7 @@ func UserFileSystem(cmd *cobra.Command) fs.FileSystem {
 			fmt.Println("could not read user: " + err.Error())
 			os.Exit(4)
 		} else {
-			if user, err := App().UserByEmail(context.Background(), value); err != nil {
+			if user, err := App().OpenUserManager(context.Background()).UserByEmail(value); err != nil {
 				fmt.Println("could not find user '" + value + "': " + err.Error())
 				os.Exit(5)
 			} else {

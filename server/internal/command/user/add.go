@@ -10,6 +10,7 @@ import (
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/app"
 	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -93,8 +94,9 @@ func setupUserAddCommand() *cobra.Command {
 
 			ctx := context.Background()
 			err = common.App().RunInTx(ctx, func(a app.App) error {
-				var u app.User
-				if user, err := a.CreateUser(ctx, username, displayName, password, root); err != nil {
+				userManager := a.OpenUserManager(ctx)
+				var u user.User
+				if user, err := userManager.CreateUser(username, displayName, password, root); err != nil {
 					return err
 				} else {
 					u = user
@@ -109,7 +111,7 @@ func setupUserAddCommand() *cobra.Command {
 					if _, err := f.UpdatePermissions(home, u.Username, fs.PermissionReadWriteShare); err != nil {
 						return err
 					}
-					return a.UpdateUserHome(ctx, u, home.ID)
+					return userManager.UpdateUserHome(u, home.ID)
 				}
 
 				return nil

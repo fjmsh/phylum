@@ -1,7 +1,6 @@
-package app
+package user
 
 import (
-	"context"
 	"net/http"
 	"time"
 	"unsafe"
@@ -22,8 +21,8 @@ var accessTokenValiditiy = pgtype.Interval{
 
 var ErrCredentialsInvalid = errors.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid Credentials")
 
-func (a App) VerifyUserPassword(ctx context.Context, email, password string) (User, error) {
-	if user, err := a.db.UserByUsername(ctx, email); err != nil {
+func (m manager) VerifyUserPassword(email, password string) (User, error) {
+	if user, err := m.db.UserByUsername(m.ctx, email); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return User{}, ErrCredentialsInvalid
 		}
@@ -43,8 +42,8 @@ func (a App) VerifyUserPassword(ctx context.Context, email, password string) (Us
 	}
 }
 
-func (a App) CreateAccessToken(ctx context.Context, username string) (string, error) {
-	if token, err := a.db.InsertAccessToken(ctx, db.InsertAccessTokenParams{
+func (m manager) CreateAccessToken(username string) (string, error) {
+	if token, err := m.db.InsertAccessToken(m.ctx, db.InsertAccessTokenParams{
 		ID:       GenerateRandomString(accessTokenLength),
 		Validity: accessTokenValiditiy,
 		Username: username,
@@ -55,8 +54,8 @@ func (a App) CreateAccessToken(ctx context.Context, username string) (string, er
 	}
 }
 
-func (a App) ReadAccessToken(ctx context.Context, accessToken string) (User, error) {
-	token, err := a.db.AccessTokenById(ctx, accessToken)
+func (m manager) ReadAccessToken(accessToken string) (User, error) {
+	token, err := m.db.AccessTokenById(m.ctx, accessToken)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return User{}, ErrCredentialsInvalid
 	} else if err != nil {

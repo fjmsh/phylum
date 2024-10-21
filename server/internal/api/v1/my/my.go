@@ -4,13 +4,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
 	fsapi "github.com/shroff/phylum/server/internal/api/v1/fs"
-	"github.com/shroff/phylum/server/internal/api/v1/users"
 	"github.com/shroff/phylum/server/internal/core/app"
 	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 type myHomeResponse struct {
-	User users.UserResponse       `json:"user"`
+	User user.User                `json:"user"`
 	Home fsapi.ResourceLsResponse `json:"home"`
 }
 
@@ -33,7 +33,7 @@ func handleMyHomeRoute(c *gin.Context) {
 	}
 
 	c.JSON(200, myHomeResponse{
-		User: users.ResponseFromUser(user),
+		User: user,
 		Home: fsapi.LsResponseFromResource(f, r),
 	})
 }

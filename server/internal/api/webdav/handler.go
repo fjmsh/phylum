@@ -10,6 +10,7 @@ import (
 	webdav "github.com/shroff/phylum/server/internal/api/webdav/impl"
 	"github.com/shroff/phylum/server/internal/core/app"
 	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,10 +24,11 @@ func createBasicAuthHandler(a *app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		authSuccess := false
 		if username, pass, ok := c.Request.BasicAuth(); ok {
-			if user, err := a.VerifyUserPassword(c.Request.Context(), username, pass); err == nil {
-				auth.Set(c, user, a.OpenFileSystem(c.Request.Context(), user))
+			ctx := c.Request.Context()
+			if u, err := a.OpenUserManager(ctx).VerifyUserPassword(username, pass); err == nil {
+				auth.Set(c, u, a.OpenFileSystem(ctx, u))
 				authSuccess = true
-			} else if !errors.Is(err, app.ErrCredentialsInvalid) {
+			} else if !errors.Is(err, user.ErrCredentialsInvalid) {
 				panic(err)
 			}
 		}

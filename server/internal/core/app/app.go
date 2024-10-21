@@ -9,6 +9,7 @@ import (
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/storage"
+	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 const defaultUserUsername = "phylum"
@@ -25,9 +26,10 @@ func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage) (*App, er
 		db: db,
 		cs: cs,
 	}
-	u, err := app.UserByEmail(ctx, defaultUserUsername)
+	userManager := user.CreateManager(ctx, db)
+	u, err := userManager.UserByEmail(defaultUserUsername)
 
-	if errors.Is(err, ErrUserNotFound) {
+	if errors.Is(err, user.ErrNotFound) {
 		u, err = app.populateData(ctx)
 	}
 	if err != nil {
@@ -51,7 +53,7 @@ func (a App) RunInTx(ctx context.Context, fn func(App) error) error {
 	})
 }
 
-func (a *App) populateData(ctx context.Context) (user User, e error) {
+func (a *App) populateData(ctx context.Context) (u user.User, e error) {
 	e = a.db.WithTx(ctx, func(dbh *db.DbHandler) error {
 		var err error
 
@@ -98,7 +100,7 @@ func (a *App) populateData(ctx context.Context) (user User, e error) {
 		if err != nil {
 			return err
 		}
-		user = User{
+		user := user.User{
 			Username:    u.Username,
 			DisplayName: u.DisplayName,
 			Root:        u.Root,
@@ -115,12 +117,16 @@ func (a *App) populateData(ctx context.Context) (user User, e error) {
 	return
 }
 
-func (a App) OpenFileSystem(ctx context.Context, user User) fs.FileSystem {
-	return fs.OpenFileSystem(a.db, ctx, a.cs, user.Username, user.Root)
+func (a App) OpenFileSystem(ctx context.Context, u user.User) fs.FileSystem {
+	return fs.OpenFileSystem(a.db, ctx, a.cs, u.Username, u.Root)
 }
 
-func (a App) GetSharedResources(ctx context.Context, user User) (result []fs.Resource, err error) {
-	res, err := a.db.Queries.SharedResources(ctx, db.SharedResourcesParams{Username: user.Username, UserHome: user.Home})
+func (a App) OpenUserManager(ctx context.Context) user.Manager {
+	return user.CreateManager(ctx, a.db)
+}
+
+func (a App) GetSharedResources(ctx context.Context, u user.User) (result []fs.Resource, err error) {
+	res, err := a.db.Queries.SharedResources(ctx, db.SharedResourcesParams{Username: u.Username, UserHome: u.Home})
 	if err != nil {
 		return
 	}

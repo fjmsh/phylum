@@ -35,13 +35,14 @@ func setupUserChrootCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]
 			idOrPath := args[1]
-			if user, err := common.App().UserByEmail(context.Background(), email); err != nil {
+			userManager := common.App().OpenUserManager(context.Background())
+			if user, err := userManager.UserByEmail(email); err != nil {
 				logrus.Fatal(err)
 			} else {
 				if res, err := common.App().Rootfs.ResourceByPathOrUUID(idOrPath); err != nil {
 					logrus.Fatal(err)
 				} else {
-					common.App().UpdateUserRoot(context.Background(), user, res.ID)
+					userManager.UpdateUserRoot(user, res.ID)
 				}
 			}
 		},
@@ -56,7 +57,7 @@ func setupUserListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List Users",
 		Run: func(cmd *cobra.Command, args []string) {
-			users, err := common.App().ListUsers(context.Background())
+			users, err := common.App().OpenUserManager(context.Background()).ListUsers()
 			if err != nil {
 				logrus.Fatal(err)
 			}

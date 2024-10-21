@@ -4,14 +4,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/api/v1/users"
 	"github.com/shroff/phylum/server/internal/core/app"
 	"github.com/shroff/phylum/server/internal/core/errors"
+	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 type loginResponse struct {
-	AccessToken string             `json:"access_token"`
-	User        users.UserResponse `json:"user"`
+	AccessToken string    `json:"access_token"`
+	User        user.User `json:"user"`
 }
 
 func SetupRoutes(r *gin.RouterGroup, a *app.App) {
@@ -30,15 +30,16 @@ func createLoginRouteHandler(a *app.App) func(c *gin.Context) {
 			panic(errors.NewError(http.StatusBadRequest, "missing_password", "Password Not Specified"))
 		}
 
-		if user, err := a.VerifyUserPassword(c.Request.Context(), email, password); err != nil {
+		userManager := a.OpenUserManager(c.Request.Context())
+		if user, err := userManager.VerifyUserPassword(email, password); err != nil {
 			panic(err)
 		} else {
-			if token, err := a.CreateAccessToken(c.Request.Context(), user.Username); err != nil {
+			if token, err := userManager.CreateAccessToken(user.Username); err != nil {
 				panic(err)
 			} else {
 				c.JSON(200, loginResponse{
 					AccessToken: token,
-					User:        users.ResponseFromUser(user),
+					User:        user,
 				})
 			}
 		}
