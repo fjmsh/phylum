@@ -132,18 +132,12 @@ var liveProps = map[xml.Name]struct {
 //
 // Each Propstat has a unique status and each property name will only be part
 // of one Propstat element.
-func props(fs FileSystem, ls LockSystem, name string, pnames []xml.Name) ([]Propstat, error) {
-	fi, err := fs.ResourceByPath(name)
-	if err != nil {
-		return nil, err
-	}
-	isDir := fi.Dir
-
+func props(fs FileSystem, ls LockSystem, fi fs.Resource, pnames []xml.Name) ([]Propstat, error) {
 	pstatOK := Propstat{Status: http.StatusOK}
 	pstatNotFound := Propstat{Status: http.StatusNotFound}
 	for _, pn := range pnames {
 		// Otherwise, it must either be a live property or we don't know it.
-		if prop := liveProps[pn]; prop.findFn != nil && (prop.dir || !isDir) {
+		if prop := liveProps[pn]; prop.findFn != nil && (prop.dir || !fi.Dir) {
 			innerXML := prop.findFn(fi)
 			pstatOK.Props = append(pstatOK.Props, Property{
 				XMLName:  pn,
@@ -159,16 +153,10 @@ func props(fs FileSystem, ls LockSystem, name string, pnames []xml.Name) ([]Prop
 }
 
 // propnames returns the property names defined for resource name.
-func propnames(fs FileSystem, ls LockSystem, name string) ([]xml.Name, error) {
-	fi, err := fs.ResourceByPath(name)
-	if err != nil {
-		return nil, err
-	}
-	isDir := fi.Dir
-
+func propnames(fs FileSystem, ls LockSystem, fi fs.Resource) ([]xml.Name, error) {
 	pnames := make([]xml.Name, 0, len(liveProps))
 	for pn, prop := range liveProps {
-		if prop.findFn != nil && (prop.dir || !isDir) {
+		if prop.findFn != nil && (prop.dir || !fi.Dir) {
 			pnames = append(pnames, pn)
 		}
 	}
@@ -183,8 +171,8 @@ func propnames(fs FileSystem, ls LockSystem, name string) ([]xml.Name, error) {
 // returned if they are named in 'include'.
 //
 // See http://www.webdav.org/specs/rfc4918.html#METHOD_PROPFIND
-func allprop(fs FileSystem, ls LockSystem, name string, include []xml.Name) ([]Propstat, error) {
-	pnames, err := propnames(fs, ls, name)
+func allprop(fs FileSystem, ls LockSystem, fi fs.Resource, include []xml.Name) ([]Propstat, error) {
+	pnames, err := propnames(fs, ls, fi)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +186,7 @@ func allprop(fs FileSystem, ls LockSystem, name string, include []xml.Name) ([]P
 			pnames = append(pnames, pn)
 		}
 	}
-	return props(fs, ls, name, pnames)
+	return props(fs, ls, fi, pnames)
 }
 
 // patch patches the properties of resource name. The return values are
