@@ -1,8 +1,11 @@
 package user
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 const DefaultUserUsername = "phylum"
@@ -13,6 +16,10 @@ type User struct {
 	DisplayName string    `json:"display"`
 	Root        uuid.UUID `json:"root"`
 	Home        uuid.UUID `json:"home"`
+}
+
+func (u User) OpenFileSystem(ctx context.Context) fs.FileSystem {
+	return fs.Open(ctx, u.Username, u.Root)
 }
 
 type Manager interface {
@@ -35,4 +42,7 @@ type Manager interface {
 	VerifyUserPassword(email, password string) (User, error)
 	CreateAccessToken(username string) (string, error)
 	ReadAccessToken(accessToken string) (User, error)
+
+	// user_lists.go
+	GetSharedResources(u User) (result []fs.Resource, err error)
 }

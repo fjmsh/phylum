@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
-	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 type FileSystem interface {
@@ -49,13 +48,13 @@ type FileSystem interface {
 	DiskUsage(r Resource) (DiskUsageInfo, error)
 }
 
-func Open(ctx context.Context, u user.User) FileSystem {
+func Open(ctx context.Context, username string, root uuid.UUID) FileSystem {
 	return filesystem{
 		ctx:      ctx,
 		db:       db.Get(),
 		cs:       storage.Get(),
-		rootID:   u.Root,
-		username: u.Username,
+		username: username,
+		rootID:   root,
 	}
 }
 

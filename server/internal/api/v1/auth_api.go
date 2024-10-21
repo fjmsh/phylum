@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
-	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
@@ -22,10 +21,10 @@ const (
 func CreateApiAuthHandler() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
-		if user, err := extractUserDetails(c); err != nil {
+		if u, err := extractUserDetails(c); err != nil {
 			panic(err)
 		} else {
-			auth.Set(c, user, fs.Open(ctx, user))
+			auth.Set(c, u, u.OpenFileSystem(ctx))
 		}
 	}
 }

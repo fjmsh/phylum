@@ -21,7 +21,7 @@ func RootFileSystem() fs.FileSystem {
 		rootUser = user
 	}
 
-	return fs.Open(context.Background(), rootUser)
+	return rootUser.OpenFileSystem(context.Background())
 }
 
 func UserFileSystem(cmd *cobra.Command) fs.FileSystem {
@@ -34,7 +34,7 @@ func UserFileSystem(cmd *cobra.Command) fs.FileSystem {
 				fmt.Println("could not find user '" + value + "': " + err.Error())
 				os.Exit(5)
 			} else {
-				f = fs.Open(context.Background(), u)
+				f = u.OpenFileSystem(context.Background())
 			}
 		}
 	}
