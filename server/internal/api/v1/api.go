@@ -9,7 +9,7 @@ import (
 	"github.com/shroff/phylum/server/internal/core/app"
 )
 
-func Setup(r *gin.RouterGroup, a *app.App) {
+func Setup(r *gin.RouterGroup, a app.App) {
 	// Unauthenticated routes
 	login.SetupRoutes(r, a)
 

@@ -16,7 +16,7 @@ import (
 
 var d *db.DbHandler
 var s storage.Storage
-var a *app.App
+var a app.App
 var f fs.FileSystem
 
 func DB() *db.DbHandler {
@@ -46,7 +46,7 @@ func Storage() storage.Storage {
 	return s
 }
 
-func App() *app.App {
+func App() app.App {
 	if a == nil {
 		if app, err := app.Create(context.Background(), DB(), Storage()); err != nil {
 			fmt.Println("could not initialize app: " + err.Error())

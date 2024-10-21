@@ -15,12 +15,12 @@ import (
 )
 
 type handler struct {
-	app        *app.App
+	app        app.App
 	prefix     string
 	lockSystem webdav.LockSystem
 }
 
-func createBasicAuthHandler(a *app.App) func(c *gin.Context) {
+func createBasicAuthHandler(a app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		authSuccess := false
 		if username, pass, ok := c.Request.BasicAuth(); ok {
@@ -39,7 +39,7 @@ func createBasicAuthHandler(a *app.App) func(c *gin.Context) {
 	}
 }
 
-func SetupHandler(r *gin.RouterGroup, app *app.App) {
+func SetupHandler(r *gin.RouterGroup, app app.App) {
 	logrus.Debug("Setting up WebDAV access at " + r.BasePath())
 	handler := &handler{
 		app:        app,

@@ -19,7 +19,7 @@ const (
 	authHeaderBearer  = 2
 )
 
-func CreateApiAuthHandler(a *app.App) func(c *gin.Context) {
+func CreateApiAuthHandler(a app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		if user, err := extractUserDetails(a, c); err != nil {
@@ -30,7 +30,7 @@ func CreateApiAuthHandler(a *app.App) func(c *gin.Context) {
 	}
 }
 
-func extractUserDetails(a *app.App, c *gin.Context) (user.User, error) {
+func extractUserDetails(a app.App, c *gin.Context) (user.User, error) {
 	userManager := a.OpenUserManager(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		return user.User{}, auth.ErrRequired

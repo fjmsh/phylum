@@ -14,12 +14,12 @@ type loginResponse struct {
 	User        user.User `json:"user"`
 }
 
-func SetupRoutes(r *gin.RouterGroup, a *app.App) {
+func SetupRoutes(r *gin.RouterGroup, a app.App) {
 	group := r.Group("/login")
 	group.POST("/password", createLoginRouteHandler(a))
 }
 
-func createLoginRouteHandler(a *app.App) func(c *gin.Context) {
+func createLoginRouteHandler(a app.App) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		email, ok := c.GetQuery("email")
 		if !ok {

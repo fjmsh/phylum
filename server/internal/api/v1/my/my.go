@@ -18,7 +18,7 @@ type mySharedResponse struct {
 	Shared []fs.Resource `json:"shared"`
 }
 
-func SetupRoutes(r *gin.RouterGroup, a *app.App) {
+func SetupRoutes(r *gin.RouterGroup, a app.App) {
 	group := r.Group("/my")
 	group.GET("/home", handleMyHomeRoute)
 	group.GET("/shared", createMySharedRouteHandler(a))
@@ -38,7 +38,7 @@ func handleMyHomeRoute(c *gin.Context) {
 	})
 }
 
-func createMySharedRouteHandler(a *app.App) func(*gin.Context) {
+func createMySharedRouteHandler(a app.App) func(*gin.Context) {
 	return func(c *gin.Context) {
 		user := auth.GetUser(c)
 		shared, err := a.OpenUserManager(c.Request.Context()).GetSharedResources(user)

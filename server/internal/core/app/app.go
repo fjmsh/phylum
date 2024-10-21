@@ -11,13 +11,19 @@ import (
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
-type App struct {
+type App interface {
+	RunInTx(ctx context.Context, fn func(*db.DbHandler) error) error
+	OpenFileSystem(ctx context.Context, u user.User) fs.FileSystem
+	OpenUserManager(ctx context.Context) user.Manager
+}
+
+type app struct {
 	db *db.DbHandler
 	cs storage.Storage
 }
 
-func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage) (*App, error) {
-	app := &App{
+func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage) (App, error) {
+	app := app{
 		db: db,
 		cs: cs,
 	}
@@ -34,19 +40,19 @@ func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage) (*App, er
 	return app, nil
 }
 
-func (a App) RunInTx(ctx context.Context, fn func(*db.DbHandler) error) error {
+func (a app) RunInTx(ctx context.Context, fn func(*db.DbHandler) error) error {
 	return a.db.WithTx(ctx, fn)
 }
 
-func (a App) OpenFileSystem(ctx context.Context, u user.User) fs.FileSystem {
+func (a app) OpenFileSystem(ctx context.Context, u user.User) fs.FileSystem {
 	return fs.OpenFileSystem(a.db, ctx, a.cs, u.Username, u.Root)
 }
 
-func (a App) OpenUserManager(ctx context.Context) user.Manager {
+func (a app) OpenUserManager(ctx context.Context) user.Manager {
 	return user.CreateManager(ctx, a.db)
 }
 
-func (a *App) populateData(ctx context.Context) (u user.User, e error) {
+func (a app) populateData(ctx context.Context) (u user.User, e error) {
 	e = a.db.WithTx(ctx, func(dbh *db.DbHandler) error {
 		var err error
 
