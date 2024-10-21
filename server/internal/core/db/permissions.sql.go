@@ -121,8 +121,9 @@ WITH RECURSIVE nodes(resid, id, parent, inherited_permissions, name, path, found
     WHERE r.id = $2::uuid 
   UNION ALL
     SELECT n.resid, r.id, r.parent, jsonb_bitwise_or(r.permissions, n.inherited_permissions), r.name,
-      CASE n.path 
-        WHEN '' THEN n.name
+      CASE 
+        WHEN n.found THEN n.path
+        WHEN n.path = '' THEN n.name
         ELSE concat(n.name, '/', n.path)
       END,
       CASE

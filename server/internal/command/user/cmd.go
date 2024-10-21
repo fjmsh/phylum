@@ -78,7 +78,7 @@ func setupUserAddCommand() *cobra.Command {
 
 func setupUserChrootCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "chroot email uuid",
+		Use:   "chroot <username> [ <path> | <uuid> ]",
 		Short: "Set User Root",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
