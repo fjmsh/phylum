@@ -25,7 +25,7 @@ func createBasicAuthHandler(a app.App) func(c *gin.Context) {
 		authSuccess := false
 		if username, pass, ok := c.Request.BasicAuth(); ok {
 			ctx := c.Request.Context()
-			if u, err := a.OpenUserManager(ctx).VerifyUserPassword(username, pass); err == nil {
+			if u, err := user.CreateManager(ctx).VerifyUserPassword(username, pass); err == nil {
 				auth.Set(c, u, a.OpenFileSystem(ctx, u))
 				authSuccess = true
 			} else if !errors.Is(err, user.ErrCredentialsInvalid) {

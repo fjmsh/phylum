@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/shroff/phylum/server/internal/command/common"
+	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -35,7 +36,7 @@ func setupUserChrootCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]
 			idOrPath := args[1]
-			userManager := common.App().OpenUserManager(context.Background())
+			userManager := user.CreateManager(context.Background())
 			if user, err := userManager.UserByEmail(email); err != nil {
 				logrus.Fatal(err)
 			} else {
@@ -57,7 +58,7 @@ func setupUserListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List Users",
 		Run: func(cmd *cobra.Command, args []string) {
-			users, err := common.App().OpenUserManager(context.Background()).AllUsers()
+			users, err := user.CreateManager(context.Background()).AllUsers()
 			if err != nil {
 				logrus.Fatal(err)
 			}

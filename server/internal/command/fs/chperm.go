@@ -7,6 +7,7 @@ import (
 
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/spf13/cobra"
 )
 
@@ -24,9 +25,9 @@ func setupChpermCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			user := args[1]
-			if _, err := common.App().OpenUserManager(context.Background()).UserByEmail(user); err != nil {
-				fmt.Println("cannot update permissions for user '" + user + "': " + err.Error())
+			username := args[1]
+			if _, err := user.CreateManager(context.Background()).UserByEmail(username); err != nil {
+				fmt.Println("cannot update permissions for user '" + username + "': " + err.Error())
 				os.Exit(1)
 			}
 
@@ -44,7 +45,7 @@ func setupChpermCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if _, err := f.UpdatePermissions(r, user, permission); err != nil {
+			if _, err := f.UpdatePermissions(r, username, permission); err != nil {
 				fmt.Println("cannot update permissions for '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)
 			}

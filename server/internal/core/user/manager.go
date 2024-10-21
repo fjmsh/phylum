@@ -11,6 +11,13 @@ type manager struct {
 	ctx context.Context
 }
 
+func CreateManager(ctx context.Context) Manager {
+	return &manager{
+		ctx: ctx,
+		db:  db.Get(),
+	}
+}
+
 func (m manager) WithDb(db *db.DbHandler) Manager {
 	return m.withDb(db)
 }

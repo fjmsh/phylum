@@ -31,7 +31,7 @@ func CreateApiAuthHandler(a app.App) func(c *gin.Context) {
 }
 
 func extractUserDetails(a app.App, c *gin.Context) (user.User, error) {
-	userManager := a.OpenUserManager(c.Request.Context())
+	userManager := user.CreateManager(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		return user.User{}, auth.ErrRequired
 	} else if auth, ok := checkAuthHeader(header, "basic"); ok {

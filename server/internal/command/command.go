@@ -8,8 +8,10 @@ import (
 	"github.com/shroff/phylum/server/internal/command/fs"
 	"github.com/shroff/phylum/server/internal/command/schema"
 	"github.com/shroff/phylum/server/internal/command/serve"
-	"github.com/shroff/phylum/server/internal/command/storage"
+	storagecmd "github.com/shroff/phylum/server/internal/command/storage"
 	"github.com/shroff/phylum/server/internal/command/user"
+	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -45,6 +47,12 @@ func SetupCommand() {
 			os.Mkdir(workDir, 0750)
 			os.Chdir(workDir)
 		}
+
+		db.DatabaseURL = viper.GetString("database_url")
+		db.TraceSQL = viper.GetBool("debug") && viper.GetBool("trace_sql")
+		db.AutoMigrate = viper.GetBool("auto_migrate")
+
+		storage.DefaultStorageDir = viper.GetString("default_storage_dir")
 	}
 
 	defer func() {
@@ -55,7 +63,7 @@ func SetupCommand() {
 	rootCmd.AddCommand([]*cobra.Command{
 		schema.SetupCommand(),
 		user.SetupCommand(),
-		storage.SetupCommand(),
+		storagecmd.SetupCommand(),
 		fs.SetupCommand(),
 		serve.SetupCommand(),
 	}...)

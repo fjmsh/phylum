@@ -24,7 +24,23 @@ type DbHandler struct {
 	pool *pgxpool.Pool
 }
 
-func Create(ctx context.Context, dsn string, traceSQL, autoMigrate bool) (*DbHandler, error) {
+var d *DbHandler
+var DatabaseURL string
+var TraceSQL bool
+var AutoMigrate bool
+
+func Get() *DbHandler {
+	if d == nil {
+		if db, err := create(context.Background(), DatabaseURL, TraceSQL, AutoMigrate); err != nil {
+			panic(err)
+		} else {
+			d = db
+		}
+	}
+	return d
+}
+
+func create(ctx context.Context, dsn string, traceSQL, autoMigrate bool) (*DbHandler, error) {
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, errors.New("Unable to parse DSN: " + err.Error())

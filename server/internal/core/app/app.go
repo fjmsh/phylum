@@ -14,7 +14,6 @@ import (
 type App interface {
 	RunInTx(ctx context.Context, fn func(*db.DbHandler) error) error
 	OpenFileSystem(ctx context.Context, u user.User) fs.FileSystem
-	OpenUserManager(ctx context.Context) user.Manager
 }
 
 type app struct {
@@ -27,8 +26,7 @@ func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage) (App, err
 		db: db,
 		cs: cs,
 	}
-	userManager := user.CreateManager(ctx, db)
-	if _, err := userManager.UserByEmail(user.DefaultUserUsername); err != nil {
+	if _, err := user.CreateManager(ctx).UserByEmail(user.DefaultUserUsername); err != nil {
 		if errors.Is(err, user.ErrNotFound) {
 			_, err = app.populateData(ctx)
 		}
@@ -46,10 +44,6 @@ func (a app) RunInTx(ctx context.Context, fn func(*db.DbHandler) error) error {
 
 func (a app) OpenFileSystem(ctx context.Context, u user.User) fs.FileSystem {
 	return fs.OpenFileSystem(a.db, ctx, a.cs, u.Username, u.Root)
-}
-
-func (a app) OpenUserManager(ctx context.Context) user.Manager {
-	return user.CreateManager(ctx, a.db)
 }
 
 func (a app) populateData(ctx context.Context) (u user.User, e error) {

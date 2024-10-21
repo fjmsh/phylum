@@ -1,8 +1,6 @@
 package user
 
 import (
-	"context"
-
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
@@ -41,11 +39,4 @@ type Manager interface {
 
 	// user_lists.go
 	GetSharedResources(u User) (result []fs.Resource, err error)
-}
-
-func CreateManager(ctx context.Context, db *db.DbHandler) Manager {
-	return &manager{
-		ctx: ctx,
-		db:  db,
-	}
 }

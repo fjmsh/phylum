@@ -96,7 +96,7 @@ func setupUserAddCommand() *cobra.Command {
 
 			ctx := context.Background()
 			err = common.App().RunInTx(ctx, func(db *db.DbHandler) error {
-				userManager := common.App().OpenUserManager(ctx).WithDb(db)
+				userManager := user.CreateManager(ctx).WithDb(db)
 				var u user.User
 				if user, err := userManager.CreateUser(username, displayName, password, root); err != nil {
 					return err
