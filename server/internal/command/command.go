@@ -4,7 +4,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/command/fs"
 	"github.com/shroff/phylum/server/internal/command/schema"
 	"github.com/shroff/phylum/server/internal/command/serve"
@@ -57,7 +56,7 @@ func SetupCommand() {
 
 	defer func() {
 		logrus.Debug("Shutting Down App")
-		common.DB().Close()
+		db.Get().Close()
 	}()
 
 	rootCmd.AddCommand([]*cobra.Command{

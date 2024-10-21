@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
 	fsapi "github.com/shroff/phylum/server/internal/api/v1/fs"
-	"github.com/shroff/phylum/server/internal/core/app"
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
@@ -18,10 +17,10 @@ type mySharedResponse struct {
 	Shared []fs.Resource `json:"shared"`
 }
 
-func SetupRoutes(r *gin.RouterGroup, a app.App) {
+func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/my")
 	group.GET("/home", handleMyHomeRoute)
-	group.GET("/shared", createMySharedRouteHandler(a))
+	group.GET("/shared", createMySharedRouteHandler())
 }
 
 func handleMyHomeRoute(c *gin.Context) {
@@ -38,13 +37,13 @@ func handleMyHomeRoute(c *gin.Context) {
 	})
 }
 
-func createMySharedRouteHandler(a app.App) func(*gin.Context) {
+func createMySharedRouteHandler() func(*gin.Context) {
 	return func(c *gin.Context) {
-		u := auth.GetUser(c)
-		shared, err := user.CreateManager(c.Request.Context()).GetSharedResources(u)
-		if err != nil {
-			panic(err)
-		}
-		c.JSON(200, mySharedResponse{Shared: shared})
+		// u := auth.GetUser(c)
+		// // shared, err := user.CreateManager(c.Request.Context()).GetSharedResources(u)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// c.JSON(200, mySharedResponse{Shared: shared})
 	}
 }

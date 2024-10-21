@@ -9,8 +9,8 @@ import (
 )
 
 type filesystem struct {
-	db       *db.DbHandler
 	ctx      context.Context
+	db       *db.DbHandler
 	cs       storage.Storage
 	rootID   uuid.UUID
 	username string
@@ -26,8 +26,8 @@ func (f filesystem) WithRoot(id uuid.UUID) FileSystem {
 
 func (f filesystem) withRoot(id uuid.UUID) filesystem {
 	return filesystem{
-		db:       f.db,
 		ctx:      f.ctx,
+		db:       f.db,
 		cs:       f.cs,
 		rootID:   id,
 		username: f.username,
@@ -40,8 +40,8 @@ func (f filesystem) WithDb(db *db.DbHandler) FileSystem {
 
 func (f filesystem) withDb(db *db.DbHandler) filesystem {
 	return filesystem{
-		db:       db,
 		ctx:      f.ctx,
+		db:       db,
 		cs:       f.cs,
 		rootID:   f.rootID,
 		username: f.username,

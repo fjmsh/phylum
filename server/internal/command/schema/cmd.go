@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,11 +29,11 @@ func setupSchemaResetCommand() *cobra.Command {
 		Short: "Reset Database Schema",
 		Run: func(cmd *cobra.Command, args []string) {
 			viper.Set("auto_migrate", false)
-			if err := common.DB().DeleteSchema(context.Background()); err != nil {
+			if err := db.Get().DeleteSchema(context.Background()); err != nil {
 				fmt.Println("unable to delete database schema: " + err.Error())
 				os.Exit(1)
 			}
-			if err := common.DB().Migrate(context.Background(), -1); err != nil {
+			if err := db.Get().Migrate(context.Background(), -1); err != nil {
 				fmt.Println("unable to migrate database schema: " + err.Error())
 				os.Exit(1)
 			}
@@ -51,13 +50,13 @@ func setupSchemaMigrateCommand() *cobra.Command {
 			ctx := context.Background()
 			if args[0] == "auto" || args[0] == "latest" {
 				db.AutoMigrate = true
-				common.DB()
+				db.Get()
 			} else {
 				db.AutoMigrate = false
 				if v, err := strconv.Atoi(args[0]); err != nil {
 					fmt.Println(err.Error())
 					os.Exit(3)
-				} else if err := common.DB().Migrate(ctx, v); err != nil {
+				} else if err := db.Get().Migrate(ctx, v); err != nil {
 					fmt.Println(err.Error())
 					os.Exit(4)
 				}

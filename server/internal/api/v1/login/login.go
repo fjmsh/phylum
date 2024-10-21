@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/core/app"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
@@ -14,12 +13,12 @@ type loginResponse struct {
 	User        user.User `json:"user"`
 }
 
-func SetupRoutes(r *gin.RouterGroup, a app.App) {
+func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/login")
-	group.POST("/password", createLoginRouteHandler(a))
+	group.POST("/password", createLoginRouteHandler())
 }
 
-func createLoginRouteHandler(a app.App) func(c *gin.Context) {
+func createLoginRouteHandler() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		email, ok := c.GetQuery("email")
 		if !ok {

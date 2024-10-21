@@ -3,7 +3,6 @@ package user
 import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 const DefaultUserUsername = "phylum"
@@ -36,7 +35,4 @@ type Manager interface {
 	VerifyUserPassword(email, password string) (User, error)
 	CreateAccessToken(username string) (string, error)
 	ReadAccessToken(accessToken string) (User, error)
-
-	// user_lists.go
-	GetSharedResources(u User) (result []fs.Resource, err error)
 }

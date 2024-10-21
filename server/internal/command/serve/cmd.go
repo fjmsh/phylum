@@ -4,7 +4,6 @@ import (
 	"github.com/fvbock/endless"
 	apiv1 "github.com/shroff/phylum/server/internal/api/v1"
 	"github.com/shroff/phylum/server/internal/api/webdav"
-	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -18,8 +17,8 @@ func SetupCommand() *cobra.Command {
 			config := viper.GetViper()
 			engine := createEngine(config.GetBool("debug"), config.GetBool("log_body"), config.GetBool("cors_enabled"), config.GetStringSlice("cors_origins"))
 
-			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")), common.App())
-			apiv1.Setup(engine.Group("/api/v1"), common.App())
+			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")))
+			apiv1.Setup(engine.Group("/api/v1"))
 
 			server := endless.NewServer(config.GetString("listen"), engine)
 			server.BeforeBegin = func(addr string) {

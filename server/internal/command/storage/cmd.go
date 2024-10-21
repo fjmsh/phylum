@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -59,7 +58,7 @@ func setupStorageCreateCommand() *cobra.Command {
 				params[paramName] = val
 			}
 
-			if err := common.Storage().CreateBackend(context.Background(), name, driver, params); err != nil {
+			if err := storage.Get().CreateBackend(context.Background(), name, driver, params); err != nil {
 				logrus.Fatal(err)
 			}
 
@@ -74,7 +73,7 @@ func setupStorageListCommand() *cobra.Command {
 		Short: "List all storage backends",
 		Run: func(cmd *cobra.Command, args []string) {
 			logrus.Info("Available storage backends:")
-			for k, v := range common.Storage().ListBackends() {
+			for k, v := range storage.Get().ListBackends() {
 				logrus.Info(fmt.Sprintf("%s: %s", k, v))
 			}
 		},

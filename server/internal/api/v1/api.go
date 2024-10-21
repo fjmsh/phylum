@@ -6,16 +6,15 @@ import (
 	"github.com/shroff/phylum/server/internal/api/v1/login"
 	"github.com/shroff/phylum/server/internal/api/v1/my"
 	"github.com/shroff/phylum/server/internal/api/v1/users"
-	"github.com/shroff/phylum/server/internal/core/app"
 )
 
-func Setup(r *gin.RouterGroup, a app.App) {
+func Setup(r *gin.RouterGroup) {
 	// Unauthenticated routes
-	login.SetupRoutes(r, a)
+	login.SetupRoutes(r)
 
 	// Authenticated routes
-	r.Use(CreateApiAuthHandler(a))
+	r.Use(CreateApiAuthHandler())
 	fs.SetupRoutes(r)
-	my.SetupRoutes(r, a)
+	my.SetupRoutes(r)
 	users.SetupUserRoutes(r)
 }

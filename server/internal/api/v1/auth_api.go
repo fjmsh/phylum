@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
-	"github.com/shroff/phylum/server/internal/core/app"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
@@ -19,18 +19,18 @@ const (
 	authHeaderBearer  = 2
 )
 
-func CreateApiAuthHandler(a app.App) func(c *gin.Context) {
+func CreateApiAuthHandler() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
-		if user, err := extractUserDetails(a, c); err != nil {
+		if user, err := extractUserDetails(c); err != nil {
 			panic(err)
 		} else {
-			auth.Set(c, user, a.OpenFileSystem(ctx, user))
+			auth.Set(c, user, fs.Open(ctx, user))
 		}
 	}
 }
 
-func extractUserDetails(a app.App, c *gin.Context) (user.User, error) {
+func extractUserDetails(c *gin.Context) (user.User, error) {
 	userManager := user.CreateManager(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		return user.User{}, auth.ErrRequired
