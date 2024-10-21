@@ -61,6 +61,9 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 }
 
 func (f filesystem) ResourceByPathOrUUID(pathOrUUID string) (Resource, error) {
+	if pathOrUUID == "" {
+		return Resource{}, ErrResourcePathInvalid
+	}
 	if pathOrUUID[0] == '/' {
 		return f.ResourceByPath(pathOrUUID)
 	}
