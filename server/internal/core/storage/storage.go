@@ -12,6 +12,7 @@ import (
 )
 
 type Storage interface {
+	WithDb(db *db.DbHandler) Storage
 	CreateBackend(ctx context.Context, name string, driver string, params map[string]string) error
 	ListBackends() map[string]Backend
 	OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error)
@@ -38,6 +39,18 @@ func Create(ctx context.Context, db *db.DbHandler, defaultStorageDir string) (St
 			backends:       backends,
 			defaultBackend: defaultBackend,
 		}, nil
+	}
+}
+
+func (s storage) WithDb(db *db.DbHandler) Storage {
+	return s.withDb(db)
+}
+
+func (s storage) withDb(db *db.DbHandler) storage {
+	return storage{
+		db:             db,
+		backends:       s.backends,
+		defaultBackend: s.defaultBackend,
 	}
 }
 

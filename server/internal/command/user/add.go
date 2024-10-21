@@ -2,11 +2,14 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strings"
 	"syscall"
 
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/sirupsen/logrus"
+	"github.com/shroff/phylum/server/internal/core/app"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -17,20 +20,27 @@ func setupUserAddCommand() *cobra.Command {
 		Short: "Add User",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			email := args[0]
+			username := args[0]
 
-			displayName, _ := cmd.Flags().GetString("name")
-			if displayName == "" {
-				displayName = email
+			displayName := username
+			if n, err := cmd.Flags().GetString("name"); err != nil {
+				fmt.Println("invalid value for flag 'name': " + err.Error())
+				os.Exit(1)
+			} else if n != "" {
+				displayName = username
 			}
 
-			password, _ := cmd.Flags().GetString("password")
-			if password == "" {
+			password, err := cmd.Flags().GetString("password")
+			if err != nil {
+				fmt.Println("invalid password: " + err.Error())
+				os.Exit(1)
+			} else if password == "" {
 				os.Stdout.WriteString("Password: ")
 				bytes, err := term.ReadPassword(syscall.Stdin)
 				os.Stdout.WriteString("\n")
 				if err != nil {
-					logrus.Fatal(err)
+					fmt.Println("unable to read password: " + err.Error())
+					os.Exit(1)
 				}
 				password = string(bytes)
 
@@ -38,21 +48,83 @@ func setupUserAddCommand() *cobra.Command {
 				bytes, err = term.ReadPassword(syscall.Stdin)
 				os.Stdout.WriteString("\n")
 				if err != nil {
-					logrus.Fatal(err)
+					fmt.Println("unable to read password: " + err.Error())
+					os.Exit(1)
 				}
 				passwordConf := string(bytes)
 
 				if password != passwordConf {
-					logrus.Fatal("Password does not match confirmation")
+					fmt.Println("password does not match confirmation")
+					os.Exit(1)
+				}
+			}
+			root := common.App().Rootfs.RootID()
+			if rootPathOrUUID, err := cmd.Flags().GetString("chroot"); err != nil {
+				fmt.Println("invalid value for flag 'chroot': " + err.Error())
+				os.Exit(2)
+			} else if rootPathOrUUID != "" {
+				if r, err := common.App().Rootfs.ResourceByPathOrUUID(rootPathOrUUID); err != nil {
+					fmt.Println("invalid value for flag 'chroot': " + err.Error())
+					os.Exit(1)
+				} else {
+					root = r.ID
 				}
 			}
 
-			if err := common.App().CreateUser(context.Background(), email, displayName, password, nil); err != nil {
-				logrus.Fatal(err)
+			createHome, _ := cmd.Flags().GetBool("no-create-home")
+			homePath := ""
+			if createHome {
+				homePath, _ := cmd.Flags().GetString("home-dir")
+				if homePath == "" {
+					basePath, _ := cmd.Flags().GetString("base-dir")
+					if basePath == "" {
+						fmt.Println("home directory path not specified. try again with -d or -b")
+						os.Exit(1)
+					} else {
+						homePath = strings.TrimRight(basePath, "/") + "/" + username
+					}
+				} else {
+					homePath = strings.TrimRight(homePath, "/")
+				}
+			}
+
+			fmt.Println(root)
+			fmt.Println(homePath)
+
+			ctx := context.Background()
+			err = common.App().RunInTx(ctx, func(a app.App) error {
+				var u app.User
+				if user, err := a.CreateUser(ctx, username, displayName, password, root); err != nil {
+					return err
+				} else {
+					u = user
+				}
+
+				if homePath != "" {
+					f := a.Rootfs.WithRoot(root)
+					home, err := f.CreateResourceByPath(homePath, true, true)
+					if err != nil {
+						return err
+					}
+					if _, err := f.UpdatePermissions(home, u.Username, fs.PermissionReadWriteShare); err != nil {
+						return err
+					}
+					return a.UpdateUserHome(ctx, u, home.ID)
+				}
+
+				return nil
+			})
+			if err != nil {
+				fmt.Println("could not add user: " + err.Error())
+				os.Exit(3)
 			}
 		},
 	}
 	cmd.Flags().StringP("name", "n", "", "Full Name")
 	cmd.Flags().StringP("password", "p", "", "Password")
+	cmd.Flags().StringP("chroot", "R", "", "Chroot")
+	cmd.Flags().StringP("base-dir", "b", "/home", "Base directory for home")
+	cmd.Flags().StringP("home-dir", "d", "", "Home directory")
+	cmd.Flags().BoolP("no-create-home", "M", false, "Do not make home directory")
 	return cmd
 }

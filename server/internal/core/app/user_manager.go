@@ -3,43 +3,40 @@ package app
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 var ErrUserNotFound = errors.NewError(http.StatusNotFound, "user_not_found", "no such user")
+var ErrUserExists = errors.NewError(http.StatusNotFound, "user_already_exists", "user already exists")
 
-func (a App) CreateUser(ctx context.Context, username, displayName, password string, root *uuid.UUID) error {
-	var rootID = a.Rootfs.RootID()
-	if root != nil {
-		rootID = *root
-	}
-	return a.db.WithTx(ctx, func(d *db.DbHandler) error {
-		f := a.Rootfs.WithDb(d)
-		if hash, err := generateArgon2EncodedHash(password, defaultArgon2Params()); err != nil {
-			return err
-		} else if u, err := d.CreateUser(ctx, db.CreateUserParams{
-			Username:     username,
-			DisplayName:  displayName,
-			PasswordHash: hash,
-			Root:         rootID,
-			Home:         rootID,
-		}); err != nil {
-			return err
-		} else if home, err := f.ResourceByPath("/home"); err != nil {
-			return err
-		} else if userHome, err := f.CreateMemberResource(home, uuid.New(), username, true); err != nil {
-			return err
-		} else if _, err := f.UpdatePermissions(userHome, u.Username, fs.PermissionReadWriteShare); err != nil {
-			return err
-		} else {
-			return d.UpdateUserHome(ctx, db.UpdateUserHomeParams{Username: u.Username, Home: userHome.ID})
+func (a App) CreateUser(ctx context.Context, username, displayName, password string, root uuid.UUID) (User, error) {
+	if hash, err := generateArgon2EncodedHash(password, defaultArgon2Params()); err != nil {
+		return User{}, err
+	} else if u, err := a.db.CreateUser(ctx, db.CreateUserParams{
+		Username:     username,
+		DisplayName:  displayName,
+		PasswordHash: hash,
+		Root:         root,
+		Home:         root,
+	}); err != nil {
+		if strings.Contains(err.Error(), "users_pkey") {
+			err = ErrUserExists
 		}
-	})
+		return User{}, err
+	} else {
+		return User{
+			Username:    u.Username,
+			DisplayName: u.DisplayName,
+			Root:        u.Root,
+			Home:        u.Home,
+		}, nil
+	}
+
 }
 
 func (a App) ListUsers(ctx context.Context) ([]User, error) {

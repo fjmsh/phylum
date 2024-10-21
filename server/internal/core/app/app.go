@@ -37,6 +37,20 @@ func Create(ctx context.Context, db *db.DbHandler, cs storage.Storage) (*App, er
 	return app, nil
 }
 
+func (a App) WithDb(db *db.DbHandler) App {
+	return App{
+		db:     db,
+		Rootfs: a.Rootfs.WithDb(db),
+		cs:     a.cs.WithDb(db),
+	}
+}
+
+func (a App) RunInTx(ctx context.Context, fn func(App) error) error {
+	return a.db.WithTx(ctx, func(db *db.DbHandler) error {
+		return fn(a.WithDb(db))
+	})
+}
+
 func (a *App) populateData(ctx context.Context) (user User, e error) {
 	e = a.db.WithTx(ctx, func(dbh *db.DbHandler) error {
 		var err error

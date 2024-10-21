@@ -21,7 +21,7 @@ func SetupCommand() {
 	var rootCmd = &cobra.Command{Use: path.Base(os.Args[0])}
 	flags := rootCmd.PersistentFlags()
 
-	flags.BoolP("debug", "d", false, "Debug mode")
+	flags.Bool("debug", false, "Debug mode")
 	viper.BindPFlag("debug", flags.Lookup("debug"))
 
 	flags.Bool("trace-sql", false, "Trace SQL Queries")
