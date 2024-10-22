@@ -29,33 +29,7 @@ WITH RECURSIVE nodes(id, parent, search, depth) AS (
 SELECT * FROM nodes WHERE cardinality(search) = depth;
 
 -- name: ResourceByID :one
-WITH RECURSIVE nodes(resid, id, parent, inherited_permissions, name, path, found) AS (
-  SELECT @resource_id::uuid, r.id, r.parent, '{}'::jsonb, r.name, ''::text,
-      CASE
-        WHEN r.id = @root::uuid THEN true
-        ELSE false
-      END
-    FROM resources r
-    WHERE r.id = @resource_id::uuid 
-  UNION ALL
-    SELECT n.resid, r.id, r.parent, jsonb_bitwise_or(r.permissions, n.inherited_permissions), r.name,
-      CASE 
-        WHEN n.found THEN n.path
-        WHEN n.path = '' THEN n.name
-        ELSE concat(n.name, '/', n.path)
-      END,
-      CASE
-        WHEN r.id = @root::uuid THEN true
-        ELSE n.found
-      END
-    FROM resources r
-    JOIN nodes n
-    ON r.id = n.parent
-)
-SELECT resid AS id, r.permissions, n.inherited_permissions, COALESCE((jsonb_bitwise_or(r.permissions, n.inherited_permissions)->(@username::text))::int, 0)::int AS user_permission, found, r.parent, r.name, concat('/', n.path)::text AS path, dir, created, modified, deleted, content_size, content_type, content_sha256 FROM nodes n
-JOIN resources r
-ON r.id = n.resid
-WHERE n.parent IS NULL;
+SELECT * FROM resource_by_id(@resource_id::uuid, @root::uuid, @username::text);
 
 -- name: UpdateUserPermissionsForResource :one
 UPDATE resources SET permissions[@username::text] = to_json(@permission::int) WHERE id = @resource_id::uuid RETURNING *;

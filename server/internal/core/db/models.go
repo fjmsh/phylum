@@ -18,8 +18,9 @@ type AccessToken struct {
 
 type Resource struct {
 	ID            uuid.UUID
-	Parent        *uuid.UUID
+	Permissions   []byte
 	Name          string
+	Parent        *uuid.UUID
 	Dir           bool
 	Created       pgtype.Timestamp
 	Modified      pgtype.Timestamp
@@ -27,7 +28,24 @@ type Resource struct {
 	ContentSize   int64
 	ContentType   string
 	ContentSha256 string
-	Permissions   []byte
+}
+
+type ResourceResult struct {
+	ID                   uuid.UUID
+	Permissions          []byte
+	Name                 string
+	Parent               *uuid.UUID
+	Dir                  bool
+	Created              pgtype.Timestamp
+	Modified             pgtype.Timestamp
+	Deleted              pgtype.Timestamp
+	ContentSize          int64
+	ContentType          string
+	ContentSha256        string
+	InheritedPermissions []byte
+	UserPermission       int32
+	Found                bool
+	Path                 string
 }
 
 type StorageBackend struct {

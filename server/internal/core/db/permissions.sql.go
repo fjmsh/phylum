@@ -83,7 +83,7 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 }
 
 const removeUserPermissionForResource = `-- name: RemoveUserPermissionForResource :one
-UPDATE resources SET permissions = permissions - $1::text WHERE id = $2::uuid RETURNING id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions
+UPDATE resources SET permissions = permissions - $1::text WHERE id = $2::uuid RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
 `
 
 type RemoveUserPermissionForResourceParams struct {
@@ -96,8 +96,9 @@ func (q *Queries) RemoveUserPermissionForResource(ctx context.Context, arg Remov
 	var i Resource
 	err := row.Scan(
 		&i.ID,
-		&i.Parent,
+		&i.Permissions,
 		&i.Name,
+		&i.Parent,
 		&i.Dir,
 		&i.Created,
 		&i.Modified,
@@ -105,77 +106,28 @@ func (q *Queries) RemoveUserPermissionForResource(ctx context.Context, arg Remov
 		&i.ContentSize,
 		&i.ContentType,
 		&i.ContentSha256,
-		&i.Permissions,
 	)
 	return i, err
 }
 
 const resourceByID = `-- name: ResourceByID :one
-WITH RECURSIVE nodes(resid, id, parent, inherited_permissions, name, path, found) AS (
-  SELECT $2::uuid, r.id, r.parent, '{}'::jsonb, r.name, ''::text,
-      CASE
-        WHEN r.id = $3::uuid THEN true
-        ELSE false
-      END
-    FROM resources r
-    WHERE r.id = $2::uuid 
-  UNION ALL
-    SELECT n.resid, r.id, r.parent, jsonb_bitwise_or(r.permissions, n.inherited_permissions), r.name,
-      CASE 
-        WHEN n.found THEN n.path
-        WHEN n.path = '' THEN n.name
-        ELSE concat(n.name, '/', n.path)
-      END,
-      CASE
-        WHEN r.id = $3::uuid THEN true
-        ELSE n.found
-      END
-    FROM resources r
-    JOIN nodes n
-    ON r.id = n.parent
-)
-SELECT resid AS id, r.permissions, n.inherited_permissions, COALESCE((jsonb_bitwise_or(r.permissions, n.inherited_permissions)->($1::text))::int, 0)::int AS user_permission, found, r.parent, r.name, concat('/', n.path)::text AS path, dir, created, modified, deleted, content_size, content_type, content_sha256 FROM nodes n
-JOIN resources r
-ON r.id = n.resid
-WHERE n.parent IS NULL
+SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, inherited_permissions, user_permission, found, path FROM resource_by_id($1::uuid, $2::uuid, $3::text)
 `
 
 type ResourceByIDParams struct {
-	Username   string
 	ResourceID uuid.UUID
 	Root       uuid.UUID
+	Username   string
 }
 
-type ResourceByIDRow struct {
-	ID                   uuid.UUID
-	Permissions          []byte
-	InheritedPermissions []byte
-	UserPermission       int32
-	Found                bool
-	Parent               *uuid.UUID
-	Name                 string
-	Path                 string
-	Dir                  bool
-	Created              pgtype.Timestamp
-	Modified             pgtype.Timestamp
-	Deleted              pgtype.Timestamp
-	ContentSize          int64
-	ContentType          string
-	ContentSha256        string
-}
-
-func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (ResourceByIDRow, error) {
-	row := q.db.QueryRow(ctx, resourceByID, arg.Username, arg.ResourceID, arg.Root)
-	var i ResourceByIDRow
+func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (ResourceResult, error) {
+	row := q.db.QueryRow(ctx, resourceByID, arg.ResourceID, arg.Root, arg.Username)
+	var i ResourceResult
 	err := row.Scan(
 		&i.ID,
 		&i.Permissions,
-		&i.InheritedPermissions,
-		&i.UserPermission,
-		&i.Found,
-		&i.Parent,
 		&i.Name,
-		&i.Path,
+		&i.Parent,
 		&i.Dir,
 		&i.Created,
 		&i.Modified,
@@ -183,6 +135,10 @@ func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (Res
 		&i.ContentSize,
 		&i.ContentType,
 		&i.ContentSha256,
+		&i.InheritedPermissions,
+		&i.UserPermission,
+		&i.Found,
+		&i.Path,
 	)
 	return i, err
 }
@@ -227,7 +183,7 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 }
 
 const updateUserPermissionsForResource = `-- name: UpdateUserPermissionsForResource :one
-UPDATE resources SET permissions[$1::text] = to_json($2::int) WHERE id = $3::uuid RETURNING id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions
+UPDATE resources SET permissions[$1::text] = to_json($2::int) WHERE id = $3::uuid RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
 `
 
 type UpdateUserPermissionsForResourceParams struct {
@@ -241,8 +197,9 @@ func (q *Queries) UpdateUserPermissionsForResource(ctx context.Context, arg Upda
 	var i Resource
 	err := row.Scan(
 		&i.ID,
-		&i.Parent,
+		&i.Permissions,
 		&i.Name,
+		&i.Parent,
 		&i.Dir,
 		&i.Created,
 		&i.Modified,
@@ -250,7 +207,6 @@ func (q *Queries) UpdateUserPermissionsForResource(ctx context.Context, arg Upda
 		&i.ContentSize,
 		&i.ContentType,
 		&i.ContentSha256,
-		&i.Permissions,
 	)
 	return i, err
 }

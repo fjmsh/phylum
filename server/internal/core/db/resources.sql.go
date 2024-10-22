@@ -12,7 +12,7 @@ import (
 )
 
 const childResourceByName = `-- name: ChildResourceByName :one
-SELECT id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions FROM resources WHERE parent = $1::uuid AND name = $2::text AND deleted IS NULL
+SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256 FROM resources WHERE parent = $1::uuid AND name = $2::text AND deleted IS NULL
 `
 
 type ChildResourceByNameParams struct {
@@ -25,8 +25,9 @@ func (q *Queries) ChildResourceByName(ctx context.Context, arg ChildResourceByNa
 	var i Resource
 	err := row.Scan(
 		&i.ID,
-		&i.Parent,
+		&i.Permissions,
 		&i.Name,
+		&i.Parent,
 		&i.Dir,
 		&i.Created,
 		&i.Modified,
@@ -34,7 +35,6 @@ func (q *Queries) ChildResourceByName(ctx context.Context, arg ChildResourceByNa
 		&i.ContentSize,
 		&i.ContentType,
 		&i.ContentSha256,
-		&i.Permissions,
 	)
 	return i, err
 }
@@ -46,7 +46,7 @@ INSERT INTO resources(
     $1::uuid, $2::uuid, $3::text, $4::boolean,
       CASE $4 WHEN TRUE THEN '' ELSE 'text/plain' END,
       CASE $4 WhEN TRUE THEN '' ELSE 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' END
-) RETURNING id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions
+) RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
 `
 
 type CreateResourceParams struct {
@@ -66,8 +66,9 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 	var i Resource
 	err := row.Scan(
 		&i.ID,
-		&i.Parent,
+		&i.Permissions,
 		&i.Name,
+		&i.Parent,
 		&i.Dir,
 		&i.Created,
 		&i.Modified,
@@ -75,7 +76,6 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 		&i.ContentSize,
 		&i.ContentType,
 		&i.ContentSha256,
-		&i.Permissions,
 	)
 	return i, err
 }
@@ -167,7 +167,7 @@ func (q *Queries) DiskUsage(ctx context.Context, id uuid.UUID) (DiskUsageRow, er
 }
 
 const sharedResources = `-- name: SharedResources :many
-SELECT id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions FROM resources WHERE permissions ? $1::text AND id <> $2::uuid AND deleted IS NULL
+SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256 FROM resources WHERE permissions ? $1::text AND id <> $2::uuid AND deleted IS NULL
 `
 
 type SharedResourcesParams struct {
@@ -186,8 +186,9 @@ func (q *Queries) SharedResources(ctx context.Context, arg SharedResourcesParams
 		var i Resource
 		if err := rows.Scan(
 			&i.ID,
-			&i.Parent,
+			&i.Permissions,
 			&i.Name,
+			&i.Parent,
 			&i.Dir,
 			&i.Created,
 			&i.Modified,
@@ -195,7 +196,6 @@ func (q *Queries) SharedResources(ctx context.Context, arg SharedResourcesParams
 			&i.ContentSize,
 			&i.ContentType,
 			&i.ContentSha256,
-			&i.Permissions,
 		); err != nil {
 			return nil, err
 		}
@@ -252,7 +252,7 @@ SET
     name = CASE WHEN ($1::text = '') THEN name ELSE $1::text END,
     modified = NOW()
 WHERE id = $2::uuid
-RETURNING id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions
+RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
 `
 
 type UpdateResourceNameParams struct {
@@ -265,8 +265,9 @@ func (q *Queries) UpdateResourceName(ctx context.Context, arg UpdateResourceName
 	var i Resource
 	err := row.Scan(
 		&i.ID,
-		&i.Parent,
+		&i.Permissions,
 		&i.Name,
+		&i.Parent,
 		&i.Dir,
 		&i.Created,
 		&i.Modified,
@@ -274,7 +275,6 @@ func (q *Queries) UpdateResourceName(ctx context.Context, arg UpdateResourceName
 		&i.ContentSize,
 		&i.ContentType,
 		&i.ContentSha256,
-		&i.Permissions,
 	)
 	return i, err
 }
@@ -286,7 +286,7 @@ SET
     parent = $2::uuid,
     modified = NOW()
 WHERE id = $3::uuid
-RETURNING id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions
+RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
 `
 
 type UpdateResourceNameParentParams struct {
@@ -300,8 +300,9 @@ func (q *Queries) UpdateResourceNameParent(ctx context.Context, arg UpdateResour
 	var i Resource
 	err := row.Scan(
 		&i.ID,
-		&i.Parent,
+		&i.Permissions,
 		&i.Name,
+		&i.Parent,
 		&i.Dir,
 		&i.Created,
 		&i.Modified,
@@ -309,7 +310,6 @@ func (q *Queries) UpdateResourceNameParent(ctx context.Context, arg UpdateResour
 		&i.ContentSize,
 		&i.ContentType,
 		&i.ContentSha256,
-		&i.Permissions,
 	)
 	return i, err
 }
@@ -320,7 +320,7 @@ SET
     parent = $1::uuid,
     modified = NOW()
 WHERE id = $2::uuid
-RETURNING id, parent, name, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions
+RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
 `
 
 type UpdateResourceParentParams struct {
@@ -333,8 +333,9 @@ func (q *Queries) UpdateResourceParent(ctx context.Context, arg UpdateResourcePa
 	var i Resource
 	err := row.Scan(
 		&i.ID,
-		&i.Parent,
+		&i.Permissions,
 		&i.Name,
+		&i.Parent,
 		&i.Dir,
 		&i.Created,
 		&i.Modified,
@@ -342,7 +343,6 @@ func (q *Queries) UpdateResourceParent(ctx context.Context, arg UpdateResourcePa
 		&i.ContentSize,
 		&i.ContentType,
 		&i.ContentSha256,
-		&i.Permissions,
 	)
 	return i, err
 }
