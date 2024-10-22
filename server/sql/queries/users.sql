@@ -6,10 +6,10 @@ INSERT INTO users(
 ) RETURNING *;
 
 -- name: UserByUsername :one
-SELECT * from users WHERE username = $1;
+SELECT * FROM users WHERE username = $1;
 
--- name: ListUsers :many
-SELECT * from users WHERE deleted IS NULL;
+-- name: AllUsers :many
+SELECT username, display_name, root, home from users WHERE deleted IS NULL;
 
 -- name: UpdateUserDisplayName :exec
 UPDATE users

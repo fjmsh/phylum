@@ -11,6 +11,42 @@ import (
 	"github.com/google/uuid"
 )
 
+const allUsers = `-- name: AllUsers :many
+SELECT username, display_name, root, home from users WHERE deleted IS NULL
+`
+
+type AllUsersRow struct {
+	Username    string
+	DisplayName string
+	Root        uuid.UUID
+	Home        uuid.UUID
+}
+
+func (q *Queries) AllUsers(ctx context.Context) ([]AllUsersRow, error) {
+	rows, err := q.db.Query(ctx, allUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AllUsersRow
+	for rows.Next() {
+		var i AllUsersRow
+		if err := rows.Scan(
+			&i.Username,
+			&i.DisplayName,
+			&i.Root,
+			&i.Home,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users(
     username, display_name, password_hash, root, home
@@ -47,39 +83,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Home,
 	)
 	return i, err
-}
-
-const listUsers = `-- name: ListUsers :many
-SELECT username, created, modified, display_name, password_hash, deleted, root, home from users WHERE deleted IS NULL
-`
-
-func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.Query(ctx, listUsers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []User
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.Username,
-			&i.Created,
-			&i.Modified,
-			&i.DisplayName,
-			&i.PasswordHash,
-			&i.Deleted,
-			&i.Root,
-			&i.Home,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const updateUserDisplayName = `-- name: UpdateUserDisplayName :exec
@@ -155,7 +158,7 @@ func (q *Queries) UpdateUserRoot(ctx context.Context, arg UpdateUserRootParams) 
 }
 
 const userByUsername = `-- name: UserByUsername :one
-SELECT username, created, modified, display_name, password_hash, deleted, root, home from users WHERE username = $1
+SELECT username, created, modified, display_name, password_hash, deleted, root, home FROM users WHERE username = $1
 `
 
 func (q *Queries) UserByUsername(ctx context.Context, username string) (User, error) {

@@ -10,7 +10,7 @@ import (
 var ErrNotFound = errors.NewError(http.StatusNotFound, "user_not_found", "no such user")
 
 func (m manager) AllUsers() ([]User, error) {
-	results, err := m.db.ListUsers(m.ctx)
+	results, err := m.db.AllUsers(m.ctx)
 	if err != nil {
 		return nil, err
 	}
