@@ -47,16 +47,19 @@ func permissionString(p Permission) string {
 	}
 	str := ""
 	if p|PermissionRead != 0 {
+		p -= PermissionRead
 		str += "r"
 	}
 	if p|PermissionWrite != 0 {
+		p -= PermissionWrite
 		str += "w"
 	}
 	if p|PermissionShare != 0 {
+		p -= PermissionShare
 		str += "s"
 	}
 	if p != 0 {
-		str += fmt.Sprintf("u%d", p)
+		str += fmt.Sprintf("u(%d)", p)
 	}
 	return str
 }

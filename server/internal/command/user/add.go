@@ -74,10 +74,10 @@ func setupUserAddCommand() *cobra.Command {
 				}
 			}
 
-			createHome, _ := cmd.Flags().GetBool("no-create-home")
+			noCreateHome, _ := cmd.Flags().GetBool("no-create-home")
 			homePath := ""
-			if createHome {
-				homePath, _ := cmd.Flags().GetString("home-dir")
+			if !noCreateHome {
+				homePath, _ = cmd.Flags().GetString("home-dir")
 				if homePath == "" {
 					basePath, _ := cmd.Flags().GetString("base-dir")
 					if basePath == "" {
@@ -90,9 +90,6 @@ func setupUserAddCommand() *cobra.Command {
 					homePath = strings.TrimRight(homePath, "/")
 				}
 			}
-
-			fmt.Println(root)
-			fmt.Println(homePath)
 
 			ctx := context.Background()
 			err = db.Get().WithTx(ctx, func(db *db.DbHandler) error {
