@@ -25,8 +25,8 @@ func setupLsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			fmt.Println(r.Path + " (" + r.InheritedPermissions + ")")
-			fmt.Println(formatRow(r.ID.String(), formatSize(r.ContentSize), r.ContentSHA256, ".", r.Permissions))
+			fmt.Println(r.Path + " " + r.InheritedPermissionsString())
+			fmt.Println(formatRow(r.ID.String(), formatSize(r.ContentSize), r.ContentSHA256, ".", r.PermissionsString()))
 
 			if r.Dir {
 				children, err := f.ReadDir(r, false)
@@ -73,5 +73,5 @@ func formatResourceSummary(r fs.Resource) string {
 	if r.Dir {
 		name += "/"
 	}
-	return formatRow(r.ID.String(), formatSize(r.ContentSize), r.ContentSHA256, name, r.Permissions)
+	return formatRow(r.ID.String(), formatSize(r.ContentSize), r.ContentSHA256, name, r.PermissionsString())
 }

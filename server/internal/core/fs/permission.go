@@ -1,8 +1,10 @@
 package fs
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type Permission = int32
@@ -19,7 +21,27 @@ func (r Resource) hasPermission(p Permission) bool {
 	return (r.UserPermissions & p) != 0
 }
 
-func PermissionString(p Permission) string {
+func (r Resource) PermissionsString() string {
+	return permissionJsonString(r.Permissions)
+}
+func (r Resource) InheritedPermissionsString() string {
+	return permissionJsonString(r.InheritedPermissions)
+}
+
+func permissionJsonString(j string) string {
+	p := make(map[string]Permission)
+	json.Unmarshal([]byte(j), &p)
+	if len(p) == 0 {
+		return ""
+	}
+	perm := make([]string, 0, len(p))
+	for k, v := range p {
+		perm = append(perm, k+": "+permissionString(v))
+	}
+	return "[" + strings.Join(perm, ", ") + "]"
+}
+
+func permissionString(p Permission) string {
 	if p == PermissionSU {
 		return "su"
 	}
