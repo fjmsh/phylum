@@ -131,7 +131,7 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 		ContentSha256: src.ContentSHA256,
 	})
 	for _, src := range tree {
-		id := uuid.New()
+		id, _ := uuid.NewUUID()
 		parent := ids[src.Path[0:strings.LastIndex(src.Path, "/")]]
 
 		create = append(create, db.CreateResourcesParams{

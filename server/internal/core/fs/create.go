@@ -27,7 +27,8 @@ func (f filesystem) CreateResourceByPath(path string, dir, recursive bool) (Reso
 			return Resource{}, err
 		}
 	}
-	return f.CreateMemberResource(parent, uuid.New(), name, dir)
+	id, _ := uuid.NewUUID()
+	return f.CreateMemberResource(parent, id, name, dir)
 }
 
 func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, dir bool) (Resource, error) {

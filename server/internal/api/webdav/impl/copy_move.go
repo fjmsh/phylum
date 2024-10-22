@@ -116,7 +116,8 @@ func copyFiles(fs FileSystem, srcPath, dstPath string, overwrite bool, depth int
 		}
 		return http.StatusInternalServerError, err
 	} else {
-		if _, deleted, err := fs.Copy(src, dstPath, uuid.New(), depth != 0, overwrite); err != nil {
+		id, _ := uuid.NewUUID()
+		if _, deleted, err := fs.Copy(src, dstPath, id, depth != 0, overwrite); err != nil {
 			if e, ok := err.(*errors.Error); ok {
 				return e.Status, e
 			}

@@ -29,8 +29,9 @@ func (d DbHandler) populateData(ctx context.Context) (e error) {
 		var err error
 
 		// Create root folder
+		id, _ := uuid.NewUUID()
 		root, err := dbh.CreateResource(ctx, CreateResourceParams{
-			ID:   uuid.New(),
+			ID:   id,
 			Name: "Phylum Root",
 			Dir:  true,
 		})
@@ -39,8 +40,9 @@ func (d DbHandler) populateData(ctx context.Context) (e error) {
 		}
 
 		// Create home folder
+		id, _ = uuid.NewUUID()
 		home, err := dbh.CreateResource(ctx, CreateResourceParams{
-			ID:     uuid.New(),
+			ID:     id,
 			Parent: &root.ID,
 			Name:   "home",
 			Dir:    true,
@@ -50,8 +52,9 @@ func (d DbHandler) populateData(ctx context.Context) (e error) {
 		}
 
 		// Create user home folder
+		id, _ = uuid.NewUUID()
 		userHome, err := dbh.CreateResource(ctx, CreateResourceParams{
-			ID:     uuid.New(),
+			ID:     id,
 			Parent: &home.ID,
 			Name:   DefaultUserUsername,
 			Dir:    true,
