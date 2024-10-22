@@ -144,40 +144,34 @@ func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (Res
 }
 
 const resourceByPath = `-- name: ResourceByPath :one
-WITH RECURSIVE nodes(id, parent, search, depth) AS (
-    SELECT r.id, r.parent, $1::text[], 0
-    FROM resources r
-    WHERE r.id = $2::uuid
-  UNION ALL
-    SELECT r.id, r.parent, n.search, n.depth + 1
-    FROM resources r
-    JOIN nodes n ON r.parent = n.id
-    WHERE deleted IS NULL
-    AND r.name = n.search[n.depth + 1]
-)
-SELECT id, parent, search, depth FROM nodes WHERE cardinality(search) = depth
+SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, inherited_permissions, user_permission, found, path FROM resource_by_path($1::text, $2::uuid, $3::text)
 `
 
 type ResourceByPathParams struct {
-	Search []string
-	Root   uuid.UUID
+	Path     string
+	Root     uuid.UUID
+	Username string
 }
 
-type ResourceByPathRow struct {
-	ID     uuid.UUID
-	Parent *uuid.UUID
-	Search []string
-	Depth  int32
-}
-
-func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) (ResourceByPathRow, error) {
-	row := q.db.QueryRow(ctx, resourceByPath, arg.Search, arg.Root)
-	var i ResourceByPathRow
+func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) (ResourceResult, error) {
+	row := q.db.QueryRow(ctx, resourceByPath, arg.Path, arg.Root, arg.Username)
+	var i ResourceResult
 	err := row.Scan(
 		&i.ID,
+		&i.Permissions,
+		&i.Name,
 		&i.Parent,
-		&i.Search,
-		&i.Depth,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.ContentSize,
+		&i.ContentType,
+		&i.ContentSha256,
+		&i.InheritedPermissions,
+		&i.UserPermission,
+		&i.Found,
+		&i.Path,
 	)
 	return i, err
 }

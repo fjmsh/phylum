@@ -1,7 +1,6 @@
 package fs
 
 import (
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,26 +9,14 @@ import (
 )
 
 func (f filesystem) ResourceByPath(path string) (Resource, error) {
-	path = strings.Trim(path, "/")
-	segments := strings.Split(path, "/")
-	if path == "" {
-		// Calling strings.Split on an empty string returns a slice of length 1. That breaks the query
-		segments = []string{}
-	}
-
-	res, err := f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.rootID, Search: segments})
-	if err == pgx.ErrNoRows {
-		err = ErrResourceNotFound
-	}
-	if err != nil {
-		return Resource{}, err
-	}
-	return f.ResourceByID(res.ID)
+	return resourceFromResult(f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.rootID, Path: path, Username: f.username}))
 }
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	r, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.rootID, ResourceID: id, Username: f.username})
-	// TODO: verify found
+	return resourceFromResult(f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.rootID, ResourceID: id, Username: f.username}))
+}
+
+func resourceFromResult(r db.ResourceResult, err error) (Resource, error) {
 	if err == pgx.ErrNoRows || !r.Found || (r.UserPermission&PermissionRead == 0) {
 		err = ErrResourceNotFound
 	}

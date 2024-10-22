@@ -15,18 +15,7 @@ SELECT * from nodes
 WHERE CASE WHEN @include_root::boolean THEN true ELSE depth > 0 END;
 
 -- name: ResourceByPath :one
-WITH RECURSIVE nodes(id, parent, search, depth) AS (
-    SELECT r.id, r.parent, @search::text[], 0
-    FROM resources r
-    WHERE r.id = @root::uuid
-  UNION ALL
-    SELECT r.id, r.parent, n.search, n.depth + 1
-    FROM resources r
-    JOIN nodes n ON r.parent = n.id
-    WHERE deleted IS NULL
-    AND r.name = n.search[n.depth + 1]
-)
-SELECT * FROM nodes WHERE cardinality(search) = depth;
+SELECT * FROM resource_by_path(@path::text, @root::uuid, @username::text);
 
 -- name: ResourceByID :one
 SELECT * FROM resource_by_id(@resource_id::uuid, @root::uuid, @username::text);
