@@ -31,17 +31,9 @@ func setupChpermCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			permission := fs.PermissionNone
-			switch args[2] {
-			case "none":
-			case "read":
-				permission = fs.PermissionReadOnly
-			case "write":
-				permission = fs.PermissionReadWrite
-			case "share":
-				permission = fs.PermissionReadWriteShare
-			default:
-				fmt.Println("cannot update permissions for '" + pathOrUUID + "': unrecognized permission: " + args[2])
+			permission, err := fs.ParsePermissionString(args[2])
+			if err != nil {
+				fmt.Println("cannot update permissions for '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)
 			}
 

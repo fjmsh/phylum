@@ -37,7 +37,7 @@ func (f filesystem) DeleteChildRecursive(r Resource, name string, hardDelete boo
 }
 
 func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
-	if r.UserPermissions < PermissionReadWrite {
+	if !r.hasPermission(PermissionWrite) {
 		return ErrInsufficientPermissions
 	}
 	// TODO: versioning

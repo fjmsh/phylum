@@ -30,7 +30,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	r, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.rootID, ResourceID: id, Username: f.username})
 	// TODO: verify found
-	if err == pgx.ErrNoRows || !r.Found || r.UserPermission == 0 {
+	if err == pgx.ErrNoRows || !r.Found || (r.UserPermission&PermissionRead == 0) {
 		err = ErrResourceNotFound
 	}
 	if err != nil {

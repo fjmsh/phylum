@@ -35,12 +35,11 @@ func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
 }
 
 func (f filesystem) UpdatePermissions(r Resource, username string, permission Permission) (Resource, error) {
-	if r.UserPermissions < PermissionReadWriteShare {
+	if !r.hasPermission(PermissionShare) {
 		return Resource{}, ErrInsufficientPermissions
 	}
-	if permission > PermissionReadWriteShare {
-		permission = PermissionReadWriteShare
-	}
+	// Do not grant more than what you have
+	permission = permission & r.UserPermissions
 
 	var res db.Resource
 	var err error

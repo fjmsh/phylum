@@ -8,14 +8,14 @@ import (
 )
 
 func (f filesystem) OpenRead(r Resource, start, length int64) (io.ReadCloser, error) {
-	if r.UserPermissions < PermissionReadOnly {
+	if !r.hasPermission(PermissionRead) {
 		return nil, ErrInsufficientPermissions
 	}
 	return f.cs.OpenRead(r.ID, start, length)
 }
 
 func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
-	if r.UserPermissions < PermissionReadWrite {
+	if !r.hasPermission(PermissionWrite) {
 		return nil, ErrInsufficientPermissions
 	}
 	return f.cs.OpenWrite(r.ID, sha256.New, func(len int, sum, mime string) error {
@@ -29,7 +29,7 @@ func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
 }
 
 func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
-	if r.UserPermissions < PermissionReadOnly {
+	if !r.hasPermission(PermissionRead) {
 		return nil, ErrInsufficientPermissions
 	}
 	if !r.Dir {

@@ -20,7 +20,7 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, b
 	if err != nil {
 		return Resource{}, false, err
 	}
-	if parent.UserPermissions < PermissionReadWrite {
+	if !parent.hasPermission(PermissionRead | PermissionWrite) {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 
@@ -32,7 +32,7 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, b
 		}
 		return Resource{}, false, err
 	}
-	if destParent.UserPermissions < PermissionReadWrite {
+	if destParent.hasPermission(PermissionWrite) {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 	if res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: r.ID, ResourceID: destParent.ID, Username: f.username}); err != nil || res.Found {
@@ -73,9 +73,9 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, b
 				ContentSHA256: r.ContentSha256,
 				Permissions:   string(r.Permissions),
 				// Not Needed
-				// Path:                 "",
-				// UserPermissions:      0,
-				// InheritedPermissions: "",
+				// Path:                 ??,
+				// UserPermissions:      ??,
+				// InheritedPermissions: ??,
 			}
 			return nil
 		}
@@ -84,7 +84,7 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, b
 
 func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, overwrite bool) (Resource, bool, error) {
 	// Check source directory permissions
-	if src.UserPermissions < PermissionReadOnly {
+	if !src.hasPermission(PermissionRead) {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 
@@ -100,7 +100,7 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 		return Resource{}, false, ErrResourceNotCollection
 
 	}
-	if destParent.UserPermissions < PermissionReadWrite {
+	if !destParent.hasPermission(PermissionWrite) {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 
@@ -194,9 +194,9 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 		ContentSHA256: src.ContentSHA256,
 		Permissions:   "{}",
 		// Not Needed
-		// UserPermissions:      src.UserPermissions,
-		// InheritedPermissions: src.InheritedPermissions,
-		// Path:                 src.Path + "/" + destName,
+		// UserPermissions:      ??
+		// InheritedPermissions: ??
+		// Path:                 destParent.Path + "/" + destName,
 	}
 	return dest, deleted, err
 }
