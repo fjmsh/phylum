@@ -63,4 +63,5 @@ type User struct {
 	Deleted      pgtype.Timestamp
 	Root         uuid.UUID
 	Home         uuid.UUID
+	Bookmarks    []byte
 }

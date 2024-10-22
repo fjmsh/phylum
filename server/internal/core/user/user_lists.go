@@ -3,6 +3,7 @@ package user
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
@@ -39,4 +40,12 @@ func (m manager) GetSharedResources(u User) (result []fs.Resource, err error) {
 		}
 	}
 	return
+}
+
+func (m manager) AddBookmark(u User, id uuid.UUID) error {
+	return m.db.Queries.AddBookmark(m.ctx, db.AddBookmarkParams{Username: u.Username, ID: id})
+}
+
+func (m manager) ListBookmarks(u User) ([][]byte, error) {
+	return m.db.Queries.ListBookmarks(m.ctx, u.Username)
 }

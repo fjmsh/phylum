@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var u user.User
 var f fs.FileSystem
 
 func RootFileSystem() fs.FileSystem {
@@ -25,19 +26,26 @@ func RootFileSystem() fs.FileSystem {
 	return rootUser.OpenFileSystem(context.Background())
 }
 
-func UserFileSystem(cmd *cobra.Command) fs.FileSystem {
-	if f == nil {
+func User(cmd *cobra.Command) user.User {
+	if u.Username == "" {
 		if value, err := cmd.Flags().GetString("user"); err != nil {
 			fmt.Println("could not read user: " + err.Error())
-			os.Exit(4)
+			os.Exit(1)
 		} else {
-			if u, err := user.CreateManager(context.Background()).UserByEmail(value); err != nil {
+			if user, err := user.CreateManager(context.Background()).UserByEmail(value); err != nil {
 				fmt.Println("could not find user '" + value + "': " + err.Error())
-				os.Exit(5)
+				os.Exit(1)
 			} else {
-				f = u.OpenFileSystem(context.Background())
+				u = user
 			}
 		}
+	}
+	return u
+}
+
+func UserFileSystem(cmd *cobra.Command) fs.FileSystem {
+	if f == nil {
+		f = User(cmd).OpenFileSystem(context.Background())
 	}
 	return f
 }

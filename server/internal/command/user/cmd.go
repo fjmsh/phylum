@@ -19,6 +19,7 @@ func SetupCommand() *cobra.Command {
 		setupUserAddCommand(),
 		setupUserChrootCommand(),
 		setupUserListCommand(),
+		setupBookmarksCommand(),
 	}...)
 
 	flags := cmd.PersistentFlags()
@@ -48,8 +49,6 @@ func setupUserChrootCommand() *cobra.Command {
 			}
 		},
 	}
-	cmd.Flags().StringP("name", "n", "", "Full Name")
-	cmd.Flags().StringP("password", "p", "", "Password")
 	return cmd
 }
 

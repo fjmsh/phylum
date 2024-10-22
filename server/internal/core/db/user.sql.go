@@ -11,6 +11,24 @@ import (
 	"github.com/google/uuid"
 )
 
+const addBookmark = `-- name: AddBookmark :exec
+UPDATE users
+SET
+    bookmarks = bookmarks || to_jsonb(array[$1::uuid]),
+    modified = NOW()
+WHERE username = $2::text
+`
+
+type AddBookmarkParams struct {
+	ID       uuid.UUID
+	Username string
+}
+
+func (q *Queries) AddBookmark(ctx context.Context, arg AddBookmarkParams) error {
+	_, err := q.db.Exec(ctx, addBookmark, arg.ID, arg.Username)
+	return err
+}
+
 const allUsers = `-- name: AllUsers :many
 SELECT username, display_name, root, home from users WHERE deleted IS NULL
 `
@@ -52,7 +70,7 @@ INSERT INTO users(
     username, display_name, password_hash, root, home
 ) VALUES (
     $1, $2, $3, $4, $5
-) RETURNING username, created, modified, display_name, password_hash, deleted, root, home
+) RETURNING username, created, modified, display_name, password_hash, deleted, root, home, bookmarks
 `
 
 type CreateUserParams struct {
@@ -81,8 +99,33 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Deleted,
 		&i.Root,
 		&i.Home,
+		&i.Bookmarks,
 	)
 	return i, err
+}
+
+const listBookmarks = `-- name: ListBookmarks :many
+SELECT jsonb_array_elements(bookmarks) FROM users WHERE username = $1::text
+`
+
+func (q *Queries) ListBookmarks(ctx context.Context, username string) ([][]byte, error) {
+	rows, err := q.db.Query(ctx, listBookmarks, username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items [][]byte
+	for rows.Next() {
+		var jsonb_array_elements []byte
+		if err := rows.Scan(&jsonb_array_elements); err != nil {
+			return nil, err
+		}
+		items = append(items, jsonb_array_elements)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateUserDisplayName = `-- name: UpdateUserDisplayName :exec
@@ -158,19 +201,24 @@ func (q *Queries) UpdateUserRoot(ctx context.Context, arg UpdateUserRootParams) 
 }
 
 const userByUsername = `-- name: UserByUsername :one
-SELECT username, created, modified, display_name, password_hash, deleted, root, home FROM users WHERE username = $1
+SELECT username, display_name, password_hash, root, home FROM users WHERE username = $1
 `
 
-func (q *Queries) UserByUsername(ctx context.Context, username string) (User, error) {
+type UserByUsernameRow struct {
+	Username     string
+	DisplayName  string
+	PasswordHash string
+	Root         uuid.UUID
+	Home         uuid.UUID
+}
+
+func (q *Queries) UserByUsername(ctx context.Context, username string) (UserByUsernameRow, error) {
 	row := q.db.QueryRow(ctx, userByUsername, username)
-	var i User
+	var i UserByUsernameRow
 	err := row.Scan(
 		&i.Username,
-		&i.Created,
-		&i.Modified,
 		&i.DisplayName,
 		&i.PasswordHash,
-		&i.Deleted,
 		&i.Root,
 		&i.Home,
 	)

@@ -13,38 +13,24 @@ import (
 )
 
 const accessTokenById = `-- name: AccessTokenById :one
-SELECT id, t.created, expires, t.username, u.username, u.created, modified, display_name, password_hash, deleted, root, home FROM access_tokens t JOIN users u ON t.username = u.username WHERE t.id = $1
+SELECT t.expires, u.username, u.display_name, u.root, u.home FROM access_tokens t JOIN users u ON t.username = u.username WHERE t.id = $1
 `
 
 type AccessTokenByIdRow struct {
-	ID           string
-	Created      pgtype.Timestamp
-	Expires      pgtype.Timestamp
-	Username     string
-	Username_2   string
-	Created_2    pgtype.Timestamp
-	Modified     pgtype.Timestamp
-	DisplayName  string
-	PasswordHash string
-	Deleted      pgtype.Timestamp
-	Root         uuid.UUID
-	Home         uuid.UUID
+	Expires     pgtype.Timestamp
+	Username    string
+	DisplayName string
+	Root        uuid.UUID
+	Home        uuid.UUID
 }
 
 func (q *Queries) AccessTokenById(ctx context.Context, id string) (AccessTokenByIdRow, error) {
 	row := q.db.QueryRow(ctx, accessTokenById, id)
 	var i AccessTokenByIdRow
 	err := row.Scan(
-		&i.ID,
-		&i.Created,
 		&i.Expires,
 		&i.Username,
-		&i.Username_2,
-		&i.Created_2,
-		&i.Modified,
 		&i.DisplayName,
-		&i.PasswordHash,
-		&i.Deleted,
 		&i.Root,
 		&i.Home,
 	)

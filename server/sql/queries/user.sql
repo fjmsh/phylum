@@ -6,7 +6,7 @@ INSERT INTO users(
 ) RETURNING *;
 
 -- name: UserByUsername :one
-SELECT * FROM users WHERE username = $1;
+SELECT username, display_name, password_hash, root, home FROM users WHERE username = $1;
 
 -- name: AllUsers :many
 SELECT username, display_name, root, home from users WHERE deleted IS NULL;
@@ -38,3 +38,13 @@ SET
     home = $1,
     modified = NOW()
 WHERE username = $2;
+
+-- name: AddBookmark :exec
+UPDATE users
+SET
+    bookmarks = bookmarks || to_jsonb(array[@id::uuid]),
+    modified = NOW()
+WHERE username = @username::text;
+
+-- name: ListBookmarks :many
+SELECT jsonb_array_elements(bookmarks) FROM users WHERE username = @username::text;
