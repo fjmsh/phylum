@@ -56,27 +56,7 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, b
 			}
 			return err
 		} else {
-			var deleted *time.Time
-			if r.Deleted.Valid {
-				deleted = &r.Deleted.Time
-			}
-			result = Resource{
-				ID:            r.ID,
-				ParentID:      r.Parent,
-				Name:          r.Name,
-				Created:       r.Created.Time,
-				Modified:      r.Modified.Time,
-				Deleted:       deleted,
-				Dir:           r.Dir,
-				ContentSize:   r.ContentSize,
-				ContentType:   r.ContentType,
-				ContentSHA256: r.ContentSha256,
-				Permissions:   string(r.Permissions),
-				// Not Needed
-				// Path:                 ??,
-				// UserPermissions:      ??,
-				// InheritedPermissions: ??,
-			}
+			result = ResourceFromDB(r, 0, "", "")
 			return nil
 		}
 	})

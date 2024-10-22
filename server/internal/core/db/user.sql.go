@@ -105,22 +105,41 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const listBookmarks = `-- name: ListBookmarks :many
-SELECT jsonb_array_elements(bookmarks) FROM users WHERE username = $1::text
+WITH ids(id) AS(
+  SELECT jsonb_array_elements_text(bookmarks)::uuid
+  FROM users
+  WHERE username = $1::text
+) SELECT r.id, r.permissions, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_size, r.content_type, r.content_sha256
+FROM ids i
+JOIN resources r
+ON i.id = r.id
 `
 
-func (q *Queries) ListBookmarks(ctx context.Context, username string) ([][]byte, error) {
+func (q *Queries) ListBookmarks(ctx context.Context, username string) ([]Resource, error) {
 	rows, err := q.db.Query(ctx, listBookmarks, username)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items [][]byte
+	var items []Resource
 	for rows.Next() {
-		var jsonb_array_elements []byte
-		if err := rows.Scan(&jsonb_array_elements); err != nil {
+		var i Resource
+		if err := rows.Scan(
+			&i.ID,
+			&i.Permissions,
+			&i.Name,
+			&i.Parent,
+			&i.Dir,
+			&i.Created,
+			&i.Modified,
+			&i.Deleted,
+			&i.ContentSize,
+			&i.ContentType,
+			&i.ContentSha256,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, jsonb_array_elements)
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

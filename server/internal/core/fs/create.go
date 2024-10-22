@@ -59,21 +59,6 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	if err != nil {
 		return Resource{}, err
 	}
-	return Resource{
-		ID:              result.ID,
-		ParentID:        result.Parent,
-		Name:            result.Name,
-		Dir:             result.Dir,
-		Created:         result.Created.Time,
-		Modified:        result.Modified.Time,
-		Deleted:         nil, // Cannot be deleted when created
-		ContentType:     result.ContentType,
-		ContentSize:     result.ContentSize,
-		ContentSHA256:   result.ContentSha256,
-		Permissions:     string(result.Permissions),
-		UserPermissions: r.UserPermissions,
-		// Not Needed
-		// Path: r.Path + "/" + result.Name,
-		// InheritedPermissions: "",
-	}, nil
+	// TODO: #badbehavior Inherited permissions should include r.Permissions as well
+	return ResourceFromDB(result, r.UserPermissions, r.Path+"/"+result.Name, r.InheritedPermissions), nil
 }

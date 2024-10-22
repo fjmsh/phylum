@@ -17,7 +17,10 @@ func setupBookmarksCommand() *cobra.Command {
 	}
 
 	cmd.PersistentFlags().StringP("user", "u", "", "User")
-	cmd.AddCommand(setupBookmarksAddCommand())
+	cmd.AddCommand(
+		setupBookmarksAddCommand(),
+		setupBookmarksListCommand(),
+	)
 
 	return cmd
 }
@@ -34,8 +37,29 @@ func setupBookmarksAddCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			user.CreateManager(context.Background()).AddBookmark(common.User(cmd), r.ID)
-			common.User(cmd)
+			if err := user.CreateManager(context.Background()).AddBookmark(common.User(cmd), r.ID); err != nil {
+				fmt.Println("unable to add bookmark: " + err.Error())
+				os.Exit(1)
+			}
+		},
+	}
+	return cmd
+}
+
+func setupBookmarksListCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List Bookmarks",
+		Args:  cobra.ExactArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if bookmarks, err := user.CreateManager(context.Background()).ListBookmarks(common.User(cmd)); err != nil {
+				fmt.Println("unable to list bookmark: " + err.Error())
+				os.Exit(1)
+			} else {
+				for _, b := range bookmarks {
+					fmt.Println(b)
+				}
+			}
 		},
 	}
 	return cmd

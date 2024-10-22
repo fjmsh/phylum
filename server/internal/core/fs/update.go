@@ -1,36 +1,24 @@
 package fs
 
 import (
-	"time"
+	"strings"
 
 	"github.com/shroff/phylum/server/internal/core/db"
 )
 
 func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
-	if r, err := f.db.UpdateResourceName(f.ctx, db.UpdateResourceNameParams{ID: r.ID, Name: name}); err != nil {
+	// TODO: #badbehavior This should check parent permissions, not self
+	if !r.hasPermission(PermissionWrite) {
+		return Resource{}, ErrInsufficientPermissions
+	}
+	if name == "" || checkNameInvalid(name) {
+		return Resource{}, ErrResourceNameInvalid
+	}
+
+	if res, err := f.db.UpdateResourceName(f.ctx, db.UpdateResourceNameParams{ID: r.ID, Name: name}); err != nil {
 		return Resource{}, err
 	} else {
-		var deleted *time.Time
-		if r.Deleted.Valid {
-			deleted = &r.Deleted.Time
-		}
-		return Resource{
-			ID:            r.ID,
-			ParentID:      r.Parent,
-			Name:          r.Name,
-			Created:       r.Created.Time,
-			Modified:      r.Modified.Time,
-			Deleted:       deleted,
-			Dir:           r.Dir,
-			ContentSize:   r.ContentSize,
-			ContentType:   r.ContentType,
-			ContentSHA256: r.ContentSha256,
-			Permissions:   string(r.Permissions),
-			// Not Needed
-			// Path: r.Path,
-			// UserPermissions: 0,
-			// InheritedPermissions: "",
-		}, nil
+		return ResourceFromDB(res, r.UserPermissions, r.Path[0:strings.LastIndex(r.Path, "/")]+"/"+name, r.InheritedPermissions), nil
 	}
 }
 
@@ -58,25 +46,5 @@ func (f filesystem) UpdatePermissions(r Resource, username string, permission Pe
 	if err != nil {
 		return Resource{}, err
 	}
-	var deleted *time.Time
-	if res.Deleted.Valid {
-		deleted = &res.Deleted.Time
-	}
-	return Resource{
-		ID:            res.ID,
-		ParentID:      res.Parent,
-		Name:          res.Name,
-		Created:       res.Created.Time,
-		Modified:      res.Modified.Time,
-		Deleted:       deleted,
-		Dir:           res.Dir,
-		ContentSize:   res.ContentSize,
-		ContentType:   res.ContentType,
-		ContentSHA256: res.ContentSha256,
-		Permissions:   string(res.Permissions),
-		// Not Needed
-		// Path: r.Path,
-		// UserPermissions: 0,
-		// InheritedPermissions: "",
-	}, nil
+	return ResourceFromDB(res, r.UserPermissions, r.Path, r.InheritedPermissions), nil
 }

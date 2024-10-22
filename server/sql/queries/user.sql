@@ -47,4 +47,11 @@ SET
 WHERE username = @username::text;
 
 -- name: ListBookmarks :many
-SELECT jsonb_array_elements(bookmarks) FROM users WHERE username = @username::text;
+WITH ids(id) AS(
+  SELECT jsonb_array_elements_text(bookmarks)::uuid
+  FROM users
+  WHERE username = @username::text
+) SELECT r.*
+FROM ids i
+JOIN resources r
+ON i.id = r.id;

@@ -15,28 +15,13 @@ func (f filesystem) DeleteChildRecursive(r Resource, name string, hardDelete boo
 		}
 		return err
 	} else {
-		child := Resource{
-			ID:              result.ID,
-			ParentID:        result.Parent,
-			Name:            result.Name,
-			Dir:             result.Dir,
-			Created:         result.Created.Time,
-			Modified:        result.Modified.Time,
-			Deleted:         nil,
-			ContentType:     result.ContentType,
-			ContentSize:     result.ContentSize,
-			ContentSHA256:   result.ContentSha256,
-			Permissions:     string(result.Permissions),
-			UserPermissions: r.UserPermissions,
-			Path:            r.Path,
-			// Not Needed
-			// InheritedPermissions: "",
-		}
+		child := ResourceFromDB(result, r.UserPermissions, r.Path+"/"+result.Name, r.InheritedPermissions)
 		return f.DeleteRecursive(child, hardDelete)
 	}
 }
 
 func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
+	// TODO: #badbehavior This should check parent permissions, not self
 	if !r.hasPermission(PermissionWrite) {
 		return ErrInsufficientPermissions
 	}
