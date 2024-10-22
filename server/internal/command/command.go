@@ -56,7 +56,7 @@ func SetupCommand() {
 
 	defer func() {
 		logrus.Debug("Shutting Down App")
-		db.Get().Close()
+		db.Close()
 	}()
 
 	rootCmd.AddCommand([]*cobra.Command{

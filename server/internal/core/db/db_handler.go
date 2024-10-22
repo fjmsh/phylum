@@ -39,6 +39,11 @@ func Get() *DbHandler {
 	}
 	return d
 }
+func Close() {
+	if d != nil {
+		d.pool.Close()
+	}
+}
 
 func create(ctx context.Context, dsn string, traceSQL, autoMigrate bool) (*DbHandler, error) {
 	config, err := pgxpool.ParseConfig(dsn)
@@ -84,8 +89,4 @@ func (d DbHandler) WithTx(ctx context.Context, fn func(*DbHandler) error) error 
 func (d DbHandler) Exec(ctx context.Context, stmt string, args ...any) error {
 	_, err := d.Queries.db.Exec(ctx, stmt, args...)
 	return err
-}
-
-func (d DbHandler) Close() {
-	d.pool.Close()
 }
