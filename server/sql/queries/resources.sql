@@ -14,6 +14,12 @@ INSERT INTO resources(
     @id::uuid, @parent::uuid, @name::text, @dir::boolean, @content_size::bigint, @content_type::text, @content_sha256::text
 );
 
+-- name: ResourceByPath :one
+SELECT * FROM resource_by_path(@path::text, @root::uuid, @username::text);
+
+-- name: ResourceByID :one
+SELECT * FROM resource_by_id(@resource_id::uuid, @root::uuid, @username::text);
+
 -- name: UpdateResourceContents :exec
 UPDATE resources
 SET
@@ -54,6 +60,54 @@ SET
 WHERE id = @id::uuid
 RETURNING *;
 
+-- name: UpdateUserPermissionsForResource :one
+UPDATE resources
+SET
+    permissions[@username::text] = to_json(@permission::int),
+    modified = NOW()
+WHERE id = @resource_id::uuid
+RETURNING *;
+
+-- name: RemoveUserPermissionForResource :one
+UPDATE resources
+SET
+    permissions = permissions - @username::text,
+    modified = NOW()
+WHERE id = @resource_id::uuid
+RETURNING *;
+
+-- name: ChildResourceByName :one
+SELECT * FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;
+
+-- name: ReadDir :many
+WITH RECURSIVE nodes(id, parent, name, dir, created, modified, content_size, content_type, content_sha256, depth, path, permissions) AS (
+  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, 0, ''::text, r.permissions
+    FROM resources r
+    WHERE r.id = @id::uuid
+  UNION ALL
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, n.depth + 1, concat(n.path, '/', r.name), r.permissions
+    FROM resources r JOIN nodes n on r.parent = n.id
+    WHERE deleted IS NULL
+    AND r.id != @id::uuid
+    AND CASE WHEN @recursive::boolean THEN true ELSE depth < 1 END
+)
+SELECT * from nodes
+WHERE CASE WHEN @include_root::boolean THEN true ELSE depth > 0 END;
+
+-- name: DeleteRecursive :many
+WITH RECURSIVE nodes(id, parent, dir) AS (
+    SELECT r.id, r.parent, r.dir
+    FROM resources r WHERE r.id = @id::uuid
+  UNION ALL
+    SELECT r.id, r.parent, r.dir
+    FROM resources r JOIN nodes n on r.parent = n.id
+    WHERE deleted IS NULL
+)
+UPDATE resources
+SET modified = NOW(), deleted = NOW()
+WHERE id in (SELECT id FROM nodes)
+RETURNING id, dir;
+
 -- name: DiskUsage :one
 WITH RECURSIVE nodes(id, parent, content_size, dir) AS (
     SELECT r.id, r.parent, r.content_size, r.dir
@@ -71,22 +125,5 @@ SELECT
 FROM nodes;
 
 
--- name: DeleteRecursive :many
-WITH RECURSIVE nodes(id, parent, dir) AS (
-    SELECT r.id, r.parent, r.dir
-    FROM resources r WHERE r.id = @id::uuid
-  UNION ALL
-    SELECT r.id, r.parent, r.dir
-    FROM resources r JOIN nodes n on r.parent = n.id
-    WHERE deleted IS NULL
-)
-UPDATE resources
-SET modified = NOW(), deleted = NOW()
-WHERE id in (SELECT id FROM nodes)
-RETURNING id, dir;
-
 -- name: SharedResources :many
 SELECT * FROM resources WHERE permissions ? @username::text AND id <> @user_home::uuid AND deleted IS NULL;
-
--- name: ChildResourceByName :one
-SELECT * FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;

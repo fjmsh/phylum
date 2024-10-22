@@ -17,7 +17,7 @@ func (f filesystem) CreateResourceByPath(path string, dir, recursive bool) (Reso
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			if recursive {
-				// TODO: this is very inefficient. Fix it
+				// TODO: this is very inefficient, but used only directly from the command line
 				parent, err = f.CreateResourceByPath(parentPath, true, true)
 			} else {
 				err = ErrParentNotFound
@@ -53,7 +53,7 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 			}
 			return err
 		}
-		return d.UpdateResourceModified(f.ctx, r.ID)
+		return d.UpdateResourceModified(f.ctx, parent)
 	})
 	if err != nil {
 		return Resource{}, err

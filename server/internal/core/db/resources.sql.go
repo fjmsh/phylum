@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const childResourceByName = `-- name: ChildResourceByName :one
@@ -162,6 +163,175 @@ func (q *Queries) DiskUsage(ctx context.Context, id uuid.UUID) (DiskUsageRow, er
 		&i.Entities,
 		&i.Dirs,
 		&i.Files,
+	)
+	return i, err
+}
+
+const readDir = `-- name: ReadDir :many
+WITH RECURSIVE nodes(id, parent, name, dir, created, modified, content_size, content_type, content_sha256, depth, path, permissions) AS (
+  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, 0, ''::text, r.permissions
+    FROM resources r
+    WHERE r.id = $2::uuid
+  UNION ALL
+    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, n.depth + 1, concat(n.path, '/', r.name), r.permissions
+    FROM resources r JOIN nodes n on r.parent = n.id
+    WHERE deleted IS NULL
+    AND r.id != $2::uuid
+    AND CASE WHEN $3::boolean THEN true ELSE depth < 1 END
+)
+SELECT id, parent, name, dir, created, modified, content_size, content_type, content_sha256, depth, path, permissions from nodes
+WHERE CASE WHEN $1::boolean THEN true ELSE depth > 0 END
+`
+
+type ReadDirParams struct {
+	IncludeRoot bool
+	ID          uuid.UUID
+	Recursive   bool
+}
+
+type ReadDirRow struct {
+	ID            uuid.UUID
+	Parent        *uuid.UUID
+	Name          string
+	Dir           bool
+	Created       pgtype.Timestamp
+	Modified      pgtype.Timestamp
+	ContentSize   int64
+	ContentType   string
+	ContentSha256 string
+	Depth         int32
+	Path          string
+	Permissions   []byte
+}
+
+func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow, error) {
+	rows, err := q.db.Query(ctx, readDir, arg.IncludeRoot, arg.ID, arg.Recursive)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ReadDirRow
+	for rows.Next() {
+		var i ReadDirRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Parent,
+			&i.Name,
+			&i.Dir,
+			&i.Created,
+			&i.Modified,
+			&i.ContentSize,
+			&i.ContentType,
+			&i.ContentSha256,
+			&i.Depth,
+			&i.Path,
+			&i.Permissions,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const removeUserPermissionForResource = `-- name: RemoveUserPermissionForResource :one
+UPDATE resources
+SET
+    permissions = permissions - $1::text,
+    modified = NOW()
+WHERE id = $2::uuid
+RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
+`
+
+type RemoveUserPermissionForResourceParams struct {
+	Username   string
+	ResourceID uuid.UUID
+}
+
+func (q *Queries) RemoveUserPermissionForResource(ctx context.Context, arg RemoveUserPermissionForResourceParams) (Resource, error) {
+	row := q.db.QueryRow(ctx, removeUserPermissionForResource, arg.Username, arg.ResourceID)
+	var i Resource
+	err := row.Scan(
+		&i.ID,
+		&i.Permissions,
+		&i.Name,
+		&i.Parent,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.ContentSize,
+		&i.ContentType,
+		&i.ContentSha256,
+	)
+	return i, err
+}
+
+const resourceByID = `-- name: ResourceByID :one
+SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, inherited_permissions, user_permission, found, path FROM resource_by_id($1::uuid, $2::uuid, $3::text)
+`
+
+type ResourceByIDParams struct {
+	ResourceID uuid.UUID
+	Root       uuid.UUID
+	Username   string
+}
+
+func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (ResourceResult, error) {
+	row := q.db.QueryRow(ctx, resourceByID, arg.ResourceID, arg.Root, arg.Username)
+	var i ResourceResult
+	err := row.Scan(
+		&i.ID,
+		&i.Permissions,
+		&i.Name,
+		&i.Parent,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.ContentSize,
+		&i.ContentType,
+		&i.ContentSha256,
+		&i.InheritedPermissions,
+		&i.UserPermission,
+		&i.Found,
+		&i.Path,
+	)
+	return i, err
+}
+
+const resourceByPath = `-- name: ResourceByPath :one
+SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, inherited_permissions, user_permission, found, path FROM resource_by_path($1::text, $2::uuid, $3::text)
+`
+
+type ResourceByPathParams struct {
+	Path     string
+	Root     uuid.UUID
+	Username string
+}
+
+func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) (ResourceResult, error) {
+	row := q.db.QueryRow(ctx, resourceByPath, arg.Path, arg.Root, arg.Username)
+	var i ResourceResult
+	err := row.Scan(
+		&i.ID,
+		&i.Permissions,
+		&i.Name,
+		&i.Parent,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.ContentSize,
+		&i.ContentType,
+		&i.ContentSha256,
+		&i.InheritedPermissions,
+		&i.UserPermission,
+		&i.Found,
+		&i.Path,
 	)
 	return i, err
 }
@@ -330,6 +500,40 @@ type UpdateResourceParentParams struct {
 
 func (q *Queries) UpdateResourceParent(ctx context.Context, arg UpdateResourceParentParams) (Resource, error) {
 	row := q.db.QueryRow(ctx, updateResourceParent, arg.Parent, arg.ID)
+	var i Resource
+	err := row.Scan(
+		&i.ID,
+		&i.Permissions,
+		&i.Name,
+		&i.Parent,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.ContentSize,
+		&i.ContentType,
+		&i.ContentSha256,
+	)
+	return i, err
+}
+
+const updateUserPermissionsForResource = `-- name: UpdateUserPermissionsForResource :one
+UPDATE resources
+SET
+    permissions[$1::text] = to_json($2::int),
+    modified = NOW()
+WHERE id = $3::uuid
+RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
+`
+
+type UpdateUserPermissionsForResourceParams struct {
+	Username   string
+	Permission int32
+	ResourceID uuid.UUID
+}
+
+func (q *Queries) UpdateUserPermissionsForResource(ctx context.Context, arg UpdateUserPermissionsForResourceParams) (Resource, error) {
+	row := q.db.QueryRow(ctx, updateUserPermissionsForResource, arg.Username, arg.Permission, arg.ResourceID)
 	var i Resource
 	err := row.Scan(
 		&i.ID,
