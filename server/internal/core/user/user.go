@@ -8,9 +8,6 @@ import (
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
-const DefaultUserUsername = "phylum"
-const DefaultUserDisplayName = "Phylum"
-
 type User struct {
 	Username    string    `json:"username"`
 	DisplayName string    `json:"display"`

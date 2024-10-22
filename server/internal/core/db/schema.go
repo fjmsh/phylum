@@ -27,7 +27,7 @@ func (d DbHandler) checkVersion(ctx context.Context, autoMigrate bool) error {
 
 	// Nothing to do
 	if currentSchemaVersion == latestSchemaVersion {
-		return nil
+		return d.BootstrapData(ctx)
 	}
 
 	if !autoMigrate {
@@ -40,7 +40,11 @@ func (d DbHandler) checkVersion(ctx context.Context, autoMigrate bool) error {
 	}
 
 	logrus.Info(fmt.Sprintf("Migrating database from version %d to %d", currentSchemaVersion, latestSchemaVersion))
-	return migrator.MigrateTo(ctx, int32(latestSchemaVersion))
+	err = migrator.MigrateTo(ctx, int32(latestSchemaVersion))
+	if err != nil {
+		return err
+	}
+	return d.BootstrapData(ctx)
 }
 
 func (d DbHandler) Migrate(ctx context.Context, version int) error {
@@ -69,7 +73,14 @@ func (d DbHandler) Migrate(ctx context.Context, version int) error {
 	}
 
 	logrus.Info(fmt.Sprintf("Migrating database from version %d to %d", currentSchemaVersion, version))
-	return migrator.MigrateTo(ctx, int32(version))
+	err = migrator.MigrateTo(ctx, int32(version))
+	if err != nil {
+		return err
+	}
+	if version == latestSchemaVersion {
+		return d.BootstrapData(ctx)
+	}
+	return nil
 }
 
 func (d DbHandler) DeleteSchema(ctx context.Context) error {
