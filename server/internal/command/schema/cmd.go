@@ -8,7 +8,6 @@ import (
 
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func SetupCommand() *cobra.Command {
@@ -28,7 +27,7 @@ func setupSchemaResetCommand() *cobra.Command {
 		Use:   "reset",
 		Short: "Reset Database Schema",
 		Run: func(cmd *cobra.Command, args []string) {
-			viper.Set("auto_migrate", false)
+			db.AutoMigrate = false
 			if err := db.Get().DeleteSchema(context.Background()); err != nil {
 				fmt.Println("unable to delete database schema: " + err.Error())
 				os.Exit(1)

@@ -32,7 +32,7 @@ var AutoMigrate bool
 func Get() *DbHandler {
 	if d == nil {
 		if db, err := create(context.Background(), DatabaseURL, TraceSQL, AutoMigrate); err != nil {
-			panic(err)
+			logrus.Fatal(err)
 		} else {
 			d = db
 		}
@@ -63,7 +63,9 @@ func create(ctx context.Context, dsn string, traceSQL, autoMigrate bool) (*DbHan
 		pool:    pool,
 	}
 
-	d.checkVersion(ctx, autoMigrate)
+	if err := d.checkVersion(ctx, autoMigrate); err != nil {
+		return nil, err
+	}
 
 	return &d, nil
 }

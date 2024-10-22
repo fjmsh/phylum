@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/sirupsen/logrus"
 )
 
 type Storage interface {
@@ -33,7 +34,7 @@ var DefaultStorageDir string
 func Get() Storage {
 	if s == nil {
 		if storage, err := create(context.Background(), db.Get(), DefaultStorageDir); err != nil {
-			panic(err)
+			logrus.Fatal(err)
 		} else {
 			s = storage
 		}
