@@ -147,6 +147,24 @@ func (q *Queries) ListBookmarks(ctx context.Context, username string) ([]Resourc
 	return items, nil
 }
 
+const removeBookmark = `-- name: RemoveBookmark :exec
+UPDATE users
+SET
+    bookmarks = bookmarks - ($1::uuid)::text,
+    modified = NOW()
+WHERE username = $2::text
+`
+
+type RemoveBookmarkParams struct {
+	ID       uuid.UUID
+	Username string
+}
+
+func (q *Queries) RemoveBookmark(ctx context.Context, arg RemoveBookmarkParams) error {
+	_, err := q.db.Exec(ctx, removeBookmark, arg.ID, arg.Username)
+	return err
+}
+
 const updateUserDisplayName = `-- name: UpdateUserDisplayName :exec
 UPDATE users
 SET

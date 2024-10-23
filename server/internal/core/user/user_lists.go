@@ -25,6 +25,10 @@ func (m manager) AddBookmark(u User, id uuid.UUID) error {
 	return m.db.Queries.AddBookmark(m.ctx, db.AddBookmarkParams{Username: u.Username, ID: id})
 }
 
+func (m manager) RemoveBookmark(u User, id uuid.UUID) error {
+	return m.db.Queries.RemoveBookmark(m.ctx, db.RemoveBookmarkParams{Username: u.Username, ID: id})
+}
+
 func (m manager) Bookmarks(u User) ([]fs.Resource, error) {
 	// TODO: #permissions This doesn't take permissions into account. is this okay?
 	res, err := m.db.Queries.ListBookmarks(m.ctx, u.Username)
