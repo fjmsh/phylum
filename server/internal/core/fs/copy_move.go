@@ -32,7 +32,7 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, b
 		}
 		return Resource{}, false, err
 	}
-	if destParent.hasPermission(PermissionWrite) {
+	if !destParent.hasPermission(PermissionWrite) {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 	if res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: r.ID, ResourceID: destParent.ID, Username: f.username}); err != nil || res.Found {
