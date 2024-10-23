@@ -14,7 +14,7 @@ import (
 const addBookmark = `-- name: AddBookmark :exec
 UPDATE users
 SET
-    bookmarks = bookmarks || to_jsonb(array[$1::uuid]),
+    bookmarks = CASE WHEN bookmarks ? ($1::uuid)::text THEN bookmarks ELSE bookmarks || to_jsonb(array[$1::uuid]) END,
     modified = NOW()
 WHERE username = $2::text
 `

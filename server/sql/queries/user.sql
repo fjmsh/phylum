@@ -42,7 +42,7 @@ WHERE username = $2;
 -- name: AddBookmark :exec
 UPDATE users
 SET
-    bookmarks = bookmarks || to_jsonb(array[@id::uuid]),
+    bookmarks = CASE WHEN bookmarks ? (@id::uuid)::text THEN bookmarks ELSE bookmarks || to_jsonb(array[@id::uuid]) END,
     modified = NOW()
 WHERE username = @username::text;
 

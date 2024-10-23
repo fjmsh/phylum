@@ -57,7 +57,7 @@ func setupBookmarksListCommand() *cobra.Command {
 				os.Exit(1)
 			} else {
 				for _, b := range bookmarks {
-					fmt.Println(b)
+					fmt.Printf("%s %s %s\n", b.ID.String(), b.Name, b.PermissionsString())
 				}
 			}
 		},
