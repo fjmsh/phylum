@@ -52,7 +52,7 @@ func setupBookmarksListCommand() *cobra.Command {
 		Short: "List Bookmarks",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			if bookmarks, err := user.CreateManager(context.Background()).ListBookmarks(common.User(cmd)); err != nil {
+			if bookmarks, err := user.CreateManager(context.Background()).Bookmarks(common.User(cmd)); err != nil {
 				fmt.Println("unable to list bookmark: " + err.Error())
 				os.Exit(1)
 			} else {

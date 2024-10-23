@@ -6,8 +6,8 @@ import (
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
-func (m manager) GetSharedResources(u User) ([]fs.Resource, error) {
-	// TODO: This doesn't take permissions into account. is this okay?
+func (m manager) SharedResources(u User) ([]fs.Resource, error) {
+	// TODO: #permissions This doesn't take permissions into account. is this okay?
 	res, err := m.db.Queries.SharedResources(m.ctx, db.SharedResourcesParams{Username: u.Username, UserHome: u.Home})
 	if err != nil {
 		return nil, err
@@ -21,10 +21,12 @@ func (m manager) GetSharedResources(u User) ([]fs.Resource, error) {
 }
 
 func (m manager) AddBookmark(u User, id uuid.UUID) error {
+	// TODO: #permissions This doesn't check that the resource even exists, let alone permissions
 	return m.db.Queries.AddBookmark(m.ctx, db.AddBookmarkParams{Username: u.Username, ID: id})
 }
 
-func (m manager) ListBookmarks(u User) ([]fs.Resource, error) {
+func (m manager) Bookmarks(u User) ([]fs.Resource, error) {
+	// TODO: #permissions This doesn't take permissions into account. is this okay?
 	res, err := m.db.Queries.ListBookmarks(m.ctx, u.Username)
 	if err != nil {
 		return nil, err
