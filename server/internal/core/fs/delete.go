@@ -15,6 +15,7 @@ func (f filesystem) DeleteChildRecursive(r Resource, name string, hardDelete boo
 		}
 		return err
 	} else {
+		// TODO: #incorrectdata inherited permissions should include r.Permisisons
 		child := ResourceFromDB(result, r.UserPermissions, r.Path+"/"+result.Name, r.InheritedPermissions)
 		return f.DeleteRecursive(child, hardDelete)
 	}
