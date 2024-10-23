@@ -20,9 +20,8 @@ func (m manager) SharedResources(u User) ([]fs.Resource, error) {
 	return result, err
 }
 
-func (m manager) AddBookmark(u User, id uuid.UUID) error {
-	// TODO: #permissions This doesn't check that the resource even exists, let alone permissions
-	return m.db.Queries.AddBookmark(m.ctx, db.AddBookmarkParams{Username: u.Username, ID: id})
+func (m manager) AddBookmark(u User, resource fs.Resource) error {
+	return m.db.Queries.AddBookmark(m.ctx, db.AddBookmarkParams{Username: u.Username, ID: resource.ID})
 }
 
 func (m manager) RemoveBookmark(u User, id uuid.UUID) error {

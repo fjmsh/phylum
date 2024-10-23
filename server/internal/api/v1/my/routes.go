@@ -79,7 +79,11 @@ func handleBookmarksAddRoute(c *gin.Context) {
 	}
 
 	u := auth.GetUser(c)
-	err = user.CreateManager(c.Request.Context()).AddBookmark(u, params.ID)
+	r, err := auth.GetFileSystem(c).ResourceByID(params.ID)
+	if err != nil {
+		panic(err)
+	}
+	err = user.CreateManager(c.Request.Context()).AddBookmark(u, r)
 	if err != nil {
 		panic(err)
 	}

@@ -78,7 +78,7 @@ func setupBookmarksAddCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if err := user.CreateManager(context.Background()).AddBookmark(common.User(cmd), r.ID); err != nil {
+			if err := user.CreateManager(context.Background()).AddBookmark(common.User(cmd), r); err != nil {
 				fmt.Println("unable to add bookmark: " + err.Error())
 				os.Exit(1)
 			}

@@ -43,6 +43,6 @@ type Manager interface {
 	// user_lists.go
 	SharedResources(u User) (result []fs.Resource, err error)
 	Bookmarks(u User) ([]fs.Resource, error)
-	AddBookmark(u User, id uuid.UUID) error
+	AddBookmark(u User, resource fs.Resource) error
 	RemoveBookmark(u User, id uuid.UUID) error
 }
