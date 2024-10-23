@@ -44,6 +44,7 @@ func handleUploadRequest(c *gin.Context) {
 			return err
 		}
 
+		// TODO: #perf disk I/O in tx
 		src, err := file.Open()
 		if err != nil {
 			return err

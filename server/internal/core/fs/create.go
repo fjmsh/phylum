@@ -59,6 +59,9 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	if err != nil {
 		return Resource{}, err
 	}
-	// TODO: #badbehavior Inherited permissions should include r.Permissions as well
-	return ResourceFromDB(result, r.UserPermissions, r.Path+"/"+result.Name, r.InheritedPermissions), nil
+	p, err := MergePermissionStrings(r.InheritedPermissions, r.Permissions)
+	if err != nil {
+		return Resource{}, err
+	}
+	return ResourceFromDB(result, r.UserPermissions, r.Path+"/"+result.Name, p), nil
 }

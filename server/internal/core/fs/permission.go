@@ -64,6 +64,22 @@ func permissionString(p Permission) string {
 	return str
 }
 
+func MergePermissionStrings(p1s, p2s string) (string, error) {
+	p1 := make(map[string]Permission)
+	json.Unmarshal([]byte(p1s), &p1)
+	p2 := make(map[string]Permission)
+	json.Unmarshal([]byte(p2s), &p2)
+	for k, v := range p1 {
+		p2[k] = p2[k] | v
+
+	}
+	res, err := json.Marshal(p2)
+	if err != nil {
+		return "", err
+	}
+	return string(res), nil
+}
+
 func ParsePermissionString(s string) (Permission, error) {
 	switch s {
 	case "none":

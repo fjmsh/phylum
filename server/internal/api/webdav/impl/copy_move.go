@@ -102,7 +102,6 @@ func moveFiles(fs FileSystem, srcPath, dstPath string, overwrite bool) (status i
 			}
 			return status, nil
 		}
-		// TODO: should return http.StatusNoContent if the target already existed before
 	}
 }
 
@@ -129,6 +128,5 @@ func copyFiles(fs FileSystem, srcPath, dstPath string, overwrite bool, depth int
 			}
 			return status, nil
 		}
-		// TODO: should return http.StatusNoContent if the target already existed before
 	}
 }

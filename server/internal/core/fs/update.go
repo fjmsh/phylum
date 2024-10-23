@@ -1,26 +1,8 @@
 package fs
 
 import (
-	"strings"
-
 	"github.com/shroff/phylum/server/internal/core/db"
 )
-
-func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
-	// TODO: #badbehavior This should check parent permissions, not self
-	if !r.hasPermission(PermissionWrite) {
-		return Resource{}, ErrInsufficientPermissions
-	}
-	if name == "" || CheckNameInvalid(name) {
-		return Resource{}, ErrResourceNameInvalid
-	}
-
-	if res, err := f.db.UpdateResourceName(f.ctx, db.UpdateResourceNameParams{ID: r.ID, Name: name}); err != nil {
-		return Resource{}, err
-	} else {
-		return ResourceFromDB(res, r.UserPermissions, r.Path[0:strings.LastIndex(r.Path, "/")]+"/"+name, r.InheritedPermissions), nil
-	}
-}
 
 func (f filesystem) UpdatePermissions(r Resource, username string, permission Permission) (Resource, error) {
 	if !r.hasPermission(PermissionShare) {

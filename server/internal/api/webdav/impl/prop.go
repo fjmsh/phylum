@@ -98,7 +98,7 @@ var liveProps = map[xml.Name]struct {
 	},
 	{Space: "DAV:", Local: "creationdate"}: {
 		findFn: findCreationDate,
-		dir:    false,
+		dir:    true,
 	},
 	{Space: "DAV:", Local: "getcontentlanguage"}: {
 		findFn: nil,

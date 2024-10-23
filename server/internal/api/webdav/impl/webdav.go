@@ -385,8 +385,10 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 		if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
 			f, err := h.FileSystem.OpenWriteTouch(reqPath)
 			if err != nil {
-				// TODO: detect missing intermediate dirs and return http.StatusConflict?
-				return http.StatusInternalServerError, err
+				if errors.Is(err, fs.ErrParentNotFound) {
+					return http.StatusConflict, err
+				}
+				return http.StatusNotFound, err
 			}
 			f.Close()
 			created = true

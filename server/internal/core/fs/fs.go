@@ -41,7 +41,6 @@ type FileSystem interface {
 	Copy(r Resource, target string, id uuid.UUID, recursive, overwrite bool) (Resource, bool, error)
 
 	// update.go
-	UpdateName(r Resource, name string) (Resource, error)
 	UpdatePermissions(r Resource, username string, permission Permission) (Resource, error)
 
 	// disk_usage.go
