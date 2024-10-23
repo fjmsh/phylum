@@ -3,42 +3,50 @@ package fs
 import (
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/sirupsen/logrus"
 )
 
 func (f filesystem) DeleteChildRecursive(r Resource, name string, hardDelete bool) error {
-	if result, err := f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: r.ID, Name: name}); err != nil {
+	if !r.hasPermission(PermissionWrite) {
+		return ErrInsufficientPermissions
+	}
+
+	id, err := f.db.ChildResourceIDByName(f.ctx, db.ChildResourceIDByNameParams{Parent: r.ID, Name: name})
+	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 		return err
-	} else {
-		// TODO: #incorrectdata inherited permissions should include r.Permisisons
-		child := ResourceFromDB(result, r.UserPermissions, r.Path+"/"+result.Name, r.InheritedPermissions)
-		return f.DeleteRecursive(child, hardDelete)
 	}
+	return deleteRecursive(f, id, r.ID, hardDelete)
 }
 
 func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
-	// TODO: #badbehavior This should check parent permissions, not self
-	if !r.hasPermission(PermissionWrite) {
+	if r.ParentID == nil {
 		return ErrInsufficientPermissions
 	}
-	// TODO: versioning
+	parent, err := f.ResourceByID(*r.ParentID)
+	if err != nil {
+		return err
+	}
+	if !parent.hasPermission(PermissionWrite) {
+		return ErrInsufficientPermissions
+	}
+	return deleteRecursive(f, r.ID, parent.ID, hardDelete)
+}
+
+func deleteRecursive(f filesystem, id, parent uuid.UUID, hardDelete bool) error {
 	var deleted []db.DeleteRecursiveRow
 	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 		var err error
-		if deleted, err = d.DeleteRecursive(f.ctx, r.ID); err != nil {
+		if deleted, err = d.DeleteRecursive(f.ctx, id); err != nil {
 			return err
 		}
 
-		parent := r.ParentID
-		if parent != nil {
-			return d.UpdateResourceModified(f.ctx, *parent)
-		}
-		return nil
+		return d.UpdateResourceModified(f.ctx, parent)
 	})
 
 	if err == nil && hardDelete {
@@ -46,8 +54,8 @@ func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
 		for _, err := range errors {
 			logrus.Warn(err)
 		}
-
 	}
 
 	return err
+
 }
