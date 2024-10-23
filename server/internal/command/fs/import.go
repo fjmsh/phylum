@@ -27,27 +27,28 @@ func setupImportCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			destParent, err := f.ResourceByPathOrUUID(args[0])
+			importPath := args[1]
 			if err != nil {
-				fmt.Println("could not import '" + args[1] + "': " + err.Error())
+				fmt.Println("could not import '" + importPath + "': " + err.Error())
 				os.Exit(1)
 			}
 
-			stat, err := os.Stat(args[1])
+			stat, err := os.Stat(importPath)
 			if err != nil {
-				fmt.Println("could not import '" + args[1] + "': " + err.Error())
+				fmt.Println("could not import '" + importPath + "': " + err.Error())
 				os.Exit(1)
 			}
 			destName := stat.Name()
 			if len(args) > 2 {
 				destName = args[2]
 				if destName == "" || fs.CheckNameInvalid(destName) {
-					fmt.Println("could not import '" + args[1] + "': name is invalid: '" + destName + "'")
+					fmt.Println("could not import '" + importPath + "': name is invalid: '" + destName + "'")
 				}
 			}
 
 			if stat.IsDir() {
 				if recursive, _ := cmd.Flags().GetBool("recursive"); !recursive {
-					fmt.Println("could not import '" + args[1] + "': is a directory. use -r to import")
+					fmt.Println("could not import '" + importPath + "': is a directory. use -r to import")
 					os.Exit(1)
 				}
 			}
@@ -67,7 +68,7 @@ func setupImportCommand() *cobra.Command {
 			})
 
 			if stat.IsDir() {
-				dirFS := os.DirFS(args[1])
+				dirFS := os.DirFS(importPath)
 
 				err := iofs.WalkDir(dirFS, ".", func(p string, d iofs.DirEntry, err error) error {
 					if p != "." && err == nil {
@@ -102,7 +103,7 @@ func setupImportCommand() *cobra.Command {
 					return err
 				})
 				if err != nil {
-					fmt.Println("could not import '" + args[1] + "': " + err.Error())
+					fmt.Println("could not import '" + importPath + "': " + err.Error())
 					os.Exit(1)
 				}
 			}
@@ -135,15 +136,15 @@ func setupImportCommand() *cobra.Command {
 			if err == nil {
 				err = func() error {
 					for k, v := range copy {
-						if err := copyContents(f, k, v); err != nil {
-							errors.New("unable to copy " + k + " to " + v.String() + ": " + err.Error())
+						if err := copyContents(f, path.Join(importPath, k), v); err != nil {
+							return errors.New("unable to copy " + k + " to " + v.String() + ": " + err.Error())
 						}
 					}
 					return nil
 				}()
 			}
 			if err != nil {
-				fmt.Println("could not import '" + args[1] + "': " + err.Error())
+				fmt.Println("could not import '" + importPath + "': " + err.Error())
 				os.Exit(1)
 			}
 		},
@@ -154,6 +155,7 @@ func setupImportCommand() *cobra.Command {
 }
 
 func copyContents(f fs.FileSystem, src string, id uuid.UUID) error {
+	fmt.Println("importing " + src + " to " + id.String())
 	in, err := os.Open(src)
 	if err != nil {
 		return err
