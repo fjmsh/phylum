@@ -38,7 +38,7 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	if !r.hasPermission(PermissionWrite) {
 		return Resource{}, ErrInsufficientPermissions
 	}
-	if name == "" || checkNameInvalid(name) {
+	if name == "" || CheckNameInvalid(name) {
 		return Resource{}, ErrResourceNameInvalid
 	}
 	var result db.Resource

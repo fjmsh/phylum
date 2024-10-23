@@ -11,7 +11,7 @@ func (f filesystem) UpdateName(r Resource, name string) (Resource, error) {
 	if !r.hasPermission(PermissionWrite) {
 		return Resource{}, ErrInsufficientPermissions
 	}
-	if name == "" || checkNameInvalid(name) {
+	if name == "" || CheckNameInvalid(name) {
 		return Resource{}, ErrResourceNameInvalid
 	}
 

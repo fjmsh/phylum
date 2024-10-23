@@ -204,7 +204,7 @@ func (f filesystem) targetByPathOrUUID(src Resource, pathOrUUID string) (Resourc
 				err = ErrParentNotFound
 			}
 			return Resource{}, "", err
-		} else if checkNameInvalid(name) {
+		} else if CheckNameInvalid(name) {
 			return Resource{}, "", ErrResourceNameInvalid
 		} else {
 			return parent, name, nil
@@ -231,7 +231,7 @@ func (f filesystem) targetByPathOrUUID(src Resource, pathOrUUID string) (Resourc
 	name := pathOrUUID[index+1:]
 	if name == "" {
 		name = src.Name
-	} else if checkNameInvalid(name) {
+	} else if CheckNameInvalid(name) {
 		return Resource{}, "", ErrResourceNameInvalid
 	}
 

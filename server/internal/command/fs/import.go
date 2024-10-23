@@ -1,16 +1,23 @@
 package fs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/command/common"
+	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/spf13/cobra"
 )
+
+const emptySHA = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 func setupImportCommand() *cobra.Command {
 	cmd := cobra.Command{
@@ -19,7 +26,7 @@ func setupImportCommand() *cobra.Command {
 		Args:  cobra.RangeArgs(2, 3),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
-			target, err := f.ResourceByPathOrUUID(args[0])
+			destParent, err := f.ResourceByPathOrUUID(args[0])
 			if err != nil {
 				fmt.Println("could not import '" + args[1] + "': " + err.Error())
 				os.Exit(1)
@@ -30,49 +37,141 @@ func setupImportCommand() *cobra.Command {
 				fmt.Println("could not import '" + args[1] + "': " + err.Error())
 				os.Exit(1)
 			}
-			name := stat.Name()
+			destName := stat.Name()
 			if len(args) > 2 {
-				name = args[2]
+				destName = args[2]
+				if destName == "" || fs.CheckNameInvalid(destName) {
+					fmt.Println("could not import '" + args[1] + "': name is invalid: '" + destName + "'")
+				}
+			}
+
+			if stat.IsDir() {
+				if recursive, _ := cmd.Flags().GetBool("recursive"); !recursive {
+					fmt.Println("could not import '" + args[1] + "': is a directory. use -r to import")
+					os.Exit(1)
+				}
 			}
 
 			force, _ := cmd.Flags().GetBool("force")
-			if force {
-				f.DeleteChildRecursive(target, name, true)
-			} else {
-				_, err := f.WithRoot(target.ID).ResourceByPath(name)
-				if err == nil {
-					fmt.Println("could not import '" + args[1] + "': resource with name '" + name + "' already exist. use -f to overwrite")
-					os.Exit(1)
-				} else if !errors.Is(err, fs.ErrResourceNotFound) {
+
+			var size int64 = 0
+			create := make([]db.CreateResourcesParams, 0)
+			copy := make(map[string]uuid.UUID)
+			ids := make(map[string]uuid.UUID)
+			ids["."], _ = uuid.NewUUID()
+			create = append(create, db.CreateResourcesParams{
+				ID:     ids["."],
+				Parent: destParent.ID,
+				Name:   destName,
+				Dir:    stat.IsDir(),
+			})
+
+			if stat.IsDir() {
+				dirFS := os.DirFS(args[1])
+
+				err := iofs.WalkDir(dirFS, ".", func(p string, d iofs.DirEntry, err error) error {
+					if p != "." && err == nil {
+						info, err := d.Info()
+						if err != nil {
+							return err
+						}
+						sz := info.Size()
+						if d.IsDir() {
+							sz = 0
+						}
+						size += sz
+						if d.Name() == "" || fs.CheckNameInvalid(d.Name()) {
+							return fs.ErrResourceNameInvalid
+						}
+						ids[p], _ = uuid.NewUUID()
+						parent := ids[path.Dir(p)]
+						create = append(create, db.CreateResourcesParams{
+							Parent:        parent,
+							ID:            ids[p],
+							Name:          d.Name(),
+							Dir:           d.IsDir(),
+							ContentSize:   sz,
+							ContentType:   "",
+							ContentSha256: "",
+						})
+						if !d.IsDir() {
+							copy[p] = ids[p]
+						}
+
+					}
+					return err
+				})
+				if err != nil {
 					fmt.Println("could not import '" + args[1] + "': " + err.Error())
 					os.Exit(1)
 				}
 			}
-			if stat.IsDir() {
+			fmt.Printf("Importing %d files (%d bytes) across %d dirs\n", len(copy), size, len(create)-len(copy))
 
-			} else {
-				in, err := os.Open(args[1])
-				if err != nil {
-					fmt.Println("could not import '" + args[1] + "': " + err.Error())
-				}
-				defer in.Close()
-				id, _ := uuid.NewUUID()
-				if r, err := f.CreateMemberResource(target, id, name, false); err != nil {
-					fmt.Println("could not import '" + args[1] + "': " + err.Error())
+			ctx := context.Background()
+			err = db.Get().WithTx(ctx, func(dbh *db.DbHandler) error {
+				f := f.WithDb(dbh)
+				if force {
+					if err := f.DeleteChildRecursive(destParent, destName, false); !errors.Is(err, fs.ErrResourceNotFound) {
+						return err
+					}
 				} else {
-					out, err := f.OpenWrite(r)
-					if err != nil {
-						fmt.Println("could not import '" + args[1] + "': " + err.Error())
-					}
-					defer out.Close()
-					_, err = io.Copy(out, in)
-					if err != nil {
-						fmt.Println("could not import '" + args[1] + "': " + err.Error())
+					_, err := f.WithRoot(destParent.ID).ResourceByPath(destName)
+					if err == nil {
+						return errors.New("resource with name '" + destName + "' already exist. use -f to overwrite")
+					} else if !errors.Is(err, fs.ErrResourceNotFound) {
+						return err
 					}
 				}
+				if _, err := dbh.CreateResources(ctx, create); err != nil {
+					if strings.Contains(err.Error(), "unique_member_resource_name") {
+						return fs.ErrResourceNameConflict
+					}
+					return err
+				}
+				return dbh.UpdateResourceModified(ctx, destParent.ID)
+			})
+
+			if err == nil {
+				err = func() error {
+					for k, v := range copy {
+						if err := copyContents(f, k, v); err != nil {
+							errors.New("unable to copy " + k + " to " + v.String() + ": " + err.Error())
+						}
+					}
+					return nil
+				}()
+			}
+			if err != nil {
+				fmt.Println("could not import '" + args[1] + "': " + err.Error())
+				os.Exit(1)
 			}
 		},
 	}
 	cmd.Flags().BoolP("force", "f", false, "Overwrite destination if it exists")
+	cmd.Flags().BoolP("recursive", "r", false, "Recursive import")
 	return &cmd
+}
+
+func copyContents(f fs.FileSystem, src string, id uuid.UUID) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	if r, err := f.ResourceByID(id); err != nil {
+		return err
+	} else {
+		out, err := f.OpenWrite(r)
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+		_, err = io.Copy(out, in)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

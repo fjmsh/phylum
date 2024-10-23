@@ -58,7 +58,7 @@ func Open(ctx context.Context, username string, root uuid.UUID) FileSystem {
 	}
 }
 
-func checkNameInvalid(s string) bool {
+func CheckNameInvalid(s string) bool {
 	return strings.ContainsFunc(s, func(r rune) bool {
 		return r == 0 || r == '/'
 	})
