@@ -3,6 +3,7 @@ package fs
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
@@ -63,5 +64,29 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	if err != nil {
 		return Resource{}, err
 	}
-	return ResourceFromDB(result, r.UserPermissions, r.Path+"/"+result.Name, p), nil
+	var deleted *time.Time
+	if result.Deleted.Valid {
+		deleted = &result.Deleted.Time
+	}
+	path := r.Path + "/" + result.Name
+	if r.Path == "/" {
+		path = result.Name
+	}
+	return Resource{
+		f:                    f,
+		ID:                   result.ID,
+		ParentID:             result.Parent,
+		Name:                 result.Name,
+		Created:              result.Created.Time,
+		Modified:             result.Modified.Time,
+		Deleted:              deleted,
+		Dir:                  result.Dir,
+		ContentSize:          result.ContentSize,
+		ContentType:          result.ContentType,
+		ContentSHA256:        result.ContentSha256,
+		Permissions:          string(result.Permissions),
+		Path:                 path,
+		UserPermissions:      r.UserPermissions,
+		InheritedPermissions: p,
+	}, nil
 }

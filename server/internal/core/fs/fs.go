@@ -33,10 +33,6 @@ type FileSystem interface {
 	ReadDir(r serve.Resource, recursive bool) ([]serve.Resource, error)
 	ProcessResources(r serve.Resource, depth int, fn func(serve.Resource) error) error
 
-	// delete.go
-	DeleteChildRecursive(r Resource, name string, hardDelete bool) error
-	DeleteRecursive(r Resource, hardDelete bool) error
-
 	// copy_move.go
 	Move(r Resource, target string, overwrite bool) (Resource, bool, error)
 	Copy(r Resource, target string, id uuid.UUID, recursive, overwrite bool) (Resource, bool, error)

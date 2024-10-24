@@ -29,7 +29,7 @@ func setupRmCommand() *cobra.Command {
 				}
 			}
 
-			f.DeleteRecursive(r, true)
+			r.DeleteRecursive(true)
 		},
 	}
 	cmd.Flags().BoolP("recursive", "r", false, "Recursive (required for directories)")

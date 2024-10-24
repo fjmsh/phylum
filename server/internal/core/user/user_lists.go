@@ -15,7 +15,7 @@ func (m manager) SharedResources(u User) ([]fs.Resource, error) {
 
 	result := make([]fs.Resource, len(res))
 	for i, r := range res {
-		result[i] = fs.ResourceFromDB(r, 0, "", "")
+		result[i] = fs.ResourceFromDB(r)
 	}
 	return result, err
 }
@@ -37,7 +37,7 @@ func (m manager) Bookmarks(u User) ([]fs.Resource, error) {
 
 	result := make([]fs.Resource, len(res))
 	for i, r := range res {
-		result[i] = fs.ResourceFromDB(r, 0, "", "")
+		result[i] = fs.ResourceFromDB(r)
 	}
 	return result, err
 }

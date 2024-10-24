@@ -9,36 +9,36 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (f filesystem) DeleteChildRecursive(r Resource, name string, hardDelete bool) error {
+func (r Resource) DeleteChildRecursive(name string, hardDelete bool) error {
 	if !r.hasPermission(PermissionWrite) {
 		return ErrInsufficientPermissions
 	}
 
-	id, err := f.db.ChildResourceIDByName(f.ctx, db.ChildResourceIDByNameParams{Parent: r.ID, Name: name})
+	id, err := r.f.db.ChildResourceIDByName(r.f.ctx, db.ChildResourceIDByNameParams{Parent: r.ID, Name: name})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 		return err
 	}
-	return deleteRecursive(f, id, r.ID, hardDelete)
+	return r.f.deleteRecursive(id, r.ID, hardDelete)
 }
 
-func (f filesystem) DeleteRecursive(r Resource, hardDelete bool) error {
+func (r Resource) DeleteRecursive(hardDelete bool) error {
 	if r.ParentID == nil {
 		return ErrInsufficientPermissions
 	}
-	parent, err := f.ResourceByID(*r.ParentID)
+	parent, err := r.f.ResourceByID(*r.ParentID)
 	if err != nil {
 		return err
 	}
 	if !parent.hasPermission(PermissionWrite) {
 		return ErrInsufficientPermissions
 	}
-	return deleteRecursive(f, r.ID, parent.ID, hardDelete)
+	return r.f.deleteRecursive(r.ID, parent.ID, hardDelete)
 }
 
-func deleteRecursive(f filesystem, id, parent uuid.UUID, hardDelete bool) error {
+func (f filesystem) deleteRecursive(id, parent uuid.UUID, hardDelete bool) error {
 	var deleted []db.DeleteRecursiveRow
 	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 		var err error

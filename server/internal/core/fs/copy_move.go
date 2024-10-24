@@ -44,7 +44,7 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, b
 	return result, deleted, f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
 		f = f.withDb(dbh)
 		if overwrite {
-			if err := f.DeleteChildRecursive(destParent, destName, false); err == nil {
+			if err := destParent.DeleteChildRecursive(destName, false); err == nil {
 				deleted = true
 			} else if !errors.Is(err, ErrResourceNotFound) {
 				return err
@@ -56,7 +56,7 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, b
 			}
 			return err
 		} else {
-			result = ResourceFromDB(r, 0, "", "")
+			result = ResourceFromDB(r)
 			return nil
 		}
 	})
@@ -135,7 +135,7 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 	err = f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
 		f := f.withDb(dbh)
 		if overwrite {
-			if err := f.DeleteChildRecursive(destParent, destName, false); err == nil {
+			if err := destParent.DeleteChildRecursive(destName, false); err == nil {
 				deleted = true
 			} else if !errors.Is(err, ErrResourceNotFound) {
 				return err
@@ -162,6 +162,7 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 	}
 
 	var dest = Resource{
+		f:             f,
 		ID:            id,
 		ParentID:      &destParent.ID,
 		Name:          destName,

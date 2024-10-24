@@ -61,6 +61,7 @@ func (f filesystem) ReadDir(sr serve.Resource, recursive bool) ([]serve.Resource
 			path = c.Path
 		}
 		result[i] = Resource{
+			f:             f,
 			ID:            c.ID,
 			ParentID:      c.Parent,
 			Name:          c.Name,

@@ -17,7 +17,7 @@ func handleRmRequest(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	if err := fs.DeleteRecursive(r, true); err != nil {
+	if err := r.DeleteRecursive(true); err != nil {
 		panic(err)
 	}
 

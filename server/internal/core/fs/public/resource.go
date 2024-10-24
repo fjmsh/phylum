@@ -7,6 +7,7 @@ import (
 )
 
 type Resource struct {
+	f             filesystem
 	id            uuid.UUID
 	name          string
 	dir           bool

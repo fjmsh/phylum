@@ -34,6 +34,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	}
 
 	return Resource{
+		f:             f,
 		id:            r.ID,
 		name:          r.Name,
 		dir:           r.Dir,
@@ -66,6 +67,7 @@ func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
 
 	for i, c := range children {
 		result[i] = Resource{
+			f:             f,
 			id:            c.ID,
 			name:          c.Name,
 			dir:           c.Dir,

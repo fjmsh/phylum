@@ -8,6 +8,7 @@ import (
 )
 
 type Resource struct {
+	f                    filesystem
 	ID                   uuid.UUID  `json:"id"`
 	ParentID             *uuid.UUID `json:"parent"`
 	Name                 string     `json:"name"`
@@ -33,25 +34,28 @@ func (r Resource) FSContentSize() int64    { return r.ContentSize }
 func (r Resource) FSContentSHA256() string { return r.ContentSHA256 }
 func (r Resource) FSContentType() string   { return r.ContentType }
 
-func ResourceFromDB(r db.Resource, userPermissions int32, path, inheritedPermissions string) Resource {
+func ResourceFromDB(r db.Resource) Resource {
 	var deleted *time.Time
 	if r.Deleted.Valid {
 		deleted = &r.Deleted.Time
 	}
 	return Resource{
-		ID:                   r.ID,
-		ParentID:             r.Parent,
-		Name:                 r.Name,
-		Created:              r.Created.Time,
-		Modified:             r.Modified.Time,
-		Deleted:              deleted,
-		Dir:                  r.Dir,
-		ContentSize:          r.ContentSize,
-		ContentType:          r.ContentType,
-		ContentSHA256:        r.ContentSha256,
-		Permissions:          string(r.Permissions),
-		Path:                 path,
-		UserPermissions:      userPermissions,
-		InheritedPermissions: inheritedPermissions,
+		ID:            r.ID,
+		ParentID:      r.Parent,
+		Name:          r.Name,
+		Created:       r.Created.Time,
+		Modified:      r.Modified.Time,
+		Deleted:       deleted,
+		Dir:           r.Dir,
+		ContentSize:   r.ContentSize,
+		ContentType:   r.ContentType,
+		ContentSHA256: r.ContentSha256,
+		Permissions:   string(r.Permissions),
+		// Not Needed
+		// f:                    f,
+		// Path:                 "",
+		// UserPermissions:      0,
+		// InheritedPermissions: "",
+
 	}
 }

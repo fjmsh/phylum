@@ -28,5 +28,5 @@ func (f filesystem) UpdatePermissions(r Resource, username string, permission Pe
 	if err != nil {
 		return Resource{}, err
 	}
-	return ResourceFromDB(res, r.UserPermissions, r.Path, r.InheritedPermissions), nil
+	return ResourceFromDB(res), nil
 }

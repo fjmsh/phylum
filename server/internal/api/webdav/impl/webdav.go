@@ -38,7 +38,6 @@ type Handler struct {
 type FileSystem interface {
 	ResourceByPath(name string) (fs.Resource, error)
 	CreateResourceByPath(name string, dir, recursive bool) (fs.Resource, error)
-	DeleteRecursive(r fs.Resource, hardDelete bool) error
 	Move(r fs.Resource, target string, overwrite bool) (fs.Resource, bool, error)
 	Copy(r fs.Resource, target string, id uuid.UUID, recursive, overwrite bool) (fs.Resource, bool, error)
 	ReadDir(r serve.Resource, recursive bool) ([]serve.Resource, error)
@@ -249,7 +248,7 @@ func (h *Handler) handleDelete(_ http.ResponseWriter, r *http.Request) (status i
 			return http.StatusNotFound, err
 		}
 		return http.StatusMethodNotAllowed, err
-	} else if err := h.FileSystem.DeleteRecursive(r, false); err != nil {
+	} else if err := r.DeleteRecursive(false); err != nil {
 		return http.StatusMethodNotAllowed, err
 	}
 	return http.StatusNoContent, nil
