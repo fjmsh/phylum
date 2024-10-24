@@ -7,8 +7,8 @@ type DiskUsageInfo struct {
 	Dirs      int64
 }
 
-func (f filesystem) DiskUsage(r Resource) (DiskUsageInfo, error) {
-	if info, err := f.db.DiskUsage(f.ctx, r.ID); err != nil {
+func (r Resource) DiskUsage() (DiskUsageInfo, error) {
+	if info, err := r.f.db.DiskUsage(r.f.ctx, r.ID); err != nil {
 		return DiskUsageInfo{}, err
 	} else {
 		return DiskUsageInfo{

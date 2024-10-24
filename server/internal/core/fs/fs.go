@@ -27,9 +27,6 @@ type FileSystem interface {
 	// copy_move.go
 	Move(r Resource, target string, overwrite bool) (Resource, bool, error)
 	Copy(r Resource, target string, id uuid.UUID, recursive, overwrite bool) (Resource, bool, error)
-
-	// disk_usage.go
-	DiskUsage(r Resource) (DiskUsageInfo, error)
 }
 
 func Open(ctx context.Context, username string, root uuid.UUID) FileSystem {

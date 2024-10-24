@@ -24,7 +24,7 @@ func handleDuRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	info, err := fs.DiskUsage(resource)
+	info, err := resource.DiskUsage()
 	if err != nil {
 		panic(err)
 	}
