@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
@@ -38,8 +37,6 @@ type Handler struct {
 type FileSystem interface {
 	ResourceByPath(name string) (fs.Resource, error)
 	CreateResourceByPath(name string, dir, recursive bool) (fs.Resource, error)
-	Move(r fs.Resource, target string, overwrite bool) (fs.Resource, bool, error)
-	Copy(r fs.Resource, target string, id uuid.UUID, recursive, overwrite bool) (fs.Resource, bool, error)
 }
 
 func (h *Handler) stripPrefix(p string) (string, int, error) {

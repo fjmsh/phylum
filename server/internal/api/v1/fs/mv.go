@@ -29,7 +29,7 @@ func handleMvRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	if r, _, err := fs.Move(r, params.Target, params.Overwrite); err != nil {
+	if r, _, err := r.Move(params.Target, params.Overwrite); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, r)

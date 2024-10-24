@@ -10,13 +10,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, bool, error) {
+func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
 	if r.ParentID == nil {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 
 	// Check source directory permissions
-	parent, err := f.ResourceByID(*r.ParentID)
+	parent, err := r.f.ResourceByID(*r.ParentID)
 	if err != nil {
 		return Resource{}, false, err
 	}
@@ -25,7 +25,7 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, b
 	}
 
 	// Check destParent directory permissions (if applicable)
-	destParent, destName, err := f.targetByPathOrUUID(r, target)
+	destParent, destName, err := r.f.targetByPathOrUUID(r, target)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
@@ -35,14 +35,14 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, b
 	if !destParent.hasPermission(PermissionWrite) {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
-	if res, err := f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: r.ID, ResourceID: destParent.ID, Username: f.username}); err != nil || res.Found {
+	if res, err := r.f.db.ResourceByID(r.f.ctx, db.ResourceByIDParams{Root: r.ID, ResourceID: destParent.ID, Username: r.f.username}); err != nil || res.Found {
 		return Resource{}, false, ErrResourceMoveTargetSubdirectory
 	}
 
 	var result Resource
 	var deleted = false
-	return result, deleted, f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
-		f = f.withDb(dbh)
+	return result, deleted, r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
+		f := r.f.withDb(dbh)
 		if overwrite {
 			if err := destParent.DeleteChildRecursive(destName, false); err == nil {
 				deleted = true
@@ -62,14 +62,14 @@ func (f filesystem) Move(r Resource, target string, overwrite bool) (Resource, b
 	})
 }
 
-func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, overwrite bool) (Resource, bool, error) {
+func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (Resource, bool, error) {
 	// Check source directory permissions
-	if !src.hasPermission(PermissionRead) {
+	if !r.hasPermission(PermissionRead) {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 
 	// Check dest directory permissions
-	destParent, destName, err := f.targetByPathOrUUID(src, target)
+	destParent, destName, err := r.f.targetByPathOrUUID(r, target)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
@@ -85,9 +85,9 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 	}
 
 	var tree []db.ReadDirRow
-	if recursive && src.Dir {
+	if recursive && r.Dir {
 		var err error
-		tree, err = f.db.ReadDir(f.ctx, db.ReadDirParams{ID: src.ID, IncludeRoot: false, Recursive: true})
+		tree, err = r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{ID: r.ID, IncludeRoot: false, Recursive: true})
 		if err != nil {
 			return Resource{}, false, err
 		}
@@ -95,20 +95,20 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 	create := make([]db.CreateResourcesParams, 0, len(tree)+1)
 	copy := make(map[uuid.UUID]uuid.UUID)
 	ids := make(map[string]uuid.UUID)
-	if src.Dir {
+	if r.Dir {
 		ids[""] = id
 	} else {
-		copy[src.ID] = id
+		copy[r.ID] = id
 	}
 
 	create = append(create, db.CreateResourcesParams{
 		ID:            id,
 		Parent:        destParent.ID,
 		Name:          destName,
-		Dir:           src.Dir,
-		ContentSize:   src.ContentSize,
-		ContentType:   src.ContentType,
-		ContentSha256: src.ContentSHA256,
+		Dir:           r.Dir,
+		ContentSize:   r.ContentSize,
+		ContentType:   r.ContentType,
+		ContentSha256: r.ContentSHA256,
 	})
 	for _, src := range tree {
 		id, _ := uuid.NewUUID()
@@ -132,8 +132,8 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 	}
 
 	var deleted = false
-	err = f.db.WithTx(f.ctx, func(dbh *db.DbHandler) error {
-		f := f.withDb(dbh)
+	err = r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
+		f := r.f.withDb(dbh)
 		if overwrite {
 			if err := destParent.DeleteChildRecursive(destName, false); err == nil {
 				deleted = true
@@ -153,7 +153,7 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 	if err == nil {
 		func() {
 			for k, v := range copy {
-				if err := f.cs.CopyContents(k, v); err != nil {
+				if err := r.f.cs.CopyContents(k, v); err != nil {
 					logrus.Warn("unable to copy " + k.String() + " to " + v.String() + ": " + err.Error())
 				}
 			}
@@ -162,17 +162,17 @@ func (f filesystem) Copy(src Resource, target string, id uuid.UUID, recursive, o
 	}
 
 	var dest = Resource{
-		f:             f,
+		f:             r.f,
 		ID:            id,
 		ParentID:      &destParent.ID,
 		Name:          destName,
-		Dir:           src.Dir,
+		Dir:           r.Dir,
 		Created:       time.Now(),
 		Modified:      time.Now(),
 		Deleted:       nil,
-		ContentSize:   src.ContentSize,
-		ContentType:   src.ContentType,
-		ContentSHA256: src.ContentSHA256,
+		ContentSize:   r.ContentSize,
+		ContentType:   r.ContentType,
+		ContentSHA256: r.ContentSHA256,
 		Permissions:   "{}",
 		// Not Needed
 		// UserPermissions:      ??

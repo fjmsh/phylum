@@ -90,7 +90,7 @@ func moveFiles(fs FileSystem, srcPath, dstPath string, overwrite bool) (status i
 		}
 		return http.StatusInternalServerError, err
 	} else {
-		if _, deleted, err := fs.Move(src, dstPath, overwrite); err != nil {
+		if _, deleted, err := src.Move(dstPath, overwrite); err != nil {
 			if e, ok := err.(*errors.Error); ok {
 				return e.Status, e
 			}
@@ -116,7 +116,7 @@ func copyFiles(fs FileSystem, srcPath, dstPath string, overwrite bool, depth int
 		return http.StatusInternalServerError, err
 	} else {
 		id, _ := uuid.NewUUID()
-		if _, deleted, err := fs.Copy(src, dstPath, id, depth != 0, overwrite); err != nil {
+		if _, deleted, err := src.Copy(dstPath, id, depth != 0, overwrite); err != nil {
 			if e, ok := err.(*errors.Error); ok {
 				return e.Status, e
 			}

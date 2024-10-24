@@ -23,10 +23,6 @@ type FileSystem interface {
 	ResourceByID(id uuid.UUID) (Resource, error)
 	ResourceByPath(path string) (Resource, error)
 	ResourceByPathOrUUID(pathOrUUID string) (Resource, error)
-
-	// copy_move.go
-	Move(r Resource, target string, overwrite bool) (Resource, bool, error)
-	Copy(r Resource, target string, id uuid.UUID, recursive, overwrite bool) (Resource, bool, error)
 }
 
 func Open(ctx context.Context, username string, root uuid.UUID) FileSystem {
