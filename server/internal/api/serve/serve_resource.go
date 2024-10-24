@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 var htmlReplacer = strings.NewReplacer(
@@ -25,12 +23,22 @@ var htmlReplacer = strings.NewReplacer(
 	"'", "&#39;",
 )
 
-type FileSystem interface {
-	ReadDir(r fs.Resource, recursive bool) ([]fs.Resource, error)
-	OpenRead(r fs.Resource, start, length int64) (io.ReadCloser, error)
+type Resource interface {
+	Name() string
+	Dir() bool
+	Created() time.Time
+	Modified() time.Time
+	ContentSize() int64
+	ContentSHA256() string
+	ContentType() string
 }
 
-func ServeCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file fs.Resource) {
+type FileSystem interface {
+	ReadDir(r Resource, recursive bool) ([]Resource, error)
+	OpenRead(r Resource, start, length int64) (io.ReadCloser, error)
+}
+
+func ServeCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file Resource) {
 	if !strings.HasSuffix(r.URL.Path, "/") {
 		http.Redirect(w, r, r.URL.String()+"/", http.StatusMovedPermanently)
 		return
@@ -39,7 +47,7 @@ func ServeCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file
 		writeNotModified(w)
 		return
 	}
-	w.Header().Set("Last-Modified", file.Modified.Format(http.TimeFormat))
+	w.Header().Set("Last-Modified", file.Modified().Format(http.TimeFormat))
 
 	files, err := fs.ReadDir(file, false)
 	if err != nil {
@@ -50,19 +58,19 @@ func ServeCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file
 	sort.Slice(files, func(i, j int) bool {
 		a := files[i]
 		b := files[j]
-		if a.Dir != b.Dir {
-			if a.Dir {
+		if a.Dir() != b.Dir() {
+			if a.Dir() {
 				return true
 			}
 		}
-		return strings.Compare(strings.ToLower(a.Name), strings.ToLower((b.Name))) <= 0
+		return strings.Compare(strings.ToLower(a.Name()), strings.ToLower((b.Name()))) <= 0
 	})
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(w, "<pre>\n")
 	for _, f := range files {
-		name := f.Name
-		if f.Dir {
+		name := f.Name()
+		if f.Dir() {
 			name += "/"
 		}
 		// name may contain '?' or '#', which must be escaped to remain
@@ -74,10 +82,10 @@ func ServeCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file
 	fmt.Fprintf(w, "</pre>\n")
 }
 
-func ServeResource(w http.ResponseWriter, r *http.Request, fs FileSystem, file fs.Resource) {
-	w.Header().Set("Etag", file.ContentSHA256)
-	w.Header().Set("Last-Modified", file.Modified.Format(http.TimeFormat))
-	w.Header().Set("Content-Type", file.ContentType)
+func ServeResource(w http.ResponseWriter, r *http.Request, fs FileSystem, file Resource) {
+	w.Header().Set("Etag", file.ContentSHA256())
+	w.Header().Set("Last-Modified", file.Modified().Format(http.TimeFormat))
+	w.Header().Set("Content-Type", file.ContentType())
 
 	done, rangeReq := checkPreconditions(w, r, file)
 	if done {
@@ -85,8 +93,8 @@ func ServeResource(w http.ResponseWriter, r *http.Request, fs FileSystem, file f
 	}
 
 	code := http.StatusOK
-	sendSize := file.ContentSize
-	ranges, err := parseRange(rangeReq, file.ContentSize)
+	sendSize := file.ContentSize()
+	ranges, err := parseRange(rangeReq, file.ContentSize())
 	if err != nil {
 		w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", file.ContentSize))
 		http.Error(w, err.Error(), http.StatusRequestedRangeNotSatisfiable)
@@ -109,7 +117,7 @@ func ServeResource(w http.ResponseWriter, r *http.Request, fs FileSystem, file f
 		ra := ranges[0]
 		sendSize = ra.length
 		code = http.StatusPartialContent
-		w.Header().Set("Content-Range", ra.contentRange(file.ContentSize))
+		w.Header().Set("Content-Range", ra.contentRange(file.ContentSize()))
 		reader, err = fs.OpenRead(file, ra.start, ra.length)
 	} else {
 		reader, err = fs.OpenRead(file, 0, -1)
@@ -221,7 +229,7 @@ func parseRange(s string, size int64) ([]httpRange, error) {
 
 // checkPreconditions evaluates request preconditions and reports whether a precondition
 // resulted in sending StatusNotModified or StatusPreconditionFailed.
-func checkPreconditions(w http.ResponseWriter, r *http.Request, ri fs.Resource) (done bool, rangeHeader string) {
+func checkPreconditions(w http.ResponseWriter, r *http.Request, ri Resource) (done bool, rangeHeader string) {
 	// This function carefully follows RFC 7232 section 6.
 	ch := checkIfMatch(r, ri)
 	if ch == condNone {
@@ -304,7 +312,7 @@ const (
 	condFalse
 )
 
-func checkIfMatch(r *http.Request, ri fs.Resource) condResult {
+func checkIfMatch(r *http.Request, ri Resource) condResult {
 	im := r.Header.Get("If-Match")
 	if im == "" {
 		return condNone
@@ -325,7 +333,7 @@ func checkIfMatch(r *http.Request, ri fs.Resource) condResult {
 		if etag == "" {
 			break
 		}
-		if etagStrongMatch(etag, ri.ContentSHA256) {
+		if etagStrongMatch(etag, ri.ContentSHA256()) {
 			return condTrue
 		}
 		im = remain
@@ -334,9 +342,9 @@ func checkIfMatch(r *http.Request, ri fs.Resource) condResult {
 	return condFalse
 }
 
-func checkIfUnmodifiedSince(r *http.Request, ri fs.Resource) condResult {
+func checkIfUnmodifiedSince(r *http.Request, ri Resource) condResult {
 	ius := r.Header.Get("If-Unmodified-Since")
-	if ius == "" || isZeroTime(ri.Modified) {
+	if ius == "" || isZeroTime(ri.Modified()) {
 		return condNone
 	}
 	t, err := http.ParseTime(ius)
@@ -346,14 +354,14 @@ func checkIfUnmodifiedSince(r *http.Request, ri fs.Resource) condResult {
 
 	// The Last-Modified header truncates sub-second precision so
 	// the modtime needs to be truncated too.
-	modtime := ri.Modified.Truncate(time.Second)
+	modtime := ri.Modified().Truncate(time.Second)
 	if ret := modtime.Compare(t); ret <= 0 {
 		return condTrue
 	}
 	return condFalse
 }
 
-func checkIfNoneMatch(r *http.Request, ri fs.Resource) condResult {
+func checkIfNoneMatch(r *http.Request, ri Resource) condResult {
 	inm := r.Header.Get("If-None-Match")
 	if inm == "" {
 		return condNone
@@ -375,7 +383,7 @@ func checkIfNoneMatch(r *http.Request, ri fs.Resource) condResult {
 		if etag == "" {
 			break
 		}
-		if etagWeakMatch(etag, ri.ContentSHA256) {
+		if etagWeakMatch(etag, ri.ContentSHA256()) {
 			return condFalse
 		}
 		buf = remain
@@ -383,12 +391,12 @@ func checkIfNoneMatch(r *http.Request, ri fs.Resource) condResult {
 	return condTrue
 }
 
-func checkIfModifiedSince(r *http.Request, ri fs.Resource) condResult {
+func checkIfModifiedSince(r *http.Request, ri Resource) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}
 	ims := r.Header.Get("If-Modified-Since")
-	if ims == "" || isZeroTime(ri.Modified) {
+	if ims == "" || isZeroTime(ri.Modified()) {
 		return condNone
 	}
 	t, err := http.ParseTime(ims)
@@ -397,14 +405,14 @@ func checkIfModifiedSince(r *http.Request, ri fs.Resource) condResult {
 	}
 	// The Last-Modified header truncates sub-second precision so
 	// the modtime needs to be truncated too.
-	modtime := ri.Modified.Truncate(time.Second)
+	modtime := ri.Modified().Truncate(time.Second)
 	if ret := modtime.Compare(t); ret <= 0 {
 		return condFalse
 	}
 	return condTrue
 }
 
-func checkIfRange(r *http.Request, ri fs.Resource) condResult {
+func checkIfRange(r *http.Request, ri Resource) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}
@@ -414,7 +422,7 @@ func checkIfRange(r *http.Request, ri fs.Resource) condResult {
 	}
 	etag, _ := scanETag(ir)
 	if etag != "" {
-		if etagStrongMatch(etag, ri.ContentSHA256) {
+		if etagStrongMatch(etag, ri.ContentSHA256()) {
 			return condTrue
 		} else {
 			return condFalse
@@ -422,14 +430,14 @@ func checkIfRange(r *http.Request, ri fs.Resource) condResult {
 	}
 	// The If-Range value is typically the ETag value, but it may also be
 	// the modtime date. See golang.org/issue/8367.
-	if ri.Modified.IsZero() {
+	if ri.Modified().IsZero() {
 		return condFalse
 	}
 	t, err := http.ParseTime(ir)
 	if err != nil {
 		return condFalse
 	}
-	if t.Unix() == ri.Modified.Unix() {
+	if t.Unix() == ri.Modified().Unix() {
 		return condTrue
 	}
 	return condFalse

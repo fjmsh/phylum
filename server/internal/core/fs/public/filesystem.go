@@ -34,26 +34,27 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	}
 
 	return Resource{
-		ID:            r.ID,
-		Name:          r.Name,
-		Dir:           r.Dir,
-		Created:       r.Created.Time,
-		Modified:      r.Modified.Time,
-		ContentSize:   r.ContentSize,
-		ContentSHA256: r.ContentSha256,
+		id:            r.ID,
+		name:          r.Name,
+		dir:           r.Dir,
+		created:       r.Created.Time,
+		modified:      r.Modified.Time,
+		contentSize:   r.ContentSize,
+		contentType:   r.ContentType,
+		contentSHA256: r.ContentSha256,
 	}, nil
 }
 
 func (f filesystem) OpenRead(r Resource, start, length int64) (io.ReadCloser, error) {
-	return f.cs.OpenRead(r.ID, start, length)
+	return f.cs.OpenRead(r.id, start, length)
 }
 
 func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
-	if !r.Dir {
+	if !r.dir {
 		return nil, fs.ErrResourceNotCollection
 	}
 	children, err := f.db.ReadDir(f.ctx, db.ReadDirParams{
-		ID:          r.ID,
+		ID:          r.id,
 		IncludeRoot: false,
 		Recursive:   recursive,
 	})
@@ -65,14 +66,14 @@ func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
 
 	for i, c := range children {
 		result[i] = Resource{
-			ID:            c.ID,
-			Name:          c.Name,
-			Created:       c.Created.Time,
-			Modified:      c.Modified.Time,
-			Deleted:       nil, // Query will not return deleted results
-			Dir:           c.Dir,
-			ContentSize:   c.ContentSize,
-			ContentSHA256: c.ContentSha256,
+			id:            c.ID,
+			name:          c.Name,
+			dir:           c.Dir,
+			created:       c.Created.Time,
+			modified:      c.Modified.Time,
+			contentSize:   c.ContentSize,
+			contentType:   c.ContentType,
+			contentSHA256: c.ContentSha256,
 		}
 	}
 	return result, nil
