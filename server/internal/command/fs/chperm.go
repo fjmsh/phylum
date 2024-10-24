@@ -37,7 +37,7 @@ func setupChpermCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if _, err := f.UpdatePermissions(r, username, permission); err != nil {
+			if _, err := r.UpdatePermissions(username, permission); err != nil {
 				fmt.Println("cannot update permissions for '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)
 			}

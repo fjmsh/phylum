@@ -4,7 +4,7 @@ import (
 	"github.com/shroff/phylum/server/internal/core/db"
 )
 
-func (f filesystem) UpdatePermissions(r Resource, username string, permission Permission) (Resource, error) {
+func (r Resource) UpdatePermissions(username string, permission Permission) (Resource, error) {
 	if !r.hasPermission(PermissionShare) {
 		return Resource{}, ErrInsufficientPermissions
 	}
@@ -14,12 +14,12 @@ func (f filesystem) UpdatePermissions(r Resource, username string, permission Pe
 	var res db.Resource
 	var err error
 	if permission == 0 {
-		res, err = f.db.RemoveUserPermissionForResource(f.ctx, db.RemoveUserPermissionForResourceParams{
+		res, err = r.f.db.RemoveUserPermissionForResource(r.f.ctx, db.RemoveUserPermissionForResourceParams{
 			ResourceID: r.ID,
 			Username:   username,
 		})
 	} else {
-		res, err = f.db.UpdateUserPermissionsForResource(f.ctx, db.UpdateUserPermissionsForResourceParams{
+		res, err = r.f.db.UpdateUserPermissionsForResource(r.f.ctx, db.UpdateUserPermissionsForResourceParams{
 			ResourceID: r.ID,
 			Username:   username,
 			Permission: permission,

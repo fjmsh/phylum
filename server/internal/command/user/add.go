@@ -107,7 +107,7 @@ func setupUserAddCommand() *cobra.Command {
 					if err != nil {
 						return err
 					}
-					if _, err := rootFS.UpdatePermissions(home, u.Username, fs.PermissionRead|fs.PermissionWrite|fs.PermissionShare); err != nil {
+					if _, err := home.UpdatePermissions(u.Username, fs.PermissionRead|fs.PermissionWrite|fs.PermissionShare); err != nil {
 						return err
 					}
 					return userManager.UpdateUserHome(u, home.ID)
