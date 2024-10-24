@@ -17,10 +17,11 @@ type Resource struct {
 	contentSHA256 string
 }
 
-func (r Resource) Name() string          { return r.name }
-func (r Resource) Dir() bool             { return r.dir }
-func (r Resource) Created() time.Time    { return r.created }
-func (r Resource) Modified() time.Time   { return r.modified }
-func (r Resource) ContentSize() int64    { return r.contentSize }
-func (r Resource) ContentSHA256() string { return r.contentSHA256 }
-func (r Resource) ContentType() string   { return r.contentType }
+func (r Resource) MID() uuid.UUID         { return r.id }
+func (r Resource) MName() string          { return r.name }
+func (r Resource) MDir() bool             { return r.dir }
+func (r Resource) MCreated() time.Time    { return r.created }
+func (r Resource) MModified() time.Time   { return r.modified }
+func (r Resource) MContentSize() int64    { return r.contentSize }
+func (r Resource) MContentSHA256() string { return r.contentSHA256 }
+func (r Resource) MContentType() string   { return r.contentType }

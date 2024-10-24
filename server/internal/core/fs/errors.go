@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	ErrUnexpectedType                 = errors.NewError(http.StatusInternalServerError, "unexpected_type", "unexpected type")
 	ErrInsufficientPermissions        = errors.NewError(http.StatusUnauthorized, "insufficient_permissions", "insufficient permissions")
 	ErrResourceNotFound               = errors.NewError(http.StatusNotFound, "resource_not_found", "no such file or directory")
 	ErrResourceNotCollection          = errors.NewError(http.StatusMethodNotAllowed, "resource_not_collection", "cannot add member to non-collection resource")

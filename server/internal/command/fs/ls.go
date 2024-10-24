@@ -37,15 +37,15 @@ func setupLsCommand() *cobra.Command {
 				sort.Slice(children, func(i, j int) bool {
 					a := children[i]
 					b := children[j]
-					if a.Dir != b.Dir {
-						if a.Dir {
+					if a.FSDir() != b.FSDir() {
+						if a.FSDir() {
 							return true
 						}
 					}
-					return strings.Compare(strings.ToLower(a.Name), strings.ToLower((b.Name))) <= 0
+					return strings.Compare(strings.ToLower(a.FSName()), strings.ToLower((b.FSName()))) <= 0
 				})
 				for _, c := range children {
-					fmt.Println(formatResourceSummary(c))
+					fmt.Println(formatResourceSummary(c.(fs.Resource)))
 				}
 			}
 		},

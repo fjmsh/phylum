@@ -4,10 +4,15 @@ import (
 	"crypto/sha256"
 	"io"
 
+	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/db"
 )
 
-func (f filesystem) OpenRead(r Resource, start, length int64) (io.ReadCloser, error) {
+func (f filesystem) OpenRead(sr serve.Resource, start, length int64) (io.ReadCloser, error) {
+	r, ok := sr.(Resource)
+	if !ok {
+		return nil, ErrUnexpectedType
+	}
 	if !r.hasPermission(PermissionRead) {
 		return nil, ErrInsufficientPermissions
 	}
@@ -28,7 +33,11 @@ func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
 	})
 }
 
-func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
+func (f filesystem) ReadDir(sr serve.Resource, recursive bool) ([]serve.Resource, error) {
+	r, ok := sr.(Resource)
+	if !ok {
+		return nil, ErrUnexpectedType
+	}
 	if !r.hasPermission(PermissionRead) {
 		return nil, ErrInsufficientPermissions
 	}
@@ -44,7 +53,7 @@ func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
 		return nil, err
 	}
 
-	result := make([]Resource, len(children))
+	result := make([]serve.Resource, len(children))
 
 	for i, c := range children {
 		path := r.Path + c.Path
@@ -72,12 +81,12 @@ func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
 	return result, nil
 }
 
-func (f filesystem) ProcessResources(r Resource, depth int, fn func(Resource) error) error {
+func (f filesystem) ProcessResources(r serve.Resource, depth int, fn func(serve.Resource) error) error {
 	err := fn(r)
 	if err != nil {
 		return err
 	}
-	if !r.Dir || depth <= 0 {
+	if !r.FSDir() || depth <= 0 {
 		return nil
 	}
 

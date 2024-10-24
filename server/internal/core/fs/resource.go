@@ -24,6 +24,15 @@ type Resource struct {
 	InheritedPermissions string     `json:"-"`
 }
 
+func (r Resource) FSName() string          { return r.Name }
+func (r Resource) FSPath() string          { return r.Path }
+func (r Resource) FSDir() bool             { return r.Dir }
+func (r Resource) FSCreated() time.Time    { return r.Created }
+func (r Resource) FSModified() time.Time   { return r.Modified }
+func (r Resource) FSContentSize() int64    { return r.ContentSize }
+func (r Resource) FSContentSHA256() string { return r.ContentSHA256 }
+func (r Resource) FSContentType() string   { return r.ContentType }
+
 func ResourceFromDB(r db.Resource, userPermissions int32, path, inheritedPermissions string) Resource {
 	var deleted *time.Time
 	if r.Deleted.Valid {

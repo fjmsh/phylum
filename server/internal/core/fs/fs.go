@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
 )
@@ -27,10 +28,10 @@ type FileSystem interface {
 	ResourceByPathOrUUID(pathOrUUID string) (Resource, error)
 
 	// open.go
-	OpenRead(r Resource, start, length int64) (io.ReadCloser, error)
+	OpenRead(r serve.Resource, start, length int64) (io.ReadCloser, error)
 	OpenWrite(r Resource) (io.WriteCloser, error)
-	ReadDir(r Resource, recursive bool) ([]Resource, error)
-	ProcessResources(r Resource, depth int, fn func(Resource) error) error
+	ReadDir(r serve.Resource, recursive bool) ([]serve.Resource, error)
+	ProcessResources(r serve.Resource, depth int, fn func(serve.Resource) error) error
 
 	// delete.go
 	DeleteChildRecursive(r Resource, name string, hardDelete bool) error

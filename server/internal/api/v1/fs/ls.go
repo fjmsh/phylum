@@ -4,13 +4,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 type ResourceLsResponse struct {
-	Metadata             fs.Resource   `json:"metadata"`
-	Children             []fs.Resource `json:"children,omitempty"`
-	InheritedPermissions string        `json:"inherited,omitempty"`
+	Metadata             fs.Resource      `json:"metadata"`
+	Children             []serve.Resource `json:"children,omitempty"`
+	InheritedPermissions string           `json:"inherited,omitempty"`
 }
 
 func handleLsRequest(c *gin.Context) {
@@ -38,10 +39,7 @@ func LsResponseFromResource(f fs.FileSystem, r fs.Resource) ResourceLsResponse {
 		if err != nil {
 			panic(err)
 		}
-		response.Children = make([]fs.Resource, len(children))
-		for i, c := range children {
-			response.Children[i] = c
-		}
+		response.Children = children
 	}
 	return response
 }
