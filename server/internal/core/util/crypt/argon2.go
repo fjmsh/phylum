@@ -1,4 +1,4 @@
-package user
+package crypt
 
 import (
 	"crypto/rand"
@@ -29,7 +29,8 @@ func defaultArgon2Params() Argon2Params {
 	}
 }
 
-func generateArgon2EncodedHash(password string, p Argon2Params) (string, error) {
+func GenerateArgon2EncodedHash(password string) (string, error) {
+	p := defaultArgon2Params()
 	salt, err := generateRandomBytes(p.salt)
 	if err != nil {
 		return "", err
@@ -44,7 +45,7 @@ func generateArgon2EncodedHash(password string, p Argon2Params) (string, error) 
 	return fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version, p.memory, p.iterations, p.parallelism, b64Salt, b64Hash), nil
 }
 
-func verifyPassword(password, encodedHash string) (bool, error) {
+func VerifyPassword(password, encodedHash string) (bool, error) {
 	// Extract the parameters, salt and derived key from the encoded password
 	// hash.
 	p, salt, hash, err := decodeHash(encodedHash)

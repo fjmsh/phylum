@@ -7,12 +7,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/errors"
+	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
 
 var ErrUserExists = errors.NewError(http.StatusNotFound, "user_already_exists", "user already exists")
 
 func (m manager) CreateUser(username, displayName, password string, root uuid.UUID) (User, error) {
-	if hash, err := generateArgon2EncodedHash(password, defaultArgon2Params()); err != nil {
+	if hash, err := crypt.GenerateArgon2EncodedHash(password); err != nil {
 		return User{}, err
 	} else if u, err := m.db.CreateUser(m.ctx, db.CreateUserParams{
 		Username:     username,

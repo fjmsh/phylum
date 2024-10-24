@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/errors"
+	"github.com/shroff/phylum/server/internal/core/util/crypt"
 	"golang.org/x/exp/rand"
 )
 
@@ -28,7 +29,7 @@ func (m manager) VerifyUserPassword(email, password string) (User, error) {
 		}
 		return User{}, err
 	} else {
-		if b, err := verifyPassword(password, user.PasswordHash); err != nil {
+		if b, err := crypt.VerifyPassword(password, user.PasswordHash); err != nil {
 			return User{}, err
 		} else if !b {
 			return User{}, ErrCredentialsInvalid
