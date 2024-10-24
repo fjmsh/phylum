@@ -28,11 +28,10 @@ func (f filesystem) CreateResourceByPath(path string, dir, recursive bool) (Reso
 			return Resource{}, err
 		}
 	}
-	id, _ := uuid.NewUUID()
-	return f.CreateMemberResource(parent, id, name, dir)
+	return parent.CreateMemberResource(name, uuid.Nil, dir)
 }
 
-func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, dir bool) (Resource, error) {
+func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Resource, error) {
 	if !r.Dir {
 		return Resource{}, ErrResourceNotCollection
 	}
@@ -42,11 +41,14 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 	if name == "" || CheckNameInvalid(name) {
 		return Resource{}, ErrResourceNameInvalid
 	}
+	if id == uuid.Nil {
+		id, _ = uuid.NewUUID()
+	}
 	var result db.Resource
-	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
+	err := r.f.db.WithTx(r.f.ctx, func(d *db.DbHandler) error {
 		var err error
 		parent := r.ID
-		if result, err = d.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir}); err != nil {
+		if result, err = d.CreateResource(r.f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir}); err != nil {
 			if strings.Contains(err.Error(), "unique_member_resource_name") {
 				return ErrResourceNameConflict
 			}
@@ -55,7 +57,7 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 			}
 			return err
 		}
-		return d.UpdateResourceModified(f.ctx, parent)
+		return d.UpdateResourceModified(r.f.ctx, parent)
 	})
 	if err != nil {
 		return Resource{}, err
@@ -73,7 +75,7 @@ func (f filesystem) CreateMemberResource(r Resource, id uuid.UUID, name string, 
 		path = result.Name
 	}
 	return Resource{
-		f:                    f,
+		f:                    r.f,
 		ID:                   result.ID,
 		ParentID:             result.Parent,
 		Name:                 result.Name,

@@ -20,7 +20,6 @@ type FileSystem interface {
 
 	// create.go
 	CreateResourceByPath(path string, dir, recursive bool) (Resource, error)
-	CreateMemberResource(r Resource, id uuid.UUID, name string, dir bool) (Resource, error)
 
 	// find.go
 	ResourceByID(id uuid.UUID) (Resource, error)

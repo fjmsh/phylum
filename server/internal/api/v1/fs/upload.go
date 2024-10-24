@@ -31,7 +31,7 @@ func handleUploadRequest(c *gin.Context) {
 			return err
 		}
 
-		res, err := f.CreateMemberResource(parent, resourceID, name, false)
+		res, err := parent.CreateMemberResource(name, resourceID, false)
 		if err != nil {
 			return err
 		}

@@ -29,7 +29,7 @@ func handleMkdirRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	r, err := fs.CreateMemberResource(parent, resourceID, params.Name, true)
+	r, err := parent.CreateMemberResource(params.Name, resourceID, true)
 	if err != nil {
 		panic(err)
 	}
