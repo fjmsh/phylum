@@ -16,6 +16,17 @@ type AccessToken struct {
 	Username string
 }
 
+type PublicShare struct {
+	ID           string
+	Created      pgtype.Timestamp
+	Deleted      pgtype.Timestamp
+	CreatedBy    string
+	Root         uuid.UUID
+	PasswordHash pgtype.Text
+	Expires      pgtype.Timestamp
+	AccessesLeft pgtype.Int4
+}
+
 type Resource struct {
 	ID            uuid.UUID
 	Permissions   []byte
