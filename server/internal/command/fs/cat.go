@@ -28,7 +28,7 @@ func setupCatCommand() *cobra.Command {
 				os.Exit(2)
 			}
 
-			in, err := f.OpenRead(r, 0, -1)
+			in, err := r.OpenRead(0, -1)
 			if err != nil {
 				fmt.Println("cannot read'" + pathOrUUID + "': " + err.Error())
 				os.Exit(3)

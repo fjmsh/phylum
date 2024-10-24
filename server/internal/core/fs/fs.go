@@ -2,11 +2,9 @@ package fs
 
 import (
 	"context"
-	"io"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
 )
@@ -25,12 +23,6 @@ type FileSystem interface {
 	ResourceByID(id uuid.UUID) (Resource, error)
 	ResourceByPath(path string) (Resource, error)
 	ResourceByPathOrUUID(pathOrUUID string) (Resource, error)
-
-	// open.go
-	OpenRead(r serve.Resource, start, length int64) (io.ReadCloser, error)
-	OpenWrite(r Resource) (io.WriteCloser, error)
-	ReadDir(r serve.Resource, recursive bool) ([]serve.Resource, error)
-	ProcessResources(r serve.Resource, depth int, fn func(serve.Resource) error) error
 
 	// copy_move.go
 	Move(r Resource, target string, overwrite bool) (Resource, bool, error)

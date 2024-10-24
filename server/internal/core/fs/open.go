@@ -8,23 +8,19 @@ import (
 	"github.com/shroff/phylum/server/internal/core/db"
 )
 
-func (f filesystem) OpenRead(sr serve.Resource, start, length int64) (io.ReadCloser, error) {
-	r, ok := sr.(Resource)
-	if !ok {
-		return nil, ErrUnexpectedType
-	}
+func (r Resource) OpenRead(start, length int64) (io.ReadCloser, error) {
 	if !r.hasPermission(PermissionRead) {
 		return nil, ErrInsufficientPermissions
 	}
-	return f.cs.OpenRead(r.ID, start, length)
+	return r.f.cs.OpenRead(r.ID, start, length)
 }
 
-func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
+func (r Resource) OpenWrite() (io.WriteCloser, error) {
 	if !r.hasPermission(PermissionWrite) {
 		return nil, ErrInsufficientPermissions
 	}
-	return f.cs.OpenWrite(r.ID, sha256.New, func(len int, sum, mime string) error {
-		return f.db.UpdateResourceContents(f.ctx, db.UpdateResourceContentsParams{
+	return r.f.cs.OpenWrite(r.ID, sha256.New, func(len int, sum, mime string) error {
+		return r.f.db.UpdateResourceContents(r.f.ctx, db.UpdateResourceContentsParams{
 			ID:            r.ID,
 			ContentType:   mime,
 			ContentSize:   int64(len),
@@ -33,18 +29,14 @@ func (f filesystem) OpenWrite(r Resource) (io.WriteCloser, error) {
 	})
 }
 
-func (f filesystem) ReadDir(sr serve.Resource, recursive bool) ([]serve.Resource, error) {
-	r, ok := sr.(Resource)
-	if !ok {
-		return nil, ErrUnexpectedType
-	}
+func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 	if !r.hasPermission(PermissionRead) {
 		return nil, ErrInsufficientPermissions
 	}
 	if !r.Dir {
 		return nil, ErrResourceNotCollection
 	}
-	children, err := f.db.ReadDir(f.ctx, db.ReadDirParams{
+	children, err := r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{
 		ID:          r.ID,
 		IncludeRoot: false,
 		Recursive:   recursive,
@@ -61,7 +53,7 @@ func (f filesystem) ReadDir(sr serve.Resource, recursive bool) ([]serve.Resource
 			path = c.Path
 		}
 		result[i] = Resource{
-			f:             f,
+			f:             r.f,
 			ID:            c.ID,
 			ParentID:      c.Parent,
 			Name:          c.Name,
@@ -82,7 +74,7 @@ func (f filesystem) ReadDir(sr serve.Resource, recursive bool) ([]serve.Resource
 	return result, nil
 }
 
-func (f filesystem) ProcessResources(r serve.Resource, depth int, fn func(serve.Resource) error) error {
+func (r Resource) Walk(depth int, fn func(serve.Resource) error) error {
 	err := fn(r)
 	if err != nil {
 		return err
@@ -91,7 +83,7 @@ func (f filesystem) ProcessResources(r serve.Resource, depth int, fn func(serve.
 		return nil
 	}
 
-	children, err := f.ReadDir(r, depth > 1)
+	children, err := r.ReadDir(depth > 1)
 	if err != nil {
 		return err
 	}

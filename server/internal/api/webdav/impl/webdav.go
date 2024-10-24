@@ -40,10 +40,6 @@ type FileSystem interface {
 	CreateResourceByPath(name string, dir, recursive bool) (fs.Resource, error)
 	Move(r fs.Resource, target string, overwrite bool) (fs.Resource, bool, error)
 	Copy(r fs.Resource, target string, id uuid.UUID, recursive, overwrite bool) (fs.Resource, bool, error)
-	ReadDir(r serve.Resource, recursive bool) ([]serve.Resource, error)
-	ProcessResources(r serve.Resource, depth int, fn func(r serve.Resource) error) error
-	OpenRead(r serve.Resource, start, length int64) (io.ReadCloser, error)
-	OpenWriteTouch(name string) (io.WriteCloser, error)
 }
 
 func (h *Handler) stripPrefix(p string) (string, int, error) {
@@ -224,9 +220,9 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 		return http.StatusNotFound, err
 	}
 	if file.Dir {
-		serve.ServeCollection(w, r, h.FileSystem, file)
+		serve.ServeCollection(w, r, file)
 	} else {
-		serve.ServeResource(w, r, h.FileSystem, file)
+		serve.ServeResource(w, r, file)
 	}
 
 	return 0, nil
@@ -267,13 +263,23 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	// TODO(rost): Support the If-Match, If-None-Match headers? See bradfitz'
 	// comments in http.checkEtag.
 
-	f, err := h.FileSystem.OpenWriteTouch(reqPath)
-	if err != nil {
-		if errors.Is(err, fs.ErrParentNotFound) {
-			return http.StatusConflict, err
+	res, err := h.FileSystem.ResourceByPath(reqPath)
+
+	if errors.Is(err, fs.ErrResourceNotFound) {
+		res, err = h.FileSystem.CreateResourceByPath(reqPath, false, false)
+		if err != nil {
+			if errors.Is(err, fs.ErrParentNotFound) {
+				return http.StatusConflict, err
+			}
+			return http.StatusNotFound, err
 		}
+	} else if err != nil {
 		return http.StatusNotFound, err
+	} else if res.Dir {
+		return http.StatusConflict, fs.ErrResourceCollection
 	}
+
+	f, err := res.OpenWrite()
 	_, copyErr := io.Copy(f, r.Body)
 	fi, statErr := h.FileSystem.ResourceByPath(reqPath)
 	closeErr := f.Close()
@@ -382,14 +388,13 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 
 		// Create the resource if it didn't previously exist.
 		if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-			f, err := h.FileSystem.OpenWriteTouch(reqPath)
+			_, err = h.FileSystem.CreateResourceByPath(reqPath, false, false)
 			if err != nil {
 				if errors.Is(err, fs.ErrParentNotFound) {
 					return http.StatusConflict, err
 				}
 				return http.StatusNotFound, err
 			}
-			f.Close()
 			created = true
 		}
 
@@ -485,7 +490,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 		return mw.write(makePropstatResponse(href, pstats))
 	}
 
-	walkErr := h.FileSystem.ProcessResources(fi, depth, writePropStat)
+	walkErr := fi.Walk(depth, writePropStat)
 	closeErr := mw.close()
 	if walkErr != nil {
 		return http.StatusInternalServerError, walkErr

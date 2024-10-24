@@ -32,14 +32,15 @@ type Resource interface {
 	FSContentSize() int64
 	FSContentSHA256() string
 	FSContentType() string
+
+	ReadDir(recursive bool) ([]Resource, error)
+	OpenRead(start, length int64) (io.ReadCloser, error)
 }
 
 type FileSystem interface {
-	ReadDir(r Resource, recursive bool) ([]Resource, error)
-	OpenRead(r Resource, start, length int64) (io.ReadCloser, error)
 }
 
-func ServeCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file Resource) {
+func ServeCollection(w http.ResponseWriter, r *http.Request, file Resource) {
 	if !strings.HasSuffix(r.URL.Path, "/") {
 		http.Redirect(w, r, r.URL.String()+"/", http.StatusMovedPermanently)
 		return
@@ -50,7 +51,7 @@ func ServeCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file
 	}
 	w.Header().Set("Last-Modified", file.FSModified().Format(http.TimeFormat))
 
-	files, err := fs.ReadDir(file, false)
+	files, err := file.ReadDir(false)
 	if err != nil {
 		http.Error(w, "Error reading directory", http.StatusInternalServerError)
 		return
@@ -83,7 +84,7 @@ func ServeCollection(w http.ResponseWriter, r *http.Request, fs FileSystem, file
 	fmt.Fprintf(w, "</pre>\n")
 }
 
-func ServeResource(w http.ResponseWriter, r *http.Request, fs FileSystem, file Resource) {
+func ServeResource(w http.ResponseWriter, r *http.Request, file Resource) {
 	w.Header().Set("Etag", file.FSContentSHA256())
 	w.Header().Set("Last-Modified", file.FSModified().Format(http.TimeFormat))
 	w.Header().Set("Content-Type", file.FSContentType())
@@ -119,9 +120,9 @@ func ServeResource(w http.ResponseWriter, r *http.Request, fs FileSystem, file R
 		sendSize = ra.length
 		code = http.StatusPartialContent
 		w.Header().Set("Content-Range", ra.contentRange(file.FSContentSize()))
-		reader, err = fs.OpenRead(file, ra.start, ra.length)
+		reader, err = file.OpenRead(ra.start, ra.length)
 	} else {
-		reader, err = fs.OpenRead(file, 0, -1)
+		reader, err = file.OpenRead(0, -1)
 	}
 
 	if err != nil {

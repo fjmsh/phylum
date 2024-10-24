@@ -51,7 +51,7 @@ func handleUploadRequest(c *gin.Context) {
 		}
 		defer src.Close()
 
-		out, err := f.OpenWrite(res)
+		out, err := res.OpenWrite()
 		if err != nil {
 			return err
 		}

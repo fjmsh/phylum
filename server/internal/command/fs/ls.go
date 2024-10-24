@@ -29,7 +29,7 @@ func setupLsCommand() *cobra.Command {
 			fmt.Println(formatRow(r.ID.String(), formatSize(r.ContentSize), r.ContentSHA256, ".", r.PermissionsString()))
 
 			if r.Dir {
-				children, err := f.ReadDir(r, false)
+				children, err := r.ReadDir(false)
 				if err != nil {
 					fmt.Println("cannot access '" + pathOrUUID + "': " + err.Error())
 					os.Exit(1)

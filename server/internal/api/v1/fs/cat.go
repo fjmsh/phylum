@@ -18,5 +18,5 @@ func handleCatRequest(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	serve.ServeResource(c.Writer, c.Request, fs, r)
+	serve.ServeResource(c.Writer, c.Request, r)
 }

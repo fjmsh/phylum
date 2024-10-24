@@ -2,13 +2,11 @@ package webdav
 
 import (
 	"errors"
-	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
 	webdav "github.com/shroff/phylum/server/internal/api/webdav/impl"
-	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/sirupsen/logrus"
 )
@@ -67,29 +65,8 @@ func (h *handler) HandleRequest(c *gin.Context) {
 	}
 	webdavHandler := webdav.Handler{
 		Prefix:     h.prefix,
-		FileSystem: adapter{FileSystem: fs},
+		FileSystem: fs,
 		LockSystem: h.lockSystem,
 	}
 	webdavHandler.ServeHTTP(c.Writer, c.Request)
-}
-
-type adapter struct {
-	fs.FileSystem
-}
-
-func (a adapter) OpenWriteTouch(name string) (io.WriteCloser, error) {
-	resource, err := a.ResourceByPath(name)
-
-	if errors.Is(err, fs.ErrResourceNotFound) {
-		resource, err = a.CreateResourceByPath(name, false, false)
-		if err != nil {
-			return nil, err
-		}
-	} else if err != nil {
-		return nil, err
-	} else if resource.Dir {
-		return nil, fs.ErrResourceCollection
-	}
-
-	return a.OpenWrite(resource)
 }
