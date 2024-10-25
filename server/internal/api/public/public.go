@@ -22,7 +22,7 @@ func Setup(r *gin.RouterGroup) {
 		id := c.Param("id")
 		path := c.Param("path")
 
-		r, err := public.OpenResource(c.Request.Context(), id, requirePassword(c, id), path)
+		r, err := public.OpenResource(c.Request.Context(), id, func() string { return requirePassword(c, id) }, path)
 		if err != nil {
 			panic(err)
 		}

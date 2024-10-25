@@ -14,7 +14,7 @@ import (
 
 var ErrPublicShareNotFound = errors.NewError(http.StatusUnauthorized, "public_share_not_found", "public share not found")
 
-func OpenResource(ctx context.Context, id string, password, path string) (Resource, error) {
+func OpenResource(ctx context.Context, id string, password func() string, path string) (Resource, error) {
 	// Check exists
 	s, err := db.Get().PublicShare(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -26,7 +26,7 @@ func OpenResource(ctx context.Context, id string, password, path string) (Resour
 
 	// check password
 	if s.PasswordHash.Valid {
-		if ok, err := crypt.VerifyPassword(password, s.PasswordHash.String); err != nil {
+		if ok, err := crypt.VerifyPassword(password(), s.PasswordHash.String); err != nil {
 			return Resource{}, err
 		} else if !ok {
 			return Resource{}, ErrPublicShareNotFound
