@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/api/serve"
+	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 func handleCatRequest(c *gin.Context) {
@@ -13,10 +14,13 @@ func handleCatRequest(c *gin.Context) {
 		panic(errResourceIDInvalid)
 	}
 
-	fs := auth.GetFileSystem(c)
-	r, err := fs.ResourceByID(resourceID)
+	f := auth.GetFileSystem(c)
+	r, err := f.ResourceByID(resourceID)
+	if r.Dir {
+		err = fs.ErrResourceCollection
+	}
 	if err != nil {
 		panic(err)
 	}
-	serve.ServeResource(c.Writer, c.Request, r)
+	serve.Serve(c.Writer, c.Request, r)
 }

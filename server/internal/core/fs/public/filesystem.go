@@ -2,7 +2,6 @@ package public
 
 import (
 	"context"
-	"io"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -10,12 +9,6 @@ import (
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/storage"
 )
-
-type FileSystem interface {
-	ResourceByPath(path string) (Resource, error)
-	OpenRead(r Resource, start, length int64) (io.ReadCloser, error)
-	ReadDir(r Resource, recursive bool) ([]Resource, error)
-}
 
 type filesystem struct {
 	ctx    context.Context
@@ -44,39 +37,4 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		contentType:   r.ContentType,
 		contentSHA256: r.ContentSha256,
 	}, nil
-}
-
-func (f filesystem) OpenRead(r Resource, start, length int64) (io.ReadCloser, error) {
-	return f.cs.OpenRead(r.id, start, length)
-}
-
-func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
-	if !r.dir {
-		return nil, fs.ErrResourceNotCollection
-	}
-	children, err := f.db.ReadDir(f.ctx, db.ReadDirParams{
-		ID:          r.id,
-		IncludeRoot: false,
-		Recursive:   recursive,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]Resource, len(children))
-
-	for i, c := range children {
-		result[i] = Resource{
-			f:             f,
-			id:            c.ID,
-			name:          c.Name,
-			dir:           c.Dir,
-			created:       c.Created.Time,
-			modified:      c.Modified.Time,
-			contentSize:   c.ContentSize,
-			contentType:   c.ContentType,
-			contentSHA256: c.ContentSha256,
-		}
-	}
-	return result, nil
 }

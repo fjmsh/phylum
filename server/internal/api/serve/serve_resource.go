@@ -32,15 +32,19 @@ type Resource interface {
 	FSContentSize() int64
 	FSContentSHA256() string
 	FSContentType() string
-
 	ReadDir(recursive bool) ([]Resource, error)
 	OpenRead(start, length int64) (io.ReadCloser, error)
 }
 
-type FileSystem interface {
+func Serve(w http.ResponseWriter, r *http.Request, res Resource) {
+	if res.FSDir() {
+		serveCollection(w, r, res)
+	} else {
+		serveResource(w, r, res)
+	}
 }
 
-func ServeCollection(w http.ResponseWriter, r *http.Request, file Resource) {
+func serveCollection(w http.ResponseWriter, r *http.Request, file Resource) {
 	if !strings.HasSuffix(r.URL.Path, "/") {
 		http.Redirect(w, r, r.URL.String()+"/", http.StatusMovedPermanently)
 		return
@@ -84,7 +88,7 @@ func ServeCollection(w http.ResponseWriter, r *http.Request, file Resource) {
 	fmt.Fprintf(w, "</pre>\n")
 }
 
-func ServeResource(w http.ResponseWriter, r *http.Request, file Resource) {
+func serveResource(w http.ResponseWriter, r *http.Request, file Resource) {
 	w.Header().Set("Etag", file.FSContentSHA256())
 	w.Header().Set("Last-Modified", file.FSModified().Format(http.TimeFormat))
 	w.Header().Set("Content-Type", file.FSContentType())

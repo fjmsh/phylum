@@ -14,45 +14,45 @@ import (
 
 var ErrPublicShareNotFound = errors.NewError(http.StatusUnauthorized, "public_share_not_found", "public share not found")
 
-
-func OpenPublic(ctx context.Context, id string, password string) (FileSystem, error) {
+func OpenResource(ctx context.Context, id string, password, path string) (Resource, error) {
 	// Check exists
 	s, err := db.Get().PublicShare(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		err = ErrPublicShareNotFound
 	}
 	if err != nil {
-		return nil, err
+		return Resource{}, err
 	}
 
 	// check password
 	if s.PasswordHash.Valid {
 		if ok, err := crypt.VerifyPassword(password, s.PasswordHash.String); err != nil {
-			return nil, err
+			return Resource{}, err
 		} else if !ok {
-			return nil, ErrPublicShareNotFound
+			return Resource{}, ErrPublicShareNotFound
 		}
 	}
 
 	// check expiration
 	if s.Expires.Valid {
 		if s.Expires.Time.Before(time.Now()) {
-			return nil, ErrPublicShareNotFound
+			return Resource{}, ErrPublicShareNotFound
 		}
 	}
 
 	// check max accesses
 	if s.AccessesLeft.Valid {
 		if s.AccessesLeft.Int32 <= 0 {
-			return nil, ErrPublicShareNotFound
+			return Resource{}, ErrPublicShareNotFound
 		}
 		db.Get().AccessPublicShare(ctx, id)
 	}
 
-	return filesystem{
+	f := filesystem{
 		ctx:    ctx,
 		db:     db.Get(),
 		cs:     storage.Get(),
 		rootID: s.Root,
-	}, nil
+	}
+	return f.ResourceByPath(path)
 }

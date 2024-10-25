@@ -212,15 +212,11 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 		return status, err
 	}
 	// TODO: check locks for read-only access??
-	file, err := h.FileSystem.ResourceByPath(reqPath)
+	res, err := h.FileSystem.ResourceByPath(reqPath)
 	if err != nil {
 		return http.StatusNotFound, err
 	}
-	if file.Dir {
-		serve.ServeCollection(w, r, file)
-	} else {
-		serve.ServeResource(w, r, file)
-	}
+	serve.Serve(w, r, res)
 
 	return 0, nil
 }
