@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/shroff/phylum/server/internal/api/serve"
 )
 
 type minioStorage struct {
@@ -64,7 +65,11 @@ func (s minioStorage) Name() string {
 
 func (s minioStorage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error) {
 	// TODO: Range
-	return s.client.GetObject(context.Background(), s.bucketName, s.prefix+id.String(), minio.GetObjectOptions{})
+	if r, err := s.client.GetObject(context.Background(), s.bucketName, s.prefix+id.String(), minio.GetObjectOptions{}); err != nil {
+		return nil, err
+	} else {
+		return r, serve.ErrRangeNotSupported
+	}
 }
 
 func (s minioStorage) OpenWrite(id uuid.UUID) (io.WriteCloser, error) {

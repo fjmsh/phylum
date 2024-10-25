@@ -23,6 +23,8 @@ var htmlReplacer = strings.NewReplacer(
 	"'", "&#39;",
 )
 
+var ErrRangeNotSupported = errors.New("byte range not suppoered")
+
 type Resource interface {
 	FSName() string
 	FSPath() string
@@ -122,9 +124,13 @@ func serveResource(w http.ResponseWriter, r *http.Request, file Resource) {
 		// multipart responses."
 		ra := ranges[0]
 		sendSize = ra.length
-		code = http.StatusPartialContent
-		w.Header().Set("Content-Range", ra.contentRange(file.FSContentSize()))
 		reader, err = file.OpenRead(ra.start, ra.length)
+		if err == nil {
+			code = http.StatusPartialContent
+			w.Header().Set("Content-Range", ra.contentRange(file.FSContentSize()))
+		} else if errors.Is(err, ErrRangeNotSupported) {
+			err = nil
+		}
 	} else {
 		reader, err = file.OpenRead(0, -1)
 	}
