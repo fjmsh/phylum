@@ -62,6 +62,14 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 	if err != nil {
 		return Resource{}, err
 	}
+	out, err := r.f.cs.OpenWrite(id, nil, nil)
+	if err == nil {
+		err = out.Close()
+	}
+	if err != nil {
+		return Resource{}, err
+	}
+
 	p, err := MergePermissionStrings(r.InheritedPermissions, r.Permissions)
 	if err != nil {
 		return Resource{}, err
