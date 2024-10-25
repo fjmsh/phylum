@@ -21,7 +21,7 @@ dependencies:
   offtheline:
     git:
       url: https://codeberg.org/shroff/offtheline.git
-      ref: 97bed487dc1438a8e07031af805b7a1447ffb254
+      ref: 4898d1f4f0df4020607cfcd1989bc2a9c0fe5537
   open_file:
   path:
   path_provider:

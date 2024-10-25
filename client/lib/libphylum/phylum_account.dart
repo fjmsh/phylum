@@ -15,7 +15,8 @@ class PhylumAccount extends Account<PhylumAccount> {
   late final db = AppDatabase(id: id);
   late final resourceRepository = ResourceRepository(account: this);
 
-  late final _dispatcher = SimulatedBadNetworkDispatcher.good(dropRate: 0);
+  final _dispatcher = SimulatedBadNetworkDispatcher.good(dropRate: 0);
+  // final _dispatcher = HttpClientDispatcher();
   @override
   Dispatcher get dispatcher => _dispatcher;
 
@@ -82,7 +83,7 @@ class PhylumAccount extends Account<PhylumAccount> {
 
     final userMap = response['user'];
     account.userEmail = userMap['username'];
-    account.userName = userMap['name'];
+    account.userName = userMap['display'];
     account.userHome = userMap['home'];
 
     return account;
