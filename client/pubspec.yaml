@@ -40,10 +40,6 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   drift_dev: ^2.19.1
   build_runner: ^2.4.12
-  
-dependency_overrides:
-  offtheline:
-    path: ../../offtheline
 
 flutter:
   uses-material-design: true
