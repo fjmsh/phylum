@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   drift: ^2.19.1+1
-  drift_flutter: ^0.1.0
+  drift_flutter: ^0.2.1
   file_selector: ^1.0.3
   flutter_state_notifier:
   go_router:
@@ -31,13 +31,13 @@ dependencies:
   super_clipboard:
   uri:
   uuid:
-  sqlite3: ^2.4.6
-  http_parser: ^4.0.2
+  sqlite3: 
+  http_parser: 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
   drift_dev: ^2.19.1
   build_runner: ^2.4.12
 
