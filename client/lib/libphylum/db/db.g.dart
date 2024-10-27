@@ -571,123 +571,172 @@ final class $$ResourcesTableReferences
 }
 
 class $$ResourcesTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $ResourcesTable> {
-  $$ResourcesTableFilterComposer(super.$state);
-  ColumnFilters<String> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
+    extends Composer<_$AppDatabase, $ResourcesTable> {
+  $$ResourcesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get name => $state.composableBuilder(
-      column: $state.table.name,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get dir => $state.composableBuilder(
-      column: $state.table.dir,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
+  ColumnFilters<bool> get dir => $composableBuilder(
+      column: $table.dir, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get modified => $state.composableBuilder(
-      column: $state.table.modified,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
+  ColumnFilters<DateTime> get modified => $composableBuilder(
+      column: $table.modified, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get size => $state.composableBuilder(
-      column: $state.table.size,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
+  ColumnFilters<int> get size => $composableBuilder(
+      column: $table.size, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get sha256 => $state.composableBuilder(
-      column: $state.table.sha256,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
+  ColumnFilters<String> get sha256 => $composableBuilder(
+      column: $table.sha256, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get contentType => $state.composableBuilder(
-      column: $state.table.contentType,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
+  ColumnFilters<String> get contentType => $composableBuilder(
+      column: $table.contentType, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get deleted => $state.composableBuilder(
-      column: $state.table.deleted,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
+  ColumnFilters<bool> get deleted => $composableBuilder(
+      column: $table.deleted, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get lastFetch => $state.composableBuilder(
-      column: $state.table.lastFetch,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
+  ColumnFilters<DateTime> get lastFetch => $composableBuilder(
+      column: $table.lastFetch, builder: (column) => ColumnFilters(column));
 
   $$ResourcesTableFilterComposer get parent {
-    final $$ResourcesTableFilterComposer composer = $state.composerBuilder(
+    final $$ResourcesTableFilterComposer composer = $composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.parent,
-        referencedTable: $state.db.resources,
+        referencedTable: $db.resources,
         getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$ResourcesTableFilterComposer(ComposerState(
-                $state.db, $state.db.resources, joinBuilder, parentComposers)));
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ResourcesTableFilterComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
     return composer;
   }
 }
 
 class $$ResourcesTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $ResourcesTable> {
-  $$ResourcesTableOrderingComposer(super.$state);
-  ColumnOrderings<String> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
+    extends Composer<_$AppDatabase, $ResourcesTable> {
+  $$ResourcesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get name => $state.composableBuilder(
-      column: $state.table.name,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get dir => $state.composableBuilder(
-      column: $state.table.dir,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
+  ColumnOrderings<bool> get dir => $composableBuilder(
+      column: $table.dir, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get modified => $state.composableBuilder(
-      column: $state.table.modified,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
+  ColumnOrderings<DateTime> get modified => $composableBuilder(
+      column: $table.modified, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get size => $state.composableBuilder(
-      column: $state.table.size,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
+  ColumnOrderings<int> get size => $composableBuilder(
+      column: $table.size, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get sha256 => $state.composableBuilder(
-      column: $state.table.sha256,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
+  ColumnOrderings<String> get sha256 => $composableBuilder(
+      column: $table.sha256, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get contentType => $state.composableBuilder(
-      column: $state.table.contentType,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
+  ColumnOrderings<String> get contentType => $composableBuilder(
+      column: $table.contentType, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get deleted => $state.composableBuilder(
-      column: $state.table.deleted,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
+  ColumnOrderings<bool> get deleted => $composableBuilder(
+      column: $table.deleted, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get lastFetch => $state.composableBuilder(
-      column: $state.table.lastFetch,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
+  ColumnOrderings<DateTime> get lastFetch => $composableBuilder(
+      column: $table.lastFetch, builder: (column) => ColumnOrderings(column));
 
   $$ResourcesTableOrderingComposer get parent {
-    final $$ResourcesTableOrderingComposer composer = $state.composerBuilder(
+    final $$ResourcesTableOrderingComposer composer = $composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.parent,
-        referencedTable: $state.db.resources,
+        referencedTable: $db.resources,
         getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$ResourcesTableOrderingComposer(ComposerState(
-                $state.db, $state.db.resources, joinBuilder, parentComposers)));
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ResourcesTableOrderingComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$ResourcesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ResourcesTable> {
+  $$ResourcesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<bool> get dir =>
+      $composableBuilder(column: $table.dir, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get modified =>
+      $composableBuilder(column: $table.modified, builder: (column) => column);
+
+  GeneratedColumn<int> get size =>
+      $composableBuilder(column: $table.size, builder: (column) => column);
+
+  GeneratedColumn<String> get sha256 =>
+      $composableBuilder(column: $table.sha256, builder: (column) => column);
+
+  GeneratedColumn<String> get contentType => $composableBuilder(
+      column: $table.contentType, builder: (column) => column);
+
+  GeneratedColumn<bool> get deleted =>
+      $composableBuilder(column: $table.deleted, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastFetch =>
+      $composableBuilder(column: $table.lastFetch, builder: (column) => column);
+
+  $$ResourcesTableAnnotationComposer get parent {
+    final $$ResourcesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.parent,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ResourcesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
     return composer;
   }
 }
@@ -698,6 +747,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
     Resource,
     $$ResourcesTableFilterComposer,
     $$ResourcesTableOrderingComposer,
+    $$ResourcesTableAnnotationComposer,
     $$ResourcesTableCreateCompanionBuilder,
     $$ResourcesTableUpdateCompanionBuilder,
     (Resource, $$ResourcesTableReferences),
@@ -707,10 +757,12 @@ class $$ResourcesTableTableManager extends RootTableManager<
       : super(TableManagerState(
           db: db,
           table: table,
-          filteringComposer:
-              $$ResourcesTableFilterComposer(ComposerState(db, table)),
-          orderingComposer:
-              $$ResourcesTableOrderingComposer(ComposerState(db, table)),
+          createFilteringComposer: () =>
+              $$ResourcesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ResourcesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ResourcesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<String> id = const Value.absent(),
             Value<String?> parent = const Value.absent(),
@@ -784,6 +836,7 @@ class $$ResourcesTableTableManager extends RootTableManager<
                       dynamic,
                       dynamic,
                       dynamic,
+                      dynamic,
                       dynamic>>(state) {
                 if (parent) {
                   state = state.withJoin(
@@ -812,6 +865,7 @@ typedef $$ResourcesTableProcessedTableManager = ProcessedTableManager<
     Resource,
     $$ResourcesTableFilterComposer,
     $$ResourcesTableOrderingComposer,
+    $$ResourcesTableAnnotationComposer,
     $$ResourcesTableCreateCompanionBuilder,
     $$ResourcesTableUpdateCompanionBuilder,
     (Resource, $$ResourcesTableReferences),
