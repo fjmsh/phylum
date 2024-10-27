@@ -14,6 +14,8 @@ var (
 
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/fs")
+	group.GET("/cat/:id", handleCatRequest)
+	group.GET("/download/:id", handleDownloadRequest)
 	group.GET("/du/:id", handleDuRequest)
 	group.GET("/ls/:id", handleLsRequest)
 	group.POST("/mkdir/:id", handleMkdirRequest)
@@ -21,5 +23,4 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group.POST("/cp/:id", handleCpRequest)
 	group.DELETE("/rm/:id", handleRmRequest)
 	group.PUT("/upload/:id", handleUploadRequest)
-	group.GET("/cat/:id", handleCatRequest)
 }

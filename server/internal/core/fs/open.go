@@ -53,21 +53,21 @@ func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 			path = c.Path
 		}
 		result[i] = Resource{
-			f:             r.f,
-			ID:            c.ID,
-			ParentID:      c.Parent,
-			Name:          c.Name,
-			Created:       c.Created.Time,
-			Modified:      c.Modified.Time,
-			Deleted:       nil, // Query will not return deleted results
-			Dir:           c.Dir,
-			ContentSize:   c.ContentSize,
-			ContentType:   c.ContentType,
-			ContentSHA256: c.ContentSha256,
-			Permissions:   string(c.Permissions),
-			Path:          path,
+			f:               r.f,
+			ID:              c.ID,
+			ParentID:        c.Parent,
+			Name:            c.Name,
+			Created:         c.Created.Time,
+			Modified:        c.Modified.Time,
+			Deleted:         nil, // Query will not return deleted results
+			Dir:             c.Dir,
+			ContentSize:     c.ContentSize,
+			ContentType:     c.ContentType,
+			ContentSHA256:   c.ContentSha256,
+			Permissions:     string(c.Permissions),
+			Path:            path,
+			UserPermissions: r.UserPermissions,
 			// Not Needed
-			// UserPermissions: 0,
 			// InheritedPermissions: "",
 		}
 	}
