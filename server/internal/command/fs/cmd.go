@@ -17,7 +17,7 @@ func SetupCommand() *cobra.Command {
 	flags.StringP("default-storage-dir", "S", "storage/default", "Default Storage Directory")
 	viper.BindPFlag("default_storage_dir", flags.Lookup("default-storage-dir"))
 
-	flags.StringP("user", "u", "phylum", "Specify user for resource operations")
+	flags.StringP("user", "u", "phylum", "User")
 
 	cmd.AddCommand(
 		setupCatCommand(),

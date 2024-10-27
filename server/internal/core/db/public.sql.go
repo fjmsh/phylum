@@ -7,6 +7,9 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const accessPublicShare = `-- name: AccessPublicShare :exec
@@ -15,6 +18,38 @@ UPDATE public_shares SET accesses_left = accesses_left - 1 WHERE id = $1
 
 func (q *Queries) AccessPublicShare(ctx context.Context, id string) error {
 	_, err := q.db.Exec(ctx, accessPublicShare, id)
+	return err
+}
+
+const createPublicShare = `-- name: CreatePublicShare :exec
+INSERT INTO public_shares(id, created_by, root, password_hash, expires, accesses_left) VALUES(
+    $1::text,
+    $2::text,
+    $3::uuid,
+    $4::text,
+    $5::timestamp,
+    $6::int
+)
+`
+
+type CreatePublicShareParams struct {
+	ID           string
+	CreatedBy    string
+	Root         uuid.UUID
+	PasswordHash pgtype.Text
+	Expires      pgtype.Timestamp
+	AccessesLeft pgtype.Int4
+}
+
+func (q *Queries) CreatePublicShare(ctx context.Context, arg CreatePublicShareParams) error {
+	_, err := q.db.Exec(ctx, createPublicShare,
+		arg.ID,
+		arg.CreatedBy,
+		arg.Root,
+		arg.PasswordHash,
+		arg.Expires,
+		arg.AccessesLeft,
+	)
 	return err
 }
 
