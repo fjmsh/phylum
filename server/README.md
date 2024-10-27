@@ -9,19 +9,19 @@ Self-hosted cloud file storage
     [x] Copy
     [ ] Merge (move/copy)
     [x] Download files
-    [ ] Download folders / multiple files as zip
+    [x] Download folder as zip
     [ ] Thumbnails
 [x] Bookmarks / Favorites
 [x] Internal sharing 
     [x] List shared resources
 [ ] Public sharing
     [ ] Create
-        [ ] Password protection (Basic auth)
-        [ ] Max Duration
-        [ ] Max Accesses (single-file only?)
-    [ ] Use
-        [ ] View directory listing
-        [ ] Download files
+    [x] Access
+        [x] Password protection (Basic auth)
+        [x] Expiration time
+        [x] Max Accesses
+        [x] View directory listing
+        [x] Download files
     [ ] Get Info
         [ ] Per-resource
         [ ] All
