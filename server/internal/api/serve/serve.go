@@ -75,7 +75,14 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file Resource) {
 	})
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, "<pre>\n")
+	fmt.Fprintln(w, "<html>")
+	fmt.Fprintln(w, "<head>")
+	fmt.Fprintf(w, "<title>%s | Phylum</title>\n", file.FSPath())
+	fmt.Fprintln(w, "<style>td {padding: 4px 12px;}</style>")
+	fmt.Fprintln(w, "</head>")
+	fmt.Fprintln(w, "<pre><table>")
+	fmt.Fprintln(w, "<thead><tr><th>Name</th><th>Size</th><th>Content-Type</th><th>SHA-256</th></tr></thead>")
+	fmt.Fprintln(w, "<tbody>")
 	for _, f := range files {
 		name := f.FSName()
 		if f.FSDir() {
@@ -85,9 +92,24 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file Resource) {
 		// part of the URL path, and not indicate the start of a query
 		// string or fragment.
 		url := url.URL{Path: name}
-		fmt.Fprintf(w, "<a href=\"%s\">%s</a>\n", url.String(), htmlReplacer.Replace(name))
+		link := fmt.Sprintf("<a href=\"%s\">%s</a>", url.String(), htmlReplacer.Replace(name))
+
+		if f.FSDir() {
+			fmt.Fprintf(w, "<tr><td>%s</td></tr>\n", link)
+		} else {
+			fmt.Fprintf(w, "<tr><td>%s</td><td align=\"right\">%s</td><td>%s</td><td>%s</td></tr>\n", link, formatSize(f.FSContentSize()), f.FSContentType(), f.FSContentSHA256()[0:12])
+		}
 	}
-	fmt.Fprintf(w, "</pre>\n")
+	fmt.Fprintln(w, "</tbody></table></pre>\n")
+	fmt.Fprintln(w, "</html>\n")
+}
+
+func formatSize(size int64) string {
+	suffix := []string{"", "K", "M", "G", "T"}
+	si := 0
+	for ; size >= 1000 && si < len(suffix); si, size = si+1, size/1000 {
+	}
+	return fmt.Sprintf("%d%s", size, suffix[si])
 }
 
 func serveResource(w http.ResponseWriter, r *http.Request, file Resource) {
