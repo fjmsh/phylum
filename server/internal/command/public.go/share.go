@@ -1,7 +1,9 @@
 package public
 
 import (
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/fs"
@@ -14,18 +16,37 @@ func setupCreateCommand() *cobra.Command {
 		Short: "Create Public Share",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := createPublicShare(common.UserFileSystem(cmd), args[0], args[1]); err != nil {
+			password, _ := cmd.Flags().GetString("password")
+			duration, _ := cmd.Flags().GetString("duration")
+			accesses, _ := cmd.Flags().GetInt("accesses")
+			if err := createPublicShare(common.UserFileSystem(cmd), args[0], args[1], password, duration, accesses); err != nil {
 				fmt.Println("could not create public share '" + args[0] + "': " + err.Error())
 			}
 		},
 	}
+
+	cmd.Flags().StringP("password", "p", "", "Password")
+	cmd.Flags().StringP("duration", "d", "", "Duration")
+	cmd.Flags().IntP("accesses", "a", 0, "Accesses")
 	return &cmd
 }
 
-func createPublicShare(f fs.FileSystem, name, pathOrUUID string) error {
+func createPublicShare(f fs.FileSystem, name, pathOrUUID string, password string, durationStr string, accesses int) error {
 	r, err := f.ResourceByPathOrUUID(pathOrUUID)
 	if err != nil {
 		return err
 	}
-	return r.CreatePublicShare(name, nil, nil, nil)
+	var duration time.Duration
+	if durationStr != "" {
+		var err error
+		duration, err = time.ParseDuration(durationStr)
+		if err != nil {
+			return err
+		}
+		if duration < 0 {
+			return errors.New("duration cannot be negative: " + duration.String())
+		}
+	}
+
+	return r.CreatePublicShare(name, password, duration, accesses)
 }

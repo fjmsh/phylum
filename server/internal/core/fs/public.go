@@ -8,7 +8,7 @@ import (
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
 
-func (r Resource) CreatePublicShare(name string, password *string, maxAge *time.Time, maxDownloads *int) error {
+func (r Resource) CreatePublicShare(name, password string, maxAge time.Duration, accesses int) error {
 	if !r.hasPermission(PermissionShare | PermissionRead) {
 		return ErrInsufficientPermissions
 	}
@@ -17,8 +17,8 @@ func (r Resource) CreatePublicShare(name string, password *string, maxAge *time.
 	expires := pgtype.Timestamp{}
 	accessesLeft := pgtype.Int4{}
 
-	if password != nil {
-		hash, err := crypt.GenerateArgon2EncodedHash(*password)
+	if password != "" {
+		hash, err := crypt.GenerateArgon2EncodedHash(password)
 		if err != nil {
 			return err
 		}
@@ -27,16 +27,16 @@ func (r Resource) CreatePublicShare(name string, password *string, maxAge *time.
 			Valid:  true,
 		}
 	}
-	if maxAge != nil {
+	if maxAge != 0 {
 		expires = pgtype.Timestamp{
-			Time:  *maxAge,
+			Time:  time.Now().Add(maxAge),
 			Valid: true,
 		}
 	}
 
-	if maxDownloads != nil {
+	if accesses != 0 {
 		accessesLeft = pgtype.Int4{
-			Int32: int32(*maxDownloads),
+			Int32: int32(accesses),
 			Valid: true,
 		}
 	}
