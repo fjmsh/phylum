@@ -6,17 +6,18 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
 
-var ErrPublicShareNotFound = errors.NewError(http.StatusUnauthorized, "public_share_not_found", "public share not found")
+var ErrPublicShareNotFound = errors.NewError(http.StatusNotFound, "public_share_not_found", "public share not found")
 
-func OpenResource(ctx context.Context, id string, password func() string, path string) (Resource, error) {
+func OpenResource(ctx context.Context, name string, password string, path string) (Resource, error) {
 	// Check exists
-	s, err := db.Get().PublicShare(ctx, id)
+	s, err := db.Get().GetPublicShare(ctx, name)
 	if errors.Is(err, pgx.ErrNoRows) {
 		err = ErrPublicShareNotFound
 	}
@@ -26,10 +27,10 @@ func OpenResource(ctx context.Context, id string, password func() string, path s
 
 	// check password
 	if s.PasswordHash.Valid {
-		if ok, err := crypt.VerifyPassword(password(), s.PasswordHash.String); err != nil {
+		if ok, err := crypt.VerifyPassword(password, s.PasswordHash.String); err != nil {
 			return Resource{}, err
 		} else if !ok {
-			return Resource{}, ErrPublicShareNotFound
+			return Resource{}, auth.ErrRequired
 		}
 	}
 
@@ -41,12 +42,12 @@ func OpenResource(ctx context.Context, id string, password func() string, path s
 	}
 
 	// check max accesses
-	if s.AccessesLeft.Valid {
-		if s.AccessesLeft.Int32 <= 0 {
+	if s.MaxAccesses.Valid {
+		if s.MaxAccesses.Int32 <= s.Accessed {
 			return Resource{}, ErrPublicShareNotFound
 		}
-		db.Get().AccessPublicShare(ctx, id)
 	}
+	db.Get().MarkPublicShareAccess(ctx, s.ID)
 
 	f := filesystem{
 		ctx:    ctx,

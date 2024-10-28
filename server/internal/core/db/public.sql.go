@@ -12,17 +12,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const accessPublicShare = `-- name: AccessPublicShare :exec
-UPDATE public_shares SET accesses_left = accesses_left - 1 WHERE id = $1
-`
-
-func (q *Queries) AccessPublicShare(ctx context.Context, id string) error {
-	_, err := q.db.Exec(ctx, accessPublicShare, id)
-	return err
-}
-
 const createPublicShare = `-- name: CreatePublicShare :exec
-INSERT INTO public_shares(id, created_by, root, password_hash, expires, accesses_left) VALUES(
+INSERT INTO public_shares(name, created_by, root, password_hash, expires, max_accesses) VALUES(
     $1::text,
     $2::text,
     $3::uuid,
@@ -33,42 +24,53 @@ INSERT INTO public_shares(id, created_by, root, password_hash, expires, accesses
 `
 
 type CreatePublicShareParams struct {
-	ID           string
+	Name         string
 	CreatedBy    string
 	Root         uuid.UUID
 	PasswordHash pgtype.Text
 	Expires      pgtype.Timestamp
-	AccessesLeft pgtype.Int4
+	MaxAccesses  pgtype.Int4
 }
 
 func (q *Queries) CreatePublicShare(ctx context.Context, arg CreatePublicShareParams) error {
 	_, err := q.db.Exec(ctx, createPublicShare,
-		arg.ID,
+		arg.Name,
 		arg.CreatedBy,
 		arg.Root,
 		arg.PasswordHash,
 		arg.Expires,
-		arg.AccessesLeft,
+		arg.MaxAccesses,
 	)
 	return err
 }
 
-const publicShare = `-- name: PublicShare :one
-SELECT id, created, deleted, created_by, root, password_hash, expires, accesses_left from public_shares WHERE id = $1
+const getPublicShare = `-- name: GetPublicShare :one
+SELECT id, name, created, deleted, created_by, root, accessed, max_accesses, password_hash, expires FROM public_shares p WHERE name = $1::text AND deleted IS NULL
 `
 
-func (q *Queries) PublicShare(ctx context.Context, id string) (PublicShare, error) {
-	row := q.db.QueryRow(ctx, publicShare, id)
+func (q *Queries) GetPublicShare(ctx context.Context, name string) (PublicShare, error) {
+	row := q.db.QueryRow(ctx, getPublicShare, name)
 	var i PublicShare
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Created,
 		&i.Deleted,
 		&i.CreatedBy,
 		&i.Root,
+		&i.Accessed,
+		&i.MaxAccesses,
 		&i.PasswordHash,
 		&i.Expires,
-		&i.AccessesLeft,
 	)
 	return i, err
+}
+
+const markPublicShareAccess = `-- name: MarkPublicShareAccess :exec
+UPDATE public_shares SET accessed = accessed + 1 WHERE id = $1
+`
+
+func (q *Queries) MarkPublicShareAccess(ctx context.Context, id int32) error {
+	_, err := q.db.Exec(ctx, markPublicShareAccess, id)
+	return err
 }

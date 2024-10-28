@@ -17,14 +17,16 @@ type AccessToken struct {
 }
 
 type PublicShare struct {
-	ID           string
+	ID           int32
+	Name         string
 	Created      pgtype.Timestamp
 	Deleted      pgtype.Timestamp
 	CreatedBy    string
 	Root         uuid.UUID
+	Accessed     int32
+	MaxAccesses  pgtype.Int4
 	PasswordHash pgtype.Text
 	Expires      pgtype.Timestamp
-	AccessesLeft pgtype.Int4
 }
 
 type Resource struct {

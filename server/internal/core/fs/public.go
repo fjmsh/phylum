@@ -15,7 +15,7 @@ func (r Resource) CreatePublicShare(name, password string, maxAge time.Duration,
 
 	passwordHash := pgtype.Text{}
 	expires := pgtype.Timestamp{}
-	accessesLeft := pgtype.Int4{}
+	maxAccesses := pgtype.Int4{}
 
 	if password != "" {
 		hash, err := crypt.GenerateArgon2EncodedHash(password)
@@ -27,6 +27,7 @@ func (r Resource) CreatePublicShare(name, password string, maxAge time.Duration,
 			Valid:  true,
 		}
 	}
+
 	if maxAge != 0 {
 		expires = pgtype.Timestamp{
 			Time:  time.Now().Add(maxAge),
@@ -35,18 +36,18 @@ func (r Resource) CreatePublicShare(name, password string, maxAge time.Duration,
 	}
 
 	if accesses != 0 {
-		accessesLeft = pgtype.Int4{
+		maxAccesses = pgtype.Int4{
 			Int32: int32(accesses),
 			Valid: true,
 		}
 	}
 
 	return r.f.db.CreatePublicShare(r.f.ctx, db.CreatePublicShareParams{
-		ID:           name,
+		Name:         name,
 		CreatedBy:    r.f.username,
 		Root:         r.ID,
 		PasswordHash: passwordHash,
 		Expires:      expires,
-		AccessesLeft: accessesLeft,
+		MaxAccesses:  maxAccesses,
 	})
 }
