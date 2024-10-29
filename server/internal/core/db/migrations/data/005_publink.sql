@@ -13,7 +13,7 @@ CREATE TABLE publinks(
 
 CREATE UNIQUE INDEX unique_publink ON publinks(name) WHERE deleted IS NULL;
 
-CREATE INDEX publinks_by_root ON publinks(root);
+CREATE INDEX publinks_by_root ON publinks(root, deleted);
 
 CREATE INDEX publinks_by_creator ON publinks(created_by);
 

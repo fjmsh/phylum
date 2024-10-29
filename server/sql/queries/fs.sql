@@ -91,9 +91,9 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, content_size, con
     AND r.id != @id::uuid
     AND CASE WHEN @recursive::boolean THEN true ELSE depth < 1 END
 ), links(id, count) AS (
-    SELECT root, count(p.id) FROM publinks p GROUP BY p.root
+    SELECT root, count(p.id) FROM publinks p WHERE p.deleted IS NULL GROUP BY p.root
 )
-SELECT nodes.*, COALESCE(links.count, 0) from nodes
+SELECT nodes.*, COALESCE(links.count, 0) AS publinks from nodes
 LEFT JOIN links ON nodes.id = links.id
 WHERE CASE WHEN @include_root::boolean THEN true ELSE depth > 0 END;
 

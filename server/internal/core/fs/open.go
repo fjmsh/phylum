@@ -65,7 +65,7 @@ func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 			ContentType:     c.ContentType,
 			ContentSHA256:   c.ContentSha256,
 			Permissions:     string(c.Permissions),
-			Publinks:        int(r.Publinks),
+			Publinks:        int(c.Publinks),
 			Path:            path,
 			UserPermissions: r.UserPermissions,
 			// Not Needed

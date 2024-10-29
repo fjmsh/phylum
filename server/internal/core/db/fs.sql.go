@@ -167,9 +167,9 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, content_size, con
     AND r.id != $2::uuid
     AND CASE WHEN $3::boolean THEN true ELSE depth < 1 END
 ), links(id, count) AS (
-    SELECT root, count(p.id) FROM publinks p GROUP BY p.root
+    SELECT root, count(p.id) FROM publinks p WHERE p.deleted IS NULL GROUP BY p.root
 )
-SELECT nodes.id, nodes.parent, nodes.name, nodes.dir, nodes.created, nodes.modified, nodes.content_size, nodes.content_type, nodes.content_sha256, nodes.depth, nodes.path, nodes.permissions, COALESCE(links.count, 0) from nodes
+SELECT nodes.id, nodes.parent, nodes.name, nodes.dir, nodes.created, nodes.modified, nodes.content_size, nodes.content_type, nodes.content_sha256, nodes.depth, nodes.path, nodes.permissions, COALESCE(links.count, 0) AS publinks from nodes
 LEFT JOIN links ON nodes.id = links.id
 WHERE CASE WHEN $1::boolean THEN true ELSE depth > 0 END
 `
@@ -193,7 +193,7 @@ type ReadDirRow struct {
 	Depth         int32
 	Path          string
 	Permissions   []byte
-	Count         int64
+	Publinks      int64
 }
 
 func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow, error) {
@@ -218,7 +218,7 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 			&i.Depth,
 			&i.Path,
 			&i.Permissions,
-			&i.Count,
+			&i.Publinks,
 		); err != nil {
 			return nil, err
 		}

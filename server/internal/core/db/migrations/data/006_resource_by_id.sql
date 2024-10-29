@@ -52,7 +52,7 @@ CREATE FUNCTION resource_by_id(resource_id uuid, root uuid, username text) RETUR
       JOIN nodes n
       ON r.id = n.parent
   ), links(id, count) AS (
-    SELECT root, count(p.id) FROM publinks p GROUP BY p.root
+    SELECT root, count(p.id) FROM publinks p WHERE p.deleted IS NULL GROUP BY p.root
   )
   SELECT
     resid AS id,
