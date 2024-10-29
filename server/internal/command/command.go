@@ -5,7 +5,7 @@ import (
 	"path"
 
 	"github.com/shroff/phylum/server/internal/command/fs"
-	"github.com/shroff/phylum/server/internal/command/public.go"
+	"github.com/shroff/phylum/server/internal/command/publink"
 	"github.com/shroff/phylum/server/internal/command/schema"
 	"github.com/shroff/phylum/server/internal/command/serve"
 	storagecmd "github.com/shroff/phylum/server/internal/command/storage"
@@ -65,7 +65,7 @@ func SetupCommand() {
 		user.SetupCommand(),
 		storagecmd.SetupCommand(),
 		fs.SetupCommand(),
-		public.SetupCommand(),
+		publink.SetupCommand(),
 		serve.SetupCommand(),
 	}...)
 	rootCmd.Execute()

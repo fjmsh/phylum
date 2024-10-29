@@ -1,4 +1,4 @@
-package public
+package publink
 
 import (
 	"errors"
@@ -13,14 +13,14 @@ import (
 func setupCreateCommand() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "create <name> (<path> | <uuid>)",
-		Short: "Create Public Share",
+		Short: "Create Publink",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			password, _ := cmd.Flags().GetString("password")
 			duration, _ := cmd.Flags().GetString("duration")
 			accesses, _ := cmd.Flags().GetInt("accesses")
-			if err := createPublicShare(common.UserFileSystem(cmd), args[0], args[1], password, duration, accesses); err != nil {
-				fmt.Println("could not create public share '" + args[0] + "': " + err.Error())
+			if err := createPublink(common.UserFileSystem(cmd), args[0], args[1], password, duration, accesses); err != nil {
+				fmt.Println("could not create publink '" + args[0] + "': " + err.Error())
 			}
 		},
 	}
@@ -31,7 +31,7 @@ func setupCreateCommand() *cobra.Command {
 	return &cmd
 }
 
-func createPublicShare(f fs.FileSystem, name, pathOrUUID string, password string, durationStr string, accesses int) error {
+func createPublink(f fs.FileSystem, name, pathOrUUID string, password string, durationStr string, accesses int) error {
 	r, err := f.ResourceByPathOrUUID(pathOrUUID)
 	if err != nil {
 		return err
@@ -48,5 +48,5 @@ func createPublicShare(f fs.FileSystem, name, pathOrUUID string, password string
 		}
 	}
 
-	return r.CreatePublicShare(name, password, duration, accesses)
+	return r.CreatePublink(name, password, duration, accesses)
 }

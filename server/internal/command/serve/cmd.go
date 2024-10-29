@@ -2,7 +2,7 @@ package serve
 
 import (
 	"github.com/fvbock/endless"
-	"github.com/shroff/phylum/server/internal/api/public"
+	"github.com/shroff/phylum/server/internal/api/publink"
 	apiv1 "github.com/shroff/phylum/server/internal/api/v1"
 	"github.com/shroff/phylum/server/internal/api/webdav"
 	"github.com/sirupsen/logrus"
@@ -20,7 +20,7 @@ func SetupCommand() *cobra.Command {
 
 			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")))
 			apiv1.Setup(engine.Group("/api/v1"))
-			public.Setup(engine.Group("/public"))
+			publink.Setup(engine.Group("/publink"))
 
 			server := endless.NewServer(config.GetString("listen"), engine)
 			server.BeforeBegin = func(addr string) {

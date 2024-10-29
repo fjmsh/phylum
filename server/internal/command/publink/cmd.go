@@ -1,4 +1,4 @@
-package public
+package publink
 
 import (
 	"github.com/spf13/cobra"
@@ -7,8 +7,8 @@ import (
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "public",
-		Short: "Public Share",
+		Use:   "publink",
+		Short: "Publink Management",
 	}
 	flags := cmd.PersistentFlags()
 	flags.Bool("auto-migrate", true, "Automatically migrate database schema")

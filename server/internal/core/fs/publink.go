@@ -8,7 +8,7 @@ import (
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
 
-func (r Resource) CreatePublicShare(name, password string, maxAge time.Duration, accesses int) error {
+func (r Resource) CreatePublink(name, password string, maxAge time.Duration, accesses int) error {
 	if !r.hasPermission(PermissionShare | PermissionRead) {
 		return ErrInsufficientPermissions
 	}
@@ -42,7 +42,7 @@ func (r Resource) CreatePublicShare(name, password string, maxAge time.Duration,
 		}
 	}
 
-	return r.f.db.CreatePublicShare(r.f.ctx, db.CreatePublicShareParams{
+	return r.f.db.CreatePublink(r.f.ctx, db.CreatePublinkParams{
 		Name:         name,
 		CreatedBy:    r.f.username,
 		Root:         r.ID,

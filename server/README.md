@@ -14,8 +14,8 @@ Self-hosted cloud file storage
 [x] Bookmarks / Favorites
 [x] Internal sharing 
     [x] List shared resources
-[ ] Public sharing
-    [ ] Create
+[x] Public sharing
+    [x] Create
     [x] Access
         [x] Password protection (Basic auth)
         [x] Expiration time

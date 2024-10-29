@@ -1,4 +1,4 @@
-CREATE TABLE public_shares(
+CREATE TABLE publinks(
   id              SERIAL      PRIMARY KEY,
   name            TEXT        NOT NULL,
   created         TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -11,9 +11,9 @@ CREATE TABLE public_shares(
   expires         TIMESTAMP
 );
 
-CREATE UNIQUE INDEX unique_share ON public_shares(name) WHERE deleted IS NULL;
+CREATE UNIQUE INDEX unique_publink ON publinks(name) WHERE deleted IS NULL;
 ---- create above / drop below ----
 
-DROP INDEX IF EXISTS unique_share;
+DROP INDEX IF EXISTS unique_publink;
 
-DROP TABLE public_shares;
+DROP TABLE publinks;

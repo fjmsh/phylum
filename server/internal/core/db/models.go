@@ -16,7 +16,7 @@ type AccessToken struct {
 	Username string
 }
 
-type PublicShare struct {
+type Publink struct {
 	ID           int32
 	Name         string
 	Created      pgtype.Timestamp

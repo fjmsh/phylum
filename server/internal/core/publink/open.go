@@ -1,4 +1,4 @@
-package public
+package publink
 
 import (
 	"context"
@@ -13,13 +13,13 @@ import (
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
 
-var ErrPublicShareNotFound = errors.NewError(http.StatusNotFound, "public_share_not_found", "public share not found")
+var ErrNotFound = errors.NewError(http.StatusNotFound, "publink_not_found", "publink not found")
 
 func OpenResource(ctx context.Context, name string, password string, path string) (Resource, error) {
 	// Check exists
-	s, err := db.Get().GetPublicShare(ctx, name)
+	s, err := db.Get().GetPublink(ctx, name)
 	if errors.Is(err, pgx.ErrNoRows) {
-		err = ErrPublicShareNotFound
+		err = ErrNotFound
 	}
 	if err != nil {
 		return Resource{}, err
@@ -37,17 +37,17 @@ func OpenResource(ctx context.Context, name string, password string, path string
 	// check expiration
 	if s.Expires.Valid {
 		if s.Expires.Time.Before(time.Now()) {
-			return Resource{}, ErrPublicShareNotFound
+			return Resource{}, ErrNotFound
 		}
 	}
 
 	// check max accesses
 	if s.MaxAccesses.Valid {
 		if s.MaxAccesses.Int32 <= s.Accessed {
-			return Resource{}, ErrPublicShareNotFound
+			return Resource{}, ErrNotFound
 		}
 	}
-	db.Get().MarkPublicShareAccess(ctx, s.ID)
+	db.Get().MarkPublinkAccess(ctx, s.ID)
 
 	f := filesystem{
 		ctx:    ctx,

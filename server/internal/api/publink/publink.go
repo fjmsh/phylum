@@ -1,4 +1,4 @@
-package public
+package publink
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
 	"github.com/shroff/phylum/server/internal/api/serve"
-	"github.com/shroff/phylum/server/internal/core/fs/public"
+	"github.com/shroff/phylum/server/internal/core/publink"
 )
 
 func Setup(r *gin.RouterGroup) {
@@ -16,7 +16,7 @@ func Setup(r *gin.RouterGroup) {
 		path := c.Param("path")
 
 		_, password, _ := c.Request.BasicAuth()
-		r, err := public.OpenResource(c.Request.Context(), name, password, path)
+		r, err := publink.OpenResource(c.Request.Context(), name, password, path)
 		if err != nil {
 			if errors.Is(err, auth.ErrRequired) {
 				c.Header("WWW-Authenticate", "Basic realm=\""+name+"\"")
