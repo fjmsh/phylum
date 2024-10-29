@@ -231,7 +231,7 @@ SET
     permissions = permissions - $1::text,
     modified = NOW()
 WHERE id = $2::uuid
-RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
+RETURNING permissions
 `
 
 type RemoveUserPermissionForResourceParams struct {
@@ -239,23 +239,11 @@ type RemoveUserPermissionForResourceParams struct {
 	ResourceID uuid.UUID
 }
 
-func (q *Queries) RemoveUserPermissionForResource(ctx context.Context, arg RemoveUserPermissionForResourceParams) (Resource, error) {
+func (q *Queries) RemoveUserPermissionForResource(ctx context.Context, arg RemoveUserPermissionForResourceParams) ([]byte, error) {
 	row := q.db.QueryRow(ctx, removeUserPermissionForResource, arg.Username, arg.ResourceID)
-	var i Resource
-	err := row.Scan(
-		&i.ID,
-		&i.Permissions,
-		&i.Name,
-		&i.Parent,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.ContentSize,
-		&i.ContentType,
-		&i.ContentSha256,
-	)
-	return i, err
+	var permissions []byte
+	err := row.Scan(&permissions)
+	return permissions, err
 }
 
 const resourceByID = `-- name: ResourceByID :one
@@ -444,7 +432,7 @@ SET
     parent = $2::uuid,
     modified = NOW()
 WHERE id = $3::uuid
-RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
+RETURNING name, parent
 `
 
 type UpdateResourceNameParentParams struct {
@@ -453,22 +441,15 @@ type UpdateResourceNameParentParams struct {
 	ID     uuid.UUID
 }
 
-func (q *Queries) UpdateResourceNameParent(ctx context.Context, arg UpdateResourceNameParentParams) (Resource, error) {
+type UpdateResourceNameParentRow struct {
+	Name   string
+	Parent *uuid.UUID
+}
+
+func (q *Queries) UpdateResourceNameParent(ctx context.Context, arg UpdateResourceNameParentParams) (UpdateResourceNameParentRow, error) {
 	row := q.db.QueryRow(ctx, updateResourceNameParent, arg.Name, arg.Parent, arg.ID)
-	var i Resource
-	err := row.Scan(
-		&i.ID,
-		&i.Permissions,
-		&i.Name,
-		&i.Parent,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.ContentSize,
-		&i.ContentType,
-		&i.ContentSha256,
-	)
+	var i UpdateResourceNameParentRow
+	err := row.Scan(&i.Name, &i.Parent)
 	return i, err
 }
 
@@ -511,7 +492,7 @@ SET
     permissions[$1::text] = to_json($2::int),
     modified = NOW()
 WHERE id = $3::uuid
-RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
+RETURNING permissions
 `
 
 type UpdateUserPermissionsForResourceParams struct {
@@ -520,21 +501,9 @@ type UpdateUserPermissionsForResourceParams struct {
 	ResourceID uuid.UUID
 }
 
-func (q *Queries) UpdateUserPermissionsForResource(ctx context.Context, arg UpdateUserPermissionsForResourceParams) (Resource, error) {
+func (q *Queries) UpdateUserPermissionsForResource(ctx context.Context, arg UpdateUserPermissionsForResourceParams) ([]byte, error) {
 	row := q.db.QueryRow(ctx, updateUserPermissionsForResource, arg.Username, arg.Permission, arg.ResourceID)
-	var i Resource
-	err := row.Scan(
-		&i.ID,
-		&i.Permissions,
-		&i.Name,
-		&i.Parent,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.ContentSize,
-		&i.ContentType,
-		&i.ContentSha256,
-	)
-	return i, err
+	var permissions []byte
+	err := row.Scan(&permissions)
+	return permissions, err
 }

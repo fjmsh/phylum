@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/core/db"
 )
 
 type Resource struct {
@@ -33,29 +32,3 @@ func (r Resource) FSModified() time.Time   { return r.Modified }
 func (r Resource) FSContentSize() int64    { return r.ContentSize }
 func (r Resource) FSContentSHA256() string { return r.ContentSHA256 }
 func (r Resource) FSContentType() string   { return r.ContentType }
-
-func ResourceFromDB(r db.Resource) Resource {
-	var deleted *time.Time
-	if r.Deleted.Valid {
-		deleted = &r.Deleted.Time
-	}
-	return Resource{
-		ID:            r.ID,
-		ParentID:      r.Parent,
-		Name:          r.Name,
-		Created:       r.Created.Time,
-		Modified:      r.Modified.Time,
-		Deleted:       deleted,
-		Dir:           r.Dir,
-		ContentSize:   r.ContentSize,
-		ContentType:   r.ContentType,
-		ContentSHA256: r.ContentSha256,
-		Permissions:   string(r.Permissions),
-		// Not Needed
-		// f:                    f,
-		// Path:                 "",
-		// UserPermissions:      0,
-		// InheritedPermissions: "",
-
-	}
-}

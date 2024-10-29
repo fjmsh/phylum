@@ -58,7 +58,7 @@ SET
     parent = @parent::uuid,
     modified = NOW()
 WHERE id = @id::uuid
-RETURNING *;
+RETURNING name, parent;
 
 -- name: UpdateUserPermissionsForResource :one
 UPDATE resources
@@ -66,7 +66,7 @@ SET
     permissions[@username::text] = to_json(@permission::int),
     modified = NOW()
 WHERE id = @resource_id::uuid
-RETURNING *;
+RETURNING permissions;
 
 -- name: RemoveUserPermissionForResource :one
 UPDATE resources
@@ -74,7 +74,7 @@ SET
     permissions = permissions - @username::text,
     modified = NOW()
 WHERE id = @resource_id::uuid
-RETURNING *;
+RETURNING permissions;
 
 -- name: ChildResourceIDByName :one
 SELECT id FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;

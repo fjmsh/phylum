@@ -11,15 +11,15 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 	// Do not grant more than what you have
 	permission = permission & r.UserPermissions
 
-	var res db.Resource
+	var p []byte
 	var err error
 	if permission == 0 {
-		res, err = r.f.db.RemoveUserPermissionForResource(r.f.ctx, db.RemoveUserPermissionForResourceParams{
+		p, err = r.f.db.RemoveUserPermissionForResource(r.f.ctx, db.RemoveUserPermissionForResourceParams{
 			ResourceID: r.ID,
 			Username:   username,
 		})
 	} else {
-		res, err = r.f.db.UpdateUserPermissionsForResource(r.f.ctx, db.UpdateUserPermissionsForResourceParams{
+		p, err = r.f.db.UpdateUserPermissionsForResource(r.f.ctx, db.UpdateUserPermissionsForResourceParams{
 			ResourceID: r.ID,
 			Username:   username,
 			Permission: permission,
@@ -28,5 +28,6 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 	if err != nil {
 		return Resource{}, err
 	}
-	return ResourceFromDB(res), nil
+	r.Permissions = string(p)
+	return r, nil
 }

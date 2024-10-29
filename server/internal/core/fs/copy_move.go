@@ -39,9 +39,8 @@ func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
 		return Resource{}, false, ErrResourceMoveTargetSubdirectory
 	}
 
-	var result Resource
 	var deleted = false
-	return result, deleted, r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
+	return r, deleted, r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
 		f := r.f.withDb(dbh)
 		if overwrite {
 			if err := destParent.DeleteChildRecursive(destName, false); err == nil {
@@ -50,13 +49,14 @@ func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
 				return err
 			}
 		}
-		if r, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID, Name: destName, Parent: destParent.ID}); err != nil {
+		if nameParent, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID, Name: destName, Parent: destParent.ID}); err != nil {
 			if strings.Contains(err.Error(), "unique_member_resource_name") {
 				return ErrResourceNameConflict
 			}
 			return err
 		} else {
-			result = ResourceFromDB(r)
+			r.Name = nameParent.Name
+			r.ParentID = nameParent.Parent
 			return nil
 		}
 	})
