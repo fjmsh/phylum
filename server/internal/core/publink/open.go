@@ -2,22 +2,22 @@ package publink
 
 import (
 	"context"
-	"net/http"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
 
-var ErrUnauthorized = errors.NewError(http.StatusUnauthorized, "", "Unauthorized")
-var ErrNotFound = errors.NewError(http.StatusNotFound, "", "Not Found")
+var ErrUnauthorized = errors.New("unauthorized")
+var ErrNotFound = errors.New("not found")
 
 func OpenResource(ctx context.Context, name string, password string, path string) (Resource, error) {
+	d := db.Get()
 	// Check exists
-	s, err := db.Get().GetPublink(ctx, name)
+	s, err := d.GetPublink(ctx, name)
 	if errors.Is(err, pgx.ErrNoRows) {
 		err = ErrNotFound
 	}
@@ -46,13 +46,13 @@ func OpenResource(ctx context.Context, name string, password string, path string
 	if s.MaxAccesses > 0 && s.MaxAccesses <= s.Accessed {
 		return Resource{}, ErrNotFound
 	}
-	db.Get().MarkPublinkAccess(ctx, s.ID)
 
 	f := filesystem{
-		ctx:    ctx,
-		db:     db.Get(),
-		cs:     storage.Get(),
-		rootID: s.Root,
+		ctx:  ctx,
+		db:   db.Get(),
+		cs:   storage.Get(),
+		root: s.Root,
 	}
-	return f.ResourceByPath(path)
+
+	return f.resourceByPath(path)
 }

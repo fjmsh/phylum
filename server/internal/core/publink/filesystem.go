@@ -2,29 +2,24 @@ package publink
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/storage"
 )
 
 type filesystem struct {
-	ctx    context.Context
-	db     *db.DbHandler
-	cs     storage.Storage
-	rootID uuid.UUID
+	ctx  context.Context
+	db   *db.DbHandler
+	cs   storage.Storage
+	root uuid.UUID
 }
 
-var errNotFound = errors.NewError(http.StatusNotFound, "", "")
-var errResourceNotCollection = errors.NewError(http.StatusBadRequest, "", "")
-
-func (f filesystem) ResourceByPath(path string) (Resource, error) {
-	r, err := f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.rootID, Path: path})
+func (f filesystem) resourceByPath(path string) (Resource, error) {
+	r, err := f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.root, Path: path})
 	if err == pgx.ErrNoRows || !r.Found {
-		err = errNotFound
+		err = ErrNotFound
 	}
 	if err != nil {
 		return Resource{}, err

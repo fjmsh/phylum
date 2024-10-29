@@ -50,26 +50,7 @@ func (r Resource) ListPublinks() ([]publink.Info, error) {
 
 	links := make([]publink.Info, len(res))
 	for i, l := range res {
-		var deleted *time.Time
-		if l.Deleted.Valid {
-			deleted = &l.Deleted.Time
-		}
-		var expires *time.Time
-		if l.Expires.Valid {
-			expires = &l.Expires.Time
-		}
-		links[i] = publink.Info{
-			ID:          l.ID,
-			Name:        l.Name,
-			Created:     l.Created.Time,
-			Deleted:     deleted,
-			CreatedBy:   l.CreatedBy,
-			Root:        l.Root,
-			Accessed:    l.Accessed,
-			MaxAccesses: l.MaxAccesses,
-			Protected:   l.PasswordHash != "",
-			Expires:     expires,
-		}
+		links[i] = publink.InfoFromDB(l)
 	}
 	return links, nil
 }

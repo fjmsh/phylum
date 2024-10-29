@@ -1,6 +1,7 @@
 package publink
 
 import (
+	"errors"
 	"io"
 	"time"
 
@@ -38,7 +39,7 @@ func (r Resource) OpenRead(start, length int64) (io.ReadCloser, error) {
 
 func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 	if !r.dir {
-		return nil, errResourceNotCollection
+		return nil, errors.New("resource is not a collection")
 	}
 	children, err := r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{
 		ID:          r.id,

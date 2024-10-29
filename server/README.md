@@ -23,8 +23,9 @@ Self-hosted cloud file storage
         [x] View directory listing
         [x] Download files
     [ ] Get Info
-        [ ] Per-resource
-        [ ] All
+        [x] Per-resource
+        [ ] By-creator
+        [ ] All (user permissions)
 [ ] Sync
     [ ] Keep track of incremental sync state per token
 [ ] User admin

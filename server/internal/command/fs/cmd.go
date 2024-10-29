@@ -27,6 +27,7 @@ func SetupCommand() *cobra.Command {
 		setupLsCommand(),
 		setupMkdirCommand(),
 		setupMvCommand(),
+		setupPublinksCommand(),
 		setupRmCommand(),
 	)
 
