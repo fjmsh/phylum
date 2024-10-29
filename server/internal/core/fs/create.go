@@ -100,5 +100,6 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 		Path:                 path,
 		UserPermissions:      r.UserPermissions,
 		InheritedPermissions: p,
+		Publinks:             0,
 	}, nil
 }

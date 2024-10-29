@@ -166,8 +166,11 @@ WITH RECURSIVE nodes(id, parent, name, dir, created, modified, content_size, con
     WHERE deleted IS NULL
     AND r.id != $2::uuid
     AND CASE WHEN $3::boolean THEN true ELSE depth < 1 END
+), links(id, count) AS (
+    SELECT root, count(p.id) FROM publinks p GROUP BY p.root
 )
-SELECT id, parent, name, dir, created, modified, content_size, content_type, content_sha256, depth, path, permissions from nodes
+SELECT nodes.id, nodes.parent, nodes.name, nodes.dir, nodes.created, nodes.modified, nodes.content_size, nodes.content_type, nodes.content_sha256, nodes.depth, nodes.path, nodes.permissions, COALESCE(links.count, 0) from nodes
+LEFT JOIN links ON nodes.id = links.id
 WHERE CASE WHEN $1::boolean THEN true ELSE depth > 0 END
 `
 
@@ -190,6 +193,7 @@ type ReadDirRow struct {
 	Depth         int32
 	Path          string
 	Permissions   []byte
+	Count         int64
 }
 
 func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow, error) {
@@ -214,6 +218,7 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow,
 			&i.Depth,
 			&i.Path,
 			&i.Permissions,
+			&i.Count,
 		); err != nil {
 			return nil, err
 		}
@@ -247,7 +252,7 @@ func (q *Queries) RemoveUserPermissionForResource(ctx context.Context, arg Remov
 }
 
 const resourceByID = `-- name: ResourceByID :one
-SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, inherited_permissions, user_permission, found, path FROM resource_by_id($1::uuid, $2::uuid, $3::text)
+SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, inherited_permissions, user_permission, found, path, publinks FROM resource_by_id($1::uuid, $2::uuid, $3::text)
 `
 
 type ResourceByIDParams struct {
@@ -275,12 +280,13 @@ func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (Res
 		&i.UserPermission,
 		&i.Found,
 		&i.Path,
+		&i.Publinks,
 	)
 	return i, err
 }
 
 const resourceByPath = `-- name: ResourceByPath :one
-SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, inherited_permissions, user_permission, found, path FROM resource_by_path($1::text, $2::uuid, $3::text)
+SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, inherited_permissions, user_permission, found, path, publinks FROM resource_by_path($1::text, $2::uuid, $3::text)
 `
 
 type ResourceByPathParams struct {
@@ -308,6 +314,7 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 		&i.UserPermission,
 		&i.Found,
 		&i.Path,
+		&i.Publinks,
 	)
 	return i, err
 }

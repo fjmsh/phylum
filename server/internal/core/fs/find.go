@@ -41,6 +41,7 @@ func (f filesystem) resourceFromResult(r db.ResourceResult, err error) (Resource
 		ContentType:   r.ContentType,
 		ContentSHA256: r.ContentSha256,
 		Permissions:   string(r.Permissions),
+		Publinks:      int(r.Publinks),
 		// Definitely Needed
 		Path:                 r.Path,
 		UserPermissions:      r.UserPermission,

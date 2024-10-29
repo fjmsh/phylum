@@ -66,6 +66,6 @@ func resourceFromDB(r db.Resource) fs.Resource {
 		// Path:                 "",
 		// UserPermissions:      0,
 		// InheritedPermissions: "",
-
+		// Publinks:			 0,
 	}
 }

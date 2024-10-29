@@ -59,6 +59,7 @@ type ResourceResult struct {
 	UserPermission       int32
 	Found                bool
 	Path                 string
+	Publinks             int32
 }
 
 type StorageBackend struct {

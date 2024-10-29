@@ -3,7 +3,8 @@ CREATE TABLE resource_result (
   inherited_permissions JSONB,
   user_permission       INT NOT NULL,
   found                 BOOLEAN NOT NULL,
-  path                  TEXT NOT NULL
+  path                  TEXT NOT NULL,
+  publinks              INT NOT NULL DEFAULT 0
 ) INHERITS (resources);
 
 CREATE OR REPLACE FUNCTION jsonb_bitwise_or(a JSONB, b JSONB)
@@ -50,35 +51,40 @@ CREATE FUNCTION resource_by_id(resource_id uuid, root uuid, username text) RETUR
       FROM resources r
       JOIN nodes n
       ON r.id = n.parent
+  ), links(id, count) AS (
+    SELECT root, count(p.id) FROM publinks p GROUP BY p.root
   )
   SELECT
     resid AS id,
     r.permissions,
     r.name,
     r.parent,
-    dir,
-    created,
-    modified,
-    deleted,
-    content_size,
-    content_type,
-    content_sha256,
+    r.dir,
+    r.created,
+    r.modified,
+    r.deleted,
+    r.content_size,
+    r.content_type,
+    r.content_sha256,
     n.inherited_permissions,
     COALESCE((jsonb_bitwise_or(r.permissions, n.inherited_permissions)->(username))::int, 0)::int AS user_permission,
-    found,
-    concat('/', n.path)::text AS path
+    n.found,
+    concat('/', n.path)::text AS path,
+    COALESCE(l.count, 0)
   FROM nodes n
   JOIN resources r
-  ON r.id = n.resid
+    ON r.id = n.resid
+  LEFT JOIN links l
+    ON r.id = l.id
   WHERE n.parent IS NULL;
 $$ LANGUAGE SQL;
 
 ---- create above / drop below ----
 
-DROP TABLE resource_result;
-
-DROP FUNCTION resource_by_id;
-
 DROP AGGREGATE agg_jsonb_bitwise_or(JSONB);
 
 DROP FUNCTION jsonb_bitwise_or;
+
+DROP FUNCTION resource_by_id;
+
+DROP TABLE resource_result;

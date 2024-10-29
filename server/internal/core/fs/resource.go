@@ -19,6 +19,7 @@ type Resource struct {
 	ContentType          string     `json:"ctype"`
 	ContentSHA256        string     `json:"csha256"`
 	Permissions          string     `json:"permissions"`
+	Publinks             int        `json:"publinks"`
 	Path                 string     `json:"-"`
 	UserPermissions      int32      `json:"-"`
 	InheritedPermissions string     `json:"-"`

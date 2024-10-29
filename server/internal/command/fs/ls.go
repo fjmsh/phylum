@@ -26,7 +26,7 @@ func setupLsCommand() *cobra.Command {
 			}
 
 			fmt.Println(r.Path + " " + r.InheritedPermissionsString())
-			fmt.Println(formatRow(r.ID.String(), formatSize(r.ContentSize), r.ContentSHA256, ".", r.PermissionsString()))
+			fmt.Println(formatRow(r.ID.String(), formatSize(r.ContentSize), r.ContentSHA256, ".", r.PermissionsString(), r.Publinks))
 
 			if r.Dir {
 				children, err := r.ReadDir(false)
@@ -61,11 +61,11 @@ func formatSize(size int64) string {
 	return fmt.Sprintf("%d%s", size, suffix[si])
 }
 
-func formatRow(id, size, sha256, name, permissions string) string {
+func formatRow(id, size, sha256, name, permissions string, links int) string {
 	if sha256 == "" {
 		sha256 = "dir     "
 	}
-	return fmt.Sprintf("%s %5s %s %-24s %s", id, size, sha256[0:8], name, permissions)
+	return fmt.Sprintf("%s %2d %4s %s %-24s %s", id, links, size, sha256[0:8], name, permissions)
 }
 
 func formatResourceSummary(r fs.Resource) string {
@@ -73,5 +73,5 @@ func formatResourceSummary(r fs.Resource) string {
 	if r.Dir {
 		name += "/"
 	}
-	return formatRow(r.ID.String(), formatSize(r.ContentSize), r.ContentSHA256, name, r.PermissionsString())
+	return formatRow(r.ID.String(), formatSize(r.ContentSize), r.ContentSHA256, name, r.PermissionsString(), r.Publinks)
 }
