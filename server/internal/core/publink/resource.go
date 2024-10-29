@@ -24,7 +24,7 @@ type Resource struct {
 
 func (r Resource) FSID() uuid.UUID         { return r.id }
 func (r Resource) FSName() string          { return r.name }
-func (r Resource) FSPath() string          { return r.name }
+func (r Resource) FSPath() string          { return r.path }
 func (r Resource) FSDir() bool             { return r.dir }
 func (r Resource) FSCreated() time.Time    { return r.created }
 func (r Resource) FSModified() time.Time   { return r.modified }

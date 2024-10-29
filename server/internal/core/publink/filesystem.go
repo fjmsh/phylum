@@ -35,6 +35,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		id:            r.ID,
 		name:          r.Name,
 		dir:           r.Dir,
+		path:          r.Path,
 		created:       r.Created.Time,
 		modified:      r.Modified.Time,
 		contentSize:   r.ContentSize,

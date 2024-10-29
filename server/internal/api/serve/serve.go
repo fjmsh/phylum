@@ -78,9 +78,12 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file Resource) {
 	fmt.Fprintln(w, "<html>")
 	fmt.Fprintln(w, "<head>")
 	fmt.Fprintf(w, "<title>%s | Phylum</title>\n", file.FSPath())
-	fmt.Fprintln(w, "<style>td {padding: 4px 12px;}</style>")
+	fmt.Fprintln(w, "<style>td, th {padding: 4px 12px;}</style>")
 	fmt.Fprintln(w, "</head>")
-	fmt.Fprintln(w, "<pre><table>")
+	fmt.Fprintln(w, "<body>")
+	fmt.Fprintln(w, "<pre>")
+	fmt.Fprintf(w, "<h2>Index of %s</h2>", file.FSPath())
+	fmt.Fprintln(w, "<table>")
 	fmt.Fprintln(w, "<thead><tr><th>Name</th><th>Size</th><th>Content-Type</th><th>SHA-256</th></tr></thead>")
 	fmt.Fprintln(w, "<tbody>")
 	for _, f := range files {
@@ -101,7 +104,7 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file Resource) {
 		}
 	}
 	fmt.Fprintln(w, "</tbody></table></pre>\n")
-	fmt.Fprintln(w, "</html>\n")
+	fmt.Fprintln(w, "</body></html>\n")
 }
 
 func formatSize(size int64) string {
