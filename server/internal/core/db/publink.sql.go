@@ -27,9 +27,9 @@ type CreatePublinkParams struct {
 	Name         string
 	CreatedBy    string
 	Root         uuid.UUID
-	PasswordHash pgtype.Text
+	PasswordHash string
 	Expires      pgtype.Timestamp
-	MaxAccesses  pgtype.Int4
+	MaxAccesses  int32
 }
 
 func (q *Queries) CreatePublink(ctx context.Context, arg CreatePublinkParams) error {
@@ -73,4 +73,74 @@ UPDATE publinks SET accessed = accessed + 1 WHERE id = $1
 func (q *Queries) MarkPublinkAccess(ctx context.Context, id int32) error {
 	_, err := q.db.Exec(ctx, markPublinkAccess, id)
 	return err
+}
+
+const publinksByCreator = `-- name: PublinksByCreator :many
+SELECT id, name, created, deleted, created_by, root, accessed, max_accesses, password_hash, expires FROM publinks WHERE created_by = $1::text
+`
+
+func (q *Queries) PublinksByCreator(ctx context.Context, username string) ([]Publink, error) {
+	rows, err := q.db.Query(ctx, publinksByCreator, username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Publink
+	for rows.Next() {
+		var i Publink
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Created,
+			&i.Deleted,
+			&i.CreatedBy,
+			&i.Root,
+			&i.Accessed,
+			&i.MaxAccesses,
+			&i.PasswordHash,
+			&i.Expires,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const publinksByRoot = `-- name: PublinksByRoot :many
+SELECT id, name, created, deleted, created_by, root, accessed, max_accesses, password_hash, expires FROM publinks WHERE root = $1::uuid
+`
+
+func (q *Queries) PublinksByRoot(ctx context.Context, root uuid.UUID) ([]Publink, error) {
+	rows, err := q.db.Query(ctx, publinksByRoot, root)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Publink
+	for rows.Next() {
+		var i Publink
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Created,
+			&i.Deleted,
+			&i.CreatedBy,
+			&i.Root,
+			&i.Accessed,
+			&i.MaxAccesses,
+			&i.PasswordHash,
+			&i.Expires,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

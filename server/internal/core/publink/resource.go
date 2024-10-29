@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 type Resource struct {
@@ -39,7 +38,7 @@ func (r Resource) OpenRead(start, length int64) (io.ReadCloser, error) {
 
 func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 	if !r.dir {
-		return nil, fs.ErrResourceNotCollection
+		return nil, errResourceNotCollection
 	}
 	children, err := r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{
 		ID:          r.id,

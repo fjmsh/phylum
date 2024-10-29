@@ -9,7 +9,13 @@ INSERT INTO publinks(name, created_by, root, password_hash, expires, max_accesse
     @name::text,
     @created_by::text,
     @root::uuid,
-    sqlc.narg('password_hash')::text,
+    @password_hash::text,
     sqlc.narg('expires')::timestamp,
-    sqlc.narg('max_accesses')::int
+    @max_accesses::int
 );
+
+-- name: PublinksByRoot :many
+SELECT * FROM publinks WHERE root = @root::uuid;
+
+-- name: PublinksByCreator :many
+SELECT * FROM publinks WHERE created_by = @username::text;

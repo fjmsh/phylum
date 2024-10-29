@@ -24,8 +24,8 @@ type Publink struct {
 	CreatedBy    string
 	Root         uuid.UUID
 	Accessed     int32
-	MaxAccesses  pgtype.Int4
-	PasswordHash pgtype.Text
+	MaxAccesses  int32
+	PasswordHash string
 	Expires      pgtype.Timestamp
 }
 

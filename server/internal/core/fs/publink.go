@@ -5,39 +5,29 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/core/publink"
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
 
-func (r Resource) CreatePublink(name, password string, maxAge time.Duration, accesses int) error {
+func (r Resource) CreatePublink(name, password string, duration time.Duration, accesses int) error {
 	if !r.hasPermission(PermissionShare | PermissionRead) {
 		return ErrInsufficientPermissions
 	}
 
-	passwordHash := pgtype.Text{}
-	expires := pgtype.Timestamp{}
-	maxAccesses := pgtype.Int4{}
+	passwordHash := ""
 
 	if password != "" {
 		hash, err := crypt.GenerateArgon2EncodedHash(password)
 		if err != nil {
 			return err
 		}
-		passwordHash = pgtype.Text{
-			String: hash,
-			Valid:  true,
-		}
+		passwordHash = hash
 	}
 
-	if maxAge != 0 {
+	expires := pgtype.Timestamp{}
+	if duration != 0 {
 		expires = pgtype.Timestamp{
-			Time:  time.Now().Add(maxAge),
-			Valid: true,
-		}
-	}
-
-	if accesses != 0 {
-		maxAccesses = pgtype.Int4{
-			Int32: int32(accesses),
+			Time:  time.Now().Add(duration),
 			Valid: true,
 		}
 	}
@@ -48,6 +38,38 @@ func (r Resource) CreatePublink(name, password string, maxAge time.Duration, acc
 		Root:         r.ID,
 		PasswordHash: passwordHash,
 		Expires:      expires,
-		MaxAccesses:  maxAccesses,
+		MaxAccesses:  int32(accesses),
 	})
+}
+
+func (r Resource) ListPublinks() ([]publink.Info, error) {
+	res, err := r.f.db.PublinksByRoot(r.f.ctx, r.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	links := make([]publink.Info, len(res))
+	for i, l := range res {
+		var deleted *time.Time
+		if l.Deleted.Valid {
+			deleted = &l.Deleted.Time
+		}
+		var expires *time.Time
+		if l.Expires.Valid {
+			expires = &l.Expires.Time
+		}
+		links[i] = publink.Info{
+			ID:          l.ID,
+			Name:        l.Name,
+			Created:     l.Created.Time,
+			Deleted:     deleted,
+			CreatedBy:   l.CreatedBy,
+			Root:        l.Root,
+			Accessed:    l.Accessed,
+			MaxAccesses: l.MaxAccesses,
+			Protected:   l.PasswordHash != "",
+			Expires:     expires,
+		}
+	}
+	return links, nil
 }

@@ -2,11 +2,12 @@ package publink
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/storage"
 )
 
@@ -17,10 +18,13 @@ type filesystem struct {
 	rootID uuid.UUID
 }
 
+var errNotFound = errors.NewError(http.StatusNotFound, "", "")
+var errResourceNotCollection = errors.NewError(http.StatusBadRequest, "", "")
+
 func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	r, err := f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.rootID, Path: path})
 	if err == pgx.ErrNoRows || !r.Found {
-		err = fs.ErrResourceNotFound
+		err = errNotFound
 	}
 	if err != nil {
 		return Resource{}, err
