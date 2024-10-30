@@ -98,7 +98,7 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 		ContentSHA256:        result.ContentSha256,
 		Permissions:          string(result.Permissions),
 		Path:                 path,
-		UserPermissions:      r.UserPermissions,
+		UserPermission:       r.UserPermission,
 		InheritedPermissions: p,
 		Publinks:             0,
 	}, nil

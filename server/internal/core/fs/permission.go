@@ -18,7 +18,7 @@ const (
 )
 
 func (r Resource) hasPermission(p Permission) bool {
-	return r.UserPermissions&p != 0
+	return r.UserPermission&p != 0
 }
 
 func (r Resource) PermissionsString() string {

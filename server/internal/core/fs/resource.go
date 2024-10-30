@@ -20,9 +20,9 @@ type Resource struct {
 	ContentSHA256        string     `json:"csha256"`
 	Permissions          string     `json:"permissions"`
 	Publinks             int        `json:"publinks"`
-	Path                 string     `json:"-"`
-	UserPermissions      int32      `json:"-"`
-	InheritedPermissions string     `json:"-"`
+	Path                 string     `json:"path"`
+	UserPermission       Permission `json:"perm"`
+	InheritedPermissions string     `json:"inherited"`
 }
 
 func (r Resource) FSName() string          { return r.Name }

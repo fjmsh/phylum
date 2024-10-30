@@ -80,22 +80,7 @@ RETURNING permissions;
 SELECT id FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;
 
 -- name: ReadDir :many
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, content_size, content_type, content_sha256, depth, path, permissions) AS (
-  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, 0, ''::text, r.permissions
-    FROM resources r
-    WHERE r.id = @id::uuid
-  UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, n.depth + 1, concat(n.path, '/', r.name), r.permissions
-    FROM resources r JOIN nodes n on r.parent = n.id
-    WHERE deleted IS NULL
-    AND r.id != @id::uuid
-    AND CASE WHEN @recursive::boolean THEN true ELSE depth < 1 END
-), links(id, count) AS (
-    SELECT root, count(p.id) FROM publinks p WHERE p.deleted IS NULL GROUP BY p.root
-)
-SELECT nodes.*, COALESCE(links.count, 0) AS publinks from nodes
-LEFT JOIN links ON nodes.id = links.id
-WHERE CASE WHEN @include_root::boolean THEN true ELSE depth > 0 END;
+SELECT * from readdir(@resource_id::uuid, @inherited_permissions::JSONB, @path::text, @username::text, @min_depth::int, @max_depth::int);
 
 -- name: DeleteRecursive :many
 WITH RECURSIVE nodes(id, parent, dir) AS (

@@ -36,10 +36,17 @@ func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 	if !r.Dir {
 		return nil, ErrResourceNotCollection
 	}
+	maxDepth := 1
+	if recursive {
+		maxDepth = 1000
+	}
 	children, err := r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{
-		ID:          r.ID,
-		IncludeRoot: false,
-		Recursive:   recursive,
+		ResourceID:           r.ID,
+		InheritedPermissions: []byte(r.InheritedPermissions),
+		Path:                 r.Path,
+		Username:             r.f.username,
+		MinDepth:             1,
+		MaxDepth:             int32(maxDepth),
 	})
 	if err != nil {
 		return nil, err
@@ -48,28 +55,23 @@ func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 	result := make([]serve.Resource, len(children))
 
 	for i, c := range children {
-		path := r.Path + c.Path
-		if r.Path == "/" {
-			path = c.Path
-		}
 		result[i] = Resource{
-			f:               r.f,
-			ID:              c.ID,
-			ParentID:        c.Parent,
-			Name:            c.Name,
-			Created:         c.Created.Time,
-			Modified:        c.Modified.Time,
-			Deleted:         nil, // Query will not return deleted results
-			Dir:             c.Dir,
-			ContentSize:     c.ContentSize,
-			ContentType:     c.ContentType,
-			ContentSHA256:   c.ContentSha256,
-			Permissions:     string(c.Permissions),
-			Publinks:        int(c.Publinks),
-			Path:            path,
-			UserPermissions: r.UserPermissions,
-			// Not Needed
-			// InheritedPermissions: "",
+			f:                    r.f,
+			ID:                   c.ID,
+			ParentID:             c.Parent,
+			Name:                 c.Name,
+			Created:              c.Created.Time,
+			Modified:             c.Modified.Time,
+			Deleted:              nil, // Query will not return deleted results
+			Dir:                  c.Dir,
+			ContentSize:          c.ContentSize,
+			ContentType:          c.ContentType,
+			ContentSHA256:        c.ContentSha256,
+			Permissions:          string(c.Permissions),
+			Publinks:             int(c.Publinks),
+			Path:                 c.Path,
+			UserPermission:       c.UserPermission,
+			InheritedPermissions: string(c.InheritedPermissions),
 		}
 	}
 	return result, nil

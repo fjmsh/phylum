@@ -1,6 +1,6 @@
 -- sqlc has a hard time generating the correct code with functions returning types instead of tables
 CREATE TABLE resource_result (
-  inherited_permissions JSONB,
+  inherited_permissions JSONB NOT NULL DEFAULT '{}',
   user_permission       INT NOT NULL,
   found                 BOOLEAN NOT NULL,
   path                  TEXT NOT NULL,

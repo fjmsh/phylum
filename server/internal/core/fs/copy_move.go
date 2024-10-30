@@ -84,10 +84,10 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 
-	var tree []db.ReadDirRow
+	var tree []db.ResourceResult
 	if recursive && r.Dir {
 		var err error
-		tree, err = r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{ID: r.ID, IncludeRoot: false, Recursive: true})
+		tree, err = r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{ResourceID: r.ID, Path: r.Path, MinDepth: 1, MaxDepth: 1000})
 		if err != nil {
 			return Resource{}, false, err
 		}

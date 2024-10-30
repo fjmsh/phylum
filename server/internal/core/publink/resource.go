@@ -41,10 +41,14 @@ func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 	if !r.dir {
 		return nil, errors.New("resource is not a collection")
 	}
+	if recursive {
+		return nil, errors.New("cannot read directory recursively")
+	}
 	children, err := r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{
-		ID:          r.id,
-		IncludeRoot: false,
-		Recursive:   recursive,
+		ResourceID: r.id,
+		Path:       r.path,
+		MinDepth:   1,
+		MaxDepth:   1,
 	})
 	if err != nil {
 		return nil, err
@@ -53,16 +57,12 @@ func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 	result := make([]serve.Resource, len(children))
 
 	for i, c := range children {
-		path := r.path + c.Path
-		if r.path == "/" {
-			path = c.Path
-		}
 		result[i] = Resource{
 			f:             r.f,
 			id:            c.ID,
 			name:          c.Name,
 			dir:           c.Dir,
-			path:          path,
+			path:          c.Path,
 			created:       c.Created.Time,
 			modified:      c.Modified.Time,
 			contentSize:   c.ContentSize,

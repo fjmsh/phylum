@@ -9,7 +9,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const childResourceIDByName = `-- name: ChildResourceIDByName :one
@@ -156,68 +155,50 @@ func (q *Queries) DiskUsage(ctx context.Context, id uuid.UUID) (DiskUsageRow, er
 }
 
 const readDir = `-- name: ReadDir :many
-WITH RECURSIVE nodes(id, parent, name, dir, created, modified, content_size, content_type, content_sha256, depth, path, permissions) AS (
-  SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, 0, ''::text, r.permissions
-    FROM resources r
-    WHERE r.id = $2::uuid
-  UNION ALL
-    SELECT r.id, r.parent, r.name, r.dir, r.created, r.modified, r.content_size, r.content_type, r.content_sha256, n.depth + 1, concat(n.path, '/', r.name), r.permissions
-    FROM resources r JOIN nodes n on r.parent = n.id
-    WHERE deleted IS NULL
-    AND r.id != $2::uuid
-    AND CASE WHEN $3::boolean THEN true ELSE depth < 1 END
-), links(id, count) AS (
-    SELECT root, count(p.id) FROM publinks p WHERE p.deleted IS NULL GROUP BY p.root
-)
-SELECT nodes.id, nodes.parent, nodes.name, nodes.dir, nodes.created, nodes.modified, nodes.content_size, nodes.content_type, nodes.content_sha256, nodes.depth, nodes.path, nodes.permissions, COALESCE(links.count, 0) AS publinks from nodes
-LEFT JOIN links ON nodes.id = links.id
-WHERE CASE WHEN $1::boolean THEN true ELSE depth > 0 END
+SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, inherited_permissions, user_permission, found, path, publinks from readdir($1::uuid, $2::JSONB, $3::text, $4::text, $5::int, $6::int)
 `
 
 type ReadDirParams struct {
-	IncludeRoot bool
-	ID          uuid.UUID
-	Recursive   bool
+	ResourceID           uuid.UUID
+	InheritedPermissions []byte
+	Path                 string
+	Username             string
+	MinDepth             int32
+	MaxDepth             int32
 }
 
-type ReadDirRow struct {
-	ID            uuid.UUID
-	Parent        *uuid.UUID
-	Name          string
-	Dir           bool
-	Created       pgtype.Timestamp
-	Modified      pgtype.Timestamp
-	ContentSize   int64
-	ContentType   string
-	ContentSha256 string
-	Depth         int32
-	Path          string
-	Permissions   []byte
-	Publinks      int64
-}
-
-func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ReadDirRow, error) {
-	rows, err := q.db.Query(ctx, readDir, arg.IncludeRoot, arg.ID, arg.Recursive)
+func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ResourceResult, error) {
+	rows, err := q.db.Query(ctx, readDir,
+		arg.ResourceID,
+		arg.InheritedPermissions,
+		arg.Path,
+		arg.Username,
+		arg.MinDepth,
+		arg.MaxDepth,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ReadDirRow
+	var items []ResourceResult
 	for rows.Next() {
-		var i ReadDirRow
+		var i ResourceResult
 		if err := rows.Scan(
 			&i.ID,
-			&i.Parent,
+			&i.Permissions,
 			&i.Name,
+			&i.Parent,
 			&i.Dir,
 			&i.Created,
 			&i.Modified,
+			&i.Deleted,
 			&i.ContentSize,
 			&i.ContentType,
 			&i.ContentSha256,
-			&i.Depth,
+			&i.InheritedPermissions,
+			&i.UserPermission,
+			&i.Found,
 			&i.Path,
-			&i.Permissions,
 			&i.Publinks,
 		); err != nil {
 			return nil, err

@@ -44,7 +44,7 @@ func (f filesystem) resourceFromResult(r db.ResourceResult, err error) (Resource
 		Publinks:      int(r.Publinks),
 		// Definitely Needed
 		Path:                 r.Path,
-		UserPermissions:      r.UserPermission,
+		UserPermission:       r.UserPermission,
 		InheritedPermissions: string(r.InheritedPermissions),
 	}, nil
 }
