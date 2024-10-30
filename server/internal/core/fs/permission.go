@@ -18,7 +18,7 @@ const (
 )
 
 func (r Resource) hasPermission(p Permission) bool {
-	return (r.UserPermissions & p) != 0
+	return r.UserPermissions&p != 0
 }
 
 func (r Resource) PermissionsString() string {
@@ -46,15 +46,15 @@ func permissionString(p Permission) string {
 		return "su"
 	}
 	str := ""
-	if p|PermissionRead != 0 {
+	if p&PermissionRead != 0 {
 		p -= PermissionRead
 		str += "r"
 	}
-	if p|PermissionWrite != 0 {
+	if p&PermissionWrite != 0 {
 		p -= PermissionWrite
 		str += "w"
 	}
-	if p|PermissionShare != 0 {
+	if p&PermissionShare != 0 {
 		p -= PermissionShare
 		str += "s"
 	}
