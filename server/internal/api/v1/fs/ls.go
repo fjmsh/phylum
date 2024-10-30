@@ -9,9 +9,9 @@ import (
 )
 
 type ResourceLsResponse struct {
-	Metadata             fs.Resource      `json:"metadata"`
-	Children             []serve.Resource `json:"children,omitempty"`
+	fs.Resource
 	InheritedPermissions string           `json:"inherited,omitempty"`
+	Children             []serve.Resource `json:"children,omitempty"`
 }
 
 func handleLsRequest(c *gin.Context) {
@@ -31,7 +31,7 @@ func handleLsRequest(c *gin.Context) {
 
 func LsResponseFromResource(f fs.FileSystem, r fs.Resource) ResourceLsResponse {
 	response := ResourceLsResponse{
-		Metadata:             r,
+		Resource:             r,
 		InheritedPermissions: r.InheritedPermissions,
 	}
 	if r.Dir {
