@@ -11,6 +11,9 @@ class Resources extends Table {
   TextColumn get contentType => text()();
   BoolColumn get deleted => boolean().withDefault(const Constant(false))();
   DateTimeColumn get lastFetch => dateTime().nullable()();
+  TextColumn get permissions => text().nullable()();
+  TextColumn get inherited => text().nullable()();
+  IntColumn get publinks => integer().withDefault(const Constant(0))();
 
   @override
   Set<Column> get primaryKey => {id};

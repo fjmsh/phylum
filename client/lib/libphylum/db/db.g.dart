@@ -73,6 +73,26 @@ class $ResourcesTable extends Resources
   late final GeneratedColumn<DateTime> lastFetch = GeneratedColumn<DateTime>(
       'last_fetch', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _permissionsMeta =
+      const VerificationMeta('permissions');
+  @override
+  late final GeneratedColumn<String> permissions = GeneratedColumn<String>(
+      'permissions', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _inheritedMeta =
+      const VerificationMeta('inherited');
+  @override
+  late final GeneratedColumn<String> inherited = GeneratedColumn<String>(
+      'inherited', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _publinksMeta =
+      const VerificationMeta('publinks');
+  @override
+  late final GeneratedColumn<int> publinks = GeneratedColumn<int>(
+      'publinks', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -84,7 +104,10 @@ class $ResourcesTable extends Resources
         sha256,
         contentType,
         deleted,
-        lastFetch
+        lastFetch,
+        permissions,
+        inherited,
+        publinks
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -151,6 +174,20 @@ class $ResourcesTable extends Resources
       context.handle(_lastFetchMeta,
           lastFetch.isAcceptableOrUnknown(data['last_fetch']!, _lastFetchMeta));
     }
+    if (data.containsKey('permissions')) {
+      context.handle(
+          _permissionsMeta,
+          permissions.isAcceptableOrUnknown(
+              data['permissions']!, _permissionsMeta));
+    }
+    if (data.containsKey('inherited')) {
+      context.handle(_inheritedMeta,
+          inherited.isAcceptableOrUnknown(data['inherited']!, _inheritedMeta));
+    }
+    if (data.containsKey('publinks')) {
+      context.handle(_publinksMeta,
+          publinks.isAcceptableOrUnknown(data['publinks']!, _publinksMeta));
+    }
     return context;
   }
 
@@ -180,6 +217,12 @@ class $ResourcesTable extends Resources
           .read(DriftSqlType.bool, data['${effectivePrefix}deleted'])!,
       lastFetch: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}last_fetch']),
+      permissions: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}permissions']),
+      inherited: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}inherited']),
+      publinks: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}publinks'])!,
     );
   }
 
@@ -200,6 +243,9 @@ class Resource extends DataClass implements Insertable<Resource> {
   final String contentType;
   final bool deleted;
   final DateTime? lastFetch;
+  final String? permissions;
+  final String? inherited;
+  final int publinks;
   const Resource(
       {required this.id,
       this.parent,
@@ -210,7 +256,10 @@ class Resource extends DataClass implements Insertable<Resource> {
       required this.sha256,
       required this.contentType,
       required this.deleted,
-      this.lastFetch});
+      this.lastFetch,
+      this.permissions,
+      this.inherited,
+      required this.publinks});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -228,6 +277,13 @@ class Resource extends DataClass implements Insertable<Resource> {
     if (!nullToAbsent || lastFetch != null) {
       map['last_fetch'] = Variable<DateTime>(lastFetch);
     }
+    if (!nullToAbsent || permissions != null) {
+      map['permissions'] = Variable<String>(permissions);
+    }
+    if (!nullToAbsent || inherited != null) {
+      map['inherited'] = Variable<String>(inherited);
+    }
+    map['publinks'] = Variable<int>(publinks);
     return map;
   }
 
@@ -246,6 +302,13 @@ class Resource extends DataClass implements Insertable<Resource> {
       lastFetch: lastFetch == null && nullToAbsent
           ? const Value.absent()
           : Value(lastFetch),
+      permissions: permissions == null && nullToAbsent
+          ? const Value.absent()
+          : Value(permissions),
+      inherited: inherited == null && nullToAbsent
+          ? const Value.absent()
+          : Value(inherited),
+      publinks: Value(publinks),
     );
   }
 
@@ -263,6 +326,9 @@ class Resource extends DataClass implements Insertable<Resource> {
       contentType: serializer.fromJson<String>(json['contentType']),
       deleted: serializer.fromJson<bool>(json['deleted']),
       lastFetch: serializer.fromJson<DateTime?>(json['lastFetch']),
+      permissions: serializer.fromJson<String?>(json['permissions']),
+      inherited: serializer.fromJson<String?>(json['inherited']),
+      publinks: serializer.fromJson<int>(json['publinks']),
     );
   }
   @override
@@ -279,6 +345,9 @@ class Resource extends DataClass implements Insertable<Resource> {
       'contentType': serializer.toJson<String>(contentType),
       'deleted': serializer.toJson<bool>(deleted),
       'lastFetch': serializer.toJson<DateTime?>(lastFetch),
+      'permissions': serializer.toJson<String?>(permissions),
+      'inherited': serializer.toJson<String?>(inherited),
+      'publinks': serializer.toJson<int>(publinks),
     };
   }
 
@@ -292,7 +361,10 @@ class Resource extends DataClass implements Insertable<Resource> {
           String? sha256,
           String? contentType,
           bool? deleted,
-          Value<DateTime?> lastFetch = const Value.absent()}) =>
+          Value<DateTime?> lastFetch = const Value.absent(),
+          Value<String?> permissions = const Value.absent(),
+          Value<String?> inherited = const Value.absent(),
+          int? publinks}) =>
       Resource(
         id: id ?? this.id,
         parent: parent.present ? parent.value : this.parent,
@@ -304,6 +376,9 @@ class Resource extends DataClass implements Insertable<Resource> {
         contentType: contentType ?? this.contentType,
         deleted: deleted ?? this.deleted,
         lastFetch: lastFetch.present ? lastFetch.value : this.lastFetch,
+        permissions: permissions.present ? permissions.value : this.permissions,
+        inherited: inherited.present ? inherited.value : this.inherited,
+        publinks: publinks ?? this.publinks,
       );
   Resource copyWithCompanion(ResourcesCompanion data) {
     return Resource(
@@ -318,6 +393,10 @@ class Resource extends DataClass implements Insertable<Resource> {
           data.contentType.present ? data.contentType.value : this.contentType,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
       lastFetch: data.lastFetch.present ? data.lastFetch.value : this.lastFetch,
+      permissions:
+          data.permissions.present ? data.permissions.value : this.permissions,
+      inherited: data.inherited.present ? data.inherited.value : this.inherited,
+      publinks: data.publinks.present ? data.publinks.value : this.publinks,
     );
   }
 
@@ -333,14 +412,17 @@ class Resource extends DataClass implements Insertable<Resource> {
           ..write('sha256: $sha256, ')
           ..write('contentType: $contentType, ')
           ..write('deleted: $deleted, ')
-          ..write('lastFetch: $lastFetch')
+          ..write('lastFetch: $lastFetch, ')
+          ..write('permissions: $permissions, ')
+          ..write('inherited: $inherited, ')
+          ..write('publinks: $publinks')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(id, parent, name, dir, modified, size, sha256,
-      contentType, deleted, lastFetch);
+      contentType, deleted, lastFetch, permissions, inherited, publinks);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -354,7 +436,10 @@ class Resource extends DataClass implements Insertable<Resource> {
           other.sha256 == this.sha256 &&
           other.contentType == this.contentType &&
           other.deleted == this.deleted &&
-          other.lastFetch == this.lastFetch);
+          other.lastFetch == this.lastFetch &&
+          other.permissions == this.permissions &&
+          other.inherited == this.inherited &&
+          other.publinks == this.publinks);
 }
 
 class ResourcesCompanion extends UpdateCompanion<Resource> {
@@ -368,6 +453,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   final Value<String> contentType;
   final Value<bool> deleted;
   final Value<DateTime?> lastFetch;
+  final Value<String?> permissions;
+  final Value<String?> inherited;
+  final Value<int> publinks;
   final Value<int> rowid;
   const ResourcesCompanion({
     this.id = const Value.absent(),
@@ -380,6 +468,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.contentType = const Value.absent(),
     this.deleted = const Value.absent(),
     this.lastFetch = const Value.absent(),
+    this.permissions = const Value.absent(),
+    this.inherited = const Value.absent(),
+    this.publinks = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ResourcesCompanion.insert({
@@ -393,6 +484,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     required String contentType,
     this.deleted = const Value.absent(),
     this.lastFetch = const Value.absent(),
+    this.permissions = const Value.absent(),
+    this.inherited = const Value.absent(),
+    this.publinks = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         name = Value(name),
@@ -412,6 +506,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     Expression<String>? contentType,
     Expression<bool>? deleted,
     Expression<DateTime>? lastFetch,
+    Expression<String>? permissions,
+    Expression<String>? inherited,
+    Expression<int>? publinks,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -425,6 +522,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       if (contentType != null) 'content_type': contentType,
       if (deleted != null) 'deleted': deleted,
       if (lastFetch != null) 'last_fetch': lastFetch,
+      if (permissions != null) 'permissions': permissions,
+      if (inherited != null) 'inherited': inherited,
+      if (publinks != null) 'publinks': publinks,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -440,6 +540,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       Value<String>? contentType,
       Value<bool>? deleted,
       Value<DateTime?>? lastFetch,
+      Value<String?>? permissions,
+      Value<String?>? inherited,
+      Value<int>? publinks,
       Value<int>? rowid}) {
     return ResourcesCompanion(
       id: id ?? this.id,
@@ -452,6 +555,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       contentType: contentType ?? this.contentType,
       deleted: deleted ?? this.deleted,
       lastFetch: lastFetch ?? this.lastFetch,
+      permissions: permissions ?? this.permissions,
+      inherited: inherited ?? this.inherited,
+      publinks: publinks ?? this.publinks,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -489,6 +595,15 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     if (lastFetch.present) {
       map['last_fetch'] = Variable<DateTime>(lastFetch.value);
     }
+    if (permissions.present) {
+      map['permissions'] = Variable<String>(permissions.value);
+    }
+    if (inherited.present) {
+      map['inherited'] = Variable<String>(inherited.value);
+    }
+    if (publinks.present) {
+      map['publinks'] = Variable<int>(publinks.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -508,6 +623,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
           ..write('contentType: $contentType, ')
           ..write('deleted: $deleted, ')
           ..write('lastFetch: $lastFetch, ')
+          ..write('permissions: $permissions, ')
+          ..write('inherited: $inherited, ')
+          ..write('publinks: $publinks, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -536,6 +654,9 @@ typedef $$ResourcesTableCreateCompanionBuilder = ResourcesCompanion Function({
   required String contentType,
   Value<bool> deleted,
   Value<DateTime?> lastFetch,
+  Value<String?> permissions,
+  Value<String?> inherited,
+  Value<int> publinks,
   Value<int> rowid,
 });
 typedef $$ResourcesTableUpdateCompanionBuilder = ResourcesCompanion Function({
@@ -549,6 +670,9 @@ typedef $$ResourcesTableUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<String> contentType,
   Value<bool> deleted,
   Value<DateTime?> lastFetch,
+  Value<String?> permissions,
+  Value<String?> inherited,
+  Value<int> publinks,
   Value<int> rowid,
 });
 
@@ -605,6 +729,15 @@ class $$ResourcesTableFilterComposer
 
   ColumnFilters<DateTime> get lastFetch => $composableBuilder(
       column: $table.lastFetch, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get permissions => $composableBuilder(
+      column: $table.permissions, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get inherited => $composableBuilder(
+      column: $table.inherited, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get publinks => $composableBuilder(
+      column: $table.publinks, builder: (column) => ColumnFilters(column));
 
   $$ResourcesTableFilterComposer get parent {
     final $$ResourcesTableFilterComposer composer = $composerBuilder(
@@ -663,6 +796,15 @@ class $$ResourcesTableOrderingComposer
   ColumnOrderings<DateTime> get lastFetch => $composableBuilder(
       column: $table.lastFetch, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get permissions => $composableBuilder(
+      column: $table.permissions, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get inherited => $composableBuilder(
+      column: $table.inherited, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get publinks => $composableBuilder(
+      column: $table.publinks, builder: (column) => ColumnOrderings(column));
+
   $$ResourcesTableOrderingComposer get parent {
     final $$ResourcesTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -720,6 +862,15 @@ class $$ResourcesTableAnnotationComposer
   GeneratedColumn<DateTime> get lastFetch =>
       $composableBuilder(column: $table.lastFetch, builder: (column) => column);
 
+  GeneratedColumn<String> get permissions => $composableBuilder(
+      column: $table.permissions, builder: (column) => column);
+
+  GeneratedColumn<String> get inherited =>
+      $composableBuilder(column: $table.inherited, builder: (column) => column);
+
+  GeneratedColumn<int> get publinks =>
+      $composableBuilder(column: $table.publinks, builder: (column) => column);
+
   $$ResourcesTableAnnotationComposer get parent {
     final $$ResourcesTableAnnotationComposer composer = $composerBuilder(
         composer: this,
@@ -774,6 +925,9 @@ class $$ResourcesTableTableManager extends RootTableManager<
             Value<String> contentType = const Value.absent(),
             Value<bool> deleted = const Value.absent(),
             Value<DateTime?> lastFetch = const Value.absent(),
+            Value<String?> permissions = const Value.absent(),
+            Value<String?> inherited = const Value.absent(),
+            Value<int> publinks = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               ResourcesCompanion(
@@ -787,6 +941,9 @@ class $$ResourcesTableTableManager extends RootTableManager<
             contentType: contentType,
             deleted: deleted,
             lastFetch: lastFetch,
+            permissions: permissions,
+            inherited: inherited,
+            publinks: publinks,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -800,6 +957,9 @@ class $$ResourcesTableTableManager extends RootTableManager<
             required String contentType,
             Value<bool> deleted = const Value.absent(),
             Value<DateTime?> lastFetch = const Value.absent(),
+            Value<String?> permissions = const Value.absent(),
+            Value<String?> inherited = const Value.absent(),
+            Value<int> publinks = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               ResourcesCompanion.insert(
@@ -813,6 +973,9 @@ class $$ResourcesTableTableManager extends RootTableManager<
             contentType: contentType,
             deleted: deleted,
             lastFetch: lastFetch,
+            permissions: permissions,
+            inherited: inherited,
+            publinks: publinks,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

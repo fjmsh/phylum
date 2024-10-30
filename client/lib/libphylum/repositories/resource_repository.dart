@@ -13,7 +13,7 @@ class ResourceRepository {
   Future<ApiResult> requestResource(String id) async {
     return account.apiClient.sendRequest(ResourceLsRequest(id), callback: (request, response) async {
       if (response is PhylumApiSuccessResponse) {
-        await parseResourceDetailsResponse(response.data);
+        await processResourceResponse(response.data);
       }
     });
   }
@@ -70,30 +70,20 @@ class ResourceRepository {
     return account.db.resources.deleteWhere((f) => f.id.equals(id));
   }
 
-  Future parseResourceDetailsResponse(Map<String, dynamic> data) async {
+  Future processResourceResponse(Map<String, dynamic> data) async {
     final db = account.db;
-    final details = parseResourceSummaryObject(data['metadata']).copyWith(lastFetch: Value(DateTime.now()));
-    final existing = Set.of(await (db.select(db.resources)..where((t) => t.parent.equals(data['metadata']['id']))).map((r) => r.id).get());
-    // final existing = Set.from(await db.managers.resources.filter((f) => f.parent.id.equals(data['metadata']['id'])).map((r) => r.id).get());
-    final children = data.containsKey('children')
-        ? (data['children'] as List).cast<Map>().map((c) {
-            existing.remove(c['id']);
-            return parseResourceSummaryObject(c.cast<String, dynamic>());
-          })
-        : <ResourcesCompanion>[];
-    await db.resources.deleteWhere((o) => o.id.isIn(List.from(existing)));
+    final (resources, deleted) = await parseResourceObject(data);
     await db.batch((batch) {
-      batch.insertAll(db.resources, [details, ...children], mode: InsertMode.insertOrReplace);
+      batch.deleteWhere(db.resources, (o) => o.id.isIn(deleted));
+      batch.insertAll(db.resources, resources, mode: InsertMode.insertOrReplace);
     });
   }
 
-  Future parseResourceSummaryResponse(Map<String, dynamic> data) async {
-    return account.db.into(account.db.resources).insert(parseResourceSummaryObject(data), mode: InsertMode.insertOrReplace);
-  }
-
-  ResourcesCompanion parseResourceSummaryObject(Map<String, dynamic> data) {
-    return ResourcesCompanion.insert(
-      id: data['id'],
+  Future<(Iterable<ResourcesCompanion>, Iterable<String>)> parseResourceObject(Map<String, dynamic> data) async {
+    bool fullFetch = data.containsKey('children');
+    final id = data['id'];
+    final details = ResourcesCompanion.insert(
+      id: id,
       parent: Value(data['parent']),
       name: data['name'],
       dir: data['dir'],
@@ -101,6 +91,27 @@ class ResourceRepository {
       size: data['csize'],
       sha256: data['csha256'],
       contentType: data['ctype'] ?? '',
+      deleted: Value(data['deleted'] != null),
+      permissions: data['permisisons'] == '{}' ? Value.absent() : Value(data['permisisons']),
+      lastFetch: fullFetch ? Value(DateTime.now()) : const Value.absent(),
     );
+    final db = account.db;
+
+    if (data.containsKey('children')) {
+      final resources = [details];
+      final deleted = [];
+      final existing = Set.of(await (db.select(db.resources)..where((t) => t.parent.equals(id))).map((r) => r.id).get());
+      final children = (data['children'] as List).cast<Map>();
+      for (final childData in children) {
+        existing.remove(childData['id']);
+        final (r, del) = await parseResourceObject(childData.cast<String, dynamic>());
+        resources.addAll(r);
+        deleted.addAll(del);
+      }
+      deleted.addAll(existing);
+      return (resources, existing);
+    } else {
+      return ([details], const <String>[]);
+    }
   }
 }

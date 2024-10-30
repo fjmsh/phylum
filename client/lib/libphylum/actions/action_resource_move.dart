@@ -105,7 +105,7 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
   @override
   FutureOr<void> processResponse(PhylumAccount account, ApiResponse response) async {
     if (response is PhylumApiSuccessResponse) {
-      await account.resourceRepository.parseResourceSummaryResponse(response.data);
+      await account.resourceRepository.processResourceResponse(response.data);
     }
   }
 
