@@ -155,34 +155,24 @@ func (q *Queries) DiskUsage(ctx context.Context, id uuid.UUID) (DiskUsageRow, er
 }
 
 const readDir = `-- name: ReadDir :many
-SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, inherited_permissions, user_permission, found, path, publinks from readdir($1::uuid, $2::JSONB, $3::text, $4::text, $5::int, $6::int)
+SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, publinks from readdir($1::uuid, $2::int, $3::int)
 `
 
 type ReadDirParams struct {
-	ResourceID           uuid.UUID
-	InheritedPermissions []byte
-	Path                 string
-	Username             string
-	MinDepth             int32
-	MaxDepth             int32
+	ResourceID uuid.UUID
+	MinDepth   int32
+	MaxDepth   int32
 }
 
-func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ResourceResult, error) {
-	rows, err := q.db.Query(ctx, readDir,
-		arg.ResourceID,
-		arg.InheritedPermissions,
-		arg.Path,
-		arg.Username,
-		arg.MinDepth,
-		arg.MaxDepth,
-	)
+func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]PublinkedResource, error) {
+	rows, err := q.db.Query(ctx, readDir, arg.ResourceID, arg.MinDepth, arg.MaxDepth)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ResourceResult
+	var items []PublinkedResource
 	for rows.Next() {
-		var i ResourceResult
+		var i PublinkedResource
 		if err := rows.Scan(
 			&i.ID,
 			&i.Permissions,
@@ -195,10 +185,6 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]ResourceRes
 			&i.ContentSize,
 			&i.ContentType,
 			&i.ContentSha256,
-			&i.InheritedPermissions,
-			&i.UserPermission,
-			&i.Found,
-			&i.Path,
 			&i.Publinks,
 		); err != nil {
 			return nil, err
@@ -232,72 +218,83 @@ func (q *Queries) RemoveUserPermissionForResource(ctx context.Context, arg Remov
 	return permissions, err
 }
 
-const resourceByID = `-- name: ResourceByID :one
-SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, inherited_permissions, user_permission, found, path, publinks FROM resource_by_id($1::uuid, $2::uuid, $3::text)
+const resourceByID = `-- name: ResourceByID :many
+SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, publinks FROM resource_by_id($1::uuid)
 `
 
-type ResourceByIDParams struct {
-	ResourceID uuid.UUID
-	Root       uuid.UUID
-	Username   string
+func (q *Queries) ResourceByID(ctx context.Context, resourceID uuid.UUID) ([]PublinkedResource, error) {
+	rows, err := q.db.Query(ctx, resourceByID, resourceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PublinkedResource
+	for rows.Next() {
+		var i PublinkedResource
+		if err := rows.Scan(
+			&i.ID,
+			&i.Permissions,
+			&i.Name,
+			&i.Parent,
+			&i.Dir,
+			&i.Created,
+			&i.Modified,
+			&i.Deleted,
+			&i.ContentSize,
+			&i.ContentType,
+			&i.ContentSha256,
+			&i.Publinks,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
-func (q *Queries) ResourceByID(ctx context.Context, arg ResourceByIDParams) (ResourceResult, error) {
-	row := q.db.QueryRow(ctx, resourceByID, arg.ResourceID, arg.Root, arg.Username)
-	var i ResourceResult
-	err := row.Scan(
-		&i.ID,
-		&i.Permissions,
-		&i.Name,
-		&i.Parent,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.ContentSize,
-		&i.ContentType,
-		&i.ContentSha256,
-		&i.InheritedPermissions,
-		&i.UserPermission,
-		&i.Found,
-		&i.Path,
-		&i.Publinks,
-	)
-	return i, err
-}
-
-const resourceByPath = `-- name: ResourceByPath :one
-SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, inherited_permissions, user_permission, found, path, publinks FROM resource_by_path($1::text, $2::uuid, $3::text)
+const resourceByPath = `-- name: ResourceByPath :many
+SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, publinks FROM resource_by_id(resource_id_by_path($1::text, $2::uuid))
 `
 
 type ResourceByPathParams struct {
-	Path     string
-	Root     uuid.UUID
-	Username string
+	Path string
+	Root *uuid.UUID
 }
 
-func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) (ResourceResult, error) {
-	row := q.db.QueryRow(ctx, resourceByPath, arg.Path, arg.Root, arg.Username)
-	var i ResourceResult
-	err := row.Scan(
-		&i.ID,
-		&i.Permissions,
-		&i.Name,
-		&i.Parent,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.ContentSize,
-		&i.ContentType,
-		&i.ContentSha256,
-		&i.InheritedPermissions,
-		&i.UserPermission,
-		&i.Found,
-		&i.Path,
-		&i.Publinks,
-	)
-	return i, err
+func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) ([]PublinkedResource, error) {
+	rows, err := q.db.Query(ctx, resourceByPath, arg.Path, arg.Root)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PublinkedResource
+	for rows.Next() {
+		var i PublinkedResource
+		if err := rows.Scan(
+			&i.ID,
+			&i.Permissions,
+			&i.Name,
+			&i.Parent,
+			&i.Dir,
+			&i.Created,
+			&i.Modified,
+			&i.Deleted,
+			&i.ContentSize,
+			&i.ContentType,
+			&i.ContentSha256,
+			&i.Publinks,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const sharedResources = `-- name: SharedResources :many

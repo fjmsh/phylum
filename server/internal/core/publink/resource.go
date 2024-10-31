@@ -46,7 +46,6 @@ func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 	}
 	children, err := r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{
 		ResourceID: r.id,
-		Path:       r.path,
 		MinDepth:   1,
 		MaxDepth:   1,
 	})
@@ -56,13 +55,18 @@ func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 
 	result := make([]serve.Resource, len(children))
 
+	parentPath := r.path
+	if parentPath == "/" {
+		parentPath = ""
+	}
 	for i, c := range children {
+		path := parentPath + "/" + c.Name
 		result[i] = Resource{
 			f:             r.f,
 			id:            c.ID,
 			name:          c.Name,
 			dir:           c.Dir,
-			path:          c.Path,
+			path:          path,
 			created:       c.Created.Time,
 			modified:      c.Modified.Time,
 			contentSize:   c.ContentSize,

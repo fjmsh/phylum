@@ -13,12 +13,6 @@ CREATE FUNCTION resource_id_by_path(path text, root uuid) RETURNS uuid AS $$
   SELECT id FROM nodes WHERE cardinality(search) = depth;
 $$ LANGUAGE sql;
 
-CREATE FUNCTION resource_by_path(path text, root uuid) RETURNS SETOF publinked_resource AS $$
-  SELECT * FROM resource_by_id(resource_id_by_path(path, root));
-$$ LANGUAGE SQL;
-
 ---- create above / drop below ----
-
-DROP FUNCTION resource_by_path;
 
 DROP FUNCTION resource_id_by_path;

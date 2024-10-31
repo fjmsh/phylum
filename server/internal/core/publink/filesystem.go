@@ -2,9 +2,9 @@ package publink
 
 import (
 	"context"
+	"strings"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
 )
@@ -16,21 +16,36 @@ type filesystem struct {
 	root uuid.UUID
 }
 
-func (f filesystem) resourceByPath(path string) (Resource, error) {
-	r, err := f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.root, Path: path})
-	if err == pgx.ErrNoRows || !r.Found {
+func (f filesystem) resourceByPath(search string) (Resource, error) {
+	e, err := f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Path: search})
+	if len(e) == 0 {
 		err = ErrNotFound
 	}
 	if err != nil {
 		return Resource{}, err
 	}
+	var b strings.Builder
+	found := false
+	for i := len(e) - 1; i >= 0; i-- {
+		if e[i].ID == f.root {
+			found = true
+		}
+		if b.Len() != 0 {
+			b.WriteByte('/')
+		}
+		b.WriteString(e[i].Name)
+	}
+	if !found {
+		return Resource{}, err
+	}
 
+	r := e[0]
 	return Resource{
 		f:             f,
 		id:            r.ID,
 		name:          r.Name,
 		dir:           r.Dir,
-		path:          r.Path,
+		path:          b.String(),
 		created:       r.Created.Time,
 		modified:      r.Modified.Time,
 		contentSize:   r.ContentSize,

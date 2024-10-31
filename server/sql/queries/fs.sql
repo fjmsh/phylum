@@ -14,11 +14,11 @@ INSERT INTO resources(
     @id::uuid, @parent::uuid, @name::text, @dir::boolean, @content_size::bigint, @content_type::text, @content_sha256::text
 );
 
--- name: ResourceByPath :one
-SELECT * FROM resource_by_path(@path::text, @root::uuid, @username::text);
+-- name: ResourceByPath :many
+SELECT * FROM resource_by_id(resource_id_by_path(@path::text, sqlc.narg('root')::uuid));
 
--- name: ResourceByID :one
-SELECT * FROM resource_by_id(@resource_id::uuid, @root::uuid, @username::text);
+-- name: ResourceByID :many
+SELECT * FROM resource_by_id(@resource_id::uuid);
 
 -- name: UpdateResourceContents :exec
 UPDATE resources
@@ -80,7 +80,7 @@ RETURNING permissions;
 SELECT id FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;
 
 -- name: ReadDir :many
-SELECT * from readdir(@resource_id::uuid, @inherited_permissions::JSONB, @path::text, @username::text, @min_depth::int, @max_depth::int);
+SELECT * from readdir(@resource_id::uuid, @min_depth::int, @max_depth::int);
 
 -- name: DeleteRecursive :many
 WITH RECURSIVE nodes(id, parent, dir) AS (
