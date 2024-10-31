@@ -32,7 +32,7 @@ func (d DbHandler) populateData(ctx context.Context) (e error) {
 		id, _ := uuid.NewUUID()
 		root, err := dbh.CreateResource(ctx, CreateResourceParams{
 			ID:   id,
-			Name: "Phylum Root",
+			Name: "",
 			Dir:  true,
 		})
 		if err != nil {
