@@ -104,7 +104,7 @@ class ResourceUploadAction extends PhylumAction with FileUploadApiAction, Resour
   @override
   FutureOr<void> processResponse(PhylumAccount account, ApiResponse response) async {
     if (response is PhylumApiSuccessResponse) {
-      await account.resourceRepository.processResourceResponse(response.data);
+      await account.resourceRepository.processResourceUpdateResponse(resourceId, response.data);
     }
   }
 

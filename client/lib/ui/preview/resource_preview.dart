@@ -64,7 +64,7 @@ class _ResourcePreviewState extends State<ResourcePreview> {
         style: TextStyle(fontSize: 18),
       );
     }
-    if (r.size > maxPreviewSize) {
+    if (r.contentSize > maxPreviewSize) {
       return const Text(
         'File too large to preview',
         style: TextStyle(fontSize: 18),

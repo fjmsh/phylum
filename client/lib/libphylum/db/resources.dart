@@ -5,15 +5,15 @@ class Resources extends Table {
   TextColumn get parent => text().nullable().references(Resources, #id)();
   TextColumn get name => text()();
   BoolColumn get dir => boolean()();
-  DateTimeColumn get modified => dateTime()();
-  IntColumn get size => integer()();
-  TextColumn get sha256 => text()();
-  TextColumn get contentType => text()();
+  DateTimeColumn get created => dateTime().nullable()();
+  DateTimeColumn get modified => dateTime().nullable()();
   BoolColumn get deleted => boolean().withDefault(const Constant(false))();
-  DateTimeColumn get lastFetch => dateTime().nullable()();
+  IntColumn get contentSize => integer().withDefault(const Constant(0))();
+  TextColumn get contentSha256 => text().withDefault(const Constant(""))();
+  TextColumn get contentType => text().withDefault(const Constant(""))();
   TextColumn get permissions => text().nullable()();
-  TextColumn get inherited => text().nullable()();
   IntColumn get publinks => integer().withDefault(const Constant(0))();
+  DateTimeColumn get lastRefresh => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

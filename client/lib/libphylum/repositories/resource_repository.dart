@@ -53,10 +53,12 @@ class ResourceRepository {
         name: name,
         parent: Value(parent),
         dir: dir,
-        modified: DateTime.now(),
-        size: 0,
-        sha256: "",
-        contentType: contentType,
+        created: Value(DateTime.now()),
+        modified: Value(DateTime.now()),
+        contentSize: Value(0),
+        contentSha256: Value(""),
+        contentType: Value(contentType),
+        publinks: Value(0),
       ),
       mode: InsertMode.insertOrReplace,
     );
@@ -72,46 +74,72 @@ class ResourceRepository {
 
   Future processResourceResponse(Map<String, dynamic> data) async {
     final db = account.db;
-    final (resources, deleted) = await parseResourceObject(data);
+    final (resources, deleted) = await parseFullResourceObject(data);
     await db.batch((batch) {
       batch.deleteWhere(db.resources, (o) => o.id.isIn(deleted));
-      batch.insertAll(db.resources, resources, mode: InsertMode.insertOrReplace);
+      batch.insertAllOnConflictUpdate(db.resources, resources);
     });
   }
 
-  Future<(Iterable<ResourcesCompanion>, Iterable<String>)> parseResourceObject(Map<String, dynamic> data) async {
-    bool fullFetch = data.containsKey('children');
-    final id = data['id'];
-    final details = ResourcesCompanion.insert(
-      id: id,
-      parent: Value(data['parent']),
-      name: data['name'],
-      dir: data['dir'],
-      modified: DateTime.parse(data['modified']),
-      size: data['csize'],
-      sha256: data['csha256'],
-      contentType: data['ctype'] ?? '',
-      deleted: Value(data['deleted'] != null),
-      permissions: data['permisisons'] == '{}' ? Value.absent() : Value(data['permisisons']),
-      lastFetch: fullFetch ? Value(DateTime.now()) : const Value.absent(),
-    );
+  Future processResourceUpdateResponse(String id, Map<String, dynamic> data) async {
+    final resource = parsePartialResourceObject(data);
+    final update = (account.db.resources.update()..where((o) => o.id.equals(id)));
+    return update.write(resource);
+  }
+
+  Future<(Iterable<ResourcesCompanion>, Iterable<String>)> parseFullResourceObject(Map<String, dynamic> data) async {
+    final ancestors = (data['ancestors'] as List).cast<Map>().map(
+          (a) => parsePartialResourceObject(a.cast<String, dynamic>()).copyWith(dir: Value(true)),
+        );
+
+    final info = parseResourceObject(data['info'])..copyWith(lastRefresh: Value(DateTime.now()));
+    final id = info.id.value;
     final db = account.db;
 
-    if (data.containsKey('children')) {
-      final resources = [details];
-      final deleted = [];
-      final existing = Set.of(await (db.select(db.resources)..where((t) => t.parent.equals(id))).map((r) => r.id).get());
-      final children = (data['children'] as List).cast<Map>();
-      for (final childData in children) {
-        existing.remove(childData['id']);
-        final (r, del) = await parseResourceObject(childData.cast<String, dynamic>());
-        resources.addAll(r);
-        deleted.addAll(del);
-      }
-      deleted.addAll(existing);
-      return (resources, existing);
-    } else {
-      return ([details], const <String>[]);
-    }
+    final existing = Set.of(await (db.select(db.resources)..where((t) => t.parent.equals(id))).map((r) => r.id).get());
+    final children = (data['children'] as List).cast<Map>().map((c) {
+      existing.remove(c['id']);
+      return parseResourceObject(c.cast<String, dynamic>());
+    });
+    return ([...ancestors, info, ...children], existing);
+  }
+
+  ResourcesCompanion parseResourceObject(Map<String, dynamic> data) {
+    return ResourcesCompanion(
+      id: Value(data['id']),
+      parent: Value(data['parent']),
+      name: Value(data['name']),
+      dir: Value(data['dir']),
+      created: Value(DateTime.parse(data['created'])),
+      modified: Value(DateTime.parse(data['modified'])),
+      deleted: Value(data['deleted'] != null),
+      contentSize: Value(data['c_size']),
+      contentSha256: Value(data['c_sha256']),
+      contentType: Value(data['c_type']),
+      permissions: data['permisisons'] == '{}' ? Value(null) : Value(data['permisisons']),
+      publinks: Value(data['publinks']),
+      lastRefresh: Value(DateTime.now()),
+    );
+  }
+
+  ResourcesCompanion parsePartialResourceObject(Map<String, dynamic> data) {
+    return ResourcesCompanion(
+      id: Value.absentIfNull(data['id']),
+      parent: Value.absentIfNull(data['parent']),
+      name: Value.absentIfNull(data['name']),
+      dir: Value.absentIfNull(data['dir']),
+      created: Value.absentIfNull(data.containsKey('created') ? DateTime.parse(data['created']) : null),
+      modified: Value.absentIfNull(data.containsKey('modified') ? DateTime.parse(data['modified']) : null),
+      deleted: Value.absentIfNull(data.containsKey('deleted') ? data['deleted'] != null : null),
+      contentSize: Value.absentIfNull(data['c_size']),
+      contentSha256: Value.absentIfNull(data['c_sha256']),
+      contentType: Value.absentIfNull(data['c_type']),
+      permissions: data.containsKey('permissions')
+          ? data['permisisons'] == '{}'
+              ? Value(null)
+              : Value(data['permisisons'])
+          : Value.absent(),
+      publinks: Value.absentIfNull(data['publinks']),
+    );
   }
 }
