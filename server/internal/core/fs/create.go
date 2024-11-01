@@ -78,13 +78,13 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 	} else {
 		info.path = r.Path() + "/" + info.name
 	}
-	ancestry := make([]ResourceInfo, len(r.Ancestry)+1)
-	copy(ancestry, r.Ancestry)
-	ancestry = append(ancestry, r.Resource)
+	ancestry := make([]ResourceInfo, len(r.Ancestors)+1)
+	copy(ancestry, r.Ancestors)
+	ancestry = append(ancestry, r.Info)
 	return Resource{
 		f:              r.f,
-		Ancestry:       ancestry,
-		Resource:       info,
+		Ancestors:      ancestry,
+		Info:           info,
 		userPermission: r.userPermission,
 	}, nil
 }

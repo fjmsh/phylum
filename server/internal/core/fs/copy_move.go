@@ -61,8 +61,8 @@ func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
 			}
 			return err
 		} else {
-			r.Resource.name = nameParent.Name
-			r.Resource.parentID = nameParent.Parent
+			r.Info.name = nameParent.Name
+			r.Info.parentID = nameParent.Parent
 			return nil
 		}
 	})
@@ -188,13 +188,13 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 		info.path = destParent.Path() + "/" + info.name
 	}
 
-	ancestry := make([]ResourceInfo, len(destParent.Ancestry)+1)
-	copy(ancestry, destParent.Ancestry)
-	ancestry = append(ancestry, r.Resource)
+	ancestry := make([]ResourceInfo, len(destParent.Ancestors)+1)
+	copy(ancestry, destParent.Ancestors)
+	ancestry = append(ancestry, r.Info)
 	created := Resource{
 		f:              r.f,
-		Ancestry:       ancestry,
-		Resource:       info,
+		Ancestors:      ancestry,
+		Info:           info,
 		userPermission: destParent.userPermission,
 	}
 	return created, deleted, err

@@ -9,8 +9,8 @@ import (
 
 type Resource struct {
 	f              filesystem
-	Ancestry       []ResourceInfo
-	Resource       ResourceInfo
+	Ancestors      []ResourceInfo
+	Info           ResourceInfo
 	userPermission Permission
 }
 
@@ -30,18 +30,18 @@ type ResourceInfo struct {
 	path          string
 }
 
-func (r Resource) ID() uuid.UUID         { return r.Resource.id }
-func (r Resource) ParentID() *uuid.UUID  { return r.Resource.parentID }
-func (r Resource) Name() string          { return r.Resource.name }
-func (r Resource) Dir() bool             { return r.Resource.dir }
-func (r Resource) Created() time.Time    { return r.Resource.created }
-func (r Resource) Modified() time.Time   { return r.Resource.modified }
-func (r Resource) Deleted() *time.Time   { return r.Resource.deleted }
-func (r Resource) ContentSize() int64    { return r.Resource.contentSize }
-func (r Resource) ContentSHA256() string { return r.Resource.contentSHA256 }
-func (r Resource) ContentType() string   { return r.Resource.contentType }
-func (r Resource) Publinks() int         { return r.Resource.publinks }
-func (r Resource) Path() string          { return r.Resource.path }
+func (r Resource) ID() uuid.UUID         { return r.Info.id }
+func (r Resource) ParentID() *uuid.UUID  { return r.Info.parentID }
+func (r Resource) Name() string          { return r.Info.name }
+func (r Resource) Dir() bool             { return r.Info.dir }
+func (r Resource) Created() time.Time    { return r.Info.created }
+func (r Resource) Modified() time.Time   { return r.Info.modified }
+func (r Resource) Deleted() *time.Time   { return r.Info.deleted }
+func (r Resource) ContentSize() int64    { return r.Info.contentSize }
+func (r Resource) ContentSHA256() string { return r.Info.contentSHA256 }
+func (r Resource) ContentType() string   { return r.Info.contentType }
+func (r Resource) Publinks() int         { return r.Info.publinks }
+func (r Resource) Path() string          { return r.Info.path }
 
 func (r Resource) hasPermission(p Permission) bool {
 	return r.userPermission&p != 0
@@ -49,7 +49,7 @@ func (r Resource) hasPermission(p Permission) bool {
 
 func (r Resource) FullPermissionsString() string {
 	result := make(map[string]Permission)
-	for _, i := range r.Ancestry {
+	for _, i := range r.Ancestors {
 		p := make(map[string]Permission)
 		json.Unmarshal([]byte(i.permissions), &p)
 		for k, v := range p {

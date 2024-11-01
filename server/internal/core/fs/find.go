@@ -58,8 +58,8 @@ func (f filesystem) resourceFromResult(e []db.PublinkedResource, err error) (Res
 	}
 	return Resource{
 		f:              f,
-		Ancestry:       ancestry,
-		Resource:       info,
+		Ancestors:      ancestry,
+		Info:           info,
 		userPermission: permission,
 	}, nil
 }

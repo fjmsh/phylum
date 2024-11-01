@@ -9,21 +9,20 @@ import (
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
-type AncestorResponse struct {
+type ancestor struct {
 	ID          uuid.UUID  `json:"id"`
 	Name        string     `json:"name"`
 	ParentID    *uuid.UUID `json:"parent"`
 	Permissions string     `json:"permissions"`
 }
 
-type InfoResponse struct {
+type info struct {
 	ID            uuid.UUID  `json:"id"`
 	Name          string     `json:"name"`
 	ParentID      *uuid.UUID `json:"parent"`
 	Dir           bool       `json:"dir"`
 	Created       time.Time  `json:"created"`
 	Modified      time.Time  `json:"modified"`
-	Deleted       *time.Time `json:"deleted"`
 	ContentSize   int64      `json:"c_size"`
 	ContentType   string     `json:"c_type"`
 	ContentSHA256 string     `json:"c_sha256"`
@@ -32,9 +31,9 @@ type InfoResponse struct {
 }
 
 type ResourceResponse struct {
-	Ancestors []AncestorResponse `json:"ancestors"`
-	Resource  InfoResponse       `json:"resource"`
-	Children  []InfoResponse     `json:"children"`
+	Ancestors []ancestor `json:"ancestors"`
+	Info      info       `json:"info"`
+	Children  []info     `json:"children"`
 }
 
 func handleLsRequest(c *gin.Context) {
@@ -54,44 +53,39 @@ func handleLsRequest(c *gin.Context) {
 
 func LsResponseFromResource(r fs.Resource) ResourceResponse {
 	response := ResourceResponse{
-		Resource: infoResponse(r.Resource),
+		Info: createInfo(r.Info),
 	}
-	response.Ancestors = make([]AncestorResponse, len(r.Ancestry))
+	response.Ancestors = make([]ancestor, len(r.Ancestors))
 
-	for i, c := range r.Ancestry {
-		response.Ancestors[i] = ancestorResponse(c)
+	for i, a := range r.Ancestors {
+		response.Ancestors[i] = ancestor{
+			ID:          a.ID(),
+			Name:        a.Name(),
+			ParentID:    a.ParentID(),
+			Permissions: string(a.Permissions()),
+		}
 	}
 	if r.Dir() {
 		children, err := r.ReadDir(false)
 		if err != nil {
 			panic(err)
 		}
-		response.Children = make([]InfoResponse, len(children))
+		response.Children = make([]info, len(children))
 		for i, c := range children {
-			response.Children[i] = infoResponse(c.(fs.ResourceInfo))
+			response.Children[i] = createInfo(c.(fs.ResourceInfo))
 		}
 	}
 	return response
 }
 
-func ancestorResponse(r fs.ResourceInfo) AncestorResponse {
-	return AncestorResponse{
-		ID:          r.ID(),
-		Name:        r.Name(),
-		ParentID:    r.ParentID(),
-		Permissions: string(r.Permissions()),
-	}
-}
-
-func infoResponse(r fs.ResourceInfo) InfoResponse {
-	return InfoResponse{
+func createInfo(r fs.ResourceInfo) info {
+	return info{
 		ID:            r.ID(),
 		Name:          r.Name(),
 		ParentID:      r.ParentID(),
 		Dir:           r.Dir(),
 		Created:       r.Created(),
 		Modified:      r.Modified(),
-		Deleted:       r.Deleted(),
 		ContentSize:   r.ContentSize(),
 		ContentType:   r.ContentType(),
 		ContentSHA256: r.ContentSHA256(),

@@ -28,6 +28,6 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 	if err != nil {
 		return Resource{}, err
 	}
-	r.Resource.permissions = p
+	r.Info.permissions = p
 	return r, nil
 }
