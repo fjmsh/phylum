@@ -28,6 +28,6 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 	if err != nil {
 		return Resource{}, err
 	}
-	r.Ancestry[0].permissions = string(p)
+	r.Last().permissions = p
 	return r, nil
 }

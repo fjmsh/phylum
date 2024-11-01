@@ -120,6 +120,6 @@ func ResourceInfoFromDBResource(r db.Resource) ResourceInfo {
 		contentSize:   r.ContentSize,
 		contentType:   r.ContentType,
 		contentSHA256: r.ContentSha256,
-		permissions:   string(r.Permissions),
+		permissions:   r.Permissions,
 	}
 }

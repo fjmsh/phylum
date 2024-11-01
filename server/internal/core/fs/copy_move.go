@@ -179,7 +179,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 		contentSize:   r.ContentSize(),
 		contentType:   r.ContentType(),
 		contentSHA256: r.ContentSHA256(),
-		permissions:   "{}",
+		permissions:   []byte{'{', '}'},
 		publinks:      0,
 	}
 	if destParent.Path() == "/" {

@@ -17,37 +17,9 @@ const (
 	PermissionSU    = Permission(-1)
 )
 
-func (r Resource) hasPermission(p Permission) bool {
-	return r.UserPermission&p != 0
-}
-
-func (r Resource) PermissionsString() string {
-	return r.Ancestry[0].PermissionsString()
-}
-
-func (r ResourceInfo) PermissionsString() string {
-	return permissionJsonString(r.permissions)
-}
-
-func (r Resource) FullPermissionsString() string {
-	result := make(map[string]Permission)
-	for _, i := range r.Ancestry {
-		p := make(map[string]Permission)
-		json.Unmarshal([]byte(i.permissions), &p)
-		for k, v := range p {
-			result[k] = result[k] | v
-		}
-	}
-	res, err := json.Marshal(result)
-	if err != nil {
-		return err.Error()
-	}
-	return permissionJsonString(string(res))
-}
-
-func permissionJsonString(j string) string {
+func permissionJsonString(j []byte) string {
 	p := make(map[string]Permission)
-	json.Unmarshal([]byte(j), &p)
+	json.Unmarshal(j, &p)
 	if len(p) == 0 {
 		return ""
 	}
@@ -79,22 +51,6 @@ func permissionString(p Permission) string {
 		str += fmt.Sprintf("u(%d)", p)
 	}
 	return str
-}
-
-func MergePermissionStrings(p1s, p2s string) (string, error) {
-	p1 := make(map[string]Permission)
-	json.Unmarshal([]byte(p1s), &p1)
-	p2 := make(map[string]Permission)
-	json.Unmarshal([]byte(p2s), &p2)
-	for k, v := range p1 {
-		p2[k] = p2[k] | v
-
-	}
-	res, err := json.Marshal(p2)
-	if err != nil {
-		return "", err
-	}
-	return string(res), nil
 }
 
 func ParsePermissionString(s string) (Permission, error) {
