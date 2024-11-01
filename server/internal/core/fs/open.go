@@ -34,7 +34,7 @@ func (r Resource) ReadDir(recursive bool) ([]serve.ResourceInfo, error) {
 	if !r.hasPermission(PermissionRead) {
 		return nil, ErrInsufficientPermissions
 	}
-	if !r.FSDir() {
+	if !r.Dir() {
 		return nil, ErrResourceNotCollection
 	}
 	maxDepth := 1
@@ -52,14 +52,14 @@ func (r Resource) ReadDir(recursive bool) ([]serve.ResourceInfo, error) {
 
 	result := make([]serve.ResourceInfo, len(children))
 	path := make(map[uuid.UUID]string)
-	path[r.ID()] = r.FSPath()
-	if r.FSPath() == "/" {
+	path[r.ID()] = r.Path()
+	if r.Path() == "/" {
 		path[r.ID()] = ""
 	}
 	for i, c := range children {
 		info := resourceInfoFromDBPublinkedResource(c)
-		info.Path = path[*info.ParentID] + "/" + info.Name
-		path[info.ID] = info.Path
+		info.path = path[*info.parentID] + "/" + info.name
+		path[info.id] = info.path
 		result[i] = info
 	}
 	return result, nil
@@ -70,7 +70,7 @@ func (r Resource) Walk(depth int, fn func(serve.ResourceInfo) error) error {
 	if err != nil {
 		return err
 	}
-	if !r.FSDir() || depth <= 0 {
+	if !r.Dir() || depth <= 0 {
 		return nil
 	}
 

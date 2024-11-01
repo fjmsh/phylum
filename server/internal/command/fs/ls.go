@@ -25,10 +25,10 @@ func setupLsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			fmt.Println(r.FSPath() + " " + r.FullPermissionsString())
-			fmt.Println(formatRow(r.ID().String(), formatSize(r.FSContentSize()), r.FSContentSHA256(), ".", r.PermissionsString(), r.Publinks()))
+			fmt.Println(r.Path() + " " + r.FullPermissionsString())
+			fmt.Println(formatRow(r.ID().String(), formatSize(r.ContentSize()), r.ContentSHA256(), ".", r.PermissionsString(), r.Publinks()))
 
-			if r.FSDir() {
+			if r.Dir() {
 				children, err := r.ReadDir(false)
 				if err != nil {
 					fmt.Println("cannot access '" + pathOrUUID + "': " + err.Error())
@@ -37,12 +37,12 @@ func setupLsCommand() *cobra.Command {
 				sort.Slice(children, func(i, j int) bool {
 					a := children[i]
 					b := children[j]
-					if a.FSDir() != b.FSDir() {
-						if a.FSDir() {
+					if a.Dir() != b.Dir() {
+						if a.Dir() {
 							return true
 						}
 					}
-					return strings.Compare(strings.ToLower(a.FSName()), strings.ToLower((b.FSName()))) <= 0
+					return strings.Compare(strings.ToLower(a.Name()), strings.ToLower((b.Name()))) <= 0
 				})
 				for _, c := range children {
 					fmt.Println(formatResourceSummary(c.(fs.ResourceInfo)))
@@ -69,9 +69,9 @@ func formatRow(id, size, sha256, name, permissions string, links int) string {
 }
 
 func formatResourceSummary(r fs.ResourceInfo) string {
-	name := r.FSName()
-	if r.FSDir() {
+	name := r.Name()
+	if r.Dir() {
 		name += "/"
 	}
-	return formatRow(r.ID.String(), formatSize(r.FSContentSize()), r.FSContentSHA256(), name, r.PermissionsString(), r.Publinks)
+	return formatRow(r.ID().String(), formatSize(r.ContentSize()), r.ContentSHA256(), name, r.PermissionsString(), r.Publinks())
 }

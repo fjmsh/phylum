@@ -26,14 +26,14 @@ func (r Resource) PermissionsString() string {
 }
 
 func (r ResourceInfo) PermissionsString() string {
-	return permissionJsonString(r.Permissions)
+	return permissionJsonString(r.permissions)
 }
 
 func (r Resource) FullPermissionsString() string {
 	result := make(map[string]Permission)
 	for _, i := range r.Ancestry {
 		p := make(map[string]Permission)
-		json.Unmarshal([]byte(i.Permissions), &p)
+		json.Unmarshal([]byte(i.permissions), &p)
 		for k, v := range p {
 			result[k] = result[k] | v
 		}

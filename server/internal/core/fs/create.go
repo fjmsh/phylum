@@ -32,7 +32,7 @@ func (f filesystem) CreateResourceByPath(path string, dir, recursive bool) (Reso
 }
 
 func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Resource, error) {
-	if !r.FSDir() {
+	if !r.Dir() {
 		return Resource{}, ErrResourceNotCollection
 	}
 	if !r.hasPermission(PermissionWrite) {
@@ -62,7 +62,7 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 	if err != nil {
 		return Resource{}, err
 	}
-	if !r.FSDir() {
+	if !r.Dir() {
 		out, err := r.f.cs.OpenWrite(id, nil, nil)
 		if err == nil {
 			err = out.Close()
@@ -88,11 +88,11 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 	// 	Path:           path,
 	// 	UserPermission: r.UserPermission,
 	// }, nil
-	info := resourceInfoFromDBResource(result)
-	if r.FSPath() == "/" {
-		info.Path = "/" + info.Name
+	info := ResourceInfoFromDBResource(result)
+	if r.Path() == "/" {
+		info.path = "/" + info.name
 	} else {
-		info.Path = r.FSPath() + "/" + info.Name
+		info.path = r.Path() + "/" + info.name
 	}
 	ancestry := make([]ResourceInfo, len(r.Ancestry)+1)
 	copy(ancestry, r.Ancestry)
@@ -104,22 +104,22 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 	}, nil
 }
 
-func resourceInfoFromDBResource(r db.Resource) ResourceInfo {
+func ResourceInfoFromDBResource(r db.Resource) ResourceInfo {
 	var delTime *time.Time
 	if r.Deleted.Valid {
 		delTime = &r.Deleted.Time
 	}
 	return ResourceInfo{
-		ID:            r.ID,
-		ParentID:      r.Parent,
-		Name:          r.Name,
-		Dir:           r.Dir,
-		Created:       r.Created.Time,
-		Modified:      r.Modified.Time,
-		Deleted:       delTime,
-		ContentSize:   r.ContentSize,
-		ContentType:   r.ContentType,
-		ContentSHA256: r.ContentSha256,
-		Permissions:   string(r.Permissions),
+		id:            r.ID,
+		parentID:      r.Parent,
+		name:          r.Name,
+		dir:           r.Dir,
+		created:       r.Created.Time,
+		modified:      r.Modified.Time,
+		deleted:       delTime,
+		contentSize:   r.ContentSize,
+		contentType:   r.ContentType,
+		contentSHA256: r.ContentSha256,
+		permissions:   string(r.Permissions),
 	}
 }

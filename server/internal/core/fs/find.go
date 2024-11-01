@@ -35,9 +35,9 @@ func (f filesystem) resourceFromResult(e []db.PublinkedResource, err error) (Res
 		}
 		info := resourceInfoFromDBPublinkedResource(e[i])
 		if b.Len() == 0 {
-			info.Path = "/"
+			info.path = "/"
 		} else {
-			info.Path = b.String()
+			info.path = b.String()
 		}
 		ancestry[len(e)-i-1] = info
 
@@ -81,18 +81,18 @@ func resourceInfoFromDBPublinkedResource(r db.PublinkedResource) ResourceInfo {
 		delTime = &r.Deleted.Time
 	}
 	return ResourceInfo{
-		ID:            r.ID,
-		ParentID:      r.Parent,
-		Name:          r.Name,
-		Dir:           r.Dir,
-		Created:       r.Created.Time,
-		Modified:      r.Modified.Time,
-		Deleted:       delTime,
-		ContentSize:   r.ContentSize,
-		ContentType:   r.ContentType,
-		ContentSHA256: r.ContentSha256,
-		Permissions:   string(r.Permissions),
-		Publinks:      int(r.Publinks),
+		id:            r.ID,
+		parentID:      r.Parent,
+		name:          r.Name,
+		dir:           r.Dir,
+		created:       r.Created.Time,
+		modified:      r.Modified.Time,
+		deleted:       delTime,
+		contentSize:   r.ContentSize,
+		contentType:   r.ContentType,
+		contentSHA256: r.ContentSha256,
+		permissions:   string(r.Permissions),
+		publinks:      int(r.Publinks),
 	}
 }
 

@@ -13,40 +13,44 @@ type Resource struct {
 }
 
 type ResourceInfo struct {
-	ID            uuid.UUID  `json:"id"`
-	ParentID      *uuid.UUID `json:"parent"`
-	Name          string     `json:"name"`
-	Dir           bool       `json:"dir"`
-	Created       time.Time  `json:"created"`
-	Modified      time.Time  `json:"modified"`
-	Deleted       *time.Time `json:"deleted"`
-	ContentSize   int64      `json:"csize"`
-	ContentType   string     `json:"ctype"`
-	ContentSHA256 string     `json:"csha256"`
-	Permissions   string     `json:"permissions"`
-	Publinks      int        `json:"publinks"`
-	Path          string     `json:"-"`
+	id            uuid.UUID
+	parentID      *uuid.UUID
+	name          string
+	dir           bool
+	created       time.Time
+	modified      time.Time
+	deleted       *time.Time
+	contentSize   int64
+	contentType   string
+	contentSHA256 string
+	permissions   string
+	publinks      int
+	path          string
 }
 
-func (r Resource) Info() ResourceInfo      { return r.Ancestry[len(r.Ancestry)-1] }
-func (r Resource) ID() uuid.UUID           { return r.Info().ID }
-func (r Resource) ParentID() *uuid.UUID    { return r.Info().ParentID }
-func (r Resource) FSName() string          { return r.Info().Name }
-func (r Resource) FSDir() bool             { return r.Info().Dir }
-func (r Resource) FSCreated() time.Time    { return r.Info().Created }
-func (r Resource) FSModified() time.Time   { return r.Info().Modified }
-func (r Resource) Deleted() *time.Time     { return r.Info().Deleted }
-func (r Resource) FSContentSize() int64    { return r.Info().ContentSize }
-func (r Resource) FSContentSHA256() string { return r.Info().ContentSHA256 }
-func (r Resource) FSContentType() string   { return r.Info().ContentType }
-func (r Resource) Publinks() int           { return r.Info().Publinks }
-func (r Resource) FSPath() string          { return r.Info().Path }
+func (r Resource) Info() ResourceInfo    { return r.Ancestry[len(r.Ancestry)-1] }
+func (r Resource) ID() uuid.UUID         { return r.Info().id }
+func (r Resource) ParentID() *uuid.UUID  { return r.Info().parentID }
+func (r Resource) Name() string          { return r.Info().name }
+func (r Resource) Dir() bool             { return r.Info().dir }
+func (r Resource) Created() time.Time    { return r.Info().created }
+func (r Resource) Modified() time.Time   { return r.Info().modified }
+func (r Resource) Deleted() *time.Time   { return r.Info().deleted }
+func (r Resource) ContentSize() int64    { return r.Info().contentSize }
+func (r Resource) ContentSHA256() string { return r.Info().contentSHA256 }
+func (r Resource) ContentType() string   { return r.Info().contentType }
+func (r Resource) Publinks() int         { return r.Info().publinks }
+func (r Resource) Path() string          { return r.Info().path }
 
-func (r ResourceInfo) FSName() string          { return r.Name }
-func (r ResourceInfo) FSDir() bool             { return r.Dir }
-func (r ResourceInfo) FSCreated() time.Time    { return r.Created }
-func (r ResourceInfo) FSModified() time.Time   { return r.Modified }
-func (r ResourceInfo) FSContentSize() int64    { return r.ContentSize }
-func (r ResourceInfo) FSContentSHA256() string { return r.ContentSHA256 }
-func (r ResourceInfo) FSContentType() string   { return r.ContentType }
-func (r ResourceInfo) FSPath() string          { return r.Path }
+func (r ResourceInfo) ID() uuid.UUID         { return r.id }
+func (r ResourceInfo) ParentID() *uuid.UUID  { return r.parentID }
+func (r ResourceInfo) Name() string          { return r.name }
+func (r ResourceInfo) Dir() bool             { return r.dir }
+func (r ResourceInfo) Created() time.Time    { return r.created }
+func (r ResourceInfo) Modified() time.Time   { return r.modified }
+func (r ResourceInfo) Deleted() *time.Time   { return r.deleted }
+func (r ResourceInfo) ContentSize() int64    { return r.contentSize }
+func (r ResourceInfo) ContentSHA256() string { return r.contentSHA256 }
+func (r ResourceInfo) ContentType() string   { return r.contentType }
+func (r ResourceInfo) Publinks() int         { return r.publinks }
+func (r ResourceInfo) Path() string          { return r.path }

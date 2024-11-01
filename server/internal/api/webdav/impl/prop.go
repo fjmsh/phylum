@@ -137,7 +137,7 @@ func props(fs FileSystem, ls LockSystem, fi serve.ResourceInfo, pnames []xml.Nam
 	pstatNotFound := Propstat{Status: http.StatusNotFound}
 	for _, pn := range pnames {
 		// Otherwise, it must either be a live property or we don't know it.
-		if prop := liveProps[pn]; prop.findFn != nil && (prop.dir || !fi.FSDir()) {
+		if prop := liveProps[pn]; prop.findFn != nil && (prop.dir || !fi.Dir()) {
 			innerXML := prop.findFn(fi)
 			pstatOK.Props = append(pstatOK.Props, Property{
 				XMLName:  pn,
@@ -156,7 +156,7 @@ func props(fs FileSystem, ls LockSystem, fi serve.ResourceInfo, pnames []xml.Nam
 func propnames(fs FileSystem, ls LockSystem, fi serve.ResourceInfo) ([]xml.Name, error) {
 	pnames := make([]xml.Name, 0, len(liveProps))
 	for pn, prop := range liveProps {
-		if prop.findFn != nil && (prop.dir || !fi.FSDir()) {
+		if prop.findFn != nil && (prop.dir || !fi.Dir()) {
 			pnames = append(pnames, pn)
 		}
 	}
@@ -253,34 +253,34 @@ func escapeXML(s string) string {
 }
 
 func findResourceType(fi serve.ResourceInfo) string {
-	if fi.FSDir() {
+	if fi.Dir() {
 		return `<D:collection xmlns:D="DAV:"/>`
 	}
 	return ""
 }
 
 func findDisplayName(fi serve.ResourceInfo) string {
-	return escapeXML(fi.FSName())
+	return escapeXML(fi.Name())
 }
 
 func findContentLength(fi serve.ResourceInfo) string {
-	return strconv.FormatInt(fi.FSContentSize(), 10)
+	return strconv.FormatInt(fi.ContentSize(), 10)
 }
 
 func findCreationDate(fi serve.ResourceInfo) string {
-	return fi.FSCreated().UTC().Format(http.TimeFormat)
+	return fi.Created().UTC().Format(http.TimeFormat)
 }
 
 func findLastModified(fi serve.ResourceInfo) string {
-	return fi.FSModified().UTC().Format(http.TimeFormat)
+	return fi.Modified().UTC().Format(http.TimeFormat)
 }
 
 func findContentType(fi serve.ResourceInfo) string {
-	return fi.FSContentType()
+	return fi.ContentType()
 }
 
 func findETag(fi serve.ResourceInfo) string {
-	return fi.FSContentSHA256()
+	return fi.ContentSHA256()
 }
 
 func findSupportedLock(fi serve.ResourceInfo) string {

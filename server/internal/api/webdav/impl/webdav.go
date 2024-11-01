@@ -167,7 +167,7 @@ func (h *Handler) confirmLocks(r *http.Request, src, dst string) (release func()
 			if res, err := h.FileSystem.ResourceByPath(path); err != nil {
 				return false, err
 			} else {
-				return res.FSContentSHA256() == etag, nil
+				return res.ContentSHA256() == etag, nil
 			}
 		}, l.conditions...)
 		if err == ErrConfirmationFailed {
@@ -192,7 +192,7 @@ func (h *Handler) handleOptions(w http.ResponseWriter, r *http.Request) (status 
 	}
 	allow := "OPTIONS, LOCK, PUT, MKCOL"
 	if fi, err := h.FileSystem.ResourceByPath(reqPath); err == nil {
-		if fi.FSDir() {
+		if fi.Dir() {
 			allow = "OPTIONS, LOCK, DELETE, PROPPATCH, COPY, MOVE, UNLOCK, PROPFIND"
 		} else {
 			allow = "OPTIONS, LOCK, GET, HEAD, POST, DELETE, PROPPATCH, COPY, MOVE, UNLOCK, PROPFIND, PUT"
@@ -268,7 +268,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 		}
 	} else if err != nil {
 		return http.StatusNotFound, err
-	} else if res.FSDir() {
+	} else if res.Dir() {
 		return http.StatusConflict, fs.ErrResourceCollection
 	}
 
@@ -286,7 +286,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	if closeErr != nil {
 		return http.StatusMethodNotAllowed, closeErr
 	}
-	w.Header().Set("ETag", fi.FSContentSHA256())
+	w.Header().Set("ETag", fi.ContentSHA256())
 	return http.StatusCreated, nil
 }
 
@@ -476,8 +476,8 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 		if err != nil {
 			return err
 		}
-		href := path.Join(h.Prefix, r.FSPath())
-		if href != "/" && r.FSDir() {
+		href := path.Join(h.Prefix, r.Path())
+		if href != "/" && r.Dir() {
 			href += "/"
 		}
 		return mw.write(makePropstatResponse(href, pstats))

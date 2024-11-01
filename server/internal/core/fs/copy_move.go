@@ -61,8 +61,8 @@ func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
 			}
 			return err
 		} else {
-			r.Ancestry[0].Name = nameParent.Name
-			r.Ancestry[0].ParentID = nameParent.Parent
+			r.Ancestry[0].name = nameParent.Name
+			r.Ancestry[0].parentID = nameParent.Parent
 			return nil
 		}
 	})
@@ -82,7 +82,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 		}
 		return Resource{}, false, err
 	}
-	if !destParent.FSDir() {
+	if !destParent.Dir() {
 		return Resource{}, false, ErrResourceNotCollection
 
 	}
@@ -91,7 +91,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 	}
 
 	var tree []db.PublinkedResource
-	if recursive && r.FSDir() {
+	if recursive && r.Dir() {
 		var err error
 		tree, err = r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{ResourceID: r.ID(), MinDepth: 1, MaxDepth: 1000})
 		if err != nil {
@@ -101,7 +101,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 	create := make([]db.CreateResourcesParams, 0, len(tree)+1)
 	contents := make(map[uuid.UUID]uuid.UUID)
 	ids := make(map[uuid.UUID]uuid.UUID)
-	if r.FSDir() {
+	if r.Dir() {
 		ids[r.ID()] = id
 	} else {
 		contents[r.ID()] = id
@@ -111,10 +111,10 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 		ID:            id,
 		Parent:        destParent.ID(),
 		Name:          destName,
-		Dir:           r.FSDir(),
-		ContentSize:   r.FSContentSize(),
-		ContentType:   r.FSContentType(),
-		ContentSha256: r.FSContentSHA256(),
+		Dir:           r.Dir(),
+		ContentSize:   r.ContentSize(),
+		ContentType:   r.ContentType(),
+		ContentSha256: r.ContentSHA256(),
 	})
 	for _, src := range tree {
 		id, _ := uuid.NewUUID()
@@ -169,23 +169,23 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 
 	parentID := destParent.ID()
 	var info = ResourceInfo{
-		ID:            id,
-		ParentID:      &parentID,
-		Name:          destName,
-		Dir:           r.FSDir(),
-		Created:       time.Now(),
-		Modified:      time.Now(),
-		Deleted:       nil,
-		ContentSize:   r.FSContentSize(),
-		ContentType:   r.FSContentType(),
-		ContentSHA256: r.FSContentSHA256(),
-		Permissions:   "{}",
-		Publinks:      0,
+		id:            id,
+		parentID:      &parentID,
+		name:          destName,
+		dir:           r.Dir(),
+		created:       time.Now(),
+		modified:      time.Now(),
+		deleted:       nil,
+		contentSize:   r.ContentSize(),
+		contentType:   r.ContentType(),
+		contentSHA256: r.ContentSHA256(),
+		permissions:   "{}",
+		publinks:      0,
 	}
-	if destParent.FSPath() == "/" {
-		info.Path = "/" + info.Name
+	if destParent.Path() == "/" {
+		info.path = "/" + info.name
 	} else {
-		info.Path = destParent.FSPath() + "/" + info.Name
+		info.path = destParent.Path() + "/" + info.name
 	}
 
 	ancestry := make([]ResourceInfo, len(destParent.Ancestry)+1)
@@ -248,7 +248,7 @@ func (f filesystem) targetByPathOrUUID(src Resource, pathOrUUID string) (Resourc
 
 	name := pathOrUUID[index+1:]
 	if name == "" {
-		name = src.FSName()
+		name = src.Name()
 	} else if CheckNameInvalid(name) {
 		return Resource{}, "", ErrResourceNameInvalid
 	}

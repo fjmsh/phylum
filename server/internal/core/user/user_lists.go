@@ -1,8 +1,6 @@
 package user
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
@@ -17,7 +15,7 @@ func (m manager) SharedResources(u User) ([]fs.ResourceInfo, error) {
 
 	result := make([]fs.ResourceInfo, len(res))
 	for i, r := range res {
-		result[i] = resourceFromDB(r)
+		result[i] = fs.ResourceInfoFromDBResource(r)
 	}
 	return result, err
 }
@@ -39,33 +37,7 @@ func (m manager) Bookmarks(u User) ([]fs.ResourceInfo, error) {
 
 	result := make([]fs.ResourceInfo, len(res))
 	for i, r := range res {
-		result[i] = resourceFromDB(r)
+		result[i] = fs.ResourceInfoFromDBResource(r)
 	}
 	return result, err
-}
-
-func resourceFromDB(r db.Resource) fs.ResourceInfo {
-	var deleted *time.Time
-	if r.Deleted.Valid {
-		deleted = &r.Deleted.Time
-	}
-	return fs.ResourceInfo{
-		ID:            r.ID,
-		ParentID:      r.Parent,
-		Name:          r.Name,
-		Created:       r.Created.Time,
-		Modified:      r.Modified.Time,
-		Deleted:       deleted,
-		Dir:           r.Dir,
-		ContentSize:   r.ContentSize,
-		ContentType:   r.ContentType,
-		ContentSHA256: r.ContentSha256,
-		Permissions:   string(r.Permissions),
-		// Not Needed
-		// f:                    f,
-		// Path:                 "",
-		// UserPermissions:      0,
-		// InheritedPermissions: "",
-		// Publinks:			 0,
-	}
 }

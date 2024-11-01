@@ -16,7 +16,7 @@ func handleCatRequest(c *gin.Context) {
 
 	f := auth.GetFileSystem(c)
 	r, err := f.ResourceByID(resourceID)
-	if r.FSDir() {
+	if r.Dir() {
 		err = fs.ErrResourceCollection
 	}
 	if err != nil {
