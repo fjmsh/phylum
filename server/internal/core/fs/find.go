@@ -51,7 +51,7 @@ func (f filesystem) resourceFromResult(e []db.PublinkedResource, err error) (Res
 		}
 	}
 	if !found || permission&PermissionRead == 0 {
-		return Resource{}, err
+		return Resource{}, ErrResourceNotFound
 	}
 	return Resource{
 		f:              f,

@@ -36,7 +36,7 @@ func (f filesystem) resourceByPath(search string) (Resource, error) {
 		}
 	}
 	if !found {
-		return Resource{}, err
+		return Resource{}, ErrNotFound
 	}
 	path := b.String()
 	if b.Len() == 0 {
