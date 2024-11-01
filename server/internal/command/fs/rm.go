@@ -22,7 +22,7 @@ func setupRmCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if r.Dir {
+			if r.FSDir() {
 				if recursive, err := cmd.Flags().GetBool("recursive"); err != nil || !recursive {
 					fmt.Println("cannot remove '" + pathOrUUID + "': Is a directory. Try again with '-r'")
 					os.Exit(1)

@@ -1,35 +1,86 @@
 package fs
 
 import (
+	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
 )
 
 func (f filesystem) ResourceByPath(path string) (Resource, error) {
-	return f.resourceFromResult(f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: f.rootID, Path: path, Username: f.username}))
+	return f.resourceFromResult(f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: &f.rootID, Path: path}))
 }
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	return f.resourceFromResult(f.db.ResourceByID(f.ctx, db.ResourceByIDParams{Root: f.rootID, ResourceID: id, Username: f.username}))
+	return f.resourceFromResult(f.db.ResourceByID(f.ctx, id))
 }
 
-func (f filesystem) resourceFromResult(r db.ResourceResult, err error) (Resource, error) {
-	if err == pgx.ErrNoRows || !r.Found || (r.UserPermission&PermissionRead == 0) {
+func (f filesystem) resourceFromResult(e []db.PublinkedResource, err error) (Resource, error) {
+	if len(e) == 0 {
 		err = ErrResourceNotFound
 	}
 	if err != nil {
 		return Resource{}, err
 	}
+	var b strings.Builder
+	found := false
+	permission := Permission(0)
+	ancestry := make([]ResourceInfo, len(e))
+	for i := len(e) - 1; i >= 0; i-- {
+		if i != len(e)-1 {
+			b.WriteByte('/')
+			b.WriteString(e[i].Name)
+		}
+		info := resourceInfoFromDBPublinkedResource(e[i])
+		if b.Len() == 0 {
+			info.Path = "/"
+		} else {
+			info.Path = b.String()
+		}
+		ancestry[len(e)-i-1] = info
 
+		if e[i].ID == f.rootID {
+			found = true
+		}
+		if p, err := readPermissionFromJson(e[i].Permissions, f.username); err != nil {
+			return Resource{}, err
+		} else {
+			permission = permission | p
+		}
+	}
+	if !found || permission&PermissionRead == 0 {
+		return Resource{}, err
+	}
+	return Resource{
+		f:              f,
+		Ancestry:       ancestry,
+		UserPermission: permission,
+	}, nil
+}
+
+func readPermissionFromJson(j []byte, username string) (Permission, error) {
+	if len(j) == 2 {
+		return PermissionNone, nil
+	}
+	p := make(map[string]Permission)
+	err := json.Unmarshal(j, &p)
+	if err != nil {
+		return PermissionNone, err
+	}
+	if p, ok := p[username]; ok {
+		return p, nil
+	}
+	return PermissionNone, nil
+}
+
+func resourceInfoFromDBPublinkedResource(r db.PublinkedResource) ResourceInfo {
 	var delTime *time.Time
 	if r.Deleted.Valid {
 		delTime = &r.Deleted.Time
 	}
-	return Resource{
-		f:             f,
+	return ResourceInfo{
 		ID:            r.ID,
 		ParentID:      r.Parent,
 		Name:          r.Name,
@@ -42,11 +93,7 @@ func (f filesystem) resourceFromResult(r db.ResourceResult, err error) (Resource
 		ContentSHA256: r.ContentSha256,
 		Permissions:   string(r.Permissions),
 		Publinks:      int(r.Publinks),
-		// Definitely Needed
-		Path:                 r.Path,
-		UserPermission:       r.UserPermission,
-		InheritedPermissions: string(r.InheritedPermissions),
-	}, nil
+	}
 }
 
 func (f filesystem) ResourceByPathOrUUID(pathOrUUID string) (Resource, error) {

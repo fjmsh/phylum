@@ -20,11 +20,11 @@ type homeResponse struct {
 }
 
 type sharedResponse struct {
-	Shared []fs.Resource `json:"shared"`
+	Shared []fs.ResourceInfo `json:"shared"`
 }
 
 type bookmarksResponse struct {
-	Bookmarks []fs.Resource `json:"bookmarks"`
+	Bookmarks []fs.ResourceInfo `json:"bookmarks"`
 }
 type bookmarkIDParams struct {
 	ID uuid.UUID `json:"id" binding:"required"`

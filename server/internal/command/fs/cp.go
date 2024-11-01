@@ -24,7 +24,7 @@ func setupCpCommand() *cobra.Command {
 			}
 
 			force, _ := cmd.Flags().GetBool("force")
-			if src.Dir {
+			if src.FSDir() {
 				if recursive, err := cmd.Flags().GetBool("recursive"); err != nil || !recursive {
 					fmt.Println("cannot copy'" + srcPathOrUUID + "' to '" + args[1] + "': must use -r to copy directories")
 					os.Exit(1)

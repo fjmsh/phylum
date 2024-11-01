@@ -23,7 +23,7 @@ func setupCatCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if r.Dir {
+			if r.FSDir() {
 				fmt.Println("cannot read'" + pathOrUUID + "': is a directory")
 				os.Exit(2)
 			}

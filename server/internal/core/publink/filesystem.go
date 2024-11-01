@@ -17,7 +17,7 @@ type filesystem struct {
 }
 
 func (f filesystem) resourceByPath(search string) (Resource, error) {
-	e, err := f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Path: search})
+	e, err := f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Path: search, Root: &f.root})
 	if len(e) == 0 {
 		err = ErrNotFound
 	}
@@ -30,13 +30,17 @@ func (f filesystem) resourceByPath(search string) (Resource, error) {
 		if e[i].ID == f.root {
 			found = true
 		}
-		if b.Len() != 0 {
+		if i != len(e)-i {
 			b.WriteByte('/')
+			b.WriteString(e[i].Name)
 		}
-		b.WriteString(e[i].Name)
 	}
 	if !found {
 		return Resource{}, err
+	}
+	path := b.String()
+	if b.Len() == 0 {
+		path = "/"
 	}
 
 	r := e[0]
@@ -45,7 +49,7 @@ func (f filesystem) resourceByPath(search string) (Resource, error) {
 		id:            r.ID,
 		name:          r.Name,
 		dir:           r.Dir,
-		path:          b.String(),
+		path:          path,
 		created:       r.Created.Time,
 		modified:      r.Modified.Time,
 		contentSize:   r.ContentSize,

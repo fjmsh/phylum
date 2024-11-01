@@ -8,7 +8,7 @@ type DiskUsageInfo struct {
 }
 
 func (r Resource) DiskUsage() (DiskUsageInfo, error) {
-	if info, err := r.f.db.DiskUsage(r.f.ctx, r.ID); err != nil {
+	if info, err := r.f.db.DiskUsage(r.f.ctx, r.ID()); err != nil {
 		return DiskUsageInfo{}, err
 	} else {
 		return DiskUsageInfo{

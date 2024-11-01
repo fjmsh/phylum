@@ -57,7 +57,7 @@ func setupBookmarksRemoveCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if err := user.CreateManager(context.Background()).RemoveBookmark(common.User(cmd), r.ID); err != nil {
+			if err := user.CreateManager(context.Background()).RemoveBookmark(common.User(cmd), r.ID()); err != nil {
 				fmt.Println("unable to remove bookmark: " + err.Error())
 				os.Exit(1)
 			}

@@ -37,7 +37,7 @@ func (r Resource) OpenRead(start, length int64) (io.ReadCloser, error) {
 	return r.f.cs.OpenRead(r.id, start, length)
 }
 
-func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
+func (r Resource) ReadDir(recursive bool) ([]serve.ResourceInfo, error) {
 	if !r.dir {
 		return nil, errors.New("resource is not a collection")
 	}
@@ -53,7 +53,7 @@ func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 		return nil, err
 	}
 
-	result := make([]serve.Resource, len(children))
+	result := make([]serve.ResourceInfo, len(children))
 
 	parentPath := r.path
 	if parentPath == "/" {

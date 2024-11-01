@@ -41,8 +41,8 @@ type Manager interface {
 	ReadAccessToken(accessToken string) (User, error)
 
 	// user_lists.go
-	SharedResources(u User) (result []fs.Resource, err error)
-	Bookmarks(u User) ([]fs.Resource, error)
+	SharedResources(u User) (result []fs.ResourceInfo, err error)
+	Bookmarks(u User) ([]fs.ResourceInfo, error)
 	AddBookmark(u User, resource fs.Resource) error
 	RemoveBookmark(u User, id uuid.UUID) error
 }

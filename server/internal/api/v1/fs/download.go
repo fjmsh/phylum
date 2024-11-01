@@ -21,14 +21,14 @@ func handleDownloadRequest(c *gin.Context) {
 
 	f := auth.GetFileSystem(c)
 	r, err := f.ResourceByID(resourceID)
-	prefix := path.Dir(r.Path)
+	prefix := path.Dir(r.FSPath())
 
 	c.Writer.Header().Set("Content-Type", "application/zip")
-	c.Writer.Header().Set("Content-Disposition", "attachment; filename=\""+r.Name+".zip\"")
+	c.Writer.Header().Set("Content-Disposition", "attachment; filename=\""+r.FSName()+".zip\"")
 
 	var zip = zip.NewWriter(c.Writer)
 	close := c.Writer.CloseNotify()
-	err = r.Walk(2, func(r serve.Resource) error {
+	err = r.Walk(2, func(r serve.ResourceInfo) error {
 		if r.FSDir() {
 			return nil
 		}
@@ -47,7 +47,7 @@ func handleDownloadRequest(c *gin.Context) {
 		if err != nil {
 			return err
 		}
-		in, err := r.OpenRead(0, -1)
+		in, err := r.(fs.Resource).OpenRead(0, -1)
 		if err != nil {
 			return err
 		}

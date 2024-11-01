@@ -25,7 +25,7 @@ var htmlReplacer = strings.NewReplacer(
 
 var ErrRangeNotSupported = errors.New("byte range not suppoered")
 
-type Resource interface {
+type ResourceInfo interface {
 	FSName() string
 	FSPath() string
 	FSDir() bool
@@ -34,7 +34,11 @@ type Resource interface {
 	FSContentSize() int64
 	FSContentSHA256() string
 	FSContentType() string
-	ReadDir(recursive bool) ([]Resource, error)
+}
+
+type Resource interface {
+	ResourceInfo
+	ReadDir(recursive bool) ([]ResourceInfo, error)
 	OpenRead(start, length int64) (io.ReadCloser, error)
 }
 

@@ -32,14 +32,14 @@ func handleLsRequest(c *gin.Context) {
 func LsResponseFromResource(f fs.FileSystem, r fs.Resource) ResourceLsResponse {
 	response := ResourceLsResponse{
 		Resource:             r,
-		InheritedPermissions: r.InheritedPermissions,
+		InheritedPermissions: r.FullPermissionsString(),
 	}
-	if r.Dir {
-		children, err := r.ReadDir(false)
-		if err != nil {
-			panic(err)
-		}
-		response.Children = children
-	}
+	// if r.FSDir() {
+	// 	children, err := r.ReadDir(false)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// 	response.Children = children
+	// }
 	return response
 }

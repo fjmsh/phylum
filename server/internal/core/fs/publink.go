@@ -35,7 +35,7 @@ func (r Resource) CreatePublink(name, password string, duration time.Duration, a
 	return r.f.db.CreatePublink(r.f.ctx, db.CreatePublinkParams{
 		Name:         name,
 		CreatedBy:    r.f.username,
-		Root:         r.ID,
+		Root:         r.ID(),
 		PasswordHash: passwordHash,
 		Expires:      expires,
 		MaxAccesses:  int32(accesses),
@@ -43,7 +43,7 @@ func (r Resource) CreatePublink(name, password string, duration time.Duration, a
 }
 
 func (r Resource) ListPublinks() ([]publink.Info, error) {
-	res, err := r.f.db.PublinksByRoot(r.f.ctx, r.ID)
+	res, err := r.f.db.PublinksByRoot(r.f.ctx, r.ID())
 	if err != nil {
 		return nil, err
 	}

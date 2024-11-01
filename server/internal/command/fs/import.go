@@ -62,7 +62,7 @@ func setupImportCommand() *cobra.Command {
 			ids["."], _ = uuid.NewUUID()
 			create = append(create, db.CreateResourcesParams{
 				ID:     ids["."],
-				Parent: destParent.ID,
+				Parent: destParent.ID(),
 				Name:   destName,
 				Dir:    stat.IsDir(),
 			})
@@ -117,7 +117,7 @@ func setupImportCommand() *cobra.Command {
 						return err
 					}
 				} else {
-					_, err := f.WithRoot(destParent.ID).ResourceByPath(destName)
+					_, err := f.WithRoot(destParent.ID()).ResourceByPath(destName)
 					if err == nil {
 						return errors.New("resource with name '" + destName + "' already exist. use -f to overwrite")
 					} else if !errors.Is(err, fs.ErrResourceNotFound) {
@@ -130,7 +130,7 @@ func setupImportCommand() *cobra.Command {
 					}
 					return err
 				}
-				return dbh.UpdateResourceModified(ctx, destParent.ID)
+				return dbh.UpdateResourceModified(ctx, destParent.ID())
 			})
 
 			if err == nil {

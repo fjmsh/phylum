@@ -32,7 +32,7 @@ func (f filesystem) CreateResourceByPath(path string, dir, recursive bool) (Reso
 }
 
 func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Resource, error) {
-	if !r.Dir {
+	if !r.FSDir() {
 		return Resource{}, ErrResourceNotCollection
 	}
 	if !r.hasPermission(PermissionWrite) {
@@ -47,7 +47,7 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 	var result db.Resource
 	err := r.f.db.WithTx(r.f.ctx, func(d *db.DbHandler) error {
 		var err error
-		parent := r.ID
+		parent := r.ID()
 		if result, err = d.CreateResource(r.f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir}); err != nil {
 			if strings.Contains(err.Error(), "unique_member_resource_name") {
 				return ErrResourceNameConflict
@@ -62,7 +62,7 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 	if err != nil {
 		return Resource{}, err
 	}
-	if !r.Dir {
+	if !r.FSDir() {
 		out, err := r.f.cs.OpenWrite(id, nil, nil)
 		if err == nil {
 			err = out.Close()
@@ -72,34 +72,54 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 		}
 	}
 
-	p, err := MergePermissionStrings(r.InheritedPermissions, r.Permissions)
-	if err != nil {
-		return Resource{}, err
+	// return Resource{
+	// 	f:              r.f,
+	// 	ID:             result.ID,
+	// 	ParentID:       result.Parent,
+	// 	Name:           result.Name,
+	// 	Created:        result.Created.Time,
+	// 	Modified:       result.Modified.Time,
+	// 	Deleted:        deleted,
+	// 	Dir:            result.Dir,
+	// 	ContentSize:    result.ContentSize,
+	// 	ContentType:    result.ContentType,
+	// 	ContentSHA256:  result.ContentSha256,
+	// 	Permissions:    string(result.Permissions),
+	// 	Path:           path,
+	// 	UserPermission: r.UserPermission,
+	// }, nil
+	info := resourceInfoFromDBResource(result)
+	if r.FSPath() == "/" {
+		info.Path = "/" + info.Name
+	} else {
+		info.Path = r.FSPath() + "/" + info.Name
 	}
-	var deleted *time.Time
-	if result.Deleted.Valid {
-		deleted = &result.Deleted.Time
-	}
-	path := r.Path + "/" + result.Name
-	if r.Path == "/" {
-		path = result.Name
-	}
+	ancestry := make([]ResourceInfo, len(r.Ancestry)+1)
+	copy(ancestry, r.Ancestry)
+	ancestry = append(ancestry, info)
 	return Resource{
-		f:                    r.f,
-		ID:                   result.ID,
-		ParentID:             result.Parent,
-		Name:                 result.Name,
-		Created:              result.Created.Time,
-		Modified:             result.Modified.Time,
-		Deleted:              deleted,
-		Dir:                  result.Dir,
-		ContentSize:          result.ContentSize,
-		ContentType:          result.ContentType,
-		ContentSHA256:        result.ContentSha256,
-		Permissions:          string(result.Permissions),
-		Path:                 path,
-		UserPermission:       r.UserPermission,
-		InheritedPermissions: p,
-		Publinks:             0,
+		f:              r.f,
+		Ancestry:       ancestry,
+		UserPermission: r.UserPermission,
 	}, nil
+}
+
+func resourceInfoFromDBResource(r db.Resource) ResourceInfo {
+	var delTime *time.Time
+	if r.Deleted.Valid {
+		delTime = &r.Deleted.Time
+	}
+	return ResourceInfo{
+		ID:            r.ID,
+		ParentID:      r.Parent,
+		Name:          r.Name,
+		Dir:           r.Dir,
+		Created:       r.Created.Time,
+		Modified:      r.Modified.Time,
+		Deleted:       delTime,
+		ContentSize:   r.ContentSize,
+		ContentType:   r.ContentType,
+		ContentSHA256: r.ContentSha256,
+		Permissions:   string(r.Permissions),
+	}
 }

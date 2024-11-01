@@ -16,7 +16,7 @@ func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
 	}
 
 	// Check source directory permissions
-	parent, err := r.f.ResourceByID(*r.ParentID)
+	parent, err := r.f.ResourceByID(*r.ParentID())
 	if err != nil {
 		return Resource{}, false, err
 	}
@@ -35,8 +35,14 @@ func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
 	if !destParent.hasPermission(PermissionWrite) {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
-	if res, err := r.f.db.ResourceByID(r.f.ctx, db.ResourceByIDParams{Root: r.ID, ResourceID: destParent.ID, Username: r.f.username}); err != nil || res.Found {
-		return Resource{}, false, ErrResourceMoveTargetSubdirectory
+	if res, err := r.f.db.ResourceByID(r.f.ctx, destParent.ID()); err != nil {
+		return Resource{}, false, err
+	} else {
+		for i := 1; i < len(res); i++ {
+			if res[i].ID == r.ID() {
+				return Resource{}, false, ErrResourceMoveTargetSubdirectory
+			}
+		}
 	}
 
 	var deleted = false
@@ -49,14 +55,14 @@ func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
 				return err
 			}
 		}
-		if nameParent, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID, Name: destName, Parent: destParent.ID}); err != nil {
+		if nameParent, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID(), Name: destName, Parent: destParent.ID()}); err != nil {
 			if strings.Contains(err.Error(), "unique_member_resource_name") {
 				return ErrResourceNameConflict
 			}
 			return err
 		} else {
-			r.Name = nameParent.Name
-			r.ParentID = nameParent.Parent
+			r.Ancestry[0].Name = nameParent.Name
+			r.Ancestry[0].ParentID = nameParent.Parent
 			return nil
 		}
 	})
@@ -76,7 +82,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 		}
 		return Resource{}, false, err
 	}
-	if !destParent.Dir {
+	if !destParent.FSDir() {
 		return Resource{}, false, ErrResourceNotCollection
 
 	}
@@ -84,35 +90,35 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 
-	var tree []db.ResourceResult
-	if recursive && r.Dir {
+	var tree []db.PublinkedResource
+	if recursive && r.FSDir() {
 		var err error
-		tree, err = r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{ResourceID: r.ID, Path: r.Path, MinDepth: 1, MaxDepth: 1000})
+		tree, err = r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{ResourceID: r.ID(), MinDepth: 1, MaxDepth: 1000})
 		if err != nil {
 			return Resource{}, false, err
 		}
 	}
 	create := make([]db.CreateResourcesParams, 0, len(tree)+1)
-	copy := make(map[uuid.UUID]uuid.UUID)
-	ids := make(map[string]uuid.UUID)
-	if r.Dir {
-		ids[""] = id
+	contents := make(map[uuid.UUID]uuid.UUID)
+	ids := make(map[uuid.UUID]uuid.UUID)
+	if r.FSDir() {
+		ids[r.ID()] = id
 	} else {
-		copy[r.ID] = id
+		contents[r.ID()] = id
 	}
 
 	create = append(create, db.CreateResourcesParams{
 		ID:            id,
-		Parent:        destParent.ID,
+		Parent:        destParent.ID(),
 		Name:          destName,
-		Dir:           r.Dir,
-		ContentSize:   r.ContentSize,
-		ContentType:   r.ContentType,
-		ContentSha256: r.ContentSHA256,
+		Dir:           r.FSDir(),
+		ContentSize:   r.FSContentSize(),
+		ContentType:   r.FSContentType(),
+		ContentSha256: r.FSContentSHA256(),
 	})
 	for _, src := range tree {
 		id, _ := uuid.NewUUID()
-		parent := ids[src.Path[0:strings.LastIndex(src.Path, "/")]]
+		parent := ids[*src.Parent]
 
 		create = append(create, db.CreateResourcesParams{
 			ID:            id,
@@ -125,9 +131,9 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 		})
 
 		if src.Dir {
-			ids[src.Path] = id
+			ids[src.ID] = id
 		} else {
-			copy[src.ID] = id
+			contents[src.ID] = id
 		}
 	}
 
@@ -147,12 +153,12 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 			}
 			return err
 		}
-		return dbh.UpdateResourceModified(f.ctx, destParent.ID)
+		return dbh.UpdateResourceModified(f.ctx, destParent.ID())
 	})
 
 	if err == nil {
 		func() {
-			for k, v := range copy {
+			for k, v := range contents {
 				if err := r.f.cs.CopyContents(k, v); err != nil {
 					logrus.Warn("unable to copy " + k.String() + " to " + v.String() + ": " + err.Error())
 				}
@@ -161,25 +167,36 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 		}()
 	}
 
-	var dest = Resource{
-		f:             r.f,
+	parentID := destParent.ID()
+	var info = ResourceInfo{
 		ID:            id,
-		ParentID:      &destParent.ID,
+		ParentID:      &parentID,
 		Name:          destName,
-		Dir:           r.Dir,
+		Dir:           r.FSDir(),
 		Created:       time.Now(),
 		Modified:      time.Now(),
 		Deleted:       nil,
-		ContentSize:   r.ContentSize,
-		ContentType:   r.ContentType,
-		ContentSHA256: r.ContentSHA256,
+		ContentSize:   r.FSContentSize(),
+		ContentType:   r.FSContentType(),
+		ContentSHA256: r.FSContentSHA256(),
 		Permissions:   "{}",
-		// Not Needed
-		// UserPermissions:      ??
-		// InheritedPermissions: ??
-		// Path:                 destParent.Path + "/" + destName,
+		Publinks:      0,
 	}
-	return dest, deleted, err
+	if destParent.FSPath() == "/" {
+		info.Path = "/" + info.Name
+	} else {
+		info.Path = destParent.FSPath() + "/" + info.Name
+	}
+
+	ancestry := make([]ResourceInfo, len(destParent.Ancestry)+1)
+	copy(ancestry, destParent.Ancestry)
+	ancestry = append(ancestry, info)
+	created := Resource{
+		f:              r.f,
+		Ancestry:       ancestry,
+		UserPermission: destParent.UserPermission,
+	}
+	return created, deleted, err
 }
 
 // targetByPathOrUUID splits a target path or uuid into its constituent components
@@ -231,7 +248,7 @@ func (f filesystem) targetByPathOrUUID(src Resource, pathOrUUID string) (Resourc
 
 	name := pathOrUUID[index+1:]
 	if name == "" {
-		name = src.Name
+		name = src.FSName()
 	} else if CheckNameInvalid(name) {
 		return Resource{}, "", ErrResourceNameInvalid
 	}

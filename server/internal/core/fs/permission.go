@@ -22,10 +22,27 @@ func (r Resource) hasPermission(p Permission) bool {
 }
 
 func (r Resource) PermissionsString() string {
+	return r.Ancestry[0].PermissionsString()
+}
+
+func (r ResourceInfo) PermissionsString() string {
 	return permissionJsonString(r.Permissions)
 }
-func (r Resource) InheritedPermissionsString() string {
-	return permissionJsonString(r.InheritedPermissions)
+
+func (r Resource) FullPermissionsString() string {
+	result := make(map[string]Permission)
+	for _, i := range r.Ancestry {
+		p := make(map[string]Permission)
+		json.Unmarshal([]byte(i.Permissions), &p)
+		for k, v := range p {
+			result[k] = result[k] | v
+		}
+	}
+	res, err := json.Marshal(result)
+	if err != nil {
+		return err.Error()
+	}
+	return permissionJsonString(string(res))
 }
 
 func permissionJsonString(j string) string {

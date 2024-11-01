@@ -14,28 +14,28 @@ func (r Resource) DeleteChildRecursive(name string, hardDelete bool) error {
 		return ErrInsufficientPermissions
 	}
 
-	id, err := r.f.db.ChildResourceIDByName(r.f.ctx, db.ChildResourceIDByNameParams{Parent: r.ID, Name: name})
+	id, err := r.f.db.ChildResourceIDByName(r.f.ctx, db.ChildResourceIDByNameParams{Parent: r.ID(), Name: name})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 		return err
 	}
-	return r.f.deleteRecursive(id, r.ID, hardDelete)
+	return r.f.deleteRecursive(id, r.ID(), hardDelete)
 }
 
 func (r Resource) DeleteRecursive(hardDelete bool) error {
-	if r.ParentID == nil {
+	if r.ParentID() == nil {
 		return ErrInsufficientPermissions
 	}
-	parent, err := r.f.ResourceByID(*r.ParentID)
+	parent, err := r.f.ResourceByID(*r.ParentID())
 	if err != nil {
 		return err
 	}
 	if !parent.hasPermission(PermissionWrite) {
 		return ErrInsufficientPermissions
 	}
-	return r.f.deleteRecursive(r.ID, parent.ID, hardDelete)
+	return r.f.deleteRecursive(r.ID(), parent.ID(), hardDelete)
 }
 
 func (f filesystem) deleteRecursive(id, parent uuid.UUID, hardDelete bool) error {

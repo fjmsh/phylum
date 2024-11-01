@@ -70,7 +70,7 @@ func setupUserAddCommand() *cobra.Command {
 					fmt.Println("invalid value for flag 'chroot': " + err.Error())
 					os.Exit(1)
 				} else {
-					root = r.ID
+					root = r.ID()
 				}
 			}
 
@@ -110,7 +110,7 @@ func setupUserAddCommand() *cobra.Command {
 					if _, err := home.UpdatePermissions(u.Username, fs.PermissionRead|fs.PermissionWrite|fs.PermissionShare); err != nil {
 						return err
 					}
-					return userManager.UpdateUserHome(u, home.ID)
+					return userManager.UpdateUserHome(u, home.ID())
 				}
 
 				return nil
