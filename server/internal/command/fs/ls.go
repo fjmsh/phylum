@@ -26,7 +26,7 @@ func setupLsCommand() *cobra.Command {
 			}
 
 			fmt.Println(r.Path() + " " + r.FullPermissionsString())
-			fmt.Println(formatRow(r.ID().String(), formatSize(r.ContentSize()), r.ContentSHA256(), ".", r.Last().PermissionsString(), r.Publinks()))
+			fmt.Println(formatRow(r.ID().String(), formatSize(r.ContentSize()), r.ContentSHA256(), ".", r.Resource.PermissionsString(), r.Publinks()))
 
 			if r.Dir() {
 				children, err := r.ReadDir(false)

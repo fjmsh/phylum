@@ -9,8 +9,9 @@ import (
 
 type Resource struct {
 	f              filesystem
-	Ancestry       []ResourceInfo `json:"ancestry"`
-	UserPermission Permission     `json:"perm"`
+	Ancestry       []ResourceInfo
+	Resource       ResourceInfo
+	userPermission Permission
 }
 
 type ResourceInfo struct {
@@ -29,22 +30,21 @@ type ResourceInfo struct {
 	path          string
 }
 
-func (r Resource) Last() *ResourceInfo   { return &r.Ancestry[len(r.Ancestry)-1] }
-func (r Resource) ID() uuid.UUID         { return r.Last().id }
-func (r Resource) ParentID() *uuid.UUID  { return r.Last().parentID }
-func (r Resource) Name() string          { return r.Last().name }
-func (r Resource) Dir() bool             { return r.Last().dir }
-func (r Resource) Created() time.Time    { return r.Last().created }
-func (r Resource) Modified() time.Time   { return r.Last().modified }
-func (r Resource) Deleted() *time.Time   { return r.Last().deleted }
-func (r Resource) ContentSize() int64    { return r.Last().contentSize }
-func (r Resource) ContentSHA256() string { return r.Last().contentSHA256 }
-func (r Resource) ContentType() string   { return r.Last().contentType }
-func (r Resource) Publinks() int         { return r.Last().publinks }
-func (r Resource) Path() string          { return r.Last().path }
+func (r Resource) ID() uuid.UUID         { return r.Resource.id }
+func (r Resource) ParentID() *uuid.UUID  { return r.Resource.parentID }
+func (r Resource) Name() string          { return r.Resource.name }
+func (r Resource) Dir() bool             { return r.Resource.dir }
+func (r Resource) Created() time.Time    { return r.Resource.created }
+func (r Resource) Modified() time.Time   { return r.Resource.modified }
+func (r Resource) Deleted() *time.Time   { return r.Resource.deleted }
+func (r Resource) ContentSize() int64    { return r.Resource.contentSize }
+func (r Resource) ContentSHA256() string { return r.Resource.contentSHA256 }
+func (r Resource) ContentType() string   { return r.Resource.contentType }
+func (r Resource) Publinks() int         { return r.Resource.publinks }
+func (r Resource) Path() string          { return r.Resource.path }
 
 func (r Resource) hasPermission(p Permission) bool {
-	return r.UserPermission&p != 0
+	return r.userPermission&p != 0
 }
 
 func (r Resource) FullPermissionsString() string {
@@ -73,6 +73,7 @@ func (r ResourceInfo) Deleted() *time.Time   { return r.deleted }
 func (r ResourceInfo) ContentSize() int64    { return r.contentSize }
 func (r ResourceInfo) ContentSHA256() string { return r.contentSHA256 }
 func (r ResourceInfo) ContentType() string   { return r.contentType }
+func (r ResourceInfo) Permissions() []byte   { return r.permissions }
 func (r ResourceInfo) Publinks() int         { return r.publinks }
 func (r ResourceInfo) Path() string          { return r.path }
 

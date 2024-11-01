@@ -9,7 +9,7 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 		return Resource{}, ErrInsufficientPermissions
 	}
 	// Do not grant more than what you have
-	permission = permission & r.UserPermission
+	permission = permission & r.userPermission
 
 	var p []byte
 	var err error
@@ -28,6 +28,6 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 	if err != nil {
 		return Resource{}, err
 	}
-	r.Last().permissions = p
+	r.Resource.permissions = p
 	return r, nil
 }

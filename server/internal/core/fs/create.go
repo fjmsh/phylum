@@ -72,22 +72,6 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 		}
 	}
 
-	// return Resource{
-	// 	f:              r.f,
-	// 	ID:             result.ID,
-	// 	ParentID:       result.Parent,
-	// 	Name:           result.Name,
-	// 	Created:        result.Created.Time,
-	// 	Modified:       result.Modified.Time,
-	// 	Deleted:        deleted,
-	// 	Dir:            result.Dir,
-	// 	ContentSize:    result.ContentSize,
-	// 	ContentType:    result.ContentType,
-	// 	ContentSHA256:  result.ContentSha256,
-	// 	Permissions:    string(result.Permissions),
-	// 	Path:           path,
-	// 	UserPermission: r.UserPermission,
-	// }, nil
 	info := ResourceInfoFromDBResource(result)
 	if r.Path() == "/" {
 		info.path = "/" + info.name
@@ -96,11 +80,12 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 	}
 	ancestry := make([]ResourceInfo, len(r.Ancestry)+1)
 	copy(ancestry, r.Ancestry)
-	ancestry = append(ancestry, info)
+	ancestry = append(ancestry, r.Resource)
 	return Resource{
 		f:              r.f,
 		Ancestry:       ancestry,
-		UserPermission: r.UserPermission,
+		Resource:       info,
+		userPermission: r.userPermission,
 	}, nil
 }
 

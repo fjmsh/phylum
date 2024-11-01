@@ -15,8 +15,8 @@ import (
 var errInvalidParams = errors.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
 
 type homeResponse struct {
-	User user.User                `json:"user"`
-	Home fsapi.ResourceLsResponse `json:"home"`
+	User user.User              `json:"user"`
+	Home fsapi.ResourceResponse `json:"home"`
 }
 
 type sharedResponse struct {
@@ -49,7 +49,7 @@ func handleHomeRoute(c *gin.Context) {
 
 	c.JSON(200, homeResponse{
 		User: user,
-		Home: fsapi.LsResponseFromResource(f, r),
+		Home: fsapi.LsResponseFromResource(r),
 	})
 }
 

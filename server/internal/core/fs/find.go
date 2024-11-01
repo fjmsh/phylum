@@ -27,19 +27,22 @@ func (f filesystem) resourceFromResult(e []db.PublinkedResource, err error) (Res
 	var b strings.Builder
 	found := false
 	permission := Permission(0)
-	ancestry := make([]ResourceInfo, len(e))
+	ancestry := make([]ResourceInfo, len(e)-1)
+	var info ResourceInfo
 	for i := len(e) - 1; i >= 0; i-- {
 		if i != len(e)-1 {
 			b.WriteByte('/')
 			b.WriteString(e[i].Name)
 		}
-		info := resourceInfoFromDBPublinkedResource(e[i])
+		info = resourceInfoFromDBPublinkedResource(e[i])
 		if b.Len() == 0 {
 			info.path = "/"
 		} else {
 			info.path = b.String()
 		}
-		ancestry[len(e)-i-1] = info
+		if i != 0 {
+			ancestry[len(e)-i-1] = info
+		}
 
 		if e[i].ID == f.rootID {
 			found = true
@@ -56,7 +59,8 @@ func (f filesystem) resourceFromResult(e []db.PublinkedResource, err error) (Res
 	return Resource{
 		f:              f,
 		Ancestry:       ancestry,
-		UserPermission: permission,
+		Resource:       info,
+		userPermission: permission,
 	}, nil
 }
 
