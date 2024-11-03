@@ -34,15 +34,15 @@ class ResourceRepository {
     return (_selectChildren(id)..orderBy([(u) => OrderingTerm.desc(u.dir), (u) => OrderingTerm.asc(u.name.collate(Collate.noCase))])).watch();
   }
 
-  SimpleSelectStatement<$ResourcesTable, Resource> _selectResource(String id) {
+  SimpleSelectStatement<Resources, Resource> _selectResource(String id) {
     return account.db.resources.select()..where((f) => f.id.equals(id) & f.deleted.equals(false));
   }
 
-  SimpleSelectStatement<$ResourcesTable, Resource> _selectChildren(String id) {
+  SimpleSelectStatement<Resources, Resource> _selectChildren(String id) {
     return account.db.resources.select()..where((f) => f.parent.equals(id) & f.deleted.equals(false));
   }
 
-  SimpleSelectStatement<$ResourcesTable, Resource> _selectResources(Iterable<String> ids) {
+  SimpleSelectStatement<Resources, Resource> _selectResources(Iterable<String> ids) {
     return account.db.resources.select()..where((f) => f.id.isIn(ids));
   }
 
@@ -64,7 +64,7 @@ class ResourceRepository {
     );
   }
 
-  Future<int> updateResource(String id, Insertable<Resource> Function($$ResourcesTableUpdateCompanionBuilder o) fn) {
+  Future<int> updateResource(String id, Insertable<Resource> Function($ResourcesUpdateCompanionBuilder o) fn) {
     return account.db.managers.resources.filter((f) => f.id.equals(id)).update(fn);
   }
 

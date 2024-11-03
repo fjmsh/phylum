@@ -3,104 +3,103 @@
 part of 'db.dart';
 
 // ignore_for_file: type=lint
-class $ResourcesTable extends Resources
-    with TableInfo<$ResourcesTable, Resource> {
+class Resources extends Table with TableInfo<Resources, Resource> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $ResourcesTable(this.attachedDatabase, [this._alias]);
+  Resources(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL PRIMARY KEY');
   static const VerificationMeta _parentMeta = const VerificationMeta('parent');
-  @override
   late final GeneratedColumn<String> parent = GeneratedColumn<String>(
       'parent', aliasedName, true,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES resources (id)'));
+      $customConstraints: 'REFERENCES resources(id)');
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
-  @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
       'name', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL');
   static const VerificationMeta _dirMeta = const VerificationMeta('dir');
-  @override
   late final GeneratedColumn<bool> dir = GeneratedColumn<bool>(
       'dir', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: true,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("dir" IN (0, 1))'));
+      $customConstraints: 'NOT NULL CHECK (dir IN (0, 1))');
   static const VerificationMeta _createdMeta =
       const VerificationMeta('created');
-  @override
   late final GeneratedColumn<DateTime> created = GeneratedColumn<DateTime>(
       'created', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      $customConstraints: '');
   static const VerificationMeta _modifiedMeta =
       const VerificationMeta('modified');
-  @override
   late final GeneratedColumn<DateTime> modified = GeneratedColumn<DateTime>(
       'modified', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      $customConstraints: '');
   static const VerificationMeta _deletedMeta =
       const VerificationMeta('deleted');
-  @override
   late final GeneratedColumn<bool> deleted = GeneratedColumn<bool>(
       'deleted', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("deleted" IN (0, 1))'),
-      defaultValue: const Constant(false));
+      $customConstraints: 'NOT NULL DEFAULT 0 CHECK (deleted IN (0, 1))',
+      defaultValue: const CustomExpression('0'));
   static const VerificationMeta _contentSizeMeta =
       const VerificationMeta('contentSize');
-  @override
   late final GeneratedColumn<int> contentSize = GeneratedColumn<int>(
       'content_size', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: false,
-      defaultValue: const Constant(0));
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const CustomExpression('0'));
   static const VerificationMeta _contentSha256Meta =
       const VerificationMeta('contentSha256');
-  @override
   late final GeneratedColumn<String> contentSha256 = GeneratedColumn<String>(
       'content_sha256', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
-      defaultValue: const Constant(""));
+      $customConstraints: 'NOT NULL DEFAULT \'\'',
+      defaultValue: const CustomExpression('\'\''));
   static const VerificationMeta _contentTypeMeta =
       const VerificationMeta('contentType');
-  @override
   late final GeneratedColumn<String> contentType = GeneratedColumn<String>(
       'content_type', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
-      defaultValue: const Constant(""));
+      $customConstraints: 'NOT NULL DEFAULT \'\'',
+      defaultValue: const CustomExpression('\'\''));
   static const VerificationMeta _permissionsMeta =
       const VerificationMeta('permissions');
-  @override
   late final GeneratedColumn<String> permissions = GeneratedColumn<String>(
       'permissions', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      $customConstraints: '');
   static const VerificationMeta _publinksMeta =
       const VerificationMeta('publinks');
-  @override
   late final GeneratedColumn<int> publinks = GeneratedColumn<int>(
       'publinks', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: false,
-      defaultValue: const Constant(0));
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const CustomExpression('0'));
   static const VerificationMeta _lastRefreshMeta =
       const VerificationMeta('lastRefresh');
-  @override
   late final GeneratedColumn<DateTime> lastRefresh = GeneratedColumn<DateTime>(
       'last_refresh', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      $customConstraints: '');
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -233,9 +232,12 @@ class $ResourcesTable extends Resources
   }
 
   @override
-  $ResourcesTable createAlias(String alias) {
-    return $ResourcesTable(attachedDatabase, alias);
+  Resources createAlias(String alias) {
+    return Resources(attachedDatabase, alias);
   }
+
+  @override
+  bool get dontWriteConstraints => true;
 }
 
 class Resource extends DataClass implements Insertable<Resource> {
@@ -333,12 +335,12 @@ class Resource extends DataClass implements Insertable<Resource> {
       created: serializer.fromJson<DateTime?>(json['created']),
       modified: serializer.fromJson<DateTime?>(json['modified']),
       deleted: serializer.fromJson<bool>(json['deleted']),
-      contentSize: serializer.fromJson<int>(json['contentSize']),
-      contentSha256: serializer.fromJson<String>(json['contentSha256']),
-      contentType: serializer.fromJson<String>(json['contentType']),
+      contentSize: serializer.fromJson<int>(json['content_size']),
+      contentSha256: serializer.fromJson<String>(json['content_sha256']),
+      contentType: serializer.fromJson<String>(json['content_type']),
       permissions: serializer.fromJson<String?>(json['permissions']),
       publinks: serializer.fromJson<int>(json['publinks']),
-      lastRefresh: serializer.fromJson<DateTime?>(json['lastRefresh']),
+      lastRefresh: serializer.fromJson<DateTime?>(json['last_refresh']),
     );
   }
   @override
@@ -352,12 +354,12 @@ class Resource extends DataClass implements Insertable<Resource> {
       'created': serializer.toJson<DateTime?>(created),
       'modified': serializer.toJson<DateTime?>(modified),
       'deleted': serializer.toJson<bool>(deleted),
-      'contentSize': serializer.toJson<int>(contentSize),
-      'contentSha256': serializer.toJson<String>(contentSha256),
-      'contentType': serializer.toJson<String>(contentType),
+      'content_size': serializer.toJson<int>(contentSize),
+      'content_sha256': serializer.toJson<String>(contentSha256),
+      'content_type': serializer.toJson<String>(contentType),
       'permissions': serializer.toJson<String?>(permissions),
       'publinks': serializer.toJson<int>(publinks),
-      'lastRefresh': serializer.toJson<DateTime?>(lastRefresh),
+      'last_refresh': serializer.toJson<DateTime?>(lastRefresh),
     };
   }
 
@@ -657,7 +659,23 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
-  late final $ResourcesTable resources = $ResourcesTable(this);
+  late final Resources resources = Resources(this);
+  Selectable<ParentsResult> parents(String id) {
+    return customSelect(
+        'WITH RECURSIVE parents (id, parent, name, permissions) AS (SELECT id, parent, name, permissions FROM resources WHERE id = ?1 UNION ALL SELECT r.id, r.parent, r.name, r.permissions FROM resources AS r JOIN parents AS p ON r.id = p.parent) SELECT * FROM parents',
+        variables: [
+          Variable<String>(id)
+        ],
+        readsFrom: {
+          resources,
+        }).map((QueryRow row) => ParentsResult(
+          id: row.read<String>('id'),
+          parent: row.readNullable<String>('parent'),
+          name: row.read<String>('name'),
+          permissions: row.readNullable<String>('permissions'),
+        ));
+  }
+
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -665,7 +683,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [resources];
 }
 
-typedef $$ResourcesTableCreateCompanionBuilder = ResourcesCompanion Function({
+typedef $ResourcesCreateCompanionBuilder = ResourcesCompanion Function({
   required String id,
   Value<String?> parent,
   required String name,
@@ -681,7 +699,7 @@ typedef $$ResourcesTableCreateCompanionBuilder = ResourcesCompanion Function({
   Value<DateTime?> lastRefresh,
   Value<int> rowid,
 });
-typedef $$ResourcesTableUpdateCompanionBuilder = ResourcesCompanion Function({
+typedef $ResourcesUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<String> id,
   Value<String?> parent,
   Value<String> name,
@@ -698,27 +716,8 @@ typedef $$ResourcesTableUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<int> rowid,
 });
 
-final class $$ResourcesTableReferences
-    extends BaseReferences<_$AppDatabase, $ResourcesTable, Resource> {
-  $$ResourcesTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  static $ResourcesTable _parentTable(_$AppDatabase db) => db.resources
-      .createAlias($_aliasNameGenerator(db.resources.parent, db.resources.id));
-
-  $$ResourcesTableProcessedTableManager? get parent {
-    if ($_item.parent == null) return null;
-    final manager = $$ResourcesTableTableManager($_db, $_db.resources)
-        .filter((f) => f.id($_item.parent!));
-    final item = $_typedResult.readTableOrNull(_parentTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: [item]));
-  }
-}
-
-class $$ResourcesTableFilterComposer
-    extends Composer<_$AppDatabase, $ResourcesTable> {
-  $$ResourcesTableFilterComposer({
+class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
+  $ResourcesFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -727,6 +726,9 @@ class $$ResourcesTableFilterComposer
   });
   ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get parent => $composableBuilder(
+      column: $table.parent, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get name => $composableBuilder(
       column: $table.name, builder: (column) => ColumnFilters(column));
@@ -760,31 +762,10 @@ class $$ResourcesTableFilterComposer
 
   ColumnFilters<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => ColumnFilters(column));
-
-  $$ResourcesTableFilterComposer get parent {
-    final $$ResourcesTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.parent,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$ResourcesTableFilterComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
 }
 
-class $$ResourcesTableOrderingComposer
-    extends Composer<_$AppDatabase, $ResourcesTable> {
-  $$ResourcesTableOrderingComposer({
+class $ResourcesOrderingComposer extends Composer<_$AppDatabase, Resources> {
+  $ResourcesOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -793,6 +774,9 @@ class $$ResourcesTableOrderingComposer
   });
   ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get parent => $composableBuilder(
+      column: $table.parent, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get name => $composableBuilder(
       column: $table.name, builder: (column) => ColumnOrderings(column));
@@ -827,31 +811,10 @@ class $$ResourcesTableOrderingComposer
 
   ColumnOrderings<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => ColumnOrderings(column));
-
-  $$ResourcesTableOrderingComposer get parent {
-    final $$ResourcesTableOrderingComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.parent,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$ResourcesTableOrderingComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
 }
 
-class $$ResourcesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $ResourcesTable> {
-  $$ResourcesTableAnnotationComposer({
+class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
+  $ResourcesAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -860,6 +823,9 @@ class $$ResourcesTableAnnotationComposer
   });
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get parent =>
+      $composableBuilder(column: $table.parent, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
@@ -893,50 +859,30 @@ class $$ResourcesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => column);
-
-  $$ResourcesTableAnnotationComposer get parent {
-    final $$ResourcesTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.parent,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$ResourcesTableAnnotationComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
 }
 
-class $$ResourcesTableTableManager extends RootTableManager<
+class $ResourcesTableManager extends RootTableManager<
     _$AppDatabase,
-    $ResourcesTable,
+    Resources,
     Resource,
-    $$ResourcesTableFilterComposer,
-    $$ResourcesTableOrderingComposer,
-    $$ResourcesTableAnnotationComposer,
-    $$ResourcesTableCreateCompanionBuilder,
-    $$ResourcesTableUpdateCompanionBuilder,
-    (Resource, $$ResourcesTableReferences),
+    $ResourcesFilterComposer,
+    $ResourcesOrderingComposer,
+    $ResourcesAnnotationComposer,
+    $ResourcesCreateCompanionBuilder,
+    $ResourcesUpdateCompanionBuilder,
+    (Resource, BaseReferences<_$AppDatabase, Resources, Resource>),
     Resource,
-    PrefetchHooks Function({bool parent})> {
-  $$ResourcesTableTableManager(_$AppDatabase db, $ResourcesTable table)
+    PrefetchHooks Function()> {
+  $ResourcesTableManager(_$AppDatabase db, Resources table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$ResourcesTableFilterComposer($db: db, $table: table),
+              $ResourcesFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$ResourcesTableOrderingComposer($db: db, $table: table),
+              $ResourcesOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$ResourcesTableAnnotationComposer($db: db, $table: table),
+              $ResourcesAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<String> id = const Value.absent(),
             Value<String?> parent = const Value.absent(),
@@ -1002,65 +948,41 @@ class $$ResourcesTableTableManager extends RootTableManager<
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (
-                    e.readTable(table),
-                    $$ResourcesTableReferences(db, table, e)
-                  ))
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: ({parent = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins: <
-                  T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic>>(state) {
-                if (parent) {
-                  state = state.withJoin(
-                    currentTable: table,
-                    currentColumn: table.parent,
-                    referencedTable:
-                        $$ResourcesTableReferences._parentTable(db),
-                    referencedColumn:
-                        $$ResourcesTableReferences._parentTable(db).id,
-                  ) as T;
-                }
-
-                return state;
-              },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
+          prefetchHooksCallback: null,
         ));
 }
 
-typedef $$ResourcesTableProcessedTableManager = ProcessedTableManager<
+typedef $ResourcesProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
-    $ResourcesTable,
+    Resources,
     Resource,
-    $$ResourcesTableFilterComposer,
-    $$ResourcesTableOrderingComposer,
-    $$ResourcesTableAnnotationComposer,
-    $$ResourcesTableCreateCompanionBuilder,
-    $$ResourcesTableUpdateCompanionBuilder,
-    (Resource, $$ResourcesTableReferences),
+    $ResourcesFilterComposer,
+    $ResourcesOrderingComposer,
+    $ResourcesAnnotationComposer,
+    $ResourcesCreateCompanionBuilder,
+    $ResourcesUpdateCompanionBuilder,
+    (Resource, BaseReferences<_$AppDatabase, Resources, Resource>),
     Resource,
-    PrefetchHooks Function({bool parent})>;
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$ResourcesTableTableManager get resources =>
-      $$ResourcesTableTableManager(_db, _db.resources);
+  $ResourcesTableManager get resources =>
+      $ResourcesTableManager(_db, _db.resources);
+}
+
+class ParentsResult {
+  final String id;
+  final String? parent;
+  final String name;
+  final String? permissions;
+  ParentsResult({
+    required this.id,
+    this.parent,
+    required this.name,
+    this.permissions,
+  });
 }

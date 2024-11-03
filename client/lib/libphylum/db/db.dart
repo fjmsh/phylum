@@ -1,13 +1,14 @@
 import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:phylum/libphylum/db/resources.dart';
 
 import 'unsupported.dart' if (dart.library.ffi) 'native.dart' if (dart.library.html) 'web.dart';
 
 part 'db.g.dart';
 
-@DriftDatabase(tables: [Resources])
+@DriftDatabase(include: {
+  'resources.drift',
+})
 class AppDatabase extends _$AppDatabase {
   static Directory? storageDir;
   static Directory? tmpDir;
@@ -16,7 +17,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase({required this.id}) : super(_openConnection(id));
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
