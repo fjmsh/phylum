@@ -81,7 +81,7 @@ class AccountSelector extends StatelessWidget {
 
   Widget buildLoginPage(BuildContext context) => MaterialApp(
         key: _loginAppKey,
-        title: 'Phylum',
+        title: 'Login | Phylum',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
         darkTheme: ThemeData.dark(),

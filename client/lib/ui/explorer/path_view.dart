@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -44,6 +45,9 @@ class _PathViewState extends State<PathView> {
   void updateStream() {
     sub?.cancel();
     sub = context.read<PhylumAccount>().db.parents(id).watch().listen((data) {
+      SystemChrome.setApplicationSwitcherDescription(ApplicationSwitcherDescription(
+        label: "${data[0].name == "" ? "/" : data[0].name} | Phylum",
+      ));
       setState(() {
         ancestors = data.reversed;
       });

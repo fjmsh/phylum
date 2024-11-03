@@ -80,7 +80,7 @@ class PhylumApp extends StatelessWidget {
     }
     return MaterialApp.router(
       key: ValueKey('${account.id}-notready'),
-      title: 'Phylum',
+      title: 'Logging Out | Phylum',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
       darkTheme: ThemeData.dark(),
@@ -92,15 +92,5 @@ class PhylumApp extends StatelessWidget {
   RouterConfig<Object> createLogoutRouter() => GoRouter(
         errorBuilder: (context, state) => const AppLogout(),
         routes: [],
-      );
-
-  MaterialApp createRouter(RouterConfig<Object> router) => MaterialApp.router(
-        key: ValueKey(account),
-        title: 'Phylum',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
-        darkTheme: ThemeData.dark(),
-        routerConfig: router,
-        shortcuts: getAppShortcuts(),
       );
 }
