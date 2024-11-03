@@ -68,7 +68,7 @@ class _PathViewState extends State<PathView> {
           ElevatedButton(
             child: Text(r.parent == null ? "/" : r.name),
             onPressed: () {
-              context.pushNamed('folder', pathParameters: {'id': r.id});
+              context.goNamed('folder', pathParameters: {'id': r.id});
             },
           ),
       ],

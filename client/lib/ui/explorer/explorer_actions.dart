@@ -85,7 +85,7 @@ class ExplorerActions extends StatelessWidget {
 
   void _openResource(BuildContext context, Resource r) {
     if (r.dir) {
-      context.pushNamed('folder', pathParameters: {'id': r.id});
+      context.goNamed('folder', pathParameters: {'id': r.id});
     } else {
       ResourcePreview.showPreview(context, r.id);
     }

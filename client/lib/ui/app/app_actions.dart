@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/app/nav_forward.dart';
+import 'package:phylum/ui/app/nav_history.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 
@@ -28,22 +28,20 @@ class AppActions extends StatelessWidget {
           final r = await context.read<PhylumAccount>().resourceRepository.getResource(folderId);
           final parent = r?.parent;
           if (parent != null && context.mounted) {
-            context.pushNamed('folder', pathParameters: {'id': parent});
+            context.goNamed('folder', pathParameters: {'id': parent});
           }
           return null;
         }),
         NavBackIntent: CallbackAction<NavBackIntent>(onInvoke: (i) {
-          if (context.canPop()) {
-            context.pop();
-          }
+          context.read<NavHistoryManager>().goBack(context);
           return null;
         }),
         NavHomeIntent: CallbackAction<NavHomeIntent>(onInvoke: (i) {
-          context.pushNamed('home');
+          context.goNamed('home');
           return null;
         }),
         NavForwardIntent: CallbackAction<NavForwardIntent>(onInvoke: (i) {
-          context.read<NavForwardManager>().goForward(context);
+          context.read<NavHistoryManager>().goForward(context);
           return null;
         }),
       },

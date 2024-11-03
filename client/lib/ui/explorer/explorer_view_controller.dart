@@ -140,9 +140,13 @@ class ExplorerViewController extends StateNotifier<ExplorerViewState> {
   Future refresh() {
     if (state.refreshing) return Future.value(state);
     state = state.copyWith(refreshing: true);
-    return account.resourceRepository.requestResource(folderId).then((result) => state = state.copyWith(
+    return account.resourceRepository.requestResource(folderId).then((result) {
+      if (mounted) {
+        state = state.copyWith(
           refreshing: false,
           refreshError: !result.success,
-        ));
+        );
+      }
+    });
   }
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:go_router/go_router.dart';
@@ -9,7 +10,7 @@ import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/app/action_queue_status_notifier.dart';
 import 'package:phylum/ui/app/app_layout.dart';
 import 'package:phylum/ui/app/app_logout.dart';
-import 'package:phylum/ui/app/nav_forward.dart';
+import 'package:phylum/ui/app/nav_history.dart';
 import 'package:provider/provider.dart';
 
 class PhylumApp extends StatelessWidget {
@@ -26,27 +27,21 @@ class PhylumApp extends StatelessWidget {
       GoRoute(
         name: 'home',
         path: '/home',
-        pageBuilder: (context, state) {
-          final userHome = context.read<PhylumAccount>().userHome;
-          return NoTransitionPage(
-            name: state.name,
-            child: AppLayout(folderId: userHome),
-            arguments: userHome,
-          );
-        },
+        redirect: (context, state) => '/folders/${context.read<PhylumAccount>().userHome}',
       ),
       GoRoute(
         name: 'folder',
         path: '/folders/:id',
         pageBuilder: (context, state) => NoTransitionPage(
           name: state.name,
+          key: ValueKey(state.pathParameters['id']),
           child: AppLayout(folderId: state.pathParameters['id']!),
           arguments: state.pathParameters['id'],
         ),
       ),
     ],
     observers: [
-      observer,
+      if (!kIsWeb) observer,
     ],
   );
 
@@ -58,13 +53,13 @@ class PhylumApp extends StatelessWidget {
           StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
           StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
           StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(account)),
-          StateNotifierProvider<NavForwardManager, NavForwardState>.value(value: NavForwardManager()),
+          StateNotifierProvider<NavHistoryManager, NavHistoryState>.value(value: NavHistoryManager()),
         ],
         builder: (context, child) => ChangeNotifierProvider(
           create: (context) => ActionQueueStatusNotifier(context),
           child: PhylumApp._(
             account: context.read<PhylumAccount>(),
-            observer: context.read<NavForwardManager>().navObserver,
+            observer: context.read<NavHistoryManager>().navObserver,
           ),
         ),
       );
