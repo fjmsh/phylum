@@ -5,6 +5,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
 
 import 'explorer_view_controller.dart';
+import 'resource_icon_extension.dart';
 import 'resource_options_dialog.dart';
 
 const _draggableDataSelected = '__selected';
@@ -112,22 +113,5 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
       selectedTileColor: dim ? theme.colorScheme.primaryContainer.withOpacity(0.75) : null,
       tileColor: dropTargetActive ? theme.colorScheme.secondaryContainer : null,
     );
-  }
-}
-
-extension ResourceViewExtensions on Resource {
-  Icon getIcon() {
-    if (dir) return const Icon(Icons.folder);
-
-    if (contentType.startsWith("image")) {
-      return const Icon(Icons.image);
-    } else if (contentType.startsWith("video")) {
-      return const Icon(Icons.movie);
-    } else if (contentType.startsWith("audio")) {
-      return const Icon(Icons.headphones);
-    } else if (contentType.startsWith("text")) {
-      return const Icon(Icons.article);
-    }
-    return const Icon(Icons.insert_drive_file);
   }
 }

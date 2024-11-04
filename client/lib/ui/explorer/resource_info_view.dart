@@ -1,19 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/ui/explorer/explorer_view_controller.dart';
+import 'package:phylum/util/file_size.dart';
+import 'package:provider/provider.dart';
 
-class ResourceInfoView extends StatefulWidget {
+import 'resource_icon_extension.dart';
+
+class ResourceInfoView extends StatelessWidget {
   final String folderId;
 
   const ResourceInfoView({super.key, required this.folderId});
 
   @override
-  State<ResourceInfoView> createState() => _ResourceInfoViewState();
-}
-
-class _ResourceInfoViewState extends State<ResourceInfoView> {
-  @override
   Widget build(BuildContext context) {
+    final resource = context.select<ExplorerViewState, Resource?>((state) {
+      return state.selectedSingle ?? state.folder;
+    });
+
+    if (resource == null) {
+      return Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     return ListView(
-      children: [Text('Loading')],
+      children: [
+        ListTile(
+          leading: resource.getIcon(),
+          title: Text(resource.name, style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+        if (!resource.dir)
+          ListTile(
+            title: const Text('Type'),
+            subtitle: Text(resource.contentType),
+          ),
+        if (!resource.dir)
+          ListTile(
+            title: const Text('Size'),
+            subtitle: Text(resource.contentSize.getHumanString()),
+          ),
+        if (!resource.dir)
+          ListTile(
+            title: const Text('SHA-256'),
+            subtitle: Text(resource.contentSha256),
+          ),
+      ],
     );
   }
 }

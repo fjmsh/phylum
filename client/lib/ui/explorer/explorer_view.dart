@@ -31,11 +31,12 @@ class ExplorerView extends StatelessWidget {
             ? explorer
             : Row(
                 children: [
-                  Expanded(child: Card(child: explorer)),
+                  Expanded(child: Card(elevation: 0, child: explorer)),
                   SizedBox(
                     width: layout == ExplorerLayout.largeSidebar ? 360 : 300,
                     child: Card(
-                      margin: EdgeInsets.only(left: 16, bottom: 16),
+                      elevation: 0,
+                      margin: EdgeInsets.only(left: 16),
                       child: ResourceInfoView(folderId: folderId),
                     ),
                   )
