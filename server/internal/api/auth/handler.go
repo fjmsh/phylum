@@ -1,11 +1,12 @@
-package apiv1
+package auth
 
 import (
 	"encoding/base64"
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
@@ -18,13 +19,16 @@ const (
 	authHeaderBearer  = 2
 )
 
-func CreateApiAuthHandler() func(c *gin.Context) {
+var errAuthRequired = errors.NewError(http.StatusUnauthorized, "auth_required", "authorization required")
+
+func CreateHandler() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		if u, err := extractUserDetails(c); err != nil {
 			panic(err)
 		} else {
-			auth.Set(c, u, u.OpenFileSystem(ctx))
+			c.Set(keyUser, u)
+			c.Set(keyFileSystem, u.OpenFileSystem(ctx))
 		}
 	}
 }
@@ -32,7 +36,7 @@ func CreateApiAuthHandler() func(c *gin.Context) {
 func extractUserDetails(c *gin.Context) (user.User, error) {
 	userManager := user.CreateManager(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
-		return user.User{}, auth.ErrRequired
+		return user.User{}, errAuthRequired
 	} else if auth, ok := checkAuthHeader(header, "basic"); ok {
 		if username, password, ok := decodeBasicAuth(auth); ok {
 			if u, err := userManager.VerifyUserPassword(username, password); err == nil {
@@ -48,7 +52,7 @@ func extractUserDetails(c *gin.Context) (user.User, error) {
 			return user.User{}, err
 		}
 	}
-	return user.User{}, auth.ErrRequired
+	return user.User{}, errAuthRequired
 }
 
 func checkAuthHeader(header, prefix string) (string, bool) {

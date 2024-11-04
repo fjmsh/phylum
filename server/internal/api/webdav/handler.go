@@ -1,38 +1,17 @@
 package webdav
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/api/auth"
 	webdav "github.com/shroff/phylum/server/internal/api/webdav/impl"
-	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/sirupsen/logrus"
 )
 
 type handler struct {
 	prefix     string
 	lockSystem webdav.LockSystem
-}
-
-func createBasicAuthHandler() func(c *gin.Context) {
-	return func(c *gin.Context) {
-		authSuccess := false
-		if username, pass, ok := c.Request.BasicAuth(); ok {
-			ctx := c.Request.Context()
-			if u, err := user.CreateManager(ctx).VerifyUserPassword(username, pass); err == nil {
-				auth.Set(c, u, u.OpenFileSystem(ctx))
-				authSuccess = true
-			} else if !errors.Is(err, user.ErrCredentialsInvalid) {
-				panic(err)
-			}
-		}
-		if !authSuccess {
-			c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
-			panic(auth.ErrRequired)
-		}
-	}
 }
 
 func SetupHandler(r *gin.RouterGroup) {
@@ -58,14 +37,16 @@ func SetupHandler(r *gin.RouterGroup) {
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
-	fs := auth.GetFileSystem(c)
-	if fs == nil {
+	val, ok := c.Get(keyFileSystem)
+	if !ok {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
+	f := val.(fs.FileSystem)
+
 	webdavHandler := webdav.Handler{
 		Prefix:     h.prefix,
-		FileSystem: fs,
+		FileSystem: f,
 		LockSystem: h.lockSystem,
 	}
 	webdavHandler.ServeHTTP(c.Writer, c.Request)
