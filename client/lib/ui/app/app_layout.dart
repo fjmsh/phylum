@@ -12,9 +12,10 @@ class AppLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
     return AppActions(
       folderId: folderId,
-      child: MediaQuery.of(context).size.width > 800 ? ExpandedAppLayout(folderId: folderId) : CollapsedAppLayout(folderId: folderId),
+      child: width > 800 ? ExpandedAppLayout(folderId: folderId, xLarge: width > 1200) : CollapsedAppLayout(folderId: folderId),
     );
   }
 }
@@ -35,7 +36,7 @@ class CollapsedAppLayout extends StatelessWidget {
         },
         child: Icon(Icons.add),
       ),
-      body: ExplorerView.create(folderId),
+      body: ExplorerView.create(folderId, ExplorerLayout.noSidebar),
     );
   }
 
@@ -63,7 +64,9 @@ class CollapsedAppLayout extends StatelessWidget {
 
 class ExpandedAppLayout extends StatelessWidget {
   final String folderId;
-  const ExpandedAppLayout({super.key, required this.folderId});
+  final bool xLarge;
+
+  const ExpandedAppLayout({super.key, required this.folderId, required this.xLarge});
 
   @override
   Widget build(BuildContext context) {
@@ -80,23 +83,14 @@ class ExpandedAppLayout extends StatelessWidget {
         ),
         body: Row(
           children: [
-            const SizedBox(
-              width: 288,
+            SizedBox(
+              width: xLarge ? 300 : 240,
               child: NavList(showFab: true),
             ),
             Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Card(
-                      margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                      elevation: 0,
-                      child: ExplorerView.create(folderId),
-                    ),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                child: ExplorerView.create(folderId, xLarge ? ExplorerLayout.largeSidebar : ExplorerLayout.smallSidebar),
               ),
             ),
           ],

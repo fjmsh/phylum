@@ -86,7 +86,10 @@ class _PathViewState extends State<PathView> {
                     },
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Text(r.parent == null ? "/" : r.name),
+                child: Text(
+                  r.parent == null ? "/" : r.name,
+                  style: const TextStyle(fontSize: 16),
+                ),
               ),
             ),
           ),
