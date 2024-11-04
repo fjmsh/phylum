@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/ui/app/app_actions.dart';
+import 'package:phylum/ui/app/fab_action.dart';
 import 'package:phylum/ui/app/nav_list.dart';
-import 'package:phylum/ui/common/expandable_fab.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
 
@@ -13,7 +12,10 @@ class AppLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MediaQuery.of(context).size.width > 800 ? ExpandedAppLayout(folderId: folderId) : CollapsedAppLayout(folderId: folderId);
+    return AppActions(
+      folderId: folderId,
+      child: MediaQuery.of(context).size.width > 800 ? ExpandedAppLayout(folderId: folderId) : CollapsedAppLayout(folderId: folderId),
+    );
   }
 }
 
@@ -24,37 +26,38 @@ class CollapsedAppLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppActions(
-      folderId: folderId,
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Phylum')),
-        drawer: const Drawer(child: NavList(showFab: false)),
-        floatingActionButton: ExpandableFab(
-          distance: 112,
-          children: [
-            ActionButton(
-              icon: const Icon(Icons.create_new_folder),
-              onPressed: () async {
-                Actions.maybeInvoke(context, const NewFolderIntent());
-              },
-            ),
-            ActionButton(
-              icon: const Icon(Icons.upload_file),
-              onPressed: () async {
-                Actions.maybeInvoke(context, const UploadFilesIntent());
-              },
-            ),
-            ActionButton(
-              icon: const Icon(Icons.drive_folder_upload_outlined),
-              onPressed: () {
-                Actions.maybeInvoke(context, const UploadFolderIntent());
-              },
-            ),
-          ],
-        ),
-        body: ExplorerView.create(folderId),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Phylum')),
+      drawer: const Drawer(child: NavList(showFab: false)),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showCreateBottomSheet(context);
+        },
+        child: Icon(Icons.add),
       ),
+      body: ExplorerView.create(folderId),
     );
+  }
+
+  void showCreateBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+        context: context,
+        builder: (ctx) {
+          return ListView(
+            shrinkWrap: true,
+            children: [
+              for (final action in FabAction.values)
+                ListTile(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Actions.maybeInvoke(context, action.intent);
+                  },
+                  title: Text(action.descripiton),
+                  leading: action.icon,
+                ),
+            ],
+          );
+        });
   }
 }
 
@@ -67,6 +70,14 @@ class ExpandedAppLayout extends StatelessWidget {
     return AppActions(
       folderId: folderId,
       child: Scaffold(
+        appBar: AppBar(
+          title: Row(
+            children: [
+              SizedBox(width: 300, child: Text('Phylum')),
+              Expanded(child: PathView.create(folderId)),
+            ],
+          ),
+        ),
         body: Row(
           children: [
             const SizedBox(
@@ -78,10 +89,9 @@ class ExpandedAppLayout extends StatelessWidget {
                 mainAxisSize: MainAxisSize.max,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  PathView.create(folderId),
                   Expanded(
                     child: Card(
-                      margin: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
                       elevation: 0,
                       child: ExplorerView.create(folderId),
                     ),
