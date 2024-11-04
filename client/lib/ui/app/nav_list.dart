@@ -12,12 +12,20 @@ class NavList extends StatelessWidget {
     return ExcludeFocusTraversal(
       child: ListView(
         children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Phylum',
+              style: Theme.of(context).textTheme.headlineLarge,
+            ),
+          ),
           if (showFab)
             Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton.icon(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+              child: FloatingActionButton.extended(
                 icon: const Icon(Icons.add),
                 label: const Text('New'),
+                elevation: 0,
                 onPressed: () {
                   showMenu(
                     context: context,
