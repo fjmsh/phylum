@@ -11,8 +11,8 @@ import (
 type User struct {
 	Username    string    `json:"username"`
 	DisplayName string    `json:"display"`
-	Root        uuid.UUID `json:"root"`
-	Home        uuid.UUID `json:"home"`
+	Root        uuid.UUID `json:"-"`
+	Home        uuid.UUID `json:"-"`
 }
 
 func (u User) OpenFileSystem(ctx context.Context) fs.FileSystem {

@@ -2,14 +2,18 @@ package users
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 func SetupUserRoutes(r *gin.RouterGroup) {
 	group := r.Group("/users")
-	group.GET("/me", handleUserMeRoute)
+	group.GET("/list", handleUsersListRoute)
 }
 
-func handleUserMeRoute(c *gin.Context) {
-	c.JSON(200, auth.GetUser(c))
+func handleUsersListRoute(c *gin.Context) {
+	users, err := user.CreateManager(c.Request.Context()).AllUsers()
+	if err != nil {
+		panic(err)
+	}
+	c.JSON(200, users)
 }
