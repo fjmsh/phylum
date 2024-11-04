@@ -15,7 +15,13 @@ class PathView extends StatefulWidget {
   static Widget create(String id) {
     return SizedBox(
       height: 56,
-      child: Align(alignment: Alignment.centerLeft, child: PathView._(id: id)),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: PathView._(id: id),
+        ),
+      ),
     );
   }
 
@@ -63,17 +69,26 @@ class _PathViewState extends State<PathView> {
   @override
   Widget build(BuildContext context) {
     if (ancestors == null) {
-      return const Text('Loading');
+      return const Text('');
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (final r in ancestors!)
-          ElevatedButton(
-            child: Text(r.parent == null ? "/" : r.name),
-            onPressed: () {
-              context.goNamed('folder', pathParameters: {'id': r.id});
-            },
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            margin: EdgeInsets.symmetric(horizontal: 6),
+            child: InkWell(
+              onTap: r.id == widget.id
+                  ? null
+                  : () {
+                      context.goNamed('folder', pathParameters: {'id': r.id});
+                    },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Text(r.parent == null ? "/" : r.name),
+              ),
+            ),
           ),
       ],
     );

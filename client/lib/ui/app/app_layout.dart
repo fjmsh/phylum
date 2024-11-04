@@ -73,7 +73,13 @@ class AppLayout extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         PathView.create(folderId),
-        Expanded(child: ExplorerView.create(folderId)),
+        Expanded(
+          child: Card(
+            margin: const EdgeInsets.all(12),
+            elevation: 0,
+            child: ExplorerView.create(folderId),
+          ),
+        ),
       ],
     );
   }

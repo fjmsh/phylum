@@ -72,8 +72,19 @@ class PhylumApp extends StatelessWidget {
         key: ValueKey(account.id),
         title: 'Phylum',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
-        darkTheme: ThemeData.dark(),
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Color(0x0063a002),
+            dynamicSchemeVariant: DynamicSchemeVariant.neutral,
+          ),
+        ),
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Color(0x0063a002),
+            dynamicSchemeVariant: DynamicSchemeVariant.neutral,
+            brightness: Brightness.dark,
+          ),
+        ),
         routerConfig: _appRouter,
         shortcuts: getAppShortcuts(),
       );
