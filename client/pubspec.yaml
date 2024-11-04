@@ -16,6 +16,7 @@ dependencies:
   go_router:
   hive:
   http:
+  intl:
   logger:
   mime:
   offtheline:

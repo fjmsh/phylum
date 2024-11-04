@@ -17,7 +17,8 @@ class ExplorerViewState {
   final bool refreshing;
   final bool refreshError;
 
-  String get focusId => (focusIndex < 0 || focusIndex >= resources.length) ? '' : resources[focusIndex].id;
+  Resource? get focussed => focusIndex < 0 || focusIndex >= resources.length ? null : resources[focusIndex];
+  String? get focusId => focussed?.id;
   Iterable<Resource> get selected => resources.where((r) => selectedIds.contains(r.id));
   Resource? get selectedSingle => selectedIds.length != 1 ? null : resources.where((r) => selectedIds.contains(r.id)).firstOrNull;
 
