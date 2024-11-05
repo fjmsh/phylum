@@ -38,7 +38,7 @@ class ExplorerActions extends StatelessWidget {
           return null;
         }),
         DismissIntent: CallbackAction<DismissIntent>(onInvoke: (i) {
-          context.read<ExplorerViewController>().updateSelection((i) => i, SelectionMode.single, true);
+          context.read<ExplorerViewController>().updateSelection((i) => i, SelectionMode.none, true);
           return null;
         }),
         ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) {

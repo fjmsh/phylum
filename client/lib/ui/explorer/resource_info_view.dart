@@ -15,7 +15,7 @@ class ResourceInfoView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resource = context.select<ExplorerViewState, Resource?>((state) {
-      return state.focussed ?? state.folder;
+      return state.focussedIfSelected ?? state.folder;
     });
 
     if (resource == null) {

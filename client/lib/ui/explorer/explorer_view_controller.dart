@@ -21,6 +21,7 @@ class ExplorerViewState {
   String? get focusId => focussed?.id;
   Iterable<Resource> get selected => resources.where((r) => selectedIds.contains(r.id));
   Resource? get selectedSingle => selectedIds.length != 1 ? null : resources.where((r) => selectedIds.contains(r.id)).firstOrNull;
+  Resource? get focussedIfSelected => selectedIds.isEmpty ? null : focussed;
 
   const ExplorerViewState({
     this.folder,
@@ -125,6 +126,10 @@ class ExplorerViewController extends StateNotifier<ExplorerViewState> {
         if (!selectedIds.add(state.resources[index].id)) {
           selectedIds.remove(state.resources[index].id);
         }
+        selectionStartIndex = index;
+        break;
+      case SelectionMode.none:
+        selectedIds = const {};
         selectionStartIndex = index;
         break;
       case SelectionMode.multi:
