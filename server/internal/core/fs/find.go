@@ -27,30 +27,37 @@ func (f filesystem) resourceFromResult(e []db.PublinkedResource, err error) (Res
 	var b strings.Builder
 	found := false
 	permission := Permission(0)
-	ancestry := make([]ResourceInfo, len(e)-1)
+	ancestry := make([]ResourceInfo, 0, len(e)-1)
 	var info ResourceInfo
 	for i := len(e) - 1; i >= 0; i-- {
-		if i != len(e)-1 {
-			b.WriteByte('/')
-			b.WriteString(e[i].Name)
+		if !found {
+			if e[i].ID == f.rootID {
+				found = true
+				e[i].Parent = nil
+			}
 		}
-		info = resourceInfoFromDBPublinkedResource(e[i])
-		if b.Len() == 0 {
-			info.path = "/"
-		} else {
-			info.path = b.String()
-		}
-		if i != 0 {
-			ancestry[len(e)-i-1] = info
-		}
+		if found {
+			if len(ancestry) != 1 {
+				b.WriteByte('/')
+			}
+			if len(ancestry) != 0 {
+				b.WriteString(e[i].Name)
+			}
+			info = resourceInfoFromDBPublinkedResource(e[i])
+			if b.Len() == 0 {
+				info.path = "/"
+			} else {
+				info.path = b.String()
+			}
+			if i != 0 {
+				ancestry = append(ancestry, info)
+			}
 
-		if e[i].ID == f.rootID {
-			found = true
-		}
-		if p, err := readPermissionFromJson(e[i].Permissions, f.username); err != nil {
-			return Resource{}, err
-		} else {
-			permission = permission | p
+			if p, err := readPermissionFromJson(e[i].Permissions, f.username); err != nil {
+				return Resource{}, err
+			} else {
+				permission = permission | p
+			}
 		}
 	}
 	if !found || permission&PermissionRead == 0 {
