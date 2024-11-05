@@ -17,7 +17,7 @@ import (
 
 func setupUserAddCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add email",
+		Use:   "add username",
 		Short: "Add User",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

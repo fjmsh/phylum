@@ -17,6 +17,7 @@ func SetupCommand() *cobra.Command {
 	}
 	cmd.AddCommand([]*cobra.Command{
 		setupUserAddCommand(),
+		setupUserModCommand(),
 		setupUserChrootCommand(),
 		setupUserListCommand(),
 		setupBookmarksCommand(),
