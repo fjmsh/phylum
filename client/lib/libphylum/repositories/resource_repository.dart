@@ -89,7 +89,7 @@ class ResourceRepository {
 
   Future<(Iterable<ResourcesCompanion>, Iterable<String>)> parseFullResourceObject(Map<String, dynamic> data) async {
     final ancestors = (data['ancestors'] as List).cast<Map>().map(
-          (a) => parsePartialResourceObject(a.cast<String, dynamic>()).copyWith(dir: Value(true)),
+          (a) => parseResourceAncestor(a.cast<String, dynamic>()).copyWith(dir: Value(true)),
         );
 
     final info = parseResourceObject(data['info'])..copyWith(lastRefresh: Value(DateTime.now()));
@@ -122,9 +122,18 @@ class ResourceRepository {
     );
   }
 
+  ResourcesCompanion parseResourceAncestor(Map<String, dynamic> data) {
+    return ResourcesCompanion(
+        id: Value(data['id']),
+        parent: Value(data['parent']),
+        name: Value(data['name']),
+        dir: Value(true),
+        permissions: data['permisisons'] == '{}' ? Value(null) : Value(data['permisisons']));
+  }
+
   ResourcesCompanion parsePartialResourceObject(Map<String, dynamic> data) {
     return ResourcesCompanion(
-      id: Value.absentIfNull(data['id']),
+      id: Value(data['id']),
       parent: Value.absentIfNull(data['parent']),
       name: Value.absentIfNull(data['name']),
       dir: Value.absentIfNull(data['dir']),
