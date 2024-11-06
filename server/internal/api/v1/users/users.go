@@ -15,5 +15,7 @@ func handleUsersListRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	c.JSON(200, users)
+	c.JSON(200, gin.H{
+		"users": users,
+	})
 }
