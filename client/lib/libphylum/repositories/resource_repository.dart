@@ -116,7 +116,7 @@ class ResourceRepository {
       contentSize: Value(data['c_size']),
       contentSha256: Value(data['c_sha256']),
       contentType: Value(data['c_type']),
-      permissions: data['permisisons'] == '{}' ? Value(null) : Value(data['permisisons']),
+      permissions: data['permissions'] == '{}' ? Value(null) : Value(data['permissions']),
       publinks: Value(data['publinks']),
       lastRefresh: Value(DateTime.now()),
     );
@@ -128,7 +128,7 @@ class ResourceRepository {
         parent: Value(data['parent']),
         name: Value(data['name']),
         dir: Value(true),
-        permissions: data['permisisons'] == '{}' ? Value(null) : Value(data['permisisons']));
+        permissions: data['permissions'] == '{}' ? Value(null) : Value(data['permissions']));
   }
 
   ResourcesCompanion parsePartialResourceObject(Map<String, dynamic> data) {
@@ -144,9 +144,9 @@ class ResourceRepository {
       contentSha256: Value.absentIfNull(data['c_sha256']),
       contentType: Value.absentIfNull(data['c_type']),
       permissions: data.containsKey('permissions')
-          ? data['permisisons'] == '{}'
+          ? data['permissions'] == '{}'
               ? Value(null)
-              : Value(data['permisisons'])
+              : Value(data['permissions'])
           : Value.absent(),
       publinks: Value.absentIfNull(data['publinks']),
     );

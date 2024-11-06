@@ -68,13 +68,14 @@ class _PathViewState extends State<PathView> {
 
   @override
   Widget build(BuildContext context) {
+    final ancestors = this.ancestors;
     if (ancestors == null) {
       return const Text('');
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (final r in ancestors!)
+        for (final r in ancestors)
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             margin: EdgeInsets.symmetric(horizontal: 6),
