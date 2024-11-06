@@ -13,9 +13,35 @@ import 'package:phylum/ui/app/app_logout.dart';
 import 'package:phylum/ui/app/nav_history.dart';
 import 'package:provider/provider.dart';
 
-class PhylumApp extends StatelessWidget {
+class PhylumApp extends StatefulWidget {
   final PhylumAccount account;
   final NavigatorObserver observer;
+
+  PhylumApp._({required this.account, required this.observer}) : super(key: ValueKey(account.id));
+
+  static Widget create(PhylumAccount account) => MultiProvider(
+        key: ValueKey(account.id),
+        providers: [
+          StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
+          StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
+          StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(account)),
+          StateNotifierProvider<NavHistoryManager, NavHistoryState>.value(value: NavHistoryManager()),
+        ],
+        builder: (context, child) => ChangeNotifierProvider(
+          create: (context) => ActionQueueStatusNotifier(context),
+          child: PhylumApp._(
+            account: context.read<PhylumAccount>(),
+            observer: context.read<NavHistoryManager>().navObserver,
+          ),
+        ),
+      );
+
+  @override
+  State<PhylumApp> createState() => _PhylumAppState();
+}
+
+class _PhylumAppState extends State<PhylumApp> {
+  late final AppLifecycleListener _listener;
 
   late final _appRouter = GoRouter(
     routes: [
@@ -41,35 +67,32 @@ class PhylumApp extends StatelessWidget {
       ),
     ],
     observers: [
-      if (!kIsWeb) observer,
+      if (!kIsWeb) widget.observer,
     ],
   );
 
-  PhylumApp._({required this.account, required this.observer}) : super(key: ValueKey(account.id));
+  @override
+  void initState() {
+    super.initState();
+    _listener = AppLifecycleListener(onStateChange: (state) {
+      if (state == AppLifecycleState.resumed) {
+        widget.account.userRepository.refreshUserList();
+      }
+    });
+  }
 
-  static Widget create(PhylumAccount account) => MultiProvider(
-        key: ValueKey(account.id),
-        providers: [
-          StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
-          StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
-          StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(account)),
-          StateNotifierProvider<NavHistoryManager, NavHistoryState>.value(value: NavHistoryManager()),
-        ],
-        builder: (context, child) => ChangeNotifierProvider(
-          create: (context) => ActionQueueStatusNotifier(context),
-          child: PhylumApp._(
-            account: context.read<PhylumAccount>(),
-            observer: context.read<NavHistoryManager>().navObserver,
-          ),
-        ),
-      );
+  @override
+  void dispose() {
+    _listener.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final ready = context.select<AccountState, bool>((state) => state == AccountState.ready);
     if (ready) {
       return MaterialApp.router(
-        key: ValueKey(account.id),
+        key: ValueKey(widget.account.id),
         title: 'Phylum',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
@@ -90,7 +113,7 @@ class PhylumApp extends StatelessWidget {
       );
     }
     return MaterialApp.router(
-      key: ValueKey('${account.id}-notready'),
+      key: ValueKey('${widget.account.id}-notready'),
       title: 'Logging Out | Phylum',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
