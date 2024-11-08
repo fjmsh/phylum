@@ -55,6 +55,8 @@ class PhylumAccount extends Account<PhylumAccount> {
     // Set Authorization header
     _accessToken = accessToken;
 
+    await resourceRepository.initialize();
+
     void Function()? l;
     l = apiClient.addResponseListener((request, errorResponse) {
       if (errorResponse is PhylumApiErrorResponse) {
@@ -73,8 +75,8 @@ class PhylumAccount extends Account<PhylumAccount> {
   }
 
   @override
-  Future<void> clearData() async {
-    await super.clearData();
+  Future<void> cleanup() async {
+    await super.cleanup();
     await db.dropDatabase();
   }
 

@@ -20,19 +20,12 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
 
   final String resourceId;
   final String? parent;
-  final String oldParent;
   final String? resourceName;
-  final String oldName;
+  final DateTime modified;
   final String description;
 
-  ResourceMoveAction._({
-    required this.resourceId,
-    required this.resourceName,
-    required this.parent,
-    required this.oldName,
-    required this.oldParent,
-    required this.description,
-  });
+  ResourceMoveAction._(
+      {required this.resourceId, required this.resourceName, required this.parent, required this.description, required this.modified});
 
   ResourceMoveAction({
     required Resource r,
@@ -42,9 +35,8 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
           resourceId: r.id,
           resourceName: name,
           parent: parent?.id,
-          oldName: r.name,
-          oldParent: r.parent!,
           description: name == null ? 'Moving ${r.name}' : 'Renaming ${r.name} to $name',
+          modified: DateTime.now(),
         );
 
   static ResourceMoveAction fromMap(Map<String, dynamic> map) {
@@ -52,9 +44,8 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
       resourceId: map['resourceId'],
       resourceName: map['resourceName'],
       parent: map['parent'],
-      oldName: map['oldName'],
-      oldParent: map['oldParent'],
       description: map['description'],
+      modified: DateTime.fromMillisecondsSinceEpoch(map['modified']),
     );
   }
 
@@ -71,23 +62,36 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
   }
 
   @override
+  Future<void> initialize(PhylumAccount account) {
+    return account.resourceRepository.retainServerData(resourceId);
+  }
+
+  @override
+  Future<void> dispose(PhylumAccount account) {
+    return account.resourceRepository.discardServerData(resourceId);
+  }
+
+  @override
   Future<void> applyOptimisticUpdate(PhylumAccount account) {
     return account.resourceRepository.updateResource(
       resourceId,
       (o) => o(
         name: Value.absentIfNull(resourceName),
         parent: Value.absentIfNull(parent),
+        modified: Value(modified),
       ),
     );
   }
 
   @override
   Future<void> revertOptimisticUpdate(PhylumAccount account) {
+    final serverData = account.resourceRepository.getServerData(resourceId)!;
     return account.resourceRepository.updateResource(
       resourceId,
       (o) => o(
-        name: Value.absentIfNull(oldName),
-        parent: Value.absentIfNull(oldParent),
+        name: resourceName == null ? Value.absent() : Value(serverData.name),
+        parent: parent == null ? Value.absent() : Value(serverData.parent),
+        modified: Value(serverData.modified),
       ),
     );
   }
@@ -97,9 +101,8 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
         'resourceId': resourceId,
         'resourceName': resourceName,
         'parent': parent,
-        'oldName': oldName,
-        'oldParent': oldParent,
         'description': description,
+        'modified': modified.millisecondsSinceEpoch,
       };
 
   @override
