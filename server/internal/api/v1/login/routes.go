@@ -4,13 +4,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 type loginResponse struct {
-	AccessToken string    `json:"access_token"`
-	User        user.User `json:"user"`
+	AccessToken string               `json:"access_token"`
+	User        loggedInUserResponse `json:"user"`
+}
+type loggedInUserResponse struct {
+	Username string    `json:"username"`
+	Display  string    `json:"display"`
+	Home     uuid.UUID `json:"home"`
 }
 
 func SetupRoutes(r *gin.RouterGroup) {
@@ -38,7 +44,11 @@ func createLoginRouteHandler() func(c *gin.Context) {
 			} else {
 				c.JSON(200, loginResponse{
 					AccessToken: token,
-					User:        user,
+					User: loggedInUserResponse{
+						Username: user.Username,
+						Display:  user.DisplayName,
+						Home:     user.Home,
+					},
 				})
 			}
 		}
