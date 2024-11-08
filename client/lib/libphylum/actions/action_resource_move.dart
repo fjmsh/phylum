@@ -63,12 +63,12 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
 
   @override
   Future<void> initialize(PhylumAccount account) {
-    return account.resourceRepository.retainServerData(resourceId);
+    return account.resourceRepository.trackServerData(resourceId);
   }
 
   @override
   Future<void> dispose(PhylumAccount account) {
-    return account.resourceRepository.discardServerData(resourceId);
+    return account.resourceRepository.stopTrackingServerData(resourceId);
   }
 
   @override

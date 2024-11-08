@@ -79,7 +79,7 @@ class ResourceRepository {
     return account.db.resources.select()..where((f) => f.id.isIn(ids));
   }
 
-  Future<void> retainServerData(String id) async {
+  Future<void> trackServerData(String id) async {
     final count = _serverDataCountsBox.get(id) ?? 0;
     if (count == 0) {
       final r = await _selectResource(id).getSingle();
@@ -92,10 +92,10 @@ class ResourceRepository {
     }
   }
 
-  Future<void> discardServerData(String id) async {
+  Future<void> stopTrackingServerData(String id) async {
     final count = _serverDataCountsBox.get(id) ?? 0;
     if (count <= 0) {
-      throw Exception('Cannot discard server data without first retaining');
+      throw Exception('Cannot stop tracking server data without first starting');
     }
     if (count == 1) {
       await Future.wait([
