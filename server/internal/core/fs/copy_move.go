@@ -32,6 +32,9 @@ func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
 		}
 		return Resource{}, false, err
 	}
+	if !destParent.Dir() {
+		return Resource{}, false, ErrResourceNotCollection
+	}
 	if !destParent.hasPermission(PermissionWrite) {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
@@ -230,22 +233,6 @@ func (f filesystem) targetByPathOrUUID(src Resource, pathOrUUID string) (Resourc
 		}
 		// }
 	}
-	var parent Resource
-	if index == 0 {
-		parent = src
-	} else {
-		if id, err := uuid.Parse(pathOrUUID[0:index]); err != nil {
-			return Resource{}, "", err
-		} else if res, err := f.ResourceByID(id); err != nil {
-			if errors.Is(err, ErrResourceNotFound) {
-				err = ErrParentNotFound
-			}
-			return Resource{}, "", err
-		} else {
-			parent = res
-		}
-
-	}
 
 	name := pathOrUUID[index+1:]
 	if name == "" {
@@ -254,5 +241,22 @@ func (f filesystem) targetByPathOrUUID(src Resource, pathOrUUID string) (Resourc
 		return Resource{}, "", ErrResourceNameInvalid
 	}
 
-	return parent, name, nil
+	var parentID = *src.ParentID()
+	if index != 0 {
+		if id, err := uuid.Parse(pathOrUUID[0:index]); err != nil {
+			return Resource{}, "", err
+		} else {
+			parentID = id
+		}
+	}
+
+	if res, err := f.ResourceByID(parentID); err != nil {
+		if errors.Is(err, ErrResourceNotFound) {
+			err = ErrParentNotFound
+		}
+		return Resource{}, "", err
+	} else {
+		return res, name, nil
+	}
+
 }
