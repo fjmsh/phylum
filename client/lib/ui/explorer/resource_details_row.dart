@@ -104,7 +104,22 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
             : const BorderSide(color: Colors.transparent, width: 2.0);
 
     return ListTile(
-      leading: widget.r.getIcon(),
+      leading: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          widget.r.getIcon(),
+          SizedBox(
+            width: 16,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.r.permissions != null) Icon(Icons.people_alt, size: 14),
+                if (widget.r.publinks > 0) Icon(Icons.public, size: 14),
+              ],
+            ),
+          ),
+        ],
+      ),
       title: Text(widget.r.name),
       trailing: ResourceOptionsButton(r: widget.r),
       shape: RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(4.0)),

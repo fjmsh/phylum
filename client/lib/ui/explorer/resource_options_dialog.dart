@@ -52,7 +52,7 @@ class ResourceOptionsButton extends StatelessWidget {
 
   void showResourceOptions(BuildContext context, PhylumAccount account) async {
     final option = await showModalBottomSheet(context: context, builder: (context) => const ResourceOptionsList());
-    if (!context.mounted) {
+    if (!context.mounted || option == null) {
       return;
     }
     handleResourceOption(context, account, option);

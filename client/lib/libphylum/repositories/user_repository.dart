@@ -1,5 +1,4 @@
 import 'package:drift/drift.dart';
-import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -16,7 +15,6 @@ class UserRepository {
   }
 
   Future<ApiResult> refreshUserList() async {
-    debugPrint('Refreshing user list');
     return account.apiClient.sendRequest(UsersListRequest(), callback: (request, response) async {
       if (response is PhylumApiSuccessResponse) {
         await processUserListResponse(response.data);
