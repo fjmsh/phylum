@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "net.kudosoft.phylum"
+    namespace = "cloud.phylum.drive"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,8 +20,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "net.kudosoft.phylum"
-        minSdk = flutter.minSdkVersion
+        applicationId = "cloud.phylum.drive"
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

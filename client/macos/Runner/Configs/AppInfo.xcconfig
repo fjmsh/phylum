@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = phylum
+PRODUCT_NAME = Phylum Drive
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = net.kudosoft.phylum
+PRODUCT_BUNDLE_IDENTIFIER = cloud.phylum.drive
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2024 net.kudosoft.phylum. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2024 cloud.phylum.drive. All rights reserved.
