@@ -22,5 +22,6 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group.POST("/mv/:id", handleMvRequest)
 	group.POST("/cp/:id", handleCpRequest)
 	group.DELETE("/rm/:id", handleRmRequest)
+	group.POST("/share/:id", handleShareRequest)
 	group.PUT("/upload/:id", handleUploadRequest)
 }
