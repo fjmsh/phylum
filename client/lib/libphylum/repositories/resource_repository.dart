@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -145,18 +144,21 @@ class ResourceRepository {
       batch.insertAllOnConflictUpdate(db.resources, resources);
     });
     for (final r in resources) {
-      if (_serverDataBox.containsKey(r.id.value)) {
-        _serverDataBox.put(r.id.value, _serverDataBox.get(r.id.value)!.copyWithCompanion(r));
+      final serverData = _serverDataBox.get(r.id.value);
+      if (serverData != null) {
+        _serverDataBox.put(r.id.value, serverData.copyWithCompanion(r));
       }
     }
   }
 
   Future processResourceUpdateResponse(String id, Map<String, dynamic> data) async {
     final r = parsePartialResourceObject(data);
-    debugPrint(r.toString());
     final update = (account.db.resources.update()..where((o) => o.id.equals(id)));
     await update.write(r);
-    _serverDataBox.put(r.id.value, _serverDataBox.get(r.id.value)!.copyWithCompanion(r));
+    final serverData = _serverDataBox.get(r.id.value);
+    if (serverData != null) {
+      _serverDataBox.put(r.id.value, serverData.copyWithCompanion(r));
+    }
   }
 
   Future<(Iterable<ResourcesCompanion>, Iterable<String>)> parseFullResourceObject(Map<String, dynamic> data) async {
