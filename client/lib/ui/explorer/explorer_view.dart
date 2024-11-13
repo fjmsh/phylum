@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
-import 'package:phylum/ui/app/app_layout.dart';
+import 'package:phylum/ui/app/app_layout_manager.dart';
 import 'package:phylum/ui/explorer/paste_action_handler.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:provider/provider.dart';
@@ -9,18 +9,12 @@ import 'explorer_view_controller.dart';
 import 'folder_empty_view.dart';
 import 'folder_list_view.dart';
 
-enum ExplorerLayout {
-  noSidebar,
-  smallSidebar,
-  largeSidebar,
-}
-
 class ExplorerView extends StatelessWidget {
   const ExplorerView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final layout = context.watch<LayoutData>();
+    final layout = context.watch<AppLayoutState>();
     return Actions(
       actions: {
         NextFocusIntent: CallbackAction<NextFocusIntent>(onInvoke: (i) => null),
