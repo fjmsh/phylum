@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart' as p;
 import 'package:phylum/integrations/directories.dart';
@@ -8,6 +7,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/requests/resource_contents_request.dart';
+import 'package:phylum/util/logging.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 const _keyDownloadTaskId = 'downloadTaskId';
@@ -61,7 +61,7 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
         return s;
       });
       sink.addStream(stream).onError((err, _) {
-        debugPrint(err.toString());
+        logger.i('Download Error: ${err.toString()}');
         sink.close();
         task.status = DownloadStatusError(err.toString());
         output.deleteSync();

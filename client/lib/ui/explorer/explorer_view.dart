@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/app_shortcuts.dart';
+import 'package:phylum/ui/app/app_layout.dart';
 import 'package:phylum/ui/explorer/paste_action_handler.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:provider/provider.dart';
@@ -14,22 +16,23 @@ enum ExplorerLayout {
 }
 
 class ExplorerView extends StatelessWidget {
-  const ExplorerView._({super.key});
+  const ExplorerView({super.key});
 
-  static Widget create(String folderId, ExplorerLayout layout) {
-    final explorer = PasteActionHandler(folderId: folderId, child: ExplorerView._(key: ValueKey(folderId)));
+  @override
+  Widget build(BuildContext context) {
+    final layout = context.watch<LayoutData>();
     return Actions(
       actions: {
         NextFocusIntent: CallbackAction<NextFocusIntent>(onInvoke: (i) => null),
         PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
+        PasteFromClipboardIntent: CallbackAction<PasteFromClipboardIntent>(onInvoke: (PasteFromClipboardIntent i) => handlePasteAction(i, context)),
       },
-      child: layout == ExplorerLayout.noSidebar
-          ? explorer
-          : Row(
+      child: layout.type.isExpanded
+          ? Row(
               children: [
-                Expanded(child: Card(elevation: 0, child: explorer)),
+                Expanded(child: Card(elevation: 0, child: buildPage(context))),
                 SizedBox(
-                  width: layout == ExplorerLayout.largeSidebar ? 360 : 300,
+                  width: layout.type == LayoutType.expandedLarge ? 360 : 300,
                   child: Card(
                     elevation: 0,
                     margin: EdgeInsets.only(left: 16),
@@ -37,12 +40,12 @@ class ExplorerView extends StatelessWidget {
                   ),
                 )
               ],
-            ),
+            )
+          : buildPage(context),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget buildPage(BuildContext context) {
     final type = context.select<ExplorerViewState, FolderEmptyViewType?>((state) {
       if (state.resources.isEmpty) {
         if (state.refreshing) {

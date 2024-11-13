@@ -57,25 +57,23 @@ class LayoutData extends ChangeNotifier {
 }
 
 class AppLayout extends StatelessWidget {
-  final String folderId;
-
-  const AppLayout({super.key, required this.folderId});
+  const AppLayout({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Builder(builder: (context) {
       final layout = context.watch<LayoutData>();
-      return layout.type.isExpanded ? ExpandedAppLayout(folderId: folderId) : CollapsedAppLayout(folderId: folderId);
+      return layout.type.isExpanded ? ExpandedAppLayout() : CollapsedAppLayout();
     });
   }
 
   static Widget create(String folderId) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider<LayoutData>(create: (context) => LayoutData()),
         StateNotifierProvider<ExplorerViewController, ExplorerViewState>(
           create: (context) => ExplorerViewController(account: context.read<PhylumAccount>(), folderId: folderId),
         ),
-        ChangeNotifierProvider<LayoutData>(create: (context) => LayoutData()),
       ],
       builder: (context, child) {
         final platform = Theme.of(context).platform;
@@ -83,19 +81,13 @@ class AppLayout extends StatelessWidget {
         context.read<LayoutData>()._update(platform, size);
         return child!;
       },
-      child: AppActions(
-          folderId: folderId,
-          child: AppLayout(
-            folderId: folderId,
-          )),
+      child: AppActions(child: AppLayout()),
     );
   }
 }
 
 class CollapsedAppLayout extends StatelessWidget {
-  final String folderId;
-
-  const CollapsedAppLayout({super.key, required this.folderId});
+  const CollapsedAppLayout({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +100,7 @@ class CollapsedAppLayout extends StatelessWidget {
         },
         child: Icon(Icons.add),
       ),
-      body: ExplorerView.create(folderId, ExplorerLayout.noSidebar),
+      body: const ExplorerView(),
     );
   }
 
@@ -135,39 +127,32 @@ class CollapsedAppLayout extends StatelessWidget {
 }
 
 class ExpandedAppLayout extends StatelessWidget {
-  final String folderId;
-
-  const ExpandedAppLayout({super.key, required this.folderId});
+  const ExpandedAppLayout({super.key});
 
   @override
   Widget build(BuildContext context) {
     final layout = context.watch<LayoutData>();
-    return AppActions(
-      folderId: folderId,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Row(
-            children: [
-              SizedBox(width: 300, child: Text('Phylum')),
-              Expanded(child: PathView.create(folderId)),
-            ],
-          ),
-        ),
-        body: Row(
+    final sidebarWidth = layout.type == LayoutType.expandedLarge ? 300.0 : 240.0;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
           children: [
-            SizedBox(
-              width: layout.type == LayoutType.expandedLarge ? 300 : 240,
-              child: NavList(showFab: true),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                child: ExplorerView.create(
-                    folderId, layout.type == LayoutType.expandedLarge ? ExplorerLayout.largeSidebar : ExplorerLayout.smallSidebar),
-              ),
-            ),
+            SizedBox(width: sidebarWidth, child: const Text('Phylum')),
+            Expanded(child: PathView.create()),
           ],
         ),
+      ),
+      body: Row(
+        children: [
+          SizedBox(width: sidebarWidth, child: NavList(showFab: true)),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+              child: const ExplorerView(),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 class ActionQueueStatusNotifier extends ChangeNotifier {
