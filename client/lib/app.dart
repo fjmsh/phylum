@@ -25,14 +25,12 @@ class PhylumApp extends StatefulWidget {
           StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
           StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
           StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(account)),
-          StateNotifierProvider<NavHistoryManager, NavHistoryState>.value(value: NavHistoryManager()),
+          StateNotifierProvider<NavHistoryManager, NavHistoryState>(create: (context) => NavHistoryManager()),
+          ChangeNotifierProvider(create: (context) => ActionQueueStatusNotifier(account.actionQueue))
         ],
-        builder: (context, child) => ChangeNotifierProvider(
-          create: (context) => ActionQueueStatusNotifier(context),
-          child: PhylumApp._(
-            account: context.read<PhylumAccount>(),
-            observer: context.read<NavHistoryManager>().navObserver,
-          ),
+        builder: (context, child) => PhylumApp._(
+          account: account,
+          observer: context.read<NavHistoryManager>().navObserver,
         ),
       );
 
@@ -61,7 +59,7 @@ class _PhylumAppState extends State<PhylumApp> {
         pageBuilder: (context, state) => NoTransitionPage(
           name: state.name,
           key: ValueKey(state.pathParameters['id']),
-          child: AppLayout(folderId: state.pathParameters['id']!),
+          child: AppLayout.create(state.pathParameters['id']!),
           arguments: state.pathParameters['id'],
         ),
       ),

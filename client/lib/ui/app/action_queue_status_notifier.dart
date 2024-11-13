@@ -22,8 +22,8 @@ class ActionQueueStatusNotifier extends ChangeNotifier {
     return _failedActions!;
   }
 
-  ActionQueueStatusNotifier(BuildContext context) {
-    removeListenerCallback = context.read<PhylumActionQueue>().addListener((state) {
+  ActionQueueStatusNotifier(PhylumActionQueue queue) {
+    removeListenerCallback = queue.addListener((state) {
       if (state.actions != last) {
         for (final action in state.actions) {
           if (!_listeners.containsKey(action)) {

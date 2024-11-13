@@ -52,7 +52,7 @@ class _PathViewState extends State<PathView> {
     sub?.cancel();
     sub = context.read<PhylumAccount>().db.parents(id).watch().listen((data) {
       SystemChrome.setApplicationSwitcherDescription(ApplicationSwitcherDescription(
-        label: "${data[0].name == "" ? "/" : data[0].name} | Phylum",
+        label: data.isEmpty ? 'Phylum' : "${data[0].name == "" ? "/" : data[0].name} | Phylum",
       ));
       setState(() {
         ancestors = data.reversed;

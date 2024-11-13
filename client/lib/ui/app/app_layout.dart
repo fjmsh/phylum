@@ -4,6 +4,54 @@ import 'package:phylum/ui/app/fab_action.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
+import 'package:provider/provider.dart';
+
+enum LayoutType {
+  collapsed,
+  expandedSmall,
+  expandedLarge;
+
+  bool get isExpanded => this == LayoutType.expandedSmall || this == LayoutType.expandedLarge;
+}
+
+class LayoutData extends ChangeNotifier {
+  LayoutType _type = LayoutType.collapsed;
+  LayoutType get type => _type;
+  bool _touchUi = true;
+  bool get touchUi => _touchUi;
+
+  LayoutData();
+
+  void _update(TargetPlatform platform, Size size) {
+    final layout = size.width < 600
+        ? LayoutType.collapsed
+        : size.width <= 1200
+            ? LayoutType.expandedSmall
+            : LayoutType.expandedLarge;
+    final touchUi = platform == TargetPlatform.android || platform == TargetPlatform.iOS;
+    bool changed = false;
+    if (_type != layout) {
+      _type = layout;
+      changed = true;
+    }
+    if (_touchUi != touchUi) {
+      _touchUi = touchUi;
+      changed = true;
+    }
+
+    if (changed) {
+      Future.delayed(const Duration(), notifyListeners);
+    }
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is LayoutData && other._type == _type && other._touchUi == _touchUi;
+  }
+
+  @override
+  int get hashCode => _type.hashCode ^ _touchUi.hashCode;
+}
 
 class AppLayout extends StatelessWidget {
   final String folderId;
@@ -12,10 +60,28 @@ class AppLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    return AppActions(
-      folderId: folderId,
-      child: width > 800 ? ExpandedAppLayout(folderId: folderId, xLarge: width > 1200) : CollapsedAppLayout(folderId: folderId),
+    return Builder(builder: (context) {
+      final layout = context.watch<LayoutData>();
+      return layout.type.isExpanded ? ExpandedAppLayout(folderId: folderId) : CollapsedAppLayout(folderId: folderId);
+    });
+  }
+
+  static Widget create(String folderId) {
+    return ChangeNotifierProvider<LayoutData>(
+      create: (context) {
+        return LayoutData();
+      },
+      builder: (context, child) {
+        final platform = Theme.of(context).platform;
+        final size = MediaQuery.sizeOf(context);
+        context.read<LayoutData>()._update(platform, size);
+        return child!;
+      },
+      child: AppActions(
+          folderId: folderId,
+          child: AppLayout(
+            folderId: folderId,
+          )),
     );
   }
 }
@@ -64,12 +130,12 @@ class CollapsedAppLayout extends StatelessWidget {
 
 class ExpandedAppLayout extends StatelessWidget {
   final String folderId;
-  final bool xLarge;
 
-  const ExpandedAppLayout({super.key, required this.folderId, required this.xLarge});
+  const ExpandedAppLayout({super.key, required this.folderId});
 
   @override
   Widget build(BuildContext context) {
+    final layout = context.watch<LayoutData>();
     return AppActions(
       folderId: folderId,
       child: Scaffold(
@@ -84,13 +150,14 @@ class ExpandedAppLayout extends StatelessWidget {
         body: Row(
           children: [
             SizedBox(
-              width: xLarge ? 300 : 240,
+              width: layout.type == LayoutType.expandedLarge ? 300 : 240,
               child: NavList(showFab: true),
             ),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                child: ExplorerView.create(folderId, xLarge ? ExplorerLayout.largeSidebar : ExplorerLayout.smallSidebar),
+                child: ExplorerView.create(
+                    folderId, layout.type == LayoutType.expandedLarge ? ExplorerLayout.largeSidebar : ExplorerLayout.smallSidebar),
               ),
             ),
           ],
