@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
-import 'package:phylum/ui/app/app_layout_manager.dart';
 import 'package:phylum/ui/explorer/paste_action_handler.dart';
-import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:provider/provider.dart';
 
 import 'explorer_view_controller.dart';
@@ -14,28 +12,13 @@ class ExplorerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final layout = context.watch<AppLayoutState>();
     return Actions(
       actions: {
         NextFocusIntent: CallbackAction<NextFocusIntent>(onInvoke: (i) => null),
         PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
         PasteFromClipboardIntent: CallbackAction<PasteFromClipboardIntent>(onInvoke: (PasteFromClipboardIntent i) => handlePasteAction(i, context)),
       },
-      child: layout.type.isExpanded
-          ? Row(
-              children: [
-                Expanded(child: Card(elevation: 0, child: buildPage(context))),
-                SizedBox(
-                  width: layout.type == LayoutType.expandedLarge ? 360 : 300,
-                  child: Card(
-                    elevation: 0,
-                    margin: EdgeInsets.only(left: 16),
-                    child: ResourceInfoView(),
-                  ),
-                )
-              ],
-            )
-          : buildPage(context),
+      child: buildPage(context),
     );
   }
 

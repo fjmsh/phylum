@@ -3,41 +3,31 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/fab_action.dart';
-import 'package:phylum/ui/app/app_layout_manager.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/explorer_view_controller.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
+import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:provider/provider.dart';
 
-class AppLayout extends StatelessWidget {
-  const AppLayout({super.key});
+class AppLayout {
+  const AppLayout();
 
   static Widget create(String folderId) {
     return MultiProvider(
       providers: [
-        StateNotifierProvider<AppLayoutManager, AppLayoutState>(create: (context) => AppLayoutManager()),
         StateNotifierProvider<ExplorerViewController, ExplorerViewState>(
           create: (context) => ExplorerViewController(account: context.read<PhylumAccount>(), folderId: folderId),
         ),
       ],
       builder: (context, child) {
-        final manager = context.read<AppLayoutManager>();
-        final platform = Theme.of(context).platform;
+        // final platform = Theme.of(context).platform;
         final size = MediaQuery.sizeOf(context);
-        Future.microtask(() => manager.update(platform, size));
-        return child!;
-      },
-      child: AppActions(child: AppLayout()),
-    );
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Builder(builder: (context) {
-      final layout = context.watch<AppLayoutState>();
-      return layout.type.isExpanded ? ExpandedAppLayout() : CollapsedAppLayout();
-    });
+        final layout = size.width <= 600 ? CollapsedAppLayout() : ExpandedAppLayout(large: size.width > 1200);
+        return AppActions(child: layout);
+      },
+    );
   }
 }
 
@@ -82,12 +72,13 @@ class CollapsedAppLayout extends StatelessWidget {
 }
 
 class ExpandedAppLayout extends StatelessWidget {
-  const ExpandedAppLayout({super.key});
+  final bool large;
+  const ExpandedAppLayout({super.key, required this.large});
 
   @override
   Widget build(BuildContext context) {
-    final layout = context.watch<AppLayoutState>();
-    final sidebarWidth = layout.type == LayoutType.expandedLarge ? 300.0 : 240.0;
+    final sidebarWidth = large ? 288.0 : 216.0;
+    final infoWidth = large ? 360.0 : 264.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -100,11 +91,27 @@ class ExpandedAppLayout extends StatelessWidget {
       ),
       body: Row(
         children: [
-          SizedBox(width: sidebarWidth, child: NavList(showFab: true)),
+          SizedBox(
+            width: sidebarWidth,
+            child: Card(
+              elevation: 0,
+              margin: const EdgeInsets.only(left: 16, bottom: 16),
+              child: NavList(showFab: true),
+            ),
+          ),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+            child: Card(
+              elevation: 0,
+              margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
               child: const ExplorerView(),
+            ),
+          ),
+          SizedBox(
+            width: infoWidth,
+            child: Card(
+              elevation: 0,
+              margin: const EdgeInsets.only(right: 16, bottom: 16),
+              child: ResourceInfoView(),
             ),
           ),
         ],
