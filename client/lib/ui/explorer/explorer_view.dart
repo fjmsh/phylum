@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/paste_action_handler.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:provider/provider.dart';
@@ -20,29 +18,26 @@ class ExplorerView extends StatelessWidget {
 
   static Widget create(String folderId, ExplorerLayout layout) {
     final explorer = PasteActionHandler(folderId: folderId, child: ExplorerView._(key: ValueKey(folderId)));
-    return StateNotifierProvider<ExplorerViewController, ExplorerViewState>(
-      create: (context) => ExplorerViewController(account: context.read<PhylumAccount>(), folderId: folderId),
-      child: Actions(
-        actions: {
-          NextFocusIntent: CallbackAction<NextFocusIntent>(onInvoke: (i) => null),
-          PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
-        },
-        child: layout == ExplorerLayout.noSidebar
-            ? explorer
-            : Row(
-                children: [
-                  Expanded(child: Card(elevation: 0, child: explorer)),
-                  SizedBox(
-                    width: layout == ExplorerLayout.largeSidebar ? 360 : 300,
-                    child: Card(
-                      elevation: 0,
-                      margin: EdgeInsets.only(left: 16),
-                      child: ResourceInfoView(folderId: folderId),
-                    ),
-                  )
-                ],
-              ),
-      ),
+    return Actions(
+      actions: {
+        NextFocusIntent: CallbackAction<NextFocusIntent>(onInvoke: (i) => null),
+        PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
+      },
+      child: layout == ExplorerLayout.noSidebar
+          ? explorer
+          : Row(
+              children: [
+                Expanded(child: Card(elevation: 0, child: explorer)),
+                SizedBox(
+                  width: layout == ExplorerLayout.largeSidebar ? 360 : 300,
+                  child: Card(
+                    elevation: 0,
+                    margin: EdgeInsets.only(left: 16),
+                    child: ResourceInfoView(),
+                  ),
+                )
+              ],
+            ),
     );
   }
 

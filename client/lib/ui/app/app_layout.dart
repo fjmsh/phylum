@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/fab_action.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
+import 'package:phylum/ui/explorer/explorer_view_controller.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
 import 'package:provider/provider.dart';
 
@@ -67,10 +70,13 @@ class AppLayout extends StatelessWidget {
   }
 
   static Widget create(String folderId) {
-    return ChangeNotifierProvider<LayoutData>(
-      create: (context) {
-        return LayoutData();
-      },
+    return MultiProvider(
+      providers: [
+        StateNotifierProvider<ExplorerViewController, ExplorerViewState>(
+          create: (context) => ExplorerViewController(account: context.read<PhylumAccount>(), folderId: folderId),
+        ),
+        ChangeNotifierProvider<LayoutData>(create: (context) => LayoutData()),
+      ],
       builder: (context, child) {
         final platform = Theme.of(context).platform;
         final size = MediaQuery.sizeOf(context);

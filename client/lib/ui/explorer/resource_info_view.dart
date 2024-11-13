@@ -12,9 +12,7 @@ import 'package:provider/provider.dart';
 import 'resource_icon_extension.dart';
 
 class ResourceInfoView extends StatelessWidget {
-  final String folderId;
-
-  const ResourceInfoView({super.key, required this.folderId});
+  const ResourceInfoView({super.key});
 
   @override
   Widget build(BuildContext context) {
