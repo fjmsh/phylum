@@ -77,8 +77,7 @@ class ExpandedAppLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sidebarWidth = large ? 288.0 : 216.0;
-    final infoWidth = large ? 360.0 : 264.0;
+    final sidebarWidth = large ? 288.0 : 240.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -106,14 +105,15 @@ class ExpandedAppLayout extends StatelessWidget {
               child: const ExplorerView(),
             ),
           ),
-          SizedBox(
-            width: infoWidth,
-            child: Card(
-              elevation: 0,
-              margin: const EdgeInsets.only(right: 16, bottom: 16),
-              child: ResourceInfoView(),
+          if (large)
+            SizedBox(
+              width: 360,
+              child: Card(
+                elevation: 0,
+                margin: const EdgeInsets.only(right: 16, bottom: 16),
+                child: ResourceInfoView(),
+              ),
             ),
-          ),
         ],
       ),
     );
