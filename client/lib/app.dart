@@ -88,24 +88,19 @@ class _PhylumAppState extends State<PhylumApp> {
   @override
   Widget build(BuildContext context) {
     final ready = context.select<AccountState, bool>((state) => state == AccountState.ready);
+    final theme = ThemeData(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: Color(0xff769e57),
+        dynamicSchemeVariant: DynamicSchemeVariant.neutral,
+      ),
+    );
     if (ready) {
       return MaterialApp.router(
         key: ValueKey(widget.account.id),
         title: 'Phylum',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Color(0x0063a002),
-            dynamicSchemeVariant: DynamicSchemeVariant.neutral,
-          ),
-        ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Color(0x0063a002),
-            dynamicSchemeVariant: DynamicSchemeVariant.neutral,
-            brightness: Brightness.dark,
-          ),
-        ),
+        theme: theme,
+        darkTheme: theme,
         routerConfig: _appRouter,
         shortcuts: getAppShortcuts(),
       );
@@ -114,10 +109,9 @@ class _PhylumAppState extends State<PhylumApp> {
       key: ValueKey('${widget.account.id}-notready'),
       title: 'Logging Out | Phylum',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
-      darkTheme: ThemeData.dark(),
+      theme: theme,
+      darkTheme: theme,
       routerConfig: createLogoutRouter(),
-      shortcuts: getAppShortcuts(),
     );
   }
 
