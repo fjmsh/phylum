@@ -15,9 +15,9 @@ class ResourceDetailsRow extends StatefulWidget {
   final Function(TapDownDetails)? onTapDown;
   final Function()? onTap;
   final Function()? onDoubleTap;
-  final Function()? onSecondaryTap;
+  final Function(TapDownDetails details)? onSecondaryTapDown;
 
-  ResourceDetailsRow({required this.r, this.onTapDown, this.onTap, this.onDoubleTap, this.onSecondaryTap}) : super(key: ValueKey(r.id));
+  ResourceDetailsRow({required this.r, this.onTapDown, this.onTap, this.onDoubleTap, this.onSecondaryTapDown}) : super(key: ValueKey(r.id));
 
   @override
   State<ResourceDetailsRow> createState() => _ResourceDetailsRowState();
@@ -86,7 +86,7 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
         onTapDown: widget.onTapDown,
         onTap: widget.onTap,
         onDoubleTap: widget.onDoubleTap,
-        onSecondaryTap: widget.onSecondaryTap,
+        onSecondaryTapDown: widget.onSecondaryTapDown,
         child: buildListTile(context),
       ),
     );

@@ -128,11 +128,16 @@ class ExplorerViewController extends StateNotifier<ExplorerViewState> {
         }
         selectionStartIndex = index;
         break;
+      case SelectionMode.add:
+        selectedIds = Set.of(state.selectedIds);
+        selectedIds.add(state.resources[index].id);
+        selectionStartIndex = index;
+        break;
       case SelectionMode.none:
         selectedIds = const {};
         selectionStartIndex = index;
         break;
-      case SelectionMode.multi:
+      case SelectionMode.noChange:
         break;
     }
     state = state.copyWith(

@@ -57,55 +57,60 @@ class ResourceOptionsButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final account = context.read<PhylumAccount>();
+    final resources = [r];
     return MediaQuery.sizeOf(context).width < 800
-        ? IconButton(icon: Icon(Icons.adaptive.more), onPressed: () => showResourceOptions(context, account))
+        ? IconButton(icon: Icon(Icons.adaptive.more), onPressed: () => showResourceOptions(context, resources))
         : ListTileTheme(
             data: ListTileThemeData(visualDensity: VisualDensity.compact),
             child: PopupMenuButton(
-              itemBuilder: (context) => buildPopupMenuItems(context, [r]).toList(growable: false),
-              onSelected: (o) => handleResourceOption(context, account, o),
+              itemBuilder: (context) => buildPopupMenuItems(context, resources).toList(growable: false),
+              onSelected: (o) => handleResourceOption(context, resources, o),
             ),
           );
   }
+}
 
-  void showResourceOptions(BuildContext context, PhylumAccount account) async {
-    final option = await showModalBottomSheet(context: context, builder: (context) => ResourceOptionsList(resources: [r]));
-    if (!context.mounted || option == null) {
-      return;
-    }
-    handleResourceOption(context, account, option);
+void showResourceOptions(BuildContext context, Iterable<Resource> resources) async {
+  final option = await showModalBottomSheet(context: context, builder: (context) => ResourceOptionsList(resources: resources));
+  if (!context.mounted || option == null) {
+    return;
   }
+  handleResourceOption(context, resources, option);
+}
 
-  void handleResourceOption(BuildContext context, final PhylumAccount account, ResourceOption option) async {
-    switch (option) {
-      case ResourceOption.details:
-      case ResourceOption.rename:
-        final name = await showInputDialog(context, title: 'Rename', preset: r.name);
-        if (name != null) {
-          account.addAction(ResourceMoveAction(r: r, name: name));
-        }
-        break;
-      case ResourceOption.move:
-        break;
-      case ResourceOption.copy:
-        break;
-      case ResourceOption.delete:
-        final confirm = await showAlertDialog(context, title: 'Delete ${r.name}?', positiveText: 'YES', negativeText: 'NO') ?? false;
-        if (confirm) {
+void handleResourceOption(BuildContext context, Iterable<Resource> resources, ResourceOption option) async {
+  final account = context.read<PhylumAccount>();
+  switch (option) {
+    case ResourceOption.details:
+    case ResourceOption.rename:
+      assert(resources.length == 1);
+      final name = await showInputDialog(context, title: 'Rename', preset: resources.first.name);
+      if (name != null) {
+        account.addAction(ResourceMoveAction(r: resources.first, name: name));
+      }
+      break;
+    case ResourceOption.move:
+      break;
+    case ResourceOption.copy:
+      break;
+    case ResourceOption.delete:
+      final name = resources.length == 1 ? resources.first.name : '${resources.length} items';
+      final confirm = await showAlertDialog(context, title: 'Delete $name?', positiveText: 'YES', negativeText: 'NO') ?? false;
+      if (confirm) {
+        for (final r in resources) {
           account.addAction(ResourceDeleteAction(r: r));
         }
-        break;
-      case ResourceOption.permissions:
-      case ResourceOption.publinks:
-      case ResourceOption.download:
-      case ResourceOption.bookmark:
-    }
+      }
+      break;
+    case ResourceOption.permissions:
+    case ResourceOption.publinks:
+    case ResourceOption.download:
+    case ResourceOption.bookmark:
   }
 }
 
 class ResourceOptionsList extends StatelessWidget {
-  final List<Resource> resources;
+  final Iterable<Resource> resources;
 
   const ResourceOptionsList({super.key, required this.resources});
 
@@ -128,7 +133,7 @@ class ResourceOptionsList extends StatelessWidget {
   }
 }
 
-Iterable<Widget> buildBottomSheetItems(BuildContext context, List<Resource> resources) {
+Iterable<Widget> buildBottomSheetItems(BuildContext context, Iterable<Resource> resources) {
   return optionsGroups
       .map((group) => group.map((o) => ListTile(
             leading: Icon(o.icon),
@@ -149,7 +154,7 @@ Iterable<Widget> buildBottomSheetItems(BuildContext context, List<Resource> reso
   );
 }
 
-Iterable<PopupMenuEntry> buildPopupMenuItems(BuildContext context, List<Resource> resources) {
+Iterable<PopupMenuEntry> buildPopupMenuItems(BuildContext context, Iterable<Resource> resources) {
   return optionsGroups
       .map((group) => group.map((o) => PopupMenuItem(
             value: o,

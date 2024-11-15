@@ -5,8 +5,9 @@ import 'package:flutter/services.dart';
 enum SelectionMode {
   single,
   range,
-  multi,
   toggle,
+  add,
+  noChange,
   none,
 }
 
@@ -83,10 +84,10 @@ Map<ShortcutActivator, Intent> getAppShortcuts() {
     // Focus / Selection
     SingleActivator(LogicalKeyboardKey.arrowUp): FocusUpIntent(SelectionMode.single),
     SingleActivator(LogicalKeyboardKey.arrowUp, shift: true): FocusUpIntent(SelectionMode.range),
-    SingleActivator(LogicalKeyboardKey.arrowUp, control: true): FocusUpIntent(SelectionMode.multi),
+    SingleActivator(LogicalKeyboardKey.arrowUp, control: true): FocusUpIntent(SelectionMode.noChange),
     SingleActivator(LogicalKeyboardKey.arrowDown): FocusDownIntent(SelectionMode.single),
     SingleActivator(LogicalKeyboardKey.arrowDown, shift: true): FocusDownIntent(SelectionMode.range),
-    SingleActivator(LogicalKeyboardKey.arrowDown, control: true): FocusDownIntent(SelectionMode.multi),
+    SingleActivator(LogicalKeyboardKey.arrowDown, control: true): FocusDownIntent(SelectionMode.noChange),
     SingleActivator(LogicalKeyboardKey.space, control: true): ToggleSelectionIntent(),
     SingleActivator(LogicalKeyboardKey.keyA, control: true): SelectAllIntent(),
 
