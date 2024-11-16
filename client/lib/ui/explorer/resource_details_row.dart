@@ -12,12 +12,8 @@ const _draggableDataSelected = '__selected';
 
 class ResourceDetailsRow extends StatefulWidget {
   final Resource r;
-  final Function(TapDownDetails)? onTapDown;
-  final Function()? onTap;
-  final Function()? onDoubleTap;
-  final Function(TapDownDetails details)? onSecondaryTapDown;
 
-  ResourceDetailsRow({required this.r, this.onTapDown, this.onTap, this.onDoubleTap, this.onSecondaryTapDown}) : super(key: ValueKey(r.id));
+  ResourceDetailsRow({required this.r}) : super(key: ValueKey(r.id));
 
   @override
   State<ResourceDetailsRow> createState() => _ResourceDetailsRowState();
@@ -25,6 +21,7 @@ class ResourceDetailsRow extends StatefulWidget {
 
 class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
   bool dropTargetActive = false;
+
   @override
   Widget build(BuildContext context) {
     return widget.r.dir
@@ -82,13 +79,7 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
           ),
         );
       }),
-      child: GestureDetector(
-        onTapDown: widget.onTapDown,
-        onTap: widget.onTap,
-        onDoubleTap: widget.onDoubleTap,
-        onSecondaryTapDown: widget.onSecondaryTapDown,
-        child: buildListTile(context),
-      ),
+      child: buildListTile(context),
     );
   }
 
