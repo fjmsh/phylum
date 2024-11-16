@@ -54,7 +54,7 @@ void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
   if (!context.mounted) return;
   uploadRecursive(context, target.id, paths);
   for (final r in cutResources) {
-    account.addAction(ResourceMoveAction(r: r, parent: target));
+    account.addAction(ResourceMoveAction(r: r, parent: target.id));
   }
   for (final r in copyResources) {
     account.addAction(ResourceCopyAction(

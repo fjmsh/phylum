@@ -29,12 +29,12 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
 
   ResourceMoveAction({
     required Resource r,
-    Resource? parent,
+    String? parent,
     String? name,
   }) : this._(
           resourceId: r.id,
           resourceName: name,
-          parent: parent?.id,
+          parent: parent,
           description: name == null ? 'Moving ${r.name}' : 'Renaming ${r.name} to $name',
           modified: DateTime.now(),
         );

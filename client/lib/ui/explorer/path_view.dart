@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_view_controller.dart';
+import 'package:phylum/ui/explorer/resource_drop_target.dart';
 import 'package:provider/provider.dart';
 
 class PathView extends StatefulWidget {
@@ -64,20 +65,26 @@ class _PathViewState extends State<PathView> {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (final r in ancestors)
-          Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-            margin: EdgeInsets.symmetric(horizontal: 6),
-            child: InkWell(
-              onTap: r.id == id
-                  ? null
-                  : () {
-                      context.goNamed('folder', pathParameters: {'id': r.id});
-                    },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Text(
-                  r.parent == null ? "/" : r.name,
-                  style: const TextStyle(fontSize: 16),
+          ResourceDropTarget(
+            resourceId: r.id,
+            buildItem: (resource, dropTargetActive) => Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+                side: dropTargetActive ? BorderSide(width: 2, color: Theme.of(context).colorScheme.primary) : BorderSide.none,
+              ),
+              margin: EdgeInsets.symmetric(horizontal: 6),
+              child: InkWell(
+                onTap: r.id == id
+                    ? null
+                    : () {
+                        context.goNamed('folder', pathParameters: {'id': r.id});
+                      },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: Text(
+                    r.parent == null ? "/" : r.name,
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 ),
               ),
             ),

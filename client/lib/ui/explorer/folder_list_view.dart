@@ -29,14 +29,23 @@ class _FolderListViewState extends State<FolderListView> {
           ),
           child: ListView.builder(
               itemCount: resources.length,
-              itemBuilder: (context, index) => ResourceDropTarget(
-                    resource: resources[index],
-                    buildItem: (resource, dropTargetActive) => ResourceItemGestureHandler(
-                      index: index,
-                      resource: resources[index],
-                      dropTargetActive: dropTargetActive,
-                    ),
-                  )),
+              itemBuilder: (context, index) {
+                final resource = resources[index];
+                return (resource.dir)
+                    ? ResourceDropTarget(
+                        resourceId: resource.id,
+                        buildItem: (id, dropTargetActive) => ResourceItemGestureHandler(
+                          index: index,
+                          resource: resource,
+                          dropTargetActive: dropTargetActive,
+                        ),
+                      )
+                    : ResourceItemGestureHandler(
+                        index: index,
+                        resource: resource,
+                        dropTargetActive: false,
+                      );
+              }),
         ),
       ),
     );
