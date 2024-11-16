@@ -1,92 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:provider/provider.dart';
 
 import 'explorer_view_controller.dart';
-import 'resource_icon_extension.dart';
 import 'resource_options_dialog.dart';
 
-const _draggableDataSelected = '__selected';
-
-class ResourceDetailsRow extends StatefulWidget {
+class ResourceDetailsRow extends StatelessWidget {
   final Resource r;
+  final bool dropTargetActive;
 
-  ResourceDetailsRow({required this.r}) : super(key: ValueKey(r.id));
+  ResourceDetailsRow({required this.r, required this.dropTargetActive}) : super(key: ValueKey(r.id));
 
-  @override
-  State<ResourceDetailsRow> createState() => _ResourceDetailsRowState();
-}
-
-class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
-  bool dropTargetActive = false;
-
-  @override
   Widget build(BuildContext context) {
-    return widget.r.dir
-        ? DragTarget(
-            builder: (context, candidate, rejected) => buildRow(context),
-            onWillAcceptWithDetails: (details) {
-              if (details.data == _draggableDataSelected && context.read<ExplorerViewState>().selectedIds.contains(widget.r.id)) {
-                return false;
-              }
-              dropTargetActive = true;
-              return true;
-            },
-            onLeave: (data) {
-              dropTargetActive = false;
-            },
-            onAcceptWithDetails: (details) async {
-              if (details.data == _draggableDataSelected) {
-                final account = context.read<PhylumAccount>();
-                final selected = context.read<ExplorerViewState>().selected;
-                for (final res in selected) {
-                  account.addAction(ResourceMoveAction(r: res, parent: widget.r));
-                }
-              }
-              dropTargetActive = false;
-            },
-          )
-        : buildRow(context);
-  }
-
-  Widget buildRow(BuildContext context) {
-    return Draggable(
-      data: _draggableDataSelected,
-      dragAnchorStrategy: pointerDragAnchorStrategy,
-      onDragStarted: () {
-        context.read<ExplorerViewController>().setDragging(true);
-      },
-      onDragEnd: (details) {
-        context.read<ExplorerViewController>().setDragging(false);
-      },
-      feedback: Builder(builder: (ctx) {
-        final theme = Theme.of(context);
-        final count = context.read<ExplorerViewState>().selectedIds.length;
-        return Card(
-          shape: RoundedRectangleBorder(side: BorderSide(color: theme.colorScheme.primary), borderRadius: BorderRadius.circular(4.0)),
-          elevation: 16.0,
-          margin: const EdgeInsets.only(left: 16.0),
-          child: SizedBox(
-            width: 240,
-            height: 48,
-            child: ListTile(
-              leading: widget.r.getIcon(),
-              title: Text(widget.r.name),
-              trailing: count == 1 ? null : Badge(label: Text(count.toString(), style: const TextStyle(fontSize: 14))),
-            ),
-          ),
-        );
-      }),
-      child: buildListTile(context),
-    );
-  }
-
-  Widget buildListTile(BuildContext context) {
-    final showBorder = context.select<ExplorerViewState, bool>((state) => state.focusId == widget.r.id && state.showFocus);
-    final highlight = context.select<ExplorerViewState, bool>((state) => state.isSelected(widget.r.id));
-    final dim = context.select<ExplorerViewState, bool>((state) => state.isSelected(widget.r.id) && state.dragging);
+    final showBorder = context.select<ExplorerViewState, bool>((state) => state.focusId == r.id && state.showFocus);
+    final highlight = context.select<ExplorerViewState, bool>((state) => state.isSelected(r.id));
+    final dim = context.select<ExplorerViewState, bool>((state) => state.isSelected(r.id) && state.dragging);
     final theme = Theme.of(context);
     final border = dropTargetActive
         ? BorderSide(color: theme.colorScheme.secondary, width: 2.0)
@@ -98,21 +27,21 @@ class _ResourceDetailsRowState extends State<ResourceDetailsRow> {
       leading: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          widget.r.getIcon(),
+          r.getIcon(),
           SizedBox(
             width: 16,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.r.permissions != null) Icon(Icons.people_alt, size: 14),
-                if (widget.r.publinks > 0) Icon(Icons.public, size: 14),
+                if (r.permissions != null) Icon(Icons.people_alt, size: 14),
+                if (r.publinks > 0) Icon(Icons.public, size: 14),
               ],
             ),
           ),
         ],
       ),
-      title: Text(widget.r.name),
-      trailing: ResourceOptionsButton(r: widget.r),
+      title: Text(r.name),
+      trailing: ResourceOptionsButton(r: r),
       shape: RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(4.0)),
       selected: highlight,
       selectedColor: dim ? theme.colorScheme.primary.withOpacity(0.75) : null,
