@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phylum/app_shortcuts.dart';
-import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_view_controller.dart';
 import 'package:phylum/ui/explorer/resource_details_row.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
@@ -12,9 +10,10 @@ import 'package:provider/provider.dart';
 
 class ResourceItemGestureHandler extends StatefulWidget {
   final int index;
-  final Resource r;
+  final Resource resource;
+  final bool dropTargetActive;
 
-  const ResourceItemGestureHandler({super.key, required this.index, required this.r});
+  const ResourceItemGestureHandler({super.key, required this.index, required this.resource, required this.dropTargetActive});
 
   @override
   State<ResourceItemGestureHandler> createState() => _ResourceItemGestureHandlerState();
@@ -25,33 +24,21 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
   bool deferHandling = false;
 
   @override
-  Widget build(BuildContext context) {
-    return widget.r.dir
-        ? DragTarget(
-            builder: (context, candidate, rejected) => buildGestureDetector(context),
-            onWillAcceptWithDetails: (details) {
-              if (context.read<ExplorerViewState>().selectedIds.contains(widget.r.id)) {
-                return false;
-              }
-              setState(() => dropTargetActive = true);
-              return true;
-            },
-            onLeave: (data) {
-              setState(() => dropTargetActive = false);
-            },
-            onAcceptWithDetails: (details) async {
-              final account = context.read<PhylumAccount>();
-              final selected = context.read<ExplorerViewState>().selected;
-              for (final res in selected) {
-                account.addAction(ResourceMoveAction(r: res, parent: widget.r));
-              }
-              setState(() => dropTargetActive = false);
-            },
-          )
-        : buildGestureDetector(context);
+  void initState() {
+    super.initState();
+    dropTargetActive = widget.dropTargetActive;
   }
 
-  Widget buildGestureDetector(BuildContext context) {
+  @override
+  void didUpdateWidget(covariant ResourceItemGestureHandler oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (dropTargetActive != widget.dropTargetActive) {
+      setState(() => dropTargetActive = widget.dropTargetActive);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (details) {
         Focus.maybeOf(context)?.requestFocus();
@@ -60,7 +47,7 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
             : HardwareKeyboard.instance.isShiftPressed
                 ? SelectionMode.range
                 : SelectionMode.single;
-        if (context.read<ExplorerViewState>().isSelected(widget.r.id) && mode == SelectionMode.single) {
+        if (context.read<ExplorerViewState>().isSelected(widget.resource.id) && mode == SelectionMode.single) {
           deferHandling = true;
           context.read<ExplorerViewController>().updateSelection((_) => widget.index, SelectionMode.noChange, false);
         } else {
@@ -76,7 +63,7 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
       },
       onSecondaryTapDown: (details) async {
         ExplorerViewState state = context.read<ExplorerViewState>();
-        if (!state.isSelected(widget.r.id)) {
+        if (!state.isSelected(widget.resource.id)) {
           final mode =
               HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed ? SelectionMode.add : SelectionMode.single;
           context.read<ExplorerViewController>().updateSelection((i) => widget.index, mode, false);
@@ -107,7 +94,7 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
         dragAnchorStrategy: pointerDragAnchorStrategy,
         onDragStarted: () {
           final controller = context.read<ExplorerViewController>();
-          if (!context.read<ExplorerViewState>().isSelected(widget.r.id)) {
+          if (!context.read<ExplorerViewState>().isSelected(widget.resource.id)) {
             controller.updateSelection((_) => widget.index, SelectionMode.single, false);
           }
           controller.setDragging(true);
@@ -126,15 +113,15 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
               width: 240,
               height: 48,
               child: ListTile(
-                leading: widget.r.getIcon(),
-                title: Text(widget.r.name),
+                leading: widget.resource.getIcon(),
+                title: Text(widget.resource.name),
                 trailing: count == 1 ? null : Badge(label: Text(count.toString(), style: const TextStyle(fontSize: 14))),
               ),
             ),
           );
         }),
         child: ResourceDetailsRow(
-          r: widget.r,
+          r: widget.resource,
           dropTargetActive: dropTargetActive,
         ),
       ),
