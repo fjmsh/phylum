@@ -12,6 +12,7 @@ class ResourceDetailsRow extends StatelessWidget {
 
   ResourceDetailsRow({required this.r, required this.dropTargetActive}) : super(key: ValueKey(r.id));
 
+  @override
   Widget build(BuildContext context) {
     final showBorder = context.select<ExplorerViewState, bool>((state) => state.focusId == r.id && state.showFocus);
     final highlight = context.select<ExplorerViewState, bool>((state) => state.isSelected(r.id));
