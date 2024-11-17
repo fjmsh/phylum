@@ -53,6 +53,7 @@ class ExplorerViewState {
         focusIndex: focusIndex ?? this.focusIndex,
         showFocus: showFocus ?? this.showFocus,
         selectionStartIndex: selectionStartIndex ?? this.selectionStartIndex,
+        dragging: dragging ?? this.dragging,
         refreshing: refreshing ?? this.refreshing,
         refreshError: refreshError ?? this.refreshError,
       );
