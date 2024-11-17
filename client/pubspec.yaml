@@ -30,6 +30,7 @@ dependencies:
   state_notifier:
   stream_transform:
   super_clipboard:
+  super_drag_and_drop:
   uri:
   uuid:
   sqlite3: 

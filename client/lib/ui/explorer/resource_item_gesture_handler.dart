@@ -7,6 +7,7 @@ import 'package:phylum/ui/explorer/resource_details_row.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/ui/explorer/resource_options_dialog.dart';
 import 'package:provider/provider.dart';
+import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 class ResourceItemGestureHandler extends StatefulWidget {
   final int index;
@@ -89,40 +90,54 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
         context.read<ExplorerViewController>().updateSelection((_) => widget.index, SelectionMode.single, false);
         Actions.maybeInvoke(context, const ActivateIntent());
       },
-      child: Draggable(
-        data: '__selected',
-        dragAnchorStrategy: pointerDragAnchorStrategy,
-        onDragStarted: () {
+      child: DragItemWidget(
+        allowedOperations: () => [DropOperation.copy, DropOperation.move],
+        dragItemProvider: (request) {
           final controller = context.read<ExplorerViewController>();
           if (!context.read<ExplorerViewState>().isSelected(widget.resource.id)) {
             controller.updateSelection((_) => widget.index, SelectionMode.single, false);
           }
           controller.setDragging(true);
+          request.session.dragCompleted.addListener(() {
+            if (request.session.dragCompleted.value != null) {
+              controller.setDragging(false);
+            }
+          });
+
+          final state = context.read<ExplorerViewState>();
+          final item = DragItem(
+            localData: state.selectedIds,
+          );
+          return item;
         },
-        onDragEnd: (details) {
-          context.read<ExplorerViewController>().setDragging(false);
-        },
-        feedback: Builder(builder: (ctx) {
+        canAddItemToExistingSession: false,
+        dragBuilder: (ctx, child) {
           final theme = Theme.of(context);
-          final count = context.read<ExplorerViewState>().selectedIds.length;
-          return Card(
-            shape: RoundedRectangleBorder(side: BorderSide(color: theme.colorScheme.primary), borderRadius: BorderRadius.circular(4.0)),
-            elevation: 16.0,
-            margin: const EdgeInsets.only(left: 16.0),
-            child: SizedBox(
-              width: 240,
-              height: 48,
-              child: ListTile(
-                leading: widget.resource.getIcon(),
-                title: Text(widget.resource.name),
-                trailing: count == 1 ? null : Badge(label: Text(count.toString(), style: const TextStyle(fontSize: 14))),
+          final state = context.read<ExplorerViewState>();
+          final count = state.selectedIds.length;
+          return SnapshotSettings(
+            constraintsTransform: (constraints) => BoxConstraints(maxWidth: 240, maxHeight: 48),
+            child: Card(
+              shape: RoundedRectangleBorder(side: BorderSide(color: theme.colorScheme.primary), borderRadius: BorderRadius.circular(4.0)),
+              elevation: 16.0,
+              margin: const EdgeInsets.only(left: 16.0),
+              child: SizedBox(
+                width: 240,
+                height: 48,
+                child: ListTile(
+                  leading: widget.resource.getIcon(),
+                  title: Text(widget.resource.name),
+                  trailing: count == 1 ? null : Badge(label: Text(count.toString(), style: const TextStyle(fontSize: 14))),
+                ),
               ),
             ),
           );
-        }),
-        child: ResourceDetailsRow(
-          r: widget.resource,
-          dropTargetActive: dropTargetActive,
+        },
+        child: DraggableWidget(
+          child: ResourceDetailsRow(
+            r: widget.resource,
+            dropTargetActive: dropTargetActive,
+          ),
         ),
       ),
     );
