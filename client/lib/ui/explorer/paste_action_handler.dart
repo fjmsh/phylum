@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
@@ -29,7 +30,11 @@ void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
   final copyResources = <Resource>[];
   for (final item in reader.items) {
     final c = Completer<String?>();
-    item.getValue(Formats.fileUri, (value) => c.complete(value?.toFilePath()), onError: (value) => c.complete(null));
+    item.getValue(
+      Formats.fileUri,
+      (value) => c.complete(value?.toFilePath(windows: Platform.isWindows)),
+      onError: (value) => c.complete(null),
+    );
     final filePath = await c.future;
     if (filePath != null) {
       paths.add(filePath);

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_view_controller.dart';
 import 'package:phylum/ui/explorer/resource_details_row.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
+import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
@@ -64,10 +66,15 @@ class _ResourceDropTargetState extends State<ResourceDropTarget> {
       onDropOver: (event) {
         final localData = event.session.items.first.localData;
         if (localData != null) {
-          if ((localData as List).contains(widget.resourceId)) {
+          if ((localData as Iterable).cast<Resource>().map((r) => r.id).contains(widget.resourceId)) {
             return DropOperation.none;
           }
           return DropOperation.copy;
+        }
+        for (final item in event.session.items) {
+          if (item.canProvide(Formats.fileUri)) {
+            return DropOperation.copy;
+          }
         }
 
         return DropOperation.none;
@@ -80,9 +87,32 @@ class _ResourceDropTargetState extends State<ResourceDropTarget> {
       },
       onPerformDrop: (event) async {
         final account = context.read<PhylumAccount>();
-        final selected = context.read<ExplorerViewState>().selected;
-        for (final res in selected) {
-          account.addAction(ResourceMoveAction(r: res, parent: widget.resourceId));
+        final localData = event.session.items.first.localData;
+        if (localData != null) {
+          for (final res in (localData as List).cast<Resource>()) {
+            account.addAction(ResourceMoveAction(r: res, parent: widget.resourceId));
+          }
+        } else {
+          final paths = <String>[];
+          for (final item in event.session.items) {
+            final reader = item.dataReader;
+            if (reader != null) {
+              final c = Completer<String?>();
+              reader.getValue(
+                Formats.fileUri,
+                (value) => c.complete(value?.toFilePath(windows: Platform.isWindows)),
+                onError: (value) => c.complete(null),
+              );
+              final path = await c.future;
+              if (path != null) {
+                paths.add(path);
+              }
+              debugPrint(path.toString());
+            }
+          }
+          if (context.mounted) {
+            uploadRecursive(context, widget.resourceId, paths);
+          }
         }
         setState(() => dropTargetActive = false);
       },
@@ -160,7 +190,7 @@ class ResourceDragSource extends StatelessWidget {
 
         final state = context.read<ExplorerViewState>();
         final item = DragItem(
-          localData: state.selectedIds,
+          localData: state.selected,
         );
         return item;
       },
