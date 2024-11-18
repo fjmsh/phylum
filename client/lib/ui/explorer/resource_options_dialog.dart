@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -7,7 +8,7 @@ import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
-enum ResourceOption {
+enum MenuOption {
   details(Icons.info_outline, 'Details', isSingle),
   download(Icons.download, 'Download', all),
   bookmark(Icons.bookmark_add_outlined, 'Add To Bookmarks', all),
@@ -17,38 +18,57 @@ enum ResourceOption {
   delete(Icons.delete_outline, 'Delete', all),
   permissions(Icons.people_alt_outlined, 'Permissions', isSingle),
   publinks(Icons.public, 'Public Access', isSingle),
+  newFolder(Icons.create_new_folder_outlined, 'New Folder', isSingle),
+  uploadFiles(Icons.upload_file_outlined, 'Upload File(s)', isSingle),
+  uploadFolders(Icons.drive_folder_upload_outlined, 'Upload Folder(s)', isSingle),
   ;
 
-  const ResourceOption(this.icon, this.text, this.filter);
+  const MenuOption(this.icon, this.text, this.filter);
 
   final IconData icon;
   final String text;
-  final bool Function(List<Resource> resources) filter;
+  final bool Function(Iterable<Resource> resources) filter;
 }
 
-const optionsGroups = [
+const resourceOptionsGroups = [
   [
-    ResourceOption.download,
-    ResourceOption.rename,
-    ResourceOption.move,
-    ResourceOption.copy,
-    ResourceOption.delete,
+    MenuOption.download,
+    MenuOption.rename,
+    MenuOption.move,
+    MenuOption.copy,
+    MenuOption.delete,
   ],
   [
-    ResourceOption.bookmark,
-    ResourceOption.permissions,
-    ResourceOption.publinks,
+    MenuOption.bookmark,
+    MenuOption.permissions,
+    MenuOption.publinks,
   ],
   [
-    ResourceOption.details,
+    MenuOption.details,
   ],
 ];
 
-bool isSingle(List<Resource> resources) => resources.length == 1;
+final explorerOptionsGroups = [
+  [
+    MenuOption.newFolder,
+    MenuOption.uploadFiles,
+    MenuOption.uploadFolders,
+  ],
+  [
+    MenuOption.bookmark,
+    MenuOption.permissions,
+    MenuOption.publinks,
+  ],
+  [
+    MenuOption.details,
+  ]
+];
 
-bool none(List<Resource> resources) => false;
+bool isSingle(Iterable<Resource> resources) => resources.length == 1;
 
-bool all(List<Resource> resources) => true;
+bool none(Iterable<Resource> resources) => false;
+
+bool all(Iterable<Resource> resources) => true;
 
 class ResourceOptionsButton extends StatelessWidget {
   final Resource r;
@@ -63,7 +83,7 @@ class ResourceOptionsButton extends StatelessWidget {
         : ListTileTheme(
             data: ListTileThemeData(visualDensity: VisualDensity.compact),
             child: PopupMenuButton(
-              itemBuilder: (context) => buildPopupMenuItems(context, resources).toList(growable: false),
+              itemBuilder: (context) => buildChildPopupMenuItems(context, resources).toList(growable: false),
               onSelected: (o) => handleResourceOption(context, resources, o),
             ),
           );
@@ -78,22 +98,21 @@ void showResourceOptions(BuildContext context, Iterable<Resource> resources) asy
   handleResourceOption(context, resources, option);
 }
 
-void handleResourceOption(BuildContext context, Iterable<Resource> resources, ResourceOption option) async {
+void handleResourceOption(BuildContext context, Iterable<Resource> resources, MenuOption option) async {
   final account = context.read<PhylumAccount>();
   switch (option) {
-    case ResourceOption.details:
-    case ResourceOption.rename:
+    case MenuOption.rename:
       assert(resources.length == 1);
       final name = await showInputDialog(context, title: 'Rename', preset: resources.first.name);
       if (name != null) {
         account.addAction(ResourceMoveAction(r: resources.first, name: name));
       }
       break;
-    case ResourceOption.move:
+    case MenuOption.move:
       break;
-    case ResourceOption.copy:
+    case MenuOption.copy:
       break;
-    case ResourceOption.delete:
+    case MenuOption.delete:
       final name = resources.length == 1 ? resources.first.name : '${resources.length} items';
       final confirm = await showAlertDialog(context, title: 'Delete $name?', positiveText: 'YES', negativeText: 'NO') ?? false;
       if (confirm) {
@@ -102,10 +121,18 @@ void handleResourceOption(BuildContext context, Iterable<Resource> resources, Re
         }
       }
       break;
-    case ResourceOption.permissions:
-    case ResourceOption.publinks:
-    case ResourceOption.download:
-    case ResourceOption.bookmark:
+    case MenuOption.details:
+    case MenuOption.permissions:
+    case MenuOption.publinks:
+    case MenuOption.download:
+    case MenuOption.bookmark:
+      break;
+    case MenuOption.newFolder:
+      Actions.maybeInvoke(context, const NewFolderIntent());
+    case MenuOption.uploadFiles:
+      Actions.maybeInvoke(context, const UploadFilesIntent());
+    case MenuOption.uploadFolders:
+      Actions.maybeInvoke(context, const UploadFolderIntent());
   }
 }
 
@@ -134,11 +161,12 @@ class ResourceOptionsList extends StatelessWidget {
 }
 
 Iterable<Widget> buildBottomSheetItems(BuildContext context, Iterable<Resource> resources) {
-  return optionsGroups
+  return resourceOptionsGroups
       .map((group) => group.map((o) => ListTile(
+            visualDensity: VisualDensity.adaptivePlatformDensity,
             leading: Icon(o.icon),
             title: Text(o.text),
-            onTap: () => Navigator.of(context).pop(o),
+            onTap: o.filter(resources) ? () => Navigator.of(context).pop(o) : null,
           )))
       .fold<Iterable<Widget>>(
     <Widget>[],
@@ -154,11 +182,21 @@ Iterable<Widget> buildBottomSheetItems(BuildContext context, Iterable<Resource> 
   );
 }
 
-Iterable<PopupMenuEntry> buildPopupMenuItems(BuildContext context, Iterable<Resource> resources) {
-  return optionsGroups
+Iterable<PopupMenuEntry> buildChildPopupMenuItems(BuildContext context, Iterable<Resource> resources) {
+  return _buildPopupMenuItems(context, resourceOptionsGroups, resources);
+}
+
+Iterable<PopupMenuEntry> buildExplorerPopupMenuItems(BuildContext context, Iterable<Resource> resources) {
+  return _buildPopupMenuItems(context, explorerOptionsGroups, resources);
+}
+
+Iterable<PopupMenuEntry> _buildPopupMenuItems(BuildContext context, Iterable<Iterable<MenuOption>> options, Iterable<Resource> resources) {
+  return options
       .map((group) => group.map((o) => PopupMenuItem(
             value: o,
+            enabled: o.filter(resources),
             child: ListTile(
+              visualDensity: VisualDensity.adaptivePlatformDensity,
               leading: Icon(o.icon),
               title: Text(o.text),
             ),

@@ -5,6 +5,7 @@ import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/explorer/paste_action_handler.dart';
 import 'package:phylum/ui/preview/resource_preview.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
@@ -21,24 +22,19 @@ class ExplorerActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Actions(
       actions: {
-        FocusUpIntent: CallbackAction<FocusUpIntent>(onInvoke: (i) {
-          context.read<ExplorerViewController>().updateSelection((i) => i - 1, i.mode, true);
-          return null;
-        }),
-        FocusDownIntent: CallbackAction<FocusDownIntent>(onInvoke: (i) {
-          context.read<ExplorerViewController>().updateSelection((i) => i + 1, i.mode, true);
-          return null;
-        }),
-        ToggleSelectionIntent: CallbackAction<ToggleSelectionIntent>(onInvoke: (i) {
-          context.read<ExplorerViewController>().updateSelection((i) => i, SelectionMode.toggle, true);
-          return null;
-        }),
+        NextFocusIntent: CallbackAction<NextFocusIntent>(onInvoke: (i) => null),
+        PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
+        PasteFromClipboardIntent: CallbackAction<PasteFromClipboardIntent>(onInvoke: (PasteFromClipboardIntent i) => handlePasteAction(i, context)),
         SelectAllIntent: CallbackAction<SelectAllIntent>(onInvoke: (i) {
           context.read<ExplorerViewController>().selectAll(showFocus: true);
           return null;
         }),
         DismissIntent: CallbackAction<DismissIntent>(onInvoke: (i) {
           context.read<ExplorerViewController>().updateSelection((i) => i, SelectionMode.none, true);
+          return null;
+        }),
+        ToggleSelectionIntent: CallbackAction<ToggleSelectionIntent>(onInvoke: (i) {
+          context.read<ExplorerViewController>().updateSelection((i) => i, SelectionMode.toggle, true);
           return null;
         }),
         ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) {

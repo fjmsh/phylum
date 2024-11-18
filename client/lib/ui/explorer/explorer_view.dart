@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/app_shortcuts.dart';
-import 'package:phylum/ui/explorer/paste_action_handler.dart';
+import 'package:phylum/ui/explorer/explorer_actions.dart';
+import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
+import 'package:phylum/ui/explorer/resource_options_dialog.dart';
 import 'package:provider/provider.dart';
 
 import 'explorer_view_controller.dart';
@@ -12,13 +13,10 @@ class ExplorerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Actions(
-      actions: {
-        NextFocusIntent: CallbackAction<NextFocusIntent>(onInvoke: (i) => null),
-        PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
-        PasteFromClipboardIntent: CallbackAction<PasteFromClipboardIntent>(onInvoke: (PasteFromClipboardIntent i) => handlePasteAction(i, context)),
-      },
-      child: buildPage(context),
+    return ExplorerActions(
+      child: ExplorerGestureHandler(
+        child: buildPage(context),
+      ),
     );
   }
 

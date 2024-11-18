@@ -78,7 +78,7 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
         final selection = await showMenu(
           context: context,
           position: position,
-          items: buildPopupMenuItems(context, resources).toList(growable: false),
+          items: buildChildPopupMenuItems(context, resources).toList(growable: false),
         );
         if (context.mounted && selection != null) {
           handleResourceOption(context, resources, selection);
