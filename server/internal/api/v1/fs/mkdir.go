@@ -34,5 +34,5 @@ func handleMkdirRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	c.JSON(200, r)
+	c.JSON(200, createInfo(r.Info))
 }
