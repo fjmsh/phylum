@@ -59,6 +59,9 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 		}
 		return d.UpdateResourceModified(r.f.ctx, parent)
 	})
+	if err == ErrResourceIDConflict {
+		return r.f.ResourceByID(id)
+	}
 	if err != nil {
 		return Resource{}, err
 	}
