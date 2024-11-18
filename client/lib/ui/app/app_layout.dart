@@ -7,6 +7,7 @@ import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/explorer_view_controller.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
+import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:provider/provider.dart';
 
@@ -21,11 +22,33 @@ class AppLayout {
         ),
       ],
       builder: (context, child) {
-        // final platform = Theme.of(context).platform;
         final size = MediaQuery.sizeOf(context);
 
         final layout = size.width <= 600 ? CollapsedAppLayout() : ExpandedAppLayout(large: size.width > 1200);
-        return AppActions(child: layout);
+        return ExternalDropRegion(
+          resourceId: folderId,
+          buildItem: (context, dropTargetActive) {
+            final child = (dropTargetActive)
+                ? Stack(
+                    children: [
+                      layout,
+                      ConstrainedBox(
+                        constraints: BoxConstraints.expand(),
+                        child: Material(
+                          color: Colors.white70,
+                          child: const Center(
+                              child: Text(
+                            'Drop Files to Upload',
+                            style: TextStyle(fontSize: 24),
+                          )),
+                        ),
+                      )
+                    ],
+                  )
+                : layout;
+            return AppActions(child: child);
+          },
+        );
       },
     );
   }

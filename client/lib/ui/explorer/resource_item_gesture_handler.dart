@@ -88,7 +88,7 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
         context.read<ExplorerViewController>().updateSelection((_) => widget.index, SelectionMode.single, false);
         Actions.maybeInvoke(context, const ActivateIntent());
       },
-      child: ResourceDragSource(
+      child: ResourceDraggable(
         resource: widget.resource,
         index: widget.index,
         dropTargetActive: dropTargetActive,

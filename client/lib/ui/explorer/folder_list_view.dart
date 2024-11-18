@@ -32,9 +32,9 @@ class _FolderListViewState extends State<FolderListView> {
               itemBuilder: (context, index) {
                 final resource = resources[index];
                 return (resource.dir)
-                    ? ResourceDropTarget(
+                    ? ResourceDragTarget(
                         resourceId: resource.id,
-                        buildItem: (id, dropTargetActive) => ResourceItemGestureHandler(
+                        buildItem: (context, dropTargetActive) => ResourceItemGestureHandler(
                           index: index,
                           resource: resource,
                           dropTargetActive: dropTargetActive,

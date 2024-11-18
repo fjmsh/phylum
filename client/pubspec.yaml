@@ -16,6 +16,7 @@ dependencies:
   go_router:
   hive:
   http:
+  http_parser: 
   intl:
   logger:
   mime:
@@ -27,14 +28,13 @@ dependencies:
   path:
   path_provider:
   provider:
+  sqlite3: 
   state_notifier:
   stream_transform:
   super_clipboard:
   super_drag_and_drop:
   uri:
   uuid:
-  sqlite3: 
-  http_parser: 
 
 dev_dependencies:
   flutter_test:

@@ -65,9 +65,9 @@ class _PathViewState extends State<PathView> {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (final r in ancestors)
-          ResourceDropTarget(
+          ResourceDragTarget(
             resourceId: r.id,
-            buildItem: (resource, dropTargetActive) => Card(
+            buildItem: (context, dropTargetActive) => Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
                 side: dropTargetActive ? BorderSide(width: 2, color: Theme.of(context).colorScheme.primary) : BorderSide.none,
