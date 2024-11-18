@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_view_controller.dart';
-import 'package:phylum/ui/explorer/resource_drop_target.dart';
+import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:provider/provider.dart';
 
 class PathView extends StatefulWidget {
