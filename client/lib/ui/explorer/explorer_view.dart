@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/explorer/explorer_actions.dart';
 import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
-import 'package:phylum/ui/explorer/resource_options_dialog.dart';
 import 'package:provider/provider.dart';
 
 import 'explorer_view_controller.dart';
