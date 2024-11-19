@@ -4,7 +4,7 @@ import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:provider/provider.dart';
 
 import 'explorer_view_controller.dart';
-import 'resource_options_dialog.dart';
+import 'menu_options.dart';
 
 class ResourceDetailsRow extends StatelessWidget {
   final Resource r;

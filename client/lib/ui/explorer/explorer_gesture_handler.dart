@@ -12,10 +12,10 @@ class ExplorerGestureHandler extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (details) {
+      onTap: () {
         context.read<ExplorerViewController>().updateSelection((i) => i, SelectionMode.none, false);
       },
-      onSecondaryTapDown: (details) async {
+      onSecondaryTapUp: (details) async {
         context.read<ExplorerViewController>().updateSelection((i) => i, SelectionMode.none, false);
         final resource = context.read<ExplorerViewState>().folder;
         if (resource == null) return;

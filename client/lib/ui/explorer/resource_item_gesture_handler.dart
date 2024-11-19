@@ -39,6 +39,7 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTapDown: (details) {
         Focus.maybeOf(context)?.requestFocus();
         final mode = HardwareKeyboard.instance.isControlPressed
@@ -60,7 +61,7 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
           context.read<ExplorerViewController>().updateSelection((_) => widget.index, SelectionMode.single, false);
         }
       },
-      onSecondaryTapDown: (details) async {
+      onSecondaryTapUp: (details) async {
         ExplorerViewState state = context.read<ExplorerViewState>();
         if (!state.isSelected(widget.resource.id)) {
           final mode =
