@@ -25,7 +25,23 @@ class ReactiveResourceInfoView extends StatelessWidget {
         child: CircularProgressIndicator(),
       );
     }
-    return ResourceInfoView(resource: resource);
+    return Column(
+      children: [
+        DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: Divider.createBorderSide(context),
+            ),
+          ),
+          child: ListTile(
+            leading: resource.getIcon(),
+            title: Text(resource.name, style: TextStyle(fontSize: 20)),
+          ),
+        ),
+        Expanded(child: SingleChildScrollView(child: ResourceInfoView(resource: resource))),
+      ],
+    );
   }
 }
 
@@ -36,41 +52,44 @@ class ResourceInfoView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ListTile(
-          leading: resource.getIcon(),
-          title: Text(resource.name, style: TextStyle(fontWeight: FontWeight.bold)),
-        ),
-        PermissionsTile(resourceId: resource.id),
-        ListTile(
-          title: const Text('Type'),
-          subtitle: Text(resource.dir ? 'Folder' : resource.contentType),
-        ),
-        ListTile(
-          title: const Text('Created'),
-          subtitle: Text(resource.created?.formatReadable() ?? '--'),
-        ),
-        ListTile(
-          title: const Text('Modified'),
-          subtitle: Text(resource.modified?.formatReadable() ?? '--'),
-        ),
-        if (!resource.dir)
+    return ListTileTheme(
+      data: ListTileThemeData(
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        titleTextStyle: Theme.of(context).textTheme.labelLarge,
+        subtitleTextStyle: Theme.of(context).textTheme.bodyLarge,
+      ),
+      child: Column(
+        children: [
+          PermissionsTile(resourceId: resource.id),
           ListTile(
-            title: const Text('Size'),
-            subtitle: Text(resource.contentSize.getHumanString()),
+            title: const Text('Type'),
+            subtitle: Text(resource.dir ? 'Folder' : resource.contentType),
           ),
-        if (!resource.dir)
           ListTile(
-            title: const Text('SHA-256'),
-            subtitle: Text(
-              resource.contentSha256,
-              maxLines: 1,
-              softWrap: false,
-              overflow: TextOverflow.fade,
+            title: const Text('Created'),
+            subtitle: Text(resource.created?.formatReadable() ?? '--'),
+          ),
+          ListTile(
+            title: const Text('Modified'),
+            subtitle: Text(resource.modified?.formatReadable() ?? '--'),
+          ),
+          if (!resource.dir)
+            ListTile(
+              title: const Text('Size'),
+              subtitle: Text(resource.contentSize.getHumanString()),
             ),
-          ),
-      ],
+          if (!resource.dir)
+            ListTile(
+              title: const Text('SHA-256'),
+              subtitle: Text(
+                resource.contentSha256,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.fade,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -41,7 +41,12 @@ class ResourceDetailsRow extends StatelessWidget {
           ),
         ],
       ),
-      title: Text(r.name),
+      title: Text(
+        r.name,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.fade,
+      ),
       trailing: ResourceOptionsButton(r: r),
       shape: RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(4.0)),
       selected: highlight,

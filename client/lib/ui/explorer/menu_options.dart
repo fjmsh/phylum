@@ -150,14 +150,27 @@ class ResourceOptionsList extends StatelessWidget {
     return ListView(
       shrinkWrap: true,
       children: [
-        resources.length == 1
-            ? ListTile(
-                leading: resources.first.getIcon(),
-                title: Text(resources.first.name),
-              )
-            : ListTile(
-                title: Text('${resources.length} items'),
-              ),
+        DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: Divider.createBorderSide(context),
+            ),
+          ),
+          child: resources.length == 1
+              ? ListTile(
+                  leading: resources.first.getIcon(),
+                  title: Text(
+                    resources.first.name,
+                    softWrap: false,
+                    overflow: TextOverflow.fade,
+                    maxLines: 1,
+                  ),
+                )
+              : ListTile(
+                  title: Text('${resources.length} items'),
+                ),
+        ),
         ...buildBottomSheetItems(context, resources)
       ],
     );
