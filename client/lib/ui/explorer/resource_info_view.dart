@@ -11,8 +11,8 @@ import 'package:provider/provider.dart';
 
 import 'resource_icon_extension.dart';
 
-class ResourceInfoView extends StatelessWidget {
-  const ResourceInfoView({super.key});
+class ReactiveResourceInfoView extends StatelessWidget {
+  const ReactiveResourceInfoView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,8 +25,18 @@ class ResourceInfoView extends StatelessWidget {
         child: CircularProgressIndicator(),
       );
     }
+    return ResourceInfoView(resource: resource);
+  }
+}
 
-    return ListView(
+class ResourceInfoView extends StatelessWidget {
+  final Resource resource;
+
+  const ResourceInfoView({super.key, required this.resource});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
       children: [
         ListTile(
           leading: resource.getIcon(),
@@ -53,7 +63,12 @@ class ResourceInfoView extends StatelessWidget {
         if (!resource.dir)
           ListTile(
             title: const Text('SHA-256'),
-            subtitle: Text(resource.contentSha256),
+            subtitle: Text(
+              resource.contentSha256,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.fade,
+            ),
           ),
       ],
     );

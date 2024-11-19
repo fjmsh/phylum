@@ -4,7 +4,9 @@ import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
+import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
@@ -122,6 +124,8 @@ void handleResourceOption(BuildContext context, Iterable<Resource> resources, Me
       }
       break;
     case MenuOption.details:
+      showReponsiveDialog(context, 'Details', (context) => ResourceInfoView(resource: resources.first));
+      break;
     case MenuOption.permissions:
     case MenuOption.publinks:
     case MenuOption.download:

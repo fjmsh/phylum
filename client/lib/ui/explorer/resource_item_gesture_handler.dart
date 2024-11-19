@@ -4,7 +4,7 @@ import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/ui/explorer/explorer_view_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
-import 'package:phylum/ui/explorer/resource_options_dialog.dart';
+import 'package:phylum/ui/explorer/menu_options.dart';
 import 'package:provider/provider.dart';
 
 class ResourceItemGestureHandler extends StatefulWidget {

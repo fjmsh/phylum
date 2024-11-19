@@ -134,7 +134,7 @@ class ExpandedAppLayout extends StatelessWidget {
               child: Card(
                 elevation: 0,
                 margin: const EdgeInsets.only(right: 16, bottom: 16),
-                child: ResourceInfoView(),
+                child: ReactiveResourceInfoView(),
               ),
             ),
         ],

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/ui/explorer/explorer_view_controller.dart';
-import 'package:phylum/ui/explorer/resource_options_dialog.dart';
+import 'package:phylum/ui/explorer/menu_options.dart';
 import 'package:provider/provider.dart';
 
 class ExplorerGestureHandler extends StatelessWidget {
