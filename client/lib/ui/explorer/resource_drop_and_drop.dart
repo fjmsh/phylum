@@ -172,7 +172,12 @@ class ResourceDraggable extends StatelessWidget {
             height: 48,
             child: ListTile(
               leading: resource.getIcon(),
-              title: Text(resource.name),
+              title: Text(
+                resource.name,
+                softWrap: false,
+                maxLines: 1,
+                overflow: TextOverflow.fade,
+              ),
               trailing: count == 1 ? null : Badge(label: Text(count.toString(), style: const TextStyle(fontSize: 14))),
             ),
           ),
