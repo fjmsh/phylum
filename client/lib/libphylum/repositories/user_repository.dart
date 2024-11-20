@@ -14,7 +14,7 @@ class UserRepository {
     account.db.users.select().get().then((users) => _users = Map.unmodifiable(Map.fromIterable(users, key: (u) => u.username)));
   }
 
-  Future<ApiResult> refreshUserList() async {
+  Future<ApiResult> refresh() async {
     return account.apiClient.sendRequest(UsersListRequest(), callback: (request, response) async {
       if (response is PhylumApiSuccessResponse) {
         await processUserListResponse(response.data);

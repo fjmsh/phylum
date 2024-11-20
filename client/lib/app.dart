@@ -74,7 +74,8 @@ class _PhylumAppState extends State<PhylumApp> {
     super.initState();
     _listener = AppLifecycleListener(onStateChange: (state) {
       if (state == AppLifecycleState.resumed) {
-        widget.account.userRepository.refreshUserList();
+        widget.account.userRepository.refresh();
+        widget.account.bookmarkRepository.refresh();
       }
     });
   }

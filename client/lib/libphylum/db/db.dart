@@ -7,6 +7,7 @@ import 'unsupported.dart' if (dart.library.ffi) 'native.dart' if (dart.library.h
 part 'db.g.dart';
 
 @DriftDatabase(include: {
+  'bookmarks.drift',
   'resources.drift',
   'users.drift',
 })
@@ -18,7 +19,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase({required this.id}) : super(_openConnection(id));
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
