@@ -9,13 +9,11 @@ const keyLastBookmarkFetch = "lastBookmarksFetch";
 
 class BookmarkRepository {
   final PhylumAccount account;
-  List<Bookmark> _bookmarks = const [];
-  List<Bookmark> get bookmarks => _bookmarks;
 
-  BookmarkRepository({required this.account}) {
-    account.db.bookmarks.select().get().then(
-          (bookmarks) => _bookmarks = List.unmodifiable(bookmarks),
-        );
+  BookmarkRepository({required this.account});
+
+  Stream<List<Bookmark>> watch() {
+    return account.db.bookmarks.select().watch();
   }
 
   Future<ApiResult> refresh() async {
@@ -36,7 +34,6 @@ class BookmarkRepository {
       batch.insertAllOnConflictUpdate(db.bookmarks, bookmarks);
     });
     account.persist(keyLastBookmarkFetch, data["until"]);
-    _bookmarks = List.unmodifiable(bookmarks);
   }
 
   Bookmark parseBookmarkObject(Map<String, dynamic> data) {

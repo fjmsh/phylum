@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:phylum/app.dart';
 import 'package:phylum/app_shortcuts.dart';
+import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/button_downloads.dart';
 import 'package:phylum/ui/app/button_server_status.dart';
 import 'package:phylum/ui/app/fab_action.dart';
+import 'package:provider/provider.dart';
 
 class NavList extends StatelessWidget {
   final bool showFab;
@@ -34,6 +39,26 @@ class NavList extends StatelessWidget {
             leading: const Icon(Icons.home),
             title: const Text('Home'),
             onTap: () => Actions.maybeInvoke(context, const NavHomeIntent()),
+          ),
+          StreamBuilder<List<Bookmark>>(
+            stream: context.read<PhylumAccount>().bookmarkRepository.watch(),
+            initialData: const [],
+            builder: (context, snapshot) {
+              return Theme(
+                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                child: ExpansionTile(
+                  title: Text('Bookmarks'),
+                  leading: Icon(Icons.bookmark),
+                  children: snapshot.data!
+                      .map((b) => ListTile(
+                            title: Text(b.name),
+                            leading: Icon(null),
+                            onTap: () => context.goNamed('folder', pathParameters: {'id': b.resourceId}),
+                          ))
+                      .toList(growable: false),
+                ),
+              );
+            },
           ),
           const Divider(),
           const DownloadButton(),
