@@ -62,10 +62,9 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
 }
 
 class ExternalDropRegion extends StatefulWidget {
-  final String resourceId;
   final DropWidgetBuilder buildItem;
 
-  const ExternalDropRegion({super.key, required this.resourceId, required this.buildItem});
+  const ExternalDropRegion({super.key, required this.buildItem});
 
   @override
   State<ExternalDropRegion> createState() => _ExternalDropRegionState();
@@ -129,7 +128,8 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
             }
           }
           if (context.mounted) {
-            uploadRecursive(context, widget.resourceId, paths);
+            final folderId = context.read<ExplorerViewState>().folderId;
+            uploadRecursive(context, folderId, paths);
           }
         }
         setState(() => dropTargetActive = false);

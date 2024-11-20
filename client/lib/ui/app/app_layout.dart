@@ -27,7 +27,6 @@ class AppLayout {
         Future.microtask(() => controller.updateFolderId(folderId));
         final layout = size.width <= 600 ? CollapsedAppLayout() : ExpandedAppLayout(large: size.width > 1200);
         return ExternalDropRegion(
-          resourceId: folderId,
           buildItem: (context, dropTargetActive) {
             final child = (dropTargetActive)
                 ? Stack(
