@@ -11,7 +11,7 @@ import (
 )
 
 func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
-	if r.ParentID == nil {
+	if r.ParentID() == nil {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 
