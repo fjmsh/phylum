@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
@@ -40,9 +41,11 @@ type Manager interface {
 	CreateAccessToken(username string) (string, error)
 	ReadAccessToken(accessToken string) (User, error)
 
-	// user_lists.go
-	SharedResources(u User) (result []fs.ResourceInfo, err error)
-	Bookmarks(u User) ([]fs.ResourceInfo, error)
-	AddBookmark(u User, resource fs.Resource) error
+	// bookmarks.go
+	AddBookmark(u User, resource fs.Resource, name string) error
 	RemoveBookmark(u User, id uuid.UUID) error
+	ListBookmarks(u User, since *time.Time) ([]Bookmark, error)
+
+	// shared.go
+	SharedResources(u User) (result []fs.ResourceInfo, err error)
 }

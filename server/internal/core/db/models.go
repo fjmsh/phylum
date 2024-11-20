@@ -16,6 +16,15 @@ type AccessToken struct {
 	Username string
 }
 
+type Bookmark struct {
+	Username   string
+	ResourceID uuid.UUID
+	Name       string
+	Created    pgtype.Timestamp
+	Modified   pgtype.Timestamp
+	Deleted    pgtype.Timestamp
+}
+
 type Publink struct {
 	ID           int32
 	Name         string
@@ -68,10 +77,9 @@ type User struct {
 	Username     string
 	Created      pgtype.Timestamp
 	Modified     pgtype.Timestamp
+	Deleted      pgtype.Timestamp
 	DisplayName  string
 	PasswordHash string
-	Deleted      pgtype.Timestamp
 	Root         uuid.UUID
 	Home         uuid.UUID
-	Bookmarks    []byte
 }

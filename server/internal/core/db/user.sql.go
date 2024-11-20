@@ -11,24 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const addBookmark = `-- name: AddBookmark :exec
-UPDATE users
-SET
-    bookmarks = CASE WHEN bookmarks ? ($1::uuid)::text THEN bookmarks ELSE bookmarks || to_jsonb(array[$1::uuid]) END,
-    modified = NOW()
-WHERE username = $2::text
-`
-
-type AddBookmarkParams struct {
-	ID       uuid.UUID
-	Username string
-}
-
-func (q *Queries) AddBookmark(ctx context.Context, arg AddBookmarkParams) error {
-	_, err := q.db.Exec(ctx, addBookmark, arg.ID, arg.Username)
-	return err
-}
-
 const allUsers = `-- name: AllUsers :many
 SELECT username, display_name, root, home from users WHERE deleted IS NULL
 `
@@ -70,7 +52,7 @@ INSERT INTO users(
     username, display_name, password_hash, root, home
 ) VALUES (
     $1, $2, $3, $4, $5
-) RETURNING username, created, modified, display_name, password_hash, deleted, root, home, bookmarks
+) RETURNING username, created, modified, deleted, display_name, password_hash, root, home
 `
 
 type CreateUserParams struct {
@@ -94,75 +76,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Username,
 		&i.Created,
 		&i.Modified,
+		&i.Deleted,
 		&i.DisplayName,
 		&i.PasswordHash,
-		&i.Deleted,
 		&i.Root,
 		&i.Home,
-		&i.Bookmarks,
 	)
 	return i, err
-}
-
-const listBookmarks = `-- name: ListBookmarks :many
-WITH ids(id) AS(
-  SELECT jsonb_array_elements_text(bookmarks)::uuid
-  FROM users
-  WHERE username = $1::text
-) SELECT r.id, r.permissions, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_size, r.content_type, r.content_sha256
-FROM ids i
-JOIN resources r
-ON i.id = r.id
-`
-
-func (q *Queries) ListBookmarks(ctx context.Context, username string) ([]Resource, error) {
-	rows, err := q.db.Query(ctx, listBookmarks, username)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Resource
-	for rows.Next() {
-		var i Resource
-		if err := rows.Scan(
-			&i.ID,
-			&i.Permissions,
-			&i.Name,
-			&i.Parent,
-			&i.Dir,
-			&i.Created,
-			&i.Modified,
-			&i.Deleted,
-			&i.ContentSize,
-			&i.ContentType,
-			&i.ContentSha256,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const removeBookmark = `-- name: RemoveBookmark :exec
-UPDATE users
-SET
-    bookmarks = bookmarks - ($1::uuid)::text,
-    modified = NOW()
-WHERE username = $2::text
-`
-
-type RemoveBookmarkParams struct {
-	ID       uuid.UUID
-	Username string
-}
-
-func (q *Queries) RemoveBookmark(ctx context.Context, arg RemoveBookmarkParams) error {
-	_, err := q.db.Exec(ctx, removeBookmark, arg.ID, arg.Username)
-	return err
 }
 
 const updateUserDisplayName = `-- name: UpdateUserDisplayName :exec

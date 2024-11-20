@@ -42,6 +42,7 @@ func Get() *DbHandler {
 func Close() {
 	if d != nil {
 		d.pool.Close()
+		d = nil
 	}
 }
 

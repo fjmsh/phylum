@@ -2,12 +2,11 @@ CREATE TABLE users(
   username      TEXT        PRIMARY KEY,
   created       TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   modified      TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted       TIMESTAMP,
   display_name  TEXT        NOT NULL,
   password_hash TEXT        NOT NULL,
-  deleted       TIMESTAMP,
   root          uuid        NOT NULL REFERENCES resources(id),
-  home          uuid        NOT NULL REFERENCES resources(id),
-  bookmarks     JSONB       NOT NULL DEFAULT '[]'
+  home          uuid        NOT NULL REFERENCES resources(id)
 );
 
 ---- create above / drop below ----

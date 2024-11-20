@@ -32,12 +32,12 @@ func setupBookmarksListCommand() *cobra.Command {
 		Short: "List Bookmarks",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			if bookmarks, err := user.CreateManager(context.Background()).Bookmarks(common.User(cmd)); err != nil {
+			if bookmarks, err := user.CreateManager(context.Background()).ListBookmarks(common.User(cmd), nil); err != nil {
 				fmt.Println("unable to list bookmark: " + err.Error())
 				os.Exit(1)
 			} else {
 				for _, b := range bookmarks {
-					fmt.Printf("%s %s %s\n", b.ID().String(), b.Name(), b.PermissionsString())
+					fmt.Printf("%s %s %t\n", b.ResourceID.String(), b.Name, b.Deleted == nil)
 				}
 			}
 		},
@@ -68,17 +68,21 @@ func setupBookmarksRemoveCommand() *cobra.Command {
 
 func setupBookmarksAddCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add [<path>|<uuid>]",
+		Use:   "add (path | uuid) [name]",
 		Short: "Add Bookmark",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.RangeArgs(1, 2),
 		Run: func(cmd *cobra.Command, args []string) {
 			r, err := common.UserFileSystem(cmd).ResourceByPathOrUUID(args[0])
 			if err != nil {
 				fmt.Println("unable to add bookmark: " + err.Error())
 				os.Exit(1)
 			}
+			name := ""
+			if len(args) == 2 {
+				name = args[1]
+			}
 
-			if err := user.CreateManager(context.Background()).AddBookmark(common.User(cmd), r); err != nil {
+			if err := user.CreateManager(context.Background()).AddBookmark(common.User(cmd), r, name); err != nil {
 				fmt.Println("unable to add bookmark: " + err.Error())
 				os.Exit(1)
 			}

@@ -38,27 +38,3 @@ SET
     home = $1,
     modified = NOW()
 WHERE username = $2;
-
--- name: ListBookmarks :many
-WITH ids(id) AS(
-  SELECT jsonb_array_elements_text(bookmarks)::uuid
-  FROM users
-  WHERE username = @username::text
-) SELECT r.*
-FROM ids i
-JOIN resources r
-ON i.id = r.id;
-
--- name: AddBookmark :exec
-UPDATE users
-SET
-    bookmarks = CASE WHEN bookmarks ? (@id::uuid)::text THEN bookmarks ELSE bookmarks || to_jsonb(array[@id::uuid]) END,
-    modified = NOW()
-WHERE username = @username::text;
-
--- name: RemoveBookmark :exec
-UPDATE users
-SET
-    bookmarks = bookmarks - (@id::uuid)::text,
-    modified = NOW()
-WHERE username = @username::text;
