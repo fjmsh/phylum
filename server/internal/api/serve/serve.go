@@ -107,8 +107,8 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file Resource) {
 			fmt.Fprintf(w, "<tr><td>%s</td><td align=\"right\">%s</td><td>%s</td><td>%s</td></tr>\n", link, formatSize(f.ContentSize()), f.ContentType(), f.ContentSHA256()[0:12])
 		}
 	}
-	fmt.Fprintln(w, "</tbody></table></pre>\n")
-	fmt.Fprintln(w, "</body></html>\n")
+	fmt.Fprintln(w, "</tbody></table></pre>")
+	fmt.Fprintln(w, "</body></html>")
 }
 
 func formatSize(size int64) string {
@@ -133,7 +133,7 @@ func serveResource(w http.ResponseWriter, r *http.Request, file Resource) {
 	sendSize := file.ContentSize()
 	ranges, err := parseRange(rangeReq, file.ContentSize())
 	if err != nil {
-		w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", file.ContentSize))
+		w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", file.ContentSize()))
 		http.Error(w, err.Error(), http.StatusRequestedRangeNotSatisfiable)
 		return
 	}
