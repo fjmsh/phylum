@@ -4,9 +4,11 @@ import 'dart:math';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 class ExplorerViewState {
+  final String folderId;
   final Resource? folder;
   final List<Resource> resources;
   final Set<String> selectedIds;
@@ -24,6 +26,7 @@ class ExplorerViewState {
   Resource? get focussedIfSelected => selectedIds.isEmpty ? null : focussed;
 
   const ExplorerViewState({
+    required this.folderId,
     this.folder,
     this.resources = const [],
     this.selectedIds = const {},
@@ -36,6 +39,7 @@ class ExplorerViewState {
   });
 
   ExplorerViewState copyWith({
+    String? folderId,
     Resource? folder,
     List<Resource>? resources,
     Set<String>? selectedIds,
@@ -47,6 +51,7 @@ class ExplorerViewState {
     bool? refreshError,
   }) =>
       ExplorerViewState(
+        folderId: folderId ?? this.folderId,
         folder: folder ?? this.folder,
         resources: resources ?? this.resources,
         selectedIds: selectedIds ?? this.selectedIds,
@@ -64,15 +69,26 @@ class ExplorerViewState {
 }
 
 class ExplorerViewController extends StateNotifier<ExplorerViewState> {
-  final PhylumAccount account;
-  final String folderId;
-  late final StreamSubscription<Resource?> folderSubscription;
-  late final StreamSubscription<List<Resource>> childrenSubscription;
+  final ResourceRepository _repository;
+  StreamSubscription<Resource?>? _folderSubscription;
+  StreamSubscription<List<Resource>>? _childrenSubscription;
 
-  ExplorerViewController({required this.account, required this.folderId}) : super(const ExplorerViewState()) {
-    folderSubscription = account.resourceRepository.watchResource(folderId).listen((e) => state = state.copyWith(folder: e));
-    childrenSubscription = account.resourceRepository.watchChildren(folderId).listen((e) => _updateResourceList(e));
+  ExplorerViewController({
+    required PhylumAccount account,
+    required String folderId,
+  })  : _repository = account.resourceRepository,
+        super(ExplorerViewState(folderId: '')) {
+    updateFolderId(folderId);
     refresh();
+  }
+
+  void updateFolderId(String folderId) {
+    if (folderId == state.folderId) return;
+    state = state.copyWith(folderId: folderId);
+    _folderSubscription?.cancel();
+    _childrenSubscription?.cancel();
+    _folderSubscription = _repository.watchResource(folderId).listen((e) => state = state.copyWith(folder: e));
+    _childrenSubscription = _repository.watchChildren(folderId).listen((e) => _updateResourceList(e));
   }
 
   void _updateResourceList(List<Resource> resources) {
@@ -93,8 +109,8 @@ class ExplorerViewController extends StateNotifier<ExplorerViewState> {
 
   @override
   void dispose() {
-    folderSubscription.cancel();
-    childrenSubscription.cancel();
+    _folderSubscription?.cancel();
+    _childrenSubscription?.cancel();
     super.dispose();
   }
 
@@ -152,7 +168,7 @@ class ExplorerViewController extends StateNotifier<ExplorerViewState> {
   Future refresh() {
     if (state.refreshing) return Future.value(state);
     state = state.copyWith(refreshing: true);
-    return account.resourceRepository.requestResource(folderId).then((result) {
+    return _repository.requestResource(state.folderId).then((result) {
       if (mounted) {
         state = state.copyWith(
           refreshing: false,

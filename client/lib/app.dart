@@ -58,7 +58,6 @@ class _PhylumAppState extends State<PhylumApp> {
         path: '/folders/:id',
         pageBuilder: (context, state) => NoTransitionPage(
           name: state.name,
-          key: ValueKey(state.pathParameters['id']),
           child: AppLayout.create(state.pathParameters['id']!),
           arguments: state.pathParameters['id'],
         ),

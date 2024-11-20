@@ -23,7 +23,8 @@ class AppLayout {
       ],
       builder: (context, child) {
         final size = MediaQuery.sizeOf(context);
-
+        final controller = context.read<ExplorerViewController>();
+        Future.microtask(() => controller.updateFolderId(folderId));
         final layout = size.width <= 600 ? CollapsedAppLayout() : ExpandedAppLayout(large: size.width > 1200);
         return ExternalDropRegion(
           resourceId: folderId,

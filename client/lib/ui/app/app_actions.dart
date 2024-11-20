@@ -15,13 +15,13 @@ class AppActions extends StatelessWidget {
     return Actions(
       actions: {
         NewFolderIntent: CallbackAction<NewFolderIntent>(
-          onInvoke: (intent) => createDirectory(context, context.read<ExplorerViewController>().folderId),
+          onInvoke: (intent) => createDirectory(context, context.read<ExplorerViewState>().folderId),
         ),
         UploadFilesIntent: CallbackAction<UploadFilesIntent>(
-          onInvoke: (intent) => pickAndUploadFiles(context, context.read<ExplorerViewController>().folderId),
+          onInvoke: (intent) => pickAndUploadFiles(context, context.read<ExplorerViewState>().folderId),
         ),
         UploadFolderIntent: CallbackAction<UploadFolderIntent>(
-          onInvoke: (intent) => pickAndUploadDirectory(context, context.read<ExplorerViewController>().folderId),
+          onInvoke: (intent) => pickAndUploadDirectory(context, context.read<ExplorerViewState>().folderId),
         ),
         NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) async {
           final parent = context.read<ExplorerViewState>().folder?.parent;

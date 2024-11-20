@@ -38,7 +38,7 @@ class _PathViewState extends State<PathView> {
   @override
   void initState() {
     super.initState();
-    id = context.read<ExplorerViewController>().folderId;
+    id = context.read<ExplorerViewState>().folderId;
     sub = context.read<PhylumAccount>().db.parents(id).watch().listen((data) {
       SystemChrome.setApplicationSwitcherDescription(ApplicationSwitcherDescription(
         label: data.isEmpty ? 'Phylum' : "${data[0].name == "" ? "/" : data[0].name} | Phylum",
