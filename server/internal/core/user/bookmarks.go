@@ -10,9 +10,9 @@ import (
 )
 
 type Bookmark struct {
-	ResourceID uuid.UUID  `json:"resource_id"`
-	Name       string     `json:"name"`
-	Deleted    *time.Time `json:"deleted"`
+	ResourceID uuid.UUID `json:"resource_id"`
+	Name       string    `json:"name"`
+	Deleted    bool      `json:"deleted"`
 }
 
 func (m manager) AddBookmark(u User, resource fs.Resource, name string) error {
@@ -48,14 +48,10 @@ func (m manager) ListBookmarks(u User, since *time.Time) ([]Bookmark, error) {
 
 	result := make([]Bookmark, len(res))
 	for i, r := range res {
-		var deleted *time.Time
-		if r.Deleted.Valid {
-			deleted = &r.Deleted.Time
-		}
 		result[i] = Bookmark{
 			ResourceID: r.ResourceID,
 			Name:       r.Name,
-			Deleted:    deleted,
+			Deleted:    r.Deleted.Valid,
 		}
 	}
 	return result, err

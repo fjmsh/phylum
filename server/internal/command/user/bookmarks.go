@@ -37,7 +37,7 @@ func setupBookmarksListCommand() *cobra.Command {
 				os.Exit(1)
 			} else {
 				for _, b := range bookmarks {
-					fmt.Printf("%s %s %t\n", b.ResourceID.String(), b.Name, b.Deleted == nil)
+					fmt.Printf("%s %s %t\n", b.ResourceID.String(), b.Name, b.Deleted)
 				}
 			}
 		},
