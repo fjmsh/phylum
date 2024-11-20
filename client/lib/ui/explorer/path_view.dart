@@ -31,26 +31,29 @@ class PathView extends StatefulWidget {
 
 class _PathViewState extends State<PathView> {
   late String id;
-  Function()? removeListener;
   StreamSubscription? sub;
+  Function()? removeListener;
   Iterable<ParentsResult>? ancestors;
 
   @override
   void initState() {
     super.initState();
-    id = context.read<ExplorerViewState>().folderId;
-    sub = context.read<PhylumAccount>().db.parents(id).watch().listen((data) {
-      SystemChrome.setApplicationSwitcherDescription(ApplicationSwitcherDescription(
-        label: data.isEmpty ? 'Phylum' : "${data[0].name == "" ? "/" : data[0].name} | Phylum",
-      ));
-      setState(() {
-        ancestors = data.reversed;
+    removeListener = context.read<ExplorerViewController>().addListener((state) {
+      id = state.folderId;
+      sub = context.read<PhylumAccount>().db.parents(id).watch().listen((data) {
+        SystemChrome.setApplicationSwitcherDescription(ApplicationSwitcherDescription(
+          label: data.isEmpty ? 'Phylum' : "${data[0].name == "" ? "/" : data[0].name} | Phylum",
+        ));
+        setState(() {
+          ancestors = data.reversed;
+        });
       });
-    });
+    }, fireImmediately: true);
   }
 
   @override
   void dispose() {
+    removeListener?.call();
     sub?.cancel();
     super.dispose();
   }
