@@ -27,7 +27,7 @@ final _appRouter = GoRouter(
     GoRoute(
       name: 'folder',
       path: '/folders/:id',
-      builder: (context, state) => AppLayout.create(state.pathParameters['id']!),
+      builder: (context, state) => AppLayout.create(NavDestinationFolder(folderId: state.pathParameters['id']!)),
     ),
   ],
 );

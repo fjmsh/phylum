@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:state_notifier/state_notifier.dart';
@@ -15,6 +16,11 @@ class NavDestinationHome extends NavDestination {
   void go(BuildContext context) {
     context.goNamed('home');
   }
+
+  @override
+  String toString() {
+    return 'NavDestinationHome';
+  }
 }
 
 class NavDestinationFolder extends NavDestination {
@@ -26,58 +32,86 @@ class NavDestinationFolder extends NavDestination {
   void go(BuildContext context) {
     context.goNamed('folder', pathParameters: {'id': folderId});
   }
+
+  @override
+  String toString() {
+    return 'NavDestinationFolder($folderId)';
+  }
 }
 
 class NavHistoryState {
-  final List<String> _back;
-  final List<String> _forward;
+  final NavDestination current;
+  final List<NavDestination> _back;
+  final List<NavDestination> _forward;
 
   bool get canGoBack => _back.isNotEmpty;
   bool get canGoForward => _forward.isNotEmpty;
 
-  const NavHistoryState({List<String> back = const [], List<String> forward = const []})
-      : _back = back,
+  const NavHistoryState({
+    required this.current,
+    List<NavDestination> back = const [],
+    List<NavDestination> forward = const [],
+  })  : _back = back,
         _forward = forward;
 
-  NavHistoryState copyWith({List<String>? back, List<String>? forward}) {
-    return NavHistoryState(forward: forward ?? _forward, back: back ?? _back);
+  NavHistoryState copyWith({NavDestination? current, List<NavDestination>? back, List<NavDestination>? forward}) {
+    return NavHistoryState(
+      current: current ?? this.current,
+      back: back ?? _back,
+      forward: forward ?? _forward,
+    );
   }
 }
 
 class NavHistoryManager extends StateNotifier<NavHistoryState> {
-  NavHistoryManager() : super(const NavHistoryState());
+  NavHistoryManager() : super(const NavHistoryState(current: NavDestinationHome()));
 
-  void go(BuildContext context, NavDestination dest) {
-    dest.go(context);
+  void go(BuildContext context, NavDestination destination) {
+    if (kIsWeb) {
+      destination.go(context);
+    } else {
+      state = NavHistoryState(
+        current: destination,
+        back: [...state._back, state.current],
+        forward: const [],
+      );
+    }
+  }
+
+  void handleDestinationChange(NavDestination destination) {
+    if (kIsWeb) {
+      state = NavHistoryState(
+        current: destination,
+      );
+    } else if (destination != state.current) {
+      // For handling deep links
+      state = NavHistoryState(
+        current: destination,
+        back: [...state._back, state.current],
+        forward: const [],
+      );
+    }
   }
 
   void goBack(BuildContext context) {
     if (!state.canGoBack) return;
     int len = state._back.length;
-    final folderId = state._back[len - 1];
-    state = state.copyWith(back: state._back.sublist(0, len - 1));
-    context.goNamed('folder', pathParameters: {'id': folderId});
+    final target = state._back[len - 1];
+    state = NavHistoryState(
+      current: target,
+      back: state._back.sublist(0, len - 1),
+      forward: [...state._forward, state.current],
+    );
   }
 
   void goForward(BuildContext context) {
     if (!state.canGoForward) return;
     int len = state._forward.length;
-    final folderId = state._forward[len - 1];
-    state = state.copyWith(forward: state._forward.sublist(0, len - 1));
-    context.goNamed('folder', pathParameters: {'id': folderId});
+    final target = state._forward[len - 1];
+    state = NavHistoryState(
+      current: target,
+      back: [...state._back, state.current],
+      forward: state._forward.sublist(0, len - 1),
+    );
   }
-
-  // void _handlePush(String folderId) {
-  //   Future.microtask(() {
-  //     switch (_pushState) {
-  //       case _NavState.idle:
-  //         state = NavHistoryState(back: [...state._back, folderId], forward: []);
-  //       case _NavState.back:
-  //         state = state.copyWith(forward: [...state._forward, folderId]);
-  //       case _NavState.forward:
-  //         state = state.copyWith(back: [...state._back, folderId]);
-  //     }
-  //     _pushState = _NavState.idle;
-  //   });
-  // }
 }

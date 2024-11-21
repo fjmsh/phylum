@@ -3,6 +3,7 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/fab_action.dart';
+import 'package:phylum/ui/app/nav_history.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/explorer_view_controller.dart';
@@ -14,17 +15,20 @@ import 'package:provider/provider.dart';
 class AppLayout {
   const AppLayout();
 
-  static Widget create(String folderId) {
+  static Widget create(NavDestination destination) {
     return MultiProvider(
       providers: [
         StateNotifierProvider<ExplorerViewController, ExplorerViewState>(
-          create: (context) => ExplorerViewController(account: context.read<PhylumAccount>(), folderId: folderId),
+          create: (context) => ExplorerViewController(
+            navHistoryManager: context.read<NavHistoryManager>(),
+            account: context.read<PhylumAccount>(),
+          ),
         ),
       ],
       builder: (context, child) {
         final size = MediaQuery.sizeOf(context);
-        final controller = context.read<ExplorerViewController>();
-        Future.microtask(() => controller.updateFolderId(folderId));
+        final navHistoryManager = context.read<NavHistoryManager>();
+        Future.microtask(() => navHistoryManager.handleDestinationChange(destination));
         final layout = size.width <= 600 ? CollapsedAppLayout() : ExpandedAppLayout(large: size.width > 1200);
         return ExternalDropRegion(
           buildItem: (context, dropTargetActive) {

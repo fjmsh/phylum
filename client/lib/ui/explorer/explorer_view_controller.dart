@@ -5,6 +5,7 @@ import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
+import 'package:phylum/ui/app/nav_history.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 class ExplorerViewState {
@@ -70,19 +71,32 @@ class ExplorerViewState {
 
 class ExplorerViewController extends StateNotifier<ExplorerViewState> {
   final ResourceRepository _repository;
+  final NavHistoryManager _historyManager;
+  final String _homeId;
+  void Function()? removeHistoryManagerListener;
   StreamSubscription<Resource?>? _folderSubscription;
   StreamSubscription<List<Resource>>? _childrenSubscription;
 
   ExplorerViewController({
     required PhylumAccount account,
-    required String folderId,
+    required NavHistoryManager navHistoryManager,
   })  : _repository = account.resourceRepository,
+        _homeId = account.userHome,
+        _historyManager = navHistoryManager,
         super(ExplorerViewState(folderId: '')) {
-    updateFolderId(folderId);
-    refresh();
+    removeHistoryManagerListener = _historyManager.addListener((state) {
+      updateDestination(state.current);
+      refresh();
+    }, fireImmediately: true);
   }
 
-  void updateFolderId(String folderId) {
+  void updateDestination(NavDestination destination) {
+    String folderId = state.folderId;
+    if (destination is NavDestinationFolder) {
+      folderId = destination.folderId;
+    } else if (destination is NavDestinationHome) {
+      folderId = _homeId;
+    }
     if (folderId == state.folderId) return;
     state = state.copyWith(folderId: folderId);
     _folderSubscription?.cancel();
