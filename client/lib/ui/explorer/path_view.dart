@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/nav_history.dart';
 import 'package:phylum/ui/explorer/explorer_view_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:provider/provider.dart';
@@ -77,11 +79,7 @@ class _PathViewState extends State<PathView> {
               ),
               margin: EdgeInsets.symmetric(horizontal: 6),
               child: InkWell(
-                onTap: r.id == id
-                    ? null
-                    : () {
-                        context.goNamed('folder', pathParameters: {'id': r.id});
-                      },
+                onTap: r.id == id ? null : () => Actions.maybeInvoke(context, NavToFolderIntent(folderId: r.id)),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: Text(

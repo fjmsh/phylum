@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:go_router/go_router.dart';
@@ -13,11 +12,28 @@ import 'package:phylum/ui/app/app_logout.dart';
 import 'package:phylum/ui/app/nav_history.dart';
 import 'package:provider/provider.dart';
 
-class PhylumApp extends StatefulWidget {
-  final PhylumAccount account;
-  final NavigatorObserver observer;
+final _appRouter = GoRouter(
+  routes: [
+    GoRoute(
+      name: 'root',
+      path: '/',
+      redirect: (context, state) => '/home',
+    ),
+    GoRoute(
+      name: 'home',
+      path: '/home',
+      redirect: (context, state) => '/folders/${context.read<PhylumAccount>().userHome}',
+    ),
+    GoRoute(
+      name: 'folder',
+      path: '/folders/:id',
+      builder: (context, state) => AppLayout.create(state.pathParameters['id']!),
+    ),
+  ],
+);
 
-  PhylumApp._({required this.account, required this.observer}) : super(key: ValueKey(account.id));
+class PhylumApp extends StatefulWidget {
+  const PhylumApp({super.key});
 
   static Widget create(PhylumAccount account) => MultiProvider(
         key: ValueKey(account.id),
@@ -28,10 +44,7 @@ class PhylumApp extends StatefulWidget {
           StateNotifierProvider<NavHistoryManager, NavHistoryState>(create: (context) => NavHistoryManager()),
           ChangeNotifierProvider(create: (context) => ActionQueueStatusNotifier(account.actionQueue))
         ],
-        builder: (context, child) => PhylumApp._(
-          account: account,
-          observer: context.read<NavHistoryManager>().navObserver,
-        ),
+        child: PhylumApp(),
       );
 
   @override
@@ -41,36 +54,14 @@ class PhylumApp extends StatefulWidget {
 class _PhylumAppState extends State<PhylumApp> {
   late final AppLifecycleListener _listener;
 
-  late final _appRouter = GoRouter(
-    routes: [
-      GoRoute(
-        name: 'root',
-        path: '/',
-        redirect: (context, state) => '/home',
-      ),
-      GoRoute(
-        name: 'home',
-        path: '/home',
-        redirect: (context, state) => '/folders/${context.read<PhylumAccount>().userHome}',
-      ),
-      GoRoute(
-        name: 'folder',
-        path: '/folders/:id',
-        builder: (context, state) => AppLayout.create(state.pathParameters['id']!),
-      ),
-    ],
-    observers: [
-      if (!kIsWeb) widget.observer,
-    ],
-  );
-
   @override
   void initState() {
     super.initState();
     _listener = AppLifecycleListener(onStateChange: (state) {
       if (state == AppLifecycleState.resumed) {
-        widget.account.userRepository.refresh();
-        widget.account.bookmarkRepository.refresh();
+        final account = context.read<PhylumAccount>();
+        account.userRepository.refresh();
+        account.bookmarkRepository.refresh();
       }
     });
   }
@@ -92,7 +83,7 @@ class _PhylumAppState extends State<PhylumApp> {
     );
     if (ready) {
       return MaterialApp.router(
-        key: ValueKey(widget.account.id),
+        key: ValueKey('ready'),
         title: 'Phylum',
         debugShowCheckedModeBanner: false,
         theme: theme,
@@ -102,7 +93,7 @@ class _PhylumAppState extends State<PhylumApp> {
       );
     }
     return MaterialApp.router(
-      key: ValueKey('${widget.account.id}-notready'),
+      key: ValueKey('loggingout'),
       title: 'Logging Out | Phylum',
       debugShowCheckedModeBanner: false,
       theme: theme,

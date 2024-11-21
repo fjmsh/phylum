@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -52,7 +51,7 @@ class NavList extends StatelessWidget {
                       .map((b) => ListTile(
                             title: Text(b.name),
                             leading: Icon(null),
-                            onTap: () => context.goNamed('folder', pathParameters: {'id': b.resourceId}),
+                            onTap: () => Actions.maybeInvoke(context, NavToFolderIntent(folderId: b.resourceId)),
                           ))
                       .toList(growable: false),
                 ),

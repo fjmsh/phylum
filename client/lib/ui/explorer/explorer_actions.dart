@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
@@ -81,7 +80,7 @@ class ExplorerActions extends StatelessWidget {
 
   void _openResource(BuildContext context, Resource r) {
     if (r.dir) {
-      context.goNamed('folder', pathParameters: {'id': r.id});
+      Actions.maybeInvoke(context, NavToFolderIntent(folderId: r.id));
     } else {
       ResourcePreview.showPreview(context, r.id);
     }

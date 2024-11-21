@@ -74,6 +74,12 @@ class NavHomeIntent extends Intent {
   const NavHomeIntent();
 }
 
+class NavToFolderIntent extends Intent {
+  final String folderId;
+
+  const NavToFolderIntent({required this.folderId});
+}
+
 Map<ShortcutActivator, Intent> getAppShortcuts() {
   return const {
     // General
