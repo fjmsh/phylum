@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
+import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/actions/bookmark_add_action.dart';
+import 'package:phylum/libphylum/actions/bookmark_remove_action.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
@@ -13,8 +15,9 @@ import 'package:provider/provider.dart';
 
 enum MenuOption {
   details(Icons.info_outline, 'Details', isSingle),
-  download(Icons.download, 'Download', all),
-  bookmark(Icons.bookmark_add_outlined, 'Add To Bookmarks', all),
+  download(Icons.download, 'Download', isFilesOnly),
+  bookmarkAdd(Icons.bookmark_add_outlined, 'Add To Bookmarks', all),
+  bookmarkRemove(Icons.bookmark_remove_outlined, 'Remove From Bookmarks', all),
   rename(Icons.drive_file_rename_outline, 'Rename', isSingle),
   move(Icons.drive_file_move_outlined, 'Move To', all),
   copy(Icons.copy, 'Copy To', all),
@@ -30,7 +33,7 @@ enum MenuOption {
 
   final IconData icon;
   final String text;
-  final bool Function(Iterable<Resource> resources) filter;
+  final bool Function(PhylumAccount account, Iterable<Resource> resources) filter;
 }
 
 const resourceOptionsGroups = [
@@ -42,7 +45,8 @@ const resourceOptionsGroups = [
     MenuOption.delete,
   ],
   [
-    MenuOption.bookmark,
+    MenuOption.bookmarkAdd,
+    MenuOption.bookmarkRemove,
     MenuOption.permissions,
     MenuOption.publinks,
   ],
@@ -58,7 +62,8 @@ final explorerOptionsGroups = [
     MenuOption.uploadFolders,
   ],
   [
-    MenuOption.bookmark,
+    MenuOption.bookmarkAdd,
+    MenuOption.bookmarkRemove,
     MenuOption.permissions,
     MenuOption.publinks,
   ],
@@ -67,11 +72,13 @@ final explorerOptionsGroups = [
   ]
 ];
 
-bool isSingle(Iterable<Resource> resources) => resources.length == 1;
+bool isSingle(PhylumAccount account, Iterable<Resource> resources) => resources.length == 1;
 
-bool none(Iterable<Resource> resources) => false;
+bool none(PhylumAccount account, Iterable<Resource> resources) => false;
 
-bool all(Iterable<Resource> resources) => true;
+bool all(PhylumAccount accout, Iterable<Resource> resources) => true;
+
+bool isFilesOnly(PhylumAccount account, Iterable<Resource> resources) => resources.every((r) => !r.dir);
 
 class ResourceOptionsButton extends StatelessWidget {
   final Resource r;
@@ -83,12 +90,9 @@ class ResourceOptionsButton extends StatelessWidget {
     final resources = [r];
     return MediaQuery.sizeOf(context).width < 800
         ? IconButton(icon: Icon(Icons.adaptive.more), onPressed: () => showResourceOptions(context, resources))
-        : ListTileTheme(
-            data: ListTileThemeData(visualDensity: VisualDensity.compact),
-            child: PopupMenuButton(
-              itemBuilder: (context) => buildChildPopupMenuItems(context, resources).toList(growable: false),
-              onSelected: (o) => handleResourceOption(context, resources, o),
-            ),
+        : PopupMenuButton(
+            itemBuilder: (context) => buildChildPopupMenuItems(context, resources).toList(growable: false),
+            onSelected: (o) => handleResourceOption(context, resources, o),
           );
   }
 }
@@ -130,20 +134,34 @@ void handleResourceOption(BuildContext context, Iterable<Resource> resources, Me
     case MenuOption.permissions:
     case MenuOption.publinks:
     case MenuOption.download:
-    case MenuOption.bookmark:
-      assert(resources.length == 1);
-      final r = resources.first;
-      final name = await showInputDialog(
-        context,
-        autocorrect: false,
-        title: 'Add Bookmark',
-        labelText: 'Name',
-        preset: r.name,
-      );
-      if (name == null || !context.mounted) {
-        return;
+      for (final r in resources) {
+        context.read<DownloadManager>().downloadResource(r);
       }
-      account.addAction(BookmarkAddAction(r: r, name: name.isEmpty ? '' : name));
+      break;
+    case MenuOption.bookmarkAdd:
+      if (resources.length == 1) {
+        final r = resources.first;
+        final name = await showInputDialog(
+          context,
+          autocorrect: false,
+          title: 'Add Bookmark',
+          labelText: 'Name',
+          preset: r.name,
+        );
+        if (name == null || !context.mounted) {
+          return;
+        }
+        account.addAction(BookmarkAddAction(r: r, name: name.isEmpty ? '' : name));
+      } else {
+        for (final r in resources) {
+          account.addAction(BookmarkAddAction(r: r));
+        }
+      }
+      break;
+    case MenuOption.bookmarkRemove:
+      for (final r in resources) {
+        account.addAction(BookmarkRemoveAction(r: r));
+      }
       break;
     case MenuOption.newFolder:
       Actions.maybeInvoke(context, const NewFolderIntent());
@@ -185,47 +203,18 @@ class ResourceOptionsList extends StatelessWidget {
                   title: Text('${resources.length} items'),
                 ),
         ),
-        ...buildBottomSheetItems(context, resources)
+        ..._buildItems(context, resourceOptionsGroups, resources)
       ],
     );
   }
 }
 
-Iterable<Widget> buildBottomSheetItems(BuildContext context, Iterable<Resource> resources) {
-  return resourceOptionsGroups
-      .map((group) => group.map((o) => ListTile(
-            visualDensity: VisualDensity.adaptivePlatformDensity,
-            leading: Icon(o.icon),
-            title: Text(o.text),
-            onTap: o.filter(resources) ? () => Navigator.of(context).pop(o) : null,
-          )))
-      .fold<Iterable<Widget>>(
-    <Widget>[],
-    (acc, e) {
-      if (e.isEmpty) {
-        return acc;
-      }
-      if (acc.isEmpty) {
-        return e;
-      }
-      return [...acc, Divider(), ...e];
-    },
-  );
-}
-
-Iterable<PopupMenuEntry> buildChildPopupMenuItems(BuildContext context, Iterable<Resource> resources) {
-  return _buildPopupMenuItems(context, resourceOptionsGroups, resources);
-}
-
-Iterable<PopupMenuEntry> buildExplorerPopupMenuItems(BuildContext context, Iterable<Resource> resources) {
-  return _buildPopupMenuItems(context, explorerOptionsGroups, resources);
-}
-
-Iterable<PopupMenuEntry> _buildPopupMenuItems(BuildContext context, Iterable<Iterable<MenuOption>> options, Iterable<Resource> resources) {
+Iterable<PopupMenuEntry> _buildItems(BuildContext context, Iterable<Iterable<MenuOption>> options, Iterable<Resource> resources) {
+  final account = context.read<PhylumAccount>();
   return options
       .map((group) => group.map((o) => PopupMenuItem(
             value: o,
-            enabled: o.filter(resources),
+            enabled: o.filter(account, resources),
             child: ListTile(
               visualDensity: VisualDensity.adaptivePlatformDensity,
               leading: Icon(o.icon),
@@ -244,4 +233,12 @@ Iterable<PopupMenuEntry> _buildPopupMenuItems(BuildContext context, Iterable<Ite
       return [...acc, PopupMenuDivider(), ...e];
     },
   );
+}
+
+Iterable<PopupMenuEntry> buildChildPopupMenuItems(BuildContext context, Iterable<Resource> resources) {
+  return _buildItems(context, resourceOptionsGroups, resources);
+}
+
+Iterable<PopupMenuEntry> buildExplorerPopupMenuItems(BuildContext context, Iterable<Resource> resources) {
+  return _buildItems(context, explorerOptionsGroups, resources);
 }

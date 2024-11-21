@@ -136,9 +136,9 @@ class ExplorerViewController extends StateNotifier<ExplorerViewState> {
     state = state.copyWith(selectedIds: Set.of(state.resources.map((r) => r.id)), showFocus: showFocus);
   }
 
-  void updateSelection(int Function(int) indexFn, SelectionMode mode, bool highlight) {
+  void updateSelection(int Function(int)? indexFn, SelectionMode mode, bool highlight) {
     Set<String>? selectedIds;
-    int index = indexFn(state.focusIndex);
+    int index = indexFn?.call(state.focusIndex) ?? state.focusIndex;
     index = min(state.resources.length - 1, max(0, index));
     int selectionStartIndex = state.selectionStartIndex;
     switch (mode) {

@@ -46,25 +46,15 @@ class BookmarkAddAction extends PhylumAction with JsonApiAction, BookmarkAction 
 
   @override
   String generateDescription(PhylumAccount account) {
-    return 'Bookmarking $bookmarkName';
+    return 'Adding Bookmarking: $bookmarkName';
   }
 
   @override
   Map<String, dynamic>? generateRequestBody() => null;
 
   @override
-  Future<void> initialize(PhylumAccount account) {
-    return account.resourceRepository.trackServerData(resourceId);
-  }
-
-  @override
-  Future<void> dispose(PhylumAccount account) {
-    return account.resourceRepository.stopTrackingServerData(resourceId);
-  }
-
-  @override
   Future<void> applyOptimisticUpdate(PhylumAccount account) {
-    return account.bookmarkRepository.create(Bookmark(
+    return account.bookmarkRepository.insertOrReplace(Bookmark(
       resourceId: resourceId,
       name: bookmarkName,
       created: createdMillis,

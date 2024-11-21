@@ -23,12 +23,20 @@ class BookmarkRepository {
     return account.db.listBookmarks();
   }
 
-  Future<int> create(Bookmark bookmark) {
+  Future<int> insertOrReplace(Bookmark bookmark) {
     return account.db.bookmarks.insertOne(bookmark, mode: InsertMode.insertOrReplace);
   }
 
-  Future<int> delete(String resourceId) {
-    return account.db.bookmarks.deleteWhere((f) => f.resourceId.equals(resourceId));
+  Future<int> update(String id, Insertable<Bookmark> update) {
+    return (account.db.bookmarks.update()..where((b) => b.resourceId.equals(id))).write(update);
+  }
+
+  Future<int> delete(String id) {
+    return account.db.bookmarks.deleteWhere((f) => f.resourceId.equals(id));
+  }
+
+  Selectable<int> bookmarksCount(Iterable<String> ids) {
+    return account.db.bookmarks.count(where: (b) => b.resourceId.isIn(ids));
   }
 
   Future<ApiResult> refresh() async {

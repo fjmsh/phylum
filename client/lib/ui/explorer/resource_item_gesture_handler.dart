@@ -68,6 +68,8 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
               HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed ? SelectionMode.add : SelectionMode.single;
           context.read<ExplorerViewController>().updateSelection((i) => widget.index, mode, false);
           state = context.read<ExplorerViewState>();
+        } else {
+          context.read<ExplorerViewController>().updateSelection(null, SelectionMode.noChange, false);
         }
         final position = RelativeRect.fromLTRB(
           details.globalPosition.dx,
