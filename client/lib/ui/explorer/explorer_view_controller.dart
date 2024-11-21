@@ -98,7 +98,7 @@ class ExplorerViewController extends StateNotifier<ExplorerViewState> {
       folderId = _homeId;
     }
     if (folderId == state.folderId) return;
-    state = state.copyWith(folderId: folderId);
+    state = ExplorerViewState(folderId: folderId);
     _folderSubscription?.cancel();
     _childrenSubscription?.cancel();
     _folderSubscription = _repository.watchResource(folderId).listen((e) => state = state.copyWith(folder: e));
