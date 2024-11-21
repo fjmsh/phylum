@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
@@ -36,9 +37,17 @@ func (m manager) AddBookmark(u User, resource fs.Resource, name string) (Bookmar
 
 func (m manager) RemoveBookmark(u User, id uuid.UUID) (Bookmark, error) {
 	if b, err := m.db.Queries.DeleteBookmarkByUsernameResourceID(m.ctx, db.DeleteBookmarkByUsernameResourceIDParams{Username: u.Username, ResourceID: id}); err != nil {
+		if err == pgx.ErrNoRows {
+			return Bookmark{
+				ResourceID: id,
+				Deleted:    true,
+			}, nil
+		}
 		return Bookmark{}, err
 	} else {
-		return bookmarkFromDb(b), nil
+		r := bookmarkFromDb(b)
+		r.Deleted = true
+		return r, nil
 	}
 }
 
