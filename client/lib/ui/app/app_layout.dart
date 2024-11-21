@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/fab_action.dart';
@@ -63,15 +64,28 @@ class CollapsedAppLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final selected = context.select<ExplorerViewState, int>((state) => state.selectedIds.length);
     return Scaffold(
-      appBar: AppBar(title: const Text('Phylum')),
-      drawer: const Drawer(child: NavList(showFab: false)),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showCreateBottomSheet(context);
-        },
-        child: Icon(Icons.add),
-      ),
+      appBar: selected == 0
+          ? AppBar(title: const Text('Phylum'))
+          : AppBar(
+              leading: CloseButton(
+                onPressed: () {
+                  context.read<ExplorerViewController>().updateSelection((i) => i, SelectionMode.none, false);
+                },
+              ),
+              backgroundColor: Colors.grey,
+              title: Text('$selected selected'),
+            ),
+      drawer: selected == 0 ? const Drawer(child: NavList(showFab: false)) : null,
+      floatingActionButton: selected == 0
+          ? FloatingActionButton(
+              onPressed: () {
+                showCreateBottomSheet(context);
+              },
+              child: Icon(Icons.add),
+            )
+          : null,
       body: const ExplorerView(),
     );
   }
