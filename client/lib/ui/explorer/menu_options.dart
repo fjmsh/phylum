@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
+import 'package:phylum/libphylum/actions/bookmark_add_action.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
@@ -130,6 +131,19 @@ void handleResourceOption(BuildContext context, Iterable<Resource> resources, Me
     case MenuOption.publinks:
     case MenuOption.download:
     case MenuOption.bookmark:
+      assert(resources.length == 1);
+      final r = resources.first;
+      final name = await showInputDialog(
+        context,
+        autocorrect: false,
+        title: 'Add Bookmark',
+        labelText: 'Name',
+        preset: r.name,
+      );
+      if (name == null || !context.mounted) {
+        return;
+      }
+      account.addAction(BookmarkAddAction(r: r, name: name.isEmpty ? '' : name));
       break;
     case MenuOption.newFolder:
       Actions.maybeInvoke(context, const NewFolderIntent());

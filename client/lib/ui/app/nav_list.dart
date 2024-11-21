@@ -38,8 +38,8 @@ class NavList extends StatelessWidget {
             title: const Text('Home'),
             onTap: () => Actions.maybeInvoke(context, const NavHomeIntent()),
           ),
-          StreamBuilder<List<Bookmark>>(
-            stream: context.read<PhylumAccount>().bookmarkRepository.watch(),
+          StreamBuilder<List<ListBookmarksResult>>(
+            stream: context.read<PhylumAccount>().bookmarkRepository.list().watch(),
             initialData: const [],
             builder: (context, snapshot) {
               return Theme(
@@ -47,7 +47,8 @@ class NavList extends StatelessWidget {
                 child: ExpansionTile(
                   title: Text('Bookmarks'),
                   leading: Icon(Icons.bookmark),
-                  children: snapshot.data!
+                  initiallyExpanded: true,
+                  children: (snapshot.data ?? const [])
                       .map((b) => ListTile(
                             title: Text(b.name),
                             leading: Icon(null),

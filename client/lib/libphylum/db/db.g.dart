@@ -870,6 +870,13 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
       type: DriftSqlType.string,
       requiredDuringInsert: true,
       $customConstraints: 'NOT NULL');
+  static const VerificationMeta _createdMeta =
+      const VerificationMeta('created');
+  late final GeneratedColumn<int> created = GeneratedColumn<int>(
+      'created', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL');
   static const VerificationMeta _deletedMeta =
       const VerificationMeta('deleted');
   late final GeneratedColumn<bool> deleted = GeneratedColumn<bool>(
@@ -878,7 +885,7 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
       requiredDuringInsert: true,
       $customConstraints: 'NOT NULL CHECK (deleted IN (0, 1))');
   @override
-  List<GeneratedColumn> get $columns => [resourceId, name, deleted];
+  List<GeneratedColumn> get $columns => [resourceId, name, created, deleted];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -903,6 +910,12 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
+    if (data.containsKey('created')) {
+      context.handle(_createdMeta,
+          created.isAcceptableOrUnknown(data['created']!, _createdMeta));
+    } else if (isInserting) {
+      context.missing(_createdMeta);
+    }
     if (data.containsKey('deleted')) {
       context.handle(_deletedMeta,
           deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta));
@@ -922,6 +935,8 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
           .read(DriftSqlType.string, data['${effectivePrefix}resource_id'])!,
       name: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      created: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}created'])!,
       deleted: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}deleted'])!,
     );
@@ -939,14 +954,19 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
 class Bookmark extends DataClass implements Insertable<Bookmark> {
   final String resourceId;
   final String name;
+  final int created;
   final bool deleted;
   const Bookmark(
-      {required this.resourceId, required this.name, required this.deleted});
+      {required this.resourceId,
+      required this.name,
+      required this.created,
+      required this.deleted});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['resource_id'] = Variable<String>(resourceId);
     map['name'] = Variable<String>(name);
+    map['created'] = Variable<int>(created);
     map['deleted'] = Variable<bool>(deleted);
     return map;
   }
@@ -955,6 +975,7 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
     return BookmarksCompanion(
       resourceId: Value(resourceId),
       name: Value(name),
+      created: Value(created),
       deleted: Value(deleted),
     );
   }
@@ -965,6 +986,7 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
     return Bookmark(
       resourceId: serializer.fromJson<String>(json['resource_id']),
       name: serializer.fromJson<String>(json['name']),
+      created: serializer.fromJson<int>(json['created']),
       deleted: serializer.fromJson<bool>(json['deleted']),
     );
   }
@@ -974,14 +996,17 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
     return <String, dynamic>{
       'resource_id': serializer.toJson<String>(resourceId),
       'name': serializer.toJson<String>(name),
+      'created': serializer.toJson<int>(created),
       'deleted': serializer.toJson<bool>(deleted),
     };
   }
 
-  Bookmark copyWith({String? resourceId, String? name, bool? deleted}) =>
+  Bookmark copyWith(
+          {String? resourceId, String? name, int? created, bool? deleted}) =>
       Bookmark(
         resourceId: resourceId ?? this.resourceId,
         name: name ?? this.name,
+        created: created ?? this.created,
         deleted: deleted ?? this.deleted,
       );
   Bookmark copyWithCompanion(BookmarksCompanion data) {
@@ -989,6 +1014,7 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
       resourceId:
           data.resourceId.present ? data.resourceId.value : this.resourceId,
       name: data.name.present ? data.name.value : this.name,
+      created: data.created.present ? data.created.value : this.created,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
     );
   }
@@ -998,50 +1024,58 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
     return (StringBuffer('Bookmark(')
           ..write('resourceId: $resourceId, ')
           ..write('name: $name, ')
+          ..write('created: $created, ')
           ..write('deleted: $deleted')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(resourceId, name, deleted);
+  int get hashCode => Object.hash(resourceId, name, created, deleted);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Bookmark &&
           other.resourceId == this.resourceId &&
           other.name == this.name &&
+          other.created == this.created &&
           other.deleted == this.deleted);
 }
 
 class BookmarksCompanion extends UpdateCompanion<Bookmark> {
   final Value<String> resourceId;
   final Value<String> name;
+  final Value<int> created;
   final Value<bool> deleted;
   final Value<int> rowid;
   const BookmarksCompanion({
     this.resourceId = const Value.absent(),
     this.name = const Value.absent(),
+    this.created = const Value.absent(),
     this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   BookmarksCompanion.insert({
     required String resourceId,
     required String name,
+    required int created,
     required bool deleted,
     this.rowid = const Value.absent(),
   })  : resourceId = Value(resourceId),
         name = Value(name),
+        created = Value(created),
         deleted = Value(deleted);
   static Insertable<Bookmark> custom({
     Expression<String>? resourceId,
     Expression<String>? name,
+    Expression<int>? created,
     Expression<bool>? deleted,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (resourceId != null) 'resource_id': resourceId,
       if (name != null) 'name': name,
+      if (created != null) 'created': created,
       if (deleted != null) 'deleted': deleted,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1050,11 +1084,13 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
   BookmarksCompanion copyWith(
       {Value<String>? resourceId,
       Value<String>? name,
+      Value<int>? created,
       Value<bool>? deleted,
       Value<int>? rowid}) {
     return BookmarksCompanion(
       resourceId: resourceId ?? this.resourceId,
       name: name ?? this.name,
+      created: created ?? this.created,
       deleted: deleted ?? this.deleted,
       rowid: rowid ?? this.rowid,
     );
@@ -1068,6 +1104,9 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
+    }
+    if (created.present) {
+      map['created'] = Variable<int>(created.value);
     }
     if (deleted.present) {
       map['deleted'] = Variable<bool>(deleted.value);
@@ -1083,6 +1122,7 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
     return (StringBuffer('BookmarksCompanion(')
           ..write('resourceId: $resourceId, ')
           ..write('name: $name, ')
+          ..write('created: $created, ')
           ..write('deleted: $deleted, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1114,13 +1154,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 
   Selectable<ListBookmarksResult> listBookmarks() {
     return customSelect(
-        'SELECT resource_id, name FROM bookmarks WHERE deleted = 0',
+        'SELECT resource_id, name, created FROM bookmarks WHERE deleted = 0 ORDER BY created ASC',
         variables: [],
         readsFrom: {
           bookmarks,
         }).map((QueryRow row) => ListBookmarksResult(
           resourceId: row.read<String>('resource_id'),
           name: row.read<String>('name'),
+          created: row.read<int>('created'),
         ));
   }
 
@@ -1282,6 +1323,26 @@ typedef $ResourcesUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<int> rowid,
 });
 
+final class $ResourcesReferences
+    extends BaseReferences<_$AppDatabase, Resources, Resource> {
+  $ResourcesReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<Bookmarks, List<Bookmark>> _bookmarksRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.bookmarks,
+          aliasName:
+              $_aliasNameGenerator(db.resources.id, db.bookmarks.resourceId));
+
+  $BookmarksProcessedTableManager get bookmarksRefs {
+    final manager = $BookmarksTableManager($_db, $_db.bookmarks)
+        .filter((f) => f.resourceId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_bookmarksRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
 class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
   $ResourcesFilterComposer({
     required super.$db,
@@ -1328,6 +1389,27 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
 
   ColumnFilters<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> bookmarksRefs(
+      Expression<bool> Function($BookmarksFilterComposer f) f) {
+    final $BookmarksFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.bookmarks,
+        getReferencedColumn: (t) => t.resourceId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $BookmarksFilterComposer(
+              $db: $db,
+              $table: $db.bookmarks,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $ResourcesOrderingComposer extends Composer<_$AppDatabase, Resources> {
@@ -1425,6 +1507,27 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
 
   GeneratedColumn<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => column);
+
+  Expression<T> bookmarksRefs<T extends Object>(
+      Expression<T> Function($BookmarksAnnotationComposer a) f) {
+    final $BookmarksAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.bookmarks,
+        getReferencedColumn: (t) => t.resourceId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $BookmarksAnnotationComposer(
+              $db: $db,
+              $table: $db.bookmarks,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $ResourcesTableManager extends RootTableManager<
@@ -1436,9 +1539,9 @@ class $ResourcesTableManager extends RootTableManager<
     $ResourcesAnnotationComposer,
     $ResourcesCreateCompanionBuilder,
     $ResourcesUpdateCompanionBuilder,
-    (Resource, BaseReferences<_$AppDatabase, Resources, Resource>),
+    (Resource, $ResourcesReferences),
     Resource,
-    PrefetchHooks Function()> {
+    PrefetchHooks Function({bool bookmarksRefs})> {
   $ResourcesTableManager(_$AppDatabase db, Resources table)
       : super(TableManagerState(
           db: db,
@@ -1514,9 +1617,31 @@ class $ResourcesTableManager extends RootTableManager<
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) =>
+                  (e.readTable(table), $ResourcesReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({bookmarksRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (bookmarksRefs) db.bookmarks],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (bookmarksRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $ResourcesReferences._bookmarksRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $ResourcesReferences(db, table, p0).bookmarksRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.resourceId == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
         ));
 }
 
@@ -1529,21 +1654,42 @@ typedef $ResourcesProcessedTableManager = ProcessedTableManager<
     $ResourcesAnnotationComposer,
     $ResourcesCreateCompanionBuilder,
     $ResourcesUpdateCompanionBuilder,
-    (Resource, BaseReferences<_$AppDatabase, Resources, Resource>),
+    (Resource, $ResourcesReferences),
     Resource,
-    PrefetchHooks Function()>;
+    PrefetchHooks Function({bool bookmarksRefs})>;
 typedef $BookmarksCreateCompanionBuilder = BookmarksCompanion Function({
   required String resourceId,
   required String name,
+  required int created,
   required bool deleted,
   Value<int> rowid,
 });
 typedef $BookmarksUpdateCompanionBuilder = BookmarksCompanion Function({
   Value<String> resourceId,
   Value<String> name,
+  Value<int> created,
   Value<bool> deleted,
   Value<int> rowid,
 });
+
+final class $BookmarksReferences
+    extends BaseReferences<_$AppDatabase, Bookmarks, Bookmark> {
+  $BookmarksReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static Resources _resourceIdTable(_$AppDatabase db) =>
+      db.resources.createAlias(
+          $_aliasNameGenerator(db.bookmarks.resourceId, db.resources.id));
+
+  $ResourcesProcessedTableManager? get resourceId {
+    if ($_item.resourceId == null) return null;
+    final manager = $ResourcesTableManager($_db, $_db.resources)
+        .filter((f) => f.id($_item.resourceId!));
+    final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
 
 class $BookmarksFilterComposer extends Composer<_$AppDatabase, Bookmarks> {
   $BookmarksFilterComposer({
@@ -1553,14 +1699,34 @@ class $BookmarksFilterComposer extends Composer<_$AppDatabase, Bookmarks> {
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get resourceId => $composableBuilder(
-      column: $table.resourceId, builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get name => $composableBuilder(
       column: $table.name, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<int> get created => $composableBuilder(
+      column: $table.created, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<bool> get deleted => $composableBuilder(
       column: $table.deleted, builder: (column) => ColumnFilters(column));
+
+  $ResourcesFilterComposer get resourceId {
+    final $ResourcesFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.resourceId,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesFilterComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $BookmarksOrderingComposer extends Composer<_$AppDatabase, Bookmarks> {
@@ -1571,14 +1737,34 @@ class $BookmarksOrderingComposer extends Composer<_$AppDatabase, Bookmarks> {
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get resourceId => $composableBuilder(
-      column: $table.resourceId, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get name => $composableBuilder(
       column: $table.name, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get created => $composableBuilder(
+      column: $table.created, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<bool> get deleted => $composableBuilder(
       column: $table.deleted, builder: (column) => ColumnOrderings(column));
+
+  $ResourcesOrderingComposer get resourceId {
+    final $ResourcesOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.resourceId,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesOrderingComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $BookmarksAnnotationComposer extends Composer<_$AppDatabase, Bookmarks> {
@@ -1589,14 +1775,34 @@ class $BookmarksAnnotationComposer extends Composer<_$AppDatabase, Bookmarks> {
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get resourceId => $composableBuilder(
-      column: $table.resourceId, builder: (column) => column);
-
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
+  GeneratedColumn<int> get created =>
+      $composableBuilder(column: $table.created, builder: (column) => column);
+
   GeneratedColumn<bool> get deleted =>
       $composableBuilder(column: $table.deleted, builder: (column) => column);
+
+  $ResourcesAnnotationComposer get resourceId {
+    final $ResourcesAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.resourceId,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesAnnotationComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $BookmarksTableManager extends RootTableManager<
@@ -1608,9 +1814,9 @@ class $BookmarksTableManager extends RootTableManager<
     $BookmarksAnnotationComposer,
     $BookmarksCreateCompanionBuilder,
     $BookmarksUpdateCompanionBuilder,
-    (Bookmark, BaseReferences<_$AppDatabase, Bookmarks, Bookmark>),
+    (Bookmark, $BookmarksReferences),
     Bookmark,
-    PrefetchHooks Function()> {
+    PrefetchHooks Function({bool resourceId})> {
   $BookmarksTableManager(_$AppDatabase db, Bookmarks table)
       : super(TableManagerState(
           db: db,
@@ -1624,31 +1830,69 @@ class $BookmarksTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<String> resourceId = const Value.absent(),
             Value<String> name = const Value.absent(),
+            Value<int> created = const Value.absent(),
             Value<bool> deleted = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               BookmarksCompanion(
             resourceId: resourceId,
             name: name,
+            created: created,
             deleted: deleted,
             rowid: rowid,
           ),
           createCompanionCallback: ({
             required String resourceId,
             required String name,
+            required int created,
             required bool deleted,
             Value<int> rowid = const Value.absent(),
           }) =>
               BookmarksCompanion.insert(
             resourceId: resourceId,
             name: name,
+            created: created,
             deleted: deleted,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) =>
+                  (e.readTable(table), $BookmarksReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({resourceId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (resourceId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.resourceId,
+                    referencedTable: $BookmarksReferences._resourceIdTable(db),
+                    referencedColumn:
+                        $BookmarksReferences._resourceIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ));
 }
 
@@ -1661,9 +1905,9 @@ typedef $BookmarksProcessedTableManager = ProcessedTableManager<
     $BookmarksAnnotationComposer,
     $BookmarksCreateCompanionBuilder,
     $BookmarksUpdateCompanionBuilder,
-    (Bookmark, BaseReferences<_$AppDatabase, Bookmarks, Bookmark>),
+    (Bookmark, $BookmarksReferences),
     Bookmark,
-    PrefetchHooks Function()>;
+    PrefetchHooks Function({bool resourceId})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1691,8 +1935,10 @@ class ParentsResult {
 class ListBookmarksResult {
   final String resourceId;
   final String name;
+  final int created;
   ListBookmarksResult({
     required this.resourceId,
     required this.name,
+    required this.created,
   });
 }

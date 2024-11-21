@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
@@ -57,7 +58,11 @@ class PhylumAccount extends Account<PhylumAccount> {
     // Set Authorization header
     _accessToken = accessToken;
 
+    // Open the database to see if data was cleared
+    await db.bookmarks.count().get();
     await resourceRepository.initialize();
+    await userRepository.initialize(db.cleared);
+    await bookmarkRepository.initialize(db.cleared);
 
     void Function()? l;
     l = apiClient.addResponseListener((request, errorResponse) {

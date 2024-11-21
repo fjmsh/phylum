@@ -10,12 +10,10 @@ QueryExecutor openDatabase({
   required Directory? tmpDir,
   required String id,
 }) {
-  return LazyDatabase(() async {
-    final file = _dbFile(storageDir, id);
-    sqlite3.tempDirectory = tmpDir!.path;
+  final file = _dbFile(storageDir, id);
+  sqlite3.tempDirectory = tmpDir!.path;
 
-    return NativeDatabase.createInBackground(file);
-  });
+  return NativeDatabase.createInBackground(file);
 }
 
 Future<void> deleteDatabase({

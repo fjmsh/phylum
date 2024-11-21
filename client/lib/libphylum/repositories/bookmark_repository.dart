@@ -12,8 +12,23 @@ class BookmarkRepository {
 
   BookmarkRepository({required this.account});
 
-  Stream<List<Bookmark>> watch() {
-    return account.db.bookmarks.select().watch();
+  Future<void> initialize(bool cleared) async {
+    if (cleared) {
+      await account.persist(keyLastBookmarkFetch, null);
+    }
+    refresh();
+  }
+
+  Selectable<ListBookmarksResult> list() {
+    return account.db.listBookmarks();
+  }
+
+  Future<int> create(Bookmark bookmark) {
+    return account.db.bookmarks.insertOne(bookmark, mode: InsertMode.insertOrReplace);
+  }
+
+  Future<int> delete(String resourceId) {
+    return account.db.bookmarks.deleteWhere((f) => f.resourceId.equals(resourceId));
   }
 
   Future<ApiResult> refresh() async {
@@ -21,13 +36,13 @@ class BookmarkRepository {
       BookmarksRequest(since: account.getPersisted(keyLastBookmarkFetch) as int?),
       callback: (request, response) async {
         if (response is PhylumApiSuccessResponse) {
-          await parseBookmarksResponse(response.data);
+          await processBookmarksResponse(response.data);
         }
       },
     );
   }
 
-  Future parseBookmarksResponse(Map<String, dynamic> data) async {
+  Future processBookmarksResponse(Map<String, dynamic> data) async {
     final db = account.db;
     final bookmarks = (data["bookmarks"] as List).cast<Map>().map((u) => parseBookmarkObject(u.cast<String, dynamic>()));
     await db.batch((batch) {
@@ -36,10 +51,17 @@ class BookmarkRepository {
     account.persist(keyLastBookmarkFetch, data["until"]);
   }
 
+  Future processSingleBookmarkResponse(Map<String, dynamic> data) async {
+    final db = account.db;
+    final bookmark = parseBookmarkObject((data as Map).cast<String, dynamic>());
+    return db.bookmarks.insertOnConflictUpdate(bookmark);
+  }
+
   Bookmark parseBookmarkObject(Map<String, dynamic> data) {
     return Bookmark(
       resourceId: data['resource_id'],
       name: data['name'],
+      created: data['created'],
       deleted: data['deleted'],
     );
   }

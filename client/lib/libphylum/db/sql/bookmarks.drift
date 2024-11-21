@@ -1,7 +1,10 @@
+import 'resources.drift';
+
 CREATE TABLE IF NOT EXISTS bookmarks(
     resource_id TEXT NOT NULL PRIMARY KEY REFERENCES resources(id),
     name TEXT NOT NULL,
+    created INT NOT NULL,
     deleted BOOLEAN NOT NULL CHECK (deleted IN (0, 1))
 );
 
-listBookmarks: SELECT resource_id, name FROM bookmarks WHERE deleted = 0;
+listBookmarks: SELECT resource_id, name, created FROM bookmarks WHERE deleted = 0 ORDER BY created ASC;
