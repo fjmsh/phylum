@@ -15,7 +15,10 @@ class BookmarkAddAction extends PhylumAction with JsonApiAction, BookmarkAction 
   String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/my/bookmarks/add/$resourceId?${Uri.encodeComponent(bookmarkName)}';
+  String get endpoint => '/api/v1/my/bookmarks/add/$resourceId';
+
+  @override
+  Map<String, String> get queryParamters => {'name': bookmarkName};
 
   @override
   final String resourceId;
@@ -63,7 +66,7 @@ class BookmarkAddAction extends PhylumAction with JsonApiAction, BookmarkAction 
   Future<void> applyOptimisticUpdate(PhylumAccount account) {
     return account.bookmarkRepository.create(Bookmark(
       resourceId: resourceId,
-      name: name,
+      name: bookmarkName,
       created: createdMillis,
       deleted: false,
     ));

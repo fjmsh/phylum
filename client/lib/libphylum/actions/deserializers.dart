@@ -3,8 +3,10 @@ import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_mkdir.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/actions/action_resource_upload.dart';
+import 'package:phylum/libphylum/actions/bookmark_add_action.dart';
 
 const actionDeserializers = {
+  BookmarkAddAction.actionName: BookmarkAddAction.fromMap,
   ResourceDeleteAction.actionName: ResourceDeleteAction.fromMap,
   ResourceMkdirAction.actionName: ResourceMkdirAction.fromMap,
   ResourceMoveAction.actionName: ResourceMoveAction.fromMap,
