@@ -42,8 +42,8 @@ type Manager interface {
 	ReadAccessToken(accessToken string) (User, error)
 
 	// bookmarks.go
-	AddBookmark(u User, resource fs.Resource, name string) error
-	RemoveBookmark(u User, id uuid.UUID) error
+	AddBookmark(u User, resource fs.Resource, name string) (Bookmark, error)
+	RemoveBookmark(u User, id uuid.UUID) (Bookmark, error)
 	ListBookmarks(u User, since *time.Time) ([]Bookmark, error)
 
 	// shared.go

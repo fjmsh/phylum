@@ -12,25 +12,34 @@ import (
 type Bookmark struct {
 	ResourceID uuid.UUID `json:"resource_id"`
 	Name       string    `json:"name"`
+	Created    int64     `json:"created"`
 	Deleted    bool      `json:"deleted"`
 }
 
-func (m manager) AddBookmark(u User, resource fs.Resource, name string) error {
+func (m manager) AddBookmark(u User, resource fs.Resource, name string) (Bookmark, error) {
 	if name == "" {
 		name = resource.Name()
 	}
 	if name == "" || fs.CheckNameInvalid(name) {
-		return fs.ErrResourceNameInvalid
+		return Bookmark{}, fs.ErrResourceNameInvalid
 	}
-	return m.db.Queries.AddBookmark(m.ctx, db.AddBookmarkParams{
+	if b, err := m.db.Queries.AddBookmark(m.ctx, db.AddBookmarkParams{
 		Username:   u.Username,
 		ResourceID: resource.ID(),
 		Name:       name,
-	})
+	}); err != nil {
+		return Bookmark{}, err
+	} else {
+		return bookmarkFromDb(b), nil
+	}
 }
 
-func (m manager) RemoveBookmark(u User, id uuid.UUID) error {
-	return m.db.Queries.DeleteBookmarkByUsernameResourceID(m.ctx, db.DeleteBookmarkByUsernameResourceIDParams{Username: u.Username, ResourceID: id})
+func (m manager) RemoveBookmark(u User, id uuid.UUID) (Bookmark, error) {
+	if b, err := m.db.Queries.DeleteBookmarkByUsernameResourceID(m.ctx, db.DeleteBookmarkByUsernameResourceIDParams{Username: u.Username, ResourceID: id}); err != nil {
+		return Bookmark{}, err
+	} else {
+		return bookmarkFromDb(b), nil
+	}
 }
 
 func (m manager) ListBookmarks(u User, since *time.Time) ([]Bookmark, error) {
@@ -47,12 +56,17 @@ func (m manager) ListBookmarks(u User, since *time.Time) ([]Bookmark, error) {
 	}
 
 	result := make([]Bookmark, len(res))
-	for i, r := range res {
-		result[i] = Bookmark{
-			ResourceID: r.ResourceID,
-			Name:       r.Name,
-			Deleted:    r.Deleted.Valid,
-		}
+	for i, b := range res {
+		result[i] = bookmarkFromDb(b)
 	}
 	return result, err
+}
+
+func bookmarkFromDb(b db.Bookmark) Bookmark {
+	return Bookmark{
+		ResourceID: b.ResourceID,
+		Name:       b.Name,
+		Created:    b.Created.Time.UnixMilli(),
+		Deleted:    b.Deleted.Valid,
+	}
 }

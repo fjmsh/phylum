@@ -57,11 +57,11 @@ func handleBookmarksAddRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	err = user.CreateManager(c.Request.Context()).AddBookmark(u, r, name)
+	b, err := user.CreateManager(c.Request.Context()).AddBookmark(u, r, name)
 	if err != nil {
 		panic(err)
 	}
-	c.JSON(200, gin.H{})
+	c.JSON(200, b)
 }
 
 func handleBookmarksRemoveRoute(c *gin.Context) {
@@ -72,9 +72,9 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 	id := uuid.MustParse(idStr)
 
 	u := auth.GetUser(c)
-	err := user.CreateManager(c.Request.Context()).RemoveBookmark(u, id)
+	b, err := user.CreateManager(c.Request.Context()).RemoveBookmark(u, id)
 	if err != nil {
 		panic(err)
 	}
-	c.JSON(200, gin.H{})
+	c.JSON(200, b)
 }

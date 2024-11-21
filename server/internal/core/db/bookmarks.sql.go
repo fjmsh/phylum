@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const addBookmark = `-- name: AddBookmark :exec
+const addBookmark = `-- name: AddBookmark :one
 INSERT INTO bookmarks(
     username,
     resource_id,
@@ -21,11 +21,13 @@ INSERT INTO bookmarks(
     $1::TEXT,
     $2::UUID,
     $3::TEXT
-) ON CONFLICT(username, resource_id) DO UPDATE SET
+) ON CONFLICT(username, resource_id) DO UPDATE
+SET
     created = CASE WHEN bookmarks.deleted IS NULL THEN CURRENT_TIMESTAMP ELSE bookmarks.created END,
     modified = CURRENT_TIMESTAMP,
     deleted = NULL,
     name = $3::TEXT
+RETURNING username, resource_id, name, created, modified, deleted
 `
 
 type AddBookmarkParams struct {
@@ -34,13 +36,23 @@ type AddBookmarkParams struct {
 	Name       string
 }
 
-func (q *Queries) AddBookmark(ctx context.Context, arg AddBookmarkParams) error {
-	_, err := q.db.Exec(ctx, addBookmark, arg.Username, arg.ResourceID, arg.Name)
-	return err
+func (q *Queries) AddBookmark(ctx context.Context, arg AddBookmarkParams) (Bookmark, error) {
+	row := q.db.QueryRow(ctx, addBookmark, arg.Username, arg.ResourceID, arg.Name)
+	var i Bookmark
+	err := row.Scan(
+		&i.Username,
+		&i.ResourceID,
+		&i.Name,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+	)
+	return i, err
 }
 
-const deleteBookmarkByUsernameResourceID = `-- name: DeleteBookmarkByUsernameResourceID :exec
+const deleteBookmarkByUsernameResourceID = `-- name: DeleteBookmarkByUsernameResourceID :one
 DELETE FROM bookmarks WHERE username = $1::TEXT AND resource_id = $2::UUID
+RETURNING username, resource_id, name, created, modified, deleted
 `
 
 type DeleteBookmarkByUsernameResourceIDParams struct {
@@ -48,9 +60,18 @@ type DeleteBookmarkByUsernameResourceIDParams struct {
 	ResourceID uuid.UUID
 }
 
-func (q *Queries) DeleteBookmarkByUsernameResourceID(ctx context.Context, arg DeleteBookmarkByUsernameResourceIDParams) error {
-	_, err := q.db.Exec(ctx, deleteBookmarkByUsernameResourceID, arg.Username, arg.ResourceID)
-	return err
+func (q *Queries) DeleteBookmarkByUsernameResourceID(ctx context.Context, arg DeleteBookmarkByUsernameResourceIDParams) (Bookmark, error) {
+	row := q.db.QueryRow(ctx, deleteBookmarkByUsernameResourceID, arg.Username, arg.ResourceID)
+	var i Bookmark
+	err := row.Scan(
+		&i.Username,
+		&i.ResourceID,
+		&i.Name,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+	)
+	return i, err
 }
 
 const listBookmarks = `-- name: ListBookmarks :many

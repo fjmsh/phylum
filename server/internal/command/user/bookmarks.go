@@ -57,7 +57,7 @@ func setupBookmarksRemoveCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if err := user.CreateManager(context.Background()).RemoveBookmark(common.User(cmd), r.ID()); err != nil {
+			if _, err := user.CreateManager(context.Background()).RemoveBookmark(common.User(cmd), r.ID()); err != nil {
 				fmt.Println("unable to remove bookmark: " + err.Error())
 				os.Exit(1)
 			}
@@ -82,7 +82,7 @@ func setupBookmarksAddCommand() *cobra.Command {
 				name = args[1]
 			}
 
-			if err := user.CreateManager(context.Background()).AddBookmark(common.User(cmd), r, name); err != nil {
+			if _, err := user.CreateManager(context.Background()).AddBookmark(common.User(cmd), r, name); err != nil {
 				fmt.Println("unable to add bookmark: " + err.Error())
 				os.Exit(1)
 			}
