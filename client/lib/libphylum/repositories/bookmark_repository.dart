@@ -36,7 +36,7 @@ class BookmarkRepository {
   }
 
   Selectable<int> bookmarksCount(Iterable<String> ids) {
-    return account.db.bookmarks.count(where: (b) => b.resourceId.isIn(ids));
+    return account.db.bookmarks.count(where: (b) => b.resourceId.isIn(ids) & b.deleted.equals(false));
   }
 
   Future<ApiResult> refresh() async {

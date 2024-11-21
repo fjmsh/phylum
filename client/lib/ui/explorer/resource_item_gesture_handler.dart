@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_view_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
-import 'package:phylum/ui/explorer/menu_options.dart';
+import 'package:phylum/ui/menu/menu_option.dart';
+import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:provider/provider.dart';
 
 class ResourceItemGestureHandler extends StatefulWidget {
@@ -78,13 +80,15 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
           details.globalPosition.dy,
         );
         final resources = state.selected;
+        final items = await buildPopupMenuItems(context.read<PhylumAccount>(), resourceOptions, resources);
+        if (!context.mounted) return;
         final selection = await showMenu(
           context: context,
           position: position,
-          items: buildChildPopupMenuItems(context, resources).toList(growable: false),
+          items: items.toList(growable: false),
         );
         if (context.mounted && selection != null) {
-          handleResourceOption(context, resources, selection);
+          handleOption(context, resources, selection);
         }
       },
       onDoubleTap: () {

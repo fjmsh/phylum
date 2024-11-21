@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
+import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:provider/provider.dart';
 
 import 'explorer_view_controller.dart';
-import 'menu_options.dart';
+import '../menu/bottom_sheet.dart';
 
 class ResourceDetailsRow extends StatelessWidget {
   final Resource r;
@@ -47,7 +48,7 @@ class ResourceDetailsRow extends StatelessWidget {
         softWrap: false,
         overflow: TextOverflow.fade,
       ),
-      trailing: ResourceOptionsButton(r: r),
+      trailing: IconButton(icon: Icon(Icons.adaptive.more), onPressed: () => showMenuOptionsBottomSheet(context, resourceOptions, [r])),
       shape: RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(4.0)),
       selected: highlight,
       selectedColor: dim ? theme.colorScheme.primary.withOpacity(0.75) : null,
