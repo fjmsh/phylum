@@ -120,7 +120,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 		ContentSha256: r.ContentSHA256(),
 	})
 	for _, src := range tree {
-		id, _ := uuid.NewUUID()
+		id, _ := uuid.NewV7()
 		parent := ids[*src.Parent]
 
 		create = append(create, db.CreateResourcesParams{

@@ -42,7 +42,7 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool) (Res
 		return Resource{}, ErrResourceNameInvalid
 	}
 	if id == uuid.Nil {
-		id, _ = uuid.NewUUID()
+		id, _ = uuid.NewV7()
 	}
 	var result db.Resource
 	err := r.f.db.WithTx(r.f.ctx, func(d *db.DbHandler) error {

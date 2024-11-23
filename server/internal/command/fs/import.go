@@ -59,7 +59,7 @@ func setupImportCommand() *cobra.Command {
 			create := make([]db.CreateResourcesParams, 0)
 			copy := make(map[string]uuid.UUID)
 			ids := make(map[string]uuid.UUID)
-			ids["."], _ = uuid.NewUUID()
+			ids["."], _ = uuid.NewV7()
 			create = append(create, db.CreateResourcesParams{
 				ID:     ids["."],
 				Parent: destParent.ID(),
@@ -84,7 +84,7 @@ func setupImportCommand() *cobra.Command {
 						if d.Name() == "" || fs.CheckNameInvalid(d.Name()) {
 							return fs.ErrResourceNameInvalid
 						}
-						ids[p], _ = uuid.NewUUID()
+						ids[p], _ = uuid.NewV7()
 						parent := ids[path.Dir(p)]
 						create = append(create, db.CreateResourcesParams{
 							Parent:        parent,
