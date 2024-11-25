@@ -8,7 +8,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:uuid/uuid.dart';
+import 'package:phylum/libphylum/util/uuid.dart';
 
 class ResourceUploadAction extends PhylumAction with FileUploadApiAction, ResourceCreateAction {
   static const actionName = 'resourceUpload';
@@ -48,7 +48,7 @@ class ResourceUploadAction extends PhylumAction with FileUploadApiAction, Resour
     final f = File(path);
     final size = await f.length();
     return ResourceUploadAction._(
-      resourceId: (const Uuid()).v4(),
+      resourceId: generateUuid(),
       parent: parent,
       resourceName: resourceName,
       path: path,

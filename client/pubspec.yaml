@@ -34,7 +34,6 @@ dependencies:
   super_clipboard:
   super_drag_and_drop:
   uri:
-  uuid:
 
 dev_dependencies:
   flutter_test:

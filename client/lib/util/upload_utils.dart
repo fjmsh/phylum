@@ -9,10 +9,9 @@ import 'package:phylum/libphylum/actions/action_resource_upload.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
+import 'package:phylum/libphylum/util/uuid.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 
-String generateId() => const Uuid().v4();
 final slashChar = '/'.runes.first;
 final illegalChars = <int>{
   ...'\\/:*?"<>|'.runes,
@@ -30,7 +29,7 @@ void createDirectory(BuildContext context, String folderId) async {
     validate: validateName,
   );
   if (dirName == null || dirName == "") return;
-  account.addAction(ResourceMkdirAction(resourceId: generateId(), parent: folderId, resourceName: dirName));
+  account.addAction(ResourceMkdirAction(resourceId: generateUuid(), parent: folderId, resourceName: dirName));
 }
 
 void pickAndUploadFiles(BuildContext context, String folderId) async {
@@ -69,7 +68,7 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
   if (!confirm || !context.mounted) return;
   final dirIds = <String, String>{};
   for (final dir in tree.dirs) {
-    dirIds[dir] = generateId();
+    dirIds[dir] = generateUuid();
     final parent = p.dirname(dir);
     account.addAction(ResourceMkdirAction(resourceId: dirIds[dir]!, parent: dirIds[parent] ?? folderId, resourceName: p.basename(dir)));
   }

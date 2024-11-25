@@ -9,6 +9,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_view_controller.dart';
 import 'package:phylum/util/upload_utils.dart';
+import 'package:phylum/libphylum/util/uuid.dart';
 import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
@@ -64,7 +65,7 @@ void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
   for (final r in copyResources) {
     account.addAction(ResourceCopyAction(
       src: r,
-      resourceId: generateId(),
+      resourceId: generateUuid(),
       resourceName: r.name,
       parentId: target.id,
     ));
