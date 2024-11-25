@@ -10,7 +10,7 @@ import 'package:phylum/libphylum/actions/bookmark_remove_action.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
-import 'package:phylum/ui/destination/destination_picker.dart';
+import 'package:phylum/ui/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
@@ -50,8 +50,10 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       break;
     case MenuOption.move:
     case MenuOption.copy:
-      final parent = resources.first.parent!;
-      await DestinationPicker.pick(context, parent);
+      final parentId = resources.first.parent!;
+      final parent = await account.resourceRepository.getResource(parentId);
+      if (!context.mounted) return;
+      await DestinationPicker.show(context, parent!);
       break;
     case MenuOption.delete:
       final name = resources.length == 1 ? resources.first.name : '${resources.length} items';
