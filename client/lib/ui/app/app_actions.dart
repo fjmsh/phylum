@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
-import 'package:phylum/ui/app/nav_history.dart';
-import 'package:phylum/ui/explorer/explorer_view_controller.dart';
+import 'package:phylum/ui/navigation/destination.dart';
+import 'package:phylum/ui/navigation/history_manager.dart';
+import 'package:phylum/ui/navigation/explorer_controller.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 
@@ -14,16 +15,16 @@ class AppActions extends StatelessWidget {
     return Actions(
       actions: {
         NewFolderIntent: CallbackAction<NewFolderIntent>(
-          onInvoke: (intent) => createDirectory(context, context.read<ExplorerViewState>().folderId),
+          onInvoke: (intent) => createDirectory(context, context.read<ExplorerState>().folderId),
         ),
         UploadFilesIntent: CallbackAction<UploadFilesIntent>(
-          onInvoke: (intent) => pickAndUploadFiles(context, context.read<ExplorerViewState>().folderId),
+          onInvoke: (intent) => pickAndUploadFiles(context, context.read<ExplorerState>().folderId),
         ),
         UploadFolderIntent: CallbackAction<UploadFolderIntent>(
-          onInvoke: (intent) => pickAndUploadDirectory(context, context.read<ExplorerViewState>().folderId),
+          onInvoke: (intent) => pickAndUploadDirectory(context, context.read<ExplorerState>().folderId),
         ),
         NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) async {
-          final parent = context.read<ExplorerViewState>().folder?.parent;
+          final parent = context.read<ExplorerState>().folder?.parent;
           if (parent != null) {
             context.read<NavHistoryManager>().go(context, NavDestinationFolder(folderId: parent));
           }

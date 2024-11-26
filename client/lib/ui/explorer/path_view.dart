@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/explorer/explorer_view_controller.dart';
+import 'package:phylum/ui/navigation/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:provider/provider.dart';
 
@@ -38,7 +38,7 @@ class _PathViewState extends State<PathView> {
   @override
   void initState() {
     super.initState();
-    removeListener = context.read<ExplorerViewController>().addListener((state) {
+    removeListener = context.read<ExplorerController>().addListener((state) {
       id = state.folderId;
       sub = context.read<PhylumAccount>().db.parents(id).watch().listen((data) {
         SystemChrome.setApplicationSwitcherDescription(ApplicationSwitcherDescription(

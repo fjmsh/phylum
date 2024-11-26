@@ -3,8 +3,8 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/app/nav_history.dart';
-import 'package:phylum/ui/explorer/explorer_view_controller.dart';
+import 'package:phylum/ui/navigation/destination.dart';
+import 'package:phylum/ui/navigation/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
@@ -20,8 +20,8 @@ class DestinationPicker extends StatefulWidget {
   static Future<String?> show(BuildContext context, Resource initialFolder) {
     return showDialog(
       context: context,
-      builder: (context) => StateNotifierProvider<ExplorerViewController, ExplorerViewState>(
-        create: (context) => ExplorerViewController(
+      builder: (context) => StateNotifierProvider<ExplorerController, ExplorerState>(
+        create: (context) => ExplorerController(
           account: context.read<PhylumAccount>(),
           destination: NavDestinationFolder(folderId: initialFolder.id),
         ),
@@ -53,7 +53,7 @@ class _DestinationPickerState extends State<DestinationPicker> {
         actions: [
           IconButton(
               onPressed: () {
-                createDirectory(context, context.read<ExplorerViewState>().folderId);
+                createDirectory(context, context.read<ExplorerState>().folderId);
               },
               icon: Icon(Icons.create_new_folder_outlined))
         ],
@@ -62,23 +62,23 @@ class _DestinationPickerState extends State<DestinationPicker> {
         child: Actions(
           actions: {
             NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) async {
-              final parentId = context.read<ExplorerViewState>().folder?.parent;
+              final parentId = context.read<ExplorerState>().folder?.parent;
               if (parentId != null) {
-                context.read<ExplorerViewController>().updateDestination(NavDestinationFolder(folderId: parentId));
+                context.read<ExplorerController>().updateDestination(NavDestinationFolder(folderId: parentId));
               }
               node.requestFocus();
               return null;
             }),
             FocusDownIntent: CallbackAction<FocusDownIntent>(
-              onInvoke: (i) async => context.read<ExplorerViewController>().updateSelection((i) => i + 1, SelectionMode.single, false),
+              onInvoke: (i) async => context.read<ExplorerController>().updateSelection((i) => i + 1, SelectionMode.single, false),
             ),
             FocusUpIntent: CallbackAction<FocusUpIntent>(
-              onInvoke: (i) async => context.read<ExplorerViewController>().updateSelection((i) => i - 1, SelectionMode.single, false),
+              onInvoke: (i) async => context.read<ExplorerController>().updateSelection((i) => i - 1, SelectionMode.single, false),
             ),
             ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) async {
-              final selected = context.read<ExplorerViewState>().selectedSingle;
+              final selected = context.read<ExplorerState>().selectedSingle;
               if (selected != null && selected.dir) {
-                context.read<ExplorerViewController>().updateDestination(NavDestinationFolder(folderId: selected.id));
+                context.read<ExplorerController>().updateDestination(NavDestinationFolder(folderId: selected.id));
               }
               return null;
             }),
@@ -101,9 +101,9 @@ class _DestinationPickerState extends State<DestinationPicker> {
                   children: [
                     TextButton(onPressed: Navigator.of(context).pop, child: Text('Cancel')),
                     ElevatedButton(
-                      onPressed: context.select<ExplorerViewState, bool>((state) => state.folderId == widget.initialFolderId)
+                      onPressed: context.select<ExplorerState, bool>((state) => state.folderId == widget.initialFolderId)
                           ? null
-                          : () => Navigator.of(context).pop(context.read<ExplorerViewState>().folderId),
+                          : () => Navigator.of(context).pop(context.read<ExplorerState>().folderId),
                       child: Text('OK'),
                     ),
                   ],
@@ -122,12 +122,12 @@ class DestinationFolderView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = context.select<ExplorerViewState, List<Resource>>((state) => state.resources);
+    final items = context.select<ExplorerState, List<Resource>>((state) => state.resources);
     return ListView.builder(
       itemBuilder: (BuildContext context, int index) {
         final r = items[index];
         return Builder(builder: (context) {
-          final selected = context.select<ExplorerViewState, bool>((state) => state.selectedIds.contains(r.id));
+          final selected = context.select<ExplorerState, bool>((state) => state.selectedIds.contains(r.id));
           return ListTile(
             key: ValueKey(r.id),
             visualDensity: VisualDensity.compact,
@@ -135,7 +135,7 @@ class DestinationFolderView extends StatelessWidget {
             leading: r.getIcon(),
             title: Text(r.name),
             enabled: r.dir,
-            onTap: () => context.read<ExplorerViewController>().updateDestination(NavDestinationFolder(folderId: r.id)),
+            onTap: () => context.read<ExplorerController>().updateDestination(NavDestinationFolder(folderId: r.id)),
           );
         });
       },

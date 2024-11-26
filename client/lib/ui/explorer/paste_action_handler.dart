@@ -7,7 +7,7 @@ import 'package:phylum/libphylum/actions/action_resource_copy.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/explorer/explorer_view_controller.dart';
+import 'package:phylum/ui/navigation/explorer_controller.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +15,7 @@ import 'package:super_clipboard/super_clipboard.dart';
 
 void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
   final account = context.read<PhylumAccount>();
-  final controller = context.read<ExplorerViewState>();
+  final controller = context.read<ExplorerState>();
   final target = controller.folder;
   if (target == null) {
     return;

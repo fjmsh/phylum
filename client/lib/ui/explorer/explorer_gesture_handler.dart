@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/explorer/explorer_view_controller.dart';
+import 'package:phylum/ui/navigation/explorer_controller.dart';
 import 'package:phylum/ui/menu/menu_option.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:provider/provider.dart';
@@ -15,11 +15,11 @@ class ExplorerGestureHandler extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        context.read<ExplorerViewController>().updateSelection((i) => i, SelectionMode.none, false);
+        context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.none, false);
       },
       onSecondaryTapUp: (details) async {
-        context.read<ExplorerViewController>().updateSelection((i) => i, SelectionMode.none, false);
-        final resource = context.read<ExplorerViewState>().folder;
+        context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.none, false);
+        final resource = context.read<ExplorerState>().folder;
         if (resource == null) return;
         final position = RelativeRect.fromLTRB(
           details.globalPosition.dx,

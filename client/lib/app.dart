@@ -9,7 +9,8 @@ import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/app/action_queue_status_notifier.dart';
 import 'package:phylum/ui/app/app_layout.dart';
 import 'package:phylum/ui/app/app_logout.dart';
-import 'package:phylum/ui/app/nav_history.dart';
+import 'package:phylum/ui/navigation/destination.dart';
+import 'package:phylum/ui/navigation/history_manager.dart';
 import 'package:provider/provider.dart';
 
 final _appRouter = GoRouter(

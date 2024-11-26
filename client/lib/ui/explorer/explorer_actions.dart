@@ -10,7 +10,7 @@ import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
-import 'explorer_view_controller.dart';
+import '../navigation/explorer_controller.dart';
 
 class ExplorerActions extends StatelessWidget {
   final Widget child;
@@ -25,31 +25,31 @@ class ExplorerActions extends StatelessWidget {
         PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
         PasteFromClipboardIntent: CallbackAction<PasteFromClipboardIntent>(onInvoke: (PasteFromClipboardIntent i) => handlePasteAction(i, context)),
         SelectAllIntent: CallbackAction<SelectAllIntent>(onInvoke: (i) {
-          context.read<ExplorerViewController>().selectAll(showFocus: true);
+          context.read<ExplorerController>().selectAll(showFocus: true);
           return null;
         }),
         DismissIntent: CallbackAction<DismissIntent>(onInvoke: (i) {
-          context.read<ExplorerViewController>().updateSelection((i) => i, SelectionMode.none, true);
+          context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.none, true);
           return null;
         }),
         ToggleSelectionIntent: CallbackAction<ToggleSelectionIntent>(onInvoke: (i) {
-          context.read<ExplorerViewController>().updateSelection((i) => i, SelectionMode.toggle, true);
+          context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.toggle, true);
           return null;
         }),
         ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) {
-          final r = context.read<ExplorerViewState>().selectedSingle;
+          final r = context.read<ExplorerState>().selectedSingle;
           if (r == null) return;
           _openResource(context, r);
           return null;
         }),
         DeleteIntent: CallbackAction<DeleteIntent>(onInvoke: (i) {
-          final selected = context.read<ExplorerViewState>().selected;
+          final selected = context.read<ExplorerState>().selected;
           _deleteResources(context, selected);
           return null;
         }),
         RenameIntent: CallbackAction<RenameIntent>(onInvoke: (i) async {
           final account = context.read<PhylumAccount>();
-          final r = context.read<ExplorerViewState>().selectedSingle;
+          final r = context.read<ExplorerState>().selectedSingle;
           if (r == null) return;
           final name = await showInputDialog(context, title: 'Rename', preset: r.name);
           if (name != null) {
@@ -59,7 +59,7 @@ class ExplorerActions extends StatelessWidget {
         }),
         CopyToClipboardIntent: CallbackAction<CopyToClipboardIntent>(onInvoke: (i) async {
           final account = context.read<PhylumAccount>();
-          final selected = context.read<ExplorerViewState>().selected;
+          final selected = context.read<ExplorerState>().selected;
           final items = selected.map((r) {
             final uri = account.apiClient.createUriBuilder('/open');
             uri.queryParameters['id'] = r.id;

@@ -5,7 +5,7 @@ import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_item_gesture_handler.dart';
 import 'package:provider/provider.dart';
 
-import 'explorer_view_controller.dart';
+import '../navigation/explorer_controller.dart';
 
 class FolderListView extends StatefulWidget {
   const FolderListView({super.key});
@@ -17,15 +17,15 @@ class FolderListView extends StatefulWidget {
 class _FolderListViewState extends State<FolderListView> {
   @override
   Widget build(BuildContext context) {
-    final resources = context.select<ExplorerViewState, List<Resource>>((state) => state.resources);
+    final resources = context.select<ExplorerState, List<Resource>>((state) => state.resources);
     return Actions(
       actions: {
         FocusUpIntent: CallbackAction<FocusUpIntent>(onInvoke: (i) {
-          context.read<ExplorerViewController>().updateSelection((i) => i - 1, i.mode, true);
+          context.read<ExplorerController>().updateSelection((i) => i - 1, i.mode, true);
           return null;
         }),
         FocusDownIntent: CallbackAction<FocusDownIntent>(onInvoke: (i) {
-          context.read<ExplorerViewController>().updateSelection((i) => i + 1, i.mode, true);
+          context.read<ExplorerController>().updateSelection((i) => i + 1, i.mode, true);
           return null;
         }),
       },

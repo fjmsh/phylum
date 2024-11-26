@@ -3,7 +3,7 @@ import 'package:phylum/ui/explorer/explorer_actions.dart';
 import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
 import 'package:provider/provider.dart';
 
-import 'explorer_view_controller.dart';
+import '../navigation/explorer_controller.dart';
 import 'folder_empty_view.dart';
 import 'folder_list_view.dart';
 
@@ -20,7 +20,7 @@ class ExplorerView extends StatelessWidget {
   }
 
   Widget buildPage(BuildContext context) {
-    final type = context.select<ExplorerViewState, FolderEmptyViewType?>((state) {
+    final type = context.select<ExplorerState, FolderEmptyViewType?>((state) {
       if (state.resources.isEmpty) {
         if (state.refreshing) {
           return FolderEmptyViewType.loading;
@@ -35,11 +35,11 @@ class ExplorerView extends StatelessWidget {
     if (type != null) {
       return FolderEmptyView(
         type: type,
-        onRefresh: context.read<ExplorerViewController>().refresh,
+        onRefresh: context.read<ExplorerController>().refresh,
       );
     }
     return RefreshIndicator(
-      onRefresh: context.read<ExplorerViewController>().refresh,
+      onRefresh: context.read<ExplorerController>().refresh,
       child: const FolderListView(),
     );
   }

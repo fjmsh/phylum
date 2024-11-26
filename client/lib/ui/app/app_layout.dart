@@ -4,10 +4,11 @@ import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/fab_action.dart';
-import 'package:phylum/ui/app/nav_history.dart';
+import 'package:phylum/ui/navigation/destination.dart';
+import 'package:phylum/ui/navigation/history_manager.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
-import 'package:phylum/ui/explorer/explorer_view_controller.dart';
+import 'package:phylum/ui/navigation/explorer_controller.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
@@ -19,8 +20,8 @@ class AppLayout {
   static Widget create(NavDestination destination) {
     return MultiProvider(
       providers: [
-        StateNotifierProvider<ExplorerViewController, ExplorerViewState>(
-          create: (context) => ExplorerViewController(
+        StateNotifierProvider<ExplorerController, ExplorerState>(
+          create: (context) => ExplorerController(
             navHistoryManager: context.read<NavHistoryManager>(),
             account: context.read<PhylumAccount>(),
           ),
@@ -64,14 +65,14 @@ class CollapsedAppLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selected = context.select<ExplorerViewState, int>((state) => state.selectedIds.length);
+    final selected = context.select<ExplorerState, int>((state) => state.selectedIds.length);
     return Scaffold(
       appBar: selected == 0
           ? AppBar(title: const Text('Phylum'))
           : AppBar(
               leading: CloseButton(
                 onPressed: () {
-                  context.read<ExplorerViewController>().updateSelection((i) => i, SelectionMode.none, false);
+                  context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.none, false);
                 },
               ),
               backgroundColor: Colors.grey,

@@ -7,7 +7,7 @@ import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/explorer/explorer_view_controller.dart';
+import 'package:phylum/ui/navigation/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_details_row.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/util/upload_utils.dart';
@@ -38,7 +38,7 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
     return DragTarget(
       builder: (context, candidate, rejected) => widget.buildItem(context, dropTargetActive),
       onWillAcceptWithDetails: (details) {
-        final state = context.read<ExplorerViewState>();
+        final state = context.read<ExplorerState>();
         if (state.selectedIds.contains(widget.resourceId) || state.folder?.id == widget.resourceId) {
           // Don't accept drops into selected resources or the parent
           return false;
@@ -51,7 +51,7 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
       },
       onAcceptWithDetails: (details) async {
         final account = context.read<PhylumAccount>();
-        final selected = context.read<ExplorerViewState>().selected;
+        final selected = context.read<ExplorerState>().selected;
         for (final res in selected) {
           account.addAction(ResourceMoveAction(r: res, parent: widget.resourceId));
         }
@@ -128,7 +128,7 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
             }
           }
           if (context.mounted) {
-            final folderId = context.read<ExplorerViewState>().folderId;
+            final folderId = context.read<ExplorerState>().folderId;
             uploadRecursive(context, folderId, paths);
           }
         }
@@ -151,18 +151,18 @@ class ResourceDraggable extends StatelessWidget {
       data: '__selected',
       dragAnchorStrategy: pointerDragAnchorStrategy,
       onDragStarted: () {
-        final controller = context.read<ExplorerViewController>();
-        if (!context.read<ExplorerViewState>().isSelected(resource.id)) {
+        final controller = context.read<ExplorerController>();
+        if (!context.read<ExplorerState>().isSelected(resource.id)) {
           controller.updateSelection((_) => index, SelectionMode.single, false);
         }
         controller.setDragging(true);
       },
       onDragEnd: (details) {
-        context.read<ExplorerViewController>().setDragging(false);
+        context.read<ExplorerController>().setDragging(false);
       },
       feedback: Builder(builder: (ctx) {
         final theme = Theme.of(context);
-        final count = context.read<ExplorerViewState>().selectedIds.length;
+        final count = context.read<ExplorerState>().selectedIds.length;
         return Card(
           shape: RoundedRectangleBorder(side: BorderSide(color: theme.colorScheme.primary), borderRadius: BorderRadius.circular(4.0)),
           elevation: 16.0,

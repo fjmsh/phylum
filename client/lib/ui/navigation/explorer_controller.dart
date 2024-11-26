@@ -5,10 +5,12 @@ import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
-import 'package:phylum/ui/app/nav_history.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-class ExplorerViewState {
+import 'destination.dart';
+import 'history_manager.dart';
+
+class ExplorerState {
   final String folderId;
   final Resource? folder;
   final List<Resource> resources;
@@ -26,7 +28,7 @@ class ExplorerViewState {
   Resource? get selectedSingle => selectedIds.length != 1 ? null : resources.where((r) => selectedIds.contains(r.id)).firstOrNull;
   Resource? get focussedIfSelected => selectedIds.isEmpty ? null : focussed;
 
-  const ExplorerViewState({
+  const ExplorerState({
     required this.folderId,
     this.folder,
     this.resources = const [],
@@ -39,7 +41,7 @@ class ExplorerViewState {
     this.refreshError = false,
   });
 
-  ExplorerViewState copyWith({
+  ExplorerState copyWith({
     String? folderId,
     Resource? folder,
     List<Resource>? resources,
@@ -51,7 +53,7 @@ class ExplorerViewState {
     bool? refreshing,
     bool? refreshError,
   }) =>
-      ExplorerViewState(
+      ExplorerState(
         folderId: folderId ?? this.folderId,
         folder: folder ?? this.folder,
         resources: resources ?? this.resources,
@@ -69,20 +71,20 @@ class ExplorerViewState {
   }
 }
 
-class ExplorerViewController extends StateNotifier<ExplorerViewState> {
+class ExplorerController extends StateNotifier<ExplorerState> {
   final ResourceRepository _repository;
   final String _homeId;
   void Function()? removeHistoryManagerListener;
   StreamSubscription<Resource?>? _folderSubscription;
   StreamSubscription<List<Resource>>? _childrenSubscription;
 
-  ExplorerViewController({
+  ExplorerController({
     required PhylumAccount account,
     NavHistoryManager? navHistoryManager,
     NavDestination? destination,
   })  : _repository = account.resourceRepository,
         _homeId = account.userHome,
-        super(ExplorerViewState(folderId: '')) {
+        super(ExplorerState(folderId: '')) {
     removeHistoryManagerListener = navHistoryManager?.addListener((state) {
       updateDestination(state.current);
     }, fireImmediately: true);
@@ -99,7 +101,7 @@ class ExplorerViewController extends StateNotifier<ExplorerViewState> {
       folderId = _homeId;
     }
     if (folderId == state.folderId) return;
-    state = ExplorerViewState(folderId: folderId);
+    state = ExplorerState(folderId: folderId);
     refresh();
     _folderSubscription?.cancel();
     _childrenSubscription?.cancel();

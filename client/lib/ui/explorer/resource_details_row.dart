@@ -4,7 +4,7 @@ import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:provider/provider.dart';
 
-import 'explorer_view_controller.dart';
+import '../navigation/explorer_controller.dart';
 import '../menu/bottom_sheet.dart';
 
 class ResourceDetailsRow extends StatelessWidget {
@@ -15,9 +15,9 @@ class ResourceDetailsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showBorder = context.select<ExplorerViewState, bool>((state) => state.focusId == r.id && state.showFocus);
-    final highlight = context.select<ExplorerViewState, bool>((state) => state.isSelected(r.id));
-    final dim = context.select<ExplorerViewState, bool>((state) => state.isSelected(r.id) && state.dragging);
+    final showBorder = context.select<ExplorerState, bool>((state) => state.focusId == r.id && state.showFocus);
+    final highlight = context.select<ExplorerState, bool>((state) => state.isSelected(r.id));
+    final dim = context.select<ExplorerState, bool>((state) => state.isSelected(r.id) && state.dragging);
     final theme = Theme.of(context);
     final border = dropTargetActive
         ? BorderSide(color: theme.colorScheme.secondary, width: 2.0)

@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/explorer/explorer_view_controller.dart';
+import 'package:phylum/ui/navigation/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/menu/menu_option.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
@@ -49,29 +49,29 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
             : HardwareKeyboard.instance.isShiftPressed
                 ? SelectionMode.range
                 : SelectionMode.single;
-        if (context.read<ExplorerViewState>().isSelected(widget.resource.id) && mode == SelectionMode.single) {
+        if (context.read<ExplorerState>().isSelected(widget.resource.id) && mode == SelectionMode.single) {
           deferHandling = true;
-          context.read<ExplorerViewController>().updateSelection((_) => widget.index, SelectionMode.noChange, false);
+          context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.noChange, false);
         } else {
           deferHandling = false;
-          context.read<ExplorerViewController>().updateSelection((_) => widget.index, mode, false);
+          context.read<ExplorerController>().updateSelection((_) => widget.index, mode, false);
         }
       },
       onTap: () {
         if (deferHandling) {
           deferHandling = false;
-          context.read<ExplorerViewController>().updateSelection((_) => widget.index, SelectionMode.single, false);
+          context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.single, false);
         }
       },
       onSecondaryTapUp: (details) async {
-        ExplorerViewState state = context.read<ExplorerViewState>();
+        ExplorerState state = context.read<ExplorerState>();
         if (!state.isSelected(widget.resource.id)) {
           final mode =
               HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed ? SelectionMode.add : SelectionMode.single;
-          context.read<ExplorerViewController>().updateSelection((i) => widget.index, mode, false);
-          state = context.read<ExplorerViewState>();
+          context.read<ExplorerController>().updateSelection((i) => widget.index, mode, false);
+          state = context.read<ExplorerState>();
         } else {
-          context.read<ExplorerViewController>().updateSelection(null, SelectionMode.noChange, false);
+          context.read<ExplorerController>().updateSelection(null, SelectionMode.noChange, false);
         }
         final position = RelativeRect.fromLTRB(
           details.globalPosition.dx,
@@ -92,7 +92,7 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
         }
       },
       onDoubleTap: () {
-        context.read<ExplorerViewController>().updateSelection((_) => widget.index, SelectionMode.single, false);
+        context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.single, false);
         Actions.maybeInvoke(context, const ActivateIntent());
       },
       child: ResourceDraggable(
