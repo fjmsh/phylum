@@ -34,6 +34,7 @@ class DestinationPicker extends StatefulWidget {
             ),
           ),
         ],
+        child: DestinationPicker(initialFolderId: initialFolderId),
       ),
     );
   }
@@ -80,10 +81,18 @@ class _DestinationPickerState extends State<DestinationPicker> {
               return null;
             }),
             FocusDownIntent: CallbackAction<FocusDownIntent>(
-              onInvoke: (i) async => context.read<ExplorerController>().updateSelection((i) => i + 1, SelectionMode.single, false),
+              onInvoke: (i) async {
+                context.read<ExplorerController>().updateSelection((i) => i + 1, SelectionMode.single, false);
+                node.requestFocus();
+                return null;
+              },
             ),
             FocusUpIntent: CallbackAction<FocusUpIntent>(
-              onInvoke: (i) async => context.read<ExplorerController>().updateSelection((i) => i - 1, SelectionMode.single, false),
+              onInvoke: (i) async {
+                context.read<ExplorerController>().updateSelection((i) => i - 1, SelectionMode.single, false);
+                node.requestFocus();
+                return null;
+              },
             ),
             ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) async {
               final selected = context.read<ExplorerState>().selectedSingle;
