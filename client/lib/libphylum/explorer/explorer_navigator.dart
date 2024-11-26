@@ -1,23 +1,23 @@
 import 'package:state_notifier/state_notifier.dart';
 
-import 'destination.dart';
+import 'page.dart';
 
 class ExplorerNavigatorState {
-  final NavDestination current;
-  final List<NavDestination> _back;
-  final List<NavDestination> _forward;
+  final ExplorerPage current;
+  final List<ExplorerPage> _back;
+  final List<ExplorerPage> _forward;
 
   bool get canGoBack => _back.isNotEmpty;
   bool get canGoForward => _forward.isNotEmpty;
 
   const ExplorerNavigatorState({
     required this.current,
-    List<NavDestination> back = const [],
-    List<NavDestination> forward = const [],
+    List<ExplorerPage> back = const [],
+    List<ExplorerPage> forward = const [],
   })  : _back = back,
         _forward = forward;
 
-  ExplorerNavigatorState copyWith({NavDestination? current, List<NavDestination>? back, List<NavDestination>? forward}) {
+  ExplorerNavigatorState copyWith({ExplorerPage? current, List<ExplorerPage>? back, List<ExplorerPage>? forward}) {
     return ExplorerNavigatorState(
       current: current ?? this.current,
       back: back ?? _back,
@@ -27,14 +27,14 @@ class ExplorerNavigatorState {
 }
 
 class ExplorerNavigator extends StateNotifier<ExplorerNavigatorState> {
-  NavDestination get current => state.current;
+  ExplorerPage get current => state.current;
 
-  ExplorerNavigator(NavDestination destination) : super(ExplorerNavigatorState(current: destination));
+  ExplorerNavigator(ExplorerPage page) : super(ExplorerNavigatorState(current: page));
 
-  void go(NavDestination destination) {
-    if (state.current != destination) {
+  void go(ExplorerPage page) {
+    if (state.current != page) {
       state = ExplorerNavigatorState(
-        current: destination,
+        current: page,
         back: [...state._back, state.current],
         forward: const [],
       );

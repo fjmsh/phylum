@@ -3,7 +3,7 @@ import 'package:phylum/ui/explorer/explorer_actions.dart';
 import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
 import 'package:provider/provider.dart';
 
-import '../navigation/explorer_controller.dart';
+import '../../libphylum/explorer/explorer_controller.dart';
 import 'folder_empty_view.dart';
 import 'folder_list_view.dart';
 

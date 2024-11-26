@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/navigation/explorer_controller.dart';
+import 'package:phylum/libphylum/explorer/explorer_controller.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:phylum/util/time.dart';

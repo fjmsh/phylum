@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phylum/ui/navigation/selection_mode.dart';
+import 'package:phylum/libphylum/explorer/selection_mode.dart';
 
 class FocusUpIntent extends Intent {
   final SelectionMode mode;

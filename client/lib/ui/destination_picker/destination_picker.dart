@@ -3,11 +3,11 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/navigation/destination.dart';
-import 'package:phylum/ui/navigation/explorer_controller.dart';
+import 'package:phylum/libphylum/explorer/page.dart';
+import 'package:phylum/libphylum/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
-import 'package:phylum/ui/navigation/explorer_navigator.dart';
-import 'package:phylum/ui/navigation/selection_mode.dart';
+import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
+import 'package:phylum/libphylum/explorer/selection_mode.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 
@@ -25,7 +25,7 @@ class DestinationPicker extends StatefulWidget {
       builder: (context) => MultiProvider(
         providers: [
           StateNotifierProvider<ExplorerNavigator, ExplorerNavigatorState>(
-            create: (context) => ExplorerNavigator(NavDestinationFolder(folderId: initialFolderId)),
+            create: (context) => ExplorerNavigator(ExplorerPageFolder(folderId: initialFolderId)),
           ),
           StateNotifierProvider<ExplorerController, ExplorerState>(
             create: (context) => ExplorerController(
@@ -75,7 +75,7 @@ class _DestinationPickerState extends State<DestinationPicker> {
             NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) async {
               final parentId = context.read<ExplorerState>().folder?.parent;
               if (parentId != null) {
-                context.read<ExplorerController>().updateDestination(NavDestinationFolder(folderId: parentId));
+                context.read<ExplorerNavigator>().go(ExplorerPageFolder(folderId: parentId));
               }
               node.requestFocus();
               return null;
@@ -97,7 +97,7 @@ class _DestinationPickerState extends State<DestinationPicker> {
             ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) async {
               final selected = context.read<ExplorerState>().selectedSingle;
               if (selected != null && selected.dir) {
-                context.read<ExplorerController>().updateDestination(NavDestinationFolder(folderId: selected.id));
+                context.read<ExplorerNavigator>().go(ExplorerPageFolder(folderId: selected.id));
               }
               return null;
             }),
@@ -154,7 +154,7 @@ class DestinationFolderView extends StatelessWidget {
             leading: r.getIcon(),
             title: Text(r.name),
             enabled: r.dir,
-            onTap: () => context.read<ExplorerController>().updateDestination(NavDestinationFolder(folderId: r.id)),
+            onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageFolder(folderId: r.id)),
           );
         });
       },

@@ -3,21 +3,21 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/fab_action.dart';
-import 'package:phylum/ui/navigation/destination.dart';
-import 'package:phylum/ui/navigation/explorer_navigator.dart';
+import 'package:phylum/libphylum/explorer/page.dart';
+import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
-import 'package:phylum/ui/navigation/explorer_controller.dart';
+import 'package:phylum/libphylum/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
-import 'package:phylum/ui/navigation/selection_mode.dart';
+import 'package:phylum/libphylum/explorer/selection_mode.dart';
 import 'package:provider/provider.dart';
 
 class AppLayout extends StatefulWidget {
-  final NavDestination destination;
+  final ExplorerPage page;
 
-  const AppLayout({super.key, required this.destination});
+  const AppLayout({super.key, required this.page});
 
   @override
   State<AppLayout> createState() => _AppLayoutState();
@@ -27,7 +27,7 @@ class _AppLayoutState extends State<AppLayout> {
   @override
   void didUpdateWidget(covariant AppLayout oldWidget) {
     super.didUpdateWidget(oldWidget);
-    context.read<ExplorerNavigator>().go(widget.destination);
+    context.read<ExplorerNavigator>().go(widget.page);
   }
 
   @override
@@ -35,7 +35,7 @@ class _AppLayoutState extends State<AppLayout> {
     return MultiProvider(
       providers: [
         StateNotifierProvider<ExplorerNavigator, ExplorerNavigatorState>(
-          create: (context) => ExplorerNavigator(widget.destination),
+          create: (context) => ExplorerNavigator(widget.page),
         ),
         StateNotifierProvider<ExplorerController, ExplorerState>(
           create: (context) => ExplorerController(

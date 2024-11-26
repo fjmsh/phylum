@@ -1,8 +1,8 @@
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 
-sealed class NavDestination {
-  const NavDestination();
+sealed class ExplorerPage {
+  const ExplorerPage();
 
   Future<bool> refresh(PhylumAccount account);
 
@@ -13,10 +13,10 @@ sealed class NavDestination {
   Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account);
 }
 
-class NavDestinationFolder extends NavDestination {
+class ExplorerPageFolder extends ExplorerPage {
   final String folderId;
 
-  NavDestinationFolder({required this.folderId});
+  ExplorerPageFolder({required this.folderId});
 
   @override
   Future<bool> refresh(PhylumAccount account) {
@@ -40,12 +40,12 @@ class NavDestinationFolder extends NavDestination {
 
   @override
   String toString() {
-    return 'NavDestinationFolder($folderId)';
+    return 'ExplorerPageFolder($folderId)';
   }
 
   @override
   bool operator ==(Object other) {
-    return other is NavDestinationFolder && other.folderId == folderId;
+    return other is ExplorerPageFolder && other.folderId == folderId;
   }
 
   @override

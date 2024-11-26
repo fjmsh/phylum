@@ -5,7 +5,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-import 'destination.dart';
+import 'page.dart';
 import 'explorer_navigator.dart';
 import 'selection_mode.dart';
 
@@ -83,7 +83,7 @@ class ExplorerController extends StateNotifier<ExplorerState> {
         _navHistoryManager = navHistoryManager,
         super(ExplorerState(folderId: null)) {
     _removeHistoryManagerListener = navHistoryManager.addListener((state) {
-      updateDestination(state.current);
+      updatePage(state.current);
     }, fireImmediately: true);
   }
 
@@ -95,13 +95,13 @@ class ExplorerController extends StateNotifier<ExplorerState> {
     super.dispose();
   }
 
-  void updateDestination(NavDestination destination) {
-    state = ExplorerState(folderId: (destination as NavDestinationFolder?)?.folderId);
-    refresh();
+  void updatePage(ExplorerPage page) {
+    state = ExplorerState(folderId: (page as ExplorerPageFolder?)?.folderId);
     _folderSubscription?.cancel();
     _childrenSubscription?.cancel();
-    _folderSubscription = destination.watchResource(_account).listen((e) => state = state.copyWith(folder: e));
-    _childrenSubscription = destination.watchChildren(_account).listen((e) => _updateResourceList(e));
+    _folderSubscription = page.watchResource(_account).listen((e) => state = state.copyWith(folder: e));
+    _childrenSubscription = page.watchChildren(_account).listen((e) => _updateResourceList(e));
+    refresh();
   }
 
   void _updateResourceList(List<Resource> resources) {
