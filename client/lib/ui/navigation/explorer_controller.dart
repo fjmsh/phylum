@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 import 'destination.dart';
 import 'history_manager.dart';
+import 'selection_mode.dart';
 
 class ExplorerState {
   final NavDestination destination;

@@ -1,12 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 
 sealed class NavDestination {
   const NavDestination();
-
-  void go(BuildContext context);
 
   Future<bool> refresh(PhylumAccount account);
 
@@ -21,11 +17,6 @@ class NavDestinationFolder extends NavDestination {
   final String folderId;
 
   NavDestinationFolder({required this.folderId});
-
-  @override
-  void go(BuildContext context) {
-    context.goNamed('folder', pathParameters: {'id': folderId});
-  }
 
   @override
   Future<bool> refresh(PhylumAccount account) {

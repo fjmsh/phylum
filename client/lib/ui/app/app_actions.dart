@@ -45,21 +45,21 @@ class AppActions extends StatelessWidget {
         NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) async {
           final parent = context.read<ExplorerState>().folder?.parent;
           if (parent != null) {
-            context.read<NavHistoryManager>().go(context, NavDestinationFolder(folderId: parent));
+            context.read<NavHistoryManager>().go(NavDestinationFolder(folderId: parent));
           }
           return null;
         }),
         NavHomeIntent: CallbackAction<NavHomeIntent>(
-          onInvoke: (i) => context.read<NavHistoryManager>().go(context, NavDestinationFolder(folderId: context.read<PhylumAccount>().userHome)),
+          onInvoke: (i) => context.read<NavHistoryManager>().go(NavDestinationFolder(folderId: context.read<PhylumAccount>().userHome)),
         ),
         NavToFolderIntent: CallbackAction<NavToFolderIntent>(
-          onInvoke: (i) => context.read<NavHistoryManager>().go(context, NavDestinationFolder(folderId: i.folderId)),
+          onInvoke: (i) => context.read<NavHistoryManager>().go(NavDestinationFolder(folderId: i.folderId)),
         ),
         NavBackIntent: CallbackAction<NavBackIntent>(
-          onInvoke: (i) => context.read<NavHistoryManager>().goBack(context),
+          onInvoke: (i) => context.read<NavHistoryManager>().goBack(),
         ),
         NavForwardIntent: CallbackAction<NavForwardIntent>(
-          onInvoke: (i) => context.read<NavHistoryManager>().goForward(context),
+          onInvoke: (i) => context.read<NavHistoryManager>().goForward(),
         ),
       },
       child: child,

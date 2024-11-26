@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/fab_action.dart';
@@ -12,6 +11,7 @@ import 'package:phylum/ui/navigation/explorer_controller.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
+import 'package:phylum/ui/navigation/selection_mode.dart';
 import 'package:provider/provider.dart';
 
 class AppLayout extends StatefulWidget {
@@ -27,7 +27,7 @@ class _AppLayoutState extends State<AppLayout> {
   @override
   void didUpdateWidget(covariant AppLayout oldWidget) {
     super.didUpdateWidget(oldWidget);
-    context.read<NavHistoryManager>().handleDestinationChange(widget.destination);
+    context.read<NavHistoryManager>().go(widget.destination);
   }
 
   @override

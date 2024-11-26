@@ -6,6 +6,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/navigation/destination.dart';
 import 'package:phylum/ui/navigation/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
+import 'package:phylum/ui/navigation/selection_mode.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 

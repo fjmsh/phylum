@@ -1,7 +1,6 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:phylum/ui/navigation/destination.dart';
 import 'package:state_notifier/state_notifier.dart';
+
+import 'destination.dart';
 
 class NavHistoryState {
   final NavDestination current;
@@ -30,10 +29,8 @@ class NavHistoryState {
 class NavHistoryManager extends StateNotifier<NavHistoryState> {
   NavHistoryManager(NavDestination destination) : super(NavHistoryState(current: destination));
 
-  void go(BuildContext context, NavDestination destination) {
-    if (kIsWeb) {
-      destination.go(context);
-    } else {
+  void go(NavDestination destination) {
+    if (state.current != destination) {
       state = NavHistoryState(
         current: destination,
         back: [...state._back, state.current],
@@ -42,22 +39,7 @@ class NavHistoryManager extends StateNotifier<NavHistoryState> {
     }
   }
 
-  void handleDestinationChange(NavDestination destination) {
-    if (kIsWeb) {
-      state = NavHistoryState(
-        current: destination,
-      );
-    } else if (destination != state.current) {
-      // For handling deep links
-      state = NavHistoryState(
-        current: destination,
-        back: [...state._back, state.current],
-        forward: const [],
-      );
-    }
-  }
-
-  void goBack(BuildContext context) {
+  void goBack() {
     if (!state.canGoBack) return;
     int len = state._back.length;
     final target = state._back[len - 1];
@@ -68,7 +50,7 @@ class NavHistoryManager extends StateNotifier<NavHistoryState> {
     );
   }
 
-  void goForward(BuildContext context) {
+  void goForward() {
     if (!state.canGoForward) return;
     int len = state._forward.length;
     final target = state._forward[len - 1];

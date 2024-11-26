@@ -1,23 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-enum SelectionMode {
-  single,
-  range,
-  toggle,
-  add,
-  noChange,
-  none,
-}
+import 'package:phylum/ui/navigation/selection_mode.dart';
 
 class FocusUpIntent extends Intent {
   final SelectionMode mode;
+
   const FocusUpIntent(this.mode);
 }
 
 class FocusDownIntent extends Intent {
   final SelectionMode mode;
+
   const FocusDownIntent(this.mode);
 }
 
@@ -31,6 +25,7 @@ class SelectAllIntent extends Intent {
 
 class CopyToClipboardIntent extends Intent {
   final bool cut;
+
   const CopyToClipboardIntent(this.cut);
 }
 
