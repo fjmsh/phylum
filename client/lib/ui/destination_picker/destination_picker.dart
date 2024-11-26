@@ -6,6 +6,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/navigation/destination.dart';
 import 'package:phylum/ui/navigation/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
+import 'package:phylum/ui/navigation/explorer_navigator.dart';
 import 'package:phylum/ui/navigation/selection_mode.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
@@ -18,22 +19,28 @@ class DestinationPicker extends StatefulWidget {
   @override
   State<DestinationPicker> createState() => _DestinationPickerState();
 
-  static Future<String?> show(BuildContext context, Resource initialFolder) {
+  static Future<String?> show(BuildContext context, String initialFolderId) {
     return showDialog(
       context: context,
-      builder: (context) => StateNotifierProvider<ExplorerController, ExplorerState>(
-        create: (context) => ExplorerController(
-          account: context.read<PhylumAccount>(),
-          destination: NavDestinationFolder(folderId: initialFolder.id),
-        ),
-        builder: (_, __) => DestinationPicker(initialFolderId: initialFolder.id),
+      builder: (context) => MultiProvider(
+        providers: [
+          StateNotifierProvider<ExplorerNavigator, ExplorerNavigatorState>(
+            create: (context) => ExplorerNavigator(NavDestinationFolder(folderId: initialFolderId)),
+          ),
+          StateNotifierProvider<ExplorerController, ExplorerState>(
+            create: (context) => ExplorerController(
+              account: context.read<PhylumAccount>(),
+              navHistoryManager: context.read<ExplorerNavigator>(),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class _DestinationPickerState extends State<DestinationPicker> {
-  final FocusNode node = FocusNode(debugLabel: 'Destination Explorer');
+  final FocusNode node = FocusNode(debugLabel: 'Destination Picker');
 
   @override
   void initState() {

@@ -5,8 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/navigation/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
+import 'package:phylum/ui/navigation/explorer_navigator.dart';
 import 'package:provider/provider.dart';
 
 class PathView extends StatefulWidget {
@@ -38,8 +38,8 @@ class _PathViewState extends State<PathView> {
   @override
   void initState() {
     super.initState();
-    removeListener = context.read<ExplorerController>().addListener((state) {
-      sub = state.destination.watchParents(context.read<PhylumAccount>()).listen((data) {
+    removeListener = context.read<ExplorerNavigator>().addListener((state) {
+      sub = state.current.watchParents(context.read<PhylumAccount>()).listen((data) {
         SystemChrome.setApplicationSwitcherDescription(ApplicationSwitcherDescription(
           label: data.isEmpty ? 'Phylum' : "${data.first.name == "" ? "/" : data.first.name} | Phylum",
         ));

@@ -4,7 +4,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/fab_action.dart';
 import 'package:phylum/ui/navigation/destination.dart';
-import 'package:phylum/ui/navigation/history_manager.dart';
+import 'package:phylum/ui/navigation/explorer_navigator.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/navigation/explorer_controller.dart';
@@ -27,21 +27,20 @@ class _AppLayoutState extends State<AppLayout> {
   @override
   void didUpdateWidget(covariant AppLayout oldWidget) {
     super.didUpdateWidget(oldWidget);
-    context.read<NavHistoryManager>().go(widget.destination);
+    context.read<ExplorerNavigator>().go(widget.destination);
   }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        StateNotifierProvider<NavHistoryManager, NavHistoryState>(
-          create: (context) => NavHistoryManager(widget.destination),
+        StateNotifierProvider<ExplorerNavigator, ExplorerNavigatorState>(
+          create: (context) => ExplorerNavigator(widget.destination),
         ),
         StateNotifierProvider<ExplorerController, ExplorerState>(
           create: (context) => ExplorerController(
-            navHistoryManager: context.read<NavHistoryManager>(),
             account: context.read<PhylumAccount>(),
-            destination: widget.destination,
+            navHistoryManager: context.read<ExplorerNavigator>(),
           ),
         ),
       ],

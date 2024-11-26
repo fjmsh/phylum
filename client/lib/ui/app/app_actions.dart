@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/navigation/destination.dart';
-import 'package:phylum/ui/navigation/history_manager.dart';
+import 'package:phylum/ui/navigation/explorer_navigator.dart';
 import 'package:phylum/ui/navigation/explorer_controller.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
@@ -45,21 +45,21 @@ class AppActions extends StatelessWidget {
         NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) async {
           final parent = context.read<ExplorerState>().folder?.parent;
           if (parent != null) {
-            context.read<NavHistoryManager>().go(NavDestinationFolder(folderId: parent));
+            context.read<ExplorerNavigator>().go(NavDestinationFolder(folderId: parent));
           }
           return null;
         }),
         NavHomeIntent: CallbackAction<NavHomeIntent>(
-          onInvoke: (i) => context.read<NavHistoryManager>().go(NavDestinationFolder(folderId: context.read<PhylumAccount>().userHome)),
+          onInvoke: (i) => context.read<ExplorerNavigator>().go(NavDestinationFolder(folderId: context.read<PhylumAccount>().userHome)),
         ),
         NavToFolderIntent: CallbackAction<NavToFolderIntent>(
-          onInvoke: (i) => context.read<NavHistoryManager>().go(NavDestinationFolder(folderId: i.folderId)),
+          onInvoke: (i) => context.read<ExplorerNavigator>().go(NavDestinationFolder(folderId: i.folderId)),
         ),
         NavBackIntent: CallbackAction<NavBackIntent>(
-          onInvoke: (i) => context.read<NavHistoryManager>().goBack(),
+          onInvoke: (i) => context.read<ExplorerNavigator>().goBack(),
         ),
         NavForwardIntent: CallbackAction<NavForwardIntent>(
-          onInvoke: (i) => context.read<NavHistoryManager>().goForward(),
+          onInvoke: (i) => context.read<ExplorerNavigator>().goForward(),
         ),
       },
       child: child,

@@ -6,11 +6,11 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 import 'destination.dart';
-import 'history_manager.dart';
+import 'explorer_navigator.dart';
 import 'selection_mode.dart';
 
 class ExplorerState {
-  final NavDestination destination;
+  final String? folderId;
   final Resource? folder;
   final List<Resource> resources;
   final Set<String> selectedIds;
@@ -21,7 +21,6 @@ class ExplorerState {
   final bool refreshing;
   final bool refreshError;
 
-  String? get folderId => (destination as NavDestinationFolder?)?.folderId;
   Resource? get focussed => focusIndex < 0 || focusIndex >= resources.length ? null : resources[focusIndex];
   String? get focusId => focussed?.id;
   Iterable<Resource> get selected => resources.where((r) => selectedIds.contains(r.id));
@@ -29,7 +28,7 @@ class ExplorerState {
   Resource? get focussedIfSelected => selectedIds.isEmpty ? null : focussed;
 
   const ExplorerState({
-    required this.destination,
+    required this.folderId,
     this.folder,
     this.resources = const [],
     this.selectedIds = const {},
@@ -53,7 +52,7 @@ class ExplorerState {
     bool? refreshError,
   }) =>
       ExplorerState(
-        destination: destination,
+        folderId: folderId,
         folder: folder ?? this.folder,
         resources: resources ?? this.resources,
         selectedIds: selectedIds ?? this.selectedIds,
@@ -72,34 +71,37 @@ class ExplorerState {
 
 class ExplorerController extends StateNotifier<ExplorerState> {
   final PhylumAccount _account;
-  void Function()? removeHistoryManagerListener;
+  final ExplorerNavigator _navHistoryManager;
+  late void Function() _removeHistoryManagerListener;
   StreamSubscription<Resource?>? _folderSubscription;
   StreamSubscription<List<Resource>>? _childrenSubscription;
 
   ExplorerController({
     required PhylumAccount account,
-    required NavDestination destination,
-    NavHistoryManager? navHistoryManager,
+    required ExplorerNavigator navHistoryManager,
   })  : _account = account,
-        super(ExplorerState(destination: destination)) {
-    removeHistoryManagerListener = navHistoryManager?.addListener((state) {
+        _navHistoryManager = navHistoryManager,
+        super(ExplorerState(folderId: null)) {
+    _removeHistoryManagerListener = navHistoryManager.addListener((state) {
       updateDestination(state.current);
-    });
-    _updateDestination();
+    }, fireImmediately: true);
+  }
+
+  @override
+  void dispose() {
+    _removeHistoryManagerListener.call();
+    _folderSubscription?.cancel();
+    _childrenSubscription?.cancel();
+    super.dispose();
   }
 
   void updateDestination(NavDestination destination) {
-    if (destination == state.destination) return;
-    state = ExplorerState(destination: destination);
-    _updateDestination();
-  }
-
-  void _updateDestination() {
+    state = ExplorerState(folderId: (destination as NavDestinationFolder?)?.folderId);
     refresh();
     _folderSubscription?.cancel();
     _childrenSubscription?.cancel();
-    _folderSubscription = state.destination.watchResource(_account).listen((e) => state = state.copyWith(folder: e));
-    _childrenSubscription = state.destination.watchChildren(_account).listen((e) => _updateResourceList(e));
+    _folderSubscription = destination.watchResource(_account).listen((e) => state = state.copyWith(folder: e));
+    _childrenSubscription = destination.watchChildren(_account).listen((e) => _updateResourceList(e));
   }
 
   void _updateResourceList(List<Resource> resources) {
@@ -116,13 +118,6 @@ class ExplorerController extends StateNotifier<ExplorerState> {
       focusIndex: focusIndex,
       selectedIds: selectedIds,
     );
-  }
-
-  @override
-  void dispose() {
-    _folderSubscription?.cancel();
-    _childrenSubscription?.cancel();
-    super.dispose();
   }
 
   void setDragging(bool dragging) {
@@ -179,7 +174,7 @@ class ExplorerController extends StateNotifier<ExplorerState> {
   Future refresh() {
     if (state.refreshing) return Future.value(state);
     state = state.copyWith(refreshing: true);
-    return state.destination.refresh(_account).then((success) {
+    return _navHistoryManager.current.refresh(_account).then((success) {
       if (mounted) {
         state = state.copyWith(
           refreshing: false,

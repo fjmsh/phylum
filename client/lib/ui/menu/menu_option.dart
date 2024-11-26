@@ -50,10 +50,9 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       break;
     case MenuOption.move:
     case MenuOption.copy:
-      final parentId = resources.first.parent!;
-      final parent = await account.resourceRepository.getResource(parentId);
-      if (!context.mounted) return;
-      await DestinationPicker.show(context, parent!);
+      final parent = resources.firstOrNull?.parent;
+      if (parent == null) return;
+      await DestinationPicker.show(context, parent);
       break;
     case MenuOption.delete:
       final name = resources.length == 1 ? resources.first.name : '${resources.length} items';
