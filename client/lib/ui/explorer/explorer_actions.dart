@@ -26,7 +26,7 @@ class ExplorerActions extends StatelessWidget {
         PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
         PasteFromClipboardIntent: CallbackAction<PasteFromClipboardIntent>(onInvoke: (PasteFromClipboardIntent i) => handlePasteAction(i, context)),
         SelectAllIntent: CallbackAction<SelectAllIntent>(onInvoke: (i) {
-          context.read<ExplorerController>().selectAll(showFocus: true);
+          context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.all, true);
           return null;
         }),
         DismissIntent: CallbackAction<DismissIntent>(onInvoke: (i) {

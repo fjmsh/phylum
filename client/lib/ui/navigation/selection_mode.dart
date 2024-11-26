@@ -5,4 +5,5 @@ enum SelectionMode {
   add,
   noChange,
   none,
+  all,
 }

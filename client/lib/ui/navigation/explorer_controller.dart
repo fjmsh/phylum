@@ -124,10 +124,6 @@ class ExplorerController extends StateNotifier<ExplorerState> {
     state = state.copyWith(dragging: dragging);
   }
 
-  void selectAll({required bool showFocus}) {
-    state = state.copyWith(selectedIds: Set.of(state.resources.map((r) => r.id)), showFocus: showFocus);
-  }
-
   void updateSelection(int Function(int)? indexFn, SelectionMode mode, bool highlight) {
     Set<String>? selectedIds;
     int index = indexFn?.call(state.focusIndex) ?? state.focusIndex;
@@ -160,6 +156,8 @@ class ExplorerController extends StateNotifier<ExplorerState> {
         selectedIds = const {};
         selectionStartIndex = index;
         break;
+      case SelectionMode.all:
+        selectedIds = Set.of(state.resources.map((r) => r.id));
       case SelectionMode.noChange:
         break;
     }
