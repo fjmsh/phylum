@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
+import 'package:phylum/libphylum/actions/action_resource_copy.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/actions/bookmark_add_action.dart';
 import 'package:phylum/libphylum/actions/bookmark_remove_action.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/util/uuid.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
@@ -49,10 +51,31 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       }
       break;
     case MenuOption.move:
+      final parent = resources.firstOrNull?.parent;
+      if (parent == null) return;
+      final dest = await DestinationPicker.show(context, parent);
+      if (dest == null) {
+        return;
+      }
+      for (final r in resources) {
+        account.addAction(ResourceMoveAction(r: r, parent: dest));
+      }
+      break;
     case MenuOption.copy:
       final parent = resources.firstOrNull?.parent;
       if (parent == null) return;
-      await DestinationPicker.show(context, parent);
+      final dest = await DestinationPicker.show(context, parent);
+      if (dest == null) {
+        return;
+      }
+      for (final r in resources) {
+        account.addAction(ResourceCopyAction(
+          src: r,
+          resourceId: generateUuid(),
+          resourceName: r.name,
+          parentId: dest,
+        ));
+      }
       break;
     case MenuOption.delete:
       final name = resources.length == 1 ? resources.first.name : '${resources.length} items';
@@ -68,9 +91,12 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       break;
     case MenuOption.permissions:
     case MenuOption.publinks:
+      break;
     case MenuOption.download:
       for (final r in resources) {
-        context.read<DownloadManager>().downloadResource(r);
+        if (r.dir) {
+          context.read<DownloadManager>().downloadResource(r);
+        }
       }
       break;
     case MenuOption.bookmarkAdd:

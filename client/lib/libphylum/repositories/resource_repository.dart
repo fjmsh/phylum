@@ -8,25 +8,6 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
 
-class ResourceAdapter implements TypeAdapter<Resource> {
-  const ResourceAdapter();
-
-  @override
-  int get typeId => 1;
-
-  @override
-  Resource read(BinaryReader reader) {
-    reader.readByte();
-    return Resource.fromJson(json.decode(reader.readString()));
-  }
-
-  @override
-  void write(BinaryWriter writer, Resource obj) {
-    writer.writeByte(0); // Version marker, in case we need to change something in the future
-    writer.writeString(obj.toJsonString());
-  }
-}
-
 class ResourceRepository {
   final PhylumAccount account;
   late final Box<Resource> _serverDataBox;
@@ -224,5 +205,24 @@ class ResourceRepository {
           : Value.absent(),
       publinks: Value.absentIfNull(data['publinks']),
     );
+  }
+}
+
+class ResourceAdapter implements TypeAdapter<Resource> {
+  const ResourceAdapter();
+
+  @override
+  int get typeId => 1;
+
+  @override
+  Resource read(BinaryReader reader) {
+    reader.readByte();
+    return Resource.fromJson(json.decode(reader.readString()));
+  }
+
+  @override
+  void write(BinaryWriter writer, Resource obj) {
+    writer.writeByte(0); // Version marker, in case we need to change something in the future
+    writer.writeString(obj.toJsonString());
   }
 }
