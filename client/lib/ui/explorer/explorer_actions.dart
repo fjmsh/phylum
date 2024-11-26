@@ -38,7 +38,8 @@ class ExplorerActions extends StatelessWidget {
           return null;
         }),
         ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) {
-          final r = context.read<ExplorerState>().selectedSingle;
+          final state = context.read<ExplorerState>();
+          final r = state.selectedSingle ?? state.focussed;
           if (r == null) return;
           _openResource(context, r);
           return null;
