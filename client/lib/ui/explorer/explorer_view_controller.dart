@@ -71,7 +71,6 @@ class ExplorerViewState {
 
 class ExplorerViewController extends StateNotifier<ExplorerViewState> {
   final ResourceRepository _repository;
-  final NavHistoryManager _historyManager;
   final String _homeId;
   void Function()? removeHistoryManagerListener;
   StreamSubscription<Resource?>? _folderSubscription;
@@ -79,15 +78,17 @@ class ExplorerViewController extends StateNotifier<ExplorerViewState> {
 
   ExplorerViewController({
     required PhylumAccount account,
-    required NavHistoryManager navHistoryManager,
+    NavHistoryManager? navHistoryManager,
+    NavDestination? destination,
   })  : _repository = account.resourceRepository,
         _homeId = account.userHome,
-        _historyManager = navHistoryManager,
         super(ExplorerViewState(folderId: '')) {
-    removeHistoryManagerListener = _historyManager.addListener((state) {
+    removeHistoryManagerListener = navHistoryManager?.addListener((state) {
       updateDestination(state.current);
-      refresh();
     }, fireImmediately: true);
+    if (navHistoryManager == null) {
+      updateDestination(destination!);
+    }
   }
 
   void updateDestination(NavDestination destination) {
@@ -99,6 +100,7 @@ class ExplorerViewController extends StateNotifier<ExplorerViewState> {
     }
     if (folderId == state.folderId) return;
     state = ExplorerViewState(folderId: folderId);
+    refresh();
     _folderSubscription?.cancel();
     _childrenSubscription?.cancel();
     _folderSubscription = _repository.watchResource(folderId).listen((e) => state = state.copyWith(folder: e));

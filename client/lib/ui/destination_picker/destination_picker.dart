@@ -3,24 +3,29 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/nav_history.dart';
+import 'package:phylum/ui/explorer/explorer_view_controller.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 
-import 'controller.dart';
-
 class DestinationPicker extends StatefulWidget {
-  const DestinationPicker({super.key});
+  final String initialFolderId;
+
+  const DestinationPicker({super.key, required this.initialFolderId});
 
   @override
   State<DestinationPicker> createState() => _DestinationPickerState();
 
-  static Future<String?> show(BuildContext context, Resource startingFolder) {
+  static Future<String?> show(BuildContext context, Resource initialFolder) {
     return showDialog(
       context: context,
-      builder: (context) => StateNotifierProvider<DestinationPickerController, DestinationPickerState>(
-        create: (context) => DestinationPickerController(startingFolder),
-        builder: (_, __) => const DestinationPicker(),
+      builder: (context) => StateNotifierProvider<ExplorerViewController, ExplorerViewState>(
+        create: (context) => ExplorerViewController(
+          account: context.read<PhylumAccount>(),
+          destination: NavDestinationFolder(folderId: initialFolder.id),
+        ),
+        builder: (_, __) => DestinationPicker(initialFolderId: initialFolder.id),
       ),
     );
   }
@@ -48,7 +53,7 @@ class _DestinationPickerState extends State<DestinationPicker> {
         actions: [
           IconButton(
               onPressed: () {
-                createDirectory(context, context.read<DestinationPickerState>().folder.id);
+                createDirectory(context, context.read<ExplorerViewState>().folderId);
               },
               icon: Icon(Icons.create_new_folder_outlined))
         ],
@@ -57,15 +62,27 @@ class _DestinationPickerState extends State<DestinationPicker> {
         child: Actions(
           actions: {
             NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) async {
-              final parentId = context.read<DestinationPickerState>().folder.parent;
+              final parentId = context.read<ExplorerViewState>().folder?.parent;
               if (parentId != null) {
-                final controller = context.read<DestinationPickerController>();
-                final parent = await context.read<PhylumAccount>().resourceRepository.getResource(parentId);
-                controller.updateFolder(parent!);
+                context.read<ExplorerViewController>().updateDestination(NavDestinationFolder(folderId: parentId));
               }
               node.requestFocus();
               return null;
             }),
+            FocusDownIntent: CallbackAction<FocusDownIntent>(
+              onInvoke: (i) async => context.read<ExplorerViewController>().updateSelection((i) => i + 1, SelectionMode.single, false),
+            ),
+            FocusUpIntent: CallbackAction<FocusUpIntent>(
+              onInvoke: (i) async => context.read<ExplorerViewController>().updateSelection((i) => i - 1, SelectionMode.single, false),
+            ),
+            ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) async {
+              final selected = context.read<ExplorerViewState>().selectedSingle;
+              if (selected != null && selected.dir) {
+                context.read<ExplorerViewController>().updateDestination(NavDestinationFolder(folderId: selected.id));
+              }
+              return null;
+            }),
+            DismissIntent: CallbackAction<DismissIntent>(onInvoke: (i) => Navigator.of(context).pop()),
           },
           child: Column(
             mainAxisSize: MainAxisSize.max,
@@ -84,9 +101,9 @@ class _DestinationPickerState extends State<DestinationPicker> {
                   children: [
                     TextButton(onPressed: Navigator.of(context).pop, child: Text('Cancel')),
                     ElevatedButton(
-                      onPressed: context.select<DestinationPickerState, bool>((state) => state.folder.id != state.initialFolder)
+                      onPressed: context.select<ExplorerViewState, bool>((state) => state.folderId == widget.initialFolderId)
                           ? null
-                          : () => Navigator.of(context).pop(context.read<DestinationPickerState>().folder.id),
+                          : () => Navigator.of(context).pop(context.read<ExplorerViewState>().folderId),
                       child: Text('OK'),
                     ),
                   ],
@@ -105,25 +122,24 @@ class DestinationFolderView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final id = context.select<DestinationPickerState, String>((state) => state.folder.id);
-    return StreamBuilder(
-        stream: context.read<PhylumAccount>().resourceRepository.watchChildren(id),
-        builder: (context, snapshot) {
-          final data = snapshot.data;
-          if (data == null) return Center(child: CircularProgressIndicator());
-          return ListView.builder(
-            itemBuilder: (BuildContext context, int index) {
-              final r = data[index];
-              return ListTile(
-                visualDensity: VisualDensity.compact,
-                leading: r.getIcon(),
-                title: Text(r.name),
-                enabled: r.dir,
-                onTap: () => context.read<DestinationPickerController>().updateFolder(r),
-              );
-            },
-            itemCount: data.length,
+    final items = context.select<ExplorerViewState, List<Resource>>((state) => state.resources);
+    return ListView.builder(
+      itemBuilder: (BuildContext context, int index) {
+        final r = items[index];
+        return Builder(builder: (context) {
+          final selected = context.select<ExplorerViewState, bool>((state) => state.selectedIds.contains(r.id));
+          return ListTile(
+            key: ValueKey(r.id),
+            visualDensity: VisualDensity.compact,
+            selected: selected,
+            leading: r.getIcon(),
+            title: Text(r.name),
+            enabled: r.dir,
+            onTap: () => context.read<ExplorerViewController>().updateDestination(NavDestinationFolder(folderId: r.id)),
           );
         });
+      },
+      itemCount: items.length,
+    );
   }
 }
