@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:go_router/go_router.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -58,7 +59,26 @@ class _DestinationPickerState extends State<DestinationPicker> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Pick Destination'),
+        leading: Builder(builder: (context) {
+          return BackButton(onPressed: () {
+            final parentId = context.read<ExplorerState>().folder?.parent;
+            if (parentId != null) {
+              context.read<ExplorerNavigator>().go(ExplorerPageFolder(folderId: parentId));
+              node.requestFocus();
+            } else {
+              context.pop();
+            }
+          });
+        }),
+        title: Builder(
+          builder: (context) {
+            final name = context.select<ExplorerState, String?>((state) => state.folder?.name);
+            return ListTile(
+              title: Text(name ?? ''),
+              subtitle: const Text('Pick Destination'),
+            );
+          },
+        ),
         actions: [
           Builder(builder: (context) {
             final folderId = context.select<ExplorerState, String?>((state) => state.folderId);
