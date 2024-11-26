@@ -39,7 +39,7 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
       builder: (context, candidate, rejected) => widget.buildItem(context, dropTargetActive),
       onWillAcceptWithDetails: (details) {
         final state = context.read<ExplorerState>();
-        if (state.selectedIds.contains(widget.resourceId) || state.folder?.id == widget.resourceId) {
+        if (state.selectedIds.contains(widget.resourceId) || state.folderId == widget.resourceId) {
           // Don't accept drops into selected resources or the parent
           return false;
         }

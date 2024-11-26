@@ -15,9 +15,8 @@ import 'package:super_clipboard/super_clipboard.dart';
 
 void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
   final account = context.read<PhylumAccount>();
-  final controller = context.read<ExplorerState>();
-  final target = controller.folder;
-  if (target == null) {
+  final folderId = context.read<ExplorerState>().folderId;
+  if (folderId == null) {
     return;
   }
   final openUri = account.apiClient.createUri('/open');
@@ -58,16 +57,16 @@ void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
     }
   }
   if (!context.mounted) return;
-  uploadRecursive(context, target.id, paths);
+  uploadRecursive(context, folderId, paths);
   for (final r in cutResources) {
-    account.addAction(ResourceMoveAction(r: r, parent: target.id));
+    account.addAction(ResourceMoveAction(r: r, parent: folderId));
   }
   for (final r in copyResources) {
     account.addAction(ResourceCopyAction(
       src: r,
       resourceId: generateUuid(),
       resourceName: r.name,
-      parentId: target.id,
+      parentId: folderId,
     ));
   }
 
