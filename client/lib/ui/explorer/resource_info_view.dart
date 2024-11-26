@@ -131,7 +131,7 @@ class _PermissionsTileState extends State<PermissionsTile> {
   Widget build(BuildContext context) {
     final repository = context.read<PhylumAccount>().userRepository;
     final entries = otherPermissions?.entries.toList(growable: false)?..sort(((a, b) => a.key.compareTo(b.key)));
-    final other = entries?.map((e) => '${repository.getUserDisplayName(e.key)}: ${e.value.toStringShort()}').join(', ');
+    final other = entries?.map((e) => repository.getUserDisplayName(e.key)).join(', ');
     return Column(
       children: [
         ListTile(

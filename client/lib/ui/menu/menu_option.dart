@@ -14,6 +14,7 @@ import 'package:phylum/libphylum/util/uuid.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
+import 'package:phylum/ui/explorer/resource_permissions_view.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
@@ -90,6 +91,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       showReponsiveDialog(context, 'Details', (context) => ResourceInfoView(resource: resources.first));
       break;
     case MenuOption.permissions:
+      showReponsiveDialog(context, 'Permissions', (context) => ResourcePermissionsView(resourceId: resources.first.id));
     case MenuOption.publinks:
       break;
     case MenuOption.download:
