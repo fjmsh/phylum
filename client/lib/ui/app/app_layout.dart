@@ -41,6 +41,7 @@ class _AppLayoutState extends State<AppLayout> {
           create: (context) => ExplorerController(
             navHistoryManager: context.read<NavHistoryManager>(),
             account: context.read<PhylumAccount>(),
+            destination: widget.destination,
           ),
         ),
       ],

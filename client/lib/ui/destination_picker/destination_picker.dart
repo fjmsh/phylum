@@ -51,11 +51,13 @@ class _DestinationPickerState extends State<DestinationPicker> {
       appBar: AppBar(
         title: Text('Pick Destination'),
         actions: [
-          IconButton(
-              onPressed: () {
-                createDirectory(context, context.read<ExplorerState>().folderId);
-              },
-              icon: Icon(Icons.create_new_folder_outlined))
+          Builder(builder: (context) {
+            final folderId = context.select<ExplorerState, String?>((state) => state.folderId);
+            return IconButton(
+              onPressed: folderId == null ? null : () => createDirectory(context, folderId),
+              icon: Icon(Icons.create_new_folder_outlined),
+            );
+          })
         ],
       ),
       body: FocusScope(

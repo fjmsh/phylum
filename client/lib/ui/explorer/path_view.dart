@@ -30,23 +30,23 @@ class PathView extends StatefulWidget {
 }
 
 class _PathViewState extends State<PathView> {
-  late String id;
   StreamSubscription? sub;
   Function()? removeListener;
+  ParentsResult? current;
   Iterable<ParentsResult>? ancestors;
 
   @override
   void initState() {
     super.initState();
     removeListener = context.read<ExplorerController>().addListener((state) {
-      id = state.folderId;
-      sub = context.read<PhylumAccount>().db.parents(id).watch().listen((data) {
+      sub = state.destination.watchParents(context.read<PhylumAccount>()).listen((data) {
         SystemChrome.setApplicationSwitcherDescription(ApplicationSwitcherDescription(
-          label: data.isEmpty ? 'Phylum' : "${data[0].name == "" ? "/" : data[0].name} | Phylum",
+          label: data.isEmpty ? 'Phylum' : "${data.first.name == "" ? "/" : data.first.name} | Phylum",
         ));
         if (mounted) {
           setState(() {
-            ancestors = data.reversed;
+            current = data.firstOrNull;
+            ancestors = data;
           });
         }
       });
@@ -79,7 +79,7 @@ class _PathViewState extends State<PathView> {
               ),
               margin: EdgeInsets.symmetric(horizontal: 6),
               child: InkWell(
-                onTap: r.id == id ? null : () => Actions.maybeInvoke(context, NavToFolderIntent(folderId: r.id)),
+                onTap: r == current ? null : () => Actions.maybeInvoke(context, NavToFolderIntent(folderId: r.id)),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: Text(

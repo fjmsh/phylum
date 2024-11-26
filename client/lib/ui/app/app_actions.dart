@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/navigation/destination.dart';
 import 'package:phylum/ui/navigation/history_manager.dart';
 import 'package:phylum/ui/navigation/explorer_controller.dart';
@@ -15,13 +16,31 @@ class AppActions extends StatelessWidget {
     return Actions(
       actions: {
         NewFolderIntent: CallbackAction<NewFolderIntent>(
-          onInvoke: (intent) => createDirectory(context, context.read<ExplorerState>().folderId),
+          onInvoke: (intent) {
+            final folderId = context.read<ExplorerState>().folderId;
+            if (folderId != null) {
+              createDirectory(context, folderId);
+            }
+            return null;
+          },
         ),
         UploadFilesIntent: CallbackAction<UploadFilesIntent>(
-          onInvoke: (intent) => pickAndUploadFiles(context, context.read<ExplorerState>().folderId),
+          onInvoke: (intent) {
+            final folderId = context.read<ExplorerState>().folderId;
+            if (folderId != null) {
+              pickAndUploadFiles(context, folderId);
+            }
+            return null;
+          },
         ),
         UploadFolderIntent: CallbackAction<UploadFolderIntent>(
-          onInvoke: (intent) => pickAndUploadDirectory(context, context.read<ExplorerState>().folderId),
+          onInvoke: (intent) {
+            final folderId = context.read<ExplorerState>().folderId;
+            if (folderId != null) {
+              pickAndUploadDirectory(context, folderId);
+            }
+            return null;
+          },
         ),
         NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) async {
           final parent = context.read<ExplorerState>().folder?.parent;
@@ -31,7 +50,7 @@ class AppActions extends StatelessWidget {
           return null;
         }),
         NavHomeIntent: CallbackAction<NavHomeIntent>(
-          onInvoke: (i) => context.read<NavHistoryManager>().go(context, const NavDestinationHome()),
+          onInvoke: (i) => context.read<NavHistoryManager>().go(context, NavDestinationFolder(folderId: context.read<PhylumAccount>().userHome)),
         ),
         NavToFolderIntent: CallbackAction<NavToFolderIntent>(
           onInvoke: (i) => context.read<NavHistoryManager>().go(context, NavDestinationFolder(folderId: i.folderId)),

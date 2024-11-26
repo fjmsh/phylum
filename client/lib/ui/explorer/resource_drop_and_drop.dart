@@ -80,6 +80,7 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
       child: widget.buildItem(context, dropTargetActive),
       onDropOver: (event) {
         if (event.session.items.isEmpty) return DropOperation.none;
+        if (context.read<ExplorerState>().folderId == null) return DropOperation.none;
         for (final item in event.session.items) {
           if (kIsWeb || item.canProvide(Formats.fileUri)) {
             return DropOperation.copy;
@@ -90,6 +91,8 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
       onDropEnter: (event) => setState(() => dropTargetActive = true),
       onDropLeave: (event) => setState(() => dropTargetActive = false),
       onPerformDrop: (event) async {
+        final folderId = context.read<ExplorerState>().folderId;
+        if (folderId == null) return;
         if (kIsWeb) {
           for (final item in event.session.items) {
             final reader = item.dataReader;
@@ -128,7 +131,6 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
             }
           }
           if (context.mounted) {
-            final folderId = context.read<ExplorerState>().folderId;
             uploadRecursive(context, folderId, paths);
           }
         }

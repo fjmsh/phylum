@@ -4,14 +4,13 @@ import 'dart:math';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 import 'destination.dart';
 import 'history_manager.dart';
 
 class ExplorerState {
-  final String folderId;
+  final NavDestination destination;
   final Resource? folder;
   final List<Resource> resources;
   final Set<String> selectedIds;
@@ -22,14 +21,15 @@ class ExplorerState {
   final bool refreshing;
   final bool refreshError;
 
+  String? get folderId => (destination as NavDestinationFolder?)?.folderId;
   Resource? get focussed => focusIndex < 0 || focusIndex >= resources.length ? null : resources[focusIndex];
   String? get focusId => focussed?.id;
   Iterable<Resource> get selected => resources.where((r) => selectedIds.contains(r.id));
-  Resource? get selectedSingle => selectedIds.length != 1 ? null : resources.where((r) => selectedIds.contains(r.id)).firstOrNull;
+  Resource? get selectedSingle => selectedIds.length != 1 ? null : resources.where((r) => selectedIds.contains(r.id)).first;
   Resource? get focussedIfSelected => selectedIds.isEmpty ? null : focussed;
 
   const ExplorerState({
-    required this.folderId,
+    required this.destination,
     this.folder,
     this.resources = const [],
     this.selectedIds = const {},
@@ -42,7 +42,6 @@ class ExplorerState {
   });
 
   ExplorerState copyWith({
-    String? folderId,
     Resource? folder,
     List<Resource>? resources,
     Set<String>? selectedIds,
@@ -54,7 +53,7 @@ class ExplorerState {
     bool? refreshError,
   }) =>
       ExplorerState(
-        folderId: folderId ?? this.folderId,
+        destination: destination,
         folder: folder ?? this.folder,
         resources: resources ?? this.resources,
         selectedIds: selectedIds ?? this.selectedIds,
@@ -72,41 +71,35 @@ class ExplorerState {
 }
 
 class ExplorerController extends StateNotifier<ExplorerState> {
-  final ResourceRepository _repository;
-  final String _homeId;
+  final PhylumAccount _account;
   void Function()? removeHistoryManagerListener;
   StreamSubscription<Resource?>? _folderSubscription;
   StreamSubscription<List<Resource>>? _childrenSubscription;
 
   ExplorerController({
     required PhylumAccount account,
+    required NavDestination destination,
     NavHistoryManager? navHistoryManager,
-    NavDestination? destination,
-  })  : _repository = account.resourceRepository,
-        _homeId = account.userHome,
-        super(ExplorerState(folderId: '')) {
+  })  : _account = account,
+        super(ExplorerState(destination: destination)) {
     removeHistoryManagerListener = navHistoryManager?.addListener((state) {
       updateDestination(state.current);
-    }, fireImmediately: true);
-    if (navHistoryManager == null) {
-      updateDestination(destination!);
-    }
+    });
+    _updateDestination();
   }
 
   void updateDestination(NavDestination destination) {
-    String folderId = state.folderId;
-    if (destination is NavDestinationFolder) {
-      folderId = destination.folderId;
-    } else if (destination is NavDestinationHome) {
-      folderId = _homeId;
-    }
-    if (folderId == state.folderId) return;
-    state = ExplorerState(folderId: folderId);
+    if (destination == state.destination) return;
+    state = ExplorerState(destination: destination);
+    _updateDestination();
+  }
+
+  void _updateDestination() {
     refresh();
     _folderSubscription?.cancel();
     _childrenSubscription?.cancel();
-    _folderSubscription = _repository.watchResource(folderId).listen((e) => state = state.copyWith(folder: e));
-    _childrenSubscription = _repository.watchChildren(folderId).listen((e) => _updateResourceList(e));
+    _folderSubscription = state.destination.watchResource(_account).listen((e) => state = state.copyWith(folder: e));
+    _childrenSubscription = state.destination.watchChildren(_account).listen((e) => _updateResourceList(e));
   }
 
   void _updateResourceList(List<Resource> resources) {
@@ -186,11 +179,11 @@ class ExplorerController extends StateNotifier<ExplorerState> {
   Future refresh() {
     if (state.refreshing) return Future.value(state);
     state = state.copyWith(refreshing: true);
-    return _repository.requestResource(state.folderId).then((result) {
+    return state.destination.refresh(_account).then((success) {
       if (mounted) {
         state = state.copyWith(
           refreshing: false,
-          refreshError: !result.success,
+          refreshError: !success,
         );
       }
     });
