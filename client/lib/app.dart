@@ -10,7 +10,6 @@ import 'package:phylum/ui/app/action_queue_status_notifier.dart';
 import 'package:phylum/ui/app/app_layout.dart';
 import 'package:phylum/ui/app/app_logout.dart';
 import 'package:phylum/ui/navigation/destination.dart';
-import 'package:phylum/ui/navigation/history_manager.dart';
 import 'package:provider/provider.dart';
 
 final _appRouter = GoRouter(
@@ -28,7 +27,7 @@ final _appRouter = GoRouter(
     GoRoute(
       name: 'folder',
       path: '/folders/:id',
-      builder: (context, state) => AppLayout.create(NavDestinationFolder(folderId: state.pathParameters['id']!)),
+      builder: (context, state) => AppLayout(destination: NavDestinationFolder(folderId: state.pathParameters['id']!)),
     ),
   ],
 );
@@ -42,7 +41,6 @@ class PhylumApp extends StatefulWidget {
           StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
           StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
           StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(account)),
-          StateNotifierProvider<NavHistoryManager, NavHistoryState>(create: (context) => NavHistoryManager()),
           ChangeNotifierProvider(create: (context) => ActionQueueStatusNotifier(account.actionQueue))
         ],
         child: PhylumApp(),

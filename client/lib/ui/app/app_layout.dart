@@ -14,12 +14,29 @@ import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:provider/provider.dart';
 
-class AppLayout {
-  const AppLayout();
+class AppLayout extends StatefulWidget {
+  final NavDestination destination;
 
-  static Widget create(NavDestination destination) {
+  const AppLayout({super.key, required this.destination});
+
+  @override
+  State<AppLayout> createState() => _AppLayoutState();
+}
+
+class _AppLayoutState extends State<AppLayout> {
+  @override
+  void didUpdateWidget(covariant AppLayout oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    context.read<NavHistoryManager>().handleDestinationChange(widget.destination);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        StateNotifierProvider<NavHistoryManager, NavHistoryState>(
+          create: (context) => NavHistoryManager(widget.destination),
+        ),
         StateNotifierProvider<ExplorerController, ExplorerState>(
           create: (context) => ExplorerController(
             navHistoryManager: context.read<NavHistoryManager>(),
@@ -29,8 +46,6 @@ class AppLayout {
       ],
       builder: (context, child) {
         final size = MediaQuery.sizeOf(context);
-        final navHistoryManager = context.read<NavHistoryManager>();
-        Future.microtask(() => navHistoryManager.handleDestinationChange(destination));
         final layout = size.width <= 600 ? CollapsedAppLayout() : ExpandedAppLayout(large: size.width > 1200);
         return ExternalDropRegion(
           buildItem: (context, dropTargetActive) {

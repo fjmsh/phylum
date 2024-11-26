@@ -28,7 +28,7 @@ class NavHistoryState {
 }
 
 class NavHistoryManager extends StateNotifier<NavHistoryState> {
-  NavHistoryManager() : super(const NavHistoryState(current: NavDestinationHome()));
+  NavHistoryManager(NavDestination destination) : super(NavHistoryState(current: destination));
 
   void go(BuildContext context, NavDestination destination) {
     if (kIsWeb) {
