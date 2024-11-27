@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 final _random = Random();
+const _range = 1 << 32;
 
 int _lastTimestamp = 0;
 
@@ -22,7 +23,7 @@ String generateUuid() {
   buf[6] = 0x70 | ((seq >> 8) & 0x0f);
   buf[7] = seq;
 
-  _populateRandomBytes4(buf, 8);
+  _populateRandomBytes4(buf, 8, 8);
   buf[8] = 0x80 | (buf[8] & 0x3f);
 
   return _format(buf);
@@ -43,9 +44,9 @@ String generateUuid() {
   return (ms, us);
 }
 
-Uint8List _populateRandomBytes4(Uint8List buf, int count) {
-  for (var i = 0; i < count; i += 4) {
-    var k = _random.nextInt(pow(2, 32).toInt());
+_populateRandomBytes4(Uint8List buf, int offset, int count) {
+  for (var i = offset; i < offset + count; i += 4) {
+    var k = _random.nextInt(_range);
     buf[i] = k;
     buf[i + 1] = k >> 8;
     buf[i + 2] = k >> 16;
