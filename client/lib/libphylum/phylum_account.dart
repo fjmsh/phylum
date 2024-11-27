@@ -25,6 +25,7 @@ class PhylumAccount extends Account<PhylumAccount> {
   @override
   Dispatcher get dispatcher => _dispatcher;
 
+  String? _initialAccessToken;
   String? get accessToken => getPersisted(_persistKeyAccessToken);
   set _accessToken(String? value) {
     if (value != accessToken) {
@@ -48,7 +49,9 @@ class PhylumAccount extends Account<PhylumAccount> {
     persist(_persistKeyUserHome, value);
   }
 
-  PhylumAccount.create({required super.serverUri}) : super.create(transformResponse: transformApiResponse);
+  PhylumAccount.create({required super.serverUri, required String accessToken})
+      : _initialAccessToken = accessToken,
+        super.create(transformResponse: transformApiResponse);
 
   PhylumAccount.restore({required super.id}) : super.restore(transformResponse: transformApiResponse);
 
@@ -56,7 +59,7 @@ class PhylumAccount extends Account<PhylumAccount> {
   Future<void> initialize() async {
     await super.initialize();
     // Set Authorization header
-    _accessToken = accessToken;
+    _accessToken = _initialAccessToken ?? accessToken;
 
     // Open the database to see if data was cleared
     await db.bookmarks.count().get();
@@ -88,9 +91,8 @@ class PhylumAccount extends Account<PhylumAccount> {
   }
 
   static Future<PhylumAccount> createFromLoginResponse(Uri serverUri, Map<String, dynamic> response) async {
-    final account = PhylumAccount.create(serverUri: serverUri);
+    final account = PhylumAccount.create(serverUri: serverUri, accessToken: response['access_token']);
     await account.initialized;
-    account._accessToken = response['access_token'];
 
     final userMap = response['user'];
     account.userEmail = userMap['username'];
