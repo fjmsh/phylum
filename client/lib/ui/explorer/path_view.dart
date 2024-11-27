@@ -46,7 +46,7 @@ class _PathViewState extends State<PathView> {
         ));
         if (mounted) {
           setState(() {
-            current = data.last;
+            current = data.lastOrNull;
             ancestors = data;
           });
         }
