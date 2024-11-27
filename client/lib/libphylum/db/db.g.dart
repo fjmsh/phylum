@@ -283,12 +283,11 @@ class Resources extends Table with TableInfo<Resources, Resource> {
       $customConstraints: '');
   static const VerificationMeta _publinksMeta =
       const VerificationMeta('publinks');
-  late final GeneratedColumn<int> publinks = GeneratedColumn<int>(
-      'publinks', aliasedName, false,
-      type: DriftSqlType.int,
+  late final GeneratedColumn<String> publinks = GeneratedColumn<String>(
+      'publinks', aliasedName, true,
+      type: DriftSqlType.string,
       requiredDuringInsert: false,
-      $customConstraints: 'NOT NULL DEFAULT 0',
-      defaultValue: const CustomExpression('0'));
+      $customConstraints: '');
   static const VerificationMeta _lastRefreshMeta =
       const VerificationMeta('lastRefresh');
   late final GeneratedColumn<DateTime> lastRefresh = GeneratedColumn<DateTime>(
@@ -421,7 +420,7 @@ class Resources extends Table with TableInfo<Resources, Resource> {
       permissions: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}permissions']),
       publinks: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}publinks'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}publinks']),
       lastRefresh: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}last_refresh']),
     );
@@ -448,7 +447,7 @@ class Resource extends DataClass implements Insertable<Resource> {
   final String contentSha256;
   final String contentType;
   final String? permissions;
-  final int publinks;
+  final String? publinks;
   final DateTime? lastRefresh;
   const Resource(
       {required this.id,
@@ -462,7 +461,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       required this.contentSha256,
       required this.contentType,
       this.permissions,
-      required this.publinks,
+      this.publinks,
       this.lastRefresh});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -486,7 +485,9 @@ class Resource extends DataClass implements Insertable<Resource> {
     if (!nullToAbsent || permissions != null) {
       map['permissions'] = Variable<String>(permissions);
     }
-    map['publinks'] = Variable<int>(publinks);
+    if (!nullToAbsent || publinks != null) {
+      map['publinks'] = Variable<String>(publinks);
+    }
     if (!nullToAbsent || lastRefresh != null) {
       map['last_refresh'] = Variable<DateTime>(lastRefresh);
     }
@@ -513,7 +514,9 @@ class Resource extends DataClass implements Insertable<Resource> {
       permissions: permissions == null && nullToAbsent
           ? const Value.absent()
           : Value(permissions),
-      publinks: Value(publinks),
+      publinks: publinks == null && nullToAbsent
+          ? const Value.absent()
+          : Value(publinks),
       lastRefresh: lastRefresh == null && nullToAbsent
           ? const Value.absent()
           : Value(lastRefresh),
@@ -535,7 +538,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       contentSha256: serializer.fromJson<String>(json['content_sha256']),
       contentType: serializer.fromJson<String>(json['content_type']),
       permissions: serializer.fromJson<String?>(json['permissions']),
-      publinks: serializer.fromJson<int>(json['publinks']),
+      publinks: serializer.fromJson<String?>(json['publinks']),
       lastRefresh: serializer.fromJson<DateTime?>(json['last_refresh']),
     );
   }
@@ -554,7 +557,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       'content_sha256': serializer.toJson<String>(contentSha256),
       'content_type': serializer.toJson<String>(contentType),
       'permissions': serializer.toJson<String?>(permissions),
-      'publinks': serializer.toJson<int>(publinks),
+      'publinks': serializer.toJson<String?>(publinks),
       'last_refresh': serializer.toJson<DateTime?>(lastRefresh),
     };
   }
@@ -571,7 +574,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           String? contentSha256,
           String? contentType,
           Value<String?> permissions = const Value.absent(),
-          int? publinks,
+          Value<String?> publinks = const Value.absent(),
           Value<DateTime?> lastRefresh = const Value.absent()}) =>
       Resource(
         id: id ?? this.id,
@@ -585,7 +588,7 @@ class Resource extends DataClass implements Insertable<Resource> {
         contentSha256: contentSha256 ?? this.contentSha256,
         contentType: contentType ?? this.contentType,
         permissions: permissions.present ? permissions.value : this.permissions,
-        publinks: publinks ?? this.publinks,
+        publinks: publinks.present ? publinks.value : this.publinks,
         lastRefresh: lastRefresh.present ? lastRefresh.value : this.lastRefresh,
       );
   Resource copyWithCompanion(ResourcesCompanion data) {
@@ -678,7 +681,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   final Value<String> contentSha256;
   final Value<String> contentType;
   final Value<String?> permissions;
-  final Value<int> publinks;
+  final Value<String?> publinks;
   final Value<DateTime?> lastRefresh;
   final Value<int> rowid;
   const ResourcesCompanion({
@@ -727,7 +730,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     Expression<String>? contentSha256,
     Expression<String>? contentType,
     Expression<String>? permissions,
-    Expression<int>? publinks,
+    Expression<String>? publinks,
     Expression<DateTime>? lastRefresh,
     Expression<int>? rowid,
   }) {
@@ -761,7 +764,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       Value<String>? contentSha256,
       Value<String>? contentType,
       Value<String?>? permissions,
-      Value<int>? publinks,
+      Value<String?>? publinks,
       Value<DateTime?>? lastRefresh,
       Value<int>? rowid}) {
     return ResourcesCompanion(
@@ -819,7 +822,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       map['permissions'] = Variable<String>(permissions.value);
     }
     if (publinks.present) {
-      map['publinks'] = Variable<int>(publinks.value);
+      map['publinks'] = Variable<String>(publinks.value);
     }
     if (lastRefresh.present) {
       map['last_refresh'] = Variable<DateTime>(lastRefresh.value);
@@ -1302,7 +1305,7 @@ typedef $ResourcesCreateCompanionBuilder = ResourcesCompanion Function({
   Value<String> contentSha256,
   Value<String> contentType,
   Value<String?> permissions,
-  Value<int> publinks,
+  Value<String?> publinks,
   Value<DateTime?> lastRefresh,
   Value<int> rowid,
 });
@@ -1318,7 +1321,7 @@ typedef $ResourcesUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<String> contentSha256,
   Value<String> contentType,
   Value<String?> permissions,
-  Value<int> publinks,
+  Value<String?> publinks,
   Value<DateTime?> lastRefresh,
   Value<int> rowid,
 });
@@ -1384,7 +1387,7 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
   ColumnFilters<String> get permissions => $composableBuilder(
       column: $table.permissions, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get publinks => $composableBuilder(
+  ColumnFilters<String> get publinks => $composableBuilder(
       column: $table.publinks, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get lastRefresh => $composableBuilder(
@@ -1454,7 +1457,7 @@ class $ResourcesOrderingComposer extends Composer<_$AppDatabase, Resources> {
   ColumnOrderings<String> get permissions => $composableBuilder(
       column: $table.permissions, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get publinks => $composableBuilder(
+  ColumnOrderings<String> get publinks => $composableBuilder(
       column: $table.publinks, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get lastRefresh => $composableBuilder(
@@ -1502,7 +1505,7 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
   GeneratedColumn<String> get permissions => $composableBuilder(
       column: $table.permissions, builder: (column) => column);
 
-  GeneratedColumn<int> get publinks =>
+  GeneratedColumn<String> get publinks =>
       $composableBuilder(column: $table.publinks, builder: (column) => column);
 
   GeneratedColumn<DateTime> get lastRefresh => $composableBuilder(
@@ -1564,7 +1567,7 @@ class $ResourcesTableManager extends RootTableManager<
             Value<String> contentSha256 = const Value.absent(),
             Value<String> contentType = const Value.absent(),
             Value<String?> permissions = const Value.absent(),
-            Value<int> publinks = const Value.absent(),
+            Value<String?> publinks = const Value.absent(),
             Value<DateTime?> lastRefresh = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -1596,7 +1599,7 @@ class $ResourcesTableManager extends RootTableManager<
             Value<String> contentSha256 = const Value.absent(),
             Value<String> contentType = const Value.absent(),
             Value<String?> permissions = const Value.absent(),
-            Value<int> publinks = const Value.absent(),
+            Value<String?> publinks = const Value.absent(),
             Value<DateTime?> lastRefresh = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>

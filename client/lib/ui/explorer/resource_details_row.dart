@@ -36,7 +36,7 @@ class ResourceDetailsRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (r.permissions != null) Icon(Icons.people_alt, size: 14),
-                if (r.publinks > 0) Icon(Icons.public, size: 14),
+                if (r.publinks != null) Icon(Icons.public, size: 14),
               ],
             ),
           ),

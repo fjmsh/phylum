@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS resources(
     content_sha256 TEXT NOT NULL DEFAULT '',
     content_type TEXT NOT NULL DEFAULT '',
     permissions TEXT,
-    publinks INTEGER NOT NULL DEFAULT 0,
+    publinks TEXT,
     last_refresh DATETIME
 );
 
