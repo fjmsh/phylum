@@ -25,6 +25,28 @@ type Bookmark struct {
 	Deleted    pgtype.Timestamp
 }
 
+type FullResource struct {
+	ID            uuid.UUID
+	Name          string
+	Parent        *uuid.UUID
+	Dir           bool
+	Created       pgtype.Timestamp
+	Modified      pgtype.Timestamp
+	Deleted       pgtype.Timestamp
+	ContentSize   int64
+	ContentType   string
+	ContentSha256 string
+	Permissions   []byte
+	Publinks      []byte
+}
+
+type Permission struct {
+	ResourceID uuid.UUID
+	Username   string
+	Modified   pgtype.Timestamp
+	Value      pgtype.Int4
+}
+
 type Publink struct {
 	ID           int32
 	Name         string
@@ -38,24 +60,8 @@ type Publink struct {
 	Expires      pgtype.Timestamp
 }
 
-type PublinkedResource struct {
-	ID            uuid.UUID
-	Permissions   []byte
-	Name          string
-	Parent        *uuid.UUID
-	Dir           bool
-	Created       pgtype.Timestamp
-	Modified      pgtype.Timestamp
-	Deleted       pgtype.Timestamp
-	ContentSize   int64
-	ContentType   string
-	ContentSha256 string
-	Publinks      int32
-}
-
 type Resource struct {
 	ID            uuid.UUID
-	Permissions   []byte
 	Name          string
 	Parent        *uuid.UUID
 	Dir           bool

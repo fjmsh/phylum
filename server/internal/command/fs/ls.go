@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
@@ -25,8 +26,8 @@ func setupLsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			fmt.Println(r.Path() + " " + r.FullPermissionsString())
-			fmt.Println(formatRow(r.ID().String(), formatSize(r.ContentSize()), r.ContentSHA256(), ".", r.Info.PermissionsString(), r.Publinks()))
+			fmt.Println(r.Path() + " " + fullPermissionsString(r))
+			fmt.Println(formatRow(r.ID().String(), formatSize(r.ContentSize()), r.ContentSHA256(), ".", permissionJsonString(r.Info.Permissions()), r.Info.Publinks()))
 
 			if r.Dir() {
 				children, err := r.ReadDir(false)
@@ -61,11 +62,11 @@ func formatSize(size int64) string {
 	return fmt.Sprintf("%d%s", size, suffix[si])
 }
 
-func formatRow(id, size, sha256, name, permissions string, links int) string {
+func formatRow(id, size, sha256, name, permissions string, links []byte) string {
 	if sha256 == "" {
 		sha256 = "dir     "
 	}
-	return fmt.Sprintf("%s %2d %4s %s %-24s %s", id, links, size, sha256[0:8], name, permissions)
+	return fmt.Sprintf("%s %4s %s %-24s %s%s", id, size, sha256[0:8], name, permissions, links)
 }
 
 func formatResourceSummary(r fs.ResourceInfo) string {
@@ -73,5 +74,57 @@ func formatResourceSummary(r fs.ResourceInfo) string {
 	if r.Dir() {
 		name += "/"
 	}
-	return formatRow(r.ID().String(), formatSize(r.ContentSize()), r.ContentSHA256(), name, r.PermissionsString(), r.Publinks())
+	return formatRow(r.ID().String(), formatSize(r.ContentSize()), r.ContentSHA256(), name, permissionJsonString(r.Permissions()), r.Publinks())
+}
+
+func fullPermissionsString(r fs.Resource) string {
+	result := make(map[string]fs.Permission)
+	for _, i := range r.Ancestors {
+		p := make(map[string]fs.Permission)
+		json.Unmarshal([]byte(i.Permissions()), &p)
+		for k, v := range p {
+			result[k] = result[k] | v
+		}
+	}
+	res, err := json.Marshal(result)
+	if err != nil {
+		return err.Error()
+	}
+	return permissionJsonString(res)
+}
+
+func permissionJsonString(j []byte) string {
+	p := make(map[string]fs.Permission)
+	json.Unmarshal(j, &p)
+	if len(p) == 0 {
+		return ""
+	}
+	perm := make([]string, 0, len(p))
+	for k, v := range p {
+		perm = append(perm, k+": "+permissionString(v))
+	}
+	return "[" + strings.Join(perm, ", ") + "]"
+}
+
+func permissionString(p fs.Permission) string {
+	if p == fs.PermissionSU {
+		return "su"
+	}
+	str := ""
+	if p&fs.PermissionRead != 0 {
+		p -= fs.PermissionRead
+		str += "r"
+	}
+	if p&fs.PermissionWrite != 0 {
+		p -= fs.PermissionWrite
+		str += "w"
+	}
+	if p&fs.PermissionShare != 0 {
+		p -= fs.PermissionShare
+		str += "s"
+	}
+	if p != 0 {
+		str += fmt.Sprintf("u(%d)", p)
+	}
+	return str
 }

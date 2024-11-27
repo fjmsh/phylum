@@ -2,6 +2,7 @@ package fs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -31,7 +32,7 @@ func setupChpermCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			permission, err := fs.ParsePermissionString(args[2])
+			permission, err := parsePermissionString(args[2])
 			if err != nil {
 				fmt.Println("cannot update permissions for '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)
@@ -44,4 +45,18 @@ func setupChpermCommand() *cobra.Command {
 		},
 	}
 	return &cmd
+}
+
+func parsePermissionString(s string) (fs.Permission, error) {
+	switch s {
+	case "none":
+		return fs.PermissionNone, nil
+	case "read":
+		return fs.PermissionRead, nil
+	case "write":
+		return fs.PermissionRead | fs.PermissionWrite, nil
+	case "share":
+		return fs.PermissionRead | fs.PermissionWrite | fs.PermissionShare, nil
+	}
+	return fs.PermissionNone, errors.New("unrecognized permission: " + s)
 }

@@ -17,7 +17,7 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	return f.resourceFromResult(f.db.ResourceByID(f.ctx, id))
 }
 
-func (f filesystem) resourceFromResult(e []db.PublinkedResource, err error) (Resource, error) {
+func (f filesystem) resourceFromResult(e []db.FullResource, err error) (Resource, error) {
 	if len(e) == 0 {
 		err = ErrResourceNotFound
 	}
@@ -72,7 +72,7 @@ func (f filesystem) resourceFromResult(e []db.PublinkedResource, err error) (Res
 }
 
 func readPermissionFromJson(j []byte, username string) (Permission, error) {
-	if len(j) == 2 {
+	if j == nil {
 		return PermissionNone, nil
 	}
 	p := make(map[string]Permission)
@@ -86,7 +86,7 @@ func readPermissionFromJson(j []byte, username string) (Permission, error) {
 	return PermissionNone, nil
 }
 
-func resourceInfoFromDBPublinkedResource(r db.PublinkedResource) ResourceInfo {
+func resourceInfoFromDBPublinkedResource(r db.FullResource) ResourceInfo {
 	var delTime *time.Time
 	if r.Deleted.Valid {
 		delTime = &r.Deleted.Time
@@ -103,7 +103,7 @@ func resourceInfoFromDBPublinkedResource(r db.PublinkedResource) ResourceInfo {
 		contentType:   r.ContentType,
 		contentSHA256: r.ContentSha256,
 		permissions:   r.Permissions,
-		publinks:      int(r.Publinks),
+		publinks:      r.Publinks,
 	}
 }
 

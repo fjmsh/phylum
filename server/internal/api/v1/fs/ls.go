@@ -27,7 +27,7 @@ type info struct {
 	ContentType   string     `json:"c_type"`
 	ContentSHA256 string     `json:"c_sha256"`
 	Permissions   string     `json:"permissions"`
-	Publinks      int        `json:"publinks"`
+	Publinks      string     `json:"publinks"`
 }
 
 type ResourceResponse struct {
@@ -90,6 +90,6 @@ func createInfo(r fs.ResourceInfo) info {
 		ContentType:   r.ContentType(),
 		ContentSHA256: r.ContentSHA256(),
 		Permissions:   string(r.Permissions()),
-		Publinks:      r.Publinks(),
+		Publinks:      string(r.Publinks()),
 	}
 }

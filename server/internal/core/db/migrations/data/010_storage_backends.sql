@@ -6,4 +6,4 @@ CREATE TABLE storage_backends(
 
 ---- create above / drop below ----
 
-DROP TABLE storage_backends
+DROP TABLE storage_backends;

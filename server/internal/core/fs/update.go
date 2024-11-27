@@ -13,18 +13,11 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 
 	var p []byte
 	var err error
-	if permission == 0 {
-		p, err = r.f.db.RemoveUserPermissionForResource(r.f.ctx, db.RemoveUserPermissionForResourceParams{
-			ResourceID: r.ID(),
-			Username:   username,
-		})
-	} else {
-		p, err = r.f.db.UpdateUserPermissionsForResource(r.f.ctx, db.UpdateUserPermissionsForResourceParams{
-			ResourceID: r.ID(),
-			Username:   username,
-			Permission: permission,
-		})
-	}
+	err = r.f.db.UpdateUserPermissionsForResource(r.f.ctx, db.UpdateUserPermissionsForResourceParams{
+		ResourceID: r.ID(),
+		Username:   username,
+		Permission: permission,
+	})
 	if err != nil {
 		return Resource{}, err
 	}

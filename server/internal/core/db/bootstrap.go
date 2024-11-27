@@ -75,11 +75,10 @@ func (d DbHandler) populateData(ctx context.Context) (e error) {
 			return err
 		}
 
-		_, err = dbh.UpdateUserPermissionsForResource(ctx, UpdateUserPermissionsForResourceParams{
+		return dbh.UpdateUserPermissionsForResource(ctx, UpdateUserPermissionsForResourceParams{
 			ResourceID: root.ID,
 			Username:   u.Username,
 			Permission: -1,
 		})
-		return err
 	})
 }

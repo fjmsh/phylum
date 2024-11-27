@@ -1,6 +1,5 @@
 CREATE TABLE resources (
   id              uuid      PRIMARY KEY,
-  permissions     JSONB     NOT NULL DEFAULT '{}',
   name            TEXT      NOT NULL,
   parent          uuid      REFERENCES resources(id) ON UPDATE CASCADE ON DELETE CASCADE,
   dir             BOOLEAN   NOT NULL,
@@ -16,5 +15,7 @@ CREATE UNIQUE INDEX unique_member_resource_name ON resources(parent, name) WHERE
 
 
 ---- create above / drop below ----
+
+DROP INDEX unique_member_resource_name;
 
 DROP TABLE resources;

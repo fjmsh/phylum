@@ -93,7 +93,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 
-	var tree []db.PublinkedResource
+	var tree []db.FullResource
 	if recursive && r.Dir() {
 		var err error
 		tree, err = r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{ResourceID: r.ID(), MinDepth: 1, MaxDepth: 1000})
@@ -182,8 +182,8 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 		contentSize:   r.ContentSize(),
 		contentType:   r.ContentType(),
 		contentSHA256: r.ContentSHA256(),
-		permissions:   []byte{'{', '}'},
-		publinks:      0,
+		permissions:   nil,
+		publinks:      nil,
 	}
 	if destParent.Path() == "/" {
 		info.path = "/" + info.name

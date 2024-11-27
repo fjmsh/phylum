@@ -60,21 +60,21 @@ SET
 WHERE id = @id::uuid
 RETURNING name, parent;
 
--- name: UpdateUserPermissionsForResource :one
-UPDATE resources
+-- name: UpdateUserPermissionsForResource :exec
+INSERT INTO permissions(
+    resource_id,
+    username,
+    modified,
+    value
+) VALUES (
+    @resource_id::UUID,
+    @username::TEXT,
+    NOW(),
+    @permission::INT
+) ON CONFLICT(resource_id, username) DO UPDATE
 SET
-    permissions[@username::text] = to_json(@permission::int),
-    modified = NOW()
-WHERE id = @resource_id::uuid
-RETURNING permissions;
-
--- name: RemoveUserPermissionForResource :one
-UPDATE resources
-SET
-    permissions = permissions - @username::text,
-    modified = NOW()
-WHERE id = @resource_id::uuid
-RETURNING permissions;
+    modified = CURRENT_TIMESTAMP,
+    value = @permission::TEXT;
 
 -- name: ChildResourceIDByName :one
 SELECT id FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;
@@ -113,5 +113,14 @@ SELECT
 FROM nodes;
 
 
+-- SELECT p.modified AS user_permission_modified, p.value as user_permission, r.*
 -- name: SharedResources :many
-SELECT * FROM resources WHERE permissions ? @username::text AND id <> @user_home::uuid AND deleted IS NULL;
+SELECT r.*
+FROM permissions p
+JOIN resources r
+ON p.resource_id = r.id
+WHERE p.username = @username::text
+AND p.resource_id <> @user_home::uuid
+AND p.value <> 0
+AND r.deleted IS NULL
+ORDER BY p.modified DESC;

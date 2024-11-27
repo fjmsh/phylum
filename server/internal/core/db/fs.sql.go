@@ -34,7 +34,7 @@ INSERT INTO resources(
     $1::uuid, $2::uuid, $3::text, $4::boolean,
       CASE $4 WHEN TRUE THEN '' ELSE 'text/plain' END,
       CASE $4 WhEN TRUE THEN '' ELSE 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' END
-) RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
+) RETURNING id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
 `
 
 type CreateResourceParams struct {
@@ -54,7 +54,6 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 	var i Resource
 	err := row.Scan(
 		&i.ID,
-		&i.Permissions,
 		&i.Name,
 		&i.Parent,
 		&i.Dir,
@@ -155,7 +154,7 @@ func (q *Queries) DiskUsage(ctx context.Context, id uuid.UUID) (DiskUsageRow, er
 }
 
 const readDir = `-- name: ReadDir :many
-SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, publinks from readdir($1::uuid, $2::int, $3::int)
+SELECT id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions, publinks from readdir($1::uuid, $2::int, $3::int)
 `
 
 type ReadDirParams struct {
@@ -164,18 +163,17 @@ type ReadDirParams struct {
 	MaxDepth   int32
 }
 
-func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]PublinkedResource, error) {
+func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]FullResource, error) {
 	rows, err := q.db.Query(ctx, readDir, arg.ResourceID, arg.MinDepth, arg.MaxDepth)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []PublinkedResource
+	var items []FullResource
 	for rows.Next() {
-		var i PublinkedResource
+		var i FullResource
 		if err := rows.Scan(
 			&i.ID,
-			&i.Permissions,
 			&i.Name,
 			&i.Parent,
 			&i.Dir,
@@ -185,6 +183,7 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]PublinkedRe
 			&i.ContentSize,
 			&i.ContentType,
 			&i.ContentSha256,
+			&i.Permissions,
 			&i.Publinks,
 		); err != nil {
 			return nil, err
@@ -197,43 +196,21 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]PublinkedRe
 	return items, nil
 }
 
-const removeUserPermissionForResource = `-- name: RemoveUserPermissionForResource :one
-UPDATE resources
-SET
-    permissions = permissions - $1::text,
-    modified = NOW()
-WHERE id = $2::uuid
-RETURNING permissions
-`
-
-type RemoveUserPermissionForResourceParams struct {
-	Username   string
-	ResourceID uuid.UUID
-}
-
-func (q *Queries) RemoveUserPermissionForResource(ctx context.Context, arg RemoveUserPermissionForResourceParams) ([]byte, error) {
-	row := q.db.QueryRow(ctx, removeUserPermissionForResource, arg.Username, arg.ResourceID)
-	var permissions []byte
-	err := row.Scan(&permissions)
-	return permissions, err
-}
-
 const resourceByID = `-- name: ResourceByID :many
-SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, publinks FROM resource_by_id($1::uuid)
+SELECT id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions, publinks FROM resource_by_id($1::uuid)
 `
 
-func (q *Queries) ResourceByID(ctx context.Context, resourceID uuid.UUID) ([]PublinkedResource, error) {
+func (q *Queries) ResourceByID(ctx context.Context, resourceID uuid.UUID) ([]FullResource, error) {
 	rows, err := q.db.Query(ctx, resourceByID, resourceID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []PublinkedResource
+	var items []FullResource
 	for rows.Next() {
-		var i PublinkedResource
+		var i FullResource
 		if err := rows.Scan(
 			&i.ID,
-			&i.Permissions,
 			&i.Name,
 			&i.Parent,
 			&i.Dir,
@@ -243,6 +220,7 @@ func (q *Queries) ResourceByID(ctx context.Context, resourceID uuid.UUID) ([]Pub
 			&i.ContentSize,
 			&i.ContentType,
 			&i.ContentSha256,
+			&i.Permissions,
 			&i.Publinks,
 		); err != nil {
 			return nil, err
@@ -256,7 +234,7 @@ func (q *Queries) ResourceByID(ctx context.Context, resourceID uuid.UUID) ([]Pub
 }
 
 const resourceByPath = `-- name: ResourceByPath :many
-SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, publinks FROM resource_by_id(resource_id_by_path($1::text, $2::uuid))
+SELECT id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions, publinks FROM resource_by_id(resource_id_by_path($1::text, $2::uuid))
 `
 
 type ResourceByPathParams struct {
@@ -264,18 +242,17 @@ type ResourceByPathParams struct {
 	Root *uuid.UUID
 }
 
-func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) ([]PublinkedResource, error) {
+func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) ([]FullResource, error) {
 	rows, err := q.db.Query(ctx, resourceByPath, arg.Path, arg.Root)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []PublinkedResource
+	var items []FullResource
 	for rows.Next() {
-		var i PublinkedResource
+		var i FullResource
 		if err := rows.Scan(
 			&i.ID,
-			&i.Permissions,
 			&i.Name,
 			&i.Parent,
 			&i.Dir,
@@ -285,6 +262,7 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 			&i.ContentSize,
 			&i.ContentType,
 			&i.ContentSha256,
+			&i.Permissions,
 			&i.Publinks,
 		); err != nil {
 			return nil, err
@@ -298,7 +276,15 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 }
 
 const sharedResources = `-- name: SharedResources :many
-SELECT id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256 FROM resources WHERE permissions ? $1::text AND id <> $2::uuid AND deleted IS NULL
+SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_size, r.content_type, r.content_sha256
+FROM permissions p
+JOIN resources r
+ON p.resource_id = r.id
+WHERE p.username = $1::text
+AND p.resource_id <> $2::uuid
+AND p.value <> 0
+AND r.deleted IS NULL
+ORDER BY p.modified DESC
 `
 
 type SharedResourcesParams struct {
@@ -306,6 +292,7 @@ type SharedResourcesParams struct {
 	UserHome uuid.UUID
 }
 
+// SELECT p.modified AS user_permission_modified, p.value as user_permission, r.*
 func (q *Queries) SharedResources(ctx context.Context, arg SharedResourcesParams) ([]Resource, error) {
 	rows, err := q.db.Query(ctx, sharedResources, arg.Username, arg.UserHome)
 	if err != nil {
@@ -317,7 +304,6 @@ func (q *Queries) SharedResources(ctx context.Context, arg SharedResourcesParams
 		var i Resource
 		if err := rows.Scan(
 			&i.ID,
-			&i.Permissions,
 			&i.Name,
 			&i.Parent,
 			&i.Dir,
@@ -383,7 +369,7 @@ SET
     name = CASE WHEN ($1::text = '') THEN name ELSE $1::text END,
     modified = NOW()
 WHERE id = $2::uuid
-RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
+RETURNING id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
 `
 
 type UpdateResourceNameParams struct {
@@ -396,7 +382,6 @@ func (q *Queries) UpdateResourceName(ctx context.Context, arg UpdateResourceName
 	var i Resource
 	err := row.Scan(
 		&i.ID,
-		&i.Permissions,
 		&i.Name,
 		&i.Parent,
 		&i.Dir,
@@ -444,7 +429,7 @@ SET
     parent = $1::uuid,
     modified = NOW()
 WHERE id = $2::uuid
-RETURNING id, permissions, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
+RETURNING id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
 `
 
 type UpdateResourceParentParams struct {
@@ -457,7 +442,6 @@ func (q *Queries) UpdateResourceParent(ctx context.Context, arg UpdateResourcePa
 	var i Resource
 	err := row.Scan(
 		&i.ID,
-		&i.Permissions,
 		&i.Name,
 		&i.Parent,
 		&i.Dir,
@@ -471,24 +455,30 @@ func (q *Queries) UpdateResourceParent(ctx context.Context, arg UpdateResourcePa
 	return i, err
 }
 
-const updateUserPermissionsForResource = `-- name: UpdateUserPermissionsForResource :one
-UPDATE resources
+const updateUserPermissionsForResource = `-- name: UpdateUserPermissionsForResource :exec
+INSERT INTO permissions(
+    resource_id,
+    username,
+    modified,
+    value
+) VALUES (
+    $1::UUID,
+    $2::TEXT,
+    NOW(),
+    $3::INT
+) ON CONFLICT(resource_id, username) DO UPDATE
 SET
-    permissions[$1::text] = to_json($2::int),
-    modified = NOW()
-WHERE id = $3::uuid
-RETURNING permissions
+    modified = CURRENT_TIMESTAMP,
+    value = $3::TEXT
 `
 
 type UpdateUserPermissionsForResourceParams struct {
+	ResourceID uuid.UUID
 	Username   string
 	Permission int32
-	ResourceID uuid.UUID
 }
 
-func (q *Queries) UpdateUserPermissionsForResource(ctx context.Context, arg UpdateUserPermissionsForResourceParams) ([]byte, error) {
-	row := q.db.QueryRow(ctx, updateUserPermissionsForResource, arg.Username, arg.Permission, arg.ResourceID)
-	var permissions []byte
-	err := row.Scan(&permissions)
-	return permissions, err
+func (q *Queries) UpdateUserPermissionsForResource(ctx context.Context, arg UpdateUserPermissionsForResourceParams) error {
+	_, err := q.db.Exec(ctx, updateUserPermissionsForResource, arg.ResourceID, arg.Username, arg.Permission)
+	return err
 }
