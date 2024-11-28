@@ -9,7 +9,7 @@ import (
 
 type shareParams struct {
 	Username    string        `json:"username" binding:"required"`
-	Permissions fs.Permission `json:"permission" binding:"required"`
+	Permissions fs.Permission `json:"permission"`
 }
 
 func handleShareRequest(c *gin.Context) {

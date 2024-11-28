@@ -1,6 +1,8 @@
 package fs
 
 import (
+	"encoding/json"
+
 	"github.com/shroff/phylum/server/internal/core/db"
 )
 
@@ -11,7 +13,6 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 	// Do not grant more than what you have
 	permission = permission & r.userPermission
 
-	var p []byte
 	var err error
 	err = r.f.db.UpdateUserPermissionsForResource(r.f.ctx, db.UpdateUserPermissionsForResourceParams{
 		ResourceID: r.ID(),
@@ -21,6 +22,20 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 	if err != nil {
 		return Resource{}, err
 	}
-	r.Info.permissions = p
+	p := make(map[string]Permission)
+	if r.Info.permissions != nil {
+		json.Unmarshal(r.Info.permissions, &p)
+	}
+	if permission == 0 {
+		delete(p, username)
+	} else {
+		p[username] = permission
+	}
+	res, err := json.Marshal(p)
+	if err != nil {
+		return Resource{}, err
+	}
+
+	r.Info.permissions = res
 	return r, nil
 }
