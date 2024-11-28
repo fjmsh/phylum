@@ -16,8 +16,8 @@ class ResourcePermissionsView extends StatefulWidget {
 }
 
 class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
-  Permission? myPermission;
-  Map<String, Permission>? otherPermissions;
+  Map<String, Permission>? inheritedPermissions;
+  Map<String, Permission>? permissions;
 
   StreamSubscription<List<ParentsResult>>? sub;
   @override
@@ -25,10 +25,11 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
     super.initState();
     final account = context.read<PhylumAccount>();
     sub = account.db.parents(widget.resourceId).watch().listen((data) {
-      final p = calculatePermissionSet(data.map((e) => e.permissions));
+      final inheritedPermissions = calculatePermissionSet(data.sublist(0, data.length - 1).map((e) => e.permissions));
+      final permissions = mergePermissions(Map.of(inheritedPermissions), data.last.permissions);
       setState(() {
-        myPermission = p.remove(account.userEmail) ?? 0;
-        otherPermissions = p;
+        this.inheritedPermissions = inheritedPermissions;
+        this.permissions = permissions;
       });
     });
   }
@@ -41,23 +42,31 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
 
   @override
   Widget build(BuildContext context) {
-    final otherPermissions = this.otherPermissions;
-    if (otherPermissions == null) return const CircularProgressIndicator();
+    final permissions = this.permissions;
+    if (permissions == null) return const CircularProgressIndicator();
+
     final repository = context.read<PhylumAccount>().userRepository;
-    final entries = otherPermissions.entries.toList(growable: false)..sort(((a, b) => a.key.compareTo(b.key)));
-    // final other = entries?.map((e) => '${repository.getUserDisplayName(e.key)}: ${e.value.toStringShort()}').join(', ');
+    final entries = permissions.entries.toList(growable: false)
+      ..sort(((a, b) {
+        return a.value == b.value ? a.key.compareTo(b.key) : a.value.compareTo(b.value);
+      }));
     return Column(
       children: [
-        ListTile(
-          title: Text(repository.getUserDisplayName(context.read<PhylumAccount>().userName)),
-          trailing: Text(myPermission?.toStringFull() ?? ''),
-        ),
         for (final e in entries)
           ListTile(
             title: Text(repository.getUserDisplayName(e.key)),
-            trailing: Text(e.value.toStringFull()),
+            trailing: _getPermissionIcon(e.value),
           ),
       ],
     );
+  }
+
+  Icon? _getPermissionIcon(Permission p) {
+    if (p == 0) return null;
+    if (p == -1) return const Icon(Icons.shield_outlined);
+    if (p == permissionRead) return const Icon(Icons.visibility);
+    if (p == (permissionRead | permissionWrite)) return const Icon(Icons.edit);
+    if (p == (permissionRead | permissionWrite | permissionShare)) return const Icon(Icons.person_add);
+    return const Icon(Icons.settings);
   }
 }

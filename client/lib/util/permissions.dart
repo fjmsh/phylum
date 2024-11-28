@@ -9,8 +9,14 @@ const Permission permissionShare = 128;
 Map<String, Permission> calculatePermissionSet(Iterable<String?> permissionJsons) {
   final permissions = <String, Permission>{};
   for (final p in permissionJsons) {
-    if (p == null) continue;
-    for (final e in (jsonDecode(p) as Map).cast<String, Permission>().entries) {
+    mergePermissions(permissions, p);
+  }
+  return permissions;
+}
+
+Map<String, Permission> mergePermissions(Map<String, Permission> permissions, String? permissionsJson) {
+  if (permissionsJson != null) {
+    for (final e in (jsonDecode(permissionsJson) as Map).cast<String, Permission>().entries) {
       permissions[e.key] = (permissions[e.key] ?? 0) | e.value;
     }
   }
