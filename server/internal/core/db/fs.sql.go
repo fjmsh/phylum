@@ -469,7 +469,7 @@ INSERT INTO permissions(
 ) ON CONFLICT(resource_id, username) DO UPDATE
 SET
     modified = CURRENT_TIMESTAMP,
-    value = $3::TEXT
+    value = $3::INT
 `
 
 type UpdateUserPermissionsForResourceParams struct {

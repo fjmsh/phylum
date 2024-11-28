@@ -74,7 +74,7 @@ INSERT INTO permissions(
 ) ON CONFLICT(resource_id, username) DO UPDATE
 SET
     modified = CURRENT_TIMESTAMP,
-    value = @permission::TEXT;
+    value = @permission::INT;
 
 -- name: ChildResourceIDByName :one
 SELECT id FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;
