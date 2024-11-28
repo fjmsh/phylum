@@ -2,9 +2,9 @@ import 'dart:convert';
 
 typedef Permission = int;
 
-const Permission PermissionRead = 4;
-const Permission PermissionWrite = 32;
-const Permission PermissionShare = 128;
+const Permission permissionRead = 4;
+const Permission permissionWrite = 32;
+const Permission permissionShare = 128;
 
 Map<String, Permission> calculatePermissionSet(Iterable<String?> permissionJsons) {
   final permissions = <String, Permission>{};
@@ -24,19 +24,19 @@ extension PermissionStringer on Permission {
 
     final b = StringBuffer();
     int p = this;
-    if (p & PermissionRead != 0) {
-      p -= PermissionRead;
+    if (p & permissionRead != 0) {
+      p -= permissionRead;
       b.write('Read');
     }
-    if (p & PermissionWrite != 0) {
-      p -= PermissionWrite;
+    if (p & permissionWrite != 0) {
+      p -= permissionWrite;
       if (b.isNotEmpty) {
         b.write(', ');
       }
       b.write('Write');
     }
-    if (p & PermissionShare != 0) {
-      p -= PermissionShare;
+    if (p & permissionShare != 0) {
+      p -= permissionShare;
       if (b.isNotEmpty) {
         b.write(', ');
       }
@@ -51,17 +51,17 @@ extension PermissionStringer on Permission {
 
     String r = '';
     int p = this;
-    if (p & PermissionRead != 0) {
+    if (p & permissionRead != 0) {
       r += 'r';
-      p -= PermissionRead;
+      p -= permissionRead;
     }
-    if (p & PermissionWrite != 0) {
+    if (p & permissionWrite != 0) {
       r += 'w';
-      p -= PermissionWrite;
+      p -= permissionWrite;
     }
-    if (p & PermissionShare != 0) {
+    if (p & permissionShare != 0) {
       r += 's';
-      p -= PermissionShare;
+      p -= permissionShare;
     }
     return r;
   }
