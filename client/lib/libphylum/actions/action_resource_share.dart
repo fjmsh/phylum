@@ -30,12 +30,13 @@ class ResourceShareAction extends PhylumAction with JsonApiAction {
       {required this.resourceId, required this.resourceName, required this.username, required this.permission, required this.modified});
 
   ResourceShareAction({
-    required Resource r,
+    required String resourceId,
+    required String resourceName,
     required String username,
     required int permission,
   }) : this._(
-          resourceId: r.id,
-          resourceName: r.name,
+          resourceId: resourceId,
+          resourceName: resourceName,
           username: username,
           permission: permission,
           modified: DateTime.now(),

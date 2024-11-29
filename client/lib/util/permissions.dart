@@ -6,6 +6,12 @@ const Permission permissionRead = 4;
 const Permission permissionWrite = 32;
 const Permission permissionShare = 128;
 
+const Permission permissionSetNone = 0;
+const Permission permissionSetAll = -1;
+const Permission permissionSetReadOnly = permissionRead;
+const Permission permissionSetReadWrite = permissionRead | permissionWrite;
+const Permission permissionSetReadWriteShare = permissionRead | permissionWrite | permissionShare;
+
 Map<String, Permission> calculatePermissionSet(Iterable<String?> permissionJsons) {
   final permissions = <String, Permission>{};
   for (final p in permissionJsons) {
