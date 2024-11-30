@@ -71,7 +71,10 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                 onChanged: (userPermissions & permissionShare) == 0
                     ? null
                     : (value) {
-                        if (value == null) return;
+                        if (value == null || value == e.value) return;
+                        if (value == inheritedPermissions[e.key]) {
+                          value = 0;
+                        }
                         account.addAction(ResourceShareAction(
                           resourceId: widget.resourceId,
                           resourceName: resourceName,
@@ -104,7 +107,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
   }
 
   DropdownMenuItem<Permission> _buildDropdownMenuItem(Permission p, Permission inherited, ThemeData theme) {
-    bool enabled = (p | inherited) != inherited;
+    bool enabled = (p | inherited) == p || (p | inherited) != inherited;
 
     final iconColor = enabled ? theme.listTileTheme.iconColor : theme.disabledColor;
     final textColor = enabled ? theme.listTileTheme.tileColor : theme.disabledColor;
