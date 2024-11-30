@@ -28,7 +28,7 @@ type Manager interface {
 	CreateUser(username, displayName, password string, root uuid.UUID) (User, error)
 
 	// select.go
-	AllUsers() ([]User, error)
+	ListUsers(since *time.Time) ([]User, error)
 	UserByEmail(email string) (User, error)
 
 	// update.go

@@ -8,8 +8,8 @@ INSERT INTO users(
 -- name: UserByUsername :one
 SELECT username, display_name, password_hash, root, home FROM users WHERE username = $1;
 
--- name: AllUsers :many
-SELECT username, display_name, root, home from users WHERE deleted IS NULL;
+-- name: ListUsers :many
+SELECT username, display_name, root, home FROM users WHERE modified > @since::TIMESTAMP;
 
 -- name: UpdateUserDisplayName :exec
 UPDATE users

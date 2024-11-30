@@ -2,15 +2,23 @@ package user
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/errors"
 )
 
 var ErrNotFound = errors.NewError(http.StatusNotFound, "user_not_found", "no such user")
 
-func (m manager) AllUsers() ([]User, error) {
-	results, err := m.db.AllUsers(m.ctx)
+func (m manager) ListUsers(since *time.Time) ([]User, error) {
+	s := pgtype.Timestamp{
+		Valid: true,
+	}
+	if since != nil {
+		s.Time = *since
+	}
+	results, err := m.db.ListUsers(m.ctx, s)
 	if err != nil {
 		return nil, err
 	}

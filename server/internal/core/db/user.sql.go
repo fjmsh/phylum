@@ -9,43 +9,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
-
-const allUsers = `-- name: AllUsers :many
-SELECT username, display_name, root, home from users WHERE deleted IS NULL
-`
-
-type AllUsersRow struct {
-	Username    string
-	DisplayName string
-	Root        uuid.UUID
-	Home        uuid.UUID
-}
-
-func (q *Queries) AllUsers(ctx context.Context) ([]AllUsersRow, error) {
-	rows, err := q.db.Query(ctx, allUsers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []AllUsersRow
-	for rows.Next() {
-		var i AllUsersRow
-		if err := rows.Scan(
-			&i.Username,
-			&i.DisplayName,
-			&i.Root,
-			&i.Home,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users(
@@ -83,6 +48,42 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Home,
 	)
 	return i, err
+}
+
+const listUsers = `-- name: ListUsers :many
+SELECT username, display_name, root, home FROM users WHERE modified > $1::TIMESTAMP
+`
+
+type ListUsersRow struct {
+	Username    string
+	DisplayName string
+	Root        uuid.UUID
+	Home        uuid.UUID
+}
+
+func (q *Queries) ListUsers(ctx context.Context, since pgtype.Timestamp) ([]ListUsersRow, error) {
+	rows, err := q.db.Query(ctx, listUsers, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUsersRow
+	for rows.Next() {
+		var i ListUsersRow
+		if err := rows.Scan(
+			&i.Username,
+			&i.DisplayName,
+			&i.Root,
+			&i.Home,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateUserDisplayName = `-- name: UpdateUserDisplayName :exec

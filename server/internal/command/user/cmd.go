@@ -58,7 +58,7 @@ func setupUserListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List Users",
 		Run: func(cmd *cobra.Command, args []string) {
-			users, err := user.CreateManager(context.Background()).AllUsers()
+			users, err := user.CreateManager(context.Background()).ListUsers(nil)
 			if err != nil {
 				logrus.Fatal(err)
 			}
