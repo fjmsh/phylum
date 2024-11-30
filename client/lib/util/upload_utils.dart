@@ -99,8 +99,8 @@ class DirTree {
       numFiles: numFiles + other.numFiles,
       numDirs: numDirs + other.numDirs,
       totalSize: totalSize + other.totalSize,
-      files: files..addAll(other.files),
-      dirs: dirs..addAll(other.dirs),
+      files: List.of(files)..addAll(other.files),
+      dirs: List.of(dirs)..addAll(other.dirs),
     );
   }
 
