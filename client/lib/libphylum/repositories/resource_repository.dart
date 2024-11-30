@@ -118,12 +118,14 @@ class ResourceRepository {
 
   Future processResourceResponse(Map<String, dynamic> data) async {
     final db = account.db;
-    final (resources, deleted) = await parseFullResourceObject(data);
+    final (insert, update) = await parseFullResourceObject(data);
     await db.batch((batch) {
-      batch.deleteWhere(db.resources, (o) => o.id.isIn(deleted));
-      batch.insertAllOnConflictUpdate(db.resources, resources);
+      for (final u in update) {
+        batch.update(db.resources, u, where: (o) => o.id.equals(u.id.value));
+      }
+      batch.insertAllOnConflictUpdate(db.resources, insert);
     });
-    for (final r in resources) {
+    for (final r in insert) {
       final serverData = _serverDataBox.get(r.id.value);
       if (serverData != null) {
         _serverDataBox.put(r.id.value, serverData.copyWithCompanion(r));
@@ -141,7 +143,7 @@ class ResourceRepository {
     }
   }
 
-  Future<(Iterable<ResourcesCompanion>, Iterable<String>)> parseFullResourceObject(Map<String, dynamic> data) async {
+  Future<(Iterable<ResourcesCompanion>, Iterable<ResourcesCompanion>)> parseFullResourceObject(Map<String, dynamic> data) async {
     final ancestors = (data['ancestors'] as List).cast<Map>().map(
           (a) => parseResourceAncestor(a.cast<String, dynamic>()).copyWith(dir: Value(true)),
         );
@@ -155,7 +157,8 @@ class ResourceRepository {
       existing.remove(c['id']);
       return parseResourceObject(c.cast<String, dynamic>());
     });
-    return ([...ancestors, info, ...children], existing);
+    final removeParentRelation = existing.map((id) => ResourcesCompanion(id: Value(id), parent: Value(null)));
+    return ([...ancestors, info, ...children], removeParentRelation);
   }
 
   ResourcesCompanion parseResourceObject(Map<String, dynamic> data) {
