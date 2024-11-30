@@ -111,16 +111,3 @@ SELECT
   COUNT(CASE dir WHEN true THEN 1 ELSE NULL END) AS dirs,
   COUNT(CASE dir WHEN false THEN 1 ELSE NULL END) AS files
 FROM nodes;
-
-
--- SELECT p.modified AS user_permission_modified, p.value as user_permission, r.*
--- name: SharedResources :many
-SELECT r.*
-FROM permissions p
-JOIN resources r
-ON p.resource_id = r.id
-WHERE p.username = @username::text
-AND p.resource_id <> @user_home::uuid
-AND p.value <> 0
-AND r.deleted IS NULL
-ORDER BY p.modified DESC;

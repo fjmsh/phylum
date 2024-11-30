@@ -86,6 +86,54 @@ func (q *Queries) ListUsers(ctx context.Context, since pgtype.Timestamp) ([]List
 	return items, nil
 }
 
+const sharedResources = `-- name: SharedResources :many
+SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_size, r.content_type, r.content_sha256
+FROM permissions p
+JOIN resources r
+ON p.resource_id = r.id
+WHERE p.username = $1::text
+AND p.resource_id <> $2::uuid
+AND p.value <> 0
+AND r.deleted IS NULL
+ORDER BY p.modified DESC
+`
+
+type SharedResourcesParams struct {
+	Username string
+	UserHome uuid.UUID
+}
+
+func (q *Queries) SharedResources(ctx context.Context, arg SharedResourcesParams) ([]Resource, error) {
+	rows, err := q.db.Query(ctx, sharedResources, arg.Username, arg.UserHome)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Resource
+	for rows.Next() {
+		var i Resource
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Parent,
+			&i.Dir,
+			&i.Created,
+			&i.Modified,
+			&i.Deleted,
+			&i.ContentSize,
+			&i.ContentType,
+			&i.ContentSha256,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateUserDisplayName = `-- name: UpdateUserDisplayName :exec
 UPDATE users
 SET

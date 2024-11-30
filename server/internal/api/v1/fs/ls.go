@@ -9,14 +9,14 @@ import (
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
-type ancestor struct {
+type ResourceAncestorResponse struct {
 	ID          uuid.UUID  `json:"id"`
 	Name        string     `json:"name"`
 	ParentID    *uuid.UUID `json:"parent"`
 	Permissions string     `json:"permissions"`
 }
 
-type info struct {
+type ResourceInfoResponse struct {
 	ID            uuid.UUID  `json:"id"`
 	Name          string     `json:"name"`
 	ParentID      *uuid.UUID `json:"parent"`
@@ -31,9 +31,9 @@ type info struct {
 }
 
 type ResourceResponse struct {
-	Ancestors []ancestor `json:"ancestors"`
-	Info      info       `json:"info"`
-	Children  []info     `json:"children"`
+	Ancestors []ResourceAncestorResponse `json:"ancestors"`
+	Info      ResourceInfoResponse       `json:"info"`
+	Children  []ResourceInfoResponse     `json:"children"`
 }
 
 func handleLsRequest(c *gin.Context) {
@@ -48,17 +48,17 @@ func handleLsRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	c.JSON(200, LsResponseFromResource(r))
+	c.JSON(200, ResponseFromResource(r))
 }
 
-func LsResponseFromResource(r fs.Resource) ResourceResponse {
+func ResponseFromResource(r fs.Resource) ResourceResponse {
 	response := ResourceResponse{
-		Info: createInfo(r.Info),
+		Info: ResponseFromResourceInfo(r.Info),
 	}
-	response.Ancestors = make([]ancestor, len(r.Ancestors))
+	response.Ancestors = make([]ResourceAncestorResponse, len(r.Ancestors))
 
 	for i, a := range r.Ancestors {
-		response.Ancestors[i] = ancestor{
+		response.Ancestors[i] = ResourceAncestorResponse{
 			ID:          a.ID(),
 			Name:        a.Name(),
 			ParentID:    a.ParentID(),
@@ -70,16 +70,16 @@ func LsResponseFromResource(r fs.Resource) ResourceResponse {
 		if err != nil {
 			panic(err)
 		}
-		response.Children = make([]info, len(children))
+		response.Children = make([]ResourceInfoResponse, len(children))
 		for i, c := range children {
-			response.Children[i] = createInfo(c.(fs.ResourceInfo))
+			response.Children[i] = ResponseFromResourceInfo(c.(fs.ResourceInfo))
 		}
 	}
 	return response
 }
 
-func createInfo(r fs.ResourceInfo) info {
-	return info{
+func ResponseFromResourceInfo(r fs.ResourceInfo) ResourceInfoResponse {
+	return ResourceInfoResponse{
 		ID:            r.ID(),
 		Name:          r.Name(),
 		ParentID:      r.ParentID(),
