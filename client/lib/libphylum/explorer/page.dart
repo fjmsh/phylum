@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 
@@ -50,4 +51,36 @@ class ExplorerPageFolder extends ExplorerPage {
 
   @override
   int get hashCode => folderId.hashCode;
+}
+
+class ExplorerPageRecents extends ExplorerPage {
+  const ExplorerPageRecents();
+
+  @override
+  Future<bool> refresh(PhylumAccount account) {
+    return SynchronousFuture(true);
+  }
+
+  @override
+  Stream<Resource?> watchResource(PhylumAccount account) {
+    return Stream.fromIterable([null]);
+  }
+
+  @override
+  Stream<List<Resource>> watchChildren(PhylumAccount account) {
+    return account.db.listRecents().watch();
+  }
+
+  @override
+  Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account) {
+    return Stream.fromIterable([
+      [ParentsResult(id: 'recents', name: 'Recents')]
+    ]);
+    // return account.db.parents(folderId).watch().map((p) => p.reversed);
+  }
+
+  @override
+  String toString() {
+    return 'ExplorerPageRecents';
+  }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
+import 'package:phylum/libphylum/explorer/page.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/button_downloads.dart';
 import 'package:phylum/ui/app/button_server_status.dart';
@@ -37,6 +39,11 @@ class NavList extends StatelessWidget {
             leading: const Icon(Icons.home),
             title: const Text('Home'),
             onTap: () => Actions.maybeInvoke(context, const NavHomeIntent()),
+          ),
+          ListTile(
+            leading: const Icon(Icons.history),
+            title: const Text('Recents'),
+            onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageRecents()),
           ),
           StreamBuilder<List<ListBookmarksResult>>(
             stream: context.read<PhylumAccount>().bookmarkRepository.list().watch(),

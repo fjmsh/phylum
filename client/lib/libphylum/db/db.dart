@@ -8,6 +8,7 @@ part 'db.g.dart';
 
 @DriftDatabase(include: {
   'sql/bookmarks.drift',
+  'sql/recents.drift',
   'sql/resources.drift',
   'sql/users.drift',
 })
@@ -21,7 +22,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase({required this.id}) : super(_openConnection(id));
 
   @override
-  int get schemaVersion => 29;
+  int get schemaVersion => 30;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

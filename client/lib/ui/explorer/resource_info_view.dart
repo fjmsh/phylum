@@ -21,9 +21,7 @@ class ReactiveResourceInfoView extends StatelessWidget {
     });
 
     if (resource == null) {
-      return Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: Text(''));
     }
     return Column(
       children: [

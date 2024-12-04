@@ -96,7 +96,8 @@ class ExplorerController extends StateNotifier<ExplorerState> {
   }
 
   void updatePage(ExplorerPage page) {
-    state = ExplorerState(folderId: (page as ExplorerPageFolder?)?.folderId);
+    final folderId = page is ExplorerPageFolder ? (page).folderId : null;
+    state = ExplorerState(folderId: folderId);
     _folderSubscription?.cancel();
     _childrenSubscription?.cancel();
     _folderSubscription = page.watchResource(_account).listen((e) => state = state.copyWith(folder: e));

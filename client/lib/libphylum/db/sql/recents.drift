@@ -1,0 +1,10 @@
+import 'resources.drift';
+
+CREATE TABLE IF NOT EXISTS recents(
+    resource_id TEXT NOT NULL PRIMARY KEY REFERENCES resources(id),
+    accessed DATETIME NOT NULL
+);
+
+CREATE INDEX recent_accesses ON recents(accessed DESC);
+
+listRecents: SELECT r.* FROM recents h LEFT JOIN resources r ON h.resource_id = r.id ORDER BY h.accessed DESC;

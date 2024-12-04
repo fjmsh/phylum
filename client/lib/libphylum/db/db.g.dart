@@ -855,6 +855,207 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   }
 }
 
+class Recents extends Table with TableInfo<Recents, Recent> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  Recents(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _resourceIdMeta =
+      const VerificationMeta('resourceId');
+  late final GeneratedColumn<String> resourceId = GeneratedColumn<String>(
+      'resource_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL PRIMARY KEY REFERENCES resources(id)');
+  static const VerificationMeta _accessedMeta =
+      const VerificationMeta('accessed');
+  late final GeneratedColumn<DateTime> accessed = GeneratedColumn<DateTime>(
+      'accessed', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL');
+  @override
+  List<GeneratedColumn> get $columns => [resourceId, accessed];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'recents';
+  @override
+  VerificationContext validateIntegrity(Insertable<Recent> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('resource_id')) {
+      context.handle(
+          _resourceIdMeta,
+          resourceId.isAcceptableOrUnknown(
+              data['resource_id']!, _resourceIdMeta));
+    } else if (isInserting) {
+      context.missing(_resourceIdMeta);
+    }
+    if (data.containsKey('accessed')) {
+      context.handle(_accessedMeta,
+          accessed.isAcceptableOrUnknown(data['accessed']!, _accessedMeta));
+    } else if (isInserting) {
+      context.missing(_accessedMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {resourceId};
+  @override
+  Recent map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Recent(
+      resourceId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}resource_id'])!,
+      accessed: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}accessed'])!,
+    );
+  }
+
+  @override
+  Recents createAlias(String alias) {
+    return Recents(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class Recent extends DataClass implements Insertable<Recent> {
+  final String resourceId;
+  final DateTime accessed;
+  const Recent({required this.resourceId, required this.accessed});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['resource_id'] = Variable<String>(resourceId);
+    map['accessed'] = Variable<DateTime>(accessed);
+    return map;
+  }
+
+  RecentsCompanion toCompanion(bool nullToAbsent) {
+    return RecentsCompanion(
+      resourceId: Value(resourceId),
+      accessed: Value(accessed),
+    );
+  }
+
+  factory Recent.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Recent(
+      resourceId: serializer.fromJson<String>(json['resource_id']),
+      accessed: serializer.fromJson<DateTime>(json['accessed']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'resource_id': serializer.toJson<String>(resourceId),
+      'accessed': serializer.toJson<DateTime>(accessed),
+    };
+  }
+
+  Recent copyWith({String? resourceId, DateTime? accessed}) => Recent(
+        resourceId: resourceId ?? this.resourceId,
+        accessed: accessed ?? this.accessed,
+      );
+  Recent copyWithCompanion(RecentsCompanion data) {
+    return Recent(
+      resourceId:
+          data.resourceId.present ? data.resourceId.value : this.resourceId,
+      accessed: data.accessed.present ? data.accessed.value : this.accessed,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Recent(')
+          ..write('resourceId: $resourceId, ')
+          ..write('accessed: $accessed')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(resourceId, accessed);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Recent &&
+          other.resourceId == this.resourceId &&
+          other.accessed == this.accessed);
+}
+
+class RecentsCompanion extends UpdateCompanion<Recent> {
+  final Value<String> resourceId;
+  final Value<DateTime> accessed;
+  final Value<int> rowid;
+  const RecentsCompanion({
+    this.resourceId = const Value.absent(),
+    this.accessed = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecentsCompanion.insert({
+    required String resourceId,
+    required DateTime accessed,
+    this.rowid = const Value.absent(),
+  })  : resourceId = Value(resourceId),
+        accessed = Value(accessed);
+  static Insertable<Recent> custom({
+    Expression<String>? resourceId,
+    Expression<DateTime>? accessed,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (resourceId != null) 'resource_id': resourceId,
+      if (accessed != null) 'accessed': accessed,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecentsCompanion copyWith(
+      {Value<String>? resourceId,
+      Value<DateTime>? accessed,
+      Value<int>? rowid}) {
+    return RecentsCompanion(
+      resourceId: resourceId ?? this.resourceId,
+      accessed: accessed ?? this.accessed,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (resourceId.present) {
+      map['resource_id'] = Variable<String>(resourceId.value);
+    }
+    if (accessed.present) {
+      map['accessed'] = Variable<DateTime>(accessed.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecentsCompanion(')
+          ..write('resourceId: $resourceId, ')
+          ..write('accessed: $accessed, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -1138,6 +1339,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final Users users = Users(this);
   late final Resources resources = Resources(this);
+  late final Recents recents = Recents(this);
+  late final Index recentAccesses = Index('recent_accesses',
+      'CREATE INDEX recent_accesses ON recents (accessed DESC)');
   late final Bookmarks bookmarks = Bookmarks(this);
   Selectable<ParentsResult> parents(String id) {
     return customSelect(
@@ -1153,6 +1357,16 @@ abstract class _$AppDatabase extends GeneratedDatabase {
           name: row.read<String>('name'),
           permissions: row.readNullable<String>('permissions'),
         ));
+  }
+
+  Selectable<Resource> listRecents() {
+    return customSelect(
+        'SELECT r.* FROM recents AS h LEFT JOIN resources AS r ON h.resource_id = r.id ORDER BY h.accessed DESC',
+        variables: [],
+        readsFrom: {
+          recents,
+          resources,
+        }).asyncMap(resources.mapFromRow);
   }
 
   Selectable<ListBookmarksResult> listBookmarks() {
@@ -1173,7 +1387,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [users, resources, bookmarks];
+      [users, resources, recents, recentAccesses, bookmarks];
 }
 
 typedef $UsersCreateCompanionBuilder = UsersCompanion Function({
@@ -1330,6 +1544,21 @@ final class $ResourcesReferences
     extends BaseReferences<_$AppDatabase, Resources, Resource> {
   $ResourcesReferences(super.$_db, super.$_table, super.$_typedResult);
 
+  static MultiTypedResultKey<Recents, List<Recent>> _recentsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.recents,
+          aliasName:
+              $_aliasNameGenerator(db.resources.id, db.recents.resourceId));
+
+  $RecentsProcessedTableManager get recentsRefs {
+    final manager = $RecentsTableManager($_db, $_db.recents)
+        .filter((f) => f.resourceId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_recentsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
   static MultiTypedResultKey<Bookmarks, List<Bookmark>> _bookmarksRefsTable(
           _$AppDatabase db) =>
       MultiTypedResultKey.fromTable(db.bookmarks,
@@ -1392,6 +1621,27 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
 
   ColumnFilters<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> recentsRefs(
+      Expression<bool> Function($RecentsFilterComposer f) f) {
+    final $RecentsFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.recents,
+        getReferencedColumn: (t) => t.resourceId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $RecentsFilterComposer(
+              $db: $db,
+              $table: $db.recents,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 
   Expression<bool> bookmarksRefs(
       Expression<bool> Function($BookmarksFilterComposer f) f) {
@@ -1511,6 +1761,27 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
   GeneratedColumn<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => column);
 
+  Expression<T> recentsRefs<T extends Object>(
+      Expression<T> Function($RecentsAnnotationComposer a) f) {
+    final $RecentsAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.recents,
+        getReferencedColumn: (t) => t.resourceId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $RecentsAnnotationComposer(
+              $db: $db,
+              $table: $db.recents,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
   Expression<T> bookmarksRefs<T extends Object>(
       Expression<T> Function($BookmarksAnnotationComposer a) f) {
     final $BookmarksAnnotationComposer composer = $composerBuilder(
@@ -1544,7 +1815,7 @@ class $ResourcesTableManager extends RootTableManager<
     $ResourcesUpdateCompanionBuilder,
     (Resource, $ResourcesReferences),
     Resource,
-    PrefetchHooks Function({bool bookmarksRefs})> {
+    PrefetchHooks Function({bool recentsRefs, bool bookmarksRefs})> {
   $ResourcesTableManager(_$AppDatabase db, Resources table)
       : super(TableManagerState(
           db: db,
@@ -1623,13 +1894,28 @@ class $ResourcesTableManager extends RootTableManager<
               .map((e) =>
                   (e.readTable(table), $ResourcesReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: ({bookmarksRefs = false}) {
+          prefetchHooksCallback: (
+              {recentsRefs = false, bookmarksRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [if (bookmarksRefs) db.bookmarks],
+              explicitlyWatchedTables: [
+                if (recentsRefs) db.recents,
+                if (bookmarksRefs) db.bookmarks
+              ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
                 return [
+                  if (recentsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $ResourcesReferences._recentsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $ResourcesReferences(db, table, p0).recentsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.resourceId == item.id),
+                        typedResults: items),
                   if (bookmarksRefs)
                     await $_getPrefetchedData(
                         currentTable: table,
@@ -1659,7 +1945,228 @@ typedef $ResourcesProcessedTableManager = ProcessedTableManager<
     $ResourcesUpdateCompanionBuilder,
     (Resource, $ResourcesReferences),
     Resource,
-    PrefetchHooks Function({bool bookmarksRefs})>;
+    PrefetchHooks Function({bool recentsRefs, bool bookmarksRefs})>;
+typedef $RecentsCreateCompanionBuilder = RecentsCompanion Function({
+  required String resourceId,
+  required DateTime accessed,
+  Value<int> rowid,
+});
+typedef $RecentsUpdateCompanionBuilder = RecentsCompanion Function({
+  Value<String> resourceId,
+  Value<DateTime> accessed,
+  Value<int> rowid,
+});
+
+final class $RecentsReferences
+    extends BaseReferences<_$AppDatabase, Recents, Recent> {
+  $RecentsReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static Resources _resourceIdTable(_$AppDatabase db) =>
+      db.resources.createAlias(
+          $_aliasNameGenerator(db.recents.resourceId, db.resources.id));
+
+  $ResourcesProcessedTableManager? get resourceId {
+    if ($_item.resourceId == null) return null;
+    final manager = $ResourcesTableManager($_db, $_db.resources)
+        .filter((f) => f.id($_item.resourceId!));
+    final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $RecentsFilterComposer extends Composer<_$AppDatabase, Recents> {
+  $RecentsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<DateTime> get accessed => $composableBuilder(
+      column: $table.accessed, builder: (column) => ColumnFilters(column));
+
+  $ResourcesFilterComposer get resourceId {
+    final $ResourcesFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.resourceId,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesFilterComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $RecentsOrderingComposer extends Composer<_$AppDatabase, Recents> {
+  $RecentsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<DateTime> get accessed => $composableBuilder(
+      column: $table.accessed, builder: (column) => ColumnOrderings(column));
+
+  $ResourcesOrderingComposer get resourceId {
+    final $ResourcesOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.resourceId,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesOrderingComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $RecentsAnnotationComposer extends Composer<_$AppDatabase, Recents> {
+  $RecentsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<DateTime> get accessed =>
+      $composableBuilder(column: $table.accessed, builder: (column) => column);
+
+  $ResourcesAnnotationComposer get resourceId {
+    final $ResourcesAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.resourceId,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesAnnotationComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $RecentsTableManager extends RootTableManager<
+    _$AppDatabase,
+    Recents,
+    Recent,
+    $RecentsFilterComposer,
+    $RecentsOrderingComposer,
+    $RecentsAnnotationComposer,
+    $RecentsCreateCompanionBuilder,
+    $RecentsUpdateCompanionBuilder,
+    (Recent, $RecentsReferences),
+    Recent,
+    PrefetchHooks Function({bool resourceId})> {
+  $RecentsTableManager(_$AppDatabase db, Recents table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $RecentsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $RecentsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $RecentsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> resourceId = const Value.absent(),
+            Value<DateTime> accessed = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              RecentsCompanion(
+            resourceId: resourceId,
+            accessed: accessed,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String resourceId,
+            required DateTime accessed,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              RecentsCompanion.insert(
+            resourceId: resourceId,
+            accessed: accessed,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                  (e) => (e.readTable(table), $RecentsReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: ({resourceId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (resourceId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.resourceId,
+                    referencedTable: $RecentsReferences._resourceIdTable(db),
+                    referencedColumn:
+                        $RecentsReferences._resourceIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $RecentsProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    Recents,
+    Recent,
+    $RecentsFilterComposer,
+    $RecentsOrderingComposer,
+    $RecentsAnnotationComposer,
+    $RecentsCreateCompanionBuilder,
+    $RecentsUpdateCompanionBuilder,
+    (Recent, $RecentsReferences),
+    Recent,
+    PrefetchHooks Function({bool resourceId})>;
 typedef $BookmarksCreateCompanionBuilder = BookmarksCompanion Function({
   required String resourceId,
   required String name,
@@ -1918,6 +2425,7 @@ class $AppDatabaseManager {
   $UsersTableManager get users => $UsersTableManager(_db, _db.users);
   $ResourcesTableManager get resources =>
       $ResourcesTableManager(_db, _db.resources);
+  $RecentsTableManager get recents => $RecentsTableManager(_db, _db.recents);
   $BookmarksTableManager get bookmarks =>
       $BookmarksTableManager(_db, _db.bookmarks);
 }
