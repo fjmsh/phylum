@@ -26,7 +26,7 @@ class DestinationPicker extends StatefulWidget {
       builder: (context) => MultiProvider(
         providers: [
           StateNotifierProvider<ExplorerNavigator, ExplorerNavigatorState>(
-            create: (context) => ExplorerNavigator(ExplorerPageFolder(folderId: initialFolderId)),
+            create: (context) => ExplorerNavigator(account: null, page: ExplorerPageFolder(folderId: initialFolderId)),
           ),
           StateNotifierProvider<ExplorerController, ExplorerState>(
             create: (context) => ExplorerController(

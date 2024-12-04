@@ -35,7 +35,7 @@ class _AppLayoutState extends State<AppLayout> {
     return MultiProvider(
       providers: [
         StateNotifierProvider<ExplorerNavigator, ExplorerNavigatorState>(
-          create: (context) => ExplorerNavigator(widget.page),
+          create: (context) => ExplorerNavigator(account: context.read<PhylumAccount>(), page: widget.page),
         ),
         StateNotifierProvider<ExplorerController, ExplorerState>(
           create: (context) => ExplorerController(

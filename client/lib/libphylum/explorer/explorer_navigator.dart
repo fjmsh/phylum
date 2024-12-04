@@ -1,3 +1,6 @@
+import 'package:drift/drift.dart';
+import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 import 'page.dart';
@@ -27,9 +30,12 @@ class ExplorerNavigatorState {
 }
 
 class ExplorerNavigator extends StateNotifier<ExplorerNavigatorState> {
+  final PhylumAccount? _account;
   ExplorerPage get current => state.current;
 
-  ExplorerNavigator(ExplorerPage page) : super(ExplorerNavigatorState(current: page));
+  ExplorerNavigator({required PhylumAccount? account, required ExplorerPage page})
+      : _account = account,
+        super(ExplorerNavigatorState(current: page));
 
   void go(ExplorerPage page) {
     if (state.current != page) {
@@ -38,6 +44,9 @@ class ExplorerNavigator extends StateNotifier<ExplorerNavigatorState> {
         back: [...state._back, state.current],
         forward: const [],
       );
+      if (page is ExplorerPageFolder && _account != null && page.folderId != _account.userHome) {
+        _account.db.recents.insertOnConflictUpdate(Recent(resourceId: page.folderId, accessed: DateTime.now()));
+      }
     }
   }
 
