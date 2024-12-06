@@ -1,5 +1,3 @@
-import 'package:drift/drift.dart';
-import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:state_notifier/state_notifier.dart';
 
@@ -45,7 +43,7 @@ class ExplorerNavigator extends StateNotifier<ExplorerNavigatorState> {
         forward: const [],
       );
       if (page is ExplorerPageFolder && _account != null && page.folderId != _account.userHome) {
-        _account.db.recents.insertOnConflictUpdate(Recent(resourceId: page.folderId, accessed: DateTime.now()));
+        _account.myListsRepository.markResourceAccessed(page.folderId);
       }
     }
   }

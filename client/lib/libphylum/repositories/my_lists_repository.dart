@@ -7,39 +7,47 @@ import 'package:phylum/libphylum/requests/bookmarks_request.dart';
 
 const keyLastBookmarkFetch = "lastBookmarksFetch";
 
-class BookmarkRepository {
+class MyListsRepository {
   final PhylumAccount account;
 
-  BookmarkRepository({required this.account});
+  MyListsRepository({required this.account});
 
   Future<void> initialize(bool cleared) async {
     if (cleared) {
       await account.persist(keyLastBookmarkFetch, null);
     }
-    refresh();
+    refreshBookmarks();
   }
 
-  Selectable<ListBookmarksResult> list() {
+  Selectable<Resource> listRecents() {
+    return account.db.listRecents();
+  }
+
+  Future<void> markResourceAccessed(String resourceId) {
+    return account.db.recents.insertOnConflictUpdate(Recent(resourceId: resourceId, accessed: DateTime.now()));
+  }
+
+  Selectable<ListBookmarksResult> listBookmarks() {
     return account.db.listBookmarks();
   }
 
-  Future<int> insertOrReplace(Bookmark bookmark) {
+  Future<int> insertOrReplaceBookmark(Bookmark bookmark) {
     return account.db.bookmarks.insertOne(bookmark, mode: InsertMode.insertOrReplace);
   }
 
-  Future<int> update(String id, Insertable<Bookmark> update) {
+  Future<int> updateBookmark(String id, Insertable<Bookmark> update) {
     return (account.db.bookmarks.update()..where((b) => b.resourceId.equals(id))).write(update);
   }
 
-  Future<int> delete(String id) {
+  Future<int> deleteBookmark(String id) {
     return account.db.bookmarks.deleteWhere((f) => f.resourceId.equals(id));
   }
 
-  Selectable<int> bookmarksCount(Iterable<String> ids) {
+  Selectable<int> countBookmarks(Iterable<String> ids) {
     return account.db.bookmarks.count(where: (b) => b.resourceId.isIn(ids) & b.deleted.equals(false));
   }
 
-  Future<ApiResult> refresh() async {
+  Future<ApiResult> refreshBookmarks() async {
     return account.apiClient.sendRequest(
       BookmarksRequest(since: account.getPersisted(keyLastBookmarkFetch) as int?),
       callback: (request, response) async {

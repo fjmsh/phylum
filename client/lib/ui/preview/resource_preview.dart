@@ -1,4 +1,3 @@
-import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -13,7 +12,7 @@ class ResourcePreview extends StatefulWidget {
   ResourcePreview({required this.resourceId}) : super(key: ValueKey(resourceId));
 
   static Future<void> showPreview(BuildContext context, String resourceId) async {
-    context.read<PhylumAccount>().db.recents.insertOnConflictUpdate(Recent(resourceId: resourceId, accessed: DateTime.now()));
+    context.read<PhylumAccount>().myListsRepository.markResourceAccessed(resourceId);
     return showDialog(context: context, builder: (context) => ResourcePreview(resourceId: resourceId));
   }
 

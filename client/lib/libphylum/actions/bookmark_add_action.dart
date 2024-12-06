@@ -54,7 +54,7 @@ class BookmarkAddAction extends PhylumAction with JsonApiAction, BookmarkAction 
 
   @override
   Future<void> applyOptimisticUpdate(PhylumAccount account) {
-    return account.bookmarkRepository.insertOrReplace(Bookmark(
+    return account.myListsRepository.insertOrReplaceBookmark(Bookmark(
       resourceId: resourceId,
       name: bookmarkName,
       created: createdMillis,
@@ -64,7 +64,7 @@ class BookmarkAddAction extends PhylumAction with JsonApiAction, BookmarkAction 
 
   @override
   Future<void> revertOptimisticUpdate(PhylumAccount account) {
-    return account.bookmarkRepository.delete(resourceId);
+    return account.myListsRepository.deleteBookmark(resourceId);
   }
 
   @override
@@ -77,7 +77,7 @@ class BookmarkAddAction extends PhylumAction with JsonApiAction, BookmarkAction 
   @override
   FutureOr<void> processResponse(PhylumAccount account, ApiResponse response) async {
     if (response is PhylumApiSuccessResponse) {
-      await account.bookmarkRepository.processSingleBookmarkResponse(response.data);
+      await account.myListsRepository.processSingleBookmarkResponse(response.data);
     }
   }
 

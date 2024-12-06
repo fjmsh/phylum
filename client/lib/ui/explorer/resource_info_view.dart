@@ -110,7 +110,7 @@ class _PermissionsTileState extends State<PermissionsTile> {
   void initState() {
     super.initState();
     final account = context.read<PhylumAccount>();
-    sub = account.db.parents(widget.resourceId).watch().listen((data) {
+    sub = account.resourceRepository.watchParents(widget.resourceId).listen((data) {
       final p = calculatePermissionSet(data.map((e) => e.permissions));
       setState(() {
         myPermission = p.remove(account.userEmail) ?? 0;

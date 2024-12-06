@@ -4,7 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:phylum/libphylum/repositories/bookmark_repository.dart';
+import 'package:phylum/libphylum/repositories/my_lists_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
 import 'package:phylum/util/logging.dart';
@@ -18,7 +18,7 @@ class PhylumAccount extends Account<PhylumAccount> {
   late final db = AppDatabase(id: id);
   late final resourceRepository = ResourceRepository(account: this);
   late final userRepository = UserRepository(account: this);
-  late final bookmarkRepository = BookmarkRepository(account: this);
+  late final myListsRepository = MyListsRepository(account: this);
 
   final _dispatcher = SimulatedBadNetworkDispatcher.good(dropRate: 0);
   // final _dispatcher = HttpClientDispatcher();
@@ -65,7 +65,7 @@ class PhylumAccount extends Account<PhylumAccount> {
     await db.bookmarks.count().get();
     await resourceRepository.initialize();
     await userRepository.initialize(db.cleared);
-    await bookmarkRepository.initialize(db.cleared);
+    await myListsRepository.initialize(db.cleared);
 
     void Function()? l;
     l = apiClient.addResponseListener((request, errorResponse) {

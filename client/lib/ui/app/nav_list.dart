@@ -46,7 +46,7 @@ class NavList extends StatelessWidget {
             onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageRecents()),
           ),
           StreamBuilder<List<ListBookmarksResult>>(
-            stream: context.read<PhylumAccount>().bookmarkRepository.list().watch(),
+            stream: context.read<PhylumAccount>().myListsRepository.listBookmarks().watch(),
             initialData: const [],
             builder: (context, snapshot) {
               return Theme(

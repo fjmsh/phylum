@@ -26,7 +26,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
   void initState() {
     super.initState();
     final account = context.read<PhylumAccount>();
-    sub = account.db.parents(widget.resourceId).watch().listen((data) {
+    sub = account.resourceRepository.watchParents(widget.resourceId).listen((data) {
       final inheritedPermissions = calculatePermissionSet(data.sublist(1).map((e) => e.permissions));
       final permissions = mergePermissions(Map.of(inheritedPermissions), data.first.permissions);
       setState(() {

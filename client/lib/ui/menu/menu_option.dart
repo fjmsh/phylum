@@ -146,4 +146,4 @@ bool isFilesOnly(PhylumAccount account, Iterable<Resource> resources) => resourc
 Future<bool> notAllBookmarked(PhylumAccount account, Iterable<Resource> resources) => allBookmarked(account, resources).then((b) => !b);
 
 Future<bool> allBookmarked(PhylumAccount account, Iterable<Resource> resources) =>
-    account.bookmarkRepository.bookmarksCount(resources.map((r) => r.id)).getSingle().then((c) => c == resources.length);
+    account.myListsRepository.countBookmarks(resources.map((r) => r.id)).getSingle().then((c) => c == resources.length);

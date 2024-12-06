@@ -36,7 +36,7 @@ class ExplorerPageFolder extends ExplorerPage {
 
   @override
   Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account) {
-    return account.db.parents(folderId).watch().map((p) => p.reversed);
+    return account.resourceRepository.watchParents(folderId).map((p) => p.reversed);
   }
 
   @override
@@ -68,7 +68,7 @@ class ExplorerPageRecents extends ExplorerPage {
 
   @override
   Stream<List<Resource>> watchChildren(PhylumAccount account) {
-    return account.db.listRecents().watch();
+    return account.myListsRepository.listRecents().watch();
   }
 
   @override

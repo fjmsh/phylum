@@ -47,6 +47,10 @@ class ResourceRepository {
     return (_selectChildren(id)..orderBy([(u) => OrderingTerm.desc(u.dir), (u) => OrderingTerm.asc(u.name.collate(Collate.noCase))])).watch();
   }
 
+  Stream<List<ParentsResult>> watchParents(String id) {
+    return account.db.parents(id).watch();
+  }
+
   SimpleSelectStatement<Resources, Resource> _selectResource(String id) {
     return account.db.resources.select()..where((f) => f.id.equals(id) & f.deleted.equals(false));
   }
