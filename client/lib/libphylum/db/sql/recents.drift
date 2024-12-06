@@ -5,6 +5,6 @@ CREATE TABLE IF NOT EXISTS recents(
     accessed DATETIME NOT NULL
 );
 
-CREATE INDEX recent_accesses ON recents(accessed DESC);
+CREATE INDEX IF NOT EXISTS recent_accesses ON recents(accessed DESC);
 
-listRecents: SELECT r.* FROM recents h LEFT JOIN resources r ON h.resource_id = r.id ORDER BY h.accessed DESC;
+selectRecents: SELECT r.* FROM recents h LEFT JOIN resources r ON h.resource_id = r.id ORDER BY h.accessed DESC;

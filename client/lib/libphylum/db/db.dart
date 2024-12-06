@@ -10,6 +10,7 @@ part 'db.g.dart';
   'sql/bookmarks.drift',
   'sql/recents.drift',
   'sql/resources.drift',
+  'sql/shared.drift',
   'sql/users.drift',
 })
 class AppDatabase extends _$AppDatabase {
@@ -22,7 +23,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase({required this.id}) : super(_openConnection(id));
 
   @override
-  int get schemaVersion => 30;
+  int get schemaVersion => 31;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -35,6 +36,7 @@ class AppDatabase extends _$AppDatabase {
           await m.drop(resources);
           await m.drop(users);
           await m.drop(bookmarks);
+          await m.drop(shared);
           await m.createAll();
         },
       );

@@ -1,0 +1,10 @@
+import 'resources.drift';
+
+CREATE TABLE IF NOT EXISTS shared(
+    resource_id TEXT NOT NULL PRIMARY KEY REFERENCES resources(id),
+    seq INT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS shared_resources ON shared(seq);
+
+selectShared: SELECT r.* FROM shared s LEFT JOIN resources r ON s.resource_id = r.id ORDER BY s.seq;

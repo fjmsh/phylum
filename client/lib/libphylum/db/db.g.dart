@@ -855,6 +855,204 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   }
 }
 
+class Shared extends Table with TableInfo<Shared, SharedData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  Shared(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _resourceIdMeta =
+      const VerificationMeta('resourceId');
+  late final GeneratedColumn<String> resourceId = GeneratedColumn<String>(
+      'resource_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL PRIMARY KEY REFERENCES resources(id)');
+  static const VerificationMeta _seqMeta = const VerificationMeta('seq');
+  late final GeneratedColumn<int> seq = GeneratedColumn<int>(
+      'seq', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL');
+  @override
+  List<GeneratedColumn> get $columns => [resourceId, seq];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'shared';
+  @override
+  VerificationContext validateIntegrity(Insertable<SharedData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('resource_id')) {
+      context.handle(
+          _resourceIdMeta,
+          resourceId.isAcceptableOrUnknown(
+              data['resource_id']!, _resourceIdMeta));
+    } else if (isInserting) {
+      context.missing(_resourceIdMeta);
+    }
+    if (data.containsKey('seq')) {
+      context.handle(
+          _seqMeta, seq.isAcceptableOrUnknown(data['seq']!, _seqMeta));
+    } else if (isInserting) {
+      context.missing(_seqMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {resourceId};
+  @override
+  SharedData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SharedData(
+      resourceId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}resource_id'])!,
+      seq: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}seq'])!,
+    );
+  }
+
+  @override
+  Shared createAlias(String alias) {
+    return Shared(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SharedData extends DataClass implements Insertable<SharedData> {
+  final String resourceId;
+  final int seq;
+  const SharedData({required this.resourceId, required this.seq});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['resource_id'] = Variable<String>(resourceId);
+    map['seq'] = Variable<int>(seq);
+    return map;
+  }
+
+  SharedCompanion toCompanion(bool nullToAbsent) {
+    return SharedCompanion(
+      resourceId: Value(resourceId),
+      seq: Value(seq),
+    );
+  }
+
+  factory SharedData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SharedData(
+      resourceId: serializer.fromJson<String>(json['resource_id']),
+      seq: serializer.fromJson<int>(json['seq']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'resource_id': serializer.toJson<String>(resourceId),
+      'seq': serializer.toJson<int>(seq),
+    };
+  }
+
+  SharedData copyWith({String? resourceId, int? seq}) => SharedData(
+        resourceId: resourceId ?? this.resourceId,
+        seq: seq ?? this.seq,
+      );
+  SharedData copyWithCompanion(SharedCompanion data) {
+    return SharedData(
+      resourceId:
+          data.resourceId.present ? data.resourceId.value : this.resourceId,
+      seq: data.seq.present ? data.seq.value : this.seq,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SharedData(')
+          ..write('resourceId: $resourceId, ')
+          ..write('seq: $seq')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(resourceId, seq);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SharedData &&
+          other.resourceId == this.resourceId &&
+          other.seq == this.seq);
+}
+
+class SharedCompanion extends UpdateCompanion<SharedData> {
+  final Value<String> resourceId;
+  final Value<int> seq;
+  final Value<int> rowid;
+  const SharedCompanion({
+    this.resourceId = const Value.absent(),
+    this.seq = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SharedCompanion.insert({
+    required String resourceId,
+    required int seq,
+    this.rowid = const Value.absent(),
+  })  : resourceId = Value(resourceId),
+        seq = Value(seq);
+  static Insertable<SharedData> custom({
+    Expression<String>? resourceId,
+    Expression<int>? seq,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (resourceId != null) 'resource_id': resourceId,
+      if (seq != null) 'seq': seq,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SharedCompanion copyWith(
+      {Value<String>? resourceId, Value<int>? seq, Value<int>? rowid}) {
+    return SharedCompanion(
+      resourceId: resourceId ?? this.resourceId,
+      seq: seq ?? this.seq,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (resourceId.present) {
+      map['resource_id'] = Variable<String>(resourceId.value);
+    }
+    if (seq.present) {
+      map['seq'] = Variable<int>(seq.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SharedCompanion(')
+          ..write('resourceId: $resourceId, ')
+          ..write('seq: $seq, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class Recents extends Table with TableInfo<Recents, Recent> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -1339,10 +1537,25 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final Users users = Users(this);
   late final Resources resources = Resources(this);
+  late final Shared shared = Shared(this);
+  late final Index sharedResources = Index('shared_resources',
+      'CREATE INDEX IF NOT EXISTS shared_resources ON shared (seq)');
   late final Recents recents = Recents(this);
   late final Index recentAccesses = Index('recent_accesses',
-      'CREATE INDEX recent_accesses ON recents (accessed DESC)');
+      'CREATE INDEX IF NOT EXISTS recent_accesses ON recents (accessed DESC)');
   late final Bookmarks bookmarks = Bookmarks(this);
+  late final Index orderedBookmarks = Index('ordered_bookmarks',
+      'CREATE INDEX IF NOT EXISTS ordered_bookmarks ON bookmarks (created)');
+  Selectable<Resource> selectShared() {
+    return customSelect(
+        'SELECT r.* FROM shared AS s LEFT JOIN resources AS r ON s.resource_id = r.id ORDER BY s.seq',
+        variables: [],
+        readsFrom: {
+          shared,
+          resources,
+        }).asyncMap(resources.mapFromRow);
+  }
+
   Selectable<ParentsResult> parents(String id) {
     return customSelect(
         'WITH RECURSIVE parents (id, parent, name, permissions) AS (SELECT id, parent, name, permissions FROM resources WHERE id = ?1 UNION ALL SELECT r.id, r.parent, r.name, r.permissions FROM resources AS r JOIN parents AS p ON r.id = p.parent) SELECT * FROM parents',
@@ -1359,7 +1572,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         ));
   }
 
-  Selectable<Resource> listRecents() {
+  Selectable<Resource> selectRecents() {
     return customSelect(
         'SELECT r.* FROM recents AS h LEFT JOIN resources AS r ON h.resource_id = r.id ORDER BY h.accessed DESC',
         variables: [],
@@ -1369,13 +1582,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         }).asyncMap(resources.mapFromRow);
   }
 
-  Selectable<ListBookmarksResult> listBookmarks() {
+  Selectable<SelectBookmarksResult> selectBookmarks() {
     return customSelect(
         'SELECT resource_id, name, created FROM bookmarks WHERE deleted = 0 ORDER BY created ASC',
         variables: [],
         readsFrom: {
           bookmarks,
-        }).map((QueryRow row) => ListBookmarksResult(
+        }).map((QueryRow row) => SelectBookmarksResult(
           resourceId: row.read<String>('resource_id'),
           name: row.read<String>('name'),
           created: row.read<int>('created'),
@@ -1386,8 +1599,16 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [users, resources, recents, recentAccesses, bookmarks];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+        users,
+        resources,
+        shared,
+        sharedResources,
+        recents,
+        recentAccesses,
+        bookmarks,
+        orderedBookmarks
+      ];
 }
 
 typedef $UsersCreateCompanionBuilder = UsersCompanion Function({
@@ -1544,6 +1765,21 @@ final class $ResourcesReferences
     extends BaseReferences<_$AppDatabase, Resources, Resource> {
   $ResourcesReferences(super.$_db, super.$_table, super.$_typedResult);
 
+  static MultiTypedResultKey<Shared, List<SharedData>> _sharedRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.shared,
+          aliasName:
+              $_aliasNameGenerator(db.resources.id, db.shared.resourceId));
+
+  $SharedProcessedTableManager get sharedRefs {
+    final manager = $SharedTableManager($_db, $_db.shared)
+        .filter((f) => f.resourceId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_sharedRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
   static MultiTypedResultKey<Recents, List<Recent>> _recentsRefsTable(
           _$AppDatabase db) =>
       MultiTypedResultKey.fromTable(db.recents,
@@ -1621,6 +1857,27 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
 
   ColumnFilters<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> sharedRefs(
+      Expression<bool> Function($SharedFilterComposer f) f) {
+    final $SharedFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.shared,
+        getReferencedColumn: (t) => t.resourceId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $SharedFilterComposer(
+              $db: $db,
+              $table: $db.shared,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 
   Expression<bool> recentsRefs(
       Expression<bool> Function($RecentsFilterComposer f) f) {
@@ -1761,6 +2018,27 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
   GeneratedColumn<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => column);
 
+  Expression<T> sharedRefs<T extends Object>(
+      Expression<T> Function($SharedAnnotationComposer a) f) {
+    final $SharedAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.shared,
+        getReferencedColumn: (t) => t.resourceId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $SharedAnnotationComposer(
+              $db: $db,
+              $table: $db.shared,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
   Expression<T> recentsRefs<T extends Object>(
       Expression<T> Function($RecentsAnnotationComposer a) f) {
     final $RecentsAnnotationComposer composer = $composerBuilder(
@@ -1815,7 +2093,8 @@ class $ResourcesTableManager extends RootTableManager<
     $ResourcesUpdateCompanionBuilder,
     (Resource, $ResourcesReferences),
     Resource,
-    PrefetchHooks Function({bool recentsRefs, bool bookmarksRefs})> {
+    PrefetchHooks Function(
+        {bool sharedRefs, bool recentsRefs, bool bookmarksRefs})> {
   $ResourcesTableManager(_$AppDatabase db, Resources table)
       : super(TableManagerState(
           db: db,
@@ -1895,16 +2174,30 @@ class $ResourcesTableManager extends RootTableManager<
                   (e.readTable(table), $ResourcesReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: (
-              {recentsRefs = false, bookmarksRefs = false}) {
+              {sharedRefs = false,
+              recentsRefs = false,
+              bookmarksRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
+                if (sharedRefs) db.shared,
                 if (recentsRefs) db.recents,
                 if (bookmarksRefs) db.bookmarks
               ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
                 return [
+                  if (sharedRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $ResourcesReferences._sharedRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $ResourcesReferences(db, table, p0).sharedRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.resourceId == item.id),
+                        typedResults: items),
                   if (recentsRefs)
                     await $_getPrefetchedData(
                         currentTable: table,
@@ -1945,7 +2238,226 @@ typedef $ResourcesProcessedTableManager = ProcessedTableManager<
     $ResourcesUpdateCompanionBuilder,
     (Resource, $ResourcesReferences),
     Resource,
-    PrefetchHooks Function({bool recentsRefs, bool bookmarksRefs})>;
+    PrefetchHooks Function(
+        {bool sharedRefs, bool recentsRefs, bool bookmarksRefs})>;
+typedef $SharedCreateCompanionBuilder = SharedCompanion Function({
+  required String resourceId,
+  required int seq,
+  Value<int> rowid,
+});
+typedef $SharedUpdateCompanionBuilder = SharedCompanion Function({
+  Value<String> resourceId,
+  Value<int> seq,
+  Value<int> rowid,
+});
+
+final class $SharedReferences
+    extends BaseReferences<_$AppDatabase, Shared, SharedData> {
+  $SharedReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static Resources _resourceIdTable(_$AppDatabase db) => db.resources
+      .createAlias($_aliasNameGenerator(db.shared.resourceId, db.resources.id));
+
+  $ResourcesProcessedTableManager? get resourceId {
+    if ($_item.resourceId == null) return null;
+    final manager = $ResourcesTableManager($_db, $_db.resources)
+        .filter((f) => f.id($_item.resourceId!));
+    final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $SharedFilterComposer extends Composer<_$AppDatabase, Shared> {
+  $SharedFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get seq => $composableBuilder(
+      column: $table.seq, builder: (column) => ColumnFilters(column));
+
+  $ResourcesFilterComposer get resourceId {
+    final $ResourcesFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.resourceId,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesFilterComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $SharedOrderingComposer extends Composer<_$AppDatabase, Shared> {
+  $SharedOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get seq => $composableBuilder(
+      column: $table.seq, builder: (column) => ColumnOrderings(column));
+
+  $ResourcesOrderingComposer get resourceId {
+    final $ResourcesOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.resourceId,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesOrderingComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $SharedAnnotationComposer extends Composer<_$AppDatabase, Shared> {
+  $SharedAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get seq =>
+      $composableBuilder(column: $table.seq, builder: (column) => column);
+
+  $ResourcesAnnotationComposer get resourceId {
+    final $ResourcesAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.resourceId,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesAnnotationComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $SharedTableManager extends RootTableManager<
+    _$AppDatabase,
+    Shared,
+    SharedData,
+    $SharedFilterComposer,
+    $SharedOrderingComposer,
+    $SharedAnnotationComposer,
+    $SharedCreateCompanionBuilder,
+    $SharedUpdateCompanionBuilder,
+    (SharedData, $SharedReferences),
+    SharedData,
+    PrefetchHooks Function({bool resourceId})> {
+  $SharedTableManager(_$AppDatabase db, Shared table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $SharedFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $SharedOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $SharedAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> resourceId = const Value.absent(),
+            Value<int> seq = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SharedCompanion(
+            resourceId: resourceId,
+            seq: seq,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String resourceId,
+            required int seq,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SharedCompanion.insert(
+            resourceId: resourceId,
+            seq: seq,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), $SharedReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: ({resourceId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (resourceId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.resourceId,
+                    referencedTable: $SharedReferences._resourceIdTable(db),
+                    referencedColumn: $SharedReferences._resourceIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $SharedProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    Shared,
+    SharedData,
+    $SharedFilterComposer,
+    $SharedOrderingComposer,
+    $SharedAnnotationComposer,
+    $SharedCreateCompanionBuilder,
+    $SharedUpdateCompanionBuilder,
+    (SharedData, $SharedReferences),
+    SharedData,
+    PrefetchHooks Function({bool resourceId})>;
 typedef $RecentsCreateCompanionBuilder = RecentsCompanion Function({
   required String resourceId,
   required DateTime accessed,
@@ -2425,6 +2937,7 @@ class $AppDatabaseManager {
   $UsersTableManager get users => $UsersTableManager(_db, _db.users);
   $ResourcesTableManager get resources =>
       $ResourcesTableManager(_db, _db.resources);
+  $SharedTableManager get shared => $SharedTableManager(_db, _db.shared);
   $RecentsTableManager get recents => $RecentsTableManager(_db, _db.recents);
   $BookmarksTableManager get bookmarks =>
       $BookmarksTableManager(_db, _db.bookmarks);
@@ -2443,11 +2956,11 @@ class ParentsResult {
   });
 }
 
-class ListBookmarksResult {
+class SelectBookmarksResult {
   final String resourceId;
   final String name;
   final int created;
-  ListBookmarksResult({
+  SelectBookmarksResult({
     required this.resourceId,
     required this.name,
     required this.created,

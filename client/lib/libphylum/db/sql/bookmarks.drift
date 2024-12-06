@@ -7,4 +7,6 @@ CREATE TABLE IF NOT EXISTS bookmarks(
     deleted BOOLEAN NOT NULL CHECK (deleted IN (0, 1))
 );
 
-listBookmarks: SELECT resource_id, name, created FROM bookmarks WHERE deleted = 0 ORDER BY created ASC;
+CREATE INDEX IF NOT EXISTS ordered_bookmarks ON bookmarks(created);
+
+selectBookmarks: SELECT resource_id, name, created FROM bookmarks WHERE deleted = 0 ORDER BY created ASC;

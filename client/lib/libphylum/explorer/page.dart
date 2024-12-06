@@ -68,7 +68,7 @@ class ExplorerPageRecents extends ExplorerPage {
 
   @override
   Stream<List<Resource>> watchChildren(PhylumAccount account) {
-    return account.myListsRepository.listRecents().watch();
+    return account.myListsRepository.watchRecents();
   }
 
   @override
@@ -82,5 +82,36 @@ class ExplorerPageRecents extends ExplorerPage {
   @override
   String toString() {
     return 'ExplorerPageRecents';
+  }
+}
+
+class ExplorerPageShared extends ExplorerPage {
+  const ExplorerPageShared();
+
+  @override
+  Future<bool> refresh(PhylumAccount account) {
+    return account.myListsRepository.refreshShared().then((result) => result.success);
+  }
+
+  @override
+  Stream<Resource?> watchResource(PhylumAccount account) {
+    return Stream.fromIterable([null]);
+  }
+
+  @override
+  Stream<List<Resource>> watchChildren(PhylumAccount account) {
+    return account.myListsRepository.watchShared();
+  }
+
+  @override
+  Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account) {
+    return Stream.fromIterable([
+      [ParentsResult(id: 'shared', name: 'Shared With Me')]
+    ]);
+  }
+
+  @override
+  String toString() {
+    return 'ExplorerPageShared';
   }
 }

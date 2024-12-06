@@ -45,8 +45,13 @@ class NavList extends StatelessWidget {
             title: const Text('Recents'),
             onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageRecents()),
           ),
-          StreamBuilder<List<ListBookmarksResult>>(
-            stream: context.read<PhylumAccount>().myListsRepository.listBookmarks().watch(),
+          ListTile(
+            leading: const Icon(Icons.people_outlined),
+            title: const Text('Shared With Me'),
+            onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageShared()),
+          ),
+          StreamBuilder<List<SelectBookmarksResult>>(
+            stream: context.read<PhylumAccount>().myListsRepository.watchBookmarks(),
             initialData: const [],
             builder: (context, snapshot) {
               return Theme(

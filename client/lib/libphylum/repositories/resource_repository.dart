@@ -164,58 +164,58 @@ class ResourceRepository {
     final removeParentRelation = existing.map((id) => ResourcesCompanion(id: Value(id), parent: Value(null)));
     return ([...ancestors, info, ...children], removeParentRelation);
   }
+}
 
-  ResourcesCompanion parseResourceObject(Map<String, dynamic> data) {
-    return ResourcesCompanion(
+ResourcesCompanion parseResourceObject(Map<String, dynamic> data) {
+  return ResourcesCompanion(
+    id: Value(data['id']),
+    parent: Value(data['parent']),
+    name: Value(data['name']),
+    dir: Value(data['dir']),
+    created: Value(DateTime.parse(data['created'])),
+    modified: Value(DateTime.parse(data['modified'])),
+    deleted: Value(data['deleted'] != null),
+    contentSize: Value(data['c_size']),
+    contentSha256: Value(data['c_sha256']),
+    contentType: Value(data['c_type']),
+    permissions: data['permissions'].isEmpty ? Value(null) : Value(data['permissions']),
+    publinks: data['publinks'].isEmpty ? Value(null) : Value(data['publinks']),
+    lastRefresh: Value(DateTime.now()),
+  );
+}
+
+ResourcesCompanion parseResourceAncestor(Map<String, dynamic> data) {
+  return ResourcesCompanion(
       id: Value(data['id']),
       parent: Value(data['parent']),
       name: Value(data['name']),
-      dir: Value(data['dir']),
-      created: Value(DateTime.parse(data['created'])),
-      modified: Value(DateTime.parse(data['modified'])),
-      deleted: Value(data['deleted'] != null),
-      contentSize: Value(data['c_size']),
-      contentSha256: Value(data['c_sha256']),
-      contentType: Value(data['c_type']),
-      permissions: data['permissions'].isEmpty ? Value(null) : Value(data['permissions']),
-      publinks: data['publinks'].isEmpty ? Value(null) : Value(data['publinks']),
-      lastRefresh: Value(DateTime.now()),
-    );
-  }
+      dir: Value(true),
+      permissions: data['permissions'].isEmpty ? Value(null) : Value(data['permissions']));
+}
 
-  ResourcesCompanion parseResourceAncestor(Map<String, dynamic> data) {
-    return ResourcesCompanion(
-        id: Value(data['id']),
-        parent: Value(data['parent']),
-        name: Value(data['name']),
-        dir: Value(true),
-        permissions: data['permissions'].isEmpty ? Value(null) : Value(data['permissions']));
-  }
-
-  ResourcesCompanion parsePartialResourceObject(Map<String, dynamic> data) {
-    return ResourcesCompanion(
-      id: Value.absentIfNull(data['id']),
-      parent: Value.absentIfNull(data['parent']),
-      name: Value.absentIfNull(data['name']),
-      dir: Value.absentIfNull(data['dir']),
-      created: Value.absentIfNull(data.containsKey('created') ? DateTime.parse(data['created']) : null),
-      modified: Value.absentIfNull(data.containsKey('modified') ? DateTime.parse(data['modified']) : null),
-      deleted: Value.absentIfNull(data.containsKey('deleted') ? data['deleted'] != null : null),
-      contentSize: Value.absentIfNull(data['c_size']),
-      contentSha256: Value.absentIfNull(data['c_sha256']),
-      contentType: Value.absentIfNull(data['c_type']),
-      permissions: data.containsKey('permissions')
-          ? data['permissions'].isEmpty
-              ? Value(null)
-              : Value(data['permissions'])
-          : Value.absent(),
-      publinks: data.containsKey('publinks')
-          ? data['publinks'].isEmpty
-              ? Value(null)
-              : Value(data['publinks'])
-          : Value.absent(),
-    );
-  }
+ResourcesCompanion parsePartialResourceObject(Map<String, dynamic> data) {
+  return ResourcesCompanion(
+    id: Value.absentIfNull(data['id']),
+    parent: Value.absentIfNull(data['parent']),
+    name: Value.absentIfNull(data['name']),
+    dir: Value.absentIfNull(data['dir']),
+    created: Value.absentIfNull(data.containsKey('created') ? DateTime.parse(data['created']) : null),
+    modified: Value.absentIfNull(data.containsKey('modified') ? DateTime.parse(data['modified']) : null),
+    deleted: Value.absentIfNull(data.containsKey('deleted') ? data['deleted'] != null : null),
+    contentSize: Value.absentIfNull(data['c_size']),
+    contentSha256: Value.absentIfNull(data['c_sha256']),
+    contentType: Value.absentIfNull(data['c_type']),
+    permissions: data.containsKey('permissions')
+        ? data['permissions'].isEmpty
+            ? Value(null)
+            : Value(data['permissions'])
+        : Value.absent(),
+    publinks: data.containsKey('publinks')
+        ? data['publinks'].isEmpty
+            ? Value(null)
+            : Value(data['publinks'])
+        : Value.absent(),
+  );
 }
 
 class ResourceAdapter implements TypeAdapter<Resource> {
