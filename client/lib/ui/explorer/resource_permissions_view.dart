@@ -18,6 +18,8 @@ class ResourcePermissionsView extends StatefulWidget {
 
 class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
   late String resourceName;
+  User? selectedUser;
+  Permission selectedUserPermission = permissionSetNone;
   Map<String, Permission>? inheritedPermissions;
   Map<String, Permission>? permissions;
 
@@ -57,9 +59,61 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
         return a.value == b.value ? a.key.compareTo(b.key) : a.value.compareTo(b.value);
       }));
     final theme = Theme.of(context);
+    if (selectedUser != null) {
+      return DropdownButtonHideUnderline(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Chip(
+              label: Text(selectedUser!.display),
+              deleteIcon: Icon(Icons.cancel_rounded),
+              onDeleted: () => setState(() => selectedUser = null),
+            ),
+            DropdownButton<Permission>(
+              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              items: _createPermissionsItems(theme, selectedUserPermission, 0),
+              value: selectedUserPermission,
+              onChanged: (userPermissions & permissionShare) == 0 ? null : (value) => setState(() => selectedUserPermission = value!),
+            ),
+          ],
+        ),
+      );
+    }
     return DropdownButtonHideUnderline(
       child: Column(
         children: [
+          if (userPermissions & permissionShare != 0)
+            Autocomplete<User>(
+              fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+                return TextField(
+                  controller: textEditingController,
+                  focusNode: focusNode,
+                  onSubmitted: (value) => onFieldSubmitted,
+                  decoration: InputDecoration(
+                    hintText: 'Add User',
+                    border: OutlineInputBorder(),
+                  ),
+                );
+              },
+              optionsBuilder: (value) {
+                final query = value.text.toLowerCase().trim();
+                return query.isEmpty
+                    ? const []
+                    : account.userRepository.users.entries
+                        .where((e) =>
+                            !inheritedPermissions.containsKey(e.key) &&
+                            !permissions.containsKey(e.key) &&
+                            (e.key.toLowerCase().contains(query) || e.value.display.toLowerCase().contains(query)))
+                        .map((e) => e.value);
+              },
+              displayStringForOption: (option) => option.display,
+              onSelected: (user) {
+                setState(() {
+                  selectedUser = user;
+                  selectedUserPermission = permissionSetReadOnly;
+                });
+              },
+            ),
           for (final e in entries)
             ListTile(
               visualDensity: VisualDensity.adaptivePlatformDensity,
