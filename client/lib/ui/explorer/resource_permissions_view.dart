@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:provider/provider.dart';
 
@@ -18,8 +19,6 @@ class ResourcePermissionsView extends StatefulWidget {
 
 class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
   late String resourceName;
-  User? selectedUser;
-  Permission selectedUserPermission = permissionSetNone;
   Map<String, Permission>? inheritedPermissions;
   Map<String, Permission>? permissions;
 
@@ -59,60 +58,43 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
         return a.value == b.value ? a.key.compareTo(b.key) : a.value.compareTo(b.value);
       }));
     final theme = Theme.of(context);
-    if (selectedUser != null) {
-      return DropdownButtonHideUnderline(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Chip(
-              label: Text(selectedUser!.display),
-              deleteIcon: Icon(Icons.cancel_rounded),
-              onDeleted: () => setState(() => selectedUser = null),
-            ),
-            DropdownButton<Permission>(
-              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-              items: _createPermissionsItems(theme, selectedUserPermission, 0),
-              value: selectedUserPermission,
-              onChanged: (userPermissions & permissionShare) == 0 ? null : (value) => setState(() => selectedUserPermission = value!),
-            ),
-          ],
-        ),
-      );
-    }
     return DropdownButtonHideUnderline(
       child: Column(
         children: [
           if (userPermissions & permissionShare != 0)
-            Autocomplete<User>(
-              fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
-                return TextField(
-                  controller: textEditingController,
-                  focusNode: focusNode,
-                  onSubmitted: (value) => onFieldSubmitted,
-                  decoration: InputDecoration(
-                    hintText: 'Add User',
-                    border: OutlineInputBorder(),
-                  ),
-                );
-              },
-              optionsBuilder: (value) {
-                final query = value.text.toLowerCase().trim();
-                return query.isEmpty
-                    ? const []
-                    : account.userRepository.users.entries
-                        .where((e) =>
-                            !inheritedPermissions.containsKey(e.key) &&
-                            !permissions.containsKey(e.key) &&
-                            (e.key.toLowerCase().contains(query) || e.value.display.toLowerCase().contains(query)))
-                        .map((e) => e.value);
-              },
-              displayStringForOption: (option) => option.display,
-              onSelected: (user) {
-                setState(() {
-                  selectedUser = user;
-                  selectedUserPermission = permissionSetReadOnly;
-                });
-              },
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: ElevatedButton.icon(
+                label: Text('Add User'),
+                icon: Icon(Icons.person_add),
+                onPressed: () async {
+                  final users = account.userRepository.users.entries
+                      .where((e) => !inheritedPermissions.containsKey(e.key) && !permissions.containsKey(e.key))
+                      .map((e) => e.value);
+                  final user = await showOptionsDialogBuilder(context, users.toList(growable: false), (user) => ListTile(title: Text(user.display)),
+                      filterList: (u, q) {
+                    final query = q.toLowerCase();
+                    return u.where((u) => u.username.contains(query) || u.display.contains(query)).toList(growable: false);
+                  });
+                  if (user == null || !context.mounted) return;
+                  final permission = await showOptionsDialogBuilder(
+                    context,
+                    [
+                      permissionSetReadOnly,
+                      permissionSetReadWrite,
+                      permissionSetReadWriteShare,
+                    ],
+                    (p) => ListTile(leading: Icon(_getIcon(p)), title: Text(_getText(p))),
+                  );
+                  if (permission == null || !context.mounted) return;
+                  account.addAction(ResourceShareAction(
+                    resourceId: widget.resourceId,
+                    resourceName: resourceName,
+                    username: user.username,
+                    permission: permission,
+                  ));
+                },
+              ),
             ),
           for (final e in entries)
             ListTile(

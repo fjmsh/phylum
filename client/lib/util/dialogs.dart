@@ -140,3 +140,59 @@ Future<String?> showInputDialog(
     }),
   );
 }
+
+Future<T?> showOptionsDialogBuilder<T>(
+  BuildContext context,
+  List<T> options,
+  Widget Function(T) buildItem, {
+  String? titleText,
+  List<T> Function(List<T>, String)? filterList,
+  bool Function(T, String)? filterTerm,
+}) async {
+  var results = options;
+  filterList ??= filterTerm == null
+      ? null
+      : (List<T> options, String query) {
+          final q = query.toLowerCase();
+          return options.where((element) => filterTerm(element, q)).toList();
+        };
+  return showDialog(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+          scrollable: true,
+          title: (titleText == null) ? null : Text(titleText),
+          content: SizedBox(
+            width: 360,
+            height: 600,
+            child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: (results.isEmpty ? 1 : results.length) + (filterList == null ? 0 : 1),
+                itemBuilder: (context, index) {
+                  if (filterList != null) {
+                    index--;
+                  }
+                  if (index < 0) {
+                    return TextField(
+                        decoration: const InputDecoration(hintText: 'Type to filter...'),
+                        autofocus: true,
+                        onChanged: (value) {
+                          setState(() {
+                            results = filterList!(options, value);
+                          });
+                        });
+                  }
+                  if (results.isEmpty && index >= 0) {
+                    return const ListTile(title: Text('No Matches'));
+                  }
+                  return InkWell(
+                    child: buildItem(results[index]),
+                    onTap: () {
+                      Navigator.of(context).pop(results[index]);
+                    },
+                  );
+                }),
+          )),
+    ),
+  );
+}
