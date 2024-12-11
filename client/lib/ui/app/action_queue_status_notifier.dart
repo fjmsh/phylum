@@ -4,6 +4,14 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:state_notifier/state_notifier.dart';
 
+const _order = {
+  ActionStatusDone: 0,
+  ActionStatusError: 1,
+  ActionStatusUploading: 2,
+  ActionStatusReady: 3,
+  ActionStatusWaiting: 4,
+};
+
 class ActionQueueStatusNotifier extends ChangeNotifier {
   final Map<QueuedAction<PhylumAccount>, RemoveListener> _listeners = {};
   final Map<QueuedAction<PhylumAccount>, ActionStatus> _statusMap = {};
@@ -16,28 +24,16 @@ class ActionQueueStatusNotifier extends ChangeNotifier {
   int get errorCount => _count<ActionStatusError>();
   int _count<T extends ActionStatus>() => _statusMap.values.fold(0, (acc, status) => status is T ? acc + 1 : acc);
 
-  final _statusActionsMap = <Type, List<QueuedAction<PhylumAccount>>>{};
-  List<QueuedAction<PhylumAccount>> _actionsByStatus(Type t) {
-    return _statusActionsMap.putIfAbsent(
-      t,
-      () => List.of(_statusMap.entries.where((e) => e.value.runtimeType == t).map((e) => e.key), growable: false),
-    );
-  }
-
-  List<QueuedAction<PhylumAccount>> get failedActions {
-    return _actionsByStatus(ActionStatusError);
-  }
-
-  List<QueuedAction<PhylumAccount>> get submittingActions {
-    return _actionsByStatus(ActionStatusUploading);
-  }
-
-  List<QueuedAction<PhylumAccount>> get readyActions {
-    return _actionsByStatus(ActionStatusReady);
-  }
-
-  List<QueuedAction<PhylumAccount>> get waitingActions {
-    return _actionsByStatus(ActionStatusWaiting);
+  List<QueuedAction<PhylumAccount>>? _orderedActions;
+  List<QueuedAction<PhylumAccount>> get orderedActions {
+    _orderedActions ??= List.of(_statusMap.keys, growable: false)
+      ..sort((a, b) {
+        if (_statusMap[a] == _statusMap[b]) {
+          return a.id.compareTo(b.id);
+        }
+        return _order[_statusMap[a].runtimeType]! - _order[_statusMap[b].runtimeType]!;
+      });
+    return _orderedActions!;
   }
 
   ActionQueueStatusNotifier(PhylumActionQueue queue) {
@@ -48,15 +44,12 @@ class ActionQueueStatusNotifier extends ChangeNotifier {
             _listeners[action] = action.statusNotifier.addListener((status) {
               // Ignore progress updates
               if (_statusMap[action].runtimeType != status.runtimeType) {
-                _statusActionsMap.remove(status.runtimeType);
-                _statusActionsMap.remove(_statusMap[action].runtimeType);
-                _statusMap[action] = status;
+                _orderedActions = null;
                 if (status is ActionStatusDone) {
-                  Future.microtask(() {
-                    _listeners[action]?.call();
-                    _listeners.remove(action);
-                    _statusMap.remove(action);
-                  });
+                  _listeners.remove(action)?.call();
+                  _statusMap.remove(action);
+                } else {
+                  _statusMap[action] = status;
                 }
                 notifyListeners();
               }

@@ -6,20 +6,20 @@ import 'package:provider/provider.dart';
 
 import 'action_view.dart';
 
-class SubmittingSliver extends StatelessWidget {
-  const SubmittingSliver({super.key});
+class ActionsSliver extends StatelessWidget {
+  const ActionsSliver({super.key});
 
   @override
   Widget build(BuildContext context) {
     final actions = context.select<ActionQueueStatusNotifier, List<QueuedAction<PhylumAccount>>>((state) {
-      return state.waitingActions;
+      return state.orderedActions;
     });
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, i) {
           if (i == 0) {
-            return const ListTile(dense: true, title: Text('Waiting'));
+            return const ListTile(dense: true, title: Text('Pending Updates'));
           }
           return ActionView(action: actions[i - 1]);
         },
