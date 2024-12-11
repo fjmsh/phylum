@@ -1,29 +1,99 @@
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/app/action_queue_status_notifier.dart';
+import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:provider/provider.dart';
+import 'package:state_notifier/state_notifier.dart';
 
 import 'action_view.dart';
 
-class ActionsSliver extends StatelessWidget {
+const _order = {
+  ActionStatusDone: 0,
+  ActionStatusError: 1,
+  ActionStatusUploading: 2,
+  ActionStatusReady: 3,
+  ActionStatusWaiting: 4,
+};
+
+class ActionsSliver extends StatefulWidget {
   const ActionsSliver({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final actions = context.select<ActionQueueStatusNotifier, List<QueuedAction<PhylumAccount>>>((state) {
-      return state.orderedActions;
-    });
+  State<ActionsSliver> createState() => _ActionsSliverState();
+}
 
+class _ActionsSliverState extends State<ActionsSliver> {
+  late final RemoveListener removeListenerCallback;
+  List<QueuedAction<PhylumAccount>>? last;
+  final Map<QueuedAction<PhylumAccount>, RemoveListener> _listeners = {};
+  final Map<QueuedAction<PhylumAccount>, ActionStatus> _statusMap = {};
+  bool paused = false;
+  bool unreachable = false;
+
+  List<QueuedAction<PhylumAccount>> actions = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    final queue = context.read<PhylumActionQueue>();
+    removeListenerCallback = queue.addListener((state) {
+      if (state.actions != last) {
+        for (final action in state.actions) {
+          if (!_listeners.containsKey(action)) {
+            _listeners[action] = action.statusNotifier.addListener((status) {
+              // Ignore progress updates
+              if (_statusMap[action].runtimeType != status.runtimeType) {
+                if (status is ActionStatusDone) {
+                  _listeners.remove(action)?.call();
+                  _statusMap.remove(action);
+                } else {
+                  _statusMap[action] = status;
+                }
+                setState(() {
+                  actions = List.of(_statusMap.keys, growable: false)
+                    ..sort((a, b) {
+                      if (_statusMap[a] == _statusMap[b]) {
+                        return a.id.compareTo(b.id);
+                      }
+                      return _order[_statusMap[a].runtimeType]! - _order[_statusMap[b].runtimeType]!;
+                    });
+                });
+              }
+            }, fireImmediately: true);
+          }
+        }
+        last = state.actions;
+      }
+      setState(() {
+        paused = state.paused;
+        unreachable = state.unreachable;
+      });
+    }, fireImmediately: true);
+  }
+
+  @override
+  void dispose() {
+    removeListenerCallback();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, i) {
           if (i == 0) {
-            return const ListTile(dense: true, title: Text('Pending Updates'));
+            return ListTile(
+              dense: true,
+              title: Text(
+                'Pending Updates (${actions.length})',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            );
           }
           return ActionView(action: actions[i - 1]);
         },
-        childCount: actions.isEmpty ? 0 : actions.length + 1,
+        childCount: actions.length + 1,
       ),
     );
   }
