@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/sync/sliver_changes.dart';
+import 'package:phylum/ui/sync/sliver_updates.dart';
+import 'package:phylum/ui/sync/sliver_offline.dart';
 import 'package:phylum/ui/sync/sliver_uploads.dart';
 import 'package:phylum/ui/sync/sliver_downloads.dart';
 
@@ -41,6 +42,6 @@ class SyncDialog extends StatelessWidget {
   }
 
   Widget buildContents(BuildContext context) => const CustomScrollView(
-        slivers: [DownloadsSliver(), ErrorsSliver(), UploadsSliver(), UpdatesSliver()],
+        slivers: [OfflineSliver(), DownloadsSliver(), ErrorsSliver(), UploadsSliver(), UpdatesSliver()],
       );
 }

@@ -13,7 +13,7 @@ class UpdatesSliver extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final actions = context.select<PhylumActionQueueState, List<QueuedAction<PhylumAccount>>>((state) => state.actions);
-    final updates = actions.where((action) => action.action is! ResourceUploadAction).toList(growable: false);
+    final updates = actions.where((action) => action.action is! ResourceUploadAction && action.status is! ActionStatusError).toList(growable: false);
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(
