@@ -7,8 +7,8 @@ import 'package:provider/provider.dart';
 
 import 'action_view.dart';
 
-class SliverUpdates extends StatelessWidget {
-  const SliverUpdates({super.key});
+class UpdatesSliver extends StatelessWidget {
+  const UpdatesSliver({super.key});
 
   @override
   Widget build(BuildContext context) {

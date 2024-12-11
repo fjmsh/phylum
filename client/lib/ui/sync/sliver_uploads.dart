@@ -7,8 +7,8 @@ import 'package:provider/provider.dart';
 
 import 'action_view.dart';
 
-class SliverUploads extends StatelessWidget {
-  const SliverUploads({super.key});
+class UploadsSliver extends StatelessWidget {
+  const UploadsSliver({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class SliverUploads extends StatelessWidget {
           }
           return ActionView(action: uploads[i - 1]);
         },
-        childCount: uploads.length + 1,
+        childCount: uploads.isEmpty ? 0 : uploads.length + 1,
       ),
     );
   }

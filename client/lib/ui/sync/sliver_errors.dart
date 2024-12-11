@@ -6,8 +6,8 @@ import 'package:provider/provider.dart';
 
 import 'action_view.dart';
 
-class SliverErrors extends StatelessWidget {
-  const SliverErrors({super.key});
+class ErrorsSliver extends StatelessWidget {
+  const ErrorsSliver({super.key});
 
   @override
   Widget build(BuildContext context) {
