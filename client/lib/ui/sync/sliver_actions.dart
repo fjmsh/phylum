@@ -44,8 +44,11 @@ class _ActionsSliverState extends State<ActionsSliver> {
               // Ignore progress updates
               if (_statusMap[action].runtimeType != status.runtimeType) {
                 if (status is ActionStatusDone) {
-                  _listeners.remove(action)?.call();
+                  final l = _listeners.remove(action);
                   _statusMap.remove(action);
+                  if (l != null) {
+                    Future.microtask(() => l());
+                  }
                 } else {
                   _statusMap[action] = status;
                 }

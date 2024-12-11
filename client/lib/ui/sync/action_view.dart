@@ -47,7 +47,7 @@ class ActionView extends StatelessWidget {
     final account = context.read<PhylumAccount>();
     String description = error.description;
     if (error is PhylumApiErrorResponse) {
-      if (error.code == "name_conflict") {
+      if (error.code == "resource_name_conflict") {
         description = 'Error: Another resource with this name already exists on the server.';
       }
     }
@@ -57,8 +57,8 @@ class ActionView extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: () => context.read<PhylumActionQueue>().retryAction(action.id)),
-          IconButton(icon: const Icon(Icons.delete), onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id)),
+          IconButton(icon: const Icon(Icons.refresh), tooltip: 'Retry', onPressed: () => context.read<PhylumActionQueue>().retryAction(action.id)),
+          IconButton(icon: const Icon(Icons.block), tooltip: 'Delete', onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id)),
         ],
       ),
     );
