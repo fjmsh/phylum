@@ -13,15 +13,15 @@ class ActionView extends StatelessWidget {
     return StreamBuilder(
       stream: action.statusNotifier.stream,
       initialData: action.status,
-      builder: (context, snapshot) => buildTile(context, snapshot.data!),
+      builder: (context, snapshot) => buildTile(context, action, snapshot.data!),
     );
   }
 
-  Widget buildTile(BuildContext context, ActionStatus status) {
+  Widget buildTile(BuildContext context, QueuedAction<PhylumAccount> action, ActionStatus status) {
     return switch (status) {
       ActionStatusWaiting _ || ActionStatusReady _ || ActionStatusDone _ => buildSimpleInfoTile(context, status),
       ActionStatusUploading(done: int done, length: int length) => buildProgressTile(context, done, length),
-      ActionStatusError(error: final error) => buildErrorInfoTile(context, error),
+      ActionStatusError(error: final error) => buildErrorInfoTile(context, action, error),
     };
   }
 
@@ -43,17 +43,14 @@ class ActionView extends StatelessWidget {
         ));
   }
 
-  Widget buildErrorInfoTile(BuildContext context, ApiResult error) {
+  Widget buildErrorInfoTile(BuildContext context, QueuedAction<PhylumAccount> action, ApiResult error) {
     final account = context.read<PhylumAccount>();
-    String description = error.description;
     if (error is PhylumApiErrorResponse) {
-      if (error.code == "resource_name_conflict") {
-        description = 'Error: Another resource with this name already exists on the server.';
-      }
+      if (error.code == "resource_name_conflict") {}
     }
     return ListTile(
       title: Text(action.action.generateDescription(account), overflow: TextOverflow.fade),
-      subtitle: Text(description),
+      subtitle: Text(error.description),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
