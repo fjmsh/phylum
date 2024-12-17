@@ -112,5 +112,17 @@ class ResourceUploadAction extends PhylumAction with FileUploadApiAction, Resour
   }
 
   @override
+  ResourceBindAction copyWithResourceName(String resourceName) {
+    return ResourceUploadAction._(
+      resourceId: resourceId,
+      parent: parent,
+      resourceName: resourceName,
+      path: path,
+      size: size,
+      contentType: contentType,
+    );
+  }
+
+  @override
   bool dependsOn(PhylumAction action) => (action is ResourceCreateAction && action.resourceId == parent);
 }

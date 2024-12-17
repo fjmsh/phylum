@@ -103,5 +103,17 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
   }
 
   @override
+  ResourceBindAction copyWithResourceName(String resourceName) {
+    return ResourceCopyAction._(
+      srcId: srcId,
+      resourceId: resourceId,
+      resourceName: resourceName,
+      parent: parent,
+      dir: dir,
+      description: description,
+    );
+  }
+
+  @override
   bool dependsOn(PhylumAction action) => action is ResourceCreateAction && action.resourceId == parent;
 }

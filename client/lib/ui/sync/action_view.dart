@@ -59,10 +59,13 @@ class ActionView extends StatelessWidget {
                 icon: const Icon(Icons.edit),
                 tooltip: 'Rename',
                 onPressed: () async {
-                  final preset = (action.action is ResourceBindAction) ? (action.action as ResourceBindAction).resourceName : null;
+                  final offlineAction = action.action;
+                  if (offlineAction is! ResourceBindAction) return;
+                  final preset = offlineAction.resourceName;
                   final name = await showInputDialog(context,
                       title: 'Edit Name', preset: preset, capitalization: TextCapitalization.words, validate: (name) => name.trim().isNotEmpty);
-                  if (name == null) return;
+                  if (name == null || !context.mounted) return;
+                  context.read<PhylumActionQueue>().editAction(action, offlineAction.copyWithResourceName(name));
                 }),
           IconButton(icon: const Icon(Icons.refresh), tooltip: 'Retry', onPressed: () => context.read<PhylumActionQueue>().retryAction(action.id)),
           IconButton(icon: const Icon(Icons.block), tooltip: 'Delete', onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id)),

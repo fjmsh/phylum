@@ -76,5 +76,14 @@ class ResourceMkdirAction extends PhylumAction with JsonApiAction, ResourceCreat
   }
 
   @override
+  ResourceBindAction copyWithResourceName(String resourceName) {
+    return ResourceMkdirAction(
+      resourceId: resourceId,
+      parent: parent,
+      resourceName: resourceName,
+    );
+  }
+
+  @override
   bool dependsOn(PhylumAction action) => action is ResourceMkdirAction && action.resourceId == parent;
 }

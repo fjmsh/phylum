@@ -116,6 +116,17 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAc
   }
 
   @override
+  ResourceBindAction copyWithResourceName(String resourceName) {
+    return ResourceMoveAction._(
+      resourceId: resourceId,
+      parent: parent,
+      resourceName: resourceName,
+      modified: modified,
+      description: description,
+    );
+  }
+
+  @override
   bool dependsOn(PhylumAction action) =>
       (action is ResourceCreateAction && action.resourceId == resourceId) ||
       (action is ResourceCreateAction && action.resourceId == parent) ||
