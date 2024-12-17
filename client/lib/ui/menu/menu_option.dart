@@ -74,7 +74,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
           src: r,
           resourceId: generateUuid(),
           resourceName: r.name,
-          parentId: dest,
+          parent: dest,
         ));
       }
       break;

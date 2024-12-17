@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
 class ActionView extends StatelessWidget {
@@ -45,15 +47,23 @@ class ActionView extends StatelessWidget {
 
   Widget buildErrorInfoTile(BuildContext context, QueuedAction<PhylumAccount> action, ApiResult error) {
     final account = context.read<PhylumAccount>();
-    if (error is PhylumApiErrorResponse) {
-      if (error.code == "resource_name_conflict") {}
-    }
+    final showRenameOptions = error is PhylumApiErrorResponse && (error.code == "resource_name_conflict" || error.code == "resource_name_invalid");
     return ListTile(
       title: Text(action.action.generateDescription(account), overflow: TextOverflow.fade),
       subtitle: Text(error.description),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (showRenameOptions)
+            IconButton(
+                icon: const Icon(Icons.edit),
+                tooltip: 'Rename',
+                onPressed: () async {
+                  final preset = (action.action is ResourceBindAction) ? (action.action as ResourceBindAction).resourceName : null;
+                  final name = await showInputDialog(context,
+                      title: 'Edit Name', preset: preset, capitalization: TextCapitalization.words, validate: (name) => name.trim().isNotEmpty);
+                  if (name == null) return;
+                }),
           IconButton(icon: const Icon(Icons.refresh), tooltip: 'Retry', onPressed: () => context.read<PhylumActionQueue>().retryAction(action.id)),
           IconButton(icon: const Icon(Icons.block), tooltip: 'Delete', onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id)),
         ],

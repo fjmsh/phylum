@@ -66,7 +66,7 @@ void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
       src: r,
       resourceId: generateUuid(),
       resourceName: r.name,
-      parentId: folderId,
+      parent: folderId,
     ));
   }
 

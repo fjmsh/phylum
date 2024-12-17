@@ -1,11 +1,12 @@
 import 'dart:async';
 
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class ResourceMkdirAction extends PhylumAction with JsonApiAction, ResourceCreateAction {
+class ResourceMkdirAction extends PhylumAction with JsonApiAction, ResourceCreateAction, ResourceBindAction {
   static const actionName = 'resourceMkdir';
   @override
   String get name => actionName;
@@ -18,7 +19,9 @@ class ResourceMkdirAction extends PhylumAction with JsonApiAction, ResourceCreat
 
   @override
   final String resourceId;
+  @override
   final String parent;
+  @override
   final String resourceName;
 
   ResourceMkdirAction({

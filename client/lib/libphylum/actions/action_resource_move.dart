@@ -2,12 +2,13 @@ import 'dart:async';
 
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class ResourceMoveAction extends PhylumAction with JsonApiAction {
+class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAction {
   static const actionName = 'resourceMove';
   @override
   String get name => actionName;
@@ -19,8 +20,10 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
   String get endpoint => '/api/v1/fs/mv/$resourceId';
 
   final String resourceId;
-  final String? parent;
-  final String? resourceName;
+  @override
+  final String parent;
+  @override
+  final String resourceName;
   final DateTime modified;
   final String description;
 
@@ -33,8 +36,8 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
     String? name,
   }) : this._(
           resourceId: r.id,
-          resourceName: name,
-          parent: parent,
+          resourceName: name ?? r.name,
+          parent: parent ?? r.parent!,
           description: name == null ? 'Moving ${r.name}' : 'Renaming ${r.name} to $name',
           modified: DateTime.now(),
         );
@@ -57,7 +60,7 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
   @override
   Map<String, dynamic>? generateRequestBody() {
     return {
-      'target': '${parent ?? ''}:${resourceName ?? ''}',
+      'target': '$parent:$resourceName',
     };
   }
 
@@ -89,8 +92,8 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction {
     return account.resourceRepository.updateResource(
       resourceId,
       (o) => o(
-        name: resourceName == null ? Value.absent() : Value(serverData.name),
-        parent: parent == null ? Value.absent() : Value(serverData.parent),
+        name: Value(serverData.name),
+        parent: Value(serverData.parent),
         modified: Value(serverData.modified),
       ),
     );

@@ -1,12 +1,13 @@
 import 'dart:async';
 
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreateAction {
+class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreateAction, ResourceBindAction {
   static const actionName = 'resourceCopy';
   @override
   String get name => actionName;
@@ -20,7 +21,9 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
   final String srcId;
   @override
   final String resourceId;
-  final String parentId;
+  @override
+  final String parent;
+  @override
   final String resourceName;
   final String description;
   final bool dir;
@@ -29,7 +32,7 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
     required this.srcId,
     required this.resourceId,
     required this.resourceName,
-    required this.parentId,
+    required this.parent,
     required this.dir,
     required this.description,
   });
@@ -38,12 +41,12 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
     required Resource src,
     required String resourceId,
     required String resourceName,
-    required String parentId,
+    required String parent,
   }) : this._(
           srcId: src.id,
           resourceId: resourceId,
           resourceName: resourceName,
-          parentId: parentId,
+          parent: parent,
           dir: src.dir,
           description: 'Copying ${src.name}',
         );
@@ -53,7 +56,7 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
       srcId: map['srcId'],
       resourceId: map['resourceId'],
       resourceName: map['resourceName'],
-      parentId: map['parentId'],
+      parent: map['parent'],
       dir: map['dir'],
       description: map['description'],
     );
@@ -68,13 +71,13 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
   Map<String, dynamic>? generateRequestBody() {
     return {
       'id': resourceId,
-      'target': '$parentId:$resourceName',
+      'target': '$parent:$resourceName',
     };
   }
 
   @override
   Future<void> applyOptimisticUpdate(PhylumAccount account) {
-    return account.resourceRepository.createResource(resourceId, dir, parentId, resourceName, '');
+    return account.resourceRepository.createResource(resourceId, dir, parent, resourceName, '');
   }
 
   @override
@@ -87,7 +90,7 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
         'srcId': srcId,
         'resourceId': resourceId,
         'resourceName': resourceName,
-        'parentId': parentId,
+        'parent': parent,
         'dir': dir,
         'description': description,
       };
@@ -100,5 +103,5 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
   }
 
   @override
-  bool dependsOn(PhylumAction action) => action is ResourceCreateAction && action.resourceId == parentId;
+  bool dependsOn(PhylumAction action) => action is ResourceCreateAction && action.resourceId == parent;
 }
