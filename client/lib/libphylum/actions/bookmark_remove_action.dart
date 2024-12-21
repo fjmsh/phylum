@@ -4,7 +4,6 @@ import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/bookmark_action.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class BookmarkRemoveAction extends PhylumAction with JsonApiAction, BookmarkAction {
@@ -39,7 +38,7 @@ class BookmarkRemoveAction extends PhylumAction with JsonApiAction, BookmarkActi
   }
 
   @override
-  String generateDescription(PhylumAccount account) {
+  String generateDescription() {
     return 'Removing Bookmark: $bookmarkName';
   }
 
@@ -47,12 +46,12 @@ class BookmarkRemoveAction extends PhylumAction with JsonApiAction, BookmarkActi
   Map<String, dynamic>? generateRequestBody() => null;
 
   @override
-  Future<void> applyOptimisticUpdate(PhylumAccount account) {
+  Future<void> applyOptimisticUpdate() {
     return account.myListsRepository.updateBookmark(resourceId, BookmarksCompanion(deleted: Value(true)));
   }
 
   @override
-  Future<void> revertOptimisticUpdate(PhylumAccount account) {
+  Future<void> revertOptimisticUpdate() {
     return account.myListsRepository.updateBookmark(resourceId, BookmarksCompanion(deleted: Value(false)));
   }
 
@@ -63,12 +62,12 @@ class BookmarkRemoveAction extends PhylumAction with JsonApiAction, BookmarkActi
       };
 
   @override
-  FutureOr<void> processResponse(PhylumAccount account, ApiResponse response) async {
+  FutureOr<void> processResponse(ApiResponse response) async {
     if (response is PhylumApiSuccessResponse) {
       await account.myListsRepository.processSingleBookmarkResponse(response.data);
     }
   }
 
   @override
-  bool dependsOn(OfflineAction<PhylumAccount> action) => action is BookmarkAction && action.resourceId == resourceId;
+  bool dependsOn(PhylumAction action) => action is BookmarkAction && action.resourceId == resourceId;
 }

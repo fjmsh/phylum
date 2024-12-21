@@ -4,7 +4,6 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreateAction, ResourceBindAction {
@@ -63,7 +62,7 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
   }
 
   @override
-  String generateDescription(PhylumAccount account) {
+  String generateDescription() {
     return description;
   }
 
@@ -76,12 +75,12 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
   }
 
   @override
-  Future<void> applyOptimisticUpdate(PhylumAccount account) {
+  Future<void> applyOptimisticUpdate() {
     return account.resourceRepository.createResource(resourceId, dir, parent, resourceName, '');
   }
 
   @override
-  Future<void> revertOptimisticUpdate(PhylumAccount account) {
+  Future<void> revertOptimisticUpdate() {
     return account.resourceRepository.deleteResource(resourceId);
   }
 
@@ -96,7 +95,7 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
       };
 
   @override
-  FutureOr<void> processResponse(PhylumAccount account, ApiResponse response) async {
+  FutureOr<void> processResponse(ApiResponse response) async {
     if (response is PhylumApiSuccessResponse) {
       await account.resourceRepository.processResourceUpdateResponse(resourceId, response.data);
     }

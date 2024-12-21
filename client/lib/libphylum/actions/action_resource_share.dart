@@ -52,7 +52,7 @@ class ResourceShareAction extends PhylumAction with JsonApiAction {
   }
 
   @override
-  String generateDescription(PhylumAccount account) {
+  String generateDescription() {
     return 'Sharing $resourceName with $username';
   }
 
@@ -66,16 +66,17 @@ class ResourceShareAction extends PhylumAction with JsonApiAction {
 
   @override
   Future<void> initialize(PhylumAccount account) {
+    super.initialize(account);
     return account.resourceRepository.trackServerData(resourceId);
   }
 
   @override
-  Future<void> dispose(PhylumAccount account) {
+  Future<void> dispose() {
     return account.resourceRepository.stopTrackingServerData(resourceId);
   }
 
   @override
-  Future<void> applyOptimisticUpdate(PhylumAccount account) async {
+  Future<void> applyOptimisticUpdate() async {
     final resource = await account.resourceRepository.getResource(resourceId);
     final p = mergePermissions({}, resource?.permissions);
     if ((p[username] ?? 0) == permission) {
@@ -97,7 +98,7 @@ class ResourceShareAction extends PhylumAction with JsonApiAction {
   }
 
   @override
-  Future<void> revertOptimisticUpdate(PhylumAccount account) {
+  Future<void> revertOptimisticUpdate() {
     final serverData = account.resourceRepository.getServerData(resourceId)!;
     return account.resourceRepository.updateResource(
       resourceId,
@@ -118,7 +119,7 @@ class ResourceShareAction extends PhylumAction with JsonApiAction {
       };
 
   @override
-  FutureOr<void> processResponse(PhylumAccount account, ApiResponse response) async {
+  FutureOr<void> processResponse(ApiResponse response) async {
     if (response is PhylumApiSuccessResponse) {
       await account.resourceRepository.processResourceUpdateResponse(resourceId, response.data);
     }

@@ -43,7 +43,7 @@ void main() async {
     await appDir.create();
     Hive.init(appDir.path);
   }
-  Hive.registerAdapter(ApiActionTypeAdapter(actionDeserializers));
+  Hive.registerAdapter(OfflineActionAdapter(actionDeserializers));
 
   final accountManager = await AccountManager.restore((id) async {
     final account = PhylumAccount.restore(id: id);

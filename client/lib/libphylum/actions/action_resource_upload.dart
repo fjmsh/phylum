@@ -7,7 +7,6 @@ import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 
@@ -72,17 +71,17 @@ class ResourceUploadAction extends PhylumAction with FileUploadApiAction, Resour
   }
 
   @override
-  String generateDescription(PhylumAccount account) {
+  String generateDescription() {
     return "Uploading $resourceName";
   }
 
   @override
-  Future<void> applyOptimisticUpdate(PhylumAccount account) {
+  Future<void> applyOptimisticUpdate() {
     return account.resourceRepository.createResource(resourceId, false, parent, resourceName, contentType);
   }
 
   @override
-  Future<void> revertOptimisticUpdate(PhylumAccount account) {
+  Future<void> revertOptimisticUpdate() {
     return account.resourceRepository.deleteResource(resourceId);
   }
 
@@ -105,7 +104,7 @@ class ResourceUploadAction extends PhylumAction with FileUploadApiAction, Resour
   }
 
   @override
-  FutureOr<void> processResponse(PhylumAccount account, ApiResponse response) async {
+  FutureOr<void> processResponse(ApiResponse response) async {
     if (response is PhylumApiSuccessResponse) {
       await account.resourceRepository.processResourceUpdateResponse(resourceId, response.data);
     }

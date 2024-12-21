@@ -24,13 +24,13 @@ class ActionsSliver extends StatefulWidget {
 
 class _ActionsSliverState extends State<ActionsSliver> {
   late final RemoveListener removeListenerCallback;
-  List<QueuedAction<PhylumAccount>>? last;
-  final Map<QueuedAction<PhylumAccount>, RemoveListener> _listeners = {};
-  final Map<QueuedAction<PhylumAccount>, ActionStatus> _statusMap = {};
+  List<OfflineAction<PhylumAccount>>? last;
+  final Map<OfflineAction<PhylumAccount>, RemoveListener> _listeners = {};
+  final Map<OfflineAction<PhylumAccount>, ActionStatus> _statusMap = {};
   bool paused = false;
   bool unreachable = false;
 
-  List<QueuedAction<PhylumAccount>> actions = const [];
+  List<OfflineAction<PhylumAccount>> actions = const [];
 
   @override
   void initState() {

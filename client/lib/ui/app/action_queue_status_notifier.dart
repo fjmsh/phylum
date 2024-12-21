@@ -6,9 +6,9 @@ import 'package:state_notifier/state_notifier.dart';
 
 class ActionQueueStatusNotifier extends ChangeNotifier {
   late final RemoveListener removeListenerCallback;
-  List<QueuedAction<PhylumAccount>>? last;
-  final Map<QueuedAction<PhylumAccount>, RemoveListener> _listeners = {};
-  final Map<QueuedAction<PhylumAccount>, ActionStatus> _statusMap = {};
+  List<OfflineAction<PhylumAccount>>? last;
+  final Map<OfflineAction<PhylumAccount>, RemoveListener> _listeners = {};
+  final Map<OfflineAction<PhylumAccount>, ActionStatus> _statusMap = {};
   bool paused = false;
   bool unreachable = false;
 

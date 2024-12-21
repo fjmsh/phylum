@@ -53,7 +53,7 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAc
   }
 
   @override
-  String generateDescription(PhylumAccount account) {
+  String generateDescription() {
     return description;
   }
 
@@ -66,16 +66,17 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAc
 
   @override
   Future<void> initialize(PhylumAccount account) {
+    super.initialize(account);
     return account.resourceRepository.trackServerData(resourceId);
   }
 
   @override
-  Future<void> dispose(PhylumAccount account) {
+  Future<void> dispose() {
     return account.resourceRepository.stopTrackingServerData(resourceId);
   }
 
   @override
-  Future<void> applyOptimisticUpdate(PhylumAccount account) {
+  Future<void> applyOptimisticUpdate() {
     return account.resourceRepository.updateResource(
       resourceId,
       (o) => o(
@@ -87,7 +88,7 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAc
   }
 
   @override
-  Future<void> revertOptimisticUpdate(PhylumAccount account) {
+  Future<void> revertOptimisticUpdate() {
     final serverData = account.resourceRepository.getServerData(resourceId)!;
     return account.resourceRepository.updateResource(
       resourceId,
@@ -109,7 +110,7 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAc
       };
 
   @override
-  FutureOr<void> processResponse(PhylumAccount account, ApiResponse response) async {
+  FutureOr<void> processResponse(ApiResponse response) async {
     if (response is PhylumApiSuccessResponse) {
       await account.resourceRepository.processResourceUpdateResponse(resourceId, response.data);
     }

@@ -7,7 +7,7 @@ import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
 class ActionView extends StatelessWidget {
-  final QueuedAction<PhylumAccount> action;
+  final OfflineAction<PhylumAccount> action;
   ActionView({required this.action}) : super(key: ValueKey(action.id));
 
   @override
@@ -19,7 +19,7 @@ class ActionView extends StatelessWidget {
     );
   }
 
-  Widget buildTile(BuildContext context, QueuedAction<PhylumAccount> action, ActionStatus status) {
+  Widget buildTile(BuildContext context, OfflineAction<PhylumAccount> action, ActionStatus status) {
     return switch (status) {
       ActionStatusWaiting _ || ActionStatusReady _ || ActionStatusDone _ => buildSimpleInfoTile(context, status),
       ActionStatusUploading(done: int done, length: int length) => buildProgressTile(context, done, length),
@@ -28,28 +28,25 @@ class ActionView extends StatelessWidget {
   }
 
   Widget buildSimpleInfoTile(BuildContext context, ActionStatus status) {
-    final account = context.read<PhylumAccount>();
     return ListTile(
-      title: Text(action.action.generateDescription(account)),
+      title: Text(action.generateDescription()),
       subtitle: Text(status.toString()),
       trailing: IconButton(onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id), icon: const Icon(Icons.delete)),
     );
   }
 
   Widget buildProgressTile(BuildContext context, int done, int total) {
-    final account = context.read<PhylumAccount>();
     return ListTile(
-        title: Text(action.action.generateDescription(account)),
+        title: Text(action.generateDescription()),
         subtitle: LinearProgressIndicator(
           value: total == 0 ? null : (done * 1.0 / total),
         ));
   }
 
-  Widget buildErrorInfoTile(BuildContext context, QueuedAction<PhylumAccount> action, ApiResult error) {
-    final account = context.read<PhylumAccount>();
+  Widget buildErrorInfoTile(BuildContext context, OfflineAction<PhylumAccount> action, ApiResult error) {
     final showRenameOptions = error is PhylumApiErrorResponse && (error.code == "resource_name_conflict" || error.code == "resource_name_invalid");
     return ListTile(
-      title: Text(action.action.generateDescription(account), overflow: TextOverflow.fade),
+      title: Text(action.generateDescription(), overflow: TextOverflow.fade),
       subtitle: Text(error.description),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -59,13 +56,12 @@ class ActionView extends StatelessWidget {
                 icon: const Icon(Icons.edit),
                 tooltip: 'Rename',
                 onPressed: () async {
-                  final offlineAction = action.action;
-                  if (offlineAction is! ResourceBindAction) return;
-                  final preset = offlineAction.resourceName;
+                  if (action is! ResourceBindAction) return;
+                  final preset = action.resourceName;
                   final name = await showInputDialog(context,
                       title: 'Edit Name', preset: preset, capitalization: TextCapitalization.words, validate: (name) => name.trim().isNotEmpty);
                   if (name == null || !context.mounted) return;
-                  context.read<PhylumActionQueue>().editAction(action, offlineAction.copyWithResourceName(name));
+                  context.read<PhylumActionQueue>().editAction(action, action.copyWithResourceName(name));
                 }),
           IconButton(icon: const Icon(Icons.refresh), tooltip: 'Retry', onPressed: () => context.read<PhylumActionQueue>().retryAction(action.id)),
           IconButton(icon: const Icon(Icons.block), tooltip: 'Delete', onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id)),

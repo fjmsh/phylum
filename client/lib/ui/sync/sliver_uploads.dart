@@ -12,8 +12,8 @@ class UploadsSliver extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final actions = context.select<PhylumActionQueueState, List<QueuedAction<PhylumAccount>>>((state) => state.actions);
-    final uploads = actions.where((action) => action.action is ResourceUploadAction).toList(growable: false);
+    final actions = context.select<PhylumActionQueueState, List<OfflineAction<PhylumAccount>>>((state) => state.actions);
+    final uploads = actions.whereType<ResourceUploadAction>().toList(growable: false);
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(
