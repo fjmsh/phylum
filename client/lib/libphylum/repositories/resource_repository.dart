@@ -137,14 +137,15 @@ class ResourceRepository {
     }
   }
 
-  Future processResourceUpdateResponse(String id, Map<String, dynamic> data) async {
-    final r = parsePartialResourceObject(data);
-    final update = (account.db.resources.update()..where((o) => o.id.equals(id)));
+  Future<ResourcesCompanion> processResourceUpdateResponse(String id, Map<String, dynamic> data) async {
+    final r = parsePartialResourceObject(data, id);
+    final update = (account.db.resources.update()..where((o) => o.id.equals(r.id.value)));
     await update.write(r);
     final serverData = _serverDataBox.get(r.id.value);
     if (serverData != null) {
       _serverDataBox.put(r.id.value, serverData.copyWithCompanion(r));
     }
+    return r;
   }
 
   Future<(Iterable<ResourcesCompanion>, Iterable<ResourcesCompanion>)> parseFullResourceObject(Map<String, dynamic> data) async {
@@ -193,9 +194,9 @@ ResourcesCompanion parseResourceAncestor(Map<String, dynamic> data) {
       permissions: data['permissions'].isEmpty ? Value(null) : Value(data['permissions']));
 }
 
-ResourcesCompanion parsePartialResourceObject(Map<String, dynamic> data) {
+ResourcesCompanion parsePartialResourceObject(Map<String, dynamic> data, [String? id]) {
   return ResourcesCompanion(
-    id: Value.absentIfNull(data['id']),
+    id: Value(data['id'] ?? id),
     parent: Value.absentIfNull(data['parent']),
     name: Value.absentIfNull(data['name']),
     dir: Value.absentIfNull(data['dir']),
