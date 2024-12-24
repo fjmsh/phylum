@@ -22,30 +22,31 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
   final String resourceId;
   @override
   final String parent;
+  String _resourceName;
   @override
-  final String resourceName;
+  String get resourceName => _resourceName;
   final String description;
   final bool dir;
 
   ResourceCopyAction._({
     required this.srcId,
     required this.resourceId,
-    required this.resourceName,
     required this.parent,
+    required String resourceName,
     required this.dir,
     required this.description,
-  });
+  }) : _resourceName = resourceName;
 
   ResourceCopyAction({
     required Resource src,
     required String resourceId,
-    required String resourceName,
     required String parent,
+    required String resourceName,
   }) : this._(
           srcId: src.id,
           resourceId: resourceId,
-          resourceName: resourceName,
           parent: parent,
+          resourceName: resourceName,
           dir: src.dir,
           description: 'Copying ${src.name}',
         );
@@ -54,8 +55,8 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
     return ResourceCopyAction._(
       srcId: map['srcId'],
       resourceId: map['resourceId'],
-      resourceName: map['resourceName'],
       parent: map['parent'],
+      resourceName: map['resourceName'],
       dir: map['dir'],
       description: map['description'],
     );
@@ -88,8 +89,8 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
   Map<String, dynamic> toMap() => {
         'srcId': srcId,
         'resourceId': resourceId,
-        'resourceName': resourceName,
         'parent': parent,
+        'resourceName': resourceName,
         'dir': dir,
         'description': description,
       };
@@ -102,15 +103,9 @@ class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreate
   }
 
   @override
-  ResourceBindAction copyWithResourceName(String resourceName) {
-    return ResourceCopyAction._(
-      srcId: srcId,
-      resourceId: resourceId,
-      resourceName: resourceName,
-      parent: parent,
-      dir: dir,
-      description: description,
-    );
+  Future<void> updateResourceName(String resourceName) {
+    _resourceName = resourceName;
+    return update(revertOptimisticUpdate);
   }
 
   @override

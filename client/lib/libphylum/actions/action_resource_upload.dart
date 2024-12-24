@@ -28,19 +28,21 @@ class ResourceUploadAction extends PhylumAction with FileUploadApiAction, Resour
   final String resourceId;
   @override
   final String parent;
+  String _resourceName;
   @override
-  final String resourceName;
+  String get resourceName => _resourceName;
   final String path;
   final int size;
   final String contentType;
 
-  ResourceUploadAction._(
-      {required this.resourceId,
-      required this.parent,
-      required this.resourceName,
-      required this.path,
-      required this.size,
-      required this.contentType});
+  ResourceUploadAction._({
+    required this.resourceId,
+    required this.parent,
+    required String resourceName,
+    required this.path,
+    required this.size,
+    required this.contentType,
+  }) : _resourceName = resourceName;
 
   static Future<ResourceUploadAction> fromPath({
     required String parent,
@@ -111,15 +113,9 @@ class ResourceUploadAction extends PhylumAction with FileUploadApiAction, Resour
   }
 
   @override
-  ResourceBindAction copyWithResourceName(String resourceName) {
-    return ResourceUploadAction._(
-      resourceId: resourceId,
-      parent: parent,
-      resourceName: resourceName,
-      path: path,
-      size: size,
-      contentType: contentType,
-    );
+  Future<void> updateResourceName(String resourceName) {
+    _resourceName = resourceName;
+    return update(revertOptimisticUpdate);
   }
 
   @override

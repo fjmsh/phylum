@@ -21,22 +21,28 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAc
   final String resourceId;
   @override
   final String parent;
+  String _resourceName;
   @override
-  final String resourceName;
+  String get resourceName => _resourceName;
   final DateTime modified;
   final String description;
 
-  ResourceMoveAction._(
-      {required this.resourceId, required this.resourceName, required this.parent, required this.description, required this.modified});
+  ResourceMoveAction._({
+    required this.resourceId,
+    required this.parent,
+    required String resourceName,
+    required this.description,
+    required this.modified,
+  }) : _resourceName = resourceName;
 
   ResourceMoveAction({
     required Resource r,
-    String? parent,
     String? name,
+    String? parent,
   }) : this._(
           resourceId: r.id,
-          resourceName: name ?? r.name,
           parent: parent ?? r.parent!,
+          resourceName: name ?? r.name,
           description: name == null ? 'Moving ${r.name}' : 'Renaming ${r.name} to $name',
           modified: DateTime.now(),
         );
@@ -44,8 +50,8 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAc
   static ResourceMoveAction fromMap(Map<String, dynamic> map) {
     return ResourceMoveAction._(
       resourceId: map['resourceId'],
-      resourceName: map['resourceName'],
       parent: map['parent'],
+      resourceName: map['resourceName'],
       description: map['description'],
       modified: DateTime.fromMillisecondsSinceEpoch(map['modified']),
     );
@@ -101,8 +107,8 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAc
   @override
   Map<String, dynamic> toMap() => {
         'resourceId': resourceId,
-        'resourceName': resourceName,
         'parent': parent,
+        'resourceName': resourceName,
         'description': description,
         'modified': modified.millisecondsSinceEpoch,
       };
@@ -115,14 +121,9 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAc
   }
 
   @override
-  ResourceBindAction copyWithResourceName(String resourceName) {
-    return ResourceMoveAction._(
-      resourceId: resourceId,
-      parent: parent,
-      resourceName: resourceName,
-      modified: modified,
-      description: description,
-    );
+  Future<void> updateResourceName(String resourceName) {
+    _resourceName = resourceName;
+    return update(revertOptimisticUpdate);
   }
 
   @override

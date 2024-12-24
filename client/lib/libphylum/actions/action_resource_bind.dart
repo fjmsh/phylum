@@ -4,5 +4,5 @@ mixin ResourceBindAction on PhylumAction {
   String get parent;
   String get resourceName;
 
-  ResourceBindAction copyWithResourceName(String resourceName);
+  Future<void> updateResourceName(String resourceName);
 }

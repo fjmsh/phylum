@@ -20,14 +20,15 @@ class ResourceMkdirAction extends PhylumAction with JsonApiAction, ResourceCreat
   final String resourceId;
   @override
   final String parent;
+  String _resourceName;
   @override
-  final String resourceName;
+  String get resourceName => _resourceName;
 
   ResourceMkdirAction({
     required this.resourceId,
     required this.parent,
-    required this.resourceName,
-  });
+    required String resourceName,
+  }) : _resourceName = resourceName;
 
   static ResourceMkdirAction fromMap(Map<String, dynamic> map) {
     return ResourceMkdirAction(
@@ -75,12 +76,9 @@ class ResourceMkdirAction extends PhylumAction with JsonApiAction, ResourceCreat
   }
 
   @override
-  ResourceBindAction copyWithResourceName(String resourceName) {
-    return ResourceMkdirAction(
-      resourceId: resourceId,
-      parent: parent,
-      resourceName: resourceName,
-    );
+  Future<void> updateResourceName(String resourceName) {
+    _resourceName = resourceName;
+    return update(revertOptimisticUpdate);
   }
 
   @override
