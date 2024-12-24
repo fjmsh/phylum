@@ -4,14 +4,13 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/util/permissions.dart';
 
 class ResourceShareAction extends PhylumAction with JsonApiAction {
-  static const actionName = 'resourceShare';
+  static const kActionName = 'resourceShare';
   @override
-  String get name => actionName;
+  String get actionName => kActionName;
 
   @override
   String get method => 'POST';
@@ -65,8 +64,7 @@ class ResourceShareAction extends PhylumAction with JsonApiAction {
   }
 
   @override
-  Future<void> initialize(PhylumAccount account) {
-    super.initialize(account);
+  Future<void> initialize() {
     return account.resourceRepository.trackServerData(resourceId);
   }
 

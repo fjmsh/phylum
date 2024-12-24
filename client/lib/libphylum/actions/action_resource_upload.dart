@@ -11,9 +11,9 @@ import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 
 class ResourceUploadAction extends PhylumAction with FileUploadApiAction, ResourceCreateAction, ResourceBindAction {
-  static const actionName = 'resourceUpload';
+  static const kActionName = 'resourceUpload';
   @override
-  String get name => actionName;
+  String get actionName => kActionName;
 
   @override
   String get method => 'PUT';

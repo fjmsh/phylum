@@ -5,13 +5,12 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAction {
-  static const actionName = 'resourceMove';
+  static const kActionName = 'resourceMove';
   @override
-  String get name => actionName;
+  String get actionName => kActionName;
 
   @override
   String get method => 'POST';
@@ -65,8 +64,7 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAc
   }
 
   @override
-  Future<void> initialize(PhylumAccount account) {
-    super.initialize(account);
+  Future<void> initialize() {
     return account.resourceRepository.trackServerData(resourceId);
   }
 

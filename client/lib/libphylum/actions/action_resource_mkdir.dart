@@ -6,9 +6,9 @@ import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceMkdirAction extends PhylumAction with JsonApiAction, ResourceCreateAction, ResourceBindAction {
-  static const actionName = 'resourceMkdir';
+  static const kActionName = 'resourceMkdir';
   @override
-  String get name => actionName;
+  String get actionName => kActionName;
 
   @override
   String get method => 'POST';

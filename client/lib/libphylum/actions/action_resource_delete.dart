@@ -7,9 +7,9 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceDeleteAction extends PhylumAction with JsonApiAction {
-  static const actionName = 'resourceDelete';
+  static const kActionName = 'resourceDelete';
   @override
-  String get name => actionName;
+  String get actionName => kActionName;
 
   @override
   String get method => 'DELETE';

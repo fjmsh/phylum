@@ -7,9 +7,9 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreateAction, ResourceBindAction {
-  static const actionName = 'resourceCopy';
+  static const kActionName = 'resourceCopy';
   @override
-  String get name => actionName;
+  String get actionName => kActionName;
 
   @override
   String get method => 'POST';

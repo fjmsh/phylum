@@ -7,9 +7,9 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class BookmarkRemoveAction extends PhylumAction with JsonApiAction, BookmarkAction {
-  static const actionName = 'bookmarkRemove';
+  static const kActionName = 'bookmarkRemove';
   @override
-  String get name => actionName;
+  String get actionName => kActionName;
 
   @override
   String get method => 'POST';

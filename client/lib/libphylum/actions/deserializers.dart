@@ -8,12 +8,12 @@ import 'package:phylum/libphylum/actions/bookmark_add_action.dart';
 import 'package:phylum/libphylum/actions/bookmark_remove_action.dart';
 
 const actionDeserializers = {
-  BookmarkAddAction.actionName: BookmarkAddAction.fromMap,
-  BookmarkRemoveAction.actionName: BookmarkRemoveAction.fromMap,
-  ResourceCopyAction.actionName: ResourceCopyAction.fromMap,
-  ResourceDeleteAction.actionName: ResourceDeleteAction.fromMap,
-  ResourceMkdirAction.actionName: ResourceMkdirAction.fromMap,
-  ResourceMoveAction.actionName: ResourceMoveAction.fromMap,
-  ResourceShareAction.actionName: ResourceShareAction.fromMap,
-  ResourceUploadAction.actionName: ResourceUploadAction.fromMap,
+  BookmarkAddAction.kActionName: BookmarkAddAction.fromMap,
+  BookmarkRemoveAction.kActionName: BookmarkRemoveAction.fromMap,
+  ResourceCopyAction.kActionName: ResourceCopyAction.fromMap,
+  ResourceDeleteAction.kActionName: ResourceDeleteAction.fromMap,
+  ResourceMkdirAction.kActionName: ResourceMkdirAction.fromMap,
+  ResourceMoveAction.kActionName: ResourceMoveAction.fromMap,
+  ResourceShareAction.kActionName: ResourceShareAction.fromMap,
+  ResourceUploadAction.kActionName: ResourceUploadAction.fromMap,
 };
