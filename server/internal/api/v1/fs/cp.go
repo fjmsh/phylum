@@ -4,12 +4,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 type cpParams struct {
-	ID        uuid.UUID `json:"id" binding:"required"`
-	Target    string    `json:"target"`
-	Overwrite bool      `json:"overwrite"`
+	ID       uuid.UUID                         `json:"id" binding:"required"`
+	Target   string                            `json:"target"`
+	Conflict fs.ResourceBindConflictResolution `json:"conflict"`
 }
 
 func handleCpRequest(c *gin.Context) {
@@ -30,7 +31,7 @@ func handleCpRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	if r, _, err := r.Copy(params.Target, params.ID, true, params.Overwrite); err != nil {
+	if r, _, err := r.Copy(params.Target, params.ID, true, params.Conflict); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, ResponseFromResourceInfo(r.Info))

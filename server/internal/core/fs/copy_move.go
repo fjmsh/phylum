@@ -10,7 +10,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
+type ResourceBindConflictResolution int32
+
+const (
+	ResourceBindConflictResolutionNone      = 0
+	ResourceBindConflictResolutionOverwrite = 1
+	ResourceBindConflictResolutionRename    = 2
+)
+
+func (r Resource) Move(target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	if r.ParentID() == nil {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
@@ -51,7 +59,7 @@ func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
 	var deleted = false
 	return r, deleted, r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
 		f := r.f.withDb(dbh)
-		if overwrite {
+		if conflictResolution == ResourceBindConflictResolutionOverwrite {
 			if _, err := destParent.DeleteChildRecursive(destName, false); err == nil {
 				deleted = true
 			} else if !errors.Is(err, ErrResourceNotFound) {
@@ -71,7 +79,7 @@ func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
 	})
 }
 
-func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (Resource, bool, error) {
+func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	// Check source directory permissions
 	if !r.hasPermission(PermissionRead) {
 		return Resource{}, false, ErrInsufficientPermissions
@@ -143,7 +151,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 	var deleted = false
 	err = r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
 		f := r.f.withDb(dbh)
-		if overwrite {
+		if conflictResolution == ResourceBindConflictResolutionOverwrite {
 			if _, err := destParent.DeleteChildRecursive(destName, false); err == nil {
 				deleted = true
 			} else if !errors.Is(err, ErrResourceNotFound) {

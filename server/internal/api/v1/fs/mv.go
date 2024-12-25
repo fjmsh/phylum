@@ -4,11 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 type mvParams struct {
-	Target    string `json:"target"`
-	Overwrite bool   `json:"overwrite"`
+	Target   string                            `json:"target"`
+	Conflict fs.ResourceBindConflictResolution `json:"conflict"`
 }
 
 func handleMvRequest(c *gin.Context) {
@@ -29,7 +30,7 @@ func handleMvRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	if r, _, err := r.Move(params.Target, params.Overwrite); err != nil {
+	if r, _, err := r.Move(params.Target, params.Conflict); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, ResponseFromResourceInfo(r.Info))
