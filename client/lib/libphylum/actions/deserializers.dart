@@ -4,12 +4,12 @@ import 'package:phylum/libphylum/actions/action_resource_mkdir.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/actions/action_resource_upload.dart';
-import 'package:phylum/libphylum/actions/bookmark_add_action.dart';
-import 'package:phylum/libphylum/actions/bookmark_remove_action.dart';
+import 'package:phylum/libphylum/actions/action_resource_bookmark_add.dart';
+import 'package:phylum/libphylum/actions/action_resource_bookmark_remove.dart';
 
 const actionDeserializers = {
-  BookmarkAddAction.kActionName: BookmarkAddAction.fromMap,
-  BookmarkRemoveAction.kActionName: BookmarkRemoveAction.fromMap,
+  ResourceBookmarkAddAction.kActionName: ResourceBookmarkAddAction.fromMap,
+  ResourceBookmarkRemoveAction.kActionName: ResourceBookmarkRemoveAction.fromMap,
   ResourceCopyAction.kActionName: ResourceCopyAction.fromMap,
   ResourceDeleteAction.kActionName: ResourceDeleteAction.fromMap,
   ResourceMkdirAction.kActionName: ResourceMkdirAction.fromMap,

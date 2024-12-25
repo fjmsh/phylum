@@ -1,11 +1,14 @@
 import 'dart:async';
 
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/actions/bookmark_action.dart';
+import 'package:phylum/libphylum/actions/action_resource_create.dart';
+import 'package:phylum/libphylum/actions/action_resource_bookmark_remove.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class BookmarkAddAction extends PhylumAction with JsonApiAction, BookmarkAction {
+import 'action_resource.dart';
+
+class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
   static const kActionName = 'bookmarkAdd';
   @override
   String get actionName => kActionName;
@@ -19,14 +22,16 @@ class BookmarkAddAction extends PhylumAction with JsonApiAction, BookmarkAction 
   @override
   Map<String, String> get queryParamters => {'name': bookmarkName};
 
-  @override
-  final String resourceId;
   final String bookmarkName;
   final int createdMillis;
 
-  BookmarkAddAction._({required this.resourceId, required this.bookmarkName, required this.createdMillis});
+  ResourceBookmarkAddAction._({
+    required super.resourceId,
+    required this.bookmarkName,
+    required this.createdMillis,
+  });
 
-  BookmarkAddAction({
+  ResourceBookmarkAddAction({
     required Resource r,
     String? name,
   }) : this._(
@@ -35,8 +40,8 @@ class BookmarkAddAction extends PhylumAction with JsonApiAction, BookmarkAction 
           createdMillis: DateTime.now().millisecondsSinceEpoch,
         );
 
-  static BookmarkAddAction fromMap(Map<String, dynamic> map) {
-    return BookmarkAddAction._(
+  static ResourceBookmarkAddAction fromMap(Map<String, dynamic> map) {
+    return ResourceBookmarkAddAction._(
       resourceId: map['resourceId'],
       bookmarkName: map['bookmarkName'],
       createdMillis: map['createdMillis'],
@@ -81,5 +86,8 @@ class BookmarkAddAction extends PhylumAction with JsonApiAction, BookmarkAction 
   }
 
   @override
-  bool dependsOn(PhylumAction action) => action is BookmarkAction && action.resourceId == resourceId;
+  bool dependsOn(PhylumAction action) =>
+      action is ResourceAction &&
+      (action is ResourceCreateAction || action is ResourceBookmarkAddAction || action is ResourceBookmarkRemoveAction) &&
+      action.resourceId == resourceId;
 }

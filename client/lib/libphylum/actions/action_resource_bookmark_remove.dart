@@ -2,11 +2,14 @@ import 'dart:async';
 
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/actions/bookmark_action.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class BookmarkRemoveAction extends PhylumAction with JsonApiAction, BookmarkAction {
+import 'action_resource.dart';
+import 'action_resource_bookmark_add.dart';
+import 'action_resource_create.dart';
+
+class ResourceBookmarkRemoveAction extends ResourceAction with JsonApiAction {
   static const kActionName = 'bookmarkRemove';
   @override
   String get actionName => kActionName;
@@ -17,21 +20,19 @@ class BookmarkRemoveAction extends PhylumAction with JsonApiAction, BookmarkActi
   @override
   String get endpoint => '/api/v1/my/bookmarks/remove/$resourceId';
 
-  @override
-  final String resourceId;
   final String bookmarkName;
 
-  BookmarkRemoveAction._({required this.resourceId, required this.bookmarkName});
+  ResourceBookmarkRemoveAction._({required super.resourceId, required this.bookmarkName});
 
-  BookmarkRemoveAction({
+  ResourceBookmarkRemoveAction({
     required Resource r,
   }) : this._(
           resourceId: r.id,
           bookmarkName: r.name,
         );
 
-  static BookmarkRemoveAction fromMap(Map<String, dynamic> map) {
-    return BookmarkRemoveAction._(
+  static ResourceBookmarkRemoveAction fromMap(Map<String, dynamic> map) {
+    return ResourceBookmarkRemoveAction._(
       resourceId: map['resourceId'],
       bookmarkName: map['bookmarkName'],
     );
@@ -69,5 +70,8 @@ class BookmarkRemoveAction extends PhylumAction with JsonApiAction, BookmarkActi
   }
 
   @override
-  bool dependsOn(PhylumAction action) => action is BookmarkAction && action.resourceId == resourceId;
+  bool dependsOn(PhylumAction action) =>
+      action is ResourceAction &&
+      (action is ResourceCreateAction || action is ResourceBookmarkAddAction || action is ResourceBookmarkRemoveAction) &&
+      action.resourceId == resourceId;
 }

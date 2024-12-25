@@ -6,8 +6,8 @@ import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/actions/action_resource_copy.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
-import 'package:phylum/libphylum/actions/bookmark_add_action.dart';
-import 'package:phylum/libphylum/actions/bookmark_remove_action.dart';
+import 'package:phylum/libphylum/actions/action_resource_bookmark_add.dart';
+import 'package:phylum/libphylum/actions/action_resource_bookmark_remove.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
@@ -114,16 +114,16 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
         if (name == null || !context.mounted) {
           return;
         }
-        account.addAction(BookmarkAddAction(r: r, name: name.isEmpty ? '' : name));
+        account.addAction(ResourceBookmarkAddAction(r: r, name: name.isEmpty ? '' : name));
       } else {
         for (final r in resources) {
-          account.addAction(BookmarkAddAction(r: r));
+          account.addAction(ResourceBookmarkAddAction(r: r));
         }
       }
       break;
     case MenuOption.bookmarkRemove:
       for (final r in resources) {
-        account.addAction(BookmarkRemoveAction(r: r));
+        account.addAction(ResourceBookmarkRemoveAction(r: r));
       }
       break;
     case MenuOption.newFolder:
