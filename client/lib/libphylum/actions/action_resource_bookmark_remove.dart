@@ -31,12 +31,18 @@ class ResourceBookmarkRemoveAction extends ResourceAction with JsonApiAction {
           bookmarkName: r.name,
         );
 
-  static ResourceBookmarkRemoveAction fromMap(Map<String, dynamic> map) {
+  factory ResourceBookmarkRemoveAction.fromMap(Map<String, dynamic> map) {
     return ResourceBookmarkRemoveAction._(
       resourceId: map['resourceId'],
       bookmarkName: map['bookmarkName'],
     );
   }
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'resourceId': resourceId,
+        'bookmarkName': bookmarkName,
+      };
 
   @override
   String generateDescription() {
@@ -55,12 +61,6 @@ class ResourceBookmarkRemoveAction extends ResourceAction with JsonApiAction {
   Future<void> revertOptimisticUpdate() {
     return account.myListsRepository.updateBookmark(resourceId, BookmarksCompanion(deleted: Value(false)));
   }
-
-  @override
-  Map<String, dynamic> toMap() => {
-        'resourceId': resourceId,
-        'bookmarkName': bookmarkName,
-      };
 
   @override
   FutureOr<void> processResponse(ApiResponse response) async {

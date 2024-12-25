@@ -25,6 +25,7 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
     required super.resourceId,
     required super.parent,
     required super.resourceName,
+    super.conflictResolution,
     required this.description,
     required this.modified,
   });
@@ -33,10 +34,12 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
     required Resource r,
     String? name,
     String? parent,
+    ResourceBindConflictResolution conflictResoltion = resourceBindConflictResolutionNone,
   }) : this._(
           resourceId: r.id,
           parent: parent ?? r.parent!,
           resourceName: name ?? r.name,
+          conflictResolution: conflictResoltion,
           description: name == null ? 'Moving ${r.name}' : 'Renaming ${r.name} to $name',
           modified: DateTime.now(),
         );
@@ -46,10 +49,21 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
       resourceId: map['resourceId'],
       parent: map['parent'],
       resourceName: map['resourceName'],
+      conflictResolution: map['conflictResolution'],
       description: map['description'],
       modified: DateTime.fromMillisecondsSinceEpoch(map['modified']),
     );
   }
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'resourceId': resourceId,
+        'parent': parent,
+        'resourceName': resourceName,
+        'conflictResolution': conflictResolution,
+        'description': description,
+        'modified': modified.millisecondsSinceEpoch,
+      };
 
   @override
   String generateDescription() {
@@ -60,6 +74,7 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
   Map<String, dynamic>? generateRequestBody() {
     return {
       'target': '$parent:$resourceName',
+      'conflict': conflictResolution,
     };
   }
 
@@ -97,15 +112,6 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
       ),
     );
   }
-
-  @override
-  Map<String, dynamic> toMap() => {
-        'resourceId': resourceId,
-        'parent': parent,
-        'resourceName': resourceName,
-        'description': description,
-        'modified': modified.millisecondsSinceEpoch,
-      };
 
   @override
   bool dependsOn(PhylumAction action) =>

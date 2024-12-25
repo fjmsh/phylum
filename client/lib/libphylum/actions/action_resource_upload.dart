@@ -9,6 +9,8 @@ import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 
+import 'action_resource_bind.dart';
+
 class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction {
   static const kActionName = 'resourceUpload';
   @override
@@ -31,6 +33,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
     required super.resourceId,
     required super.parent,
     required super.resourceName,
+    required super.conflictResolution,
     required this.path,
     required this.size,
     required this.contentType,
@@ -40,6 +43,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
     required String parent,
     required String resourceName,
     required String path,
+    required ResourceBindConflictResolution conflictResolution,
   }) async {
     final f = File(path);
     final size = await f.length();
@@ -47,6 +51,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       resourceId: generateUuid(),
       parent: parent,
       resourceName: resourceName,
+      conflictResolution: conflictResolution,
       path: path,
       size: size,
       contentType: lookupMimeType(path) ?? 'application/octet-stream',
@@ -58,11 +63,23 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       resourceId: map['resourceId'],
       parent: map['parent'],
       resourceName: map['resourceName'],
+      conflictResolution: map['conflictResolution'],
       path: map['path'],
       size: map['size'],
       contentType: map['contentType'],
     );
   }
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'resourceId': resourceId,
+        'parent': parent,
+        'resourceName': resourceName,
+        'conflictResolution': conflictResolution,
+        'path': path,
+        'size': size,
+        'contentType': contentType,
+      };
 
   @override
   String generateDescription() {
@@ -80,20 +97,11 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   }
 
   @override
-  Map<String, dynamic> toMap() => {
-        'resourceId': resourceId,
-        'parent': parent,
-        'resourceName': resourceName,
-        'path': path,
-        'size': size,
-        'contentType': contentType,
-      };
-
-  @override
   Map<String, String> generateFormFields() {
     return {
       'parent_id': parent,
       'name': resourceName,
+      'conflict': conflictResolution.toString(),
     };
   }
 

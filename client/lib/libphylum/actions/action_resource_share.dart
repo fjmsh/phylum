@@ -57,6 +57,15 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
   }
 
   @override
+  Map<String, dynamic> toMap() => {
+        'resourceId': resourceId,
+        'username': username,
+        'permission': permission,
+        'modified': modified.millisecondsSinceEpoch,
+        'description': description,
+      };
+
+  @override
   String generateDescription() {
     return description;
   }
@@ -112,15 +121,6 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
       ),
     );
   }
-
-  @override
-  Map<String, dynamic> toMap() => {
-        'resourceId': resourceId,
-        'username': username,
-        'permission': permission,
-        'modified': modified.millisecondsSinceEpoch,
-        'description': description,
-      };
 
   @override
   bool dependsOn(PhylumAction action) =>

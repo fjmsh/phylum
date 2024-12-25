@@ -40,13 +40,20 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
           createdMillis: DateTime.now().millisecondsSinceEpoch,
         );
 
-  static ResourceBookmarkAddAction fromMap(Map<String, dynamic> map) {
+  factory ResourceBookmarkAddAction.fromMap(Map<String, dynamic> map) {
     return ResourceBookmarkAddAction._(
       resourceId: map['resourceId'],
       bookmarkName: map['bookmarkName'],
       createdMillis: map['createdMillis'],
     );
   }
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'resourceId': resourceId,
+        'bookmarkName': bookmarkName,
+        'createdMillis': createdMillis,
+      };
 
   @override
   String generateDescription() {
@@ -70,13 +77,6 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
   Future<void> revertOptimisticUpdate() {
     return account.myListsRepository.deleteBookmark(resourceId);
   }
-
-  @override
-  Map<String, dynamic> toMap() => {
-        'resourceId': resourceId,
-        'bookmarkName': bookmarkName,
-        'createdMillis': createdMillis,
-      };
 
   @override
   FutureOr<void> processResponse(ApiResponse response) async {

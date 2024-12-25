@@ -38,6 +38,12 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   }
 
   @override
+  Map<String, dynamic> toMap() => {
+        'resourceId': resourceId,
+        'resourceName': resourceName,
+      };
+
+  @override
   String generateDescription() {
     return "Deleting $resourceName";
   }
@@ -56,12 +62,6 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   Future<void> revertOptimisticUpdate() {
     return account.resourceRepository.updateResource(resourceId, (o) => o(deleted: const Value(false)));
   }
-
-  @override
-  Map<String, dynamic> toMap() => {
-        'resourceId': resourceId,
-        'resourceName': resourceName,
-      };
 
   @override
   bool dependsOn(PhylumAction action) => action is ResourceCreateAction && action.resourceId == resourceId;

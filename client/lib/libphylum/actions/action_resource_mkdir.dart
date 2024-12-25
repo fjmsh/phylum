@@ -19,6 +19,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
     required super.resourceId,
     required super.parent,
     required super.resourceName,
+    super.conflictResolution,
   });
 
   static ResourceMkdirAction fromMap(Map<String, dynamic> map) {
@@ -26,8 +27,17 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
       resourceId: map['resourceId'],
       parent: map['parent'],
       resourceName: map['resourceName'],
+      conflictResolution: map['conflictResolution'],
     );
   }
+
+  @override
+  Map<String, dynamic> toMap() => {
+        'resourceId': resourceId,
+        'resourceName': resourceName,
+        'parent': parent,
+        'conflictResolution': conflictResolution,
+      };
 
   @override
   String generateDescription() {
@@ -39,6 +49,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
     return {
       'parent_id': parent,
       'name': resourceName,
+      'conflict': conflictResolution,
     };
   }
 
@@ -51,13 +62,6 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
   Future<void> revertOptimisticUpdate() {
     return account.resourceRepository.deleteResource(resourceId);
   }
-
-  @override
-  Map<String, dynamic> toMap() => {
-        'resourceId': resourceId,
-        'resourceName': resourceName,
-        'parent': parent,
-      };
 
   @override
   bool dependsOn(PhylumAction action) => action is ResourceMkdirAction && action.resourceId == parent;

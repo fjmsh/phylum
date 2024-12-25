@@ -10,6 +10,7 @@ abstract class ResourceCreateAction extends ResourceBindAction {
     required super.resourceId,
     required super.parent,
     required super.resourceName,
+    super.conflictResolution,
   });
 
   @override
