@@ -20,15 +20,13 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/share/$resourceId';
 
-  @override
-  final String resourceId;
   final String username;
   final int permission;
   final DateTime modified;
   final String description;
 
   ResourceShareAction._({
-    required this.resourceId,
+    required super.resourceId,
     required this.username,
     required this.permission,
     required this.modified,
@@ -123,13 +121,6 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
         'modified': modified.millisecondsSinceEpoch,
         'description': description,
       };
-
-  @override
-  FutureOr<void> processResponse(ApiResponse response) async {
-    if (response is PhylumApiSuccessResponse) {
-      await account.resourceRepository.processResourceUpdateResponse(resourceId, response.data);
-    }
-  }
 
   @override
   bool dependsOn(PhylumAction action) =>

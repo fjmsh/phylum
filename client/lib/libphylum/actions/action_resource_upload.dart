@@ -23,25 +23,18 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   @override
   Future<MultipartFile> get file => MultipartFile.fromPath('contents', path, filename: resourceName, contentType: MediaType.parse(contentType));
 
-  @override
-  final String resourceId;
-  @override
-  final String parent;
-  String _resourceName;
-  @override
-  String get resourceName => _resourceName;
   final String path;
   final int size;
   final String contentType;
 
   ResourceUploadAction._({
-    required this.resourceId,
-    required this.parent,
-    required String resourceName,
+    required super.resourceId,
+    required super.parent,
+    required super.resourceName,
     required this.path,
     required this.size,
     required this.contentType,
-  }) : _resourceName = resourceName;
+  });
 
   static Future<ResourceUploadAction> fromPath({
     required String parent,
@@ -102,12 +95,6 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       'parent_id': parent,
       'name': resourceName,
     };
-  }
-
-  @override
-  Future<void> updateResourceName(String resourceName) {
-    _resourceName = resourceName;
-    return update(revertOptimisticUpdate);
   }
 
   @override

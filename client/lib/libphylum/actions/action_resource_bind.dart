@@ -1,8 +1,26 @@
 import 'action_resource.dart';
 
 abstract class ResourceBindAction extends ResourceAction {
-  String get parent;
-  String get resourceName;
+  String _parent;
+  String get parent => _parent;
 
-  Future<void> updateResourceName(String resourceName);
+  String _resourceName;
+  String get resourceName => _resourceName;
+
+  ResourceBindAction({
+    required super.resourceId,
+    required String parent,
+    required String resourceName,
+  })  : _parent = parent,
+        _resourceName = resourceName;
+
+  Future<void> updateParent(String parent) {
+    _parent = parent;
+    return update(revertOptimisticUpdate);
+  }
+
+  Future<void> updateResourceName(String resourceName) {
+    _resourceName = resourceName;
+    return update(revertOptimisticUpdate);
+  }
 }

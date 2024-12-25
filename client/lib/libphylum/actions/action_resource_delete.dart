@@ -19,12 +19,10 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/rm/$id';
 
-  @override
-  final String resourceId;
   final String resourceName;
 
   ResourceDeleteAction._({
-    required this.resourceId,
+    required super.resourceId,
     required this.resourceName,
   });
 

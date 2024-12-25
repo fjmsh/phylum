@@ -17,24 +17,17 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   String get endpoint => '/api/v1/fs/cp/$srcId';
 
   final String srcId;
-  @override
-  final String resourceId;
-  @override
-  final String parent;
-  String _resourceName;
-  @override
-  String get resourceName => _resourceName;
   final String description;
   final bool dir;
 
   ResourceCopyAction._({
     required this.srcId,
-    required this.resourceId,
-    required this.parent,
-    required String resourceName,
+    required super.resourceId,
+    required super.parent,
+    required super.resourceName,
     required this.dir,
     required this.description,
-  }) : _resourceName = resourceName;
+  });
 
   ResourceCopyAction({
     required Resource src,
@@ -93,19 +86,6 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
         'dir': dir,
         'description': description,
       };
-
-  @override
-  FutureOr<void> processResponse(ApiResponse response) async {
-    if (response is PhylumApiSuccessResponse) {
-      await account.resourceRepository.processResourceUpdateResponse(resourceId, response.data);
-    }
-  }
-
-  @override
-  Future<void> updateResourceName(String resourceName) {
-    _resourceName = resourceName;
-    return update(revertOptimisticUpdate);
-  }
 
   @override
   bool dependsOn(PhylumAction action) => action is ResourceCreateAction && action.resourceId == parent;

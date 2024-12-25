@@ -18,23 +18,16 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/mv/$resourceId';
 
-  @override
-  final String resourceId;
-  @override
-  final String parent;
-  String _resourceName;
-  @override
-  String get resourceName => _resourceName;
   final DateTime modified;
   final String description;
 
   ResourceMoveAction._({
-    required this.resourceId,
-    required this.parent,
-    required String resourceName,
+    required super.resourceId,
+    required super.parent,
+    required super.resourceName,
     required this.description,
     required this.modified,
-  }) : _resourceName = resourceName;
+  });
 
   ResourceMoveAction({
     required Resource r,
@@ -113,19 +106,6 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
         'description': description,
         'modified': modified.millisecondsSinceEpoch,
       };
-
-  @override
-  FutureOr<void> processResponse(ApiResponse response) async {
-    if (response is PhylumApiSuccessResponse) {
-      await account.resourceRepository.processResourceUpdateResponse(resourceId, response.data);
-    }
-  }
-
-  @override
-  Future<void> updateResourceName(String resourceName) {
-    _resourceName = resourceName;
-    return update(revertOptimisticUpdate);
-  }
 
   @override
   bool dependsOn(PhylumAction action) =>

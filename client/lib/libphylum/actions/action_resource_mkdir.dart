@@ -15,19 +15,11 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/mkdir/$resourceId';
 
-  @override
-  final String resourceId;
-  @override
-  final String parent;
-  String _resourceName;
-  @override
-  String get resourceName => _resourceName;
-
   ResourceMkdirAction({
-    required this.resourceId,
-    required this.parent,
-    required String resourceName,
-  }) : _resourceName = resourceName;
+    required super.resourceId,
+    required super.parent,
+    required super.resourceName,
+  });
 
   static ResourceMkdirAction fromMap(Map<String, dynamic> map) {
     return ResourceMkdirAction(
@@ -66,12 +58,6 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
         'resourceName': resourceName,
         'parent': parent,
       };
-
-  @override
-  Future<void> updateResourceName(String resourceName) {
-    _resourceName = resourceName;
-    return update(revertOptimisticUpdate);
-  }
 
   @override
   bool dependsOn(PhylumAction action) => action is ResourceMkdirAction && action.resourceId == parent;
