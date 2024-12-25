@@ -16,11 +16,11 @@ abstract class ResourceBindAction extends ResourceAction {
 
   Future<void> updateParent(String parent) {
     _parent = parent;
-    return update(revertOptimisticUpdate);
+    return update();
   }
 
   Future<void> updateResourceName(String resourceName) {
     _resourceName = resourceName;
-    return update(revertOptimisticUpdate);
+    return update();
   }
 }

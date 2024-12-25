@@ -17,7 +17,7 @@ class OfflineSliver extends StatelessWidget {
             title: Text('Server Unreachable'),
             subtitle: Text('Tap to retry'),
             onTap: () {
-              context.read<PhylumActionQueue>().resume();
+              context.read<PhylumActionQueue>().retry();
             },
           );
         },
