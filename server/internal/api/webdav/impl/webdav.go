@@ -237,7 +237,7 @@ func (h *Handler) handleDelete(_ http.ResponseWriter, r *http.Request) (status i
 			return http.StatusNotFound, err
 		}
 		return http.StatusMethodNotAllowed, err
-	} else if err := r.DeleteRecursive(false); err != nil {
+	} else if _, err := r.DeleteRecursive(false); err != nil {
 		return http.StatusMethodNotAllowed, err
 	}
 	return http.StatusNoContent, nil

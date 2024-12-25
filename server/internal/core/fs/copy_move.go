@@ -52,7 +52,7 @@ func (r Resource) Move(target string, overwrite bool) (Resource, bool, error) {
 	return r, deleted, r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
 		f := r.f.withDb(dbh)
 		if overwrite {
-			if err := destParent.DeleteChildRecursive(destName, false); err == nil {
+			if _, err := destParent.DeleteChildRecursive(destName, false); err == nil {
 				deleted = true
 			} else if !errors.Is(err, ErrResourceNotFound) {
 				return err
@@ -144,7 +144,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive, overwrite bool) (
 	err = r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
 		f := r.f.withDb(dbh)
 		if overwrite {
-			if err := destParent.DeleteChildRecursive(destName, false); err == nil {
+			if _, err := destParent.DeleteChildRecursive(destName, false); err == nil {
 				deleted = true
 			} else if !errors.Is(err, ErrResourceNotFound) {
 				return err

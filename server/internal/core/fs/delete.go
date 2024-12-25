@@ -2,6 +2,7 @@ package fs
 
 import (
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -9,33 +10,43 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (r Resource) DeleteChildRecursive(name string, hardDelete bool) error {
+func (r Resource) DeleteChildRecursive(name string, hardDelete bool) (ResourceInfo, error) {
 	if !r.hasPermission(PermissionWrite) {
-		return ErrInsufficientPermissions
+		return ResourceInfo{}, ErrInsufficientPermissions
 	}
 
 	id, err := r.f.db.ChildResourceIDByName(r.f.ctx, db.ChildResourceIDByNameParams{Parent: r.ID(), Name: name})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
+			err = ErrResourceNotFound
 		}
-		return err
+		return ResourceInfo{}, err
 	}
-	return r.f.deleteRecursive(id, r.ID(), hardDelete)
+	if err := r.f.deleteRecursive(id, r.ID(), hardDelete); err != nil {
+		return ResourceInfo{}, err
+	}
+	deleted := time.Now()
+	r.Info.deleted = &deleted
+	return r.Info, nil
 }
 
-func (r Resource) DeleteRecursive(hardDelete bool) error {
+func (r Resource) DeleteRecursive(hardDelete bool) (ResourceInfo, error) {
 	if r.ParentID() == nil {
-		return ErrInsufficientPermissions
+		return ResourceInfo{}, ErrInsufficientPermissions
 	}
 	parent, err := r.f.ResourceByID(*r.ParentID())
+	if err == nil && !parent.hasPermission(PermissionWrite) {
+		err = ErrInsufficientPermissions
+	}
 	if err != nil {
-		return err
+		return ResourceInfo{}, err
 	}
-	if !parent.hasPermission(PermissionWrite) {
-		return ErrInsufficientPermissions
+	if err := r.f.deleteRecursive(r.ID(), r.ID(), hardDelete); err != nil {
+		return ResourceInfo{}, err
 	}
-	return r.f.deleteRecursive(r.ID(), parent.ID(), hardDelete)
+	deleted := time.Now()
+	r.Info.deleted = &deleted
+	return r.Info, nil
 }
 
 func (f filesystem) deleteRecursive(id, parent uuid.UUID, hardDelete bool) error {
