@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class ResourceCopyAction extends PhylumAction with JsonApiAction, ResourceCreateAction, ResourceBindAction {
+class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   static const kActionName = 'resourceCopy';
   @override
   String get actionName => kActionName;

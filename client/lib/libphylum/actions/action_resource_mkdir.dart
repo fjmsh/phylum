@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class ResourceMkdirAction extends PhylumAction with JsonApiAction, ResourceCreateAction, ResourceBindAction {
+class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
   static const kActionName = 'resourceMkdir';
   @override
   String get actionName => kActionName;
@@ -67,13 +66,6 @@ class ResourceMkdirAction extends PhylumAction with JsonApiAction, ResourceCreat
         'resourceName': resourceName,
         'parent': parent,
       };
-
-  @override
-  FutureOr<void> processResponse(ApiResponse response) async {
-    if (response is PhylumApiSuccessResponse) {
-      await account.resourceRepository.processResourceUpdateResponse(resourceId, response.data);
-    }
-  }
 
   @override
   Future<void> updateResourceName(String resourceName) {

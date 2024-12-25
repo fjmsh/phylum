@@ -5,12 +5,11 @@ import 'package:http/http.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 
-class ResourceUploadAction extends PhylumAction with FileUploadApiAction, ResourceCreateAction, ResourceBindAction {
+class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction {
   static const kActionName = 'resourceUpload';
   @override
   String get actionName => kActionName;
@@ -103,13 +102,6 @@ class ResourceUploadAction extends PhylumAction with FileUploadApiAction, Resour
       'parent_id': parent,
       'name': resourceName,
     };
-  }
-
-  @override
-  FutureOr<void> processResponse(ApiResponse response) async {
-    if (response is PhylumApiSuccessResponse) {
-      await account.resourceRepository.processResourceUpdateResponse(resourceId, response.data);
-    }
   }
 
   @override

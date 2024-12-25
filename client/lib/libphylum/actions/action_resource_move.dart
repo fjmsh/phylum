@@ -7,7 +7,7 @@ import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAction {
+class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
   static const kActionName = 'resourceMove';
   @override
   String get actionName => kActionName;
@@ -18,6 +18,7 @@ class ResourceMoveAction extends PhylumAction with JsonApiAction, ResourceBindAc
   @override
   String get endpoint => '/api/v1/fs/mv/$resourceId';
 
+  @override
   final String resourceId;
   @override
   final String parent;

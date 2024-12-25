@@ -3,11 +3,13 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/util/permissions.dart';
 
-class ResourceShareAction extends PhylumAction with JsonApiAction {
+import 'action_resource.dart';
+import 'action_resource_create.dart';
+
+class ResourceShareAction extends ResourceAction with JsonApiAction {
   static const kActionName = 'resourceShare';
   @override
   String get actionName => kActionName;
@@ -18,14 +20,20 @@ class ResourceShareAction extends PhylumAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/share/$resourceId';
 
+  @override
   final String resourceId;
-  final String resourceName;
   final String username;
   final int permission;
   final DateTime modified;
+  final String description;
 
-  ResourceShareAction._(
-      {required this.resourceId, required this.resourceName, required this.username, required this.permission, required this.modified});
+  ResourceShareAction._({
+    required this.resourceId,
+    required this.username,
+    required this.permission,
+    required this.modified,
+    required this.description,
+  });
 
   ResourceShareAction({
     required String resourceId,
@@ -34,25 +42,25 @@ class ResourceShareAction extends PhylumAction with JsonApiAction {
     required int permission,
   }) : this._(
           resourceId: resourceId,
-          resourceName: resourceName,
           username: username,
           permission: permission,
           modified: DateTime.now(),
+          description: 'Sharing $resourceName with $username',
         );
 
   static ResourceShareAction fromMap(Map<String, dynamic> map) {
     return ResourceShareAction._(
       resourceId: map['resourceId'],
-      resourceName: map['resourceName'],
       username: map['username'],
       permission: map['permission'],
       modified: DateTime.fromMillisecondsSinceEpoch(map['modified']),
+      description: map['description'],
     );
   }
 
   @override
   String generateDescription() {
-    return 'Sharing $resourceName with $username';
+    return description;
   }
 
   @override
@@ -110,10 +118,10 @@ class ResourceShareAction extends PhylumAction with JsonApiAction {
   @override
   Map<String, dynamic> toMap() => {
         'resourceId': resourceId,
-        'resourceName': resourceName,
         'username': username,
         'permission': permission,
         'modified': modified.millisecondsSinceEpoch,
+        'description': description,
       };
 
   @override

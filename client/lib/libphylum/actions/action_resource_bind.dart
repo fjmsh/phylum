@@ -1,6 +1,6 @@
-import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'action_resource.dart';
 
-mixin ResourceBindAction on PhylumAction {
+abstract class ResourceBindAction extends ResourceAction {
   String get parent;
   String get resourceName;
 

@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
-class ResourceDeleteAction extends PhylumAction with JsonApiAction {
+import 'action_resource.dart';
+import 'action_resource_create.dart';
+
+class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   static const kActionName = 'resourceDelete';
   @override
   String get actionName => kActionName;
@@ -17,6 +19,7 @@ class ResourceDeleteAction extends PhylumAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/rm/$id';
 
+  @override
   final String resourceId;
   final String resourceName;
 
