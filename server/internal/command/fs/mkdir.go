@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/shroff/phylum/server/internal/command/common"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +24,7 @@ func setupMkdirCommand() *cobra.Command {
 			} else {
 				recursive = b
 			}
-			if _, err := f.CreateResourceByPath(path, true, recursive); err != nil {
+			if _, err := f.CreateResourceByPath(path, true, recursive, fs.ResourceBindConflictResolutionNone); err != nil {
 				fmt.Println("could not create directory: " + err.Error())
 				os.Exit(1)
 			}

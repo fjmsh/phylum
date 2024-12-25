@@ -93,7 +93,7 @@ func moveFiles(f FileSystem, srcPath, dstPath string, overwrite bool) (status in
 	} else {
 		var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionNone
 		if overwrite {
-			conflictResolution = fs.ResourceBindConflictResolutionOverwrite
+			conflictResolution = fs.ResourceBindConflictResolutionDelete
 		}
 		if _, deleted, err := src.Move(dstPath, conflictResolution); err != nil {
 			if e, ok := err.(*errors.Error); ok {

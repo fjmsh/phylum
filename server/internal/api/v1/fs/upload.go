@@ -3,6 +3,7 @@ package fs
 import (
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -21,6 +22,10 @@ func handleUploadRequest(c *gin.Context) {
 	if err != nil || name == "" {
 		panic(errInvalidParams)
 	}
+	conflict, err := strconv.Atoi(c.Request.FormValue("conflict"))
+	if err != nil || name == "" {
+		panic(errInvalidParams)
+	}
 	// TODO: Calculate and verify sha sum
 	// c.Request.FormValue("sha256sum")
 
@@ -31,7 +36,7 @@ func handleUploadRequest(c *gin.Context) {
 			return err
 		}
 
-		res, err := parent.CreateMemberResource(name, resourceID, false)
+		res, err := parent.CreateMemberResource(name, resourceID, false, fs.ResourceBindConflictResolution(conflict))
 		if err != nil {
 			return err
 		}

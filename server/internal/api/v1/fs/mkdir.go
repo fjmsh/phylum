@@ -4,11 +4,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 type mkdirParams struct {
-	Name     string    `json:"name" binding:"required"`
-	ParentID uuid.UUID `json:"parent_id" binding:"required"`
+	Name     string                            `json:"name" binding:"required"`
+	ParentID uuid.UUID                         `json:"parent_id" binding:"required"`
+	Conflict fs.ResourceBindConflictResolution `json:"conflict"`
 }
 
 func handleMkdirRequest(c *gin.Context) {
@@ -29,7 +31,7 @@ func handleMkdirRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	r, err := parent.CreateMemberResource(params.Name, resourceID, true)
+	r, err := parent.CreateMemberResource(params.Name, resourceID, true, params.Conflict)
 	if err != nil {
 		panic(err)
 	}

@@ -17,7 +17,7 @@ type FileSystem interface {
 	RunInTx(fn func(FileSystem) error) error
 
 	// create.go
-	CreateResourceByPath(path string, dir, recursive bool) (Resource, error)
+	CreateResourceByPath(path string, dir, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, error)
 
 	// find.go
 	ResourceByID(id uuid.UUID) (Resource, error)

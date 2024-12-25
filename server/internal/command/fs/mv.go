@@ -27,7 +27,7 @@ func setupMvCommand() *cobra.Command {
 
 			var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionNone
 			if force {
-				conflictResolution = fs.ResourceBindConflictResolutionOverwrite
+				conflictResolution = fs.ResourceBindConflictResolutionDelete
 			}
 			if _, _, err := src.Move(args[1], conflictResolution); err != nil {
 				fmt.Println("cannot move'" + srcPathOrUUID + "' to '" + args[1] + "': " + err.Error())
