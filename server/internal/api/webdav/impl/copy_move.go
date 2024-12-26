@@ -91,7 +91,7 @@ func moveFiles(f FileSystem, srcPath, dstPath string, overwrite bool) (status in
 		}
 		return http.StatusInternalServerError, err
 	} else {
-		var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionNone
+		var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionError
 		if overwrite {
 			conflictResolution = fs.ResourceBindConflictResolutionDelete
 		}
@@ -121,7 +121,7 @@ func copyFiles(f FileSystem, srcPath, dstPath string, overwrite bool, depth int)
 		return http.StatusInternalServerError, err
 	} else {
 		id, _ := uuid.NewV7()
-		var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionNone
+		var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionError
 		if overwrite {
 			conflictResolution = fs.ResourceBindConflictResolutionOverwrite
 		}

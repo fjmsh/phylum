@@ -10,15 +10,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type ResourceBindConflictResolution int32
-
-const (
-	ResourceBindConflictResolutionNone      = 0 // Throw Error
-	ResourceBindConflictResolutionRename    = 1 // Auto rename with suffix
-	ResourceBindConflictResolutionOverwrite = 2 // Try to preserve props, delete only if type mismatch (dir vs regular)
-	ResourceBindConflictResolutionDelete    = 3 // Delete existing resource first
-)
-
 func (r Resource) Move(target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	if r.ParentID() == nil {
 		return Resource{}, false, ErrInsufficientPermissions

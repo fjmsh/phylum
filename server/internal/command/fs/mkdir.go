@@ -18,13 +18,17 @@ func setupMkdirCommand() *cobra.Command {
 			f := common.UserFileSystem(cmd)
 			path := args[0]
 			var recursive bool
+			var conflict fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionError
 			if b, err := cmd.Flags().GetBool("parents"); err != nil {
 				fmt.Println("could not read flag 'parents': " + err.Error())
 				os.Exit(1)
 			} else {
 				recursive = b
+				if recursive {
+					conflict = fs.ResourceBindConflictResolutionEnsure
+				}
 			}
-			if _, err := f.CreateResourceByPath(path, true, recursive, fs.ResourceBindConflictResolutionNone); err != nil {
+			if _, err := f.CreateResourceByPath(path, true, recursive, conflict); err != nil {
 				fmt.Println("could not create directory: " + err.Error())
 				os.Exit(1)
 			}

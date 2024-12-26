@@ -259,7 +259,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	res, err := h.FileSystem.ResourceByPath(reqPath)
 
 	if errors.Is(err, fs.ErrResourceNotFound) {
-		res, err = h.FileSystem.CreateResourceByPath(reqPath, false, false, fs.ResourceBindConflictResolutionOverwrite)
+		res, err = h.FileSystem.CreateResourceByPath(reqPath, false, false, fs.ResourceBindConflictResolutionEnsure)
 		if err != nil {
 			if errors.Is(err, fs.ErrParentNotFound) {
 				return http.StatusConflict, err
@@ -304,7 +304,7 @@ func (h *Handler) handleMkcol(_ http.ResponseWriter, r *http.Request) (status in
 	if r.ContentLength > 0 {
 		return http.StatusUnsupportedMediaType, nil
 	}
-	if _, err := h.FileSystem.CreateResourceByPath(reqPath, true, false, fs.ResourceBindConflictResolutionNone); err != nil {
+	if _, err := h.FileSystem.CreateResourceByPath(reqPath, true, false, fs.ResourceBindConflictResolutionError); err != nil {
 		if errors.Is(err, fs.ErrParentNotFound) {
 			return http.StatusConflict, err
 		}
@@ -381,7 +381,7 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 
 		// Create the resource if it didn't previously exist.
 		if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-			_, err = h.FileSystem.CreateResourceByPath(reqPath, false, false, fs.ResourceBindConflictResolutionNone)
+			_, err = h.FileSystem.CreateResourceByPath(reqPath, false, false, fs.ResourceBindConflictResolutionEnsure)
 			if err != nil {
 				if errors.Is(err, fs.ErrParentNotFound) {
 					return http.StatusConflict, err

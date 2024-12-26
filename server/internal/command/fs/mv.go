@@ -25,7 +25,7 @@ func setupMvCommand() *cobra.Command {
 
 			force, _ := cmd.Flags().GetBool("force")
 
-			var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionNone
+			var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionError
 			if force {
 				conflictResolution = fs.ResourceBindConflictResolutionDelete
 			}

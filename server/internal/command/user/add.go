@@ -103,7 +103,7 @@ func setupUserAddCommand() *cobra.Command {
 
 				if homePath != "" {
 					rootFS = rootFS.WithDb(db)
-					home, err := rootFS.CreateResourceByPath(homePath, true, true, fs.ResourceBindConflictResolutionNone)
+					home, err := rootFS.CreateResourceByPath(homePath, true, true, fs.ResourceBindConflictResolutionEnsure)
 					if err != nil {
 						return err
 					}

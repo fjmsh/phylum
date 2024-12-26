@@ -33,7 +33,7 @@ func setupCpCommand() *cobra.Command {
 			}
 
 			id, _ := uuid.NewV7()
-			var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionNone
+			var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionError
 			if force {
 				conflictResolution = fs.ResourceBindConflictResolutionOverwrite
 			}

@@ -9,6 +9,16 @@ import (
 	"github.com/shroff/phylum/server/internal/core/storage"
 )
 
+type ResourceBindConflictResolution int32
+
+const (
+	ResourceBindConflictResolutionError     = 0 // Error if exists
+	ResourceBindConflictResolutionEnsure    = 1 // Error if type mismatch
+	ResourceBindConflictResolutionRename    = 2 // Auto rename new resource
+	ResourceBindConflictResolutionOverwrite = 3 // Delete existing resource only if type mismatch (preserves props)
+	ResourceBindConflictResolutionDelete    = 4 // Delete existing resource before creating
+)
+
 type FileSystem interface {
 	// filesystem.go
 	RootID() uuid.UUID
