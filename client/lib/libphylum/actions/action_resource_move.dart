@@ -34,7 +34,7 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
     required Resource r,
     String? name,
     String? parent,
-    ResourceBindConflictResolution conflictResoltion = resourceBindConflictResolutionNone,
+    ResourceBindConflictResolution conflictResoltion = resourceBindConflictResolutionError,
   }) : this._(
           resourceId: r.id,
           parent: parent ?? r.parent!,

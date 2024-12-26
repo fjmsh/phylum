@@ -1,9 +1,11 @@
 import 'action_resource.dart';
 
 typedef ResourceBindConflictResolution = int;
-const ResourceBindConflictResolution resourceBindConflictResolutionNone = 0;
-const ResourceBindConflictResolution resourceBindConflictResolutionOverwrite = 1;
+const ResourceBindConflictResolution resourceBindConflictResolutionError = 0;
+const ResourceBindConflictResolution resourceBindConflictResolutionEnsure = 1;
 const ResourceBindConflictResolution resourceBindConflictResolutionRename = 2;
+const ResourceBindConflictResolution resourceBindConflictResolutionOverwrite = 3;
+const ResourceBindConflictResolution resourceBindConflictResolutionDelete = 4;
 
 abstract class ResourceBindAction extends ResourceAction {
   ResourceBindConflictResolution _conflictResolution;
@@ -19,7 +21,7 @@ abstract class ResourceBindAction extends ResourceAction {
     required super.resourceId,
     required String parent,
     required String resourceName,
-    ResourceBindConflictResolution conflictResolution = resourceBindConflictResolutionNone,
+    ResourceBindConflictResolution conflictResolution = resourceBindConflictResolutionError,
   })  : _parent = parent,
         _resourceName = resourceName,
         _conflictResolution = conflictResolution;

@@ -36,7 +36,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
     required String resourceId,
     required String parent,
     required String resourceName,
-    ResourceBindConflictResolution conflictResolution = resourceBindConflictResolutionNone,
+    ResourceBindConflictResolution conflictResolution = resourceBindConflictResolutionError,
   }) : this._(
           srcId: src.id,
           resourceId: resourceId,
