@@ -11,20 +11,31 @@ import (
 	"github.com/google/uuid"
 )
 
-const childResourceIDByName = `-- name: ChildResourceIDByName :one
-SELECT id FROM resources WHERE parent = $1::uuid AND name = $2::text AND deleted IS NULL
+const childResourceByName = `-- name: ChildResourceByName :one
+SELECT id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256 FROM resources WHERE parent = $1::uuid AND name = $2::text AND deleted IS NULL
 `
 
-type ChildResourceIDByNameParams struct {
+type ChildResourceByNameParams struct {
 	Parent uuid.UUID
 	Name   string
 }
 
-func (q *Queries) ChildResourceIDByName(ctx context.Context, arg ChildResourceIDByNameParams) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, childResourceIDByName, arg.Parent, arg.Name)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+func (q *Queries) ChildResourceByName(ctx context.Context, arg ChildResourceByNameParams) (Resource, error) {
+	row := q.db.QueryRow(ctx, childResourceByName, arg.Parent, arg.Name)
+	var i Resource
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Parent,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.ContentSize,
+		&i.ContentType,
+		&i.ContentSha256,
+	)
+	return i, err
 }
 
 const createResource = `-- name: CreateResource :one
@@ -80,7 +91,12 @@ type CreateResourcesParams struct {
 const deleteRecursive = `-- name: DeleteRecursive :many
 WITH RECURSIVE nodes(id, parent, dir) AS (
     SELECT r.id, r.parent, r.dir
-    FROM resources r WHERE r.id = $1::uuid
+    FROM resources r
+    WHERE
+        CASE $1::boolean
+            WHEN TRUE THEN r.parent = $2::uuid
+            ELSE r.id = $2::uuid
+        END
   UNION ALL
     SELECT r.id, r.parent, r.dir
     FROM resources r JOIN nodes n on r.parent = n.id
@@ -92,13 +108,18 @@ WHERE id in (SELECT id FROM nodes)
 RETURNING id, dir
 `
 
+type DeleteRecursiveParams struct {
+	PreserveRoot bool
+	ID           uuid.UUID
+}
+
 type DeleteRecursiveRow struct {
 	ID  uuid.UUID
 	Dir bool
 }
 
-func (q *Queries) DeleteRecursive(ctx context.Context, id uuid.UUID) ([]DeleteRecursiveRow, error) {
-	rows, err := q.db.Query(ctx, deleteRecursive, id)
+func (q *Queries) DeleteRecursive(ctx context.Context, arg DeleteRecursiveParams) ([]DeleteRecursiveRow, error) {
+	rows, err := q.db.Query(ctx, deleteRecursive, arg.PreserveRoot, arg.ID)
 	if err != nil {
 		return nil, err
 	}

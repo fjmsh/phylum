@@ -113,7 +113,7 @@ func setupImportCommand() *cobra.Command {
 			err = db.Get().WithTx(ctx, func(dbh *db.DbHandler) error {
 				f := f.WithDb(dbh)
 				if force {
-					if _, err := destParent.DeleteChildRecursive(destName, false); !errors.Is(err, fs.ErrResourceNotFound) {
+					if _, err := destParent.DeleteChildRecursive(destName, true); !errors.Is(err, fs.ErrResourceNotFound) {
 						return err
 					}
 				} else {

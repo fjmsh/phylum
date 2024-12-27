@@ -76,8 +76,8 @@ SET
     modified = CURRENT_TIMESTAMP,
     value = @permission::INT;
 
--- name: ChildResourceIDByName :one
-SELECT id FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;
+-- name: ChildResourceByName :one
+SELECT * FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;
 
 -- name: ReadDir :many
 SELECT * from readdir(@resource_id::uuid, @min_depth::int, @max_depth::int);
@@ -85,7 +85,12 @@ SELECT * from readdir(@resource_id::uuid, @min_depth::int, @max_depth::int);
 -- name: DeleteRecursive :many
 WITH RECURSIVE nodes(id, parent, dir) AS (
     SELECT r.id, r.parent, r.dir
-    FROM resources r WHERE r.id = @id::uuid
+    FROM resources r
+    WHERE
+        CASE @preserve_root::boolean
+            WHEN TRUE THEN r.parent = @id::uuid
+            ELSE r.id = @id::uuid
+        END
   UNION ALL
     SELECT r.id, r.parent, r.dir
     FROM resources r JOIN nodes n on r.parent = n.id

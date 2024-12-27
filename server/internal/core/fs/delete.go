@@ -15,14 +15,14 @@ func (r Resource) DeleteChildRecursive(name string, hardDelete bool) (ResourceIn
 		return ResourceInfo{}, ErrInsufficientPermissions
 	}
 
-	id, err := r.f.db.ChildResourceIDByName(r.f.ctx, db.ChildResourceIDByNameParams{Parent: r.ID(), Name: name})
+	c, err := r.f.db.ChildResourceByName(r.f.ctx, db.ChildResourceByNameParams{Parent: r.ID(), Name: name})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrResourceNotFound
 		}
 		return ResourceInfo{}, err
 	}
-	if err := r.f.deleteRecursive(id, r.ID(), hardDelete); err != nil {
+	if err := r.f.deleteRecursive(c.ID, r.ID(), hardDelete, false); err != nil {
 		return ResourceInfo{}, err
 	}
 	deleted := time.Now()
@@ -41,7 +41,7 @@ func (r Resource) DeleteRecursive(hardDelete bool) (ResourceInfo, error) {
 	if err != nil {
 		return ResourceInfo{}, err
 	}
-	if err := r.f.deleteRecursive(r.ID(), r.ID(), hardDelete); err != nil {
+	if err := r.f.deleteRecursive(r.ID(), r.ID(), hardDelete, false); err != nil {
 		return ResourceInfo{}, err
 	}
 	deleted := time.Now()
@@ -49,11 +49,11 @@ func (r Resource) DeleteRecursive(hardDelete bool) (ResourceInfo, error) {
 	return r.Info, nil
 }
 
-func (f filesystem) deleteRecursive(id, parent uuid.UUID, hardDelete bool) error {
+func (f filesystem) deleteRecursive(id, parent uuid.UUID, hardDelete, preserveRoot bool) error {
 	var deleted []db.DeleteRecursiveRow
 	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 		var err error
-		if deleted, err = d.DeleteRecursive(f.ctx, id); err != nil {
+		if deleted, err = d.DeleteRecursive(f.ctx, db.DeleteRecursiveParams{ID: id, PreserveRoot: preserveRoot}); err != nil {
 			return err
 		}
 

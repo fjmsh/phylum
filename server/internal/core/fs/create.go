@@ -2,6 +2,8 @@ package fs
 
 import (
 	"errors"
+	"fmt"
+	"path"
 	"strings"
 	"time"
 
@@ -45,19 +47,17 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 		id, _ = uuid.NewV7()
 	}
 	var result db.Resource
+	var created bool
 	err := r.f.db.WithTx(r.f.ctx, func(d *db.DbHandler) error {
 		var err error
 		parent := r.ID()
-		if result, err = d.CreateResource(r.f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir}); err != nil {
-			if strings.Contains(err.Error(), "unique_member_resource_name") {
-				return ErrResourceNameConflict
-			}
-			if strings.Contains(err.Error(), "resources_pkey") {
-				return ErrResourceIDConflict
-			}
+		f := r.f.withDb(d)
+		if result, created, err = f.createResourceInDB(id, &parent, name, dir, conflictResolution); err != nil {
 			return err
+		} else if created {
+			return d.UpdateResourceModified(r.f.ctx, parent)
 		}
-		return d.UpdateResourceModified(r.f.ctx, parent)
+		return nil
 	})
 	if err == ErrResourceIDConflict {
 		return r.f.ResourceByID(id)
@@ -90,6 +90,73 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 		Info:           info,
 		userPermission: r.userPermission,
 	}, nil
+}
+
+func (f filesystem) createResourceInDB(id uuid.UUID, parent *uuid.UUID, name string, dir bool, conflictResolution ResourceBindConflictResolution) (db.Resource, bool, error) {
+	if created, err := f.db.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: parent, Name: name, Dir: dir}); err != nil {
+		if strings.Contains(err.Error(), "unique_member_resource_name") {
+			switch conflictResolution {
+			case ResourceBindConflictResolutionError:
+				return db.Resource{}, false, ErrResourceNameConflict
+			case ResourceBindConflictResolutionEnsure:
+				existing, err := f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: *parent, Name: "name"})
+				if err == nil && existing.Dir != dir {
+					err = ErrResourceNameConflict
+				}
+				if err != nil {
+					return db.Resource{}, false, err
+				}
+				return existing, false, nil
+			case ResourceBindConflictResolutionRename:
+				ext := path.Ext(name)
+				basename := name[:len(name)-len(ext)]
+				counter := 1
+				for {
+					name := fmt.Sprintf("%s (%d).%s", basename, counter, ext)
+					if ext == "" {
+						name = fmt.Sprintf("%s (%d)", basename, counter)
+						if created, err := f.db.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: parent, Name: name, Dir: dir}); err != nil {
+							if !strings.Contains(err.Error(), "unique_member_resource_name") {
+								return db.Resource{}, false, err
+							}
+							counter++
+						} else {
+							return created, true, nil
+						}
+					}
+				}
+			case ResourceBindConflictResolutionOverwrite:
+				existing, err := f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: *parent, Name: "name"})
+				if err != nil {
+					return db.Resource{}, false, err
+				}
+				if existing.Dir == dir {
+					if dir {
+						f.deleteRecursive(id, *parent, true, true)
+					}
+					return existing, false, nil
+				}
+				err = f.deleteRecursive(id, *parent, true, false)
+				if err != nil {
+					return db.Resource{}, false, err
+				}
+				return f.createResourceInDB(id, parent, name, dir, ResourceBindConflictResolutionError)
+			case ResourceBindConflictResolutionDelete:
+				err := f.deleteRecursive(id, *parent, true, false)
+				if err != nil {
+					return db.Resource{}, false, err
+				}
+				return f.createResourceInDB(id, parent, name, dir, ResourceBindConflictResolutionError)
+			}
+		}
+		if strings.Contains(err.Error(), "resources_pkey") {
+			// TODO: maybe the request already succeeded in the previous attempt but the client didn't receive the response?
+			err = ErrResourceIDConflict
+		}
+		return db.Resource{}, false, err
+	} else {
+		return created, true, nil
+	}
 }
 
 func ResourceInfoFromDBResource(r db.Resource) ResourceInfo {
