@@ -10,6 +10,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type copySrcDest struct {
+	src  uuid.UUID
+	dest uuid.UUID
+}
+
 func (r Resource) Move(target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	if r.ParentID() == nil {
 		return Resource{}, false, ErrInsufficientPermissions
@@ -101,69 +106,61 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			return Resource{}, false, err
 		}
 	}
-	create := make([]db.CreateResourcesParams, 0, len(tree)+1)
-	contents := make(map[uuid.UUID]uuid.UUID)
-	ids := make(map[uuid.UUID]uuid.UUID)
-	if r.Dir() {
-		ids[r.ID()] = id
-	} else {
-		contents[r.ID()] = id
-	}
+	children := make([]db.CreateResourcesParams, 0, len(tree))
+	var contents []copySrcDest
+	newIDs := make(map[uuid.UUID]uuid.UUID)
 
-	create = append(create, db.CreateResourcesParams{
-		ID:            id,
-		Parent:        destParent.ID(),
-		Name:          destName,
-		Dir:           r.Dir(),
-		ContentSize:   r.ContentSize(),
-		ContentType:   r.ContentType(),
-		ContentSha256: r.ContentSHA256(),
-	})
-	for _, src := range tree {
-		id, _ := uuid.NewV7()
-		parent := ids[*src.Parent]
-
-		create = append(create, db.CreateResourcesParams{
-			ID:            id,
-			Parent:        parent,
-			Name:          src.Name,
-			Dir:           src.Dir,
-			ContentSize:   src.ContentSize,
-			ContentType:   src.ContentType,
-			ContentSha256: src.ContentSha256,
-		})
-
-		if src.Dir {
-			ids[src.ID] = id
-		} else {
-			contents[src.ID] = id
-		}
-	}
-
-	var deleted = false
+	deleted := false
 	err = r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
 		f := r.f.withDb(dbh)
-		if conflictResolution == ResourceBindConflictResolutionOverwrite {
-			if _, err := destParent.DeleteChildRecursive(destName, false); err == nil {
-				deleted = true
-			} else if !errors.Is(err, ErrResourceNotFound) {
-				return err
-			}
-		}
-		if _, err := dbh.CreateResources(f.ctx, create); err != nil {
-			if strings.Contains(err.Error(), "unique_member_resource_name") {
-				return ErrResourceNameConflict
-			}
+
+		root, created, d, err := f.createResource(id, destParent.ID(), destName, r.Dir(), conflictResolution)
+		if err != nil {
 			return err
 		}
-		return dbh.UpdateResourceModified(f.ctx, destParent.ID())
+		deleted = d
+
+		if root.Dir {
+			newIDs[r.ID()] = root.ID
+		} else {
+			contents = append(contents, copySrcDest{src: r.ID(), dest: root.ID})
+		}
+
+		for _, src := range tree {
+			id, _ := uuid.NewV7()
+			parent := newIDs[*src.Parent]
+
+			children = append(children, db.CreateResourcesParams{
+				ID:            id,
+				Parent:        parent,
+				Name:          src.Name,
+				Dir:           src.Dir,
+				ContentSize:   src.ContentSize,
+				ContentType:   src.ContentType,
+				ContentSha256: src.ContentSha256,
+			})
+
+			if src.Dir {
+				newIDs[src.ID] = id
+			} else {
+				contents = append(contents, copySrcDest{src: src.ID, dest: id})
+			}
+		}
+
+		if _, err := dbh.CreateResources(f.ctx, children); err != nil {
+			return err
+		}
+		if created {
+			return dbh.UpdateResourceModified(f.ctx, destParent.ID())
+		}
+		return nil
 	})
 
 	if err == nil {
 		func() {
-			for k, v := range contents {
-				if err := r.f.cs.CopyContents(k, v); err != nil {
-					logrus.Warn("unable to copy " + k.String() + " to " + v.String() + ": " + err.Error())
+			for _, c := range contents {
+				if err := r.f.cs.CopyContents(c.src, c.dest); err != nil {
+					logrus.Warn("unable to copy " + c.src.String() + " to " + c.dest.String() + ": " + err.Error())
 				}
 			}
 
