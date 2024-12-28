@@ -17,7 +17,7 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   String get method => 'DELETE';
 
   @override
-  String get endpoint => '/api/v1/fs/rm/$id';
+  String get endpoint => '/api/v1/fs/rm/$resourceId';
 
   final String resourceName;
 
