@@ -11,6 +11,9 @@ import (
 	"github.com/shroff/phylum/server/internal/core/db"
 )
 
+const emptyContentType = "text/plain"
+const emptyContentSHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
 func (f filesystem) CreateResourceByPath(path string, dir, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	path = strings.TrimRight(path, "/")
 	index := strings.LastIndex(path, "/")
@@ -52,7 +55,13 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 		var err error
 		parent := r.ID()
 		f := r.f.withDb(d)
-		if result, created, _, err = f.createResource(id, parent, name, dir, conflictResolution); err != nil {
+		contentType := ""
+		contentSHA256 := ""
+		if dir {
+			contentType = emptyContentType
+			contentSHA256 = emptyContentSHA256
+		}
+		if result, created, _, err = f.createResource(id, parent, name, dir, 0, contentType, contentSHA256, conflictResolution); err != nil {
 			return err
 		} else if created {
 			return d.UpdateResourceModified(r.f.ctx, parent)
@@ -92,10 +101,27 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 	}, nil
 }
 
-func (f filesystem) createResource(id uuid.UUID, parent uuid.UUID, name string, dir bool, conflictResolution ResourceBindConflictResolution) (res db.Resource, created, deleted bool, err error) {
+func (f filesystem) createResource(
+	id uuid.UUID,
+	parent uuid.UUID,
+	name string,
+	dir bool,
+	contentSize int64,
+	contentType string,
+	contentSHA256 string,
+	conflictResolution ResourceBindConflictResolution,
+) (res db.Resource, created, deleted bool, err error) {
 	err = f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 		f := f.withDb(d)
-		res, err = f.db.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir})
+		res, err = f.db.CreateResource(f.ctx, db.CreateResourceParams{
+			ID:            id,
+			Parent:        &parent,
+			Name:          name,
+			ContentSize:   contentSize,
+			ContentType:   contentType,
+			ContentSha256: contentSHA256,
+			Dir:           dir,
+		})
 		return err
 	})
 	if err == nil {
@@ -122,7 +148,15 @@ func (f filesystem) createResource(id uuid.UUID, parent uuid.UUID, name string, 
 				}
 				err = f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 					f := f.withDb(d)
-					res, err = f.db.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir})
+					res, err = f.db.CreateResource(f.ctx, db.CreateResourceParams{
+						ID:            id,
+						Parent:        &parent,
+						Name:          name,
+						ContentSize:   contentSize,
+						ContentType:   contentType,
+						ContentSha256: contentSHA256,
+						Dir:           dir,
+					})
 					return err
 				})
 				if err != nil {
@@ -146,7 +180,16 @@ func (f filesystem) createResource(id uuid.UUID, parent uuid.UUID, name string, 
 				} else {
 					err = f.deleteRecursive(id, parent, true, false)
 					if err == nil {
-						res, created, _, err = f.createResource(id, parent, name, dir, ResourceBindConflictResolutionError)
+						res, created, _, err = f.createResource(
+							id,
+							parent,
+							name,
+							dir,
+							contentSize,
+							contentType,
+							contentSHA256,
+							ResourceBindConflictResolutionError,
+						)
 					}
 				}
 			}
@@ -154,7 +197,16 @@ func (f filesystem) createResource(id uuid.UUID, parent uuid.UUID, name string, 
 			deleted = true
 			err = f.deleteRecursive(id, parent, true, false)
 			if err == nil {
-				res, created, _, err = f.createResource(id, parent, name, dir, ResourceBindConflictResolutionError)
+				res, created, _, err = f.createResource(
+					id,
+					parent,
+					name,
+					dir,
+					contentSize,
+					contentType,
+					contentSHA256,
+					ResourceBindConflictResolutionError,
+				)
 			}
 		}
 	} else if strings.Contains(err.Error(), "resources_pkey") {

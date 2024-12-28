@@ -115,7 +115,16 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	err = r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
 		f := r.f.withDb(dbh)
 
-		root, created, deleted, err = f.createResource(id, destParent.ID(), destName, r.Dir(), conflictResolution)
+		root, created, deleted, err = f.createResource(
+			id,
+			destParent.ID(),
+			destName,
+			r.Dir(),
+			r.Info.contentSize,
+			r.Info.contentType,
+			r.Info.contentSHA256,
+			conflictResolution,
+		)
 		if err != nil {
 			return err
 		}
@@ -170,9 +179,6 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	}
 
 	info := ResourceInfoFromDBResource(root)
-	info.contentSize = r.ContentSize()
-	info.contentType = r.ContentType()
-	info.contentSHA256 = r.ContentSHA256()
 	if destParent.Path() == "/" {
 		info.path = "/" + info.name
 	} else {

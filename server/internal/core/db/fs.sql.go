@@ -40,19 +40,20 @@ func (q *Queries) ChildResourceByName(ctx context.Context, arg ChildResourceByNa
 
 const createResource = `-- name: CreateResource :one
 INSERT INTO resources(
-    id, parent, name, dir, content_type, content_sha256
+    id, parent, name, dir, content_size, content_type, content_sha256
 ) VALUES (
-    $1::uuid, $2::uuid, $3::text, $4::boolean,
-      CASE $4 WHEN TRUE THEN '' ELSE 'text/plain' END,
-      CASE $4 WhEN TRUE THEN '' ELSE 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' END
+    $1::uuid, $2::uuid, $3::text, $4::boolean, $5::bigint, $6::text, $7::text
 ) RETURNING id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
 `
 
 type CreateResourceParams struct {
-	ID     uuid.UUID
-	Parent *uuid.UUID
-	Name   string
-	Dir    bool
+	ID            uuid.UUID
+	Parent        *uuid.UUID
+	Name          string
+	Dir           bool
+	ContentSize   int64
+	ContentType   string
+	ContentSha256 string
 }
 
 func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) (Resource, error) {
@@ -61,6 +62,9 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 		arg.Parent,
 		arg.Name,
 		arg.Dir,
+		arg.ContentSize,
+		arg.ContentType,
+		arg.ContentSha256,
 	)
 	var i Resource
 	err := row.Scan(
