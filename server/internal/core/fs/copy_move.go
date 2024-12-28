@@ -3,7 +3,6 @@ package fs
 import (
 	"errors"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
@@ -110,15 +109,16 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	var contents []copySrcDest
 	newIDs := make(map[uuid.UUID]uuid.UUID)
 
+	var root db.Resource
+	created := false
 	deleted := false
 	err = r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
 		f := r.f.withDb(dbh)
 
-		root, created, d, err := f.createResource(id, destParent.ID(), destName, r.Dir(), conflictResolution)
+		root, created, deleted, err = f.createResource(id, destParent.ID(), destName, r.Dir(), conflictResolution)
 		if err != nil {
 			return err
 		}
-		deleted = d
 
 		if root.Dir {
 			newIDs[r.ID()] = root.ID
@@ -165,23 +165,14 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			}
 
 		}()
+	} else {
+		return Resource{}, false, err
 	}
 
-	parentID := destParent.ID()
-	var info = ResourceInfo{
-		id:            id,
-		parentID:      &parentID,
-		name:          destName,
-		dir:           r.Dir(),
-		created:       time.Now(),
-		modified:      time.Now(),
-		deleted:       nil,
-		contentSize:   r.ContentSize(),
-		contentType:   r.ContentType(),
-		contentSHA256: r.ContentSHA256(),
-		permissions:   nil,
-		publinks:      nil,
-	}
+	info := ResourceInfoFromDBResource(root)
+	info.contentSize = r.ContentSize()
+	info.contentType = r.ContentType()
+	info.contentSHA256 = r.ContentSHA256()
 	if destParent.Path() == "/" {
 		info.path = "/" + info.name
 	} else {
@@ -191,13 +182,13 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	ancestry := make([]ResourceInfo, len(destParent.Ancestors)+1)
 	copy(ancestry, destParent.Ancestors)
 	ancestry = append(ancestry, r.Info)
-	created := Resource{
+	result := Resource{
 		f:              r.f,
 		Ancestors:      ancestry,
 		Info:           info,
 		userPermission: destParent.userPermission,
 	}
-	return created, deleted, err
+	return result, deleted, err
 }
 
 // targetByPathOrUUID splits a target path or uuid into its constituent components

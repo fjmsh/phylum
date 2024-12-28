@@ -93,62 +93,73 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 }
 
 func (f filesystem) createResource(id uuid.UUID, parent uuid.UUID, name string, dir bool, conflictResolution ResourceBindConflictResolution) (res db.Resource, created, deleted bool, err error) {
-	if res, err = f.db.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir}); err != nil {
-		if strings.Contains(err.Error(), "unique_member_resource_name") {
-			switch conflictResolution {
-			// case ResourceBindConflictResolutionError: // Nothing to do
-			case ResourceBindConflictResolutionEnsure:
-				res, err = f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: parent, Name: "name"})
-				if err == nil && res.Dir != dir {
-					err = ErrResourceNameConflict
+	err = f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
+		f := f.withDb(d)
+		res, err = f.db.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir})
+		return err
+	})
+	if err == nil {
+		created = true
+		return
+	}
+	if strings.Contains(err.Error(), "unique_member_resource_name") {
+		switch conflictResolution {
+		case ResourceBindConflictResolutionError:
+			err = ErrResourceNameConflict
+		case ResourceBindConflictResolutionEnsure:
+			res, err = f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: parent, Name: "name"})
+			if err == nil && res.Dir != dir {
+				err = ErrResourceNameConflict
+			}
+		case ResourceBindConflictResolutionRename:
+			ext := path.Ext(name)
+			basename := name[:len(name)-len(ext)]
+			counter := 1
+			for {
+				name := fmt.Sprintf("%s (%d).%s", basename, counter, ext)
+				if ext == "" {
+					name = fmt.Sprintf("%s (%d)", basename, counter)
 				}
-			case ResourceBindConflictResolutionRename:
-				ext := path.Ext(name)
-				basename := name[:len(name)-len(ext)]
-				counter := 1
-				for {
-					name := fmt.Sprintf("%s (%d).%s", basename, counter, ext)
-					if ext == "" {
-						name = fmt.Sprintf("%s (%d)", basename, counter)
-						if res, err = f.db.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir}); err != nil {
-							if !strings.Contains(err.Error(), "unique_member_resource_name") {
-								return
-							}
-							counter++
-						} else {
-							created = true
-							return
-						}
+				err = f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
+					f := f.withDb(d)
+					res, err = f.db.CreateResource(f.ctx, db.CreateResourceParams{ID: id, Parent: &parent, Name: name, Dir: dir})
+					return err
+				})
+				if err != nil {
+					if !strings.Contains(err.Error(), "unique_member_resource_name") {
+						return
 					}
-				}
-			case ResourceBindConflictResolutionOverwrite:
-				res, err = f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: parent, Name: "name"})
-				if err == nil {
-					deleted = true
-					if res.Dir == dir {
-						if dir {
-							err = f.deleteRecursive(id, parent, true, true)
-						}
-					} else {
-						err = f.deleteRecursive(id, parent, true, false)
-						if err == nil {
-							res, created, _, err = f.createResource(id, parent, name, dir, ResourceBindConflictResolutionError)
-						}
-					}
-				}
-			case ResourceBindConflictResolutionDelete:
-				deleted = true
-				err = f.deleteRecursive(id, parent, true, false)
-				if err == nil {
-					res, created, _, err = f.createResource(id, parent, name, dir, ResourceBindConflictResolutionError)
+					counter++
+				} else {
+					created = true
+					return
 				}
 			}
-		} else if strings.Contains(err.Error(), "resources_pkey") {
-			// TODO: maybe the request already succeeded in the previous attempt but the client didn't receive the response?
-			err = ErrResourceIDConflict
+		case ResourceBindConflictResolutionOverwrite:
+			res, err = f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: parent, Name: "name"})
+			if err == nil {
+				deleted = true
+				if res.Dir == dir {
+					if dir {
+						err = f.deleteRecursive(id, parent, true, true)
+					}
+				} else {
+					err = f.deleteRecursive(id, parent, true, false)
+					if err == nil {
+						res, created, _, err = f.createResource(id, parent, name, dir, ResourceBindConflictResolutionError)
+					}
+				}
+			}
+		case ResourceBindConflictResolutionDelete:
+			deleted = true
+			err = f.deleteRecursive(id, parent, true, false)
+			if err == nil {
+				res, created, _, err = f.createResource(id, parent, name, dir, ResourceBindConflictResolutionError)
+			}
 		}
-	} else {
-		created = true
+	} else if strings.Contains(err.Error(), "resources_pkey") {
+		// TODO: maybe the request already succeeded in the previous attempt but the client didn't receive the response?
+		err = ErrResourceIDConflict
 	}
 	return
 }
