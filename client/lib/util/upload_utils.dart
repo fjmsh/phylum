@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_mkdir.dart';
 import 'package:phylum/libphylum/actions/action_resource_upload.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -74,7 +75,12 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
   }
   for (final file in tree.files) {
     final parent = p.dirname(file);
-    final action = await ResourceUploadAction.fromPath(parent: dirIds[parent] ?? folderId, resourceName: p.basename(file), path: file);
+    final action = await ResourceUploadAction.fromPath(
+      parent: dirIds[parent] ?? folderId,
+      resourceName: p.basename(file),
+      path: file,
+      conflictResolution: resourceBindConflictResolutionError,
+    );
     await account.addAction(action);
   }
 }

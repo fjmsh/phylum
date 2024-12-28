@@ -53,6 +53,14 @@ class ActionView extends StatelessWidget {
         children: [
           if (showRenameOptions)
             IconButton(
+                icon: const Icon(Icons.healing),
+                tooltip: 'Auto Rename',
+                onPressed: () async {
+                  if (action is! ResourceBindAction) return;
+                  action.updateConflictResolution(resourceBindConflictResolutionRename);
+                }),
+          if (showRenameOptions)
+            IconButton(
                 icon: const Icon(Icons.edit),
                 tooltip: 'Rename',
                 onPressed: () async {
