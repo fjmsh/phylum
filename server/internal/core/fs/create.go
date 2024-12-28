@@ -133,7 +133,7 @@ func (f filesystem) createResource(
 		case ResourceBindConflictResolutionError:
 			err = ErrResourceNameConflict
 		case ResourceBindConflictResolutionEnsure:
-			res, err = f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: parent, Name: "name"})
+			res, err = f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: parent, Name: name})
 			if err == nil && res.Dir != dir {
 				err = ErrResourceNameConflict
 			}
@@ -142,10 +142,7 @@ func (f filesystem) createResource(
 			basename := name[:len(name)-len(ext)]
 			counter := 1
 			for {
-				name := fmt.Sprintf("%s (%d).%s", basename, counter, ext)
-				if ext == "" {
-					name = fmt.Sprintf("%s (%d)", basename, counter)
-				}
+				name := fmt.Sprintf("%s (%d)%s", basename, counter, ext)
 				err = f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 					f := f.withDb(d)
 					res, err = f.db.CreateResource(f.ctx, db.CreateResourceParams{
@@ -170,7 +167,7 @@ func (f filesystem) createResource(
 				}
 			}
 		case ResourceBindConflictResolutionOverwrite:
-			res, err = f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: parent, Name: "name"})
+			res, err = f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: parent, Name: name})
 			if err == nil {
 				deleted = true
 				if res.Dir == dir {
