@@ -18,6 +18,9 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/mv/$resourceId';
 
+  @override
+  bool get trackServerData => true;
+
   final DateTime modified;
   final String description;
 
@@ -76,16 +79,6 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
       'target': '$parent:$resourceName',
       'conflict': conflictResolution,
     };
-  }
-
-  @override
-  Future<void> initialize() {
-    return account.resourceRepository.trackServerData(resourceId);
-  }
-
-  @override
-  Future<void> dispose() {
-    return account.resourceRepository.stopTrackingServerData(resourceId);
   }
 
   @override

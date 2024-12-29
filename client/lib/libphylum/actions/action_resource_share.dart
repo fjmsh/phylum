@@ -20,6 +20,9 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/share/$resourceId';
 
+  @override
+  bool get trackServerData => true;
+
   final String username;
   final int permission;
   final DateTime modified;
@@ -76,16 +79,6 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
       'username': username,
       'permission': permission,
     };
-  }
-
-  @override
-  Future<void> initialize() {
-    return account.resourceRepository.trackServerData(resourceId);
-  }
-
-  @override
-  Future<void> dispose() {
-    return account.resourceRepository.stopTrackingServerData(resourceId);
   }
 
   @override
