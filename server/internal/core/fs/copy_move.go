@@ -125,6 +125,9 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			r.Info.contentSHA256,
 			conflictResolution,
 		)
+		if err == nil && r.ID() == root.ID {
+			err = ErrResourceCopyTargetSelf
+		}
 		if err != nil {
 			return err
 		}

@@ -16,5 +16,6 @@ var (
 	ErrResourceNameInvalid            = errors.NewError(http.StatusBadRequest, "resource_name_invalid", "Resource name is invalid")
 	ErrResourceNameConflict           = errors.NewError(http.StatusPreconditionFailed, "resource_name_conflict", "Another resource with this name already exists on the server")
 	ErrResourceMoveTargetSubdirectory = errors.NewError(http.StatusConflict, "move_target_subdirectory", "Cannot move a resource to its own subdirectory")
+	ErrResourceCopyTargetSelf         = errors.NewError(http.StatusConflict, "copy_target_self", "Cannot overwrite a resource with itself")
 	ErrParentNotFound                 = errors.NewError(http.StatusConflict, "parent_not_found", "Parent not found")
 )
