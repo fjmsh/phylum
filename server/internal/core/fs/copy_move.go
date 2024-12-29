@@ -55,7 +55,7 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 	var deleted = false
 	return r, deleted, r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
 		f := r.f.withDb(dbh)
-		if conflictResolution == ResourceBindConflictResolutionOverwrite {
+		if conflictResolution == ResourceBindConflictResolutionOverwrite || conflictResolution == ResourceBindConflictResolutionDelete {
 			if _, err := destParent.DeleteChildRecursive(destName, false); err == nil {
 				deleted = true
 			} else if !errors.Is(err, ErrResourceNotFound) {
