@@ -173,6 +173,16 @@ func (f filesystem) createResource(
 				if res.Dir == dir {
 					if dir {
 						err = f.deleteRecursive(id, parent, true, true)
+					} else {
+						err = f.db.UpdateResourceContents(f.ctx, db.UpdateResourceContentsParams{
+							ID:            res.ID,
+							ContentSize:   contentSize,
+							ContentType:   contentType,
+							ContentSha256: contentSHA256,
+						})
+						res.ContentSize = contentSize
+						res.ContentType = contentType
+						res.ContentSha256 = contentSHA256
 					}
 				} else {
 					err = f.deleteRecursive(id, parent, true, false)
