@@ -256,35 +256,28 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	// TODO(rost): Support the If-Match, If-None-Match headers? See bradfitz'
 	// comments in http.checkEtag.
 
-	res, err := h.FileSystem.ResourceByPath(reqPath)
-
-	if errors.Is(err, fs.ErrResourceNotFound) {
-		res, err = h.FileSystem.CreateResourceByPath(reqPath, false, false, fs.ResourceBindConflictResolutionEnsure)
-		if err != nil {
-			if errors.Is(err, fs.ErrParentNotFound) {
-				return http.StatusConflict, err
-			}
-			return http.StatusNotFound, err
+	res, err := h.FileSystem.CreateResourceByPath(reqPath, false, false, fs.ResourceBindConflictResolutionEnsure)
+	if err != nil {
+		if errors.Is(err, fs.ErrParentNotFound) {
+			return http.StatusConflict, err
+		} else if errors.Is(err, fs.ErrResourceCollection) {
+			return http.StatusConflict, fs.ErrResourceCollection
 		}
-	} else if err != nil {
 		return http.StatusNotFound, err
-	} else if res.Dir() {
-		return http.StatusConflict, fs.ErrResourceCollection
 	}
 
 	f, err := res.OpenWrite()
 	_, copyErr := io.Copy(f, r.Body)
-	fi, statErr := h.FileSystem.ResourceByPath(reqPath)
 	closeErr := f.Close()
-	// TODO(rost): Returning 405 Method Not Allowed might not be appropriate.
 	if copyErr != nil {
-		return http.StatusMethodNotAllowed, copyErr
-	}
-	if statErr != nil {
-		return http.StatusMethodNotAllowed, statErr
+		return http.StatusInternalServerError, copyErr
 	}
 	if closeErr != nil {
-		return http.StatusMethodNotAllowed, closeErr
+		return http.StatusInternalServerError, closeErr
+	}
+	fi, statErr := h.FileSystem.ResourceByPath(reqPath)
+	if statErr != nil {
+		return http.StatusInternalServerError, statErr
 	}
 	w.Header().Set("ETag", fi.ContentSHA256())
 	return http.StatusCreated, nil
