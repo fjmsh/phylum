@@ -172,7 +172,7 @@ func (f filesystem) createResource(
 				deleted = true
 				if res.Dir == dir {
 					if dir {
-						err = f.deleteRecursive(id, parent, true, true)
+						err = f.deleteRecursive(res.ID, parent, true, true)
 					} else {
 						err = f.db.UpdateResourceContents(f.ctx, db.UpdateResourceContentsParams{
 							ID:            res.ID,
@@ -185,7 +185,7 @@ func (f filesystem) createResource(
 						res.ContentSha256 = contentSHA256
 					}
 				} else {
-					err = f.deleteRecursive(id, parent, true, false)
+					err = f.deleteRecursive(res.ID, parent, true, false)
 					if err == nil {
 						res, created, _, err = f.createResource(
 							id,
@@ -202,7 +202,7 @@ func (f filesystem) createResource(
 			}
 		case ResourceBindConflictResolutionDelete:
 			deleted = true
-			err = f.deleteRecursive(id, parent, true, false)
+			err = f.deleteRecursive(res.ID, parent, true, false)
 			if err == nil {
 				res, created, _, err = f.createResource(
 					id,
