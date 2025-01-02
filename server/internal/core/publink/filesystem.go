@@ -52,7 +52,7 @@ func (f filesystem) resourceByPath(search string) (Resource, error) {
 		path:          path,
 		created:       r.Created.Time,
 		modified:      r.Modified.Time,
-		contentSize:   r.ContentSize,
+		contentLength: r.ContentLength,
 		contentType:   r.ContentType,
 		contentSHA256: r.ContentSha256,
 	}, nil

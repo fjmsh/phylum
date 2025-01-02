@@ -1,15 +1,15 @@
 -- name: CreateResource :one
 INSERT INTO resources(
-    id, parent, name, dir, content_size, content_type, content_sha256
+    id, parent, name, dir, content_length, content_type, content_sha256
 ) VALUES (
-    @id::uuid, sqlc.narg('parent')::uuid, @name::text, @dir::boolean, @content_size::bigint, @content_type::text, @content_sha256::text
+    @id::uuid, sqlc.narg('parent')::uuid, @name::text, @dir::boolean, @content_length::bigint, @content_type::text, @content_sha256::text
 ) RETURNING *;
 
 -- name: CreateResources :copyfrom
 INSERT INTO resources(
-    id, parent, name, dir, content_size, content_type, content_sha256
+    id, parent, name, dir, content_length, content_type, content_sha256
 ) VALUES (
-    @id::uuid, @parent::uuid, @name::text, @dir::boolean, @content_size::bigint, @content_type::text, @content_sha256::text
+    @id::uuid, @parent::uuid, @name::text, @dir::boolean, @content_length::bigint, @content_type::text, @content_sha256::text
 );
 
 -- name: ResourceByPath :many
@@ -21,7 +21,7 @@ SELECT * FROM resource_by_id(@resource_id::uuid);
 -- name: UpdateResourceContents :exec
 UPDATE resources
 SET
-    content_size = $1,
+    content_length = $1,
     content_type = $2, 
     content_sha256 = $3,
     modified = NOW()
@@ -100,16 +100,16 @@ WHERE id in (SELECT id FROM nodes)
 RETURNING id, dir;
 
 -- name: DiskUsage :one
-WITH RECURSIVE nodes(id, parent, content_size, dir) AS (
-    SELECT r.id, r.parent, r.content_size, r.dir
+WITH RECURSIVE nodes(id, parent, content_length, dir) AS (
+    SELECT r.id, r.parent, r.content_length, r.dir
     FROM resources r WHERE r.id = @id::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.content_size, r.dir
+    SELECT r.id, r.parent, r.content_length, r.dir
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
 )
 SELECT
-  SUM(content_size) AS size,
+  SUM(content_length) AS size,
   COUNT(*) AS entities,
   COUNT(CASE dir WHEN true THEN 1 ELSE NULL END) AS dirs,
   COUNT(CASE dir WHEN false THEN 1 ELSE NULL END) AS files

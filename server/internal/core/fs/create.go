@@ -106,7 +106,7 @@ func (f filesystem) createResource(
 	parent uuid.UUID,
 	name string,
 	dir bool,
-	contentSize int64,
+	contentLength int64,
 	contentType string,
 	contentSHA256 string,
 	conflictResolution ResourceBindConflictResolution,
@@ -117,7 +117,7 @@ func (f filesystem) createResource(
 			ID:            id,
 			Parent:        &parent,
 			Name:          name,
-			ContentSize:   contentSize,
+			ContentLength: contentLength,
 			ContentType:   contentType,
 			ContentSha256: contentSHA256,
 			Dir:           dir,
@@ -149,7 +149,7 @@ func (f filesystem) createResource(
 						ID:            id,
 						Parent:        &parent,
 						Name:          name,
-						ContentSize:   contentSize,
+						ContentLength: contentLength,
 						ContentType:   contentType,
 						ContentSha256: contentSHA256,
 						Dir:           dir,
@@ -176,11 +176,11 @@ func (f filesystem) createResource(
 					} else {
 						err = f.db.UpdateResourceContents(f.ctx, db.UpdateResourceContentsParams{
 							ID:            res.ID,
-							ContentSize:   contentSize,
+							ContentLength: contentLength,
 							ContentType:   contentType,
 							ContentSha256: contentSHA256,
 						})
-						res.ContentSize = contentSize
+						res.ContentLength = contentLength
 						res.ContentType = contentType
 						res.ContentSha256 = contentSHA256
 					}
@@ -192,7 +192,7 @@ func (f filesystem) createResource(
 							parent,
 							name,
 							dir,
-							contentSize,
+							contentLength,
 							contentType,
 							contentSHA256,
 							ResourceBindConflictResolutionError,
@@ -209,7 +209,7 @@ func (f filesystem) createResource(
 					parent,
 					name,
 					dir,
-					contentSize,
+					contentLength,
 					contentType,
 					contentSHA256,
 					ResourceBindConflictResolutionError,
@@ -236,7 +236,7 @@ func ResourceInfoFromDBResource(r db.Resource) ResourceInfo {
 		created:       r.Created.Time,
 		modified:      r.Modified.Time,
 		deleted:       delTime,
-		contentSize:   r.ContentSize,
+		contentLength: r.ContentLength,
 		contentType:   r.ContentType,
 		contentSHA256: r.ContentSha256,
 	}

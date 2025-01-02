@@ -21,7 +21,7 @@ type ResourceInfo struct {
 	created       time.Time
 	modified      time.Time
 	deleted       *time.Time
-	contentSize   int64
+	contentLength int64
 	contentType   string
 	contentSHA256 string
 	permissions   []byte
@@ -36,7 +36,7 @@ func (r Resource) Dir() bool             { return r.Info.dir }
 func (r Resource) Created() time.Time    { return r.Info.created }
 func (r Resource) Modified() time.Time   { return r.Info.modified }
 func (r Resource) Deleted() *time.Time   { return r.Info.deleted }
-func (r Resource) ContentSize() int64    { return r.Info.contentSize }
+func (r Resource) ContentLength() int64  { return r.Info.contentLength }
 func (r Resource) ContentSHA256() string { return r.Info.contentSHA256 }
 func (r Resource) ContentType() string   { return r.Info.contentType }
 func (r Resource) Path() string          { return r.Info.path }
@@ -52,7 +52,7 @@ func (r ResourceInfo) Dir() bool             { return r.dir }
 func (r ResourceInfo) Created() time.Time    { return r.created }
 func (r ResourceInfo) Modified() time.Time   { return r.modified }
 func (r ResourceInfo) Deleted() *time.Time   { return r.deleted }
-func (r ResourceInfo) ContentSize() int64    { return r.contentSize }
+func (r ResourceInfo) ContentLength() int64  { return r.contentLength }
 func (r ResourceInfo) ContentSHA256() string { return r.contentSHA256 }
 func (r ResourceInfo) ContentType() string   { return r.contentType }
 func (r ResourceInfo) Permissions() []byte   { return r.permissions }

@@ -18,7 +18,7 @@ type Resource struct {
 	path          string
 	created       time.Time
 	modified      time.Time
-	contentSize   int64
+	contentLength int64
 	contentType   string
 	contentSHA256 string
 }
@@ -29,7 +29,7 @@ func (r Resource) Path() string          { return r.path }
 func (r Resource) Dir() bool             { return r.dir }
 func (r Resource) Created() time.Time    { return r.created }
 func (r Resource) Modified() time.Time   { return r.modified }
-func (r Resource) ContentSize() int64    { return r.contentSize }
+func (r Resource) ContentLength() int64  { return r.contentLength }
 func (r Resource) ContentSHA256() string { return r.contentSHA256 }
 func (r Resource) ContentType() string   { return r.contentType }
 
@@ -69,7 +69,7 @@ func (r Resource) ReadDir(recursive bool) ([]serve.ResourceInfo, error) {
 			path:          path,
 			created:       c.Created.Time,
 			modified:      c.Modified.Time,
-			contentSize:   c.ContentSize,
+			contentLength: c.ContentLength,
 			contentType:   c.ContentType,
 			contentSHA256: c.ContentSha256,
 		}

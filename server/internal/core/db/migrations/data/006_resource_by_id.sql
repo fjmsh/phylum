@@ -6,12 +6,12 @@ CREATE TABLE full_resource (
 
 
 CREATE FUNCTION resource_by_id(resource_id uuid) RETURNS SETOF full_resource AS $$
-  WITH RECURSIVE nodes(id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256) AS (
-    SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_size, r.content_type, r.content_sha256
+  WITH RECURSIVE nodes(id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256) AS (
+    SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_length, r.content_type, r.content_sha256
       FROM resources r
       WHERE r.id = resource_id
     UNION ALL
-      SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_size, r.content_type, r.content_sha256
+      SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_length, r.content_type, r.content_sha256
         FROM resources r
         JOIN nodes n ON r.id = n.parent
   ), resource_permissions(id, permissions) AS (
@@ -19,7 +19,7 @@ CREATE FUNCTION resource_by_id(resource_id uuid) RETURNS SETOF full_resource AS 
   ), resource_publinks(id, names) AS (
     SELECT l.root, jsonb_agg(l.name) FROM publinks l WHERE l.deleted IS NULL GROUP BY l.root
   )
-  SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_size, r.content_type, r.content_sha256, p.permissions, l.names
+  SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_length, r.content_type, r.content_sha256, p.permissions, l.names
     FROM nodes r
     LEFT JOIN resource_permissions p ON r.id = p.id
     LEFT JOIN resource_publinks l ON r.id = l.id;

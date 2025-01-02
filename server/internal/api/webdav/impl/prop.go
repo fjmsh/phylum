@@ -264,7 +264,7 @@ func findDisplayName(fi serve.ResourceInfo) string {
 }
 
 func findContentLength(fi serve.ResourceInfo) string {
-	return strconv.FormatInt(fi.ContentSize(), 10)
+	return strconv.FormatInt(fi.ContentLength(), 10)
 }
 
 func findCreationDate(fi serve.ResourceInfo) string {

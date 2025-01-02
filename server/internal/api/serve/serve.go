@@ -31,7 +31,7 @@ type ResourceInfo interface {
 	Dir() bool
 	Created() time.Time
 	Modified() time.Time
-	ContentSize() int64
+	ContentLength() int64
 	ContentSHA256() string
 	ContentType() string
 }
@@ -104,7 +104,7 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file Resource) {
 		if f.Dir() {
 			fmt.Fprintf(w, "<tr><td>%s</td></tr>\n", link)
 		} else {
-			fmt.Fprintf(w, "<tr><td>%s</td><td align=\"right\">%s</td><td>%s</td><td>%s</td></tr>\n", link, formatSize(f.ContentSize()), f.ContentType(), f.ContentSHA256()[0:12])
+			fmt.Fprintf(w, "<tr><td>%s</td><td align=\"right\">%s</td><td>%s</td><td>%s</td></tr>\n", link, formatSize(f.ContentLength()), f.ContentType(), f.ContentSHA256()[0:12])
 		}
 	}
 	fmt.Fprintln(w, "</tbody></table></pre>")
@@ -130,10 +130,10 @@ func serveResource(w http.ResponseWriter, r *http.Request, file Resource) {
 	}
 
 	code := http.StatusOK
-	sendSize := file.ContentSize()
-	ranges, err := parseRange(rangeReq, file.ContentSize())
+	sendSize := file.ContentLength()
+	ranges, err := parseRange(rangeReq, file.ContentLength())
 	if err != nil {
-		w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", file.ContentSize()))
+		w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", file.ContentLength()))
 		http.Error(w, err.Error(), http.StatusRequestedRangeNotSatisfiable)
 		return
 	}
@@ -156,7 +156,7 @@ func serveResource(w http.ResponseWriter, r *http.Request, file Resource) {
 		reader, err = file.OpenRead(ra.start, ra.length)
 		if err == nil {
 			code = http.StatusPartialContent
-			w.Header().Set("Content-Range", ra.contentRange(file.ContentSize()))
+			w.Header().Set("Content-Range", ra.contentRange(file.ContentLength()))
 		} else if errors.Is(err, ErrRangeNotSupported) {
 			err = nil
 		}

@@ -33,7 +33,7 @@ func (r iteratorForCreateResources) Values() ([]interface{}, error) {
 		r.rows[0].Parent,
 		r.rows[0].Name,
 		r.rows[0].Dir,
-		r.rows[0].ContentSize,
+		r.rows[0].ContentLength,
 		r.rows[0].ContentType,
 		r.rows[0].ContentSha256,
 	}, nil
@@ -44,5 +44,5 @@ func (r iteratorForCreateResources) Err() error {
 }
 
 func (q *Queries) CreateResources(ctx context.Context, arg []CreateResourcesParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"resources"}, []string{"id", "parent", "name", "dir", "content_size", "content_type", "content_sha256"}, &iteratorForCreateResources{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"resources"}, []string{"id", "parent", "name", "dir", "content_length", "content_type", "content_sha256"}, &iteratorForCreateResources{rows: arg})
 }

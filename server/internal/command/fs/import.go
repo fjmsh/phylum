@@ -76,11 +76,11 @@ func setupImportCommand() *cobra.Command {
 						if err != nil {
 							return err
 						}
-						sz := info.Size()
+						len := info.Size()
 						if d.IsDir() {
-							sz = 0
+							len = 0
 						}
-						size += sz
+						size += len
 						if d.Name() == "" || fs.CheckNameInvalid(d.Name()) {
 							return fs.ErrResourceNameInvalid
 						}
@@ -91,7 +91,7 @@ func setupImportCommand() *cobra.Command {
 							ID:            ids[p],
 							Name:          d.Name(),
 							Dir:           d.IsDir(),
-							ContentSize:   sz,
+							ContentLength: len,
 							ContentType:   "",
 							ContentSha256: "",
 						})

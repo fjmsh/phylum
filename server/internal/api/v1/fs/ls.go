@@ -23,7 +23,7 @@ type ResourceInfoResponse struct {
 	Dir           bool       `json:"dir"`
 	Created       time.Time  `json:"created"`
 	Modified      time.Time  `json:"modified"`
-	ContentSize   int64      `json:"c_size"`
+	ContentLength int64      `json:"c_len"`
 	ContentType   string     `json:"c_type"`
 	ContentSHA256 string     `json:"c_sha256"`
 	Permissions   string     `json:"permissions"`
@@ -86,7 +86,7 @@ func ResponseFromResourceInfo(r fs.ResourceInfo) ResourceInfoResponse {
 		Dir:           r.Dir(),
 		Created:       r.Created(),
 		Modified:      r.Modified(),
-		ContentSize:   r.ContentSize(),
+		ContentLength: r.ContentLength(),
 		ContentType:   r.ContentType(),
 		ContentSHA256: r.ContentSHA256(),
 		Permissions:   string(r.Permissions()),

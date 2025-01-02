@@ -27,7 +27,7 @@ func setupLsCommand() *cobra.Command {
 			}
 
 			fmt.Println(r.Path() + " " + fullPermissionsString(r))
-			fmt.Println(formatRow(r.ID().String(), formatSize(r.ContentSize()), r.ContentSHA256(), ".", permissionJsonString(r.Info.Permissions()), r.Info.Publinks()))
+			fmt.Println(formatRow(r.ID().String(), formatSize(r.ContentLength()), r.ContentSHA256(), ".", permissionJsonString(r.Info.Permissions()), r.Info.Publinks()))
 
 			if r.Dir() {
 				children, err := r.ReadDir(false)
@@ -74,7 +74,7 @@ func formatResourceSummary(r fs.ResourceInfo) string {
 	if r.Dir() {
 		name += "/"
 	}
-	return formatRow(r.ID().String(), formatSize(r.ContentSize()), r.ContentSHA256(), name, permissionJsonString(r.Permissions()), r.Publinks())
+	return formatRow(r.ID().String(), formatSize(r.ContentLength()), r.ContentSHA256(), name, permissionJsonString(r.Permissions()), r.Publinks())
 }
 
 func fullPermissionsString(r fs.Resource) string {

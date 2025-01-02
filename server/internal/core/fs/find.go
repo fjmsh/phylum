@@ -99,7 +99,7 @@ func resourceInfoFromDBPublinkedResource(r db.FullResource) ResourceInfo {
 		created:       r.Created.Time,
 		modified:      r.Modified.Time,
 		deleted:       delTime,
-		contentSize:   r.ContentSize,
+		contentLength: r.ContentLength,
 		contentType:   r.ContentType,
 		contentSHA256: r.ContentSha256,
 		permissions:   r.Permissions,

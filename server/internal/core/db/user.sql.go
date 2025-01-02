@@ -87,7 +87,7 @@ func (q *Queries) ListUsers(ctx context.Context, since pgtype.Timestamp) ([]List
 }
 
 const sharedResources = `-- name: SharedResources :many
-SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_size, r.content_type, r.content_sha256
+SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_length, r.content_type, r.content_sha256
 FROM permissions p
 JOIN resources r
 ON p.resource_id = r.id
@@ -120,7 +120,7 @@ func (q *Queries) SharedResources(ctx context.Context, arg SharedResourcesParams
 			&i.Created,
 			&i.Modified,
 			&i.Deleted,
-			&i.ContentSize,
+			&i.ContentLength,
 			&i.ContentType,
 			&i.ContentSha256,
 		); err != nil {

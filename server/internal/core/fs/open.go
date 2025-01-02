@@ -24,7 +24,7 @@ func (r Resource) OpenWrite() (io.WriteCloser, error) {
 		return r.f.db.UpdateResourceContents(r.f.ctx, db.UpdateResourceContentsParams{
 			ID:            r.ID(),
 			ContentType:   mime,
-			ContentSize:   int64(len),
+			ContentLength: int64(len),
 			ContentSha256: sum,
 		})
 	})

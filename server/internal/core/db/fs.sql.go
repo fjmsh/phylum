@@ -13,7 +13,7 @@ import (
 )
 
 const childResourceByName = `-- name: ChildResourceByName :one
-SELECT id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256 FROM resources WHERE parent = $1::uuid AND name = $2::text AND deleted IS NULL
+SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256 FROM resources WHERE parent = $1::uuid AND name = $2::text AND deleted IS NULL
 `
 
 type ChildResourceByNameParams struct {
@@ -32,7 +32,7 @@ func (q *Queries) ChildResourceByName(ctx context.Context, arg ChildResourceByNa
 		&i.Created,
 		&i.Modified,
 		&i.Deleted,
-		&i.ContentSize,
+		&i.ContentLength,
 		&i.ContentType,
 		&i.ContentSha256,
 	)
@@ -41,10 +41,10 @@ func (q *Queries) ChildResourceByName(ctx context.Context, arg ChildResourceByNa
 
 const createResource = `-- name: CreateResource :one
 INSERT INTO resources(
-    id, parent, name, dir, content_size, content_type, content_sha256
+    id, parent, name, dir, content_length, content_type, content_sha256
 ) VALUES (
     $1::uuid, $2::uuid, $3::text, $4::boolean, $5::bigint, $6::text, $7::text
-) RETURNING id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
+) RETURNING id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256
 `
 
 type CreateResourceParams struct {
@@ -52,7 +52,7 @@ type CreateResourceParams struct {
 	Parent        *uuid.UUID
 	Name          string
 	Dir           bool
-	ContentSize   int64
+	ContentLength int64
 	ContentType   string
 	ContentSha256 string
 }
@@ -63,7 +63,7 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 		arg.Parent,
 		arg.Name,
 		arg.Dir,
-		arg.ContentSize,
+		arg.ContentLength,
 		arg.ContentType,
 		arg.ContentSha256,
 	)
@@ -76,7 +76,7 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 		&i.Created,
 		&i.Modified,
 		&i.Deleted,
-		&i.ContentSize,
+		&i.ContentLength,
 		&i.ContentType,
 		&i.ContentSha256,
 	)
@@ -88,7 +88,7 @@ type CreateResourcesParams struct {
 	Parent        uuid.UUID
 	Name          string
 	Dir           bool
-	ContentSize   int64
+	ContentLength int64
 	ContentType   string
 	ContentSha256 string
 }
@@ -144,16 +144,16 @@ func (q *Queries) DeleteRecursive(ctx context.Context, arg DeleteRecursiveParams
 }
 
 const diskUsage = `-- name: DiskUsage :one
-WITH RECURSIVE nodes(id, parent, content_size, dir) AS (
-    SELECT r.id, r.parent, r.content_size, r.dir
+WITH RECURSIVE nodes(id, parent, content_length, dir) AS (
+    SELECT r.id, r.parent, r.content_length, r.dir
     FROM resources r WHERE r.id = $1::uuid
   UNION ALL
-    SELECT r.id, r.parent, r.content_size, r.dir
+    SELECT r.id, r.parent, r.content_length, r.dir
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
 )
 SELECT
-  SUM(content_size) AS size,
+  SUM(content_length) AS size,
   COUNT(*) AS entities,
   COUNT(CASE dir WHEN true THEN 1 ELSE NULL END) AS dirs,
   COUNT(CASE dir WHEN false THEN 1 ELSE NULL END) AS files
@@ -180,7 +180,7 @@ func (q *Queries) DiskUsage(ctx context.Context, id uuid.UUID) (DiskUsageRow, er
 }
 
 const readDir = `-- name: ReadDir :many
-SELECT id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions, publinks from readdir($1::uuid, $2::int, $3::int)
+SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, publinks from readdir($1::uuid, $2::int, $3::int)
 `
 
 type ReadDirParams struct {
@@ -206,7 +206,7 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]FullResourc
 			&i.Created,
 			&i.Modified,
 			&i.Deleted,
-			&i.ContentSize,
+			&i.ContentLength,
 			&i.ContentType,
 			&i.ContentSha256,
 			&i.Permissions,
@@ -223,7 +223,7 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]FullResourc
 }
 
 const resourceByID = `-- name: ResourceByID :many
-SELECT id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions, publinks FROM resource_by_id($1::uuid)
+SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, publinks FROM resource_by_id($1::uuid)
 `
 
 func (q *Queries) ResourceByID(ctx context.Context, resourceID uuid.UUID) ([]FullResource, error) {
@@ -243,7 +243,7 @@ func (q *Queries) ResourceByID(ctx context.Context, resourceID uuid.UUID) ([]Ful
 			&i.Created,
 			&i.Modified,
 			&i.Deleted,
-			&i.ContentSize,
+			&i.ContentLength,
 			&i.ContentType,
 			&i.ContentSha256,
 			&i.Permissions,
@@ -260,7 +260,7 @@ func (q *Queries) ResourceByID(ctx context.Context, resourceID uuid.UUID) ([]Ful
 }
 
 const resourceByPath = `-- name: ResourceByPath :many
-SELECT id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256, permissions, publinks FROM resource_by_id(resource_id_by_path($1::text, $2::uuid))
+SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, publinks FROM resource_by_id(resource_id_by_path($1::text, $2::uuid))
 `
 
 type ResourceByPathParams struct {
@@ -285,7 +285,7 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 			&i.Created,
 			&i.Modified,
 			&i.Deleted,
-			&i.ContentSize,
+			&i.ContentLength,
 			&i.ContentType,
 			&i.ContentSha256,
 			&i.Permissions,
@@ -304,7 +304,7 @@ func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) 
 const updateResourceContents = `-- name: UpdateResourceContents :exec
 UPDATE resources
 SET
-    content_size = $1,
+    content_length = $1,
     content_type = $2, 
     content_sha256 = $3,
     modified = NOW()
@@ -312,7 +312,7 @@ WHERE id = $4
 `
 
 type UpdateResourceContentsParams struct {
-	ContentSize   int64
+	ContentLength int64
 	ContentType   string
 	ContentSha256 string
 	ID            uuid.UUID
@@ -320,7 +320,7 @@ type UpdateResourceContentsParams struct {
 
 func (q *Queries) UpdateResourceContents(ctx context.Context, arg UpdateResourceContentsParams) error {
 	_, err := q.db.Exec(ctx, updateResourceContents,
-		arg.ContentSize,
+		arg.ContentLength,
 		arg.ContentType,
 		arg.ContentSha256,
 		arg.ID,
@@ -346,7 +346,7 @@ SET
     name = CASE WHEN ($1::text = '') THEN name ELSE $1::text END,
     modified = NOW()
 WHERE id = $2::uuid
-RETURNING id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
+RETURNING id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256
 `
 
 type UpdateResourceNameParams struct {
@@ -365,7 +365,7 @@ func (q *Queries) UpdateResourceName(ctx context.Context, arg UpdateResourceName
 		&i.Created,
 		&i.Modified,
 		&i.Deleted,
-		&i.ContentSize,
+		&i.ContentLength,
 		&i.ContentType,
 		&i.ContentSha256,
 	)
@@ -407,7 +407,7 @@ SET
     parent = $1::uuid,
     modified = NOW()
 WHERE id = $2::uuid
-RETURNING id, name, parent, dir, created, modified, deleted, content_size, content_type, content_sha256
+RETURNING id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256
 `
 
 type UpdateResourceParentParams struct {
@@ -426,7 +426,7 @@ func (q *Queries) UpdateResourceParent(ctx context.Context, arg UpdateResourcePa
 		&i.Created,
 		&i.Modified,
 		&i.Deleted,
-		&i.ContentSize,
+		&i.ContentLength,
 		&i.ContentType,
 		&i.ContentSha256,
 	)

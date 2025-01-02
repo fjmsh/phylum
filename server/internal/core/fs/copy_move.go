@@ -121,7 +121,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			destParent.ID(),
 			destName,
 			r.Dir(),
-			r.Info.contentSize,
+			r.Info.contentLength,
 			r.Info.contentType,
 			r.Info.contentSHA256,
 			conflictResolution,
@@ -148,7 +148,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 				Parent:        parent,
 				Name:          src.Name,
 				Dir:           src.Dir,
-				ContentSize:   src.ContentSize,
+				ContentLength: src.ContentLength,
 				ContentType:   src.ContentType,
 				ContentSha256: src.ContentSha256,
 			})
