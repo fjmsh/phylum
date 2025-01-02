@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
+import 'package:phylum/util/file_size.dart';
+import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
 import '../../libphylum/explorer/explorer_controller.dart';
@@ -24,6 +26,16 @@ class ResourceDetailsRow extends StatelessWidget {
         : showBorder
             ? BorderSide(color: theme.colorScheme.primary, width: 2.0)
             : const BorderSide(color: Colors.transparent, width: 2.0);
+    String subtitle = "";
+    if (!r.dir) {
+      subtitle = r.contentSize.formatForDisplay();
+    }
+    if (r.modified != null) {
+      if (subtitle.isNotEmpty) {
+        subtitle += " \u2022 ";
+      }
+      subtitle += r.modified!.formatForDisplay();
+    }
 
     return ListTile(
       leading: Row(
@@ -42,12 +54,21 @@ class ResourceDetailsRow extends StatelessWidget {
           ),
         ],
       ),
+      visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
       title: Text(
         r.name,
         maxLines: 1,
         softWrap: false,
         overflow: TextOverflow.fade,
       ),
+      subtitle: subtitle.isEmpty
+          ? null
+          : Text(
+              subtitle,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.fade,
+            ),
       trailing: IconButton(icon: Icon(Icons.adaptive.more), onPressed: () => showMenuOptionsBottomSheet(context, resourceOptions, [r])),
       shape: RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(4.0)),
       selected: highlight,

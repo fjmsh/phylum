@@ -61,7 +61,7 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
   final confirm = await showAlertDialog(
         context,
         title: 'Upload Files?',
-        message: 'Found ${tree.files.length} files and ${tree.dirs.length} directories.\n\nTotal Upload Size: ${tree.totalSize.getHumanString()}',
+        message: 'Found ${tree.files.length} files and ${tree.dirs.length} directories.\n\nTotal Upload Size: ${tree.totalSize.formatForDisplay()}',
         positiveText: 'YES',
         negativeText: 'NO',
       ) ??

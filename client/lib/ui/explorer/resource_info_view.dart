@@ -65,16 +65,16 @@ class ResourceInfoView extends StatelessWidget {
           ),
           ListTile(
             title: const Text('Created'),
-            subtitle: Text(resource.created?.formatReadable() ?? '--'),
+            subtitle: Text(resource.created?.formatForDisplay() ?? '--'),
           ),
           ListTile(
             title: const Text('Modified'),
-            subtitle: Text(resource.modified?.formatReadable() ?? '--'),
+            subtitle: Text(resource.modified?.formatForDisplay() ?? '--'),
           ),
           if (!resource.dir)
             ListTile(
               title: const Text('Size'),
-              subtitle: Text(resource.contentSize.getHumanString()),
+              subtitle: Text(resource.contentSize.formatForDisplay()),
             ),
           if (!resource.dir)
             ListTile(

@@ -1,7 +1,7 @@
 typedef FileSize = int;
 
 extension FileSizeString on FileSize {
-  String getHumanString() {
+  String formatForDisplay() {
     const suffixes = ['B', 'KB', 'MB', 'GB'];
     var sz = this;
     for (var i = 0; i < suffixes.length; i++) {
