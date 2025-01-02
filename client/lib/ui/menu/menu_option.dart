@@ -3,14 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
-import 'package:phylum/libphylum/actions/action_resource_copy.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_add.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_remove.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/util/uuid.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
@@ -70,12 +68,10 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
         return;
       }
       for (final r in resources) {
-        account.addAction(ResourceCopyAction(
-          src: r,
-          resourceId: generateUuid(),
-          resourceName: r.name,
-          parent: dest,
-        ));
+        account.resourceRepository.copy(
+          resource: r,
+          destination: dest,
+        );
       }
       break;
     case MenuOption.delete:

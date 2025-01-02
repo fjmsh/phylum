@@ -3,11 +3,15 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:hive/hive.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:path/path.dart';
+import 'package:phylum/libphylum/actions/action_resource_bind.dart';
+import 'package:phylum/libphylum/actions/action_resource_copy.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
+import 'package:phylum/libphylum/util/uuid.dart';
 
 class ResourceRepository {
   final PhylumAccount account;
@@ -15,6 +19,8 @@ class ResourceRepository {
   late final Box<int> _serverDataCountsBox;
 
   ResourceRepository({required this.account});
+
+  get dest => null;
 
   Future<void> initialize() async {
     if (!Hive.isAdapterRegistered(const ResourceAdapter().typeId)) {
@@ -30,6 +36,25 @@ class ResourceRepository {
         await processResourceResponse(response.data);
       }
     });
+  }
+
+  void copy({required Resource resource, required String destination}) {
+    String name = resource.name;
+    if (resource.parent == destination) {
+      name = '${basenameWithoutExtension(name)} - Copy${extension(name)}';
+    }
+    account.addAction(ResourceCopyAction(
+      srcId: resource.id,
+      resourceId: generateUuid(),
+      parent: destination,
+      resourceName: name,
+      conflictResolution: resourceBindConflictResolutionError,
+      dir: resource.dir,
+      contentType: resource.contentType,
+      contentLength: resource.contentLength,
+      contentSha256: resource.contentSha256,
+      description: 'Copying ${resource.name}',
+    ));
   }
 
   Future<void> trackServerData(String id) async {

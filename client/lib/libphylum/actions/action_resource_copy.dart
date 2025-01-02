@@ -26,7 +26,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   final int contentLength;
   final String contentSha256;
 
-  ResourceCopyAction._({
+  ResourceCopyAction({
     required this.srcId,
     required super.resourceId,
     required super.parent,
@@ -39,27 +39,8 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
     required this.description,
   });
 
-  ResourceCopyAction({
-    required Resource src,
-    required String resourceId,
-    required String parent,
-    required String resourceName,
-    ResourceBindConflictResolution conflictResolution = resourceBindConflictResolutionError,
-  }) : this._(
-          srcId: src.id,
-          resourceId: resourceId,
-          parent: parent,
-          resourceName: resourceName,
-          conflictResolution: conflictResolution,
-          dir: src.dir,
-          contentType: src.contentType,
-          contentLength: src.contentLength,
-          contentSha256: src.contentSha256,
-          description: 'Copying ${src.name}',
-        );
-
   factory ResourceCopyAction.fromMap(Map<String, dynamic> map) {
-    return ResourceCopyAction._(
+    return ResourceCopyAction(
       srcId: map['srcId'],
       resourceId: map['resourceId'],
       parent: map['parent'],

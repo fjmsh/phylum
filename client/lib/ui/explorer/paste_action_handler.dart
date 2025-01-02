@@ -3,14 +3,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
-import 'package:phylum/libphylum/actions/action_resource_copy.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/explorer/explorer_controller.dart';
 import 'package:phylum/util/upload_utils.dart';
-import 'package:phylum/libphylum/util/uuid.dart';
 import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
@@ -63,12 +61,10 @@ void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
     account.addAction(ResourceMoveAction(r: r, parent: folderId));
   }
   for (final r in copyResources) {
-    account.addAction(ResourceCopyAction(
-      src: r,
-      resourceId: generateUuid(),
-      resourceName: r.name,
-      parent: folderId,
-    ));
+    account.resourceRepository.copy(
+      resource: r,
+      destination: folderId,
+    );
   }
 
   await SystemClipboard.instance?.write([]);
