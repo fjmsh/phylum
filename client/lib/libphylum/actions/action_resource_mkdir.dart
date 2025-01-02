@@ -55,7 +55,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
 
   @override
   Future<void> applyOptimisticUpdate() {
-    return account.resourceRepository.createResource(resourceId, true, parent, resourceName, '');
+    return account.resourceRepository.createResource(resourceId, parent, resourceName, true);
   }
 
   @override

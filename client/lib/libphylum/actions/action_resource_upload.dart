@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:drift/drift.dart';
 import 'package:http/http.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
@@ -87,8 +88,15 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   }
 
   @override
-  Future<void> applyOptimisticUpdate() {
-    return account.resourceRepository.createResource(resourceId, false, parent, resourceName, contentType);
+  Future<void> applyOptimisticUpdate() async {
+    await account.resourceRepository.createResource(resourceId, parent, resourceName, false);
+    await account.resourceRepository.updateResource(
+      resourceId,
+      (o) => o(
+        contentType: Value(contentType),
+        contentSize: Value(size),
+      ),
+    );
   }
 
   @override

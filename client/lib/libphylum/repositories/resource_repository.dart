@@ -95,7 +95,7 @@ class ResourceRepository {
     return _serverDataBox.get(id);
   }
 
-  Future<int> createResource(String id, bool dir, String parent, String name, String contentType) {
+  Future<int> createResource(String id, String parent, String name, bool dir) {
     return account.db.resources.insertOne(
       ResourcesCompanion.insert(
         id: id,
@@ -104,9 +104,6 @@ class ResourceRepository {
         dir: dir,
         created: Value(DateTime.now()),
         modified: Value(DateTime.now()),
-        contentSize: Value(0),
-        contentSha256: Value(""),
-        contentType: Value(contentType),
       ),
       mode: InsertMode.insertOrReplace,
     );

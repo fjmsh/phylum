@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
@@ -20,6 +21,9 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   final String srcId;
   final String description;
   final bool dir;
+  final String contentType;
+  final int contentLength;
+  final String contentSha256;
 
   ResourceCopyAction._({
     required this.srcId,
@@ -28,6 +32,9 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
     required super.resourceName,
     required super.conflictResolution,
     required this.dir,
+    required this.contentType,
+    required this.contentLength,
+    required this.contentSha256,
     required this.description,
   });
 
@@ -44,6 +51,9 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
           resourceName: resourceName,
           conflictResolution: conflictResolution,
           dir: src.dir,
+          contentType: src.contentType,
+          contentLength: src.contentSize,
+          contentSha256: src.contentSha256,
           description: 'Copying ${src.name}',
         );
 
@@ -55,6 +65,9 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
       resourceName: map['resourceName'],
       conflictResolution: map['conflictResolution'],
       dir: map['dir'],
+      contentType: map['contentType'],
+      contentLength: map['contentLength'],
+      contentSha256: map['contentSha256'],
       description: map['description'],
     );
   }
@@ -67,6 +80,9 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
         'resourceName': resourceName,
         'conflictResolution': conflictResolution,
         'dir': dir,
+        'contentType': contentType,
+        'contentLength': contentLength,
+        'contentSha256': contentSha256,
         'description': description,
       };
 
@@ -85,8 +101,18 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   }
 
   @override
-  Future<void> applyOptimisticUpdate() {
-    return account.resourceRepository.createResource(resourceId, dir, parent, resourceName, '');
+  Future<void> applyOptimisticUpdate() async {
+    await account.resourceRepository.createResource(resourceId, parent, resourceName, dir);
+    if (!dir) {
+      await account.resourceRepository.updateResource(
+        resourceId,
+        (o) => o(
+          contentType: Value(contentType),
+          contentSize: Value(contentLength),
+          contentSha256: Value(contentSha256),
+        ),
+      );
+    }
   }
 
   @override
