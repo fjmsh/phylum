@@ -56,7 +56,7 @@ SET
     parent = @parent::uuid,
     modified = NOW()
 WHERE id = @id::uuid
-RETURNING name, parent;
+RETURNING name, parent, modified;
 
 -- name: UpdateUserPermissionsForResource :exec
 INSERT INTO permissions(

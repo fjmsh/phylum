@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const childResourceByName = `-- name: ChildResourceByName :one
@@ -378,7 +379,7 @@ SET
     parent = $2::uuid,
     modified = NOW()
 WHERE id = $3::uuid
-RETURNING name, parent
+RETURNING name, parent, modified
 `
 
 type UpdateResourceNameParentParams struct {
@@ -388,14 +389,15 @@ type UpdateResourceNameParentParams struct {
 }
 
 type UpdateResourceNameParentRow struct {
-	Name   string
-	Parent *uuid.UUID
+	Name     string
+	Parent   *uuid.UUID
+	Modified pgtype.Timestamp
 }
 
 func (q *Queries) UpdateResourceNameParent(ctx context.Context, arg UpdateResourceNameParentParams) (UpdateResourceNameParentRow, error) {
 	row := q.db.QueryRow(ctx, updateResourceNameParent, arg.Name, arg.Parent, arg.ID)
 	var i UpdateResourceNameParentRow
-	err := row.Scan(&i.Name, &i.Parent)
+	err := row.Scan(&i.Name, &i.Parent, &i.Modified)
 	return i, err
 }
 

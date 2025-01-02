@@ -62,14 +62,15 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 				return err
 			}
 		}
-		if nameParent, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID(), Name: destName, Parent: destParent.ID()}); err != nil {
+		if result, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID(), Name: destName, Parent: destParent.ID()}); err != nil {
 			if strings.Contains(err.Error(), "unique_member_resource_name") {
 				return ErrResourceNameConflict
 			}
 			return err
 		} else {
-			r.Info.name = nameParent.Name
-			r.Info.parentID = nameParent.Parent
+			r.Info.name = result.Name
+			r.Info.parentID = result.Parent
+			r.Info.modified = result.Modified.Time
 			return nil
 		}
 	})
