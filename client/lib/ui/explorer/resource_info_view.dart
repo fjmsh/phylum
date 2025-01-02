@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/explorer/explorer_controller.dart';
 import 'package:phylum/util/file_size.dart';
@@ -110,7 +111,7 @@ class _PermissionsTileState extends State<PermissionsTile> {
   void initState() {
     super.initState();
     final account = context.read<PhylumAccount>();
-    sub = account.resourceRepository.watchParents(widget.resourceId).listen((data) {
+    sub = account.db.watchParents(widget.resourceId).listen((data) {
       final p = calculatePermissionSet(data.map((e) => e.permissions));
       setState(() {
         myPermission = p.remove(account.userEmail) ?? 0;

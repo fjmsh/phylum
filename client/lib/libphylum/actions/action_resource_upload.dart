@@ -7,6 +7,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 
@@ -89,8 +90,8 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
 
   @override
   Future<void> applyOptimisticUpdate() async {
-    await account.resourceRepository.createResource(resourceId, parent, resourceName, false);
-    await account.resourceRepository.updateResource(
+    await account.db.createResource(resourceId, parent, resourceName, false);
+    await account.db.updateResource(
       resourceId,
       (o) => o(
         contentType: Value(contentType),
@@ -101,7 +102,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
 
   @override
   Future<void> revertOptimisticUpdate() {
-    return account.resourceRepository.deleteResource(resourceId);
+    return account.db.deleteResource(resourceId);
   }
 
   @override

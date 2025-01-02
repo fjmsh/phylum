@@ -5,6 +5,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
@@ -102,9 +103,9 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
 
   @override
   Future<void> applyOptimisticUpdate() async {
-    await account.resourceRepository.createResource(resourceId, parent, resourceName, dir);
+    await account.db.createResource(resourceId, parent, resourceName, dir);
     if (!dir) {
-      await account.resourceRepository.updateResource(
+      await account.db.updateResource(
         resourceId,
         (o) => o(
           contentType: Value(contentType),
@@ -117,7 +118,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
 
   @override
   Future<void> revertOptimisticUpdate() {
-    return account.resourceRepository.deleteResource(resourceId);
+    return account.db.deleteResource(resourceId);
   }
 
   @override

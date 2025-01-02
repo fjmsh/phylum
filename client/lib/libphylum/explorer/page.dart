@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 
 sealed class ExplorerPage {
@@ -20,29 +21,19 @@ class ExplorerPageFolder extends ExplorerPage {
   ExplorerPageFolder({required this.folderId});
 
   @override
-  Future<bool> refresh(PhylumAccount account) {
-    return account.resourceRepository.requestResource(folderId).then((result) => result.success);
-  }
+  Future<bool> refresh(PhylumAccount account) => account.resourceRepository.requestResource(folderId).then((result) => result.success);
 
   @override
-  Stream<Resource?> watchResource(PhylumAccount account) {
-    return account.resourceRepository.watchResource(folderId);
-  }
+  Stream<Resource?> watchResource(PhylumAccount account) => account.db.watchResource(folderId);
 
   @override
-  Stream<List<Resource>> watchChildren(PhylumAccount account) {
-    return account.resourceRepository.watchChildren(folderId);
-  }
+  Stream<List<Resource>> watchChildren(PhylumAccount account) => account.db.watchChildren(folderId);
 
   @override
-  Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account) {
-    return account.resourceRepository.watchParents(folderId).map((p) => p.reversed);
-  }
+  Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account) => account.db.watchParents(folderId).map((p) => p.reversed);
 
   @override
-  String toString() {
-    return 'ExplorerPageFolder($folderId)';
-  }
+  String toString() => 'ExplorerPageFolder($folderId)';
 
   @override
   bool operator ==(Object other) {

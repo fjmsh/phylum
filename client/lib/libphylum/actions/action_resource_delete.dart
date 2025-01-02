@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 import 'action_resource.dart';
@@ -55,12 +56,12 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
 
   @override
   Future<void> applyOptimisticUpdate() {
-    return account.resourceRepository.updateResource(resourceId, (o) => o(deleted: const Value(true)));
+    return account.db.updateResource(resourceId, (o) => o(deleted: const Value(true)));
   }
 
   @override
   Future<void> revertOptimisticUpdate() {
-    return account.resourceRepository.updateResource(resourceId, (o) => o(deleted: const Value(false)));
+    return account.db.updateResource(resourceId, (o) => o(deleted: const Value(false)));
   }
 
   @override

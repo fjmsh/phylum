@@ -6,6 +6,7 @@ import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_copy.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/explorer/explorer_controller.dart';
 import 'package:phylum/util/upload_utils.dart';
@@ -48,7 +49,7 @@ void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
         if (uri.authority == openUri.authority && uri.path == openUri.path && uri.queryParameters.containsKey('id')) {
           final resourceId = uri.queryParameters['id']!;
           final cut = uri.queryParameters.containsKey('cut');
-          final resource = await account.resourceRepository.getResource(resourceId);
+          final resource = await account.db.getResource(resourceId);
           if (resource != null) {
             (cut ? cutResources : copyResources).add(resource);
           }

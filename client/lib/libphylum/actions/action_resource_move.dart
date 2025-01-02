@@ -5,6 +5,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
@@ -83,7 +84,7 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
 
   @override
   Future<void> applyOptimisticUpdate() {
-    return account.resourceRepository.updateResource(
+    return account.db.updateResource(
       resourceId,
       (o) => o(
         name: Value.absentIfNull(resourceName),
@@ -96,7 +97,7 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
   @override
   Future<void> revertOptimisticUpdate() {
     final serverData = account.resourceRepository.getServerData(resourceId)!;
-    return account.resourceRepository.updateResource(
+    return account.db.updateResource(
       resourceId,
       (o) => o(
         name: Value(serverData.name),

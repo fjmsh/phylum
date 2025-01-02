@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
 
@@ -27,7 +28,7 @@ class _ResourcePreviewState extends State<ResourcePreview> {
   @override
   void initState() {
     super.initState();
-    context.read<PhylumAccount>().resourceRepository.getResource(widget.resourceId).then((r) => setState(() {
+    context.read<PhylumAccount>().db.getResource(widget.resourceId).then((r) => setState(() {
           loading = false;
           resource = r;
         }));

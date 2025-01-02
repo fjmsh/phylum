@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:hive/hive.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
@@ -31,45 +32,14 @@ class ResourceRepository {
     });
   }
 
-  Future<Resource?> getResource(String id) {
-    return _selectResource(id).getSingleOrNull();
-  }
-
-  Stream<Resource?> watchResource(String id) {
-    return _selectResource(id).watchSingleOrNull();
-  }
-
-  Future<List<Resource>> getResources(Iterable<String> ids) {
-    return _selectResources(ids).get();
-  }
-
-  Stream<List<Resource>> watchChildren(String id) {
-    return (_selectChildren(id)..orderBy([(u) => OrderingTerm.desc(u.dir), (u) => OrderingTerm.asc(u.name.collate(Collate.noCase))])).watch();
-  }
-
-  Stream<List<ParentsResult>> watchParents(String id) {
-    return account.db.parents(id).watch();
-  }
-
-  SimpleSelectStatement<Resources, Resource> _selectResource(String id) {
-    return account.db.resources.select()..where((f) => f.id.equals(id) & f.deleted.equals(false));
-  }
-
-  SimpleSelectStatement<Resources, Resource> _selectChildren(String id) {
-    return account.db.resources.select()..where((f) => f.parent.equals(id) & f.deleted.equals(false));
-  }
-
-  SimpleSelectStatement<Resources, Resource> _selectResources(Iterable<String> ids) {
-    return account.db.resources.select()..where((f) => f.id.isIn(ids));
-  }
-
   Future<void> trackServerData(String id) async {
     final count = _serverDataCountsBox.get(id) ?? 0;
     if (count == 0) {
-      final r = await _selectResource(id).getSingle();
+      final r = await account.db.getResource(id);
+      assert(r != null);
       await Future.wait([
         _serverDataCountsBox.put(id, 1),
-        _serverDataBox.put(id, r),
+        _serverDataBox.put(id, r!),
       ]);
     } else {
       return _serverDataCountsBox.put(id, count + 1);
@@ -93,28 +63,6 @@ class ResourceRepository {
 
   Resource? getServerData(String id) {
     return _serverDataBox.get(id);
-  }
-
-  Future<int> createResource(String id, String parent, String name, bool dir) {
-    return account.db.resources.insertOne(
-      ResourcesCompanion.insert(
-        id: id,
-        name: name,
-        parent: Value(parent),
-        dir: dir,
-        created: Value(DateTime.now()),
-        modified: Value(DateTime.now()),
-      ),
-      mode: InsertMode.insertOrReplace,
-    );
-  }
-
-  Future<int> updateResource(String id, Insertable<Resource> Function($ResourcesUpdateCompanionBuilder o) fn) {
-    return account.db.managers.resources.filter((f) => f.id.equals(id)).update(fn);
-  }
-
-  Future<int> deleteResource(String id) {
-    return account.db.resources.deleteWhere((f) => f.id.equals(id));
   }
 
   Future processResourceResponse(Map<String, dynamic> data) async {

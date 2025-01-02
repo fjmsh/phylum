@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
@@ -55,12 +56,12 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
 
   @override
   Future<void> applyOptimisticUpdate() {
-    return account.resourceRepository.createResource(resourceId, parent, resourceName, true);
+    return account.db.createResource(resourceId, parent, resourceName, true);
   }
 
   @override
   Future<void> revertOptimisticUpdate() {
-    return account.resourceRepository.deleteResource(resourceId);
+    return account.db.deleteResource(resourceId);
   }
 
   @override

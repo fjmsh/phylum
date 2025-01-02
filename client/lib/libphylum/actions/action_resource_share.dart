@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/util/permissions.dart';
 
@@ -83,7 +84,7 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
 
   @override
   Future<void> applyOptimisticUpdate() async {
-    final resource = await account.resourceRepository.getResource(resourceId);
+    final resource = await account.db.getResource(resourceId);
     final p = mergePermissions({}, resource?.permissions);
     if ((p[username] ?? 0) == permission) {
       return;
@@ -94,7 +95,7 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
       p[username] = permission;
     }
     final serialized = p.isEmpty ? null : json.encode(p);
-    account.resourceRepository.updateResource(
+    account.db.updateResource(
       resourceId,
       (o) => o(
         permissions: Value(serialized),
@@ -106,7 +107,7 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
   @override
   Future<void> revertOptimisticUpdate() {
     final serverData = account.resourceRepository.getServerData(resourceId)!;
-    return account.resourceRepository.updateResource(
+    return account.db.updateResource(
       resourceId,
       (o) => o(
         permissions: Value(serverData.permissions),

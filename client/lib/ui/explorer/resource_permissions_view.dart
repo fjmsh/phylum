@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/permissions.dart';
@@ -27,7 +28,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
   void initState() {
     super.initState();
     final account = context.read<PhylumAccount>();
-    sub = account.resourceRepository.watchParents(widget.resourceId).listen((data) {
+    sub = account.db.watchParents(widget.resourceId).listen((data) {
       final inheritedPermissions = calculatePermissionSet(data.sublist(1).map((e) => e.permissions));
       final permissions = mergePermissions(Map.of(inheritedPermissions), data.first.permissions);
       setState(() {
