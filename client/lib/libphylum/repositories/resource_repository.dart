@@ -173,7 +173,7 @@ ResourcesCompanion parseResourceObject(Map<String, dynamic> data) {
     created: Value(DateTime.parse(data['created'])),
     modified: Value(DateTime.parse(data['modified'])),
     deleted: Value(data['deleted'] != null),
-    contentSize: Value(data['c_size']),
+    contentLength: Value(data['c_len']),
     contentSha256: Value(data['c_sha256']),
     contentType: Value(data['c_type']),
     permissions: data['permissions'].isEmpty ? Value(null) : Value(data['permissions']),
@@ -200,7 +200,7 @@ ResourcesCompanion parsePartialResourceObject(Map<String, dynamic> data, [String
     created: Value.absentIfNull(data.containsKey('created') ? DateTime.parse(data['created']) : null),
     modified: Value.absentIfNull(data.containsKey('modified') ? DateTime.parse(data['modified']) : null),
     deleted: Value.absentIfNull(data.containsKey('deleted') ? data['deleted'] != null : null),
-    contentSize: Value.absentIfNull(data['c_size']),
+    contentLength: Value.absentIfNull(data['c_len']),
     contentSha256: Value.absentIfNull(data['c_sha256']),
     contentType: Value.absentIfNull(data['c_type']),
     permissions: data.containsKey('permissions')

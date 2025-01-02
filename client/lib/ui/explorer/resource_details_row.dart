@@ -28,7 +28,7 @@ class ResourceDetailsRow extends StatelessWidget {
             : const BorderSide(color: Colors.transparent, width: 2.0);
     String subtitle = "";
     if (!r.dir) {
-      subtitle = r.contentSize.formatForDisplay();
+      subtitle = r.contentLength.formatForDisplay();
     }
     if (r.modified != null) {
       if (subtitle.isNotEmpty) {
@@ -72,8 +72,8 @@ class ResourceDetailsRow extends StatelessWidget {
       trailing: IconButton(icon: Icon(Icons.adaptive.more), onPressed: () => showMenuOptionsBottomSheet(context, resourceOptions, [r])),
       shape: RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(4.0)),
       selected: highlight,
-      selectedColor: dim ? theme.colorScheme.primary.withOpacity(0.75) : null,
-      selectedTileColor: dim ? theme.colorScheme.primaryContainer.withOpacity(0.75) : null,
+      selectedColor: dim ? theme.colorScheme.primary.withAlpha(192) : null,
+      selectedTileColor: dim ? theme.colorScheme.primaryContainer.withAlpha(192) : null,
       tileColor: dropTargetActive ? theme.colorScheme.secondaryContainer : null,
     );
   }

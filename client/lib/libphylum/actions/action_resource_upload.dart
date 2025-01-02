@@ -94,7 +94,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       resourceId,
       (o) => o(
         contentType: Value(contentType),
-        contentSize: Value(size),
+        contentLength: Value(size),
       ),
     );
   }

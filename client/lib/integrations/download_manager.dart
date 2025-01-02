@@ -26,7 +26,7 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
   Future<void> downloadResource(Resource r) async {
     int id = account.getPersisted<int>(_keyDownloadTaskId) ?? 1;
     await account.persist(_keyDownloadTaskId, id + 1);
-    final task = DownloadTask(id: id, resourceId: r.id, resourceName: r.name, expectedSize: r.contentSize);
+    final task = DownloadTask(id: id, resourceId: r.id, resourceName: r.name, expectedSize: r.contentLength);
 
     RemoveListener? remove;
     remove = task._statusNotifier.addListener((status) {
@@ -53,7 +53,7 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
       }
       final sink = output.openWrite();
 
-      final length = response.contentLength ?? r.contentSize;
+      final length = response.contentLength ?? r.contentLength;
       int received = 0;
       final stream = response.stream.map((s) {
         received += s.length;

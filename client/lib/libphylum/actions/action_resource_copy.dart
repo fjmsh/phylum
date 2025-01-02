@@ -52,7 +52,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
           conflictResolution: conflictResolution,
           dir: src.dir,
           contentType: src.contentType,
-          contentLength: src.contentSize,
+          contentLength: src.contentLength,
           contentSha256: src.contentSha256,
           description: 'Copying ${src.name}',
         );
@@ -108,7 +108,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
         resourceId,
         (o) => o(
           contentType: Value(contentType),
-          contentSize: Value(contentLength),
+          contentLength: Value(contentLength),
           contentSha256: Value(contentSha256),
         ),
       );

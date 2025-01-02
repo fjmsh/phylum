@@ -250,10 +250,10 @@ class Resources extends Table with TableInfo<Resources, Resource> {
       requiredDuringInsert: false,
       $customConstraints: 'NOT NULL DEFAULT 0 CHECK (deleted IN (0, 1))',
       defaultValue: const CustomExpression('0'));
-  static const VerificationMeta _contentSizeMeta =
-      const VerificationMeta('contentSize');
-  late final GeneratedColumn<int> contentSize = GeneratedColumn<int>(
-      'content_size', aliasedName, false,
+  static const VerificationMeta _contentLengthMeta =
+      const VerificationMeta('contentLength');
+  late final GeneratedColumn<int> contentLength = GeneratedColumn<int>(
+      'content_length', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       $customConstraints: 'NOT NULL DEFAULT 0',
@@ -304,7 +304,7 @@ class Resources extends Table with TableInfo<Resources, Resource> {
         created,
         modified,
         deleted,
-        contentSize,
+        contentLength,
         contentSha256,
         contentType,
         permissions,
@@ -354,11 +354,11 @@ class Resources extends Table with TableInfo<Resources, Resource> {
       context.handle(_deletedMeta,
           deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta));
     }
-    if (data.containsKey('content_size')) {
+    if (data.containsKey('content_length')) {
       context.handle(
-          _contentSizeMeta,
-          contentSize.isAcceptableOrUnknown(
-              data['content_size']!, _contentSizeMeta));
+          _contentLengthMeta,
+          contentLength.isAcceptableOrUnknown(
+              data['content_length']!, _contentLengthMeta));
     }
     if (data.containsKey('content_sha256')) {
       context.handle(
@@ -411,8 +411,8 @@ class Resources extends Table with TableInfo<Resources, Resource> {
           .read(DriftSqlType.dateTime, data['${effectivePrefix}modified']),
       deleted: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}deleted'])!,
-      contentSize: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}content_size'])!,
+      contentLength: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}content_length'])!,
       contentSha256: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}content_sha256'])!,
       contentType: attachedDatabase.typeMapping
@@ -443,7 +443,7 @@ class Resource extends DataClass implements Insertable<Resource> {
   final DateTime? created;
   final DateTime? modified;
   final bool deleted;
-  final int contentSize;
+  final int contentLength;
   final String contentSha256;
   final String contentType;
   final String? permissions;
@@ -457,7 +457,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       this.created,
       this.modified,
       required this.deleted,
-      required this.contentSize,
+      required this.contentLength,
       required this.contentSha256,
       required this.contentType,
       this.permissions,
@@ -479,7 +479,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       map['modified'] = Variable<DateTime>(modified);
     }
     map['deleted'] = Variable<bool>(deleted);
-    map['content_size'] = Variable<int>(contentSize);
+    map['content_length'] = Variable<int>(contentLength);
     map['content_sha256'] = Variable<String>(contentSha256);
     map['content_type'] = Variable<String>(contentType);
     if (!nullToAbsent || permissions != null) {
@@ -508,7 +508,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           ? const Value.absent()
           : Value(modified),
       deleted: Value(deleted),
-      contentSize: Value(contentSize),
+      contentLength: Value(contentLength),
       contentSha256: Value(contentSha256),
       contentType: Value(contentType),
       permissions: permissions == null && nullToAbsent
@@ -534,7 +534,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       created: serializer.fromJson<DateTime?>(json['created']),
       modified: serializer.fromJson<DateTime?>(json['modified']),
       deleted: serializer.fromJson<bool>(json['deleted']),
-      contentSize: serializer.fromJson<int>(json['content_size']),
+      contentLength: serializer.fromJson<int>(json['content_length']),
       contentSha256: serializer.fromJson<String>(json['content_sha256']),
       contentType: serializer.fromJson<String>(json['content_type']),
       permissions: serializer.fromJson<String?>(json['permissions']),
@@ -553,7 +553,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       'created': serializer.toJson<DateTime?>(created),
       'modified': serializer.toJson<DateTime?>(modified),
       'deleted': serializer.toJson<bool>(deleted),
-      'content_size': serializer.toJson<int>(contentSize),
+      'content_length': serializer.toJson<int>(contentLength),
       'content_sha256': serializer.toJson<String>(contentSha256),
       'content_type': serializer.toJson<String>(contentType),
       'permissions': serializer.toJson<String?>(permissions),
@@ -570,7 +570,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           Value<DateTime?> created = const Value.absent(),
           Value<DateTime?> modified = const Value.absent(),
           bool? deleted,
-          int? contentSize,
+          int? contentLength,
           String? contentSha256,
           String? contentType,
           Value<String?> permissions = const Value.absent(),
@@ -584,7 +584,7 @@ class Resource extends DataClass implements Insertable<Resource> {
         created: created.present ? created.value : this.created,
         modified: modified.present ? modified.value : this.modified,
         deleted: deleted ?? this.deleted,
-        contentSize: contentSize ?? this.contentSize,
+        contentLength: contentLength ?? this.contentLength,
         contentSha256: contentSha256 ?? this.contentSha256,
         contentType: contentType ?? this.contentType,
         permissions: permissions.present ? permissions.value : this.permissions,
@@ -600,8 +600,9 @@ class Resource extends DataClass implements Insertable<Resource> {
       created: data.created.present ? data.created.value : this.created,
       modified: data.modified.present ? data.modified.value : this.modified,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
-      contentSize:
-          data.contentSize.present ? data.contentSize.value : this.contentSize,
+      contentLength: data.contentLength.present
+          ? data.contentLength.value
+          : this.contentLength,
       contentSha256: data.contentSha256.present
           ? data.contentSha256.value
           : this.contentSha256,
@@ -625,7 +626,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           ..write('created: $created, ')
           ..write('modified: $modified, ')
           ..write('deleted: $deleted, ')
-          ..write('contentSize: $contentSize, ')
+          ..write('contentLength: $contentLength, ')
           ..write('contentSha256: $contentSha256, ')
           ..write('contentType: $contentType, ')
           ..write('permissions: $permissions, ')
@@ -644,7 +645,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       created,
       modified,
       deleted,
-      contentSize,
+      contentLength,
       contentSha256,
       contentType,
       permissions,
@@ -661,7 +662,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           other.created == this.created &&
           other.modified == this.modified &&
           other.deleted == this.deleted &&
-          other.contentSize == this.contentSize &&
+          other.contentLength == this.contentLength &&
           other.contentSha256 == this.contentSha256 &&
           other.contentType == this.contentType &&
           other.permissions == this.permissions &&
@@ -677,7 +678,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   final Value<DateTime?> created;
   final Value<DateTime?> modified;
   final Value<bool> deleted;
-  final Value<int> contentSize;
+  final Value<int> contentLength;
   final Value<String> contentSha256;
   final Value<String> contentType;
   final Value<String?> permissions;
@@ -692,7 +693,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.created = const Value.absent(),
     this.modified = const Value.absent(),
     this.deleted = const Value.absent(),
-    this.contentSize = const Value.absent(),
+    this.contentLength = const Value.absent(),
     this.contentSha256 = const Value.absent(),
     this.contentType = const Value.absent(),
     this.permissions = const Value.absent(),
@@ -708,7 +709,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.created = const Value.absent(),
     this.modified = const Value.absent(),
     this.deleted = const Value.absent(),
-    this.contentSize = const Value.absent(),
+    this.contentLength = const Value.absent(),
     this.contentSha256 = const Value.absent(),
     this.contentType = const Value.absent(),
     this.permissions = const Value.absent(),
@@ -726,7 +727,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     Expression<DateTime>? created,
     Expression<DateTime>? modified,
     Expression<bool>? deleted,
-    Expression<int>? contentSize,
+    Expression<int>? contentLength,
     Expression<String>? contentSha256,
     Expression<String>? contentType,
     Expression<String>? permissions,
@@ -742,7 +743,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       if (created != null) 'created': created,
       if (modified != null) 'modified': modified,
       if (deleted != null) 'deleted': deleted,
-      if (contentSize != null) 'content_size': contentSize,
+      if (contentLength != null) 'content_length': contentLength,
       if (contentSha256 != null) 'content_sha256': contentSha256,
       if (contentType != null) 'content_type': contentType,
       if (permissions != null) 'permissions': permissions,
@@ -760,7 +761,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       Value<DateTime?>? created,
       Value<DateTime?>? modified,
       Value<bool>? deleted,
-      Value<int>? contentSize,
+      Value<int>? contentLength,
       Value<String>? contentSha256,
       Value<String>? contentType,
       Value<String?>? permissions,
@@ -775,7 +776,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       created: created ?? this.created,
       modified: modified ?? this.modified,
       deleted: deleted ?? this.deleted,
-      contentSize: contentSize ?? this.contentSize,
+      contentLength: contentLength ?? this.contentLength,
       contentSha256: contentSha256 ?? this.contentSha256,
       contentType: contentType ?? this.contentType,
       permissions: permissions ?? this.permissions,
@@ -809,8 +810,8 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     if (deleted.present) {
       map['deleted'] = Variable<bool>(deleted.value);
     }
-    if (contentSize.present) {
-      map['content_size'] = Variable<int>(contentSize.value);
+    if (contentLength.present) {
+      map['content_length'] = Variable<int>(contentLength.value);
     }
     if (contentSha256.present) {
       map['content_sha256'] = Variable<String>(contentSha256.value);
@@ -843,7 +844,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
           ..write('created: $created, ')
           ..write('modified: $modified, ')
           ..write('deleted: $deleted, ')
-          ..write('contentSize: $contentSize, ')
+          ..write('contentLength: $contentLength, ')
           ..write('contentSha256: $contentSha256, ')
           ..write('contentType: $contentType, ')
           ..write('permissions: $permissions, ')
@@ -1736,7 +1737,7 @@ typedef $ResourcesCreateCompanionBuilder = ResourcesCompanion Function({
   Value<DateTime?> created,
   Value<DateTime?> modified,
   Value<bool> deleted,
-  Value<int> contentSize,
+  Value<int> contentLength,
   Value<String> contentSha256,
   Value<String> contentType,
   Value<String?> permissions,
@@ -1752,7 +1753,7 @@ typedef $ResourcesUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<DateTime?> created,
   Value<DateTime?> modified,
   Value<bool> deleted,
-  Value<int> contentSize,
+  Value<int> contentLength,
   Value<String> contentSha256,
   Value<String> contentType,
   Value<String?> permissions,
@@ -1840,8 +1841,8 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
   ColumnFilters<bool> get deleted => $composableBuilder(
       column: $table.deleted, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get contentSize => $composableBuilder(
-      column: $table.contentSize, builder: (column) => ColumnFilters(column));
+  ColumnFilters<int> get contentLength => $composableBuilder(
+      column: $table.contentLength, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get contentSha256 => $composableBuilder(
       column: $table.contentSha256, builder: (column) => ColumnFilters(column));
@@ -1951,8 +1952,9 @@ class $ResourcesOrderingComposer extends Composer<_$AppDatabase, Resources> {
   ColumnOrderings<bool> get deleted => $composableBuilder(
       column: $table.deleted, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get contentSize => $composableBuilder(
-      column: $table.contentSize, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<int> get contentLength => $composableBuilder(
+      column: $table.contentLength,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get contentSha256 => $composableBuilder(
       column: $table.contentSha256,
@@ -2000,8 +2002,8 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
   GeneratedColumn<bool> get deleted =>
       $composableBuilder(column: $table.deleted, builder: (column) => column);
 
-  GeneratedColumn<int> get contentSize => $composableBuilder(
-      column: $table.contentSize, builder: (column) => column);
+  GeneratedColumn<int> get contentLength => $composableBuilder(
+      column: $table.contentLength, builder: (column) => column);
 
   GeneratedColumn<String> get contentSha256 => $composableBuilder(
       column: $table.contentSha256, builder: (column) => column);
@@ -2113,7 +2115,7 @@ class $ResourcesTableManager extends RootTableManager<
             Value<DateTime?> created = const Value.absent(),
             Value<DateTime?> modified = const Value.absent(),
             Value<bool> deleted = const Value.absent(),
-            Value<int> contentSize = const Value.absent(),
+            Value<int> contentLength = const Value.absent(),
             Value<String> contentSha256 = const Value.absent(),
             Value<String> contentType = const Value.absent(),
             Value<String?> permissions = const Value.absent(),
@@ -2129,7 +2131,7 @@ class $ResourcesTableManager extends RootTableManager<
             created: created,
             modified: modified,
             deleted: deleted,
-            contentSize: contentSize,
+            contentLength: contentLength,
             contentSha256: contentSha256,
             contentType: contentType,
             permissions: permissions,
@@ -2145,7 +2147,7 @@ class $ResourcesTableManager extends RootTableManager<
             Value<DateTime?> created = const Value.absent(),
             Value<DateTime?> modified = const Value.absent(),
             Value<bool> deleted = const Value.absent(),
-            Value<int> contentSize = const Value.absent(),
+            Value<int> contentLength = const Value.absent(),
             Value<String> contentSha256 = const Value.absent(),
             Value<String> contentType = const Value.absent(),
             Value<String?> permissions = const Value.absent(),
@@ -2161,7 +2163,7 @@ class $ResourcesTableManager extends RootTableManager<
             created: created,
             modified: modified,
             deleted: deleted,
-            contentSize: contentSize,
+            contentLength: contentLength,
             contentSha256: contentSha256,
             contentType: contentType,
             permissions: permissions,
@@ -2258,8 +2260,7 @@ final class $SharedReferences
   static Resources _resourceIdTable(_$AppDatabase db) => db.resources
       .createAlias($_aliasNameGenerator(db.shared.resourceId, db.resources.id));
 
-  $ResourcesProcessedTableManager? get resourceId {
-    if ($_item.resourceId == null) return null;
+  $ResourcesProcessedTableManager get resourceId {
     final manager = $ResourcesTableManager($_db, $_db.resources)
         .filter((f) => f.id($_item.resourceId!));
     final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));
@@ -2477,8 +2478,7 @@ final class $RecentsReferences
       db.resources.createAlias(
           $_aliasNameGenerator(db.recents.resourceId, db.resources.id));
 
-  $ResourcesProcessedTableManager? get resourceId {
-    if ($_item.resourceId == null) return null;
+  $ResourcesProcessedTableManager get resourceId {
     final manager = $ResourcesTableManager($_db, $_db.resources)
         .filter((f) => f.id($_item.resourceId!));
     final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));
@@ -2702,8 +2702,7 @@ final class $BookmarksReferences
       db.resources.createAlias(
           $_aliasNameGenerator(db.bookmarks.resourceId, db.resources.id));
 
-  $ResourcesProcessedTableManager? get resourceId {
-    if ($_item.resourceId == null) return null;
+  $ResourcesProcessedTableManager get resourceId {
     final manager = $ResourcesTableManager($_db, $_db.resources)
         .filter((f) => f.id($_item.resourceId!));
     final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));

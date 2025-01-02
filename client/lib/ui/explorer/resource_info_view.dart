@@ -74,7 +74,7 @@ class ResourceInfoView extends StatelessWidget {
           if (!resource.dir)
             ListTile(
               title: const Text('Size'),
-              subtitle: Text(resource.contentSize.formatForDisplay()),
+              subtitle: Text(resource.contentLength.formatForDisplay()),
             ),
           if (!resource.dir)
             ListTile(
