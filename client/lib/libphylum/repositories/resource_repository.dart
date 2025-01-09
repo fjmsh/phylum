@@ -43,41 +43,6 @@ class ResourceRepository {
     });
   }
 
-  Future<String> copy({
-    required Resource resource,
-    required String destination,
-  }) async {
-    String name = resource.name;
-    if (resource.parent == destination) {
-      name = '${basenameWithoutExtension(name)} - copy${extension(name)}';
-    }
-
-    int counter = 0;
-    String localName = name;
-    var existing = await account.db.getResourcesByName(parent: destination, name: name);
-    while (existing.isNotEmpty) {
-      counter++;
-      localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
-      existing = await account.db.getResourcesByName(parent: destination, name: localName);
-    }
-    String id = generateUuid();
-    await account.addAction(ResourceCopyAction(
-      srcId: resource.id,
-      resourceId: id,
-      parent: destination,
-      resourceName: name,
-      conflictResolution: nameConflictRename,
-      dir: resource.dir,
-      localName: localName,
-      contentType: resource.contentType,
-      contentLength: resource.contentLength,
-      contentSha256: resource.contentSha256,
-      description: 'Copying ${resource.name}',
-      timestamp: DateTime.now(),
-    ));
-    return id;
-  }
-
   Future<String> mkdir({
     required String parent,
     required String name,
@@ -120,6 +85,52 @@ class ResourceRepository {
       deletedId: deletedId,
     ));
 
+    return id;
+  }
+
+  Future<String> upload({
+    required String parent,
+    required String path,
+    String? name,
+    NameConflictResolution conflictResolution = nameConflictError,
+  }) async {
+    name ??= basename(path);
+    var existing = await account.db.getResourcesByName(parent: parent, name: name);
+    String localName = name;
+    String id = generateUuid();
+    if (existing.isNotEmpty) {
+      switch (conflictResolution) {
+        case nameConflictError:
+          throw const NameConflictException();
+        case nameConflictRename:
+          int counter = 0;
+          while (existing.isNotEmpty) {
+            counter++;
+            localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
+            existing = await account.db.getResourcesByName(parent: parent, name: localName);
+          }
+          break;
+        case nameConflictOverwrite:
+          id = existing.first.id;
+        // TODO: Fix if existing resource is directory
+        default:
+          throw UnsupportedError('Unsupported conflict resolution');
+      }
+    }
+    final f = File(path);
+    final size = await f.length();
+    final contentType = lookupMimeType(path) ?? 'application/octet-stream';
+    await account.addAction(ResourceUploadAction(
+      resourceId: id,
+      parent: parent,
+      resourceName: name,
+      conflictResolution: conflictResolution,
+      timestamp: DateTime.now(),
+      path: path,
+      size: size,
+      contentType: contentType,
+      localName: localName,
+    ));
     return id;
   }
 
@@ -169,16 +180,21 @@ class ResourceRepository {
     return resource.id;
   }
 
-  Future<String> upload({
+  Future<String> copy({
+    required Resource resource,
     required String parent,
-    required String path,
+    required NameConflictResolution conflictResolution,
     String? name,
-    NameConflictResolution conflictResolution = nameConflictError,
   }) async {
-    name ??= basename(path);
-    var existing = await account.db.getResourcesByName(parent: parent, name: name);
-    String localName = name;
+    name ??= resource.name;
+    if (parent == resource.parent && name == resource.name) {
+      name = '${basenameWithoutExtension(name)} - copy${extension(name)}';
+    }
+
     String id = generateUuid();
+    var existing = await account.db.getResourcesByName(parent: parent, name: name);
+    String? deletedId;
+    String localName = name;
     if (existing.isNotEmpty) {
       switch (conflictResolution) {
         case nameConflictError:
@@ -192,24 +208,28 @@ class ResourceRepository {
           }
           break;
         case nameConflictOverwrite:
-          id = existing.first.id;
+        case nameConflictDelete:
+          conflictResolution = nameConflictDelete;
+          deletedId = existing.first.id;
+          break;
         default:
           throw UnsupportedError('Unsupported conflict resolution');
       }
     }
-    final f = File(path);
-    final size = await f.length();
-    final contentType = lookupMimeType(path) ?? 'application/octet-stream';
-    await account.addAction(ResourceUploadAction(
+    await account.addAction(ResourceCopyAction(
+      srcId: resource.id,
       resourceId: id,
       parent: parent,
       resourceName: name,
-      conflictResolution: conflictResolution,
-      timestamp: DateTime.now(),
-      path: path,
-      size: size,
-      contentType: contentType,
+      conflictResolution: nameConflictRename,
+      dir: resource.dir,
       localName: localName,
+      contentType: resource.contentType,
+      contentLength: resource.contentLength,
+      contentSha256: resource.contentSha256,
+      description: 'Copying ${resource.name}',
+      timestamp: DateTime.now(),
+      deletedId: deletedId,
     ));
     return id;
   }

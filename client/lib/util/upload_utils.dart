@@ -28,7 +28,7 @@ Future<void> createDirectory(BuildContext context, String folderId, {String? pre
     validate: validateName,
   );
   if (name == null || !context.mounted) return;
-  handleNameConflict(
+  await handleNameConflict(
     context,
     name,
     deleteButtonText: 'Overwrite',

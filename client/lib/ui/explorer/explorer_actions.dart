@@ -58,6 +58,7 @@ class ExplorerActions extends StatelessWidget {
             handleNameConflict(
               context,
               name,
+              deleteButtonText: 'Overwrite',
               (name, conflictResolution) => account.resourceRepository.move(
                 resource: r,
                 name: name,

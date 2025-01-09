@@ -50,6 +50,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
         await handleNameConflict(
           context,
           r.name,
+          deleteButtonText: 'Overwrite',
           (name, conflictResolution) => account.resourceRepository.move(
             resource: r,
             name: name,
@@ -70,6 +71,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
         await handleNameConflict(
           context,
           r.name,
+          deleteButtonText: 'Overwrite',
           (name, conflictResolution) => account.resourceRepository.move(
             resource: r,
             name: name,
@@ -86,10 +88,18 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       if (dest == null) {
         return;
       }
+      if (!context.mounted) return;
       for (final r in resources) {
-        account.resourceRepository.copy(
-          resource: r,
-          destination: dest,
+        await handleNameConflict(
+          context,
+          r.name,
+          deleteButtonText: 'Overwrite',
+          (name, conflictResolution) => account.resourceRepository.copy(
+            resource: r,
+            name: name,
+            parent: dest,
+            conflictResolution: conflictResolution,
+          ),
         );
       }
       break;

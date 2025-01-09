@@ -25,6 +25,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   final int contentLength;
   final String contentSha256;
   final DateTime timestamp;
+  final String? deletedId;
 
   ResourceCopyAction({
     required this.srcId,
@@ -39,6 +40,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
     required this.contentSha256,
     required this.description,
     required this.timestamp,
+    required this.deletedId,
   });
 
   factory ResourceCopyAction.fromMap(Map<String, dynamic> map) {
@@ -55,6 +57,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
       contentSha256: map['contentSha256'],
       description: map['description'],
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
+      deletedId: map['deletedId'],
     );
   }
 
@@ -72,6 +75,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
         'contentSha256': contentSha256,
         'description': description,
         'timestamp': timestamp.millisecondsSinceEpoch,
+        'deletedId': deletedId,
       };
 
   @override
@@ -101,11 +105,18 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
         ),
       );
     }
+    if (deletedId != null) {
+      await account.db.updateResource(deletedId!, (u) => u(parent: Value(null)));
+    }
   }
 
   @override
-  Future<void> revertOptimisticUpdate() {
-    return account.db.deleteResource(resourceId);
+  Future<void> revertOptimisticUpdate() async {
+    await account.db.deleteResource(resourceId);
+    if (deletedId != null) {
+      // TODO: This should be reverted based on server data
+      await account.db.updateResource(deletedId!, (u) => u(parent: Value(parent)));
+    }
   }
 
   @override

@@ -60,6 +60,7 @@ void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
     handleNameConflict(
       context,
       r.name,
+      deleteButtonText: 'Overwrite',
       (name, conflictResolution) => account.resourceRepository.move(
         resource: r,
         name: name,
@@ -69,7 +70,17 @@ void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
     );
   }
   for (final r in copyResources) {
-    account.resourceRepository.copy(resource: r, destination: folderId);
+    handleNameConflict(
+      context,
+      r.name,
+      deleteButtonText: 'Overwrite',
+      (name, conflictResolution) => account.resourceRepository.copy(
+        resource: r,
+        name: name,
+        parent: folderId,
+        conflictResolution: conflictResolution,
+      ),
+    );
   }
 
   await SystemClipboard.instance?.write([]);

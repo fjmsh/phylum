@@ -55,6 +55,7 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
           handleNameConflict(
             context,
             r.name,
+            deleteButtonText: 'Overwrite',
             (name, conflictResolution) => account.resourceRepository.move(
               resource: r,
               name: name,
