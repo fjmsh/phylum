@@ -31,74 +31,13 @@ Future<void> createDirectory(BuildContext context, String folderId, {String? pre
   handleNameConflict(
     context,
     name,
-    (name, conflictResolution) => account.resourceRepository.mkdir(parent: folderId, name: name, conflictResolution: conflictResolution),
+    deleteButtonText: 'Overwrite',
+    (name, conflictResolution) => account.resourceRepository.mkdir(
+      parent: folderId,
+      name: name,
+      conflictResolution: conflictResolution,
+    ),
   );
-}
-
-Future<String?> handleNameConflict(
-  BuildContext context,
-  String name,
-  Future<String> Function(String name, NameConflictResolution conflictResolution) performAction,
-) async {
-  NameConflictResolution? conflictResolution = nameConflictError;
-  while (conflictResolution != null) {
-    try {
-      return performAction(name, conflictResolution);
-    } on NameConflictException {
-      if (!context.mounted) return null;
-      conflictResolution = await showDialog<NameConflictResolution>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Name Conflict'),
-          content: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: Text(
-              'There is already another item with the name \'$name\' in this folder.',
-              softWrap: true,
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop(nameConflictDelete);
-              },
-            ),
-            TextButton(
-              child: Text('Change Name'),
-              onPressed: () {
-                Navigator.of(context).pop(nameConflictError);
-              },
-            ),
-            ElevatedButton(
-              autofocus: true,
-              onPressed: () {
-                Navigator.of(context).pop(nameConflictRename);
-              },
-              child: Text('Auto Rename'),
-            ),
-          ],
-        ),
-      );
-      if (conflictResolution == nameConflictError) {
-        if (!context.mounted) return null;
-        final newName = await showInputDialog(
-          context,
-          title: 'Change Name',
-          labelText: 'New Name',
-          preset: name,
-          validate: validateName,
-        );
-        if (!context.mounted) return null;
-        if (newName == null) {
-          return null;
-        }
-        handleNameConflict(context, newName, performAction);
-      }
-    }
-  }
-
-  return null;
 }
 
 void pickAndUploadFiles(BuildContext context, String folderId) async {
@@ -144,7 +83,12 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
         // ignore: use_build_context_synchronously
         context,
         p.basename(path),
-        (name, conflictResolution) => account.resourceRepository.mkdir(parent: parent, name: name, conflictResolution: conflictResolution),
+        deleteButtonText: 'Overwrite',
+        (name, conflictResolution) => account.resourceRepository.mkdir(
+          parent: parent,
+          name: name,
+          conflictResolution: conflictResolution,
+        ),
       );
       if (id == null) {
         if (!context.mounted) return;
@@ -164,6 +108,7 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
         // ignore: use_build_context_synchronously
         context,
         p.basename(path),
+        overwriteButtonText: 'Overwrite',
         (name, conflictResolution) => account.resourceRepository.upload(parent: parent, path: path, conflictResolution: conflictResolution),
       );
       if (id == null && context.mounted) {
@@ -172,6 +117,84 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
       }
     }
   }
+}
+
+Future<String?> handleNameConflict(
+  BuildContext context,
+  String name,
+  Future<String> Function(String name, NameConflictResolution conflictResolution) performAction, {
+  String? overwriteButtonText,
+  String? deleteButtonText,
+}) async {
+  NameConflictResolution? conflictResolution = nameConflictError;
+  while (conflictResolution != null) {
+    try {
+      return await performAction(name, conflictResolution);
+    } on NameConflictException {
+      if (!context.mounted) return null;
+      conflictResolution = await showDialog<NameConflictResolution>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Name Conflict'),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Text(
+              'There is already another item with the name \'$name\' in this folder.',
+              softWrap: true,
+            ),
+          ),
+          actions: <Widget>[
+            if (deleteButtonText != null)
+              TextButton(
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: Text(deleteButtonText),
+                onPressed: () {
+                  Navigator.of(context).pop(nameConflictDelete);
+                },
+              ),
+            if (overwriteButtonText != null)
+              TextButton(
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: Text(overwriteButtonText),
+                onPressed: () {
+                  Navigator.of(context).pop(nameConflictOverwrite);
+                },
+              ),
+            TextButton(
+              child: const Text('Change Name'),
+              onPressed: () {
+                Navigator.of(context).pop(nameConflictError);
+              },
+            ),
+            ElevatedButton(
+              autofocus: true,
+              child: const Text('Auto Rename'),
+              onPressed: () {
+                Navigator.of(context).pop(nameConflictRename);
+              },
+            ),
+          ],
+        ),
+      );
+      if (conflictResolution == nameConflictError) {
+        if (!context.mounted) return null;
+        final newName = await showInputDialog(
+          context,
+          title: 'Change Name',
+          labelText: 'New Name',
+          preset: name,
+          validate: validateName,
+        );
+        if (!context.mounted) return null;
+        if (newName == null) {
+          return null;
+        }
+        name = newName;
+      }
+    }
+  }
+
+  return null;
 }
 
 class DirTree {
