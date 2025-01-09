@@ -71,7 +71,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       path: map['path'],
       size: map['size'],
       contentType: map['contentType'],
-      timestamp: map['timestamp'],
+      timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
     );
   }
 
@@ -84,7 +84,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
         'path': path,
         'size': size,
         'contentType': contentType,
-        'timestamp': timestamp,
+        'timestamp': timestamp.millisecondsSinceEpoch,
       };
 
   @override

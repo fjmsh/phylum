@@ -54,7 +54,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
       contentLength: map['contentLength'],
       contentSha256: map['contentSha256'],
       description: map['description'],
-      timestamp: map['timestamp'],
+      timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
     );
   }
 
@@ -71,7 +71,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
         'contentLength': contentLength,
         'contentSha256': contentSha256,
         'description': description,
-        'timestamp': timestamp,
+        'timestamp': timestamp.millisecondsSinceEpoch,
       };
 
   @override

@@ -37,7 +37,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
       parent: map['parent'],
       resourceName: map['resourceName'],
       conflictResolution: map['conflictResolution'],
-      timestamp: map['timestamp'],
+      timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
       localName: map['localName'],
       deletedId: map['deletedId'],
     );
@@ -49,7 +49,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
         'resourceName': resourceName,
         'parent': parent,
         'conflictResolution': conflictResolution,
-        'timestamp': timestamp,
+        'timestamp': timestamp.millisecondsSinceEpoch,
         'localName': localName,
         'deletedId': deletedId,
       };
