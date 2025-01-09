@@ -18,52 +18,62 @@ final illegalChars = <int>{
 bool validateName(String name) =>
     !name.startsWith(' ') && name != '.' && name != '..' && name.trim().isNotEmpty && !name.runes.any((c) => c < 31 || illegalChars.contains(c));
 
-Future<void> createDirectory(BuildContext context, String folderId) async {
+Future<void> createDirectory(BuildContext context, String folderId, {String? preset}) async {
   final account = context.read<PhylumAccount>();
-  final dirName = await showInputDialog(
+  final name = await showInputDialog(
     context,
     title: 'Create New Folder',
     labelText: 'Folder Name',
+    preset: preset,
     validate: validateName,
   );
-  if (dirName == null || dirName == "") return;
-  try {
-    await account.resourceRepository.mkdir(parent: folderId, name: dirName);
-  } on NameConflictException {
-    if (!context.mounted) return;
-    final conflictResolution = await showDialog<NameConflictResolution>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Name Conflict'),
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360),
-          child: Text(
-            'There is already another item with the name \'$dirName\' in this folder.',
-            softWrap: true,
+  if (name == null || name == "") return;
+  NameConflictResolution? conflictResolution = nameConflictError;
+  while (conflictResolution != null) {
+    try {
+      await account.resourceRepository.mkdir(parent: folderId, name: name, conflictResolution: conflictResolution);
+      return; // TODO: #antipattern ?
+    } on NameConflictException {
+      if (!context.mounted) return;
+      conflictResolution = await showDialog<NameConflictResolution>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Name Conflict'),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Text(
+              'There is already another item with the name \'$name\' in this folder.',
+              softWrap: true,
+            ),
           ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop(nameConflictDelete);
+              },
+            ),
+            TextButton(
+              child: Text('Change Name'),
+              onPressed: () {
+                Navigator.of(context).pop(nameConflictError);
+              },
+            ),
+            ElevatedButton(
+              autofocus: true,
+              onPressed: () {
+                Navigator.of(context).pop(nameConflictRename);
+              },
+              child: Text('Auto Rename'),
+            ),
+          ],
         ),
-        actions: <Widget>[
-          TextButton(
-            child: Text('Delete'),
-            onPressed: () {
-              Navigator.of(context).pop(nameConflictDelete);
-            },
-          ),
-          ElevatedButton(
-            autofocus: true,
-            onPressed: () {
-              Navigator.of(context).pop(nameConflictRename);
-            },
-            child: Text('Rename'),
-          ),
-        ],
-      ),
-    );
-    if (conflictResolution == null) return;
-    await account.resourceRepository.mkdir(parent: folderId, name: dirName, conflictResolution: conflictResolution);
-  } catch (e) {
-    if (!context.mounted) return;
-    await showAlertDialog(context, title: 'Error while creating directory', message: e.toString());
+      );
+      if (conflictResolution == nameConflictError) {
+        if (!context.mounted) return;
+        return createDirectory(context, folderId, preset: name);
+      }
+    }
   }
 }
 
