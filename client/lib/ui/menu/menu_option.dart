@@ -55,6 +55,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
           (name, conflictResolution) => account.resourceRepository.move(
             resource: r,
             name: name,
+            parent: r.parent!,
             conflictResolution: conflictResolution,
           ),
         );

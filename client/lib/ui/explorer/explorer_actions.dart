@@ -63,6 +63,7 @@ class ExplorerActions extends StatelessWidget {
               (name, conflictResolution) => account.resourceRepository.move(
                 resource: r,
                 name: name,
+                parent: r.parent!,
                 conflictResolution: conflictResolution,
               ),
             );

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:hive/hive.dart';
+import 'package:http/http.dart';
 import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart';
@@ -86,10 +87,9 @@ class ResourceRepository {
   Future<String> upload({
     required String parent,
     required String path,
-    String? name,
+    required String name,
     NameConflictResolution conflictResolution = nameConflictError,
   }) async {
-    name ??= basename(path);
     var existing = await account.db.getResourcesByName(parent: parent, name: name);
     String localName = name;
     String id = generateUuid();
@@ -131,13 +131,10 @@ class ResourceRepository {
 
   Future<String> move({
     required Resource resource,
+    required String name,
+    required String parent,
     required NameConflictResolution conflictResolution,
-    String? parent,
-    String? name,
   }) async {
-    assert(parent != null || name != null);
-    parent ??= resource.parent!;
-    name ??= resource.name;
     var existing = await account.db.getResourcesByName(parent: parent, name: name);
     String? deletedId;
     String localName = name;
@@ -162,7 +159,7 @@ class ResourceRepository {
       parent: parent,
       resourceName: name,
       conflictResolution: conflictResolution,
-      description: 'Moving $name',
+      description: parent == resource.parent ? 'Renaming ${resource.name} to $localName' : 'Moving ${resource.name}',
       modified: DateTime.now(),
       localName: localName,
       deletedId: deletedId,
@@ -173,10 +170,9 @@ class ResourceRepository {
   Future<String> copy({
     required Resource resource,
     required String parent,
+    required String name,
     required NameConflictResolution conflictResolution,
-    String? name,
   }) async {
-    name ??= resource.name;
     if (parent == resource.parent && name == resource.name) {
       name = '${basenameWithoutExtension(name)} - copy${extension(name)}';
     }

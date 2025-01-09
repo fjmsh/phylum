@@ -109,8 +109,13 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
         // ignore: use_build_context_synchronously
         context,
         p.basename(path),
-        overwriteFn: (r) => nameConflictOverwrite,
-        (name, conflictResolution) => account.resourceRepository.upload(parent: parent, path: path, conflictResolution: conflictResolution),
+        overwriteFn: (r) => r.dir ? nameConflictDelete : nameConflictOverwrite,
+        (name, conflictResolution) => account.resourceRepository.upload(
+          parent: parent,
+          name: name,
+          path: path,
+          conflictResolution: conflictResolution,
+        ),
       );
       if (id == null && context.mounted) {
         final confirm = await showAlertDialog(context, title: 'Skip file?') ?? false;
