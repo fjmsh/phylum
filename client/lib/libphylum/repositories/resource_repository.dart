@@ -103,8 +103,10 @@ class ResourceRepository {
           break;
         case nameConflictOverwrite:
           id = existing.first.id;
+          break;
         case nameConflictDelete:
           deletedId = existing.first.id;
+          break;
         default:
           throw UnsupportedError('Unsupported conflict resolution');
       }

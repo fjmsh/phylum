@@ -585,8 +585,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "89cdd4c98c637f231e4bc582c597b6a01ef28add"
-      resolved-ref: "89cdd4c98c637f231e4bc582c597b6a01ef28add"
+      ref: d5e1879c76b780a1a78eb64fe5e03d6618d1b38d
+      resolved-ref: d5e1879c76b780a1a78eb64fe5e03d6618d1b38d
       url: "https://codeberg.org/shroff/offtheline.git"
     source: git
     version: "0.16.0"
