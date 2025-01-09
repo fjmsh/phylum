@@ -7,6 +7,7 @@ import 'package:phylum/ui/explorer/paste_action_handler.dart';
 import 'package:phylum/libphylum/explorer/selection_mode.dart';
 import 'package:phylum/ui/preview/resource_preview.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
@@ -53,9 +54,16 @@ class ExplorerActions extends StatelessWidget {
           final r = context.read<ExplorerState>().selectedSingle;
           if (r == null) return;
           final name = await showInputDialog(context, title: 'Rename', preset: r.name);
-          if (name != null) {
-            account.resourceRepository.move(resource: r, name: name);
-            // TODO: #nameconflict
+          if (name != null && context.mounted) {
+            handleNameConflict(
+              context,
+              name,
+              (name, conflictResolution) => account.resourceRepository.move(
+                resource: r,
+                name: name,
+                conflictResolution: conflictResolution,
+              ),
+            );
           }
           return null;
         }),

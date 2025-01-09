@@ -13,6 +13,7 @@ import 'package:phylum/ui/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:phylum/ui/explorer/resource_permissions_view.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 
 enum MenuOption {
@@ -44,9 +45,17 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
     case MenuOption.rename:
       assert(resources.length == 1);
       final name = await showInputDialog(context, title: 'Rename', preset: resources.first.name);
-      if (name != null) {
-        account.resourceRepository.move(resource: resources.first, name: name);
-        // TODO: #nameconflict
+      if (name != null && context.mounted) {
+        final r = resources.first;
+        await handleNameConflict(
+          context,
+          r.name,
+          (name, conflictResolution) => account.resourceRepository.move(
+            resource: r,
+            name: name,
+            conflictResolution: conflictResolution,
+          ),
+        );
       }
       break;
     case MenuOption.move:
@@ -56,9 +65,18 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       if (dest == null) {
         return;
       }
+      if (!context.mounted) return;
       for (final r in resources) {
-        account.resourceRepository.move(resource: r, parent: dest);
-        // TODO: #nameconflict
+        await handleNameConflict(
+          context,
+          r.name,
+          (name, conflictResolution) => account.resourceRepository.move(
+            resource: r,
+            name: name,
+            parent: dest,
+            conflictResolution: conflictResolution,
+          ),
+        );
       }
       break;
     case MenuOption.copy:
@@ -73,7 +91,6 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
           resource: r,
           destination: dest,
         );
-        // TODO: #nameconflict
       }
       break;
     case MenuOption.delete:

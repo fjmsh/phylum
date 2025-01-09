@@ -51,9 +51,17 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
       onAcceptWithDetails: (details) async {
         final account = context.read<PhylumAccount>();
         final selected = context.read<ExplorerState>().selected;
-        for (final res in selected) {
-          account.resourceRepository.move(resource: res, parent: widget.resourceId);
-          // TODO: #nameconflict
+        for (final r in selected) {
+          handleNameConflict(
+            context,
+            r.name,
+            (name, conflictResolution) => account.resourceRepository.move(
+              resource: r,
+              name: name,
+              parent: widget.resourceId,
+              conflictResolution: conflictResolution,
+            ),
+          );
         }
         setState(() => dropTargetActive = false);
       },

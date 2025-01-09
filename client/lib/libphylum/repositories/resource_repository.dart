@@ -123,11 +123,11 @@ class ResourceRepository {
     return id;
   }
 
-  Future<void> move({
+  Future<String> move({
     required Resource resource,
+    required NameConflictResolution conflictResolution,
     String? parent,
     String? name,
-    NameConflictResolution conflictResolution = nameConflictError,
   }) async {
     assert(parent != null || name != null);
     parent ??= resource.parent!;
@@ -166,6 +166,7 @@ class ResourceRepository {
       localName: localName,
       deletedId: deletedId,
     ));
+    return resource.id;
   }
 
   Future<String> upload({

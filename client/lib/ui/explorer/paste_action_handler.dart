@@ -57,12 +57,19 @@ void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
   if (!context.mounted) return;
   uploadRecursive(context, folderId, paths);
   for (final r in cutResources) {
-    account.resourceRepository.move(resource: r, parent: folderId);
-    // TODO: #nameconflict
+    handleNameConflict(
+      context,
+      r.name,
+      (name, conflictResolution) => account.resourceRepository.move(
+        resource: r,
+        name: name,
+        parent: folderId,
+        conflictResolution: conflictResolution,
+      ),
+    );
   }
   for (final r in copyResources) {
     account.resourceRepository.copy(resource: r, destination: folderId);
-    // TODO: #nameconflict
   }
 
   await SystemClipboard.instance?.write([]);
