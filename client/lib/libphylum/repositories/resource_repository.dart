@@ -54,11 +54,11 @@ class ResourceRepository {
 
     int counter = 0;
     String localName = name;
-    Resource? existing = await account.db.getResourceByName(parent: destination, name: name);
-    while (existing != null) {
+    var existing = await account.db.getResourcesByName(parent: destination, name: name);
+    while (existing.isNotEmpty) {
       counter++;
       localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
-      existing = await account.db.getResourceByName(parent: destination, name: localName);
+      existing = await account.db.getResourcesByName(parent: destination, name: localName);
     }
     String id = generateUuid();
     await account.addAction(ResourceCopyAction(
@@ -84,25 +84,25 @@ class ResourceRepository {
     String? id,
     NameConflictResolution conflictResolution = nameConflictError,
   }) async {
-    Resource? existing = await account.db.getResourceByName(parent: parent, name: name);
+    var existing = await account.db.getResourcesByName(parent: parent, name: name);
     String? deletedId;
     String localName = name;
-    if (existing != null) {
+    if (existing.isNotEmpty) {
       switch (conflictResolution) {
         case nameConflictError:
           throw const NameConflictException();
         case nameConflictRename:
           int counter = 0;
-          while (existing != null) {
+          while (existing.isNotEmpty) {
             counter++;
             localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
-            existing = await account.db.getResourceByName(parent: parent, name: localName);
+            existing = await account.db.getResourcesByName(parent: parent, name: localName);
           }
           break;
         case nameConflictOverwrite:
         case nameConflictDelete:
           conflictResolution = nameConflictDelete;
-          deletedId = existing.id;
+          deletedId = existing.first.id;
           break;
         default:
           throw UnsupportedError('Unsupported conflict resolution');
@@ -132,25 +132,25 @@ class ResourceRepository {
     assert(parent != null || name != null);
     parent ??= resource.parent!;
     name ??= resource.name;
-    Resource? existing = await account.db.getResourceByName(parent: parent, name: name);
+    var existing = await account.db.getResourcesByName(parent: parent, name: name);
     String? deletedId;
     String localName = name;
-    if (existing != null) {
+    if (existing.isNotEmpty) {
       switch (conflictResolution) {
         case nameConflictError:
           throw const NameConflictException();
         case nameConflictRename:
           int counter = 0;
-          while (existing != null) {
+          while (existing.isNotEmpty) {
             counter++;
             localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
-            existing = await account.db.getResourceByName(parent: parent, name: localName);
+            existing = await account.db.getResourcesByName(parent: parent, name: localName);
           }
           break;
         case nameConflictOverwrite:
         case nameConflictDelete:
           conflictResolution = nameConflictDelete;
-          deletedId = existing.id;
+          deletedId = existing.first.id;
           break;
         default:
           throw UnsupportedError('Unsupported conflict resolution');
@@ -175,23 +175,23 @@ class ResourceRepository {
     NameConflictResolution conflictResolution = nameConflictError,
   }) async {
     name ??= basename(path);
-    Resource? existing = await account.db.getResourceByName(parent: parent, name: name);
+    var existing = await account.db.getResourcesByName(parent: parent, name: name);
     String localName = name;
     String id = generateUuid();
-    if (existing != null) {
+    if (existing.isNotEmpty) {
       switch (conflictResolution) {
         case nameConflictError:
           throw const NameConflictException();
         case nameConflictRename:
           int counter = 0;
-          while (existing != null) {
+          while (existing.isNotEmpty) {
             counter++;
             localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
-            existing = await account.db.getResourceByName(parent: parent, name: localName);
+            existing = await account.db.getResourcesByName(parent: parent, name: localName);
           }
           break;
         case nameConflictOverwrite:
-          id = existing.id;
+          id = existing.first.id;
         default:
           throw UnsupportedError('Unsupported conflict resolution');
       }

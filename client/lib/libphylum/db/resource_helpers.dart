@@ -6,8 +6,8 @@ extension ResourceHelpers on AppDatabase {
     return _selectResource(id).getSingleOrNull();
   }
 
-  Future<Resource?> getResourceByName({required String parent, required String name}) {
-    return _selectResourceByName(parent: parent, name: name).getSingleOrNull();
+  Future<List<Resource>> getResourcesByName({required String parent, required String name}) {
+    return _selectResourceByName(parent: parent, name: name).get();
   }
 
   Stream<Resource?> watchResource(String id) {
