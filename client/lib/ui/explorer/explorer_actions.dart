@@ -99,7 +99,6 @@ class ExplorerActions extends StatelessWidget {
 
   void _deleteResources(BuildContext context, Iterable<Resource> resources) async {
     final account = context.read<PhylumAccount>();
-    // TOOD: #folderconfirmation
     final confirm =
         await showAlertDialog(context, title: 'Delete selected items?', barrierDismissible: true, positiveText: 'YES', negativeText: 'NO') ?? false;
 

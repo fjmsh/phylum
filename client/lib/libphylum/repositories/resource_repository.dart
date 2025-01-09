@@ -57,12 +57,7 @@ class ResourceRepository {
         case nameConflictError:
           throw const NameConflictException();
         case nameConflictRename:
-          int counter = 0;
-          while (existing.isNotEmpty) {
-            counter++;
-            localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
-            existing = await account.db.getResourcesByName(parent: parent, name: localName);
-          }
+          localName = await _createUniqueName(existing, parent, name);
           break;
         case nameConflictOverwrite:
         case nameConflictDelete:
@@ -103,12 +98,7 @@ class ResourceRepository {
         case nameConflictError:
           throw const NameConflictException();
         case nameConflictRename:
-          int counter = 0;
-          while (existing.isNotEmpty) {
-            counter++;
-            localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
-            existing = await account.db.getResourcesByName(parent: parent, name: localName);
-          }
+          localName = await _createUniqueName(existing, parent, name);
           break;
         case nameConflictOverwrite:
           id = existing.first.id;
@@ -151,12 +141,7 @@ class ResourceRepository {
         case nameConflictError:
           throw const NameConflictException();
         case nameConflictRename:
-          int counter = 0;
-          while (existing.isNotEmpty) {
-            counter++;
-            localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
-            existing = await account.db.getResourcesByName(parent: parent, name: localName);
-          }
+          localName = await _createUniqueName(existing, parent, name);
           break;
         case nameConflictOverwrite:
         case nameConflictDelete:
@@ -200,12 +185,7 @@ class ResourceRepository {
         case nameConflictError:
           throw const NameConflictException();
         case nameConflictRename:
-          int counter = 0;
-          while (existing.isNotEmpty) {
-            counter++;
-            localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
-            existing = await account.db.getResourcesByName(parent: parent, name: localName);
-          }
+          localName = await _createUniqueName(existing, parent, name);
           break;
         case nameConflictOverwrite:
         case nameConflictDelete:
@@ -232,6 +212,16 @@ class ResourceRepository {
       deletedId: deletedId,
     ));
     return id;
+  }
+
+  Future<String> _createUniqueName(List<Resource> existing, String parent, String name) async {
+    String localName = name;
+    int counter = 1;
+    while (existing.isNotEmpty) {
+      localName = '${basenameWithoutExtension(name)} (${counter++})${extension(name)}';
+      existing = await account.db.getResourcesByName(parent: parent, name: localName);
+    }
+    return localName;
   }
 
   Future<void> trackServerData(String id) async {
