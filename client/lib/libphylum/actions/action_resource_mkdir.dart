@@ -72,13 +72,16 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
   Future<void> applyOptimisticUpdate() async {
     await account.db.createResource(resourceId, parent, localName, true, timestamp);
     if (deletedId != null) {
-      account.db.updateResource(deletedId!, (u) => u(parent: Value(null)));
+      await account.db.updateResource(deletedId!, (u) => u(parent: Value(null)));
     }
   }
 
   @override
-  Future<void> revertOptimisticUpdate() {
-    return account.db.deleteResource(resourceId);
+  Future<void> revertOptimisticUpdate() async {
+    await account.db.deleteResource(resourceId);
+    if (deletedId != null) {
+      await account.db.updateResource(deletedId!, (u) => u(parent: Value(parent)));
+    }
   }
 
   @override
