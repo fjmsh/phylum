@@ -1,16 +1,12 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:http/http.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
-import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:phylum/libphylum/util/uuid.dart';
 
 class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction {
   static const kActionName = 'resourceUpload';
@@ -30,8 +26,9 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   final int size;
   final String contentType;
   final DateTime timestamp;
+  final String localName;
 
-  ResourceUploadAction._({
+  ResourceUploadAction({
     required super.resourceId,
     required super.parent,
     required super.resourceName,
@@ -40,30 +37,11 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
     required this.size,
     required this.contentType,
     required this.timestamp,
+    required this.localName,
   });
 
-  static Future<ResourceUploadAction> fromPath({
-    required String parent,
-    required String resourceName,
-    required String path,
-    required NameConflictResolution conflictResolution,
-  }) async {
-    final f = File(path);
-    final size = await f.length();
-    return ResourceUploadAction._(
-      resourceId: generateUuid(),
-      parent: parent,
-      resourceName: resourceName,
-      conflictResolution: conflictResolution,
-      path: path,
-      size: size,
-      contentType: lookupMimeType(path) ?? 'application/octet-stream',
-      timestamp: DateTime.now(),
-    );
-  }
-
-  static ResourceUploadAction fromMap(Map<String, dynamic> map) {
-    return ResourceUploadAction._(
+  factory ResourceUploadAction.fromMap(Map<String, dynamic> map) {
+    return ResourceUploadAction(
       resourceId: map['resourceId'],
       parent: map['parent'],
       resourceName: map['resourceName'],
@@ -72,6 +50,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       size: map['size'],
       contentType: map['contentType'],
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
+      localName: map['localName'],
     );
   }
 
@@ -85,6 +64,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
         'size': size,
         'contentType': contentType,
         'timestamp': timestamp.millisecondsSinceEpoch,
+        'localName': localName,
       };
 
   @override
@@ -94,7 +74,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
 
   @override
   Future<void> applyOptimisticUpdate() async {
-    await account.db.createResource(resourceId, parent, resourceName, false, timestamp);
+    await account.db.createResource(resourceId, parent, localName, false, timestamp);
     await account.db.updateResource(
       resourceId,
       (o) => o(

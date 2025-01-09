@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/actions/action_resource_upload.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -106,17 +105,12 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
   for (final dir in tree.dirs) {
     final parent = p.dirname(dir);
     dirIds[dir] = await account.resourceRepository.mkdir(parent: dirIds[parent] ?? folderId, name: p.basename(dir));
-    // TODO: Handle Exceptions
+    // TODO: #nameconflict
   }
-  for (final file in tree.files) {
-    final parent = p.dirname(file);
-    final action = await ResourceUploadAction.fromPath(
-      parent: dirIds[parent] ?? folderId,
-      resourceName: p.basename(file),
-      path: file,
-      conflictResolution: nameConflictError,
-    );
-    await account.addAction(action);
+  for (final path in tree.files) {
+    final parentPath = p.dirname(path);
+    await account.resourceRepository.upload(parent: dirIds[parentPath] ?? folderId, path: path);
+    // TODO: #nameconflict
   }
 }
 

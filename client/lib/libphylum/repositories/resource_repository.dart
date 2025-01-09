@@ -1,12 +1,15 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:hive/hive.dart';
+import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart';
 import 'package:phylum/libphylum/actions/action_resource_copy.dart';
 import 'package:phylum/libphylum/actions/action_resource_mkdir.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
+import 'package:phylum/libphylum/actions/action_resource_upload.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
@@ -163,6 +166,51 @@ class ResourceRepository {
       localName: localName,
       deletedId: deletedId,
     ));
+  }
+
+  Future<String> upload({
+    required String parent,
+    required String path,
+    String? name,
+    NameConflictResolution conflictResolution = nameConflictError,
+  }) async {
+    name ??= basename(path);
+    Resource? existing = await account.db.getResourceByName(parent: parent, name: name);
+    String localName = name;
+    String id = generateUuid();
+    if (existing != null) {
+      switch (conflictResolution) {
+        case nameConflictError:
+          throw const NameConflictException();
+        case nameConflictRename:
+          int counter = 0;
+          while (existing != null) {
+            counter++;
+            localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
+            existing = await account.db.getResourceByName(parent: parent, name: localName);
+          }
+          break;
+        case nameConflictOverwrite:
+          id = existing.id;
+        default:
+          throw UnsupportedError('Unsupported conflict resolution');
+      }
+    }
+    final f = File(path);
+    final size = await f.length();
+    final contentType = lookupMimeType(path) ?? 'application/octet-stream';
+    await account.addAction(ResourceUploadAction(
+      resourceId: id,
+      parent: parent,
+      resourceName: name,
+      conflictResolution: conflictResolution,
+      timestamp: DateTime.now(),
+      path: path,
+      size: size,
+      contentType: contentType,
+      localName: localName,
+    ));
+    return id;
   }
 
   Future<void> trackServerData(String id) async {
