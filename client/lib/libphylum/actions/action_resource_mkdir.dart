@@ -16,11 +16,14 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/mkdir/$resourceId';
 
+  final DateTime timestamp;
+
   ResourceMkdirAction({
     required super.resourceId,
     required super.parent,
     required super.resourceName,
     super.conflictResolution,
+    required this.timestamp,
   });
 
   static ResourceMkdirAction fromMap(Map<String, dynamic> map) {
@@ -29,6 +32,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
       parent: map['parent'],
       resourceName: map['resourceName'],
       conflictResolution: map['conflictResolution'],
+      timestamp: map['timestamp'],
     );
   }
 
@@ -38,6 +42,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
         'resourceName': resourceName,
         'parent': parent,
         'conflictResolution': conflictResolution,
+        'timestamp': timestamp,
       };
 
   @override
@@ -56,7 +61,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
 
   @override
   Future<void> applyOptimisticUpdate() {
-    return account.db.createResource(resourceId, parent, resourceName, true);
+    return account.db.createResource(resourceId, parent, resourceName, true, timestamp);
   }
 
   @override

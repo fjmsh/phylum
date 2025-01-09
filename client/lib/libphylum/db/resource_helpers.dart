@@ -42,15 +42,15 @@ extension ResourceHelpers on AppDatabase {
     return resources.select()..where((f) => f.id.isIn(ids));
   }
 
-  Future<int> createResource(String id, String parent, String name, bool dir) {
+  Future<int> createResource(String id, String parent, String name, bool dir, DateTime timestamp) {
     return resources.insertOne(
       ResourcesCompanion.insert(
         id: id,
         name: name,
         parent: Value(parent),
         dir: dir,
-        created: Value(DateTime.now()),
-        modified: Value(DateTime.now()),
+        created: Value(timestamp),
+        modified: Value(timestamp),
       ),
       mode: InsertMode.insertOrReplace,
     );

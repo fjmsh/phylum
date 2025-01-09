@@ -69,6 +69,7 @@ class ResourceRepository {
       contentLength: resource.contentLength,
       contentSha256: resource.contentSha256,
       description: 'Copying ${resource.name}',
+      timestamp: DateTime.now(),
     ));
   }
 

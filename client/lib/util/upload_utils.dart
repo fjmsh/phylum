@@ -30,7 +30,12 @@ void createDirectory(BuildContext context, String folderId) async {
     validate: validateName,
   );
   if (dirName == null || dirName == "") return;
-  account.addAction(ResourceMkdirAction(resourceId: generateUuid(), parent: folderId, resourceName: dirName));
+  account.addAction(ResourceMkdirAction(
+    resourceId: generateUuid(),
+    parent: folderId,
+    resourceName: dirName,
+    timestamp: DateTime.now(),
+  ));
 }
 
 void pickAndUploadFiles(BuildContext context, String folderId) async {
@@ -71,7 +76,12 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
   for (final dir in tree.dirs) {
     dirIds[dir] = generateUuid();
     final parent = p.dirname(dir);
-    account.addAction(ResourceMkdirAction(resourceId: dirIds[dir]!, parent: dirIds[parent] ?? folderId, resourceName: p.basename(dir)));
+    account.addAction(ResourceMkdirAction(
+      resourceId: dirIds[dir]!,
+      parent: dirIds[parent] ?? folderId,
+      resourceName: p.basename(dir),
+      timestamp: DateTime.now(),
+    ));
   }
   for (final file in tree.files) {
     final parent = p.dirname(file);

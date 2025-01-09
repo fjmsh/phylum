@@ -24,6 +24,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   final String contentType;
   final int contentLength;
   final String contentSha256;
+  final DateTime timestamp;
 
   ResourceCopyAction({
     required this.srcId,
@@ -37,6 +38,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
     required this.contentLength,
     required this.contentSha256,
     required this.description,
+    required this.timestamp,
   });
 
   factory ResourceCopyAction.fromMap(Map<String, dynamic> map) {
@@ -52,6 +54,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
       contentLength: map['contentLength'],
       contentSha256: map['contentSha256'],
       description: map['description'],
+      timestamp: map['timestamp'],
     );
   }
 
@@ -68,6 +71,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
         'contentLength': contentLength,
         'contentSha256': contentSha256,
         'description': description,
+        'timestamp': timestamp,
       };
 
   @override
@@ -86,7 +90,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
 
   @override
   Future<void> applyOptimisticUpdate() async {
-    await account.db.createResource(resourceId, parent, localName, dir);
+    await account.db.createResource(resourceId, parent, localName, dir, timestamp);
     if (!dir) {
       await account.db.updateResource(
         resourceId,

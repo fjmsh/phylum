@@ -30,6 +30,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   final String path;
   final int size;
   final String contentType;
+  final DateTime timestamp;
 
   ResourceUploadAction._({
     required super.resourceId,
@@ -39,6 +40,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
     required this.path,
     required this.size,
     required this.contentType,
+    required this.timestamp,
   });
 
   static Future<ResourceUploadAction> fromPath({
@@ -57,6 +59,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       path: path,
       size: size,
       contentType: lookupMimeType(path) ?? 'application/octet-stream',
+      timestamp: DateTime.now(),
     );
   }
 
@@ -69,6 +72,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       path: map['path'],
       size: map['size'],
       contentType: map['contentType'],
+      timestamp: map['timestamp'],
     );
   }
 
@@ -81,6 +85,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
         'path': path,
         'size': size,
         'contentType': contentType,
+        'timestamp': timestamp,
       };
 
   @override
@@ -90,7 +95,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
 
   @override
   Future<void> applyOptimisticUpdate() async {
-    await account.db.createResource(resourceId, parent, resourceName, false);
+    await account.db.createResource(resourceId, parent, resourceName, false, timestamp);
     await account.db.updateResource(
       resourceId,
       (o) => o(
