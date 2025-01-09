@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/explorer/explorer_controller.dart';
@@ -53,7 +52,8 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
         final account = context.read<PhylumAccount>();
         final selected = context.read<ExplorerState>().selected;
         for (final res in selected) {
-          account.addAction(ResourceMoveAction(r: res, parent: widget.resourceId));
+          account.resourceRepository.move(resource: res, parent: widget.resourceId);
+          // TODO: #nameconflict
         }
         setState(() => dropTargetActive = false);
       },

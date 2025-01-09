@@ -6,6 +6,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart';
 import 'package:phylum/libphylum/actions/action_resource_copy.dart';
 import 'package:phylum/libphylum/actions/action_resource_mkdir.dart';
+import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
@@ -115,6 +116,49 @@ class ResourceRepository {
     ));
 
     return id;
+  }
+
+  Future<void> move({
+    required Resource resource,
+    String? parent,
+    String? name,
+    NameConflictResolution conflictResolution = nameConflictError,
+  }) async {
+    assert(parent != null || name != null);
+    parent ??= resource.parent!;
+    name ??= resource.name;
+    Resource? existing = await account.db.getResourceByName(parent: resource.parent!, name: name);
+    String? deletedId;
+    String localName = name;
+    if (existing != null) {
+      switch (conflictResolution) {
+        case nameConflictError:
+          throw const NameConflictException();
+        case nameConflictEnsure:
+          throw UnsupportedError('Unsupported conflict resolution');
+        case nameConflictRename:
+          int counter = 0;
+          while (existing != null) {
+            counter++;
+            localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
+            existing = await account.db.getResourceByName(parent: resource.parent!, name: localName);
+          }
+        case nameConflictOverwrite:
+        case nameConflictDelete:
+          conflictResolution = nameConflictDelete;
+          deletedId = existing.id;
+      }
+    }
+    await account.addAction(ResourceMoveAction(
+      resourceId: resource.id,
+      parent: resource.parent!,
+      resourceName: name,
+      conflictResolution: conflictResolution,
+      description: 'Moving $name',
+      modified: DateTime.now(),
+      localName: localName,
+      deletedId: deletedId,
+    ));
   }
 
   Future<void> trackServerData(String id) async {

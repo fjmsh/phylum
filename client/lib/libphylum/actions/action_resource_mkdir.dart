@@ -25,10 +25,10 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
     required super.resourceId,
     required super.parent,
     required super.resourceName,
-    super.conflictResolution,
+    required super.conflictResolution,
     required this.timestamp,
     required this.localName,
-    this.deletedId,
+    required this.deletedId,
   });
 
   static ResourceMkdirAction fromMap(Map<String, dynamic> map) {

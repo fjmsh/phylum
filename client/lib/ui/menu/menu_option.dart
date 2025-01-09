@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
-import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_add.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_remove.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -46,7 +45,8 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       assert(resources.length == 1);
       final name = await showInputDialog(context, title: 'Rename', preset: resources.first.name);
       if (name != null) {
-        account.addAction(ResourceMoveAction(r: resources.first, name: name));
+        account.resourceRepository.move(resource: resources.first, name: name);
+        // TODO: #nameconflict
       }
       break;
     case MenuOption.move:
@@ -57,7 +57,8 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
         return;
       }
       for (final r in resources) {
-        account.addAction(ResourceMoveAction(r: r, parent: dest));
+        account.resourceRepository.move(resource: r, parent: dest);
+        // TODO: #nameconflict
       }
       break;
     case MenuOption.copy:
@@ -72,6 +73,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
           resource: r,
           destination: dest,
         );
+        // TODO: #nameconflict
       }
       break;
     case MenuOption.delete:
