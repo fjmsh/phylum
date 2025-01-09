@@ -81,8 +81,8 @@ class ResourceRepository {
   Future<String> mkdir({
     required String parent,
     required String name,
+    required NameConflictResolution conflictResolution,
     String? id,
-    NameConflictResolution conflictResolution = nameConflictError,
   }) async {
     var existing = await account.db.getResourcesByName(parent: parent, name: name);
     String? deletedId;

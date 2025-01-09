@@ -27,14 +27,25 @@ Future<void> createDirectory(BuildContext context, String folderId, {String? pre
     preset: preset,
     validate: validateName,
   );
-  if (name == null || name == "") return;
+  if (name == null || !context.mounted) return;
+  handleNameConflict(
+    context,
+    name,
+    (name, conflictResolution) => account.resourceRepository.mkdir(parent: folderId, name: name, conflictResolution: conflictResolution),
+  );
+}
+
+Future<String?> handleNameConflict(
+  BuildContext context,
+  String name,
+  Future<String> Function(String name, NameConflictResolution conflictResolution) performAction,
+) async {
   NameConflictResolution? conflictResolution = nameConflictError;
   while (conflictResolution != null) {
     try {
-      await account.resourceRepository.mkdir(parent: folderId, name: name, conflictResolution: conflictResolution);
-      return; // TODO: #antipattern ?
+      return performAction(name, conflictResolution);
     } on NameConflictException {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       conflictResolution = await showDialog<NameConflictResolution>(
         context: context,
         builder: (context) => AlertDialog(
@@ -70,11 +81,24 @@ Future<void> createDirectory(BuildContext context, String folderId, {String? pre
         ),
       );
       if (conflictResolution == nameConflictError) {
-        if (!context.mounted) return;
-        return createDirectory(context, folderId, preset: name);
+        if (!context.mounted) return null;
+        final newName = await showInputDialog(
+          context,
+          title: 'Change Name',
+          labelText: 'New Name',
+          preset: name,
+          validate: validateName,
+        );
+        if (!context.mounted) return null;
+        if (newName == null) {
+          return null;
+        }
+        handleNameConflict(context, newName, performAction);
       }
     }
   }
+
+  return null;
 }
 
 void pickAndUploadFiles(BuildContext context, String folderId) async {
@@ -112,15 +136,41 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
       false;
   if (!confirm || !context.mounted) return;
   final dirIds = <String, String>{};
-  for (final dir in tree.dirs) {
-    final parent = p.dirname(dir);
-    dirIds[dir] = await account.resourceRepository.mkdir(parent: dirIds[parent] ?? folderId, name: p.basename(dir));
-    // TODO: #nameconflict
+  for (final path in tree.dirs) {
+    final parent = dirIds[p.dirname(path)] ?? folderId;
+    String? id;
+    while (id == null) {
+      id = await handleNameConflict(
+        // ignore: use_build_context_synchronously
+        context,
+        p.basename(path),
+        (name, conflictResolution) => account.resourceRepository.mkdir(parent: parent, name: name, conflictResolution: conflictResolution),
+      );
+      if (id == null) {
+        if (!context.mounted) return;
+        final confirm = await showAlertDialog(context, title: 'Cancel operation?') ?? false;
+        if (!confirm) return;
+      }
+    }
+    dirIds[path] = id;
   }
+
   for (final path in tree.files) {
-    final parentPath = p.dirname(path);
-    await account.resourceRepository.upload(parent: dirIds[parentPath] ?? folderId, path: path);
-    // TODO: #nameconflict
+    final parent = dirIds[p.dirname(path)] ?? folderId;
+    String? id;
+    ensurefile:
+    while (id == null) {
+      id = await handleNameConflict(
+        // ignore: use_build_context_synchronously
+        context,
+        p.basename(path),
+        (name, conflictResolution) => account.resourceRepository.upload(parent: parent, path: path, conflictResolution: conflictResolution),
+      );
+      if (id == null && context.mounted) {
+        final confirm = await showAlertDialog(context, title: 'Skip file?') ?? false;
+        if (!confirm) break ensurefile;
+      }
+    }
   }
 }
 
