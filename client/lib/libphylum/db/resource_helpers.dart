@@ -6,6 +6,10 @@ extension ResourceHelpers on AppDatabase {
     return _selectResource(id).getSingleOrNull();
   }
 
+  Future<Resource?> getResourceByName({required String parent, required String name}) {
+    return _selectResourceByName(parent: parent, name: name).getSingleOrNull();
+  }
+
   Stream<Resource?> watchResource(String id) {
     return _selectResource(id).watchSingleOrNull();
   }
@@ -24,6 +28,10 @@ extension ResourceHelpers on AppDatabase {
 
   SimpleSelectStatement<Resources, Resource> _selectResource(String id) {
     return resources.select()..where((f) => f.id.equals(id) & f.deleted.equals(false));
+  }
+
+  SimpleSelectStatement<Resources, Resource> _selectResourceByName({required String parent, required String name}) {
+    return resources.select()..where((f) => f.parent.equals(parent) & f.name.equals(name) & f.deleted.equals(false));
   }
 
   SimpleSelectStatement<Resources, Resource> _selectChildren(String id) {

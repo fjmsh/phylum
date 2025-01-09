@@ -16,11 +16,11 @@ part 'db.g.dart';
 class AppDatabase extends _$AppDatabase {
   static Directory? storageDir;
   static Directory? tmpDir;
-  final String id;
+  final String accountId;
   bool _cleared = false;
   bool get cleared => _cleared;
 
-  AppDatabase({required this.id}) : super(_openConnection(id));
+  AppDatabase({required this.accountId}) : super(_openConnection(accountId));
 
   @override
   int get schemaVersion => 32;
@@ -43,7 +43,7 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> dropDatabase() async {
     await super.close();
-    await deleteDatabase(storageDir: storageDir, id: id);
+    await deleteDatabase(storageDir: storageDir, id: accountId);
   }
 
   static QueryExecutor _openConnection(String id) {

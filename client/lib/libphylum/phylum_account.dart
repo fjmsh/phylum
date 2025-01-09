@@ -15,7 +15,7 @@ const _persistKeyUserName = 'userName';
 const _persistKeyUserHome = 'userHome';
 
 class PhylumAccount extends Account<PhylumAccount> {
-  late final db = AppDatabase(id: id);
+  late final db = AppDatabase(accountId: id);
   late final resourceRepository = ResourceRepository(account: this);
   late final userRepository = UserRepository(account: this);
   late final myListsRepository = MyListsRepository(account: this);

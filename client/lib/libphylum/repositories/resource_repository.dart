@@ -13,6 +13,8 @@ import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 
+const nameConflictException = "name_conflict";
+
 class ResourceRepository {
   final PhylumAccount account;
   late final Box<Resource> _serverDataBox;
@@ -38,18 +40,31 @@ class ResourceRepository {
     });
   }
 
-  void copy({required Resource resource, required String destination}) {
+  Future<void> copy({
+    required Resource resource,
+    required String destination,
+  }) async {
     String name = resource.name;
     if (resource.parent == destination) {
-      name = '${basenameWithoutExtension(name)} - Copy${extension(name)}';
+      name = '${basenameWithoutExtension(name)} - copy${extension(name)}';
+    }
+
+    int counter = 0;
+    String localName = name;
+    Resource? existing = await account.db.getResourceByName(parent: destination, name: name);
+    while (existing != null) {
+      counter++;
+      localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
+      existing = await account.db.getResourceByName(parent: destination, name: localName);
     }
     account.addAction(ResourceCopyAction(
       srcId: resource.id,
       resourceId: generateUuid(),
       parent: destination,
       resourceName: name,
-      conflictResolution: resourceBindConflictResolutionError,
+      conflictResolution: resourceBindConflictResolutionRename,
       dir: resource.dir,
+      localName: localName,
       contentType: resource.contentType,
       contentLength: resource.contentLength,
       contentSha256: resource.contentSha256,
