@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
@@ -17,6 +18,8 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
   String get endpoint => '/api/v1/fs/mkdir/$resourceId';
 
   final DateTime timestamp;
+  final String localName;
+  final String? deletedId;
 
   ResourceMkdirAction({
     required super.resourceId,
@@ -24,6 +27,8 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
     required super.resourceName,
     super.conflictResolution,
     required this.timestamp,
+    required this.localName,
+    this.deletedId,
   });
 
   static ResourceMkdirAction fromMap(Map<String, dynamic> map) {
@@ -33,6 +38,8 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
       resourceName: map['resourceName'],
       conflictResolution: map['conflictResolution'],
       timestamp: map['timestamp'],
+      localName: map['localName'],
+      deletedId: map['deletedId'],
     );
   }
 
@@ -43,6 +50,8 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
         'parent': parent,
         'conflictResolution': conflictResolution,
         'timestamp': timestamp,
+        'localName': localName,
+        'deletedId': deletedId,
       };
 
   @override
@@ -60,8 +69,11 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
   }
 
   @override
-  Future<void> applyOptimisticUpdate() {
-    return account.db.createResource(resourceId, parent, resourceName, true, timestamp);
+  Future<void> applyOptimisticUpdate() async {
+    await account.db.createResource(resourceId, parent, localName, true, timestamp);
+    if (deletedId != null) {
+      account.db.updateResource(deletedId!, (u) => u(parent: Value(null)));
+    }
   }
 
   @override

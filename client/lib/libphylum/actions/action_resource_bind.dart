@@ -1,15 +1,10 @@
+import 'package:phylum/libphylum/name_conflict.dart';
+
 import 'action_resource.dart';
 
-typedef ResourceBindConflictResolution = int;
-const ResourceBindConflictResolution resourceBindConflictResolutionError = 0;
-const ResourceBindConflictResolution resourceBindConflictResolutionEnsure = 1;
-const ResourceBindConflictResolution resourceBindConflictResolutionRename = 2;
-const ResourceBindConflictResolution resourceBindConflictResolutionOverwrite = 3;
-const ResourceBindConflictResolution resourceBindConflictResolutionDelete = 4;
-
 abstract class ResourceBindAction extends ResourceAction {
-  ResourceBindConflictResolution _conflictResolution;
-  ResourceBindConflictResolution get conflictResolution => _conflictResolution;
+  NameConflictResolution _conflictResolution;
+  NameConflictResolution get conflictResolution => _conflictResolution;
 
   String _parent;
   String get parent => _parent;
@@ -21,12 +16,12 @@ abstract class ResourceBindAction extends ResourceAction {
     required super.resourceId,
     required String parent,
     required String resourceName,
-    ResourceBindConflictResolution conflictResolution = resourceBindConflictResolutionError,
+    NameConflictResolution conflictResolution = nameConflictError,
   })  : _parent = parent,
         _resourceName = resourceName,
         _conflictResolution = conflictResolution;
 
-  Future<void> updateConflictResolution(ResourceBindConflictResolution conflictResolution) {
+  Future<void> updateConflictResolution(NameConflictResolution conflictResolution) {
     _conflictResolution = conflictResolution;
     return update();
   }

@@ -8,10 +8,9 @@ import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
+import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
-
-import 'action_resource_bind.dart';
 
 class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction {
   static const kActionName = 'resourceUpload';
@@ -47,7 +46,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
     required String parent,
     required String resourceName,
     required String path,
-    required ResourceBindConflictResolution conflictResolution,
+    required NameConflictResolution conflictResolution,
   }) async {
     final f = File(path);
     final size = await f.length();

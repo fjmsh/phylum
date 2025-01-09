@@ -4,16 +4,15 @@ import 'package:drift/drift.dart';
 import 'package:hive/hive.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart';
-import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_copy.dart';
+import 'package:phylum/libphylum/actions/action_resource_mkdir.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
+import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
-
-const nameConflictException = "name_conflict";
 
 class ResourceRepository {
   final PhylumAccount account;
@@ -40,7 +39,7 @@ class ResourceRepository {
     });
   }
 
-  Future<void> copy({
+  Future<String> copy({
     required Resource resource,
     required String destination,
   }) async {
@@ -57,12 +56,13 @@ class ResourceRepository {
       localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
       existing = await account.db.getResourceByName(parent: destination, name: localName);
     }
-    account.addAction(ResourceCopyAction(
+    String id = generateUuid();
+    await account.addAction(ResourceCopyAction(
       srcId: resource.id,
-      resourceId: generateUuid(),
+      resourceId: id,
       parent: destination,
       resourceName: name,
-      conflictResolution: resourceBindConflictResolutionRename,
+      conflictResolution: nameConflictRename,
       dir: resource.dir,
       localName: localName,
       contentType: resource.contentType,
@@ -71,6 +71,50 @@ class ResourceRepository {
       description: 'Copying ${resource.name}',
       timestamp: DateTime.now(),
     ));
+    return id;
+  }
+
+  Future<String> mkdir({
+    required String parent,
+    required String name,
+    String? id,
+    NameConflictResolution conflictResolution = nameConflictError,
+  }) async {
+    Resource? existing = await account.db.getResourceByName(parent: parent, name: name);
+    String? deletedId;
+    String localName = name;
+    if (existing != null) {
+      switch (conflictResolution) {
+        case nameConflictError:
+          throw const NameConflictException();
+        case nameConflictEnsure:
+          throw UnsupportedError('Unsupported conflict resolution for mkdir');
+        case nameConflictRename:
+          int counter = 0;
+          while (existing != null) {
+            counter++;
+            localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
+            existing = await account.db.getResourceByName(parent: parent, name: localName);
+          }
+        case nameConflictOverwrite:
+        case nameConflictDelete:
+          conflictResolution = nameConflictDelete;
+          deletedId = existing.id;
+      }
+    }
+
+    id ??= generateUuid();
+    await account.addAction(ResourceMkdirAction(
+      parent: parent,
+      resourceName: name,
+      resourceId: id,
+      conflictResolution: conflictResolution,
+      timestamp: DateTime.now(),
+      localName: localName,
+      deletedId: deletedId,
+    ));
+
+    return id;
   }
 
   Future<void> trackServerData(String id) async {

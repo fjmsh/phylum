@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bind.dart';
+import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -57,7 +58,7 @@ class ActionView extends StatelessWidget {
                 tooltip: 'Overwrite',
                 onPressed: () async {
                   if (action is! ResourceBindAction) return;
-                  action.updateConflictResolution(resourceBindConflictResolutionOverwrite);
+                  action.updateConflictResolution(nameConflictOverwrite);
                 }),
           if (showRenameOptions)
             IconButton(
@@ -65,7 +66,7 @@ class ActionView extends StatelessWidget {
                 tooltip: 'Auto Rename',
                 onPressed: () async {
                   if (action is! ResourceBindAction) return;
-                  action.updateConflictResolution(resourceBindConflictResolutionRename);
+                  action.updateConflictResolution(nameConflictRename);
                 }),
           if (showRenameOptions)
             IconButton(

@@ -4,13 +4,11 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/actions/action_resource_bind.dart';
-import 'package:phylum/libphylum/actions/action_resource_mkdir.dart';
 import 'package:phylum/libphylum/actions/action_resource_upload.dart';
+import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
-import 'package:phylum/libphylum/util/uuid.dart';
 import 'package:provider/provider.dart';
 
 final slashChar = '/'.runes.first;
@@ -30,12 +28,7 @@ void createDirectory(BuildContext context, String folderId) async {
     validate: validateName,
   );
   if (dirName == null || dirName == "") return;
-  account.addAction(ResourceMkdirAction(
-    resourceId: generateUuid(),
-    parent: folderId,
-    resourceName: dirName,
-    timestamp: DateTime.now(),
-  ));
+  account.resourceRepository.mkdir(parent: folderId, name: dirName);
 }
 
 void pickAndUploadFiles(BuildContext context, String folderId) async {
@@ -74,14 +67,9 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
   if (!confirm || !context.mounted) return;
   final dirIds = <String, String>{};
   for (final dir in tree.dirs) {
-    dirIds[dir] = generateUuid();
     final parent = p.dirname(dir);
-    account.addAction(ResourceMkdirAction(
-      resourceId: dirIds[dir]!,
-      parent: dirIds[parent] ?? folderId,
-      resourceName: p.basename(dir),
-      timestamp: DateTime.now(),
-    ));
+    dirIds[dir] = await account.resourceRepository.mkdir(parent: dirIds[parent] ?? folderId, name: p.basename(dir));
+    // TODO: Handle Exceptions
   }
   for (final file in tree.files) {
     final parent = p.dirname(file);
@@ -89,7 +77,7 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
       parent: dirIds[parent] ?? folderId,
       resourceName: p.basename(file),
       path: file,
-      conflictResolution: resourceBindConflictResolutionError,
+      conflictResolution: nameConflictError,
     );
     await account.addAction(action);
   }

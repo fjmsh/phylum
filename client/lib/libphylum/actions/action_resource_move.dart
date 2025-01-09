@@ -6,6 +6,7 @@ import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
+import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
@@ -38,7 +39,7 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
     required Resource r,
     String? name,
     String? parent,
-    ResourceBindConflictResolution conflictResoltion = resourceBindConflictResolutionError,
+    NameConflictResolution conflictResoltion = nameConflictError,
   }) : this._(
           resourceId: r.id,
           parent: parent ?? r.parent!,
