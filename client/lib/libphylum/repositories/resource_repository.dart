@@ -88,8 +88,6 @@ class ResourceRepository {
       switch (conflictResolution) {
         case nameConflictError:
           throw const NameConflictException();
-        case nameConflictEnsure:
-          throw UnsupportedError('Unsupported conflict resolution for mkdir');
         case nameConflictRename:
           int counter = 0;
           while (existing != null) {
@@ -97,10 +95,14 @@ class ResourceRepository {
             localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
             existing = await account.db.getResourceByName(parent: parent, name: localName);
           }
+          break;
         case nameConflictOverwrite:
         case nameConflictDelete:
           conflictResolution = nameConflictDelete;
           deletedId = existing.id;
+          break;
+        default:
+          throw UnsupportedError('Unsupported conflict resolution');
       }
     }
 
@@ -127,31 +129,33 @@ class ResourceRepository {
     assert(parent != null || name != null);
     parent ??= resource.parent!;
     name ??= resource.name;
-    Resource? existing = await account.db.getResourceByName(parent: resource.parent!, name: name);
+    Resource? existing = await account.db.getResourceByName(parent: parent, name: name);
     String? deletedId;
     String localName = name;
     if (existing != null) {
       switch (conflictResolution) {
         case nameConflictError:
           throw const NameConflictException();
-        case nameConflictEnsure:
-          throw UnsupportedError('Unsupported conflict resolution');
         case nameConflictRename:
           int counter = 0;
           while (existing != null) {
             counter++;
             localName = '${basenameWithoutExtension(name)} ${counter++}${extension(name)}';
-            existing = await account.db.getResourceByName(parent: resource.parent!, name: localName);
+            existing = await account.db.getResourceByName(parent: parent, name: localName);
           }
+          break;
         case nameConflictOverwrite:
         case nameConflictDelete:
           conflictResolution = nameConflictDelete;
           deletedId = existing.id;
+          break;
+        default:
+          throw UnsupportedError('Unsupported conflict resolution');
       }
     }
     await account.addAction(ResourceMoveAction(
       resourceId: resource.id,
-      parent: resource.parent!,
+      parent: parent,
       resourceName: name,
       conflictResolution: conflictResolution,
       description: 'Moving $name',
