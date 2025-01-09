@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -31,7 +32,7 @@ Future<void> createDirectory(BuildContext context, String folderId, {String? pre
   await handleNameConflict(
     context,
     name,
-    deleteButtonText: 'Overwrite',
+    overwriteFn: (r) => nameConflictDelete,
     (name, conflictResolution) => account.resourceRepository.mkdir(
       parent: folderId,
       name: name,
@@ -83,7 +84,7 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
         // ignore: use_build_context_synchronously
         context,
         p.basename(path),
-        deleteButtonText: 'Overwrite',
+        overwriteFn: (r) => nameConflictDelete,
         (name, conflictResolution) => account.resourceRepository.mkdir(
           parent: parent,
           name: name,
@@ -108,7 +109,7 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
         // ignore: use_build_context_synchronously
         context,
         p.basename(path),
-        overwriteButtonText: 'Overwrite',
+        overwriteFn: (r) => nameConflictOverwrite,
         (name, conflictResolution) => account.resourceRepository.upload(parent: parent, path: path, conflictResolution: conflictResolution),
       );
       if (id == null && context.mounted) {
@@ -123,15 +124,15 @@ Future<String?> handleNameConflict(
   BuildContext context,
   String name,
   Future<String> Function(String name, NameConflictResolution conflictResolution) performAction, {
-  String? overwriteButtonText,
-  String? deleteButtonText,
+  NameConflictResolution? Function(Resource)? overwriteFn,
 }) async {
   NameConflictResolution? conflictResolution = nameConflictError;
   while (conflictResolution != null) {
     try {
       return await performAction(name, conflictResolution);
-    } on NameConflictException {
+    } on NameConflictException catch (e) {
       if (!context.mounted) return null;
+      final overwrite = overwriteFn?.call(e.resource);
       conflictResolution = await showDialog<NameConflictResolution>(
         context: context,
         builder: (context) => AlertDialog(
@@ -144,20 +145,12 @@ Future<String?> handleNameConflict(
             ),
           ),
           actions: <Widget>[
-            if (deleteButtonText != null)
+            if (overwrite != null)
               TextButton(
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: Text(deleteButtonText),
+                child: const Text('Overwrite'),
                 onPressed: () {
-                  Navigator.of(context).pop(nameConflictDelete);
-                },
-              ),
-            if (overwriteButtonText != null)
-              TextButton(
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: Text(overwriteButtonText),
-                onPressed: () {
-                  Navigator.of(context).pop(nameConflictOverwrite);
+                  Navigator.of(context).pop(overwrite);
                 },
               ),
             TextButton(

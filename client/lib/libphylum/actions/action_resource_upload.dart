@@ -27,6 +27,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   final String contentType;
   final DateTime timestamp;
   final String localName;
+  final String? deletedId;
 
   ResourceUploadAction({
     required super.resourceId,
@@ -38,6 +39,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
     required this.contentType,
     required this.timestamp,
     required this.localName,
+    required this.deletedId,
   });
 
   factory ResourceUploadAction.fromMap(Map<String, dynamic> map) {
@@ -51,6 +53,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       contentType: map['contentType'],
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
       localName: map['localName'],
+      deletedId: map['deletedId'],
     );
   }
 
@@ -65,6 +68,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
         'contentType': contentType,
         'timestamp': timestamp.millisecondsSinceEpoch,
         'localName': localName,
+        'deletedId': deletedId,
       };
 
   @override
@@ -80,13 +84,20 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       (o) => o(
         contentType: Value(contentType),
         contentLength: Value(size),
+        contentSha256: Value("<unknown>"),
       ),
     );
+    if (deletedId != null) {
+      account.db.updateResource(deletedId!, (u) => u(parent: Value(null)));
+    }
   }
 
   @override
-  Future<void> revertOptimisticUpdate() {
-    return account.db.deleteResource(resourceId);
+  Future<void> revertOptimisticUpdate() async {
+    await account.db.deleteResource(resourceId);
+    if (deletedId != null) {
+      account.db.updateResource(deletedId!, (u) => u(parent: Value(parent)));
+    }
   }
 
   @override

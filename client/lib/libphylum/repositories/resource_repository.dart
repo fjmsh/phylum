@@ -55,7 +55,7 @@ class ResourceRepository {
     if (existing.isNotEmpty) {
       switch (conflictResolution) {
         case nameConflictError:
-          throw const NameConflictException();
+          throw NameConflictException(existing.first);
         case nameConflictRename:
           localName = await _createUniqueName(existing, parent, name);
           break;
@@ -93,16 +93,18 @@ class ResourceRepository {
     var existing = await account.db.getResourcesByName(parent: parent, name: name);
     String localName = name;
     String id = generateUuid();
+    String? deletedId;
     if (existing.isNotEmpty) {
       switch (conflictResolution) {
         case nameConflictError:
-          throw const NameConflictException();
+          throw NameConflictException(existing.first);
         case nameConflictRename:
           localName = await _createUniqueName(existing, parent, name);
           break;
         case nameConflictOverwrite:
           id = existing.first.id;
-        // TODO: Fix if existing resource is directory
+        case nameConflictDelete:
+          deletedId = existing.first.id;
         default:
           throw UnsupportedError('Unsupported conflict resolution');
       }
@@ -120,6 +122,7 @@ class ResourceRepository {
       size: size,
       contentType: contentType,
       localName: localName,
+      deletedId: deletedId,
     ));
     return id;
   }
@@ -139,7 +142,7 @@ class ResourceRepository {
     if (existing.isNotEmpty) {
       switch (conflictResolution) {
         case nameConflictError:
-          throw const NameConflictException();
+          throw NameConflictException(existing.first);
         case nameConflictRename:
           localName = await _createUniqueName(existing, parent, name);
           break;
@@ -183,7 +186,7 @@ class ResourceRepository {
     if (existing.isNotEmpty) {
       switch (conflictResolution) {
         case nameConflictError:
-          throw const NameConflictException();
+          throw NameConflictException(existing.first);
         case nameConflictRename:
           localName = await _createUniqueName(existing, parent, name);
           break;

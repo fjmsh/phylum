@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
+import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/explorer/explorer_controller.dart';
 import 'package:phylum/util/upload_utils.dart';
@@ -60,7 +61,7 @@ void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
     handleNameConflict(
       context,
       r.name,
-      deleteButtonText: 'Overwrite',
+      overwriteFn: (r) => nameConflictDelete,
       (name, conflictResolution) => account.resourceRepository.move(
         resource: r,
         name: name,
@@ -73,7 +74,7 @@ void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
     handleNameConflict(
       context,
       r.name,
-      deleteButtonText: 'Overwrite',
+      overwriteFn: (r) => nameConflictDelete,
       (name, conflictResolution) => account.resourceRepository.copy(
         resource: r,
         name: name,

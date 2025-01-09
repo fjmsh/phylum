@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/paste_action_handler.dart';
 import 'package:phylum/libphylum/explorer/selection_mode.dart';
@@ -58,7 +59,7 @@ class ExplorerActions extends StatelessWidget {
             handleNameConflict(
               context,
               name,
-              deleteButtonText: 'Overwrite',
+              overwriteFn: (r) => nameConflictDelete,
               (name, conflictResolution) => account.resourceRepository.move(
                 resource: r,
                 name: name,

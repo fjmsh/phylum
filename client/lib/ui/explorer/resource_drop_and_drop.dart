@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_details_row.dart';
@@ -55,7 +56,7 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
           handleNameConflict(
             context,
             r.name,
-            deleteButtonText: 'Overwrite',
+            overwriteFn: (r) => nameConflictDelete,
             (name, conflictResolution) => account.resourceRepository.move(
               resource: r,
               name: name,

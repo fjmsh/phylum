@@ -7,6 +7,7 @@ import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_add.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_remove.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/destination_picker/destination_picker.dart';
@@ -50,7 +51,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
         await handleNameConflict(
           context,
           r.name,
-          deleteButtonText: 'Overwrite',
+          overwriteFn: (r) => nameConflictDelete,
           (name, conflictResolution) => account.resourceRepository.move(
             resource: r,
             name: name,
@@ -71,7 +72,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
         await handleNameConflict(
           context,
           r.name,
-          deleteButtonText: 'Overwrite',
+          overwriteFn: (r) => nameConflictDelete,
           (name, conflictResolution) => account.resourceRepository.move(
             resource: r,
             name: name,
@@ -93,7 +94,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
         await handleNameConflict(
           context,
           r.name,
-          deleteButtonText: 'Overwrite',
+          overwriteFn: (r) => nameConflictDelete,
           (name, conflictResolution) => account.resourceRepository.copy(
             resource: r,
             name: name,
