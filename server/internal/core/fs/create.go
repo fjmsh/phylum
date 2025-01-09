@@ -201,19 +201,22 @@ func (f filesystem) createResource(
 				}
 			}
 		case ResourceBindConflictResolutionDelete:
-			deleted = true
-			err = f.deleteRecursive(res.ID, parent, true, false)
+			res, err = f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: parent, Name: name})
 			if err == nil {
-				res, created, _, err = f.createResource(
-					id,
-					parent,
-					name,
-					dir,
-					contentLength,
-					contentType,
-					contentSHA256,
-					ResourceBindConflictResolutionError,
-				)
+				deleted = true
+				err = f.deleteRecursive(res.ID, parent, true, false)
+				if err == nil {
+					res, created, _, err = f.createResource(
+						id,
+						parent,
+						name,
+						dir,
+						contentLength,
+						contentType,
+						contentSHA256,
+						ResourceBindConflictResolutionError,
+					)
+				}
 			}
 		}
 	} else if strings.Contains(err.Error(), "resources_pkey") {
