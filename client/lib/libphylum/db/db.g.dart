@@ -1575,7 +1575,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 
   Selectable<Resource> selectRecents() {
     return customSelect(
-        'SELECT r.* FROM recents AS h LEFT JOIN resources AS r ON h.resource_id = r.id ORDER BY h.accessed DESC',
+        'SELECT r.* FROM recents AS h INNER JOIN resources AS r ON h.resource_id = r.id WHERE r.deleted == 0 AND r.parent IS NOT NULL ORDER BY h.accessed DESC',
         variables: [],
         readsFrom: {
           recents,

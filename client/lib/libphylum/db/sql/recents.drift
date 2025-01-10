@@ -7,4 +7,4 @@ CREATE TABLE IF NOT EXISTS recents(
 
 CREATE INDEX IF NOT EXISTS recent_accesses ON recents(accessed DESC);
 
-selectRecents: SELECT r.* FROM recents h LEFT JOIN resources r ON h.resource_id = r.id ORDER BY h.accessed DESC;
+selectRecents: SELECT r.* FROM recents h INNER JOIN resources r ON h.resource_id = r.id WHERE r.deleted == 0 AND r.parent IS NOT NULL ORDER BY h.accessed DESC;
