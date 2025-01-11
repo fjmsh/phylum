@@ -14,8 +14,8 @@ class MyListsRepository {
 
   MyListsRepository({required this.account});
 
-  Future<void> initialize(bool cleared) async {
-    if (cleared) {
+  Future<void> initialize({bool clearLastFetchTimestamp = false}) async {
+    if (clearLastFetchTimestamp) {
       await account.persist(keyLastBookmarkFetch, null);
     }
     refreshBookmarks();

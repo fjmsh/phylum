@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
@@ -63,19 +62,19 @@ class PhylumAccount extends Account<PhylumAccount> {
     // Set Authorization header
     _accessToken = _initialAccessToken ?? accessToken;
 
-    // Open the database to see if data was cleared
-    await db.bookmarks.count().get();
+    // Ensure database open
+    await db.doWhenOpened((executor) {});
     await serverResourceTracker.initialize();
-    await userRepository.initialize(db.cleared);
-    await myListsRepository.initialize(db.cleared);
+    await userRepository.initialize();
+    await myListsRepository.initialize();
 
-    void Function()? l;
+    late final void Function() l;
     l = apiClient.addResponseListener((request, errorResponse) {
       if (errorResponse is PhylumApiErrorResponse) {
         if (errorResponse.code == "credentials_invalid") {
           logger.i('Invalid Credentials - Logging out');
           logOut();
-          l?.call();
+          l.call();
         }
       }
     });

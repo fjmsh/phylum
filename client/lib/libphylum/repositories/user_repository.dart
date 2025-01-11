@@ -14,10 +14,7 @@ class UserRepository {
     account.db.users.select().get().then((users) => _users = Map.unmodifiable(Map.fromIterable(users, key: (u) => u.username)));
   }
 
-  Future<void> initialize(bool cleared) async {
-    if (cleared) {
-      // await account.persist(keyLastUserFetch, null);
-    }
+  Future<void> initialize() async {
     refresh();
   }
 
