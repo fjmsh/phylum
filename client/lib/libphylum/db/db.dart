@@ -21,6 +21,7 @@ class AppDatabase extends _$AppDatabase {
   bool get cleared => _cleared;
 
   AppDatabase({required this.accountId}) : super(_openConnection(accountId));
+  AppDatabase.fromExecutor({required this.accountId, required QueryExecutor executor}) : super(executor);
 
   @override
   int get schemaVersion => 32;

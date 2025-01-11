@@ -21,9 +21,6 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/share/$resourceId';
 
-  @override
-  bool get trackServerData => true;
-
   final String username;
   final int permission;
   final DateTime modified;
@@ -106,7 +103,7 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
 
   @override
   Future<void> revertOptimisticUpdate() {
-    final serverData = account.resourceRepository.getServerData(resourceId)!;
+    final serverData = account.serverResourceTracker.getServerResource(resourceId)!;
     return account.db.updateResource(
       resourceId,
       (o) => o(

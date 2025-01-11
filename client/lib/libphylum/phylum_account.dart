@@ -7,6 +7,7 @@ import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/repositories/my_lists_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
+import 'package:phylum/libphylum/server_data_tracker.dart';
 import 'package:phylum/util/logging.dart';
 
 const _persistKeyAccessToken = 'accessToken';
@@ -19,6 +20,7 @@ class PhylumAccount extends Account<PhylumAccount> {
   late final resourceRepository = ResourceRepository(account: this);
   late final userRepository = UserRepository(account: this);
   late final myListsRepository = MyListsRepository(account: this);
+  late final serverResourceTracker = ServerResourceStateTracker(account: this);
 
   final _dispatcher = SimulatedBadNetworkDispatcher.good(dropRate: 0);
   // final _dispatcher = HttpClientDispatcher();
@@ -63,7 +65,7 @@ class PhylumAccount extends Account<PhylumAccount> {
 
     // Open the database to see if data was cleared
     await db.bookmarks.count().get();
-    await resourceRepository.initialize();
+    await serverResourceTracker.initialize();
     await userRepository.initialize(db.cleared);
     await myListsRepository.initialize(db.cleared);
 
@@ -80,8 +82,8 @@ class PhylumAccount extends Account<PhylumAccount> {
   }
 
   @override
-  Future<void> transaction(Future<void> Function() fn) {
-    return db.transaction(fn);
+  Future<void> transaction(Future<void> Function() fn, {bool local = false, bool clearPreviousLocal = true}) {
+    return db.transaction(fn, interceptor: local ? serverResourceTracker.newInterceptor(clearPreviousLocal) : null);
   }
 
   @override

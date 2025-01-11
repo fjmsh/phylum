@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:hive/hive.dart';
 import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart';
@@ -20,20 +18,8 @@ import 'package:phylum/libphylum/util/uuid.dart';
 
 class ResourceRepository {
   final PhylumAccount account;
-  late final Box<Resource> _serverDataBox;
-  late final Box<int> _serverDataCountsBox;
 
   ResourceRepository({required this.account});
-
-  get dest => null;
-
-  Future<void> initialize() async {
-    if (!Hive.isAdapterRegistered(const ResourceAdapter().typeId)) {
-      Hive.registerAdapter(const ResourceAdapter());
-    }
-    _serverDataBox = await account.openBox('server_data');
-    _serverDataCountsBox = await account.openBox('server_data_counts');
-  }
 
   Future<ApiResult> requestResource(String id) async {
     return account.apiClient.sendRequest(ResourceLsRequest(id), callback: (request, response) async {
@@ -224,64 +210,24 @@ class ResourceRepository {
     return localName;
   }
 
-  Future<void> trackServerData(String id) async {
-    final count = _serverDataCountsBox.get(id) ?? 0;
-    if (count == 0) {
-      final r = await account.db.getResource(id);
-      assert(r != null);
-      await Future.wait([
-        _serverDataCountsBox.put(id, 1),
-        _serverDataBox.put(id, r!),
-      ]);
-    } else {
-      return _serverDataCountsBox.put(id, count + 1);
-    }
-  }
-
-  Future<void> stopTrackingServerData(String id) async {
-    final count = _serverDataCountsBox.get(id) ?? 0;
-    if (count <= 0) {
-      throw Exception('Cannot stop tracking server data without first starting');
-    }
-    if (count == 1) {
-      await Future.wait([
-        _serverDataCountsBox.delete(id),
-        _serverDataBox.delete(id),
-      ]);
-    } else {
-      return _serverDataCountsBox.put(id, count - 1);
-    }
-  }
-
-  Resource? getServerData(String id) {
-    return _serverDataBox.get(id);
-  }
-
   Future processResourceResponse(Map<String, dynamic> data) async {
     final db = account.db;
-    final (insert, update) = await parseFullResourceObject(data);
+    final (parsed, previousChildren) = await parseFullResourceObject(data);
     await db.batch((batch) {
-      for (final u in update) {
+      for (final u in previousChildren) {
         batch.update(db.resources, u, where: (o) => o.id.equals(u.id.value));
       }
-      batch.insertAllOnConflictUpdate(db.resources, insert);
+      batch.insertAllOnConflictUpdate(db.resources, parsed);
     });
-    for (final r in insert) {
-      final serverData = _serverDataBox.get(r.id.value);
-      if (serverData != null) {
-        _serverDataBox.put(r.id.value, serverData.copyWithCompanion(r));
-      }
-    }
+    account.serverResourceTracker.update(parsed);
+    account.serverResourceTracker.update(previousChildren);
   }
 
   Future<ResourcesCompanion> processResourceUpdateResponse(String id, Map<String, dynamic> data) async {
     final r = parsePartialResourceObject(data, id);
     final update = (account.db.resources.update()..where((o) => o.id.equals(r.id.value)));
     await update.write(r);
-    final serverData = _serverDataBox.get(r.id.value);
-    if (serverData != null) {
-      _serverDataBox.put(r.id.value, serverData.copyWithCompanion(r));
-    }
+    account.serverResourceTracker.update([r]);
     return r;
   }
 
@@ -354,23 +300,4 @@ ResourcesCompanion parsePartialResourceObject(Map<String, dynamic> data, [String
             : Value(data['publinks'])
         : Value.absent(),
   );
-}
-
-class ResourceAdapter implements TypeAdapter<Resource> {
-  const ResourceAdapter();
-
-  @override
-  int get typeId => 1;
-
-  @override
-  Resource read(BinaryReader reader) {
-    reader.readByte();
-    return Resource.fromJson(json.decode(reader.readString()));
-  }
-
-  @override
-  void write(BinaryWriter writer, Resource obj) {
-    writer.writeByte(0); // Version marker, in case we need to change something in the future
-    writer.writeString(obj.toJsonString());
-  }
 }

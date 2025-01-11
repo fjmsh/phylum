@@ -18,9 +18,6 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/mv/$resourceId';
 
-  @override
-  bool get trackServerData => true;
-
   final DateTime modified;
   final String description;
   final String localName;
@@ -92,7 +89,7 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
 
   @override
   Future<void> revertOptimisticUpdate() async {
-    final serverData = account.resourceRepository.getServerData(resourceId);
+    final serverData = account.serverResourceTracker.getServerResource(resourceId);
     if (serverData != null) {
       await account.db.updateResource(
         resourceId,

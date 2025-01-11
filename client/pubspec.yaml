@@ -43,6 +43,15 @@ dev_dependencies:
   drift_dev: ^2.19.1
   build_runner: ^2.4.12
   
+dependency_overrides:
+  offtheline:
+    path: ../../offtheline
+  drift:
+    path: ../../drift/drift
+  drift_flutter:
+    path: ../../drift/drift_flutter
+  drift_sqflite:
+    path: ../../drift/drift_sqflite
 
 flutter:
   uses-material-design: true
