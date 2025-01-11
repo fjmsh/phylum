@@ -30,20 +30,20 @@ class ServerResourceStateTracker {
     }
   }
 
-  QueryInterceptor newInterceptor(bool clearPrevious) {
-    return Interceptor(tracker: this, clearPrevious: clearPrevious);
+  QueryInterceptor newInterceptor(bool clearUntouched) {
+    return Interceptor(tracker: this, clearUntouched: clearUntouched);
   }
 
-  Future<void> _trackServerResources(Map<String, Resource?> serverResources, bool clearUnused) async {
-    var unusedKeys = const <String>{};
-    if (clearUnused) {
-      unusedKeys = Set.from(_box.keys);
-      unusedKeys.retainWhere((key) => !serverResources.containsKey(key));
+  Future<void> _trackServerResources(Map<String, Resource?> serverResources, bool clearUntouched) async {
+    var untouchedKeys = const <String>{};
+    if (clearUntouched) {
+      untouchedKeys = Set.from(_box.keys);
+      untouchedKeys.retainWhere((key) => !serverResources.containsKey(key));
     }
     // Avoid unnecessary disk writes
     serverResources.removeWhere((key, value) => _box.containsKey(key) && _box.get(key) == value);
     await _box.putAll(serverResources);
-    await _box.deleteAll(unusedKeys);
+    await _box.deleteAll(untouchedKeys);
     await _box.flush();
   }
 
@@ -58,11 +58,11 @@ class ServerResourceStateTracker {
 
 class Interceptor extends QueryInterceptor {
   final ServerResourceStateTracker tracker;
-  final bool clearPrevious;
+  final bool clearUntouched;
   late final AppDatabase db;
   final Map<String, Resource?> serverData = {};
 
-  Interceptor({required this.tracker, required this.clearPrevious});
+  Interceptor({required this.tracker, required this.clearUntouched});
 
   @override
   TransactionExecutor beginTransaction(QueryExecutor parent) {
@@ -95,7 +95,7 @@ class Interceptor extends QueryInterceptor {
   @override
   Future<void> commitTransaction(TransactionExecutor inner) async {
     super.commitTransaction(inner);
-    await tracker._trackServerResources(serverData, clearPrevious);
+    await tracker._trackServerResources(serverData, clearUntouched);
   }
 }
 

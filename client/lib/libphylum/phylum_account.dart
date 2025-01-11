@@ -82,8 +82,8 @@ class PhylumAccount extends Account<PhylumAccount> {
   }
 
   @override
-  Future<void> transaction(Future<void> Function() fn, {bool local = false, bool clearPreviousLocal = true}) {
-    return db.transaction(fn, interceptor: local ? serverResourceTracker.newInterceptor(clearPreviousLocal) : null);
+  Future<void> transaction(Future<void> Function() fn, {bool retainServerData = false, bool clearUntouched = true}) {
+    return db.transaction(fn, interceptor: retainServerData ? serverResourceTracker.newInterceptor(clearUntouched) : null);
   }
 
   @override

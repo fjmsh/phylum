@@ -23,7 +23,7 @@ dependencies:
   offtheline:
     git:
       url: https://codeberg.org/shroff/offtheline.git
-      ref: d5e1879c76b780a1a78eb64fe5e03d6618d1b38d
+      ref: 5ecd79d00a69f907795f38c4d26053aa2dbba889
   open_file:
   path:
   path_provider:
@@ -44,8 +44,6 @@ dev_dependencies:
   build_runner: ^2.4.12
   
 dependency_overrides:
-  offtheline:
-    path: ../../offtheline
   drift:
     path: ../../drift/drift
   drift_flutter:
