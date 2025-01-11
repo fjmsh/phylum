@@ -50,7 +50,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
         final r = resources.first;
         await handleNameConflict(
           context,
-          r.name,
+          name,
           overwriteFn: (r) => nameConflictDelete,
           (name, conflictResolution) => account.resourceRepository.move(
             resource: r,
