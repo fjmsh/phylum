@@ -1,7 +1,10 @@
-import 'package:flutter/foundation.dart';
+import 'dart:convert';
+
+import 'package:collection/collection.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/util/permissions.dart';
 
 sealed class ExplorerPage {
   const ExplorerPage();
@@ -30,7 +33,21 @@ class ExplorerPageFolder extends ExplorerPage {
   Stream<List<Resource>> watchChildren(PhylumAccount account) => account.db.watchChildren(folderId);
 
   @override
-  Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account) => account.db.watchParents(folderId).map((p) => p.reversed);
+  Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account) {
+    return account.db.watchParents(folderId).map((p) {
+      int index = p.indexWhere((r) => r.id == account.userHome);
+      if (index >= 0) {
+        p[index] = ParentsResult(id: account.userHome, name: 'My Files');
+      } else {
+        index = p.lastIndexWhere((r) =>
+            r.permissions != null && ((jsonDecode(r.permissions!) as Map).cast<String, Permission>()[account.userName] ?? 0) & permissionRead != 0);
+        if (index < 0) {
+          index = 0;
+        }
+      }
+      return ListSlice(p, 0, index + 1).reversed;
+    });
+  }
 
   @override
   String toString() => 'ExplorerPageFolder($folderId)';
@@ -49,7 +66,7 @@ class ExplorerPageRecents extends ExplorerPage {
 
   @override
   Future<bool> refresh(PhylumAccount account) {
-    return SynchronousFuture(true);
+    return Future.value(true);
   }
 
   @override
@@ -65,9 +82,8 @@ class ExplorerPageRecents extends ExplorerPage {
   @override
   Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account) {
     return Stream.fromIterable([
-      [ParentsResult(id: 'recents', name: 'Recents')]
+      [],
     ]);
-    // return account.db.parents(folderId).watch().map((p) => p.reversed);
   }
 
   @override
@@ -97,7 +113,7 @@ class ExplorerPageShared extends ExplorerPage {
   @override
   Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account) {
     return Stream.fromIterable([
-      [ParentsResult(id: 'shared', name: 'Shared With Me')]
+      [],
     ]);
   }
 

@@ -64,8 +64,8 @@ class _PathViewState extends State<PathView> {
   @override
   Widget build(BuildContext context) {
     final ancestors = this.ancestors;
-    if (ancestors == null) {
-      return const Text('');
+    if (ancestors == null || ancestors.isEmpty) {
+      return const SizedBox();
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -84,7 +84,7 @@ class _PathViewState extends State<PathView> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: Text(
-                    r.parent == null ? "/" : r.name,
+                    r.name,
                     style: const TextStyle(fontSize: 16),
                   ),
                 ),

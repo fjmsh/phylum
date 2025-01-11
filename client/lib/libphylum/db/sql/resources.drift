@@ -23,4 +23,4 @@ parents: WITH RECURSIVE parents(id, parent, name, permissions) AS (
         FROM resources r
         JOIN parents p
         ON r.id = p.parent
-) SELECT * from parents;
+) SELECT id, name, permissions from parents;
