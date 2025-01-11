@@ -96,7 +96,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   Future<void> revertOptimisticUpdate() async {
     await account.db.deleteResource(resourceId);
     if (deletedId != null) {
-      await account.db.updateResource(deletedId!, (u) => u(parent: Value(parent)));
+      await account.serverResourceTracker.revert(deletedId!);
     }
   }
 

@@ -103,14 +103,7 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
 
   @override
   Future<void> revertOptimisticUpdate() {
-    final serverData = account.serverResourceTracker.getServerResource(resourceId)!;
-    return account.db.updateResource(
-      resourceId,
-      (o) => o(
-        permissions: Value(serverData.permissions),
-        modified: Value(serverData.modified),
-      ),
-    );
+    return account.serverResourceTracker.revert(resourceId);
   }
 
   @override

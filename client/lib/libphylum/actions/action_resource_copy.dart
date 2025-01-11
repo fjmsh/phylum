@@ -114,8 +114,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   Future<void> revertOptimisticUpdate() async {
     await account.db.deleteResource(resourceId);
     if (deletedId != null) {
-      // TODO: This should be reverted based on server data
-      await account.db.updateResource(deletedId!, (u) => u(parent: Value(parent)));
+      await account.serverResourceTracker.revert(deletedId!);
     }
   }
 

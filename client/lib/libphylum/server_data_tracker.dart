@@ -23,6 +23,13 @@ class ServerResourceStateTracker {
     return _box.get(id);
   }
 
+  Future<void> revert(String id) async {
+    final r = _box.get(id);
+    if (r != null) {
+      await account.db.resources.replaceOne(r);
+    }
+  }
+
   QueryInterceptor newInterceptor(bool clearPrevious) {
     return Interceptor(tracker: this, clearPrevious: clearPrevious);
   }
@@ -82,7 +89,7 @@ class Interceptor extends QueryInterceptor {
   }
 
   Future<void> retainOriginal(String id) async {
-    serverData[id] ??= tracker.getServerResource(id) ?? await db.getResource(id);
+    serverData[id] ??= tracker._box.get(id) ?? await db.getResource(id);
   }
 
   @override

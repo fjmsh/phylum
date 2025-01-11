@@ -61,7 +61,7 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
 
   @override
   Future<void> revertOptimisticUpdate() {
-    return account.db.updateResource(resourceId, (o) => o(deleted: const Value(false)));
+    return account.db.deleteResource(resourceId);
   }
 
   @override

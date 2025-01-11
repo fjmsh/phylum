@@ -89,21 +89,9 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
 
   @override
   Future<void> revertOptimisticUpdate() async {
-    final serverData = account.serverResourceTracker.getServerResource(resourceId);
-    if (serverData != null) {
-      await account.db.updateResource(
-        resourceId,
-        (o) => o(
-          name: Value(serverData.name),
-          parent: Value(serverData.parent),
-          modified: Value(serverData.modified),
-        ),
-      );
-    } else {
-      // TODO: report error
-    }
+    await account.serverResourceTracker.revert(resourceId);
     if (deletedId != null) {
-      await account.db.updateResource(deletedId!, (u) => u(parent: Value(parent)));
+      await account.serverResourceTracker.revert(deletedId!);
     }
   }
 
