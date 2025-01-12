@@ -78,7 +78,12 @@ class _PhylumAppState extends State<PhylumApp> {
       colorScheme: ColorScheme.fromSeed(
         seedColor: Color(0xff769e57),
         dynamicSchemeVariant: DynamicSchemeVariant.neutral,
+        brightness: Brightness.dark,
       ),
+    );
+    final darkTheme = ThemeData(
+      colorScheme: theme.colorScheme.copyWith(brightness: Brightness.dark),
+      brightness: Brightness.dark,
     );
     if (ready) {
       return MaterialApp.router(
@@ -86,7 +91,8 @@ class _PhylumAppState extends State<PhylumApp> {
         title: 'Phylum',
         debugShowCheckedModeBanner: false,
         theme: theme,
-        darkTheme: theme,
+        darkTheme: darkTheme,
+        themeMode: ThemeMode.system,
         routerConfig: _appRouter,
         shortcuts: getAppShortcuts(),
       );
@@ -96,7 +102,8 @@ class _PhylumAppState extends State<PhylumApp> {
       title: 'Logging Out | Phylum',
       debugShowCheckedModeBanner: false,
       theme: theme,
-      darkTheme: theme,
+      darkTheme: darkTheme,
+      themeMode: ThemeMode.system,
       routerConfig: createLogoutRouter(),
     );
   }
