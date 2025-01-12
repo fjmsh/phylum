@@ -10,7 +10,7 @@ import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
 import 'package:provider/provider.dart';
 
 const reverse = false;
-const small = true;
+const small = false;
 
 class PathView extends StatefulWidget {
   const PathView._() : super();
@@ -68,6 +68,7 @@ class _PathViewState extends State<PathView> {
       return const SizedBox();
     }
     final current = reverse ? ancestors.firstOrNull : ancestors.lastOrNull;
+    final theme = Theme.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -77,10 +78,9 @@ class _PathViewState extends State<PathView> {
             buildItem: (context, dropTargetActive) => Card(
               shape: RoundedRectangleBorder(
                 borderRadius: const BorderRadius.all(Radius.circular(4.0)),
-                side: dropTargetActive
-                    ? BorderSide(width: 2, color: Theme.of(context).colorScheme.primary)
-                    : BorderSide.none,
+                side: dropTargetActive ? BorderSide(width: 2, color: theme.colorScheme.primary) : BorderSide.none,
               ),
+              elevation: r == current ? 0 : null,
               margin: EdgeInsets.symmetric(horizontal: 6),
               child: InkWell(
                 onTap: r == current ? null : () => Actions.maybeInvoke(context, NavToFolderIntent(folderId: r.id)),
@@ -88,10 +88,13 @@ class _PathViewState extends State<PathView> {
                   padding: small
                       ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
                       : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Text(
-                    r.name,
-                    style: const TextStyle(fontSize: small ? 13 : 16, fontWeight: FontWeight.bold),
-                  ),
+                  child: Text(r.name,
+                      style: small
+                          ? theme.textTheme.bodyMedium!.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: r == current ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant)
+                          : theme.textTheme.bodyLarge!.copyWith(
+                              color: r == current ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant)),
                 ),
               ),
             ),
