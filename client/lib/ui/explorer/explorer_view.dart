@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/explorer/explorer_actions.dart';
 import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
+import 'package:phylum/ui/explorer/path_view.dart';
 import 'package:provider/provider.dart';
 
 import '../../libphylum/explorer/explorer_controller.dart';
@@ -14,7 +15,12 @@ class ExplorerView extends StatelessWidget {
   Widget build(BuildContext context) {
     return ExplorerActions(
       child: ExplorerGestureHandler(
-        child: buildPage(context),
+        child: Column(
+          children: [
+            PathView.create(),
+            Expanded(child: buildPage(context)),
+          ],
+        ),
       ),
     );
   }

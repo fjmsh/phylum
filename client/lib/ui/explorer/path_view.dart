@@ -9,18 +9,17 @@ import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
 import 'package:provider/provider.dart';
 
+const reverse = false;
+
 class PathView extends StatefulWidget {
   const PathView._() : super();
 
   static Widget create() {
-    return SizedBox(
-      height: 56,
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: PathView._(),
-        ),
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: PathView._(),
       ),
     );
   }
@@ -32,7 +31,6 @@ class PathView extends StatefulWidget {
 class _PathViewState extends State<PathView> {
   StreamSubscription? sub;
   Function()? removeListener;
-  ParentsResult? current;
   Iterable<ParentsResult>? ancestors;
 
   @override
@@ -46,8 +44,7 @@ class _PathViewState extends State<PathView> {
         ));
         if (mounted) {
           setState(() {
-            current = data.lastOrNull;
-            ancestors = data;
+            ancestors = reverse ? data : data.reversed;
           });
         }
       });
@@ -67,6 +64,7 @@ class _PathViewState extends State<PathView> {
     if (ancestors == null || ancestors.isEmpty) {
       return const SizedBox();
     }
+    final current = reverse ? ancestors.firstOrNull : ancestors.lastOrNull;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -75,7 +73,7 @@ class _PathViewState extends State<PathView> {
             resourceId: r.id,
             buildItem: (context, dropTargetActive) => Card(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: const BorderRadius.all(Radius.circular(4.0)),
                 side: dropTargetActive ? BorderSide(width: 2, color: Theme.of(context).colorScheme.primary) : BorderSide.none,
               ),
               margin: EdgeInsets.symmetric(horizontal: 6),

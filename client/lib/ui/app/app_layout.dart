@@ -8,7 +8,6 @@ import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/libphylum/explorer/explorer_controller.dart';
-import 'package:phylum/ui/explorer/path_view.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:phylum/libphylum/explorer/selection_mode.dart';
@@ -141,7 +140,6 @@ class ExpandedAppLayout extends StatelessWidget {
         title: Row(
           children: [
             SizedBox(width: sidebarWidth, child: const Text('Phylum')),
-            Expanded(child: PathView.create()),
           ],
         ),
       ),

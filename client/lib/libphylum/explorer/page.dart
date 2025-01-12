@@ -15,7 +15,7 @@ sealed class ExplorerPage {
 
   Stream<List<Resource>> watchChildren(PhylumAccount account);
 
-  Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account);
+  Stream<List<ParentsResult>> watchParents(PhylumAccount account);
 }
 
 class ExplorerPageFolder extends ExplorerPage {
@@ -33,7 +33,7 @@ class ExplorerPageFolder extends ExplorerPage {
   Stream<List<Resource>> watchChildren(PhylumAccount account) => account.db.watchChildren(folderId);
 
   @override
-  Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account) {
+  Stream<List<ParentsResult>> watchParents(PhylumAccount account) {
     return account.db.watchParents(folderId).map((p) {
       int index = p.indexWhere((r) => r.id == account.userHome);
       if (index >= 0) {
@@ -45,7 +45,7 @@ class ExplorerPageFolder extends ExplorerPage {
           index = 0;
         }
       }
-      return ListSlice(p, 0, index + 1).reversed;
+      return ListSlice(p, 0, index + 1);
     });
   }
 
@@ -80,7 +80,7 @@ class ExplorerPageRecents extends ExplorerPage {
   }
 
   @override
-  Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account) {
+  Stream<List<ParentsResult>> watchParents(PhylumAccount account) {
     return Stream.fromIterable([
       [],
     ]);
@@ -111,7 +111,7 @@ class ExplorerPageShared extends ExplorerPage {
   }
 
   @override
-  Stream<Iterable<ParentsResult>> watchParents(PhylumAccount account) {
+  Stream<List<ParentsResult>> watchParents(PhylumAccount account) {
     return Stream.fromIterable([
       [],
     ]);
