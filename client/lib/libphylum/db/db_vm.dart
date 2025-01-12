@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
+import 'package:path/path.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 QueryExecutor openDatabase({
@@ -24,5 +24,5 @@ Future<void> deleteDatabase({
 }
 
 File _dbFile(Directory? storageDir, String id) {
-  return File(p.join(storageDir!.path, '$id-phylum.db'));
+  return File(join(storageDir!.path, '$id-phylum.db'));
 }

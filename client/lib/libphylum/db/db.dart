@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 
-import 'unsupported.dart' if (dart.library.ffi) 'native.dart' if (dart.library.html) 'web.dart';
+import 'db_stub.dart' if (dart.library.ffi) 'db_vm.dart' if (dart.library.html) 'db_wasm.dart';
 
 part 'db.g.dart';
 
