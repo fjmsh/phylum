@@ -32,31 +32,25 @@ class _FolderListViewState extends State<FolderListView> {
       child: Focus(
         autofocus: true,
         descendantsAreFocusable: false,
-        child: ListTileTheme(
-          data: ListTileThemeData(
-            mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.basic),
-            selectedTileColor: Theme.of(context).colorScheme.primaryContainer,
-          ),
-          child: ListView.builder(
-              itemCount: resources.length,
-              itemBuilder: (context, index) {
-                final resource = resources[index];
-                return (resource.dir)
-                    ? ResourceDragTarget(
-                        resourceId: resource.id,
-                        buildItem: (context, dropTargetActive) => ResourceItemGestureHandler(
-                          index: index,
-                          resource: resource,
-                          dropTargetActive: dropTargetActive,
-                        ),
-                      )
-                    : ResourceItemGestureHandler(
+        child: ListView.builder(
+            itemCount: resources.length,
+            itemBuilder: (context, index) {
+              final resource = resources[index];
+              return (resource.dir)
+                  ? ResourceDragTarget(
+                      resourceId: resource.id,
+                      buildItem: (context, dropTargetActive) => ResourceItemGestureHandler(
                         index: index,
                         resource: resource,
-                        dropTargetActive: false,
-                      );
-              }),
-        ),
+                        dropTargetActive: dropTargetActive,
+                      ),
+                    )
+                  : ResourceItemGestureHandler(
+                      index: index,
+                      resource: resource,
+                      dropTargetActive: false,
+                    );
+            }),
       ),
     );
   }

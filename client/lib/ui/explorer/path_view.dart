@@ -10,6 +10,7 @@ import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
 import 'package:provider/provider.dart';
 
 const reverse = false;
+const small = true;
 
 class PathView extends StatefulWidget {
   const PathView._() : super();
@@ -18,7 +19,9 @@ class PathView extends StatefulWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: small
+            ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+            : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: PathView._(),
       ),
     );
@@ -74,16 +77,20 @@ class _PathViewState extends State<PathView> {
             buildItem: (context, dropTargetActive) => Card(
               shape: RoundedRectangleBorder(
                 borderRadius: const BorderRadius.all(Radius.circular(4.0)),
-                side: dropTargetActive ? BorderSide(width: 2, color: Theme.of(context).colorScheme.primary) : BorderSide.none,
+                side: dropTargetActive
+                    ? BorderSide(width: 2, color: Theme.of(context).colorScheme.primary)
+                    : BorderSide.none,
               ),
               margin: EdgeInsets.symmetric(horizontal: 6),
               child: InkWell(
                 onTap: r == current ? null : () => Actions.maybeInvoke(context, NavToFolderIntent(folderId: r.id)),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: small
+                      ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+                      : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Text(
                     r.name,
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: small ? 13 : 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
