@@ -62,8 +62,6 @@ class PhylumAccount extends Account<PhylumAccount> {
     // Set Authorization header
     _accessToken = _initialAccessToken ?? accessToken;
 
-    // Ensure database open
-    await db.doWhenOpened((executor) {});
     await serverResourceTracker.initialize();
     await userRepository.initialize();
     await myListsRepository.initialize();
@@ -81,8 +79,18 @@ class PhylumAccount extends Account<PhylumAccount> {
   }
 
   @override
-  Future<void> transaction(Future<void> Function() fn, {bool retainServerData = false, bool clearUntouched = true}) {
-    return db.transaction(fn, interceptor: retainServerData ? serverResourceTracker.newInterceptor(clearUntouched) : null);
+  Future<void> transaction(
+    Future<void> Function() fn, {
+    bool retainServerData = false,
+    bool clearUntouched = true,
+  }) {
+    if (retainServerData) {
+      return db.runWithInterceptor(
+        () => db.transaction(fn),
+        interceptor: serverResourceTracker.newInterceptor(clearUntouched),
+      );
+    }
+    return db.transaction(fn);
   }
 
   @override
@@ -91,7 +99,10 @@ class PhylumAccount extends Account<PhylumAccount> {
     await db.dropDatabase();
   }
 
-  static Future<PhylumAccount> createFromLoginResponse(Uri serverUri, Map<String, dynamic> response) async {
+  static Future<PhylumAccount> createFromLoginResponse(
+    Uri serverUri,
+    Map<String, dynamic> response,
+  ) async {
     final account = PhylumAccount.create(serverUri: serverUri, accessToken: response['access_token']);
     await account.initialized;
 
