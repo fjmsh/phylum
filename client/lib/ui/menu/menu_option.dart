@@ -107,7 +107,8 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       break;
     case MenuOption.delete:
       final name = resources.length == 1 ? resources.first.name : '${resources.length} items';
-      final confirm = await showAlertDialog(context, title: 'Delete $name?', positiveText: 'YES', negativeText: 'NO') ?? false;
+      final confirm =
+          await showAlertDialog(context, title: 'Delete $name?', positiveText: 'YES', negativeText: 'NO') ?? false;
       if (confirm) {
         for (final r in resources) {
           account.addAction(ResourceDeleteAction(r: r));
@@ -170,7 +171,8 @@ bool all(PhylumAccount accout, Iterable<Resource> resources) => true;
 
 bool isFilesOnly(PhylumAccount account, Iterable<Resource> resources) => resources.every((r) => !r.dir);
 
-Future<bool> notAllBookmarked(PhylumAccount account, Iterable<Resource> resources) => allBookmarked(account, resources).then((b) => !b);
+Future<bool> notAllBookmarked(PhylumAccount account, Iterable<Resource> resources) =>
+    allBookmarked(account, resources).then((b) => !b);
 
 Future<bool> allBookmarked(PhylumAccount account, Iterable<Resource> resources) =>
     account.myListsRepository.countBookmarks(resources.map((r) => r.id)).getSingle().then((c) => c == resources.length);

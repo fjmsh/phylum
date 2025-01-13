@@ -40,20 +40,20 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
     state = DownloadManagerState([...state.tasks, task]);
     try {
       task.status = const DownloadStatusStarting();
-      final response = await account.apiClient.dispatchRequestRaw(ResourceContentsRequest(r.id));
+      final response = await account.apiClient.dispatchRequestRaw(ResourceContentsRequest(task.resourceId));
       if (response.statusCode < 200 || response.statusCode > 300) {
         final error = PhylumApiErrorResponse.fromResponseString(await response.bodyString());
         task.status = DownloadStatusError(error.message);
         return;
       }
-      final output = _createDownloadFile(PhylumDirectories.instance.downloads!, r.name);
+      final output = _createDownloadFile(PhylumDirectories.instance.downloads!, task.resourceName);
       if (output == null) {
         task.status = const DownloadStatusError('Unable to open output file');
         return;
       }
       final sink = output.openWrite();
 
-      final length = response.contentLength ?? r.contentLength;
+      final length = response.contentLength ?? task.expectedSize;
       int received = 0;
       final stream = response.stream.map((s) {
         received += s.length;

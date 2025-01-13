@@ -28,6 +28,7 @@ dependencies:
   open_file:
   path:
   path_provider:
+  printing:
   provider:
   sqlite3: 
   state_notifier:

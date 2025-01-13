@@ -23,27 +23,30 @@ class ExplorerActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Actions(
       actions: {
-        NextFocusIntent: CallbackAction<NextFocusIntent>(onInvoke: (i) => null),
-        PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
-        PasteFromClipboardIntent: CallbackAction<PasteFromClipboardIntent>(onInvoke: (PasteFromClipboardIntent i) => handlePasteAction(i, context)),
-        SelectAllIntent: CallbackAction<SelectAllIntent>(onInvoke: (i) {
-          context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.all, true);
-          return null;
-        }),
-        DismissIntent: CallbackAction<DismissIntent>(onInvoke: (i) {
-          context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.none, true);
-          return null;
-        }),
-        ToggleSelectionIntent: CallbackAction<ToggleSelectionIntent>(onInvoke: (i) {
-          context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.toggle, true);
-          return null;
-        }),
+        NextFocusIntent: CallbackAction<NextFocusIntent>(
+          onInvoke: (i) => null,
+        ),
+        PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(
+          onInvoke: (i) => null,
+        ),
+        PasteFromClipboardIntent: CallbackAction<PasteFromClipboardIntent>(
+          onInvoke: (PasteFromClipboardIntent i) => handlePasteAction(i, context),
+        ),
+        SelectAllIntent: CallbackAction<SelectAllIntent>(
+          onInvoke: (i) => context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.all, true),
+        ),
+        DismissIntent: CallbackAction<DismissIntent>(
+          onInvoke: (i) => context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.none, true),
+        ),
+        ToggleSelectionIntent: CallbackAction<ToggleSelectionIntent>(
+          onInvoke: (i) => context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.toggle, true),
+        ),
         ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) {
           final state = context.read<ExplorerState>();
           final r = state.selectedSingle ?? state.focussed;
           if (r == null) return;
           _openResource(context, r);
-          return null;
+          return;
         }),
         DeleteIntent: CallbackAction<DeleteIntent>(onInvoke: (i) {
           final selected = context.read<ExplorerState>().selected;
@@ -82,7 +85,8 @@ class ExplorerActions extends StatelessWidget {
             final uriData = Formats.uri(NamedUri(uri.build(), name: r.name));
             return DataWriterItem(suggestedName: r.name)..add(uriData);
           });
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${items.length} items ${i.cut ? 'cut' : 'copied'} to clipboard')));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('${items.length} items ${i.cut ? 'cut' : 'copied'} to clipboard')));
           await SystemClipboard.instance?.write(items);
           return null;
         }),
@@ -95,14 +99,20 @@ class ExplorerActions extends StatelessWidget {
     if (r.dir) {
       Actions.maybeInvoke(context, NavToFolderIntent(folderId: r.id));
     } else {
-      ResourcePreview.showPreview(context, r.id);
+      ResourcePreview.showPreview(context, r);
     }
   }
 
   void _deleteResources(BuildContext context, Iterable<Resource> resources) async {
     final account = context.read<PhylumAccount>();
-    final confirm =
-        await showAlertDialog(context, title: 'Delete selected items?', barrierDismissible: true, positiveText: 'YES', negativeText: 'NO') ?? false;
+    final confirm = await showAlertDialog(
+          context,
+          title: 'Delete selected items?',
+          barrierDismissible: true,
+          positiveText: 'YES',
+          negativeText: 'NO',
+        ) ??
+        false;
 
     if (!confirm) return;
     for (final r in resources) {

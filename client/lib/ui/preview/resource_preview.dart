@@ -1,20 +1,29 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
+import 'package:offtheline/offtheline.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/libphylum/requests/resource_contents_request.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
-const maxPreviewSize = 5 * 1024 * 1024;
+const maxPreviewSize = 1 * 1024 * 1024;
 
 class ResourcePreview extends StatefulWidget {
-  final String resourceId;
+  final Resource resource;
 
-  ResourcePreview({required this.resourceId}) : super(key: ValueKey(resourceId));
+  ResourcePreview({required this.resource}) : super(key: ValueKey(resource.id));
 
-  static Future<void> showPreview(BuildContext context, String resourceId) async {
-    context.read<PhylumAccount>().myListsRepository.markResourceAccessed(resourceId);
-    return showDialog(context: context, builder: (context) => ResourcePreview(resourceId: resourceId));
+  static Future<void> showPreview(BuildContext context, Resource r) async {
+    context.read<PhylumAccount>().myListsRepository.markResourceAccessed(r.id);
+    return showDialog(context: context, builder: (context) => ResourcePreview(resource: r));
   }
 
   @override
@@ -22,74 +31,178 @@ class ResourcePreview extends StatefulWidget {
 }
 
 class _ResourcePreviewState extends State<ResourcePreview> {
+  String? _error;
+  Widget Function(Uint8List)? buildPreview;
   bool loading = true;
-  Resource? resource;
 
   @override
   void initState() {
     super.initState();
-    context.read<PhylumAccount>().db.getResource(widget.resourceId).then((r) => setState(() {
-          loading = false;
-          resource = r;
-        }));
+    if (widget.resource.dir) {
+      _error = 'Cannot preview directory';
+    } else if (widget.resource.contentLength > maxPreviewSize) {
+      _error = 'Resource too large to preview';
+    } else {
+      if (widget.resource.contentType.startsWith('image/')) {
+        buildPreview = buildImagePreview;
+      }
+      if (widget.resource.contentType == 'application/pdf') {
+        buildPreview = buildPdfPreview;
+      }
+      if (buildPreview == null) {
+        _error = 'Unable to preview ${widget.resource.contentType}';
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final r = resource;
     return Theme(
       data: ThemeData.dark(),
       child: Scaffold(
         backgroundColor: Colors.black45,
         appBar: AppBar(
-          leading: CloseButton(
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          actions: [IconButton(onPressed: (r == null || r.dir) ? null : () => downloadResource(r), icon: const Icon(Icons.download))],
-          title: (r != null) ? Text(r.name) : null,
+          leading: const CloseButton(),
+          actions: [
+            IconButton(
+                onPressed: (widget.resource.dir) ? null : () => downloadResource(), icon: const Icon(Icons.download))
+          ],
+          title: Text(widget.resource.name),
           backgroundColor: Colors.transparent,
         ),
         body: Center(
-            child: loading
-                ? const CircularProgressIndicator()
-                : r == null
-                    ? const Text('Error loading details', style: TextStyle(fontSize: 18))
-                    : buildPreview(r)),
+            child: buildPreview == null
+                ? Text(_error ?? 'Unknown error', style: Theme.of(context).textTheme.bodyLarge)
+                : ResourcePreviewBuilder(
+                    resource: widget.resource,
+                    buildPreview: buildPreview!,
+                  )),
       ),
     );
   }
 
-  Widget buildPreview(Resource r) {
-    if (r.dir) {
-      return const Text(
-        'Cannot preview directory',
-        style: TextStyle(fontSize: 18),
-      );
-    }
-    if (r.contentLength > maxPreviewSize) {
-      return const Text(
-        'File too large to preview',
-        style: TextStyle(fontSize: 18),
-      );
-    }
-    return switch (r.contentType) {
-      'image/jpeg' || 'image/webp' || 'image/png' || 'image/gif' => buildImagePreview(r),
-      _ => const Text('Unable to display preview', style: TextStyle(fontSize: 18)),
-    };
+  Widget buildImagePreview(Uint8List data) => Image.memory(data);
+
+  Widget buildPdfPreview(Uint8List data) => PdfPreview(build: (_) => data);
+
+  Future<void> downloadResource() {
+    return context.read<DownloadManager>().downloadResource(widget.resource);
+  }
+}
+
+class ResourcePreviewBuilder extends StatefulWidget {
+  final Resource resource;
+  final Widget Function(Uint8List data) buildPreview;
+
+  const ResourcePreviewBuilder({super.key, required this.resource, required this.buildPreview});
+
+  @override
+  State<ResourcePreviewBuilder> createState() => _ResourcePreviewBuilderState();
+}
+
+class _ResourcePreviewBuilderState extends State<ResourcePreviewBuilder> {
+  bool _downloading = false;
+  String? _error;
+  double? _progress;
+  Uint8List? _data;
+
+  @override
+  void initState() {
+    super.initState();
+    _runDownloadTask();
   }
 
-  Widget buildImagePreview(Resource r) {
-    final api = context.read<PhylumAccount>().apiClient;
-    return SizedBox(
-      width: 800,
-      child: Image.network(
-        context.read<PhylumAccount>().apiClient.createUri('/api/v1/fs/cat/${r.id}').toString(),
-        headers: api.requestHeaders,
-      ),
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_data != null) {
+      return SizedBox(
+        width: 800,
+        child: widget.buildPreview(_data!),
+      );
+    }
+    if (!_downloading) {
+      return Column(
+        children: [
+          if (_error != null) Text(_error!),
+          ElevatedButton(onPressed: _runDownloadTask, child: const Text('Retry'))
+        ],
+      );
+    }
+    return CircularProgressIndicator.adaptive(
+      value: _progress,
     );
   }
 
-  void downloadResource(Resource r) async {
-    context.read<DownloadManager>().downloadResource(r);
+  Future<void> _runDownloadTask() async {
+    try {
+      setState(() {
+        _downloading = true;
+        _error = null;
+        _progress = null;
+      });
+      final account = context.read<PhylumAccount>();
+      final response = await account.apiClient.dispatchRequestRaw(ResourceContentsRequest(widget.resource.id));
+      if (response.statusCode < 200 || response.statusCode > 300) {
+        final error = PhylumApiErrorResponse.fromResponseString(await response.bodyString()).message;
+        _error = error;
+        _downloading = false;
+        if (mounted) {
+          setState(() {});
+        }
+        return;
+      }
+
+      final expected = (response.contentLength ?? widget.resource.contentLength).toDouble();
+      int received = 0;
+      _progress = 0;
+      if (mounted) {
+        setState(() {});
+      }
+      final stream = _toByteStream(response.stream.map((s) {
+        received += s.length;
+        _progress = received / expected;
+        if (mounted) {
+          setState(() {});
+        }
+        return s;
+      }));
+      final data = await _toBytes(stream);
+      _data = data;
+      _downloading = false;
+      if (mounted) {
+        setState(() {});
+      }
+    } on SocketException {
+      _error = 'Unable to reach server';
+      _downloading = false;
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      _error = e.toString();
+      _downloading = false;
+      if (mounted) {
+        setState(() {});
+      }
+    }
+  }
+
+  static ByteStream _toByteStream(Stream<List<int>> stream) {
+    if (stream is ByteStream) return stream;
+    return ByteStream(stream);
+  }
+
+  static Future<Uint8List> _toBytes(ByteStream stream) {
+    var completer = Completer<Uint8List>();
+    var sink = ByteConversionSink.withCallback(
+      (bytes) => completer.complete(Uint8List.fromList(bytes)),
+    );
+    stream.listen(sink.add, onError: completer.completeError, onDone: sink.close, cancelOnError: true);
+    return completer.future;
   }
 }
