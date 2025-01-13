@@ -70,20 +70,26 @@ class _ResourcePreviewState extends State<ResourcePreview> {
           title: Text(widget.resource.name),
           backgroundColor: Colors.transparent,
         ),
-        body: Center(
-            child: buildPreview == null
-                ? Text(_error ?? 'Unknown error', style: Theme.of(context).textTheme.bodyLarge)
-                : ResourcePreviewBuilder(
-                    resource: widget.resource,
-                    buildPreview: buildPreview!,
-                  )),
+        body: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: Center(
+              child: buildPreview == null
+                  ? Text(_error ?? 'Unknown error', style: Theme.of(context).textTheme.bodyLarge)
+                  : ResourcePreviewBuilder(
+                      resource: widget.resource,
+                      buildPreview: buildPreview!,
+                    )),
+        ),
       ),
     );
   }
 
   Widget buildImagePreview(Uint8List data) => Image.memory(data);
 
-  Widget buildPdfPreview(Uint8List data) => PdfPreview(build: (_) => data);
+  Widget buildPdfPreview(Uint8List data) => PdfPreview(
+        build: (_) => data,
+        previewPageMargin: EdgeInsets.zero,
+      );
 
   Future<void> downloadResource() {
     return context.read<DownloadManager>().downloadResource(widget.resource);
