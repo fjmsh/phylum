@@ -28,6 +28,14 @@ class _FolderListViewState extends State<FolderListView> {
           context.read<ExplorerController>().updateSelection((i) => i + 1, i.mode, true);
           return null;
         }),
+        FocusFirstIntent: CallbackAction<FocusFirstIntent>(onInvoke: (i) {
+          context.read<ExplorerController>().updateSelection((i) => 0, i.mode, true);
+          return null;
+        }),
+        FocusLastIntent: CallbackAction<FocusLastIntent>(onInvoke: (i) {
+          context.read<ExplorerController>().updateSelection((i) => 4294967296, i.mode, true);
+          return null;
+        }),
       },
       child: Focus(
         autofocus: true,
