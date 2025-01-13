@@ -46,6 +46,9 @@ class _ResourcePreviewState extends State<ResourcePreview> {
       if (widget.resource.contentType.startsWith('image/')) {
         buildPreview = buildImagePreview;
       }
+      if (widget.resource.contentType.startsWith('text/')) {
+        buildPreview = buildTextPreview;
+      }
       if (widget.resource.contentType == 'application/pdf') {
         buildPreview = buildPdfPreview;
       }
@@ -57,8 +60,8 @@ class _ResourcePreviewState extends State<ResourcePreview> {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData.dark(),
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pop(),
       child: Scaffold(
         backgroundColor: Colors.black45,
         appBar: AppBar(
@@ -70,21 +73,30 @@ class _ResourcePreviewState extends State<ResourcePreview> {
           title: Text(widget.resource.name),
           backgroundColor: Colors.transparent,
         ),
-        body: GestureDetector(
-          onTap: () => Navigator.of(context).pop(),
-          child: Center(
-              child: buildPreview == null
-                  ? Text(_error ?? 'Unknown error', style: Theme.of(context).textTheme.bodyLarge)
-                  : ResourcePreviewBuilder(
-                      resource: widget.resource,
-                      buildPreview: buildPreview!,
-                    )),
-        ),
+        body: Center(
+            child: buildPreview == null
+                ? Text(_error ?? 'Unknown error', style: Theme.of(context).textTheme.bodyLarge)
+                : ResourcePreviewBuilder(
+                    resource: widget.resource,
+                    buildPreview: buildPreview!,
+                  )),
       ),
     );
   }
 
   Widget buildImagePreview(Uint8List data) => Image.memory(data);
+
+  Widget buildTextPreview(Uint8List data) => Material(
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: TextFormField(
+            decoration: const InputDecoration(border: InputBorder.none),
+            initialValue: String.fromCharCodes(data),
+            readOnly: true,
+            maxLines: 30,
+          ),
+        ),
+      );
 
   Widget buildPdfPreview(Uint8List data) => PdfPreview(
         build: (_) => data,

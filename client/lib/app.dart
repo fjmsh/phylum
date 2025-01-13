@@ -78,7 +78,6 @@ class _PhylumAppState extends State<PhylumApp> {
       colorScheme: ColorScheme.fromSeed(
         seedColor: Color(0xff769e57),
         dynamicSchemeVariant: DynamicSchemeVariant.neutral,
-        brightness: Brightness.dark,
       ),
     );
     final darkTheme = ThemeData(
@@ -92,7 +91,7 @@ class _PhylumAppState extends State<PhylumApp> {
         debugShowCheckedModeBanner: false,
         theme: theme,
         darkTheme: darkTheme,
-        themeMode: ThemeMode.system,
+        // themeMode: ThemeMode.light,
         routerConfig: _appRouter,
         shortcuts: getAppShortcuts(),
       );
@@ -103,7 +102,6 @@ class _PhylumAppState extends State<PhylumApp> {
       debugShowCheckedModeBanner: false,
       theme: theme,
       darkTheme: darkTheme,
-      themeMode: ThemeMode.system,
       routerConfig: createLogoutRouter(),
     );
   }
