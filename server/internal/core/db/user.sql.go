@@ -51,6 +51,24 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const grantUserPermissions = `-- name: GrantUserPermissions :exec
+UPDATE users
+SET
+    permissions = permissions | $1,
+    modified = NOW()
+WHERE username = $2
+`
+
+type GrantUserPermissionsParams struct {
+	Permissions int32
+	Username    string
+}
+
+func (q *Queries) GrantUserPermissions(ctx context.Context, arg GrantUserPermissionsParams) error {
+	_, err := q.db.Exec(ctx, grantUserPermissions, arg.Permissions, arg.Username)
+	return err
+}
+
 const listUsers = `-- name: ListUsers :many
 SELECT username, display_name, root, home FROM users WHERE modified > $1::TIMESTAMP
 `
@@ -85,6 +103,25 @@ func (q *Queries) ListUsers(ctx context.Context, since pgtype.Timestamp) ([]List
 		return nil, err
 	}
 	return items, nil
+}
+
+const revokeUserPermissions = `-- name: RevokeUserPermissions :exec
+UPDATE users
+SET
+    permissions = permissions & $1,
+    modified = NOW()
+WHERE username = $2
+`
+
+type RevokeUserPermissionsParams struct {
+	Permissions int32
+	Username    string
+}
+
+// Cannot manage to put a named parameter for $1. Something like 'mask' would be less confusion
+func (q *Queries) RevokeUserPermissions(ctx context.Context, arg RevokeUserPermissionsParams) error {
+	_, err := q.db.Exec(ctx, revokeUserPermissions, arg.Permissions, arg.Username)
+	return err
 }
 
 const sharedResources = `-- name: SharedResources :many

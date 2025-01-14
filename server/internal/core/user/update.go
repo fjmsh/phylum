@@ -16,3 +16,11 @@ func (m manager) UpdateUserHome(user User, home uuid.UUID) error {
 func (m manager) UpdateUserDisplayName(user User, displayName string) error {
 	return m.db.UpdateUserDisplayName(m.ctx, db.UpdateUserDisplayNameParams{Username: user.Username, DisplayName: displayName})
 }
+
+func (m manager) GrantUserPermissions(user User, permissions int32) error {
+	return m.db.GrantUserPermissions(m.ctx, db.GrantUserPermissionsParams{Username: user.Username, Permissions: permissions})
+}
+
+func (m manager) RevokeUserPermissions(user User, permissions int32) error {
+	return m.db.RevokeUserPermissions(m.ctx, db.RevokeUserPermissionsParams{Username: user.Username, Permissions: ^permissions})
+}

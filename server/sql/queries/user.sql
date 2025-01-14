@@ -39,6 +39,21 @@ SET
     modified = NOW()
 WHERE username = $2;
 
+-- name: GrantUserPermissions :exec
+UPDATE users
+SET
+    permissions = permissions | $1,
+    modified = NOW()
+WHERE username = $2;
+
+-- Cannot manage to put a named parameter for $1. Something like 'mask' would be less confusion
+-- name: RevokeUserPermissions :exec
+UPDATE users
+SET
+    permissions = permissions & $1,
+    modified = NOW()
+WHERE username = $2;
+
 -- name: SharedResources :many
 SELECT r.*
 FROM permissions p
