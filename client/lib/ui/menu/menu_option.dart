@@ -116,7 +116,9 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       }
       break;
     case MenuOption.details:
-      showReponsiveDialog(context, 'Details', (context) => ResourceInfoView(resource: resources.first));
+      final resource = resources.firstOrNull;
+      if (resource == null) return;
+      showReponsiveDialog(context, resource.name, (context) => ResourceInfoView(resource: resource));
       break;
     case MenuOption.permissions:
       showReponsiveDialog(context, 'Permissions', (context) => ResourcePermissionsView(resourceId: resources.first.id));
