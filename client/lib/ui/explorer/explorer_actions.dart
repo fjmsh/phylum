@@ -45,7 +45,15 @@ class ExplorerActions extends StatelessWidget {
           final state = context.read<ExplorerState>();
           final r = state.selectedSingle ?? state.focussed;
           if (r == null) return;
-          _openResource(context, r);
+          if (r.dir) {
+            Actions.maybeInvoke(context, NavToFolderIntent(folderId: r.id));
+          } else {
+            final resources = state.resources.where((r) => !r.dir).toList(growable: false);
+            final index = resources.indexOf(r);
+            if (index >= 0) {
+              ResourcePreview.showPreview(context, resources, index);
+            }
+          }
           return;
         }),
         DeleteIntent: CallbackAction<DeleteIntent>(onInvoke: (i) {
@@ -93,14 +101,6 @@ class ExplorerActions extends StatelessWidget {
       },
       child: child,
     );
-  }
-
-  void _openResource(BuildContext context, Resource r) {
-    if (r.dir) {
-      Actions.maybeInvoke(context, NavToFolderIntent(folderId: r.id));
-    } else {
-      ResourcePreview.showPreview(context, r);
-    }
   }
 
   void _deleteResources(BuildContext context, Iterable<Resource> resources) async {

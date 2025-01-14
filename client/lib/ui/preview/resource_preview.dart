@@ -9,7 +9,6 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/explorer/explorer_controller.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/requests/resource_contents_request.dart';
@@ -19,13 +18,14 @@ import 'package:provider/provider.dart';
 const maxPreviewSize = 1 * 1024 * 1024;
 
 class ResourcePreview extends StatefulWidget {
-  final Resource resource;
+  final List<Resource> resources;
+  final int index;
 
-  ResourcePreview({required this.resource}) : super(key: ValueKey(resource.id));
+  const ResourcePreview({super.key, required this.resources, required this.index});
 
-  static Future<void> showPreview(BuildContext context, Resource r) async {
-    context.read<PhylumAccount>().myListsRepository.markResourceAccessed(r.id);
-    return showDialog(context: context, builder: (context) => ResourcePreview(resource: r));
+  static Future<void> showPreview(BuildContext context, List<Resource> resources, int index) async {
+    context.read<PhylumAccount>().myListsRepository.markResourceAccessed(resources[index].id);
+    return showDialog(context: context, builder: (context) => ResourcePreview(resources: resources, index: index));
   }
 
   @override
@@ -33,6 +33,7 @@ class ResourcePreview extends StatefulWidget {
 }
 
 class _ResourcePreviewState extends State<ResourcePreview> {
+  late int index;
   late Resource _resource;
   final _focusNode = FocusNode();
   String? _error;
@@ -41,7 +42,8 @@ class _ResourcePreviewState extends State<ResourcePreview> {
   @override
   void initState() {
     super.initState();
-    _updateResource(widget.resource);
+    index = widget.index;
+    _updateResource();
   }
 
   @override
@@ -50,24 +52,24 @@ class _ResourcePreviewState extends State<ResourcePreview> {
     super.dispose();
   }
 
-  void _updateResource(Resource resource) {
-    this._resource = resource;
-    if (resource.dir) {
+  void _updateResource() {
+    _resource = widget.resources[index];
+    if (_resource.dir) {
       _error = 'Cannot preview directory';
-    } else if (resource.contentLength > maxPreviewSize) {
+    } else if (_resource.contentLength > maxPreviewSize) {
       _error = 'Resource too large to preview';
     } else {
-      if (resource.contentType.startsWith('image/')) {
+      if (_resource.contentType.startsWith('image/')) {
         _buildPreview = buildImagePreview;
       }
-      if (resource.contentType.startsWith('text/')) {
+      if (_resource.contentType.startsWith('text/')) {
         _buildPreview = buildTextPreview;
       }
-      if (resource.contentType == 'application/pdf') {
+      if (_resource.contentType == 'application/pdf') {
         _buildPreview = buildPdfPreview;
       }
       if (_buildPreview == null) {
-        _error = 'Unable to preview ${resource.contentType}';
+        _error = 'Unable to preview ${_resource.contentType}';
       }
     }
   }
@@ -77,40 +79,26 @@ class _ResourcePreviewState extends State<ResourcePreview> {
     final theme = Theme.of(context);
     return Actions(
       actions: {
-        DismissIntent: CallbackAction<DismissIntent>(onInvoke: (i) {
-          Navigator.of(context).pop();
-        }),
+        DismissIntent: CallbackAction<DismissIntent>(
+          onInvoke: (i) => Navigator.of(context).pop(),
+        ),
         FocusLeftIntent: CallbackAction<FocusLeftIntent>(onInvoke: (FocusLeftIntent i) {
-          final state = context.read<ExplorerState>();
-          final index = state.resources.indexOf(_resource);
-          if (index == -1) {
-            return;
-          }
-          for (int i = index; i >= 0; i--) {
-            final r = state.resources[i];
-            if (!r.dir) {
-              return setState(() {
-                _updateResource(r);
-              });
+          return setState(() {
+            if (index <= 0) {
+              index = widget.resources.length;
             }
-          }
-          return;
+            index--;
+            _updateResource();
+          });
         }),
         FocusRightIntent: CallbackAction<FocusRightIntent>(onInvoke: (FocusRightIntent i) {
-          final state = context.read<ExplorerState>();
-          final index = state.resources.indexOf(_resource);
-          if (index == -1) {
-            return;
-          }
-          for (int i = index; i < state.resources.length; i++) {
-            final r = state.resources[i];
-            if (!r.dir) {
-              return setState(() {
-                _updateResource(r);
-              });
+          return setState(() {
+            index++;
+            if (index >= widget.resources.length) {
+              index = 0;
             }
-          }
-          return;
+            _updateResource();
+          });
         }),
       },
       child: GestureDetector(
