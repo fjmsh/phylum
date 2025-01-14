@@ -11,6 +11,8 @@ import 'package:phylum/libphylum/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:phylum/libphylum/explorer/selection_mode.dart';
+import 'package:phylum/ui/menu/bottom_sheet.dart';
+import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:provider/provider.dart';
 
 class AppLayout extends StatefulWidget {
@@ -84,13 +86,22 @@ class CollapsedAppLayout extends StatelessWidget {
       appBar: selected == 0
           ? AppBar(title: const Text('Phylum'))
           : AppBar(
-              leading: CloseButton(
+              leading: IconButton(
+                tooltip: 'Clear Selection',
+                icon: Icon(Icons.close),
                 onPressed: () {
                   context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.none, false);
                 },
               ),
-              backgroundColor: Colors.grey,
               title: Text('$selected selected'),
+              actions: [
+                IconButton(
+                    onPressed: () {
+                      final selected = context.read<ExplorerState>().selected;
+                      showMenuOptionsBottomSheet(context, resourceOptions, selected);
+                    },
+                    icon: Icon(Icons.adaptive.more))
+              ],
             ),
       drawer: selected == 0 ? const Drawer(child: NavList(showFab: false)) : null,
       floatingActionButton: selected == 0
