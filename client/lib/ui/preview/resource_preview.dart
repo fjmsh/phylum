@@ -12,6 +12,8 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/requests/resource_contents_request.dart';
+import 'package:phylum/ui/common/responsive_dialog.dart';
+import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
@@ -113,7 +115,17 @@ class _ResourcePreviewState extends State<ResourcePreview> {
               leading: const CloseButton(),
               actions: [
                 IconButton(
-                    onPressed: (_resource.dir) ? null : () => downloadResource(), icon: const Icon(Icons.download))
+                  icon: const Icon(Icons.info_outline),
+                  onPressed: () => showReponsiveDialog(
+                    context,
+                    _resource.name,
+                    (context) => ResourceInfoView(resource: _resource),
+                  ),
+                ),
+                IconButton(
+                  onPressed: (_resource.dir) ? null : () => downloadResource(),
+                  icon: const Icon(Icons.download),
+                )
               ],
               title: Text(_resource.name),
               backgroundColor: Colors.transparent,
