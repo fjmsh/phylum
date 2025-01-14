@@ -15,6 +15,18 @@ class FocusDownIntent extends Intent {
   const FocusDownIntent(this.mode);
 }
 
+class FocusRightIntent extends Intent {
+  final SelectionMode mode;
+
+  const FocusRightIntent(this.mode);
+}
+
+class FocusLeftIntent extends Intent {
+  final SelectionMode mode;
+
+  const FocusLeftIntent(this.mode);
+}
+
 class FocusFirstIntent extends Intent {
   final SelectionMode mode;
 
@@ -101,6 +113,12 @@ Map<ShortcutActivator, Intent> getAppShortcuts() {
     SingleActivator(LogicalKeyboardKey.arrowDown): FocusDownIntent(SelectionMode.single),
     SingleActivator(LogicalKeyboardKey.arrowDown, shift: true): FocusDownIntent(SelectionMode.range),
     SingleActivator(LogicalKeyboardKey.arrowDown, control: true): FocusDownIntent(SelectionMode.noChange),
+    SingleActivator(LogicalKeyboardKey.arrowLeft): FocusLeftIntent(SelectionMode.single),
+    SingleActivator(LogicalKeyboardKey.arrowLeft, shift: true): FocusLeftIntent(SelectionMode.range),
+    SingleActivator(LogicalKeyboardKey.arrowLeft, control: true): FocusLeftIntent(SelectionMode.noChange),
+    SingleActivator(LogicalKeyboardKey.arrowRight): FocusRightIntent(SelectionMode.single),
+    SingleActivator(LogicalKeyboardKey.arrowRight, shift: true): FocusRightIntent(SelectionMode.range),
+    SingleActivator(LogicalKeyboardKey.arrowRight, control: true): FocusRightIntent(SelectionMode.noChange),
     SingleActivator(LogicalKeyboardKey.home): FocusFirstIntent(SelectionMode.single),
     SingleActivator(LogicalKeyboardKey.home, shift: true): FocusFirstIntent(SelectionMode.range),
     SingleActivator(LogicalKeyboardKey.home, control: true): FocusFirstIntent(SelectionMode.noChange),

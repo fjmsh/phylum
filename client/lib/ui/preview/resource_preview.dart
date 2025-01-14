@@ -6,8 +6,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/explorer/explorer_controller.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/requests/resource_contents_request.dart';
@@ -31,29 +33,41 @@ class ResourcePreview extends StatefulWidget {
 }
 
 class _ResourcePreviewState extends State<ResourcePreview> {
+  late Resource _resource;
+  final _focusNode = FocusNode();
   String? _error;
-  Widget Function(Uint8List)? buildPreview;
-  bool loading = true;
+  Widget Function(Uint8List)? _buildPreview;
 
   @override
   void initState() {
     super.initState();
-    if (widget.resource.dir) {
+    _updateResource(widget.resource);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _updateResource(Resource resource) {
+    this._resource = resource;
+    if (resource.dir) {
       _error = 'Cannot preview directory';
-    } else if (widget.resource.contentLength > maxPreviewSize) {
+    } else if (resource.contentLength > maxPreviewSize) {
       _error = 'Resource too large to preview';
     } else {
-      if (widget.resource.contentType.startsWith('image/')) {
-        buildPreview = buildImagePreview;
+      if (resource.contentType.startsWith('image/')) {
+        _buildPreview = buildImagePreview;
       }
-      if (widget.resource.contentType.startsWith('text/')) {
-        buildPreview = buildTextPreview;
+      if (resource.contentType.startsWith('text/')) {
+        _buildPreview = buildTextPreview;
       }
-      if (widget.resource.contentType == 'application/pdf') {
-        buildPreview = buildPdfPreview;
+      if (resource.contentType == 'application/pdf') {
+        _buildPreview = buildPdfPreview;
       }
-      if (buildPreview == null) {
-        _error = 'Unable to preview ${widget.resource.contentType}';
+      if (_buildPreview == null) {
+        _error = 'Unable to preview ${resource.contentType}';
       }
     }
   }
@@ -61,27 +75,70 @@ class _ResourcePreviewState extends State<ResourcePreview> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: () => Navigator.of(context).pop(),
-      child: Scaffold(
-        backgroundColor: Colors.black45,
-        appBar: AppBar(
-          foregroundColor: theme.colorScheme.onInverseSurface,
-          leading: const CloseButton(),
-          actions: [
-            IconButton(
-                onPressed: (widget.resource.dir) ? null : () => downloadResource(), icon: const Icon(Icons.download))
-          ],
-          title: Text(widget.resource.name),
-          backgroundColor: Colors.transparent,
+    return Actions(
+      actions: {
+        DismissIntent: CallbackAction<DismissIntent>(onInvoke: (i) {
+          Navigator.of(context).pop();
+        }),
+        FocusLeftIntent: CallbackAction<FocusLeftIntent>(onInvoke: (FocusLeftIntent i) {
+          final state = context.read<ExplorerState>();
+          final index = state.resources.indexOf(_resource);
+          if (index == -1) {
+            return;
+          }
+          for (int i = index; i >= 0; i--) {
+            final r = state.resources[i];
+            if (!r.dir) {
+              return setState(() {
+                _updateResource(r);
+              });
+            }
+          }
+          return;
+        }),
+        FocusRightIntent: CallbackAction<FocusRightIntent>(onInvoke: (FocusRightIntent i) {
+          final state = context.read<ExplorerState>();
+          final index = state.resources.indexOf(_resource);
+          if (index == -1) {
+            return;
+          }
+          for (int i = index; i < state.resources.length; i++) {
+            final r = state.resources[i];
+            if (!r.dir) {
+              return setState(() {
+                _updateResource(r);
+              });
+            }
+          }
+          return;
+        }),
+      },
+      child: GestureDetector(
+        onTap: () => Navigator.of(context).pop(),
+        child: Focus(
+          focusNode: _focusNode,
+          autofocus: true,
+          child: Scaffold(
+            backgroundColor: Colors.black45,
+            appBar: AppBar(
+              foregroundColor: theme.colorScheme.onInverseSurface,
+              leading: const CloseButton(),
+              actions: [
+                IconButton(
+                    onPressed: (_resource.dir) ? null : () => downloadResource(), icon: const Icon(Icons.download))
+              ],
+              title: Text(_resource.name),
+              backgroundColor: Colors.transparent,
+            ),
+            body: Center(
+                child: _buildPreview == null
+                    ? Text(_error ?? 'Unknown error', style: Theme.of(context).textTheme.bodyLarge)
+                    : ResourcePreviewBuilder(
+                        resource: _resource,
+                        buildPreview: _buildPreview!,
+                      )),
+          ),
         ),
-        body: Center(
-            child: buildPreview == null
-                ? Text(_error ?? 'Unknown error', style: Theme.of(context).textTheme.bodyLarge)
-                : ResourcePreviewBuilder(
-                    resource: widget.resource,
-                    buildPreview: buildPreview!,
-                  )),
       ),
     );
   }
@@ -106,7 +163,7 @@ class _ResourcePreviewState extends State<ResourcePreview> {
       );
 
   Future<void> downloadResource() {
-    return context.read<DownloadManager>().downloadResource(widget.resource);
+    return context.read<DownloadManager>().downloadResource(_resource);
   }
 }
 
@@ -114,7 +171,7 @@ class ResourcePreviewBuilder extends StatefulWidget {
   final Resource resource;
   final Widget Function(Uint8List data) buildPreview;
 
-  const ResourcePreviewBuilder({super.key, required this.resource, required this.buildPreview});
+  ResourcePreviewBuilder({required this.resource, required this.buildPreview}) : super(key: ValueKey(resource.id));
 
   @override
   State<ResourcePreviewBuilder> createState() => _ResourcePreviewBuilderState();
