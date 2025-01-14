@@ -60,11 +60,13 @@ class _ResourcePreviewState extends State<ResourcePreview> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => Navigator.of(context).pop(),
       child: Scaffold(
         backgroundColor: Colors.black45,
         appBar: AppBar(
+          foregroundColor: theme.colorScheme.onInverseSurface,
           leading: const CloseButton(),
           actions: [
             IconButton(
