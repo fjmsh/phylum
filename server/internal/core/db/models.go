@@ -88,4 +88,5 @@ type User struct {
 	PasswordHash string
 	Root         uuid.UUID
 	Home         uuid.UUID
+	Permissions  int32
 }

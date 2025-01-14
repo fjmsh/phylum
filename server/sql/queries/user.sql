@@ -6,7 +6,7 @@ INSERT INTO users(
 ) RETURNING *;
 
 -- name: UserByUsername :one
-SELECT username, display_name, password_hash, root, home FROM users WHERE username = $1;
+SELECT username, display_name, password_hash, root, home, permissions FROM users WHERE username = $1;
 
 -- name: ListUsers :many
 SELECT username, display_name, root, home FROM users WHERE modified > @since::TIMESTAMP;

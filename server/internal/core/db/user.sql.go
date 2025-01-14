@@ -17,7 +17,7 @@ INSERT INTO users(
     username, display_name, password_hash, root, home
 ) VALUES (
     $1, $2, $3, $4, $5
-) RETURNING username, created, modified, deleted, display_name, password_hash, root, home
+) RETURNING username, created, modified, deleted, display_name, password_hash, root, home, permissions
 `
 
 type CreateUserParams struct {
@@ -46,6 +46,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.PasswordHash,
 		&i.Root,
 		&i.Home,
+		&i.Permissions,
 	)
 	return i, err
 }
@@ -207,7 +208,7 @@ func (q *Queries) UpdateUserRoot(ctx context.Context, arg UpdateUserRootParams) 
 }
 
 const userByUsername = `-- name: UserByUsername :one
-SELECT username, display_name, password_hash, root, home FROM users WHERE username = $1
+SELECT username, display_name, password_hash, root, home, permissions FROM users WHERE username = $1
 `
 
 type UserByUsernameRow struct {
@@ -216,6 +217,7 @@ type UserByUsernameRow struct {
 	PasswordHash string
 	Root         uuid.UUID
 	Home         uuid.UUID
+	Permissions  int32
 }
 
 func (q *Queries) UserByUsername(ctx context.Context, username string) (UserByUsernameRow, error) {
@@ -227,6 +229,7 @@ func (q *Queries) UserByUsername(ctx context.Context, username string) (UserByUs
 		&i.PasswordHash,
 		&i.Root,
 		&i.Home,
+		&i.Permissions,
 	)
 	return i, err
 }

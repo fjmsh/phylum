@@ -53,10 +53,14 @@ func (f filesystem) resourceFromResult(e []db.FullResource, err error) (Resource
 				ancestry = append(ancestry, info)
 			}
 
-			if p, err := readPermissionFromJson(e[i].Permissions, f.username); err != nil {
-				return Resource{}, err
+			if f.fullAccess {
+				permission = -1
 			} else {
-				permission = permission | p
+				if p, err := readPermissionFromJson(e[i].Permissions, f.username); err != nil {
+					return Resource{}, err
+				} else {
+					permission = permission | p
+				}
 			}
 		}
 	}

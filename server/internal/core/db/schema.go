@@ -21,9 +21,6 @@ func (d DbHandler) checkVersion(ctx context.Context, autoMigrate bool) error {
 		return err
 	}
 	latestSchemaVersion := migrator.GetLatestVersion()
-	if err != nil {
-		return err
-	}
 
 	// Nothing to do
 	if currentSchemaVersion == latestSchemaVersion {
@@ -60,9 +57,6 @@ func (d DbHandler) Migrate(ctx context.Context, version int) error {
 		return err
 	}
 	latestSchemaVersion := migrator.GetLatestVersion()
-	if err != nil {
-		return err
-	}
 	if version < 0 {
 		version = latestSchemaVersion
 	} else if version == 0 {

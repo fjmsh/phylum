@@ -9,11 +9,12 @@ import (
 )
 
 type filesystem struct {
-	ctx      context.Context
-	db       *db.DbHandler
-	cs       storage.Storage
-	rootID   uuid.UUID
-	username string
+	ctx        context.Context
+	db         *db.DbHandler
+	cs         storage.Storage
+	rootID     uuid.UUID
+	username   string
+	fullAccess bool
 }
 
 func (f filesystem) RootID() uuid.UUID {
@@ -26,11 +27,12 @@ func (f filesystem) WithRoot(id uuid.UUID) FileSystem {
 
 func (f filesystem) withRoot(id uuid.UUID) filesystem {
 	return filesystem{
-		ctx:      f.ctx,
-		db:       f.db,
-		cs:       f.cs,
-		rootID:   id,
-		username: f.username,
+		ctx:        f.ctx,
+		db:         f.db,
+		cs:         f.cs,
+		rootID:     id,
+		username:   f.username,
+		fullAccess: f.fullAccess,
 	}
 }
 
@@ -40,11 +42,12 @@ func (f filesystem) WithDb(db *db.DbHandler) FileSystem {
 
 func (f filesystem) withDb(db *db.DbHandler) filesystem {
 	return filesystem{
-		ctx:      f.ctx,
-		db:       db,
-		cs:       f.cs,
-		rootID:   f.rootID,
-		username: f.username,
+		ctx:        f.ctx,
+		db:         db,
+		cs:         f.cs,
+		rootID:     f.rootID,
+		username:   f.username,
+		fullAccess: f.fullAccess,
 	}
 }
 

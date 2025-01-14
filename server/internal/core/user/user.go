@@ -12,12 +12,13 @@ import (
 type User struct {
 	Username    string    `json:"username"`
 	DisplayName string    `json:"display"`
+	Permissions int32     `json:"-"`
 	Root        uuid.UUID `json:"-"`
 	Home        uuid.UUID `json:"-"`
 }
 
 func (u User) OpenFileSystem(ctx context.Context) fs.FileSystem {
-	return fs.Open(ctx, u.Username, u.Root)
+	return fs.Open(ctx, u.Username, u.Root, u.Permissions&PermissionAllFiles != 0)
 }
 
 type Manager interface {

@@ -64,7 +64,7 @@ func (d DbHandler) populateData(ctx context.Context) (e error) {
 		}
 
 		// Create phylum user
-		u, err := dbh.CreateUser(ctx, CreateUserParams{
+		_, err = dbh.CreateUser(ctx, CreateUserParams{
 			Username:     DefaultUserUsername,
 			DisplayName:  DefaultUserDisplayName,
 			PasswordHash: "CANNOT LOG IN",
@@ -75,10 +75,11 @@ func (d DbHandler) populateData(ctx context.Context) (e error) {
 			return err
 		}
 
-		return dbh.UpdateUserPermissionsForResource(ctx, UpdateUserPermissionsForResourceParams{
-			ResourceID: root.ID,
-			Username:   u.Username,
-			Permission: -1,
-		})
+		return nil
+		// return dbh.UpdateUserPermissionsForResource(ctx, UpdateUserPermissionsForResourceParams{
+		// 	ResourceID: root.ID,
+		// 	Username:   u.Username,
+		// 	Permission: -1,
+		// })
 	})
 }

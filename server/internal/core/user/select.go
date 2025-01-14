@@ -45,6 +45,7 @@ func (m manager) UserByEmail(email string) (User, error) {
 	return User{
 		Username:    result.Username,
 		DisplayName: result.DisplayName,
+		Permissions: result.Permissions,
 		Root:        result.Root,
 		Home:        result.Home,
 	}, nil

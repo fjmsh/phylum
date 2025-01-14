@@ -13,13 +13,14 @@ import (
 )
 
 const accessTokenById = `-- name: AccessTokenById :one
-SELECT t.expires, u.username, u.display_name, u.root, u.home FROM access_tokens t JOIN users u ON t.username = u.username WHERE t.id = $1
+SELECT t.expires, u.username, u.display_name, u.permissions, u.root, u.home FROM access_tokens t JOIN users u ON t.username = u.username WHERE t.id = $1
 `
 
 type AccessTokenByIdRow struct {
 	Expires     pgtype.Timestamp
 	Username    string
 	DisplayName string
+	Permissions int32
 	Root        uuid.UUID
 	Home        uuid.UUID
 }
@@ -31,6 +32,7 @@ func (q *Queries) AccessTokenById(ctx context.Context, id string) (AccessTokenBy
 		&i.Expires,
 		&i.Username,
 		&i.DisplayName,
+		&i.Permissions,
 		&i.Root,
 		&i.Home,
 	)

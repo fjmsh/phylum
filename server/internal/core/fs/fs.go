@@ -35,13 +35,14 @@ type FileSystem interface {
 	ResourceByPathOrUUID(pathOrUUID string) (Resource, error)
 }
 
-func Open(ctx context.Context, username string, root uuid.UUID) FileSystem {
+func Open(ctx context.Context, username string, root uuid.UUID, fullAccess bool) FileSystem {
 	return filesystem{
-		ctx:      ctx,
-		db:       db.Get(),
-		cs:       storage.Get(),
-		username: username,
-		rootID:   root,
+		ctx:        ctx,
+		db:         db.Get(),
+		cs:         storage.Get(),
+		username:   username,
+		rootID:     root,
+		fullAccess: fullAccess,
 	}
 }
 

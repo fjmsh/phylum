@@ -37,6 +37,7 @@ func (m manager) VerifyUserPassword(email, password string) (User, error) {
 		return User{
 			Username:    user.Username,
 			DisplayName: user.DisplayName,
+			Permissions: user.Permissions,
 			Root:        user.Root,
 			Home:        user.Home,
 		}, nil
@@ -68,6 +69,7 @@ func (m manager) ReadAccessToken(accessToken string) (User, error) {
 	return User{
 		Username:    token.Username,
 		DisplayName: token.DisplayName,
+		Permissions: token.Permissions,
 		Root:        token.Root,
 		Home:        token.Home,
 	}, nil
