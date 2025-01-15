@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_upload.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:provider/provider.dart';
 
@@ -12,7 +10,7 @@ class UploadsSliver extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final actions = context.select<PhylumActionQueueState, List<OfflineAction<PhylumAccount>>>((state) => state.actions);
+    final actions = context.select<PhylumActionQueueState, List<PhylumAction>>((state) => state.actions);
     final uploads = actions.whereType<ResourceUploadAction>().toList(growable: false);
 
     return SliverList(

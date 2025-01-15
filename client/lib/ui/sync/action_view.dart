@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
 class ActionView extends StatelessWidget {
-  final OfflineAction<PhylumAccount> action;
+  final PhylumAction action;
   ActionView({required this.action}) : super(key: ValueKey(action.id));
 
   @override
@@ -20,7 +19,7 @@ class ActionView extends StatelessWidget {
     );
   }
 
-  Widget buildTile(BuildContext context, OfflineAction<PhylumAccount> action, ActionStatus status) {
+  Widget buildTile(BuildContext context, PhylumAction action, ActionStatus status) {
     return switch (status) {
       ActionStatusWaiting _ || ActionStatusReady _ || ActionStatusDone _ => buildSimpleInfoTile(context, status),
       ActionStatusUploading(done: int done, length: int length) => buildProgressTile(context, done, length),
@@ -32,7 +31,10 @@ class ActionView extends StatelessWidget {
     return ListTile(
       title: Text(action.generateDescription()),
       subtitle: Text(status.toString()),
-      trailing: IconButton(onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id), icon: const Icon(Icons.delete)),
+      trailing: IconButton(
+        onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id),
+        icon: const Icon(Icons.delete),
+      ),
     );
   }
 
@@ -44,8 +46,9 @@ class ActionView extends StatelessWidget {
         ));
   }
 
-  Widget buildErrorInfoTile(BuildContext context, OfflineAction<PhylumAccount> action, ApiResult error) {
-    final showRenameOptions = error is PhylumApiErrorResponse && (error.code == "resource_name_conflict" || error.code == "resource_name_invalid");
+  Widget buildErrorInfoTile(BuildContext context, PhylumAction action, ApiResult error) {
+    final showRenameOptions = error is PhylumApiErrorResponse &&
+        (error.code == "resource_name_conflict" || error.code == "resource_name_invalid");
     return ListTile(
       title: Text(action.generateDescription(), overflow: TextOverflow.fade),
       subtitle: Text(error.description),
@@ -54,34 +57,48 @@ class ActionView extends StatelessWidget {
         children: [
           if (showRenameOptions)
             IconButton(
-                icon: const Icon(Icons.warning),
-                tooltip: 'Overwrite',
-                onPressed: () async {
-                  if (action is! ResourceBindAction) return;
-                  action.updateConflictResolution(nameConflictOverwrite);
-                }),
+              icon: const Icon(Icons.warning),
+              tooltip: 'Overwrite',
+              onPressed: () async {
+                if (action is! ResourceBindAction) return;
+                action.updateConflictResolution(nameConflictOverwrite);
+              },
+            ),
           if (showRenameOptions)
             IconButton(
-                icon: const Icon(Icons.healing),
-                tooltip: 'Auto Rename',
-                onPressed: () async {
-                  if (action is! ResourceBindAction) return;
-                  action.updateConflictResolution(nameConflictRename);
-                }),
+              icon: const Icon(Icons.healing),
+              tooltip: 'Auto Rename',
+              onPressed: () async {
+                if (action is! ResourceBindAction) return;
+                action.updateConflictResolution(nameConflictRename);
+              },
+            ),
           if (showRenameOptions)
             IconButton(
-                icon: const Icon(Icons.edit),
-                tooltip: 'Rename',
-                onPressed: () async {
-                  if (action is! ResourceBindAction) return;
-                  final preset = action.resourceName;
-                  final name = await showInputDialog(context,
-                      title: 'Edit Name', preset: preset, capitalization: TextCapitalization.words, validate: (name) => name.trim().isNotEmpty);
-                  if (name == null || !context.mounted) return;
-                  action.updateResourceName(name);
-                }),
-          IconButton(icon: const Icon(Icons.refresh), tooltip: 'Retry', onPressed: () => context.read<PhylumActionQueue>().retryAction(action.id)),
-          IconButton(icon: const Icon(Icons.block), tooltip: 'Delete', onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id)),
+              icon: const Icon(Icons.edit),
+              tooltip: 'Rename',
+              onPressed: () async {
+                if (action is! ResourceBindAction) return;
+                final preset = action.resourceName;
+                final name = await showInputDialog(context,
+                    title: 'Edit Name',
+                    preset: preset,
+                    capitalization: TextCapitalization.words,
+                    validate: (name) => name.trim().isNotEmpty);
+                if (name == null || !context.mounted) return;
+                action.updateResourceName(name);
+              },
+            ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Retry',
+            onPressed: () => context.read<PhylumActionQueue>().retryAction(action.id),
+          ),
+          IconButton(
+            icon: const Icon(Icons.block),
+            tooltip: 'Delete',
+            onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id),
+          ),
         ],
       ),
     );

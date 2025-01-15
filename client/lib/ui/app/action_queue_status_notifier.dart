@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 class ActionQueueStatusNotifier extends ChangeNotifier {
   late final RemoveListener removeListenerCallback;
-  List<OfflineAction<PhylumAccount>>? last;
-  final Map<OfflineAction<PhylumAccount>, RemoveListener> _listeners = {};
-  final Map<OfflineAction<PhylumAccount>, ActionStatus> _statusMap = {};
+  List<PhylumAction>? last;
+  final Map<PhylumAction, RemoveListener> _listeners = {};
+  final Map<PhylumAction, ActionStatus> _statusMap = {};
   bool paused = false;
   bool unreachable = false;
 
