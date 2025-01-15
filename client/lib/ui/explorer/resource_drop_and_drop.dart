@@ -15,7 +15,8 @@ import 'package:provider/provider.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 @pragma('vm:platform-const')
-final bool _useSuperNative = defaultTargetPlatform != TargetPlatform.android && defaultTargetPlatform != TargetPlatform.iOS;
+final bool _useSuperNative =
+    defaultTargetPlatform != TargetPlatform.android && defaultTargetPlatform != TargetPlatform.iOS;
 
 typedef DropWidgetBuilder = Widget Function(BuildContext context, bool dropTargetActive);
 
@@ -85,6 +86,10 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
 
   @override
   Widget build(BuildContext context) {
+    return _useSuperNative ? buildDropRegion(context) : widget.buildItem(context, false);
+  }
+
+  Widget buildDropRegion(BuildContext context) {
     return DropRegion(
       formats: Formats.standardFormats,
       child: widget.buildItem(context, dropTargetActive),
@@ -176,7 +181,8 @@ class ResourceDraggable extends StatelessWidget {
         final theme = Theme.of(context);
         final count = context.read<ExplorerState>().selectedIds.length;
         return Card(
-          shape: RoundedRectangleBorder(side: BorderSide(color: theme.colorScheme.primary), borderRadius: BorderRadius.circular(4.0)),
+          shape: RoundedRectangleBorder(
+              side: BorderSide(color: theme.colorScheme.primary), borderRadius: BorderRadius.circular(4.0)),
           elevation: 16.0,
           margin: const EdgeInsets.only(left: 16.0),
           child: SizedBox(
