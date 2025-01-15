@@ -24,7 +24,7 @@ dependencies:
   offtheline:
     git:
       url: https://codeberg.org/shroff/offtheline.git
-      ref: 5ecd79d00a69f907795f38c4d26053aa2dbba889
+      ref: ab233bd87a0c7e0d77ce211a5d9c929fd18f33b6
   open_file:
   path:
   path_provider:
@@ -32,7 +32,6 @@ dependencies:
   provider:
   sqlite3: 
   state_notifier:
-  stream_transform:
   super_clipboard:
   super_drag_and_drop:
   uri:
@@ -47,11 +46,9 @@ dev_dependencies:
   
 dependency_overrides:
   drift:
-    path: ../../drift/drift
-  drift_flutter:
-    path: ../../drift/drift_flutter
-  drift_sqflite:
-    path: ../../drift/drift_sqflite
+    git:
+      url: https://github.com/simolus3/drift
+      path: drift
 
 flutter:
   uses-material-design: true
