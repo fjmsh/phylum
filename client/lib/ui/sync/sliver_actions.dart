@@ -51,25 +51,27 @@ class _ActionsSliverState extends State<ActionsSliver> {
                 } else {
                   _statusMap[action] = status;
                 }
-                setState(() {
-                  actions = List.of(_statusMap.keys, growable: false)
-                    ..sort((a, b) {
-                      if (_statusMap[a] == _statusMap[b]) {
-                        return a.id.compareTo(b.id);
-                      }
-                      return _order[_statusMap[a].runtimeType]! - _order[_statusMap[b].runtimeType]!;
-                    });
-                });
+                actions = List.of(_statusMap.keys, growable: false)
+                  ..sort((a, b) {
+                    if (_statusMap[a] == _statusMap[b]) {
+                      return a.id.compareTo(b.id);
+                    }
+                    return _order[_statusMap[a].runtimeType]! - _order[_statusMap[b].runtimeType]!;
+                  });
+                if (mounted) {
+                  setState(() {});
+                }
               }
             }, fireImmediately: true);
           }
         }
         last = state.actions;
       }
-      setState(() {
-        paused = state.paused;
-        unreachable = state.unreachable;
-      });
+      paused = state.paused;
+      unreachable = state.unreachable;
+      if (mounted) {
+        setState(() {});
+      }
     }, fireImmediately: true);
   }
 
