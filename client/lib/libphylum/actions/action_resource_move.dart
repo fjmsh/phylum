@@ -4,7 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
-import 'package:phylum/libphylum/db/resource_helpers.dart';
+import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
@@ -74,24 +74,24 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
 
   @override
   Future<void> applyOptimisticUpdate() async {
-    await account.db.updateResource(
+    await account.localChangeTracker.update(
       resourceId,
-      (o) => o(
+      ResourcesCompanion(
         name: Value.absentIfNull(localName),
         parent: Value.absentIfNull(parent),
         modified: Value(modified),
       ),
     );
     if (deletedId != null) {
-      await account.db.updateResource(deletedId!, (u) => u(parent: Value(null)));
+      await account.localChangeTracker.update(deletedId!, ResourcesCompanion(parent: Value(null)));
     }
   }
 
   @override
   Future<void> revertOptimisticUpdate() async {
-    await account.serverResourceTracker.revert(resourceId);
+    await account.localChangeTracker.revert(resourceId);
     if (deletedId != null) {
-      await account.serverResourceTracker.revert(deletedId!);
+      await account.localChangeTracker.revert(deletedId!);
     }
   }
 

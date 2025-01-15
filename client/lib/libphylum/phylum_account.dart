@@ -6,7 +6,7 @@ import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/repositories/my_lists_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
-import 'package:phylum/libphylum/server_data_tracker.dart';
+import 'package:phylum/libphylum/local_updates_tracker.dart';
 import 'package:phylum/util/logging.dart';
 
 const _persistKeyAccessToken = 'accessToken';
@@ -19,7 +19,7 @@ class PhylumAccount extends Account<PhylumAccount> {
   late final resourceRepository = ResourceRepository(account: this);
   late final userRepository = UserRepository(account: this);
   late final myListsRepository = MyListsRepository(account: this);
-  late final serverResourceTracker = ServerResourceStateTracker(account: this);
+  late final localChangeTracker = LocalChangeTracker(account: this);
 
   final _dispatcher = SimulatedBadNetworkDispatcher.good(dropRate: 0);
   // final _dispatcher = HttpClientDispatcher();
@@ -62,7 +62,7 @@ class PhylumAccount extends Account<PhylumAccount> {
     // Set Authorization header
     _accessToken = _initialAccessToken ?? accessToken;
 
-    await serverResourceTracker.initialize();
+    await localChangeTracker.initialize();
     await userRepository.initialize();
     await myListsRepository.initialize();
 
@@ -79,19 +79,12 @@ class PhylumAccount extends Account<PhylumAccount> {
   }
 
   @override
-  Future<void> transaction(
-    Future<void> Function() fn, {
-    bool retainServerData = false,
-    bool clearUntouched = true,
-  }) {
-    if (retainServerData) {
-      return db.runWithInterceptor(
-        () => db.transaction(fn),
-        interceptor: serverResourceTracker.newInterceptor(clearUntouched),
-      );
-    }
-    return db.transaction(fn);
+  Future<void> localChanges(Future<void> Function() fn, {bool clearUntouched = true}) {
+    return localChangeTracker.track(fn, clearUntouched: clearUntouched);
   }
+
+  @override
+  Future<void> transaction(Future<void> Function() fn) => db.transaction(fn);
 
   @override
   Future<void> cleanup() async {

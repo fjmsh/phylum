@@ -5,7 +5,7 @@ import 'package:http/http.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
-import 'package:phylum/libphylum/db/resource_helpers.dart';
+import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction {
@@ -20,7 +20,8 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   String get endpoint => '/api/v1/fs/upload/$resourceId';
 
   @override
-  Future<MultipartFile> get file => MultipartFile.fromPath('contents', path, filename: resourceName, contentType: MediaType.parse(contentType));
+  Future<MultipartFile> get file =>
+      MultipartFile.fromPath('contents', path, filename: resourceName, contentType: MediaType.parse(contentType));
 
   final String path;
   final int size;
@@ -78,25 +79,25 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
 
   @override
   Future<void> applyOptimisticUpdate() async {
-    await account.db.createResource(resourceId, parent, localName, false, timestamp);
-    await account.db.updateResource(
+    await account.localChangeTracker.create(resourceId, parent, localName, false, timestamp);
+    await account.localChangeTracker.update(
       resourceId,
-      (o) => o(
+      ResourcesCompanion(
         contentType: Value(contentType),
         contentLength: Value(size),
         contentSha256: Value("<unknown>"),
       ),
     );
     if (deletedId != null) {
-      await account.db.updateResource(deletedId!, (u) => u(parent: Value(null)));
+      await account.localChangeTracker.update(deletedId!, ResourcesCompanion(parent: Value(null)));
     }
   }
 
   @override
   Future<void> revertOptimisticUpdate() async {
-    await account.db.deleteResource(resourceId);
+    await account.localChangeTracker.revert(resourceId);
     if (deletedId != null) {
-      await account.serverResourceTracker.revert(deletedId!);
+      await account.localChangeTracker.revert(deletedId!);
     }
   }
 

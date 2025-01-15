@@ -219,19 +219,20 @@ class ResourceRepository {
       }
       batch.insertAllOnConflictUpdate(db.resources, parsed);
     });
-    account.serverResourceTracker.update(parsed);
-    account.serverResourceTracker.update(previousChildren);
+    account.localChangeTracker.processServerUpdates(parsed);
+    account.localChangeTracker.processServerUpdates(previousChildren);
   }
 
   Future<ResourcesCompanion> processResourceUpdateResponse(String id, Map<String, dynamic> data) async {
     final r = parsePartialResourceObject(data, id);
     final update = (account.db.resources.update()..where((o) => o.id.equals(r.id.value)));
     await update.write(r);
-    account.serverResourceTracker.update([r]);
+    account.localChangeTracker.processServerUpdates([r]);
     return r;
   }
 
-  Future<(Iterable<ResourcesCompanion>, Iterable<ResourcesCompanion>)> parseFullResourceObject(Map<String, dynamic> data) async {
+  Future<(Iterable<ResourcesCompanion>, Iterable<ResourcesCompanion>)> parseFullResourceObject(
+      Map<String, dynamic> data) async {
     final ancestors = (data['ancestors'] as List).cast<Map>().map(
           (a) => parseResourceAncestor(a.cast<String, dynamic>()).copyWith(dir: Value(true)),
         );
