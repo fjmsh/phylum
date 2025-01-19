@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/libphylum/parsers/parsers.dart';
 import 'package:phylum/libphylum/repositories/my_lists_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
-import 'package:phylum/libphylum/local_updates_tracker.dart';
+import 'package:phylum/libphylum/phylum_change_tracker.dart';
 import 'package:phylum/util/logging.dart';
 
 const _persistKeyAccessToken = 'accessToken';
@@ -19,7 +19,8 @@ class PhylumAccount extends Account<PhylumAccount> {
   late final resourceRepository = ResourceRepository(account: this);
   late final userRepository = UserRepository(account: this);
   late final myListsRepository = MyListsRepository(account: this);
-  late final localChangeTracker = LocalChangeTracker(account: this);
+  @override
+  late final changeTracker = PhylumChangeTracker(account: this);
 
   final _dispatcher = SimulatedBadNetworkDispatcher.good(dropRate: 0);
   // final _dispatcher = HttpClientDispatcher();
@@ -52,9 +53,9 @@ class PhylumAccount extends Account<PhylumAccount> {
 
   PhylumAccount.create({required super.serverUri, required String accessToken})
       : _initialAccessToken = accessToken,
-        super.create(transformResponse: transformApiResponse);
+        super.create();
 
-  PhylumAccount.restore({required super.id}) : super.restore(transformResponse: transformApiResponse);
+  PhylumAccount.restore({required super.id}) : super.restore();
 
   @override
   Future<void> initialize() async {
@@ -62,12 +63,11 @@ class PhylumAccount extends Account<PhylumAccount> {
     // Set Authorization header
     _accessToken = _initialAccessToken ?? accessToken;
 
-    await localChangeTracker.initialize();
     await userRepository.initialize();
     await myListsRepository.initialize();
 
     late final void Function() l;
-    l = apiClient.addResponseListener((request, errorResponse) {
+    l = apiClient.addListener((request, errorResponse) {
       if (errorResponse is PhylumApiErrorResponse) {
         if (errorResponse.code == "credentials_invalid") {
           logger.i('Invalid Credentials - Logging out');
@@ -76,11 +76,6 @@ class PhylumAccount extends Account<PhylumAccount> {
         }
       }
     });
-  }
-
-  @override
-  Future<void> localChanges(Future<void> Function() fn, {bool clearUntouched = true}) {
-    return localChangeTracker.track(fn, clearUntouched: clearUntouched);
   }
 
   @override

@@ -24,7 +24,7 @@ dependencies:
   offtheline:
     git:
       url: https://codeberg.org/shroff/offtheline.git
-      ref: 3471261985806a93ced64fa7b425240c7d57d79b
+      ref: 661d11d7a572fd54dfb4bca418a07968cf8184c7
   open_file:
   path:
   path_provider:
@@ -43,12 +43,6 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   drift_dev: ^2.19.1
   build_runner: ^2.4.12
-  
-dependency_overrides:
-  drift:
-    git:
-      url: https://github.com/simolus3/drift
-      path: drift
 
 flutter:
   uses-material-design: true

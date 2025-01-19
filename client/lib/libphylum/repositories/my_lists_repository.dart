@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/parsers/parsers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
@@ -74,7 +75,8 @@ class MyListsRepository {
 
   Future processBookmarksResponse(Map<String, dynamic> data) async {
     final db = account.db;
-    final bookmarks = (data["bookmarks"] as List).cast<Map>().map((u) => parseBookmarkObject(u.cast<String, dynamic>()));
+    final bookmarks =
+        (data["bookmarks"] as List).cast<Map>().map((u) => parseBookmarkObject(u.cast<String, dynamic>()));
     await db.batch((batch) {
       batch.insertAllOnConflictUpdate(db.bookmarks, bookmarks);
     });
@@ -83,7 +85,8 @@ class MyListsRepository {
 
   Future processSharedResourcesResponse(Map<String, dynamic> data) async {
     final db = account.db;
-    final resources = (data["shared"] as List).cast<Map>().map((u) => parsePartialResourceObject(u.cast<String, dynamic>()));
+    final resources =
+        (data["shared"] as List).cast<Map>().map((u) => parsePartialResourceObject(u.cast<String, dynamic>()));
     final shared = resources.indexed.map((r) => SharedCompanion.insert(resourceId: r.$2.id.value, seq: r.$1));
     await db.batch((batch) {
       batch.insertAllOnConflictUpdate(db.resources, resources);
@@ -97,14 +100,5 @@ class MyListsRepository {
     final db = account.db;
     final bookmark = parseBookmarkObject((data as Map).cast<String, dynamic>());
     return db.bookmarks.insertOnConflictUpdate(bookmark);
-  }
-
-  Bookmark parseBookmarkObject(Map<String, dynamic> data) {
-    return Bookmark(
-      resourceId: data['resource_id'],
-      name: data['name'],
-      created: data['created'],
-      deleted: data['deleted'],
-    );
   }
 }

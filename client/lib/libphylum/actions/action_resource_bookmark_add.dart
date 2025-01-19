@@ -49,19 +49,14 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
   }
 
   @override
-  Map<String, dynamic> toMap() => {
+  Map<String, dynamic> get props => {
         'resourceId': resourceId,
         'bookmarkName': bookmarkName,
         'createdMillis': createdMillis,
       };
 
   @override
-  String generateDescription() {
-    return 'Adding Bookmarking: $bookmarkName';
-  }
-
-  @override
-  Map<String, dynamic>? generateRequestBody() => null;
+  String get description => 'Adding Bookmarking: $bookmarkName';
 
   @override
   Future<void> applyOptimisticUpdate() {
@@ -88,6 +83,8 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
   @override
   bool dependsOn(PhylumAction action) =>
       action is ResourceAction &&
-      (action is ResourceCreateAction || action is ResourceBookmarkAddAction || action is ResourceBookmarkRemoveAction) &&
+      (action is ResourceCreateAction ||
+          action is ResourceBookmarkAddAction ||
+          action is ResourceBookmarkRemoveAction) &&
       action.resourceId == resourceId;
 }

@@ -249,12 +249,11 @@ packages:
   drift:
     dependency: "direct main"
     description:
-      path: drift
-      ref: HEAD
-      resolved-ref: "58f71cf52f7d25fc5aab8a33afd47585ce17b1fa"
-      url: "https://github.com/simolus3/drift"
-    source: git
-    version: "2.23.1"
+      name: drift
+      sha256: c2d073d35ad441730812f4ea05b5dd031fb81c5f9786a4f5fb77ecd6307b6f74
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.22.1"
   drift_dev:
     dependency: "direct dev"
     description:
@@ -618,8 +617,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "3471261985806a93ced64fa7b425240c7d57d79b"
-      resolved-ref: "3471261985806a93ced64fa7b425240c7d57d79b"
+      ref: "661d11d7a572fd54dfb4bca418a07968cf8184c7"
+      resolved-ref: "661d11d7a572fd54dfb4bca418a07968cf8184c7"
       url: "https://codeberg.org/shroff/offtheline.git"
     source: git
     version: "0.16.0"
