@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart';
 import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart';
@@ -11,8 +10,9 @@ import 'package:phylum/libphylum/actions/action_resource_upload.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
+import 'package:phylum/libphylum/parsers/parsers.dart';
+import 'package:phylum/libphylum/parsers/resources.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 
@@ -22,11 +22,10 @@ class ResourceRepository {
   ResourceRepository({required this.account});
 
   Future<ApiResult> requestResource(String id) async {
-    return account.apiClient.sendRequest(ResourceLsRequest(id), callback: (request, response) async {
-      if (response is PhylumApiSuccessResponse) {
-        await processResourceResponse(response.data);
-      }
-    });
+    return account.apiClient.sendRequest(
+      ResourceLsRequest(id),
+      (request, response) => parseJsonMapResponse(response, FullResourceResponse.fromResponse),
+    );
   }
 
   Future<String> mkdir({
@@ -209,96 +208,4 @@ class ResourceRepository {
     }
     return localName;
   }
-
-  Future processResourceResponse(Map<String, dynamic> data) async {
-    final db = account.db;
-    final (parsed, previousChildren) = await parseFullResourceObject(data);
-    await db.batch((batch) {
-      for (final u in previousChildren) {
-        batch.update(db.resources, u, where: (o) => o.id.equals(u.id.value));
-      }
-      batch.insertAllOnConflictUpdate(db.resources, parsed);
-    });
-    account.localChangeTracker.processServerUpdates(parsed);
-    account.localChangeTracker.processServerUpdates(previousChildren);
-  }
-
-  Future<ResourcesCompanion> processResourceUpdateResponse(String id, Map<String, dynamic> data) async {
-    final r = parsePartialResourceObject(data, id);
-    final update = (account.db.resources.update()..where((o) => o.id.equals(r.id.value)));
-    await update.write(r);
-    account.localChangeTracker.processServerUpdates([r]);
-    return r;
-  }
-
-  Future<(Iterable<ResourcesCompanion>, Iterable<ResourcesCompanion>)> parseFullResourceObject(
-      Map<String, dynamic> data) async {
-    final ancestors = (data['ancestors'] as List).cast<Map>().map(
-          (a) => parseResourceAncestor(a.cast<String, dynamic>()).copyWith(dir: Value(true)),
-        );
-
-    final info = parseResourceObject(data['info'])..copyWith(lastRefresh: Value(DateTime.now()));
-    final id = info.id.value;
-    final db = account.db;
-
-    final existing = Set.of(await (db.select(db.resources)..where((t) => t.parent.equals(id))).map((r) => r.id).get());
-    final children = (data['children'] as List).cast<Map>().map((c) {
-      existing.remove(c['id']);
-      return parseResourceObject(c.cast<String, dynamic>());
-    });
-    final removeParentRelation = existing.map((id) => ResourcesCompanion(id: Value(id), parent: Value(null)));
-    return ([...ancestors, info, ...children], removeParentRelation);
-  }
-}
-
-ResourcesCompanion parseResourceObject(Map<String, dynamic> data) {
-  return ResourcesCompanion(
-    id: Value(data['id']),
-    parent: Value(data['parent']),
-    name: Value(data['name']),
-    dir: Value(data['dir']),
-    created: Value(DateTime.parse(data['created'])),
-    modified: Value(DateTime.parse(data['modified'])),
-    deleted: Value(data['deleted'] != null),
-    contentLength: Value(data['c_len']),
-    contentSha256: Value(data['c_sha256']),
-    contentType: Value(data['c_type']),
-    permissions: data['permissions'].isEmpty ? Value(null) : Value(data['permissions']),
-    publinks: data['publinks'].isEmpty ? Value(null) : Value(data['publinks']),
-    lastRefresh: Value(DateTime.now()),
-  );
-}
-
-ResourcesCompanion parseResourceAncestor(Map<String, dynamic> data) {
-  return ResourcesCompanion(
-      id: Value(data['id']),
-      parent: Value(data['parent']),
-      name: Value(data['name']),
-      dir: Value(true),
-      permissions: data['permissions'].isEmpty ? Value(null) : Value(data['permissions']));
-}
-
-ResourcesCompanion parsePartialResourceObject(Map<String, dynamic> data, [String? id]) {
-  return ResourcesCompanion(
-    id: Value(data['id'] ?? id),
-    parent: Value.absentIfNull(data['parent']),
-    name: Value.absentIfNull(data['name']),
-    dir: Value.absentIfNull(data['dir']),
-    created: Value.absentIfNull(data.containsKey('created') ? DateTime.parse(data['created']) : null),
-    modified: Value.absentIfNull(data.containsKey('modified') ? DateTime.parse(data['modified']) : null),
-    deleted: Value.absentIfNull(data.containsKey('deleted') ? data['deleted'] != null : null),
-    contentLength: Value.absentIfNull(data['c_len']),
-    contentSha256: Value.absentIfNull(data['c_sha256']),
-    contentType: Value.absentIfNull(data['c_type']),
-    permissions: data.containsKey('permissions')
-        ? data['permissions'].isEmpty
-            ? Value(null)
-            : Value(data['permissions'])
-        : Value.absent(),
-    publinks: data.containsKey('publinks')
-        ? data['publinks'].isEmpty
-            ? Value(null)
-            : Value(data['publinks'])
-        : Value.absent(),
-  );
 }
