@@ -1,9 +1,7 @@
-import 'dart:async';
-
-import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
-import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/actions/changes/create_resource_change.dart';
+import 'package:phylum/libphylum/actions/changes/soft_delete_resource_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
@@ -17,8 +15,48 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/cp/$srcId';
 
-  final String srcId;
+  @override
+  Map<String, dynamic>? get requestBody => {
+        'id': resourceId,
+        'target': '$parent:$resourceName',
+        'conflict': conflictResolution,
+      };
+
+  @override
+  List<LocalChange> get localChanges => [
+        CreateResourceChange(
+          objectId: resourceId,
+          parent: parent,
+          localName: localName,
+          timestamp: timestamp,
+          contentLength: contentLength,
+          contentType: contentType,
+          contentSha256: contentSha256,
+        ),
+        if (deletedId != null) SoftDeleteResourceChange(objectId: deletedId!),
+      ];
+
+  @override
   final String description;
+
+  @override
+  Map<String, dynamic> get props => {
+        'srcId': srcId,
+        'resourceId': resourceId,
+        'parent': parent,
+        'resourceName': resourceName,
+        'conflictResolution': conflictResolution,
+        'dir': dir,
+        'localName': localName,
+        'contentType': contentType,
+        'contentLength': contentLength,
+        'contentSha256': contentSha256,
+        'description': description,
+        'timestamp': timestamp.millisecondsSinceEpoch,
+        'deletedId': deletedId,
+      };
+
+  final String srcId;
   final bool dir;
   final String localName;
   final String contentType;
@@ -59,63 +97,6 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
       deletedId: map['deletedId'],
     );
-  }
-
-  @override
-  Map<String, dynamic> toMap() => {
-        'srcId': srcId,
-        'resourceId': resourceId,
-        'parent': parent,
-        'resourceName': resourceName,
-        'conflictResolution': conflictResolution,
-        'dir': dir,
-        'localName': localName,
-        'contentType': contentType,
-        'contentLength': contentLength,
-        'contentSha256': contentSha256,
-        'description': description,
-        'timestamp': timestamp.millisecondsSinceEpoch,
-        'deletedId': deletedId,
-      };
-
-  @override
-  String generateDescription() {
-    return description;
-  }
-
-  @override
-  Map<String, dynamic>? generateRequestBody() {
-    return {
-      'id': resourceId,
-      'target': '$parent:$resourceName',
-      'conflict': conflictResolution,
-    };
-  }
-
-  @override
-  Future<void> applyOptimisticUpdate() async {
-    await account.localChangeTracker.create(resourceId, parent, localName, dir, timestamp);
-    if (!dir) {
-      await account.localChangeTracker.update(
-        resourceId,
-        ResourcesCompanion(
-          contentType: Value(contentType),
-          contentLength: Value(contentLength),
-          contentSha256: Value(contentSha256),
-        ),
-      );
-    }
-    if (deletedId != null) {
-      await account.localChangeTracker.update(deletedId!, ResourcesCompanion(parent: Value(null)));
-    }
-  }
-
-  @override
-  Future<void> revertOptimisticUpdate() async {
-    await account.localChangeTracker.revert(resourceId);
-    if (deletedId != null) {
-      await account.localChangeTracker.revert(deletedId!);
-    }
   }
 
   @override

@@ -14,10 +14,11 @@ class PartialResourceResponse extends PhylumApiSuccessResponse {
     required this.updates,
   });
 
-  factory PartialResourceResponse.fromResponse(String id, Map<String, dynamic> data) {
+  factory PartialResourceResponse.fromResponse(Map<String, dynamic> data) {
+    final updates = parsePartialResource(data);
     return PartialResourceResponse(
-      id: id,
-      updates: parsePartialResource(data),
+      id: updates.id.value,
+      updates: updates,
     );
   }
 

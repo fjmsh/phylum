@@ -1,7 +1,5 @@
-import 'dart:async';
-
-import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/changes/soft_delete_resource_change.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
@@ -19,6 +17,20 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/rm/$resourceId';
 
+  @override
+  List<LocalChange> get localChanges => [
+        SoftDeleteResourceChange(objectId: resourceId),
+      ];
+
+  @override
+  String get description => "Deleting $resourceName";
+
+  @override
+  Map<String, dynamic> get props => {
+        'resourceId': resourceId,
+        'resourceName': resourceName,
+      };
+
   final String resourceName;
 
   ResourceDeleteAction._({
@@ -30,37 +42,11 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
     required Resource r,
   }) : this._(resourceId: r.id, resourceName: r.name);
 
-  static ResourceDeleteAction fromMap(Map<String, dynamic> map) {
+  factory ResourceDeleteAction.fromMap(Map<String, dynamic> map) {
     return ResourceDeleteAction._(
       resourceId: map['resourceId'],
       resourceName: map['resourceName'],
     );
-  }
-
-  @override
-  Map<String, dynamic> toMap() => {
-        'resourceId': resourceId,
-        'resourceName': resourceName,
-      };
-
-  @override
-  String generateDescription() {
-    return "Deleting $resourceName";
-  }
-
-  @override
-  Map<String, dynamic>? generateRequestBody() {
-    return null;
-  }
-
-  @override
-  Future<void> applyOptimisticUpdate() {
-    return account.localChangeTracker.update(resourceId, ResourcesCompanion(deleted: const Value(true)));
-  }
-
-  @override
-  Future<void> revertOptimisticUpdate() {
-    return account.localChangeTracker.revert(resourceId);
   }
 
   @override

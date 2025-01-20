@@ -1,9 +1,7 @@
-import 'dart:async';
-
-import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
-import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/actions/changes/create_resource_change.dart';
+import 'package:phylum/libphylum/actions/changes/soft_delete_resource_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
@@ -16,6 +14,41 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
 
   @override
   String get endpoint => '/api/v1/fs/mkdir/$resourceId';
+
+  @override
+  Map<String, dynamic>? get requestBody => {
+        'parent_id': parent,
+        'name': resourceName,
+        'conflict': conflictResolution,
+      };
+
+  @override
+  List<LocalChange> get localChanges => [
+        CreateResourceChange(
+          objectId: resourceId,
+          parent: parent,
+          localName: localName,
+          timestamp: timestamp,
+          contentLength: 0,
+          contentType: '',
+          contentSha256: '',
+        ),
+        if (deletedId != null) SoftDeleteResourceChange(objectId: resourceId),
+      ];
+
+  @override
+  String get description => "Creating Directory $resourceName";
+
+  @override
+  Map<String, dynamic> get props => {
+        'resourceId': resourceId,
+        'resourceName': resourceName,
+        'parent': parent,
+        'conflictResolution': conflictResolution,
+        'timestamp': timestamp.millisecondsSinceEpoch,
+        'localName': localName,
+        'deletedId': deletedId,
+      };
 
   final DateTime timestamp;
   final String localName;
@@ -41,47 +74,6 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
       localName: map['localName'],
       deletedId: map['deletedId'],
     );
-  }
-
-  @override
-  Map<String, dynamic> toMap() => {
-        'resourceId': resourceId,
-        'resourceName': resourceName,
-        'parent': parent,
-        'conflictResolution': conflictResolution,
-        'timestamp': timestamp.millisecondsSinceEpoch,
-        'localName': localName,
-        'deletedId': deletedId,
-      };
-
-  @override
-  String generateDescription() {
-    return "Creating Directory $resourceName";
-  }
-
-  @override
-  Map<String, dynamic>? generateRequestBody() {
-    return {
-      'parent_id': parent,
-      'name': resourceName,
-      'conflict': conflictResolution,
-    };
-  }
-
-  @override
-  Future<void> applyOptimisticUpdate() async {
-    await account.localChangeTracker.create(resourceId, parent, localName, true, timestamp);
-    if (deletedId != null) {
-      await account.localChangeTracker.update(deletedId!, ResourcesCompanion(parent: Value(null)));
-    }
-  }
-
-  @override
-  Future<void> revertOptimisticUpdate() async {
-    await account.localChangeTracker.revert(resourceId);
-    if (deletedId != null) {
-      await account.localChangeTracker.revert(deletedId!);
-    }
   }
 
   @override

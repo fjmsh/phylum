@@ -1,10 +1,9 @@
-import 'dart:async';
-
-import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
-import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/actions/changes/mark_resource_modified_change.dart';
+import 'package:phylum/libphylum/actions/changes/move_resource_change.dart';
+import 'package:phylum/libphylum/actions/changes/soft_delete_resource_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
@@ -18,9 +17,39 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/mv/$resourceId';
 
-  final DateTime modified;
+  @override
+  Map<String, dynamic>? get requestBody => {
+        'target': '$parent:$resourceName',
+        'conflict': conflictResolution,
+      };
+
+  @override
+  List<LocalChange> get localChanges => [
+        MoveResourceChange(objectId: resourceId, parent: parent, name: localName, timestamp: modified),
+        MarkResourceModifiedChange(objectId: parent, timestamp: modified),
+        if (oldParent != null) MarkResourceModifiedChange(objectId: oldParent!, timestamp: modified),
+        if (deletedId != null) SoftDeleteResourceChange(objectId: resourceId),
+      ];
+
+  @override
   final String description;
+
+  @override
+  Map<String, dynamic> get props => {
+        'resourceId': resourceId,
+        'parent': parent,
+        'resourceName': resourceName,
+        'conflictResolution': conflictResolution,
+        'description': description,
+        'modified': modified.millisecondsSinceEpoch,
+        'localName': localName,
+        'oldParent': oldParent,
+        'deletedId': deletedId,
+      };
+
+  final DateTime modified;
   final String localName;
+  final String? oldParent;
   final String? deletedId;
 
   ResourceMoveAction({
@@ -30,6 +59,7 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
     required super.conflictResolution,
     required this.description,
     required this.modified,
+    required this.oldParent,
     required this.localName,
     required this.deletedId,
   });
@@ -43,56 +73,9 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
       description: map['description'],
       modified: DateTime.fromMillisecondsSinceEpoch(map['modified']),
       localName: map['localName'],
+      oldParent: map['oldParent'],
       deletedId: map['deletedId'],
     );
-  }
-
-  @override
-  Map<String, dynamic> toMap() => {
-        'resourceId': resourceId,
-        'parent': parent,
-        'resourceName': resourceName,
-        'conflictResolution': conflictResolution,
-        'description': description,
-        'modified': modified.millisecondsSinceEpoch,
-        'localName': localName,
-        'deletedId': deletedId,
-      };
-
-  @override
-  String generateDescription() {
-    return description;
-  }
-
-  @override
-  Map<String, dynamic>? generateRequestBody() {
-    return {
-      'target': '$parent:$resourceName',
-      'conflict': conflictResolution,
-    };
-  }
-
-  @override
-  Future<void> applyOptimisticUpdate() async {
-    await account.localChangeTracker.update(
-      resourceId,
-      ResourcesCompanion(
-        name: Value.absentIfNull(localName),
-        parent: Value.absentIfNull(parent),
-        modified: Value(modified),
-      ),
-    );
-    if (deletedId != null) {
-      await account.localChangeTracker.update(deletedId!, ResourcesCompanion(parent: Value(null)));
-    }
-  }
-
-  @override
-  Future<void> revertOptimisticUpdate() async {
-    await account.localChangeTracker.revert(resourceId);
-    if (deletedId != null) {
-      await account.localChangeTracker.revert(deletedId!);
-    }
   }
 
   @override

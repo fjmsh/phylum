@@ -1,11 +1,9 @@
-import 'dart:async';
-
-import 'package:drift/drift.dart';
 import 'package:http/http.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
-import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/actions/changes/create_resource_change.dart';
+import 'package:phylum/libphylum/actions/changes/soft_delete_resource_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction {
@@ -22,6 +20,44 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   @override
   Future<MultipartFile> get file =>
       MultipartFile.fromPath('contents', path, filename: resourceName, contentType: MediaType.parse(contentType));
+
+  @override
+  Map<String, String> get fields => {
+        'parent_id': parent,
+        'name': resourceName,
+        'conflict': conflictResolution.toString(),
+      };
+
+  @override
+  List<LocalChange> get localChanges => [
+        CreateResourceChange(
+          objectId: resourceId,
+          parent: parent,
+          localName: localName,
+          timestamp: timestamp,
+          contentLength: size,
+          contentType: contentType,
+          contentSha256: '<unknown>',
+        ),
+        if (deletedId != null) SoftDeleteResourceChange(objectId: deletedId!),
+      ];
+
+  @override
+  String get description => "Uploading $resourceName";
+
+  @override
+  Map<String, dynamic> get props => {
+        'resourceId': resourceId,
+        'parent': parent,
+        'resourceName': resourceName,
+        'conflictResolution': conflictResolution,
+        'path': path,
+        'size': size,
+        'contentType': contentType,
+        'timestamp': timestamp.millisecondsSinceEpoch,
+        'localName': localName,
+        'deletedId': deletedId,
+      };
 
   final String path;
   final int size;
@@ -56,58 +92,6 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       localName: map['localName'],
       deletedId: map['deletedId'],
     );
-  }
-
-  @override
-  Map<String, dynamic> toMap() => {
-        'resourceId': resourceId,
-        'parent': parent,
-        'resourceName': resourceName,
-        'conflictResolution': conflictResolution,
-        'path': path,
-        'size': size,
-        'contentType': contentType,
-        'timestamp': timestamp.millisecondsSinceEpoch,
-        'localName': localName,
-        'deletedId': deletedId,
-      };
-
-  @override
-  String generateDescription() {
-    return "Uploading $resourceName";
-  }
-
-  @override
-  Future<void> applyOptimisticUpdate() async {
-    await account.localChangeTracker.create(resourceId, parent, localName, false, timestamp);
-    await account.localChangeTracker.update(
-      resourceId,
-      ResourcesCompanion(
-        contentType: Value(contentType),
-        contentLength: Value(size),
-        contentSha256: Value("<unknown>"),
-      ),
-    );
-    if (deletedId != null) {
-      await account.localChangeTracker.update(deletedId!, ResourcesCompanion(parent: Value(null)));
-    }
-  }
-
-  @override
-  Future<void> revertOptimisticUpdate() async {
-    await account.localChangeTracker.revert(resourceId);
-    if (deletedId != null) {
-      await account.localChangeTracker.revert(deletedId!);
-    }
-  }
-
-  @override
-  Map<String, String> generateFormFields() {
-    return {
-      'parent_id': parent,
-      'name': resourceName,
-      'conflict': conflictResolution.toString(),
-    };
   }
 
   @override

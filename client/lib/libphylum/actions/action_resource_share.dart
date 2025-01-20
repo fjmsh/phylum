@@ -1,12 +1,6 @@
-import 'dart:async';
-import 'dart:convert';
-
-import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/db/resource_helpers.dart';
+import 'package:phylum/libphylum/actions/changes/update_permissions_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:phylum/util/permissions.dart';
 
 import 'action_resource.dart';
 import 'action_resource_create.dart';
@@ -22,10 +16,39 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
   @override
   String get endpoint => '/api/v1/fs/share/$resourceId';
 
+  @override
+  Map<String, dynamic>? get requestBody {
+    return {
+      'username': username,
+      'permission': permission,
+    };
+  }
+
+  @override
+  List<LocalChange> get localChanges => [
+        UpdatePermissionsChange(
+          objectId: resourceId,
+          username: username,
+          permission: permission,
+          timestamp: modified,
+        ),
+      ];
+
+  @override
+  final String description;
+
+  @override
+  Map<String, dynamic> get props => {
+        'resourceId': resourceId,
+        'username': username,
+        'permission': permission,
+        'modified': modified.millisecondsSinceEpoch,
+        'description': description,
+      };
+
   final String username;
   final int permission;
   final DateTime modified;
-  final String description;
 
   ResourceShareAction._({
     required super.resourceId,
@@ -56,55 +79,6 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
       modified: DateTime.fromMillisecondsSinceEpoch(map['modified']),
       description: map['description'],
     );
-  }
-
-  @override
-  Map<String, dynamic> toMap() => {
-        'resourceId': resourceId,
-        'username': username,
-        'permission': permission,
-        'modified': modified.millisecondsSinceEpoch,
-        'description': description,
-      };
-
-  @override
-  String generateDescription() {
-    return description;
-  }
-
-  @override
-  Map<String, dynamic>? generateRequestBody() {
-    return {
-      'username': username,
-      'permission': permission,
-    };
-  }
-
-  @override
-  Future<void> applyOptimisticUpdate() async {
-    final resource = await account.db.getResource(resourceId);
-    final p = mergePermissions({}, resource?.permissions);
-    if ((p[username] ?? 0) == permission) {
-      return;
-    }
-    if (permission == 0) {
-      p.remove(username);
-    } else {
-      p[username] = permission;
-    }
-    final serialized = p.isEmpty ? null : json.encode(p);
-    return account.localChangeTracker.update(
-      resourceId,
-      ResourcesCompanion(
-        permissions: Value(serialized),
-        modified: Value(modified),
-      ),
-    );
-  }
-
-  @override
-  Future<void> revertOptimisticUpdate() {
-    return account.localChangeTracker.revert(resourceId);
   }
 
   @override

@@ -145,6 +145,7 @@ class ResourceRepository {
       description: parent == resource.parent ? 'Renaming ${resource.name} to $localName' : 'Moving ${resource.name}',
       modified: DateTime.now(),
       localName: localName,
+      oldParent: parent == resource.parent ? null : resource.parent,
       deletedId: deletedId,
     ));
     return resource.id;
