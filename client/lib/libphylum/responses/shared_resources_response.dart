@@ -1,7 +1,4 @@
-import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/parsers/resources.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/phylum_api_types.dart';
+part of 'responses.dart';
 
 class SharedResourcesResponse extends PhylumApiSuccessResponse {
   final Iterable<ResourcesCompanion> resources;

@@ -3,9 +3,9 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_add.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_remove.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/parsers/parsers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/bookmarks_request.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 
 const keyLastBookmarkFetch = "lastBookmarksFetch";
 

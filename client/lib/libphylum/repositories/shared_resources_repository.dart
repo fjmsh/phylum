@@ -1,6 +1,5 @@
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/parsers/parsers.dart';
-import 'package:phylum/libphylum/parsers/shared.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/shared_resources_request.dart';
 

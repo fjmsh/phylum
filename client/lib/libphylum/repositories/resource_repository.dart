@@ -10,10 +10,9 @@ import 'package:phylum/libphylum/actions/action_resource_upload.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
-import 'package:phylum/libphylum/parsers/parsers.dart';
-import 'package:phylum/libphylum/parsers/resources.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_detail_request.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 
 class ResourceRepository {

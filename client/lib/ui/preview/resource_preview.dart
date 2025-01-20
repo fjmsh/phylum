@@ -10,9 +10,9 @@ import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
-import 'package:phylum/libphylum/parsers/parsers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_contents_request.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:printing/printing.dart';
@@ -226,7 +226,7 @@ class _ResourcePreviewBuilderState extends State<ResourcePreviewBuilder> {
       final account = context.read<PhylumAccount>();
       final response = await account.apiClient.dispatchRequestRaw(ResourceContentsRequest(widget.resource.id));
       if (response.statusCode < 200 || response.statusCode > 300) {
-        final error = parseErrorResponse(await response.bodyString()).message;
+        final error = PhylumApiErrorResponse.fromResponseBody(await response.bodyString()).message;
         _error = error;
         _downloading = false;
         if (mounted) {

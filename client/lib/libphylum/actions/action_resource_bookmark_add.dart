@@ -2,8 +2,8 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_remove.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/parsers/parsers.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 
 import 'action_resource.dart';
 

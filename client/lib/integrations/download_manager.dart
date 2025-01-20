@@ -4,9 +4,9 @@ import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart' as p;
 import 'package:phylum/integrations/directories.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/parsers/parsers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_contents_request.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/logging.dart';
 import 'package:state_notifier/state_notifier.dart';
 
@@ -42,7 +42,7 @@ class DownloadManager extends StateNotifier<DownloadManagerState> {
       task.status = const DownloadStatusStarting();
       final response = await account.apiClient.dispatchRequestRaw(ResourceContentsRequest(task.resourceId));
       if (response.statusCode < 200 || response.statusCode > 300) {
-        final error = parseErrorResponse(await response.bodyString());
+        final error = PhylumApiErrorResponse.fromResponseBody(await response.bodyString());
         task.status = DownloadStatusError(error.message);
         return;
       }

@@ -1,10 +1,9 @@
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/parsers/parsers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/requests/users_list_request.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 
 class UserRepository {
   final PhylumAccount account;
@@ -33,29 +32,5 @@ class UserRepository {
 
   String getUserDisplayName(String username) {
     return _users[username]?.display ?? username;
-  }
-}
-
-class UserListResponse extends PhylumApiSuccessResponse {
-  final Iterable<User> users;
-
-  @override
-  Iterable<(Type, String)> get updatedObjects => const [];
-
-  @override
-  Future<void> process(PhylumAccount account) async {
-    await account.db.batch((batch) {
-      batch.insertAllOnConflictUpdate(account.db.users, users);
-    });
-  }
-
-  UserListResponse({required this.users});
-
-  factory UserListResponse.fromResponse(Map<String, dynamic> data) {
-    final users = (data["users"] as List).cast<Map>().map((u) => User(
-          username: data['username'],
-          display: data['display'],
-        ));
-    return UserListResponse(users: users);
   }
 }

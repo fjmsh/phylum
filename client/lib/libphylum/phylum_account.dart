@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/repositories/bookmark_repository.dart';
 import 'package:phylum/libphylum/repositories/shared_resources_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
 import 'package:phylum/libphylum/phylum_change_tracker.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/logging.dart';
 
 const _persistKeyAccessToken = 'accessToken';
