@@ -100,7 +100,7 @@ class ExplorerPageShared extends ExplorerPage {
 
   @override
   Future<bool> refresh(PhylumAccount account) {
-    return account.myListsRepository.refreshShared().then((result) => result.success);
+    return account.sharedResourcesRepository.refresh().then((result) => result.success);
   }
 
   @override
