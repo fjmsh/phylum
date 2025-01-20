@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/parsers/parsers.dart';
+import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/repositories/my_lists_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';

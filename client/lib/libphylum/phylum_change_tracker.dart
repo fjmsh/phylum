@@ -8,6 +8,9 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 
+const _remoteResourcesBoxName = 'remote_resources';
+const _remoteBookmarksBoxName = 'remote_bookmarks';
+
 class PhylumChangeTracker extends LocalChangeTracker<PhylumAccount> {
   PhylumChangeTracker({required super.account});
 
@@ -15,6 +18,7 @@ class PhylumChangeTracker extends LocalChangeTracker<PhylumAccount> {
   Future<void> initialize() async {
     super.initialize();
     await registerTracker(await ResourceChangeTracker.create(account));
+    await registerTracker(await BookmarkChangeTracker.create(account));
   }
 
   Future<int> create(String id, String parent, String name, bool dir, DateTime timestamp) {
@@ -30,54 +34,95 @@ class PhylumChangeTracker extends LocalChangeTracker<PhylumAccount> {
       mode: InsertMode.insertOrReplace,
     );
   }
-
-  Future<void> update(String id, Insertable<Resource> update) {
-    return (account.db.resources.update()..where((f) => f.id.equals(id))).write(update);
-  }
 }
 
 class ResourceChangeTracker extends TypedChangeTracker<PhylumAccount, Resource> {
   late final PhylumAccount account;
-  late final LazyBox<Resource?> _serverDataBox;
+  late final LazyBox<Resource?> _remoteDataBox;
 
   @override
   String get typeName => 'resource';
 
-  ResourceChangeTracker._(this.account, this._serverDataBox, super._remoteData);
+  ResourceChangeTracker._(this.account, this._remoteDataBox, super._remoteData);
 
   static Future<ResourceChangeTracker> create(PhylumAccount account) async {
     if (!Hive.isAdapterRegistered(const ResourceAdapter().typeId)) {
       Hive.registerAdapter(const ResourceAdapter());
     }
-    final box = await account.openBox<Resource>('server_data');
+    final box = await account.openBox<Resource>(_remoteResourcesBoxName);
     final remoteData = Map<String, Resource?>.fromIterable(box.keys, value: (key) => box.get(key));
     await box.close();
-    return ResourceChangeTracker._(account, await account.openLazyBox('server_data'), remoteData);
+    return ResourceChangeTracker._(account, await account.openLazyBox(_remoteResourcesBoxName), remoteData);
   }
 
   @override
   Future<void> persistRemoteData(String objectId, Resource? data) {
-    return _serverDataBox.put(objectId, data);
+    return _remoteDataBox.put(objectId, data);
   }
 
   @override
   Future<void> discardRemoteData(String objectId) {
-    return _serverDataBox.delete(objectId);
+    return _remoteDataBox.delete(objectId);
   }
 
   @override
-  Future<Resource?> load(String objectId) {
+  Future<Resource?> get(String objectId) {
     return account.db.getResource(objectId);
   }
 
   @override
-  Future<void> update(String objectId, Resource data) async {
-    await (account.db.resources.update()..where((f) => f.id.equals(objectId))).write(data);
+  Future<void> put(String objectId, Resource data) {
+    return account.db.resources.insertOne(data, mode: InsertMode.insertOrReplace);
   }
 
   @override
   Future<void> delete(String objectId) async {
     await account.db.resources.deleteWhere((r) => r.id.equals(objectId));
+  }
+}
+
+class BookmarkChangeTracker extends TypedChangeTracker<PhylumAccount, Bookmark> {
+  late final PhylumAccount account;
+  late final LazyBox<Bookmark?> _remoteDataBox;
+
+  @override
+  String get typeName => 'bookmark';
+
+  BookmarkChangeTracker._(this.account, this._remoteDataBox, super._remoteData);
+
+  static Future<BookmarkChangeTracker> create(PhylumAccount account) async {
+    if (!Hive.isAdapterRegistered(const BookmarkAdapter().typeId)) {
+      Hive.registerAdapter(const BookmarkAdapter());
+    }
+    final box = await account.openBox<Bookmark>(_remoteBookmarksBoxName);
+    final remoteData = Map<String, Bookmark?>.fromIterable(box.keys, value: (key) => box.get(key));
+    await box.close();
+    return BookmarkChangeTracker._(account, await account.openLazyBox(_remoteBookmarksBoxName), remoteData);
+  }
+
+  @override
+  Future<void> persistRemoteData(String objectId, Bookmark? data) {
+    return _remoteDataBox.put(objectId, data);
+  }
+
+  @override
+  Future<void> discardRemoteData(String objectId) {
+    return _remoteDataBox.delete(objectId);
+  }
+
+  @override
+  Future<Bookmark?> get(String objectId) {
+    return (account.db.bookmarks.select()..where((o) => o.resourceId.equals(objectId))).getSingleOrNull();
+  }
+
+  @override
+  Future<void> put(String objectId, Bookmark data) {
+    return account.db.bookmarks.insertOne(data, mode: InsertMode.insertOrReplace);
+  }
+
+  @override
+  Future<void> delete(String objectId) async {
+    await account.db.bookmarks.deleteWhere((r) => r.resourceId.equals(objectId));
   }
 }
 
@@ -96,6 +141,26 @@ class ResourceAdapter implements TypeAdapter<Resource?> {
 
   @override
   void write(BinaryWriter writer, Resource? obj) {
+    writer.writeByte(0); // Version marker, in case we need to change something in the future
+    writer.writeString(obj?.toJsonString() ?? '');
+  }
+}
+
+class BookmarkAdapter implements TypeAdapter<Bookmark?> {
+  const BookmarkAdapter();
+
+  @override
+  int get typeId => 2;
+
+  @override
+  Bookmark? read(BinaryReader reader) {
+    reader.readByte();
+    final data = reader.readString();
+    return data.isEmpty ? null : Bookmark.fromJson(json.decode(data));
+  }
+
+  @override
+  void write(BinaryWriter writer, Bookmark? obj) {
     writer.writeByte(0); // Version marker, in case we need to change something in the future
     writer.writeString(obj?.toJsonString() ?? '');
   }

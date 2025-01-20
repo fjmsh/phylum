@@ -1,8 +1,7 @@
-import 'dart:async';
-
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/parsers/parsers.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 import 'action_resource.dart';
@@ -19,6 +18,24 @@ class ResourceBookmarkRemoveAction extends ResourceAction with JsonApiAction {
 
   @override
   String get endpoint => '/api/v1/my/bookmarks/remove/$resourceId';
+
+  @override
+  Map<String, dynamic>? get requestBody => null;
+
+  @override
+  ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, BookmarkResponse.fromResponse);
+
+  @override
+  List<LocalChange> get localChanges => [RemoveBookmarkChange(resourceId)];
+
+  @override
+  String get description => 'Removing Bookmark: $bookmarkName';
+
+  @override
+  Map<String, dynamic> get props => {
+        'resourceId': resourceId,
+        'bookmarkName': bookmarkName,
+      };
 
   final String bookmarkName;
 
@@ -39,39 +56,22 @@ class ResourceBookmarkRemoveAction extends ResourceAction with JsonApiAction {
   }
 
   @override
-  Map<String, dynamic> toMap() => {
-        'resourceId': resourceId,
-        'bookmarkName': bookmarkName,
-      };
-
-  @override
-  String generateDescription() {
-    return 'Removing Bookmark: $bookmarkName';
-  }
-
-  @override
-  Map<String, dynamic>? generateRequestBody() => null;
-
-  @override
-  Future<void> applyOptimisticUpdate() {
-    return account.myListsRepository.updateBookmark(resourceId, BookmarksCompanion(deleted: Value(true)));
-  }
-
-  @override
-  Future<void> revertOptimisticUpdate() {
-    return account.myListsRepository.updateBookmark(resourceId, BookmarksCompanion(deleted: Value(false)));
-  }
-
-  @override
-  FutureOr<void> processResponse(ApiResponse response) async {
-    if (response is PhylumApiSuccessResponse) {
-      await account.myListsRepository.processSingleBookmarkResponse(response.data);
-    }
-  }
-
-  @override
   bool dependsOn(PhylumAction action) =>
       action is ResourceAction &&
-      (action is ResourceCreateAction || action is ResourceBookmarkAddAction || action is ResourceBookmarkRemoveAction) &&
+      (action is ResourceCreateAction ||
+          action is ResourceBookmarkAddAction ||
+          action is ResourceBookmarkRemoveAction) &&
       action.resourceId == resourceId;
+}
+
+class RemoveBookmarkChange extends LocalChange<Bookmark> {
+  @override
+  final String objectId;
+
+  const RemoveBookmarkChange(this.objectId);
+
+  @override
+  Bookmark? apply(Bookmark? data) {
+    return data?.copyWithCompanion(BookmarksCompanion(deleted: Value(true)));
+  }
 }

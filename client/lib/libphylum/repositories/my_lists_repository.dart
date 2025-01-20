@@ -46,18 +46,6 @@ class MyListsRepository {
     return account.db.selectBookmarks().watch();
   }
 
-  Future<int> insertOrReplaceBookmark(Bookmark bookmark) {
-    return account.db.bookmarks.insertOne(bookmark, mode: InsertMode.insertOrReplace);
-  }
-
-  Future<int> updateBookmark(String id, Insertable<Bookmark> update) {
-    return (account.db.bookmarks.update()..where((b) => b.resourceId.equals(id))).write(update);
-  }
-
-  Future<int> deleteBookmark(String id) {
-    return account.db.bookmarks.deleteWhere((f) => f.resourceId.equals(id));
-  }
-
   Selectable<int> countBookmarks(Iterable<String> ids) {
     return account.db.bookmarks.count(where: (b) => b.resourceId.isIn(ids) & b.deleted.equals(false));
   }
@@ -65,22 +53,8 @@ class MyListsRepository {
   Future<ApiResult> refreshBookmarks() async {
     return account.apiClient.sendRequest(
       BookmarksRequest(since: account.getPersisted(keyLastBookmarkFetch) as int?),
-      callback: (request, response) async {
-        if (response is PhylumApiSuccessResponse) {
-          await processBookmarksResponse(response.data);
-        }
-      },
+      (request, response) => parseJsonMapResponse(response, BookmarkListResponse.fromResponse),
     );
-  }
-
-  Future processBookmarksResponse(Map<String, dynamic> data) async {
-    final db = account.db;
-    final bookmarks =
-        (data["bookmarks"] as List).cast<Map>().map((u) => parseBookmarkObject(u.cast<String, dynamic>()));
-    await db.batch((batch) {
-      batch.insertAllOnConflictUpdate(db.bookmarks, bookmarks);
-    });
-    account.persist(keyLastBookmarkFetch, data["until"]);
   }
 
   Future processSharedResourcesResponse(Map<String, dynamic> data) async {
@@ -94,11 +68,5 @@ class MyListsRepository {
       batch.insertAll(db.shared, shared);
     });
     account.persist(keyLastBookmarkFetch, data["until"]);
-  }
-
-  Future processSingleBookmarkResponse(Map<String, dynamic> data) async {
-    final db = account.db;
-    final bookmark = parseBookmarkObject((data as Map).cast<String, dynamic>());
-    return db.bookmarks.insertOnConflictUpdate(bookmark);
   }
 }

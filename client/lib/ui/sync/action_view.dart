@@ -29,7 +29,7 @@ class ActionView extends StatelessWidget {
 
   Widget buildSimpleInfoTile(BuildContext context, ActionStatus status) {
     return ListTile(
-      title: Text(action.generateDescription()),
+      title: Text(action.description),
       subtitle: Text(status.toString()),
       trailing: IconButton(
         onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id),
@@ -40,7 +40,7 @@ class ActionView extends StatelessWidget {
 
   Widget buildProgressTile(BuildContext context, int done, int total) {
     return ListTile(
-        title: Text(action.generateDescription()),
+        title: Text(action.description),
         subtitle: LinearProgressIndicator(
           value: total == 0 ? null : (done * 1.0 / total),
         ));
@@ -50,7 +50,7 @@ class ActionView extends StatelessWidget {
     final showRenameOptions = error is PhylumApiErrorResponse &&
         (error.code == "resource_name_conflict" || error.code == "resource_name_invalid");
     return ListTile(
-      title: Text(action.generateDescription(), overflow: TextOverflow.fade),
+      title: Text(action.description, overflow: TextOverflow.fade),
       subtitle: Text(error.description),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
