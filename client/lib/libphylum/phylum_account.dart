@@ -4,7 +4,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/repositories/bookmark_repository.dart';
-import 'package:phylum/libphylum/repositories/my_lists_repository.dart';
+import 'package:phylum/libphylum/repositories/shared_resources_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
 import 'package:phylum/libphylum/phylum_change_tracker.dart';
@@ -19,7 +19,7 @@ class PhylumAccount extends Account<PhylumAccount> {
   late final db = AppDatabase(accountId: id);
   late final resourceRepository = ResourceRepository(account: this);
   late final userRepository = UserRepository(account: this);
-  late final myListsRepository = MyListsRepository(account: this);
+  late final myListsRepository = SharedResourcesRepository(account: this);
   late final bookmarkRepository = BookmarkRepository(account: this);
   @override
   late final changeTracker = PhylumChangeTracker(account: this);

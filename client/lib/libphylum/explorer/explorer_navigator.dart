@@ -1,3 +1,4 @@
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:state_notifier/state_notifier.dart';
 
@@ -43,7 +44,7 @@ class ExplorerNavigator extends StateNotifier<ExplorerNavigatorState> {
         forward: const [],
       );
       if (page is ExplorerPageFolder && _account != null && page.folderId != _account.userHome) {
-        _account.myListsRepository.markResourceAccessed(page.folderId);
+        _account.db.markResourceAccess(page.folderId);
       }
     }
   }

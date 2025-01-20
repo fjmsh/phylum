@@ -9,6 +9,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/parsers/parsers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_contents_request.dart';
@@ -26,7 +27,7 @@ class ResourcePreview extends StatefulWidget {
   const ResourcePreview({super.key, required this.resources, required this.index});
 
   static Future<void> showPreview(BuildContext context, List<Resource> resources, int index) async {
-    context.read<PhylumAccount>().myListsRepository.markResourceAccessed(resources[index].id);
+    context.read<PhylumAccount>().db.markResourceAccess(resources[index].id);
     return showDialog(context: context, builder: (context) => ResourcePreview(resources: resources, index: index));
   }
 

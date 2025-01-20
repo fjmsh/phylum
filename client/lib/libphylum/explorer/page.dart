@@ -24,7 +24,8 @@ class ExplorerPageFolder extends ExplorerPage {
   ExplorerPageFolder({required this.folderId});
 
   @override
-  Future<bool> refresh(PhylumAccount account) => account.resourceRepository.requestResource(folderId).then((result) => result.success);
+  Future<bool> refresh(PhylumAccount account) =>
+      account.resourceRepository.requestResource(folderId).then((result) => result.success);
 
   @override
   Stream<Resource?> watchResource(PhylumAccount account) => account.db.watchResource(folderId);
@@ -40,7 +41,9 @@ class ExplorerPageFolder extends ExplorerPage {
         p[index] = ParentsResult(id: account.userHome, name: 'My Files');
       } else {
         index = p.lastIndexWhere((r) =>
-            r.permissions != null && ((jsonDecode(r.permissions!) as Map).cast<String, Permission>()[account.userName] ?? 0) & permissionRead != 0);
+            r.permissions != null &&
+            ((jsonDecode(r.permissions!) as Map).cast<String, Permission>()[account.userName] ?? 0) & permissionRead !=
+                0);
         if (index < 0) {
           index = 0;
         }
@@ -76,7 +79,7 @@ class ExplorerPageRecents extends ExplorerPage {
 
   @override
   Stream<List<Resource>> watchChildren(PhylumAccount account) {
-    return account.myListsRepository.watchRecents();
+    return account.db.selectRecents().watch();
   }
 
   @override
@@ -107,7 +110,7 @@ class ExplorerPageShared extends ExplorerPage {
 
   @override
   Stream<List<Resource>> watchChildren(PhylumAccount account) {
-    return account.myListsRepository.watchShared();
+    return account.db.selectShared().watch();
   }
 
   @override

@@ -28,6 +28,10 @@ extension ResourceHelpers on AppDatabase {
     return parents(id).watch();
   }
 
+  Future<void> markResourceAccess(String id) {
+    return recents.insertOnConflictUpdate(Recent(resourceId: id, accessed: DateTime.now()));
+  }
+
   SimpleSelectStatement<Resources, Resource> _selectResource(String id) {
     return resources.select()..where((f) => f.id.equals(id) & f.deleted.equals(false));
   }
