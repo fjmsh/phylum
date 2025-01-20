@@ -29,10 +29,15 @@ class NavList extends StatelessWidget {
                     if (action == null)
                       const PopupMenuItem(enabled: false, height: 16, child: Divider())
                     else
-                      PopupMenuItem(child: Text(action.descripiton), onTap: () => Actions.maybeInvoke(context, action.intent)),
+                      PopupMenuItem(
+                          child: Text(action.descripiton), onTap: () => Actions.maybeInvoke(context, action.intent)),
                 ],
                 child: FloatingActionButton.extended(
-                    icon: const Icon(Icons.add), label: const Text('New'), elevation: 0, enableFeedback: false, onPressed: null),
+                    icon: const Icon(Icons.add),
+                    label: const Text('New'),
+                    elevation: 0,
+                    enableFeedback: false,
+                    onPressed: null),
               ),
             ),
           ListTile(
@@ -51,7 +56,7 @@ class NavList extends StatelessWidget {
             onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageShared()),
           ),
           StreamBuilder<List<SelectBookmarksResult>>(
-            stream: context.read<PhylumAccount>().myListsRepository.watchBookmarks(),
+            stream: context.read<PhylumAccount>().db.selectBookmarks().watch(),
             initialData: const [],
             builder: (context, snapshot) {
               return Theme(

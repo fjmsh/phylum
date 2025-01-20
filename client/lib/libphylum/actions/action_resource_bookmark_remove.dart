@@ -39,17 +39,10 @@ class ResourceBookmarkRemoveAction extends ResourceAction with JsonApiAction {
 
   final String bookmarkName;
 
-  ResourceBookmarkRemoveAction._({required super.resourceId, required this.bookmarkName});
-
-  ResourceBookmarkRemoveAction({
-    required Resource r,
-  }) : this._(
-          resourceId: r.id,
-          bookmarkName: r.name,
-        );
+  ResourceBookmarkRemoveAction({required super.resourceId, required this.bookmarkName});
 
   factory ResourceBookmarkRemoveAction.fromMap(Map<String, dynamic> map) {
-    return ResourceBookmarkRemoveAction._(
+    return ResourceBookmarkRemoveAction(
       resourceId: map['resourceId'],
       bookmarkName: map['bookmarkName'],
     );

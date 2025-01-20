@@ -1,11 +1,10 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
-import 'package:phylum/libphylum/actions/action_resource_bookmark_add.dart';
-import 'package:phylum/libphylum/actions/action_resource_bookmark_remove.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -144,16 +143,16 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
         if (name == null || !context.mounted) {
           return;
         }
-        account.addAction(ResourceBookmarkAddAction(r: r, name: name.isEmpty ? '' : name));
+        account.bookmarkRepository.addBookmark(resource: r, name: name);
       } else {
         for (final r in resources) {
-          account.addAction(ResourceBookmarkAddAction(r: r));
+          account.bookmarkRepository.addBookmark(resource: r);
         }
       }
       break;
     case MenuOption.bookmarkRemove:
       for (final r in resources) {
-        account.addAction(ResourceBookmarkRemoveAction(r: r));
+        account.bookmarkRepository.removeBookmark(resource: r);
       }
       break;
     case MenuOption.newFolder:
@@ -176,5 +175,7 @@ bool isFilesOnly(PhylumAccount account, Iterable<Resource> resources) => resourc
 Future<bool> notAllBookmarked(PhylumAccount account, Iterable<Resource> resources) =>
     allBookmarked(account, resources).then((b) => !b);
 
-Future<bool> allBookmarked(PhylumAccount account, Iterable<Resource> resources) =>
-    account.myListsRepository.countBookmarks(resources.map((r) => r.id)).getSingle().then((c) => c == resources.length);
+Future<bool> allBookmarked(PhylumAccount account, Iterable<Resource> resources) => account.db.bookmarks
+    .count(where: (b) => b.resourceId.isIn(resources.map((r) => r.id)) & b.deleted.equals(false))
+    .getSingle()
+    .then((c) => c == resources.length);

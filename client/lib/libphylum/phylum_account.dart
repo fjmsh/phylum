@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/libphylum/repositories/bookmark_repository.dart';
 import 'package:phylum/libphylum/repositories/my_lists_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
@@ -19,6 +20,7 @@ class PhylumAccount extends Account<PhylumAccount> {
   late final resourceRepository = ResourceRepository(account: this);
   late final userRepository = UserRepository(account: this);
   late final myListsRepository = MyListsRepository(account: this);
+  late final bookmarkRepository = BookmarkRepository(account: this);
   @override
   late final changeTracker = PhylumChangeTracker(account: this);
 
@@ -64,7 +66,7 @@ class PhylumAccount extends Account<PhylumAccount> {
     _accessToken = _initialAccessToken ?? accessToken;
 
     await userRepository.initialize();
-    await myListsRepository.initialize();
+    await bookmarkRepository.initialize();
 
     late final void Function() l;
     l = apiClient.addListener((request, errorResponse) {

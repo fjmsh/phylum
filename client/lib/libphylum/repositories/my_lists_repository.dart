@@ -1,26 +1,15 @@
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/parsers/parsers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
-import 'package:phylum/libphylum/requests/bookmarks_request.dart';
 import 'package:phylum/libphylum/requests/shared_resources_request.dart';
-
-const keyLastBookmarkFetch = "lastBookmarksFetch";
 
 class MyListsRepository {
   final PhylumAccount account;
 
   MyListsRepository({required this.account});
-
-  Future<void> initialize({bool clearLastFetchTimestamp = false}) async {
-    if (clearLastFetchTimestamp) {
-      await account.persist(keyLastBookmarkFetch, null);
-    }
-    refreshBookmarks();
-  }
 
   Stream<List<Resource>> watchRecents() {
     return account.db.selectRecents().watch();
@@ -42,21 +31,6 @@ class MyListsRepository {
     });
   }
 
-  Stream<List<SelectBookmarksResult>> watchBookmarks() {
-    return account.db.selectBookmarks().watch();
-  }
-
-  Selectable<int> countBookmarks(Iterable<String> ids) {
-    return account.db.bookmarks.count(where: (b) => b.resourceId.isIn(ids) & b.deleted.equals(false));
-  }
-
-  Future<ApiResult> refreshBookmarks() async {
-    return account.apiClient.sendRequest(
-      BookmarksRequest(since: account.getPersisted(keyLastBookmarkFetch) as int?),
-      (request, response) => parseJsonMapResponse(response, BookmarkListResponse.fromResponse),
-    );
-  }
-
   Future processSharedResourcesResponse(Map<String, dynamic> data) async {
     final db = account.db;
     final resources =
@@ -67,6 +41,5 @@ class MyListsRepository {
       batch.deleteAll(db.shared);
       batch.insertAll(db.shared, shared);
     });
-    account.persist(keyLastBookmarkFetch, data["until"]);
   }
 }

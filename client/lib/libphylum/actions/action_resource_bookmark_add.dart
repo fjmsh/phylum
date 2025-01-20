@@ -41,23 +41,14 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
   final String bookmarkName;
   final int createdMillis;
 
-  ResourceBookmarkAddAction._({
+  ResourceBookmarkAddAction({
     required super.resourceId,
     required this.bookmarkName,
     required this.createdMillis,
   });
 
-  ResourceBookmarkAddAction({
-    required Resource r,
-    String? name,
-  }) : this._(
-          resourceId: r.id,
-          bookmarkName: name ?? r.name,
-          createdMillis: DateTime.now().millisecondsSinceEpoch,
-        );
-
   factory ResourceBookmarkAddAction.fromMap(Map<String, dynamic> map) {
-    return ResourceBookmarkAddAction._(
+    return ResourceBookmarkAddAction(
       resourceId: map['resourceId'],
       bookmarkName: map['bookmarkName'],
       createdMillis: map['createdMillis'],

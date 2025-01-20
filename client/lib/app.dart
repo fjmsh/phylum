@@ -60,7 +60,7 @@ class _PhylumAppState extends State<PhylumApp> {
       if (state == AppLifecycleState.resumed) {
         final account = context.read<PhylumAccount>();
         account.userRepository.refresh();
-        account.myListsRepository.refreshBookmarks();
+        account.bookmarkRepository.refresh();
       }
     });
   }
