@@ -18,13 +18,10 @@ abstract class ResourceCreateAction extends ResourceBindAction {
   FutureOr<void> processResponse(ApiResponse response) async {
     if (response is PartialResourceResponse) {
       if (response.id != resourceId) {
-        account.actionQueue.updateActions((PhylumAction action) {
-          if (action is ResourceAction && action.resourceId == resourceId && action != this) {
-            action.updateResourceId(parsedId);
-            return true;
-          }
-          return false;
-        });
+        account.actionQueue.updateActions(
+          (PhylumAction action) => action is ResourceAction && action.resourceId == resourceId,
+          (action) => (action as ResourceAction).setResourceId(response.id),
+        );
       }
     }
   }

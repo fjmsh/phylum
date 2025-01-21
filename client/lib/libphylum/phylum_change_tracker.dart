@@ -7,6 +7,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/phylum_api_types.dart';
 
 const _remoteResourcesBoxName = 'remote_resources';
 const _remoteBookmarksBoxName = 'remote_bookmarks';
@@ -15,10 +16,10 @@ class PhylumChangeTracker extends LocalChangeTracker<PhylumAccount> {
   PhylumChangeTracker({required super.account});
 
   @override
-  Future<void> initialize() async {
-    super.initialize();
+  Future<void> initialize(Iterable<PhylumAction> actions) async {
     await registerTracker(await ResourceChangeTracker.create(account));
     await registerTracker(await BookmarkChangeTracker.create(account));
+    super.initialize(actions);
   }
 
   Future<int> create(String id, String parent, String name, bool dir, DateTime timestamp) {
@@ -56,22 +57,22 @@ class ResourceChangeTracker extends TypedChangeTracker<PhylumAccount, Resource> 
   }
 
   @override
-  Future<void> persistRemoteData(String objectId, Resource? data) {
-    return _remoteDataBox.put(objectId, data);
+  Future<void> persistRemoteData(Map<String, Resource?> remoteData) {
+    return _remoteDataBox.putAll(remoteData);
   }
 
   @override
-  Future<void> discardRemoteData(String objectId) {
-    return _remoteDataBox.delete(objectId);
+  Future<void> discardRemoteData(Iterable<String> objectIds) {
+    return _remoteDataBox.deleteAll(objectIds);
   }
 
   @override
-  Future<Resource?> get(String objectId) {
+  Future<Resource?> load(String objectId) {
     return account.db.getResource(objectId);
   }
 
   @override
-  Future<void> put(String objectId, Resource data) {
+  Future<void> save(String objectId, Resource data) {
     return account.db.resources.insertOne(data, mode: InsertMode.insertOrReplace);
   }
 
@@ -101,22 +102,22 @@ class BookmarkChangeTracker extends TypedChangeTracker<PhylumAccount, Bookmark> 
   }
 
   @override
-  Future<void> persistRemoteData(String objectId, Bookmark? data) {
-    return _remoteDataBox.put(objectId, data);
+  Future<void> persistRemoteData(Map<String, Bookmark?> remoteData) {
+    return _remoteDataBox.putAll(remoteData);
   }
 
   @override
-  Future<void> discardRemoteData(String objectId) {
-    return _remoteDataBox.delete(objectId);
+  Future<void> discardRemoteData(Iterable<String> objectIds) {
+    return _remoteDataBox.deleteAll(objectIds);
   }
 
   @override
-  Future<Bookmark?> get(String objectId) {
+  Future<Bookmark?> load(String objectId) {
     return (account.db.bookmarks.select()..where((o) => o.resourceId.equals(objectId))).getSingleOrNull();
   }
 
   @override
-  Future<void> put(String objectId, Bookmark data) {
+  Future<void> save(String objectId, Bookmark data) {
     return account.db.bookmarks.insertOne(data, mode: InsertMode.insertOrReplace);
   }
 

@@ -21,8 +21,6 @@ class PhylumAccount extends Account<PhylumAccount> {
   late final userRepository = UserRepository(account: this);
   late final sharedResourcesRepository = SharedResourcesRepository(account: this);
   late final bookmarkRepository = BookmarkRepository(account: this);
-  @override
-  late final changeTracker = PhylumChangeTracker(account: this);
 
   final _dispatcher = SimulatedBadNetworkDispatcher.good(dropRate: 0);
   // final _dispatcher = HttpClientDispatcher();
@@ -79,6 +77,9 @@ class PhylumAccount extends Account<PhylumAccount> {
       }
     });
   }
+
+  @override
+  LocalChangeTracker<PhylumAccount> createChangeTracker() => PhylumChangeTracker(account: this);
 
   @override
   Future<void> transaction(Future<void> Function() fn) => db.transaction(fn);

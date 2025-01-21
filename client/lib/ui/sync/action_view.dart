@@ -93,7 +93,7 @@ class ActionView extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Retry',
-            onPressed: () => context.read<PhylumActionQueue>().retryAction(action.id),
+            onPressed: () => context.read<PhylumActionQueue>().retryAction(action),
           ),
           IconButton(
             icon: const Icon(Icons.block),

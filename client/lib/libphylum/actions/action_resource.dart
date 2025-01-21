@@ -12,7 +12,7 @@ abstract class ResourceAction extends PhylumAction {
 
   ResourceAction({required String resourceId}) : _resourceId = resourceId;
 
-  void updateResourceId(String resourceId) {
+  void setResourceId(String resourceId) {
     _resourceId = resourceId;
   }
 }

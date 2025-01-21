@@ -22,17 +22,23 @@ abstract class ResourceBindAction extends ResourceAction {
         _conflictResolution = conflictResolution;
 
   Future<void> updateConflictResolution(NameConflictResolution conflictResolution) {
-    _conflictResolution = conflictResolution;
-    return update();
+    return account.actionQueue.updateActions(
+      (action) => action == this,
+      (action) => (action as ResourceBindAction)._conflictResolution = conflictResolution,
+    );
   }
 
   Future<void> updateParent(String parent) {
-    _parent = parent;
-    return update();
+    return account.actionQueue.updateActions(
+      (action) => action == this,
+      (action) => (action as ResourceBindAction)._parent = parent,
+    );
   }
 
   Future<void> updateResourceName(String resourceName) {
-    _resourceName = resourceName;
-    return update();
+    return account.actionQueue.updateActions(
+      (action) => action == this,
+      (action) => (action as ResourceBindAction)._resourceName = resourceName,
+    );
   }
 }
