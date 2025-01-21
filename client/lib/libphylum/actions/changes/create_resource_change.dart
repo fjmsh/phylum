@@ -14,6 +14,9 @@ class CreateResourceChange extends LocalChange<Resource> {
   @override
   bool get persist => false;
 
+  @override
+  String get description => 'Creating';
+
   const CreateResourceChange({
     required this.objectId,
     required this.parent,

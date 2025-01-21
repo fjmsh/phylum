@@ -70,6 +70,9 @@ class AddBookmarkChange extends LocalChange<Bookmark> {
   final String bookmarkName;
   final int createdMillis;
 
+  @override
+  String get description => 'Adding Bookmark';
+
   const AddBookmarkChange(
     this.objectId, {
     required this.bookmarkName,

@@ -12,6 +12,9 @@ class UpdatePermissionsChange extends LocalChange<Resource> {
   final int permission;
   final DateTime timestamp;
 
+  @override
+  String get description => 'Updating Permissions';
+
   const UpdatePermissionsChange({
     required this.objectId,
     required this.username,

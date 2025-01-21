@@ -21,20 +21,6 @@ class PhylumChangeTracker extends LocalChangeTracker<PhylumAccount> {
     await registerTracker(await BookmarkChangeTracker.create(account));
     super.initialize(actions);
   }
-
-  Future<int> create(String id, String parent, String name, bool dir, DateTime timestamp) {
-    return account.db.resources.insertOne(
-      ResourcesCompanion.insert(
-        id: id,
-        name: name,
-        parent: Value(parent),
-        dir: dir,
-        created: Value(timestamp),
-        modified: Value(timestamp),
-      ),
-      mode: InsertMode.insertOrReplace,
-    );
-  }
 }
 
 class ResourceChangeTracker extends TypedChangeTracker<PhylumAccount, Resource> {
@@ -67,8 +53,9 @@ class ResourceChangeTracker extends TypedChangeTracker<PhylumAccount, Resource> 
   }
 
   @override
-  Future<Resource?> load(String objectId) {
-    return account.db.getResource(objectId);
+  Future<Resource?> load(String objectId) async {
+    final data = await account.db.getResource(objectId);
+    return data;
   }
 
   @override

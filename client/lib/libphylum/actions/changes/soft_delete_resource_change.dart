@@ -5,6 +5,9 @@ class SoftDeleteResourceChange extends LocalChange<Resource> {
   @override
   final String objectId;
 
+  @override
+  String get description => 'Deleting';
+
   const SoftDeleteResourceChange({required this.objectId});
 
   @override

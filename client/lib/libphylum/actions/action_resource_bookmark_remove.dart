@@ -58,6 +58,9 @@ class RemoveBookmarkChange extends LocalChange<Bookmark> {
   @override
   final String objectId;
 
+  @override
+  String get description => 'Removing Bookmark';
+
   const RemoveBookmarkChange(this.objectId);
 
   @override

@@ -7,6 +7,9 @@ class MarkResourceModifiedChange extends LocalChange<Resource> {
   final String objectId;
   final DateTime timestamp;
 
+  @override
+  String get description => 'Updating Modified';
+
   const MarkResourceModifiedChange({
     required this.objectId,
     required this.timestamp,

@@ -9,6 +9,9 @@ class MoveResourceChange extends LocalChange<Resource> {
   final String? name;
   final DateTime timestamp;
 
+  @override
+  String get description => 'Moving';
+
   const MoveResourceChange({
     required this.objectId,
     required this.parent,
