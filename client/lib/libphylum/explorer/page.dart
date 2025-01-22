@@ -36,6 +36,11 @@ class ExplorerPageFolder extends ExplorerPage {
   @override
   Stream<List<ParentsResult>> watchParents(PhylumAccount account) {
     return account.db.watchParents(folderId).map((p) {
+      if (p.isEmpty) {
+        p = [
+          ParentsResult(id: folderId, name: 'Loading...'),
+        ];
+      }
       int index = p.indexWhere((r) => r.id == account.userHome);
       if (index >= 0) {
         p[index] = ParentsResult(id: account.userHome, name: 'My Files');
