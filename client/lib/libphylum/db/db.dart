@@ -22,14 +22,21 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.fromExecutor({required this.accountId, required QueryExecutor executor}) : super(executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) {
           return m.createAll();
         },
-        onUpgrade: (m, from, to) async {},
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            m.drop(orderedBookmarks);
+            m.drop(bookmarks);
+            m.create(bookmarks);
+            m.create(orderedBookmarks);
+          }
+        },
       );
 
   Future<void> dropDatabase() async {

@@ -1273,6 +1273,12 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
       type: DriftSqlType.string,
       requiredDuringInsert: true,
       $customConstraints: 'NOT NULL');
+  static const VerificationMeta _dirMeta = const VerificationMeta('dir');
+  late final GeneratedColumn<bool> dir = GeneratedColumn<bool>(
+      'dir', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL CHECK (deleted IN (0, 1))');
   static const VerificationMeta _createdMeta =
       const VerificationMeta('created');
   late final GeneratedColumn<int> created = GeneratedColumn<int>(
@@ -1288,7 +1294,8 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
       requiredDuringInsert: true,
       $customConstraints: 'NOT NULL CHECK (deleted IN (0, 1))');
   @override
-  List<GeneratedColumn> get $columns => [resourceId, name, created, deleted];
+  List<GeneratedColumn> get $columns =>
+      [resourceId, name, dir, created, deleted];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1312,6 +1319,12 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
           _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
     } else if (isInserting) {
       context.missing(_nameMeta);
+    }
+    if (data.containsKey('dir')) {
+      context.handle(
+          _dirMeta, dir.isAcceptableOrUnknown(data['dir']!, _dirMeta));
+    } else if (isInserting) {
+      context.missing(_dirMeta);
     }
     if (data.containsKey('created')) {
       context.handle(_createdMeta,
@@ -1338,6 +1351,8 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
           .read(DriftSqlType.string, data['${effectivePrefix}resource_id'])!,
       name: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      dir: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}dir'])!,
       created: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}created'])!,
       deleted: attachedDatabase.typeMapping
@@ -1357,11 +1372,13 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
 class Bookmark extends DataClass implements Insertable<Bookmark> {
   final String resourceId;
   final String name;
+  final bool dir;
   final int created;
   final bool deleted;
   const Bookmark(
       {required this.resourceId,
       required this.name,
+      required this.dir,
       required this.created,
       required this.deleted});
   @override
@@ -1369,6 +1386,7 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
     final map = <String, Expression>{};
     map['resource_id'] = Variable<String>(resourceId);
     map['name'] = Variable<String>(name);
+    map['dir'] = Variable<bool>(dir);
     map['created'] = Variable<int>(created);
     map['deleted'] = Variable<bool>(deleted);
     return map;
@@ -1378,6 +1396,7 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
     return BookmarksCompanion(
       resourceId: Value(resourceId),
       name: Value(name),
+      dir: Value(dir),
       created: Value(created),
       deleted: Value(deleted),
     );
@@ -1389,6 +1408,7 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
     return Bookmark(
       resourceId: serializer.fromJson<String>(json['resource_id']),
       name: serializer.fromJson<String>(json['name']),
+      dir: serializer.fromJson<bool>(json['dir']),
       created: serializer.fromJson<int>(json['created']),
       deleted: serializer.fromJson<bool>(json['deleted']),
     );
@@ -1399,16 +1419,22 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
     return <String, dynamic>{
       'resource_id': serializer.toJson<String>(resourceId),
       'name': serializer.toJson<String>(name),
+      'dir': serializer.toJson<bool>(dir),
       'created': serializer.toJson<int>(created),
       'deleted': serializer.toJson<bool>(deleted),
     };
   }
 
   Bookmark copyWith(
-          {String? resourceId, String? name, int? created, bool? deleted}) =>
+          {String? resourceId,
+          String? name,
+          bool? dir,
+          int? created,
+          bool? deleted}) =>
       Bookmark(
         resourceId: resourceId ?? this.resourceId,
         name: name ?? this.name,
+        dir: dir ?? this.dir,
         created: created ?? this.created,
         deleted: deleted ?? this.deleted,
       );
@@ -1417,6 +1443,7 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
       resourceId:
           data.resourceId.present ? data.resourceId.value : this.resourceId,
       name: data.name.present ? data.name.value : this.name,
+      dir: data.dir.present ? data.dir.value : this.dir,
       created: data.created.present ? data.created.value : this.created,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
     );
@@ -1427,6 +1454,7 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
     return (StringBuffer('Bookmark(')
           ..write('resourceId: $resourceId, ')
           ..write('name: $name, ')
+          ..write('dir: $dir, ')
           ..write('created: $created, ')
           ..write('deleted: $deleted')
           ..write(')'))
@@ -1434,13 +1462,14 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
   }
 
   @override
-  int get hashCode => Object.hash(resourceId, name, created, deleted);
+  int get hashCode => Object.hash(resourceId, name, dir, created, deleted);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Bookmark &&
           other.resourceId == this.resourceId &&
           other.name == this.name &&
+          other.dir == this.dir &&
           other.created == this.created &&
           other.deleted == this.deleted);
 }
@@ -1448,12 +1477,14 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
 class BookmarksCompanion extends UpdateCompanion<Bookmark> {
   final Value<String> resourceId;
   final Value<String> name;
+  final Value<bool> dir;
   final Value<int> created;
   final Value<bool> deleted;
   final Value<int> rowid;
   const BookmarksCompanion({
     this.resourceId = const Value.absent(),
     this.name = const Value.absent(),
+    this.dir = const Value.absent(),
     this.created = const Value.absent(),
     this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1461,16 +1492,19 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
   BookmarksCompanion.insert({
     required String resourceId,
     required String name,
+    required bool dir,
     required int created,
     required bool deleted,
     this.rowid = const Value.absent(),
   })  : resourceId = Value(resourceId),
         name = Value(name),
+        dir = Value(dir),
         created = Value(created),
         deleted = Value(deleted);
   static Insertable<Bookmark> custom({
     Expression<String>? resourceId,
     Expression<String>? name,
+    Expression<bool>? dir,
     Expression<int>? created,
     Expression<bool>? deleted,
     Expression<int>? rowid,
@@ -1478,6 +1512,7 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
     return RawValuesInsertable({
       if (resourceId != null) 'resource_id': resourceId,
       if (name != null) 'name': name,
+      if (dir != null) 'dir': dir,
       if (created != null) 'created': created,
       if (deleted != null) 'deleted': deleted,
       if (rowid != null) 'rowid': rowid,
@@ -1487,12 +1522,14 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
   BookmarksCompanion copyWith(
       {Value<String>? resourceId,
       Value<String>? name,
+      Value<bool>? dir,
       Value<int>? created,
       Value<bool>? deleted,
       Value<int>? rowid}) {
     return BookmarksCompanion(
       resourceId: resourceId ?? this.resourceId,
       name: name ?? this.name,
+      dir: dir ?? this.dir,
       created: created ?? this.created,
       deleted: deleted ?? this.deleted,
       rowid: rowid ?? this.rowid,
@@ -1507,6 +1544,9 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
+    }
+    if (dir.present) {
+      map['dir'] = Variable<bool>(dir.value);
     }
     if (created.present) {
       map['created'] = Variable<int>(created.value);
@@ -1525,6 +1565,7 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
     return (StringBuffer('BookmarksCompanion(')
           ..write('resourceId: $resourceId, ')
           ..write('name: $name, ')
+          ..write('dir: $dir, ')
           ..write('created: $created, ')
           ..write('deleted: $deleted, ')
           ..write('rowid: $rowid')
@@ -1584,13 +1625,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 
   Selectable<SelectBookmarksResult> selectBookmarks() {
     return customSelect(
-        'SELECT resource_id, name, created FROM bookmarks WHERE deleted = 0 ORDER BY created ASC',
+        'SELECT resource_id, name, dir, created FROM bookmarks WHERE deleted = 0 ORDER BY created ASC',
         variables: [],
         readsFrom: {
           bookmarks,
         }).map((QueryRow row) => SelectBookmarksResult(
           resourceId: row.read<String>('resource_id'),
           name: row.read<String>('name'),
+          dir: row.read<bool>('dir'),
           created: row.read<int>('created'),
         ));
   }
@@ -2681,6 +2723,7 @@ typedef $RecentsProcessedTableManager = ProcessedTableManager<
 typedef $BookmarksCreateCompanionBuilder = BookmarksCompanion Function({
   required String resourceId,
   required String name,
+  required bool dir,
   required int created,
   required bool deleted,
   Value<int> rowid,
@@ -2688,6 +2731,7 @@ typedef $BookmarksCreateCompanionBuilder = BookmarksCompanion Function({
 typedef $BookmarksUpdateCompanionBuilder = BookmarksCompanion Function({
   Value<String> resourceId,
   Value<String> name,
+  Value<bool> dir,
   Value<int> created,
   Value<bool> deleted,
   Value<int> rowid,
@@ -2721,6 +2765,9 @@ class $BookmarksFilterComposer extends Composer<_$AppDatabase, Bookmarks> {
   });
   ColumnFilters<String> get name => $composableBuilder(
       column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get dir => $composableBuilder(
+      column: $table.dir, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get created => $composableBuilder(
       column: $table.created, builder: (column) => ColumnFilters(column));
@@ -2760,6 +2807,9 @@ class $BookmarksOrderingComposer extends Composer<_$AppDatabase, Bookmarks> {
   ColumnOrderings<String> get name => $composableBuilder(
       column: $table.name, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<bool> get dir => $composableBuilder(
+      column: $table.dir, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<int> get created => $composableBuilder(
       column: $table.created, builder: (column) => ColumnOrderings(column));
 
@@ -2797,6 +2847,9 @@ class $BookmarksAnnotationComposer extends Composer<_$AppDatabase, Bookmarks> {
   });
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<bool> get dir =>
+      $composableBuilder(column: $table.dir, builder: (column) => column);
 
   GeneratedColumn<int> get created =>
       $composableBuilder(column: $table.created, builder: (column) => column);
@@ -2850,6 +2903,7 @@ class $BookmarksTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<String> resourceId = const Value.absent(),
             Value<String> name = const Value.absent(),
+            Value<bool> dir = const Value.absent(),
             Value<int> created = const Value.absent(),
             Value<bool> deleted = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -2857,6 +2911,7 @@ class $BookmarksTableManager extends RootTableManager<
               BookmarksCompanion(
             resourceId: resourceId,
             name: name,
+            dir: dir,
             created: created,
             deleted: deleted,
             rowid: rowid,
@@ -2864,6 +2919,7 @@ class $BookmarksTableManager extends RootTableManager<
           createCompanionCallback: ({
             required String resourceId,
             required String name,
+            required bool dir,
             required int created,
             required bool deleted,
             Value<int> rowid = const Value.absent(),
@@ -2871,6 +2927,7 @@ class $BookmarksTableManager extends RootTableManager<
               BookmarksCompanion.insert(
             resourceId: resourceId,
             name: name,
+            dir: dir,
             created: created,
             deleted: deleted,
             rowid: rowid,
@@ -2955,10 +3012,12 @@ class ParentsResult {
 class SelectBookmarksResult {
   final String resourceId;
   final String name;
+  final bool dir;
   final int created;
   SelectBookmarksResult({
     required this.resourceId,
     required this.name,
+    required this.dir,
     required this.created,
   });
 }

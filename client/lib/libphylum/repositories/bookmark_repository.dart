@@ -25,6 +25,7 @@ class BookmarkRepository {
     return account.addAction(ResourceBookmarkAddAction(
       resourceId: resource.id,
       bookmarkName: name == null || name.trim().isEmpty ? resource.name : name,
+      dir: resource.dir,
       createdMillis: DateTime.now().millisecondsSinceEpoch,
     ));
   }

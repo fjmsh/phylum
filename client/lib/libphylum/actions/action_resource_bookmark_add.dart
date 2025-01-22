@@ -26,7 +26,7 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
 
   @override
   List<LocalChange> get localChanges =>
-      [AddBookmarkChange(resourceId, bookmarkName: bookmarkName, createdMillis: createdMillis)];
+      [AddBookmarkChange(resourceId, bookmarkName: bookmarkName, dir: dir, createdMillis: createdMillis)];
 
   @override
   String get description => 'Adding Bookmark: $bookmarkName';
@@ -35,15 +35,18 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
   Map<String, dynamic> get props => {
         'resourceId': resourceId,
         'bookmarkName': bookmarkName,
+        'dir': dir,
         'createdMillis': createdMillis,
       };
 
   final String bookmarkName;
+  final bool dir;
   final int createdMillis;
 
   ResourceBookmarkAddAction({
     required super.resourceId,
     required this.bookmarkName,
+    required this.dir,
     required this.createdMillis,
   });
 
@@ -51,6 +54,7 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
     return ResourceBookmarkAddAction(
       resourceId: map['resourceId'],
       bookmarkName: map['bookmarkName'],
+      dir: map['dir'],
       createdMillis: map['createdMillis'],
     );
   }
@@ -68,6 +72,7 @@ class AddBookmarkChange extends LocalChange<Bookmark> {
   @override
   final String objectId;
   final String bookmarkName;
+  final bool dir;
   final int createdMillis;
 
   @override
@@ -76,6 +81,7 @@ class AddBookmarkChange extends LocalChange<Bookmark> {
   const AddBookmarkChange(
     this.objectId, {
     required this.bookmarkName,
+    required this.dir,
     required this.createdMillis,
   });
 
@@ -84,6 +90,7 @@ class AddBookmarkChange extends LocalChange<Bookmark> {
     return Bookmark(
       resourceId: objectId,
       name: bookmarkName,
+      dir: dir,
       created: createdMillis,
       deleted: false,
     );

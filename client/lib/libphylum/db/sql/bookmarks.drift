@@ -3,10 +3,11 @@ import 'resources.drift';
 CREATE TABLE IF NOT EXISTS bookmarks(
     resource_id TEXT NOT NULL PRIMARY KEY REFERENCES resources(id),
     name TEXT NOT NULL,
+    dir BOOLEAN NOT NULL CHECK (deleted IN (0, 1)),
     created INT NOT NULL,
     deleted BOOLEAN NOT NULL CHECK (deleted IN (0, 1))
 );
 
 CREATE INDEX IF NOT EXISTS ordered_bookmarks ON bookmarks(created);
 
-selectBookmarks: SELECT resource_id, name, created FROM bookmarks WHERE deleted = 0 ORDER BY created ASC;
+selectBookmarks: SELECT resource_id, name, dir, created FROM bookmarks WHERE deleted = 0 ORDER BY created ASC;

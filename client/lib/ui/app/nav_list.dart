@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
 import 'package:phylum/libphylum/explorer/page.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/button_downloads.dart';
 import 'package:phylum/ui/app/button_server_status.dart';
 import 'package:phylum/ui/app/fab_action.dart';
+import 'package:phylum/ui/preview/resource_preview.dart';
 import 'package:provider/provider.dart';
 
 class NavList extends StatelessWidget {
@@ -15,6 +17,7 @@ class NavList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final account = context.read<PhylumAccount>();
     return ExcludeFocusTraversal(
       child: ListView(
         children: [
@@ -56,7 +59,7 @@ class NavList extends StatelessWidget {
             onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageShared()),
           ),
           StreamBuilder<List<SelectBookmarksResult>>(
-            stream: context.read<PhylumAccount>().db.selectBookmarks().watch(),
+            stream: account.db.selectBookmarks().watch(),
             initialData: const [],
             builder: (context, snapshot) {
               return Theme(
@@ -69,7 +72,18 @@ class NavList extends StatelessWidget {
                       .map((b) => ListTile(
                             title: Text(b.name),
                             leading: Icon(null),
-                            onTap: () => Actions.maybeInvoke(context, NavToFolderIntent(folderId: b.resourceId)),
+                            onTap: () async {
+                              if (b.dir) {
+                                Actions.maybeInvoke(context, NavToFolderIntent(folderId: b.resourceId));
+                                return;
+                              }
+                              final resource = await account.db.getResource(b.resourceId);
+                              if (resource != null && context.mounted) {
+                                ResourcePreview.showPreview(context, [resource], 0);
+                                return;
+                              }
+                              // TODO: load resource from server
+                            },
                           ))
                       .toList(growable: false),
                 ),
