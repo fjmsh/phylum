@@ -59,7 +59,6 @@ class ResourceInfoView extends StatelessWidget {
       ),
       child: Column(
         children: [
-          PermissionsTile(resourceId: resource.id),
           ListTile(
             title: const Text('Type'),
             subtitle: Text(resource.dir ? 'Folder' : resource.contentType),
@@ -87,6 +86,7 @@ class ResourceInfoView extends StatelessWidget {
                 overflow: TextOverflow.fade,
               ),
             ),
+          PermissionsTile(resourceId: resource.id),
         ],
       ),
     );
@@ -139,7 +139,7 @@ class _PermissionsTileState extends State<PermissionsTile> {
         ),
         ListTile(
           title: const Text('Others with Access'),
-          subtitle: other == null ? const Text('') : Text(other),
+          subtitle: (other?.isEmpty ?? true) ? const Text('--') : Text(other!),
         ),
       ],
     );

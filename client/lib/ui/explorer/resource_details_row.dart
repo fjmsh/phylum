@@ -1,7 +1,9 @@
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/util/file_size.dart';
@@ -130,6 +132,21 @@ class ResourceDetailsRow extends StatelessWidget {
                             padding: EdgeInsets.only(right: 6.0),
                             child: Icon(Icons.public, size: 14),
                           ),
+                        StreamBuilder<bool?>(
+                            stream: (context.read<PhylumAccount>().db.bookmarks.select()
+                                  ..where((b) => b.resourceId.equals(resource.id)))
+                                .map((b) => !b.deleted)
+                                .watchSingleOrNull(),
+                            initialData: false,
+                            builder: (context, snapshot) {
+                              if (snapshot.data == true) {
+                                return const Padding(
+                                  padding: EdgeInsets.only(right: 6.0),
+                                  child: Icon(Icons.bookmark, size: 14),
+                                );
+                              }
+                              return const SizedBox();
+                            }),
                         Text(
                           subtitle,
                           maxLines: 1,
