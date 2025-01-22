@@ -2,6 +2,7 @@ CREATE TABLE bookmarks(
     username        TEXT        NOT NULL REFERENCES users(username),
     resource_id     UUID        NOT NULL REFERENCES resources(id),
     name            TEXT        NOT NULL,
+    dir             BOOLEAN     NOT NULL,
     created         TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     modified        TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted         TIMESTAMP,

@@ -20,6 +20,7 @@ type Bookmark struct {
 	Username   string
 	ResourceID uuid.UUID
 	Name       string
+	Dir        bool
 	Created    pgtype.Timestamp
 	Modified   pgtype.Timestamp
 	Deleted    pgtype.Timestamp

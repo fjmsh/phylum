@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
@@ -13,6 +12,7 @@ import (
 type Bookmark struct {
 	ResourceID uuid.UUID `json:"resource_id"`
 	Name       string    `json:"name"`
+	Dir        bool      `json:"dir"`
 	Created    int64     `json:"created"`
 	Deleted    bool      `json:"deleted"`
 }
@@ -28,6 +28,7 @@ func (m manager) AddBookmark(u User, resource fs.Resource, name string) (Bookmar
 		Username:   u.Username,
 		ResourceID: resource.ID(),
 		Name:       name,
+		Dir:        resource.Dir(),
 	}); err != nil {
 		return Bookmark{}, err
 	} else {
@@ -36,13 +37,7 @@ func (m manager) AddBookmark(u User, resource fs.Resource, name string) (Bookmar
 }
 
 func (m manager) RemoveBookmark(u User, id uuid.UUID) (Bookmark, error) {
-	if b, err := m.db.Queries.DeleteBookmarkByUsernameResourceID(m.ctx, db.DeleteBookmarkByUsernameResourceIDParams{Username: u.Username, ResourceID: id}); err != nil {
-		if err == pgx.ErrNoRows {
-			return Bookmark{
-				ResourceID: id,
-				Deleted:    true,
-			}, nil
-		}
+	if b, err := m.db.Queries.DeleteBookmark(m.ctx, db.DeleteBookmarkParams{Username: u.Username, ResourceID: id}); err != nil {
 		return Bookmark{}, err
 	} else {
 		r := bookmarkFromDb(b)
@@ -75,6 +70,7 @@ func bookmarkFromDb(b db.Bookmark) Bookmark {
 	return Bookmark{
 		ResourceID: b.ResourceID,
 		Name:       b.Name,
+		Dir:        b.Dir,
 		Created:    b.Created.Time.UnixMilli(),
 		Deleted:    b.Deleted.Valid,
 	}
