@@ -15,6 +15,8 @@ import 'package:phylum/libphylum/requests/resource_detail_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 
+const performLocalNameCheck = true;
+
 class ResourceRepository {
   final PhylumAccount account;
 
@@ -33,27 +35,29 @@ class ResourceRepository {
     required NameConflictResolution conflictResolution,
     String? id,
   }) async {
-    var existing = await account.db.getResourcesByName(parent: parent, name: name);
-    String? deletedId;
+    id ??= generateUuid();
     String localName = name;
-    if (existing.isNotEmpty) {
-      switch (conflictResolution) {
-        case nameConflictError:
-          throw NameConflictException(existing.first);
-        case nameConflictRename:
-          localName = await _createUniqueName(existing, parent, name);
-          break;
-        case nameConflictOverwrite:
-        case nameConflictDelete:
-          conflictResolution = nameConflictDelete;
-          deletedId = existing.first.id;
-          break;
-        default:
-          throw UnsupportedError('Unsupported conflict resolution');
+    String? deletedId;
+    if (performLocalNameCheck) {
+      var existing = await account.db.getResourcesByName(parent: parent, name: name);
+      if (existing.isNotEmpty) {
+        switch (conflictResolution) {
+          case nameConflictError:
+            throw NameConflictException(existing.first);
+          case nameConflictRename:
+            localName = await _createUniqueName(existing, parent, name);
+            break;
+          case nameConflictOverwrite:
+          case nameConflictDelete:
+            conflictResolution = nameConflictDelete;
+            deletedId = existing.first.id;
+            break;
+          default:
+            throw UnsupportedError('Unsupported conflict resolution');
+        }
       }
     }
 
-    id ??= generateUuid();
     await account.addAction(ResourceMkdirAction(
       parent: parent,
       resourceName: name,
@@ -73,25 +77,27 @@ class ResourceRepository {
     required String name,
     NameConflictResolution conflictResolution = nameConflictError,
   }) async {
-    var existing = await account.db.getResourcesByName(parent: parent, name: name);
-    String localName = name;
     String id = generateUuid();
+    String localName = name;
     String? deletedId;
-    if (existing.isNotEmpty) {
-      switch (conflictResolution) {
-        case nameConflictError:
-          throw NameConflictException(existing.first);
-        case nameConflictRename:
-          localName = await _createUniqueName(existing, parent, name);
-          break;
-        case nameConflictOverwrite:
-          id = existing.first.id;
-          break;
-        case nameConflictDelete:
-          deletedId = existing.first.id;
-          break;
-        default:
-          throw UnsupportedError('Unsupported conflict resolution');
+    if (performLocalNameCheck) {
+      var existing = await account.db.getResourcesByName(parent: parent, name: name);
+      if (existing.isNotEmpty) {
+        switch (conflictResolution) {
+          case nameConflictError:
+            throw NameConflictException(existing.first);
+          case nameConflictRename:
+            localName = await _createUniqueName(existing, parent, name);
+            break;
+          case nameConflictOverwrite:
+            id = existing.first.id;
+            break;
+          case nameConflictDelete:
+            deletedId = existing.first.id;
+            break;
+          default:
+            throw UnsupportedError('Unsupported conflict resolution');
+        }
       }
     }
     final f = File(path);
@@ -118,23 +124,25 @@ class ResourceRepository {
     required String parent,
     required NameConflictResolution conflictResolution,
   }) async {
-    var existing = await account.db.getResourcesByName(parent: parent, name: name);
-    String? deletedId;
     String localName = name;
-    if (existing.isNotEmpty) {
-      switch (conflictResolution) {
-        case nameConflictError:
-          throw NameConflictException(existing.first);
-        case nameConflictRename:
-          localName = await _createUniqueName(existing, parent, name);
-          break;
-        case nameConflictOverwrite:
-        case nameConflictDelete:
-          conflictResolution = nameConflictDelete;
-          deletedId = existing.first.id;
-          break;
-        default:
-          throw UnsupportedError('Unsupported conflict resolution');
+    String? deletedId;
+    if (performLocalNameCheck) {
+      var existing = await account.db.getResourcesByName(parent: parent, name: name);
+      if (existing.isNotEmpty) {
+        switch (conflictResolution) {
+          case nameConflictError:
+            throw NameConflictException(existing.first);
+          case nameConflictRename:
+            localName = await _createUniqueName(existing, parent, name);
+            break;
+          case nameConflictOverwrite:
+          case nameConflictDelete:
+            conflictResolution = nameConflictDelete;
+            deletedId = existing.first.id;
+            break;
+          default:
+            throw UnsupportedError('Unsupported conflict resolution');
+        }
       }
     }
     await account.addAction(ResourceMoveAction(
@@ -162,23 +170,25 @@ class ResourceRepository {
     }
 
     String id = generateUuid();
-    var existing = await account.db.getResourcesByName(parent: parent, name: name);
     String? deletedId;
     String localName = name;
-    if (existing.isNotEmpty) {
-      switch (conflictResolution) {
-        case nameConflictError:
-          throw NameConflictException(existing.first);
-        case nameConflictRename:
-          localName = await _createUniqueName(existing, parent, name);
-          break;
-        case nameConflictOverwrite:
-        case nameConflictDelete:
-          conflictResolution = nameConflictDelete;
-          deletedId = existing.first.id;
-          break;
-        default:
-          throw UnsupportedError('Unsupported conflict resolution');
+    if (performLocalNameCheck) {
+      var existing = await account.db.getResourcesByName(parent: parent, name: name);
+      if (existing.isNotEmpty) {
+        switch (conflictResolution) {
+          case nameConflictError:
+            throw NameConflictException(existing.first);
+          case nameConflictRename:
+            localName = await _createUniqueName(existing, parent, name);
+            break;
+          case nameConflictOverwrite:
+          case nameConflictDelete:
+            conflictResolution = nameConflictDelete;
+            deletedId = existing.first.id;
+            break;
+          default:
+            throw UnsupportedError('Unsupported conflict resolution');
+        }
       }
     }
     await account.addAction(ResourceCopyAction(

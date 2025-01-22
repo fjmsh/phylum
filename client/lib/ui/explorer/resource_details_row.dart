@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
@@ -8,6 +9,30 @@ import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
 import '../../libphylum/explorer/explorer_controller.dart';
+
+enum _SyncState {
+  none(Icons.block),
+  waiting(Icons.cloud_queue),
+  error(Icons.sync_problem),
+  syncing(Icons.sync);
+
+  const _SyncState(this.icon);
+
+  final IconData icon;
+
+  factory _SyncState.fromStatus(ActionStatus status) {
+    if (status is ActionStatusReady || status is ActionStatusWaiting) {
+      return _SyncState.waiting;
+    }
+    if (status is ActionStatusUploading) {
+      return _SyncState.syncing;
+    }
+    if (status is ActionStatusError) {
+      return _SyncState.error;
+    }
+    return _SyncState.none;
+  }
+}
 
 class ResourceDetailsRow extends StatelessWidget {
   final Resource resource;
@@ -20,8 +45,15 @@ class ResourceDetailsRow extends StatelessWidget {
     final showBorder = context.select<ExplorerState, bool>((state) => state.focusId == resource.id && state.showFocus);
     final highlight = context.select<ExplorerState, bool>((state) => state.isSelected(resource.id));
     final dim = context.select<ExplorerState, bool>((state) => state.isSelected(resource.id) && state.dragging);
-    final hasChanges = context.select<PhylumActionQueueState, bool>(
-        (state) => state.actions.any((action) => action is ResourceAction && action.resourceId == resource.id));
+    final sync = context.select<PhylumActionQueueState, _SyncState>((state) {
+      return state.actions.fold(_SyncState.none, (acc, action) {
+        if (action is ResourceAction && action.resourceId == resource.id) {
+          final actionState = _SyncState.fromStatus(action.status);
+          if (actionState.index > acc.index) return actionState;
+        }
+        return acc;
+      });
+    });
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final border = dropTargetActive
@@ -83,10 +115,10 @@ class ResourceDetailsRow extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        if (hasChanges)
-                          const Padding(
-                            padding: EdgeInsets.only(right: 6.0),
-                            child: Icon(Icons.sync, size: 14),
+                        if (sync != _SyncState.none)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6.0),
+                            child: Icon(sync.icon, size: 14),
                           ),
                         if (resource.permissions != null)
                           const Padding(

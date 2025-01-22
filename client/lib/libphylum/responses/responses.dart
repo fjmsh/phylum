@@ -41,7 +41,7 @@ class PhylumApiErrorResponse extends ApiResponse<PhylumAccount> {
   final String message;
 
   @override
-  String get description => 'Api Error: $message';
+  String get description => message;
 
   @override
   bool get success => false;
