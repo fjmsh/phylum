@@ -202,7 +202,7 @@ class ResourceDraggable extends StatelessWidget {
         );
       }),
       child: ResourceDetailsRow(
-        r: resource,
+        resource: resource,
         dropTargetActive: dropTargetActive,
       ),
     );
