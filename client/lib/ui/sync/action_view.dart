@@ -33,7 +33,7 @@ class ActionView extends StatelessWidget {
       title: Text(action.description),
       subtitle: Text(status.toString()),
       trailing: IconButton(
-        onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id),
+        onPressed: () => context.read<PhylumActionQueue>().deleteAction(action),
         icon: const Icon(Icons.delete),
       ),
     );
@@ -98,7 +98,7 @@ class ActionView extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.block),
             tooltip: 'Delete',
-            onPressed: () => context.read<PhylumActionQueue>().deleteAction(action.id),
+            onPressed: () => context.read<PhylumActionQueue>().deleteAction(action),
           ),
         ],
       ),
