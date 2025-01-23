@@ -1,14 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/explorer/explorer_controller.dart';
+import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/ui/explorer/resource_details_row.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
+import 'package:state_notifier/state_notifier.dart';
 
 import 'resource_icon_extension.dart';
 
@@ -47,7 +52,7 @@ class ReactiveResourceInfoView extends StatelessWidget {
 class ResourceInfoView extends StatelessWidget {
   final Resource resource;
 
-  const ResourceInfoView({super.key, required this.resource});
+  ResourceInfoView({required this.resource}) : super(key: ValueKey(resource.id));
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +64,7 @@ class ResourceInfoView extends StatelessWidget {
       ),
       child: Column(
         children: [
+          PendingActionsTile(resourceId: resource.id),
           ListTile(
             title: const Text('Type'),
             subtitle: Text(resource.dir ? 'Folder' : resource.contentType),
@@ -93,10 +99,75 @@ class ResourceInfoView extends StatelessWidget {
   }
 }
 
+class PendingActionsTile extends StatefulWidget {
+  final String resourceId;
+
+  const PendingActionsTile({super.key, required this.resourceId});
+
+  @override
+  State<PendingActionsTile> createState() => _PendingActionsTileState();
+}
+
+class _PendingActionsTileState extends State<PendingActionsTile> {
+  RemoveListener? _removeListener;
+  final Map<PhylumAction, RemoveListener> _listeners = {};
+  final Map<PhylumAction, ActionStatus> _statusMap = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _removeListener = context.read<PhylumActionQueue>().addListener((state) {
+      final actions =
+          state.actions.where((action) => action is ResourceAction && action.resourceId == widget.resourceId);
+      for (final action in actions) {
+        if (!_listeners.containsKey(action)) {
+          _listeners[action] = action.statusNotifier.addListener((status) {
+            if (_statusMap[action].runtimeType != status.runtimeType) {
+              if (status is ActionStatusDone) {
+                final l = _listeners.remove(action);
+                _statusMap.remove(action);
+                if (l != null) {
+                  Future.microtask(() => l());
+                }
+              } else {
+                _statusMap[action] = status;
+              }
+              if (mounted) {
+                setState(() {});
+              }
+            }
+          }, fireImmediately: true);
+        }
+      }
+    }, fireImmediately: true);
+  }
+
+  @override
+  void dispose() {
+    _removeListener?.call();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (final e in _statusMap.entries)
+          ListTile(
+            visualDensity: VisualDensity.compact,
+            dense: true,
+            leading: Icon(SyncState.fromStatus(e.value).icon),
+            title: Text(e.key.description, maxLines: 1),
+          ),
+      ],
+    );
+  }
+}
+
 class PermissionsTile extends StatefulWidget {
   final String resourceId;
 
-  PermissionsTile({required this.resourceId}) : super(key: ValueKey(resourceId));
+  const PermissionsTile({super.key, required this.resourceId});
 
   @override
   State<PermissionsTile> createState() => _PermissionsTileState();
@@ -105,8 +176,8 @@ class PermissionsTile extends StatefulWidget {
 class _PermissionsTileState extends State<PermissionsTile> {
   Permission? myPermission;
   Map<String, Permission>? otherPermissions;
-
   StreamSubscription<List<ParentsResult>>? sub;
+
   @override
   void initState() {
     super.initState();

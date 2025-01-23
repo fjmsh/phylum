@@ -12,27 +12,27 @@ import 'package:provider/provider.dart';
 
 import '../../libphylum/explorer/explorer_controller.dart';
 
-enum _SyncState {
+enum SyncState {
   none(Icons.block),
   waiting(Icons.cloud_queue),
   error(Icons.sync_problem),
   syncing(Icons.sync);
 
-  const _SyncState(this.icon);
+  const SyncState(this.icon);
 
   final IconData icon;
 
-  factory _SyncState.fromStatus(ActionStatus status) {
+  factory SyncState.fromStatus(ActionStatus status) {
     if (status is ActionStatusReady || status is ActionStatusWaiting) {
-      return _SyncState.waiting;
+      return SyncState.waiting;
     }
     if (status is ActionStatusUploading) {
-      return _SyncState.syncing;
+      return SyncState.syncing;
     }
     if (status is ActionStatusError) {
-      return _SyncState.error;
+      return SyncState.error;
     }
-    return _SyncState.none;
+    return SyncState.none;
   }
 }
 
@@ -47,10 +47,10 @@ class ResourceDetailsRow extends StatelessWidget {
     final showBorder = context.select<ExplorerState, bool>((state) => state.focusId == resource.id && state.showFocus);
     final highlight = context.select<ExplorerState, bool>((state) => state.isSelected(resource.id));
     final dim = context.select<ExplorerState, bool>((state) => state.isSelected(resource.id) && state.dragging);
-    final sync = context.select<PhylumActionQueueState, _SyncState>((state) {
-      return state.actions.fold(_SyncState.none, (acc, action) {
+    final sync = context.select<PhylumActionQueueState, SyncState>((state) {
+      return state.actions.fold(SyncState.none, (acc, action) {
         if (action is ResourceAction && action.resourceId == resource.id) {
-          final actionState = _SyncState.fromStatus(action.status);
+          final actionState = SyncState.fromStatus(action.status);
           if (actionState.index > acc.index) return actionState;
         }
         return acc;
@@ -117,7 +117,7 @@ class ResourceDetailsRow extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        if (sync != _SyncState.none)
+                        if (sync != SyncState.none)
                           Padding(
                             padding: const EdgeInsets.only(right: 6.0),
                             child: Icon(sync.icon, size: 14),
