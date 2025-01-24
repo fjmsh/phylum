@@ -17,7 +17,7 @@ const _persistKeyUserHome = 'userHome';
 
 class PhylumAccount extends Account<PhylumAccount> {
   late final db = AppDatabase(accountId: id);
-  late final resourceRepository = ResourceRepository(account: this);
+  late final ResourceRepository resourceRepository;
   late final userRepository = UserRepository(account: this);
   late final sharedResourcesRepository = SharedResourcesRepository(account: this);
   late final bookmarkRepository = BookmarkRepository(account: this);
@@ -63,6 +63,7 @@ class PhylumAccount extends Account<PhylumAccount> {
     // Set Authorization header
     _accessToken = _initialAccessToken ?? accessToken;
 
+    resourceRepository = await ResourceRepository.create(this);
     await userRepository.initialize();
     await bookmarkRepository.initialize();
 

@@ -5,11 +5,9 @@ import 'package:drift/drift.dart';
 import 'package:hive/hive.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
-const _remoteResourcesBoxName = 'remote_resources';
 const _remoteBookmarksBoxName = 'remote_bookmarks';
 
 class PhylumChangeTracker extends LocalChangeTracker<PhylumAccount> {
@@ -17,55 +15,9 @@ class PhylumChangeTracker extends LocalChangeTracker<PhylumAccount> {
 
   @override
   Future<void> initialize(Iterable<PhylumAction> actions) async {
-    await registerTracker(await ResourceChangeTracker.create(account));
+    await registerTracker(account.resourceRepository);
     await registerTracker(await BookmarkChangeTracker.create(account));
     super.initialize(actions);
-  }
-}
-
-class ResourceChangeTracker extends TypedChangeTracker<PhylumAccount, Resource> {
-  late final PhylumAccount account;
-  late final LazyBox<Resource?> _remoteDataBox;
-
-  @override
-  String get typeName => 'resource';
-
-  ResourceChangeTracker._(this.account, this._remoteDataBox, super._remoteData);
-
-  static Future<ResourceChangeTracker> create(PhylumAccount account) async {
-    if (!Hive.isAdapterRegistered(const ResourceAdapter().typeId)) {
-      Hive.registerAdapter(const ResourceAdapter());
-    }
-    final box = await account.openBox<Resource>(_remoteResourcesBoxName);
-    final remoteData = Map<String, Resource?>.fromIterable(box.keys, value: (key) => box.get(key));
-    await box.close();
-    return ResourceChangeTracker._(account, await account.openLazyBox(_remoteResourcesBoxName), remoteData);
-  }
-
-  @override
-  Future<void> persistRemoteData(Map<String, Resource?> remoteData) {
-    return _remoteDataBox.putAll(remoteData);
-  }
-
-  @override
-  Future<void> discardRemoteData(Iterable<String> objectIds) {
-    return _remoteDataBox.deleteAll(objectIds);
-  }
-
-  @override
-  Future<Resource?> load(String objectId) async {
-    final data = await account.db.getResource(objectId);
-    return data;
-  }
-
-  @override
-  Future<void> save(String objectId, Resource data) {
-    return account.db.resources.insertOne(data, mode: InsertMode.insertOrReplace);
-  }
-
-  @override
-  Future<void> delete(String objectId) async {
-    await account.db.resources.deleteWhere((r) => r.id.equals(objectId));
   }
 }
 

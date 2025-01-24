@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -45,9 +46,6 @@ class PhylumApiErrorResponse extends ApiResponse<PhylumAccount> {
 
   @override
   bool get success => false;
-
-  @override
-  Iterable<(Type, String)> get updatedObjects => const [];
 
   @override
   Future<void> process(PhylumAccount account) => Future.value();

@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:drift/drift.dart';
+import 'package:hive/hive.dart';
 import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart';
@@ -16,17 +19,58 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 
 const performLocalNameCheck = true;
+const _remoteResourcesBoxName = 'remote_resources';
 
-class ResourceRepository {
+class ResourceRepository extends TypedChangeTracker<PhylumAccount, Resource> {
   final PhylumAccount account;
+  late final LazyBox<Resource?> _remoteDataBox;
 
-  ResourceRepository({required this.account});
+  @override
+  String get typeName => 'resource';
+
+  ResourceRepository._(this.account, this._remoteDataBox, super._remoteData);
+
+  static Future<ResourceRepository> create(PhylumAccount account) async {
+    if (!Hive.isAdapterRegistered(const ResourceAdapter().typeId)) {
+      Hive.registerAdapter(const ResourceAdapter());
+    }
+    final box = await account.openBox<Resource>(_remoteResourcesBoxName);
+    final remoteData = Map<String, Resource?>.fromIterable(box.keys, value: (key) => box.get(key));
+    await box.close();
+    return ResourceRepository._(account, await account.openLazyBox(_remoteResourcesBoxName), remoteData);
+  }
 
   Future<ApiResult> requestResource(String id) async {
     return account.apiClient.sendRequest(
       ResourceLsRequest(id),
       (request, response) => parseJsonMapResponse(response, FullResourceResponse.fromResponse),
     );
+  }
+
+  @override
+  Future<void> persistRemoteData(Map<String, Resource?> remoteData) {
+    return _remoteDataBox.putAll(remoteData);
+  }
+
+  @override
+  Future<void> discardRemoteData(Iterable<String> objectIds) {
+    return _remoteDataBox.deleteAll(objectIds);
+  }
+
+  @override
+  Future<Resource?> load(String objectId) async {
+    final data = await account.db.getResource(objectId);
+    return data;
+  }
+
+  @override
+  Future<void> save(String objectId, Resource data) {
+    return account.db.resources.insertOne(data, mode: InsertMode.insertOrReplace);
+  }
+
+  @override
+  Future<void> delete(String objectId) async {
+    await account.db.resources.deleteWhere((r) => r.id.equals(objectId));
   }
 
   Future<String> mkdir({
@@ -217,5 +261,25 @@ class ResourceRepository {
       existing = await account.db.getResourcesByName(parent: parent, name: localName);
     }
     return localName;
+  }
+}
+
+class ResourceAdapter implements TypeAdapter<Resource?> {
+  const ResourceAdapter();
+
+  @override
+  int get typeId => 1;
+
+  @override
+  Resource? read(BinaryReader reader) {
+    reader.readByte();
+    final data = reader.readString();
+    return data.isEmpty ? null : Resource.fromJson(json.decode(data));
+  }
+
+  @override
+  void write(BinaryWriter writer, Resource? obj) {
+    writer.writeByte(0); // Version marker, in case we need to change something in the future
+    writer.writeString(obj?.toJsonString() ?? '');
   }
 }
