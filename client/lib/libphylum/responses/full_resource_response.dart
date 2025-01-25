@@ -41,15 +41,16 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
       batch.insertAll(db.resources, children, mode: InsertMode.insertOrReplace);
     });
 
+    final repo = account.datastore.get<Resource>();
     for (final id in removedChildren) {
-      await account.resourceRepository.reloadRemoteData(id);
+      await repo.reloadRemoteData(id);
     }
     for (final a in ancestors) {
-      await account.resourceRepository.reloadRemoteData(a.id.value);
+      await repo.reloadRemoteData(a.id.value);
     }
-    await account.resourceRepository.replaceRemoteData(resource.id, resource);
+    await repo.replaceRemoteData(resource.id, resource);
     for (final c in children) {
-      await account.resourceRepository.replaceRemoteData(c.id, c);
+      await repo.replaceRemoteData(c.id, c);
     }
   }
 }

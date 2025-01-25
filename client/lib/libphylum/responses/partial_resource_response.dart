@@ -4,11 +4,6 @@ class PartialResourceResponse extends PhylumApiSuccessResponse {
   final String id;
   final ResourcesCompanion updates;
 
-  @override
-  Iterable<(Type, String)> get updatedObjects => [
-        (Resource, id),
-      ];
-
   PartialResourceResponse({
     required this.id,
     required this.updates,
@@ -27,5 +22,6 @@ class PartialResourceResponse extends PhylumApiSuccessResponse {
     assert(id == updates.id.value);
     final update = (account.db.resources.update()..where((o) => o.id.equals(id)));
     await update.write(updates);
+    await account.datastore.get<Resource>().reloadRemoteData(id);
   }
 }

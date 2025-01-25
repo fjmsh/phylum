@@ -6,7 +6,6 @@ import 'package:phylum/libphylum/repositories/bookmark_repository.dart';
 import 'package:phylum/libphylum/repositories/shared_resources_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
-import 'package:phylum/libphylum/phylum_change_tracker.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/logging.dart';
 
@@ -17,10 +16,16 @@ const _persistKeyUserHome = 'userHome';
 
 class PhylumAccount extends Account<PhylumAccount> {
   late final db = AppDatabase(accountId: id);
-  late final ResourceRepository resourceRepository;
+  final resourceRepository = ResourceRepository();
+  final bookmarkRepository = BookmarkRepository();
   late final userRepository = UserRepository(account: this);
   late final sharedResourcesRepository = SharedResourcesRepository(account: this);
-  late final bookmarkRepository = BookmarkRepository(account: this);
+
+  @override
+  Map<Type, Repository<PhylumAccount, dynamic>> get repositories => {
+        Resource: resourceRepository,
+        Bookmark: bookmarkRepository,
+      };
 
   final _dispatcher = SimulatedBadNetworkDispatcher.good(dropRate: 0);
   // final _dispatcher = HttpClientDispatcher();
@@ -63,7 +68,6 @@ class PhylumAccount extends Account<PhylumAccount> {
     // Set Authorization header
     _accessToken = _initialAccessToken ?? accessToken;
 
-    resourceRepository = await ResourceRepository.create(this);
     await userRepository.initialize();
     await bookmarkRepository.initialize();
 
@@ -78,9 +82,6 @@ class PhylumAccount extends Account<PhylumAccount> {
       }
     });
   }
-
-  @override
-  LocalChangeTracker<PhylumAccount> createChangeTracker() => PhylumChangeTracker(account: this);
 
   @override
   Future<void> transaction(Future<void> Function() fn) => db.transaction(fn);

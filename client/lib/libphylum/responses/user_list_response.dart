@@ -4,9 +4,6 @@ class UserListResponse extends PhylumApiSuccessResponse {
   final Iterable<User> users;
 
   @override
-  Iterable<(Type, String)> get updatedObjects => const [];
-
-  @override
   Future<void> process(PhylumAccount account) async {
     await account.db.batch((batch) {
       batch.insertAllOnConflictUpdate(account.db.users, users);

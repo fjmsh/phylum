@@ -6,9 +6,6 @@ class BookmarkListResponse extends PhylumApiSuccessResponse {
   final Iterable<Bookmark> bookmarks;
   final int until;
 
-  @override
-  Iterable<(Type, String)> get updatedObjects => bookmarks.map((b) => (Bookmark, b.resourceId));
-
   BookmarkListResponse({required this.bookmarks, required this.until});
 
   factory BookmarkListResponse.fromResponse(Map<String, dynamic> data) {
@@ -19,8 +16,11 @@ class BookmarkListResponse extends PhylumApiSuccessResponse {
   @override
   Future process(PhylumAccount account) async {
     await account.db.batch((batch) {
-      batch.insertAllOnConflictUpdate(account.db.bookmarks, bookmarks);
+      batch.insertAll(account.db.bookmarks, bookmarks, mode: InsertMode.replace);
     });
+    for (final b in bookmarks) {
+      await account.datastore.get<Bookmark>().replaceRemoteData(b.resourceId, b);
+    }
     await account.persist(keyLastBookmarkFetch, until);
   }
 }

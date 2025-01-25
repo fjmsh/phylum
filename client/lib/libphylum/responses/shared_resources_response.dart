@@ -4,9 +4,6 @@ class SharedResourcesResponse extends PhylumApiSuccessResponse {
   final Iterable<ResourcesCompanion> resources;
 
   @override
-  Iterable<(Type, String)> get updatedObjects => resources.map((u) => (Resource, u.id.value));
-
-  @override
   Future<void> process(PhylumAccount account) async {
     final shared = resources.indexed.map((r) => SharedCompanion.insert(resourceId: r.$2.id.value, seq: r.$1));
     await account.db.batch((batch) {
@@ -14,6 +11,11 @@ class SharedResourcesResponse extends PhylumApiSuccessResponse {
       batch.deleteAll(account.db.shared);
       batch.insertAll(account.db.shared, shared);
     });
+
+    final repo = account.datastore.get<Resource>();
+    for (final r in resources) {
+      await repo.reloadRemoteData(r.id.value);
+    }
   }
 
   SharedResourcesResponse({required this.resources});

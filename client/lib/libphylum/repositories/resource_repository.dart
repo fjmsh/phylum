@@ -21,27 +21,27 @@ import 'package:phylum/libphylum/util/uuid.dart';
 const performLocalNameCheck = true;
 const _remoteResourcesBoxName = 'remote_resources';
 
-class ResourceRepository extends TypedChangeTracker<PhylumAccount, Resource> {
-  final PhylumAccount account;
+class ResourceRepository extends Repository<PhylumAccount, Resource> {
+  late final PhylumAccount _account;
   late final LazyBox<Resource?> _remoteDataBox;
 
+  ResourceRepository();
+
   @override
-  String get typeName => 'resource';
-
-  ResourceRepository._(this.account, this._remoteDataBox, super._remoteData);
-
-  static Future<ResourceRepository> create(PhylumAccount account) async {
+  Future<Map<String, Resource?>> initializeAndRestoreRemoteData(PhylumAccount account) async {
     if (!Hive.isAdapterRegistered(const ResourceAdapter().typeId)) {
       Hive.registerAdapter(const ResourceAdapter());
     }
     final box = await account.openBox<Resource>(_remoteResourcesBoxName);
     final remoteData = Map<String, Resource?>.fromIterable(box.keys, value: (key) => box.get(key));
     await box.close();
-    return ResourceRepository._(account, await account.openLazyBox(_remoteResourcesBoxName), remoteData);
+    _account = account;
+    _remoteDataBox = await account.openLazyBox(_remoteResourcesBoxName);
+    return remoteData;
   }
 
   Future<ApiResult> requestResource(String id) async {
-    return account.apiClient.sendRequest(
+    return _account.apiClient.sendRequest(
       ResourceLsRequest(id),
       (request, response) => parseJsonMapResponse(response, FullResourceResponse.fromResponse),
     );
@@ -59,18 +59,18 @@ class ResourceRepository extends TypedChangeTracker<PhylumAccount, Resource> {
 
   @override
   Future<Resource?> load(String objectId) async {
-    final data = await account.db.getResource(objectId);
+    final data = await _account.db.getResource(objectId);
     return data;
   }
 
   @override
   Future<void> save(String objectId, Resource data) {
-    return account.db.resources.insertOne(data, mode: InsertMode.insertOrReplace);
+    return _account.db.resources.insertOne(data, mode: InsertMode.insertOrReplace);
   }
 
   @override
   Future<void> delete(String objectId) async {
-    await account.db.resources.deleteWhere((r) => r.id.equals(objectId));
+    await _account.db.resources.deleteWhere((r) => r.id.equals(objectId));
   }
 
   Future<String> mkdir({
@@ -83,7 +83,7 @@ class ResourceRepository extends TypedChangeTracker<PhylumAccount, Resource> {
     String localName = name;
     String? deletedId;
     if (performLocalNameCheck) {
-      var existing = await account.db.getResourcesByName(parent: parent, name: name);
+      var existing = await _account.db.getResourcesByName(parent: parent, name: name);
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
           case nameConflictError:
@@ -102,7 +102,7 @@ class ResourceRepository extends TypedChangeTracker<PhylumAccount, Resource> {
       }
     }
 
-    await account.addAction(ResourceMkdirAction(
+    await _account.addAction(ResourceMkdirAction(
       parent: parent,
       resourceName: name,
       resourceId: id,
@@ -125,7 +125,7 @@ class ResourceRepository extends TypedChangeTracker<PhylumAccount, Resource> {
     String localName = name;
     String? deletedId;
     if (performLocalNameCheck) {
-      var existing = await account.db.getResourcesByName(parent: parent, name: name);
+      var existing = await _account.db.getResourcesByName(parent: parent, name: name);
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
           case nameConflictError:
@@ -147,7 +147,7 @@ class ResourceRepository extends TypedChangeTracker<PhylumAccount, Resource> {
     final f = File(path);
     final size = await f.length();
     final contentType = lookupMimeType(path) ?? 'application/octet-stream';
-    await account.addAction(ResourceUploadAction(
+    await _account.addAction(ResourceUploadAction(
       resourceId: id,
       parent: parent,
       resourceName: name,
@@ -171,7 +171,7 @@ class ResourceRepository extends TypedChangeTracker<PhylumAccount, Resource> {
     String localName = name;
     String? deletedId;
     if (performLocalNameCheck) {
-      var existing = await account.db.getResourcesByName(parent: parent, name: name);
+      var existing = await _account.db.getResourcesByName(parent: parent, name: name);
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
           case nameConflictError:
@@ -189,7 +189,7 @@ class ResourceRepository extends TypedChangeTracker<PhylumAccount, Resource> {
         }
       }
     }
-    await account.addAction(ResourceMoveAction(
+    await _account.addAction(ResourceMoveAction(
       resourceId: resource.id,
       parent: parent,
       resourceName: name,
@@ -217,7 +217,7 @@ class ResourceRepository extends TypedChangeTracker<PhylumAccount, Resource> {
     String? deletedId;
     String localName = name;
     if (performLocalNameCheck) {
-      var existing = await account.db.getResourcesByName(parent: parent, name: name);
+      var existing = await _account.db.getResourcesByName(parent: parent, name: name);
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
           case nameConflictError:
@@ -235,7 +235,7 @@ class ResourceRepository extends TypedChangeTracker<PhylumAccount, Resource> {
         }
       }
     }
-    await account.addAction(ResourceCopyAction(
+    await _account.addAction(ResourceCopyAction(
       srcId: resource.id,
       resourceId: id,
       parent: parent,
@@ -258,7 +258,7 @@ class ResourceRepository extends TypedChangeTracker<PhylumAccount, Resource> {
     int counter = 1;
     while (existing.isNotEmpty) {
       localName = '${basenameWithoutExtension(name)} (${counter++})${extension(name)}';
-      existing = await account.db.getResourcesByName(parent: parent, name: localName);
+      existing = await _account.db.getResourcesByName(parent: parent, name: localName);
     }
     return localName;
   }

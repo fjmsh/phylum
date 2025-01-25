@@ -3,9 +3,6 @@ part of 'responses.dart';
 class BookmarkResponse extends PhylumApiSuccessResponse {
   final Bookmark bookmark;
 
-  @override
-  Iterable<(Type, String)> get updatedObjects => [(Bookmark, bookmark.resourceId)];
-
   BookmarkResponse({required this.bookmark});
 
   factory BookmarkResponse.fromResponse(Map<String, dynamic> data) {
@@ -14,7 +11,8 @@ class BookmarkResponse extends PhylumApiSuccessResponse {
   }
 
   @override
-  Future process(PhylumAccount account) async {
-    return account.db.bookmarks.insertOnConflictUpdate(bookmark);
+  Future<void> process(PhylumAccount account) async {
+    await account.db.bookmarks.insertOne(bookmark, mode: InsertMode.insertOrReplace);
+    await account.datastore.get<Bookmark>().replaceRemoteData(bookmark.resourceId, bookmark);
   }
 }
