@@ -26,7 +26,17 @@ void main() async {
 
   PhylumDirectories.instance.initialize();
   logger = Logger(level: Level.info, printer: PrettyPrinter(methodCount: 0, noBoxingByDefault: true));
-  OTL.logger = logger;
+  otlLogger = (LogLevel level, dynamic message, {dynamic error, StackTrace? stackTrace}) {
+    final lvl = switch (level) {
+      LogLevel.trace => Level.trace,
+      LogLevel.debug => Level.debug,
+      LogLevel.info => Level.info,
+      LogLevel.warning => Level.warning,
+      LogLevel.error => Level.error,
+      LogLevel.fatal => Level.fatal,
+    };
+    logger.log(lvl, message, error: error, stackTrace: stackTrace);
+  };
   GoRouter.optionURLReflectsImperativeAPIs = true;
   // We use multiple distinct databases for different accounts, so this is expected behavior
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -35,7 +45,8 @@ void main() async {
     Hive.init(null, backendPreference: HiveStorageBackendPreference.webWorker);
   } else {
     final appDir = (Platform.isLinux)
-        ? Directory(path.join((await getApplicationSupportDirectory()).path, storageDir.isNotEmpty ? storageDir : 'data'))
+        ? Directory(
+            path.join((await getApplicationSupportDirectory()).path, storageDir.isNotEmpty ? storageDir : 'data'))
         : await getApplicationDocumentsDirectory();
     AppDatabase.storageDir = appDir;
     AppDatabase.tmpDir = await getTemporaryDirectory();
@@ -68,16 +79,18 @@ class AccountSelector extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => StateNotifierProvider<AccountManager<PhylumAccount>, AccountManagerState<PhylumAccount>>.value(
-      value: accountManager,
-      builder: (context, child) {
-        final account = context.select<AccountManagerState<PhylumAccount>, PhylumAccount?>((state) => state.selectedAccount);
+  Widget build(BuildContext context) =>
+      StateNotifierProvider<AccountManager<PhylumAccount>, AccountManagerState<PhylumAccount>>.value(
+          value: accountManager,
+          builder: (context, child) {
+            final account =
+                context.select<AccountManagerState<PhylumAccount>, PhylumAccount?>((state) => state.selectedAccount);
 
-        if (account == null) {
-          return buildLoginPage(context);
-        }
-        return PhylumApp.create(account);
-      });
+            if (account == null) {
+              return buildLoginPage(context);
+            }
+            return PhylumApp.create(account);
+          });
 
   Widget buildLoginPage(BuildContext context) => MaterialApp(
         key: _loginAppKey,
