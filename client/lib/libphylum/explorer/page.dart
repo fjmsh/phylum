@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
+import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -25,7 +26,7 @@ class ExplorerPageFolder extends ExplorerPage {
 
   @override
   Future<bool> refresh(PhylumAccount account) =>
-      account.resourceRepository.requestResource(folderId).then((result) => result.success);
+      account.resourceRepository.requestResource(folderId).then((result) => result is ApiSuccessResponse);
 
   @override
   Stream<Resource?> watchResource(PhylumAccount account) => account.db.watchResource(folderId);
@@ -105,7 +106,7 @@ class ExplorerPageShared extends ExplorerPage {
 
   @override
   Future<bool> refresh(PhylumAccount account) {
-    return account.sharedResourcesRepository.refresh().then((result) => result.success);
+    return account.sharedResourcesRepository.refresh().then((result) => result is ApiSuccessResponse);
   }
 
   @override

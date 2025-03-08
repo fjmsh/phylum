@@ -16,7 +16,10 @@ part 'user_list_response.dart';
 
 typedef JsonMapResponseParser = PhylumApiSuccessResponse Function(Map<String, dynamic> data);
 
-Future<ApiResponse> parseJsonMapResponse(StreamedResponse response, JsonMapResponseParser parseResponse) async {
+Future<ApiResponse<PhylumAccount>> parseJsonMapResponse(
+  StreamedResponse response,
+  JsonMapResponseParser parseResponse,
+) async {
   final body = await response.bodyString();
   if (response.statusCode >= 200 && response.statusCode < 300) {
     final responseMap = (jsonDecode(body) as Map<String, dynamic>?) ?? const {};
@@ -25,36 +28,24 @@ Future<ApiResponse> parseJsonMapResponse(StreamedResponse response, JsonMapRespo
   return PhylumApiErrorResponse.fromResponseBody(body);
 }
 
-abstract class PhylumApiSuccessResponse extends ApiResponse<PhylumAccount> {
+typedef PhylumApiSuccessResponse = ApiSuccessResponse<PhylumAccount>;
+
+class PhylumApiErrorResponse extends ApiErrorResponse<PhylumAccount> {
   @override
-  bool get success => true;
-
-  @override
-  String get description => 'Success';
-
-  const PhylumApiSuccessResponse();
-}
-
-class PhylumApiErrorResponse extends ApiResponse<PhylumAccount> {
-  final int httpStatusCode;
+  final bool serverError;
   final String code;
   final String message;
 
   @override
   String get description => message;
 
-  @override
-  bool get success => false;
-
-  @override
-  Future<void> process(PhylumAccount account) => Future.value();
-
-  PhylumApiErrorResponse({required this.httpStatusCode, required this.code, required this.message});
+  PhylumApiErrorResponse({required this.serverError, required this.code, required this.message});
 
   factory PhylumApiErrorResponse.fromResponseBody(String body) {
     final map = (jsonDecode(body) as Map<String, dynamic>?) ?? const {};
+    final statusCode = map['status'] ?? 500;
     return PhylumApiErrorResponse(
-      httpStatusCode: map['status'] ?? 500,
+      serverError: statusCode >= 500,
       code: map['code'] ?? 'server_error',
       message: map['msg'] ?? 'Server Error',
     );
