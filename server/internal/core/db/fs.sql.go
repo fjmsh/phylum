@@ -13,7 +13,7 @@ import (
 )
 
 const childResourceByName = `-- name: ChildResourceByName :one
-SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256 FROM resources WHERE parent = $1::uuid AND name = $2::text AND deleted IS NULL
+SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants FROM resources WHERE parent = $1::uuid AND name = $2::text AND deleted IS NULL
 `
 
 type ChildResourceByNameParams struct {
@@ -35,6 +35,8 @@ func (q *Queries) ChildResourceByName(ctx context.Context, arg ChildResourceByNa
 		&i.ContentLength,
 		&i.ContentType,
 		&i.ContentSha256,
+		&i.Permissions,
+		&i.Grants,
 	)
 	return i, err
 }
@@ -44,7 +46,7 @@ INSERT INTO resources(
     id, parent, name, dir, content_length, content_type, content_sha256
 ) VALUES (
     $1::uuid, $2::uuid, $3::text, $4::boolean, $5::bigint, $6::text, $7::text
-) RETURNING id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256
+) RETURNING id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants
 `
 
 type CreateResourceParams struct {
@@ -79,6 +81,8 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 		&i.ContentLength,
 		&i.ContentType,
 		&i.ContentSha256,
+		&i.Permissions,
+		&i.Grants,
 	)
 	return i, err
 }
@@ -346,7 +350,7 @@ SET
     name = CASE WHEN ($1::text = '') THEN name ELSE $1::text END,
     modified = NOW()
 WHERE id = $2::uuid
-RETURNING id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256
+RETURNING id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants
 `
 
 type UpdateResourceNameParams struct {
@@ -368,6 +372,8 @@ func (q *Queries) UpdateResourceName(ctx context.Context, arg UpdateResourceName
 		&i.ContentLength,
 		&i.ContentType,
 		&i.ContentSha256,
+		&i.Permissions,
+		&i.Grants,
 	)
 	return i, err
 }
@@ -407,7 +413,7 @@ SET
     parent = $1::uuid,
     modified = NOW()
 WHERE id = $2::uuid
-RETURNING id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256
+RETURNING id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants
 `
 
 type UpdateResourceParentParams struct {
@@ -429,6 +435,8 @@ func (q *Queries) UpdateResourceParent(ctx context.Context, arg UpdateResourcePa
 		&i.ContentLength,
 		&i.ContentType,
 		&i.ContentSha256,
+		&i.Permissions,
+		&i.Grants,
 	)
 	return i, err
 }

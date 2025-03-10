@@ -72,6 +72,8 @@ type Resource struct {
 	ContentLength int64
 	ContentType   string
 	ContentSha256 string
+	Permissions   []byte
+	Grants        []byte
 }
 
 type StorageBackend struct {

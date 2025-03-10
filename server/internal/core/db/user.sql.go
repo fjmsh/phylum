@@ -125,7 +125,7 @@ func (q *Queries) RevokeUserPermissions(ctx context.Context, arg RevokeUserPermi
 }
 
 const sharedResources = `-- name: SharedResources :many
-SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_length, r.content_type, r.content_sha256
+SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_length, r.content_type, r.content_sha256, r.permissions, r.grants
 FROM permissions p
 JOIN resources r
 ON p.resource_id = r.id
@@ -161,6 +161,8 @@ func (q *Queries) SharedResources(ctx context.Context, arg SharedResourcesParams
 			&i.ContentLength,
 			&i.ContentType,
 			&i.ContentSha256,
+			&i.Permissions,
+			&i.Grants,
 		); err != nil {
 			return nil, err
 		}
