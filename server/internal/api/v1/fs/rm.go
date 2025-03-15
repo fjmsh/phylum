@@ -20,6 +20,6 @@ func handleRmRequest(c *gin.Context) {
 	if r, err := r.DeleteRecursive(true); err != nil {
 		panic(err)
 	} else {
-		c.JSON(200, ResponseFromResourceInfo(r))
+		c.JSON(200, CreateResponse(r))
 	}
 }

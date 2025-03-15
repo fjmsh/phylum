@@ -34,7 +34,7 @@ SELECT r.*
 -- name: ResourceByID :one
 SELECT * FROM resources WHERE id = @resource_id::UUID;
 
--- name: ResourceAncestry :many
+-- name: GetAncestors :many
 WITH RECURSIVE nodes(id, name, parent, permissions, self) AS (
     SELECT r.id, r.name, r.parent, r.permissions, TRUE
         FROM resources r

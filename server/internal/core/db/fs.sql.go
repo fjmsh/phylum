@@ -182,6 +182,51 @@ func (q *Queries) DiskUsage(ctx context.Context, id uuid.UUID) (DiskUsageRow, er
 	return i, err
 }
 
+const getAncestors = `-- name: GetAncestors :many
+WITH RECURSIVE nodes(id, name, parent, permissions, self) AS (
+    SELECT r.id, r.name, r.parent, r.permissions, TRUE
+        FROM resources r
+        WHERE r.id = $1::UUID
+    UNION ALL
+        SELECT r.id, r.name, r.parent, r.permissions, FALSE
+            FROM resources r
+            JOIN nodes n ON r.id = n.parent
+)
+SELECT id, name, parent, permissions FROM nodes WHERE self = FALSE
+`
+
+type GetAncestorsRow struct {
+	ID          uuid.UUID
+	Name        string
+	Parent      *uuid.UUID
+	Permissions []byte
+}
+
+func (q *Queries) GetAncestors(ctx context.Context, resourceID uuid.UUID) ([]GetAncestorsRow, error) {
+	rows, err := q.db.Query(ctx, getAncestors, resourceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAncestorsRow
+	for rows.Next() {
+		var i GetAncestorsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Parent,
+			&i.Permissions,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const readDir = `-- name: ReadDir :many
 WITH RECURSIVE nodes(id, parent, depth) AS (
     SELECT r.id, r.parent, 0
@@ -229,51 +274,6 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]Resource, e
 			&i.ContentSha256,
 			&i.Permissions,
 			&i.Grants,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const resourceAncestry = `-- name: ResourceAncestry :many
-WITH RECURSIVE nodes(id, name, parent, permissions, self) AS (
-    SELECT r.id, r.name, r.parent, r.permissions, TRUE
-        FROM resources r
-        WHERE r.id = $1::UUID
-    UNION ALL
-        SELECT r.id, r.name, r.parent, r.permissions, FALSE
-            FROM resources r
-            JOIN nodes n ON r.id = n.parent
-)
-SELECT id, name, parent, permissions FROM nodes WHERE self = FALSE
-`
-
-type ResourceAncestryRow struct {
-	ID          uuid.UUID
-	Name        string
-	Parent      *uuid.UUID
-	Permissions []byte
-}
-
-func (q *Queries) ResourceAncestry(ctx context.Context, resourceID uuid.UUID) ([]ResourceAncestryRow, error) {
-	rows, err := q.db.Query(ctx, resourceAncestry, resourceID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ResourceAncestryRow
-	for rows.Next() {
-		var i ResourceAncestryRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Parent,
-			&i.Permissions,
 		); err != nil {
 			return nil, err
 		}

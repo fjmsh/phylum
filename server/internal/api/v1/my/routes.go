@@ -13,12 +13,12 @@ import (
 var errInvalidParams = errors.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
 
 type homeResponse struct {
-	User user.User           `json:"user"`
-	Home fs.ResourceResponse `json:"home"`
+	User user.User       `json:"user"`
+	Home fs.FullResponse `json:"home"`
 }
 
 type sharedResponse struct {
-	Shared []fs.ResourceInfoResponse `json:"shared"`
+	Shared []fs.InfoResponse `json:"shared"`
 }
 
 func SetupRoutes(r *gin.RouterGroup) {
@@ -38,7 +38,7 @@ func handleHomeRoute(c *gin.Context) {
 
 	c.JSON(200, homeResponse{
 		User: user,
-		Home: fs.ResponseFromResource(r),
+		Home: fs.CreateFullResponse(r),
 	})
 }
 
@@ -48,9 +48,9 @@ func handleSharedRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	res := make([]fs.ResourceInfoResponse, len(shared))
+	res := make([]fs.InfoResponse, len(shared))
 	for i, r := range shared {
-		res[i] = fs.ResponseFromResourceInfo(r)
+		res[i] = fs.CreateResponse(r)
 	}
 	c.JSON(200, sharedResponse{Shared: res})
 }

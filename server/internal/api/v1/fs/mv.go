@@ -33,6 +33,6 @@ func handleMvRequest(c *gin.Context) {
 	if r, _, err := r.Move(params.Target, params.Conflict); err != nil {
 		panic(err)
 	} else {
-		c.JSON(200, ResponseFromResourceInfo(r.Info))
+		c.JSON(200, CreateResponse(r))
 	}
 }

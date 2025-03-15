@@ -74,5 +74,5 @@ func handleUploadRequest(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	c.JSON(200, ResponseFromResourceInfo(r.Info))
+	c.JSON(200, CreateResponse(r))
 }

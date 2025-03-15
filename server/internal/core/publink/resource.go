@@ -15,7 +15,6 @@ type Resource struct {
 	id            uuid.UUID
 	name          string
 	dir           bool
-	path          string
 	created       time.Time
 	modified      time.Time
 	contentLength int64
@@ -25,7 +24,6 @@ type Resource struct {
 
 func (r Resource) FSID() uuid.UUID       { return r.id }
 func (r Resource) Name() string          { return r.name }
-func (r Resource) Path() string          { return r.path }
 func (r Resource) Dir() bool             { return r.dir }
 func (r Resource) Created() time.Time    { return r.created }
 func (r Resource) Modified() time.Time   { return r.modified }
@@ -37,7 +35,7 @@ func (r Resource) OpenRead(start, length int64) (io.ReadCloser, error) {
 	return r.f.cs.OpenRead(r.id, start, length)
 }
 
-func (r Resource) ReadDir(recursive bool) ([]serve.ResourceInfo, error) {
+func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 	if !r.dir {
 		return nil, errors.New("resource is not a collection")
 	}
@@ -53,20 +51,14 @@ func (r Resource) ReadDir(recursive bool) ([]serve.ResourceInfo, error) {
 		return nil, err
 	}
 
-	result := make([]serve.ResourceInfo, len(children))
+	result := make([]serve.Resource, len(children))
 
-	parentPath := r.path
-	if parentPath == "/" {
-		parentPath = ""
-	}
 	for i, c := range children {
-		path := parentPath + "/" + c.Name
 		result[i] = Resource{
 			f:             r.f,
 			id:            c.ID,
 			name:          c.Name,
 			dir:           c.Dir,
-			path:          path,
 			created:       c.Created.Time,
 			modified:      c.Modified.Time,
 			contentLength: c.ContentLength,
