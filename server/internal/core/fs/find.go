@@ -24,7 +24,9 @@ func (f filesystem) resourceFromResult(r db.Resource, err error) (Resource, erro
 		return Resource{}, err
 	}
 	permission := Permission(0)
-	if p, err := readPermissionFromJson(r.Permissions, f.username); err != nil {
+	if f.fullAccess {
+		permission = -1
+	} else if p, err := readPermissionFromJson(r.Permissions, f.username); err != nil {
 		return Resource{}, err
 	} else {
 		permission = p
