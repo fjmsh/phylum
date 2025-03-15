@@ -183,11 +183,6 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	}
 
 	info := ResourceInfoFromDBResource(root)
-	if destParent.Path() == "/" {
-		info.path = "/" + info.name
-	} else {
-		info.path = destParent.Path() + "/" + info.name
-	}
 
 	ancestry := make([]ResourceInfo, len(destParent.Ancestors)+1)
 	copy(ancestry, destParent.Ancestors)

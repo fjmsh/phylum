@@ -449,7 +449,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 
 	mw := multistatusWriter{w: w}
 
-	writePropStat := func(r serve.ResourceInfo) error {
+	writePropStat := func(r serve.ResourceInfo, p string) error {
 		var pstats []Propstat
 		if pf.Propname != nil {
 			pnames, err := propnames(h.FileSystem, h.LockSystem, r)
@@ -469,7 +469,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 		if err != nil {
 			return err
 		}
-		href := path.Join(h.Prefix, r.Path())
+		href := path.Join(reqPath, p)
 		if href != "/" && r.Dir() {
 			href += "/"
 		}

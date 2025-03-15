@@ -26,7 +26,7 @@ func setupLsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			fmt.Println(r.Path() + " " + fullPermissionsString(r))
+			fmt.Println(r.Name() + " " + fullPermissionsString(r))
 			fmt.Println(formatRow(r.ID().String(), formatSize(r.ContentLength()), r.ContentSHA256(), ".", permissionJsonString(r.Info.Permissions()), r.Info.Publinks()))
 
 			if r.Dir() {

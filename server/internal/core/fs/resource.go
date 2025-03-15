@@ -26,7 +26,6 @@ type ResourceInfo struct {
 	contentSHA256 string
 	permissions   []byte
 	publinks      []byte
-	path          string
 }
 
 func (r Resource) ID() uuid.UUID         { return r.Info.id }
@@ -39,7 +38,6 @@ func (r Resource) Deleted() *time.Time   { return r.Info.deleted }
 func (r Resource) ContentLength() int64  { return r.Info.contentLength }
 func (r Resource) ContentSHA256() string { return r.Info.contentSHA256 }
 func (r Resource) ContentType() string   { return r.Info.contentType }
-func (r Resource) Path() string          { return r.Info.path }
 
 func (r Resource) hasPermission(p Permission) bool {
 	return r.userPermission&p != 0
@@ -57,4 +55,3 @@ func (r ResourceInfo) ContentSHA256() string { return r.contentSHA256 }
 func (r ResourceInfo) ContentType() string   { return r.contentType }
 func (r ResourceInfo) Permissions() []byte   { return r.permissions }
 func (r ResourceInfo) Publinks() []byte      { return r.publinks }
-func (r ResourceInfo) Path() string          { return r.path }

@@ -3,8 +3,6 @@ package fs
 import (
 	"archive/zip"
 	"io"
-	"path"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -21,14 +19,13 @@ func handleDownloadRequest(c *gin.Context) {
 
 	f := auth.GetFileSystem(c)
 	r, err := f.ResourceByID(resourceID)
-	prefix := path.Dir(r.Path())
 
 	c.Writer.Header().Set("Content-Type", "application/zip")
 	c.Writer.Header().Set("Content-Disposition", "attachment; filename=\""+r.Name()+".zip\"")
 
 	var zip = zip.NewWriter(c.Writer)
 	close := c.Writer.CloseNotify()
-	err = r.Walk(2, func(r serve.ResourceInfo) error {
+	err = r.Walk(2, func(r serve.ResourceInfo, p string) error {
 		if r.Dir() {
 			return nil
 		}
@@ -39,11 +36,7 @@ func handleDownloadRequest(c *gin.Context) {
 		default:
 		}
 
-		path, found := strings.CutPrefix(r.Path(), prefix)
-		if !found {
-			return fs.ErrResourcePathInvalid
-		}
-		out, err := zip.Create(path)
+		out, err := zip.Create(p)
 		if err != nil {
 			return err
 		}

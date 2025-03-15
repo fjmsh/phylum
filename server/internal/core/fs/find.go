@@ -44,11 +44,6 @@ func (f filesystem) resourceFromResult(e []db.FullResource, err error) (Resource
 				b.WriteString(e[i].Name)
 			}
 			info = resourceInfoFromDBPublinkedResource(e[i])
-			if b.Len() == 0 {
-				info.path = "/"
-			} else {
-				info.path = b.String()
-			}
 			if i != 0 {
 				ancestry = append(ancestry, info)
 			}

@@ -27,7 +27,6 @@ var ErrRangeNotSupported = errors.New("byte range not suppoered")
 
 type ResourceInfo interface {
 	Name() string
-	Path() string
 	Dir() bool
 	Created() time.Time
 	Modified() time.Time
@@ -81,12 +80,12 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file Resource) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintln(w, "<html>")
 	fmt.Fprintln(w, "<head>")
-	fmt.Fprintf(w, "<title>%s | Phylum</title>\n", file.Path())
+	fmt.Fprintf(w, "<title>%s | Phylum</title>\n", file.Name())
 	fmt.Fprintln(w, "<style>td, th {padding: 4px 12px;}</style>")
 	fmt.Fprintln(w, "</head>")
 	fmt.Fprintln(w, "<body>")
 	fmt.Fprintln(w, "<pre>")
-	fmt.Fprintf(w, "<h2>Index of %s</h2>", file.Path())
+	fmt.Fprintf(w, "<h2>Index of %s</h2>", file.Name())
 	fmt.Fprintln(w, "<table>")
 	fmt.Fprintln(w, "<thead><tr><th>Name</th><th>Size</th><th>Content-Type</th><th>SHA-256</th></tr></thead>")
 	fmt.Fprintln(w, "<tbody>")

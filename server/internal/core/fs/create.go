@@ -85,11 +85,6 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 	}
 
 	info := ResourceInfoFromDBResource(result)
-	if r.Path() == "/" {
-		info.path = "/" + info.name
-	} else {
-		info.path = r.Path() + "/" + info.name
-	}
 	ancestry := make([]ResourceInfo, len(r.Ancestors)+1)
 	copy(ancestry, r.Ancestors)
 	ancestry = append(ancestry, r.Info)

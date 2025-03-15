@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"io"
 
-	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/db"
 )
@@ -51,22 +50,19 @@ func (r Resource) ReadDir(recursive bool) ([]serve.ResourceInfo, error) {
 	}
 
 	result := make([]serve.ResourceInfo, len(children))
-	path := make(map[uuid.UUID]string)
-	path[r.ID()] = r.Path()
-	if r.Path() == "/" {
-		path[r.ID()] = ""
-	}
 	for i, c := range children {
 		info := resourceInfoFromDBPublinkedResource(c)
-		info.path = path[*info.parentID] + "/" + info.name
-		path[info.id] = info.path
 		result[i] = info
 	}
 	return result, nil
 }
 
-func (r Resource) Walk(depth int, fn func(serve.ResourceInfo) error) error {
-	err := fn(r)
+func (r Resource) Walk(depth int, fn func(serve.ResourceInfo, string) error) error {
+	suffix := ""
+	if r.Dir() {
+		suffix = "/"
+	}
+	err := fn(r, suffix)
 	if err != nil {
 		return err
 	}
@@ -80,7 +76,7 @@ func (r Resource) Walk(depth int, fn func(serve.ResourceInfo) error) error {
 	}
 
 	for _, c := range children {
-		if err := fn(c); err != nil {
+		if err := fn(c, suffix+r.Name()); err != nil {
 			return err
 		}
 	}
