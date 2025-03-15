@@ -125,15 +125,12 @@ func (q *Queries) RevokeUserPermissions(ctx context.Context, arg RevokeUserPermi
 }
 
 const sharedResources = `-- name: SharedResources :many
-SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_length, r.content_type, r.content_sha256, r.permissions, r.grants
-FROM permissions p
-JOIN resources r
-ON p.resource_id = r.id
-WHERE p.username = $1::text
-AND p.resource_id <> $2::uuid
-AND p.value <> 0
-AND r.deleted IS NULL
-ORDER BY p.modified DESC
+SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants FROM resources
+    WHERE grants ? $1::TEXT
+    AND id <> $2::UUID
+    AND deleted IS NULL
+    AND grants -> $1::TEXT -> 'p' <> 0
+    ORDER BY grants -> $1::TEXT -> 't' DESC
 `
 
 type SharedResourcesParams struct {

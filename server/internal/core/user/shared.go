@@ -6,7 +6,6 @@ import (
 )
 
 func (m manager) SharedResources(u User) ([]fs.ResourceInfo, error) {
-	// TODO: #permissions This doesn't take permissions into account. is this okay?
 	res, err := m.db.Queries.SharedResources(m.ctx, db.SharedResourcesParams{Username: u.Username, UserHome: u.Home})
 	if err != nil {
 		return nil, err

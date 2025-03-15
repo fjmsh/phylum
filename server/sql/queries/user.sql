@@ -55,12 +55,9 @@ SET
 WHERE username = $2;
 
 -- name: SharedResources :many
-SELECT r.*
-FROM permissions p
-JOIN resources r
-ON p.resource_id = r.id
-WHERE p.username = @username::text
-AND p.resource_id <> @user_home::uuid
-AND p.value <> 0
-AND r.deleted IS NULL
-ORDER BY p.modified DESC;
+SELECT * FROM resources
+    WHERE grants ? @username::TEXT
+    AND id <> @user_home::UUID
+    AND deleted IS NULL
+    AND grants -> @username::TEXT -> 'p' <> 0
+    ORDER BY grants -> @username::TEXT -> 't' DESC;
