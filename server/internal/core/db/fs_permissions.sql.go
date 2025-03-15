@@ -11,15 +11,35 @@ import (
 	"github.com/google/uuid"
 )
 
+const grantUserPermissionForResource = `-- name: GrantUserPermissionForResource :exec
+UPDATE resources
+SET
+    grants[$1::text] = jsonb_build_object('p', $2::INT, 't', EXTRACT(EPOCH FROM NOW())::INTEGER),
+    modified = NOW()
+WHERE id = $3::uuid
+RETURNING permissions
+`
+
+type GrantUserPermissionForResourceParams struct {
+	Username   string
+	Permission int32
+	ResourceID uuid.UUID
+}
+
+func (q *Queries) GrantUserPermissionForResource(ctx context.Context, arg GrantUserPermissionForResourceParams) error {
+	_, err := q.db.Exec(ctx, grantUserPermissionForResource, arg.Username, arg.Permission, arg.ResourceID)
+	return err
+}
+
 const recomputePermissions = `-- name: RecomputePermissions :exec
 WITH RECURSIVE nodes(id, parent, permissions) AS (
-    SELECT r.id, r.parent, CASE WHEN r.parent IS NULL THEN r.grants ELSE jsonb_bitwise_or(p.permissions, r.grants) END
+    SELECT r.id, r.parent, phylum_merge_permission_grants(COALESCE(p.permissions, '{}'::JSONB), r.grants) END
         FROM resources r
         LEFT JOIN resources p
             ON r.parent = p.id
         WHERE r.id = $1::uuid
     UNION ALL
-        SELECT r.id, r.parent, jsonb_bitwise_or(n.permissions, r.grants)
+        SELECT r.id, r.parent, phylum_merge_permission_grants(n.permissions, r.grants)
             FROM resources r JOIN nodes n on r.parent = n.id
 )
 UPDATE resources
@@ -30,5 +50,24 @@ UPDATE resources
 
 func (q *Queries) RecomputePermissions(ctx context.Context, resourceID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, recomputePermissions, resourceID)
+	return err
+}
+
+const revokeUserPermissionForResource = `-- name: RevokeUserPermissionForResource :exec
+UPDATE resources
+SET
+    grants = grants - $1::TEXT,
+    modified = NOW()
+WHERE id = $2::uuid
+RETURNING permissions
+`
+
+type RevokeUserPermissionForResourceParams struct {
+	Username   string
+	ResourceID uuid.UUID
+}
+
+func (q *Queries) RevokeUserPermissionForResource(ctx context.Context, arg RevokeUserPermissionForResourceParams) error {
+	_, err := q.db.Exec(ctx, revokeUserPermissionForResource, arg.Username, arg.ResourceID)
 	return err
 }

@@ -13,15 +13,31 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 	// Do not grant more than what you have
 	permission = permission & r.userPermission
 
-	var err error
-	err = r.f.db.UpdateUserPermissionsForResource(r.f.ctx, db.UpdateUserPermissionsForResourceParams{
-		ResourceID: r.ID(),
-		Username:   username,
-		Permission: permission,
+	ctx := r.f.ctx
+	err := r.f.db.WithTx(ctx, func(dbh *db.DbHandler) error {
+		if permission == PermissionNone {
+			if err := dbh.RevokeUserPermissionForResource(ctx, db.RevokeUserPermissionForResourceParams{
+				ResourceID: r.ID(),
+				Username:   username,
+			}); err != nil {
+				return err
+			}
+		} else {
+			if err := dbh.GrantUserPermissionForResource(ctx, db.GrantUserPermissionForResourceParams{
+				ResourceID: r.ID(),
+				Username:   username,
+				Permission: permission,
+			}); err != nil {
+				return err
+			}
+		}
+
+		if err := dbh.RecomputePermissions(ctx, r.ID()); err != nil {
+			return err
+		}
+
+		return nil
 	})
-	if err != nil {
-		return Resource{}, err
-	}
 	p := make(map[string]Permission)
 	if r.Info.permissions != nil {
 		json.Unmarshal(r.Info.permissions, &p)

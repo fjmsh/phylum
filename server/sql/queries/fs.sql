@@ -58,22 +58,6 @@ SET
 WHERE id = @id::uuid
 RETURNING name, parent, modified;
 
--- name: UpdateUserPermissionsForResource :exec
-INSERT INTO permissions(
-    resource_id,
-    username,
-    modified,
-    value
-) VALUES (
-    @resource_id::UUID,
-    @username::TEXT,
-    NOW(),
-    @permission::INT
-) ON CONFLICT(resource_id, username) DO UPDATE
-SET
-    modified = CURRENT_TIMESTAMP,
-    value = @permission::INT;
-
 -- name: ChildResourceByName :one
 SELECT * FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;
 

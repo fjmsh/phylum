@@ -440,31 +440,3 @@ func (q *Queries) UpdateResourceParent(ctx context.Context, arg UpdateResourcePa
 	)
 	return i, err
 }
-
-const updateUserPermissionsForResource = `-- name: UpdateUserPermissionsForResource :exec
-INSERT INTO permissions(
-    resource_id,
-    username,
-    modified,
-    value
-) VALUES (
-    $1::UUID,
-    $2::TEXT,
-    NOW(),
-    $3::INT
-) ON CONFLICT(resource_id, username) DO UPDATE
-SET
-    modified = CURRENT_TIMESTAMP,
-    value = $3::INT
-`
-
-type UpdateUserPermissionsForResourceParams struct {
-	ResourceID uuid.UUID
-	Username   string
-	Permission int32
-}
-
-func (q *Queries) UpdateUserPermissionsForResource(ctx context.Context, arg UpdateUserPermissionsForResourceParams) error {
-	_, err := q.db.Exec(ctx, updateUserPermissionsForResource, arg.ResourceID, arg.Username, arg.Permission)
-	return err
-}
