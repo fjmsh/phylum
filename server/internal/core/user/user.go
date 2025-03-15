@@ -48,5 +48,5 @@ type Manager interface {
 	ListBookmarks(u User, since *time.Time) ([]Bookmark, error)
 
 	// shared.go
-	SharedResources(u User) (result []fs.ResourceInfo, err error)
+	SharedResources(u User) (result []fs.Resource, err error)
 }

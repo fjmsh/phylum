@@ -84,16 +84,10 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 		}
 	}
 
-	info := ResourceInfoFromDBResource(result)
-	ancestry := make([]ResourceInfo, len(r.Ancestors)+1)
-	copy(ancestry, r.Ancestors)
-	ancestry = append(ancestry, r.Info)
-	return Resource{
-		f:              r.f,
-		Ancestors:      ancestry,
-		Info:           info,
-		userPermission: r.userPermission,
-	}, nil
+	res := ResourceFromDB(result)
+	res.f = r.f
+	res.userPermission = r.userPermission
+	return res, nil
 }
 
 func (f filesystem) createResource(
@@ -221,12 +215,12 @@ func (f filesystem) createResource(
 	return
 }
 
-func ResourceInfoFromDBResource(r db.Resource) ResourceInfo {
+func ResourceFromDB(r db.Resource) Resource {
 	var delTime *time.Time
 	if r.Deleted.Valid {
 		delTime = &r.Deleted.Time
 	}
-	return ResourceInfo{
+	return Resource{
 		id:            r.ID,
 		parentID:      r.Parent,
 		name:          r.Name,
@@ -237,5 +231,7 @@ func ResourceInfoFromDBResource(r db.Resource) ResourceInfo {
 		contentLength: r.ContentLength,
 		contentType:   r.ContentType,
 		contentSHA256: r.ContentSha256,
+		permissions:   r.Permissions,
+		grants:        r.Grants,
 	}
 }

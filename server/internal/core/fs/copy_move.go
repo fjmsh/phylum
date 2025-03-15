@@ -42,7 +42,7 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 	if !destParent.hasPermission(PermissionWrite) {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
-	if res, err := r.f.db.ResourceByID(r.f.ctx, destParent.ID()); err != nil {
+	if res, err := r.f.db.ResourceAncestry(r.f.ctx, destParent.ID()); err != nil {
 		return Resource{}, false, err
 	} else {
 		for i := 1; i < len(res); i++ {
@@ -52,8 +52,9 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 		}
 	}
 
+	var res Resource
 	var deleted = false
-	return r, deleted, r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
+	return res, deleted, r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
 		f := r.f.withDb(dbh)
 		if conflictResolution == ResourceBindConflictResolutionOverwrite || conflictResolution == ResourceBindConflictResolutionDelete {
 			if _, err := destParent.DeleteChildRecursive(destName, false); err == nil {
@@ -68,9 +69,9 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 			}
 			return err
 		} else {
-			r.Info.name = result.Name
-			r.Info.parentID = result.Parent
-			r.Info.modified = result.Modified.Time
+			res = ResourceFromDB(result)
+			res.f = r.f
+			res.userPermission = r.userPermission
 			return nil
 		}
 	})
@@ -98,7 +99,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 
-	var tree []db.FullResource
+	var tree []db.Resource
 	if recursive && r.Dir() {
 		var err error
 		tree, err = r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{ResourceID: r.ID(), MinDepth: 1, MaxDepth: 1000})
@@ -121,9 +122,9 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			destParent.ID(),
 			destName,
 			r.Dir(),
-			r.Info.contentLength,
-			r.Info.contentType,
-			r.Info.contentSHA256,
+			r.contentLength,
+			r.contentType,
+			r.contentSHA256,
 			conflictResolution,
 		)
 		if err == nil && r.ID() == root.ID {
@@ -182,18 +183,10 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		return Resource{}, false, err
 	}
 
-	info := ResourceInfoFromDBResource(root)
-
-	ancestry := make([]ResourceInfo, len(destParent.Ancestors)+1)
-	copy(ancestry, destParent.Ancestors)
-	ancestry = append(ancestry, r.Info)
-	result := Resource{
-		f:              r.f,
-		Ancestors:      ancestry,
-		Info:           info,
-		userPermission: destParent.userPermission,
-	}
-	return result, deleted, err
+	res := ResourceFromDB(root)
+	res.f = r.f
+	res.userPermission = destParent.userPermission
+	return res, deleted, err
 }
 
 // targetByPathOrUUID splits a target path or uuid into its constituent components

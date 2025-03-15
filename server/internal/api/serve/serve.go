@@ -37,7 +37,7 @@ type ResourceInfo interface {
 
 type Resource interface {
 	ResourceInfo
-	ReadDir(recursive bool) ([]ResourceInfo, error)
+	ReadDir(recursive bool) ([]Resource, error)
 	OpenRead(start, length int64) (io.ReadCloser, error)
 }
 

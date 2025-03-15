@@ -1,9 +1,4 @@
 -- sqlc has a hard time generating the correct code with functions returning types instead of tables
-CREATE TABLE full_resource (
-  permissions           JSONB,
-  publinks              JSONB
-) INHERITS (resources);
-
 
 CREATE FUNCTION resource_by_id(resource_id uuid) RETURNS SETOF full_resource AS $$
   WITH RECURSIVE nodes(id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256) AS (

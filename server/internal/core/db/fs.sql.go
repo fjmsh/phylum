@@ -9,7 +9,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const childResourceByName = `-- name: ChildResourceByName :one
@@ -184,24 +183,39 @@ func (q *Queries) DiskUsage(ctx context.Context, id uuid.UUID) (DiskUsageRow, er
 }
 
 const readDir = `-- name: ReadDir :many
-SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, publinks from readdir($1::uuid, $2::int, $3::int)
+WITH RECURSIVE nodes(id, parent, depth) AS (
+    SELECT r.id, r.parent, 0
+        FROM resources r
+        WHERE r.id = $2::UUID
+    UNION ALL
+        SELECT r.id, r.parent, n.depth + 1
+            FROM resources r
+            JOIN nodes n ON r.parent = n.id
+            WHERE r.deleted IS NULL
+            AND n.depth < $3::INTEGER
+)
+SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_length, r.content_type, r.content_sha256, r.permissions, r.grants
+    FROM nodes n
+    JOIN resources r
+        ON n.id = r.id
+    WHERE n.depth >= $1::INTEGER
 `
 
 type ReadDirParams struct {
-	ResourceID uuid.UUID
 	MinDepth   int32
+	ResourceID uuid.UUID
 	MaxDepth   int32
 }
 
-func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]FullResource, error) {
-	rows, err := q.db.Query(ctx, readDir, arg.ResourceID, arg.MinDepth, arg.MaxDepth)
+func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]Resource, error) {
+	rows, err := q.db.Query(ctx, readDir, arg.MinDepth, arg.ResourceID, arg.MaxDepth)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []FullResource
+	var items []Resource
 	for rows.Next() {
-		var i FullResource
+		var i Resource
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
@@ -214,7 +228,7 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]FullResourc
 			&i.ContentType,
 			&i.ContentSha256,
 			&i.Permissions,
-			&i.Publinks,
+			&i.Grants,
 		); err != nil {
 			return nil, err
 		}
@@ -226,32 +240,40 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]FullResourc
 	return items, nil
 }
 
-const resourceByID = `-- name: ResourceByID :many
-SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, publinks FROM resource_by_id($1::uuid)
+const resourceAncestry = `-- name: ResourceAncestry :many
+WITH RECURSIVE nodes(id, name, parent, permissions, self) AS (
+    SELECT r.id, r.name, r.parent, r.permissions, TRUE
+        FROM resources r
+        WHERE r.id = $1::UUID
+    UNION ALL
+        SELECT r.id, r.name, r.parent, r.permissions, FALSE
+            FROM resources r
+            JOIN nodes n ON r.id = n.parent
+)
+SELECT id, name, parent, permissions FROM nodes WHERE self = FALSE
 `
 
-func (q *Queries) ResourceByID(ctx context.Context, resourceID uuid.UUID) ([]FullResource, error) {
-	rows, err := q.db.Query(ctx, resourceByID, resourceID)
+type ResourceAncestryRow struct {
+	ID          uuid.UUID
+	Name        string
+	Parent      *uuid.UUID
+	Permissions []byte
+}
+
+func (q *Queries) ResourceAncestry(ctx context.Context, resourceID uuid.UUID) ([]ResourceAncestryRow, error) {
+	rows, err := q.db.Query(ctx, resourceAncestry, resourceID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []FullResource
+	var items []ResourceAncestryRow
 	for rows.Next() {
-		var i FullResource
+		var i ResourceAncestryRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
 			&i.Parent,
-			&i.Dir,
-			&i.Created,
-			&i.Modified,
-			&i.Deleted,
-			&i.ContentLength,
-			&i.ContentType,
-			&i.ContentSha256,
 			&i.Permissions,
-			&i.Publinks,
 		); err != nil {
 			return nil, err
 		}
@@ -263,8 +285,48 @@ func (q *Queries) ResourceByID(ctx context.Context, resourceID uuid.UUID) ([]Ful
 	return items, nil
 }
 
-const resourceByPath = `-- name: ResourceByPath :many
-SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, publinks FROM resource_by_id(resource_id_by_path($1::text, $2::uuid))
+const resourceByID = `-- name: ResourceByID :one
+SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants FROM resources WHERE id = $1::UUID
+`
+
+func (q *Queries) ResourceByID(ctx context.Context, resourceID uuid.UUID) (Resource, error) {
+	row := q.db.QueryRow(ctx, resourceByID, resourceID)
+	var i Resource
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Parent,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.ContentLength,
+		&i.ContentType,
+		&i.ContentSha256,
+		&i.Permissions,
+		&i.Grants,
+	)
+	return i, err
+}
+
+const resourceByPath = `-- name: ResourceByPath :one
+WITH RECURSIVE nodes(id, parent, search, depth) AS (
+    SELECT r.id, r.parent, array_remove(string_to_array($1::text, '/', NULL), ''), 0
+        FROM resources r
+        WHERE r.id = $2::UUID OR (r.parent IS NULL AND $2::UUID IS NULL)
+    UNION ALL
+        SELECT r.id, r.parent, n.search, n.depth + 1
+            FROM resources r
+            JOIN nodes n
+                ON r.parent = n.id
+            WHERE deleted IS NULL
+            AND r.name = n.search[n.depth + 1]
+)
+SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_length, r.content_type, r.content_sha256, r.permissions, r.grants
+    FROM nodes n
+    JOIN resources r
+        ON r.id = n.id
+    WHERE cardinality(n.search) = n.depth
 `
 
 type ResourceByPathParams struct {
@@ -272,37 +334,24 @@ type ResourceByPathParams struct {
 	Root *uuid.UUID
 }
 
-func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) ([]FullResource, error) {
-	rows, err := q.db.Query(ctx, resourceByPath, arg.Path, arg.Root)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []FullResource
-	for rows.Next() {
-		var i FullResource
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Parent,
-			&i.Dir,
-			&i.Created,
-			&i.Modified,
-			&i.Deleted,
-			&i.ContentLength,
-			&i.ContentType,
-			&i.ContentSha256,
-			&i.Permissions,
-			&i.Publinks,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) ResourceByPath(ctx context.Context, arg ResourceByPathParams) (Resource, error) {
+	row := q.db.QueryRow(ctx, resourceByPath, arg.Path, arg.Root)
+	var i Resource
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Parent,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.ContentLength,
+		&i.ContentType,
+		&i.ContentSha256,
+		&i.Permissions,
+		&i.Grants,
+	)
+	return i, err
 }
 
 const updateResourceContents = `-- name: UpdateResourceContents :exec
@@ -385,7 +434,7 @@ SET
     parent = $2::uuid,
     modified = NOW()
 WHERE id = $3::uuid
-RETURNING name, parent, modified
+RETURNING id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants
 `
 
 type UpdateResourceNameParentParams struct {
@@ -394,16 +443,23 @@ type UpdateResourceNameParentParams struct {
 	ID     uuid.UUID
 }
 
-type UpdateResourceNameParentRow struct {
-	Name     string
-	Parent   *uuid.UUID
-	Modified pgtype.Timestamp
-}
-
-func (q *Queries) UpdateResourceNameParent(ctx context.Context, arg UpdateResourceNameParentParams) (UpdateResourceNameParentRow, error) {
+func (q *Queries) UpdateResourceNameParent(ctx context.Context, arg UpdateResourceNameParentParams) (Resource, error) {
 	row := q.db.QueryRow(ctx, updateResourceNameParent, arg.Name, arg.Parent, arg.ID)
-	var i UpdateResourceNameParentRow
-	err := row.Scan(&i.Name, &i.Parent, &i.Modified)
+	var i Resource
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Parent,
+		&i.Dir,
+		&i.Created,
+		&i.Modified,
+		&i.Deleted,
+		&i.ContentLength,
+		&i.ContentType,
+		&i.ContentSha256,
+		&i.Permissions,
+		&i.Grants,
+	)
 	return i, err
 }
 

@@ -29,7 +29,7 @@ func (r Resource) OpenWrite() (io.WriteCloser, error) {
 	})
 }
 
-func (r Resource) ReadDir(recursive bool) ([]serve.ResourceInfo, error) {
+func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 	if !r.hasPermission(PermissionRead) {
 		return nil, ErrInsufficientPermissions
 	}
@@ -49,9 +49,9 @@ func (r Resource) ReadDir(recursive bool) ([]serve.ResourceInfo, error) {
 		return nil, err
 	}
 
-	result := make([]serve.ResourceInfo, len(children))
+	result := make([]serve.Resource, len(children))
 	for i, c := range children {
-		info := resourceInfoFromDBPublinkedResource(c)
+		info := ResourceFromDB(c)
 		result[i] = info
 	}
 	return result, nil

@@ -39,8 +39,8 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 		return nil
 	})
 	p := make(map[string]Permission)
-	if r.Info.permissions != nil {
-		json.Unmarshal(r.Info.permissions, &p)
+	if r.permissions != nil {
+		json.Unmarshal(r.permissions, &p)
 	}
 	if permission == 0 {
 		delete(p, username)
@@ -52,6 +52,6 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 		return Resource{}, err
 	}
 
-	r.Info.permissions = res
+	r.permissions = res
 	return r, nil
 }

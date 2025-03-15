@@ -10,9 +10,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (r Resource) DeleteChildRecursive(name string, hardDelete bool) (ResourceInfo, error) {
+func (r Resource) DeleteChildRecursive(name string, hardDelete bool) (Resource, error) {
 	if !r.hasPermission(PermissionWrite) {
-		return ResourceInfo{}, ErrInsufficientPermissions
+		return Resource{}, ErrInsufficientPermissions
 	}
 
 	c, err := r.f.db.ChildResourceByName(r.f.ctx, db.ChildResourceByNameParams{Parent: r.ID(), Name: name})
@@ -20,33 +20,33 @@ func (r Resource) DeleteChildRecursive(name string, hardDelete bool) (ResourceIn
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrResourceNotFound
 		}
-		return ResourceInfo{}, err
+		return Resource{}, err
 	}
 	if err := r.f.deleteRecursive(c.ID, r.ID(), hardDelete, false); err != nil {
-		return ResourceInfo{}, err
+		return Resource{}, err
 	}
 	deleted := time.Now()
-	r.Info.deleted = &deleted
-	return r.Info, nil
+	r.deleted = &deleted
+	return r, nil
 }
 
-func (r Resource) DeleteRecursive(hardDelete bool) (ResourceInfo, error) {
+func (r Resource) DeleteRecursive(hardDelete bool) (Resource, error) {
 	if r.ParentID() == nil {
-		return ResourceInfo{}, ErrInsufficientPermissions
+		return Resource{}, ErrInsufficientPermissions
 	}
 	parent, err := r.f.ResourceByID(*r.ParentID())
 	if err == nil && !parent.hasPermission(PermissionWrite) {
 		err = ErrInsufficientPermissions
 	}
 	if err != nil {
-		return ResourceInfo{}, err
+		return Resource{}, err
 	}
 	if err := r.f.deleteRecursive(r.ID(), r.ID(), hardDelete, false); err != nil {
-		return ResourceInfo{}, err
+		return Resource{}, err
 	}
 	deleted := time.Now()
-	r.Info.deleted = &deleted
-	return r.Info, nil
+	r.deleted = &deleted
+	return r, nil
 }
 
 func (f filesystem) deleteRecursive(id, parent uuid.UUID, hardDelete, preserveRoot bool) error {

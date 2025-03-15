@@ -26,8 +26,8 @@ func setupLsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			fmt.Println(r.Name() + " " + fullPermissionsString(r))
-			fmt.Println(formatRow(r.ID().String(), formatSize(r.ContentLength()), r.ContentSHA256(), ".", permissionJsonString(r.Info.Permissions()), r.Info.Publinks()))
+			fmt.Println(r.Name() + " " + permissionJsonString(r.Permissions()))
+			fmt.Println(formatRow(r.ID().String(), formatSize(r.ContentLength()), r.ContentSHA256(), ".", permissionJsonString(r.Grants())))
 
 			if r.Dir() {
 				children, err := r.ReadDir(false)
@@ -46,7 +46,7 @@ func setupLsCommand() *cobra.Command {
 					return strings.Compare(strings.ToLower(a.Name()), strings.ToLower((b.Name()))) <= 0
 				})
 				for _, c := range children {
-					fmt.Println(formatResourceSummary(c.(fs.ResourceInfo)))
+					fmt.Println(formatResourceSummary(c.(fs.Resource)))
 				}
 			}
 		},
@@ -62,35 +62,19 @@ func formatSize(size int64) string {
 	return fmt.Sprintf("%d%s", size, suffix[si])
 }
 
-func formatRow(id, size, sha256, name, permissions string, links []byte) string {
+func formatRow(id, size, sha256, name, permissions string) string {
 	if sha256 == "" {
 		sha256 = "dir     "
 	}
-	return fmt.Sprintf("%s %4s %s %-24s %s%s", id, size, sha256[0:8], name, permissions, links)
+	return fmt.Sprintf("%s %4s %s %-24s %s", id, size, sha256[0:8], name, permissions)
 }
 
-func formatResourceSummary(r fs.ResourceInfo) string {
+func formatResourceSummary(r fs.Resource) string {
 	name := r.Name()
 	if r.Dir() {
 		name += "/"
 	}
-	return formatRow(r.ID().String(), formatSize(r.ContentLength()), r.ContentSHA256(), name, permissionJsonString(r.Permissions()), r.Publinks())
-}
-
-func fullPermissionsString(r fs.Resource) string {
-	result := make(map[string]fs.Permission)
-	for _, i := range r.Ancestors {
-		p := make(map[string]fs.Permission)
-		json.Unmarshal([]byte(i.Permissions()), &p)
-		for k, v := range p {
-			result[k] = result[k] | v
-		}
-	}
-	res, err := json.Marshal(result)
-	if err != nil {
-		return err.Error()
-	}
-	return permissionJsonString(res)
+	return formatRow(r.ID().String(), formatSize(r.ContentLength()), r.ContentSHA256(), name, permissionJsonString(r.Permissions()))
 }
 
 func permissionJsonString(j []byte) string {

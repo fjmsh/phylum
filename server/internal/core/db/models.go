@@ -26,21 +26,6 @@ type Bookmark struct {
 	Deleted    pgtype.Timestamp
 }
 
-type FullResource struct {
-	ID            uuid.UUID
-	Name          string
-	Parent        *uuid.UUID
-	Dir           bool
-	Created       pgtype.Timestamp
-	Modified      pgtype.Timestamp
-	Deleted       pgtype.Timestamp
-	ContentLength int64
-	ContentType   string
-	ContentSha256 string
-	Permissions   []byte
-	Publinks      []byte
-}
-
 type Permission struct {
 	ResourceID uuid.UUID
 	Username   string

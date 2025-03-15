@@ -12,11 +12,39 @@ INSERT INTO resources(
     @id::uuid, @parent::uuid, @name::text, @dir::boolean, @content_length::bigint, @content_type::text, @content_sha256::text
 );
 
--- name: ResourceByPath :many
-SELECT * FROM resource_by_id(resource_id_by_path(@path::text, sqlc.narg('root')::uuid));
+-- name: ResourceByPath :one
+WITH RECURSIVE nodes(id, parent, search, depth) AS (
+    SELECT r.id, r.parent, array_remove(string_to_array(@path::text, '/', NULL), ''), 0
+        FROM resources r
+        WHERE r.id = sqlc.narg('root')::UUID OR (r.parent IS NULL AND sqlc.narg('root')::UUID IS NULL)
+    UNION ALL
+        SELECT r.id, r.parent, n.search, n.depth + 1
+            FROM resources r
+            JOIN nodes n
+                ON r.parent = n.id
+            WHERE deleted IS NULL
+            AND r.name = n.search[n.depth + 1]
+)
+SELECT r.*
+    FROM nodes n
+    JOIN resources r
+        ON r.id = n.id
+    WHERE cardinality(n.search) = n.depth;
 
--- name: ResourceByID :many
-SELECT * FROM resource_by_id(@resource_id::uuid);
+-- name: ResourceByID :one
+SELECT * FROM resources WHERE id = @resource_id::UUID;
+
+-- name: ResourceAncestry :many
+WITH RECURSIVE nodes(id, name, parent, permissions, self) AS (
+    SELECT r.id, r.name, r.parent, r.permissions, TRUE
+        FROM resources r
+        WHERE r.id = @resource_id::UUID
+    UNION ALL
+        SELECT r.id, r.name, r.parent, r.permissions, FALSE
+            FROM resources r
+            JOIN nodes n ON r.id = n.parent
+)
+SELECT id, name, parent, permissions FROM nodes WHERE self = FALSE;
 
 -- name: UpdateResourceContents :exec
 UPDATE resources
@@ -56,13 +84,28 @@ SET
     parent = @parent::uuid,
     modified = NOW()
 WHERE id = @id::uuid
-RETURNING name, parent, modified;
+RETURNING *;
 
 -- name: ChildResourceByName :one
 SELECT * FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;
 
 -- name: ReadDir :many
-SELECT * from readdir(@resource_id::uuid, @min_depth::int, @max_depth::int);
+WITH RECURSIVE nodes(id, parent, depth) AS (
+    SELECT r.id, r.parent, 0
+        FROM resources r
+        WHERE r.id = @resource_id::UUID
+    UNION ALL
+        SELECT r.id, r.parent, n.depth + 1
+            FROM resources r
+            JOIN nodes n ON r.parent = n.id
+            WHERE r.deleted IS NULL
+            AND n.depth < @max_depth::INTEGER
+)
+SELECT r.*
+    FROM nodes n
+    JOIN resources r
+        ON n.id = r.id
+    WHERE n.depth >= @min_depth::INTEGER;
 
 -- name: DeleteRecursive :many
 WITH RECURSIVE nodes(id, parent, dir) AS (

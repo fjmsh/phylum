@@ -2,10 +2,9 @@ package fs
 
 import (
 	"encoding/json"
-	"strings"
-	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
 )
 
@@ -17,57 +16,26 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	return f.resourceFromResult(f.db.ResourceByID(f.ctx, id))
 }
 
-func (f filesystem) resourceFromResult(e []db.FullResource, err error) (Resource, error) {
-	if len(e) == 0 {
+func (f filesystem) resourceFromResult(r db.Resource, err error) (Resource, error) {
+	if err == pgx.ErrNoRows {
 		err = ErrResourceNotFound
 	}
 	if err != nil {
 		return Resource{}, err
 	}
-	var b strings.Builder
-	found := false
 	permission := Permission(0)
-	ancestry := make([]ResourceInfo, 0, len(e)-1)
-	var info ResourceInfo
-	for i := len(e) - 1; i >= 0; i-- {
-		if !found {
-			if e[i].ID == f.rootID {
-				found = true
-				e[i].Parent = nil
-			}
-		}
-		if found {
-			if len(ancestry) != 1 {
-				b.WriteByte('/')
-			}
-			if len(ancestry) != 0 {
-				b.WriteString(e[i].Name)
-			}
-			info = resourceInfoFromDBPublinkedResource(e[i])
-			if i != 0 {
-				ancestry = append(ancestry, info)
-			}
-
-			if f.fullAccess {
-				permission = -1
-			} else {
-				if p, err := readPermissionFromJson(e[i].Permissions, f.username); err != nil {
-					return Resource{}, err
-				} else {
-					permission = permission | p
-				}
-			}
-		}
+	if p, err := readPermissionFromJson(r.Permissions, f.username); err != nil {
+		return Resource{}, err
+	} else {
+		permission = p
 	}
-	if !found || permission&PermissionRead == 0 {
+	if permission&PermissionRead == 0 {
 		return Resource{}, ErrResourceNotFound
 	}
-	return Resource{
-		f:              f,
-		Ancestors:      ancestry,
-		Info:           info,
-		userPermission: permission,
-	}, nil
+	res := ResourceFromDB(r)
+	res.f = f
+	res.userPermission = permission
+	return res, nil
 }
 
 func readPermissionFromJson(j []byte, username string) (Permission, error) {
@@ -83,27 +51,6 @@ func readPermissionFromJson(j []byte, username string) (Permission, error) {
 		return p, nil
 	}
 	return PermissionNone, nil
-}
-
-func resourceInfoFromDBPublinkedResource(r db.FullResource) ResourceInfo {
-	var delTime *time.Time
-	if r.Deleted.Valid {
-		delTime = &r.Deleted.Time
-	}
-	return ResourceInfo{
-		id:            r.ID,
-		parentID:      r.Parent,
-		name:          r.Name,
-		dir:           r.Dir,
-		created:       r.Created.Time,
-		modified:      r.Modified.Time,
-		deleted:       delTime,
-		contentLength: r.ContentLength,
-		contentType:   r.ContentType,
-		contentSHA256: r.ContentSha256,
-		permissions:   r.Permissions,
-		publinks:      r.Publinks,
-	}
 }
 
 func (f filesystem) ResourceByPathOrUUID(pathOrUUID string) (Resource, error) {
