@@ -14,7 +14,7 @@ import (
 
 func setupChpermCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "chperm <path | uuid> <user> [ none | read | write | share ]",
+		Use:   "chperm {path | uuid} <user> {none|read|write|share}",
 		Short: "Change Permissions",
 		Args:  cobra.ExactArgs(3),
 		Run: func(cmd *cobra.Command, args []string) {

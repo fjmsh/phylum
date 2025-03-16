@@ -11,7 +11,7 @@ import (
 
 func setupCatCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "cat [<path> | <uuid>]",
+		Use:   "cat {path | uuid}",
 		Short: "Output resource Contents",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

@@ -14,7 +14,7 @@ import (
 
 func setupLsCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "ls <path | uuid>",
+		Use:   "ls {path | uuid}",
 		Short: "List Resource Details",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

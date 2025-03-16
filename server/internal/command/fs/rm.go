@@ -10,7 +10,7 @@ import (
 
 func setupRmCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "rm <path | uuid>",
+		Use:   "rm {path | uuid}",
 		Short: "Delete Resource",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

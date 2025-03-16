@@ -7,7 +7,7 @@ import (
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "fs",
+		Use:     "fs [-u user] command",
 		Short:   "Filesystem Access",
 		GroupID: "app",
 	}

@@ -10,7 +10,7 @@ import (
 
 func setupPublinksCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "publinks (<path> | <uuid>)",
+		Use:   "publinks {path | uuid}",
 		Short: "List Publinks",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

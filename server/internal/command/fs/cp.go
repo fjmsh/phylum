@@ -12,7 +12,7 @@ import (
 
 func setupCpCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "cp [<src-path> | <src-uuid>] [<dest-path> | <dest-uuid>/<dest-name>]",
+		Use:   "cp {src-path | src-uuid} {dest-path | dest-uuid/dest-name}",
 		Short: "Copy Resource",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {

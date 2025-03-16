@@ -21,7 +21,7 @@ const emptySHA = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b8
 
 func setupImportCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "import (<path> | <uuid>) <fs-path> [<name>]",
+		Use:   "import {path | uuid} fs-path [name]",
 		Short: "Import from filesystem",
 		Args:  cobra.RangeArgs(2, 3),
 		Run: func(cmd *cobra.Command, args []string) {

@@ -11,7 +11,7 @@ import (
 
 func setupMvCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "mv [<src-path> | <src-uuid>] [<dest-path> | <dest-name> | <dest-uuid>/<dest-name>]",
+		Use:   "mv {src-path | src-uuid} {dest-path | dest-name | dest-uuid/dest-name}",
 		Short: "Move Resource",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
