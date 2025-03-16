@@ -98,7 +98,7 @@ WITH RECURSIVE nodes(id, parent, deleted, depth) AS (
         SELECT r.id, r.parent, n.deleted, n.depth + 1
             FROM resources r
             JOIN nodes n ON r.parent = n.id
-            WHERE r.deleted = n.deleted
+            WHERE r.deleted IS NOT DISTINCT FROM n.deleted
             AND n.depth < @max_depth::INTEGER
 )
 SELECT r.*

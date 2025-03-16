@@ -232,7 +232,7 @@ const listDeleted = `-- name: ListDeleted :many
 SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants FROM resources
     WHERE CASE
         WHEN $1::TIMESTAMP IS NULL THEN deleted IS NOT NULL
-        ELSE deleted < $1::TIMESTAMP OR ($1::TIMESTAMP = deleted AND id < $2::UUID) END
+        ELSE deleted < $1::TIMESTAMP OR (deleted = $1::TIMESTAMP AND id < $2::UUID) END
     AND CASE
         WHEN $3::TEXT IS NULL THEN TRUE
         ELSE permissions[$3::TEXT]::integer <> 0 END
@@ -294,7 +294,7 @@ WITH RECURSIVE nodes(id, parent, deleted, depth) AS (
         SELECT r.id, r.parent, n.deleted, n.depth + 1
             FROM resources r
             JOIN nodes n ON r.parent = n.id
-            WHERE r.deleted = n.deleted
+            WHERE r.deleted IS NOT DISTINCT FROM n.deleted
             AND n.depth < $3::INTEGER
 )
 SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_length, r.content_type, r.content_sha256, r.permissions, r.grants
