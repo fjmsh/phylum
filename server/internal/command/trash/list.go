@@ -16,7 +16,8 @@ func setupListCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			n, _ := cmd.Flags().GetInt("num")
-			deleted, err := f.ListDeleted(n)
+			cursor, _ := cmd.Flags().GetString("cursor")
+			deleted, cursor, err := f.ListDeleted(cursor, n)
 			if err != nil {
 				fmt.Println("cannot list trash: " + err.Error())
 				os.Exit(1)
@@ -25,8 +26,12 @@ func setupListCommand() *cobra.Command {
 			for _, c := range deleted {
 				fmt.Println(common.FormatResourceSummary(c))
 			}
+			if cursor != "" {
+				fmt.Println("Cursor: " + cursor)
+			}
 		},
 	}
 	cmd.Flags().IntP("num", "n", 5, "How many items to show")
+	cmd.Flags().StringP("cursor", "c", "", "Pagination Cursor")
 	return &cmd
 }

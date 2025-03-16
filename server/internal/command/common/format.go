@@ -12,6 +12,9 @@ func formatRow(id string, dir bool, size int64, sha256, name, permissions string
 	if dir {
 		sha256 = "dir     "
 	}
+	if sha256 == "" {
+		sha256 = "xxxxxxxx"
+	}
 	return fmt.Sprintf("%s %4s %s %-24s %s", id, formatSize(size), sha256[0:8], name, permissions)
 }
 

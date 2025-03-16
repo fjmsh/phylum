@@ -230,21 +230,30 @@ func (q *Queries) GetAncestors(ctx context.Context, resourceID uuid.UUID) ([]Get
 
 const listDeleted = `-- name: ListDeleted :many
 SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants FROM resources
-    WHERE deleted IS NOT NULL
+    WHERE CASE
+        WHEN $1::TIMESTAMP IS NULL THEN deleted IS NOT NULL
+        ELSE deleted < $1::TIMESTAMP OR ($1::TIMESTAMP = deleted AND id < $2::UUID) END
     AND CASE
-        WHEN $1::TEXT IS NULL THEN TRUE
-        ELSE permissions[$1::TEXT]::integer <> 0 END
-    ORDER BY deleted DESC
-    LIMIT $2::INTEGER
+        WHEN $3::TEXT IS NULL THEN TRUE
+        ELSE permissions[$3::TEXT]::integer <> 0 END
+    ORDER BY deleted DESC, id DESC
+    LIMIT $4::INTEGER
 `
 
 type ListDeletedParams struct {
-	Username pgtype.Text
-	N        int32
+	LastTimestamp pgtype.Timestamp
+	LastID        uuid.UUID
+	Username      pgtype.Text
+	N             int32
 }
 
 func (q *Queries) ListDeleted(ctx context.Context, arg ListDeletedParams) ([]Resource, error) {
-	rows, err := q.db.Query(ctx, listDeleted, arg.Username, arg.N)
+	rows, err := q.db.Query(ctx, listDeleted,
+		arg.LastTimestamp,
+		arg.LastID,
+		arg.Username,
+		arg.N,
+	)
 	if err != nil {
 		return nil, err
 	}
