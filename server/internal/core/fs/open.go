@@ -76,7 +76,7 @@ func (r Resource) Walk(depth int, fn func(serve.ResourceInfo, string) error) err
 	}
 
 	for _, c := range children {
-		if err := fn(c, suffix+r.Name()); err != nil {
+		if err := fn(c, suffix+c.Name()); err != nil {
 			return err
 		}
 	}

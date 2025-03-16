@@ -423,8 +423,8 @@ func (h *Handler) handleUnlock(_ http.ResponseWriter, r *http.Request) (status i
 	}
 }
 
-func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status int, err error) {
-	reqPath, status, err := h.stripPrefix(r.URL.Path)
+func (h *Handler) handlePropfind(w http.ResponseWriter, request *http.Request) (status int, err error) {
+	reqPath, status, err := h.stripPrefix(request.URL.Path)
 	if err != nil {
 		return status, err
 	}
@@ -436,13 +436,13 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 		return http.StatusMethodNotAllowed, err
 	}
 	depth := infiniteDepth
-	if hdr := r.Header.Get("Depth"); hdr != "" {
+	if hdr := request.Header.Get("Depth"); hdr != "" {
 		depth = parseDepth(hdr)
 		if depth == invalidDepth {
 			return http.StatusBadRequest, errInvalidDepth
 		}
 	}
-	pf, status, err := readPropfind(r.Body)
+	pf, status, err := readPropfind(request.Body)
 	if err != nil {
 		return status, err
 	}
@@ -469,7 +469,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 		if err != nil {
 			return err
 		}
-		href := path.Join(reqPath, p)
+		href := path.Join(request.URL.Path, p)
 		if href != "/" && r.Dir() {
 			href += "/"
 		}
