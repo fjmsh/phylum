@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const childResourceByName = `-- name: ChildResourceByName :one
@@ -216,6 +217,48 @@ func (q *Queries) GetAncestors(ctx context.Context, resourceID uuid.UUID) ([]Get
 			&i.Name,
 			&i.Parent,
 			&i.Permissions,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDeleted = `-- name: ListDeleted :many
+SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants FROM resources
+    WHERE deleted IS NOT NULL
+    AND CASE
+        WHEN $1::TEXT IS NULL THEN TRUE
+        ELSE permissions[$1::TEXT]::integer <> 0 END
+    ORDER BY deleted DESC
+`
+
+func (q *Queries) ListDeleted(ctx context.Context, username pgtype.Text) ([]Resource, error) {
+	rows, err := q.db.Query(ctx, listDeleted, username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Resource
+	for rows.Next() {
+		var i Resource
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Parent,
+			&i.Dir,
+			&i.Created,
+			&i.Modified,
+			&i.Deleted,
+			&i.ContentLength,
+			&i.ContentType,
+			&i.ContentSha256,
+			&i.Permissions,
+			&i.Grants,
 		); err != nil {
 			return nil, err
 		}

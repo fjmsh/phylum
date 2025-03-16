@@ -141,3 +141,11 @@ SELECT
   COUNT(CASE dir WHEN true THEN 1 ELSE NULL END) AS dirs,
   COUNT(CASE dir WHEN false THEN 1 ELSE NULL END) AS files
 FROM nodes;
+
+-- name: ListDeleted :many
+SELECT * FROM resources
+    WHERE deleted IS NOT NULL
+    AND CASE
+        WHEN sqlc.narg('username')::TEXT IS NULL THEN TRUE
+        ELSE permissions[@username::TEXT]::integer <> 0 END
+    ORDER BY deleted DESC;
