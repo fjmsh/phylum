@@ -90,15 +90,15 @@ RETURNING *;
 SELECT * FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;
 
 -- name: ReadDir :many
-WITH RECURSIVE nodes(id, parent, depth) AS (
-    SELECT r.id, r.parent, 0
+WITH RECURSIVE nodes(id, parent, deleted, depth) AS (
+    SELECT r.id, r.parent, r.deleted, 0
         FROM resources r
         WHERE r.id = @resource_id::UUID
     UNION ALL
-        SELECT r.id, r.parent, n.depth + 1
+        SELECT r.id, r.parent, n.deleted, n.depth + 1
             FROM resources r
             JOIN nodes n ON r.parent = n.id
-            WHERE r.deleted IS NULL
+            WHERE r.deleted = n.deleted
             AND n.depth < @max_depth::INTEGER
 )
 SELECT r.*
@@ -148,4 +148,5 @@ SELECT * FROM resources
     AND CASE
         WHEN sqlc.narg('username')::TEXT IS NULL THEN TRUE
         ELSE permissions[@username::TEXT]::integer <> 0 END
-    ORDER BY deleted DESC;
+    ORDER BY deleted DESC
+    LIMIT @n::INTEGER;

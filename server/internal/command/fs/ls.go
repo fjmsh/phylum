@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/fs"
@@ -32,8 +33,12 @@ func setupLsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			fmt.Println(path)
-			fmt.Println(permissionsJsonString(r.Permissions()))
-			fmt.Println(formatRow(r.ID().String(), formatSize(r.ContentLength()), r.ContentSHA256(), ".", grantsJsonString(r.Grants())))
+			fmt.Println(formatPermissionsJson(r.Permissions()))
+			if r.Deleted() != nil {
+				fmt.Println("Deleted on " + r.Deleted().Local().Format(time.RFC1123))
+			}
+			fmt.Println()
+			fmt.Println(common.FormatResourceSummaryWithName(r, "."))
 
 			if r.Dir() {
 				children, err := r.ReadDir(false)
@@ -52,7 +57,7 @@ func setupLsCommand() *cobra.Command {
 					return strings.Compare(strings.ToLower(a.Name()), strings.ToLower((b.Name()))) <= 0
 				})
 				for _, c := range children {
-					fmt.Println(formatResourceSummary(c.(fs.Resource)))
+					fmt.Println(common.FormatResourceSummary(c.(fs.Resource)))
 				}
 			}
 		},
@@ -60,30 +65,7 @@ func setupLsCommand() *cobra.Command {
 	return &cmd
 }
 
-func formatSize(size int64) string {
-	suffix := []string{"", "K", "M", "G", "T"}
-	si := 0
-	for ; size >= 1000 && si < len(suffix); si, size = si+1, size/1000 {
-	}
-	return fmt.Sprintf("%d%s", size, suffix[si])
-}
-
-func formatRow(id, size, sha256, name, permissions string) string {
-	if sha256 == "" {
-		sha256 = "dir     "
-	}
-	return fmt.Sprintf("%s %4s %s %-24s %s", id, size, sha256[0:8], name, permissions)
-}
-
-func formatResourceSummary(r fs.Resource) string {
-	name := r.Name()
-	if r.Dir() {
-		name += "/"
-	}
-	return formatRow(r.ID().String(), formatSize(r.ContentLength()), r.ContentSHA256(), name, grantsJsonString(r.Grants()))
-}
-
-func permissionsJsonString(j []byte) string {
+func formatPermissionsJson(j []byte) string {
 	p := make(map[string]fs.Permission)
 	json.Unmarshal(j, &p)
 	if len(p) == 0 {
@@ -91,42 +73,7 @@ func permissionsJsonString(j []byte) string {
 	}
 	perm := make([]string, 0, len(p))
 	for k, v := range p {
-		perm = append(perm, k+": "+permissionString(v))
+		perm = append(perm, k+": "+common.FormatPermission(v))
 	}
 	return "[" + strings.Join(perm, ", ") + "]"
-}
-func grantsJsonString(j []byte) string {
-	p := make(map[string]interface{})
-	json.Unmarshal(j, &p)
-	if len(p) == 0 {
-		return ""
-	}
-	perm := make([]string, 0, len(p))
-	for k, v := range p {
-		perm = append(perm, k+": "+permissionString(int32((v.(map[string]interface{})["p"]).(float64))))
-	}
-	return "[" + strings.Join(perm, ", ") + "]"
-}
-
-func permissionString(p fs.Permission) string {
-	if p == fs.PermissionSU {
-		return "su"
-	}
-	str := ""
-	if p&fs.PermissionRead != 0 {
-		p -= fs.PermissionRead
-		str += "r"
-	}
-	if p&fs.PermissionWrite != 0 {
-		p -= fs.PermissionWrite
-		str += "w"
-	}
-	if p&fs.PermissionShare != 0 {
-		p -= fs.PermissionShare
-		str += "s"
-	}
-	if p != 0 {
-		str += fmt.Sprintf("u(%d)", p)
-	}
-	return str
 }

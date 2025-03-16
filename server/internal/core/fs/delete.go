@@ -68,5 +68,4 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, hardDelete, preserveRo
 	}
 
 	return err
-
 }

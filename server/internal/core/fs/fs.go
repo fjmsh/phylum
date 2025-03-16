@@ -33,6 +33,9 @@ type FileSystem interface {
 	ResourceByID(id uuid.UUID) (Resource, error)
 	ResourceByPath(path string) (Resource, error)
 	ResourceByPathOrUUID(pathOrUUID string) (Resource, error)
+
+	// trash.go
+	ListDeleted(n int) ([]Resource, error)
 }
 
 func Open(ctx context.Context, username string, root uuid.UUID, fullAccess bool) FileSystem {

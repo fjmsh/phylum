@@ -235,10 +235,16 @@ SELECT id, name, parent, dir, created, modified, deleted, content_length, conten
         WHEN $1::TEXT IS NULL THEN TRUE
         ELSE permissions[$1::TEXT]::integer <> 0 END
     ORDER BY deleted DESC
+    LIMIT $2::INTEGER
 `
 
-func (q *Queries) ListDeleted(ctx context.Context, username pgtype.Text) ([]Resource, error) {
-	rows, err := q.db.Query(ctx, listDeleted, username)
+type ListDeletedParams struct {
+	Username pgtype.Text
+	N        int32
+}
+
+func (q *Queries) ListDeleted(ctx context.Context, arg ListDeletedParams) ([]Resource, error) {
+	rows, err := q.db.Query(ctx, listDeleted, arg.Username, arg.N)
 	if err != nil {
 		return nil, err
 	}
@@ -271,15 +277,15 @@ func (q *Queries) ListDeleted(ctx context.Context, username pgtype.Text) ([]Reso
 }
 
 const readDir = `-- name: ReadDir :many
-WITH RECURSIVE nodes(id, parent, depth) AS (
-    SELECT r.id, r.parent, 0
+WITH RECURSIVE nodes(id, parent, deleted, depth) AS (
+    SELECT r.id, r.parent, r.deleted, 0
         FROM resources r
         WHERE r.id = $2::UUID
     UNION ALL
-        SELECT r.id, r.parent, n.depth + 1
+        SELECT r.id, r.parent, n.deleted, n.depth + 1
             FROM resources r
             JOIN nodes n ON r.parent = n.id
-            WHERE r.deleted IS NULL
+            WHERE r.deleted = n.deleted
             AND n.depth < $3::INTEGER
 )
 SELECT r.id, r.name, r.parent, r.dir, r.created, r.modified, r.deleted, r.content_length, r.content_type, r.content_sha256, r.permissions, r.grants

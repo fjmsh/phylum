@@ -10,6 +10,7 @@ import (
 	"github.com/shroff/phylum/server/internal/command/schema"
 	"github.com/shroff/phylum/server/internal/command/serve"
 	storagecmd "github.com/shroff/phylum/server/internal/command/storage"
+	"github.com/shroff/phylum/server/internal/command/trash"
 	"github.com/shroff/phylum/server/internal/command/user"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
@@ -79,6 +80,7 @@ func SetupCommand() {
 	rootCmd.AddCommand(
 		fs.SetupCommand(),
 		publink.SetupCommand(),
+		trash.SetupCommand(),
 	)
 
 	rootCmd.AddGroup(&cobra.Group{
