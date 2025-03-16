@@ -26,8 +26,14 @@ func setupLsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			fmt.Println(r.Name() + " " + permissionJsonString(r.Permissions()))
-			fmt.Println(formatRow(r.ID().String(), formatSize(r.ContentLength()), r.ContentSHA256(), ".", permissionJsonString(r.Grants())))
+			path, err := r.GetPath()
+			if err != nil {
+				fmt.Println("cannot get path:" + err.Error())
+				os.Exit(1)
+			}
+			fmt.Println(path)
+			fmt.Println(permissionsJsonString(r.Permissions()))
+			fmt.Println(formatRow(r.ID().String(), formatSize(r.ContentLength()), r.ContentSHA256(), ".", grantsJsonString(r.Grants())))
 
 			if r.Dir() {
 				children, err := r.ReadDir(false)
@@ -74,10 +80,10 @@ func formatResourceSummary(r fs.Resource) string {
 	if r.Dir() {
 		name += "/"
 	}
-	return formatRow(r.ID().String(), formatSize(r.ContentLength()), r.ContentSHA256(), name, permissionJsonString(r.Permissions()))
+	return formatRow(r.ID().String(), formatSize(r.ContentLength()), r.ContentSHA256(), name, grantsJsonString(r.Grants()))
 }
 
-func permissionJsonString(j []byte) string {
+func permissionsJsonString(j []byte) string {
 	p := make(map[string]fs.Permission)
 	json.Unmarshal(j, &p)
 	if len(p) == 0 {
@@ -86,6 +92,18 @@ func permissionJsonString(j []byte) string {
 	perm := make([]string, 0, len(p))
 	for k, v := range p {
 		perm = append(perm, k+": "+permissionString(v))
+	}
+	return "[" + strings.Join(perm, ", ") + "]"
+}
+func grantsJsonString(j []byte) string {
+	p := make(map[string]interface{})
+	json.Unmarshal(j, &p)
+	if len(p) == 0 {
+		return ""
+	}
+	perm := make([]string, 0, len(p))
+	for k, v := range p {
+		perm = append(perm, k+": "+permissionString(int32((v.(map[string]interface{})["p"]).(float64))))
 	}
 	return "[" + strings.Join(perm, ", ") + "]"
 }

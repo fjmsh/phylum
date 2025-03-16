@@ -1,6 +1,8 @@
 package fs
 
 import (
+	"strings"
+
 	"github.com/google/uuid"
 )
 
@@ -25,5 +27,22 @@ func (r Resource) GetAncestors() ([]ResourceAncestor, error) {
 			}
 		}
 		return res, nil
+	}
+}
+
+func (r Resource) GetPath() (string, error) {
+	if a, err := r.f.db.GetAncestors(r.f.ctx, r.id); err != nil {
+		return "", err
+	} else {
+		if len(a) <= 1 {
+			return "/", nil
+		}
+		b := strings.Builder{}
+		for i := len(a) - 1; i >= 0; i-- {
+			b.WriteString(a[i].Name)
+			b.WriteByte(byte('/'))
+		}
+		b.Write([]byte(r.name))
+		return b.String(), nil
 	}
 }
