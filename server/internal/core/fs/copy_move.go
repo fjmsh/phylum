@@ -69,6 +69,9 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 			}
 			return err
 		} else {
+			if err := f.db.RecomputePermissions(r.f.ctx, r.ID()); err != nil {
+				return err
+			}
 			res = ResourceFromDB(result)
 			res.f = r.f
 			res.userPermission = r.userPermission
@@ -162,6 +165,9 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		}
 
 		if _, err := dbh.CreateResources(f.ctx, children); err != nil {
+			return err
+		}
+		if err := f.db.RecomputePermissions(r.f.ctx, id); err != nil {
 			return err
 		}
 		if created {

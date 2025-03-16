@@ -32,11 +32,7 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 			}
 		}
 
-		if err := dbh.RecomputePermissions(ctx, r.ID()); err != nil {
-			return err
-		}
-
-		return nil
+		return dbh.RecomputePermissions(ctx, r.ID())
 	})
 	p := make(map[string]Permission)
 	if r.permissions != nil {
