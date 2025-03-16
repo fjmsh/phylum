@@ -7,8 +7,9 @@ import (
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "publink",
-		Short: "Publink Management",
+		Use:     "publink",
+		Short:   "Publink Management",
+		GroupID: "app",
 	}
 	flags := cmd.PersistentFlags()
 	flags.Bool("auto-migrate", true, "Automatically migrate database schema")

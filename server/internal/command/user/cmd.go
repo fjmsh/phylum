@@ -12,8 +12,9 @@ import (
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "user",
-		Short: "User Management",
+		GroupID: "admin",
+		Use:     "user",
+		Short:   "User Management",
 	}
 	cmd.AddCommand([]*cobra.Command{
 		setupUserAddCommand(),

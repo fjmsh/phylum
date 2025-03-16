@@ -15,8 +15,9 @@ import (
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "storage",
-		Short: "Storage Management",
+		GroupID: "admin",
+		Use:     "storage",
+		Short:   "Storage Management",
 	}
 	flags := cmd.PersistentFlags()
 	flags.Bool("auto-migrate", true, "Automatically migrate database schema")

@@ -12,8 +12,9 @@ import (
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "schema",
-		Short: "Database Schema Management",
+		GroupID: "admin",
+		Use:     "schema",
+		Short:   "Database Schema Management",
 	}
 	cmd.AddCommand([]*cobra.Command{
 		setupSchemaMigrateCommand(),

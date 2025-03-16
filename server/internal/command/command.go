@@ -62,13 +62,30 @@ func SetupCommand() {
 		db.Close()
 	}()
 
-	rootCmd.AddCommand([]*cobra.Command{
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    "admin",
+		Title: "Admin",
+	})
+	rootCmd.AddCommand(
 		schema.SetupCommand(),
 		user.SetupCommand(),
 		storagecmd.SetupCommand(),
+	)
+
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    "app",
+		Title: "App",
+	})
+	rootCmd.AddCommand(
 		fs.SetupCommand(),
 		publink.SetupCommand(),
-		serve.SetupCommand(),
-	}...)
+	)
+
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    "server",
+		Title: "Server",
+	})
+	rootCmd.AddCommand(serve.SetupCommand())
+
 	rootCmd.Execute()
 }

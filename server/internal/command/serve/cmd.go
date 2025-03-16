@@ -12,8 +12,9 @@ import (
 
 func SetupCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "serve",
-		Short: "Run the server",
+		Use:     "serve",
+		Short:   "Run the server",
+		GroupID: "server",
 		Run: func(cmd *cobra.Command, args []string) {
 			config := viper.GetViper()
 			engine := createEngine(config.GetBool("debug"), config.GetBool("log_body"), config.GetBool("cors_enabled"), config.GetStringSlice("cors_origins"))

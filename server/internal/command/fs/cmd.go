@@ -7,8 +7,9 @@ import (
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "fs",
-		Short: "Filesystem Access",
+		Use:     "fs",
+		Short:   "Filesystem Access",
+		GroupID: "app",
 	}
 	flags := cmd.PersistentFlags()
 	flags.Bool("auto-migrate", true, "Automatically migrate database schema")
