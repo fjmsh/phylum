@@ -80,9 +80,8 @@ func (f filesystem) TrashSummary() (int, int, error) {
 //   - Parent must not be deleted
 //   - Parent must have write permission
 //   - No name conflict with exiting resource
-func (r Resource) Restore(parentPathOrUUID string, name string, autoRename bool) (Resource, int, error) {
+func (r Resource) Restore(parentPathOrUUID string, name string, autoRename bool) (res Resource, count int, size int64, err error) {
 	var p Resource
-	var err error
 	if parentPathOrUUID == "" {
 		p, err = r.f.ResourceByID(*r.parentID)
 	} else {
@@ -92,14 +91,16 @@ func (r Resource) Restore(parentPathOrUUID string, name string, autoRename bool)
 		err = ErrParentNotFound
 	}
 	if err != nil {
-		return Resource{}, 0, err
+		return
 	}
 
 	if p.deleted != nil {
-		return Resource{}, 0, ErrParentDeleted
+		err = ErrParentDeleted
+		return
 	}
 	if !p.hasPermission(PermissionWrite) {
-		return Resource{}, 0, ErrInsufficientPermissions
+		err = ErrInsufficientPermissions
+		return
 	}
 
 	if name == "" {
@@ -123,7 +124,7 @@ func (r Resource) Restore(parentPathOrUUID string, name string, autoRename bool)
 		if err == nil {
 			err = ErrResourceNameConflict
 		}
-		return Resource{}, 0, err
+		return
 	}
 
 	var username pgtype.Text
@@ -131,7 +132,6 @@ func (r Resource) Restore(parentPathOrUUID string, name string, autoRename bool)
 		username.String = r.f.username
 		username.Valid = true
 	}
-	var count int
 	err = r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
 		f := r.f.withDb(dbh)
 		if p.id != *r.parentID || r.name != name {
@@ -145,13 +145,17 @@ func (r Resource) Restore(parentPathOrUUID string, name string, autoRename bool)
 				r.parentID = update.Parent
 			}
 		}
-		if res, err := f.db.RestoreDeleted(f.ctx, db.RestoreDeletedParams{Username: username, ResourceID: r.id}); err != nil {
+		if del, err := f.db.RestoreDeleted(f.ctx, db.RestoreDeletedParams{Username: username, ResourceID: r.id}); err != nil {
 			return err
 		} else {
-			count = len(res)
+			count = len(del)
+			for _, l := range del {
+				size += l
+			}
 		}
 
 		return f.db.RecomputePermissions(f.ctx, r.ID())
 	})
-	return r, count, err
+	res = r
+	return
 }

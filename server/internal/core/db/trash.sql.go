@@ -80,7 +80,7 @@ UPDATE resources
     SET modified = NOW(), deleted = NULL
     FROM nodes
     WHERE resources.id = nodes.id
-    RETURNING 1
+    RETURNING resources.content_length
 `
 
 type RestoreDeletedParams struct {
@@ -88,19 +88,19 @@ type RestoreDeletedParams struct {
 	Username   pgtype.Text
 }
 
-func (q *Queries) RestoreDeleted(ctx context.Context, arg RestoreDeletedParams) ([]int32, error) {
+func (q *Queries) RestoreDeleted(ctx context.Context, arg RestoreDeletedParams) ([]int64, error) {
 	rows, err := q.db.Query(ctx, restoreDeleted, arg.ResourceID, arg.Username)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []int32
+	var items []int64
 	for rows.Next() {
-		var column_1 int32
-		if err := rows.Scan(&column_1); err != nil {
+		var content_length int64
+		if err := rows.Scan(&content_length); err != nil {
 			return nil, err
 		}
-		items = append(items, column_1)
+		items = append(items, content_length)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

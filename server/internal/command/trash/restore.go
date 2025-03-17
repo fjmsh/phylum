@@ -24,7 +24,7 @@ func setupRestoreCommand() *cobra.Command {
 					}
 				}
 				p, err := cmd.Flags().GetString("parent")
-				r, items, err := r.Restore(p, "", true)
+				r, items, size, err := r.Restore(p, "", true)
 				if err != nil {
 					fmt.Println("cannot restore '" + uuid + "': " + err.Error())
 					os.Exit(1)
@@ -35,11 +35,7 @@ func setupRestoreCommand() *cobra.Command {
 					fmt.Println("cannot get path: " + err.Error())
 					os.Exit(1)
 				}
-				if r.Dir() {
-					fmt.Printf("Restored dir: %s (%d items)\n", path, items)
-				} else {
-					fmt.Printf("Restored file: %s\n", path)
-				}
+				fmt.Printf("Restored %s (%d items, %s)\n", path, items, common.FormatSize(int(size)))
 			}
 		},
 	}

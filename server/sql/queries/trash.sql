@@ -35,7 +35,7 @@ UPDATE resources
     SET modified = NOW(), deleted = NULL
     FROM nodes
     WHERE resources.id = nodes.id
-    RETURNING 1;
+    RETURNING resources.content_length;
 
 SELECT r.*
     FROM nodes n

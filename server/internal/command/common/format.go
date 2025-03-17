@@ -9,13 +9,16 @@ import (
 )
 
 func formatRow(id string, dir bool, size int, sha256, name, permissions string) string {
+	sizeStr := "    -"
 	if dir {
-		sha256 = "dir     "
+		sha256 = "-       "
+	} else {
+		sizeStr = FormatSize(size)
 	}
 	if sha256 == "" {
 		sha256 = "xxxxxxxx"
 	}
-	return fmt.Sprintf("%s %4s %s %-24s %s", id, FormatSize(size), sha256[0:8], name, permissions)
+	return fmt.Sprintf("%s %s %s %-24s %s", id, sizeStr, sha256[0:8], name, permissions)
 }
 
 func FormatResourceSummaryWithName(r fs.Resource, name string) string {
@@ -31,11 +34,11 @@ func FormatResourceSummary(r fs.Resource) string {
 }
 
 func FormatSize(size int) string {
-	suffix := []string{"", "K", "M", "G", "T"}
+	suffix := []string{"B", "K", "M", "G", "T"}
 	si := 0
 	for ; size >= 1000 && si < len(suffix); si, size = si+1, size/1000 {
 	}
-	return fmt.Sprintf("%d%s", size, suffix[si])
+	return fmt.Sprintf("%4d%s", size, suffix[si])
 }
 
 func formatGrantsJson(j []byte) string {
