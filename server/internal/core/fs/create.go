@@ -55,13 +55,7 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 		var err error
 		parent := r.ID()
 		f := r.f.withDb(d)
-		contentType := ""
-		contentSHA256 := ""
-		if dir {
-			contentType = emptyContentType
-			contentSHA256 = emptyContentSHA256
-		}
-		if result, created, _, err = f.createResource(id, parent, name, dir, 0, contentType, contentSHA256, conflictResolution); err != nil {
+		if result, created, _, err = f.createResource(id, parent, name, dir, 0, emptyContentType, emptyContentSHA256, conflictResolution); err != nil {
 			return err
 		} else if created {
 			if err := f.db.RecomputePermissions(r.f.ctx, id); err != nil {

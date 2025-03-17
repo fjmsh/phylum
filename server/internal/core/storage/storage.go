@@ -63,6 +63,7 @@ func (s storage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, err
 		return backend.OpenRead(id, start, length)
 	}
 }
+
 func (s storage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string, string) error) (io.WriteCloser, error) {
 	if backend, err := s.findStorageBackend(id); err != nil {
 		return nil, err
