@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
+	"path"
 	"strings"
 	"time"
 
@@ -79,7 +80,7 @@ func (f filesystem) TrashSummary() (int, int, error) {
 //   - Parent must not be deleted
 //   - Parent must have write permission
 //   - No name conflict with exiting resource
-func (r Resource) Restore(parentPathOrUUID string) (Resource, int, error) {
+func (r Resource) Restore(parentPathOrUUID string, name string, autoRename bool) (Resource, int, error) {
 	var p Resource
 	var err error
 	if parentPathOrUUID == "" {
@@ -101,7 +102,23 @@ func (r Resource) Restore(parentPathOrUUID string) (Resource, int, error) {
 		return Resource{}, 0, ErrInsufficientPermissions
 	}
 
-	_, err = r.f.db.ChildResourceByName(r.f.ctx, db.ChildResourceByNameParams{Parent: p.id, Name: r.name})
+	if name == "" {
+		name = r.name
+	}
+	_, err = r.f.db.ChildResourceByName(r.f.ctx, db.ChildResourceByNameParams{Parent: p.id, Name: name})
+	if autoRename && err == nil {
+		ext := path.Ext(name)
+		basename := name[:len(name)-len(ext)]
+		counter := 1
+		for {
+			name = fmt.Sprintf("%s (%d)%s", basename, counter, ext)
+			if _, err = r.f.db.ChildResourceByName(r.f.ctx, db.ChildResourceByNameParams{Parent: p.id, Name: name}); err == nil {
+				counter++
+			} else {
+				break
+			}
+		}
+	}
 	if err != pgx.ErrNoRows {
 		if err == nil {
 			err = ErrResourceNameConflict
@@ -117,13 +134,8 @@ func (r Resource) Restore(parentPathOrUUID string) (Resource, int, error) {
 	var count int
 	err = r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
 		f := r.f.withDb(dbh)
-		if res, err := f.db.RestoreDeleted(f.ctx, db.RestoreDeletedParams{Username: username, ResourceID: r.id}); err != nil {
-			return err
-		} else {
-			count = len(res)
-		}
-		if p.id != *r.parentID {
-			if update, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID(), Parent: p.id}); err != nil {
+		if p.id != *r.parentID || r.name != name {
+			if update, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID(), Name: name, Parent: p.id}); err != nil {
 				if strings.Contains(err.Error(), "unique_member_resource_name") {
 					return ErrResourceNameConflict
 				}
@@ -131,11 +143,15 @@ func (r Resource) Restore(parentPathOrUUID string) (Resource, int, error) {
 			} else {
 				r.name = update.Name
 				r.parentID = update.Parent
-				return f.db.RecomputePermissions(f.ctx, r.ID())
 			}
 		}
+		if res, err := f.db.RestoreDeleted(f.ctx, db.RestoreDeletedParams{Username: username, ResourceID: r.id}); err != nil {
+			return err
+		} else {
+			count = len(res)
+		}
 
-		return nil
+		return f.db.RecomputePermissions(f.ctx, r.ID())
 	})
 	return r, count, err
 }

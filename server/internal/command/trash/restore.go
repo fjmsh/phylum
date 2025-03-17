@@ -24,7 +24,7 @@ func setupRestoreCommand() *cobra.Command {
 					}
 				}
 				p, err := cmd.Flags().GetString("parent")
-				r, items, err := r.Restore(p)
+				r, items, err := r.Restore(p, "", true)
 				if err != nil {
 					fmt.Println("cannot restore '" + uuid + "': " + err.Error())
 					os.Exit(1)
