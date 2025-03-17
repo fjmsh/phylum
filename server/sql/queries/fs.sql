@@ -107,25 +107,6 @@ SELECT r.*
         ON n.id = r.id
     WHERE n.depth >= @min_depth::INTEGER;
 
--- name: DeleteRecursive :many
-WITH RECURSIVE nodes(id, parent, dir) AS (
-    SELECT r.id, r.parent, r.dir
-    FROM resources r
-    WHERE
-        CASE @preserve_root::boolean
-            WHEN TRUE THEN r.parent = @id::uuid
-            ELSE r.id = @id::uuid
-        END
-  UNION ALL
-    SELECT r.id, r.parent, r.dir
-    FROM resources r JOIN nodes n on r.parent = n.id
-    WHERE deleted IS NULL
-)
-UPDATE resources
-SET modified = NOW(), deleted = NOW()
-WHERE id in (SELECT id FROM nodes)
-RETURNING id, dir;
-
 -- name: DiskUsage :one
 WITH RECURSIVE nodes(id, parent, content_length, dir) AS (
     SELECT r.id, r.parent, r.content_length, r.dir

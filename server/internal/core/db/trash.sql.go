@@ -12,6 +12,102 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const deleteRecursive = `-- name: DeleteRecursive :many
+WITH RECURSIVE nodes(id, parent, dir) AS (
+    SELECT r.id, r.parent, r.dir
+    FROM resources r
+    WHERE
+        CASE $1::boolean
+            WHEN TRUE THEN r.parent = $2::uuid
+            ELSE r.id = $2::uuid
+        END
+  UNION ALL
+    SELECT r.id, r.parent, r.dir
+    FROM resources r JOIN nodes n on r.parent = n.id
+    WHERE deleted IS NULL
+)
+UPDATE resources
+    SET modified = NOW(), deleted = NOW()
+    WHERE id in (SELECT id FROM nodes)
+    RETURNING id, dir
+`
+
+type DeleteRecursiveParams struct {
+	PreserveRoot bool
+	ID           uuid.UUID
+}
+
+type DeleteRecursiveRow struct {
+	ID  uuid.UUID
+	Dir bool
+}
+
+func (q *Queries) DeleteRecursive(ctx context.Context, arg DeleteRecursiveParams) ([]DeleteRecursiveRow, error) {
+	rows, err := q.db.Query(ctx, deleteRecursive, arg.PreserveRoot, arg.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DeleteRecursiveRow
+	for rows.Next() {
+		var i DeleteRecursiveRow
+		if err := rows.Scan(&i.ID, &i.Dir); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const restoreDeleted = `-- name: RestoreDeleted :many
+WITH RECURSIVE nodes(id, parent, ts) AS (
+    SELECT r.id, r.parent, r.deleted
+        FROM resources r
+        WHERE r.id = $1::UUID
+        AND CASE
+            WHEN $2::TEXT IS NULL THEN TRUE
+            ELSE permissions[$2::TEXT]::integer <> 0 END
+    UNION ALL
+        SELECT r.id, r.parent, n.ts
+            FROM resources r
+            JOIN nodes n ON r.parent = n.id
+            WHERE r.deleted = n.ts
+)
+UPDATE resources
+    SET modified = NOW(), deleted = NULL
+    FROM nodes
+    WHERE resources.id = nodes.id
+    RETURNING 1
+`
+
+type RestoreDeletedParams struct {
+	ResourceID uuid.UUID
+	Username   pgtype.Text
+}
+
+func (q *Queries) RestoreDeleted(ctx context.Context, arg RestoreDeletedParams) ([]int32, error) {
+	rows, err := q.db.Query(ctx, restoreDeleted, arg.ResourceID, arg.Username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var column_1 int32
+		if err := rows.Scan(&column_1); err != nil {
+			return nil, err
+		}
+		items = append(items, column_1)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const trashList = `-- name: TrashList :many
 SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants FROM resources
     WHERE CASE

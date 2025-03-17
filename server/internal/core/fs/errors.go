@@ -18,4 +18,5 @@ var (
 	ErrResourceMoveTargetSubdirectory = errors.NewError(http.StatusConflict, "move_target_subdirectory", "Cannot move a resource to its own subdirectory")
 	ErrResourceCopyTargetSelf         = errors.NewError(http.StatusConflict, "copy_target_self", "Cannot overwrite a resource with itself")
 	ErrParentNotFound                 = errors.NewError(http.StatusConflict, "parent_not_found", "Parent not found")
+	ErrParentDeleted                  = errors.NewError(http.StatusConflict, "parent_deleted", "Parent deleted")
 )

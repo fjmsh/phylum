@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/db"
 )
@@ -70,4 +71,42 @@ func (f filesystem) TrashSummary() (int, int, error) {
 	} else {
 		return int(res.Items), int(res.Size), nil
 	}
+}
+
+// RestoreDeleted restores a previously deleted resources
+// Checks:
+//   - Parent must not be deleted
+//   - Parent must have write permission
+//   - No name conflict with exiting resource
+func (r Resource) Restore() (int, error) {
+	p, err := r.f.ResourceByID(*r.parentID)
+	if err == ErrResourceNotFound {
+		err = ErrParentNotFound
+	}
+	if err != nil {
+		return 0, err
+	}
+
+	if p.deleted != nil {
+		return 0, ErrParentDeleted
+	}
+	if !p.hasPermission(PermissionWrite) {
+		return 0, ErrInsufficientPermissions
+	}
+
+	_, err = r.f.db.ChildResourceByName(r.f.ctx, db.ChildResourceByNameParams{Parent: p.id, Name: r.name})
+	if err != pgx.ErrNoRows {
+		if err != nil {
+			err = ErrResourceNameConflict
+		}
+		return 0, err
+	}
+
+	var username pgtype.Text
+	if !r.f.fullAccess {
+		username.String = r.f.username
+		username.Valid = true
+	}
+	res, err := r.f.db.RestoreDeleted(r.f.ctx, db.RestoreDeletedParams{Username: username, ResourceID: r.id})
+	return len(res), err
 }

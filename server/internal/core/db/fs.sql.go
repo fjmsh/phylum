@@ -96,56 +96,6 @@ type CreateResourcesParams struct {
 	ContentSha256 string
 }
 
-const deleteRecursive = `-- name: DeleteRecursive :many
-WITH RECURSIVE nodes(id, parent, dir) AS (
-    SELECT r.id, r.parent, r.dir
-    FROM resources r
-    WHERE
-        CASE $1::boolean
-            WHEN TRUE THEN r.parent = $2::uuid
-            ELSE r.id = $2::uuid
-        END
-  UNION ALL
-    SELECT r.id, r.parent, r.dir
-    FROM resources r JOIN nodes n on r.parent = n.id
-    WHERE deleted IS NULL
-)
-UPDATE resources
-SET modified = NOW(), deleted = NOW()
-WHERE id in (SELECT id FROM nodes)
-RETURNING id, dir
-`
-
-type DeleteRecursiveParams struct {
-	PreserveRoot bool
-	ID           uuid.UUID
-}
-
-type DeleteRecursiveRow struct {
-	ID  uuid.UUID
-	Dir bool
-}
-
-func (q *Queries) DeleteRecursive(ctx context.Context, arg DeleteRecursiveParams) ([]DeleteRecursiveRow, error) {
-	rows, err := q.db.Query(ctx, deleteRecursive, arg.PreserveRoot, arg.ID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []DeleteRecursiveRow
-	for rows.Next() {
-		var i DeleteRecursiveRow
-		if err := rows.Scan(&i.ID, &i.Dir); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const diskUsage = `-- name: DiskUsage :one
 WITH RECURSIVE nodes(id, parent, content_length, dir) AS (
     SELECT r.id, r.parent, r.content_length, r.dir
