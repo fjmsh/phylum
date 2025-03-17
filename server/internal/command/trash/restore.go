@@ -24,7 +24,9 @@ func setupRestoreCommand() *cobra.Command {
 					}
 				}
 				p, err := cmd.Flags().GetString("parent")
-				r, items, size, err := r.Restore(p, "", true)
+				name, _ := cmd.Flags().GetString("name")
+				autoRename, _ := cmd.Flags().GetBool("auto-rename")
+				r, items, size, err := r.Restore(p, name, autoRename)
 				if err != nil {
 					fmt.Println("cannot restore '" + uuid + "': " + err.Error())
 					os.Exit(1)
@@ -41,5 +43,7 @@ func setupRestoreCommand() *cobra.Command {
 	}
 	cmd.Flags().BoolP("recursive", "r", false, "Recursive restore (required for directories)")
 	cmd.Flags().StringP("parent", "p", "", "Restore to parent uuid or path")
+	cmd.Flags().StringP("name", "n", "", "Overwrite name")
+	cmd.Flags().BoolP("auto-rename", "a", false, "Automatically rename on name conflict")
 	return &cmd
 }
