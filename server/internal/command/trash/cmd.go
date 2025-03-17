@@ -22,6 +22,7 @@ func SetupCommand() *cobra.Command {
 
 	cmd.AddCommand(
 		setupListCommand(),
+		setupSummaryCommand(),
 	)
 
 	return cmd

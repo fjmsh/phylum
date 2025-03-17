@@ -8,18 +8,18 @@ import (
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
-func formatRow(id string, dir bool, size int64, sha256, name, permissions string) string {
+func formatRow(id string, dir bool, size int, sha256, name, permissions string) string {
 	if dir {
 		sha256 = "dir     "
 	}
 	if sha256 == "" {
 		sha256 = "xxxxxxxx"
 	}
-	return fmt.Sprintf("%s %4s %s %-24s %s", id, formatSize(size), sha256[0:8], name, permissions)
+	return fmt.Sprintf("%s %4s %s %-24s %s", id, FormatSize(size), sha256[0:8], name, permissions)
 }
 
 func FormatResourceSummaryWithName(r fs.Resource, name string) string {
-	return formatRow(r.ID().String(), r.Dir(), r.ContentLength(), r.ContentSHA256(), name, formatGrantsJson(r.Grants()))
+	return formatRow(r.ID().String(), r.Dir(), int(r.ContentLength()), r.ContentSHA256(), name, formatGrantsJson(r.Grants()))
 }
 
 func FormatResourceSummary(r fs.Resource) string {
@@ -30,7 +30,7 @@ func FormatResourceSummary(r fs.Resource) string {
 	return FormatResourceSummaryWithName(r, name)
 }
 
-func formatSize(size int64) string {
+func FormatSize(size int) string {
 	suffix := []string{"", "K", "M", "G", "T"}
 	si := 0
 	for ; size >= 1000 && si < len(suffix); si, size = si+1, size/1000 {

@@ -17,7 +17,7 @@ func setupListCommand() *cobra.Command {
 			f := common.UserFileSystem(cmd)
 			n, _ := cmd.Flags().GetInt("num")
 			cursor, _ := cmd.Flags().GetString("cursor")
-			deleted, cursor, err := f.ListDeleted(cursor, n)
+			deleted, cursor, err := f.TrashList(cursor, n)
 			if err != nil {
 				fmt.Println("cannot list trash: " + err.Error())
 				os.Exit(1)

@@ -11,7 +11,7 @@ import (
 	"github.com/shroff/phylum/server/internal/core/db"
 )
 
-func (f filesystem) ListDeleted(cursor string, n int) ([]Resource, string, error) {
+func (f filesystem) TrashList(cursor string, n int) ([]Resource, string, error) {
 	var username pgtype.Text
 	if !f.fullAccess {
 		username.String = f.username
@@ -33,7 +33,7 @@ func (f filesystem) ListDeleted(cursor string, n int) ([]Resource, string, error
 		}
 	}
 
-	if res, err := f.db.ListDeleted(f.ctx, db.ListDeletedParams{
+	if res, err := f.db.TrashList(f.ctx, db.TrashListParams{
 		Username:      username,
 		N:             int32(n),
 		LastTimestamp: lastTimestamp,
@@ -56,5 +56,18 @@ func (f filesystem) ListDeleted(cursor string, n int) ([]Resource, string, error
 
 		binary.LittleEndian.PutUint64(c[16:], uint64(last.deleted.UnixNano()))
 		return deleted, base64.StdEncoding.EncodeToString(c), nil
+	}
+}
+
+func (f filesystem) TrashSummary() (int, int, error) {
+	var username pgtype.Text
+	if !f.fullAccess {
+		username.String = f.username
+		username.Valid = true
+	}
+	if res, err := f.db.TrashSummary(f.ctx, username); err != nil {
+		return 0, 0, err
+	} else {
+		return int(res.Items), int(res.Size), nil
 	}
 }
