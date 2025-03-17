@@ -130,7 +130,9 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			r.contentSHA256,
 			conflictResolution,
 		)
-		if err == nil && r.ID() == root.ID {
+		// createResource may return an already existing resources, depending on the specified conflictResolution
+		id = root.ID
+		if err == nil && r.ID() == id {
 			err = ErrResourceCopyTargetSelf
 		}
 		if err != nil {
@@ -138,9 +140,9 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		}
 
 		if root.Dir {
-			newIDs[r.ID()] = root.ID
+			newIDs[r.ID()] = id
 		} else {
-			contents = append(contents, copySrcDest{src: r.ID(), dest: root.ID})
+			contents = append(contents, copySrcDest{src: r.ID(), dest: id})
 		}
 
 		for _, src := range tree {
