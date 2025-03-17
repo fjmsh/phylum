@@ -17,7 +17,8 @@ func setupRestoreCommand() *cobra.Command {
 			f := common.UserFileSystem(cmd)
 			for _, uuid := range args {
 				r, err := f.ResourceByPathOrUUID(uuid)
-				items, err := r.Restore()
+				p, err := cmd.Flags().GetString("parent")
+				_, items, err := r.Restore(p)
 				if err != nil {
 					fmt.Println("cannot restore '" + uuid + "': " + err.Error())
 					os.Exit(1)
@@ -27,5 +28,6 @@ func setupRestoreCommand() *cobra.Command {
 			}
 		},
 	}
+	cmd.Flags().StringP("parent", "p", "", "Restore to parent uuid or path")
 	return &cmd
 }

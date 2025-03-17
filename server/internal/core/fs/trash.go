@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -78,28 +79,34 @@ func (f filesystem) TrashSummary() (int, int, error) {
 //   - Parent must not be deleted
 //   - Parent must have write permission
 //   - No name conflict with exiting resource
-func (r Resource) Restore() (int, error) {
-	p, err := r.f.ResourceByID(*r.parentID)
+func (r Resource) Restore(parentPathOrUUID string) (Resource, int, error) {
+	var p Resource
+	var err error
+	if parentPathOrUUID == "" {
+		p, err = r.f.ResourceByID(*r.parentID)
+	} else {
+		p, err = r.f.ResourceByPathOrUUID(parentPathOrUUID)
+	}
 	if err == ErrResourceNotFound {
 		err = ErrParentNotFound
 	}
 	if err != nil {
-		return 0, err
+		return Resource{}, 0, err
 	}
 
 	if p.deleted != nil {
-		return 0, ErrParentDeleted
+		return Resource{}, 0, ErrParentDeleted
 	}
 	if !p.hasPermission(PermissionWrite) {
-		return 0, ErrInsufficientPermissions
+		return Resource{}, 0, ErrInsufficientPermissions
 	}
 
 	_, err = r.f.db.ChildResourceByName(r.f.ctx, db.ChildResourceByNameParams{Parent: p.id, Name: r.name})
 	if err != pgx.ErrNoRows {
-		if err != nil {
+		if err == nil {
 			err = ErrResourceNameConflict
 		}
-		return 0, err
+		return Resource{}, 0, err
 	}
 
 	var username pgtype.Text
@@ -107,6 +114,28 @@ func (r Resource) Restore() (int, error) {
 		username.String = r.f.username
 		username.Valid = true
 	}
-	res, err := r.f.db.RestoreDeleted(r.f.ctx, db.RestoreDeletedParams{Username: username, ResourceID: r.id})
-	return len(res), err
+	var count int
+	err = r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
+		f := r.f.withDb(dbh)
+		if res, err := f.db.RestoreDeleted(f.ctx, db.RestoreDeletedParams{Username: username, ResourceID: r.id}); err != nil {
+			return err
+		} else {
+			count = len(res)
+		}
+		if p.id != *r.parentID {
+			if update, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID(), Parent: p.id}); err != nil {
+				if strings.Contains(err.Error(), "unique_member_resource_name") {
+					return ErrResourceNameConflict
+				}
+				return err
+			} else {
+				r.name = update.Name
+				r.parentID = update.Parent
+				return f.db.RecomputePermissions(f.ctx, r.ID())
+			}
+		}
+
+		return nil
+	})
+	return r, count, err
 }
