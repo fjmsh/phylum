@@ -19,7 +19,7 @@ type Storage interface {
 	OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string, string) error) (io.WriteCloser, error)
 	CopyContents(src, dest uuid.UUID) error
 	Delete(id uuid.UUID) error
-	DeleteAll(deleted []db.DeleteRecursiveRow) []error
+	DeleteAll(deleted []db.HardDeleteRow) []error
 }
 
 type storage struct {
@@ -104,7 +104,7 @@ func (s storage) Delete(id uuid.UUID) error {
 	}
 }
 
-func (s storage) DeleteAll(deleted []db.DeleteRecursiveRow) []error {
+func (s storage) DeleteAll(deleted []db.HardDeleteRow) []error {
 	// TODO: Batch delete
 	var errs []error
 	for _, d := range deleted {

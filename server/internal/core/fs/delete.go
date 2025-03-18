@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (r Resource) DeleteChildRecursive(name string, hardDelete bool) (Resource, error) {
+func (r Resource) DeleteChildRecursive(name string, softDelete bool) (Resource, error) {
 	if !r.hasPermission(PermissionWrite) {
 		return Resource{}, ErrInsufficientPermissions
 	}
@@ -22,7 +22,7 @@ func (r Resource) DeleteChildRecursive(name string, hardDelete bool) (Resource, 
 		}
 		return Resource{}, err
 	}
-	if err := r.f.deleteRecursive(c.ID, r.ID(), hardDelete, false); err != nil {
+	if err := r.f.deleteRecursive(c.ID, r.ID(), softDelete, false); err != nil {
 		return Resource{}, err
 	}
 	deleted := time.Now()
@@ -30,7 +30,7 @@ func (r Resource) DeleteChildRecursive(name string, hardDelete bool) (Resource, 
 	return r, nil
 }
 
-func (r Resource) DeleteRecursive(hardDelete bool) (Resource, error) {
+func (r Resource) DeleteRecursive(softDelete bool) (Resource, error) {
 	if r.ParentID() == nil {
 		return Resource{}, ErrInsufficientPermissions
 	}
@@ -41,7 +41,7 @@ func (r Resource) DeleteRecursive(hardDelete bool) (Resource, error) {
 	if err != nil {
 		return Resource{}, err
 	}
-	if err := r.f.deleteRecursive(r.ID(), r.ID(), hardDelete, false); err != nil {
+	if err := r.f.deleteRecursive(r.ID(), r.ID(), softDelete, false); err != nil {
 		return Resource{}, err
 	}
 	deleted := time.Now()
@@ -49,18 +49,28 @@ func (r Resource) DeleteRecursive(hardDelete bool) (Resource, error) {
 	return r, nil
 }
 
-func (f filesystem) deleteRecursive(id, parent uuid.UUID, hardDelete, preserveRoot bool) error {
-	var deleted []db.DeleteRecursiveRow
+func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRoot bool) error {
+	if softDelete {
+		return f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
+			var err error
+			if err = d.SoftDelete(f.ctx, db.SoftDeleteParams{ID: id, PreserveRoot: preserveRoot}); err != nil {
+				return err
+			}
+
+			return d.UpdateResourceModified(f.ctx, parent)
+		})
+	}
+	var deleted []db.HardDeleteRow
 	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 		var err error
-		if deleted, err = d.DeleteRecursive(f.ctx, db.DeleteRecursiveParams{ID: id, PreserveRoot: preserveRoot}); err != nil {
+		if deleted, err = d.HardDelete(f.ctx, db.HardDeleteParams{ID: id, PreserveRoot: preserveRoot}); err != nil {
 			return err
 		}
 
 		return d.UpdateResourceModified(f.ctx, parent)
 	})
 
-	if err == nil && hardDelete {
+	if err == nil {
 		errors := f.cs.DeleteAll(deleted)
 		for _, err := range errors {
 			logrus.Warn(err)

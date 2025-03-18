@@ -12,9 +12,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const deleteRecursive = `-- name: DeleteRecursive :many
-WITH RECURSIVE nodes(id, parent, dir) AS (
-    SELECT r.id, r.parent, r.dir
+const hardDelete = `-- name: HardDelete :many
+WITH RECURSIVE nodes(id, parent) AS (
+    SELECT r.id, r.parent
     FROM resources r
     WHERE
         CASE $1::boolean
@@ -22,35 +22,34 @@ WITH RECURSIVE nodes(id, parent, dir) AS (
             ELSE r.id = $2::uuid
         END
   UNION ALL
-    SELECT r.id, r.parent, r.dir
+    SELECT r.id, r.parent
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
 )
-UPDATE resources
-    SET modified = NOW(), deleted = NOW()
-    WHERE id in (SELECT id FROM nodes)
+DELETE FROM resources
+    WHERE id IN (SELECT id FROM nodes)
     RETURNING id, dir
 `
 
-type DeleteRecursiveParams struct {
+type HardDeleteParams struct {
 	PreserveRoot bool
 	ID           uuid.UUID
 }
 
-type DeleteRecursiveRow struct {
+type HardDeleteRow struct {
 	ID  uuid.UUID
 	Dir bool
 }
 
-func (q *Queries) DeleteRecursive(ctx context.Context, arg DeleteRecursiveParams) ([]DeleteRecursiveRow, error) {
-	rows, err := q.db.Query(ctx, deleteRecursive, arg.PreserveRoot, arg.ID)
+func (q *Queries) HardDelete(ctx context.Context, arg HardDeleteParams) ([]HardDeleteRow, error) {
+	rows, err := q.db.Query(ctx, hardDelete, arg.PreserveRoot, arg.ID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []DeleteRecursiveRow
+	var items []HardDeleteRow
 	for rows.Next() {
-		var i DeleteRecursiveRow
+		var i HardDeleteRow
 		if err := rows.Scan(&i.ID, &i.Dir); err != nil {
 			return nil, err
 		}
@@ -106,6 +105,36 @@ func (q *Queries) RestoreDeleted(ctx context.Context, arg RestoreDeletedParams) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const softDelete = `-- name: SoftDelete :exec
+WITH RECURSIVE nodes(id, parent) AS (
+    SELECT r.id, r.parent
+    FROM resources r
+    WHERE
+        CASE $1::boolean
+            WHEN TRUE THEN r.parent = $2::uuid
+            ELSE r.id = $2::uuid
+        END
+  UNION ALL
+    SELECT r.id, r.parent
+    FROM resources r JOIN nodes n on r.parent = n.id
+    WHERE deleted IS NULL
+)
+UPDATE resources
+    SET modified = NOW(), deleted = NOW()
+    FROM nodes
+        WHERE nodes.id = resources.id
+`
+
+type SoftDeleteParams struct {
+	PreserveRoot bool
+	ID           uuid.UUID
+}
+
+func (q *Queries) SoftDelete(ctx context.Context, arg SoftDeleteParams) error {
+	_, err := q.db.Exec(ctx, softDelete, arg.PreserveRoot, arg.ID)
+	return err
 }
 
 const trashList = `-- name: TrashList :many

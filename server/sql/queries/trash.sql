@@ -1,6 +1,6 @@
--- name: DeleteRecursive :many
-WITH RECURSIVE nodes(id, parent, dir) AS (
-    SELECT r.id, r.parent, r.dir
+-- name: SoftDelete :exec
+WITH RECURSIVE nodes(id, parent) AS (
+    SELECT r.id, r.parent
     FROM resources r
     WHERE
         CASE @preserve_root::boolean
@@ -8,13 +8,31 @@ WITH RECURSIVE nodes(id, parent, dir) AS (
             ELSE r.id = @id::uuid
         END
   UNION ALL
-    SELECT r.id, r.parent, r.dir
+    SELECT r.id, r.parent
     FROM resources r JOIN nodes n on r.parent = n.id
     WHERE deleted IS NULL
 )
 UPDATE resources
     SET modified = NOW(), deleted = NOW()
-    WHERE id in (SELECT id FROM nodes)
+    FROM nodes
+        WHERE nodes.id = resources.id;
+
+-- name: HardDelete :many
+WITH RECURSIVE nodes(id, parent) AS (
+    SELECT r.id, r.parent
+    FROM resources r
+    WHERE
+        CASE @preserve_root::boolean
+            WHEN TRUE THEN r.parent = @id::uuid
+            ELSE r.id = @id::uuid
+        END
+  UNION ALL
+    SELECT r.id, r.parent
+    FROM resources r JOIN nodes n on r.parent = n.id
+    WHERE deleted IS NULL
+)
+DELETE FROM resources
+    WHERE id IN (SELECT id FROM nodes)
     RETURNING id, dir;
 
 -- name: RestoreDeleted :many
