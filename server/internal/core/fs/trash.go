@@ -167,7 +167,6 @@ func (r Resource) Restore(parentPathOrUUID string, name string, autoRename bool)
 
 func SetupTrashCompactor() {
 	ticker := time.NewTimer(24 * time.Hour)
-	// ticker := time.NewTicker(time.Second)
 	go func() {
 		for {
 			<-ticker.C
