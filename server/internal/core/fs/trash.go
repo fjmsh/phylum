@@ -174,3 +174,21 @@ func HardDeleteExpired(ctx context.Context, t time.Time) (int, error) {
 	storage.Get().DeleteAll(ids)
 	return len(rows), err
 }
+
+func (f filesystem) TrashEmpty() (int, error) {
+	var username pgtype.Text
+	if !f.fullAccess {
+		username.String = f.username
+		username.Valid = true
+	}
+	d := db.Get()
+	rows, err := d.EmptyTrash(f.ctx, username)
+	ids := make([]uuid.UUID, len(rows))
+	for _, d := range rows {
+		if !d.Dir {
+			ids = append(ids, d.ID)
+		}
+	}
+	storage.Get().DeleteAll(ids)
+	return len(rows), err
+}

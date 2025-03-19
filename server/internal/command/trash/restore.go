@@ -17,13 +17,17 @@ func setupRestoreCommand() *cobra.Command {
 			f := common.UserFileSystem(cmd)
 			for _, uuid := range args {
 				r, err := f.ResourceByPathOrUUID(uuid)
+				if err != nil {
+					fmt.Println("cannot restore'" + uuid + "': " + err.Error())
+					os.Exit(1)
+				}
 				if r.Dir() {
 					if recursive, err := cmd.Flags().GetBool("recursive"); err != nil || !recursive {
 						fmt.Println("cannot restore '" + uuid + "': Is a directory. Try again with '-r'")
 						os.Exit(1)
 					}
 				}
-				p, err := cmd.Flags().GetString("parent")
+				p, _ := cmd.Flags().GetString("parent")
 				name, _ := cmd.Flags().GetString("name")
 				autoRename, _ := cmd.Flags().GetBool("auto-rename")
 				r, items, size, err := r.Restore(p, name, autoRename)

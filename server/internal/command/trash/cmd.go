@@ -21,9 +21,10 @@ func SetupCommand() *cobra.Command {
 	flags.StringP("user", "u", "phylum", "User")
 
 	cmd.AddCommand(
+		setupEmptyCommand(),
 		setupListCommand(),
-		setupSummaryCommand(),
 		setupRestoreCommand(),
+		setupSummaryCommand(),
 	)
 
 	return cmd

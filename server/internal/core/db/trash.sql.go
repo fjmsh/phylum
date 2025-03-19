@@ -12,6 +12,40 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const emptyTrash = `-- name: EmptyTrash :many
+DELETE FROM resources
+    WHERE deleted IS NOT NULL
+    AND CASE
+        WHEN $1::TEXT IS NULL THEN TRUE
+        ELSE permissions[$1::TEXT]::integer & 32 <> 0 END
+    RETURNING id, dir
+`
+
+type EmptyTrashRow struct {
+	ID  uuid.UUID
+	Dir bool
+}
+
+func (q *Queries) EmptyTrash(ctx context.Context, username pgtype.Text) ([]EmptyTrashRow, error) {
+	rows, err := q.db.Query(ctx, emptyTrash, username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []EmptyTrashRow
+	for rows.Next() {
+		var i EmptyTrashRow
+		if err := rows.Scan(&i.ID, &i.Dir); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const hardDelete = `-- name: HardDelete :many
 WITH RECURSIVE nodes(id, parent) AS (
     SELECT r.id, r.parent
@@ -224,7 +258,7 @@ func (q *Queries) TrashList(ctx context.Context, arg TrashListParams) ([]Resourc
 }
 
 const trashSummary = `-- name: TrashSummary :one
-SELECT SUM(content_length) AS size, COUNT(*) AS items
+SELECT COALESCE(SUM(content_length), 0)::INTEGER AS size, COUNT(*) AS items
     FROM resources
     WHERE deleted IS NOT NULL
     AND CASE
@@ -233,7 +267,7 @@ SELECT SUM(content_length) AS size, COUNT(*) AS items
 `
 
 type TrashSummaryRow struct {
-	Size  int64
+	Size  int32
 	Items int64
 }
 

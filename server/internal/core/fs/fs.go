@@ -37,6 +37,7 @@ type FileSystem interface {
 	// trash.go
 	TrashList(cursor string, n int) ([]Resource, string, error)
 	TrashSummary() (int, int, error)
+	TrashEmpty() (int, error)
 }
 
 func Open(ctx context.Context, username string, root uuid.UUID, fullAccess bool) FileSystem {

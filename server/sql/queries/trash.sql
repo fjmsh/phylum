@@ -76,9 +76,17 @@ SELECT * FROM resources
     LIMIT @n::INTEGER;
 
 -- name: TrashSummary :one
-SELECT SUM(content_length) AS size, COUNT(*) AS items
+SELECT COALESCE(SUM(content_length), 0)::INTEGER AS size, COUNT(*) AS items
     FROM resources
     WHERE deleted IS NOT NULL
     AND CASE
         WHEN sqlc.narg('username')::TEXT IS NULL THEN TRUE
         ELSE permissions[@username::TEXT]::integer <> 0 END;
+
+-- name: EmptyTrash :many
+DELETE FROM resources
+    WHERE deleted IS NOT NULL
+    AND CASE
+        WHEN sqlc.narg('username')::TEXT IS NULL THEN TRUE
+        ELSE permissions[@username::TEXT]::integer & 32 <> 0 END
+    RETURNING id, dir;
