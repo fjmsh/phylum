@@ -60,6 +60,7 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 			return d.UpdateResourceModified(f.ctx, parent)
 		})
 	}
+
 	var deleted []db.HardDeleteRow
 	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 		var err error
@@ -72,9 +73,9 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 
 	if err == nil {
 		ids := make([]uuid.UUID, len(deleted))
-		for _, d := range deleted {
+		for i, d := range deleted {
 			if !d.Dir {
-				ids = append(ids, d.ID)
+				ids[i] = d.ID
 			}
 		}
 		errors := f.cs.DeleteAll(ids)
