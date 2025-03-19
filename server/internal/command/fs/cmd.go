@@ -30,6 +30,7 @@ func SetupCommand() *cobra.Command {
 		setupMvCommand(),
 		setupPublinksCommand(),
 		setupRmCommand(),
+		setupSearchCommand(),
 	)
 
 	return cmd

@@ -26,13 +26,6 @@ type Bookmark struct {
 	Deleted    pgtype.Timestamp
 }
 
-type Permission struct {
-	ResourceID uuid.UUID
-	Username   string
-	Modified   pgtype.Timestamp
-	Value      pgtype.Int4
-}
-
 type Publink struct {
 	ID           int32
 	Name         string

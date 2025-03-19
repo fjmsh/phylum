@@ -34,6 +34,9 @@ type FileSystem interface {
 	ResourceByPath(path string) (Resource, error)
 	ResourceByPathOrUUID(pathOrUUID string) (Resource, error)
 
+	// search.go
+	Search(query string) ([]Resource, error)
+
 	// trash.go
 	TrashList(cursor string, n int) ([]Resource, string, error)
 	TrashSummary() (int, int, error)
