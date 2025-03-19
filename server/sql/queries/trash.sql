@@ -35,7 +35,7 @@ DELETE FROM resources
     WHERE id IN (SELECT id FROM nodes)
     RETURNING id, dir;
 
--- name: HardDeleteExpired :many
+-- name: TrashCompact :many
 DELETE FROM resources WHERE deleted < @t::TIMESTAMP RETURNING id, dir;
 
 -- name: RestoreDeleted :many

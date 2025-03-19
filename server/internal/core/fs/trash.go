@@ -14,7 +14,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
+	"github.com/sirupsen/logrus"
 )
+
+const trashDuration = 30 * 24 * time.Hour
 
 func (f filesystem) TrashList(cursor string, n int) ([]Resource, string, error) {
 	var username pgtype.Text
@@ -162,9 +165,33 @@ func (r Resource) Restore(parentPathOrUUID string, name string, autoRename bool)
 	return
 }
 
-func HardDeleteExpired(ctx context.Context, t time.Time) (int, error) {
+func SetupTrashCompactor() {
+	ticker := time.NewTimer(24 * time.Hour)
+	// ticker := time.NewTicker(time.Second)
+	go func() {
+		for {
+			<-ticker.C
+			TrashCompact()
+		}
+	}()
+	TrashCompact()
+}
+
+func TrashCompact() {
+	t := time.Now().Add(-trashDuration)
+	if d, err := trashCompact(t); err != nil {
+		logrus.Error(err)
+	} else {
+		logrus.Info(fmt.Sprintf("Removed %d files deleted before %s", d, t.Format(time.RFC1123)))
+	}
+}
+
+func trashCompact(t time.Time) (int, error) {
 	d := db.Get()
-	rows, err := d.HardDeleteExpired(ctx, pgtype.Timestamp{Valid: true, Time: t.UTC()})
+	rows, err := d.TrashCompact(context.Background(), pgtype.Timestamp{Valid: true, Time: t.UTC()})
+	if err != nil {
+		return 0, err
+	}
 	ids := make([]uuid.UUID, len(rows))
 	for _, d := range rows {
 		if !d.Dir {

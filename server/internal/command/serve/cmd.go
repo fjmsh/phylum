@@ -1,10 +1,6 @@
 package serve
 
 import (
-	"context"
-	"fmt"
-	"time"
-
 	"github.com/fvbock/endless"
 	"github.com/shroff/phylum/server/internal/api/publink"
 	apiv1 "github.com/shroff/phylum/server/internal/api/v1"
@@ -27,12 +23,7 @@ func SetupCommand() *cobra.Command {
 			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")))
 			apiv1.Setup(engine.Group("/api/v1"))
 			publink.Setup(engine.Group("/publink"))
-			t := time.Now().Add(-30 * 24 * time.Hour)
-			if d, err := fs.HardDeleteExpired(context.Background(), t); err != nil {
-				logrus.Fatal(err)
-			} else {
-				logrus.Info(fmt.Sprintf("Removed %d files deleted before %s", d, t.Format(time.RFC1123)))
-			}
+			fs.SetupTrashCompactor()
 
 			server := endless.NewServer(config.GetString("listen"), engine)
 			server.BeforeBegin = func(addr string) {

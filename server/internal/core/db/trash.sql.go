@@ -95,35 +95,6 @@ func (q *Queries) HardDelete(ctx context.Context, arg HardDeleteParams) ([]HardD
 	return items, nil
 }
 
-const hardDeleteExpired = `-- name: HardDeleteExpired :many
-DELETE FROM resources WHERE deleted < $1::TIMESTAMP RETURNING id, dir
-`
-
-type HardDeleteExpiredRow struct {
-	ID  uuid.UUID
-	Dir bool
-}
-
-func (q *Queries) HardDeleteExpired(ctx context.Context, t pgtype.Timestamp) ([]HardDeleteExpiredRow, error) {
-	rows, err := q.db.Query(ctx, hardDeleteExpired, t)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []HardDeleteExpiredRow
-	for rows.Next() {
-		var i HardDeleteExpiredRow
-		if err := rows.Scan(&i.ID, &i.Dir); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const restoreDeleted = `-- name: RestoreDeleted :many
 WITH RECURSIVE nodes(id, parent, ts) AS (
     SELECT r.id, r.parent, r.deleted
@@ -198,6 +169,35 @@ type SoftDeleteParams struct {
 func (q *Queries) SoftDelete(ctx context.Context, arg SoftDeleteParams) error {
 	_, err := q.db.Exec(ctx, softDelete, arg.PreserveRoot, arg.ID)
 	return err
+}
+
+const trashCompact = `-- name: TrashCompact :many
+DELETE FROM resources WHERE deleted < $1::TIMESTAMP RETURNING id, dir
+`
+
+type TrashCompactRow struct {
+	ID  uuid.UUID
+	Dir bool
+}
+
+func (q *Queries) TrashCompact(ctx context.Context, t pgtype.Timestamp) ([]TrashCompactRow, error) {
+	rows, err := q.db.Query(ctx, trashCompact, t)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []TrashCompactRow
+	for rows.Next() {
+		var i TrashCompactRow
+		if err := rows.Scan(&i.ID, &i.Dir); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const trashList = `-- name: TrashList :many
