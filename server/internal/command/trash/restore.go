@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/spf13/cobra"
 )
@@ -15,15 +16,20 @@ func setupRestoreCommand() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
-			for _, uuid := range args {
-				r, err := f.ResourceByPathOrUUID(uuid)
+			for _, idStr := range args {
+				id, err := uuid.Parse(idStr)
 				if err != nil {
-					fmt.Println("cannot restore'" + uuid + "': " + err.Error())
+					fmt.Println("cannot remove '" + idStr + "': " + err.Error())
+					os.Exit(1)
+				}
+				r, err := f.ResourceByID(id)
+				if err != nil {
+					fmt.Println("cannot restore'" + id.String() + "': " + err.Error())
 					os.Exit(1)
 				}
 				if r.Dir() {
 					if recursive, err := cmd.Flags().GetBool("recursive"); err != nil || !recursive {
-						fmt.Println("cannot restore '" + uuid + "': Is a directory. Try again with '-r'")
+						fmt.Println("cannot restore '" + id.String() + "': Is a directory. Try again with '-r'")
 						os.Exit(1)
 					}
 				}
@@ -32,7 +38,7 @@ func setupRestoreCommand() *cobra.Command {
 				autoRename, _ := cmd.Flags().GetBool("auto-rename")
 				r, items, size, err := r.Restore(p, name, autoRename)
 				if err != nil {
-					fmt.Println("cannot restore '" + uuid + "': " + err.Error())
+					fmt.Println("cannot restore '" + id.String() + "': " + err.Error())
 					os.Exit(1)
 				}
 

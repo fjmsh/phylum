@@ -29,10 +29,12 @@ func setupRmCommand() *cobra.Command {
 				}
 			}
 
-			r.DeleteRecursive(true)
+			hard, _ := cmd.Flags().GetBool("hard")
+			r.DeleteRecursive(!hard)
 		},
 	}
 	cmd.Flags().BoolP("recursive", "r", false, "Recursive (required for directories)")
+	cmd.Flags().BoolP("hard", "x", false, "Permanently delete (do not send to trash)")
 
 	return &cmd
 }
