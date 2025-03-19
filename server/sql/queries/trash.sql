@@ -35,6 +35,9 @@ DELETE FROM resources
     WHERE id IN (SELECT id FROM nodes)
     RETURNING id, dir;
 
+-- name: HardDeleteExpired :many
+DELETE FROM resources WHERE deleted < @t::TIMESTAMP RETURNING id, dir;
+
 -- name: RestoreDeleted :many
 WITH RECURSIVE nodes(id, parent, ts) AS (
     SELECT r.id, r.parent, r.deleted

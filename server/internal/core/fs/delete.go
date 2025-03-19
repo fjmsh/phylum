@@ -71,7 +71,13 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 	})
 
 	if err == nil {
-		errors := f.cs.DeleteAll(deleted)
+		ids := make([]uuid.UUID, len(deleted))
+		for _, d := range deleted {
+			if !d.Dir {
+				ids = append(ids, d.ID)
+			}
+		}
+		errors := f.cs.DeleteAll(ids)
 		for _, err := range errors {
 			logrus.Warn(err)
 		}

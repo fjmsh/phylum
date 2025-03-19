@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/core/storage"
 )
 
 func (f filesystem) TrashList(cursor string, n int) ([]Resource, string, error) {
@@ -158,4 +160,17 @@ func (r Resource) Restore(parentPathOrUUID string, name string, autoRename bool)
 	})
 	res = r
 	return
+}
+
+func HardDeleteExpired(ctx context.Context, t time.Time) (int, error) {
+	d := db.Get()
+	rows, err := d.HardDeleteExpired(ctx, pgtype.Timestamp{Valid: true, Time: t.UTC()})
+	ids := make([]uuid.UUID, len(rows))
+	for _, d := range rows {
+		if !d.Dir {
+			ids = append(ids, d.ID)
+		}
+	}
+	storage.Get().DeleteAll(ids)
+	return len(rows), err
 }
