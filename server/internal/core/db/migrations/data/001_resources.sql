@@ -8,13 +8,31 @@ CREATE TABLE resources (
   deleted         TIMESTAMP,
   content_length  BIGINT    NOT NULL DEFAULT 0,
   content_type    TEXT      NOT NULL DEFAULT '',
-  content_sha256  TEXT      NOT NULL DEFAULT ''
+  content_sha256  TEXT      NOT NULL DEFAULT '',
+  permissions     JSONB     NOT NULL DEFAULT '{}',
+  grants          JSONB     NOT NULL DEFAULT '{}'
 );
 
 CREATE UNIQUE INDEX unique_member_resource_name ON resources(parent, name) WHERE deleted IS NULL;
 
+CREATE OR REPLACE FUNCTION phylum_merge_permission_grants(a JSONB, b JSONB)
+RETURNS JSONB LANGUAGE SQL AS $$
+    SELECT 
+        COALESCE(jsonb_object_agg(
+            COALESCE(ka, kb), 
+            CASE
+                WHEN vb ISNULL THEN va::integer 
+                WHEN va ISNULL THEN (vb -> 'p')::integer 
+                ELSE va::integer | (vb -> 'p')::integer 
+            END
+        ), '{}'::JSONB)
+    FROM jsonb_each(a) e1(ka, va)
+    FULL JOIN jsonb_each(b) e2(kb, vb) ON ka = kb
+$$;
 
 ---- create above / drop below ----
+
+DROP FUNCTION phylum_merge_permission_grants;
 
 DROP INDEX unique_member_resource_name;
 
