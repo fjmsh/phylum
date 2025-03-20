@@ -34,9 +34,14 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 
 		return dbh.RecomputePermissions(ctx, r.ID())
 	})
+	if err != nil {
+		return Resource{}, err
+	}
 	p := make(map[string]Permission)
 	if r.permissions != nil {
-		json.Unmarshal(r.permissions, &p)
+		if err := json.Unmarshal(r.permissions, &p); err != nil {
+			return Resource{}, err
+		}
 	}
 	if permission == 0 {
 		delete(p, username)
