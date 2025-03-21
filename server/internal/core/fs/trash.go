@@ -208,13 +208,7 @@ func (f filesystem) TrashEmpty() (int, error) {
 		username.Valid = true
 	}
 	d := db.Get()
-	rows, err := d.EmptyTrash(f.ctx, username)
-	ids := make([]uuid.UUID, len(rows))
-	for _, d := range rows {
-		if !d.Dir {
-			ids = append(ids, d.ID)
-		}
-	}
+	count, ids, err := d.EmptyTrash(f.ctx, username)
 	storage.Get().DeleteAll(ids)
-	return len(rows), err
+	return count, err
 }
