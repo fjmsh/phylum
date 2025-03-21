@@ -2,12 +2,15 @@ package db
 
 import (
 	"context"
-	"strings"
 
+	"github.com/doug-martin/goqu/v9"
+	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+var p = goqu.New("postgres", nil)
 
 const emptyTrash = `DELETE FROM resources
     WHERE deleted IS NOT NULL
@@ -21,47 +24,59 @@ func (q *Queries) EmptyTrash(ctx context.Context, username pgtype.Text) (count i
 	return collectDeletedRows(q.db.Query(ctx, emptyTrash, username))
 }
 
-func selectDescendentsCTE(includeDeleted bool) string {
-	cte := `WITH RECURSIVE nodes(id, parent, deleted, depth) AS (
-	SELECT r.id, r.parent, r.deleted, 0
-		FROM resources r
-		WHERE r.id = $1::UUID
-	UNION ALL
-	SELECT r.id, r.parent, r.deleted, n.depth+1
-		FROM resources r
-		JOIN nodes n ON r.parent = n.id
-`
+func selectDescendentsCTE(id uuid.UUID, includeDeleted bool) (exp.AliasedExpression, *goqu.SelectDataset) {
+	resTable := goqu.T("resources").As("r")
+	rec := p.From(resTable).
+		Select(resTable.Col("id"), resTable.Col("parent"), resTable.Col("deleted"), goqu.L("? + 1", goqu.I("n.depth"))).
+		Join(goqu.T("nodes").As("n"), goqu.On(goqu.I("r.parent").Eq(goqu.I("n.id"))))
 
-	var where []string
 	if !includeDeleted {
-		where = append(where, "r.deleted IS NOT DISTINCT FROM n.deleted")
+		rec = rec.Where(
+			goqu.Or(
+				goqu.I("r.deleted").Eq(goqu.I("n.deleted")),
+				goqu.And(
+					goqu.I("r.deleted").IsNull(),
+					goqu.I("n.deleted").IsNull(),
+				)))
 	}
 
-	if where != nil {
-		cte += "WHERE " + strings.Join(where, "\nAND ")
-	}
-
-	cte += ")\n"
-
-	return cte
-
+	return resTable, p.From(resTable).WithRecursive("nodes(id, parent, deleted, depth)",
+		p.From(resTable).
+			Select(resTable.Col("id"), resTable.Col("parent"), resTable.Col("deleted"), goqu.L("0")).
+			Where(goqu.I("r.id").Eq(id)).
+			UnionAll(rec))
 }
 
-func (q *Queries) Delete(ctx context.Context, id uuid.UUID, softDelete, preserveRoot bool) (count int, ids []uuid.UUID, err error) {
-	query := selectDescendentsCTE(!softDelete)
-	if softDelete {
-		query += "UPDATE resources SET modified = NOW(), deleted = NOW()\n"
-	} else {
-		query += "DELETE FROM resources\n"
+func (q *Queries) Delete(ctx context.Context, id uuid.UUID, softDelete, excludeRoot bool) (int, []uuid.UUID, error) {
+	table, exp := selectDescendentsCTE(id, !softDelete)
+
+	idSelect := p.From("nodes").Select("id")
+	if excludeRoot {
+		idSelect = idSelect.Where(goqu.C("depth").Gt(0))
 	}
-	if preserveRoot {
-		query += "WHERE id IN (SELECT id FROM nodes WHERE depth > 0)\n"
+	exp = exp.Where(table.Col("id").Eq(idSelect))
+
+	// table
+	var query string
+	var params []interface{}
+	if softDelete {
+		query, params, _ = exp.
+			Update().
+			Set(
+				goqu.Record{
+					"modified": goqu.L("NOW()"),
+					"deleted":  goqu.L("NOW()"),
+				}).
+			Returning(table.Col("id"), table.Col("dir")).
+			ToSQL()
 	} else {
-		query += "WHERE id IN (SELECT id FROM nodes)\n"
+		query, params, _ = exp.
+			Delete().
+			Returning(table.Col("id"), table.Col("dir")).
+			ToSQL()
 	}
 
-	query += "RETURNING id, dir"
-	return collectDeletedRows(q.db.Query(ctx, query, id))
+	return collectDeletedRows(q.db.Query(ctx, query, params...))
 }
 
 func collectDeletedRows(rows pgx.Rows, e error) (count int, ids []uuid.UUID, err error) {
@@ -85,14 +100,25 @@ func collectDeletedRows(rows pgx.Rows, e error) (count int, ids []uuid.UUID, err
 }
 
 func (q *Queries) RestoreDeleted(ctx context.Context, id uuid.UUID) ([]int64, error) {
-	query := selectDescendentsCTE(false)
+	table, exp := selectDescendentsCTE(id, false)
 
-	query += `UPDATE resources SET modified = NOW(), deleted = NULL
-    FROM nodes
-    WHERE resources.id = nodes.id
-    RETURNING resources.content_length
-`
-	rows, err := q.db.Query(ctx, query, id)
+	idSelect := p.From("nodes").Select("id")
+	exp = exp.Where(table.Col("id").Eq(idSelect))
+
+	// table
+	var query string
+	var params []interface{}
+	query, params, _ = exp.
+		Update().
+		Set(
+			goqu.Record{
+				"modified": goqu.L("NOW()"),
+				"deleted":  nil,
+			}).
+		Returning(table.Col("content_length")).
+		ToSQL()
+
+	rows, err := q.db.Query(ctx, query, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -173,19 +199,21 @@ func (q *Queries) TrashList(ctx context.Context, arg TrashListParams) ([]Resourc
 }
 
 func (q *Queries) TrashSummary(ctx context.Context, username pgtype.Text) (int, int, error) {
-	query := `SELECT COALESCE(SUM(content_length), 0)::INTEGER AS size, COUNT(*) AS items
-    FROM resources
-    WHERE deleted IS NOT NULL
-`
-	var row pgx.Row
+	var whereCond exp.Expression = goqu.C("deleted").IsNotNull()
 	if username.Valid {
-		query += "AND permissions[$1::TEXT]::integer <> 0"
-		row = q.db.QueryRow(ctx, query, username)
-	} else {
-		row = q.db.QueryRow(ctx, query)
+		whereCond = goqu.And(whereCond, goqu.L("permissions[?]::INTEGER <> 0", username.String))
 	}
-	var size int32
-	var items int64
+	exp := p.
+		From("resources").
+		Select(
+			goqu.COALESCE(goqu.SUM("content_length"), 0),
+			goqu.COUNT("*")).
+		Where(whereCond)
+
+	query, args, _ := exp.ToSQL()
+	row := q.db.QueryRow(ctx, query, args...)
+	var size int
+	var items int
 	err := row.Scan(&size, &items)
-	return int(items), int(size), err
+	return items, size, err
 }
