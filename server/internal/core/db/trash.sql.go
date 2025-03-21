@@ -84,34 +84,15 @@ func collectDeletedRows(rows pgx.Rows, e error) (count int, ids []uuid.UUID, err
 	return count, ids, err
 }
 
-const restoreDeleted = `-- name: RestoreDeleted :many
-WITH RECURSIVE nodes(id, parent, ts) AS (
-    SELECT r.id, r.parent, r.deleted
-        FROM resources r
-        WHERE r.id = $1::UUID
-        AND CASE
-            WHEN $2::TEXT IS NULL THEN TRUE
-            ELSE permissions[$2::TEXT]::integer <> 0 END
-    UNION ALL
-        SELECT r.id, r.parent, n.ts
-            FROM resources r
-            JOIN nodes n ON r.parent = n.id
-            WHERE r.deleted = n.ts
-)
-UPDATE resources
-    SET modified = NOW(), deleted = NULL
+func (q *Queries) RestoreDeleted(ctx context.Context, id uuid.UUID) ([]int64, error) {
+	query := selectDescendentsCTE(false)
+
+	query += `UPDATE resources SET modified = NOW(), deleted = NULL
     FROM nodes
     WHERE resources.id = nodes.id
     RETURNING resources.content_length
 `
-
-type RestoreDeletedParams struct {
-	ResourceID uuid.UUID
-	Username   pgtype.Text
-}
-
-func (q *Queries) RestoreDeleted(ctx context.Context, arg RestoreDeletedParams) ([]int64, error) {
-	rows, err := q.db.Query(ctx, restoreDeleted, arg.ResourceID, arg.Username)
+	rows, err := q.db.Query(ctx, query, id)
 	if err != nil {
 		return nil, err
 	}
@@ -130,33 +111,8 @@ func (q *Queries) RestoreDeleted(ctx context.Context, arg RestoreDeletedParams) 
 	return items, nil
 }
 
-const trashCompact = `-- name: TrashCompact :many
-DELETE FROM resources WHERE deleted < $1::TIMESTAMP RETURNING id, dir
-`
-
-type TrashCompactRow struct {
-	ID  uuid.UUID
-	Dir bool
-}
-
-func (q *Queries) TrashCompact(ctx context.Context, t pgtype.Timestamp) ([]TrashCompactRow, error) {
-	rows, err := q.db.Query(ctx, trashCompact, t)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []TrashCompactRow
-	for rows.Next() {
-		var i TrashCompactRow
-		if err := rows.Scan(&i.ID, &i.Dir); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) TrashCompact(ctx context.Context, t pgtype.Timestamp) (int, uuid.UUIDs, error) {
+	return collectDeletedRows(q.db.Query(ctx, "DELETE FROM resources WHERE deleted < $1::TIMESTAMP RETURNING id, dir", t))
 }
 
 const trashList = `-- name: TrashList :many
