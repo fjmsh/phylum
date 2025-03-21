@@ -172,23 +172,20 @@ func (q *Queries) TrashList(ctx context.Context, arg TrashListParams) ([]Resourc
 	return items, nil
 }
 
-const trashSummary = `-- name: TrashSummary :one
-SELECT COALESCE(SUM(content_length), 0)::INTEGER AS size, COUNT(*) AS items
+func (q *Queries) TrashSummary(ctx context.Context, username pgtype.Text) (int, int, error) {
+	query := `SELECT COALESCE(SUM(content_length), 0)::INTEGER AS size, COUNT(*) AS items
     FROM resources
     WHERE deleted IS NOT NULL
-    AND CASE
-        WHEN $1::TEXT IS NULL THEN TRUE
-        ELSE permissions[$1::TEXT]::integer <> 0 END
 `
-
-type TrashSummaryRow struct {
-	Size  int32
-	Items int64
-}
-
-func (q *Queries) TrashSummary(ctx context.Context, username pgtype.Text) (TrashSummaryRow, error) {
-	row := q.db.QueryRow(ctx, trashSummary, username)
-	var i TrashSummaryRow
-	err := row.Scan(&i.Size, &i.Items)
-	return i, err
+	var row pgx.Row
+	if username.Valid {
+		query += "AND permissions[$1::TEXT]::integer <> 0"
+		row = q.db.QueryRow(ctx, query, username)
+	} else {
+		row = q.db.QueryRow(ctx, query)
+	}
+	var size int32
+	var items int64
+	err := row.Scan(&size, &items)
+	return int(items), int(size), err
 }

@@ -73,11 +73,7 @@ func (f filesystem) TrashSummary() (int, int, error) {
 		username.String = f.username
 		username.Valid = true
 	}
-	if res, err := f.db.TrashSummary(f.ctx, username); err != nil {
-		return 0, 0, err
-	} else {
-		return int(res.Items), int(res.Size), nil
-	}
+	return f.db.TrashSummary(f.ctx, username)
 }
 
 // RestoreDeleted restores a previously deleted resources
@@ -150,7 +146,7 @@ func (r Resource) Restore(parentPathOrUUID string, name string, autoRename bool)
 				r.parentID = update.Parent
 			}
 		}
-		if del, err := f.db.RestoreDeleted(f.ctx, db.RestoreDeletedParams{Username: username, ResourceID: r.id}); err != nil {
+		if del, err := f.db.RestoreDeleted(f.ctx, r.id); err != nil {
 			return err
 		} else {
 			count = len(del)
@@ -187,18 +183,15 @@ func TrashCompact() {
 
 func trashCompact(t time.Time) (int, error) {
 	d := db.Get()
-	rows, err := d.TrashCompact(context.Background(), pgtype.Timestamp{Valid: true, Time: t.UTC()})
+	count, ids, err := d.TrashCompact(context.Background(), pgtype.Timestamp{Valid: true, Time: t.UTC()})
 	if err != nil {
 		return 0, err
 	}
-	ids := make([]uuid.UUID, len(rows))
-	for _, d := range rows {
-		if !d.Dir {
-			ids = append(ids, d.ID)
-		}
+	errors := storage.Get().DeleteAll(ids)
+	for _, err := range errors {
+		logrus.Warn(err)
 	}
-	storage.Get().DeleteAll(ids)
-	return len(rows), err
+	return count, err
 }
 
 func (f filesystem) TrashEmpty() (int, error) {
