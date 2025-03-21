@@ -2,8 +2,10 @@ package db
 
 import (
 	"context"
+	"strings"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -16,17 +18,62 @@ const emptyTrash = `DELETE FROM resources
 `
 
 func (q *Queries) EmptyTrash(ctx context.Context, username pgtype.Text) (count int, ids []uuid.UUID, err error) {
-	rows, err := q.db.Query(ctx, emptyTrash, username)
-	if err != nil {
-		return 0, nil, err
+	return collectDeletedRows(q.db.Query(ctx, emptyTrash, username))
+}
+
+func selectDescendentsCTE(includeDeleted bool) string {
+	cte := `WITH RECURSIVE nodes(id, parent, deleted, depth) AS (
+	SELECT r.id, r.parent, r.deleted, 0
+		FROM resources r
+		WHERE r.id = $1::UUID
+	UNION ALL
+	SELECT r.id, r.parent, r.deleted, n.depth+1
+		FROM resources r
+		JOIN nodes n ON r.parent = n.id
+`
+
+	var where []string
+	if !includeDeleted {
+		where = append(where, "r.deleted IS NOT DISTINCT FROM n.deleted")
+	}
+
+	if where != nil {
+		cte += "WHERE " + strings.Join(where, "\nAND ")
+	}
+
+	cte += ")\n"
+
+	return cte
+
+}
+
+func (q *Queries) Delete(ctx context.Context, id uuid.UUID, softDelete, preserveRoot bool) (count int, ids []uuid.UUID, err error) {
+	query := selectDescendentsCTE(!softDelete)
+	if softDelete {
+		query += "UPDATE resources SET modified = NOW(), deleted = NOW()\n"
+	} else {
+		query += "DELETE FROM resources\n"
+	}
+	if preserveRoot {
+		query += "WHERE id IN (SELECT id FROM nodes WHERE depth > 0)\n"
+	} else {
+		query += "WHERE id IN (SELECT id FROM nodes)\n"
+	}
+
+	query += "RETURNING id, dir"
+	return collectDeletedRows(q.db.Query(ctx, query, id))
+}
+
+func collectDeletedRows(rows pgx.Rows, e error) (count int, ids []uuid.UUID, err error) {
+	if e != nil {
+		return 0, nil, e
 	}
 	defer rows.Close()
-
 	var id uuid.UUID
 	var dir bool
 	for rows.Next() {
-		if err = rows.Scan(&id, &dir); err != nil {
-			return
+		if err := rows.Scan(&id, &dir); err != nil {
+			return count, nil, err
 		}
 		if !dir {
 			ids = append(ids, id)
@@ -34,56 +81,7 @@ func (q *Queries) EmptyTrash(ctx context.Context, username pgtype.Text) (count i
 		count++
 	}
 	err = rows.Err()
-	return
-}
-
-const hardDelete = `-- name: HardDelete :many
-WITH RECURSIVE nodes(id, parent) AS (
-    SELECT r.id, r.parent
-    FROM resources r
-    WHERE
-        CASE $1::boolean
-            WHEN TRUE THEN r.parent = $2::uuid
-            ELSE r.id = $2::uuid
-        END
-  UNION ALL
-    SELECT r.id, r.parent
-    FROM resources r JOIN nodes n on r.parent = n.id
-    WHERE deleted IS NULL
-)
-DELETE FROM resources
-    WHERE id IN (SELECT id FROM nodes)
-    RETURNING id, dir
-`
-
-type HardDeleteParams struct {
-	PreserveRoot bool
-	ID           uuid.UUID
-}
-
-type HardDeleteRow struct {
-	ID  uuid.UUID
-	Dir bool
-}
-
-func (q *Queries) HardDelete(ctx context.Context, arg HardDeleteParams) ([]HardDeleteRow, error) {
-	rows, err := q.db.Query(ctx, hardDelete, arg.PreserveRoot, arg.ID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []HardDeleteRow
-	for rows.Next() {
-		var i HardDeleteRow
-		if err := rows.Scan(&i.ID, &i.Dir); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+	return count, ids, err
 }
 
 const restoreDeleted = `-- name: RestoreDeleted :many
@@ -130,36 +128,6 @@ func (q *Queries) RestoreDeleted(ctx context.Context, arg RestoreDeletedParams) 
 		return nil, err
 	}
 	return items, nil
-}
-
-const softDelete = `-- name: SoftDelete :exec
-WITH RECURSIVE nodes(id, parent) AS (
-    SELECT r.id, r.parent
-    FROM resources r
-    WHERE
-        CASE $1::boolean
-            WHEN TRUE THEN r.parent = $2::uuid
-            ELSE r.id = $2::uuid
-        END
-  UNION ALL
-    SELECT r.id, r.parent
-    FROM resources r JOIN nodes n on r.parent = n.id
-    WHERE deleted IS NULL
-)
-UPDATE resources
-    SET modified = NOW(), deleted = NOW()
-    FROM nodes
-        WHERE nodes.id = resources.id
-`
-
-type SoftDeleteParams struct {
-	PreserveRoot bool
-	ID           uuid.UUID
-}
-
-func (q *Queries) SoftDelete(ctx context.Context, arg SoftDeleteParams) error {
-	_, err := q.db.Exec(ctx, softDelete, arg.PreserveRoot, arg.ID)
-	return err
 }
 
 const trashCompact = `-- name: TrashCompact :many

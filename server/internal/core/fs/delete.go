@@ -50,34 +50,17 @@ func (r Resource) DeleteRecursive(softDelete bool) (Resource, error) {
 }
 
 func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRoot bool) error {
-	if softDelete {
-		return f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
-			var err error
-			if err = d.SoftDelete(f.ctx, db.SoftDeleteParams{ID: id, PreserveRoot: preserveRoot}); err != nil {
-				return err
-			}
-
-			return d.UpdateResourceModified(f.ctx, parent)
-		})
-	}
-
-	var deleted []db.HardDeleteRow
+	var ids uuid.UUIDs
 	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 		var err error
-		if deleted, err = d.HardDelete(f.ctx, db.HardDeleteParams{ID: id, PreserveRoot: preserveRoot}); err != nil {
+		if _, ids, err = d.Delete(f.ctx, id, softDelete, preserveRoot); err != nil {
 			return err
 		}
 
 		return d.UpdateResourceModified(f.ctx, parent)
 	})
 
-	if err == nil {
-		ids := make([]uuid.UUID, len(deleted))
-		for i, d := range deleted {
-			if !d.Dir {
-				ids[i] = d.ID
-			}
-		}
+	if err == nil && !softDelete {
 		errors := f.cs.DeleteAll(ids)
 		for _, err := range errors {
 			logrus.Warn(err)
