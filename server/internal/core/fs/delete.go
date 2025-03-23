@@ -102,5 +102,5 @@ func (f filesystem) Delete(id uuid.UUID, softDelete, excludeRoot bool) (int, []u
 			ToSQL()
 	}
 
-	return collectDeletedRows(f.db.Query(f.ctx, query, params...))
+	return collectNonDirResourceIDs(f.db.Query(f.ctx, query, params...))
 }

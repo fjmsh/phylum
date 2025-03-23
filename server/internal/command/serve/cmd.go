@@ -1,6 +1,8 @@
 package serve
 
 import (
+	"time"
+
 	"github.com/fvbock/endless"
 	"github.com/shroff/phylum/server/internal/api/publink"
 	apiv1 "github.com/shroff/phylum/server/internal/api/v1"
@@ -10,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+const trashRetainDuration = 30 * 24 * time.Hour
 
 func SetupCommand() *cobra.Command {
 	var cmd = &cobra.Command{
@@ -23,7 +27,7 @@ func SetupCommand() *cobra.Command {
 			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")))
 			apiv1.Setup(engine.Group("/api/v1"))
 			publink.Setup(engine.Group("/publink"))
-			fs.SetupTrashCompactor()
+			setupTrashCompactor()
 
 			server := endless.NewServer(config.GetString("listen"), engine)
 			server.BeforeBegin = func(addr string) {
@@ -59,4 +63,15 @@ func SetupCommand() *cobra.Command {
 	viper.BindPFlag("webdav_prefix", flags.Lookup("webdav-prefix"))
 
 	return cmd
+}
+
+func setupTrashCompactor() {
+	ticker := time.NewTimer(24 * time.Hour)
+	go func() {
+		for {
+			<-ticker.C
+			fs.TrashCompact(trashRetainDuration)
+		}
+	}()
+	fs.TrashCompact(trashRetainDuration)
 }

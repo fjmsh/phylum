@@ -4,6 +4,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 func selectResourceTree(ds *goqu.SelectDataset, nodes exp.IdentifierExpression, id uuid.UUID, includeDeleted bool) *goqu.SelectDataset {
@@ -27,4 +28,43 @@ func selectResourceTree(ds *goqu.SelectDataset, nodes exp.IdentifierExpression, 
 			Select(resTable.Col("id"), resTable.Col("parent"), resTable.Col("deleted"), goqu.L("0")).
 			Where(goqu.I("r.id").Eq(id)).
 			UnionAll(rec))
+}
+
+func scanResourceRow(row pgx.CollectableRow) (Resource, error) {
+	var r Resource
+	err := row.Scan(
+		&r.id,
+		&r.name,
+		&r.parentID,
+		&r.dir,
+		&r.created,
+		&r.modified,
+		&r.deleted,
+		&r.contentLength,
+		&r.contentType,
+		&r.contentSHA256,
+		&r.permissions,
+		&r.grants,
+	)
+	return r, err
+}
+
+func collectNonDirResourceIDs(rows pgx.Rows, e error) (total int, ids []uuid.UUID, err error) {
+	if e != nil {
+		return 0, nil, e
+	}
+	defer rows.Close()
+	var id uuid.UUID
+	var dir bool
+	for rows.Next() {
+		if err := rows.Scan(&id, &dir); err != nil {
+			return total, nil, err
+		}
+		if !dir {
+			ids = append(ids, id)
+		}
+		total++
+	}
+	err = rows.Err()
+	return total, ids, err
 }
