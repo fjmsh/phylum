@@ -56,3 +56,9 @@ func (f filesystem) RunInTx(fn func(FileSystem) error) error {
 		return fn(f.WithDb(db))
 	})
 }
+
+func (f filesystem) runInTx(fn func(filesystem) error) error {
+	return f.db.WithTx(f.ctx, func(db *db.DbHandler) error {
+		return fn(f.withDb(db))
+	})
+}

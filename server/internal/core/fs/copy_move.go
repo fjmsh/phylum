@@ -54,8 +54,7 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 
 	var res Resource
 	var deleted = false
-	return res, deleted, r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
-		f := r.f.withDb(dbh)
+	return res, deleted, r.f.runInTx(func(f filesystem) error {
 		if conflictResolution == ResourceBindConflictResolutionOverwrite || conflictResolution == ResourceBindConflictResolutionDelete {
 			if _, err := destParent.DeleteChildRecursive(destName, true); err == nil {
 				deleted = true
@@ -117,9 +116,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	var root db.Resource
 	created := false
 	deleted := false
-	err = r.f.db.WithTx(r.f.ctx, func(dbh *db.DbHandler) error {
-		f := r.f.withDb(dbh)
-
+	err = r.f.runInTx(func(f filesystem) error {
 		root, created, deleted, err = f.createResource(
 			id,
 			destParent.ID(),
@@ -166,14 +163,14 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			}
 		}
 
-		if _, err := dbh.CreateResources(f.ctx, children); err != nil {
+		if _, err := f.db.CreateResources(f.ctx, children); err != nil {
 			return err
 		}
 		if err := f.db.RecomputePermissions(r.f.ctx, id); err != nil {
 			return err
 		}
 		if created {
-			return dbh.UpdateResourceModified(f.ctx, destParent.ID())
+			return f.db.UpdateResourceModified(f.ctx, destParent.ID())
 		}
 		return nil
 	})

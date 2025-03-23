@@ -51,17 +51,16 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 	}
 	var result db.Resource
 	var created bool
-	err := r.f.db.WithTx(r.f.ctx, func(d *db.DbHandler) error {
+	err := r.f.runInTx(func(f filesystem) error {
 		var err error
 		parent := r.ID()
-		f := r.f.withDb(d)
 		if result, created, _, err = f.createResource(id, parent, name, dir, 0, emptyContentType, emptyContentSHA256, conflictResolution); err != nil {
 			return err
 		} else if created {
-			if err := f.db.RecomputePermissions(r.f.ctx, id); err != nil {
+			if err := f.db.RecomputePermissions(f.ctx, id); err != nil {
 				return err
 			}
-			return d.UpdateResourceModified(r.f.ctx, parent)
+			return f.db.UpdateResourceModified(f.ctx, parent)
 		}
 		return nil
 	})
@@ -97,8 +96,7 @@ func (f filesystem) createResource(
 	contentSHA256 string,
 	conflictResolution ResourceBindConflictResolution,
 ) (res db.Resource, created, deleted bool, err error) {
-	err = f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
-		f := f.withDb(d)
+	err = f.runInTx(func(f filesystem) error {
 		res, err = f.db.CreateResource(f.ctx, db.CreateResourceParams{
 			ID:            id,
 			Parent:        &parent,
@@ -129,8 +127,7 @@ func (f filesystem) createResource(
 			counter := 1
 			for {
 				name := fmt.Sprintf("%s (%d)%s", basename, counter, ext)
-				err = f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
-					f := f.withDb(d)
+				err = f.runInTx(func(f filesystem) error {
 					res, err = f.db.CreateResource(f.ctx, db.CreateResourceParams{
 						ID:            id,
 						Parent:        &parent,

@@ -106,8 +106,7 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 		return
 	}
 
-	err = r.f.db.WithTx(r.f.ctx, func(d *db.DbHandler) error {
-		f := r.f.withDb(d)
+	err = r.f.runInTx(func(f filesystem) error {
 		if p.id != *r.parentID || r.name != name {
 			if update, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID(), Name: name, Parent: p.id}); err != nil {
 				if strings.Contains(err.Error(), "unique_member_resource_name") {
@@ -136,13 +135,13 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 
 func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRoot bool) error {
 	var ids uuid.UUIDs
-	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
+	err := f.runInTx(func(f filesystem) error {
 		var err error
 		if _, ids, err = f.markDeleted(id, softDelete, preserveRoot); err != nil {
 			return err
 		}
 
-		return d.UpdateResourceModified(f.ctx, parent)
+		return f.db.UpdateResourceModified(f.ctx, parent)
 	})
 
 	if err == nil && !softDelete {
