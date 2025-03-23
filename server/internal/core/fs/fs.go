@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/doug-martin/goqu/v9"
+	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
@@ -18,6 +20,13 @@ const (
 	ResourceBindConflictResolutionOverwrite = 3 // Delete existing resource only if type mismatch (preserves props)
 	ResourceBindConflictResolutionDelete    = 4 // Delete existing resource before creating
 )
+
+var pg *goqu.Database
+
+func init() {
+	pg = goqu.New("postgres", nil)
+	goqu.SetDefaultPrepared(true)
+}
 
 type FileSystem interface {
 	// filesystem.go
@@ -38,7 +47,7 @@ type FileSystem interface {
 	Search(query string) ([]Resource, error)
 
 	// trash.go
-	TrashList(cursor string, n int) ([]Resource, string, error)
+	TrashList(cursor string, n uint) ([]Resource, string, error)
 	TrashSummary() (int, int, error)
 	TrashEmpty() (int, error)
 }

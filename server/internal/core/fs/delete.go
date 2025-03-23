@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
@@ -53,7 +54,7 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 	var ids uuid.UUIDs
 	err := f.db.WithTx(f.ctx, func(d *db.DbHandler) error {
 		var err error
-		if _, ids, err = d.Delete(f.ctx, id, softDelete, preserveRoot); err != nil {
+		if _, ids, err = f.Delete(id, softDelete, preserveRoot); err != nil {
 			return err
 		}
 
@@ -68,4 +69,38 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 	}
 
 	return err
+}
+
+func (f filesystem) Delete(id uuid.UUID, softDelete, excludeRoot bool) (int, []uuid.UUID, error) {
+	idSelect := pg.From("nodes").Select("id")
+	if excludeRoot {
+		idSelect = idSelect.Where(goqu.C("depth").Gt(0))
+	}
+
+	table := goqu.T("resource").As("r")
+	nodes := goqu.T("nodes")
+	q := selectResourceTree(pg.From(table), nodes, id, !softDelete).
+		Where(table.Col("id").Eq(idSelect))
+
+	// table
+	var query string
+	var params []interface{}
+	if softDelete {
+		query, params, _ = q.
+			Update().
+			Set(
+				goqu.Record{
+					"modified": goqu.L("NOW()"),
+					"deleted":  goqu.L("NOW()"),
+				}).
+			Returning(table.Col("id"), table.Col("dir")).
+			ToSQL()
+	} else {
+		query, params, _ = q.
+			Delete().
+			Returning(table.Col("id"), table.Col("dir")).
+			ToSQL()
+	}
+
+	return collectDeletedRows(f.db.Query(f.ctx, query, params...))
 }

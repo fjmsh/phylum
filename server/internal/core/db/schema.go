@@ -80,18 +80,19 @@ func (d DbHandler) Migrate(ctx context.Context, version int) error {
 func (d DbHandler) DeleteSchema(ctx context.Context) error {
 	return d.WithTx(ctx, func(d *DbHandler) (err error) {
 		user := d.pool.Config().ConnConfig.User
-		if err = d.Exec(ctx, "DROP SCHEMA public CASCADE"); err != nil {
+		if _, err = d.Exec(ctx, "DROP SCHEMA public CASCADE"); err != nil {
 			return
 		}
-		if err = d.Exec(ctx, "CREATE SCHEMA public"); err != nil {
+		if _, err = d.Exec(ctx, "CREATE SCHEMA public"); err != nil {
 			return
 		}
-		if err = d.Exec(ctx, "GRANT ALL ON SCHEMA public TO "+user); err != nil {
+		if _, err = d.Exec(ctx, "GRANT ALL ON SCHEMA public TO "+user); err != nil {
 			return
 		}
-		if err = d.Exec(ctx, "GRANT ALL ON SCHEMA public TO public"); err != nil {
+		if _, err = d.Exec(ctx, "GRANT ALL ON SCHEMA public TO public"); err != nil {
 			return
 		}
-		return d.Exec(ctx, "COMMENT ON SCHEMA public IS 'standard public schema'")
+		_, err = d.Exec(ctx, "COMMENT ON SCHEMA public IS 'standard public schema'")
+		return
 	})
 }

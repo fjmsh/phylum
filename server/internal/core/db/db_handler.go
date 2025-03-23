@@ -5,9 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/doug-martin/goqu/v9"
-	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
 )
@@ -30,13 +29,6 @@ var d *DbHandler
 var DatabaseURL string
 var TraceSQL bool
 var AutoMigrate bool
-
-var pg *goqu.Database
-
-func init() {
-	pg = goqu.New("postgres", nil)
-	goqu.SetDefaultPrepared(true)
-}
 
 func Get() *DbHandler {
 	if d == nil {
@@ -96,7 +88,18 @@ func (d DbHandler) WithTx(ctx context.Context, fn func(*DbHandler) error) error 
 	})
 }
 
-func (d DbHandler) Exec(ctx context.Context, stmt string, args ...any) error {
-	_, err := d.Queries.db.Exec(ctx, stmt, args...)
-	return err
+func (d DbHandler) Exec(ctx context.Context, stmt string, args ...interface{}) (pgconn.CommandTag, error) {
+	return d.Queries.db.Exec(ctx, stmt, args...)
+}
+
+func (d DbHandler) Query(ctx context.Context, stmt string, args ...interface{}) (pgx.Rows, error) {
+	return d.Queries.db.Query(ctx, stmt, args...)
+}
+
+func (d DbHandler) QueryRow(ctx context.Context, stmt string, args ...interface{}) pgx.Row {
+	return d.Queries.db.QueryRow(ctx, stmt, args...)
+}
+
+func (d DbHandler) CopyFrom(ctx context.Context, tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error) {
+	return d.Queries.db.CopyFrom(ctx, tableName, columnNames, rowSrc)
 }

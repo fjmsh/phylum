@@ -15,7 +15,7 @@ func setupListCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
-			n, _ := cmd.Flags().GetInt("num")
+			n, _ := cmd.Flags().GetUint("num")
 			cursor, _ := cmd.Flags().GetString("cursor")
 			deleted, cursor, err := f.TrashList(cursor, n)
 			if err != nil {

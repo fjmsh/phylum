@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -19,61 +20,79 @@ import (
 
 const trashDuration = 30 * 24 * time.Hour
 
-func (f filesystem) TrashList(cursor string, n int) ([]Resource, string, error) {
+func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error) {
 	var username pgtype.Text
 	if !f.fullAccess {
 		username.String = f.username
 		username.Valid = true
 	}
 
-	var lastTimestamp pgtype.Timestamp
-	var lastID uuid.UUID
+	q := pg.From("resources").
+		Where(goqu.C("deleted").IsNotNull())
+	if !f.fullAccess {
+		q = q.Where(goqu.L("permissions[?]::INTEGER <> 0", f.username))
+	}
 	if cursor != "" {
 		if d, err := base64.StdEncoding.DecodeString(cursor); err != nil {
 			return nil, "", err
 		} else if len(d) != 24 {
 			return nil, "", fmt.Errorf("illegal cursor. Length %d not expected", len(d))
 		} else {
-			lastID, _ = uuid.FromBytes(d[:16])
 			t := int64(binary.LittleEndian.Uint64(d[16:]))
-			lastTimestamp.Time = time.Unix(t/1e9, t%1e9).UTC()
-			lastTimestamp.Valid = true
+			lastID, _ := uuid.FromBytes(d[:16])
+			lastTimestamp := time.Unix(t/1e9, t%1e9).UTC()
+			q = q.Where(
+				goqu.Or(
+					goqu.I("deleted").Lt(goqu.V(lastTimestamp)),
+					goqu.And(
+						goqu.I("deleted").Eq(goqu.V(lastTimestamp)),
+						goqu.I("id").Lt(goqu.V(lastID)),
+					)))
 		}
 	}
 
-	if res, err := f.db.TrashList(f.ctx, db.TrashListParams{
-		Username:      username,
-		N:             uint(n),
-		LastTimestamp: lastTimestamp,
-		LastID:        lastID,
-	}); err != nil {
+	query, params, _ := q.
+		Order(goqu.C("deleted").Desc()).
+		OrderAppend(goqu.C("id").Desc()).
+		Limit(n).
+		ToSQL()
+
+	if rows, err := f.db.Query(f.ctx, query, params...); err != nil {
+		return nil, "", err
+	} else if res, err := pgx.CollectRows(rows, scanResourceRow); err != nil {
 		return nil, "", err
 	} else {
 		if res == nil {
 			return nil, "", nil
 		}
-		deleted := make([]Resource, len(res))
-		for i, r := range res {
-			deleted[i] = ResourceFromDB(r)
-		}
-		last := deleted[len(deleted)-1]
+		last := res[len(res)-1]
 		c := make([]byte, 24)
 
 		b, _ := last.id.MarshalBinary()
 		copy(c, b)
 
 		binary.LittleEndian.PutUint64(c[16:], uint64(last.deleted.UnixNano()))
-		return deleted, base64.StdEncoding.EncodeToString(c), nil
+		return res, base64.StdEncoding.EncodeToString(c), nil
 	}
 }
 
-func (f filesystem) TrashSummary() (int, int, error) {
-	var username pgtype.Text
-	if !f.fullAccess {
-		username.String = f.username
-		username.Valid = true
-	}
-	return f.db.TrashSummary(f.ctx, username)
+func scanResourceRow(row pgx.CollectableRow) (Resource, error) {
+	var r Resource
+	err := row.Scan(
+		&r.id,
+		&r.name,
+		&r.parentID,
+		&r.dir,
+		&r.created,
+		&r.modified,
+		&r.deleted,
+		&r.contentLength,
+		&r.contentType,
+		&r.contentSHA256,
+		&r.permissions,
+		&r.grants,
+	)
+	return r, err
 }
 
 // RestoreDeleted restores a previously deleted resources
@@ -146,7 +165,7 @@ func (r Resource) Restore(parentPathOrUUID string, name string, autoRename bool)
 				r.parentID = update.Parent
 			}
 		}
-		if del, err := f.db.RestoreDeleted(f.ctx, r.id); err != nil {
+		if del, err := f.markNotDeleted(f.ctx, r.id); err != nil {
 			return err
 		} else {
 			count = len(del)
@@ -159,6 +178,39 @@ func (r Resource) Restore(parentPathOrUUID string, name string, autoRename bool)
 	})
 	res = r
 	return
+}
+
+func (f filesystem) markNotDeleted(ctx context.Context, id uuid.UUID) ([]int64, error) {
+	table := goqu.T("resources").As("r")
+	nodes := goqu.T("nodes")
+	q := selectResourceTree(pg.From(table), nodes, id, false).
+		Where(table.Col("id").Eq(pg.Select("id").From(nodes))).
+		Update().Set(
+		goqu.Record{
+			"modified": goqu.L("NOW()"),
+			"deleted":  nil,
+		}).
+		Returning(table.Col("content_length"))
+
+	query, params, _ := q.ToSQL()
+
+	rows, err := f.db.Query(ctx, query, params...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var content_length int64
+		if err := rows.Scan(&content_length); err != nil {
+			return nil, err
+		}
+		items = append(items, content_length)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 func SetupTrashCompactor() {
@@ -182,8 +234,13 @@ func TrashCompact() {
 }
 
 func trashCompact(t time.Time) (int, error) {
-	d := db.Get()
-	count, ids, err := d.TrashCompact(context.Background(), pgtype.Timestamp{Valid: true, Time: t.UTC()})
+	q := pg.
+		From("resources").
+		Where(goqu.C("deleted").Lt(goqu.V(t.UTC()))).
+		Delete().
+		Returning("id", "dir")
+	query, args, _ := q.ToSQL()
+	count, ids, err := collectDeletedRows(db.Get().Query(context.Background(), query, args...))
 	if err != nil {
 		return 0, err
 	}
@@ -194,14 +251,56 @@ func trashCompact(t time.Time) (int, error) {
 	return count, err
 }
 
+func (f filesystem) TrashSummary() (int, int, error) {
+	q := f.selectDeletedResources().
+		Select(
+			goqu.COALESCE(goqu.SUM("content_length"), 0),
+			goqu.COUNT("*"))
+
+	query, args, _ := q.ToSQL()
+	row := f.db.QueryRow(f.ctx, query, args...)
+	var size int
+	var items int
+	err := row.Scan(&size, &items)
+	return items, size, err
+}
+
 func (f filesystem) TrashEmpty() (int, error) {
-	var username pgtype.Text
-	if !f.fullAccess {
-		username.String = f.username
-		username.Valid = true
-	}
-	d := db.Get()
-	count, ids, err := d.EmptyTrash(f.ctx, username)
+	q := f.selectDeletedResources().
+		Delete().
+		Returning("id", "dir")
+	query, args, _ := q.ToSQL()
+	count, ids, err := collectDeletedRows(f.db.Query(f.ctx, query, args...))
 	storage.Get().DeleteAll(ids)
 	return count, err
+}
+
+func (f filesystem) selectDeletedResources() *goqu.SelectDataset {
+	q := pg.
+		From("resources").
+		Where(goqu.C("deleted").IsNotNull())
+	if !f.fullAccess {
+		q = q.Where(goqu.L("permissions[?]::INTEGER <> 0", f.username))
+	}
+	return q
+}
+
+func collectDeletedRows(rows pgx.Rows, e error) (count int, ids []uuid.UUID, err error) {
+	if e != nil {
+		return 0, nil, e
+	}
+	defer rows.Close()
+	var id uuid.UUID
+	var dir bool
+	for rows.Next() {
+		if err := rows.Scan(&id, &dir); err != nil {
+			return count, nil, err
+		}
+		if !dir {
+			ids = append(ids, id)
+		}
+		count++
+	}
+	err = rows.Err()
+	return count, ids, err
 }
