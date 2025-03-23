@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/doug-martin/goqu/v9"
+	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
@@ -28,6 +30,13 @@ var d *DbHandler
 var DatabaseURL string
 var TraceSQL bool
 var AutoMigrate bool
+
+var pg *goqu.Database
+
+func init() {
+	pg = goqu.New("postgres", nil)
+	goqu.SetDefaultPrepared(true)
+}
 
 func Get() *DbHandler {
 	if d == nil {

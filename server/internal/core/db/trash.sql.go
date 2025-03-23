@@ -10,8 +10,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-var p = goqu.New("postgres", nil)
-
 const emptyTrash = `DELETE FROM resources
     WHERE deleted IS NOT NULL
     AND CASE
@@ -26,7 +24,7 @@ func (q *Queries) EmptyTrash(ctx context.Context, username pgtype.Text) (count i
 
 func selectDescendentsCTE(id uuid.UUID, includeDeleted bool) (exp.AliasedExpression, *goqu.SelectDataset) {
 	resTable := goqu.T("resources").As("r")
-	rec := p.From(resTable).
+	rec := pg.From(resTable).
 		Select(resTable.Col("id"), resTable.Col("parent"), resTable.Col("deleted"), goqu.L("? + 1", goqu.I("n.depth"))).
 		Join(goqu.T("nodes").As("n"), goqu.On(goqu.I("r.parent").Eq(goqu.I("n.id"))))
 
@@ -40,8 +38,8 @@ func selectDescendentsCTE(id uuid.UUID, includeDeleted bool) (exp.AliasedExpress
 				)))
 	}
 
-	return resTable, p.From(resTable).WithRecursive("nodes(id, parent, deleted, depth)",
-		p.From(resTable).
+	return resTable, pg.From(resTable).WithRecursive("nodes(id, parent, deleted, depth)",
+		pg.From(resTable).
 			Select(resTable.Col("id"), resTable.Col("parent"), resTable.Col("deleted"), goqu.L("0")).
 			Where(goqu.I("r.id").Eq(id)).
 			UnionAll(rec))
@@ -50,7 +48,7 @@ func selectDescendentsCTE(id uuid.UUID, includeDeleted bool) (exp.AliasedExpress
 func (q *Queries) Delete(ctx context.Context, id uuid.UUID, softDelete, excludeRoot bool) (int, []uuid.UUID, error) {
 	table, exp := selectDescendentsCTE(id, !softDelete)
 
-	idSelect := p.From("nodes").Select("id")
+	idSelect := pg.From("nodes").Select("id")
 	if excludeRoot {
 		idSelect = idSelect.Where(goqu.C("depth").Gt(0))
 	}
@@ -102,7 +100,7 @@ func collectDeletedRows(rows pgx.Rows, e error) (count int, ids []uuid.UUID, err
 func (q *Queries) RestoreDeleted(ctx context.Context, id uuid.UUID) ([]int64, error) {
 	table, exp := selectDescendentsCTE(id, false)
 
-	idSelect := p.From("nodes").Select("id")
+	idSelect := pg.From("nodes").Select("id")
 	exp = exp.Where(table.Col("id").Eq(idSelect))
 
 	// table
@@ -141,32 +139,36 @@ func (q *Queries) TrashCompact(ctx context.Context, t pgtype.Timestamp) (int, uu
 	return collectDeletedRows(q.db.Query(ctx, "DELETE FROM resources WHERE deleted < $1::TIMESTAMP RETURNING id, dir", t))
 }
 
-const trashList = `-- name: TrashList :many
-SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants FROM resources
-    WHERE CASE
-        WHEN $1::TIMESTAMP IS NULL THEN deleted IS NOT NULL
-        ELSE deleted < $1::TIMESTAMP OR (deleted = $1::TIMESTAMP AND id < $2::UUID) END
-    AND CASE
-        WHEN $3::TEXT IS NULL THEN TRUE
-        ELSE permissions[$3::TEXT]::integer <> 0 END
-    ORDER BY deleted DESC, id DESC
-    LIMIT $4::INTEGER
-`
-
 type TrashListParams struct {
 	LastTimestamp pgtype.Timestamp
 	LastID        uuid.UUID
 	Username      pgtype.Text
-	N             int32
+	N             uint
 }
 
 func (q *Queries) TrashList(ctx context.Context, arg TrashListParams) ([]Resource, error) {
-	rows, err := q.db.Query(ctx, trashList,
-		arg.LastTimestamp,
-		arg.LastID,
-		arg.Username,
-		arg.N,
-	)
+	exp := pg.From("resources")
+	if arg.LastTimestamp.Valid {
+		exp = exp.Where(
+			goqu.Or(
+				goqu.I("deleted").Lt(goqu.V(arg.LastTimestamp.Time)),
+				goqu.And(
+					goqu.I("deleted").Eq(goqu.V(arg.LastTimestamp.Time)),
+					goqu.I("id").Lt(goqu.V(arg.LastID)),
+				)))
+	} else {
+		exp = exp.Where(goqu.C("deleted").IsNotNull())
+	}
+
+	var query string
+	var params []interface{}
+	query, params, _ = exp.
+		Order(goqu.C("deleted").Desc()).
+		OrderAppend(goqu.C("id").Desc()).
+		Limit(arg.N).
+		ToSQL()
+
+	rows, err := q.db.Query(ctx, query, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +205,7 @@ func (q *Queries) TrashSummary(ctx context.Context, username pgtype.Text) (int, 
 	if username.Valid {
 		whereCond = goqu.And(whereCond, goqu.L("permissions[?]::INTEGER <> 0", username.String))
 	}
-	exp := p.
+	exp := pg.
 		From("resources").
 		Select(
 			goqu.COALESCE(goqu.SUM("content_length"), 0),
@@ -211,7 +213,7 @@ func (q *Queries) TrashSummary(ctx context.Context, username pgtype.Text) (int, 
 		Where(whereCond)
 
 	query, args, _ := exp.ToSQL()
-	row := q.db.QueryRow(ctx, query, args...)
+	row := d.db.QueryRow(ctx, query, args...)
 	var size int
 	var items int
 	err := row.Scan(&size, &items)

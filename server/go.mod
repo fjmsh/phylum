@@ -3,6 +3,7 @@ module github.com/shroff/phylum/server
 go 1.21.6
 
 require (
+	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/fvbock/endless v0.0.0-20170109170031-447134032cb6
 	github.com/gabriel-vasile/mimetype v1.4.6
 	github.com/gin-contrib/cors v1.5.0
@@ -26,7 +27,6 @@ require (
 	github.com/bytedance/sonic v1.10.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.0 // indirect
-	github.com/doug-martin/goqu/v9 v9.19.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect

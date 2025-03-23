@@ -43,7 +43,7 @@ func (f filesystem) TrashList(cursor string, n int) ([]Resource, string, error) 
 
 	if res, err := f.db.TrashList(f.ctx, db.TrashListParams{
 		Username:      username,
-		N:             int32(n),
+		N:             uint(n),
 		LastTimestamp: lastTimestamp,
 		LastID:        lastID,
 	}); err != nil {
