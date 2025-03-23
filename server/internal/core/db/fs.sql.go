@@ -235,30 +235,6 @@ func (q *Queries) ReadDir(ctx context.Context, arg ReadDirParams) ([]Resource, e
 	return items, nil
 }
 
-const resourceByID = `-- name: ResourceByID :one
-SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants FROM resources WHERE id = $1::UUID
-`
-
-func (q *Queries) ResourceByID(ctx context.Context, resourceID uuid.UUID) (Resource, error) {
-	row := q.db.QueryRow(ctx, resourceByID, resourceID)
-	var i Resource
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Parent,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.ContentLength,
-		&i.ContentType,
-		&i.ContentSha256,
-		&i.Permissions,
-		&i.Grants,
-	)
-	return i, err
-}
-
 const resourceByPath = `-- name: ResourceByPath :one
 WITH RECURSIVE nodes(id, parent, search, depth) AS (
     SELECT r.id, r.parent, array_remove(string_to_array($1::text, '/', NULL), ''), 0

@@ -51,7 +51,7 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 
 	if rows, err := f.db.Query(f.ctx, query, params...); err != nil {
 		return nil, "", err
-	} else if res, err := pgx.CollectRows(rows, scanResourceRow); err != nil {
+	} else if res, err := pgx.CollectRows(rows, f.readResource); err != nil {
 		return nil, "", err
 	} else {
 		if res == nil {

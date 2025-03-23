@@ -49,6 +49,27 @@ func scanResourceRow(row pgx.CollectableRow) (Resource, error) {
 	return r, err
 }
 
+func (f filesystem) readResource(row pgx.CollectableRow) (Resource, error) {
+	r, err := scanResourceRow(row)
+	if err != nil {
+		return r, err
+	}
+	permission := Permission(0)
+	if f.fullAccess {
+		permission = -1
+	} else if p, err := readPermissionFromJson(r.permissions, f.username); err != nil {
+		return Resource{}, err
+	} else {
+		permission = p
+	}
+	if permission&PermissionRead == 0 {
+		return Resource{}, ErrResourceNotFound
+	}
+	r.f = f
+	r.userPermission = permission
+	return r, err
+}
+
 func collectNonDirResourceIDs(rows pgx.Rows, e error) (total int, ids []uuid.UUID, err error) {
 	if e != nil {
 		return 0, nil, e

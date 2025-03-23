@@ -31,9 +31,6 @@ SELECT r.*
         ON r.id = n.id
     WHERE cardinality(n.search) = n.depth;
 
--- name: ResourceByID :one
-SELECT * FROM resources WHERE id = @resource_id::UUID;
-
 -- name: GetAncestors :many
 WITH RECURSIVE nodes(id, name, parent, permissions, self) AS (
     SELECT r.id, r.name, r.parent, r.permissions, TRUE

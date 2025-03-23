@@ -13,7 +13,12 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 }
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	return f.resourceFromResult(f.db.ResourceByID(f.ctx, id))
+	const query = "SELECT * FROM resources WHERE id = $1::UUID"
+	if rows, err := f.db.Query(f.ctx, query, id); err != nil {
+		return Resource{}, err
+	} else {
+		return pgx.CollectExactlyOneRow(rows, pgx.RowToFunc[Resource](f.readResource))
+	}
 }
 
 func (f filesystem) resourceFromResult(r db.Resource, err error) (Resource, error) {
