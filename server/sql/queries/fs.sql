@@ -83,9 +83,6 @@ SET
 WHERE id = @id::uuid
 RETURNING *;
 
--- name: ChildResourceByName :one
-SELECT * FROM resources WHERE parent = @parent::uuid AND name = @name::text AND deleted IS NULL;
-
 -- name: ReadDir :many
 WITH RECURSIVE nodes(id, parent, deleted, depth) AS (
     SELECT r.id, r.parent, r.deleted, 0

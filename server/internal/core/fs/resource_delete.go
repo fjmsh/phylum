@@ -20,14 +20,14 @@ func (r Resource) DeleteChildRecursive(name string, softDelete bool) (Resource, 
 		return Resource{}, ErrInsufficientPermissions
 	}
 
-	c, err := r.f.db.ChildResourceByName(r.f.ctx, db.ChildResourceByNameParams{Parent: r.ID(), Name: name})
+	c, err := r.f.ChildResourceByName(r.ID(), name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrResourceNotFound
 		}
 		return Resource{}, err
 	}
-	if err := r.f.deleteRecursive(c.ID, r.ID(), softDelete, false); err != nil {
+	if err := r.f.deleteRecursive(c.ID(), r.ID(), softDelete, false); err != nil {
 		return Resource{}, err
 	}
 	deleted := time.Now()
@@ -85,14 +85,14 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 	if name == "" {
 		name = r.name
 	}
-	_, err = r.f.db.ChildResourceByName(r.f.ctx, db.ChildResourceByNameParams{Parent: p.id, Name: name})
+	_, err = r.f.ChildResourceByName(p.id, name)
 	if autoRename && err == nil {
 		ext := path.Ext(name)
 		basename := name[:len(name)-len(ext)]
 		counter := 1
 		for {
 			name = fmt.Sprintf("%s (%d)%s", basename, counter, ext)
-			if _, err = r.f.db.ChildResourceByName(r.f.ctx, db.ChildResourceByNameParams{Parent: p.id, Name: name}); err == nil {
+			if _, err = r.f.ChildResourceByName(p.id, name); err == nil {
 				counter++
 			} else {
 				break

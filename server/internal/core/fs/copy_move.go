@@ -113,11 +113,11 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	var contents []copySrcDest
 	newIDs := make(map[uuid.UUID]uuid.UUID)
 
-	var root db.Resource
+	var res Resource
 	created := false
 	deleted := false
 	err = r.f.runInTx(func(f filesystem) error {
-		root, created, deleted, err = f.createResource(
+		res, created, deleted, err = f.createResource(
 			id,
 			destParent.ID(),
 			destName,
@@ -128,7 +128,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			conflictResolution,
 		)
 		// createResource may return an already existing resources, depending on the specified conflictResolution
-		id = root.ID
+		id = res.id
 		if err == nil && r.ID() == id {
 			err = ErrResourceCopyTargetSelf
 		}
@@ -136,7 +136,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			return err
 		}
 
-		if root.Dir {
+		if res.dir {
 			newIDs[r.ID()] = id
 		} else {
 			contents = append(contents, copySrcDest{src: r.ID(), dest: id})
@@ -188,7 +188,6 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		return Resource{}, false, err
 	}
 
-	res := ResourceFromDB(root)
 	res.f = r.f
 	res.userPermission = destParent.userPermission
 	return res, deleted, err

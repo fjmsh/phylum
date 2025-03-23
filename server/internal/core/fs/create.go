@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
 )
@@ -49,18 +50,17 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 	if id == uuid.Nil {
 		id, _ = uuid.NewV7()
 	}
-	var result db.Resource
+	var res Resource
 	var created bool
 	err := r.f.runInTx(func(f filesystem) error {
 		var err error
-		parent := r.ID()
-		if result, created, _, err = f.createResource(id, parent, name, dir, 0, emptyContentType, emptyContentSHA256, conflictResolution); err != nil {
+		if res, created, _, err = f.createResource(id, r.id, name, dir, 0, emptyContentType, emptyContentSHA256, conflictResolution); err != nil {
 			return err
 		} else if created {
 			if err := f.db.RecomputePermissions(f.ctx, id); err != nil {
 				return err
 			}
-			return f.db.UpdateResourceModified(f.ctx, parent)
+			return f.db.UpdateResourceModified(f.ctx, r.id)
 		}
 		return nil
 	})
@@ -80,7 +80,6 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 		}
 	}
 
-	res := ResourceFromDB(result)
 	res.f = r.f
 	res.userPermission = r.userPermission
 	return res, nil
@@ -95,17 +94,17 @@ func (f filesystem) createResource(
 	contentType string,
 	contentSHA256 string,
 	conflictResolution ResourceBindConflictResolution,
-) (res db.Resource, created, deleted bool, err error) {
+) (res Resource, created, deleted bool, err error) {
 	err = f.runInTx(func(f filesystem) error {
-		res, err = f.db.CreateResource(f.ctx, db.CreateResourceParams{
-			ID:            id,
-			Parent:        &parent,
-			Name:          name,
-			ContentLength: contentLength,
-			ContentType:   contentType,
-			ContentSha256: contentSHA256,
-			Dir:           dir,
-		})
+		res, err = f.insertResource(
+			id,
+			parent,
+			name,
+			dir,
+			contentLength,
+			contentType,
+			contentSHA256,
+		)
 		return err
 	})
 	if err == nil {
@@ -117,8 +116,8 @@ func (f filesystem) createResource(
 		case ResourceBindConflictResolutionError:
 			err = ErrResourceNameConflict
 		case ResourceBindConflictResolutionEnsure:
-			res, err = f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: parent, Name: name})
-			if err == nil && res.Dir != dir {
+			res, err = f.ChildResourceByName(parent, name)
+			if err == nil && res.dir != dir {
 				err = ErrResourceNameConflict
 			}
 		case ResourceBindConflictResolutionRename:
@@ -128,15 +127,15 @@ func (f filesystem) createResource(
 			for {
 				name := fmt.Sprintf("%s (%d)%s", basename, counter, ext)
 				err = f.runInTx(func(f filesystem) error {
-					res, err = f.db.CreateResource(f.ctx, db.CreateResourceParams{
-						ID:            id,
-						Parent:        &parent,
-						Name:          name,
-						ContentLength: contentLength,
-						ContentType:   contentType,
-						ContentSha256: contentSHA256,
-						Dir:           dir,
-					})
+					res, err = f.insertResource(
+						id,
+						parent,
+						name,
+						dir,
+						contentLength,
+						contentType,
+						contentSHA256,
+					)
 					return err
 				})
 				if err != nil {
@@ -150,25 +149,25 @@ func (f filesystem) createResource(
 				}
 			}
 		case ResourceBindConflictResolutionOverwrite:
-			res, err = f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: parent, Name: name})
+			res, err = f.ChildResourceByName(parent, name)
 			if err == nil {
 				deleted = true
-				if res.Dir == dir {
+				if res.dir == dir {
 					if dir {
-						err = f.deleteRecursive(res.ID, parent, true, true)
+						err = f.deleteRecursive(res.id, parent, true, true)
 					} else {
 						err = f.db.UpdateResourceContents(f.ctx, db.UpdateResourceContentsParams{
-							ID:            res.ID,
+							ID:            res.id,
 							ContentLength: contentLength,
 							ContentType:   contentType,
 							ContentSha256: contentSHA256,
 						})
-						res.ContentLength = contentLength
-						res.ContentType = contentType
-						res.ContentSha256 = contentSHA256
+						res.contentLength = contentLength
+						res.contentType = contentType
+						res.contentSHA256 = contentSHA256
 					}
 				} else {
-					err = f.deleteRecursive(res.ID, parent, true, false)
+					err = f.deleteRecursive(res.id, parent, true, false)
 					if err == nil {
 						res, created, _, err = f.createResource(
 							id,
@@ -184,10 +183,10 @@ func (f filesystem) createResource(
 				}
 			}
 		case ResourceBindConflictResolutionDelete:
-			res, err = f.db.ChildResourceByName(f.ctx, db.ChildResourceByNameParams{Parent: parent, Name: name})
+			res, err = f.ChildResourceByName(parent, name)
 			if err == nil {
 				deleted = true
-				err = f.deleteRecursive(res.ID, parent, true, false)
+				err = f.deleteRecursive(res.id, parent, true, false)
 				if err == nil {
 					res, created, _, err = f.createResource(
 						id,
@@ -207,6 +206,27 @@ func (f filesystem) createResource(
 		err = ErrResourceIDConflict
 	}
 	return
+}
+
+func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, contentLength int64, contentType, contentSha256 string) (Resource, error) {
+	query, args, _ := pg.From("resources").
+		Insert().
+		Rows(goqu.Record{
+			"id":             goqu.V(id),
+			"parent":         goqu.V(parent),
+			"name":           goqu.V(name),
+			"dir":            goqu.V(dir),
+			"content_length": goqu.V(contentLength),
+			"content_type":   goqu.V(contentType),
+			"content_sha256": goqu.V(contentSha256),
+		}).
+		Returning("*").
+		ToSQL()
+	if rows, err := f.db.Query(f.ctx, query, args...); err != nil {
+		return Resource{}, err
+	} else {
+		return f.collectResource(rows)
+	}
 }
 
 func ResourceFromDB(r db.Resource) Resource {

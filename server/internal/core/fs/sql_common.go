@@ -30,7 +30,19 @@ func selectResourceTree(ds *goqu.SelectDataset, nodes exp.IdentifierExpression, 
 			UnionAll(rec))
 }
 
-func scanResourceRow(row pgx.CollectableRow) (Resource, error) {
+func (f filesystem) collectResource(rows pgx.Rows) (Resource, error) {
+	if r, err := pgx.CollectExactlyOneRow(rows, f.scanResource); err == nil {
+		return r, nil
+	} else {
+		if err == pgx.ErrNoRows {
+			err = ErrResourceNotFound
+		}
+		return r, err
+	}
+
+}
+
+func (f filesystem) scanResource(row pgx.CollectableRow) (Resource, error) {
 	var r Resource
 	err := row.Scan(
 		&r.id,
@@ -46,11 +58,6 @@ func scanResourceRow(row pgx.CollectableRow) (Resource, error) {
 		&r.permissions,
 		&r.grants,
 	)
-	return r, err
-}
-
-func (f filesystem) readResource(row pgx.CollectableRow) (Resource, error) {
-	r, err := scanResourceRow(row)
 	if err != nil {
 		return r, err
 	}

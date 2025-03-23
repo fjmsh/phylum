@@ -17,7 +17,16 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	if rows, err := f.db.Query(f.ctx, query, id); err != nil {
 		return Resource{}, err
 	} else {
-		return pgx.CollectExactlyOneRow(rows, pgx.RowToFunc[Resource](f.readResource))
+		return f.collectResource(rows)
+	}
+}
+
+func (f filesystem) ChildResourceByName(parentID uuid.UUID, name string) (Resource, error) {
+	const query = "SELECT * FROM resources WHERE parent = $1::UUID AND name = $2::TEXT AND deleted IS NULL"
+	if rows, err := f.db.Query(f.ctx, query, parentID, name); err != nil {
+		return Resource{}, err
+	} else {
+		return f.collectResource(rows)
 	}
 }
 
