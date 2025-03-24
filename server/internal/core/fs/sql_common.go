@@ -13,6 +13,7 @@ import (
 
 type tbl interface {
 	Col(interface{}) exp.IdentifierExpression
+	All() exp.IdentifierExpression
 }
 
 func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool) (tbl, tbl, *goqu.SelectDataset) {

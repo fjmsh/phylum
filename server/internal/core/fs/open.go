@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"io"
 
+	"github.com/doug-martin/goqu/v9"
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/db"
@@ -38,34 +39,20 @@ func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 		return nil, ErrResourceNotCollection
 	}
 
+	var q *goqu.SelectDataset
 	if !recursive {
-		_, q := selectDirectChildren(r.id, r.deleted)
-		query, args, _ := q.ToSQL()
-		if rows, err := r.f.db.Query(r.f.ctx, query, args...); err != nil {
-			return nil, err
-		} else {
-			return pgx.CollectRows(rows, r.f.scanServeResource)
-		}
-	}
-	maxDepth := 1
-	if recursive {
-		maxDepth = 1000
-	}
-	children, err := r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{
-		ResourceID: r.ID(),
-		MinDepth:   1,
-		MaxDepth:   int32(maxDepth),
-	})
-	if err != nil {
-		return nil, err
+		_, q = selectDirectChildren(r.id, r.deleted)
+	} else {
+		t, _, qq := selectResourceTree(r.id, true, false)
+		q = qq.Select(t.All())
 	}
 
-	result := make([]serve.Resource, len(children))
-	for i, c := range children {
-		info := ResourceFromDB(c)
-		result[i] = info
+	query, args, _ := q.ToSQL()
+	if rows, err := r.f.db.Query(r.f.ctx, query, args...); err != nil {
+		return nil, err
+	} else {
+		return pgx.CollectRows(rows, r.f.scanServeResource)
 	}
-	return result, nil
 }
 
 func (r Resource) Walk(depth int, fn func(serve.ResourceInfo, string) error) error {
