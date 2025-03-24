@@ -20,13 +20,7 @@ func selectResourceTree(table tbl, id uuid.UUID, excludeTreeRoot, includeDeleted
 		Join(nodes.As("n"), goqu.On(goqu.I("r.parent").Eq(goqu.I("n.id"))))
 
 	if !includeDeleted {
-		rec = rec.Where(
-			goqu.Or(
-				goqu.I("r.deleted").Eq(goqu.I("n.deleted")),
-				goqu.And(
-					goqu.I("r.deleted").IsNull(),
-					goqu.I("n.deleted").IsNull(),
-				)))
+		rec = rec.Where(goqu.L("r.deleted IS NOT DISTINCT FROM n.deleted"))
 	}
 
 	idSelect := pg.From("nodes").Select("id")
