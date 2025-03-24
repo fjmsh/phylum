@@ -1,15 +1,41 @@
 package fs
 
 import (
-	"encoding/json"
-
+	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/core/db"
 )
 
 func (f filesystem) ResourceByPath(path string) (Resource, error) {
-	return f.resourceFromResult(f.db.ResourceByPath(f.ctx, db.ResourceByPathParams{Root: &f.rootID, Path: path}))
+	nodes := goqu.T("nodes").As("n")
+	resources := goqu.T("resources").As("r")
+	sub := pg.
+		Select(resources.Col("id"), resources.Col("parent"), nodes.Col("search"), goqu.L("n.depth + 1")).
+		From(resources).
+		Join(nodes, goqu.On(resources.Col("parent").Eq(nodes.Col("id")))).
+		Where(
+			resources.Col("deleted").IsNull(),
+			resources.Col("name").Eq(goqu.L("n.search[n.depth + 1]")),
+		)
+
+	rec := pg.
+		Select(resources.Col("id"), resources.Col("parent"), goqu.L("array_remove(string_to_array(?::TEXT, '/', NULL), '')", path), goqu.L("0")).
+		From(resources).
+		Where(resources.Col("id").Eq(goqu.V(f.rootID))).
+		UnionAll(sub)
+
+	q := pg.Select(resources.All()).
+		From(resources).
+		WithRecursive("nodes(id, parent, search, depth)", rec).
+		Join(nodes, goqu.On(resources.Col("id").Eq(nodes.Col("id")))).
+		Where(goqu.L("cardinality(n.search) = n.depth"))
+
+	query, args, _ := q.ToSQL()
+
+	if rows, err := f.db.Query(f.ctx, query, args...); err != nil {
+		return Resource{}, err
+	} else {
+		return f.collectResource(rows)
+	}
 }
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
@@ -28,45 +54,6 @@ func (f filesystem) ChildResourceByName(parentID uuid.UUID, name string) (Resour
 	} else {
 		return f.collectResource(rows)
 	}
-}
-
-func (f filesystem) resourceFromResult(r db.Resource, err error) (Resource, error) {
-	if err == pgx.ErrNoRows {
-		err = ErrResourceNotFound
-	}
-	if err != nil {
-		return Resource{}, err
-	}
-	permission := Permission(0)
-	if f.fullAccess {
-		permission = -1
-	} else if p, err := readPermissionFromJson(r.Permissions, f.username); err != nil {
-		return Resource{}, err
-	} else {
-		permission = p
-	}
-	if permission&PermissionRead == 0 {
-		return Resource{}, ErrResourceNotFound
-	}
-	res := ResourceFromDB(r)
-	res.f = f
-	res.userPermission = permission
-	return res, nil
-}
-
-func readPermissionFromJson(j []byte, username string) (Permission, error) {
-	if j == nil {
-		return PermissionNone, nil
-	}
-	p := make(map[string]Permission)
-	err := json.Unmarshal(j, &p)
-	if err != nil {
-		return PermissionNone, err
-	}
-	if p, ok := p[username]; ok {
-		return p, nil
-	}
-	return PermissionNone, nil
 }
 
 func (f filesystem) ResourceByPathOrUUID(pathOrUUID string) (Resource, error) {

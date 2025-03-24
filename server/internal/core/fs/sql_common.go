@@ -1,6 +1,8 @@
 package fs
 
 import (
+	"encoding/json"
+
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/google/uuid"
@@ -75,6 +77,21 @@ func (f filesystem) scanResource(row pgx.CollectableRow) (Resource, error) {
 	r.f = f
 	r.userPermission = permission
 	return r, err
+}
+
+func readPermissionFromJson(j []byte, username string) (Permission, error) {
+	if j == nil {
+		return PermissionNone, nil
+	}
+	p := make(map[string]Permission)
+	err := json.Unmarshal(j, &p)
+	if err != nil {
+		return PermissionNone, err
+	}
+	if p, ok := p[username]; ok {
+		return p, nil
+	}
+	return PermissionNone, nil
 }
 
 func collectNonDirResourceIDs(rows pgx.Rows, e error) (total int, ids []uuid.UUID, err error) {
