@@ -30,7 +30,11 @@ func setupRmCommand() *cobra.Command {
 			}
 
 			hard, _ := cmd.Flags().GetBool("hard")
-			r.DeleteRecursive(!hard)
+			_, err = r.DeleteRecursive(!hard)
+			if err != nil {
+				fmt.Println("cannot remove '" + pathOrUUID + "': " + err.Error())
+				os.Exit(1)
+			}
 		},
 	}
 	cmd.Flags().BoolP("recursive", "r", false, "Recursive (required for directories)")
