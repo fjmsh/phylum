@@ -9,10 +9,14 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func selectResourceTree(ds *goqu.SelectDataset, nodes exp.IdentifierExpression, id uuid.UUID, includeDeleted bool) *goqu.SelectDataset {
-	resTable := goqu.T("resources").As("r")
-	rec := pg.From(resTable).
-		Select(resTable.Col("id"), resTable.Col("parent"), resTable.Col("deleted"), goqu.L("? + 1", goqu.I("n.depth"))).
+type tbl interface {
+	Col(interface{}) exp.IdentifierExpression
+}
+
+func selectResourceTree(table tbl, id uuid.UUID, excludeTreeRoot, includeDeleted bool) *goqu.SelectDataset {
+	nodes := goqu.T("nodes")
+	rec := pg.From(table).
+		Select(table.Col("id"), table.Col("parent"), table.Col("deleted"), goqu.L("? + 1", goqu.I("n.depth"))).
 		Join(nodes.As("n"), goqu.On(goqu.I("r.parent").Eq(goqu.I("n.id"))))
 
 	if !includeDeleted {
@@ -25,11 +29,19 @@ func selectResourceTree(ds *goqu.SelectDataset, nodes exp.IdentifierExpression, 
 				)))
 	}
 
-	return ds.WithRecursive(nodes.GetTable()+"(id, parent, deleted, depth)",
-		pg.From(resTable).
-			Select(resTable.Col("id"), resTable.Col("parent"), resTable.Col("deleted"), goqu.L("0")).
-			Where(goqu.I("r.id").Eq(id)).
-			UnionAll(rec))
+	idSelect := pg.From("nodes").Select("id")
+	if excludeTreeRoot {
+		idSelect = idSelect.Where(goqu.C("depth").Gt(0))
+	}
+
+	return pg.
+		From(table).
+		WithRecursive(nodes.GetTable()+"(id, parent, deleted, depth)",
+			pg.From(table).
+				Select(table.Col("id"), table.Col("parent"), table.Col("deleted"), goqu.L("0")).
+				Where(table.Col("id").Eq(id)).
+				UnionAll(rec)).
+		Where(table.Col("id").Eq(idSelect))
 }
 
 func (f filesystem) collectResource(rows pgx.Rows) (Resource, error) {
