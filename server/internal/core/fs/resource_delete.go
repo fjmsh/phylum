@@ -155,8 +155,7 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 }
 
 func (f filesystem) markDeleted(id uuid.UUID, softDelete, excludeRoot bool) (int, []uuid.UUID, error) {
-	table := goqu.T("resources").As("r")
-	q := selectResourceTree(table, id, excludeRoot, !softDelete)
+	r, _, q := selectResourceTree(id, excludeRoot, !softDelete)
 
 	// table
 	var query string
@@ -169,12 +168,12 @@ func (f filesystem) markDeleted(id uuid.UUID, softDelete, excludeRoot bool) (int
 					"modified": goqu.L("NOW()"),
 					"deleted":  goqu.L("NOW()"),
 				}).
-			Returning(table.Col("id"), table.Col("dir")).
+			Returning(r.Col("id"), r.Col("dir")).
 			ToSQL()
 	} else {
 		query, params, _ = q.
 			Delete().
-			Returning(table.Col("id"), table.Col("dir")).
+			Returning(r.Col("id"), r.Col("dir")).
 			ToSQL()
 	}
 
@@ -182,14 +181,13 @@ func (f filesystem) markDeleted(id uuid.UUID, softDelete, excludeRoot bool) (int
 }
 
 func (f filesystem) markNotDeleted(ctx context.Context, id uuid.UUID) ([]int64, error) {
-	table := goqu.T("resources").As("r")
-	q := selectResourceTree(table, id, false, false).
-		Update().Set(
+	r, _, s := selectResourceTree(id, false, false)
+	q := s.Update().Set(
 		goqu.Record{
 			"modified": goqu.L("NOW()"),
 			"deleted":  nil,
 		}).
-		Returning(table.Col("content_length"))
+		Returning(r.Col("content_length"))
 
 	query, params, _ := q.ToSQL()
 

@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"io"
 
-	"github.com/doug-martin/goqu/v9"
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/db"
@@ -40,8 +39,8 @@ func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 	}
 
 	if !recursive {
-		table := goqu.T("resources")
-		query, args, _ := selectDirectChildren(table, r.id, r.deleted).ToSQL()
+		_, q := selectDirectChildren(r.id, r.deleted)
+		query, args, _ := q.ToSQL()
 		if rows, err := r.f.db.Query(r.f.ctx, query, args...); err != nil {
 			return nil, err
 		} else {

@@ -15,38 +15,39 @@ type tbl interface {
 	Col(interface{}) exp.IdentifierExpression
 }
 
-func selectResourceTree(table tbl, id uuid.UUID, excludeTreeRoot, includeDeleted bool) *goqu.SelectDataset {
-	nodes := goqu.T("nodes")
-	rec := pg.From(table).
-		Select(table.Col("id"), table.Col("parent"), table.Col("deleted"), goqu.L("? + 1", goqu.I("n.depth"))).
-		Join(nodes.As("n"), goqu.On(goqu.I("r.parent").Eq(goqu.I("n.id"))))
+func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool) (tbl, tbl, *goqu.SelectDataset) {
+	n := goqu.T("nodes").As("n")
+	r := goqu.T("resources").As("r")
+	rec := pg.From(r).
+		Select(r.Col("id"), r.Col("parent"), r.Col("deleted"), goqu.L("? + 1", goqu.I("n.depth"))).
+		Join(n, goqu.On(r.Col("parent").Eq(n.Col("id"))))
 
 	if !includeDeleted {
-		rec = rec.Where(goqu.L("r.deleted IS NOT DISTINCT FROM n.deleted"))
+		rec = rec.Where(goqu.L("? IS NOT DISTINCT FROM ?", r.Col("deleted"), n.Col("deleted")))
 	}
 
-	idSelect := pg.From("nodes").Select("id")
-	if excludeTreeRoot {
-		idSelect = idSelect.Where(goqu.C("depth").Gt(0))
-	}
-
-	return pg.
-		From(table).
-		WithRecursive(nodes.GetTable()+"(id, parent, deleted, depth)",
-			pg.From(table).
-				Select(table.Col("id"), table.Col("parent"), table.Col("deleted"), goqu.L("0")).
-				Where(table.Col("id").Eq(id)).
+	q := pg.
+		From(r).
+		WithRecursive("nodes(id, parent, deleted, depth)",
+			pg.From(r).
+				Select(r.Col("id"), r.Col("parent"), r.Col("deleted"), goqu.L("0")).
+				Where(r.Col("id").Eq(id)).
 				UnionAll(rec)).
-		Where(table.Col("id").Eq(idSelect))
+		Join(n, goqu.On(n.Col("id").Eq(r.Col("id"))))
+	if excludeTreeRoot {
+		q = q.Where(n.Col("depth").Gt(0))
+	}
+	return r, n, q
 }
 
-func selectDirectChildren(table tbl, id uuid.UUID, deleted *time.Time) *goqu.SelectDataset {
+func selectDirectChildren(id uuid.UUID, deleted *time.Time) (tbl, *goqu.SelectDataset) {
+	r := goqu.T("resources").As("r")
 	q := pg.
-		From(table).
-		Where(table.Col("parent").Eq(goqu.V(id))).
-		Where(goqu.L("? IS NOT DISTINCT FROM ?", table.Col("deleted"), goqu.V(deleted)))
+		From(r).
+		Where(r.Col("parent").Eq(goqu.V(id))).
+		Where(goqu.L("? IS NOT DISTINCT FROM ?", r.Col("deleted"), goqu.V(deleted)))
 
-	return q
+	return r, q
 }
 
 func (f filesystem) collectResource(rows pgx.Rows) (Resource, error) {
