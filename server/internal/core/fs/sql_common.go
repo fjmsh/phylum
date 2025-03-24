@@ -2,11 +2,13 @@ package fs
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/shroff/phylum/server/internal/api/serve"
 )
 
 type tbl interface {
@@ -38,6 +40,15 @@ func selectResourceTree(table tbl, id uuid.UUID, excludeTreeRoot, includeDeleted
 		Where(table.Col("id").Eq(idSelect))
 }
 
+func selectDirectChildren(table tbl, id uuid.UUID, deleted *time.Time) *goqu.SelectDataset {
+	q := pg.
+		From(table).
+		Where(table.Col("parent").Eq(goqu.V(id))).
+		Where(goqu.L("? IS NOT DISTINCT FROM ?", table.Col("deleted"), goqu.V(deleted)))
+
+	return q
+}
+
 func (f filesystem) collectResource(rows pgx.Rows) (Resource, error) {
 	if r, err := pgx.CollectExactlyOneRow(rows, f.scanResource); err == nil {
 		return r, nil
@@ -48,6 +59,10 @@ func (f filesystem) collectResource(rows pgx.Rows) (Resource, error) {
 		return r, err
 	}
 
+}
+
+func (f filesystem) scanServeResource(row pgx.CollectableRow) (serve.Resource, error) {
+	return f.scanResource(row)
 }
 
 func (f filesystem) scanResource(row pgx.CollectableRow) (Resource, error) {
