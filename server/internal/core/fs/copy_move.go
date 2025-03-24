@@ -126,6 +126,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			r.contentType,
 			r.contentSHA256,
 			conflictResolution,
+			r.permissions,
 		)
 		// createResource may return an already existing resources, depending on the specified conflictResolution
 		id = res.id

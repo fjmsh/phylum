@@ -57,7 +57,7 @@ func (f filesystem) collectResource(rows pgx.Rows) (Resource, error) {
 }
 
 func (f filesystem) scanResource(row pgx.CollectableRow) (Resource, error) {
-	var r Resource
+	r := Resource{f: f}
 	err := row.Scan(
 		&r.id,
 		&r.name,
@@ -86,7 +86,6 @@ func (f filesystem) scanResource(row pgx.CollectableRow) (Resource, error) {
 	if permission&PermissionRead == 0 {
 		return Resource{}, ErrResourceNotFound
 	}
-	r.f = f
 	r.userPermission = permission
 	return r, err
 }

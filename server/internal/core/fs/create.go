@@ -54,7 +54,7 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 	var created bool
 	err := r.f.runInTx(func(f filesystem) error {
 		var err error
-		if res, created, _, err = f.createResource(id, r.id, name, dir, 0, emptyContentType, emptyContentSHA256, conflictResolution); err != nil {
+		if res, created, _, err = f.createResource(id, r.id, name, dir, 0, emptyContentType, emptyContentSHA256, conflictResolution, r.permissions); err != nil {
 			return err
 		} else if created {
 			if err := f.db.RecomputePermissions(f.ctx, id); err != nil {
@@ -94,6 +94,7 @@ func (f filesystem) createResource(
 	contentType string,
 	contentSHA256 string,
 	conflictResolution ResourceBindConflictResolution,
+	permissions []byte,
 ) (res Resource, created, deleted bool, err error) {
 	err = f.runInTx(func(f filesystem) error {
 		res, err = f.insertResource(
@@ -104,6 +105,7 @@ func (f filesystem) createResource(
 			contentLength,
 			contentType,
 			contentSHA256,
+			permissions,
 		)
 		return err
 	})
@@ -135,6 +137,7 @@ func (f filesystem) createResource(
 						contentLength,
 						contentType,
 						contentSHA256,
+						permissions,
 					)
 					return err
 				})
@@ -178,6 +181,7 @@ func (f filesystem) createResource(
 							contentType,
 							contentSHA256,
 							ResourceBindConflictResolutionError,
+							permissions,
 						)
 					}
 				}
@@ -197,6 +201,7 @@ func (f filesystem) createResource(
 						contentType,
 						contentSHA256,
 						ResourceBindConflictResolutionError,
+						permissions,
 					)
 				}
 			}
@@ -208,7 +213,7 @@ func (f filesystem) createResource(
 	return
 }
 
-func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, contentLength int64, contentType, contentSha256 string) (Resource, error) {
+func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, contentLength int64, contentType, contentSha256 string, permissions []byte) (Resource, error) {
 	query, args, _ := pg.From("resources").
 		Insert().
 		Rows(goqu.Record{
@@ -219,6 +224,7 @@ func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, 
 			"content_length": goqu.V(contentLength),
 			"content_type":   goqu.V(contentType),
 			"content_sha256": goqu.V(contentSha256),
+			"permissions":    goqu.V(permissions),
 		}).
 		Returning("*").
 		ToSQL()
