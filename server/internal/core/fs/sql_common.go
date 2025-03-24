@@ -2,6 +2,8 @@ package fs
 
 import (
 	"encoding/json"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/doug-martin/goqu/v9"
@@ -16,23 +18,42 @@ type tbl interface {
 	All() exp.IdentifierExpression
 }
 
-func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool) (tbl, tbl, *goqu.SelectDataset) {
+func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool, cols ...string) (tbl, tbl, *goqu.SelectDataset) {
 	n := goqu.T("nodes").As("n")
 	r := goqu.T("resources").As("r")
 	rec := pg.From(r).
-		Select(r.Col("id"), r.Col("parent"), r.Col("deleted"), goqu.L("? + 1", goqu.I("n.depth"))).
-		Join(n, goqu.On(r.Col("parent").Eq(n.Col("id"))))
+		Select(r.Col("id"), r.Col("parent"), r.Col("deleted"), goqu.L("? + 1", goqu.I("n.depth")))
+	if len(cols) != 0 {
+		s := make([]interface{}, len(cols))
+		for i, c := range cols {
+			s[i] = r.Col(c)
+		}
+		rec = rec.SelectAppend(s...)
+	}
+	rec = rec.Join(n, goqu.On(r.Col("parent").Eq(n.Col("id"))))
 
 	if !includeDeleted {
 		rec = rec.Where(goqu.L("? IS NOT DISTINCT FROM ?", r.Col("deleted"), n.Col("deleted")))
 	}
 
+	base := pg.From(r).
+		Select(r.Col("id"), r.Col("parent"), r.Col("deleted"), goqu.L("0"))
+	if len(cols) != 0 {
+		s := make([]interface{}, len(cols))
+		for i, c := range cols {
+			s[i] = r.Col(c)
+		}
+		base = base.SelectAppend(s...)
+	}
+
+	c := []string{"id", "parent", "deleted", "depth"}
+	c = slices.Insert(c, 4, cols...)
+	cs := strings.Join(c, ",")
+
 	q := pg.
 		From(r).
-		WithRecursive("nodes(id, parent, deleted, depth)",
-			pg.From(r).
-				Select(r.Col("id"), r.Col("parent"), r.Col("deleted"), goqu.L("0")).
-				Where(r.Col("id").Eq(id)).
+		WithRecursive("nodes("+cs+")",
+			base.Where(r.Col("id").Eq(id)).
 				UnionAll(rec)).
 		Join(n, goqu.On(n.Col("id").Eq(r.Col("id"))))
 	if excludeTreeRoot {
