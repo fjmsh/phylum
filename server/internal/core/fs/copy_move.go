@@ -56,7 +56,7 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 	var deleted = false
 	return res, deleted, r.f.runInTx(func(f filesystem) error {
 		if conflictResolution == ResourceBindConflictResolutionOverwrite || conflictResolution == ResourceBindConflictResolutionDelete {
-			if _, err := destParent.DeleteChildRecursive(destName, true); err == nil {
+			if _, err := destParent.DeleteChildRecursive(destName); err == nil {
 				deleted = true
 			} else if !errors.Is(err, ErrResourceNotFound) {
 				return err

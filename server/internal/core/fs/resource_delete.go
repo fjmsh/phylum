@@ -15,7 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (r Resource) DeleteChildRecursive(name string, softDelete bool) (Resource, error) {
+func (r Resource) DeleteChildRecursive(name string) (Resource, error) {
 	if !r.hasPermission(PermissionWrite) {
 		return Resource{}, ErrInsufficientPermissions
 	}
@@ -27,7 +27,7 @@ func (r Resource) DeleteChildRecursive(name string, softDelete bool) (Resource, 
 		}
 		return Resource{}, err
 	}
-	if err := r.f.deleteRecursive(c.ID(), r.ID(), softDelete, false); err != nil {
+	if err := r.f.deleteRecursive(c.ID(), r.ID(), true, false); err != nil {
 		return Resource{}, err
 	}
 	deleted := time.Now()
