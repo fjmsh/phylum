@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/shroff/phylum/server/internal/api/serve"
+	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 // Proppatch describes a property update instruction as defined in RFC 4918.
@@ -69,7 +69,7 @@ func makePropstats(x, y Propstat) []Propstat {
 var liveProps = map[xml.Name]struct {
 	// findFn implements the propfind function of this property. If nil,
 	// it indicates a hidden property.
-	findFn func(serve.ResourceInfo) string
+	findFn func(fs.Resource) string
 	// dir is true if the property applies to directories.
 	dir bool
 }{
@@ -132,7 +132,7 @@ var liveProps = map[xml.Name]struct {
 //
 // Each Propstat has a unique status and each property name will only be part
 // of one Propstat element.
-func props(fs FileSystem, ls LockSystem, fi serve.ResourceInfo, pnames []xml.Name) ([]Propstat, error) {
+func props(fs FileSystem, ls LockSystem, fi fs.Resource, pnames []xml.Name) ([]Propstat, error) {
 	pstatOK := Propstat{Status: http.StatusOK}
 	pstatNotFound := Propstat{Status: http.StatusNotFound}
 	for _, pn := range pnames {
@@ -153,7 +153,7 @@ func props(fs FileSystem, ls LockSystem, fi serve.ResourceInfo, pnames []xml.Nam
 }
 
 // propnames returns the property names defined for resource name.
-func propnames(fs FileSystem, ls LockSystem, fi serve.ResourceInfo) ([]xml.Name, error) {
+func propnames(fs FileSystem, ls LockSystem, fi fs.Resource) ([]xml.Name, error) {
 	pnames := make([]xml.Name, 0, len(liveProps))
 	for pn, prop := range liveProps {
 		if prop.findFn != nil && (prop.dir || !fi.Dir()) {
@@ -171,7 +171,7 @@ func propnames(fs FileSystem, ls LockSystem, fi serve.ResourceInfo) ([]xml.Name,
 // returned if they are named in 'include'.
 //
 // See http://www.webdav.org/specs/rfc4918.html#METHOD_PROPFIND
-func allprop(fs FileSystem, ls LockSystem, fi serve.ResourceInfo, include []xml.Name) ([]Propstat, error) {
+func allprop(fs FileSystem, ls LockSystem, fi fs.Resource, include []xml.Name) ([]Propstat, error) {
 	pnames, err := propnames(fs, ls, fi)
 	if err != nil {
 		return nil, err
@@ -252,38 +252,38 @@ func escapeXML(s string) string {
 	return s
 }
 
-func findResourceType(fi serve.ResourceInfo) string {
+func findResourceType(fi fs.Resource) string {
 	if fi.Dir() {
 		return `<D:collection xmlns:D="DAV:"/>`
 	}
 	return ""
 }
 
-func findDisplayName(fi serve.ResourceInfo) string {
+func findDisplayName(fi fs.Resource) string {
 	return escapeXML(fi.Name())
 }
 
-func findContentLength(fi serve.ResourceInfo) string {
+func findContentLength(fi fs.Resource) string {
 	return strconv.FormatInt(fi.ContentLength(), 10)
 }
 
-func findCreationDate(fi serve.ResourceInfo) string {
+func findCreationDate(fi fs.Resource) string {
 	return fi.Created().UTC().Format(http.TimeFormat)
 }
 
-func findLastModified(fi serve.ResourceInfo) string {
+func findLastModified(fi fs.Resource) string {
 	return fi.Modified().UTC().Format(http.TimeFormat)
 }
 
-func findContentType(fi serve.ResourceInfo) string {
+func findContentType(fi fs.Resource) string {
 	return fi.ContentType()
 }
 
-func findETag(fi serve.ResourceInfo) string {
+func findETag(fi fs.Resource) string {
 	return fi.ContentSHA256()
 }
 
-func findSupportedLock(fi serve.ResourceInfo) string {
+func findSupportedLock(fi fs.Resource) string {
 	return `` +
 		`<D:lockentry xmlns:D="DAV:">` +
 		`<D:lockscope><D:exclusive/></D:lockscope>` +

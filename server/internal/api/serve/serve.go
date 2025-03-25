@@ -11,6 +11,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core/storage"
 )
 
 var htmlReplacer = strings.NewReplacer(
@@ -23,25 +26,7 @@ var htmlReplacer = strings.NewReplacer(
 	"'", "&#39;",
 )
 
-var ErrRangeNotSupported = errors.New("byte range not suppoered")
-
-type ResourceInfo interface {
-	Name() string
-	Dir() bool
-	Created() time.Time
-	Modified() time.Time
-	ContentLength() int64
-	ContentSHA256() string
-	ContentType() string
-}
-
-type Resource interface {
-	ResourceInfo
-	ReadDir(recursive bool) ([]Resource, error)
-	OpenRead(start, length int64) (io.ReadCloser, error)
-}
-
-func Serve(w http.ResponseWriter, r *http.Request, res Resource) {
+func Serve(w http.ResponseWriter, r *http.Request, res fs.Resource) {
 	if res.Dir() {
 		serveCollection(w, r, res)
 	} else {
@@ -49,7 +34,7 @@ func Serve(w http.ResponseWriter, r *http.Request, res Resource) {
 	}
 }
 
-func serveCollection(w http.ResponseWriter, r *http.Request, file Resource) {
+func serveCollection(w http.ResponseWriter, r *http.Request, file fs.Resource) {
 	if !strings.HasSuffix(r.URL.Path, "/") {
 		http.Redirect(w, r, r.URL.String()+"/", http.StatusMovedPermanently)
 		return
@@ -118,7 +103,7 @@ func formatSize(size int64) string {
 	return fmt.Sprintf("%d%s", size, suffix[si])
 }
 
-func serveResource(w http.ResponseWriter, r *http.Request, file Resource) {
+func serveResource(w http.ResponseWriter, r *http.Request, file fs.Resource) {
 	w.Header().Set("Etag", file.ContentSHA256())
 	w.Header().Set("Last-Modified", file.Modified().Format(http.TimeFormat))
 	w.Header().Set("Content-Type", file.ContentType())
@@ -156,7 +141,7 @@ func serveResource(w http.ResponseWriter, r *http.Request, file Resource) {
 		if err == nil {
 			code = http.StatusPartialContent
 			w.Header().Set("Content-Range", ra.contentRange(file.ContentLength()))
-		} else if errors.Is(err, ErrRangeNotSupported) {
+		} else if errors.Is(err, storage.ErrRangeNotSupported) {
 			err = nil
 		}
 	} else {
@@ -269,7 +254,7 @@ func parseRange(s string, size int64) ([]httpRange, error) {
 
 // checkPreconditions evaluates request preconditions and reports whether a precondition
 // resulted in sending StatusNotModified or StatusPreconditionFailed.
-func checkPreconditions(w http.ResponseWriter, r *http.Request, ri Resource) (done bool, rangeHeader string) {
+func checkPreconditions(w http.ResponseWriter, r *http.Request, ri fs.Resource) (done bool, rangeHeader string) {
 	// This function carefully follows RFC 7232 section 6.
 	ch := checkIfMatch(r, ri)
 	if ch == condNone {
@@ -352,7 +337,7 @@ const (
 	condFalse
 )
 
-func checkIfMatch(r *http.Request, ri Resource) condResult {
+func checkIfMatch(r *http.Request, ri fs.Resource) condResult {
 	im := r.Header.Get("If-Match")
 	if im == "" {
 		return condNone
@@ -382,7 +367,7 @@ func checkIfMatch(r *http.Request, ri Resource) condResult {
 	return condFalse
 }
 
-func checkIfUnmodifiedSince(r *http.Request, ri Resource) condResult {
+func checkIfUnmodifiedSince(r *http.Request, ri fs.Resource) condResult {
 	ius := r.Header.Get("If-Unmodified-Since")
 	if ius == "" || isZeroTime(ri.Modified()) {
 		return condNone
@@ -401,7 +386,7 @@ func checkIfUnmodifiedSince(r *http.Request, ri Resource) condResult {
 	return condFalse
 }
 
-func checkIfNoneMatch(r *http.Request, ri Resource) condResult {
+func checkIfNoneMatch(r *http.Request, ri fs.Resource) condResult {
 	inm := r.Header.Get("If-None-Match")
 	if inm == "" {
 		return condNone
@@ -431,7 +416,7 @@ func checkIfNoneMatch(r *http.Request, ri Resource) condResult {
 	return condTrue
 }
 
-func checkIfModifiedSince(r *http.Request, ri Resource) condResult {
+func checkIfModifiedSince(r *http.Request, ri fs.Resource) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}
@@ -452,7 +437,7 @@ func checkIfModifiedSince(r *http.Request, ri Resource) condResult {
 	return condTrue
 }
 
-func checkIfRange(r *http.Request, ri Resource) condResult {
+func checkIfRange(r *http.Request, ri fs.Resource) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}

@@ -6,7 +6,6 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/db"
 )
 
@@ -31,11 +30,11 @@ func (r Resource) OpenWrite() (io.WriteCloser, error) {
 	})
 }
 
-func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
+func (r Resource) ReadDir(recursive bool) ([]Resource, error) {
 	return r.ReadDirDeleted(recursive, false)
 }
 
-func (r Resource) ReadDirDeleted(recursive, includeDeleted bool) ([]serve.Resource, error) {
+func (r Resource) ReadDirDeleted(recursive, includeDeleted bool) ([]Resource, error) {
 	if !r.hasPermission(PermissionRead) {
 		return nil, ErrInsufficientPermissions
 	}
@@ -54,11 +53,11 @@ func (r Resource) ReadDirDeleted(recursive, includeDeleted bool) ([]serve.Resour
 	if rows, err := r.f.db.Query(r.f.ctx, query, args...); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, r.f.scanServeResource)
+		return pgx.CollectRows(rows, r.f.scanResource)
 	}
 }
 
-func (r Resource) Walk(depth int, fn func(serve.ResourceInfo, string) error) error {
+func (r Resource) Walk(depth int, fn func(Resource, string) error) error {
 	suffix := ""
 	if r.Dir() {
 		suffix = "/"

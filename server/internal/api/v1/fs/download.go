@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
-	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
@@ -25,7 +24,7 @@ func handleDownloadRequest(c *gin.Context) {
 
 	var zip = zip.NewWriter(c.Writer)
 	close := c.Writer.CloseNotify()
-	err = r.Walk(2, func(r serve.ResourceInfo, p string) error {
+	err = r.Walk(2, func(r fs.Resource, p string) error {
 		if r.Dir() {
 			return nil
 		}
@@ -40,7 +39,7 @@ func handleDownloadRequest(c *gin.Context) {
 		if err != nil {
 			return err
 		}
-		in, err := r.(fs.Resource).OpenRead(0, -1)
+		in, err := r.OpenRead(0, -1)
 		if err != nil {
 			return err
 		}

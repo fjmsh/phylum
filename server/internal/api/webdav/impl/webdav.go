@@ -449,7 +449,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, request *http.Request) (
 
 	mw := multistatusWriter{w: w}
 
-	writePropStat := func(r serve.ResourceInfo, p string) error {
+	writePropStat := func(r fs.Resource, p string) error {
 		var pstats []Propstat
 		if pf.Propname != nil {
 			pnames, err := propnames(h.FileSystem, h.LockSystem, r)

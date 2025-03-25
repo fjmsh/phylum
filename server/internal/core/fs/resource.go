@@ -5,7 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/api/serve"
 )
 
 type Resource struct {
@@ -52,10 +51,6 @@ func (f filesystem) collectResource(rows pgx.Rows) (Resource, error) {
 		return r, err
 	}
 
-}
-
-func (f filesystem) scanServeResource(row pgx.CollectableRow) (serve.Resource, error) {
-	return f.scanResource(row)
 }
 
 func (f filesystem) scanResource(row pgx.CollectableRow) (Resource, error) {

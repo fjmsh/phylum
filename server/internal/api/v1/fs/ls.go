@@ -76,7 +76,7 @@ func CreateFullResponse(r fs.Resource) FullResponse {
 		}
 		response.Children = make([]InfoResponse, len(children))
 		for i, c := range children {
-			response.Children[i] = CreateResponse(c.(fs.Resource))
+			response.Children[i] = CreateResponse(c)
 		}
 	}
 	return response

@@ -60,7 +60,7 @@ func setupLsCommand() *cobra.Command {
 					return strings.Compare(strings.ToLower(a.Name()), strings.ToLower((b.Name()))) <= 0
 				})
 				for _, c := range children {
-					fmt.Println(common.FormatResourceSummary(c.(fs.Resource), "", r.Deleted()))
+					fmt.Println(common.FormatResourceSummary(c, "", r.Deleted()))
 				}
 			}
 		},
