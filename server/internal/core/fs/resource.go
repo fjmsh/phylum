@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/shroff/phylum/server/internal/api/serve"
 )
 
 type Resource struct {
@@ -38,4 +40,54 @@ func (r Resource) Grants() []byte        { return r.grants }
 
 func (r Resource) hasPermission(p Permission) bool {
 	return r.userPermission&p != 0
+}
+
+func (f filesystem) collectResource(rows pgx.Rows) (Resource, error) {
+	if r, err := pgx.CollectExactlyOneRow(rows, f.scanResource); err == nil {
+		return r, nil
+	} else {
+		if err == pgx.ErrNoRows {
+			err = ErrResourceNotFound
+		}
+		return r, err
+	}
+
+}
+
+func (f filesystem) scanServeResource(row pgx.CollectableRow) (serve.Resource, error) {
+	return f.scanResource(row)
+}
+
+func (f filesystem) scanResource(row pgx.CollectableRow) (Resource, error) {
+	r := Resource{f: f}
+	err := row.Scan(
+		&r.id,
+		&r.name,
+		&r.parentID,
+		&r.dir,
+		&r.created,
+		&r.modified,
+		&r.deleted,
+		&r.contentLength,
+		&r.contentType,
+		&r.contentSHA256,
+		&r.permissions,
+		&r.grants,
+	)
+	if err != nil {
+		return r, err
+	}
+	permission := Permission(0)
+	if f.fullAccess {
+		permission = -1
+	} else if p, err := readPermissionFromJson(r.permissions, f.username); err != nil {
+		return Resource{}, err
+	} else {
+		permission = p
+	}
+	if permission&PermissionRead == 0 {
+		return Resource{}, ErrResourceNotFound
+	}
+	r.userPermission = permission
+	return r, err
 }

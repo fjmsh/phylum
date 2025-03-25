@@ -31,18 +31,6 @@ SELECT r.*
         ON r.id = n.id
     WHERE cardinality(n.search) = n.depth;
 
--- name: GetAncestors :many
-WITH RECURSIVE nodes(id, name, parent, permissions, self) AS (
-    SELECT r.id, r.name, r.parent, r.permissions, TRUE
-        FROM resources r
-        WHERE r.id = @resource_id::UUID
-    UNION ALL
-        SELECT r.id, r.name, r.parent, r.permissions, FALSE
-            FROM resources r
-            JOIN nodes n ON r.id = n.parent
-)
-SELECT id, name, parent, permissions FROM nodes WHERE self = FALSE;
-
 -- name: UpdateResourceContents :exec
 UPDATE resources
 SET

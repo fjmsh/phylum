@@ -42,11 +42,11 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 	if !destParent.hasPermission(PermissionWrite) {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
-	if res, err := r.f.db.GetAncestors(r.f.ctx, destParent.ID()); err != nil {
+	if destAncestors, err := destParent.GetAncestors(); err != nil {
 		return Resource{}, false, err
 	} else {
-		for i := 1; i < len(res); i++ {
-			if res[i].ID == r.ID() {
+		for _, a := range destAncestors {
+			if a.ID == r.ID() {
 				return Resource{}, false, ErrResourceMoveTargetSubdirectory
 			}
 		}
