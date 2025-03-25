@@ -2,13 +2,17 @@ package fs
 
 import (
 	"context"
+	"errors"
 	"strings"
+	"time"
 
 	"github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
+	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
 
 type ResourceBindConflictResolution int32
@@ -61,6 +65,50 @@ func Open(ctx context.Context, username string, root uuid.UUID, fullAccess bool)
 		rootID:     root,
 		fullAccess: fullAccess,
 	}
+}
+
+func OpenFromPublink(ctx context.Context, name string, password string, path string) (Resource, error) {
+	d := db.Get()
+	// Check exists
+	s, err := d.GetPublink(ctx, name)
+	if errors.Is(err, pgx.ErrNoRows) {
+		err = ErrParentNotFound
+	}
+	if err != nil {
+		return Resource{}, err
+	}
+
+	// check password
+	if s.PasswordHash != "" {
+		if password == "" {
+			return Resource{}, ErrInsufficientPermissions
+		}
+		if ok, err := crypt.VerifyPassword(password, s.PasswordHash); err != nil {
+			return Resource{}, err
+		} else if !ok {
+			return Resource{}, ErrInsufficientPermissions
+		}
+	}
+
+	// check expiration
+	if s.Expires.Valid && s.Expires.Time.Before(time.Now()) {
+		return Resource{}, ErrResourceNotFound
+	}
+
+	// check max accesses
+	if s.MaxAccesses > 0 && s.MaxAccesses <= s.Accessed {
+		return Resource{}, ErrResourceNotFound
+	}
+
+	f := filesystem{
+		ctx:        ctx,
+		db:         db.Get(),
+		cs:         storage.Get(),
+		rootID:     s.Root,
+		fullAccess: true, // TODO: #permissions Replace with permissions int
+	}
+
+	return f.ResourceByPath(path)
 }
 
 func CheckNameInvalid(s string) bool {

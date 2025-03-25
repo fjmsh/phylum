@@ -3,11 +3,47 @@ package fs
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/publink"
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
+
+type Publink struct {
+	ID          int32      `json:"id"`
+	Name        string     `json:"name"`
+	Created     time.Time  `json:"created"`
+	Deleted     *time.Time `json:"deleted"`
+	CreatedBy   string     `json:"creator"`
+	Root        uuid.UUID  `json:"root"`
+	Accessed    int32      `json:"accessed"`
+	MaxAccesses int32      `json:"max_accesses"`
+	Protected   bool       `json:"protected"`
+	Expires     *time.Time `json:"expires"`
+}
+
+func infoFromDB(d db.Publink) Publink {
+	var deleted *time.Time
+	if d.Deleted.Valid {
+		deleted = &d.Deleted.Time
+	}
+	var expires *time.Time
+	if d.Expires.Valid {
+		expires = &d.Expires.Time
+	}
+	return Publink{
+		ID:          d.ID,
+		Name:        d.Name,
+		Created:     d.Created.Time,
+		Deleted:     deleted,
+		CreatedBy:   d.CreatedBy,
+		Root:        d.Root,
+		Accessed:    d.Accessed,
+		MaxAccesses: d.MaxAccesses,
+		Protected:   d.PasswordHash != "",
+		Expires:     expires,
+	}
+}
 
 func (r Resource) CreatePublink(name, password string, duration time.Duration, accesses int) error {
 	if !r.hasPermission(PermissionShare | PermissionRead) {
@@ -42,15 +78,15 @@ func (r Resource) CreatePublink(name, password string, duration time.Duration, a
 	})
 }
 
-func (r Resource) ListPublinks() ([]publink.Info, error) {
+func (r Resource) ListPublinks() ([]Publink, error) {
 	res, err := r.f.db.PublinksByRoot(r.f.ctx, r.ID())
 	if err != nil {
 		return nil, err
 	}
 
-	links := make([]publink.Info, len(res))
+	links := make([]Publink, len(res))
 	for i, l := range res {
-		links[i] = publink.InfoFromDB(l)
+		links[i] = infoFromDB(l)
 	}
 	return links, nil
 }
