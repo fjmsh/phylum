@@ -18,8 +18,8 @@ func (f filesystem) scanResourceAncestor(row pgx.CollectableRow) (ResourceAncest
 	var a ResourceAncestor
 	err := row.Scan(
 		&a.ID,
-		&a.ParentID,
 		&a.Name,
+		&a.ParentID,
 		&a.Permissions,
 	)
 	return a, err
@@ -30,7 +30,7 @@ const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, permissions) AS (
         FROM resources r
         WHERE r.id = $1::UUID
     UNION ALL
-        SELECT r.id, r.name, r.parent, r.permissions, FALSE
+        SELECT r.id, r.name, r.parent, r.permissions
             FROM resources r
             JOIN nodes n ON r.id = n.parent
 )
