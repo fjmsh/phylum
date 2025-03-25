@@ -47,16 +47,17 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 	} else if res, err := pgx.CollectRows(rows, f.scanResource); err != nil {
 		return nil, "", err
 	} else {
-		if res == nil {
-			return nil, "", nil
+		cursor := ""
+		if uint(len(res)) < n {
+			last := res[len(res)-1]
+			c := make([]byte, 24)
+
+			b, _ := last.id.MarshalBinary()
+			copy(c, b)
+
+			binary.LittleEndian.PutUint64(c[16:], uint64(last.deleted.UnixNano()))
+			cursor = base64.StdEncoding.EncodeToString(c)
 		}
-		last := res[len(res)-1]
-		c := make([]byte, 24)
-
-		b, _ := last.id.MarshalBinary()
-		copy(c, b)
-
-		binary.LittleEndian.PutUint64(c[16:], uint64(last.deleted.UnixNano()))
-		return res, base64.StdEncoding.EncodeToString(c), nil
+		return res, cursor, nil
 	}
 }
