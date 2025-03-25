@@ -9,16 +9,9 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error) {
-	var username pgtype.Text
-	if !f.fullAccess {
-		username.String = f.username
-		username.Valid = true
-	}
-
 	q := pg.From("resources").
 		Where(goqu.C("deleted").IsNotNull())
 	if !f.fullAccess {

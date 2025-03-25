@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
-func formatRow(id string, dir bool, size int, sha256, name, permissions string) string {
+func formatRow(id string, dir bool, size int, sha256, name, permissions string, deleted bool) string {
 	sizeStr := "    -"
 	if dir {
 		sha256 = "-       "
@@ -18,19 +19,21 @@ func formatRow(id string, dir bool, size int, sha256, name, permissions string) 
 	if sha256 == "" {
 		sha256 = "xxxxxxxx"
 	}
-	return fmt.Sprintf("%s %s %s %-24s %s", id, sizeStr, sha256[0:8], name, permissions)
+	delStr := " "
+	if deleted {
+		delStr = "*"
+	}
+	return fmt.Sprintf("%s %s %s %s%-24s %s", id, sizeStr, sha256[0:8], delStr, name, permissions)
 }
 
-func FormatResourceSummaryWithName(r fs.Resource, name string) string {
-	return formatRow(r.ID().String(), r.Dir(), int(r.ContentLength()), r.ContentSHA256(), name, formatGrantsJson(r.Grants()))
-}
-
-func FormatResourceSummary(r fs.Resource) string {
-	name := r.Name()
+func FormatResourceSummary(r fs.Resource, name string, deleted *time.Time) string {
+	if name == "" {
+		name = r.Name()
+	}
 	if r.Dir() {
 		name += "/"
 	}
-	return FormatResourceSummaryWithName(r, name)
+	return formatRow(r.ID().String(), r.Dir(), int(r.ContentLength()), r.ContentSHA256(), name, formatGrantsJson(r.Grants()), deleted != r.Deleted())
 }
 
 func FormatSize(size int) string {

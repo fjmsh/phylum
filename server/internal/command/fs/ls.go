@@ -34,14 +34,17 @@ func setupLsCommand() *cobra.Command {
 			}
 			fmt.Println(path)
 			fmt.Println(formatPermissionsJson(r.Permissions()))
+			fmt.Println("Created:  " + r.Created().Local().Format(time.RFC1123))
+			fmt.Println("Modified: " + r.Modified().Local().Format(time.RFC1123))
 			if r.Deleted() != nil {
-				fmt.Println("Deleted on " + r.Deleted().Local().Format(time.RFC1123))
+				fmt.Println("Deleted:  " + r.Deleted().Local().Format(time.RFC1123))
 			}
 			fmt.Println()
-			fmt.Println(common.FormatResourceSummaryWithName(r, "."))
+			fmt.Println(common.FormatResourceSummary(r, ".", nil))
 
 			if r.Dir() {
-				children, err := r.ReadDir(false)
+				includeDeleted, _ := cmd.Flags().GetBool("include-deleted")
+				children, err := r.ReadDirDeleted(false, includeDeleted)
 				if err != nil {
 					fmt.Println("cannot access '" + pathOrUUID + "': " + err.Error())
 					os.Exit(1)
@@ -57,11 +60,12 @@ func setupLsCommand() *cobra.Command {
 					return strings.Compare(strings.ToLower(a.Name()), strings.ToLower((b.Name()))) <= 0
 				})
 				for _, c := range children {
-					fmt.Println(common.FormatResourceSummary(c.(fs.Resource)))
+					fmt.Println(common.FormatResourceSummary(c.(fs.Resource), "", r.Deleted()))
 				}
 			}
 		},
 	}
+	cmd.Flags().BoolP("include-deleted", "x", false, "Include deleted files")
 	return &cmd
 }
 

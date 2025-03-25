@@ -61,12 +61,14 @@ func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool, cols
 	return n, q
 }
 
-func selectDirectChildren(id uuid.UUID, deleted *time.Time) (tbl, *goqu.SelectDataset) {
+func selectDirectChildren(id uuid.UUID, deleted *time.Time, includeDeleted bool) (tbl, *goqu.SelectDataset) {
 	r := goqu.T("resources").As("r")
 	q := pg.
 		From(r).
-		Where(r.Col("parent").Eq(goqu.V(id))).
-		Where(goqu.L("? IS NOT DISTINCT FROM ?", r.Col("deleted"), goqu.V(deleted)))
+		Where(r.Col("parent").Eq(goqu.V(id)))
+	if !includeDeleted {
+		q = q.Where(goqu.L("? IS NOT DISTINCT FROM ?", r.Col("deleted"), goqu.V(deleted)))
+	}
 
 	return r, q
 }

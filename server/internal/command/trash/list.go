@@ -24,7 +24,7 @@ func setupListCommand() *cobra.Command {
 			}
 
 			for _, c := range deleted {
-				fmt.Println(common.FormatResourceSummary(c))
+				fmt.Println(common.FormatResourceSummary(c, "", nil))
 			}
 			if cursor != "" {
 				fmt.Println("Cursor: " + cursor)

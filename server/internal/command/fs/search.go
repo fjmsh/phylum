@@ -24,7 +24,7 @@ func setupSearchCommand() *cobra.Command {
 			}
 
 			for _, c := range res {
-				fmt.Println(common.FormatResourceSummary(c))
+				fmt.Println(common.FormatResourceSummary(c, "", nil))
 			}
 		},
 	}

@@ -32,6 +32,10 @@ func (r Resource) OpenWrite() (io.WriteCloser, error) {
 }
 
 func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
+	return r.ReadDirDeleted(recursive, false)
+}
+
+func (r Resource) ReadDirDeleted(recursive, includeDeleted bool) ([]serve.Resource, error) {
 	if !r.hasPermission(PermissionRead) {
 		return nil, ErrInsufficientPermissions
 	}
@@ -41,10 +45,10 @@ func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 
 	var q *goqu.SelectDataset
 	if !recursive {
-		_, q = selectDirectChildren(r.id, r.deleted)
+		_, q = selectDirectChildren(r.id, r.deleted, includeDeleted)
 	} else {
 		t := goqu.T("resources").As("r")
-		n, qq := selectResourceTree(r.id, true, false)
+		n, qq := selectResourceTree(r.id, true, includeDeleted)
 		q = qq.
 			From(t).Join(n, goqu.On(t.Col("id").Eq(n.Col("id")))).
 			Select(t.All())
