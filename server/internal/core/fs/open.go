@@ -43,8 +43,11 @@ func (r Resource) ReadDir(recursive bool) ([]serve.Resource, error) {
 	if !recursive {
 		_, q = selectDirectChildren(r.id, r.deleted)
 	} else {
-		t, _, qq := selectResourceTree(r.id, true, false)
-		q = qq.Select(t.All())
+		t := goqu.T("resources").As("r")
+		n, qq := selectResourceTree(r.id, true, false)
+		q = qq.
+			From(t).Join(n, goqu.On(t.Col("id").Eq(n.Col("id")))).
+			Select(t.All())
 	}
 
 	query, args, _ := q.ToSQL()

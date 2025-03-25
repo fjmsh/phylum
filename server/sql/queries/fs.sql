@@ -100,19 +100,3 @@ SELECT r.*
     JOIN resources r
         ON n.id = r.id
     WHERE n.depth >= @min_depth::INTEGER;
-
--- name: DiskUsage :one
-WITH RECURSIVE nodes(id, parent, content_length, dir) AS (
-    SELECT r.id, r.parent, r.content_length, r.dir
-    FROM resources r WHERE r.id = @id::uuid
-  UNION ALL
-    SELECT r.id, r.parent, r.content_length, r.dir
-    FROM resources r JOIN nodes n on r.parent = n.id
-    WHERE deleted IS NULL
-)
-SELECT
-  SUM(content_length) AS size,
-  COUNT(*) AS entities,
-  COUNT(CASE dir WHEN true THEN 1 ELSE NULL END) AS dirs,
-  COUNT(CASE dir WHEN false THEN 1 ELSE NULL END) AS files
-FROM nodes;

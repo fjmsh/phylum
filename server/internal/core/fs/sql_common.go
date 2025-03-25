@@ -18,7 +18,7 @@ type tbl interface {
 	All() exp.IdentifierExpression
 }
 
-func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool, cols ...string) (tbl, tbl, *goqu.SelectDataset) {
+func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool, cols ...string) (exp.AliasedExpression, *goqu.SelectDataset) {
 	n := goqu.T("nodes").As("n")
 	r := goqu.T("resources").As("r")
 	rec := pg.From(r).
@@ -51,15 +51,14 @@ func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool, cols
 	cs := strings.Join(c, ",")
 
 	q := pg.
-		From(r).
+		From(n).
 		WithRecursive("nodes("+cs+")",
 			base.Where(r.Col("id").Eq(id)).
-				UnionAll(rec)).
-		Join(n, goqu.On(n.Col("id").Eq(r.Col("id"))))
+				UnionAll(rec))
 	if excludeTreeRoot {
 		q = q.Where(n.Col("depth").Gt(0))
 	}
-	return r, n, q
+	return n, q
 }
 
 func selectDirectChildren(id uuid.UUID, deleted *time.Time) (tbl, *goqu.SelectDataset) {

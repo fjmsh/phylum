@@ -99,7 +99,7 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 			}
 		}
 	}
-	if err != pgx.ErrNoRows {
+	if err != ErrResourceNotFound {
 		if err == nil {
 			err = ErrResourceNameConflict
 		}
@@ -155,7 +155,11 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 }
 
 func (f filesystem) markDeleted(id uuid.UUID, softDelete, excludeRoot bool) (int, []uuid.UUID, error) {
-	r, _, q := selectResourceTree(id, excludeRoot, !softDelete)
+	r := goqu.T("resources").As("r")
+	n, q := selectResourceTree(id, excludeRoot, !softDelete)
+	q = q.
+		From(r).
+		Join(n, goqu.On(r.Col("id").Eq(n.Col("id"))))
 
 	// table
 	var query string
@@ -181,7 +185,11 @@ func (f filesystem) markDeleted(id uuid.UUID, softDelete, excludeRoot bool) (int
 }
 
 func (f filesystem) markNotDeleted(ctx context.Context, id uuid.UUID) ([]int64, error) {
-	r, _, s := selectResourceTree(id, false, false)
+	r := goqu.T("resources").As("r")
+	n, s := selectResourceTree(id, false, false)
+	s = s.
+		From(r).
+		Join(n, goqu.On(r.Col("id").Eq(n.Col("id"))))
 	q := s.Update().Set(
 		goqu.Record{
 			"modified": goqu.L("NOW()"),
