@@ -93,7 +93,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		}
 		return Resource{}, false, err
 	}
-	if !destParent.Dir() {
+	if !destParent.dir {
 		return Resource{}, false, ErrResourceNotCollection
 
 	}
@@ -101,10 +101,10 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 
-	var tree []db.Resource
-	if recursive && r.Dir() {
+	var tree []Resource
+	if recursive && r.dir {
 		var err error
-		tree, err = r.f.db.ReadDir(r.f.ctx, db.ReadDirParams{ResourceID: r.ID(), MinDepth: 1, MaxDepth: 1000})
+		tree, err = r.ReadDir(true)
 		if err != nil {
 			return Resource{}, false, err
 		}
@@ -145,22 +145,22 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 
 		for _, src := range tree {
 			id, _ := uuid.NewV7()
-			parent := newIDs[*src.Parent]
+			parent := newIDs[*src.parentID]
 
 			children = append(children, db.CreateResourcesParams{
 				ID:            id,
 				Parent:        parent,
-				Name:          src.Name,
-				Dir:           src.Dir,
-				ContentLength: src.ContentLength,
-				ContentType:   src.ContentType,
-				ContentSha256: src.ContentSha256,
+				Name:          src.name,
+				Dir:           src.dir,
+				ContentLength: src.contentLength,
+				ContentType:   src.contentType,
+				ContentSha256: src.contentSHA256,
 			})
 
-			if src.Dir {
-				newIDs[src.ID] = id
+			if src.dir {
+				newIDs[src.id] = id
 			} else {
-				contents = append(contents, copySrcDest{src: src.ID, dest: id})
+				contents = append(contents, copySrcDest{src: src.id, dest: id})
 			}
 		}
 
