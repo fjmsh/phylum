@@ -47,11 +47,7 @@ func (r Resource) ReadDirDeleted(recursive, includeDeleted bool) ([]serve.Resour
 	if !recursive {
 		_, q = selectDirectChildren(r.id, r.deleted, includeDeleted)
 	} else {
-		t := goqu.T("resources").As("r")
-		n, qq := selectResourceTree(r.id, true, includeDeleted)
-		q = qq.
-			From(t).Join(n, goqu.On(t.Col("id").Eq(n.Col("id")))).
-			Select(t.All())
+		_, _, q = selectResourceTree(r.id, true, includeDeleted)
 	}
 
 	query, args, _ := q.ToSQL()

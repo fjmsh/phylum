@@ -12,9 +12,11 @@ type DiskUsageInfo struct {
 }
 
 func (r Resource) DiskUsage() (DiskUsageInfo, error) {
-	n, q := selectResourceTree(r.id, false, false, "content_length", "dir")
+	_, n, q := selectResourceTree(r.id, false, false, "content_length", "dir")
 
 	q = q.
+		From(n).
+		ClearWhere().
 		Select(
 			goqu.SUM(n.Col("content_length")),
 			goqu.COUNT("*"),

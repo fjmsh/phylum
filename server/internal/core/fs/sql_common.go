@@ -13,19 +13,15 @@ import (
 	"github.com/shroff/phylum/server/internal/api/serve"
 )
 
-type tbl interface {
-	Col(interface{}) exp.IdentifierExpression
-	All() exp.IdentifierExpression
-}
-
-func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool, cols ...string) (exp.AliasedExpression, *goqu.SelectDataset) {
+func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool, extraCols ...string) (exp.IdentifierExpression, exp.AliasedExpression, *goqu.SelectDataset) {
+	t := goqu.T("resources")
+	r := t.As("r")
 	n := goqu.T("nodes").As("n")
-	r := goqu.T("resources").As("r")
 	rec := pg.From(r).
 		Select(r.Col("id"), r.Col("parent"), r.Col("deleted"), goqu.L("? + 1", goqu.I("n.depth")))
-	if len(cols) != 0 {
-		s := make([]interface{}, len(cols))
-		for i, c := range cols {
+	if len(extraCols) != 0 {
+		s := make([]interface{}, len(extraCols))
+		for i, c := range extraCols {
 			s[i] = r.Col(c)
 		}
 		rec = rec.SelectAppend(s...)
@@ -36,32 +32,34 @@ func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool, cols
 		rec = rec.Where(goqu.L("? IS NOT DISTINCT FROM ?", r.Col("deleted"), n.Col("deleted")))
 	}
 
-	base := pg.From(r).
-		Select(r.Col("id"), r.Col("parent"), r.Col("deleted"), goqu.L("0"))
-	if len(cols) != 0 {
-		s := make([]interface{}, len(cols))
-		for i, c := range cols {
+	base := pg.
+		From(r).
+		Select(r.Col("id"), r.Col("parent"), r.Col("deleted"), goqu.L("0")).
+		Where(r.Col("id").Eq(id))
+
+	if len(extraCols) != 0 {
+		s := make([]interface{}, len(extraCols))
+		for i, c := range extraCols {
 			s[i] = r.Col(c)
 		}
 		base = base.SelectAppend(s...)
 	}
 
-	c := []string{"id", "parent", "deleted", "depth"}
-	c = slices.Insert(c, 4, cols...)
-	cs := strings.Join(c, ",")
+	cols := []string{"id", "parent", "deleted", "depth"}
+	cols = slices.Insert(cols, 4, extraCols...)
+	idSelect := pg.From(n).Select(n.Col("id"))
+	if excludeTreeRoot {
+		idSelect = idSelect.Where(n.Col("depth").Gt(0))
+	}
 
 	q := pg.
-		From(n).
-		WithRecursive("nodes("+cs+")",
-			base.Where(r.Col("id").Eq(id)).
-				UnionAll(rec))
-	if excludeTreeRoot {
-		q = q.Where(n.Col("depth").Gt(0))
-	}
-	return n, q
+		From(t).
+		WithRecursive("nodes("+strings.Join(cols, ",")+")", base.UnionAll(rec)).
+		Where(t.Col("id").Eq(idSelect))
+	return t, n, q
 }
 
-func selectDirectChildren(id uuid.UUID, deleted *time.Time, includeDeleted bool) (tbl, *goqu.SelectDataset) {
+func selectDirectChildren(id uuid.UUID, deleted *time.Time, includeDeleted bool) (exp.AliasedExpression, *goqu.SelectDataset) {
 	r := goqu.T("resources").As("r")
 	q := pg.
 		From(r).
