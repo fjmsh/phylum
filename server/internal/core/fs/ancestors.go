@@ -9,7 +9,7 @@ import (
 
 type ResourceAncestor struct {
 	ID          uuid.UUID
-	ParentID    *uuid.UUID
+	ParentID    uuid.UUID
 	Name        string
 	Permissions []byte
 }

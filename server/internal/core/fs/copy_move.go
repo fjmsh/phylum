@@ -15,12 +15,12 @@ type copySrcDest struct {
 }
 
 func (r Resource) Move(target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
-	if r.ParentID() == nil {
+	if r.ParentID() == uuid.Nil {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
 
 	// Check source directory permissions
-	parent, err := r.f.ResourceByID(*r.ParentID())
+	parent, err := r.f.ResourceByID(r.ParentID())
 	if err != nil {
 		return Resource{}, false, err
 	}
@@ -145,7 +145,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 
 		for _, src := range tree {
 			id, _ := uuid.NewV7()
-			parent := newIDs[*src.parentID]
+			parent := newIDs[src.parentID]
 
 			children = append(children, db.CreateResourcesParams{
 				ID:            id,
@@ -232,7 +232,7 @@ func (f filesystem) targetByPathOrUUID(src Resource, pathOrUUID string) (Resourc
 		return Resource{}, "", ErrResourceNameInvalid
 	}
 
-	var parentID = *src.ParentID()
+	var parentID = src.ParentID()
 	if index != 0 {
 		if id, err := uuid.Parse(pathOrUUID[0:index]); err != nil {
 			return Resource{}, "", err

@@ -36,17 +36,17 @@ func (r Resource) DeleteChildRecursive(name string) (Resource, error) {
 }
 
 func (r Resource) DeleteRecursive(softDelete bool) (Resource, error) {
-	if r.ParentID() == nil {
+	if r.ParentID() == uuid.Nil {
 		return Resource{}, ErrInsufficientPermissions
 	}
-	parent, err := r.f.ResourceByID(*r.ParentID())
+	parent, err := r.f.ResourceByID(r.ParentID())
 	if err == nil && !parent.hasPermission(PermissionWrite) {
 		err = ErrInsufficientPermissions
 	}
 	if err != nil {
 		return Resource{}, err
 	}
-	if err := r.f.deleteRecursive(r.ID(), *r.ParentID(), softDelete, false); err != nil {
+	if err := r.f.deleteRecursive(r.ID(), r.ParentID(), softDelete, false); err != nil {
 		return Resource{}, err
 	}
 	deleted := time.Now()
@@ -62,7 +62,7 @@ func (r Resource) DeleteRecursive(softDelete bool) (Resource, error) {
 func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRename bool) (res Resource, count int, size int64, err error) {
 	var p Resource
 	if parentPathOrUUID == "" {
-		p, err = r.f.ResourceByID(*r.parentID)
+		p, err = r.f.ResourceByID(r.parentID)
 	} else {
 		p, err = r.f.ResourceByPathOrUUID(parentPathOrUUID)
 	}
@@ -107,7 +107,7 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 	}
 
 	err = r.f.runInTx(func(f filesystem) error {
-		if p.id != *r.parentID || r.name != name {
+		if p.id != r.parentID || r.name != name {
 			if update, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID(), Name: name, Parent: p.id}); err != nil {
 				if strings.Contains(err.Error(), "unique_member_resource_name") {
 					return ErrResourceNameConflict

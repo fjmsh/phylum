@@ -42,7 +42,7 @@ type Publink struct {
 type Resource struct {
 	ID            uuid.UUID
 	Name          string
-	Parent        *uuid.UUID
+	Parent        uuid.UUID
 	Dir           bool
 	Created       pgtype.Timestamp
 	Modified      pgtype.Timestamp
