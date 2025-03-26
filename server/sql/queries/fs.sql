@@ -12,25 +12,6 @@ INSERT INTO resources(
     @id::uuid, @parent::uuid, @name::text, @dir::boolean, @content_length::bigint, @content_type::text, @content_sha256::text
 );
 
--- name: ResourceByPath :one
-WITH RECURSIVE nodes(id, parent, search, depth) AS (
-    SELECT r.id, r.parent, array_remove(string_to_array(@path::text, '/', NULL), ''), 0
-        FROM resources r
-        WHERE r.id = sqlc.narg('root')::UUID OR (r.parent IS NULL AND sqlc.narg('root')::UUID IS NULL)
-    UNION ALL
-        SELECT r.id, r.parent, n.search, n.depth + 1
-            FROM resources r
-            JOIN nodes n
-                ON r.parent = n.id
-            WHERE deleted IS NULL
-            AND r.name = n.search[n.depth + 1]
-)
-SELECT r.*
-    FROM nodes n
-    JOIN resources r
-        ON r.id = n.id
-    WHERE cardinality(n.search) = n.depth;
-
 -- name: UpdateResourceContents :exec
 UPDATE resources
 SET
@@ -70,21 +51,3 @@ SET
     modified = NOW()
 WHERE id = @id::uuid
 RETURNING *;
-
--- name: ReadDir :many
-WITH RECURSIVE nodes(id, parent, deleted, depth) AS (
-    SELECT r.id, r.parent, r.deleted, 0
-        FROM resources r
-        WHERE r.id = @resource_id::UUID
-    UNION ALL
-        SELECT r.id, r.parent, n.deleted, n.depth + 1
-            FROM resources r
-            JOIN nodes n ON r.parent = n.id
-            WHERE r.deleted IS NOT DISTINCT FROM n.deleted
-            AND n.depth < @max_depth::INTEGER
-)
-SELECT r.*
-    FROM nodes n
-    JOIN resources r
-        ON n.id = r.id
-    WHERE n.depth >= @min_depth::INTEGER;
