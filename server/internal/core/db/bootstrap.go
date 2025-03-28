@@ -26,58 +26,38 @@ func (d DbHandler) BootstrapData(ctx context.Context) error {
 
 func (d DbHandler) populateData(ctx context.Context) (e error) {
 	return d.WithTx(ctx, func(dbh *DbHandler) error {
-		var err error
+		const createDir = `INSERT INTO resources(id, parent, name, dir, content_length, content_type, content_sha256)
+VALUES ($1::UUID, $2::UUID, $3::TEXT, TRUE, 0, '', '')`
 
 		// Create root folder
-		id, _ := uuid.NewV7()
-		root, err := dbh.CreateResource(ctx, CreateResourceParams{
-			ID:   id,
-			Name: "",
-			Dir:  true,
-		})
-		if err != nil {
+		rootID, _ := uuid.NewV7()
+		if _, err := dbh.db.Exec(ctx, createDir, rootID, nil, ""); err != nil {
 			return err
 		}
 
 		// Create home folder
-		id, _ = uuid.NewV7()
-		home, err := dbh.CreateResource(ctx, CreateResourceParams{
-			ID:     id,
-			Parent: &root.ID,
-			Name:   "home",
-			Dir:    true,
-		})
-		if err != nil {
+		homeID, _ := uuid.NewV7()
+		if _, err := dbh.db.Exec(ctx, createDir, homeID, rootID, "home"); err != nil {
 			return err
 		}
 
 		// Create user home folder
-		id, _ = uuid.NewV7()
-		userHome, err := dbh.CreateResource(ctx, CreateResourceParams{
-			ID:     id,
-			Parent: &home.ID,
-			Name:   DefaultUserUsername,
-			Dir:    true,
-		})
-		if err != nil {
+		userHomeID, _ := uuid.NewV7()
+		if _, err := dbh.db.Exec(ctx, createDir, userHomeID, homeID, DefaultUserUsername); err != nil {
 			return err
 		}
 
-		// Create phylum user
-		_, err = dbh.CreateUser(ctx, CreateUserParams{
-			Username:     DefaultUserUsername,
-			DisplayName:  DefaultUserDisplayName,
-			PasswordHash: "CANNOT LOG IN",
-			Root:         root.ID,
-			Home:         userHome.ID,
-		})
-		if err != nil {
+		const createRootUser = `-- name: CreateUser :one
+INSERT INTO users(
+    username, display_name, password_hash, root, home, permissions
+) VALUES (
+    $1::TEXT, $2::TEXT, '', $3::UUID, $4::UUID, -1
+) `
+
+		if _, err := dbh.db.Exec(ctx, createRootUser, DefaultUserUsername, DefaultUserDisplayName, rootID, userHomeID); err != nil {
 			return err
 		}
+		return nil
 
-		return dbh.GrantUserPermissions(ctx, GrantUserPermissionsParams{
-			Username:    DefaultUserUsername,
-			Permissions: -1,
-		})
 	})
 }

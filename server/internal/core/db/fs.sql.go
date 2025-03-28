@@ -11,52 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const createResource = `-- name: CreateResource :one
-INSERT INTO resources(
-    id, parent, name, dir, content_length, content_type, content_sha256
-) VALUES (
-    $1::uuid, $2::uuid, $3::text, $4::boolean, $5::bigint, $6::text, $7::text
-) RETURNING id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants
-`
-
-type CreateResourceParams struct {
-	ID            uuid.UUID
-	Parent        *uuid.UUID
-	Name          string
-	Dir           bool
-	ContentLength int64
-	ContentType   string
-	ContentSha256 string
-}
-
-func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) (Resource, error) {
-	row := q.db.QueryRow(ctx, createResource,
-		arg.ID,
-		arg.Parent,
-		arg.Name,
-		arg.Dir,
-		arg.ContentLength,
-		arg.ContentType,
-		arg.ContentSha256,
-	)
-	var i Resource
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Parent,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.ContentLength,
-		&i.ContentType,
-		&i.ContentSha256,
-		&i.Permissions,
-		&i.Grants,
-	)
-	return i, err
-}
-
 type CreateResourcesParams struct {
 	ID            uuid.UUID
 	Parent        uuid.UUID
