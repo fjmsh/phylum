@@ -62,13 +62,13 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 				return err
 			}
 		}
-		if result, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID(), Name: destName, Parent: destParent.ID()}); err != nil {
+		if result, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.id, Name: destName, Parent: destParent.ID()}); err != nil {
 			if strings.Contains(err.Error(), "unique_member_resource_name") {
 				return ErrResourceNameConflict
 			}
 			return err
 		} else {
-			if err := f.db.RecomputePermissions(r.f.ctx, r.ID()); err != nil {
+			if err := f.recomputePermissions(r.id); err != nil {
 				return err
 			}
 			res = ResourceFromDB(result)
@@ -167,7 +167,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		if _, err := f.db.CreateResources(f.ctx, children); err != nil {
 			return err
 		}
-		if err := f.db.RecomputePermissions(r.f.ctx, id); err != nil {
+		if err := f.recomputePermissions(id); err != nil {
 			return err
 		}
 		if created {

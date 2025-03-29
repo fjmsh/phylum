@@ -57,7 +57,7 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 		if res, created, _, err = f.createResource(id, r.id, name, dir, 0, emptyContentType, emptyContentSHA256, conflictResolution, r.permissions); err != nil {
 			return err
 		} else if created {
-			if err := f.db.RecomputePermissions(f.ctx, id); err != nil {
+			if err := f.recomputePermissions(r.id); err != nil {
 				return err
 			}
 			return f.db.UpdateResourceModified(f.ctx, r.id)

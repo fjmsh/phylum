@@ -1,7 +1,6 @@
 package fs
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"path"
@@ -118,7 +117,7 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 				r.parentID = update.Parent
 			}
 		}
-		if del, err := f.markNotDeleted(f.ctx, r.id); err != nil {
+		if del, err := f.markNotDeleted(r.id); err != nil {
 			return err
 		} else {
 			count = len(del)
@@ -127,7 +126,7 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 			}
 		}
 
-		return f.db.RecomputePermissions(f.ctx, r.ID())
+		return f.recomputePermissions(r.id)
 	})
 	res = r
 	return
@@ -180,7 +179,7 @@ func (f filesystem) markDeleted(id uuid.UUID, softDelete, excludeRoot bool) (int
 	return collectNonDirResourceIDs(f.db.Query(f.ctx, query, params...))
 }
 
-func (f filesystem) markNotDeleted(ctx context.Context, id uuid.UUID) ([]int64, error) {
+func (f filesystem) markNotDeleted(id uuid.UUID) ([]int64, error) {
 	r, _, s := selectResourceTree(id, false, false)
 	q := s.Update().Set(
 		goqu.Record{
@@ -191,7 +190,7 @@ func (f filesystem) markNotDeleted(ctx context.Context, id uuid.UUID) ([]int64, 
 
 	query, params, _ := q.ToSQL()
 
-	rows, err := f.db.Query(ctx, query, params...)
+	rows, err := f.db.Query(f.ctx, query, params...)
 	if err != nil {
 		return nil, err
 	}
