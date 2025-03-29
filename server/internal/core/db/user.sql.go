@@ -51,24 +51,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
-const grantUserPermissions = `-- name: GrantUserPermissions :exec
-UPDATE users
-SET
-    permissions = permissions | $1,
-    modified = NOW()
-WHERE username = $2
-`
-
-type GrantUserPermissionsParams struct {
-	Permissions int32
-	Username    string
-}
-
-func (q *Queries) GrantUserPermissions(ctx context.Context, arg GrantUserPermissionsParams) error {
-	_, err := q.db.Exec(ctx, grantUserPermissions, arg.Permissions, arg.Username)
-	return err
-}
-
 const listUsers = `-- name: ListUsers :many
 SELECT username, display_name, root, home FROM users WHERE modified > $1::TIMESTAMP
 `
@@ -103,25 +85,6 @@ func (q *Queries) ListUsers(ctx context.Context, since pgtype.Timestamp) ([]List
 		return nil, err
 	}
 	return items, nil
-}
-
-const revokeUserPermissions = `-- name: RevokeUserPermissions :exec
-UPDATE users
-SET
-    permissions = permissions & $1,
-    modified = NOW()
-WHERE username = $2
-`
-
-type RevokeUserPermissionsParams struct {
-	Permissions int32
-	Username    string
-}
-
-// Cannot manage to put a named parameter for $1. Something like 'mask' would be less confusion
-func (q *Queries) RevokeUserPermissions(ctx context.Context, arg RevokeUserPermissionsParams) error {
-	_, err := q.db.Exec(ctx, revokeUserPermissions, arg.Permissions, arg.Username)
-	return err
 }
 
 const sharedResources = `-- name: SharedResources :many
@@ -169,78 +132,6 @@ func (q *Queries) SharedResources(ctx context.Context, arg SharedResourcesParams
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateUserDisplayName = `-- name: UpdateUserDisplayName :exec
-UPDATE users
-SET
-    display_name = $1,
-    modified = NOW()
-WHERE username = $2
-`
-
-type UpdateUserDisplayNameParams struct {
-	DisplayName string
-	Username    string
-}
-
-func (q *Queries) UpdateUserDisplayName(ctx context.Context, arg UpdateUserDisplayNameParams) error {
-	_, err := q.db.Exec(ctx, updateUserDisplayName, arg.DisplayName, arg.Username)
-	return err
-}
-
-const updateUserHome = `-- name: UpdateUserHome :exec
-UPDATE users
-SET
-    home = $1,
-    modified = NOW()
-WHERE username = $2
-`
-
-type UpdateUserHomeParams struct {
-	Home     uuid.UUID
-	Username string
-}
-
-func (q *Queries) UpdateUserHome(ctx context.Context, arg UpdateUserHomeParams) error {
-	_, err := q.db.Exec(ctx, updateUserHome, arg.Home, arg.Username)
-	return err
-}
-
-const updateUserPasswordHash = `-- name: UpdateUserPasswordHash :exec
-UPDATE users
-SET
-    password_hash = $1,
-    modified = NOW()
-WHERE username = $2
-`
-
-type UpdateUserPasswordHashParams struct {
-	PasswordHash string
-	Username     string
-}
-
-func (q *Queries) UpdateUserPasswordHash(ctx context.Context, arg UpdateUserPasswordHashParams) error {
-	_, err := q.db.Exec(ctx, updateUserPasswordHash, arg.PasswordHash, arg.Username)
-	return err
-}
-
-const updateUserRoot = `-- name: UpdateUserRoot :exec
-UPDATE users
-SET
-    root = $1,
-    modified = NOW()
-WHERE username = $2
-`
-
-type UpdateUserRootParams struct {
-	Root     uuid.UUID
-	Username string
-}
-
-func (q *Queries) UpdateUserRoot(ctx context.Context, arg UpdateUserRootParams) error {
-	_, err := q.db.Exec(ctx, updateUserRoot, arg.Root, arg.Username)
-	return err
 }
 
 const userByUsername = `-- name: UserByUsername :one
