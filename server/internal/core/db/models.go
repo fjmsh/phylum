@@ -47,7 +47,7 @@ type Resource struct {
 	Created       pgtype.Timestamp
 	Modified      pgtype.Timestamp
 	Deleted       pgtype.Timestamp
-	ContentLength int64
+	ContentLength int
 	ContentType   string
 	ContentSha256 string
 	Permissions   []byte

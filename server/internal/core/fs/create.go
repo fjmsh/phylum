@@ -90,7 +90,7 @@ func (f filesystem) createResource(
 	parent uuid.UUID,
 	name string,
 	dir bool,
-	contentLength int64,
+	contentLength int,
 	contentType string,
 	contentSHA256 string,
 	conflictResolution ResourceBindConflictResolution,
@@ -159,12 +159,12 @@ func (f filesystem) createResource(
 					if dir {
 						err = f.deleteRecursive(res.id, parent, true, true)
 					} else {
-						err = f.db.UpdateResourceContents(f.ctx, db.UpdateResourceContentsParams{
-							ID:            res.id,
-							ContentLength: contentLength,
-							ContentType:   contentType,
-							ContentSha256: contentSHA256,
-						})
+						err = f.updateResourceContents(
+							res.id,
+							contentLength,
+							contentType,
+							contentSHA256,
+						)
 						res.contentLength = contentLength
 						res.contentType = contentType
 						res.contentSHA256 = contentSHA256
@@ -213,7 +213,7 @@ func (f filesystem) createResource(
 	return
 }
 
-func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, contentLength int64, contentType, contentSha256 string, permissions []byte) (Resource, error) {
+func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, contentLength int, contentType, contentSha256 string, permissions []byte) (Resource, error) {
 	query, args, _ := pg.From("resources").
 		Insert().
 		Rows(goqu.Record{

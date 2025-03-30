@@ -16,7 +16,7 @@ type Resource struct {
 	created        time.Time
 	modified       time.Time
 	deleted        *time.Time
-	contentLength  int64
+	contentLength  int
 	contentType    string
 	contentSHA256  string
 	permissions    []byte
@@ -31,7 +31,7 @@ func (r Resource) Dir() bool             { return r.dir }
 func (r Resource) Created() time.Time    { return r.created }
 func (r Resource) Modified() time.Time   { return r.modified }
 func (r Resource) Deleted() *time.Time   { return r.deleted }
-func (r Resource) ContentLength() int64  { return r.contentLength }
+func (r Resource) ContentLength() int    { return r.contentLength }
 func (r Resource) ContentSHA256() string { return r.contentSHA256 }
 func (r Resource) ContentType() string   { return r.contentType }
 func (r Resource) Permissions() []byte   { return r.permissions }

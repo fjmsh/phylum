@@ -6,8 +6,6 @@
 package db
 
 import (
-	"context"
-
 	"github.com/google/uuid"
 )
 
@@ -16,34 +14,7 @@ type CreateResourcesParams struct {
 	Parent        uuid.UUID
 	Name          string
 	Dir           bool
-	ContentLength int64
+	ContentLength int
 	ContentType   string
 	ContentSha256 string
-}
-
-const updateResourceContents = `-- name: UpdateResourceContents :exec
-UPDATE resources
-SET
-    content_length = $1,
-    content_type = $2, 
-    content_sha256 = $3,
-    modified = NOW()
-WHERE id = $4
-`
-
-type UpdateResourceContentsParams struct {
-	ContentLength int64
-	ContentType   string
-	ContentSha256 string
-	ID            uuid.UUID
-}
-
-func (q *Queries) UpdateResourceContents(ctx context.Context, arg UpdateResourceContentsParams) error {
-	_, err := q.db.Exec(ctx, updateResourceContents,
-		arg.ContentLength,
-		arg.ContentType,
-		arg.ContentSha256,
-		arg.ID,
-	)
-	return err
 }

@@ -264,7 +264,7 @@ func findDisplayName(fi fs.Resource) string {
 }
 
 func findContentLength(fi fs.Resource) string {
-	return strconv.FormatInt(fi.ContentLength(), 10)
+	return strconv.Itoa(fi.ContentLength())
 }
 
 func findCreationDate(fi fs.Resource) string {

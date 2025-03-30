@@ -55,7 +55,7 @@ func setupImportCommand() *cobra.Command {
 
 			force, _ := cmd.Flags().GetBool("force")
 
-			var size int64 = 0
+			var size int = 0
 			create := make([]db.CreateResourcesParams, 0)
 			copy := make(map[string]uuid.UUID)
 			ids := make(map[string]uuid.UUID)
@@ -76,7 +76,7 @@ func setupImportCommand() *cobra.Command {
 						if err != nil {
 							return err
 						}
-						len := info.Size()
+						len := int(info.Size())
 						if d.IsDir() {
 							len = 0
 						}

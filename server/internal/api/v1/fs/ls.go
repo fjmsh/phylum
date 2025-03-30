@@ -23,7 +23,7 @@ type InfoResponse struct {
 	Dir           bool      `json:"dir"`
 	Created       time.Time `json:"created"`
 	Modified      time.Time `json:"modified"`
-	ContentLength int64     `json:"c_len"`
+	ContentLength int       `json:"c_len"`
 	ContentType   string    `json:"c_type"`
 	ContentSHA256 string    `json:"c_sha256"`
 	Permissions   string    `json:"permissions"`

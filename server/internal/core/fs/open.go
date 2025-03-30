@@ -6,7 +6,6 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/core/db"
 )
 
 func (r Resource) OpenRead(start, length int64) (io.ReadCloser, error) {
@@ -21,12 +20,7 @@ func (r Resource) OpenWrite() (io.WriteCloser, error) {
 		return nil, ErrInsufficientPermissions
 	}
 	return r.f.cs.OpenWrite(r.ID(), sha256.New, func(len int, sum, mime string) error {
-		return r.f.db.UpdateResourceContents(r.f.ctx, db.UpdateResourceContentsParams{
-			ID:            r.ID(),
-			ContentType:   mime,
-			ContentLength: int64(len),
-			ContentSha256: sum,
-		})
+		return r.f.updateResourceContents(r.ID(), len, mime, sum)
 	})
 }
 
