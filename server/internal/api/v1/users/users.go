@@ -8,6 +8,11 @@ import (
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
+type User struct {
+	Username    string `json:"username"`
+	DisplayName string `json:"display"`
+}
+
 func SetupUserRoutes(r *gin.RouterGroup) {
 	group := r.Group("/users")
 	group.GET("/list", handleUsersListRoute)
@@ -28,7 +33,15 @@ func handleUsersListRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
+	result := make([]User, len(users))
+	for i, u := range users {
+		result[i] = User{
+			Username:    u.Username,
+			DisplayName: u.DisplayName,
+		}
+	}
+
 	c.JSON(200, gin.H{
-		"users": users,
+		"users": result,
 	})
 }

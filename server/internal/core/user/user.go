@@ -11,11 +11,11 @@ import (
 )
 
 type User struct {
-	Username    string    `json:"username"`
-	DisplayName string    `json:"display"`
-	Root        uuid.UUID `json:"-"`
-	Home        uuid.UUID `json:"-"`
-	Permissions int32     `json:"-"`
+	Username    string
+	DisplayName string
+	Root        uuid.UUID
+	Home        uuid.UUID
+	Permissions int32
 }
 
 func scanUser(row pgx.CollectableRow) (User, error) {
