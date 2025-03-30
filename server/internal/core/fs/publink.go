@@ -4,45 +4,42 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
 
 type Publink struct {
-	ID          int32      `json:"id"`
-	Name        string     `json:"name"`
-	Created     time.Time  `json:"created"`
-	Deleted     *time.Time `json:"deleted"`
-	CreatedBy   string     `json:"creator"`
-	Root        uuid.UUID  `json:"root"`
-	Accessed    int32      `json:"accessed"`
-	MaxAccesses int32      `json:"max_accesses"`
-	Protected   bool       `json:"protected"`
-	Expires     *time.Time `json:"expires"`
+	ID           int32
+	Name         string
+	Created      time.Time
+	Deleted      pgtype.Timestamp
+	CreatedBy    string
+	Root         uuid.UUID
+	Accessed     int32
+	MaxAccesses  int32
+	PasswordHash string
+	Expires      pgtype.Timestamp
 }
 
-func infoFromDB(d db.Publink) Publink {
-	var deleted *time.Time
-	if d.Deleted.Valid {
-		deleted = &d.Deleted.Time
+func scanPublink(row pgx.CollectableRow) (Publink, error) {
+	var p Publink
+	if err := row.Scan(
+		&p.ID,
+		&p.Name,
+		&p.Created,
+		&p.Deleted,
+		&p.CreatedBy,
+		&p.Root,
+		&p.Accessed,
+		&p.MaxAccesses,
+		&p.PasswordHash,
+		&p.Expires,
+	); err != nil {
+		return Publink{}, err
 	}
-	var expires *time.Time
-	if d.Expires.Valid {
-		expires = &d.Expires.Time
-	}
-	return Publink{
-		ID:          d.ID,
-		Name:        d.Name,
-		Created:     d.Created.Time,
-		Deleted:     deleted,
-		CreatedBy:   d.CreatedBy,
-		Root:        d.Root,
-		Accessed:    d.Accessed,
-		MaxAccesses: d.MaxAccesses,
-		Protected:   d.PasswordHash != "",
-		Expires:     expires,
-	}
+	return p, nil
 }
 
 func (r Resource) CreatePublink(name, password string, duration time.Duration, accesses int) error {
@@ -79,14 +76,12 @@ func (r Resource) CreatePublink(name, password string, duration time.Duration, a
 }
 
 func (r Resource) ListPublinks() ([]Publink, error) {
-	res, err := r.f.db.PublinksByRoot(r.f.ctx, r.ID())
-	if err != nil {
+	const q = "SELECT * FROM publinks WHERE root = $1::UUID"
+	if rows, err := r.f.db.Query(r.f.ctx, q, r.id); err != nil {
 		return nil, err
+	} else if links, err := pgx.CollectRows(rows, scanPublink); err != nil {
+		return nil, err
+	} else {
+		return links, nil
 	}
-
-	links := make([]Publink, len(res))
-	for i, l := range res {
-		links[i] = infoFromDB(l)
-	}
-	return links, nil
 }

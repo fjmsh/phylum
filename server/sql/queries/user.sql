@@ -11,13 +11,6 @@ SELECT username, display_name, password_hash, root, home, permissions FROM users
 -- name: ListUsers :many
 SELECT username, display_name, root, home FROM users WHERE modified > @since::TIMESTAMP;
 
--- name: UpdateUserPasswordHash :exec
-UPDATE users
-SET
-    password_hash = $1,
-    modified = NOW()
-WHERE username = $2;
-
 -- name: SharedResources :many
 SELECT * FROM resources
     WHERE grants ? @username::TEXT

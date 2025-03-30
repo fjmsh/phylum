@@ -1,21 +1,29 @@
 package fs
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
-	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 type publinkParams struct {
-	Username    string        `json:"username" binding:"required"`
-	Permissions fs.Permission `json:"permission" binding:"required"`
+	Name        string `json:"name" binding:"required"`
+	Password    string `json:"password"`
+	DurationStr string `json:"duration"`
+	duration    time.Duration
+	Accesses    int `json:"accesses"`
 }
 
 func handlePublinkCreateRequest(c *gin.Context) {
-	var params shareParams
+	var params publinkParams
 	err := c.ShouldBindJSON(&params)
-	if err != nil || params.Username == "" {
+	if err != nil || params.Name == "" {
+		panic(errInvalidParams)
+	}
+	params.duration, err = time.ParseDuration(params.DurationStr)
+	if err != nil || params.duration.Milliseconds() < 0 {
 		panic(errInvalidParams)
 	}
 
@@ -30,8 +38,7 @@ func handlePublinkCreateRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	r, err = r.UpdatePermissions(params.Username, params.Permissions)
-	if err != nil {
+	if err := r.CreatePublink(params.Name, params.Password, params.duration, params.Accesses); err != nil {
 		panic(err)
 	}
 

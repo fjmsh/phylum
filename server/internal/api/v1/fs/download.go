@@ -18,6 +18,9 @@ func handleDownloadRequest(c *gin.Context) {
 
 	f := auth.GetFileSystem(c)
 	r, err := f.ResourceByID(resourceID)
+	if err != nil {
+		panic(err)
+	}
 
 	c.Writer.Header().Set("Content-Type", "application/zip")
 	c.Writer.Header().Set("Content-Disposition", "attachment; filename=\""+r.Name()+".zip\"")

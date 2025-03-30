@@ -14,8 +14,5 @@ INSERT INTO publinks(name, created_by, root, password_hash, expires, max_accesse
     @max_accesses::int
 );
 
--- name: PublinksByRoot :many
-SELECT * FROM publinks WHERE root = @root::uuid;
-
 -- name: PublinksByCreator :many
 SELECT * FROM publinks WHERE created_by = @username::text;

@@ -28,7 +28,7 @@ func setupPublinksCommand() *cobra.Command {
 			}
 			for _, l := range links {
 				fmt.Print(l.Name)
-				if l.Deleted != nil {
+				if l.Deleted.Valid {
 					fmt.Print(" (deleted)")
 				}
 				fmt.Printf(": accessed %d", l.Accessed)
@@ -36,11 +36,11 @@ func setupPublinksCommand() *cobra.Command {
 					fmt.Printf("/%d", l.MaxAccesses)
 				}
 				fmt.Print(" times")
-				if l.Protected {
+				if l.PasswordHash != "" {
 					fmt.Print(", password protected")
 				}
-				if l.Expires != nil {
-					fmt.Printf(", expires " + l.Expires.String())
+				if l.Expires.Valid {
+					fmt.Printf(", expires " + l.Expires.Time.String())
 				}
 				fmt.Println()
 			}

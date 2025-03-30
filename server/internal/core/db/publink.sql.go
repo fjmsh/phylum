@@ -109,38 +109,3 @@ func (q *Queries) PublinksByCreator(ctx context.Context, username string) ([]Pub
 	}
 	return items, nil
 }
-
-const publinksByRoot = `-- name: PublinksByRoot :many
-SELECT id, name, created, deleted, created_by, root, accessed, max_accesses, password_hash, expires FROM publinks WHERE root = $1::uuid
-`
-
-func (q *Queries) PublinksByRoot(ctx context.Context, root uuid.UUID) ([]Publink, error) {
-	rows, err := q.db.Query(ctx, publinksByRoot, root)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Publink
-	for rows.Next() {
-		var i Publink
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Created,
-			&i.Deleted,
-			&i.CreatedBy,
-			&i.Root,
-			&i.Accessed,
-			&i.MaxAccesses,
-			&i.PasswordHash,
-			&i.Expires,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
