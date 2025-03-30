@@ -8,9 +8,6 @@ INSERT INTO users(
 -- name: UserByUsername :one
 SELECT username, display_name, password_hash, root, home, permissions FROM users WHERE username = $1;
 
--- name: ListUsers :many
-SELECT username, display_name, root, home FROM users WHERE modified > @since::TIMESTAMP;
-
 -- name: SharedResources :many
 SELECT * FROM resources
     WHERE grants ? @username::TEXT

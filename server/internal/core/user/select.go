@@ -18,20 +18,12 @@ func (m manager) ListUsers(since *time.Time) ([]User, error) {
 	if since != nil {
 		s.Time = *since
 	}
-	results, err := m.db.ListUsers(m.ctx, s)
-	if err != nil {
+	const q = "SELECT username, display_name, root, home, permissions FROM users WHERE modified > $1::TIMESTAMP"
+	if rows, err := m.db.Query(m.ctx, q, s); err != nil {
 		return nil, err
+	} else {
+		return pgx.CollectRows(rows, scanUser)
 	}
-	users := make([]User, len(results))
-	for i, r := range results {
-		users[i] = User{
-			Username:    r.Username,
-			DisplayName: r.DisplayName,
-			Root:        r.Root,
-			Home:        r.Home,
-		}
-	}
-	return users, nil
 }
 
 func (m manager) UserByEmail(email string) (User, error) {

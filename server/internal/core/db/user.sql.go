@@ -9,7 +9,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -49,42 +48,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Permissions,
 	)
 	return i, err
-}
-
-const listUsers = `-- name: ListUsers :many
-SELECT username, display_name, root, home FROM users WHERE modified > $1::TIMESTAMP
-`
-
-type ListUsersRow struct {
-	Username    string
-	DisplayName string
-	Root        uuid.UUID
-	Home        uuid.UUID
-}
-
-func (q *Queries) ListUsers(ctx context.Context, since pgtype.Timestamp) ([]ListUsersRow, error) {
-	rows, err := q.db.Query(ctx, listUsers, since)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListUsersRow
-	for rows.Next() {
-		var i ListUsersRow
-		if err := rows.Scan(
-			&i.Username,
-			&i.DisplayName,
-			&i.Root,
-			&i.Home,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const sharedResources = `-- name: SharedResources :many

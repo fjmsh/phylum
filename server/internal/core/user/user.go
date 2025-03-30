@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
@@ -12,9 +13,21 @@ import (
 type User struct {
 	Username    string    `json:"username"`
 	DisplayName string    `json:"display"`
-	Permissions int32     `json:"-"`
 	Root        uuid.UUID `json:"-"`
 	Home        uuid.UUID `json:"-"`
+	Permissions int32     `json:"-"`
+}
+
+func scanUser(row pgx.CollectableRow) (User, error) {
+	var u User
+	err := row.Scan(
+		&u.Username,
+		&u.DisplayName,
+		&u.Root,
+		&u.Home,
+		&u.Permissions,
+	)
+	return u, err
 }
 
 func (u User) OpenFileSystem(ctx context.Context) fs.FileSystem {
