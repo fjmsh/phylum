@@ -16,6 +16,3 @@ SET
     deleted = NULL,
     name = @name::TEXT
 RETURNING *;
-
--- name: ListBookmarks :many
-SELECT * FROM bookmarks b WHERE username = @username::TEXT AND modified > @since::TIMESTAMP;

@@ -9,7 +9,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const addBookmark = `-- name: AddBookmark :one
@@ -57,41 +56,4 @@ func (q *Queries) AddBookmark(ctx context.Context, arg AddBookmarkParams) (Bookm
 		&i.Deleted,
 	)
 	return i, err
-}
-
-const listBookmarks = `-- name: ListBookmarks :many
-SELECT username, resource_id, name, dir, created, modified, deleted FROM bookmarks b WHERE username = $1::TEXT AND modified > $2::TIMESTAMP
-`
-
-type ListBookmarksParams struct {
-	Username string
-	Since    pgtype.Timestamp
-}
-
-func (q *Queries) ListBookmarks(ctx context.Context, arg ListBookmarksParams) ([]Bookmark, error) {
-	rows, err := q.db.Query(ctx, listBookmarks, arg.Username, arg.Since)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Bookmark
-	for rows.Next() {
-		var i Bookmark
-		if err := rows.Scan(
-			&i.Username,
-			&i.ResourceID,
-			&i.Name,
-			&i.Dir,
-			&i.Created,
-			&i.Modified,
-			&i.Deleted,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }

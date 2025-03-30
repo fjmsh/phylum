@@ -1,10 +1,8 @@
 package user
 
 import (
-	"time"
-
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
@@ -14,7 +12,19 @@ type Bookmark struct {
 	Name       string    `json:"name"`
 	Dir        bool      `json:"dir"`
 	Created    int64     `json:"created"`
-	Deleted    bool      `json:"deleted"`
+}
+
+func scanBookmark(row pgx.CollectableRow) (Bookmark, error) {
+	var p Bookmark
+	if err := row.Scan(
+		&p.ResourceID,
+		&p.Name,
+		&p.Dir,
+		&p.Created,
+	); err != nil {
+		return Bookmark{}, err
+	}
+	return p, nil
 }
 
 func (m manager) AddBookmark(u User, resource fs.Resource, name string) (Bookmark, error) {
@@ -42,24 +52,20 @@ func (m manager) RemoveBookmark(u User, id uuid.UUID) error {
 	return err
 }
 
-func (m manager) ListBookmarks(u User, since *time.Time) ([]Bookmark, error) {
-	s := pgtype.Timestamp{
-		Valid: true,
-	}
-	if since != nil {
-		s.Time = *since
-	}
-	// TODO: #permissions This doesn't take permissions into account. is this okay?
-	res, err := m.db.Queries.ListBookmarks(m.ctx, db.ListBookmarksParams{Username: u.Username, Since: s})
-	if err != nil {
-		return nil, err
-	}
+func (m manager) ListBookmarks(u User) ([]Bookmark, error) {
+	const q = `SELECT resource_id, name, dir, created
+FROM bookmarks b
+WHERE username = $1::TEXT
+AND deleted IS NULL
+ORDER BY modified DESC`
 
-	result := make([]Bookmark, len(res))
-	for i, b := range res {
-		result[i] = bookmarkFromDb(b)
+	if rows, err := m.db.Query(m.ctx, q, u.Username); err != nil {
+		return nil, err
+	} else if bookmarks, err := pgx.CollectRows(rows, scanBookmark); err != nil {
+		return nil, err
+	} else {
+		return bookmarks, nil
 	}
-	return result, err
 }
 
 func bookmarkFromDb(b db.Bookmark) Bookmark {
@@ -68,6 +74,5 @@ func bookmarkFromDb(b db.Bookmark) Bookmark {
 		Name:       b.Name,
 		Dir:        b.Dir,
 		Created:    b.Created.Time.UnixMilli(),
-		Deleted:    b.Deleted.Valid,
 	}
 }
