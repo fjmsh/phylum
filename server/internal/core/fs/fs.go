@@ -69,7 +69,8 @@ func Open(ctx context.Context, username string, root uuid.UUID, fullAccess bool)
 }
 
 func OpenFromPublink(ctx context.Context, name string, password string, path string) (Resource, error) {
-	link, err := getPublink(ctx, name)
+	d := db.Get()
+	link, err := getPublink(d, ctx, name)
 	if err != nil {
 		return Resource{}, err
 	}
@@ -96,9 +97,14 @@ func OpenFromPublink(ctx context.Context, name string, password string, path str
 		return Resource{}, ErrResourceNotFound
 	}
 
+	const q = "UPDATE publinks SET accessed = accessed + 1 WHERE id = $1"
+	if _, err := d.Exec(ctx, q, link.ID); err != nil {
+		return Resource{}, err
+	}
+
 	f := filesystem{
 		ctx:        ctx,
-		db:         db.Get(),
+		db:         d,
 		cs:         storage.Get(),
 		rootID:     link.Root,
 		fullAccess: true, // TODO: #permissions Replace with permissions int
@@ -107,9 +113,9 @@ func OpenFromPublink(ctx context.Context, name string, password string, path str
 	return f.ResourceByPath(path)
 }
 
-func getPublink(ctx context.Context, name string) (Publink, error) {
+func getPublink(d *db.DbHandler, ctx context.Context, name string) (Publink, error) {
 	q := "SELECT FROM publinks p WHERE name = $1::TEXT AND deleted IS NULL"
-	if rows, err := db.Get().Query(ctx, q, name); err != nil {
+	if rows, err := d.Query(ctx, q, name); err != nil {
 		return Publink{}, err
 	} else if link, err := pgx.CollectExactlyOneRow(rows, scanPublink); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

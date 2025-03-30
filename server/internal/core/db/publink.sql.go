@@ -43,12 +43,3 @@ func (q *Queries) CreatePublink(ctx context.Context, arg CreatePublinkParams) er
 	)
 	return err
 }
-
-const markPublinkAccess = `-- name: MarkPublinkAccess :exec
-UPDATE publinks SET accessed = accessed + 1 WHERE id = $1
-`
-
-func (q *Queries) MarkPublinkAccess(ctx context.Context, id int32) error {
-	_, err := q.db.Exec(ctx, markPublinkAccess, id)
-	return err
-}

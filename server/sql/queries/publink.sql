@@ -1,6 +1,3 @@
--- name: MarkPublinkAccess :exec
-UPDATE publinks SET accessed = accessed + 1 WHERE id = $1;
-
 -- name: CreatePublink :exec
 INSERT INTO publinks(name, created_by, root, password_hash, expires, max_accesses) VALUES(
     @name::text,
