@@ -17,7 +17,7 @@ import (
 type Storage interface {
 	CreateBackend(ctx context.Context, name string, driver string, params map[string]string) error
 	ListBackends() map[string]Backend
-	OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error)
+	OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error)
 	OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string, string) error) (io.WriteCloser, error)
 	CopyContents(src, dest uuid.UUID) error
 	Delete(id uuid.UUID) error
@@ -58,7 +58,7 @@ func create(ctx context.Context, db *db.DbHandler, defaultStorageDir string) (St
 	}
 }
 
-func (s storage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error) {
+func (s storage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error) {
 	if backend, err := s.findStorageBackend(id); err != nil {
 		return nil, err
 	} else {

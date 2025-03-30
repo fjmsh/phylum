@@ -64,7 +64,7 @@ func (s minioStorage) Name() string {
 	return s.name
 }
 
-func (s minioStorage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error) {
+func (s minioStorage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error) {
 	// TODO: Range
 	if r, err := s.client.GetObject(context.Background(), s.bucketName, s.prefix+id.String(), minio.GetObjectOptions{}); err != nil {
 		return nil, err

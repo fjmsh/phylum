@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (r Resource) OpenRead(start, length int64) (io.ReadCloser, error) {
+func (r Resource) OpenRead(start, length int) (io.ReadCloser, error) {
 	if !r.hasPermission(PermissionRead) {
 		return nil, ErrInsufficientPermissions
 	}

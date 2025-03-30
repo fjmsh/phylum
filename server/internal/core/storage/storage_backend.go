@@ -8,7 +8,7 @@ import (
 
 type Backend interface {
 	Name() string
-	OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error)
+	OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error)
 	OpenWrite(id uuid.UUID) (io.WriteCloser, error)
 	Delete(id uuid.UUID) error
 	DeleteAll(ids uuid.UUIDs) []error

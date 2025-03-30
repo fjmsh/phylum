@@ -30,12 +30,12 @@ func (l localStorage) Name() string {
 	return l.name
 }
 
-func (l localStorage) OpenRead(id uuid.UUID, start, length int64) (io.ReadCloser, error) {
+func (l localStorage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error) {
 	file, err := os.OpenFile(l.path(id), os.O_RDONLY, 0640)
 	if err != nil {
 		return nil, err
 	}
-	_, err = file.Seek(start, io.SeekStart)
+	_, err = file.Seek(int64(start), io.SeekStart)
 	if err != nil {
 		return nil, err
 	}
