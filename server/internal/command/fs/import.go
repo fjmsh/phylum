@@ -130,7 +130,7 @@ func setupImportCommand() *cobra.Command {
 					}
 					return err
 				}
-				return dbh.UpdateResourceModified(ctx, destParent.ID())
+				return f.updateResourceModified(destParent.ID())
 			})
 
 			if err == nil {

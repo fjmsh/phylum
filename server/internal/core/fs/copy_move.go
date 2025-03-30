@@ -36,6 +36,9 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 		}
 		return Resource{}, false, err
 	}
+	if r.parentID == destParent.id && r.name == destName {
+		return r, false, nil
+	}
 	if !destParent.Dir() {
 		return Resource{}, false, ErrResourceNotCollection
 	}
@@ -56,27 +59,42 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 	var deleted = false
 	return res, deleted, r.f.runInTx(func(f filesystem) error {
 		if conflictResolution == ResourceBindConflictResolutionOverwrite || conflictResolution == ResourceBindConflictResolutionDelete {
+			// TODO: Use f directly instead of Resource
 			if _, err := destParent.DeleteChildRecursive(destName); err == nil {
 				deleted = true
 			} else if !errors.Is(err, ErrResourceNotFound) {
 				return err
 			}
 		}
-		if result, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.id, Name: destName, Parent: destParent.ID()}); err != nil {
-			if strings.Contains(err.Error(), "unique_member_resource_name") {
-				return ErrResourceNameConflict
-			}
+		if err := f.updateResourceNameParent(r.id, destName, destParent.ID()); err != nil {
 			return err
 		} else {
 			if err := f.recomputePermissions(r.id); err != nil {
 				return err
 			}
-			res = ResourceFromDB(result)
-			res.f = r.f
-			res.userPermission = r.userPermission
+			res = r
+			res.name = destName
+			res.parentID = destParent.id
 			return nil
 		}
 	})
+}
+
+func (f filesystem) updateResourceNameParent(id uuid.UUID, name string, parent uuid.UUID) error {
+	const q = `UPDATE resources
+SET
+    name = CASE WHEN ($1::TEXT = '') THEN name ELSE $1::TEXT END,
+    parent = CASE WHEN ($2 IS NULL) THEN parent ELSE $2::UUID,
+    modified = NOW()
+WHERE id = $1::UUID `
+
+	if _, err := f.db.Exec(f.ctx, q, id, name, &parent); err != nil {
+		if strings.Contains(err.Error(), "unique_member_resource_name") {
+			return ErrResourceNameConflict
+		}
+		return err
+	}
+	return nil
 }
 
 func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
@@ -171,7 +189,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			return err
 		}
 		if created {
-			return f.db.UpdateResourceModified(f.ctx, destParent.ID())
+			return f.updateResourceModified(destParent.ID())
 		}
 		return nil
 	})

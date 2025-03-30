@@ -60,7 +60,7 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 			if err := f.recomputePermissions(r.id); err != nil {
 				return err
 			}
-			return f.db.UpdateResourceModified(f.ctx, r.id)
+			return f.updateResourceModified(r.id)
 		}
 		return nil
 	})

@@ -4,13 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/sirupsen/logrus"
 )
 
@@ -107,14 +105,11 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 
 	err = r.f.runInTx(func(f filesystem) error {
 		if p.id != r.parentID || r.name != name {
-			if update, err := f.db.UpdateResourceNameParent(f.ctx, db.UpdateResourceNameParentParams{ID: r.ID(), Name: name, Parent: p.id}); err != nil {
-				if strings.Contains(err.Error(), "unique_member_resource_name") {
-					return ErrResourceNameConflict
-				}
+			if err := f.updateResourceNameParent(r.ID(), name, p.id); err != nil {
 				return err
 			} else {
-				r.name = update.Name
-				r.parentID = update.Parent
+				r.name = name
+				r.parentID = p.id
 			}
 		}
 		if del, err := f.markNotDeleted(r.id); err != nil {
@@ -140,7 +135,7 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 			return err
 		}
 
-		return f.db.UpdateResourceModified(f.ctx, parent)
+		return f.updateResourceModified(parent)
 	})
 
 	if err == nil && !softDelete {
