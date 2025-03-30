@@ -1,7 +1,6 @@
 package fs
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -12,12 +11,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/spf13/cobra"
 )
-
-const emptySHA = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 func setupImportCommand() *cobra.Command {
 	cmd := cobra.Command{
@@ -56,11 +52,12 @@ func setupImportCommand() *cobra.Command {
 			force, _ := cmd.Flags().GetBool("force")
 
 			var size int = 0
-			create := make([]db.CreateResourcesParams, 0)
+			create := make([]fs.CreateResourcesParams, 0)
 			copy := make(map[string]uuid.UUID)
 			ids := make(map[string]uuid.UUID)
-			ids["."], _ = uuid.NewV7()
-			create = append(create, db.CreateResourcesParams{
+			targetRootID, _ := uuid.NewV7()
+			ids["."] = targetRootID
+			create = append(create, fs.CreateResourcesParams{
 				ID:     ids["."],
 				Parent: destParent.ID(),
 				Name:   destName,
@@ -86,7 +83,7 @@ func setupImportCommand() *cobra.Command {
 						}
 						ids[p], _ = uuid.NewV7()
 						parent := ids[path.Dir(p)]
-						create = append(create, db.CreateResourcesParams{
+						create = append(create, fs.CreateResourcesParams{
 							Parent:        parent,
 							ID:            ids[p],
 							Name:          d.Name(),
@@ -107,30 +104,26 @@ func setupImportCommand() *cobra.Command {
 					os.Exit(1)
 				}
 			}
-			fmt.Printf("Importing %d files (%d bytes) across %d dirs\n", len(copy), size, len(create)-len(copy))
+			fmt.Printf("Importing %d files (%d bytes) across %d dirs\n", len(copy), size, 1+len(create)-len(copy))
 
-			ctx := context.Background()
-			err = db.Get().WithTx(ctx, func(dbh *db.DbHandler) error {
-				f := f.WithDb(dbh)
-				if force {
-					if _, err := destParent.DeleteChildRecursive(destName); !errors.Is(err, fs.ErrResourceNotFound) {
-						return err
+			var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionError
+			if force {
+				conflictResolution = fs.ResourceBindConflictResolutionDelete
+			}
+			err = f.RunInTx(func(f fs.FileSystem) error {
+				if _, err := destParent.CreateMemberResource(destName, targetRootID, stat.IsDir(), conflictResolution); err != nil {
+					if err == fs.ErrResourceNameConflict {
+						err = errors.New("resource with name '" + destName + "' already exist. use -f to overwrite")
 					}
-				} else {
-					_, err := f.WithRoot(destParent.ID()).ResourceByPath(destName)
-					if err == nil {
-						return errors.New("resource with name '" + destName + "' already exist. use -f to overwrite")
-					} else if !errors.Is(err, fs.ErrResourceNotFound) {
-						return err
-					}
+					return err
 				}
-				if _, err := dbh.CreateResources(ctx, create); err != nil {
+				if _, err := f.CreateResources(create); err != nil {
 					if strings.Contains(err.Error(), "unique_member_resource_name") {
 						return fs.ErrResourceNameConflict
 					}
 					return err
 				}
-				return f.updateResourceModified(destParent.ID())
+				return nil
 			})
 
 			if err == nil {

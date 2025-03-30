@@ -54,7 +54,7 @@ func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conf
 	var created bool
 	err := r.f.runInTx(func(f filesystem) error {
 		var err error
-		if res, created, _, err = f.createResource(id, r.id, name, dir, 0, emptyContentType, emptyContentSHA256, conflictResolution, r.permissions); err != nil {
+		if res, created, _, err = f.createResource(id, r.id, name, dir, 0, emptyContentType, emptyContentSHA256, r.permissions, conflictResolution); err != nil {
 			return err
 		} else if created {
 			if err := f.recomputePermissions(r.id); err != nil {
@@ -93,8 +93,8 @@ func (f filesystem) createResource(
 	contentLength int,
 	contentType string,
 	contentSHA256 string,
-	conflictResolution ResourceBindConflictResolution,
 	permissions []byte,
+	conflictResolution ResourceBindConflictResolution,
 ) (res Resource, created, deleted bool, err error) {
 	err = f.runInTx(func(f filesystem) error {
 		res, err = f.insertResource(
@@ -180,8 +180,8 @@ func (f filesystem) createResource(
 							contentLength,
 							contentType,
 							contentSHA256,
-							ResourceBindConflictResolutionError,
 							permissions,
+							ResourceBindConflictResolutionError,
 						)
 					}
 				}
@@ -200,8 +200,8 @@ func (f filesystem) createResource(
 						contentLength,
 						contentType,
 						contentSHA256,
-						ResourceBindConflictResolutionError,
 						permissions,
+						ResourceBindConflictResolutionError,
 					)
 				}
 			}

@@ -41,6 +41,7 @@ type FileSystem interface {
 
 	// create.go
 	CreateResourceByPath(path string, dir, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, error)
+	CreateResources(args []CreateResourcesParams) (int64, error)
 
 	// find.go
 	ResourceByID(id uuid.UUID) (Resource, error)

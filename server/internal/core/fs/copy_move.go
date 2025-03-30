@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/sirupsen/logrus"
 )
 
@@ -127,45 +126,45 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			return Resource{}, false, err
 		}
 	}
-	children := make([]db.CreateResourcesParams, 0, len(tree))
+	children := make([]CreateResourcesParams, 0, len(tree))
 	var contents []copySrcDest
 	newIDs := make(map[uuid.UUID]uuid.UUID)
 
-	var res Resource
+	var targetRoot Resource
 	created := false
 	deleted := false
 	err = r.f.runInTx(func(f filesystem) error {
-		res, created, deleted, err = f.createResource(
+		targetRoot, created, deleted, err = f.createResource(
 			id,
-			destParent.ID(),
+			destParent.id,
 			destName,
-			r.Dir(),
+			r.dir,
 			r.contentLength,
 			r.contentType,
 			r.contentSHA256,
-			conflictResolution,
 			r.permissions,
+			conflictResolution,
 		)
 		// createResource may return an already existing resources, depending on the specified conflictResolution
-		id = res.id
-		if err == nil && r.ID() == id {
+		id = targetRoot.id
+		if err == nil && r.id == id {
 			err = ErrResourceCopyTargetSelf
 		}
 		if err != nil {
 			return err
 		}
 
-		if res.dir {
-			newIDs[r.ID()] = id
+		if targetRoot.dir {
+			newIDs[r.id] = id
 		} else {
-			contents = append(contents, copySrcDest{src: r.ID(), dest: id})
+			contents = append(contents, copySrcDest{src: r.id, dest: id})
 		}
 
 		for _, src := range tree {
 			id, _ := uuid.NewV7()
 			parent := newIDs[src.parentID]
 
-			children = append(children, db.CreateResourcesParams{
+			children = append(children, CreateResourcesParams{
 				ID:            id,
 				Parent:        parent,
 				Name:          src.name,
@@ -182,7 +181,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			}
 		}
 
-		if _, err := f.db.CreateResources(f.ctx, children); err != nil {
+		if _, err := f.CreateResources(children); err != nil {
 			return err
 		}
 		if err := f.recomputePermissions(id); err != nil {
@@ -207,9 +206,9 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		return Resource{}, false, err
 	}
 
-	res.f = r.f
-	res.userPermission = destParent.userPermission
-	return res, deleted, err
+	targetRoot.f = r.f
+	targetRoot.userPermission = destParent.userPermission
+	return targetRoot, deleted, err
 }
 
 // targetByPathOrUUID splits a target path or uuid into its constituent components
