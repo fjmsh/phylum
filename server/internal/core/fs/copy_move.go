@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
@@ -65,11 +66,17 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 				return err
 			}
 		}
-		if err := f.updateResourceNameParent(r.id, destName, destParent.ID()); err != nil {
+		parent := destParent.id
+		if r.parentID == destParent.id {
+			parent = uuid.Nil
+		}
+		if err := f.updateResourceNameParent(r.id, destName, parent); err != nil {
 			return err
 		} else {
-			if err := f.recomputePermissions(r.id); err != nil {
-				return err
+			if parent != uuid.Nil {
+				if err := f.recomputePermissions(r.id); err != nil {
+					return err
+				}
 			}
 			res = r
 			res.name = destName
@@ -80,14 +87,18 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 }
 
 func (f filesystem) updateResourceNameParent(id uuid.UUID, name string, parent uuid.UUID) error {
-	const q = `UPDATE resources
-SET
-    name = CASE WHEN ($1::TEXT = '') THEN name ELSE $1::TEXT END,
-    parent = CASE WHEN ($2 IS NULL) THEN parent ELSE $2::UUID,
-    modified = NOW()
-WHERE id = $1::UUID `
+	updates := goqu.Record{
+		"modified": goqu.L("NOW()"),
+	}
+	if name != "" {
+		updates["name"] = name
+	}
+	if parent != uuid.Nil {
+		updates["parent"] = parent
+	}
+	q, args, _ := pg.Update("resources").Where(goqu.C("id").Eq(id)).Set(updates).ToSQL()
 
-	if _, err := f.db.Exec(f.ctx, q, id, name, &parent); err != nil {
+	if _, err := f.db.Exec(f.ctx, q, args...); err != nil {
 		if strings.Contains(err.Error(), "unique_member_resource_name") {
 			return ErrResourceNameConflict
 		}
