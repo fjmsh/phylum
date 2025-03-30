@@ -17,9 +17,5 @@ SET
     name = @name::TEXT
 RETURNING *;
 
--- name: DeleteBookmark :one
-DELETE FROM bookmarks WHERE username = @username::TEXT AND resource_id = @resource_id::UUID
-RETURNING *;
-
 -- name: ListBookmarks :many
 SELECT * FROM bookmarks b WHERE username = @username::TEXT AND modified > @since::TIMESTAMP;

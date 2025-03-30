@@ -36,14 +36,10 @@ func (m manager) AddBookmark(u User, resource fs.Resource, name string) (Bookmar
 	}
 }
 
-func (m manager) RemoveBookmark(u User, id uuid.UUID) (Bookmark, error) {
-	if b, err := m.db.Queries.DeleteBookmark(m.ctx, db.DeleteBookmarkParams{Username: u.Username, ResourceID: id}); err != nil {
-		return Bookmark{}, err
-	} else {
-		r := bookmarkFromDb(b)
-		r.Deleted = true
-		return r, nil
-	}
+func (m manager) RemoveBookmark(u User, id uuid.UUID) error {
+	const q = "DELETE FROM bookmarks WHERE username = $1::TEXT AND resource_id = $2::UUID"
+	_, err := m.db.Exec(m.ctx, q, u.Username, id)
+	return err
 }
 
 func (m manager) ListBookmarks(u User, since *time.Time) ([]Bookmark, error) {

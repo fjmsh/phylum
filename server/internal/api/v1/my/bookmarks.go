@@ -72,9 +72,8 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 	id := uuid.MustParse(idStr)
 
 	u := auth.GetUser(c)
-	b, err := user.CreateManager(c.Request.Context()).RemoveBookmark(u, id)
-	if err != nil {
+	if err := user.CreateManager(c.Request.Context()).RemoveBookmark(u, id); err != nil {
 		panic(err)
 	}
-	c.JSON(200, b)
+	c.JSON(200, gin.H{})
 }

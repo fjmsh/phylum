@@ -59,31 +59,6 @@ func (q *Queries) AddBookmark(ctx context.Context, arg AddBookmarkParams) (Bookm
 	return i, err
 }
 
-const deleteBookmark = `-- name: DeleteBookmark :one
-DELETE FROM bookmarks WHERE username = $1::TEXT AND resource_id = $2::UUID
-RETURNING username, resource_id, name, dir, created, modified, deleted
-`
-
-type DeleteBookmarkParams struct {
-	Username   string
-	ResourceID uuid.UUID
-}
-
-func (q *Queries) DeleteBookmark(ctx context.Context, arg DeleteBookmarkParams) (Bookmark, error) {
-	row := q.db.QueryRow(ctx, deleteBookmark, arg.Username, arg.ResourceID)
-	var i Bookmark
-	err := row.Scan(
-		&i.Username,
-		&i.ResourceID,
-		&i.Name,
-		&i.Dir,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-	)
-	return i, err
-}
-
 const listBookmarks = `-- name: ListBookmarks :many
 SELECT username, resource_id, name, dir, created, modified, deleted FROM bookmarks b WHERE username = $1::TEXT AND modified > $2::TIMESTAMP
 `

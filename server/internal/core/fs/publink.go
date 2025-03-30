@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
 
@@ -65,14 +64,11 @@ func (r Resource) CreatePublink(name, password string, duration time.Duration, a
 		}
 	}
 
-	return r.f.db.CreatePublink(r.f.ctx, db.CreatePublinkParams{
-		Name:         name,
-		CreatedBy:    r.f.username,
-		Root:         r.ID(),
-		PasswordHash: passwordHash,
-		Expires:      expires,
-		MaxAccesses:  int32(accesses),
-	})
+	const q = `INSERT INTO publinks(name, created_by, root, password_hash, expires, max_accesses) VALUES
+	($1::text, $2::text, $3::uuid, $4::text, $5::timestamp, $6::int)`
+
+	_, err := r.f.db.Exec(r.f.ctx, q, name, r.f.username, r.ID(), passwordHash, expires, accesses)
+	return err
 }
 
 func (r Resource) ListPublinks() ([]Publink, error) {
