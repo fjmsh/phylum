@@ -3,7 +3,6 @@ package user
 import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
@@ -34,15 +33,23 @@ func (m manager) AddBookmark(u User, resource fs.Resource, name string) (Bookmar
 	if name == "" || fs.CheckNameInvalid(name) {
 		return Bookmark{}, fs.ErrResourceNameInvalid
 	}
-	if b, err := m.db.Queries.AddBookmark(m.ctx, db.AddBookmarkParams{
-		Username:   u.Username,
-		ResourceID: resource.ID(),
-		Name:       name,
-		Dir:        resource.Dir(),
-	}); err != nil {
+
+	const q = `INSERT INTO bookmarks(username, resource_id, name, dir)
+VALUES ($1::TEXT, $2::UUID, $3::TEXT, $4::BOOLEAN)
+ON CONFLICT(username, resource_id) DO UPDATE
+SET
+    created = CASE WHEN bookmarks.deleted IS NULL THEN CURRENT_TIMESTAMP ELSE bookmarks.created END,
+    modified = CURRENT_TIMESTAMP,
+    deleted = NULL,
+    name = $3::TEXT
+RETURNING resource_id, name, dir, created`
+
+	if rows, err := m.db.Query(m.ctx, q, u.Username); err != nil {
+		return Bookmark{}, err
+	} else if bookmark, err := pgx.CollectExactlyOneRow(rows, scanBookmark); err != nil {
 		return Bookmark{}, err
 	} else {
-		return bookmarkFromDb(b), nil
+		return bookmark, nil
 	}
 }
 
@@ -65,14 +72,5 @@ ORDER BY modified DESC`
 		return nil, err
 	} else {
 		return bookmarks, nil
-	}
-}
-
-func bookmarkFromDb(b db.Bookmark) Bookmark {
-	return Bookmark{
-		ResourceID: b.ResourceID,
-		Name:       b.Name,
-		Dir:        b.Dir,
-		Created:    b.Created.Time.UnixMilli(),
 	}
 }
