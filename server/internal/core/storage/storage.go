@@ -3,11 +3,13 @@ package storage
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"hash"
 	"io"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/sirupsen/logrus"
 )
@@ -126,12 +128,12 @@ func (s storage) CreateBackend(ctx context.Context, name string, driver string, 
 	if err != nil {
 		return nil
 	}
-	err = s.db.CreateStorageBackend(ctx, db.CreateStorageBackendParams{
-		Name:   name,
-		Driver: driver,
-		Params: params,
-	})
+	const q = "INSERT INTO storage_backends(name, driver, params) VALUES ($1::TEXT, $2::TEXT, $3::JSONB)"
+	p, err := json.Marshal(params)
 	if err != nil {
+		return err
+	}
+	if _, err := s.db.Exec(ctx, q, name, driver, p); err != nil {
 		return err
 	}
 	s.backends[name] = backend
@@ -143,19 +145,29 @@ func (s storage) ListBackends() map[string]Backend {
 }
 
 func restoreBackends(db *db.DbHandler, ctx context.Context) (map[string]Backend, error) {
-	backends, err := db.AllStorageBackends(ctx)
-	if err != nil {
+	const q = "SELECT name, driver, params from storage_backends"
+	if rows, err := db.Query(ctx, q); err != nil {
 		return nil, err
-	}
-	results := map[string]Backend{}
-	for _, b := range backends {
-		store, err := openBackend(b.Name, b.Driver, b.Params)
-		if err != nil {
+	} else if backends, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (Backend, error) {
+		var name, driver string
+		var params []byte
+		if err := row.Scan(&name, &driver, &params); err != nil {
 			return nil, err
 		}
-		results[b.Name] = store
+		p := make(map[string]string)
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, err
+		}
+		return openBackend(name, driver, p)
+	}); err != nil {
+		return nil, err
+	} else {
+		results := map[string]Backend{}
+		for _, b := range backends {
+			results[b.Name()] = b
+		}
+		return results, nil
 	}
-	return results, nil
 }
 
 func openBackend(name string, driver string, params map[string]string) (Backend, error) {
