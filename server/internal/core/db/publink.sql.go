@@ -44,28 +44,6 @@ func (q *Queries) CreatePublink(ctx context.Context, arg CreatePublinkParams) er
 	return err
 }
 
-const getPublink = `-- name: GetPublink :one
-SELECT id, name, created, deleted, created_by, root, accessed, max_accesses, password_hash, expires FROM publinks p WHERE name = $1::text AND deleted IS NULL
-`
-
-func (q *Queries) GetPublink(ctx context.Context, name string) (Publink, error) {
-	row := q.db.QueryRow(ctx, getPublink, name)
-	var i Publink
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Created,
-		&i.Deleted,
-		&i.CreatedBy,
-		&i.Root,
-		&i.Accessed,
-		&i.MaxAccesses,
-		&i.PasswordHash,
-		&i.Expires,
-	)
-	return i, err
-}
-
 const markPublinkAccess = `-- name: MarkPublinkAccess :exec
 UPDATE publinks SET accessed = accessed + 1 WHERE id = $1
 `
@@ -73,39 +51,4 @@ UPDATE publinks SET accessed = accessed + 1 WHERE id = $1
 func (q *Queries) MarkPublinkAccess(ctx context.Context, id int32) error {
 	_, err := q.db.Exec(ctx, markPublinkAccess, id)
 	return err
-}
-
-const publinksByCreator = `-- name: PublinksByCreator :many
-SELECT id, name, created, deleted, created_by, root, accessed, max_accesses, password_hash, expires FROM publinks WHERE created_by = $1::text
-`
-
-func (q *Queries) PublinksByCreator(ctx context.Context, username string) ([]Publink, error) {
-	rows, err := q.db.Query(ctx, publinksByCreator, username)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Publink
-	for rows.Next() {
-		var i Publink
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Created,
-			&i.Deleted,
-			&i.CreatedBy,
-			&i.Root,
-			&i.Accessed,
-			&i.MaxAccesses,
-			&i.PasswordHash,
-			&i.Expires,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }

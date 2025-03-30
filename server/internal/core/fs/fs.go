@@ -69,22 +69,17 @@ func Open(ctx context.Context, username string, root uuid.UUID, fullAccess bool)
 }
 
 func OpenFromPublink(ctx context.Context, name string, password string, path string) (Resource, error) {
-	d := db.Get()
-	// Check exists
-	s, err := d.GetPublink(ctx, name)
-	if errors.Is(err, pgx.ErrNoRows) {
-		err = ErrParentNotFound
-	}
+	link, err := getPublink(ctx, name)
 	if err != nil {
 		return Resource{}, err
 	}
 
 	// check password
-	if s.PasswordHash != "" {
+	if link.PasswordHash != "" {
 		if password == "" {
 			return Resource{}, ErrInsufficientPermissions
 		}
-		if ok, err := crypt.VerifyPassword(password, s.PasswordHash); err != nil {
+		if ok, err := crypt.VerifyPassword(password, link.PasswordHash); err != nil {
 			return Resource{}, err
 		} else if !ok {
 			return Resource{}, ErrInsufficientPermissions
@@ -92,12 +87,12 @@ func OpenFromPublink(ctx context.Context, name string, password string, path str
 	}
 
 	// check expiration
-	if s.Expires.Valid && s.Expires.Time.Before(time.Now()) {
+	if link.Expires.Valid && link.Expires.Time.Before(time.Now()) {
 		return Resource{}, ErrResourceNotFound
 	}
 
 	// check max accesses
-	if s.MaxAccesses > 0 && s.MaxAccesses <= s.Accessed {
+	if link.MaxAccesses > 0 && link.MaxAccesses <= link.Accessed {
 		return Resource{}, ErrResourceNotFound
 	}
 
@@ -105,11 +100,25 @@ func OpenFromPublink(ctx context.Context, name string, password string, path str
 		ctx:        ctx,
 		db:         db.Get(),
 		cs:         storage.Get(),
-		rootID:     s.Root,
+		rootID:     link.Root,
 		fullAccess: true, // TODO: #permissions Replace with permissions int
 	}
 
 	return f.ResourceByPath(path)
+}
+
+func getPublink(ctx context.Context, name string) (Publink, error) {
+	q := "SELECT FROM publinks p WHERE name = $1::TEXT AND deleted IS NULL"
+	if rows, err := db.Get().Query(ctx, q, name); err != nil {
+		return Publink{}, err
+	} else if link, err := pgx.CollectExactlyOneRow(rows, scanPublink); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = ErrParentNotFound
+		}
+		return Publink{}, err
+	} else {
+		return link, nil
+	}
 }
 
 func CheckNameInvalid(s string) bool {
