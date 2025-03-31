@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
@@ -26,7 +26,7 @@ func formatRow(id string, dir bool, size int, sha256, name, permissions string, 
 	return fmt.Sprintf("%s %s %s %s%-24s %s", id, sizeStr, sha256[0:8], delStr, name, permissions)
 }
 
-func FormatResourceSummary(r fs.Resource, name string, deleted *time.Time) string {
+func FormatResourceSummary(r fs.Resource, name string, deleted pgtype.Timestamp) string {
 	if name == "" {
 		name = r.Name()
 	}

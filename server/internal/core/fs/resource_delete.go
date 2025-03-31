@@ -9,6 +9,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,8 +28,10 @@ func (r Resource) DeleteChildRecursive(name string) (Resource, error) {
 	if err := r.f.deleteRecursive(c.ID(), r.ID(), true, false); err != nil {
 		return Resource{}, err
 	}
-	deleted := time.Now()
-	r.deleted = &deleted
+	r.deleted = pgtype.Timestamp{
+		Valid: true,
+		Time:  time.Now(),
+	}
 	return r, nil
 }
 
@@ -46,8 +49,10 @@ func (r Resource) DeleteRecursive(softDelete bool) (Resource, error) {
 	if err := r.f.deleteRecursive(r.ID(), r.ParentID(), softDelete, false); err != nil {
 		return Resource{}, err
 	}
-	deleted := time.Now()
-	r.deleted = &deleted
+	r.deleted = pgtype.Timestamp{
+		Valid: true,
+		Time:  time.Now(),
+	}
 	return r, nil
 }
 
@@ -70,7 +75,7 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 		return
 	}
 
-	if p.deleted != nil {
+	if p.deleted.Valid {
 		err = ErrParentDeleted
 		return
 	}

@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/core/db"
 )
 
 const emptyContentType = "text/plain"
@@ -232,26 +230,5 @@ func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, 
 		return Resource{}, err
 	} else {
 		return f.collectResource(rows)
-	}
-}
-
-func ResourceFromDB(r db.Resource) Resource {
-	var delTime *time.Time
-	if r.Deleted.Valid {
-		delTime = &r.Deleted.Time
-	}
-	return Resource{
-		id:            r.ID,
-		parentID:      r.Parent,
-		name:          r.Name,
-		dir:           r.Dir,
-		created:       r.Created.Time,
-		modified:      r.Modified.Time,
-		deleted:       delTime,
-		contentLength: r.ContentLength,
-		contentType:   r.ContentType,
-		contentSHA256: r.ContentSha256,
-		permissions:   r.Permissions,
-		grants:        r.Grants,
 	}
 }

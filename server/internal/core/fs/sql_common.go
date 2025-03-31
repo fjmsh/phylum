@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool, extraCols ...string) (exp.IdentifierExpression, exp.AliasedExpression, *goqu.SelectDataset) {
@@ -58,7 +58,7 @@ func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool, extr
 	return t, n, q
 }
 
-func selectDirectChildren(id uuid.UUID, deleted *time.Time, includeDeleted bool) (exp.AliasedExpression, *goqu.SelectDataset) {
+func selectDirectChildren(id uuid.UUID, deleted pgtype.Timestamp, includeDeleted bool) (exp.AliasedExpression, *goqu.SelectDataset) {
 	r := goqu.T("resources").As("r")
 	q := pg.
 		From(r).

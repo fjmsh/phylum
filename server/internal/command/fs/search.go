@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/spf13/cobra"
 )
@@ -25,7 +26,7 @@ func setupSearchCommand() *cobra.Command {
 			}
 
 			for _, c := range res {
-				fmt.Println(common.FormatResourceSummary(c, "", nil))
+				fmt.Println(common.FormatResourceSummary(c, "", pgtype.Timestamp{}))
 			}
 		},
 	}

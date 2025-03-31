@@ -55,7 +55,7 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 			b, _ := last.id.MarshalBinary()
 			copy(c, b)
 
-			binary.LittleEndian.PutUint64(c[16:], uint64(last.deleted.UnixNano()))
+			binary.LittleEndian.PutUint64(c[16:], uint64(last.deleted.Time.UnixNano()))
 			cursor = base64.StdEncoding.EncodeToString(c)
 		}
 		return res, cursor, nil

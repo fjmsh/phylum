@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +25,7 @@ func setupListCommand() *cobra.Command {
 			}
 
 			for _, c := range deleted {
-				fmt.Println(common.FormatResourceSummary(c, "", nil))
+				fmt.Println(common.FormatResourceSummary(c, "", pgtype.Timestamp{}))
 			}
 			if cursor != "" {
 				fmt.Println("Cursor: " + cursor)

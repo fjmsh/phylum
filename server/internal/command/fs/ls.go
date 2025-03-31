@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/spf13/cobra"
@@ -36,11 +37,11 @@ func setupLsCommand() *cobra.Command {
 			fmt.Println(formatPermissionsJson(r.Permissions()))
 			fmt.Println("Created:  " + r.Created().Local().Format(time.RFC1123))
 			fmt.Println("Modified: " + r.Modified().Local().Format(time.RFC1123))
-			if r.Deleted() != nil {
-				fmt.Println("Deleted:  " + r.Deleted().Local().Format(time.RFC1123))
+			if r.Deleted().Valid {
+				fmt.Println("Deleted:  " + r.Deleted().Time.Local().Format(time.RFC1123))
 			}
 			fmt.Println()
-			fmt.Println(common.FormatResourceSummary(r, ".", nil))
+			fmt.Println(common.FormatResourceSummary(r, ".", pgtype.Timestamp{}))
 
 			if r.Dir() {
 				includeDeleted, _ := cmd.Flags().GetBool("include-deleted")
