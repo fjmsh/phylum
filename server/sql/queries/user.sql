@@ -1,13 +1,3 @@
--- name: CreateUser :one
-INSERT INTO users(
-    username, display_name, password_hash, root, home
-) VALUES (
-    $1, $2, $3, $4, $5
-) RETURNING *;
-
--- name: UserByUsername :one
-SELECT username, display_name, password_hash, root, home, permissions FROM users WHERE username = $1;
-
 -- name: SharedResources :many
 SELECT * FROM resources
     WHERE grants ? @username::TEXT

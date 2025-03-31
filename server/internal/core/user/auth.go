@@ -23,7 +23,7 @@ var accessTokenValiditiy = pgtype.Interval{
 var ErrCredentialsInvalid = errors.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid Credentials")
 
 func (m manager) VerifyUserPassword(email, password string) (User, error) {
-	if user, err := m.db.UserByUsername(m.ctx, email); err != nil {
+	if user, err := m.UserByEmail(email); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return User{}, ErrCredentialsInvalid
 		}
@@ -34,13 +34,7 @@ func (m manager) VerifyUserPassword(email, password string) (User, error) {
 		} else if !b {
 			return User{}, ErrCredentialsInvalid
 		}
-		return User{
-			Username:    user.Username,
-			DisplayName: user.DisplayName,
-			Permissions: user.Permissions,
-			Root:        user.Root,
-			Home:        user.Home,
-		}, nil
+		return user, nil
 	}
 }
 
@@ -67,8 +61,10 @@ func (m manager) ReadAccessToken(accessToken string) (User, error) {
 		return User{}, ErrCredentialsInvalid
 	}
 	return User{
-		Username:    token.Username,
-		DisplayName: token.DisplayName,
+		BasicUser: BasicUser{
+			Username:    token.Username,
+			DisplayName: token.DisplayName,
+		},
 		Permissions: token.Permissions,
 		Root:        token.Root,
 		Home:        token.Home,

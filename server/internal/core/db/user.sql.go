@@ -11,45 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const createUser = `-- name: CreateUser :one
-INSERT INTO users(
-    username, display_name, password_hash, root, home
-) VALUES (
-    $1, $2, $3, $4, $5
-) RETURNING username, created, modified, deleted, display_name, password_hash, root, home, permissions
-`
-
-type CreateUserParams struct {
-	Username     string
-	DisplayName  string
-	PasswordHash string
-	Root         uuid.UUID
-	Home         uuid.UUID
-}
-
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser,
-		arg.Username,
-		arg.DisplayName,
-		arg.PasswordHash,
-		arg.Root,
-		arg.Home,
-	)
-	var i User
-	err := row.Scan(
-		&i.Username,
-		&i.Created,
-		&i.Modified,
-		&i.Deleted,
-		&i.DisplayName,
-		&i.PasswordHash,
-		&i.Root,
-		&i.Home,
-		&i.Permissions,
-	)
-	return i, err
-}
-
 const sharedResources = `-- name: SharedResources :many
 SELECT id, name, parent, dir, created, modified, deleted, content_length, content_type, content_sha256, permissions, grants FROM resources
     WHERE grants ? $1::TEXT
@@ -95,31 +56,4 @@ func (q *Queries) SharedResources(ctx context.Context, arg SharedResourcesParams
 		return nil, err
 	}
 	return items, nil
-}
-
-const userByUsername = `-- name: UserByUsername :one
-SELECT username, display_name, password_hash, root, home, permissions FROM users WHERE username = $1
-`
-
-type UserByUsernameRow struct {
-	Username     string
-	DisplayName  string
-	PasswordHash string
-	Root         uuid.UUID
-	Home         uuid.UUID
-	Permissions  int32
-}
-
-func (q *Queries) UserByUsername(ctx context.Context, username string) (UserByUsernameRow, error) {
-	row := q.db.QueryRow(ctx, userByUsername, username)
-	var i UserByUsernameRow
-	err := row.Scan(
-		&i.Username,
-		&i.DisplayName,
-		&i.PasswordHash,
-		&i.Root,
-		&i.Home,
-		&i.Permissions,
-	)
-	return i, err
 }

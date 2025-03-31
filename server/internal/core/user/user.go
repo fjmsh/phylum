@@ -10,12 +10,26 @@ import (
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
-type User struct {
+type BasicUser struct {
 	Username    string
 	DisplayName string
-	Root        uuid.UUID
-	Home        uuid.UUID
-	Permissions int32
+}
+
+type User struct {
+	BasicUser
+	PasswordHash string
+	Root         uuid.UUID
+	Home         uuid.UUID
+	Permissions  int32
+}
+
+func scanBasicUser(row pgx.CollectableRow) (BasicUser, error) {
+	var u BasicUser
+	err := row.Scan(
+		&u.Username,
+		&u.DisplayName,
+	)
+	return u, err
 }
 
 func scanUser(row pgx.CollectableRow) (User, error) {
@@ -23,6 +37,7 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 	err := row.Scan(
 		&u.Username,
 		&u.DisplayName,
+		&u.PasswordHash,
 		&u.Root,
 		&u.Home,
 		&u.Permissions,
@@ -42,7 +57,7 @@ type Manager interface {
 	CreateUser(username, displayName, password string, root uuid.UUID) (User, error)
 
 	// select.go
-	ListUsers(since *time.Time) ([]User, error)
+	ListUsers(since *time.Time) ([]BasicUser, error)
 	UserByEmail(email string) (User, error)
 
 	// update.go

@@ -12,7 +12,9 @@ const DefaultUserUsername = "phylum"
 const DefaultUserDisplayName = "Phylum"
 
 func (d DbHandler) BootstrapData(ctx context.Context) error {
-	if _, err := d.UserByUsername(ctx, DefaultUserUsername); err != nil {
+	const q = "SELECT username FROM users WHERE username = $1::TEXT"
+	row := d.QueryRow(ctx, q, DefaultUserUsername)
+	if err := row.Scan(nil); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = d.populateData(ctx)
 		}
@@ -47,12 +49,8 @@ VALUES ($1::UUID, $2::UUID, $3::TEXT, TRUE, 0, '', '')`
 			return err
 		}
 
-		const createRootUser = `-- name: CreateUser :one
-INSERT INTO users(
-    username, display_name, password_hash, root, home, permissions
-) VALUES (
-    $1::TEXT, $2::TEXT, '', $3::UUID, $4::UUID, -1
-) `
+		const createRootUser = `INSERT INTO users(username, display_name, password_hash, root, home, permissions)
+VALUES ($1::TEXT, $2::TEXT, '', $3::UUID, $4::UUID, -1)`
 
 		if _, err := dbh.db.Exec(ctx, createRootUser, DefaultUserUsername, DefaultUserDisplayName, rootID, userHomeID); err != nil {
 			return err
