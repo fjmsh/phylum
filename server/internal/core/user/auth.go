@@ -7,7 +7,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 	"golang.org/x/exp/rand"
@@ -15,7 +14,7 @@ import (
 
 const accessTokenLength = 16
 
-var accessTokenValiditiy = pgtype.Interval{
+var accessTokenValidity = pgtype.Interval{
 	Days:  30,
 	Valid: true,
 }
@@ -39,14 +38,12 @@ func (m manager) VerifyUserPassword(email, password string) (User, error) {
 }
 
 func (m manager) CreateAccessToken(username string) (string, error) {
-	if token, err := m.db.InsertAccessToken(m.ctx, db.InsertAccessTokenParams{
-		ID:       GenerateRandomString(accessTokenLength),
-		Validity: accessTokenValiditiy,
-		Username: username,
-	}); err != nil {
+	const q = `INSERT INTO access_tokens(id, expires, username) VALUES ($1::text, NOW() + $2::interval, $3::text)`
+	id := GenerateRandomString(accessTokenLength)
+	if _, err := m.db.Exec(m.ctx, q, id, accessTokenValidity, username); err != nil {
 		return "", err
 	} else {
-		return token.ID, nil
+		return id, nil
 	}
 }
 
