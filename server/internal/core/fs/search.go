@@ -3,24 +3,27 @@ package fs
 import (
 	"strings"
 
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/jackc/pgx/v5"
 )
 
 func (f filesystem) Search(query string) ([]Resource, error) {
-	var username pgtype.Text
+	qb := strings.Builder{}
+	qb.WriteString(`SELECT * FROM resources
+WHERE f_prepare_search(name) %> @query::TEXT
+AND deleted IS NULL`)
 	if !f.fullAccess {
-		username.String = f.username
-		username.Valid = true
+		qb.WriteString("\nAND permissions[@username::TEXT]::integer <> 0")
 	}
-	d := db.Get()
-	if res, err := d.Search(f.ctx, db.SearchParams{Search: strings.ToLower(query), Username: username}); err != nil {
+	qb.WriteString("\nORDER BY word_similarity(f_prepare_search(name), @query::TEXT) DESC ")
+
+	args := pgx.NamedArgs{
+		"query":    strings.ToLower(query),
+		"username": f.username,
+	}
+
+	if rows, err := f.db.Query(f.ctx, qb.String(), args); err != nil {
 		return nil, err
 	} else {
-		h := make([]Resource, len(res))
-		for i, r := range res {
-			h[i] = ResourceFromDB(r)
-		}
-		return h, nil
+		return pgx.CollectRows(rows, f.scanResource)
 	}
 }
