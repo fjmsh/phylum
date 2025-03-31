@@ -6,11 +6,13 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (f filesystem) Search(query string) ([]Resource, error) {
+func (f filesystem) Search(query string, includeDeleted bool) ([]Resource, error) {
 	qb := strings.Builder{}
 	qb.WriteString(`SELECT * FROM resources
-WHERE f_prepare_search(name) %> @query::TEXT
-AND deleted IS NULL`)
+WHERE f_prepare_search(name) %> @query::TEXT`)
+	if !includeDeleted {
+		qb.WriteString("\nAND deleted IS NULL")
+	}
 	if !f.fullAccess {
 		qb.WriteString("\nAND permissions[@username::TEXT]::integer <> 0")
 	}

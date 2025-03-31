@@ -49,7 +49,7 @@ type FileSystem interface {
 	ResourceByPathOrUUID(pathOrUUID string) (Resource, error)
 
 	// search.go
-	Search(query string) ([]Resource, error)
+	Search(query string, includeDeleted bool) ([]Resource, error)
 
 	// shared.go
 	SharedResources() ([]Resource, error)

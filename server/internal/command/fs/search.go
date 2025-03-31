@@ -17,7 +17,8 @@ func setupSearchCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			query := strings.Join(args, " ")
-			res, err := f.Search(query)
+			includeDeleted, _ := cmd.Flags().GetBool("include-deleted")
+			res, err := f.Search(query, includeDeleted)
 			if err != nil {
 				fmt.Println("cannot search: " + err.Error())
 				os.Exit(1)
@@ -28,5 +29,6 @@ func setupSearchCommand() *cobra.Command {
 			}
 		},
 	}
+	cmd.Flags().BoolP("include-deleted", "x", false, "Include Deleted Files")
 	return &cmd
 }
