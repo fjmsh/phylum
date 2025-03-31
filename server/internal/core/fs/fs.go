@@ -51,6 +51,9 @@ type FileSystem interface {
 	// search.go
 	Search(query string) ([]Resource, error)
 
+	// shared.go
+	SharedResources() ([]Resource, error)
+
 	// trash.go
 	TrashList(cursor string, n uint) ([]Resource, string, error)
 	TrashSummary() (int, int, error)

@@ -74,7 +74,4 @@ type Manager interface {
 	AddBookmark(u User, resource fs.Resource, name string) (Bookmark, error)
 	RemoveBookmark(u User, id uuid.UUID) error
 	ListBookmarks(u User) ([]Bookmark, error)
-
-	// shared.go
-	SharedResources(u User) (result []fs.Resource, err error)
 }
