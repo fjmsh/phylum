@@ -5,6 +5,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/errors"
@@ -48,24 +49,33 @@ func (m manager) CreateAccessToken(username string) (string, error) {
 }
 
 func (m manager) ReadAccessToken(accessToken string) (User, error) {
-	token, err := m.db.AccessTokenById(m.ctx, accessToken)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return User{}, ErrCredentialsInvalid
-	} else if err != nil {
+	const q = `SELECT t.expires, u.username, u.display_name, u.permissions, u.root, u.home FROM access_tokens t JOIN users u ON t.username = u.username WHERE t.id = $1; `
+	row := m.db.QueryRow(m.ctx, q, accessToken)
+
+	var expires pgtype.Timestamp
+	var username string
+	var displayName string
+	var permissions int32
+	var root uuid.UUID
+	var home uuid.UUID
+	if err := row.Scan(&expires, &username, &displayName, &permissions, &root, &home); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = ErrCredentialsInvalid
+		}
 		return User{}, err
-	}
-	if time.Now().After(token.Expires.Time) {
+	} else if time.Now().After(expires.Time) {
 		return User{}, ErrCredentialsInvalid
+	} else {
+		return User{
+			BasicUser: BasicUser{
+				Username:    username,
+				DisplayName: displayName,
+			},
+			Permissions: permissions,
+			Root:        root,
+			Home:        home,
+		}, nil
 	}
-	return User{
-		BasicUser: BasicUser{
-			Username:    token.Username,
-			DisplayName: token.DisplayName,
-		},
-		Permissions: token.Permissions,
-		Root:        token.Root,
-		Home:        token.Home,
-	}, nil
 }
 
 const (
