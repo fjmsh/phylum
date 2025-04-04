@@ -2,10 +2,12 @@ package storage
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -58,7 +60,7 @@ func setupStorageCreateCommand() *cobra.Command {
 				params[paramName] = val
 			}
 
-			if err := storage.Get().CreateBackend(name, driver, params); err != nil {
+			if err := storage.Get().CreateBackend(db.Get(context.Background()), name, driver, params); err != nil {
 				logrus.Fatal(err)
 			}
 
