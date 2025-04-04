@@ -14,17 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Storage interface {
-	CreateBackend(db db.Handler, name string, driver string, params map[string]string) error
-	ListBackends() map[string]Backend
-	OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error)
-	OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string, string) error) (io.WriteCloser, error)
-	CopyContents(src, dest uuid.UUID) error
-	Delete(id uuid.UUID) error
-	DeleteAll(deleted []uuid.UUID) []error
-}
-
-type storage struct {
+type Storage struct {
 	backends       map[string]Backend
 	defaultBackend Backend
 }
@@ -33,7 +23,7 @@ var s Storage
 var DefaultStorageDir string
 
 func Get() Storage {
-	if s == nil {
+	if s.defaultBackend == nil {
 		if storage, err := create(DefaultStorageDir); err != nil {
 			logrus.Fatal(err)
 		} else {
@@ -45,18 +35,18 @@ func Get() Storage {
 
 func create(defaultStorageDir string) (Storage, error) {
 	if backends, err := restoreBackends(); err != nil {
-		return nil, err
+		return Storage{}, err
 	} else if defaultBackend, err := newLocalStorage("<default>", defaultStorageDir); err != nil {
-		return nil, err
+		return Storage{}, err
 	} else {
-		return storage{
+		return Storage{
 			backends:       backends,
 			defaultBackend: defaultBackend,
 		}, nil
 	}
 }
 
-func (s storage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error) {
+func (s Storage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error) {
 	if backend, err := s.findStorageBackend(id); err != nil {
 		return nil, err
 	} else {
@@ -64,7 +54,7 @@ func (s storage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error
 	}
 }
 
-func (s storage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string, string) error) (io.WriteCloser, error) {
+func (s Storage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string, string) error) (io.WriteCloser, error) {
 	if backend, err := s.findStorageBackend(id); err != nil {
 		return nil, err
 	} else if out, err := backend.OpenWrite(id); err != nil {
@@ -79,7 +69,7 @@ func (s storage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, 
 	}
 }
 
-func (s storage) CopyContents(src, dest uuid.UUID) error {
+func (s Storage) CopyContents(src, dest uuid.UUID) error {
 	in, err := s.OpenRead(src, 0, -1)
 	if err != nil {
 		return errors.New("Unable to open " + src.String() + ": " + err.Error())
@@ -96,7 +86,7 @@ func (s storage) CopyContents(src, dest uuid.UUID) error {
 
 }
 
-func (s storage) Delete(id uuid.UUID) error {
+func (s Storage) Delete(id uuid.UUID) error {
 	if backend, err := s.findStorageBackend(id); err != nil {
 		return err
 	} else {
@@ -104,7 +94,7 @@ func (s storage) Delete(id uuid.UUID) error {
 	}
 }
 
-func (s storage) DeleteAll(ids []uuid.UUID) []error {
+func (s Storage) DeleteAll(ids []uuid.UUID) []error {
 	// TODO: Batch delete
 	var errs []error
 	for _, id := range ids {
@@ -116,12 +106,12 @@ func (s storage) DeleteAll(ids []uuid.UUID) []error {
 	return errs
 }
 
-func (s storage) findStorageBackend(id uuid.UUID) (Backend, error) {
+func (s Storage) findStorageBackend(id uuid.UUID) (Backend, error) {
 	// TODO: implement
 	return s.defaultBackend, nil
 }
 
-func (s storage) CreateBackend(db db.Handler, name string, driver string, params map[string]string) error {
+func (s Storage) CreateBackend(db db.Handler, name string, driver string, params map[string]string) error {
 	backend, err := openBackend(name, driver, params)
 	if err != nil {
 		return nil
@@ -138,7 +128,7 @@ func (s storage) CreateBackend(db db.Handler, name string, driver string, params
 	return nil
 }
 
-func (s storage) ListBackends() map[string]Backend {
+func (s Storage) ListBackends() map[string]Backend {
 	return s.backends
 }
 
