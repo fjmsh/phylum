@@ -2,20 +2,30 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/shroff/phylum/server/internal/core/db/migrations"
 	"github.com/sirupsen/logrus"
 )
 
-func (d DbHandler) checkVersion(ctx context.Context, autoMigrate bool) error {
-	conn, err := d.pool.Acquire(ctx)
+var (
+	ErrMigrationTargetTooLow    = errors.New("schema migration target cannot be less than 0")
+	ErrMigrationTargetTooHigh   = errors.New("schema migration target cannot be greater than latest")
+	ErrMigrationNoAutoDowngrade = errors.New("will not auto-downgrade schema to prevent data loss")
+)
+
+func (h Handler) checkVersion(ctx context.Context, autoMigrate bool) error {
+	conn, err := h.pool.Acquire(ctx)
 	if err != nil {
 		return err
 	}
 	defer conn.Release()
 
 	migrator, err := migrations.NewMigrator(ctx, conn.Conn())
+	if err != nil {
+		return err
+	}
 	currentSchemaVersion, err := migrator.GetCurrentVersion(ctx)
 	if err != nil {
 		return err
@@ -24,7 +34,7 @@ func (d DbHandler) checkVersion(ctx context.Context, autoMigrate bool) error {
 
 	// Nothing to do
 	if currentSchemaVersion == latestSchemaVersion {
-		return d.BootstrapData(ctx)
+		return h.BootstrapData(ctx)
 	}
 
 	if !autoMigrate {
@@ -41,17 +51,20 @@ func (d DbHandler) checkVersion(ctx context.Context, autoMigrate bool) error {
 	if err != nil {
 		return err
 	}
-	return d.BootstrapData(ctx)
+	return h.BootstrapData(ctx)
 }
 
-func (d DbHandler) Migrate(ctx context.Context, version int) error {
-	conn, err := d.pool.Acquire(ctx)
+func (h Handler) Migrate(ctx context.Context, version int) error {
+	conn, err := h.pool.Acquire(ctx)
 	if err != nil {
 		return err
 	}
 	defer conn.Release()
 
 	migrator, err := migrations.NewMigrator(ctx, conn.Conn())
+	if err != nil {
+		return err
+	}
 	currentSchemaVersion, err := migrator.GetCurrentVersion(ctx)
 	if err != nil {
 		return err
@@ -61,7 +74,7 @@ func (d DbHandler) Migrate(ctx context.Context, version int) error {
 		version = latestSchemaVersion
 	} else if version == 0 {
 		logrus.Info("Deleting database schema")
-		return d.DeleteSchema(ctx)
+		return h.DeleteSchema(ctx)
 	} else if version > latestSchemaVersion {
 		return ErrMigrationTargetTooHigh
 	}
@@ -72,13 +85,13 @@ func (d DbHandler) Migrate(ctx context.Context, version int) error {
 		return err
 	}
 	if version == latestSchemaVersion {
-		return d.BootstrapData(ctx)
+		return h.BootstrapData(ctx)
 	}
 	return nil
 }
 
-func (d DbHandler) DeleteSchema(ctx context.Context) error {
-	return d.WithTx(ctx, func(d *DbHandler) (err error) {
+func (h Handler) DeleteSchema(ctx context.Context) error {
+	return h.RunInTx(ctx, func(d *Handler) (err error) {
 		user := d.pool.Config().ConnConfig.User
 		if _, err = d.Exec(ctx, "DROP SCHEMA public CASCADE"); err != nil {
 			return

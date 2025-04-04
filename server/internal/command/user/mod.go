@@ -55,7 +55,7 @@ func setupUserModCommand() *cobra.Command {
 			}
 
 			ctx := context.Background()
-			err = db.Get().WithTx(ctx, func(db *db.DbHandler) error {
+			err = db.Get().RunInTx(ctx, func(db *db.Handler) error {
 				m := user.CreateManager(ctx).WithDb(db)
 				if displayName != "" {
 					if err := m.UpdateUserDisplayName(u, displayName); err != nil {

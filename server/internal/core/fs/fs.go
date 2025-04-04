@@ -36,7 +36,7 @@ type FileSystem interface {
 	// filesystem.go
 	RootID() uuid.UUID
 	WithRoot(uuid.UUID) FileSystem
-	WithDb(db *db.DbHandler) FileSystem
+	WithDb(db *db.Handler) FileSystem
 	RunInTx(fn func(FileSystem) error) error
 
 	// create.go
@@ -116,7 +116,7 @@ func OpenFromPublink(ctx context.Context, name string, password string, path str
 	return f.ResourceByPath(path)
 }
 
-func getPublink(d *db.DbHandler, ctx context.Context, name string) (Publink, error) {
+func getPublink(d *db.Handler, ctx context.Context, name string) (Publink, error) {
 	q := "SELECT FROM publinks p WHERE name = $1::TEXT AND deleted IS NULL"
 	if rows, err := d.Query(ctx, q, name); err != nil {
 		return Publink{}, err

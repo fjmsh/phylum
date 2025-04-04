@@ -10,7 +10,7 @@ import (
 
 type filesystem struct {
 	ctx        context.Context
-	db         *db.DbHandler
+	db         *db.Handler
 	cs         storage.Storage
 	rootID     uuid.UUID
 	username   string
@@ -36,11 +36,11 @@ func (f filesystem) withRoot(id uuid.UUID) filesystem {
 	}
 }
 
-func (f filesystem) WithDb(db *db.DbHandler) FileSystem {
+func (f filesystem) WithDb(db *db.Handler) FileSystem {
 	return f.withDb(db)
 }
 
-func (f filesystem) withDb(db *db.DbHandler) filesystem {
+func (f filesystem) withDb(db *db.Handler) filesystem {
 	return filesystem{
 		ctx:        f.ctx,
 		db:         db,
@@ -52,13 +52,13 @@ func (f filesystem) withDb(db *db.DbHandler) filesystem {
 }
 
 func (f filesystem) RunInTx(fn func(FileSystem) error) error {
-	return f.db.WithTx(f.ctx, func(db *db.DbHandler) error {
+	return f.db.RunInTx(f.ctx, func(db *db.Handler) error {
 		return fn(f.WithDb(db))
 	})
 }
 
 func (f filesystem) runInTx(fn func(filesystem) error) error {
-	return f.db.WithTx(f.ctx, func(db *db.DbHandler) error {
+	return f.db.RunInTx(f.ctx, func(db *db.Handler) error {
 		return fn(f.withDb(db))
 	})
 }
