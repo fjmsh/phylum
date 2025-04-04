@@ -16,7 +16,7 @@ var f fs.FileSystem
 
 func RootFileSystem() fs.FileSystem {
 	var rootUser user.User
-	if user, err := user.CreateManager(context.Background()).UserByEmail(db.DefaultUserUsername); err != nil {
+	if user, err := user.ManagerFromContext(context.Background()).UserByEmail(db.DefaultUserUsername); err != nil {
 		fmt.Println("unable to find root user: " + err.Error())
 		os.Exit(1)
 	} else {
@@ -32,7 +32,7 @@ func User(cmd *cobra.Command) user.User {
 			fmt.Println("could not read user: " + err.Error())
 			os.Exit(1)
 		} else {
-			if user, err := user.CreateManager(context.Background()).UserByEmail(value); err != nil {
+			if user, err := user.ManagerFromContext(context.Background()).UserByEmail(value); err != nil {
 				fmt.Println("could not find user '" + value + "': " + err.Error())
 				os.Exit(1)
 			} else {

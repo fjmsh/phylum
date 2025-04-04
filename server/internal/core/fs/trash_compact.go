@@ -11,23 +11,23 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func TrashCompact(duration time.Duration) {
+func TrashCompact(ctx context.Context, duration time.Duration) {
 	t := time.Now().Add(-duration)
-	if d, err := hardDeleteOldResources(t); err != nil {
+	if d, err := hardDeleteOldResources(ctx, t); err != nil {
 		logrus.Error(err)
 	} else {
 		logrus.Info(fmt.Sprintf("Removed %d files deleted before %s", d, t.Format(time.RFC1123)))
 	}
 }
 
-func hardDeleteOldResources(t time.Time) (int, error) {
+func hardDeleteOldResources(ctx context.Context, t time.Time) (int, error) {
 	q := pg.
 		From("resources").
 		Where(goqu.C("deleted").Lt(goqu.V(t.UTC()))).
 		Delete().
 		Returning("id", "dir")
 	query, args, _ := q.ToSQL()
-	count, ids, err := collectNonDirResourceIDs(db.Get().Query(context.Background(), query, args...))
+	count, ids, err := collectNonDirResourceIDs(db.Get(ctx).Query(query, args...))
 	if err != nil {
 		return 0, err
 	}

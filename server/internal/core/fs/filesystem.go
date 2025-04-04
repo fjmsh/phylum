@@ -1,15 +1,12 @@
 package fs
 
 import (
-	"context"
-
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
 )
 
 type filesystem struct {
-	ctx        context.Context
 	db         db.Handler
 	cs         storage.Storage
 	rootID     uuid.UUID
@@ -27,7 +24,6 @@ func (f filesystem) WithRoot(id uuid.UUID) FileSystem {
 
 func (f filesystem) withRoot(id uuid.UUID) filesystem {
 	return filesystem{
-		ctx:        f.ctx,
 		db:         f.db,
 		cs:         f.cs,
 		rootID:     id,
@@ -42,7 +38,6 @@ func (f filesystem) WithDb(db db.Handler) FileSystem {
 
 func (f filesystem) withDb(db db.Handler) filesystem {
 	return filesystem{
-		ctx:        f.ctx,
 		db:         db,
 		cs:         f.cs,
 		rootID:     f.rootID,
@@ -52,13 +47,13 @@ func (f filesystem) withDb(db db.Handler) filesystem {
 }
 
 func (f filesystem) RunInTx(fn func(FileSystem) error) error {
-	return f.db.RunInTx(f.ctx, func(db db.Handler) error {
+	return f.db.RunInTx(func(db db.Handler) error {
 		return fn(f.WithDb(db))
 	})
 }
 
 func (f filesystem) runInTx(fn func(filesystem) error) error {
-	return f.db.RunInTx(f.ctx, func(db db.Handler) error {
+	return f.db.RunInTx(func(db db.Handler) error {
 		return fn(f.withDb(db))
 	})
 }

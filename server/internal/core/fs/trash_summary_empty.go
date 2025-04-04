@@ -22,7 +22,7 @@ func (f filesystem) TrashSummary() (int, int, error) {
 			goqu.COUNT("*"))
 
 	query, args, _ := q.ToSQL()
-	row := f.db.QueryRow(f.ctx, query, args...)
+	row := f.db.QueryRow(query, args...)
 	var size int
 	var items int
 	err := row.Scan(&size, &items)
@@ -34,7 +34,7 @@ func (f filesystem) TrashEmpty() (int, error) {
 		Delete().
 		Returning("id", "dir")
 	query, args, _ := q.ToSQL()
-	count, ids, err := collectNonDirResourceIDs(f.db.Query(f.ctx, query, args...))
+	count, ids, err := collectNonDirResourceIDs(f.db.Query(query, args...))
 	storage.Get().DeleteAll(ids)
 	return count, err
 }

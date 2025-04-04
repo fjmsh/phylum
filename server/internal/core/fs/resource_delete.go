@@ -176,7 +176,7 @@ func (f filesystem) markDeleted(id uuid.UUID, softDelete, excludeRoot bool) (int
 			ToSQL()
 	}
 
-	return collectNonDirResourceIDs(f.db.Query(f.ctx, query, params...))
+	return collectNonDirResourceIDs(f.db.Query(query, params...))
 }
 
 func (f filesystem) markNotDeleted(id uuid.UUID) ([]int64, error) {
@@ -190,7 +190,7 @@ func (f filesystem) markNotDeleted(id uuid.UUID) ([]int64, error) {
 
 	query, params, _ := q.ToSQL()
 
-	rows, err := f.db.Query(f.ctx, query, params...)
+	rows, err := f.db.Query(query, params...)
 	if err != nil {
 		return nil, err
 	}

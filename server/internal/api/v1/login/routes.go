@@ -35,7 +35,7 @@ func createLoginRouteHandler() func(c *gin.Context) {
 			panic(errors.NewError(http.StatusBadRequest, "missing_password", "Password Not Specified"))
 		}
 
-		userManager := user.CreateManager(c.Request.Context())
+		userManager := user.ManagerFromContext(c.Request.Context())
 		if user, err := userManager.VerifyUserPassword(email, password); err != nil {
 			panic(err)
 		} else {

@@ -49,5 +49,5 @@ func (r iteratorForCreateResources) Err() error {
 }
 
 func (f filesystem) CreateResources(arg []CreateResourcesParams) (int64, error) {
-	return f.db.CopyFrom(f.ctx, []string{"resources"}, []string{"id", "parent", "name", "dir", "content_length", "content_type", "content_sha256"}, &iteratorForCreateResources{rows: arg})
+	return f.db.CopyFrom([]string{"resources"}, []string{"id", "parent", "name", "dir", "content_length", "content_type", "content_sha256"}, &iteratorForCreateResources{rows: arg})
 }

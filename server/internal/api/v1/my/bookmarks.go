@@ -23,7 +23,7 @@ func setupBookmarksRoutes(r *gin.RouterGroup) {
 
 func handleBookmarksGetRoute(c *gin.Context) {
 	u := auth.GetUser(c)
-	bookmarks, err := user.CreateManager(c.Request.Context()).ListBookmarks(u)
+	bookmarks, err := user.ManagerFromContext(c.Request.Context()).ListBookmarks(u)
 	if err != nil {
 		panic(err)
 	}
@@ -46,7 +46,7 @@ func handleBookmarksAddRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	b, err := user.CreateManager(c.Request.Context()).AddBookmark(u, r, name)
+	b, err := user.ManagerFromContext(c.Request.Context()).AddBookmark(u, r, name)
 	if err != nil {
 		panic(err)
 	}
@@ -61,7 +61,7 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 	id := uuid.MustParse(idStr)
 
 	u := auth.GetUser(c)
-	if err := user.CreateManager(c.Request.Context()).RemoveBookmark(u, id); err != nil {
+	if err := user.ManagerFromContext(c.Request.Context()).RemoveBookmark(u, id); err != nil {
 		panic(err)
 	}
 	c.JSON(200, gin.H{})

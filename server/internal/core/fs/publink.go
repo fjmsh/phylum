@@ -67,13 +67,13 @@ func (r Resource) CreatePublink(name, password string, duration time.Duration, a
 	const q = `INSERT INTO publinks(name, created_by, root, password_hash, expires, max_accesses) VALUES
 	($1::text, $2::text, $3::uuid, $4::text, $5::timestamp, $6::int)`
 
-	_, err := r.f.db.Exec(r.f.ctx, q, name, r.f.username, r.ID(), passwordHash, expires, accesses)
+	_, err := r.f.db.Exec(q, name, r.f.username, r.ID(), passwordHash, expires, accesses)
 	return err
 }
 
 func (r Resource) ListPublinks() ([]Publink, error) {
 	const q = "SELECT * FROM publinks WHERE root = $1::UUID"
-	if rows, err := r.f.db.Query(r.f.ctx, q, r.id); err != nil {
+	if rows, err := r.f.db.Query(q, r.id); err != nil {
 		return nil, err
 	} else if links, err := pgx.CollectRows(rows, scanPublink); err != nil {
 		return nil, err

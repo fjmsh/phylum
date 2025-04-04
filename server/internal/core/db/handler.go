@@ -8,7 +8,8 @@ import (
 )
 
 type Handler struct {
-	tx interface {
+	ctx context.Context
+	tx  interface {
 		Begin(context.Context) (pgx.Tx, error)
 		SendBatch(context.Context, *pgx.Batch) pgx.BatchResults
 		Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
@@ -18,31 +19,32 @@ type Handler struct {
 	}
 }
 
-func (h Handler) RunInTx(ctx context.Context, fn func(Handler) error) error {
-	return pgx.BeginFunc(ctx, h.tx, func(tx pgx.Tx) error {
+func (h Handler) RunInTx(fn func(Handler) error) error {
+	return pgx.BeginFunc(h.ctx, h.tx, func(tx pgx.Tx) error {
 		h := Handler{
-			tx: tx,
+			ctx: h.ctx,
+			tx:  tx,
 		}
 		return fn(h)
 	})
 }
 
-func (h Handler) Exec(ctx context.Context, stmt string, args ...interface{}) (pgconn.CommandTag, error) {
-	return h.tx.Exec(ctx, stmt, args...)
+func (h Handler) Exec(stmt string, args ...interface{}) (pgconn.CommandTag, error) {
+	return h.tx.Exec(h.ctx, stmt, args...)
 }
 
-func (h Handler) Query(ctx context.Context, stmt string, args ...interface{}) (pgx.Rows, error) {
-	return h.tx.Query(ctx, stmt, args...)
+func (h Handler) Query(stmt string, args ...interface{}) (pgx.Rows, error) {
+	return h.tx.Query(h.ctx, stmt, args...)
 }
 
-func (h Handler) QueryRow(ctx context.Context, stmt string, args ...interface{}) pgx.Row {
-	return h.tx.QueryRow(ctx, stmt, args...)
+func (h Handler) QueryRow(stmt string, args ...interface{}) pgx.Row {
+	return h.tx.QueryRow(h.ctx, stmt, args...)
 }
 
-func (h Handler) CopyFrom(ctx context.Context, tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error) {
-	return h.tx.CopyFrom(ctx, tableName, columnNames, rowSrc)
+func (h Handler) CopyFrom(tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error) {
+	return h.tx.CopyFrom(h.ctx, tableName, columnNames, rowSrc)
 }
 
-func (h Handler) SendBatch(ctx context.Context, batch *pgx.Batch) pgx.BatchResults {
-	return h.tx.SendBatch(ctx, batch)
+func (h Handler) SendBatch(batch *pgx.Batch) pgx.BatchResults {
+	return h.tx.SendBatch(h.ctx, batch)
 }

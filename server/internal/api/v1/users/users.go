@@ -29,7 +29,7 @@ func handleUsersListRoute(c *gin.Context) {
 		t := time.UnixMilli(sinceInt - 1000).UTC()
 		since = &t
 	}
-	users, err := user.CreateManager(c.Request.Context()).ListUsers(since)
+	users, err := user.ManagerFromContext(c.Request.Context()).ListUsers(since)
 	if err != nil {
 		panic(err)
 	}

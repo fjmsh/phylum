@@ -34,7 +34,7 @@ func CreateHandler() func(c *gin.Context) {
 }
 
 func extractUserDetails(c *gin.Context) (user.User, error) {
-	userManager := user.CreateManager(c.Request.Context())
+	userManager := user.ManagerFromContext(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		return user.User{}, errAuthRequired
 	} else if auth, ok := checkAuthHeader(header, "basic"); ok {

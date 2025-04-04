@@ -6,7 +6,7 @@ import (
 
 func (f filesystem) updateResourceModified(id uuid.UUID) error {
 	const q = "UPDATE resources SET modified = NOW() WHERE id = $1"
-	_, err := f.db.Exec(f.ctx, q, id)
+	_, err := f.db.Exec(q, id)
 	return err
 }
 func (f filesystem) updateResourceContents(id uuid.UUID, contentLength int, contentType, contentSHA256 string) error {
@@ -17,6 +17,6 @@ func (f filesystem) updateResourceContents(id uuid.UUID, contentLength int, cont
     modified = NOW()
 WHERE id = $1::UUID
 `
-	_, err := f.db.Exec(f.ctx, q, id, contentLength, contentType, contentSHA256)
+	_, err := f.db.Exec(q, id, contentLength, contentType, contentSHA256)
 	return err
 }

@@ -23,7 +23,7 @@ WHERE f_prepare_search(name) %> @query::TEXT`)
 		"username": f.username,
 	}
 
-	if rows, err := f.db.Query(f.ctx, qb.String(), args); err != nil {
+	if rows, err := f.db.Query(qb.String(), args); err != nil {
 		return nil, err
 	} else {
 		return pgx.CollectRows(rows, f.scanResource)

@@ -98,7 +98,7 @@ func (f filesystem) updateResourceNameParent(id uuid.UUID, name string, parent u
 	}
 	q, args, _ := pg.Update("resources").Where(goqu.C("id").Eq(id)).Set(updates).ToSQL()
 
-	if _, err := f.db.Exec(f.ctx, q, args...); err != nil {
+	if _, err := f.db.Exec(q, args...); err != nil {
 		if strings.Contains(err.Error(), "unique_member_resource_name") {
 			return ErrResourceNameConflict
 		}

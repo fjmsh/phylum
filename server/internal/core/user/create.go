@@ -19,7 +19,7 @@ RETURNING username, display_name, password_hash, root, home, permissions`
 
 	if hash, err := crypt.GenerateArgon2EncodedHash(password); err != nil {
 		return User{}, err
-	} else if rows, err := m.db.Query(m.ctx, q, username, displayName, hash, root, root); err != nil {
+	} else if rows, err := m.db.Query(q, username, displayName, hash, root, root); err != nil {
 		if strings.Contains(err.Error(), "users_pkey") {
 			err = ErrUserExists
 		}

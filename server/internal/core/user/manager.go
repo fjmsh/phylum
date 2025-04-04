@@ -7,24 +7,13 @@ import (
 )
 
 type manager struct {
-	db  db.Handler
-	ctx context.Context
+	db db.Handler
 }
 
-func CreateManager(ctx context.Context) Manager {
-	return &manager{
-		ctx: ctx,
-		db:  db.Get(),
-	}
+func ManagerFromContext(ctx context.Context) Manager {
+	return manager{db: db.Get(ctx)}
 }
 
-func (m manager) WithDb(db db.Handler) Manager {
-	return m.withDb(db)
-}
-
-func (m manager) withDb(db db.Handler) manager {
-	return manager{
-		ctx: m.ctx,
-		db:  db,
-	}
+func ManagerFromDB(db db.Handler) Manager {
+	return manager{db: db}
 }

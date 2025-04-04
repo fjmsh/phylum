@@ -91,9 +91,8 @@ func setupUserAddCommand() *cobra.Command {
 				}
 			}
 
-			ctx := context.Background()
-			err = db.Get().RunInTx(ctx, func(db db.Handler) error {
-				userManager := user.CreateManager(ctx).WithDb(db)
+			err = db.Get(context.Background()).RunInTx(func(db db.Handler) error {
+				userManager := user.ManagerFromDB(db)
 				var u user.User
 				if user, err := userManager.CreateUser(username, displayName, password, root); err != nil {
 					return err

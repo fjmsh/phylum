@@ -1,6 +1,7 @@
 package serve
 
 import (
+	"context"
 	"time"
 
 	"github.com/fvbock/endless"
@@ -70,8 +71,8 @@ func setupTrashCompactor() {
 	go func() {
 		for {
 			<-ticker.C
-			fs.TrashCompact(trashRetainDuration)
+			fs.TrashCompact(context.Background(), trashRetainDuration)
 		}
 	}()
-	fs.TrashCompact(trashRetainDuration)
+	fs.TrashCompact(context.Background(), trashRetainDuration)
 }

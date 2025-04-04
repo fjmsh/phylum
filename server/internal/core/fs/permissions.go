@@ -31,7 +31,7 @@ UPDATE resources SET
 WHERE id = @resource_id::UUID`
 
 	err := r.f.runInTx(func(f filesystem) error {
-		if _, err := f.db.Exec(f.ctx, q, pgx.NamedArgs{
+		if _, err := f.db.Exec(q, pgx.NamedArgs{
 			"resource_id": r.id,
 			"username":    username,
 			"permission":  permission,
@@ -81,6 +81,6 @@ UPDATE resources
     FROM nodes
     WHERE resources.id = nodes.id`
 
-	_, err := f.db.Exec(f.ctx, q, id)
+	_, err := f.db.Exec(q, id)
 	return err
 }

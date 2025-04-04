@@ -42,7 +42,7 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 		Limit(n).
 		ToSQL()
 
-	if rows, err := f.db.Query(f.ctx, query, params...); err != nil {
+	if rows, err := f.db.Query(query, params...); err != nil {
 		return nil, "", err
 	} else if res, err := pgx.CollectRows(rows, f.scanResource); err != nil {
 		return nil, "", err

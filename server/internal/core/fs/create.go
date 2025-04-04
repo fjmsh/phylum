@@ -226,7 +226,7 @@ func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, 
 		}).
 		Returning("*").
 		ToSQL()
-	if rows, err := f.db.Query(f.ctx, query, args...); err != nil {
+	if rows, err := f.db.Query(query, args...); err != nil {
 		return Resource{}, err
 	} else {
 		return f.collectResource(rows)

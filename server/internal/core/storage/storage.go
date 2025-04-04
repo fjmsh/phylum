@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -15,7 +14,7 @@ import (
 )
 
 type Storage interface {
-	CreateBackend(ctx context.Context, name string, driver string, params map[string]string) error
+	CreateBackend(name string, driver string, params map[string]string) error
 	ListBackends() map[string]Backend
 	OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error)
 	OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string, string) error) (io.WriteCloser, error)
@@ -35,7 +34,7 @@ var DefaultStorageDir string
 
 func Get() Storage {
 	if s == nil {
-		if storage, err := create(context.Background(), db.Get(), DefaultStorageDir); err != nil {
+		if storage, err := create(db.Get(), DefaultStorageDir); err != nil {
 			logrus.Fatal(err)
 		} else {
 			s = storage
@@ -44,8 +43,8 @@ func Get() Storage {
 	return s
 }
 
-func create(ctx context.Context, db db.Handler, defaultStorageDir string) (Storage, error) {
-	if backends, err := restoreBackends(db, ctx); err != nil {
+func create(db db.Handler, defaultStorageDir string) (Storage, error) {
+	if backends, err := restoreBackends(db); err != nil {
 		return nil, err
 	} else if defaultBackend, err := newLocalStorage("<default>", defaultStorageDir); err != nil {
 		return nil, err
@@ -123,7 +122,7 @@ func (s *storage) findStorageBackend(id uuid.UUID) (Backend, error) {
 	return s.defaultBackend, nil
 }
 
-func (s storage) CreateBackend(ctx context.Context, name string, driver string, params map[string]string) error {
+func (s storage) CreateBackend(name string, driver string, params map[string]string) error {
 	backend, err := openBackend(name, driver, params)
 	if err != nil {
 		return nil
@@ -133,7 +132,7 @@ func (s storage) CreateBackend(ctx context.Context, name string, driver string, 
 	if err != nil {
 		return err
 	}
-	if _, err := s.db.Exec(ctx, q, name, driver, p); err != nil {
+	if _, err := s.db.Exec(q, name, driver, p); err != nil {
 		return err
 	}
 	s.backends[name] = backend
@@ -144,9 +143,9 @@ func (s storage) ListBackends() map[string]Backend {
 	return s.backends
 }
 
-func restoreBackends(db db.Handler, ctx context.Context) (map[string]Backend, error) {
+func restoreBackends(db db.Handler) (map[string]Backend, error) {
 	const q = "SELECT name, driver, params from storage_backends"
-	if rows, err := db.Query(ctx, q); err != nil {
+	if rows, err := db.Query(q); err != nil {
 		return nil, err
 	} else if backends, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (Backend, error) {
 		var name, driver string

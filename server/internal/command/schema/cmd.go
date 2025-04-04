@@ -50,7 +50,7 @@ func setupSchemaMigrateCommand() *cobra.Command {
 			ctx := context.Background()
 			if args[0] == "auto" || args[0] == "latest" {
 				db.AutoMigrate = true
-				db.Get()
+				db.Get(ctx)
 			} else {
 				db.AutoMigrate = false
 				if v, err := strconv.Atoi(args[0]); err != nil {

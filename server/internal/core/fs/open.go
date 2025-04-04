@@ -44,7 +44,7 @@ func (r Resource) ReadDirDeleted(recursive, includeDeleted bool) ([]Resource, er
 	}
 
 	query, args, _ := q.ToSQL()
-	if rows, err := r.f.db.Query(r.f.ctx, query, args...); err != nil {
+	if rows, err := r.f.db.Query(query, args...); err != nil {
 		return nil, err
 	} else {
 		return pgx.CollectRows(rows, r.f.scanResource)

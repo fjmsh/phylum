@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
@@ -50,9 +49,6 @@ func (u User) OpenFileSystem(ctx context.Context) fs.FileSystem {
 }
 
 type Manager interface {
-	// manager.go
-	WithDb(db db.Handler) Manager
-
 	// create.go
 	CreateUser(username, displayName, password string, root uuid.UUID) (User, error)
 

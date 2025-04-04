@@ -44,7 +44,7 @@ SET
     name = $3::TEXT
 RETURNING resource_id, name, dir, created`
 
-	if rows, err := m.db.Query(m.ctx, q, u.Username); err != nil {
+	if rows, err := m.db.Query(q, u.Username); err != nil {
 		return Bookmark{}, err
 	} else if bookmark, err := pgx.CollectExactlyOneRow(rows, scanBookmark); err != nil {
 		return Bookmark{}, err
@@ -55,7 +55,7 @@ RETURNING resource_id, name, dir, created`
 
 func (m manager) RemoveBookmark(u User, id uuid.UUID) error {
 	const q = "DELETE FROM bookmarks WHERE username = $1::TEXT AND resource_id = $2::UUID"
-	_, err := m.db.Exec(m.ctx, q, u.Username, id)
+	_, err := m.db.Exec(q, u.Username, id)
 	return err
 }
 
@@ -66,7 +66,7 @@ WHERE username = $1::TEXT
 AND deleted IS NULL
 ORDER BY modified DESC`
 
-	if rows, err := m.db.Query(m.ctx, q, u.Username); err != nil {
+	if rows, err := m.db.Query(q, u.Username); err != nil {
 		return nil, err
 	} else if bookmarks, err := pgx.CollectRows(rows, scanBookmark); err != nil {
 		return nil, err

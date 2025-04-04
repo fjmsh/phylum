@@ -24,7 +24,7 @@ func (r Resource) DiskUsage() (DiskUsageInfo, error) {
 
 	query, args, _ := q.ToSQL()
 
-	row := r.f.db.QueryRow(r.f.ctx, query, args...)
+	row := r.f.db.QueryRow(query, args...)
 	var size, count, dirs int64
 	err := row.Scan(&size, &count, &dirs)
 	return DiskUsageInfo{

@@ -27,7 +27,7 @@ func setupChpermCommand() *cobra.Command {
 			}
 
 			username := args[1]
-			if _, err := user.CreateManager(context.Background()).UserByEmail(username); err != nil {
+			if _, err := user.ManagerFromContext(context.Background()).UserByEmail(username); err != nil {
 				fmt.Println("cannot update permissions for user '" + username + "': " + err.Error())
 				os.Exit(1)
 			}

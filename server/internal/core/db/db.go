@@ -15,7 +15,7 @@ var AutoMigrate bool
 
 var pool *pgxpool.Pool
 
-func Get() Handler {
+func Get(ctx context.Context) Handler {
 	if pool == nil {
 		if p, err := createPool(context.Background(), DatabaseURL, TraceSQL, AutoMigrate); err != nil {
 			logrus.Fatal(err)
@@ -23,7 +23,10 @@ func Get() Handler {
 			pool = p
 		}
 	}
-	return Handler{tx: pool}
+	return Handler{
+		ctx: ctx,
+		tx:  pool,
+	}
 }
 func Close() {
 	if pool != nil {

@@ -37,7 +37,7 @@ const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, permissions) AS (
 SELECT id, name, parent, permissions FROM nodes`
 
 func (r Resource) GetAncestors() ([]ResourceAncestor, error) {
-	if rows, err := r.f.db.Query(r.f.ctx, ancestorsQuery, r.parentID); err != nil {
+	if rows, err := r.f.db.Query(ancestorsQuery, r.parentID); err != nil {
 		return nil, err
 	} else {
 		return pgx.CollectRows(rows, r.f.scanResourceAncestor)

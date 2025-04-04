@@ -39,7 +39,7 @@ func setupUserChrootCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]
 			idOrPath := args[1]
-			userManager := user.CreateManager(context.Background())
+			userManager := user.ManagerFromContext(context.Background())
 			if user, err := userManager.UserByEmail(email); err != nil {
 				logrus.Fatal(err)
 			} else {
@@ -59,7 +59,7 @@ func setupUserListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List Users",
 		Run: func(cmd *cobra.Command, args []string) {
-			users, err := user.CreateManager(context.Background()).ListUsers(nil)
+			users, err := user.ManagerFromContext(context.Background()).ListUsers(nil)
 			if err != nil {
 				logrus.Fatal(err)
 			}
