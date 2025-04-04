@@ -25,7 +25,7 @@ type Storage interface {
 }
 
 type storage struct {
-	db             *db.Handler
+	db             db.Handler
 	backends       map[string]Backend
 	defaultBackend Backend
 }
@@ -44,7 +44,7 @@ func Get() Storage {
 	return s
 }
 
-func create(ctx context.Context, db *db.Handler, defaultStorageDir string) (Storage, error) {
+func create(ctx context.Context, db db.Handler, defaultStorageDir string) (Storage, error) {
 	if backends, err := restoreBackends(db, ctx); err != nil {
 		return nil, err
 	} else if defaultBackend, err := newLocalStorage("<default>", defaultStorageDir); err != nil {
@@ -144,7 +144,7 @@ func (s storage) ListBackends() map[string]Backend {
 	return s.backends
 }
 
-func restoreBackends(db *db.Handler, ctx context.Context) (map[string]Backend, error) {
+func restoreBackends(db db.Handler, ctx context.Context) (map[string]Backend, error) {
 	const q = "SELECT name, driver, params from storage_backends"
 	if rows, err := db.Query(ctx, q); err != nil {
 		return nil, err

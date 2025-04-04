@@ -9,29 +9,30 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var h *Handler
 var DatabaseURL string
 var TraceSQL bool
 var AutoMigrate bool
 
-func Get() *Handler {
-	if h == nil {
-		if handler, err := createHandler(context.Background(), DatabaseURL, TraceSQL, AutoMigrate); err != nil {
+var pool *pgxpool.Pool
+
+func Get() Handler {
+	if pool == nil {
+		if p, err := createPool(context.Background(), DatabaseURL, TraceSQL, AutoMigrate); err != nil {
 			logrus.Fatal(err)
 		} else {
-			h = handler
+			pool = p
 		}
 	}
-	return h
+	return Handler{tx: pool}
 }
 func Close() {
-	if h != nil {
-		h.pool.Close()
-		h = nil
+	if pool != nil {
+		pool.Close()
+		pool = nil
 	}
 }
 
-func createHandler(ctx context.Context, dsn string, traceSQL, autoMigrate bool) (*Handler, error) {
+func createPool(ctx context.Context, dsn string, traceSQL, autoMigrate bool) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, errors.New("Unable to parse DSN: " + err.Error())
@@ -48,14 +49,9 @@ func createHandler(ctx context.Context, dsn string, traceSQL, autoMigrate bool) 
 
 	logrus.Debug("Connected to " + config.ConnConfig.Database + " at " + config.ConnConfig.Host + ":" + fmt.Sprint(config.ConnConfig.Port))
 
-	h := Handler{
-		tx:   pool,
-		pool: pool,
-	}
-
-	if err := h.checkVersion(ctx, autoMigrate); err != nil {
+	if err := checkVersion(ctx, autoMigrate); err != nil {
 		return nil, err
 	}
 
-	return &h, nil
+	return pool, nil
 }

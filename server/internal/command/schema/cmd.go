@@ -29,11 +29,11 @@ func setupSchemaResetCommand() *cobra.Command {
 		Short: "Reset Database Schema",
 		Run: func(cmd *cobra.Command, args []string) {
 			db.AutoMigrate = false
-			if err := db.Get().DeleteSchema(context.Background()); err != nil {
+			if err := db.DeleteSchema(context.Background()); err != nil {
 				fmt.Println("unable to delete database schema: " + err.Error())
 				os.Exit(1)
 			}
-			if err := db.Get().Migrate(context.Background(), -1); err != nil {
+			if err := db.Migrate(context.Background(), -1); err != nil {
 				fmt.Println("unable to migrate database schema: " + err.Error())
 				os.Exit(1)
 			}
@@ -56,7 +56,7 @@ func setupSchemaMigrateCommand() *cobra.Command {
 				if v, err := strconv.Atoi(args[0]); err != nil {
 					fmt.Println(err.Error())
 					os.Exit(3)
-				} else if err := db.Get().Migrate(ctx, v); err != nil {
+				} else if err := db.Migrate(ctx, v); err != nil {
 					fmt.Println(err.Error())
 					os.Exit(4)
 				}

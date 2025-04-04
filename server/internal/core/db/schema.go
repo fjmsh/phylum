@@ -15,8 +15,8 @@ var (
 	ErrMigrationNoAutoDowngrade = errors.New("will not auto-downgrade schema to prevent data loss")
 )
 
-func (h Handler) checkVersion(ctx context.Context, autoMigrate bool) error {
-	conn, err := h.pool.Acquire(ctx)
+func checkVersion(ctx context.Context, autoMigrate bool) error {
+	conn, err := pool.Acquire(ctx)
 	if err != nil {
 		return err
 	}
@@ -34,7 +34,7 @@ func (h Handler) checkVersion(ctx context.Context, autoMigrate bool) error {
 
 	// Nothing to do
 	if currentSchemaVersion == latestSchemaVersion {
-		return h.BootstrapData(ctx)
+		return BootstrapData(ctx)
 	}
 
 	if !autoMigrate {
@@ -51,11 +51,12 @@ func (h Handler) checkVersion(ctx context.Context, autoMigrate bool) error {
 	if err != nil {
 		return err
 	}
-	return h.BootstrapData(ctx)
+	return BootstrapData(ctx)
 }
 
-func (h Handler) Migrate(ctx context.Context, version int) error {
-	conn, err := h.pool.Acquire(ctx)
+func Migrate(ctx context.Context, version int) error {
+	Get() // Initialize the pool, just in case
+	conn, err := pool.Acquire(ctx)
 	if err != nil {
 		return err
 	}
@@ -74,7 +75,7 @@ func (h Handler) Migrate(ctx context.Context, version int) error {
 		version = latestSchemaVersion
 	} else if version == 0 {
 		logrus.Info("Deleting database schema")
-		return h.DeleteSchema(ctx)
+		return DeleteSchema(ctx)
 	} else if version > latestSchemaVersion {
 		return ErrMigrationTargetTooHigh
 	}
@@ -85,14 +86,15 @@ func (h Handler) Migrate(ctx context.Context, version int) error {
 		return err
 	}
 	if version == latestSchemaVersion {
-		return h.BootstrapData(ctx)
+		return BootstrapData(ctx)
 	}
 	return nil
 }
 
-func (h Handler) DeleteSchema(ctx context.Context) error {
-	return h.RunInTx(ctx, func(d *Handler) (err error) {
-		user := d.pool.Config().ConnConfig.User
+func DeleteSchema(ctx context.Context) error {
+	h := Get()
+	user := pool.Config().ConnConfig.User
+	return h.RunInTx(ctx, func(d Handler) (err error) {
 		if _, err = d.Exec(ctx, "DROP SCHEMA public CASCADE"); err != nil {
 			return
 		}

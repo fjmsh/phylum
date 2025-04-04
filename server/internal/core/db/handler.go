@@ -5,27 +5,25 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Handler struct {
 	tx interface {
 		Begin(context.Context) (pgx.Tx, error)
+		SendBatch(context.Context, *pgx.Batch) pgx.BatchResults
 		Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
 		Query(context.Context, string, ...interface{}) (pgx.Rows, error)
 		QueryRow(context.Context, string, ...interface{}) pgx.Row
 		CopyFrom(context.Context, pgx.Identifier, []string, pgx.CopyFromSource) (int64, error)
 	}
-	pool *pgxpool.Pool
 }
 
-func (h Handler) RunInTx(ctx context.Context, fn func(*Handler) error) error {
+func (h Handler) RunInTx(ctx context.Context, fn func(Handler) error) error {
 	return pgx.BeginFunc(ctx, h.tx, func(tx pgx.Tx) error {
 		h := Handler{
-			tx:   tx,
-			pool: h.pool,
+			tx: tx,
 		}
-		return fn(&h)
+		return fn(h)
 	})
 }
 
@@ -43,4 +41,8 @@ func (h Handler) QueryRow(ctx context.Context, stmt string, args ...interface{})
 
 func (h Handler) CopyFrom(ctx context.Context, tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error) {
 	return h.tx.CopyFrom(ctx, tableName, columnNames, rowSrc)
+}
+
+func (h Handler) SendBatch(ctx context.Context, batch *pgx.Batch) pgx.BatchResults {
+	return h.tx.SendBatch(ctx, batch)
 }
