@@ -24,7 +24,7 @@ class BookmarkRepository extends Repository<PhylumAccount, Bookmark> {
     if (!Hive.isAdapterRegistered(const BookmarkAdapter().typeId)) {
       Hive.registerAdapter(const BookmarkAdapter());
     }
-    final box = await _account.openBox<Bookmark>(_remoteBookmarksBoxName);
+    final box = await account.openBox<Bookmark>(_remoteBookmarksBoxName);
     final remoteData = Map<String, Bookmark?>.fromIterable(box.keys, value: (key) => box.get(key));
     await box.close();
     _account = account;

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/explorer/explorer_controller.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
@@ -56,6 +55,13 @@ class ResourceInfoView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final account = context.read<PhylumAccount>();
+    final p = resource.permissions.parsePermissionMap();
+    final myPermission = p.remove(account.userEmail) ?? 0;
+    final repository = context.read<PhylumAccount>().userRepository;
+    final entries = p.entries.toList(growable: false)..sort(((a, b) => a.key.compareTo(b.key)));
+    final other = entries.map((e) => repository.getUserDisplayName(e.key)).join(', ');
+
     return ListTileTheme(
       data: ListTileThemeData(
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -92,7 +98,14 @@ class ResourceInfoView extends StatelessWidget {
                 overflow: TextOverflow.fade,
               ),
             ),
-          PermissionsTile(resourceId: resource.id),
+          ListTile(
+            title: const Text('My Permissions'),
+            subtitle: Text(myPermission.toStringFull()),
+          ),
+          ListTile(
+            title: const Text('Others with Access'),
+            subtitle: other.isEmpty ? const Text('--') : Text(other),
+          ),
         ],
       ),
     );
@@ -159,59 +172,6 @@ class _PendingActionsTileState extends State<PendingActionsTile> {
             leading: Icon(SyncState.fromStatus(e.value).icon),
             title: Text(e.key.description, maxLines: 1),
           ),
-      ],
-    );
-  }
-}
-
-class PermissionsTile extends StatefulWidget {
-  final String resourceId;
-
-  const PermissionsTile({super.key, required this.resourceId});
-
-  @override
-  State<PermissionsTile> createState() => _PermissionsTileState();
-}
-
-class _PermissionsTileState extends State<PermissionsTile> {
-  Permission? myPermission;
-  Map<String, Permission>? otherPermissions;
-  StreamSubscription<List<ParentsResult>>? sub;
-
-  @override
-  void initState() {
-    super.initState();
-    final account = context.read<PhylumAccount>();
-    sub = account.db.watchParents(widget.resourceId).listen((data) {
-      final p = calculatePermissionSet(data.map((e) => e.permissions));
-      setState(() {
-        myPermission = p.remove(account.userEmail) ?? 0;
-        otherPermissions = p;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    sub?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final repository = context.read<PhylumAccount>().userRepository;
-    final entries = otherPermissions?.entries.toList(growable: false)?..sort(((a, b) => a.key.compareTo(b.key)));
-    final other = entries?.map((e) => repository.getUserDisplayName(e.key)).join(', ');
-    return Column(
-      children: [
-        ListTile(
-          title: const Text('My Permissions'),
-          subtitle: myPermission == null ? const Text('') : Text(myPermission!.toStringFull()),
-        ),
-        ListTile(
-          title: const Text('Others with Access'),
-          subtitle: (other?.isEmpty ?? true) ? const Text('--') : Text(other!),
-        ),
       ],
     );
   }

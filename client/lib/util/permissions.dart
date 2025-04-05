@@ -12,21 +12,9 @@ const Permission permissionSetReadOnly = permissionRead;
 const Permission permissionSetReadWrite = permissionRead | permissionWrite;
 const Permission permissionSetReadWriteShare = permissionRead | permissionWrite | permissionShare;
 
-Map<String, Permission> calculatePermissionSet(Iterable<String?> permissionJsons) {
-  final permissions = <String, Permission>{};
-  for (final p in permissionJsons) {
-    mergePermissions(permissions, p);
-  }
-  return permissions;
-}
-
-Map<String, Permission> mergePermissions(Map<String, Permission> permissions, String? permissionsJson) {
-  if (permissionsJson != null) {
-    for (final e in (jsonDecode(permissionsJson) as Map).cast<String, Permission>().entries) {
-      permissions[e.key] = (permissions[e.key] ?? 0) | e.value;
-    }
-  }
-  return permissions;
+extension PermissionMapper on String? {
+  Map<String, Permission> parsePermissionMap() =>
+      this == null ? const {} : (jsonDecode(this!) as Map).cast<String, Permission>();
 }
 
 extension PermissionStringer on Permission {

@@ -6,6 +6,6 @@ Bookmark parseBookmark(Map<String, dynamic> data) {
     name: data['name'],
     dir: data['dir'],
     created: data['created'],
-    deleted: data['deleted'],
+    deleted: data.containsKey('deleted') ? data['deleted'] : false,
   );
 }

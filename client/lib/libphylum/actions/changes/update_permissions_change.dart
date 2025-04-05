@@ -25,12 +25,15 @@ class UpdatePermissionsChange extends LocalChange<Resource> {
   @override
   Resource? apply(Resource? data) {
     if (data == null) return null;
-    final p = mergePermissions({}, data.permissions);
+    var p = data.grants.parsePermissionMap();
     if ((p[username] ?? 0) == permission) {
       return data;
     }
     if (permission == 0) {
       p.remove(username);
+    } else if (p.isEmpty) {
+      // Empty means const map, so we can't add to it
+      p = {username: permission};
     } else {
       p[username] = permission;
     }

@@ -29,12 +29,10 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
     super.initState();
     final account = context.read<PhylumAccount>();
     sub = account.db.watchParents(widget.resourceId).listen((data) {
-      final inheritedPermissions = calculatePermissionSet(data.sublist(1).map((e) => e.permissions));
-      final permissions = mergePermissions(Map.of(inheritedPermissions), data.first.permissions);
       setState(() {
         resourceName = data.first.name;
-        this.inheritedPermissions = inheritedPermissions;
-        this.permissions = permissions;
+        inheritedPermissions = data.length > 1 ? data[1].permissions.parsePermissionMap() : const {};
+        permissions = data.first.permissions.parsePermissionMap();
       });
     });
   }
@@ -72,10 +70,13 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                   final users = account.userRepository.users.entries
                       .where((e) => !inheritedPermissions.containsKey(e.key) && !permissions.containsKey(e.key))
                       .map((e) => e.value);
-                  final user = await showOptionsDialogBuilder(context, users.toList(growable: false), (user) => ListTile(title: Text(user.display)),
+                  final user = await showOptionsDialogBuilder(
+                      context, users.toList(growable: false), (user) => ListTile(title: Text(user.display)),
                       filterList: (u, q) {
                     final query = q.toLowerCase();
-                    return u.where((u) => u.username.contains(query) || u.display.contains(query)).toList(growable: false);
+                    return u
+                        .where((u) => u.username.contains(query) || u.display.contains(query))
+                        .toList(growable: false);
                   });
                   if (user == null || !context.mounted) return;
                   final permission = await showOptionsDialogBuilder(

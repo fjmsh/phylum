@@ -14,7 +14,7 @@ Resource parseFullResource(Map<String, dynamic> data) {
     contentType: data['c_type'],
     permissions: data['permissions'].isEmpty ? null : data['permissions'],
     publinks: data['publinks'].isEmpty ? null : data['publinks'],
-    grants: data['grants'].isEmpty ? null : data['grants'],
+    grants: data['grants'].isEmpty || data['grants'] == '{}' ? null : data['grants'],
   );
 }
 
@@ -45,7 +45,7 @@ ResourcesCompanion parsePartialResource(Map<String, dynamic> data, [String? id])
             : Value(data['permissions'])
         : Value.absent(),
     grants: data.containsKey('grants')
-        ? data['grants'].isEmpty
+        ? data['grants'].isEmpty || data['grants'] == '{}'
             ? Value(null)
             : Value(data['grants'])
         : Value.absent(),
