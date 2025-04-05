@@ -1,7 +1,6 @@
 package fs
 
 import (
-	"encoding/json"
 	"slices"
 	"strings"
 
@@ -68,21 +67,6 @@ func selectDirectChildren(id uuid.UUID, deleted pgtype.Timestamp, includeDeleted
 	}
 
 	return r, q
-}
-
-func readPermissionFromJson(j []byte, username string) (Permission, error) {
-	if j == nil {
-		return PermissionNone, nil
-	}
-	p := make(map[string]Permission)
-	err := json.Unmarshal(j, &p)
-	if err != nil {
-		return PermissionNone, err
-	}
-	if p, ok := p[username]; ok {
-		return p, nil
-	}
-	return PermissionNone, nil
 }
 
 func collectNonDirResourceIDs(rows pgx.Rows, e error) (total int, ids []uuid.UUID, err error) {

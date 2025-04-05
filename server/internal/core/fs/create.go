@@ -116,7 +116,7 @@ func (f filesystem) createResource(
 		case ResourceBindConflictResolutionError:
 			err = ErrResourceNameConflict
 		case ResourceBindConflictResolutionEnsure:
-			res, err = f.ChildResourceByName(parent, name)
+			res, err = f.childResourceByName(parent, name)
 			if err == nil && res.dir != dir {
 				err = ErrResourceNameConflict
 			}
@@ -150,7 +150,7 @@ func (f filesystem) createResource(
 				}
 			}
 		case ResourceBindConflictResolutionOverwrite:
-			res, err = f.ChildResourceByName(parent, name)
+			res, err = f.childResourceByName(parent, name)
 			if err == nil {
 				deleted = true
 				if res.dir == dir {
@@ -185,7 +185,7 @@ func (f filesystem) createResource(
 				}
 			}
 		case ResourceBindConflictResolutionDelete:
-			res, err = f.ChildResourceByName(parent, name)
+			res, err = f.childResourceByName(parent, name)
 			if err == nil {
 				deleted = true
 				err = f.deleteRecursive(res.id, parent, true, false)
@@ -229,6 +229,6 @@ func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, 
 	if rows, err := f.db.Query(query, args...); err != nil {
 		return Resource{}, err
 	} else {
-		return f.collectResource(rows)
+		return f.collectResource(rows, false)
 	}
 }

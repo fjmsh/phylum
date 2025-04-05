@@ -18,7 +18,7 @@ func (r Resource) DeleteChildRecursive(name string) (Resource, error) {
 		return Resource{}, ErrInsufficientPermissions
 	}
 
-	c, err := r.f.ChildResourceByName(r.ID(), name)
+	c, err := r.f.childResourceByName(r.ID(), name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrResourceNotFound
@@ -90,14 +90,14 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 	if name == "" {
 		name = r.name
 	}
-	_, err = r.f.ChildResourceByName(p.id, name)
+	_, err = r.f.childResourceByName(p.id, name)
 	if autoRename && err == nil {
 		ext := path.Ext(name)
 		basename := name[:len(name)-len(ext)]
 		counter := 1
 		for {
 			name = fmt.Sprintf("%s (%d)%s", basename, counter, ext)
-			if _, err = r.f.ChildResourceByName(p.id, name); err == nil {
+			if _, err = r.f.childResourceByName(p.id, name); err == nil {
 				counter++
 			} else {
 				break

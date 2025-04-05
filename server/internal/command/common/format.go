@@ -9,23 +9,6 @@ import (
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
-func formatRow(id string, dir bool, size int, sha256, name, permissions string, deleted bool) string {
-	sizeStr := "    -"
-	if dir {
-		sha256 = "-       "
-	} else {
-		sizeStr = FormatSize(size)
-	}
-	if sha256 == "" {
-		sha256 = "xxxxxxxx"
-	}
-	delStr := " "
-	if deleted {
-		delStr = "*"
-	}
-	return fmt.Sprintf("%s %s %s %s%-24s %s", id, sizeStr, sha256[0:8], delStr, name, permissions)
-}
-
 func FormatResourceSummary(r fs.Resource, name string, deleted pgtype.Timestamp) string {
 	if name == "" {
 		name = r.Name()
@@ -33,7 +16,21 @@ func FormatResourceSummary(r fs.Resource, name string, deleted pgtype.Timestamp)
 	if r.Dir() {
 		name += "/"
 	}
-	return formatRow(r.ID().String(), r.Dir(), int(r.ContentLength()), r.ContentSHA256(), name, formatGrantsJson(r.Grants()), deleted != r.Deleted())
+	sha256 := r.ContentSHA256()
+	sizeStr := "    -"
+	if r.Dir() {
+		sha256 = "-       "
+	} else {
+		sizeStr = FormatSize(r.ContentLength())
+	}
+	if sha256 == "" {
+		sha256 = "xxxxxxxx"
+	}
+	delStr := " "
+	if deleted != r.Deleted() {
+		delStr = "*"
+	}
+	return fmt.Sprintf("%s %s %s %s%-24s %s %s", r.ID().String(), sizeStr, sha256[0:8], delStr, name, formatGrantsJson(r.Grants()), r.Links())
 }
 
 func FormatSize(size int) string {

@@ -23,7 +23,8 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		Where(resources.Col("id").Eq(goqu.V(f.rootID))).
 		UnionAll(sub)
 
-	q := pg.Select(resources.All()).
+	l := goqu.T("publinks").As("l")
+	q := pg.Select(resources.All(), pg.Select(goqu.L("jsonb_agg(?)", l.Col("name"))).From(l).Where(l.Col("root").Eq(resources.Col("id")), l.Col("deleted").IsNull())).
 		From(resources).
 		WithRecursive("nodes(id, parent, search, depth)", rec).
 		Join(nodes, goqu.On(resources.Col("id").Eq(nodes.Col("id")))).
@@ -34,25 +35,25 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	if rows, err := f.db.Query(query, args...); err != nil {
 		return Resource{}, err
 	} else {
-		return f.collectResource(rows)
+		return f.collectResource(rows, true)
 	}
 }
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	const query = "SELECT * FROM resources WHERE id = $1::UUID"
+	const query = "SELECT r.*, (SELECT jsonb_agg(l.name) FROM publinks l WHERE l.root = r.id AND l.deleted IS NULL) AS links FROM resources r WHERE id = $1::UUID"
 	if rows, err := f.db.Query(query, id); err != nil {
 		return Resource{}, err
 	} else {
-		return f.collectResource(rows)
+		return f.collectResource(rows, true)
 	}
 }
 
-func (f filesystem) ChildResourceByName(parentID uuid.UUID, name string) (Resource, error) {
+func (f filesystem) childResourceByName(parentID uuid.UUID, name string) (Resource, error) {
 	const query = "SELECT * FROM resources WHERE parent = $1::UUID AND name = $2::TEXT AND deleted IS NULL"
 	if rows, err := f.db.Query(query, parentID, name); err != nil {
 		return Resource{}, err
 	} else {
-		return f.collectResource(rows)
+		return f.collectResource(rows, false)
 	}
 }
 
