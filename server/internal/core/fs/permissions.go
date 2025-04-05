@@ -23,12 +23,22 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 	}
 	// Do not grant more than what you have
 	permission = permission & r.userPermission
-	const q = `
+	const qUpdate = `
 UPDATE resources SET
-	grants[@username::TEXT] = jsonb_build_object('p', @permission::INT, 't', EXTRACT(EPOCH FROM NOW())::INTEGER)"
-	grants = (CASE permissions WHEN 0 THEN grants - @username::TEXT ELSE grants END)
+	grants[@username::TEXT] = jsonb_build_object('p', @permission::INT, 't', EXTRACT(EPOCH FROM NOW())::INTEGER),
 	modified = NOW()
 WHERE id = @resource_id::UUID`
+
+	const qRemove = `
+UPDATE resources SET
+	grants = grants - @username::TEXT
+	modified = NOW()
+WHERE id = @resource_id::UUID`
+
+	q := qUpdate
+	if permission == PermissionNone {
+		q = qRemove
+	}
 
 	err := r.f.runInTx(func(f filesystem) error {
 		if _, err := f.db.Exec(q, pgx.NamedArgs{
