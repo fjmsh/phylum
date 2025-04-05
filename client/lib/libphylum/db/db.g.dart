@@ -1639,7 +1639,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 
   Selectable<ParentsResult> parents(String id) {
     return customSelect(
-        'WITH RECURSIVE parents (id, parent, name, permissions, grants) AS (SELECT id, parent, name, permissions, grants FROM resources WHERE id = ?1 UNION ALL SELECT r.id, r.parent, r.name, r.permissions, r.grants FROM resources AS r JOIN parents AS p ON r.id = p.parent) SELECT id, name, permissions, grants FROM parents',
+        'WITH RECURSIVE parents (id, parent, name, permissions) AS (SELECT id, parent, name, permissions FROM resources WHERE id = ?1 UNION ALL SELECT r.id, r.parent, r.name, r.permissions FROM resources AS r JOIN parents AS p ON r.id = p.parent) SELECT id, name, permissions FROM parents',
         variables: [
           Variable<String>(id)
         ],
@@ -1649,7 +1649,23 @@ abstract class _$AppDatabase extends GeneratedDatabase {
           id: row.read<String>('id'),
           name: row.read<String>('name'),
           permissions: row.readNullable<String>('permissions'),
+        ));
+  }
+
+  Selectable<PermissionsResult> permissions(String id) {
+    return customSelect(
+        'SELECT r.name, r.permissions, r.grants, p.permissions AS inherited_permissions FROM resources AS r JOIN resources AS p ON r.parent = p.id WHERE r.id = ?1',
+        variables: [
+          Variable<String>(id)
+        ],
+        readsFrom: {
+          resources,
+        }).map((QueryRow row) => PermissionsResult(
+          name: row.read<String>('name'),
+          permissions: row.readNullable<String>('permissions'),
           grants: row.readNullable<String>('grants'),
+          inheritedPermissions:
+              row.readNullable<String>('inherited_permissions'),
         ));
   }
 
@@ -3063,12 +3079,23 @@ class ParentsResult {
   final String id;
   final String name;
   final String? permissions;
-  final String? grants;
   ParentsResult({
     required this.id,
     required this.name,
     this.permissions,
+  });
+}
+
+class PermissionsResult {
+  final String name;
+  final String? permissions;
+  final String? grants;
+  final String? inheritedPermissions;
+  PermissionsResult({
+    required this.name,
+    this.permissions,
     this.grants,
+    this.inheritedPermissions,
   });
 }
 

@@ -28,6 +28,10 @@ extension ResourceHelpers on AppDatabase {
     return parents(id).watch();
   }
 
+  Stream<PermissionsResult?> watchPermissions(String id) {
+    return permissions(id).watchSingleOrNull();
+  }
+
   Future<void> markResourceAccess(String id) {
     return recents.insertOnConflictUpdate(Recent(resourceId: id, accessed: DateTime.now()));
   }

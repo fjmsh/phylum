@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/util/permissions.dart';
 
 class UpdatePermissionsChange extends LocalChange<Resource> {
   @override
@@ -25,21 +24,29 @@ class UpdatePermissionsChange extends LocalChange<Resource> {
   @override
   Resource? apply(Resource? data) {
     if (data == null) return null;
-    var p = data.grants.parseGrantsMap();
-    if (p.containsKey(username) && p[username] == permission) {
+    var p = data.grants == null ? const <String, Map>{} : (jsonDecode(data.grants!) as Map).cast<String, Map>();
+    if ((p[username]?['p'] ?? 0) == permission) {
       return data;
     }
     if (permission == 0) {
       p.remove(username);
     } else if (p.isEmpty) {
       // Empty means const map, so we can't add to it
-      p = {username: permission};
+      p = {
+        username: <String, int>{
+          'p': permission,
+          't': DateTime.now().millisecondsSinceEpoch,
+        },
+      };
     } else {
-      p[username] = permission;
+      p[username] = <String, int>{
+        'p': permission,
+        't': DateTime.now().millisecondsSinceEpoch,
+      };
     }
     final serialized = p.isEmpty ? null : json.encode(p);
     return data.copyWith(
-      permissions: Value(serialized),
+      grants: Value(serialized),
       modified: Value(timestamp),
     );
   }
