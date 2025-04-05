@@ -40,14 +40,14 @@ func (r Resource) ReadDirDeleted(recursive, includeDeleted bool) ([]Resource, er
 	if !recursive {
 		_, q = selectDirectChildren(r.id, r.deleted, includeDeleted)
 	} else {
-		_, _, q = selectResourceTree(r.id, true, includeDeleted)
+		_, _, q = selectResourceTree(r.id, true, includeDeleted, true)
 	}
 
 	query, args, _ := q.ToSQL()
 	if rows, err := r.f.db.Query(query, args...); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, r.f.scanResource)
+		return pgx.CollectRows(rows, r.f.scanLinkedResource)
 	}
 }
 

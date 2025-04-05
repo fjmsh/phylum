@@ -12,7 +12,10 @@ import (
 )
 
 func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error) {
-	q := pg.From("resources").
+	l := goqu.T("publinks").As("l")
+	r := goqu.T("resources")
+	q := pg.From(r).
+		Select(r.All(), pg.Select(goqu.L("jsonb_agg(?)", l.Col("name"))).From(l).Where(l.Col("root").Eq(r.Col("id")), l.Col("deleted").IsNull())).
 		Where(goqu.C("deleted").IsNotNull())
 	if !f.fullAccess {
 		q = q.Where(goqu.L("permissions[?]::INTEGER <> 0", f.username))
@@ -44,7 +47,7 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 
 	if rows, err := f.db.Query(query, params...); err != nil {
 		return nil, "", err
-	} else if res, err := pgx.CollectRows(rows, f.scanResource); err != nil {
+	} else if res, err := pgx.CollectRows(rows, f.scanLinkedResource); err != nil {
 		return nil, "", err
 	} else {
 		cursor := ""

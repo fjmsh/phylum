@@ -12,7 +12,7 @@ type DiskUsageInfo struct {
 }
 
 func (r Resource) DiskUsage() (DiskUsageInfo, error) {
-	_, n, q := selectResourceTree(r.id, false, false, "content_length", "dir")
+	_, n, q := selectResourceTree(r.id, false, false, false, "content_length", "dir")
 
 	q = q.
 		From(n).

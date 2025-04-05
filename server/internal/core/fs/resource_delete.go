@@ -157,7 +157,7 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 }
 
 func (f filesystem) markDeleted(id uuid.UUID, softDelete, excludeRoot bool) (int, []uuid.UUID, error) {
-	r, _, q := selectResourceTree(id, excludeRoot, !softDelete)
+	r, _, q := selectResourceTree(id, excludeRoot, !softDelete, false)
 
 	// table
 	var query string
@@ -183,7 +183,7 @@ func (f filesystem) markDeleted(id uuid.UUID, softDelete, excludeRoot bool) (int
 }
 
 func (f filesystem) markNotDeleted(id uuid.UUID) ([]int64, error) {
-	r, _, s := selectResourceTree(id, false, false)
+	r, _, s := selectResourceTree(id, false, false, false)
 	q := s.Update().Set(
 		goqu.Record{
 			"modified": goqu.L("NOW()"),

@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool, extraCols ...string) (exp.IdentifierExpression, exp.AliasedExpression, *goqu.SelectDataset) {
+func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted, includeLinks bool, extraCols ...string) (exp.IdentifierExpression, exp.AliasedExpression, *goqu.SelectDataset) {
 	t := goqu.T("resources")
 	r := t.As("r")
 	n := goqu.T("nodes").As("n")
@@ -50,17 +50,23 @@ func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted bool, extr
 		idSelect = idSelect.Where(n.Col("depth").Gt(0))
 	}
 
+	l := goqu.T("publinks").As("l")
 	q := pg.
-		From(t).
-		WithRecursive("nodes("+strings.Join(cols, ",")+")", base.UnionAll(rec)).
+		From(t)
+	if includeLinks {
+		q = q.Select(t.All(), pg.Select(goqu.L("jsonb_agg(?)", l.Col("name"))).From(l).Where(l.Col("root").Eq(t.Col("id")), l.Col("deleted").IsNull()))
+	}
+	q = q.WithRecursive("nodes("+strings.Join(cols, ",")+")", base.UnionAll(rec)).
 		Where(t.Col("id").Eq(idSelect))
 	return t, n, q
 }
 
 func selectDirectChildren(id uuid.UUID, deleted pgtype.Timestamp, includeDeleted bool) (exp.AliasedExpression, *goqu.SelectDataset) {
+	l := goqu.T("publinks").As("l")
 	r := goqu.T("resources").As("r")
 	q := pg.
 		From(r).
+		Select(r.All(), pg.Select(goqu.L("jsonb_agg(?)", l.Col("name"))).From(l).Where(l.Col("root").Eq(r.Col("id")), l.Col("deleted").IsNull())).
 		Where(r.Col("parent").Eq(goqu.V(id)))
 	if !includeDeleted {
 		q = q.Where(goqu.L("? IS NOT DISTINCT FROM ?", r.Col("deleted"), goqu.V(deleted)))

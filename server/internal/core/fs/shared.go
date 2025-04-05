@@ -3,7 +3,7 @@ package fs
 import "github.com/jackc/pgx/v5"
 
 func (f filesystem) SharedResources() ([]Resource, error) {
-	const q = `SELECT * FROM resources
+	const q = `SELECT r.*, (SELECT jsonb_agg(l.name) FROM publinks l WHERE l.root = r.id AND l.deleted IS NULL) as links FROM resources r
 WHERE grants ? $1::TEXT
 AND id <> $2::UUID
 AND deleted IS NULL
@@ -12,6 +12,6 @@ ORDER BY grants -> $1::TEXT -> 't' DESC`
 	if rows, err := f.db.Query(q, f.username); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, f.scanResource)
+		return pgx.CollectRows(rows, f.scanLinkedResource)
 	}
 }
