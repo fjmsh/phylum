@@ -12,7 +12,7 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
   });
 
   factory FullResourceResponse.fromResponse(Map<String, dynamic> data) {
-    final resource = parseFullResource(data['info'])..copyWith(lastRefresh: Value(DateTime.now()));
+    final resource = parseFullResource(data['resource'])..copyWith(lastRefresh: Value(DateTime.now()));
     final ancestors =
         (data['ancestors'] as List).cast<Map>().map((a) => parseResourceAncestor(a.cast<String, dynamic>()));
     final children = (data['children'] as List).cast<Map>().map((c) => parseFullResource(c.cast<String, dynamic>()));
