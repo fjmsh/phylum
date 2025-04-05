@@ -3,14 +3,19 @@ package fs
 import (
 	"archive/zip"
 	"io"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/api/serve"
+	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
-func handleDownloadRequest(c *gin.Context) {
+var errGetCollectionContents = errors.NewError(http.StatusBadRequest, "resource_is_collection", "Cannot get contents of collection")
+
+func handleContentsRequest(c *gin.Context) {
 	resourceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		panic(errResourceIDInvalid)
@@ -22,8 +27,23 @@ func handleDownloadRequest(c *gin.Context) {
 		panic(err)
 	}
 
+	download := c.Request.URL.Query().Has("download")
+	if download {
+		name := c.Request.URL.Query().Get("name")
+		if name == "" {
+			name = r.Name() + ".zip"
+		}
+		c.Writer.Header().Set("Content-Disposition", "attachment; filename=\""+name+"\"")
+	}
+	if !r.Dir() {
+		serve.Serve(c.Writer, c.Request, r)
+		return
+	}
+	if !download {
+		panic(errGetCollectionContents)
+	}
+
 	c.Writer.Header().Set("Content-Type", "application/zip")
-	c.Writer.Header().Set("Content-Disposition", "attachment; filename=\""+r.Name()+".zip\"")
 
 	var zip = zip.NewWriter(c.Writer)
 	close := c.Writer.CloseNotify()
