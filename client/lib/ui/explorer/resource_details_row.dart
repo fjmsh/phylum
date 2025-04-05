@@ -122,7 +122,7 @@ class ResourceDetailsRow extends StatelessWidget {
                             padding: const EdgeInsets.only(right: 6.0),
                             child: Icon(sync.icon, size: 14),
                           ),
-                        if (resource.permissions != null)
+                        if (resource.grants != null)
                           const Padding(
                             padding: EdgeInsets.only(right: 6.0),
                             child: Icon(Icons.people_alt, size: 14),

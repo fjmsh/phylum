@@ -281,6 +281,12 @@ class Resources extends Table with TableInfo<Resources, Resource> {
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       $customConstraints: '');
+  static const VerificationMeta _grantsMeta = const VerificationMeta('grants');
+  late final GeneratedColumn<String> grants = GeneratedColumn<String>(
+      'grants', aliasedName, true,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      $customConstraints: '');
   static const VerificationMeta _publinksMeta =
       const VerificationMeta('publinks');
   late final GeneratedColumn<String> publinks = GeneratedColumn<String>(
@@ -308,6 +314,7 @@ class Resources extends Table with TableInfo<Resources, Resource> {
         contentSha256,
         contentType,
         permissions,
+        grants,
         publinks,
         lastRefresh
       ];
@@ -378,6 +385,10 @@ class Resources extends Table with TableInfo<Resources, Resource> {
           permissions.isAcceptableOrUnknown(
               data['permissions']!, _permissionsMeta));
     }
+    if (data.containsKey('grants')) {
+      context.handle(_grantsMeta,
+          grants.isAcceptableOrUnknown(data['grants']!, _grantsMeta));
+    }
     if (data.containsKey('publinks')) {
       context.handle(_publinksMeta,
           publinks.isAcceptableOrUnknown(data['publinks']!, _publinksMeta));
@@ -419,6 +430,8 @@ class Resources extends Table with TableInfo<Resources, Resource> {
           .read(DriftSqlType.string, data['${effectivePrefix}content_type'])!,
       permissions: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}permissions']),
+      grants: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}grants']),
       publinks: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}publinks']),
       lastRefresh: attachedDatabase.typeMapping
@@ -447,6 +460,7 @@ class Resource extends DataClass implements Insertable<Resource> {
   final String contentSha256;
   final String contentType;
   final String? permissions;
+  final String? grants;
   final String? publinks;
   final DateTime? lastRefresh;
   const Resource(
@@ -461,6 +475,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       required this.contentSha256,
       required this.contentType,
       this.permissions,
+      this.grants,
       this.publinks,
       this.lastRefresh});
   @override
@@ -484,6 +499,9 @@ class Resource extends DataClass implements Insertable<Resource> {
     map['content_type'] = Variable<String>(contentType);
     if (!nullToAbsent || permissions != null) {
       map['permissions'] = Variable<String>(permissions);
+    }
+    if (!nullToAbsent || grants != null) {
+      map['grants'] = Variable<String>(grants);
     }
     if (!nullToAbsent || publinks != null) {
       map['publinks'] = Variable<String>(publinks);
@@ -514,6 +532,8 @@ class Resource extends DataClass implements Insertable<Resource> {
       permissions: permissions == null && nullToAbsent
           ? const Value.absent()
           : Value(permissions),
+      grants:
+          grants == null && nullToAbsent ? const Value.absent() : Value(grants),
       publinks: publinks == null && nullToAbsent
           ? const Value.absent()
           : Value(publinks),
@@ -538,6 +558,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       contentSha256: serializer.fromJson<String>(json['content_sha256']),
       contentType: serializer.fromJson<String>(json['content_type']),
       permissions: serializer.fromJson<String?>(json['permissions']),
+      grants: serializer.fromJson<String?>(json['grants']),
       publinks: serializer.fromJson<String?>(json['publinks']),
       lastRefresh: serializer.fromJson<DateTime?>(json['last_refresh']),
     );
@@ -557,6 +578,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       'content_sha256': serializer.toJson<String>(contentSha256),
       'content_type': serializer.toJson<String>(contentType),
       'permissions': serializer.toJson<String?>(permissions),
+      'grants': serializer.toJson<String?>(grants),
       'publinks': serializer.toJson<String?>(publinks),
       'last_refresh': serializer.toJson<DateTime?>(lastRefresh),
     };
@@ -574,6 +596,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           String? contentSha256,
           String? contentType,
           Value<String?> permissions = const Value.absent(),
+          Value<String?> grants = const Value.absent(),
           Value<String?> publinks = const Value.absent(),
           Value<DateTime?> lastRefresh = const Value.absent()}) =>
       Resource(
@@ -588,6 +611,7 @@ class Resource extends DataClass implements Insertable<Resource> {
         contentSha256: contentSha256 ?? this.contentSha256,
         contentType: contentType ?? this.contentType,
         permissions: permissions.present ? permissions.value : this.permissions,
+        grants: grants.present ? grants.value : this.grants,
         publinks: publinks.present ? publinks.value : this.publinks,
         lastRefresh: lastRefresh.present ? lastRefresh.value : this.lastRefresh,
       );
@@ -610,6 +634,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           data.contentType.present ? data.contentType.value : this.contentType,
       permissions:
           data.permissions.present ? data.permissions.value : this.permissions,
+      grants: data.grants.present ? data.grants.value : this.grants,
       publinks: data.publinks.present ? data.publinks.value : this.publinks,
       lastRefresh:
           data.lastRefresh.present ? data.lastRefresh.value : this.lastRefresh,
@@ -630,6 +655,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           ..write('contentSha256: $contentSha256, ')
           ..write('contentType: $contentType, ')
           ..write('permissions: $permissions, ')
+          ..write('grants: $grants, ')
           ..write('publinks: $publinks, ')
           ..write('lastRefresh: $lastRefresh')
           ..write(')'))
@@ -649,6 +675,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       contentSha256,
       contentType,
       permissions,
+      grants,
       publinks,
       lastRefresh);
   @override
@@ -666,6 +693,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           other.contentSha256 == this.contentSha256 &&
           other.contentType == this.contentType &&
           other.permissions == this.permissions &&
+          other.grants == this.grants &&
           other.publinks == this.publinks &&
           other.lastRefresh == this.lastRefresh);
 }
@@ -682,6 +710,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   final Value<String> contentSha256;
   final Value<String> contentType;
   final Value<String?> permissions;
+  final Value<String?> grants;
   final Value<String?> publinks;
   final Value<DateTime?> lastRefresh;
   final Value<int> rowid;
@@ -697,6 +726,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.contentSha256 = const Value.absent(),
     this.contentType = const Value.absent(),
     this.permissions = const Value.absent(),
+    this.grants = const Value.absent(),
     this.publinks = const Value.absent(),
     this.lastRefresh = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -713,6 +743,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.contentSha256 = const Value.absent(),
     this.contentType = const Value.absent(),
     this.permissions = const Value.absent(),
+    this.grants = const Value.absent(),
     this.publinks = const Value.absent(),
     this.lastRefresh = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -731,6 +762,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     Expression<String>? contentSha256,
     Expression<String>? contentType,
     Expression<String>? permissions,
+    Expression<String>? grants,
     Expression<String>? publinks,
     Expression<DateTime>? lastRefresh,
     Expression<int>? rowid,
@@ -747,6 +779,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       if (contentSha256 != null) 'content_sha256': contentSha256,
       if (contentType != null) 'content_type': contentType,
       if (permissions != null) 'permissions': permissions,
+      if (grants != null) 'grants': grants,
       if (publinks != null) 'publinks': publinks,
       if (lastRefresh != null) 'last_refresh': lastRefresh,
       if (rowid != null) 'rowid': rowid,
@@ -765,6 +798,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       Value<String>? contentSha256,
       Value<String>? contentType,
       Value<String?>? permissions,
+      Value<String?>? grants,
       Value<String?>? publinks,
       Value<DateTime?>? lastRefresh,
       Value<int>? rowid}) {
@@ -780,6 +814,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       contentSha256: contentSha256 ?? this.contentSha256,
       contentType: contentType ?? this.contentType,
       permissions: permissions ?? this.permissions,
+      grants: grants ?? this.grants,
       publinks: publinks ?? this.publinks,
       lastRefresh: lastRefresh ?? this.lastRefresh,
       rowid: rowid ?? this.rowid,
@@ -822,6 +857,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     if (permissions.present) {
       map['permissions'] = Variable<String>(permissions.value);
     }
+    if (grants.present) {
+      map['grants'] = Variable<String>(grants.value);
+    }
     if (publinks.present) {
       map['publinks'] = Variable<String>(publinks.value);
     }
@@ -848,6 +886,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
           ..write('contentSha256: $contentSha256, ')
           ..write('contentType: $contentType, ')
           ..write('permissions: $permissions, ')
+          ..write('grants: $grants, ')
           ..write('publinks: $publinks, ')
           ..write('lastRefresh: $lastRefresh, ')
           ..write('rowid: $rowid')
@@ -1782,6 +1821,7 @@ typedef $ResourcesCreateCompanionBuilder = ResourcesCompanion Function({
   Value<String> contentSha256,
   Value<String> contentType,
   Value<String?> permissions,
+  Value<String?> grants,
   Value<String?> publinks,
   Value<DateTime?> lastRefresh,
   Value<int> rowid,
@@ -1798,6 +1838,7 @@ typedef $ResourcesUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<String> contentSha256,
   Value<String> contentType,
   Value<String?> permissions,
+  Value<String?> grants,
   Value<String?> publinks,
   Value<DateTime?> lastRefresh,
   Value<int> rowid,
@@ -1815,7 +1856,7 @@ final class $ResourcesReferences
 
   $SharedProcessedTableManager get sharedRefs {
     final manager = $SharedTableManager($_db, $_db.shared)
-        .filter((f) => f.resourceId.id($_item.id));
+        .filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_sharedRefsTable($_db));
     return ProcessedTableManager(
@@ -1830,7 +1871,7 @@ final class $ResourcesReferences
 
   $RecentsProcessedTableManager get recentsRefs {
     final manager = $RecentsTableManager($_db, $_db.recents)
-        .filter((f) => f.resourceId.id($_item.id));
+        .filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_recentsRefsTable($_db));
     return ProcessedTableManager(
@@ -1845,7 +1886,7 @@ final class $ResourcesReferences
 
   $BookmarksProcessedTableManager get bookmarksRefs {
     final manager = $BookmarksTableManager($_db, $_db.bookmarks)
-        .filter((f) => f.resourceId.id($_item.id));
+        .filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_bookmarksRefsTable($_db));
     return ProcessedTableManager(
@@ -1893,6 +1934,9 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
 
   ColumnFilters<String> get permissions => $composableBuilder(
       column: $table.permissions, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get grants => $composableBuilder(
+      column: $table.grants, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get publinks => $composableBuilder(
       column: $table.publinks, builder: (column) => ColumnFilters(column));
@@ -2007,6 +2051,9 @@ class $ResourcesOrderingComposer extends Composer<_$AppDatabase, Resources> {
   ColumnOrderings<String> get permissions => $composableBuilder(
       column: $table.permissions, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get grants => $composableBuilder(
+      column: $table.grants, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get publinks => $composableBuilder(
       column: $table.publinks, builder: (column) => ColumnOrderings(column));
 
@@ -2054,6 +2101,9 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
 
   GeneratedColumn<String> get permissions => $composableBuilder(
       column: $table.permissions, builder: (column) => column);
+
+  GeneratedColumn<String> get grants =>
+      $composableBuilder(column: $table.grants, builder: (column) => column);
 
   GeneratedColumn<String> get publinks =>
       $composableBuilder(column: $table.publinks, builder: (column) => column);
@@ -2160,6 +2210,7 @@ class $ResourcesTableManager extends RootTableManager<
             Value<String> contentSha256 = const Value.absent(),
             Value<String> contentType = const Value.absent(),
             Value<String?> permissions = const Value.absent(),
+            Value<String?> grants = const Value.absent(),
             Value<String?> publinks = const Value.absent(),
             Value<DateTime?> lastRefresh = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -2176,6 +2227,7 @@ class $ResourcesTableManager extends RootTableManager<
             contentSha256: contentSha256,
             contentType: contentType,
             permissions: permissions,
+            grants: grants,
             publinks: publinks,
             lastRefresh: lastRefresh,
             rowid: rowid,
@@ -2192,6 +2244,7 @@ class $ResourcesTableManager extends RootTableManager<
             Value<String> contentSha256 = const Value.absent(),
             Value<String> contentType = const Value.absent(),
             Value<String?> permissions = const Value.absent(),
+            Value<String?> grants = const Value.absent(),
             Value<String?> publinks = const Value.absent(),
             Value<DateTime?> lastRefresh = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -2208,6 +2261,7 @@ class $ResourcesTableManager extends RootTableManager<
             contentSha256: contentSha256,
             contentType: contentType,
             permissions: permissions,
+            grants: grants,
             publinks: publinks,
             lastRefresh: lastRefresh,
             rowid: rowid,
@@ -2231,7 +2285,7 @@ class $ResourcesTableManager extends RootTableManager<
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (sharedRefs)
-                    await $_getPrefetchedData(
+                    await $_getPrefetchedData<Resource, Resources, SharedData>(
                         currentTable: table,
                         referencedTable:
                             $ResourcesReferences._sharedRefsTable(db),
@@ -2242,7 +2296,7 @@ class $ResourcesTableManager extends RootTableManager<
                                 .where((e) => e.resourceId == item.id),
                         typedResults: items),
                   if (recentsRefs)
-                    await $_getPrefetchedData(
+                    await $_getPrefetchedData<Resource, Resources, Recent>(
                         currentTable: table,
                         referencedTable:
                             $ResourcesReferences._recentsRefsTable(db),
@@ -2253,7 +2307,7 @@ class $ResourcesTableManager extends RootTableManager<
                                 .where((e) => e.resourceId == item.id),
                         typedResults: items),
                   if (bookmarksRefs)
-                    await $_getPrefetchedData(
+                    await $_getPrefetchedData<Resource, Resources, Bookmark>(
                         currentTable: table,
                         referencedTable:
                             $ResourcesReferences._bookmarksRefsTable(db),
@@ -2302,8 +2356,10 @@ final class $SharedReferences
       .createAlias($_aliasNameGenerator(db.shared.resourceId, db.resources.id));
 
   $ResourcesProcessedTableManager get resourceId {
+    final $_column = $_itemColumn<String>('resource_id')!;
+
     final manager = $ResourcesTableManager($_db, $_db.resources)
-        .filter((f) => f.id($_item.resourceId!));
+        .filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -2520,8 +2576,10 @@ final class $RecentsReferences
           $_aliasNameGenerator(db.recents.resourceId, db.resources.id));
 
   $ResourcesProcessedTableManager get resourceId {
+    final $_column = $_itemColumn<String>('resource_id')!;
+
     final manager = $ResourcesTableManager($_db, $_db.resources)
-        .filter((f) => f.id($_item.resourceId!));
+        .filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -2746,8 +2804,10 @@ final class $BookmarksReferences
           $_aliasNameGenerator(db.bookmarks.resourceId, db.resources.id));
 
   $ResourcesProcessedTableManager get resourceId {
+    final $_column = $_itemColumn<String>('resource_id')!;
+
     final manager = $ResourcesTableManager($_db, $_db.resources)
-        .filter((f) => f.id($_item.resourceId!));
+        .filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
