@@ -15,7 +15,7 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
   String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/fs/mv/$resourceId';
+  String get endpoint => '/api/v1/fs/move/$resourceId';
 
   @override
   Map<String, dynamic>? get requestBody => {

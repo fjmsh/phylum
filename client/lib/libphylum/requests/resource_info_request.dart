@@ -1,14 +1,14 @@
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 
-class ResourceLsRequest extends ApiRequest {
+class ResourceInfoRequest extends ApiRequest {
   final String resourceId;
 
-  const ResourceLsRequest(this.resourceId);
+  const ResourceInfoRequest(this.resourceId);
 
   @override
   BaseRequest createRequest(ApiClient api) {
-    final uri = api.createUriBuilder('/api/v1/fs/ls/$resourceId');
+    final uri = api.createUriBuilder('/api/v1/fs/info/$resourceId');
     return Request('get', uri.build());
   }
 }
