@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/auth"
-	"github.com/shroff/phylum/server/internal/api/v1/fs"
+	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
@@ -13,12 +13,12 @@ import (
 var errInvalidParams = errors.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
 
 type homeResponse struct {
-	User user.User       `json:"user"`
-	Home fs.FullResponse `json:"home"`
+	User user.User              `json:"user"`
+	Home responses.ResourceFull `json:"home"`
 }
 
 type sharedResponse struct {
-	Shared []fs.InfoResponse `json:"shared"`
+	Shared []responses.Resource `json:"shared"`
 }
 
 func SetupRoutes(r *gin.RouterGroup) {
@@ -38,7 +38,7 @@ func handleHomeRoute(c *gin.Context) {
 
 	c.JSON(200, homeResponse{
 		User: user,
-		Home: fs.CreateFullResponse(r),
+		Home: responses.FullResourceFromFS(r),
 	})
 }
 
@@ -48,9 +48,9 @@ func handleSharedRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	res := make([]fs.InfoResponse, len(shared))
+	res := make([]responses.Resource, len(shared))
 	for i, r := range shared {
-		res[i] = fs.CreateResponse(r)
+		res[i] = responses.ResourceFromFS(r)
 	}
 	c.JSON(200, sharedResponse{Shared: res})
 }

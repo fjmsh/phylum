@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
@@ -74,5 +75,5 @@ func handleUploadRequest(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	c.JSON(200, CreateResponse(r))
+	c.JSON(200, responses.ResourceFromFS(r))
 }

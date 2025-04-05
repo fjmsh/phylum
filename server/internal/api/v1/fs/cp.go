@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
@@ -34,6 +35,6 @@ func handleCpRequest(c *gin.Context) {
 	if r, _, err := r.Copy(params.Target, params.ID, true, params.Conflict); err != nil {
 		panic(err)
 	} else {
-		c.JSON(200, CreateResponse(r))
+		c.JSON(200, responses.ResourceFromFS(r))
 	}
 }
