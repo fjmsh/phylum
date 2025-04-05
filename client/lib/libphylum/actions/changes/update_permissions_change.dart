@@ -25,8 +25,8 @@ class UpdatePermissionsChange extends LocalChange<Resource> {
   @override
   Resource? apply(Resource? data) {
     if (data == null) return null;
-    var p = data.grants.parsePermissionMap();
-    if ((p[username] ?? 0) == permission) {
+    var p = data.grants.parseGrantsMap();
+    if (p.containsKey(username) && p[username] == permission) {
       return data;
     }
     if (permission == 0) {

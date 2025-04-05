@@ -15,13 +15,13 @@ CREATE TABLE IF NOT EXISTS resources(
     last_refresh DATETIME
 );
 
-parents: WITH RECURSIVE parents(id, parent, name, permissions) AS (
-    SELECT id, parent, name, permissions
+parents: WITH RECURSIVE parents(id, parent, name, permissions, grants) AS (
+    SELECT id, parent, name, permissions, grants
         FROM resources
         WHERE id = :id
     UNION ALL
-    SELECT r.id, r.parent, r.name, r.permissions
+    SELECT r.id, r.parent, r.name, r.permissions, r.grants
         FROM resources r
         JOIN parents p
         ON r.id = p.parent
-) SELECT id, name, permissions from parents;
+) SELECT id, name, permissions, grants from parents;

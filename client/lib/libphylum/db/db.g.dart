@@ -1639,7 +1639,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 
   Selectable<ParentsResult> parents(String id) {
     return customSelect(
-        'WITH RECURSIVE parents (id, parent, name, permissions) AS (SELECT id, parent, name, permissions FROM resources WHERE id = ?1 UNION ALL SELECT r.id, r.parent, r.name, r.permissions FROM resources AS r JOIN parents AS p ON r.id = p.parent) SELECT id, name, permissions FROM parents',
+        'WITH RECURSIVE parents (id, parent, name, permissions, grants) AS (SELECT id, parent, name, permissions, grants FROM resources WHERE id = ?1 UNION ALL SELECT r.id, r.parent, r.name, r.permissions, r.grants FROM resources AS r JOIN parents AS p ON r.id = p.parent) SELECT id, name, permissions, grants FROM parents',
         variables: [
           Variable<String>(id)
         ],
@@ -1649,6 +1649,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
           id: row.read<String>('id'),
           name: row.read<String>('name'),
           permissions: row.readNullable<String>('permissions'),
+          grants: row.readNullable<String>('grants'),
         ));
   }
 
@@ -3062,10 +3063,12 @@ class ParentsResult {
   final String id;
   final String name;
   final String? permissions;
+  final String? grants;
   ParentsResult({
     required this.id,
     required this.name,
     this.permissions,
+    this.grants,
   });
 }
 

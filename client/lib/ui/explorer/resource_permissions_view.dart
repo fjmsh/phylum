@@ -32,7 +32,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
       setState(() {
         resourceName = data.first.name;
         inheritedPermissions = data.length > 1 ? data[1].permissions.parsePermissionMap() : const {};
-        permissions = data.first.permissions.parsePermissionMap();
+        permissions = data.first.grants.parseGrantsMap();
       });
     });
   }

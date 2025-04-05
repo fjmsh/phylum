@@ -15,6 +15,13 @@ const Permission permissionSetReadWriteShare = permissionRead | permissionWrite 
 extension PermissionMapper on String? {
   Map<String, Permission> parsePermissionMap() =>
       this == null ? const {} : (jsonDecode(this!) as Map).cast<String, Permission>();
+
+  Map<String, Permission> parseGrantsMap() => this == null
+      ? const {}
+      : Map.fromEntries((jsonDecode(this!) as Map)
+          .cast<String, Map>()
+          .entries
+          .map((e) => MapEntry(e.key, e.value.cast<String, int>()['p']!)));
 }
 
 extension PermissionStringer on Permission {
