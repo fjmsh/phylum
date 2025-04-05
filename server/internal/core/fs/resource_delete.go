@@ -49,11 +49,14 @@ func (r Resource) DeleteRecursive(softDelete bool) (Resource, error) {
 	if err := r.f.deleteRecursive(r.ID(), r.ParentID(), softDelete, false); err != nil {
 		return Resource{}, err
 	}
-	r.deleted = pgtype.Timestamp{
-		Valid: true,
-		Time:  time.Now(),
+	if softDelete {
+		r.deleted = pgtype.Timestamp{
+			Valid: true,
+			Time:  time.Now(),
+		}
+		return r, nil
 	}
-	return r, nil
+	return Resource{}, nil
 }
 
 // RestoreDeleted restores a previously deleted resources
