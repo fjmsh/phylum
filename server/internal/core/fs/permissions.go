@@ -1,8 +1,6 @@
 package fs
 
 import (
-	"encoding/json"
-
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -27,25 +25,30 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 UPDATE resources SET
 	grants[@username::TEXT] = jsonb_build_object('p', @permission::INT, 't', EXTRACT(EPOCH FROM NOW())::INTEGER),
 	modified = NOW()
-WHERE id = @resource_id::UUID`
+WHERE id = @resource_id::UUID
+RETURNING grants`
 
 	const qRemove = `
 UPDATE resources SET
-	grants = grants - @username::TEXT
+	grants = grants - @username::TEXT,
 	modified = NOW()
-WHERE id = @resource_id::UUID`
+WHERE id = @resource_id::UUID
+RETURNING grants`
 
 	q := qUpdate
 	if permission == PermissionNone {
 		q = qRemove
 	}
 
+	var grants []byte
 	err := r.f.runInTx(func(f filesystem) error {
-		if _, err := f.db.Exec(q, pgx.NamedArgs{
+		row := f.db.QueryRow(q, pgx.NamedArgs{
 			"resource_id": r.id,
 			"username":    username,
 			"permission":  permission,
-		}); err != nil {
+		})
+
+		if err := row.Scan(&grants); err != nil {
 			return err
 		}
 
@@ -54,23 +57,8 @@ WHERE id = @resource_id::UUID`
 	if err != nil {
 		return Resource{}, err
 	}
-	p := make(map[string]Permission)
-	if r.permissions != nil {
-		if err := json.Unmarshal(r.permissions, &p); err != nil {
-			return Resource{}, err
-		}
-	}
-	if permission == 0 {
-		delete(p, username)
-	} else {
-		p[username] = permission
-	}
-	res, err := json.Marshal(p)
-	if err != nil {
-		return Resource{}, err
-	}
 
-	r.permissions = res
+	r.grants = grants
 	return r, nil
 }
 
