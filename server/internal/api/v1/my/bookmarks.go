@@ -10,8 +10,15 @@ import (
 )
 
 type bookmarksResponse struct {
-	Bookmarks []user.Bookmark `json:"bookmarks"`
-	Until     int64           `json:"until"`
+	Bookmarks []Bookmark `json:"bookmarks"`
+	Until     int64      `json:"until"`
+}
+
+type Bookmark struct {
+	ResourceID uuid.UUID `json:"resource_id"`
+	Name       string    `json:"name"`
+	Dir        bool      `json:"dir"`
+	Created    int64     `json:"created"`
 }
 
 func setupBookmarksRoutes(r *gin.RouterGroup) {
@@ -23,9 +30,18 @@ func setupBookmarksRoutes(r *gin.RouterGroup) {
 
 func handleBookmarksGetRoute(c *gin.Context) {
 	u := auth.GetUser(c)
-	bookmarks, err := user.ManagerFromContext(c.Request.Context()).ListBookmarks(u)
+	res, err := user.ManagerFromContext(c.Request.Context()).ListBookmarks(u)
 	if err != nil {
 		panic(err)
+	}
+	bookmarks := make([]Bookmark, len(res))
+	for i, b := range res {
+		bookmarks[i] = Bookmark{
+			ResourceID: b.ResourceID,
+			Name:       b.Name,
+			Dir:        b.Dir,
+			Created:    b.Created.UnixMilli(),
+		}
 	}
 	c.JSON(200, bookmarksResponse{
 		Bookmarks: bookmarks,

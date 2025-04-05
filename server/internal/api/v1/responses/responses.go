@@ -25,7 +25,7 @@ type Resource struct {
 	ContentSHA256 string    `json:"c_sha256"`
 	Permissions   string    `json:"permissions"`
 	Grants        string    `json:"grants"`
-	Links         string    `json:"links"`
+	Links         string    `json:"publinks"`
 }
 
 type ResourceFull struct {

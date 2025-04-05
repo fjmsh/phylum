@@ -1,16 +1,18 @@
 package user
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 type Bookmark struct {
-	ResourceID uuid.UUID `json:"resource_id"`
-	Name       string    `json:"name"`
-	Dir        bool      `json:"dir"`
-	Created    int64     `json:"created"`
+	ResourceID uuid.UUID
+	Name       string
+	Dir        bool
+	Created    time.Time
 }
 
 func scanBookmark(row pgx.CollectableRow) (Bookmark, error) {
