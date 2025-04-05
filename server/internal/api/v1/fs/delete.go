@@ -7,17 +7,20 @@ import (
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 )
 
-func handleLsRequest(c *gin.Context) {
-	resourceID, err := uuid.Parse(c.Param("id"))
+func handleDeleteRequest(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		panic(errResourceIDInvalid)
 	}
 
 	fs := auth.GetFileSystem(c)
-	r, err := fs.ResourceByID(resourceID)
+	r, err := fs.ResourceByID(id)
 	if err != nil {
 		panic(err)
 	}
-
-	c.JSON(200, responses.FullResourceFromFS(r))
+	if r, err := r.DeleteRecursive(true); err != nil {
+		panic(err)
+	} else {
+		c.JSON(200, responses.ResourceFromFS(r))
+	}
 }

@@ -7,20 +7,17 @@ import (
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 )
 
-func handleRmRequest(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+func handleInfoRequest(c *gin.Context) {
+	resourceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		panic(errResourceIDInvalid)
 	}
 
 	fs := auth.GetFileSystem(c)
-	r, err := fs.ResourceByID(id)
+	r, err := fs.ResourceByID(resourceID)
 	if err != nil {
 		panic(err)
 	}
-	if r, err := r.DeleteRecursive(true); err != nil {
-		panic(err)
-	} else {
-		c.JSON(200, responses.ResourceFromFS(r))
-	}
+
+	c.JSON(200, responses.FullResourceFromFS(r))
 }

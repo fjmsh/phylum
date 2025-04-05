@@ -12,7 +12,7 @@ type DiskUsageResponse struct {
 	Dirs      int64 `json:"dirs"`
 }
 
-func handleDuRequest(c *gin.Context) {
+func handleDiskUsageRequest(c *gin.Context) {
 	resourceId, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		panic(errResourceIDInvalid)

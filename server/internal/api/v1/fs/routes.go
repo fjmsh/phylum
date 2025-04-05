@@ -14,15 +14,18 @@ var (
 
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/fs")
+
 	group.GET("/contents/:id", handleContentsRequest)
-	group.GET("/du/:id", handleDuRequest)
-	group.GET("/ls/:id", handleLsRequest)
+	group.GET("/info/:id", handleInfoRequest)
+	group.GET("/disk_usage/:id", handleDiskUsageRequest)
+	group.POST("/share/:id", handleShareRequest)
+	group.POST("/move/:id", handleMoveRequest)
+	group.POST("/copy/:id", handleCopyRequest)
+	group.DELETE("/delete/:id", handleDeleteRequest)
+
 	group.POST("/mkdir/:id", handleMkdirRequest)
-	group.POST("/mv/:id", handleMvRequest)
-	group.POST("/cp/:id", handleCpRequest)
+	group.PUT("/upload/:id", handleUploadRequest)
+
 	group.GET("/publink/:id/list", handlePublinkListRequest)
 	group.POST("/publink/:id/create", handlePublinkCreateRequest)
-	group.DELETE("/rm/:id", handleRmRequest)
-	group.POST("/share/:id", handleShareRequest)
-	group.PUT("/upload/:id", handleUploadRequest)
 }

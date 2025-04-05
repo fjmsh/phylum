@@ -8,14 +8,13 @@ import (
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
-type cpParams struct {
-	ID       uuid.UUID                         `json:"id" binding:"required"`
+type mvParams struct {
 	Target   string                            `json:"target"`
 	Conflict fs.ResourceBindConflictResolution `json:"conflict"`
 }
 
-func handleCpRequest(c *gin.Context) {
-	var params cpParams
+func handleMoveRequest(c *gin.Context) {
+	var params mvParams
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
 		panic(errInvalidParams)
@@ -32,7 +31,7 @@ func handleCpRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	if r, _, err := r.Copy(params.Target, params.ID, true, params.Conflict); err != nil {
+	if r, _, err := r.Move(params.Target, params.Conflict); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, responses.ResourceFromFS(r))
