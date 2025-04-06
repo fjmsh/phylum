@@ -244,12 +244,11 @@ class Resources extends Table with TableInfo<Resources, Resource> {
       $customConstraints: '');
   static const VerificationMeta _deletedMeta =
       const VerificationMeta('deleted');
-  late final GeneratedColumn<bool> deleted = GeneratedColumn<bool>(
-      'deleted', aliasedName, false,
-      type: DriftSqlType.bool,
+  late final GeneratedColumn<DateTime> deleted = GeneratedColumn<DateTime>(
+      'deleted', aliasedName, true,
+      type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
-      $customConstraints: 'NOT NULL DEFAULT 0 CHECK (deleted IN (0, 1))',
-      defaultValue: const CustomExpression('0'));
+      $customConstraints: '');
   static const VerificationMeta _contentLengthMeta =
       const VerificationMeta('contentLength');
   late final GeneratedColumn<int> contentLength = GeneratedColumn<int>(
@@ -421,7 +420,7 @@ class Resources extends Table with TableInfo<Resources, Resource> {
       modified: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}modified']),
       deleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}deleted'])!,
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted']),
       contentLength: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}content_length'])!,
       contentSha256: attachedDatabase.typeMapping
@@ -455,7 +454,7 @@ class Resource extends DataClass implements Insertable<Resource> {
   final bool dir;
   final DateTime? created;
   final DateTime? modified;
-  final bool deleted;
+  final DateTime? deleted;
   final int contentLength;
   final String contentSha256;
   final String contentType;
@@ -470,7 +469,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       required this.dir,
       this.created,
       this.modified,
-      required this.deleted,
+      this.deleted,
       required this.contentLength,
       required this.contentSha256,
       required this.contentType,
@@ -493,7 +492,9 @@ class Resource extends DataClass implements Insertable<Resource> {
     if (!nullToAbsent || modified != null) {
       map['modified'] = Variable<DateTime>(modified);
     }
-    map['deleted'] = Variable<bool>(deleted);
+    if (!nullToAbsent || deleted != null) {
+      map['deleted'] = Variable<DateTime>(deleted);
+    }
     map['content_length'] = Variable<int>(contentLength);
     map['content_sha256'] = Variable<String>(contentSha256);
     map['content_type'] = Variable<String>(contentType);
@@ -525,7 +526,9 @@ class Resource extends DataClass implements Insertable<Resource> {
       modified: modified == null && nullToAbsent
           ? const Value.absent()
           : Value(modified),
-      deleted: Value(deleted),
+      deleted: deleted == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deleted),
       contentLength: Value(contentLength),
       contentSha256: Value(contentSha256),
       contentType: Value(contentType),
@@ -553,7 +556,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       dir: serializer.fromJson<bool>(json['dir']),
       created: serializer.fromJson<DateTime?>(json['created']),
       modified: serializer.fromJson<DateTime?>(json['modified']),
-      deleted: serializer.fromJson<bool>(json['deleted']),
+      deleted: serializer.fromJson<DateTime?>(json['deleted']),
       contentLength: serializer.fromJson<int>(json['content_length']),
       contentSha256: serializer.fromJson<String>(json['content_sha256']),
       contentType: serializer.fromJson<String>(json['content_type']),
@@ -573,7 +576,7 @@ class Resource extends DataClass implements Insertable<Resource> {
       'dir': serializer.toJson<bool>(dir),
       'created': serializer.toJson<DateTime?>(created),
       'modified': serializer.toJson<DateTime?>(modified),
-      'deleted': serializer.toJson<bool>(deleted),
+      'deleted': serializer.toJson<DateTime?>(deleted),
       'content_length': serializer.toJson<int>(contentLength),
       'content_sha256': serializer.toJson<String>(contentSha256),
       'content_type': serializer.toJson<String>(contentType),
@@ -591,7 +594,7 @@ class Resource extends DataClass implements Insertable<Resource> {
           bool? dir,
           Value<DateTime?> created = const Value.absent(),
           Value<DateTime?> modified = const Value.absent(),
-          bool? deleted,
+          Value<DateTime?> deleted = const Value.absent(),
           int? contentLength,
           String? contentSha256,
           String? contentType,
@@ -606,7 +609,7 @@ class Resource extends DataClass implements Insertable<Resource> {
         dir: dir ?? this.dir,
         created: created.present ? created.value : this.created,
         modified: modified.present ? modified.value : this.modified,
-        deleted: deleted ?? this.deleted,
+        deleted: deleted.present ? deleted.value : this.deleted,
         contentLength: contentLength ?? this.contentLength,
         contentSha256: contentSha256 ?? this.contentSha256,
         contentType: contentType ?? this.contentType,
@@ -705,7 +708,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   final Value<bool> dir;
   final Value<DateTime?> created;
   final Value<DateTime?> modified;
-  final Value<bool> deleted;
+  final Value<DateTime?> deleted;
   final Value<int> contentLength;
   final Value<String> contentSha256;
   final Value<String> contentType;
@@ -757,7 +760,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     Expression<bool>? dir,
     Expression<DateTime>? created,
     Expression<DateTime>? modified,
-    Expression<bool>? deleted,
+    Expression<DateTime>? deleted,
     Expression<int>? contentLength,
     Expression<String>? contentSha256,
     Expression<String>? contentType,
@@ -793,7 +796,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       Value<bool>? dir,
       Value<DateTime?>? created,
       Value<DateTime?>? modified,
-      Value<bool>? deleted,
+      Value<DateTime?>? deleted,
       Value<int>? contentLength,
       Value<String>? contentSha256,
       Value<String>? contentType,
@@ -843,7 +846,7 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       map['modified'] = Variable<DateTime>(modified.value);
     }
     if (deleted.present) {
-      map['deleted'] = Variable<bool>(deleted.value);
+      map['deleted'] = Variable<DateTime>(deleted.value);
     }
     if (contentLength.present) {
       map['content_length'] = Variable<int>(contentLength.value);
@@ -1833,7 +1836,7 @@ typedef $ResourcesCreateCompanionBuilder = ResourcesCompanion Function({
   required bool dir,
   Value<DateTime?> created,
   Value<DateTime?> modified,
-  Value<bool> deleted,
+  Value<DateTime?> deleted,
   Value<int> contentLength,
   Value<String> contentSha256,
   Value<String> contentType,
@@ -1850,7 +1853,7 @@ typedef $ResourcesUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<bool> dir,
   Value<DateTime?> created,
   Value<DateTime?> modified,
-  Value<bool> deleted,
+  Value<DateTime?> deleted,
   Value<int> contentLength,
   Value<String> contentSha256,
   Value<String> contentType,
@@ -1937,7 +1940,7 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
   ColumnFilters<DateTime> get modified => $composableBuilder(
       column: $table.modified, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get deleted => $composableBuilder(
+  ColumnFilters<DateTime> get deleted => $composableBuilder(
       column: $table.deleted, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get contentLength => $composableBuilder(
@@ -2051,7 +2054,7 @@ class $ResourcesOrderingComposer extends Composer<_$AppDatabase, Resources> {
   ColumnOrderings<DateTime> get modified => $composableBuilder(
       column: $table.modified, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get deleted => $composableBuilder(
+  ColumnOrderings<DateTime> get deleted => $composableBuilder(
       column: $table.deleted, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get contentLength => $composableBuilder(
@@ -2104,7 +2107,7 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
   GeneratedColumn<DateTime> get modified =>
       $composableBuilder(column: $table.modified, builder: (column) => column);
 
-  GeneratedColumn<bool> get deleted =>
+  GeneratedColumn<DateTime> get deleted =>
       $composableBuilder(column: $table.deleted, builder: (column) => column);
 
   GeneratedColumn<int> get contentLength => $composableBuilder(
@@ -2222,7 +2225,7 @@ class $ResourcesTableManager extends RootTableManager<
             Value<bool> dir = const Value.absent(),
             Value<DateTime?> created = const Value.absent(),
             Value<DateTime?> modified = const Value.absent(),
-            Value<bool> deleted = const Value.absent(),
+            Value<DateTime?> deleted = const Value.absent(),
             Value<int> contentLength = const Value.absent(),
             Value<String> contentSha256 = const Value.absent(),
             Value<String> contentType = const Value.absent(),
@@ -2256,7 +2259,7 @@ class $ResourcesTableManager extends RootTableManager<
             required bool dir,
             Value<DateTime?> created = const Value.absent(),
             Value<DateTime?> modified = const Value.absent(),
-            Value<bool> deleted = const Value.absent(),
+            Value<DateTime?> deleted = const Value.absent(),
             Value<int> contentLength = const Value.absent(),
             Value<String> contentSha256 = const Value.absent(),
             Value<String> contentType = const Value.absent(),

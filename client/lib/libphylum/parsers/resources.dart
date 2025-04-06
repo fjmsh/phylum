@@ -6,9 +6,9 @@ Resource parseFullResource(Map<String, dynamic> data) {
     parent: data['parent'],
     name: data['name'],
     dir: data['dir'],
-    created: DateTime.parse(data['created']),
-    modified: DateTime.parse(data['modified']),
-    deleted: data['deleted'] != null,
+    created: DateTime.fromMillisecondsSinceEpoch(data['created']),
+    modified: DateTime.fromMillisecondsSinceEpoch(data['modified']),
+    deleted: data['deleted'] == 0 ? null : DateTime.fromMillisecondsSinceEpoch(data['deleted']),
     contentLength: data['c_len'],
     contentSha256: data['c_sha256'],
     contentType: data['c_type'],
@@ -33,9 +33,14 @@ ResourcesCompanion parsePartialResource(Map<String, dynamic> data, [String? id])
     parent: Value.absentIfNull(data['parent']),
     name: Value.absentIfNull(data['name']),
     dir: Value.absentIfNull(data['dir']),
-    created: Value.absentIfNull(data.containsKey('created') ? DateTime.parse(data['created']) : null),
-    modified: Value.absentIfNull(data.containsKey('modified') ? DateTime.parse(data['modified']) : null),
-    deleted: Value.absentIfNull(data.containsKey('deleted') ? data['deleted'] != null : null),
+    created: data.containsKey('created') ? Value(DateTime.fromMillisecondsSinceEpoch(data['created'])) : Value.absent(),
+    modified:
+        data.containsKey('modified') ? Value(DateTime.fromMillisecondsSinceEpoch(data['modified'])) : Value.absent(),
+    deleted: data.containsKey('deleted')
+        ? data['deleted'] == 0
+            ? Value(null)
+            : Value(DateTime.fromMillisecondsSinceEpoch(data['deleted']))
+        : Value.absent(),
     contentLength: Value.absentIfNull(data['c_len']),
     contentSha256: Value.absentIfNull(data['c_sha256']),
     contentType: Value.absentIfNull(data['c_type']),

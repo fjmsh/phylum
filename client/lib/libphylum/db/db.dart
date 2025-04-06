@@ -22,7 +22,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.fromExecutor({required this.accountId, required QueryExecutor executor}) : super(executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -35,6 +35,10 @@ class AppDatabase extends _$AppDatabase {
             m.drop(bookmarks);
             m.create(bookmarks);
             m.create(orderedBookmarks);
+          }
+          if (from < 3) {
+            m.drop(resources);
+            m.create(resources);
           }
         },
       );

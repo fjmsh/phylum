@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS resources(
     dir BOOLEAN NOT NULL CHECK ("dir" IN (0, 1)),
     created DATETIME,
     modified DATETIME,
-    deleted BOOLEAN NOT NULL DEFAULT 0 CHECK ("deleted" IN (0, 1)),
+    deleted DATETIME,
     content_length INTEGER NOT NULL DEFAULT 0,
     content_sha256 TEXT NOT NULL DEFAULT '',
     content_type TEXT NOT NULL DEFAULT '',
