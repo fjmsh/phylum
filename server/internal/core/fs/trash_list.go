@@ -51,7 +51,7 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 		return nil, "", err
 	} else {
 		cursor := ""
-		if uint(len(res)) < n {
+		if uint(len(res)) == n {
 			last := res[len(res)-1]
 			c := make([]byte, 24)
 
