@@ -26,6 +26,8 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group.POST("/mkdir/:id", handleMkdirRequest)
 	group.PUT("/upload/:id", handleUploadRequest)
 
+	group.GET("/search", handleSearchRequest)
+
 	group.GET("/publink/:id/list", handlePublinkListRequest)
 	group.POST("/publink/:id/create", handlePublinkCreateRequest)
 }
