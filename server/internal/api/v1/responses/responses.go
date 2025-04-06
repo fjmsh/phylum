@@ -1,8 +1,6 @@
 package responses
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 )
 
@@ -18,8 +16,9 @@ type Resource struct {
 	Name          string    `json:"name"`
 	ParentID      uuid.UUID `json:"parent"`
 	Dir           bool      `json:"dir"`
-	Created       time.Time `json:"created"`
-	Modified      time.Time `json:"modified"`
+	Created       int64     `json:"created"`
+	Modified      int64     `json:"modified"`
+	Deleted       int64     `json:"deleted"`
 	ContentLength int       `json:"c_len"`
 	ContentType   string    `json:"c_type"`
 	ContentSHA256 string    `json:"c_sha256"`

@@ -34,13 +34,18 @@ func FullResourceFromFS(r fs.Resource) ResourceFull {
 }
 
 func ResourceFromFS(r fs.Resource) Resource {
+	var deleted int64 = 0
+	if r.Deleted().Valid {
+		deleted = r.Deleted().Time.UnixMilli()
+	}
 	return Resource{
 		ID:            r.ID(),
 		Name:          r.Name(),
 		ParentID:      r.ParentID(),
 		Dir:           r.Dir(),
-		Created:       r.Created(),
-		Modified:      r.Modified(),
+		Created:       r.Created().UnixMilli(),
+		Modified:      r.Modified().UnixMilli(),
+		Deleted:       deleted,
 		ContentLength: r.ContentLength(),
 		ContentType:   r.ContentType(),
 		ContentSHA256: r.ContentSHA256(),
