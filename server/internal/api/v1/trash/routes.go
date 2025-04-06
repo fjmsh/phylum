@@ -12,6 +12,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/trash")
 
 	group.GET("/list", handleListRequest)
+	group.POST("/empty", handleEmptyRequest)
 }
 
 type trashListResponse struct {
@@ -36,4 +37,13 @@ func handleListRequest(c *gin.Context) {
 	}
 
 	c.JSON(200, r)
+}
+
+func handleEmptyRequest(c *gin.Context) {
+	fs := auth.GetFileSystem(c)
+	_, err := fs.TrashEmpty()
+	if err != nil {
+		panic(err)
+	}
+	c.JSON(200, gin.H{})
 }
