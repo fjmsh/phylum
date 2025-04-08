@@ -7,7 +7,7 @@ func (f filesystem) SharedResources() ([]Resource, error) {
 WHERE grants ? $1::TEXT
 AND id <> $2::UUID
 AND deleted IS NULL
-AND grants -> $1::TEXT -> 'p' <> 0
+AND (grants -> $1::TEXT -> 'p')::INTEGER <> 0
 ORDER BY grants -> $1::TEXT -> 't' DESC`
 	if rows, err := f.db.Query(q, f.username); err != nil {
 		return nil, err
