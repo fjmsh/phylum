@@ -24,11 +24,11 @@ func SetupRoutes(r *gin.RouterGroup) {
 
 type trashListResponse struct {
 	Resources []responses.Resource `json:"resources"`
-	Cursor    string               `json:"c"`
+	Cursor    string               `json:"cursor"`
 }
 
 func handleListRequest(c *gin.Context) {
-	cursor := c.Request.URL.Query().Get("c")
+	cursor := c.Request.URL.Query().Get("cursor")
 
 	fs := auth.GetFileSystem(c)
 	res, cursor, err := fs.TrashList(cursor, trashListLength)
