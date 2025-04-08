@@ -14,13 +14,14 @@ import 'package:provider/provider.dart';
 
 class DestinationPicker extends StatefulWidget {
   final String initialFolderId;
+  final bool allowInitialFolder;
 
-  const DestinationPicker({super.key, required this.initialFolderId});
+  const DestinationPicker({super.key, required this.initialFolderId, this.allowInitialFolder = false});
 
   @override
   State<DestinationPicker> createState() => _DestinationPickerState();
 
-  static Future<String?> show(BuildContext context, String initialFolderId) {
+  static Future<String?> show(BuildContext context, String initialFolderId, {bool allowInitialFolder = false}) {
     return showDialog(
       context: context,
       builder: (context) => MultiProvider(
@@ -35,7 +36,7 @@ class DestinationPicker extends StatefulWidget {
             ),
           ),
         ],
-        child: DestinationPicker(initialFolderId: initialFolderId),
+        child: DestinationPicker(initialFolderId: initialFolderId, allowInitialFolder: allowInitialFolder),
       ),
     );
   }
@@ -56,7 +57,8 @@ class _DestinationPickerState extends State<DestinationPicker> {
   }
 
   @override
-  Widget build(BuildContext context) => MediaQuery.sizeOf(context).width <= 600 ? buildScaffold(context) : buildDialog(context);
+  Widget build(BuildContext context) =>
+      MediaQuery.sizeOf(context).width <= 600 ? buildScaffold(context) : buildDialog(context);
 
   Widget buildScaffold(BuildContext context) {
     return Scaffold(
@@ -151,9 +153,10 @@ class _DestinationPickerState extends State<DestinationPicker> {
                 children: [
                   TextButton(onPressed: Navigator.of(context).pop, child: Text('Cancel')),
                   ElevatedButton(
-                    onPressed: context.select<ExplorerState, bool>((state) => state.folderId == widget.initialFolderId)
-                        ? null
-                        : () => Navigator.of(context).pop(context.read<ExplorerState>().folderId),
+                    onPressed: widget.allowInitialFolder ||
+                            context.select<ExplorerState, bool>((state) => state.folderId != widget.initialFolderId)
+                        ? () => Navigator.of(context).pop(context.read<ExplorerState>().folderId)
+                        : null,
                     child: Text('OK'),
                   ),
                 ],

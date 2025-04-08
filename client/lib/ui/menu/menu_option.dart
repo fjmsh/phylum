@@ -85,7 +85,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
     case MenuOption.copy:
       final parent = resources.firstOrNull?.parent;
       if (parent == null) return;
-      final dest = await DestinationPicker.show(context, parent);
+      final dest = await DestinationPicker.show(context, parent, allowInitialFolder: true);
       if (dest == null) {
         return;
       }
