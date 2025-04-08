@@ -131,6 +131,7 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 
 		return f.recomputePermissions(r.id)
 	})
+	r.deleted = pgtype.Timestamp{}
 	res = r
 	return
 }
