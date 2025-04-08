@@ -40,7 +40,6 @@ class CreateResourceChange extends LocalChange<Resource> {
       dir: true,
       created: timestamp,
       modified: timestamp,
-      deleted: false,
       contentLength: contentLength,
       contentType: contentType,
       contentSha256: contentSha256,

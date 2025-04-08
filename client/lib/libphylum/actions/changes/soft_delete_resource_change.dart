@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 
@@ -12,6 +13,6 @@ class SoftDeleteResourceChange extends LocalChange<Resource> {
 
   @override
   Resource? apply(Resource? data) {
-    return data?.copyWith(deleted: true);
+    return data?.copyWith(deleted: Value(DateTime.now()));
   }
 }

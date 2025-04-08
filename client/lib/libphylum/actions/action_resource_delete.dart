@@ -18,9 +18,7 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   String get endpoint => '/api/v1/fs/delete/$resourceId';
 
   @override
-  List<LocalChange> get localChanges => [
-        SoftDeleteResourceChange(objectId: resourceId),
-      ];
+  List<LocalChange> get localChanges => [SoftDeleteResourceChange(objectId: resourceId)];
 
   @override
   String get description => "Deleting $resourceName";

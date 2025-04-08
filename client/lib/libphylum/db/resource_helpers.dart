@@ -37,15 +37,15 @@ extension ResourceHelpers on AppDatabase {
   }
 
   SimpleSelectStatement<Resources, Resource> _selectResource(String id) {
-    return resources.select()..where((f) => f.id.equals(id) & f.deleted.equals(false));
+    return resources.select()..where((f) => f.id.equals(id) & f.deleted.isNull());
   }
 
   SimpleSelectStatement<Resources, Resource> _selectResourceByName({required String parent, required String name}) {
-    return resources.select()..where((f) => f.parent.equals(parent) & f.name.equals(name) & f.deleted.equals(false));
+    return resources.select()..where((f) => f.parent.equals(parent) & f.name.equals(name) & f.deleted.isNull());
   }
 
   SimpleSelectStatement<Resources, Resource> _selectChildren(String id) {
-    return resources.select()..where((f) => f.parent.equals(id) & f.deleted.equals(false));
+    return resources.select()..where((f) => f.parent.equals(id) & f.deleted.isNull());
   }
 
   SimpleSelectStatement<Resources, Resource> _selectResources(Iterable<String> ids) {

@@ -1624,6 +1624,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Shared shared = Shared(this);
   late final Index sharedResources = Index('shared_resources',
       'CREATE INDEX IF NOT EXISTS shared_resources ON shared (seq)');
+  late final Index deletedResources = Index('deleted_resources',
+      'CREATE INDEX IF NOT EXISTS deleted_resources ON resources (deleted DESC)');
   late final Recents recents = Recents(this);
   late final Index recentAccesses = Index('recent_accesses',
       'CREATE INDEX IF NOT EXISTS recent_accesses ON recents (accessed DESC)');
@@ -1636,6 +1638,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         variables: [],
         readsFrom: {
           shared,
+          resources,
+        }).asyncMap(resources.mapFromRow);
+  }
+
+  Selectable<Resource> selectDeleted() {
+    return customSelect(
+        'SELECT * FROM resources WHERE deleted IS NOT NULL ORDER BY deleted DESC',
+        variables: [],
+        readsFrom: {
           resources,
         }).asyncMap(resources.mapFromRow);
   }
@@ -1674,7 +1685,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 
   Selectable<Resource> selectRecents() {
     return customSelect(
-        'SELECT r.* FROM recents AS h INNER JOIN resources AS r ON h.resource_id = r.id WHERE r.deleted == 0 AND r.parent IS NOT NULL ORDER BY h.accessed DESC',
+        'SELECT r.* FROM recents AS h INNER JOIN resources AS r ON h.resource_id = r.id WHERE r.deleted IS NULL AND r.parent IS NOT NULL ORDER BY h.accessed DESC',
         variables: [],
         readsFrom: {
           recents,
@@ -1705,6 +1716,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         resources,
         shared,
         sharedResources,
+        deletedResources,
         recents,
         recentAccesses,
         bookmarks,

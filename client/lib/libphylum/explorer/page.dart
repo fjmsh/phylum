@@ -101,6 +101,37 @@ class ExplorerPageRecents extends ExplorerPage {
   }
 }
 
+class ExplorerPageTrash extends ExplorerPage {
+  const ExplorerPageTrash();
+
+  @override
+  Future<bool> refresh(PhylumAccount account) {
+    return account.resourceRepository.requestDeletedResources().then((result) => result is ApiSuccessResponse);
+  }
+
+  @override
+  Stream<Resource?> watchResource(PhylumAccount account) {
+    return Stream.fromIterable([null]);
+  }
+
+  @override
+  Stream<List<Resource>> watchChildren(PhylumAccount account) {
+    return account.db.selectDeleted().watch();
+  }
+
+  @override
+  Stream<List<ParentsResult>> watchParents(PhylumAccount account) {
+    return Stream.fromIterable([
+      [],
+    ]);
+  }
+
+  @override
+  String toString() {
+    return 'ExplorerPageTrash';
+  }
+}
+
 class ExplorerPageShared extends ExplorerPage {
   const ExplorerPageShared();
 
