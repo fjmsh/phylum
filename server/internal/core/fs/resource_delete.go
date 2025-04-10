@@ -112,6 +112,10 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 	}
 
 	err = r.f.runInTx(func(f filesystem) error {
+		q, args, _ := pg.Delete(goqu.T("trash")).Where(goqu.C("id").Eq(r.id)).ToSQL()
+		if _, err := f.db.Exec(q, args...); err != nil {
+			return err
+		}
 		if p.id != r.parentID || r.name != name {
 			if err := f.updateResourceNameParent(r.ID(), name, p.id); err != nil {
 				return err
@@ -123,10 +127,6 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 		if del, err := f.markNotDeleted(r.id); err != nil {
 			return err
 		} else {
-			q, args, _ := pg.Delete(goqu.T("trash")).Where(goqu.C("id").Eq(r.id)).ToSQL()
-			if _, err := f.db.Exec(q, args...); err != nil {
-				return err
-			}
 			count = len(del)
 			for _, l := range del {
 				size += l
