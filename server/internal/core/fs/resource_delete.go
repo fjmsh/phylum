@@ -123,6 +123,10 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 		if del, err := f.markNotDeleted(r.id); err != nil {
 			return err
 		} else {
+			q, args, _ := pg.Delete(goqu.T("trash")).Where(goqu.C("id").Eq(r.id)).ToSQL()
+			if _, err := f.db.Exec(q, args...); err != nil {
+				return err
+			}
 			count = len(del)
 			for _, l := range del {
 				size += l
@@ -142,6 +146,19 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 		var err error
 		if _, ids, err = f.markDeleted(id, softDelete, preserveRoot); err != nil {
 			return err
+		}
+		if softDelete {
+			// Add to trash
+			insert := pg.Insert(goqu.T("trash")).Cols("id")
+			if preserveRoot {
+				insert = insert.FromQuery(pg.From("resources").Select("id").Where(goqu.C("parent").Eq(id)))
+			} else {
+				insert = insert.Vals(goqu.Vals{id})
+			}
+			q, args, _ := insert.ToSQL()
+			if _, err := f.db.Exec(q, args...); err != nil {
+				return err
+			}
 		}
 
 		return f.updateResourceModified(parent)

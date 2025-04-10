@@ -13,10 +13,11 @@ import (
 
 func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error) {
 	l := goqu.T("publinks").As("l")
+	t := goqu.T("trash")
 	r := goqu.T("resources")
-	q := pg.From(r).
-		Select(r.All(), pg.Select(goqu.L("jsonb_agg(?)", l.Col("name"))).From(l).Where(l.Col("root").Eq(r.Col("id")), l.Col("deleted").IsNull())).
-		Where(goqu.C("deleted").IsNotNull())
+	q := pg.From(t).
+		Join(r, goqu.On(t.Col("id").Eq(r.Col("id")))).
+		Select(r.All(), pg.Select(goqu.L("jsonb_agg(?)", l.Col("name"))).From(l).Where(l.Col("root").Eq(r.Col("id")), l.Col("deleted").IsNull()))
 	if !f.fullAccess {
 		q = q.Where(goqu.L("permissions[?]::INTEGER <> 0", f.username))
 	}
@@ -41,7 +42,7 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 
 	query, params, _ := q.
 		Order(goqu.C("deleted").Desc()).
-		OrderAppend(goqu.C("id").Desc()).
+		OrderAppend(r.Col("id").Desc()).
 		Limit(n).
 		ToSQL()
 

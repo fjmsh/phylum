@@ -35,7 +35,11 @@ func setupDeleteCommand() *cobra.Command {
 					}
 				}
 
-				r.DeleteRecursive(false)
+				if _, err := r.DeleteRecursive(false); err != nil {
+					fmt.Println("cannot remove '" + id.String() + "': " + err.Error())
+					os.Exit(1)
+				}
+
 			}
 		},
 	}

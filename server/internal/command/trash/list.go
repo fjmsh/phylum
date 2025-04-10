@@ -32,7 +32,7 @@ func setupListCommand() *cobra.Command {
 			}
 		},
 	}
-	cmd.Flags().IntP("num", "n", 5, "How many items to show")
+	cmd.Flags().UintP("num", "n", 5, "How many items to show")
 	cmd.Flags().StringP("cursor", "c", "", "Pagination Cursor")
 	return &cmd
 }
