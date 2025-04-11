@@ -25,6 +25,16 @@ const resourceOptions = [
   ],
 ];
 
+const trashedResourceOptions = [
+  [
+    MenuOption.restore,
+    MenuOption.deleteForever,
+  ],
+  [
+    MenuOption.details,
+  ],
+];
+
 final parentFolderOptions = [
   [
     MenuOption.newFolder,

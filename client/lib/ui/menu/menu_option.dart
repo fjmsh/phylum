@@ -25,6 +25,8 @@ enum MenuOption {
   move(Icons.drive_file_move_outlined, 'Move To', all),
   copy(Icons.copy, 'Copy To', all),
   delete(Icons.delete_outline, 'Delete', all),
+  restore(Icons.restore, 'Restore from Trash', all),
+  deleteForever(Icons.delete_forever_outlined, 'Delete Forever', all),
   permissions(Icons.people_alt_outlined, 'Permissions', isSingle),
   publinks(Icons.public, 'Public Access', isSingle),
   newFolder(Icons.create_new_folder_outlined, 'New Folder', isSingle),
@@ -113,6 +115,17 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
           account.addAction(ResourceDeleteAction(r: r, timestamp: DateTime.now()));
         }
       }
+      break;
+    case MenuOption.restore:
+    case MenuOption.deleteForever:
+      // final name = resources.length == 1 ? resources.first.name : '${resources.length} items';
+      // final confirm =
+      //     await showAlertDialog(context, title: 'Delete $name?', positiveText: 'YES', negativeText: 'NO') ?? false;
+      // if (confirm) {
+      //   for (final r in resources) {
+      //     account.addAction(ResourceDeleteAction(r: r, timestamp: DateTime.now()));
+      //   }
+      // }
       break;
     case MenuOption.details:
       final resource = resources.firstOrNull;

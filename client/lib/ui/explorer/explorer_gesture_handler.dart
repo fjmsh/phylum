@@ -27,8 +27,12 @@ class ExplorerGestureHandler extends StatelessWidget {
           details.globalPosition.dx,
           details.globalPosition.dy,
         );
+        var options = parentFolderOptions;
+        if (resource.deleted != null) {
+          options = trashedResourceOptions;
+        }
         final resources = [resource];
-        final items = await buildPopupMenuItems(context.read<PhylumAccount>(), parentFolderOptions, resources);
+        final items = await buildPopupMenuItems(context.read<PhylumAccount>(), options, resources);
         if (!context.mounted) return;
         final selection = await showMenu(
           context: context,

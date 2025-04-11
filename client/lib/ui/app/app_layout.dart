@@ -98,7 +98,11 @@ class CollapsedAppLayout extends StatelessWidget {
                 IconButton(
                     onPressed: () {
                       final selected = context.read<ExplorerState>().selected;
-                      showMenuOptionsBottomSheet(context, resourceOptions, selected);
+                      var options = resourceOptions;
+                      if (selected.every((r) => r.deleted != null)) {
+                        options = trashedResourceOptions;
+                      }
+                      showMenuOptionsBottomSheet(context, options, selected);
                     },
                     icon: Icon(Icons.adaptive.more))
               ],

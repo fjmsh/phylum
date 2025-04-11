@@ -14,7 +14,8 @@ class ResourceItemGestureHandler extends StatefulWidget {
   final Resource resource;
   final bool dropTargetActive;
 
-  const ResourceItemGestureHandler({super.key, required this.index, required this.resource, required this.dropTargetActive});
+  const ResourceItemGestureHandler(
+      {super.key, required this.index, required this.resource, required this.dropTargetActive});
 
   @override
   State<ResourceItemGestureHandler> createState() => _ResourceItemGestureHandlerState();
@@ -66,8 +67,9 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
       onSecondaryTapUp: (details) async {
         ExplorerState state = context.read<ExplorerState>();
         if (!state.isSelected(widget.resource.id)) {
-          final mode =
-              HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed ? SelectionMode.add : SelectionMode.single;
+          final mode = HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed
+              ? SelectionMode.add
+              : SelectionMode.single;
           context.read<ExplorerController>().updateSelection((i) => widget.index, mode, false);
           state = context.read<ExplorerState>();
         } else {
@@ -80,7 +82,11 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
           details.globalPosition.dy,
         );
         final resources = state.selected;
-        final items = await buildPopupMenuItems(context.read<PhylumAccount>(), resourceOptions, resources);
+        var options = resourceOptions;
+        if (resources.every((r) => r.deleted != null)) {
+          options = trashedResourceOptions;
+        }
+        final items = await buildPopupMenuItems(context.read<PhylumAccount>(), options, resources);
         if (!context.mounted) return;
         final selection = await showMenu(
           context: context,
