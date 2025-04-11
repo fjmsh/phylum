@@ -4,7 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 
-class UpdatePermissionsChange extends LocalChange<Resource> {
+class UpdateResourcePermissionsChange extends LocalChange<Resource> {
   @override
   final String objectId;
   final String username;
@@ -14,7 +14,7 @@ class UpdatePermissionsChange extends LocalChange<Resource> {
   @override
   String get description => 'Updating Permissions';
 
-  const UpdatePermissionsChange({
+  const UpdateResourcePermissionsChange({
     required this.objectId,
     required this.username,
     required this.permission,

@@ -2,15 +2,15 @@ import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 
-class MarkResourceDeletedChange extends LocalChange<Resource> {
+class UpdateResourceDeletedChange extends LocalChange<Resource> {
   @override
   final String objectId;
-  final DateTime timestamp;
+  final DateTime? timestamp;
 
   @override
-  String get description => 'Deleting';
+  String get description => 'Updating Deleted';
 
-  const MarkResourceDeletedChange({required this.objectId, required this.timestamp});
+  const UpdateResourceDeletedChange({required this.objectId, required this.timestamp});
 
   @override
   Resource? apply(Resource? data) {

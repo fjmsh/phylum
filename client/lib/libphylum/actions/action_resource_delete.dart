@@ -1,11 +1,11 @@
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/actions/changes/mark_resource_deleted_change.dart';
-import 'package:phylum/libphylum/actions/changes/move_resource_to_trash_change.dart';
+import 'package:phylum/libphylum/actions/changes/update_resource_deleted_change.dart';
+import 'package:phylum/libphylum/actions/changes/update_resource_modified_change.dart';
+import 'package:phylum/libphylum/actions/changes/update_resource_trashed_change.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 import 'action_resource.dart';
-import 'action_resource_create.dart';
 
 class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   static const kActionName = 'resourceDelete';
@@ -20,11 +20,15 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
 
   @override
   List<LocalChange> get localChanges => [
-        MarkResourceDeletedChange(
+        UpdateResourceDeletedChange(
           objectId: resourceId,
           timestamp: timestamp,
         ),
-        MoveResourceToTrashChange(objectId: resourceId),
+        UpdateResourceModifiedChange(
+          objectId: resourceId,
+          timestamp: timestamp,
+        ),
+        UpdateResourceTrashedChange(objectId: resourceId, add: true),
       ];
 
   @override
@@ -60,5 +64,5 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   }
 
   @override
-  bool dependsOn(PhylumAction action) => action is ResourceCreateAction && action.resourceId == resourceId;
+  bool dependsOn(PhylumAction action) => action is ResourceAction && action.resourceId == resourceId;
 }

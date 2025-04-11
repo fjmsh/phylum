@@ -2,6 +2,7 @@ import 'package:phylum/libphylum/actions/action_resource_copy.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_mkdir.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
+import 'package:phylum/libphylum/actions/action_resource_restore.dart';
 import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/actions/action_resource_upload.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_add.dart';
@@ -14,6 +15,7 @@ const actionDeserializers = {
   ResourceDeleteAction.kActionName: ResourceDeleteAction.fromMap,
   ResourceMkdirAction.kActionName: ResourceMkdirAction.fromMap,
   ResourceMoveAction.kActionName: ResourceMoveAction.fromMap,
+  ResourceRestoreAction.kActionName: ResourceRestoreAction.fromMap,
   ResourceShareAction.kActionName: ResourceShareAction.fromMap,
   ResourceUploadAction.kActionName: ResourceUploadAction.fromMap,
 };

@@ -1,5 +1,5 @@
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/actions/changes/update_permissions_change.dart';
+import 'package:phylum/libphylum/actions/changes/update_resource_permissions_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 import 'action_resource.dart';
@@ -26,7 +26,7 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
 
   @override
   List<LocalChange> get localChanges => [
-        UpdatePermissionsChange(
+        UpdateResourcePermissionsChange(
           objectId: resourceId,
           username: username,
           permission: permission,

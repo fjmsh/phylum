@@ -2,7 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 
-class MoveResourceChange extends LocalChange<Resource> {
+class UpdateResourceNameParentChange extends LocalChange<Resource> {
   @override
   final String objectId;
   final String? parent;
@@ -10,9 +10,9 @@ class MoveResourceChange extends LocalChange<Resource> {
   final DateTime timestamp;
 
   @override
-  String get description => 'Moving';
+  String get description => 'Updating name/parent';
 
-  const MoveResourceChange({
+  const UpdateResourceNameParentChange({
     required this.objectId,
     required this.parent,
     required this.name,

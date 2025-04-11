@@ -3,7 +3,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/actions/changes/create_resource_change.dart';
-import 'package:phylum/libphylum/actions/changes/mark_resource_deleted_change.dart';
+import 'package:phylum/libphylum/actions/changes/update_resource_deleted_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction {
@@ -40,7 +40,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
           contentSha256: '<unknown>',
         ),
         if (deletedId != null)
-          MarkResourceDeletedChange(
+          UpdateResourceDeletedChange(
             objectId: deletedId!,
             timestamp: timestamp,
           ),

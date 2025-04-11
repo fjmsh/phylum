@@ -2,7 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 
-class MarkResourceModifiedChange extends LocalChange<Resource> {
+class UpdateResourceModifiedChange extends LocalChange<Resource> {
   @override
   final String objectId;
   final DateTime timestamp;
@@ -10,7 +10,7 @@ class MarkResourceModifiedChange extends LocalChange<Resource> {
   @override
   String get description => 'Updating Modified';
 
-  const MarkResourceModifiedChange({
+  const UpdateResourceModifiedChange({
     required this.objectId,
     required this.timestamp,
   });
