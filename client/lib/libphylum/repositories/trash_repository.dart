@@ -49,7 +49,7 @@ class TrashedResourceRepository extends Repository<PhylumAccount, TrashedResourc
     await _account.db.trashedResources.deleteWhere((t) => t.id.equals(objectId));
   }
 
-  Future<ApiResult> requestDeletedResources({String? cursor}) async {
+  Future<ApiResult> refresh({String? cursor}) async {
     return _account.apiClient.sendRequest(
       TrashListRequest(cursor: cursor),
       (request, response) => parseJsonMapResponse(response, TrashListResponse.fromResponse),

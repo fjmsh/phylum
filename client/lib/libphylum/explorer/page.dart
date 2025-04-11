@@ -106,7 +106,7 @@ class ExplorerPageTrash extends ExplorerPage {
 
   @override
   Future<bool> refresh(PhylumAccount account) {
-    return account.trashedResourcRepository.requestDeletedResources().then((result) => result is ApiSuccessResponse);
+    return account.trashedResourcRepository.refresh().then((result) => result is ApiSuccessResponse);
   }
 
   @override
