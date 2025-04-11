@@ -110,7 +110,8 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
     case MenuOption.delete:
       final name = resources.length == 1 ? resources.first.name : '${resources.length} items';
       final confirm =
-          await showAlertDialog(context, title: 'Delete $name?', positiveText: 'YES', negativeText: 'NO') ?? false;
+          await showAlertDialog(context, title: 'Send $name to trash?', positiveText: 'YES', negativeText: 'NO') ??
+              false;
       if (confirm) {
         for (final r in resources) {
           account.addAction(ResourceDeleteAction(r: r, timestamp: DateTime.now()));
@@ -123,14 +124,15 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       }
       break;
     case MenuOption.deleteForever:
-      // final name = resources.length == 1 ? resources.first.name : '${resources.length} items';
-      // final confirm =
-      //     await showAlertDialog(context, title: 'Delete $name?', positiveText: 'YES', negativeText: 'NO') ?? false;
-      // if (confirm) {
-      //   for (final r in resources) {
-      //     account.addAction(ResourceDeleteAction(r: r, timestamp: DateTime.now()));
-      //   }
-      // }
+      final name = resources.length == 1 ? resources.first.name : '${resources.length} items';
+      final confirm =
+          await showAlertDialog(context, title: 'Delete $name permanently?', positiveText: 'YES', negativeText: 'NO') ??
+              false;
+      if (confirm) {
+        for (final r in resources) {
+          account.addAction(ResourceDeleteAction(r: r, timestamp: DateTime.now(), permanent: true));
+        }
+      }
       break;
     case MenuOption.details:
       final resource = resources.firstOrNull;

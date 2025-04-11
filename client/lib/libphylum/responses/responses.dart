@@ -9,6 +9,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 
 part 'bookmark_list_response.dart';
 part 'bookmark_response.dart';
+part 'empty_response.dart';
 part 'full_resource_response.dart';
 part 'partial_resource_response.dart';
 part 'shared_resources_response.dart';
