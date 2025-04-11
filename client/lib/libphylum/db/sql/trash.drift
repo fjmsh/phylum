@@ -1,0 +1,8 @@
+import 'resources.drift';
+
+CREATE TABLE IF NOT EXISTS trashed_resources(
+    id TEXT NOT NULL PRIMARY KEY REFERENCES resources
+);
+
+
+selectTrash: SELECT r.* FROM trashed_resources t JOIN resources r ON t.id = r.id ORDER BY r.deleted DESC;

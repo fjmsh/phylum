@@ -1,7 +1,7 @@
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/actions/changes/create_resource_change.dart';
-import 'package:phylum/libphylum/actions/changes/soft_delete_resource_change.dart';
+import 'package:phylum/libphylum/actions/changes/mark_resource_deleted_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
@@ -33,7 +33,11 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
           contentType: contentType,
           contentSha256: contentSha256,
         ),
-        if (deletedId != null) SoftDeleteResourceChange(objectId: deletedId!),
+        if (deletedId != null)
+          MarkResourceDeletedChange(
+            objectId: deletedId!,
+            timestamp: timestamp,
+          ),
       ];
 
   @override

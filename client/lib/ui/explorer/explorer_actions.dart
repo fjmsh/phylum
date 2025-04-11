@@ -116,7 +116,7 @@ class ExplorerActions extends StatelessWidget {
 
     if (!confirm) return;
     for (final r in resources) {
-      account.addAction(ResourceDeleteAction(r: r));
+      account.addAction(ResourceDeleteAction(r: r, timestamp: DateTime.now()));
     }
   }
 }

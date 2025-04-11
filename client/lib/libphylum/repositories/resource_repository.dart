@@ -15,7 +15,6 @@ import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_info_request.dart';
-import 'package:phylum/libphylum/requests/trash_list_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 
@@ -45,13 +44,6 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     return _account.apiClient.sendRequest(
       ResourceInfoRequest(id),
       (request, response) => parseJsonMapResponse(response, FullResourceResponse.fromResponse),
-    );
-  }
-
-  Future<ApiResult> requestDeletedResources({String? cursor}) async {
-    return _account.apiClient.sendRequest(
-      TrashListRequest(cursor: cursor),
-      (request, response) => parseJsonMapResponse(response, TrashListResponse.fromResponse),
     );
   }
 
@@ -203,7 +195,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
       resourceName: name,
       conflictResolution: conflictResolution,
       description: parent == resource.parent ? 'Renaming ${resource.name} to $localName' : 'Moving ${resource.name}',
-      modified: DateTime.now(),
+      timestamp: DateTime.now(),
       localName: localName,
       oldParent: parent == resource.parent ? null : resource.parent,
       deletedId: deletedId,

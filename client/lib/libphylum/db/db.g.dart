@@ -898,6 +898,164 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   }
 }
 
+class TrashedResources extends Table
+    with TableInfo<TrashedResources, TrashedResource> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  TrashedResources(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL PRIMARY KEY REFERENCES resources');
+  @override
+  List<GeneratedColumn> get $columns => [id];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'trashed_resources';
+  @override
+  VerificationContext validateIntegrity(Insertable<TrashedResource> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TrashedResource map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TrashedResource(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+    );
+  }
+
+  @override
+  TrashedResources createAlias(String alias) {
+    return TrashedResources(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class TrashedResource extends DataClass implements Insertable<TrashedResource> {
+  final String id;
+  const TrashedResource({required this.id});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    return map;
+  }
+
+  TrashedResourcesCompanion toCompanion(bool nullToAbsent) {
+    return TrashedResourcesCompanion(
+      id: Value(id),
+    );
+  }
+
+  factory TrashedResource.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TrashedResource(
+      id: serializer.fromJson<String>(json['id']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+    };
+  }
+
+  TrashedResource copyWith({String? id}) => TrashedResource(
+        id: id ?? this.id,
+      );
+  TrashedResource copyWithCompanion(TrashedResourcesCompanion data) {
+    return TrashedResource(
+      id: data.id.present ? data.id.value : this.id,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrashedResource(')
+          ..write('id: $id')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TrashedResource && other.id == this.id);
+}
+
+class TrashedResourcesCompanion extends UpdateCompanion<TrashedResource> {
+  final Value<String> id;
+  final Value<int> rowid;
+  const TrashedResourcesCompanion({
+    this.id = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TrashedResourcesCompanion.insert({
+    required String id,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id);
+  static Insertable<TrashedResource> custom({
+    Expression<String>? id,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TrashedResourcesCompanion copyWith({Value<String>? id, Value<int>? rowid}) {
+    return TrashedResourcesCompanion(
+      id: id ?? this.id,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TrashedResourcesCompanion(')
+          ..write('id: $id, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class Shared extends Table with TableInfo<Shared, SharedData> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -1621,32 +1779,32 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final Users users = Users(this);
   late final Resources resources = Resources(this);
+  late final TrashedResources trashedResources = TrashedResources(this);
   late final Shared shared = Shared(this);
   late final Index sharedResources = Index('shared_resources',
       'CREATE INDEX IF NOT EXISTS shared_resources ON shared (seq)');
-  late final Index deletedResources = Index('deleted_resources',
-      'CREATE INDEX IF NOT EXISTS deleted_resources ON resources (deleted DESC)');
   late final Recents recents = Recents(this);
   late final Index recentAccesses = Index('recent_accesses',
       'CREATE INDEX IF NOT EXISTS recent_accesses ON recents (accessed DESC)');
   late final Bookmarks bookmarks = Bookmarks(this);
   late final Index orderedBookmarks = Index('ordered_bookmarks',
       'CREATE INDEX IF NOT EXISTS ordered_bookmarks ON bookmarks (created)');
+  Selectable<Resource> selectTrash() {
+    return customSelect(
+        'SELECT r.* FROM trashed_resources AS t JOIN resources AS r ON t.id = r.id ORDER BY r.deleted DESC',
+        variables: [],
+        readsFrom: {
+          trashedResources,
+          resources,
+        }).asyncMap(resources.mapFromRow);
+  }
+
   Selectable<Resource> selectShared() {
     return customSelect(
         'SELECT r.* FROM shared AS s LEFT JOIN resources AS r ON s.resource_id = r.id ORDER BY s.seq',
         variables: [],
         readsFrom: {
           shared,
-          resources,
-        }).asyncMap(resources.mapFromRow);
-  }
-
-  Selectable<Resource> selectDeleted() {
-    return customSelect(
-        'SELECT * FROM resources WHERE deleted IS NOT NULL ORDER BY deleted DESC',
-        variables: [],
-        readsFrom: {
           resources,
         }).asyncMap(resources.mapFromRow);
   }
@@ -1714,9 +1872,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
         users,
         resources,
+        trashedResources,
         shared,
         sharedResources,
-        deletedResources,
         recents,
         recentAccesses,
         bookmarks,
@@ -2369,6 +2527,119 @@ typedef $ResourcesProcessedTableManager = ProcessedTableManager<
     Resource,
     PrefetchHooks Function(
         {bool sharedRefs, bool recentsRefs, bool bookmarksRefs})>;
+typedef $TrashedResourcesCreateCompanionBuilder = TrashedResourcesCompanion
+    Function({
+  required String id,
+  Value<int> rowid,
+});
+typedef $TrashedResourcesUpdateCompanionBuilder = TrashedResourcesCompanion
+    Function({
+  Value<String> id,
+  Value<int> rowid,
+});
+
+class $TrashedResourcesFilterComposer
+    extends Composer<_$AppDatabase, TrashedResources> {
+  $TrashedResourcesFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+}
+
+class $TrashedResourcesOrderingComposer
+    extends Composer<_$AppDatabase, TrashedResources> {
+  $TrashedResourcesOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+}
+
+class $TrashedResourcesAnnotationComposer
+    extends Composer<_$AppDatabase, TrashedResources> {
+  $TrashedResourcesAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+}
+
+class $TrashedResourcesTableManager extends RootTableManager<
+    _$AppDatabase,
+    TrashedResources,
+    TrashedResource,
+    $TrashedResourcesFilterComposer,
+    $TrashedResourcesOrderingComposer,
+    $TrashedResourcesAnnotationComposer,
+    $TrashedResourcesCreateCompanionBuilder,
+    $TrashedResourcesUpdateCompanionBuilder,
+    (
+      TrashedResource,
+      BaseReferences<_$AppDatabase, TrashedResources, TrashedResource>
+    ),
+    TrashedResource,
+    PrefetchHooks Function()> {
+  $TrashedResourcesTableManager(_$AppDatabase db, TrashedResources table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $TrashedResourcesFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $TrashedResourcesOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $TrashedResourcesAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              TrashedResourcesCompanion(
+            id: id,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              TrashedResourcesCompanion.insert(
+            id: id,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $TrashedResourcesProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    TrashedResources,
+    TrashedResource,
+    $TrashedResourcesFilterComposer,
+    $TrashedResourcesOrderingComposer,
+    $TrashedResourcesAnnotationComposer,
+    $TrashedResourcesCreateCompanionBuilder,
+    $TrashedResourcesUpdateCompanionBuilder,
+    (
+      TrashedResource,
+      BaseReferences<_$AppDatabase, TrashedResources, TrashedResource>
+    ),
+    TrashedResource,
+    PrefetchHooks Function()>;
 typedef $SharedCreateCompanionBuilder = SharedCompanion Function({
   required String resourceId,
   required int seq,
@@ -3084,6 +3355,8 @@ class $AppDatabaseManager {
   $UsersTableManager get users => $UsersTableManager(_db, _db.users);
   $ResourcesTableManager get resources =>
       $ResourcesTableManager(_db, _db.resources);
+  $TrashedResourcesTableManager get trashedResources =>
+      $TrashedResourcesTableManager(_db, _db.trashedResources);
   $SharedTableManager get shared => $SharedTableManager(_db, _db.shared);
   $RecentsTableManager get recents => $RecentsTableManager(_db, _db.recents);
   $BookmarksTableManager get bookmarks =>

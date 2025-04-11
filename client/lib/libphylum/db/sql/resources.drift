@@ -15,10 +15,6 @@ CREATE TABLE IF NOT EXISTS resources(
     last_refresh DATETIME
 );
 
-CREATE INDEX IF NOT EXISTS deleted_resources ON resources(deleted DESC);
-
-selectDeleted: SELECT * FROM resources WHERE deleted IS NOT NULL ORDER BY deleted DESC;
-
 parents: WITH RECURSIVE parents(id, parent, name, permissions) AS (
     SELECT id, parent, name, permissions
         FROM resources

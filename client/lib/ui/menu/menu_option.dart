@@ -110,7 +110,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
           await showAlertDialog(context, title: 'Delete $name?', positiveText: 'YES', negativeText: 'NO') ?? false;
       if (confirm) {
         for (final r in resources) {
-          account.addAction(ResourceDeleteAction(r: r));
+          account.addAction(ResourceDeleteAction(r: r, timestamp: DateTime.now()));
         }
       }
       break;

@@ -11,6 +11,7 @@ part 'db.g.dart';
   'sql/recents.drift',
   'sql/resources.drift',
   'sql/shared.drift',
+  'sql/trash.drift',
   'sql/users.drift',
 })
 class AppDatabase extends _$AppDatabase {
@@ -22,7 +23,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.fromExecutor({required this.accountId, required QueryExecutor executor}) : super(executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -39,6 +40,9 @@ class AppDatabase extends _$AppDatabase {
           if (from < 3) {
             m.drop(resources);
             m.create(resources);
+          }
+          if (from < 4) {
+            m.create(trashedResources);
           }
         },
       );

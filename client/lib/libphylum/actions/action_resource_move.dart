@@ -3,7 +3,7 @@ import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/actions/changes/mark_resource_modified_change.dart';
 import 'package:phylum/libphylum/actions/changes/move_resource_change.dart';
-import 'package:phylum/libphylum/actions/changes/soft_delete_resource_change.dart';
+import 'package:phylum/libphylum/actions/changes/mark_resource_deleted_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 
 class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
@@ -26,10 +26,26 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
 
   @override
   List<LocalChange> get localChanges => [
-        MoveResourceChange(objectId: resourceId, parent: parent, name: localName, timestamp: modified),
-        MarkResourceModifiedChange(objectId: parent, timestamp: modified),
-        if (oldParent != null) MarkResourceModifiedChange(objectId: oldParent!, timestamp: modified),
-        if (deletedId != null) SoftDeleteResourceChange(objectId: resourceId),
+        MoveResourceChange(
+          objectId: resourceId,
+          parent: parent,
+          name: localName,
+          timestamp: timestamp,
+        ),
+        MarkResourceModifiedChange(
+          objectId: parent,
+          timestamp: timestamp,
+        ),
+        if (oldParent != null)
+          MarkResourceModifiedChange(
+            objectId: oldParent!,
+            timestamp: timestamp,
+          ),
+        if (deletedId != null)
+          MarkResourceDeletedChange(
+            objectId: resourceId,
+            timestamp: timestamp,
+          ),
       ];
 
   @override
@@ -42,13 +58,13 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
         'resourceName': resourceName,
         'conflictResolution': conflictResolution,
         'description': description,
-        'modified': modified.millisecondsSinceEpoch,
+        'modified': timestamp.millisecondsSinceEpoch,
         'localName': localName,
         'oldParent': oldParent,
         'deletedId': deletedId,
       };
 
-  final DateTime modified;
+  final DateTime timestamp;
   final String localName;
   final String? oldParent;
   final String? deletedId;
@@ -59,7 +75,7 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
     required super.resourceName,
     required super.conflictResolution,
     required this.description,
-    required this.modified,
+    required this.timestamp,
     required this.oldParent,
     required this.localName,
     required this.deletedId,
@@ -72,7 +88,7 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
       resourceName: map['resourceName'],
       conflictResolution: map['conflictResolution'],
       description: map['description'],
-      modified: DateTime.fromMillisecondsSinceEpoch(map['modified']),
+      timestamp: DateTime.fromMillisecondsSinceEpoch(map['modified']),
       localName: map['localName'],
       oldParent: map['oldParent'],
       deletedId: map['deletedId'],

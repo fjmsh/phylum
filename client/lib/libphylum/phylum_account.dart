@@ -5,6 +5,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/repositories/bookmark_repository.dart';
 import 'package:phylum/libphylum/repositories/shared_resources_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
+import 'package:phylum/libphylum/repositories/trash_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/logging.dart';
@@ -18,6 +19,7 @@ class PhylumAccount extends Account<PhylumAccount> {
   late final db = AppDatabase(accountId: id);
   final resourceRepository = ResourceRepository();
   final bookmarkRepository = BookmarkRepository();
+  final trashedResourcRepository = TrashedResourceRepository();
   late final userRepository = UserRepository(account: this);
   late final sharedResourcesRepository = SharedResourcesRepository(account: this);
 
@@ -25,6 +27,7 @@ class PhylumAccount extends Account<PhylumAccount> {
   Map<Type, Repository<PhylumAccount, dynamic>> get repositories => {
         Resource: resourceRepository,
         Bookmark: bookmarkRepository,
+        TrashedResource: trashedResourcRepository,
       };
 
   final _dispatcher = SimulatedBadNetworkDispatcher.good(dropRate: 0);
