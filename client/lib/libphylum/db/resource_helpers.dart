@@ -37,7 +37,7 @@ extension ResourceHelpers on AppDatabase {
   }
 
   SimpleSelectStatement<Resources, Resource> _selectResource(String id) {
-    return resources.select()..where((f) => f.id.equals(id) & f.deleted.isNull());
+    return resources.select()..where((f) => f.id.equals(id));
   }
 
   SimpleSelectStatement<Resources, Resource> _selectResourceByName({required String parent, required String name}) {
@@ -45,7 +45,10 @@ extension ResourceHelpers on AppDatabase {
   }
 
   SimpleSelectStatement<Resources, Resource> _selectChildren(String id) {
-    return resources.select()..where((f) => f.parent.equals(id) & f.deleted.isNull());
+    final deletedQuery = resources.selectOnly()
+      ..addColumns([resources.deleted])
+      ..where(resources.parent.equals(id));
+    return resources.select()..where((f) => f.parent.equals(id) & f.deleted.isExp(subqueryExpression(deletedQuery)));
   }
 
   SimpleSelectStatement<Resources, Resource> _selectResources(Iterable<String> ids) {
