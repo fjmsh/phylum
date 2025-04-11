@@ -8,6 +8,9 @@ class MoveResourceToTrashChange extends LocalChange<TrashedResource> {
   @override
   String get description => 'Moving To Trash';
 
+  @override
+  bool get persist => true;
+
   const MoveResourceToTrashChange({required this.objectId});
 
   @override

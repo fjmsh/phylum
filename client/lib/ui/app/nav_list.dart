@@ -54,11 +54,6 @@ class NavList extends StatelessWidget {
             onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageRecents()),
           ),
           ListTile(
-            leading: const Icon(Icons.delete),
-            title: const Text('Trash'),
-            onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageTrash()),
-          ),
-          ListTile(
             leading: const Icon(Icons.people_outlined),
             title: const Text('Shared With Me'),
             onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageShared()),
@@ -94,6 +89,11 @@ class NavList extends StatelessWidget {
                 ),
               );
             },
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete),
+            title: const Text('Trash'),
+            onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageTrash()),
           ),
           const Divider(),
           const DownloadButton(),
