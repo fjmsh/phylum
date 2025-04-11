@@ -5,7 +5,6 @@ import "github.com/jackc/pgx/v5"
 func (f filesystem) SharedResources() ([]Resource, error) {
 	const q = `SELECT r.*, (SELECT jsonb_agg(l.name) FROM publinks l WHERE l.root = r.id AND l.deleted IS NULL) as links FROM resources r
 WHERE grants ? $1::TEXT
-AND id <> $2::UUID
 AND deleted IS NULL
 AND (grants -> $1::TEXT -> 'p')::INTEGER <> 0
 ORDER BY grants -> $1::TEXT -> 't' DESC`
