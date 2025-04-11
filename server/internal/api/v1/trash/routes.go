@@ -39,7 +39,7 @@ func handleListRequest(c *gin.Context) {
 
 	var r trashListResponse
 	r.Cursor = cursor
-	r.Clear = c.Request.URL.Query().Get("cursor") != ""
+	r.Clear = c.Request.URL.Query().Get("cursor") == ""
 	r.Resources = make([]responses.Resource, len(res))
 	for i, c := range res {
 		r.Resources[i] = responses.ResourceFromFS(c)
