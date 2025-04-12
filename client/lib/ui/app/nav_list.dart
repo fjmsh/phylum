@@ -18,8 +18,9 @@ class NavList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final account = context.read<PhylumAccount>();
-    return ExcludeFocusTraversal(
-      child: ListView(
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showFab)
             Padding(

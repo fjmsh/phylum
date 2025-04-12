@@ -151,39 +151,78 @@ class ExpandedAppLayout extends StatelessWidget {
     final sidebarWidth = large ? 288.0 : 240.0;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            SizedBox(width: sidebarWidth, child: const Text('Phylum')),
-          ],
-        ),
-      ),
-      body: Row(
+      body: Column(
+        mainAxisSize: MainAxisSize.max,
         children: [
-          SizedBox(
-            width: sidebarWidth,
-            child: Card(
-              elevation: 0,
-              margin: const EdgeInsets.only(left: 16, bottom: 16),
-              child: NavList(showFab: true),
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: sidebarWidth,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  child: Text('Phylum', style: Theme.of(context).textTheme.headlineLarge),
+                ),
+              ),
+              Expanded(
+                child: Card(
+                  elevation: 0,
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(right: 16.0),
+                          child: Icon(Icons.search),
+                        ),
+                        Expanded(
+                          child: TextField(
+                            decoration: InputDecoration.collapsed(
+                                hintText: 'Search Files...', hintStyle: TextStyle(fontSize: 18)),
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (large) SizedBox(width: 360),
+            ],
           ),
           Expanded(
-            child: Card(
-              elevation: 0,
-              margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-              child: const ExplorerView(),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: sidebarWidth,
+                  child: Card(
+                    elevation: 0,
+                    margin: const EdgeInsets.only(left: 16, bottom: 16),
+                    child: ExcludeFocusTraversal(child: NavList(showFab: true)),
+                  ),
+                ),
+                Expanded(
+                  child: Card(
+                    elevation: 0,
+                    margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                    child: const ExplorerView(),
+                  ),
+                ),
+                if (large)
+                  SizedBox(
+                    width: 360,
+                    child: Card(
+                      elevation: 0,
+                      margin: const EdgeInsets.only(right: 16, bottom: 16),
+                      child: ReactiveResourceInfoView(),
+                    ),
+                  ),
+              ],
             ),
           ),
-          if (large)
-            SizedBox(
-              width: 360,
-              child: Card(
-                elevation: 0,
-                margin: const EdgeInsets.only(right: 16, bottom: 16),
-                child: ReactiveResourceInfoView(),
-              ),
-            ),
         ],
       ),
     );
