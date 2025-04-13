@@ -24,7 +24,8 @@ class ExplorerState {
   Resource? get focussed => focusIndex < 0 || focusIndex >= resources.length ? null : resources[focusIndex];
   String? get focusId => focussed?.id;
   Iterable<Resource> get selected => resources.where((r) => selectedIds.contains(r.id));
-  Resource? get selectedSingle => selectedIds.length != 1 ? null : resources.where((r) => selectedIds.contains(r.id)).first;
+  Resource? get selectedSingle =>
+      selectedIds.length != 1 ? null : resources.where((r) => selectedIds.contains(r.id)).first;
   Resource? get focussedIfSelected => selectedIds.isEmpty ? null : focussed;
 
   const ExplorerState({
@@ -83,7 +84,7 @@ class ExplorerController extends StateNotifier<ExplorerState> {
         _navHistoryManager = navHistoryManager,
         super(ExplorerState(folderId: null)) {
     _removeHistoryManagerListener = navHistoryManager.addListener((state) {
-      updatePage(state.current);
+      if (state.current != null) updatePage(state.current!);
     }, fireImmediately: true);
   }
 
@@ -135,7 +136,9 @@ class ExplorerController extends StateNotifier<ExplorerState> {
         if (selectionStartIndex == -1) {
           selectionStartIndex = index;
         }
-        selectedIds = Set.of(state.resources.getRange(min(selectionStartIndex, index), max(selectionStartIndex, index) + 1).map((r) => r.id));
+        selectedIds = Set.of(state.resources
+            .getRange(min(selectionStartIndex, index), max(selectionStartIndex, index) + 1)
+            .map((r) => r.id));
         break;
       case SelectionMode.single:
         selectedIds = {state.resources[index].id};
@@ -171,9 +174,9 @@ class ExplorerController extends StateNotifier<ExplorerState> {
   }
 
   Future refresh() {
-    if (state.refreshing) return Future.value(state);
+    if (state.refreshing || _navHistoryManager.current == null) return Future.value(state);
     state = state.copyWith(refreshing: true);
-    return _navHistoryManager.current.refresh(_account).then((success) {
+    return _navHistoryManager.current!.refresh(_account).then((success) {
       if (mounted) {
         state = state.copyWith(
           refreshing: false,

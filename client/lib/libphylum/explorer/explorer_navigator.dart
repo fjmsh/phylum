@@ -5,7 +5,7 @@ import 'package:state_notifier/state_notifier.dart';
 import 'page.dart';
 
 class ExplorerNavigatorState {
-  final ExplorerPage current;
+  final ExplorerPage? current;
   final List<ExplorerPage> _back;
   final List<ExplorerPage> _forward;
 
@@ -30,9 +30,9 @@ class ExplorerNavigatorState {
 
 class ExplorerNavigator extends StateNotifier<ExplorerNavigatorState> {
   final PhylumAccount? _account;
-  ExplorerPage get current => state.current;
+  ExplorerPage? get current => state.current;
 
-  ExplorerNavigator({required PhylumAccount? account, required ExplorerPage page})
+  ExplorerNavigator({required PhylumAccount? account, ExplorerPage? page})
       : _account = account,
         super(ExplorerNavigatorState(current: page));
 
@@ -40,7 +40,10 @@ class ExplorerNavigator extends StateNotifier<ExplorerNavigatorState> {
     if (state.current != page) {
       state = ExplorerNavigatorState(
         current: page,
-        back: [...state._back, state.current],
+        back: [
+          ...state._back,
+          if (state.current != null) state.current!,
+        ],
         forward: const [],
       );
       if (page is ExplorerPageFolder && _account != null && page.folderId != _account.userHome) {
@@ -56,7 +59,7 @@ class ExplorerNavigator extends StateNotifier<ExplorerNavigatorState> {
     state = ExplorerNavigatorState(
       current: target,
       back: state._back.sublist(0, len - 1),
-      forward: [...state._forward, state.current],
+      forward: [...state._forward, state.current!],
     );
   }
 
@@ -66,7 +69,7 @@ class ExplorerNavigator extends StateNotifier<ExplorerNavigatorState> {
     final target = state._forward[len - 1];
     state = ExplorerNavigatorState(
       current: target,
-      back: [...state._back, state.current],
+      back: [...state._back, state.current!],
       forward: state._forward.sublist(0, len - 1),
     );
   }

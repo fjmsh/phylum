@@ -4,7 +4,6 @@ import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:offtheline/offtheline.dart';
@@ -37,7 +36,7 @@ void main() async {
     };
     logger.log(lvl, message, error: error, stackTrace: stackTrace);
   };
-  GoRouter.optionURLReflectsImperativeAPIs = true;
+  // GoRouter.optionURLReflectsImperativeAPIs = true;
   // We use multiple distinct databases for different accounts, so this is expected behavior
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 

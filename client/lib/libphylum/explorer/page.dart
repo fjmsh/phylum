@@ -8,6 +8,8 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/permissions.dart';
 
 sealed class ExplorerPage {
+  Uri get uri;
+
   const ExplorerPage();
 
   Future<bool> refresh(PhylumAccount account);
@@ -19,7 +21,45 @@ sealed class ExplorerPage {
   Stream<List<ParentsResult>> watchParents(PhylumAccount account);
 }
 
+class ExplorerPageHome extends ExplorerPage {
+  @override
+  Uri get uri => Uri(path: '/home');
+
+  const ExplorerPageHome();
+
+  @override
+  Future<bool> refresh(PhylumAccount account) =>
+      account.resourceRepository.requestResource(account.userHome).then((result) => result is ApiSuccessResponse);
+
+  @override
+  Stream<Resource?> watchResource(PhylumAccount account) => account.db.watchResource(account.userHome);
+
+  @override
+  Stream<List<Resource>> watchChildren(PhylumAccount account) => account.db.watchChildren(account.userHome);
+
+  @override
+  Stream<List<ParentsResult>> watchParents(PhylumAccount account) {
+    return Stream.fromIterable([
+      [ParentsResult(id: account.userHome, name: 'My Files')]
+    ]);
+  }
+
+  @override
+  String toString() => 'ExplorerPageHome';
+
+  @override
+  bool operator ==(Object other) {
+    return other is ExplorerPageHome;
+  }
+
+  @override
+  int get hashCode => 'home'.hashCode;
+}
+
 class ExplorerPageFolder extends ExplorerPage {
+  @override
+  Uri get uri => Uri(path: '/folder/$folderId');
+
   final String folderId;
 
   ExplorerPageFolder({required this.folderId});
@@ -71,6 +111,9 @@ class ExplorerPageFolder extends ExplorerPage {
 }
 
 class ExplorerPageRecents extends ExplorerPage {
+  @override
+  Uri get uri => Uri(path: '/recents');
+
   const ExplorerPageRecents();
 
   @override
@@ -102,6 +145,9 @@ class ExplorerPageRecents extends ExplorerPage {
 }
 
 class ExplorerPageTrash extends ExplorerPage {
+  @override
+  Uri get uri => Uri(path: '/trash');
+
   const ExplorerPageTrash();
 
   @override
@@ -133,6 +179,9 @@ class ExplorerPageTrash extends ExplorerPage {
 }
 
 class ExplorerPageShared extends ExplorerPage {
+  @override
+  Uri get uri => Uri(path: '/shared');
+
   const ExplorerPageShared();
 
   @override

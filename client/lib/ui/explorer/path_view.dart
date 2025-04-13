@@ -41,7 +41,7 @@ class _PathViewState extends State<PathView> {
     super.initState();
     removeListener = context.read<ExplorerNavigator>().addListener((state) {
       sub?.cancel();
-      sub = state.current.watchParents(context.read<PhylumAccount>()).listen((data) {
+      sub = state.current?.watchParents(context.read<PhylumAccount>()).listen((data) {
         SystemChrome.setApplicationSwitcherDescription(ApplicationSwitcherDescription(
           label: data.isEmpty ? 'Phylum' : "${data.first.name == "" ? "/" : data.first.name} | Phylum",
         ));

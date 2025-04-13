@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/app_shortcuts.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/explorer/page.dart';
 import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
 import 'package:phylum/libphylum/explorer/explorer_controller.dart';
+import 'package:phylum/libphylum/explorer/page.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 
@@ -50,7 +49,7 @@ class AppActions extends StatelessWidget {
           return null;
         }),
         NavHomeIntent: CallbackAction<NavHomeIntent>(
-          onInvoke: (i) => context.read<ExplorerNavigator>().go(ExplorerPageFolder(folderId: context.read<PhylumAccount>().userHome)),
+          onInvoke: (i) => context.read<ExplorerNavigator>().go(const ExplorerPageHome()),
         ),
         NavToFolderIntent: CallbackAction<NavToFolderIntent>(
           onInvoke: (i) => context.read<ExplorerNavigator>().go(ExplorerPageFolder(folderId: i.folderId)),

@@ -3,7 +3,6 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/fab_action.dart';
-import 'package:phylum/libphylum/explorer/page.dart';
 import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
@@ -15,36 +14,16 @@ import 'package:phylum/ui/menu/bottom_sheet.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:provider/provider.dart';
 
-class AppLayout extends StatefulWidget {
-  final ExplorerPage page;
-
-  const AppLayout({super.key, required this.page});
-
-  @override
-  State<AppLayout> createState() => _AppLayoutState();
-}
-
-class _AppLayoutState extends State<AppLayout> {
-  @override
-  void didUpdateWidget(covariant AppLayout oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    context.read<ExplorerNavigator>().go(widget.page);
-  }
+class AppLayout extends StatelessWidget {
+  const AppLayout({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        StateNotifierProvider<ExplorerNavigator, ExplorerNavigatorState>(
-          create: (context) => ExplorerNavigator(account: context.read<PhylumAccount>(), page: widget.page),
-        ),
-        StateNotifierProvider<ExplorerController, ExplorerState>(
-          create: (context) => ExplorerController(
-            account: context.read<PhylumAccount>(),
-            navHistoryManager: context.read<ExplorerNavigator>(),
-          ),
-        ),
-      ],
+    return StateNotifierProvider<ExplorerController, ExplorerState>(
+      create: (context) => ExplorerController(
+        account: context.read<PhylumAccount>(),
+        navHistoryManager: context.read<ExplorerNavigator>(),
+      ),
       builder: (context, child) {
         final size = MediaQuery.sizeOf(context);
         final layout = size.width <= 600 ? CollapsedAppLayout() : ExpandedAppLayout(large: size.width > 1200);
