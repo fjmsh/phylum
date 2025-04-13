@@ -22,7 +22,7 @@ class AppLayout extends StatelessWidget {
     return StateNotifierProvider<ExplorerController, ExplorerState>(
       create: (context) => ExplorerController(
         account: context.read<PhylumAccount>(),
-        navHistoryManager: context.read<ExplorerNavigator>(),
+        navigator: context.read<ExplorerNavigator>(),
       ),
       builder: (context, child) {
         final size = MediaQuery.sizeOf(context);

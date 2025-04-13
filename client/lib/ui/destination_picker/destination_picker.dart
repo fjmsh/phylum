@@ -25,13 +25,13 @@ class DestinationPicker extends StatefulWidget {
       context: context,
       builder: (context) => MultiProvider(
         providers: [
-          StateNotifierProvider<ExplorerNavigator, ExplorerNavigatorState>(
+          ChangeNotifierProvider(
             create: (context) => ExplorerNavigator(account: null, page: ExplorerPageFolder(folderId: initialFolderId)),
           ),
           StateNotifierProvider<ExplorerController, ExplorerState>(
             create: (context) => ExplorerController(
               account: context.read<PhylumAccount>(),
-              navHistoryManager: context.read<ExplorerNavigator>(),
+              navigator: context.read<ExplorerNavigator>(),
             ),
           ),
         ],

@@ -72,31 +72,34 @@ class ExplorerState {
 
 class ExplorerController extends StateNotifier<ExplorerState> {
   final PhylumAccount _account;
-  final ExplorerNavigator _navHistoryManager;
-  late void Function() _removeHistoryManagerListener;
+  final ExplorerNavigator _navigator;
   StreamSubscription<Resource?>? _folderSubscription;
   StreamSubscription<List<Resource>>? _childrenSubscription;
 
   ExplorerController({
     required PhylumAccount account,
-    required ExplorerNavigator navHistoryManager,
+    required ExplorerNavigator navigator,
   })  : _account = account,
-        _navHistoryManager = navHistoryManager,
+        _navigator = navigator,
         super(ExplorerState(folderId: null)) {
-    _removeHistoryManagerListener = navHistoryManager.addListener((state) {
-      if (state.current != null) updatePage(state.current!);
-    }, fireImmediately: true);
+    navigator.addListener(onNavigatorUpdated);
+    onNavigatorUpdated();
   }
 
   @override
   void dispose() {
-    _removeHistoryManagerListener.call();
+    _navigator.removeListener(onNavigatorUpdated);
     _folderSubscription?.cancel();
     _childrenSubscription?.cancel();
     super.dispose();
   }
 
-  void updatePage(ExplorerPage page) {
+  void onNavigatorUpdated() {
+    updatePage(_navigator.current);
+  }
+
+  void updatePage(ExplorerPage? page) {
+    if (page == null) return;
     final folderId = page is ExplorerPageFolder ? (page).folderId : null;
     state = ExplorerState(folderId: folderId);
     _folderSubscription?.cancel();
@@ -174,9 +177,9 @@ class ExplorerController extends StateNotifier<ExplorerState> {
   }
 
   Future refresh() {
-    if (state.refreshing || _navHistoryManager.current == null) return Future.value(state);
+    if (state.refreshing || _navigator.current == null) return Future.value(state);
     state = state.copyWith(refreshing: true);
-    return _navHistoryManager.current!.refresh(_account).then((success) {
+    return _navigator.current!.refresh(_account).then((success) {
       if (mounted) {
         state = state.copyWith(
           refreshing: false,

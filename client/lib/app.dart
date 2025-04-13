@@ -24,9 +24,7 @@ class PhylumApp extends StatefulWidget {
           StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
           StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(account)),
           ChangeNotifierProvider(create: (context) => ActionQueueStatusNotifier(account.actionQueue)),
-          StateNotifierProvider<ExplorerNavigator, ExplorerNavigatorState>(
-            create: (context) => ExplorerNavigator(account: context.read<PhylumAccount>()),
-          ),
+          ChangeNotifierProvider(create: (context) => ExplorerNavigator(account: context.read<PhylumAccount>())),
         ],
         child: PhylumApp(),
       );
@@ -77,10 +75,7 @@ class _PhylumAppState extends State<PhylumApp> {
         theme: theme,
         darkTheme: darkTheme,
         routeInformationParser: const PhylumRouteInformationParser(),
-        routerDelegate: PhylumRouterDelegate(navigator: context.read(), state: context.watch<ExplorerNavigatorState>()),
-        // routeInformationProvider:
-        //     PlatformRouteInformationProvider(initialRouteInformation: RouteInformation(uri: Uri(path: '/home'))),
-        // routerConfig: _appRouter,
+        routerDelegate: PhylumRouterDelegate(navigator: context.watch()),
         shortcuts: getAppShortcuts(),
       );
     }
@@ -139,14 +134,13 @@ class PhylumRouteInformationParser extends RouteInformationParser<ExplorerPage> 
 class PhylumRouterDelegate extends RouterDelegate<ExplorerPage>
     with ChangeNotifier, PopNavigatorRouterDelegateMixin<ExplorerPage> {
   final ExplorerNavigator navigator;
-  final ExplorerNavigatorState state;
   @override
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-  PhylumRouterDelegate({required this.navigator, required this.state});
+  PhylumRouterDelegate({required this.navigator});
 
   @override
-  ExplorerPage? get currentConfiguration => state.current;
+  ExplorerPage? get currentConfiguration => navigator.current;
 
   @override
   Widget build(BuildContext context) {

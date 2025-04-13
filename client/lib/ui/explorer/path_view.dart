@@ -33,30 +33,34 @@ class PathView extends StatefulWidget {
 
 class _PathViewState extends State<PathView> {
   StreamSubscription? sub;
-  Function()? removeListener;
+  late final ExplorerNavigator _navigator;
   Iterable<ParentsResult>? ancestors;
 
   @override
   void initState() {
     super.initState();
-    removeListener = context.read<ExplorerNavigator>().addListener((state) {
-      sub?.cancel();
-      sub = state.current?.watchParents(context.read<PhylumAccount>()).listen((data) {
-        SystemChrome.setApplicationSwitcherDescription(ApplicationSwitcherDescription(
-          label: data.isEmpty ? 'Phylum' : "${data.first.name == "" ? "/" : data.first.name} | Phylum",
-        ));
-        if (mounted) {
-          setState(() {
-            ancestors = reverse ? data : data.reversed;
-          });
-        }
-      });
-    }, fireImmediately: true);
+    _navigator = context.read<ExplorerNavigator>();
+    _navigator.addListener(onNavigatorUpdated);
+    onNavigatorUpdated();
+  }
+
+  void onNavigatorUpdated() {
+    sub?.cancel();
+    sub = _navigator.current?.watchParents(context.read<PhylumAccount>()).listen((data) {
+      SystemChrome.setApplicationSwitcherDescription(ApplicationSwitcherDescription(
+        label: data.isEmpty ? 'Phylum' : "${data.first.name == "" ? "/" : data.first.name} | Phylum",
+      ));
+      if (mounted) {
+        setState(() {
+          ancestors = reverse ? data : data.reversed;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
-    removeListener?.call();
+    _navigator.removeListener(onNavigatorUpdated);
     sub?.cancel();
     super.dispose();
   }
