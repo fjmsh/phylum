@@ -142,6 +142,14 @@ class ExplorerPageRecents extends ExplorerPage {
   String toString() {
     return 'ExplorerPageRecents';
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ExplorerPageRecents;
+  }
+
+  @override
+  int get hashCode => 'recents'.hashCode;
 }
 
 class ExplorerPageTrash extends ExplorerPage {
@@ -176,6 +184,14 @@ class ExplorerPageTrash extends ExplorerPage {
   String toString() {
     return 'ExplorerPageTrash';
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ExplorerPageTrash;
+  }
+
+  @override
+  int get hashCode => 'trash'.hashCode;
 }
 
 class ExplorerPageShared extends ExplorerPage {
@@ -210,4 +226,12 @@ class ExplorerPageShared extends ExplorerPage {
   String toString() {
     return 'ExplorerPageShared';
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ExplorerPageShared;
+  }
+
+  @override
+  int get hashCode => 'shared'.hashCode;
 }

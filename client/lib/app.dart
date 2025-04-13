@@ -35,6 +35,7 @@ class PhylumApp extends StatefulWidget {
 
 class _PhylumAppState extends State<PhylumApp> {
   late final AppLifecycleListener _listener;
+  final _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
@@ -75,7 +76,7 @@ class _PhylumAppState extends State<PhylumApp> {
         theme: theme,
         darkTheme: darkTheme,
         routeInformationParser: const PhylumRouteInformationParser(),
-        routerDelegate: PhylumRouterDelegate(navigator: context.watch()),
+        routerDelegate: PhylumRouterDelegate(navigator: context.watch(), navigatorKey: _navigatorKey),
         shortcuts: getAppShortcuts(),
       );
     }
@@ -134,10 +135,9 @@ class PhylumRouteInformationParser extends RouteInformationParser<ExplorerPage> 
 class PhylumRouterDelegate extends RouterDelegate<ExplorerPage>
     with ChangeNotifier, PopNavigatorRouterDelegateMixin<ExplorerPage> {
   final ExplorerNavigator navigator;
-  @override
-  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> navigatorKey;
 
-  PhylumRouterDelegate({required this.navigator});
+  PhylumRouterDelegate({required this.navigator, required this.navigatorKey});
 
   @override
   ExplorerPage? get currentConfiguration => navigator.current;
@@ -146,10 +146,13 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage>
   Widget build(BuildContext context) {
     return Navigator(
       key: navigatorKey,
-      pages: [MaterialPage(child: AppLayout(key: UniqueKey()))],
-      onDidRemovePage: (page) {
-        // navigator.goBack();
-      },
+      onGenerateRoute: (settings) => MaterialPageRoute(builder: (context) => const AppLayout()),
+      // pages: [
+      //   MaterialPage(
+      //     child: const AppLayout(),
+      //     onPopInvoked: (didPop, result) => navigator.goBack(),
+      //   )
+      // ],
     );
   }
 

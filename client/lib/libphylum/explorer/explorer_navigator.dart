@@ -27,7 +27,6 @@ class ExplorerNavigator extends ChangeNotifier {
       if (!first) {
         notifyListeners();
       }
-      print('Going to $page: ${_back.length}');
       if (page is ExplorerPageFolder && _account != null && page.folderId != _account.userHome) {
         _account.db.markResourceAccess(page.folderId);
       }
@@ -35,14 +34,12 @@ class ExplorerNavigator extends ChangeNotifier {
   }
 
   void goBack() {
-    print('At $_current, going back ${_back.length}');
     if (!canGoBack) return;
     int len = _back.length;
     final target = _back[len - 1];
     _current = target;
     _back = _back.sublist(0, len - 1);
     _forward = [..._forward, current!];
-    print('Going back to $_current, ${_forward.length}');
     notifyListeners();
   }
 
