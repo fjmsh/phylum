@@ -1,55 +1,75 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:phylum/ui/explorer/page.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/fab_action.dart';
-import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
-import 'package:phylum/libphylum/explorer/explorer_controller.dart';
+import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
-import 'package:phylum/libphylum/explorer/selection_mode.dart';
+import 'package:phylum/ui/explorer/selection_mode.dart';
 import 'package:phylum/ui/menu/bottom_sheet.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:provider/provider.dart';
 
-class AppLayout extends StatelessWidget {
-  const AppLayout({super.key});
+class AppLayout extends StatefulWidget {
+  final ExplorerPage page;
 
-  @override
-  Widget build(BuildContext context) {
+  const AppLayout._({required this.page});
+
+  static Widget create(ExplorerPage page) {
     return StateNotifierProvider<ExplorerController, ExplorerState>(
       create: (context) => ExplorerController(
         account: context.read<PhylumAccount>(),
-        navigator: context.read<PhylumRouterDelegate>(),
+        page: page,
       ),
-      builder: (context, child) {
-        final size = MediaQuery.sizeOf(context);
-        final layout = size.width <= 600 ? CollapsedAppLayout() : ExpandedAppLayout(large: size.width > 1200);
-        return ExternalDropRegion(
-          buildItem: (context, dropTargetActive) {
-            final child = (dropTargetActive)
-                ? Stack(
-                    children: [
-                      layout,
-                      ConstrainedBox(
-                        constraints: BoxConstraints.expand(),
-                        child: Material(
-                          color: Colors.white70,
-                          child: const Center(
-                              child: Text(
-                            'Drop Files to Upload',
-                            style: TextStyle(fontSize: 24),
-                          )),
-                        ),
-                      )
-                    ],
+      lazy: false,
+      child: AppLayout._(page: page),
+    );
+  }
+
+  @override
+  State<AppLayout> createState() => _AppLayoutState();
+}
+
+class _AppLayoutState extends State<AppLayout> {
+  @override
+  void didUpdateWidget(covariant AppLayout oldWidget) {
+    Future.microtask(() {
+      if (mounted) {
+        context.read<ExplorerController>().updatePage(widget.page);
+      }
+    });
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final layout = size.width <= 600 ? CollapsedAppLayout() : ExpandedAppLayout(large: size.width > 1200);
+    return ExternalDropRegion(
+      buildItem: (context, dropTargetActive) {
+        final child = (dropTargetActive)
+            ? Stack(
+                children: [
+                  layout,
+                  ConstrainedBox(
+                    constraints: BoxConstraints.expand(),
+                    child: Material(
+                      color: Colors.white70,
+                      child: const Center(
+                          child: Text(
+                        'Drop Files to Upload',
+                        style: TextStyle(fontSize: 24),
+                      )),
+                    ),
                   )
-                : layout;
-            return AppActions(child: child);
-          },
-        );
+                ],
+              )
+            : layout;
+        return AppActions(child: child);
       },
     );
   }

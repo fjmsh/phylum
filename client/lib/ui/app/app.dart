@@ -9,7 +9,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/app/action_queue_status_notifier.dart';
 import 'package:phylum/ui/logout/logout_app.dart';
-import 'package:phylum/libphylum/explorer/page.dart';
+import 'package:phylum/ui/explorer/page.dart';
 import 'package:provider/provider.dart';
 
 class PhylumApp extends StatefulWidget {

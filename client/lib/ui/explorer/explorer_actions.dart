@@ -5,14 +5,14 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/paste_action_handler.dart';
-import 'package:phylum/libphylum/explorer/selection_mode.dart';
+import 'package:phylum/ui/explorer/selection_mode.dart';
 import 'package:phylum/ui/preview/resource_preview.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
-import '../../libphylum/explorer/explorer_controller.dart';
+import 'explorer_controller.dart';
 
 class ExplorerActions extends StatelessWidget {
   final Widget child;

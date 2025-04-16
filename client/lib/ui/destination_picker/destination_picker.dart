@@ -3,11 +3,11 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/explorer/page.dart';
-import 'package:phylum/libphylum/explorer/explorer_controller.dart';
+import 'package:phylum/ui/explorer/page.dart';
+import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/libphylum/explorer/selection_mode.dart';
+import 'package:phylum/ui/explorer/selection_mode.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 
@@ -23,19 +23,19 @@ class DestinationPicker extends StatefulWidget {
   static Future<String?> show(BuildContext context, String initialFolderId, {bool allowInitialFolder = false}) {
     return showDialog(
       context: context,
-      builder: (context) => MultiProvider(
-        providers: [
-          ChangeNotifierProvider(
-            create: (context) =>
-                PhylumRouterDelegate(account: null, page: ExplorerPageFolder(folderId: initialFolderId)),
-          ),
-          StateNotifierProvider<ExplorerController, ExplorerState>(
+      builder: (context) => ChangeNotifierProvider(
+        create: (context) => PhylumRouterDelegate(account: null, page: ExplorerPageFolder(folderId: initialFolderId)),
+        builder: (context, child) {
+          final page = context.watch<PhylumRouterDelegate>().current!;
+          return StateNotifierProvider<ExplorerController, ExplorerState>(
+            key: ValueKey(page),
             create: (context) => ExplorerController(
               account: context.read<PhylumAccount>(),
-              navigator: context.read<PhylumRouterDelegate>(),
+              page: page,
             ),
-          ),
-        ],
+            child: child,
+          );
+        },
         child: DestinationPicker(initialFolderId: initialFolderId, allowInitialFolder: allowInitialFolder),
       ),
     );

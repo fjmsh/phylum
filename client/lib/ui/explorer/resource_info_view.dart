@@ -5,7 +5,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/explorer/explorer_controller.dart';
+import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/explorer/resource_details_row.dart';
 import 'package:phylum/util/file_size.dart';

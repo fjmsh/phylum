@@ -5,7 +5,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_layout.dart';
 import 'package:provider/provider.dart';
 
-import '../../libphylum/explorer/page.dart';
+import '../explorer/page.dart';
 
 class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotifier, PopNavigatorRouterDelegateMixin {
   @override
@@ -63,7 +63,7 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
       value: this,
       child: Navigator(
         key: navigatorKey,
-        onGenerateRoute: (settings) => MaterialPageRoute(builder: (context) => const AppLayout()),
+        onGenerateRoute: (settings) => MaterialPageRoute(builder: (context) => AppLayout.create(_current!)),
       ),
     );
   }

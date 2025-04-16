@@ -4,7 +4,7 @@ import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
 import 'package:provider/provider.dart';
 
-import '../../libphylum/explorer/explorer_controller.dart';
+import 'explorer_controller.dart';
 import 'folder_empty_view.dart';
 import 'folder_list_view.dart';
 

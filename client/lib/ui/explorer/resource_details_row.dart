@@ -10,7 +10,7 @@ import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
-import '../../libphylum/explorer/explorer_controller.dart';
+import 'explorer_controller.dart';
 
 enum SyncState {
   none(Icons.block),

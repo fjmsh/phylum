@@ -5,7 +5,7 @@ import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_item_gesture_handler.dart';
 import 'package:provider/provider.dart';
 
-import '../../libphylum/explorer/explorer_controller.dart';
+import 'explorer_controller.dart';
 
 class FolderListView extends StatefulWidget {
   const FolderListView({super.key});

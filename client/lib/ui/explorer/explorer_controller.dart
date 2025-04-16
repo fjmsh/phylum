@@ -6,7 +6,6 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 import 'page.dart';
-import '../../ui/app/router.dart';
 import 'selection_mode.dart';
 
 class ExplorerState {
@@ -72,41 +71,36 @@ class ExplorerState {
 
 class ExplorerController extends StateNotifier<ExplorerState> {
   final PhylumAccount _account;
-  final PhylumRouterDelegate _navigator;
+  ExplorerPage _page;
   StreamSubscription<Resource?>? _folderSubscription;
   StreamSubscription<List<Resource>>? _childrenSubscription;
 
   ExplorerController({
     required PhylumAccount account,
-    required PhylumRouterDelegate navigator,
+    required ExplorerPage page,
   })  : _account = account,
-        _navigator = navigator,
-        super(ExplorerState(folderId: null)) {
-    navigator.addListener(onNavigatorUpdated);
-    onNavigatorUpdated();
+        _page = page,
+        super(ExplorerState(folderId: page is ExplorerPageFolder ? page.folderId : null)) {
+    _folderSubscription = page.watchResource(_account).listen((e) => state = state.copyWith(folder: e));
+    _childrenSubscription = page.watchChildren(_account).listen((e) => _updateResourceList(e));
+    refresh();
+  }
+
+  void updatePage(ExplorerPage page) {
+    _page = page;
+    _folderSubscription?.cancel();
+    _folderSubscription = page.watchResource(_account).listen((e) => state = state.copyWith(folder: e));
+    _childrenSubscription?.cancel();
+    _childrenSubscription = page.watchChildren(_account).listen((e) => _updateResourceList(e));
+    state = ExplorerState(folderId: page is ExplorerPageFolder ? page.folderId : null);
+    refresh();
   }
 
   @override
   void dispose() {
-    _navigator.removeListener(onNavigatorUpdated);
     _folderSubscription?.cancel();
     _childrenSubscription?.cancel();
     super.dispose();
-  }
-
-  void onNavigatorUpdated() {
-    updatePage(_navigator.current);
-  }
-
-  void updatePage(ExplorerPage? page) {
-    if (page == null) return;
-    final folderId = page is ExplorerPageFolder ? (page).folderId : null;
-    state = ExplorerState(folderId: folderId);
-    _folderSubscription?.cancel();
-    _childrenSubscription?.cancel();
-    _folderSubscription = page.watchResource(_account).listen((e) => state = state.copyWith(folder: e));
-    _childrenSubscription = page.watchChildren(_account).listen((e) => _updateResourceList(e));
-    refresh();
   }
 
   void _updateResourceList(List<Resource> resources) {
@@ -177,9 +171,9 @@ class ExplorerController extends StateNotifier<ExplorerState> {
   }
 
   Future refresh() {
-    if (state.refreshing || _navigator.current == null) return Future.value(state);
+    if (state.refreshing) return Future.value(state);
     state = state.copyWith(refreshing: true);
-    return _navigator.current!.refresh(_account).then((success) {
+    return _page.refresh(_account).then((success) {
       if (mounted) {
         state = state.copyWith(
           refreshing: false,
