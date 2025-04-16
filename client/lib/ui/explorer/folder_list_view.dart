@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/app_shortcuts.dart';
+import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_item_gesture_handler.dart';

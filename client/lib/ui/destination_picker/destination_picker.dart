@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:phylum/app_shortcuts.dart';
+import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/explorer/page.dart';
 import 'package:phylum/libphylum/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
-import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
+import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/libphylum/explorer/selection_mode.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
@@ -26,12 +26,13 @@ class DestinationPicker extends StatefulWidget {
       builder: (context) => MultiProvider(
         providers: [
           ChangeNotifierProvider(
-            create: (context) => ExplorerNavigator(account: null, page: ExplorerPageFolder(folderId: initialFolderId)),
+            create: (context) =>
+                PhylumRouterDelegate(account: null, page: ExplorerPageFolder(folderId: initialFolderId)),
           ),
           StateNotifierProvider<ExplorerController, ExplorerState>(
             create: (context) => ExplorerController(
               account: context.read<PhylumAccount>(),
-              navigator: context.read<ExplorerNavigator>(),
+              navigator: context.read<PhylumRouterDelegate>(),
             ),
           ),
         ],
@@ -66,7 +67,7 @@ class _DestinationPickerState extends State<DestinationPicker> {
           return BackButton(onPressed: () {
             final parentId = context.read<ExplorerState>().folder?.parent;
             if (parentId != null) {
-              context.read<ExplorerNavigator>().go(ExplorerPageFolder(folderId: parentId));
+              context.read<PhylumRouterDelegate>().go(ExplorerPageFolder(folderId: parentId));
               node.requestFocus();
             } else {
               Navigator.of(context).pop();
@@ -111,7 +112,7 @@ class _DestinationPickerState extends State<DestinationPicker> {
                 leading: BackButton(onPressed: () {
                   final parentId = context.read<ExplorerState>().folder?.parent;
                   if (parentId != null) {
-                    context.read<ExplorerNavigator>().go(ExplorerPageFolder(folderId: parentId));
+                    context.read<PhylumRouterDelegate>().go(ExplorerPageFolder(folderId: parentId));
                     node.requestFocus();
                   } else {
                     Navigator.of(context).pop();
@@ -191,7 +192,7 @@ class _FolderListView extends StatelessWidget {
                 leading: r.getIcon(),
                 title: Text(r.name),
                 enabled: r.dir,
-                onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageFolder(folderId: r.id)),
+                onTap: () => context.read<PhylumRouterDelegate>().go(ExplorerPageFolder(folderId: r.id)),
               );
             });
           },
@@ -214,7 +215,7 @@ class _ActionHandler extends StatelessWidget {
         NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) async {
           final parentId = context.read<ExplorerState>().folder?.parent;
           if (parentId != null) {
-            context.read<ExplorerNavigator>().go(ExplorerPageFolder(folderId: parentId));
+            context.read<PhylumRouterDelegate>().go(ExplorerPageFolder(folderId: parentId));
           }
           focusNode.requestFocus();
           return null;
@@ -236,7 +237,7 @@ class _ActionHandler extends StatelessWidget {
         ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) async {
           final selected = context.read<ExplorerState>().selectedSingle;
           if (selected != null && selected.dir) {
-            context.read<ExplorerNavigator>().go(ExplorerPageFolder(folderId: selected.id));
+            context.read<PhylumRouterDelegate>().go(ExplorerPageFolder(folderId: selected.id));
           }
           return null;
         }),

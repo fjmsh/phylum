@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/app_shortcuts.dart';
+import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
-import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
+import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/libphylum/explorer/page.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/button_downloads.dart';
@@ -52,12 +52,12 @@ class NavList extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.history),
             title: const Text('Recents'),
-            onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageRecents()),
+            onTap: () => context.read<PhylumRouterDelegate>().go(ExplorerPageRecents()),
           ),
           ListTile(
             leading: const Icon(Icons.people_outlined),
             title: const Text('Shared With Me'),
-            onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageShared()),
+            onTap: () => context.read<PhylumRouterDelegate>().go(ExplorerPageShared()),
           ),
           StreamBuilder<List<SelectBookmarksResult>>(
             stream: account.db.selectBookmarks().watch(),
@@ -94,7 +94,7 @@ class NavList extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.delete),
             title: const Text('Trash'),
-            onTap: () => context.read<ExplorerNavigator>().go(ExplorerPageTrash()),
+            onTap: () => context.read<PhylumRouterDelegate>().go(ExplorerPageTrash()),
           ),
           const Divider(),
           const DownloadButton(),

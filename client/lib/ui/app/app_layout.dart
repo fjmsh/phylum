@@ -3,7 +3,7 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/fab_action.dart';
-import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
+import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/libphylum/explorer/explorer_controller.dart';
@@ -22,7 +22,7 @@ class AppLayout extends StatelessWidget {
     return StateNotifierProvider<ExplorerController, ExplorerState>(
       create: (context) => ExplorerController(
         account: context.read<PhylumAccount>(),
-        navigator: context.read<ExplorerNavigator>(),
+        navigator: context.read<PhylumRouterDelegate>(),
       ),
       builder: (context, child) {
         final size = MediaQuery.sizeOf(context);

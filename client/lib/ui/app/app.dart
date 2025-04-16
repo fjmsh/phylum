@@ -2,13 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/app_shortcuts.dart';
+import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
-import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
+import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/app/action_queue_status_notifier.dart';
-import 'package:phylum/ui/app/app_layout.dart';
 import 'package:phylum/ui/logout/logout_app.dart';
 import 'package:phylum/libphylum/explorer/page.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +22,6 @@ class PhylumApp extends StatefulWidget {
           StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
           StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(account)),
           ChangeNotifierProvider(create: (context) => ActionQueueStatusNotifier(account.actionQueue)),
-          ChangeNotifierProvider(create: (context) => ExplorerNavigator(account: context.read<PhylumAccount>())),
         ],
         child: PhylumApp(),
       );
@@ -34,17 +32,16 @@ class PhylumApp extends StatefulWidget {
 
 class _PhylumAppState extends State<PhylumApp> {
   late final AppLifecycleListener _listener;
-  final _navigatorKey = GlobalKey<NavigatorState>();
+  late final PhylumRouterDelegate _routerDelegate;
 
   @override
   void initState() {
     super.initState();
-    _listener = AppLifecycleListener(onStateChange: (state) {
-      if (state == AppLifecycleState.resumed) {
-        final account = context.read<PhylumAccount>();
-        account.userRepository.refresh();
-        account.bookmarkRepository.refresh();
-      }
+    _routerDelegate = PhylumRouterDelegate(account: context.read());
+    _listener = AppLifecycleListener(onResume: () {
+      final account = context.read<PhylumAccount>();
+      account.userRepository.refresh();
+      account.bookmarkRepository.refresh();
     });
   }
 
@@ -75,7 +72,7 @@ class _PhylumAppState extends State<PhylumApp> {
         theme: theme,
         darkTheme: darkTheme,
         routeInformationParser: const PhylumRouteInformationParser(),
-        routerDelegate: PhylumRouterDelegate(navigator: context.watch(), navigatorKey: _navigatorKey),
+        routerDelegate: _routerDelegate,
         shortcuts: getAppShortcuts(),
       );
     }
@@ -116,35 +113,5 @@ class PhylumRouteInformationParser extends RouteInformationParser<ExplorerPage> 
   @override
   RouteInformation? restoreRouteInformation(ExplorerPage configuration) {
     return RouteInformation(uri: configuration.uri);
-  }
-}
-
-class PhylumRouterDelegate extends RouterDelegate<ExplorerPage>
-    with ChangeNotifier, PopNavigatorRouterDelegateMixin<ExplorerPage> {
-  final ExplorerNavigator navigator;
-  final GlobalKey<NavigatorState> navigatorKey;
-
-  PhylumRouterDelegate({required this.navigator, required this.navigatorKey});
-
-  @override
-  ExplorerPage? get currentConfiguration => navigator.current;
-
-  @override
-  Widget build(BuildContext context) {
-    return Navigator(
-      key: navigatorKey,
-      onGenerateRoute: (settings) => MaterialPageRoute(builder: (context) => const AppLayout()),
-    );
-  }
-
-  @override
-  Future<void> setInitialRoutePath(ExplorerPage configuration) {
-    navigator.go(configuration);
-    return SynchronousFuture(null);
-  }
-
-  @override
-  Future<void> setNewRoutePath(ExplorerPage configuration) {
-    return SynchronousFuture(null);
   }
 }

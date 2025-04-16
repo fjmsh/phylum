@@ -9,7 +9,7 @@ import 'package:logger/logger.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:phylum/app.dart';
+import 'package:phylum/ui/app/app.dart';
 import 'package:phylum/integrations/directories.dart';
 import 'package:phylum/libphylum/actions/deserializers.dart';
 import 'package:phylum/libphylum/db/db.dart';

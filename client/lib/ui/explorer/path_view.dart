@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phylum/app_shortcuts.dart';
+import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
-import 'package:phylum/libphylum/explorer/explorer_navigator.dart';
+import 'package:phylum/ui/app/router.dart';
 import 'package:provider/provider.dart';
 
 const reverse = false;
@@ -33,13 +33,13 @@ class PathView extends StatefulWidget {
 
 class _PathViewState extends State<PathView> {
   StreamSubscription? sub;
-  late final ExplorerNavigator _navigator;
+  late final PhylumRouterDelegate _navigator;
   Iterable<ParentsResult>? ancestors;
 
   @override
   void initState() {
     super.initState();
-    _navigator = context.read<ExplorerNavigator>();
+    _navigator = context.read<PhylumRouterDelegate>();
     _navigator.addListener(onNavigatorUpdated);
     onNavigatorUpdated();
   }

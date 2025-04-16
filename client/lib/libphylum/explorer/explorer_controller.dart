@@ -6,7 +6,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 import 'page.dart';
-import 'explorer_navigator.dart';
+import '../../ui/app/router.dart';
 import 'selection_mode.dart';
 
 class ExplorerState {
@@ -72,13 +72,13 @@ class ExplorerState {
 
 class ExplorerController extends StateNotifier<ExplorerState> {
   final PhylumAccount _account;
-  final ExplorerNavigator _navigator;
+  final PhylumRouterDelegate _navigator;
   StreamSubscription<Resource?>? _folderSubscription;
   StreamSubscription<List<Resource>>? _childrenSubscription;
 
   ExplorerController({
     required PhylumAccount account,
-    required ExplorerNavigator navigator,
+    required PhylumRouterDelegate navigator,
   })  : _account = account,
         _navigator = navigator,
         super(ExplorerState(folderId: null)) {
