@@ -3,8 +3,8 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
 
-class AppLogout extends StatelessWidget {
-  const AppLogout({super.key});
+class LogoutPage extends StatelessWidget {
+  const LogoutPage({super.key});
 
   @override
   Widget build(BuildContext context) {

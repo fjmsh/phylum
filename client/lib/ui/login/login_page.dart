@@ -27,7 +27,8 @@ class _LoginPageState extends State<LoginPage> {
   String? urlError;
   String? emailError;
 
-  bool get serverUrlValid => (kIsWeb && serverUrl == Uri()) || (serverUrl?.hasScheme == true && serverUrl?.hasAuthority == true);
+  bool get serverUrlValid =>
+      (kIsWeb && serverUrl == Uri()) || (serverUrl?.hasScheme == true && serverUrl?.hasAuthority == true);
 
   @override
   void initState() {

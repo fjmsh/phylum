@@ -14,7 +14,7 @@ import 'package:phylum/integrations/directories.dart';
 import 'package:phylum/libphylum/actions/deserializers.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/login_page.dart';
+import 'package:phylum/ui/login/login_app.dart';
 import 'package:phylum/util/logging.dart';
 import 'package:provider/provider.dart';
 
@@ -36,7 +36,6 @@ void main() async {
     };
     logger.log(lvl, message, error: error, stackTrace: stackTrace);
   };
-  // GoRouter.optionURLReflectsImperativeAPIs = true;
   // We use multiple distinct databases for different accounts, so this is expected behavior
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
@@ -70,9 +69,8 @@ void main() async {
 
 class AccountSelector extends StatelessWidget {
   final AccountManager<PhylumAccount> accountManager;
-  final Key _loginAppKey = UniqueKey();
 
-  AccountSelector({
+  const AccountSelector({
     super.key,
     required this.accountManager,
   });
@@ -86,23 +84,8 @@ class AccountSelector extends StatelessWidget {
                 context.select<AccountManagerState<PhylumAccount>, PhylumAccount?>((state) => state.selectedAccount);
 
             if (account == null) {
-              return buildLoginPage(context);
+              return const LoginApp(key: ValueKey('login'));
             }
             return PhylumApp.create(account);
           });
-
-  Widget buildLoginPage(BuildContext context) => MaterialApp(
-        key: _loginAppKey,
-        title: 'Login | Phylum',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
-        darkTheme: ThemeData.dark(),
-        initialRoute: '/',
-        onGenerateRoute: (settings) {
-          return MaterialPageRoute(
-            settings: settings,
-            builder: (context) => const LoginPage(),
-          );
-        },
-      );
 }

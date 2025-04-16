@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:go_router/go_router.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
@@ -10,7 +9,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/app/action_queue_status_notifier.dart';
 import 'package:phylum/ui/app/app_layout.dart';
-import 'package:phylum/ui/app/app_logout.dart';
+import 'package:phylum/ui/logout/logout_app.dart';
 import 'package:phylum/libphylum/explorer/page.dart';
 import 'package:provider/provider.dart';
 
@@ -80,20 +79,8 @@ class _PhylumAppState extends State<PhylumApp> {
         shortcuts: getAppShortcuts(),
       );
     }
-    return MaterialApp.router(
-      key: ValueKey('loggingout'),
-      title: 'Logging Out | Phylum',
-      debugShowCheckedModeBanner: false,
-      theme: theme,
-      darkTheme: darkTheme,
-      routerConfig: createLogoutRouter(),
-    );
+    return const LogoutApp();
   }
-
-  RouterConfig<Object> createLogoutRouter() => GoRouter(
-        errorBuilder: (context, state) => const AppLogout(),
-        routes: [],
-      );
 }
 
 class PhylumRouteInformationParser extends RouteInformationParser<ExplorerPage> {
@@ -147,12 +134,6 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage>
     return Navigator(
       key: navigatorKey,
       onGenerateRoute: (settings) => MaterialPageRoute(builder: (context) => const AppLayout()),
-      // pages: [
-      //   MaterialPage(
-      //     child: const AppLayout(),
-      //     onPopInvoked: (didPop, result) => navigator.goBack(),
-      //   )
-      // ],
     );
   }
 
@@ -164,67 +145,6 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage>
 
   @override
   Future<void> setNewRoutePath(ExplorerPage configuration) {
-    // navigator.go(configuration);
     return SynchronousFuture(null);
   }
 }
-
-// sealed class PhylumRoute {
-//   Uri get uri;
-
-//   ExplorerPage get page;
-
-//   const PhylumRoute();
-// }
-
-// class PhylumRouteHome extends PhylumRoute {
-//   @override
-//   Uri get uri => Uri(path: '/home');
-
-//   @override
-//   ExplorerPage get page => const ExplorerPageHome();
-
-//   const PhylumRouteHome();
-// }
-
-// class PhylumRouteFolder extends PhylumRoute {
-//   @override
-//   Uri get uri => Uri(path: '/folder/$folderId');
-
-//   final String folderId;
-
-//   @override
-//   ExplorerPage get page => ExplorerPageFolder(folderId: folderId);
-
-//   const PhylumRouteFolder(this.folderId);
-// }
-
-// class PhylumRouteRecents extends PhylumRoute {
-//   @override
-//   Uri get uri => Uri(path: '/recents');
-
-//   @override
-//   ExplorerPage get page => const ExplorerPageRecents();
-
-//   const PhylumRouteRecents();
-// }
-
-// class PhylumRouteShared extends PhylumRoute {
-//   @override
-//   Uri get uri => Uri(path: '/shared');
-
-//   @override
-//   ExplorerPage get page => const ExplorerPageShared();
-
-//   const PhylumRouteShared();
-// }
-
-// class PhylumRouteTrash extends PhylumRoute {
-//   @override
-//   Uri get uri => Uri(path: '/trash');
-
-//   @override
-//   ExplorerPage get page => const ExplorerPageTrash();
-
-//   const PhylumRouteTrash();
-// }
