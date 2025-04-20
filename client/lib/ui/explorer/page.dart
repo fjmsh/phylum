@@ -1,11 +1,7 @@
-import 'dart:convert';
-
-import 'package:collection/collection.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/util/permissions.dart';
 
 sealed class ExplorerPage {
   Uri get uri;
@@ -18,12 +14,15 @@ sealed class ExplorerPage {
 
   Stream<List<Resource>> watchChildren(PhylumAccount account);
 
-  Stream<List<ParentsResult>> watchParents(PhylumAccount account);
+  String get title;
 }
 
 class ExplorerPageHome extends ExplorerPage {
   @override
   Uri get uri => Uri(path: '/home');
+
+  @override
+  String get title => 'My Files';
 
   const ExplorerPageHome();
 
@@ -36,13 +35,6 @@ class ExplorerPageHome extends ExplorerPage {
 
   @override
   Stream<List<Resource>> watchChildren(PhylumAccount account) => account.db.watchChildren(account.userHome);
-
-  @override
-  Stream<List<ParentsResult>> watchParents(PhylumAccount account) {
-    return Stream.fromIterable([
-      [ParentsResult(id: account.userHome, name: 'My Files')]
-    ]);
-  }
 
   @override
   String toString() => 'ExplorerPageHome';
@@ -60,6 +52,9 @@ class ExplorerPageFolder extends ExplorerPage {
   @override
   Uri get uri => Uri(path: '/folder/$folderId');
 
+  @override
+  String get title => 'Folder';
+
   final String folderId;
 
   ExplorerPageFolder({required this.folderId});
@@ -73,30 +68,6 @@ class ExplorerPageFolder extends ExplorerPage {
 
   @override
   Stream<List<Resource>> watchChildren(PhylumAccount account) => account.db.watchChildren(folderId);
-
-  @override
-  Stream<List<ParentsResult>> watchParents(PhylumAccount account) {
-    return account.db.watchParents(folderId).map((p) {
-      if (p.isEmpty) {
-        p = [
-          ParentsResult(id: folderId, name: 'Loading...'),
-        ];
-      }
-      int index = p.indexWhere((r) => r.id == account.userHome);
-      if (index >= 0) {
-        p[index] = ParentsResult(id: account.userHome, name: 'My Files');
-      } else {
-        index = p.lastIndexWhere((r) =>
-            r.permissions != null &&
-            ((jsonDecode(r.permissions!) as Map).cast<String, Permission>()[account.userName] ?? 0) & permissionRead !=
-                0);
-        if (index < 0) {
-          index = 0;
-        }
-      }
-      return ListSlice(p, 0, index + 1);
-    });
-  }
 
   @override
   String toString() => 'ExplorerPageFolder($folderId)';
@@ -114,6 +85,9 @@ class ExplorerPageRecents extends ExplorerPage {
   @override
   Uri get uri => Uri(path: '/recents');
 
+  @override
+  String get title => 'Recents';
+
   const ExplorerPageRecents();
 
   @override
@@ -129,13 +103,6 @@ class ExplorerPageRecents extends ExplorerPage {
   @override
   Stream<List<Resource>> watchChildren(PhylumAccount account) {
     return account.db.selectRecents().watch();
-  }
-
-  @override
-  Stream<List<ParentsResult>> watchParents(PhylumAccount account) {
-    return Stream.fromIterable([
-      [],
-    ]);
   }
 
   @override
@@ -156,6 +123,9 @@ class ExplorerPageTrash extends ExplorerPage {
   @override
   Uri get uri => Uri(path: '/trash');
 
+  @override
+  String get title => 'Trash';
+
   const ExplorerPageTrash();
 
   @override
@@ -171,13 +141,6 @@ class ExplorerPageTrash extends ExplorerPage {
   @override
   Stream<List<Resource>> watchChildren(PhylumAccount account) {
     return account.db.selectTrash().watch();
-  }
-
-  @override
-  Stream<List<ParentsResult>> watchParents(PhylumAccount account) {
-    return Stream.fromIterable([
-      [],
-    ]);
   }
 
   @override
@@ -198,6 +161,9 @@ class ExplorerPageShared extends ExplorerPage {
   @override
   Uri get uri => Uri(path: '/shared');
 
+  @override
+  String get title => 'Shared';
+
   const ExplorerPageShared();
 
   @override
@@ -213,13 +179,6 @@ class ExplorerPageShared extends ExplorerPage {
   @override
   Stream<List<Resource>> watchChildren(PhylumAccount account) {
     return account.db.selectShared().watch();
-  }
-
-  @override
-  Stream<List<ParentsResult>> watchParents(PhylumAccount account) {
-    return Stream.fromIterable([
-      [],
-    ]);
   }
 
   @override

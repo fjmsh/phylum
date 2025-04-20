@@ -9,7 +9,7 @@ import 'page.dart';
 import 'selection_mode.dart';
 
 class ExplorerState {
-  final String? folderId;
+  final ExplorerPage page;
   final Resource? folder;
   final List<Resource> resources;
   final Set<String> selectedIds;
@@ -20,6 +20,7 @@ class ExplorerState {
   final bool refreshing;
   final bool refreshError;
 
+  String? get folderId => page is ExplorerPageFolder ? (page as ExplorerPageFolder).folderId : null;
   Resource? get focussed => focusIndex < 0 || focusIndex >= resources.length ? null : resources[focusIndex];
   String? get focusId => focussed?.id;
   Iterable<Resource> get selected => resources.where((r) => selectedIds.contains(r.id));
@@ -28,7 +29,7 @@ class ExplorerState {
   Resource? get focussedIfSelected => selectedIds.isEmpty ? null : focussed;
 
   const ExplorerState({
-    required this.folderId,
+    required this.page,
     this.folder,
     this.resources = const [],
     this.selectedIds = const {},
@@ -41,6 +42,7 @@ class ExplorerState {
   });
 
   ExplorerState copyWith({
+    ExplorerPage? page,
     Resource? folder,
     List<Resource>? resources,
     Set<String>? selectedIds,
@@ -52,7 +54,7 @@ class ExplorerState {
     bool? refreshError,
   }) =>
       ExplorerState(
-        folderId: folderId,
+        page: page ?? this.page,
         folder: folder ?? this.folder,
         resources: resources ?? this.resources,
         selectedIds: selectedIds ?? this.selectedIds,
@@ -71,7 +73,6 @@ class ExplorerState {
 
 class ExplorerController extends StateNotifier<ExplorerState> {
   final PhylumAccount _account;
-  ExplorerPage _page;
   StreamSubscription<Resource?>? _folderSubscription;
   StreamSubscription<List<Resource>>? _childrenSubscription;
 
@@ -79,20 +80,18 @@ class ExplorerController extends StateNotifier<ExplorerState> {
     required PhylumAccount account,
     required ExplorerPage page,
   })  : _account = account,
-        _page = page,
-        super(ExplorerState(folderId: page is ExplorerPageFolder ? page.folderId : null)) {
+        super(ExplorerState(page: page)) {
     _folderSubscription = page.watchResource(_account).listen((e) => state = state.copyWith(folder: e));
     _childrenSubscription = page.watchChildren(_account).listen((e) => _updateResourceList(e));
     refresh();
   }
 
   void updatePage(ExplorerPage page) {
-    _page = page;
     _folderSubscription?.cancel();
     _folderSubscription = page.watchResource(_account).listen((e) => state = state.copyWith(folder: e));
     _childrenSubscription?.cancel();
     _childrenSubscription = page.watchChildren(_account).listen((e) => _updateResourceList(e));
-    state = ExplorerState(folderId: page is ExplorerPageFolder ? page.folderId : null);
+    state = ExplorerState(page: page);
     refresh();
   }
 
@@ -173,7 +172,7 @@ class ExplorerController extends StateNotifier<ExplorerState> {
   Future refresh() {
     if (state.refreshing) return Future.value(state);
     state = state.copyWith(refreshing: true);
-    return _page.refresh(_account).then((success) {
+    return state.page.refresh(_account).then((success) {
       if (mounted) {
         state = state.copyWith(
           refreshing: false,

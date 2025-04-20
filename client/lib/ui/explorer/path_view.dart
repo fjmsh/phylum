@@ -1,109 +1,133 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/explorer/explorer_controller.dart';
+import 'package:phylum/ui/explorer/page.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
-import 'package:phylum/ui/app/router.dart';
+import 'package:phylum/util/permissions.dart';
 import 'package:provider/provider.dart';
 
 const reverse = false;
 const small = false;
 
-class PathView extends StatefulWidget {
-  const PathView._() : super();
+class PathView extends StatelessWidget {
+  const PathView({super.key});
 
-  static Widget create() {
+  @override
+  Widget build(BuildContext context) {
+    final page = context.select<ExplorerState, ExplorerPage>((state) => state.page);
+    final account = context.read<PhylumAccount>();
+    if (page is ExplorerPageFolder) {
+      final user = account.userName;
+      final home = account.userHome;
+      return StreamBuilder(
+          stream: account.db.watchParents(page.folderId),
+          initialData: <ParentsResult>[ParentsResult(id: page.folderId, name: 'Folder')],
+          builder: (context, snapshot) {
+            final path = <PathItem>[];
+            for (int i = snapshot.data!.length - 1; i >= 0; i--) {
+              final entry = snapshot.data![i];
+              final permission = (entry.permissions?.parsePermissionMap() ?? const {})[user] ?? 0;
+              if (permission != 0) {
+                if (entry.id == home) {
+                  if (path.isNotEmpty) {
+                    path.clear();
+                  }
+                  path.add(PathItem(title: 'My Files', dropTargetId: entry.id, targetPage: const ExplorerPageHome()));
+                } else {
+                  if (path.isEmpty) {
+                    path.add(
+                        PathItem(title: 'Shared With Me', dropTargetId: null, targetPage: const ExplorerPageShared()));
+                  }
+                  path.add(PathItem(
+                    title: entry.name,
+                    dropTargetId: permission & permissionSetReadWrite == 0 ? null : entry.id,
+                    targetPage: ExplorerPageFolder(folderId: entry.id),
+                  ));
+                }
+              }
+            }
+            if (path.isEmpty) {
+              path.add(PathItem(title: 'Folder', dropTargetId: null, targetPage: null));
+            }
+            return Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: small
+                    ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+                    : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  children: [
+                    ...path.getRange(0, path.length - 1),
+                    PathItem(title: path.last.title, dropTargetId: null, targetPage: null),
+                  ],
+                ),
+              ),
+            );
+          });
+    }
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
         padding: small
             ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
             : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: PathView._(),
+        child: Row(
+          children: [PathItem(title: page.title, dropTargetId: null, targetPage: null)],
+        ),
       ),
     );
   }
-
-  @override
-  State<PathView> createState() => _PathViewState();
 }
 
-class _PathViewState extends State<PathView> {
-  StreamSubscription? sub;
-  late final PhylumRouterDelegate _navigator;
-  Iterable<ParentsResult>? ancestors;
+class PathItem extends StatelessWidget {
+  final String title;
+  final String? dropTargetId;
+  final ExplorerPage? targetPage;
 
-  @override
-  void initState() {
-    super.initState();
-    _navigator = context.read<PhylumRouterDelegate>();
-    _navigator.addListener(onNavigatorUpdated);
-    onNavigatorUpdated();
-  }
-
-  void onNavigatorUpdated() {
-    sub?.cancel();
-    sub = _navigator.current?.watchParents(context.read<PhylumAccount>()).listen((data) {
-      SystemChrome.setApplicationSwitcherDescription(ApplicationSwitcherDescription(
-        label: data.isEmpty ? 'Phylum' : "${data.first.name == "" ? "/" : data.first.name} | Phylum",
-      ));
-      if (mounted) {
-        setState(() {
-          ancestors = reverse ? data : data.reversed;
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _navigator.removeListener(onNavigatorUpdated);
-    sub?.cancel();
-    super.dispose();
-  }
+  const PathItem({
+    super.key,
+    required this.title,
+    required this.dropTargetId,
+    required this.targetPage,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final ancestors = this.ancestors;
-    if (ancestors == null || ancestors.isEmpty) {
-      return const SizedBox();
-    }
-    final current = reverse ? ancestors.firstOrNull : ancestors.lastOrNull;
+    return dropTargetId == null
+        ? buildCard(context, false)
+        : ResourceDragTarget(
+            resourceId: dropTargetId!,
+            buildItem: (context, dropTargetActive) => buildCard(context, dropTargetActive),
+          );
+  }
+
+  Widget buildCard(BuildContext context, bool dropTargetActive) {
     final theme = Theme.of(context);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final r in ancestors)
-          ResourceDragTarget(
-            resourceId: r.id,
-            buildItem: (context, dropTargetActive) => Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: const BorderRadius.all(Radius.circular(4.0)),
-                side: dropTargetActive ? BorderSide(width: 2, color: theme.colorScheme.primary) : BorderSide.none,
-              ),
-              elevation: r == current ? 0 : null,
-              margin: EdgeInsets.symmetric(horizontal: 6),
-              child: InkWell(
-                onTap: r == current ? null : () => Actions.maybeInvoke(context, NavToFolderIntent(folderId: r.id)),
-                child: Padding(
-                  padding: small
-                      ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
-                      : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Text(r.name,
-                      style: small
-                          ? theme.textTheme.bodyMedium!.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: r == current ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant)
-                          : theme.textTheme.bodyLarge!.copyWith(
-                              color: r == current ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant)),
-                ),
-              ),
-            ),
-          ),
-      ],
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(4.0)),
+        side: dropTargetActive ? BorderSide(width: 2, color: theme.colorScheme.primary) : BorderSide.none,
+      ),
+      elevation: targetPage == null ? 0 : null,
+      margin: EdgeInsets.symmetric(horizontal: 6),
+      child: InkWell(
+        onTap: targetPage == null ? null : () => Actions.maybeInvoke(context, NavIntent(page: targetPage!)),
+        child: Padding(
+          padding: small
+              ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+              : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Text(title,
+              style: small
+                  ? theme.textTheme.bodyMedium!.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: targetPage == null ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant)
+                  : theme.textTheme.bodyLarge!.copyWith(
+                      color: targetPage == null ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant)),
+        ),
+      ),
     );
   }
 }

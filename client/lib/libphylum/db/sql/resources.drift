@@ -15,16 +15,16 @@ CREATE TABLE IF NOT EXISTS resources(
     last_refresh DATETIME
 );
 
-parents: WITH RECURSIVE parents(id, parent, name, permissions) AS (
-    SELECT id, parent, name, permissions
+parents: WITH RECURSIVE parents(id, parent, name, deleted, permissions) AS (
+    SELECT id, parent, name, deleted,permissions
         FROM resources
         WHERE id = :id
     UNION ALL
-    SELECT r.id, r.parent, r.name, r.permissions
+    SELECT r.id, r.parent, r.name, r.deleted, r.permissions
         FROM resources r
         JOIN parents p
         ON r.id = p.parent
-) SELECT id, name, permissions from parents;
+) SELECT id, name, deleted, permissions from parents;
 
 permissions: SELECT r.name, r.permissions, r.grants, p.permissions as inherited_permissions
     FROM resources r

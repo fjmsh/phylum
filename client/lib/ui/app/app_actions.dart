@@ -56,6 +56,9 @@ class AppActions extends StatelessWidget {
           }
           return null;
         }),
+        NavIntent: CallbackAction<NavIntent>(
+          onInvoke: (i) => context.read<PhylumRouterDelegate>().go(i.page),
+        ),
         NavHomeIntent: CallbackAction<NavHomeIntent>(
           onInvoke: (i) => context.read<PhylumRouterDelegate>().go(const ExplorerPageHome()),
         ),

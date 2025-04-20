@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phylum/ui/explorer/page.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
 
 class FocusUpIntent extends Intent {
@@ -77,16 +78,22 @@ class UploadFolderIntent extends Intent {
   const UploadFolderIntent();
 }
 
-class NavUpIntent extends Intent {
-  const NavUpIntent();
-}
-
 class NavBackIntent extends Intent {
   const NavBackIntent();
 }
 
 class NavForwardIntent extends Intent {
   const NavForwardIntent();
+}
+
+class NavUpIntent extends Intent {
+  const NavUpIntent();
+}
+
+class NavIntent extends Intent {
+  final ExplorerPage page;
+
+  const NavIntent({required this.page});
 }
 
 class NavHomeIntent extends Intent {

@@ -17,7 +17,7 @@ class ExplorerView extends StatelessWidget {
       child: ExplorerGestureHandler(
         child: Column(
           children: [
-            PathView.create(),
+            const PathView(),
             Expanded(child: buildPage(context)),
           ],
         ),
