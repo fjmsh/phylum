@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/router.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 import 'page.dart';
@@ -73,20 +74,22 @@ class ExplorerState {
 
 class ExplorerController extends StateNotifier<ExplorerState> {
   final PhylumAccount _account;
+  final PhylumRouterDelegate _routerDelegate;
   StreamSubscription<Resource?>? _folderSubscription;
   StreamSubscription<List<Resource>>? _childrenSubscription;
 
   ExplorerController({
     required PhylumAccount account,
-    required ExplorerPage page,
+    required PhylumRouterDelegate routerDelegate,
   })  : _account = account,
-        super(ExplorerState(page: page)) {
-    _folderSubscription = page.watchResource(_account).listen((e) => state = state.copyWith(folder: e));
-    _childrenSubscription = page.watchChildren(_account).listen((e) => _updateResourceList(e));
-    refresh();
+        _routerDelegate = routerDelegate,
+        super(ExplorerState(page: routerDelegate.currentConfiguration!)) {
+    _routerDelegate.addListener(updatePage);
+    updatePage();
   }
 
-  void updatePage(ExplorerPage page) {
+  void updatePage() {
+    final page = _routerDelegate.currentConfiguration!;
     _folderSubscription?.cancel();
     _folderSubscription = page.watchResource(_account).listen((e) => state = state.copyWith(folder: e));
     _childrenSubscription?.cancel();
@@ -97,6 +100,7 @@ class ExplorerController extends StateNotifier<ExplorerState> {
 
   @override
   void dispose() {
+    _routerDelegate.removeListener(updatePage);
     _folderSubscription?.cancel();
     _childrenSubscription?.cancel();
     super.dispose();

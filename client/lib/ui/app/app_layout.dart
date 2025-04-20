@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:phylum/ui/explorer/page.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/fab_action.dart';
 import 'package:phylum/ui/app/nav_list.dart';
@@ -14,35 +12,15 @@ import 'package:phylum/ui/menu/bottom_sheet.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:provider/provider.dart';
 
-class AppLayout extends StatefulWidget {
-  final ExplorerPage page;
+class AppLayout extends StatelessWidget {
+  const AppLayout._();
 
-  const AppLayout._({required this.page});
-
-  static Widget create(ExplorerPage page) {
+  static Widget create() {
     return StateNotifierProvider<ExplorerController, ExplorerState>(
-      create: (context) => ExplorerController(
-        account: context.read<PhylumAccount>(),
-        page: page,
-      ),
+      create: (context) => ExplorerController(account: context.read(), routerDelegate: context.read()),
       lazy: false,
-      child: AppLayout._(page: page),
+      child: AppLayout._(),
     );
-  }
-
-  @override
-  State<AppLayout> createState() => _AppLayoutState();
-}
-
-class _AppLayoutState extends State<AppLayout> {
-  @override
-  void didUpdateWidget(covariant AppLayout oldWidget) {
-    Future.microtask(() {
-      if (mounted) {
-        context.read<ExplorerController>().updatePage(widget.page);
-      }
-    });
-    super.didUpdateWidget(oldWidget);
   }
 
   @override

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/page.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
@@ -29,10 +28,7 @@ class DestinationPicker extends StatefulWidget {
           final page = context.watch<PhylumRouterDelegate>().current!;
           return StateNotifierProvider<ExplorerController, ExplorerState>(
             key: ValueKey(page),
-            create: (context) => ExplorerController(
-              account: context.read<PhylumAccount>(),
-              page: page,
-            ),
+            create: (context) => ExplorerController(account: context.read(), routerDelegate: context.read()),
             child: child,
           );
         },

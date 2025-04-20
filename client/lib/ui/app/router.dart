@@ -63,7 +63,7 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
       value: this,
       child: Navigator(
         key: navigatorKey,
-        onGenerateRoute: (settings) => MaterialPageRoute(builder: (context) => AppLayout.create(_current!)),
+        onGenerateRoute: (settings) => MaterialPageRoute(builder: (context) => AppLayout.create()),
       ),
     );
   }

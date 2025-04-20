@@ -35,17 +35,6 @@ class ExplorerPageHome extends ExplorerPage {
 
   @override
   Stream<List<Resource>> watchChildren(PhylumAccount account) => account.db.watchChildren(account.userHome);
-
-  @override
-  String toString() => 'ExplorerPageHome';
-
-  @override
-  bool operator ==(Object other) {
-    return other is ExplorerPageHome;
-  }
-
-  @override
-  int get hashCode => 'home'.hashCode;
 }
 
 class ExplorerPageFolder extends ExplorerPage {
@@ -68,17 +57,6 @@ class ExplorerPageFolder extends ExplorerPage {
 
   @override
   Stream<List<Resource>> watchChildren(PhylumAccount account) => account.db.watchChildren(folderId);
-
-  @override
-  String toString() => 'ExplorerPageFolder($folderId)';
-
-  @override
-  bool operator ==(Object other) {
-    return other is ExplorerPageFolder && other.folderId == folderId;
-  }
-
-  @override
-  int get hashCode => folderId.hashCode;
 }
 
 class ExplorerPageRecents extends ExplorerPage {
@@ -104,19 +82,6 @@ class ExplorerPageRecents extends ExplorerPage {
   Stream<List<Resource>> watchChildren(PhylumAccount account) {
     return account.db.selectRecents().watch();
   }
-
-  @override
-  String toString() {
-    return 'ExplorerPageRecents';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ExplorerPageRecents;
-  }
-
-  @override
-  int get hashCode => 'recents'.hashCode;
 }
 
 class ExplorerPageTrash extends ExplorerPage {
@@ -142,19 +107,6 @@ class ExplorerPageTrash extends ExplorerPage {
   Stream<List<Resource>> watchChildren(PhylumAccount account) {
     return account.db.selectTrash().watch();
   }
-
-  @override
-  String toString() {
-    return 'ExplorerPageTrash';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ExplorerPageTrash;
-  }
-
-  @override
-  int get hashCode => 'trash'.hashCode;
 }
 
 class ExplorerPageShared extends ExplorerPage {
@@ -180,17 +132,4 @@ class ExplorerPageShared extends ExplorerPage {
   Stream<List<Resource>> watchChildren(PhylumAccount account) {
     return account.db.selectShared().watch();
   }
-
-  @override
-  String toString() {
-    return 'ExplorerPageShared';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ExplorerPageShared;
-  }
-
-  @override
-  int get hashCode => 'shared'.hashCode;
 }
