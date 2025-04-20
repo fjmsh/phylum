@@ -91,19 +91,9 @@ class NavUpIntent extends Intent {
 }
 
 class NavIntent extends Intent {
-  final ExplorerPage page;
+  final ExplorerPage target;
 
-  const NavIntent({required this.page});
-}
-
-class NavHomeIntent extends Intent {
-  const NavHomeIntent();
-}
-
-class NavToFolderIntent extends Intent {
-  final String folderId;
-
-  const NavToFolderIntent({required this.folderId});
+  const NavIntent({required this.target});
 }
 
 Map<ShortcutActivator, Intent> getAppShortcuts() {
@@ -152,7 +142,7 @@ Map<ShortcutActivator, Intent> getAppShortcuts() {
 
     // Top-level Navigation
     SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
-    SingleActivator(LogicalKeyboardKey.keyH, alt: true): NavHomeIntent(),
+    SingleActivator(LogicalKeyboardKey.keyH, alt: true): NavIntent(target: ExplorerPageHome()),
     if (!kIsWeb) SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): NavBackIntent(),
     if (!kIsWeb) SingleActivator(LogicalKeyboardKey.arrowRight, alt: true): NavForwardIntent(),
   };

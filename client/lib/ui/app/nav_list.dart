@@ -47,7 +47,7 @@ class NavList extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.home),
             title: const Text('Home'),
-            onTap: () => Actions.maybeInvoke(context, const NavHomeIntent()),
+            onTap: () => Actions.maybeInvoke(context, const NavIntent(target: ExplorerPageHome())),
           ),
           ListTile(
             leading: const Icon(Icons.history),
@@ -75,7 +75,8 @@ class NavList extends StatelessWidget {
                             leading: Icon(null),
                             onTap: () async {
                               if (b.dir) {
-                                Actions.maybeInvoke(context, NavToFolderIntent(folderId: b.resourceId));
+                                Actions.maybeInvoke(
+                                    context, NavIntent(target: ExplorerPageFolder(folderId: b.resourceId)));
                                 return;
                               }
                               final resource = await account.db.getResource(b.resourceId);

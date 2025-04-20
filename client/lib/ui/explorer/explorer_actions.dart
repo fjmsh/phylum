@@ -4,6 +4,7 @@ import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/explorer/page.dart';
 import 'package:phylum/ui/explorer/paste_action_handler.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
 import 'package:phylum/ui/preview/resource_preview.dart';
@@ -46,7 +47,7 @@ class ExplorerActions extends StatelessWidget {
           final r = state.selectedSingle ?? state.focussed;
           if (r == null) return;
           if (r.dir) {
-            Actions.maybeInvoke(context, NavToFolderIntent(folderId: r.id));
+            Actions.maybeInvoke(context, NavIntent(target: ExplorerPageFolder(folderId: r.id)));
           } else {
             final resources = state.resources.where((r) => !r.dir).toList(growable: false);
             final index = resources.indexOf(r);

@@ -114,7 +114,7 @@ class PathItem extends StatelessWidget {
       elevation: targetPage == null ? 0 : null,
       margin: EdgeInsets.symmetric(horizontal: 6),
       child: InkWell(
-        onTap: targetPage == null ? null : () => Actions.maybeInvoke(context, NavIntent(page: targetPage!)),
+        onTap: targetPage == null ? null : () => Actions.maybeInvoke(context, NavIntent(target: targetPage!)),
         child: Padding(
           padding: small
               ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
