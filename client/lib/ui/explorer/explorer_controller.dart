@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:state_notifier/state_notifier.dart';
@@ -91,9 +92,13 @@ class ExplorerController extends StateNotifier<ExplorerState> {
   void updatePage() {
     final page = _routerDelegate.currentConfiguration!;
     _folderSubscription?.cancel();
-    _folderSubscription = page.watchResource(_account).listen((e) => state = state.copyWith(folder: e));
+    if (page is ExplorerPageFolder) {
+      _folderSubscription = _account.db.watchResource(page.folderId).listen((e) => state = state.copyWith(folder: e));
+    } else {
+      _folderSubscription = null;
+    }
     _childrenSubscription?.cancel();
-    _childrenSubscription = page.watchChildren(_account).listen((e) => _updateResourceList(e));
+    _childrenSubscription = page.watchItems(_account).listen((e) => _updateResourceList(e));
     state = ExplorerState(page: page);
     refresh();
   }

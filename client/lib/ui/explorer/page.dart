@@ -6,15 +6,13 @@ import 'package:phylum/libphylum/phylum_account.dart';
 sealed class ExplorerPage {
   Uri get uri;
 
+  String get title;
+
   const ExplorerPage();
 
   Future<bool> refresh(PhylumAccount account);
 
-  Stream<Resource?> watchResource(PhylumAccount account);
-
-  Stream<List<Resource>> watchChildren(PhylumAccount account);
-
-  String get title;
+  Stream<List<Resource>> watchItems(PhylumAccount account);
 }
 
 class ExplorerPageHome extends ExplorerPage {
@@ -31,10 +29,7 @@ class ExplorerPageHome extends ExplorerPage {
       account.resourceRepository.requestResource(account.userHome).then((result) => result is ApiSuccessResponse);
 
   @override
-  Stream<Resource?> watchResource(PhylumAccount account) => account.db.watchResource(account.userHome);
-
-  @override
-  Stream<List<Resource>> watchChildren(PhylumAccount account) => account.db.watchChildren(account.userHome);
+  Stream<List<Resource>> watchItems(PhylumAccount account) => account.db.watchChildren(account.userHome);
 }
 
 class ExplorerPageFolder extends ExplorerPage {
@@ -53,10 +48,7 @@ class ExplorerPageFolder extends ExplorerPage {
       account.resourceRepository.requestResource(folderId).then((result) => result is ApiSuccessResponse);
 
   @override
-  Stream<Resource?> watchResource(PhylumAccount account) => account.db.watchResource(folderId);
-
-  @override
-  Stream<List<Resource>> watchChildren(PhylumAccount account) => account.db.watchChildren(folderId);
+  Stream<List<Resource>> watchItems(PhylumAccount account) => account.db.watchChildren(folderId);
 }
 
 class ExplorerPageRecents extends ExplorerPage {
@@ -74,12 +66,7 @@ class ExplorerPageRecents extends ExplorerPage {
   }
 
   @override
-  Stream<Resource?> watchResource(PhylumAccount account) {
-    return Stream.fromIterable([null]);
-  }
-
-  @override
-  Stream<List<Resource>> watchChildren(PhylumAccount account) {
+  Stream<List<Resource>> watchItems(PhylumAccount account) {
     return account.db.selectRecents().watch();
   }
 }
@@ -99,12 +86,7 @@ class ExplorerPageTrash extends ExplorerPage {
   }
 
   @override
-  Stream<Resource?> watchResource(PhylumAccount account) {
-    return Stream.fromIterable([null]);
-  }
-
-  @override
-  Stream<List<Resource>> watchChildren(PhylumAccount account) {
+  Stream<List<Resource>> watchItems(PhylumAccount account) {
     return account.db.selectTrash().watch();
   }
 }
@@ -124,12 +106,7 @@ class ExplorerPageShared extends ExplorerPage {
   }
 
   @override
-  Stream<Resource?> watchResource(PhylumAccount account) {
-    return Stream.fromIterable([null]);
-  }
-
-  @override
-  Stream<List<Resource>> watchChildren(PhylumAccount account) {
+  Stream<List<Resource>> watchItems(PhylumAccount account) {
     return account.db.selectShared().watch();
   }
 }
