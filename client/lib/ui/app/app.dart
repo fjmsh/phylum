@@ -45,6 +45,7 @@ class _PhylumAppState extends State<PhylumApp> {
 
   @override
   void dispose() {
+    _routerDelegate.dispose();
     _listener.dispose();
     super.dispose();
   }
@@ -71,9 +72,9 @@ class _PhylumAppState extends State<PhylumApp> {
         darkTheme: darkTheme,
         routeInformationParser: const PhylumRouteInformationParser(),
         routerDelegate: _routerDelegate,
-        shortcuts: getAppShortcuts(),
+        shortcuts: appShortcuts,
       );
     }
-    return const LogoutApp();
+    return const LogoutApp(key: ValueKey('logout'));
   }
 }

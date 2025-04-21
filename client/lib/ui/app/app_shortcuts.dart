@@ -96,54 +96,52 @@ class NavIntent extends Intent {
   const NavIntent({required this.target});
 }
 
-Map<ShortcutActivator, Intent> getAppShortcuts() {
-  return const {
-    // General
-    SingleActivator(LogicalKeyboardKey.tab): NextFocusIntent(),
-    SingleActivator(LogicalKeyboardKey.tab, shift: true): PreviousFocusIntent(),
-    SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
+Map<ShortcutActivator, Intent> get appShortcuts => const {
+      // General
+      SingleActivator(LogicalKeyboardKey.tab): NextFocusIntent(),
+      SingleActivator(LogicalKeyboardKey.tab, shift: true): PreviousFocusIntent(),
+      SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
 
-    // Focus / Selection
-    SingleActivator(LogicalKeyboardKey.arrowUp): FocusUpIntent(SelectionMode.single),
-    SingleActivator(LogicalKeyboardKey.arrowUp, shift: true): FocusUpIntent(SelectionMode.range),
-    SingleActivator(LogicalKeyboardKey.arrowUp, control: true): FocusUpIntent(SelectionMode.noChange),
-    SingleActivator(LogicalKeyboardKey.arrowDown): FocusDownIntent(SelectionMode.single),
-    SingleActivator(LogicalKeyboardKey.arrowDown, shift: true): FocusDownIntent(SelectionMode.range),
-    SingleActivator(LogicalKeyboardKey.arrowDown, control: true): FocusDownIntent(SelectionMode.noChange),
-    SingleActivator(LogicalKeyboardKey.arrowLeft): FocusLeftIntent(SelectionMode.single),
-    SingleActivator(LogicalKeyboardKey.arrowLeft, shift: true): FocusLeftIntent(SelectionMode.range),
-    SingleActivator(LogicalKeyboardKey.arrowLeft, control: true): FocusLeftIntent(SelectionMode.noChange),
-    SingleActivator(LogicalKeyboardKey.arrowRight): FocusRightIntent(SelectionMode.single),
-    SingleActivator(LogicalKeyboardKey.arrowRight, shift: true): FocusRightIntent(SelectionMode.range),
-    SingleActivator(LogicalKeyboardKey.arrowRight, control: true): FocusRightIntent(SelectionMode.noChange),
-    SingleActivator(LogicalKeyboardKey.home): FocusFirstIntent(SelectionMode.single),
-    SingleActivator(LogicalKeyboardKey.home, shift: true): FocusFirstIntent(SelectionMode.range),
-    SingleActivator(LogicalKeyboardKey.home, control: true): FocusFirstIntent(SelectionMode.noChange),
-    SingleActivator(LogicalKeyboardKey.end): FocusLastIntent(SelectionMode.single),
-    SingleActivator(LogicalKeyboardKey.end, shift: true): FocusLastIntent(SelectionMode.range),
-    SingleActivator(LogicalKeyboardKey.end, control: true): FocusLastIntent(SelectionMode.noChange),
-    SingleActivator(LogicalKeyboardKey.space, control: true): ToggleSelectionIntent(),
-    SingleActivator(LogicalKeyboardKey.keyA, control: true): SelectAllIntent(),
+      // Focus / Selection
+      SingleActivator(LogicalKeyboardKey.arrowUp): FocusUpIntent(SelectionMode.single),
+      SingleActivator(LogicalKeyboardKey.arrowUp, shift: true): FocusUpIntent(SelectionMode.range),
+      SingleActivator(LogicalKeyboardKey.arrowUp, control: true): FocusUpIntent(SelectionMode.noChange),
+      SingleActivator(LogicalKeyboardKey.arrowDown): FocusDownIntent(SelectionMode.single),
+      SingleActivator(LogicalKeyboardKey.arrowDown, shift: true): FocusDownIntent(SelectionMode.range),
+      SingleActivator(LogicalKeyboardKey.arrowDown, control: true): FocusDownIntent(SelectionMode.noChange),
+      SingleActivator(LogicalKeyboardKey.arrowLeft): FocusLeftIntent(SelectionMode.single),
+      SingleActivator(LogicalKeyboardKey.arrowLeft, shift: true): FocusLeftIntent(SelectionMode.range),
+      SingleActivator(LogicalKeyboardKey.arrowLeft, control: true): FocusLeftIntent(SelectionMode.noChange),
+      SingleActivator(LogicalKeyboardKey.arrowRight): FocusRightIntent(SelectionMode.single),
+      SingleActivator(LogicalKeyboardKey.arrowRight, shift: true): FocusRightIntent(SelectionMode.range),
+      SingleActivator(LogicalKeyboardKey.arrowRight, control: true): FocusRightIntent(SelectionMode.noChange),
+      SingleActivator(LogicalKeyboardKey.home): FocusFirstIntent(SelectionMode.single),
+      SingleActivator(LogicalKeyboardKey.home, shift: true): FocusFirstIntent(SelectionMode.range),
+      SingleActivator(LogicalKeyboardKey.home, control: true): FocusFirstIntent(SelectionMode.noChange),
+      SingleActivator(LogicalKeyboardKey.end): FocusLastIntent(SelectionMode.single),
+      SingleActivator(LogicalKeyboardKey.end, shift: true): FocusLastIntent(SelectionMode.range),
+      SingleActivator(LogicalKeyboardKey.end, control: true): FocusLastIntent(SelectionMode.noChange),
+      SingleActivator(LogicalKeyboardKey.space, control: true): ToggleSelectionIntent(),
+      SingleActivator(LogicalKeyboardKey.keyA, control: true): SelectAllIntent(),
 
-    // Actions for selection
-    SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
-    SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
-    SingleActivator(LogicalKeyboardKey.delete): DeleteIntent(),
-    SingleActivator(LogicalKeyboardKey.keyC, control: true): CopyToClipboardIntent(false),
-    SingleActivator(LogicalKeyboardKey.keyX, control: true): CopyToClipboardIntent(true),
-    SingleActivator(LogicalKeyboardKey.keyE, control: true): RenameIntent(),
-    SingleActivator(LogicalKeyboardKey.f2): RenameIntent(),
+      // Actions for selection
+      SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+      SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+      SingleActivator(LogicalKeyboardKey.delete): DeleteIntent(),
+      SingleActivator(LogicalKeyboardKey.keyC, control: true): CopyToClipboardIntent(false),
+      SingleActivator(LogicalKeyboardKey.keyX, control: true): CopyToClipboardIntent(true),
+      SingleActivator(LogicalKeyboardKey.keyE, control: true): RenameIntent(),
+      SingleActivator(LogicalKeyboardKey.f2): RenameIntent(),
 
-    // Actions for folder
-    SingleActivator(LogicalKeyboardKey.keyN, control: true): NewFolderIntent(),
-    SingleActivator(LogicalKeyboardKey.keyU, control: true): UploadFilesIntent(),
-    SingleActivator(LogicalKeyboardKey.keyU, control: true, shift: true): UploadFolderIntent(),
-    SingleActivator(LogicalKeyboardKey.keyV, control: true): PasteFromClipboardIntent(),
+      // Actions for folder
+      SingleActivator(LogicalKeyboardKey.keyN, control: true): NewFolderIntent(),
+      SingleActivator(LogicalKeyboardKey.keyU, control: true): UploadFilesIntent(),
+      SingleActivator(LogicalKeyboardKey.keyU, control: true, shift: true): UploadFolderIntent(),
+      SingleActivator(LogicalKeyboardKey.keyV, control: true): PasteFromClipboardIntent(),
 
-    // Top-level Navigation
-    SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
-    SingleActivator(LogicalKeyboardKey.keyH, alt: true): NavIntent(target: ExplorerPageHome()),
-    if (!kIsWeb) SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): NavBackIntent(),
-    if (!kIsWeb) SingleActivator(LogicalKeyboardKey.arrowRight, alt: true): NavForwardIntent(),
-  };
-}
+      // Top-level Navigation
+      SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
+      SingleActivator(LogicalKeyboardKey.keyH, alt: true): NavIntent(target: ExplorerPageHome()),
+      if (!kIsWeb) SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): NavBackIntent(),
+      if (!kIsWeb) SingleActivator(LogicalKeyboardKey.arrowRight, alt: true): NavForwardIntent(),
+    };

@@ -16,11 +16,21 @@ class _LoginAppState extends State<LoginApp> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = ThemeData(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: Color(0xff769e57),
+        dynamicSchemeVariant: DynamicSchemeVariant.neutral,
+      ),
+    );
+    final darkTheme = ThemeData(
+      colorScheme: theme.colorScheme.copyWith(brightness: Brightness.dark),
+      brightness: Brightness.dark,
+    );
     return MaterialApp.router(
       title: 'Login | Phylum',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange)),
-      darkTheme: ThemeData.dark(),
+      theme: theme,
+      darkTheme: darkTheme,
       routeInformationParser: const LoginRouteInformationParser(),
       routerDelegate: delegate,
     );
