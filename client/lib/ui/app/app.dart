@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
@@ -9,7 +8,6 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/app/action_queue_status_notifier.dart';
 import 'package:phylum/ui/logout/logout_app.dart';
-import 'package:phylum/ui/explorer/page.dart';
 import 'package:provider/provider.dart';
 
 class PhylumApp extends StatefulWidget {
@@ -37,7 +35,7 @@ class _PhylumAppState extends State<PhylumApp> {
   @override
   void initState() {
     super.initState();
-    _routerDelegate = PhylumRouterDelegate(account: context.read());
+    _routerDelegate = PhylumRouterDelegate();
     _listener = AppLifecycleListener(onResume: () {
       final account = context.read<PhylumAccount>();
       account.userRepository.refresh();
@@ -77,41 +75,5 @@ class _PhylumAppState extends State<PhylumApp> {
       );
     }
     return const LogoutApp();
-  }
-}
-
-class PhylumRouteInformationParser extends RouteInformationParser<ExplorerPage> {
-  const PhylumRouteInformationParser();
-
-  @override
-  Future<ExplorerPage> parseRouteInformation(RouteInformation routeInformation) {
-    final uri = routeInformation.uri;
-    final segments = uri.pathSegments;
-
-    if (segments.isEmpty) {
-      return SynchronousFuture(const ExplorerPageHome());
-    }
-    if (segments.length == 1) {
-      if (segments[0] == 'home') {
-        return SynchronousFuture(const ExplorerPageHome());
-      }
-      if (segments[0] == 'recents') {
-        return SynchronousFuture(const ExplorerPageRecents());
-      }
-      if (segments[0] == 'shared') {
-        return SynchronousFuture(const ExplorerPageShared());
-      }
-      if (segments[0] == 'trash') {
-        return SynchronousFuture(const ExplorerPageTrash());
-      }
-    } else if (segments.length == 2 && segments[0] == 'folder') {
-      return SynchronousFuture(ExplorerPageFolder(folderId: segments[1]));
-    }
-    return SynchronousFuture(ExplorerPageFolder(folderId: 'unknown'));
-  }
-
-  @override
-  RouteInformation? restoreRouteInformation(ExplorerPage configuration) {
-    return RouteInformation(uri: configuration.uri);
   }
 }

@@ -1,7 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/db/resource_helpers.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_layout.dart';
 import 'package:provider/provider.dart';
 
@@ -10,8 +8,6 @@ import '../explorer/page.dart';
 class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotifier, PopNavigatorRouterDelegateMixin {
   @override
   final navigatorKey = GlobalKey<NavigatorState>();
-
-  final PhylumAccount? _account;
   ExplorerPage? _current;
   List<ExplorerPage> _back = const [];
   List<ExplorerPage> _forward = const [];
@@ -21,9 +17,7 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
   @override
   ExplorerPage? get currentConfiguration => _current;
 
-  PhylumRouterDelegate({required PhylumAccount? account, ExplorerPage? page})
-      : _account = account,
-        _current = page;
+  PhylumRouterDelegate({ExplorerPage? page}) : _current = page;
 
   void go(ExplorerPage page) {
     if (_current != page) {
@@ -31,9 +25,6 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
       _forward = const [];
       _current = page;
       notifyListeners();
-      if (page is ExplorerPageFolder && _account != null && page.folderId != _account.userHome) {
-        _account.db.markResourceAccess(page.folderId);
-      }
     }
   }
 
@@ -78,5 +69,41 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
   Future<void> setNewRoutePath(ExplorerPage configuration) {
     go(configuration);
     return SynchronousFuture(null);
+  }
+}
+
+class PhylumRouteInformationParser extends RouteInformationParser<ExplorerPage> {
+  const PhylumRouteInformationParser();
+
+  @override
+  Future<ExplorerPage> parseRouteInformation(RouteInformation routeInformation) {
+    final uri = routeInformation.uri;
+    final segments = uri.pathSegments;
+
+    if (segments.isEmpty) {
+      return SynchronousFuture(const ExplorerPageHome());
+    }
+    if (segments.length == 1) {
+      if (segments[0] == 'home') {
+        return SynchronousFuture(const ExplorerPageHome());
+      }
+      if (segments[0] == 'recents') {
+        return SynchronousFuture(const ExplorerPageRecents());
+      }
+      if (segments[0] == 'shared') {
+        return SynchronousFuture(const ExplorerPageShared());
+      }
+      if (segments[0] == 'trash') {
+        return SynchronousFuture(const ExplorerPageTrash());
+      }
+    } else if (segments.length == 2 && segments[0] == 'folder') {
+      return SynchronousFuture(ExplorerPageFolder(folderId: segments[1]));
+    }
+    return SynchronousFuture(ExplorerPageFolder(folderId: 'unknown'));
+  }
+
+  @override
+  RouteInformation? restoreRouteInformation(ExplorerPage configuration) {
+    return RouteInformation(uri: configuration.uri);
   }
 }

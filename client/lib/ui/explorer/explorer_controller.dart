@@ -94,11 +94,14 @@ class ExplorerController extends StateNotifier<ExplorerState> {
     _folderSubscription?.cancel();
     if (page is ExplorerPageFolder) {
       _folderSubscription = _account.db.watchResource(page.folderId).listen((e) => state = state.copyWith(folder: e));
+      if (page.folderId != _account.userHome) {
+        _account.db.markResourceAccess(page.folderId);
+      }
     } else {
       _folderSubscription = null;
     }
     _childrenSubscription?.cancel();
-    _childrenSubscription = page.watchItems(_account).listen((e) => _updateResourceList(e));
+    _childrenSubscription = page.items(_account).listen((e) => _updateResourceList(e));
     state = ExplorerState(page: page);
     refresh();
   }
