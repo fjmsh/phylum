@@ -25,7 +25,7 @@ class DestinationPicker extends StatefulWidget {
       builder: (context) => ChangeNotifierProvider(
         create: (context) => PhylumRouterDelegate(page: ExplorerPageFolder(folderId: initialFolderId)),
         builder: (context, child) {
-          final page = context.watch<PhylumRouterDelegate>().current!;
+          final page = context.watch<PhylumRouterDelegate>().currentConfiguration!;
           return StateNotifierProvider<ExplorerController, ExplorerState>(
             key: ValueKey(page),
             create: (context) => ExplorerController(account: context.read(), routerDelegate: context.read()),

@@ -17,7 +17,7 @@ class AppActions extends StatelessWidget {
       actions: {
         NewFolderIntent: CallbackAction<NewFolderIntent>(
           onInvoke: (intent) {
-            final page = context.read<PhylumRouterDelegate>().current;
+            final page = context.read<PhylumRouterDelegate>().currentConfiguration;
             final folderId = page is ExplorerPageFolder ? page.folderId : null;
             if (folderId != null) {
               createDirectory(context, folderId);
@@ -27,7 +27,7 @@ class AppActions extends StatelessWidget {
         ),
         UploadFilesIntent: CallbackAction<UploadFilesIntent>(
           onInvoke: (intent) {
-            final page = context.read<PhylumRouterDelegate>().current;
+            final page = context.read<PhylumRouterDelegate>().currentConfiguration;
             final folderId = page is ExplorerPageFolder ? page.folderId : null;
             if (folderId != null) {
               pickAndUploadFiles(context, folderId);
@@ -37,7 +37,7 @@ class AppActions extends StatelessWidget {
         ),
         UploadFolderIntent: CallbackAction<UploadFolderIntent>(
           onInvoke: (intent) {
-            final page = context.read<PhylumRouterDelegate>().current;
+            final page = context.read<PhylumRouterDelegate>().currentConfiguration;
             final folderId = page is ExplorerPageFolder ? page.folderId : null;
             if (folderId != null) {
               pickAndUploadDirectory(context, folderId);
@@ -47,7 +47,7 @@ class AppActions extends StatelessWidget {
         ),
         NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) async {
           final routerDelegate = context.read<PhylumRouterDelegate>();
-          final page = routerDelegate.current;
+          final page = routerDelegate.currentConfiguration;
           final folderId = page is ExplorerPageFolder ? page.folderId : null;
           if (folderId == null) return;
           final folder = await context.read<PhylumAccount>().db.getResource(folderId);

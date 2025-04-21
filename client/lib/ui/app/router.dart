@@ -8,14 +8,12 @@ import '../explorer/page.dart';
 class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotifier, PopNavigatorRouterDelegateMixin {
   @override
   final navigatorKey = GlobalKey<NavigatorState>();
+  @override
+  ExplorerPage? get currentConfiguration => _current;
+
   ExplorerPage? _current;
   List<ExplorerPage> _back = const [];
   List<ExplorerPage> _forward = const [];
-
-  ExplorerPage? get current => _current;
-
-  @override
-  ExplorerPage? get currentConfiguration => _current;
 
   PhylumRouterDelegate({ExplorerPage? page}) : _current = page;
 
@@ -33,7 +31,7 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
     int len = _back.length;
     final target = _back[len - 1];
     _back = _back.sublist(0, len - 1);
-    _forward = [..._forward, current!];
+    _forward = [..._forward, _current!];
     _current = target;
     notifyListeners();
   }
