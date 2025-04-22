@@ -9,7 +9,9 @@ import 'package:provider/provider.dart';
 
 class AppActions extends StatelessWidget {
   final Widget child;
-  const AppActions({super.key, required this.child});
+  final FocusNode searchFocusNode;
+
+  const AppActions({super.key, required this.child, required this.searchFocusNode});
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +67,7 @@ class AppActions extends StatelessWidget {
         NavForwardIntent: CallbackAction<NavForwardIntent>(
           onInvoke: (i) => context.read<PhylumRouterDelegate>().goForward(),
         ),
+        FocusSearchIntent: CallbackAction<FocusSearchIntent>(onInvoke: (i) => searchFocusNode.requestFocus()),
       },
       child: child,
     );

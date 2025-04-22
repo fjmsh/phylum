@@ -5,7 +5,9 @@ import 'package:phylum/ui/explorer/page.dart';
 import 'package:provider/provider.dart';
 
 class SearchField extends StatefulWidget {
-  const SearchField({super.key});
+  final FocusNode focusNode;
+
+  const SearchField({super.key, required this.focusNode});
 
   @override
   State<SearchField> createState() => _SearchFieldState();
@@ -35,19 +37,25 @@ class _SearchFieldState extends State<SearchField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      decoration: InputDecoration.collapsed(
-        hintText: 'Search Files...',
-        hintStyle: TextStyle(fontSize: 18),
-      ),
-      controller: _controller,
-      style: TextStyle(fontSize: 18),
-      onSubmitted: (text) {
-        final query = text.trim();
-        if (query.isNotEmpty) {
-          context.read<PhylumRouterDelegate>().go(ExplorerPageSearch(query: query));
-        }
+    return Actions(
+      actions: {
+        DismissIntent: CallbackAction<DismissIntent>(onInvoke: (i) => widget.focusNode.nextFocus()),
       },
+      child: TextField(
+        decoration: InputDecoration.collapsed(
+          hintText: 'Search Files...',
+          hintStyle: TextStyle(fontSize: 18),
+        ),
+        focusNode: widget.focusNode,
+        controller: _controller,
+        style: TextStyle(fontSize: 18),
+        onSubmitted: (text) {
+          final query = text.trim();
+          if (query.isNotEmpty) {
+            context.read<PhylumRouterDelegate>().go(ExplorerPageSearch(query: query));
+          }
+        },
+      ),
     );
   }
 }

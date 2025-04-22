@@ -13,7 +13,7 @@ import 'package:phylum/ui/menu/bottom_sheet.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:provider/provider.dart';
 
-class AppLayout extends StatelessWidget {
+class AppLayout extends StatefulWidget {
   const AppLayout._();
 
   static Widget create() {
@@ -25,9 +25,27 @@ class AppLayout extends StatelessWidget {
   }
 
   @override
+  State<AppLayout> createState() => _AppLayoutState();
+}
+
+class _AppLayoutState extends State<AppLayout> {
+  final _searchFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final layout = size.width <= 600 ? CollapsedAppLayout() : ExpandedAppLayout(large: size.width > 1200);
+    final layout = size.width <= 600
+        ? CollapsedAppLayout()
+        : ExpandedAppLayout(
+            large: size.width > 1200,
+            searchFocusNode: _searchFocusNode,
+          );
     return ExternalDropRegion(
       buildItem: (context, dropTargetActive) {
         final child = (dropTargetActive)
@@ -48,7 +66,10 @@ class AppLayout extends StatelessWidget {
                 ],
               )
             : layout;
-        return AppActions(child: child);
+        return AppActions(
+          searchFocusNode: _searchFocusNode,
+          child: child,
+        );
       },
     );
   }
@@ -121,8 +142,10 @@ class CollapsedAppLayout extends StatelessWidget {
 }
 
 class ExpandedAppLayout extends StatelessWidget {
+  final FocusNode searchFocusNode;
   final bool large;
-  const ExpandedAppLayout({super.key, required this.large});
+
+  const ExpandedAppLayout({super.key, required this.large, required this.searchFocusNode});
 
   @override
   Widget build(BuildContext context) {
@@ -156,7 +179,9 @@ class ExpandedAppLayout extends StatelessWidget {
                           child: Icon(Icons.search),
                         ),
                         Expanded(
-                          child: SearchField(),
+                          child: SearchField(
+                            focusNode: searchFocusNode,
+                          ),
                         ),
                       ],
                     ),
