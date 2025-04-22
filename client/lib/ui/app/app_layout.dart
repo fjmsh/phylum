@@ -3,8 +3,10 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/fab_action.dart';
 import 'package:phylum/ui/app/nav_list.dart';
+import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
+import 'package:phylum/ui/explorer/page.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
@@ -157,8 +159,16 @@ class ExpandedAppLayout extends StatelessWidget {
                         Expanded(
                           child: TextField(
                             decoration: InputDecoration.collapsed(
-                                hintText: 'Search Files...', hintStyle: TextStyle(fontSize: 18)),
+                              hintText: 'Search Files...',
+                              hintStyle: TextStyle(fontSize: 18),
+                            ),
                             style: TextStyle(fontSize: 18),
+                            onSubmitted: (text) {
+                              final query = text.trim();
+                              if (query.isNotEmpty) {
+                                context.read<PhylumRouterDelegate>().go(ExplorerPageSearch(query: query));
+                              }
+                            },
                           ),
                         ),
                       ],

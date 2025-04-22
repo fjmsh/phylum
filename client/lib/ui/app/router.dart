@@ -94,6 +94,13 @@ class PhylumRouteInformationParser extends RouteInformationParser<ExplorerPage> 
       if (segments[0] == 'trash') {
         return SynchronousFuture(const ExplorerPageTrash());
       }
+      if (segments[0] == 'search') {
+        final query = uri.queryParameters['q'];
+        if (query == null || query.trim().isEmpty) {
+          return SynchronousFuture(const ExplorerPageHome());
+        }
+        return SynchronousFuture(ExplorerPageSearch(query: query));
+      }
     } else if (segments.length == 2 && segments[0] == 'folder') {
       return SynchronousFuture(ExplorerPageFolder(folderId: segments[1]));
     }

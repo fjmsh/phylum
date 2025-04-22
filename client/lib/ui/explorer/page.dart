@@ -110,3 +110,25 @@ class ExplorerPageShared extends ExplorerPage {
     return account.db.selectShared().watch();
   }
 }
+
+class ExplorerPageSearch extends ExplorerPage {
+  @override
+  Uri get uri => Uri(path: '/search', queryParameters: {'q': query});
+
+  @override
+  String get title => 'Search';
+
+  final String query;
+
+  ExplorerPageSearch({required this.query});
+
+  @override
+  Future<bool> refresh(PhylumAccount account) {
+    return account.sharedResourcesRepository.refresh().then((result) => result is ApiSuccessResponse);
+  }
+
+  @override
+  Stream<List<Resource>> items(PhylumAccount account) {
+    return account.db.selectShared().watch();
+  }
+}
