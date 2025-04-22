@@ -12,11 +12,13 @@ part 'bookmark_response.dart';
 part 'empty_response.dart';
 part 'full_resource_response.dart';
 part 'partial_resource_response.dart';
+part 'search_response.dart';
 part 'shared_resources_response.dart';
 part 'trash_list_response.dart';
 part 'user_list_response.dart';
 
 typedef JsonMapResponseParser = PhylumApiSuccessResponse Function(Map<String, dynamic> data);
+typedef JsonListResponseParser = PhylumApiSuccessResponse Function(List data);
 
 Future<ApiResponse<PhylumAccount>> parseJsonMapResponse(
   StreamedResponse response,
@@ -25,6 +27,18 @@ Future<ApiResponse<PhylumAccount>> parseJsonMapResponse(
   final body = await response.bodyString();
   if (response.statusCode >= 200 && response.statusCode < 300) {
     final responseMap = (jsonDecode(body) as Map<String, dynamic>?) ?? const {};
+    return parseResponse(responseMap);
+  }
+  return PhylumApiErrorResponse.fromResponseBody(body);
+}
+
+Future<ApiResponse<PhylumAccount>> parseJsonListResponse(
+  StreamedResponse response,
+  JsonListResponseParser parseResponse,
+) async {
+  final body = await response.bodyString();
+  if (response.statusCode >= 200 && response.statusCode < 300) {
+    final responseMap = (jsonDecode(body) as List?) ?? const [];
     return parseResponse(responseMap);
   }
   return PhylumApiErrorResponse.fromResponseBody(body);
