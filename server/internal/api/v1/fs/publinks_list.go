@@ -57,9 +57,13 @@ func handlePublinkListRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	links, err := r.ListPublinks()
+	res, err := r.ListPublinks()
 	if err != nil {
 		panic(err)
+	}
+	links := make([]Publink, len(res))
+	for i, l := range res {
+		links[i] = publinkFromFS(l)
 	}
 
 	c.JSON(200, gin.H{
