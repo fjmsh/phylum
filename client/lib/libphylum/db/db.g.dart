@@ -1811,7 +1811,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 
   Selectable<ParentsResult> parents(String id) {
     return customSelect(
-        'WITH RECURSIVE parents (id, parent, name, deleted, permissions) AS (SELECT id, parent, name, deleted, permissions FROM resources WHERE id = ?1 UNION ALL SELECT r.id, r.parent, r.name, r.deleted, r.permissions FROM resources AS r JOIN parents AS p ON r.id = p.parent) SELECT id, name, deleted, permissions FROM parents',
+        'WITH RECURSIVE parents (id, parent, name, deleted, permissions) AS (SELECT id, parent, name, deleted, permissions FROM resources WHERE id = ?1 UNION SELECT r.id, r.parent, r.name, r.deleted, r.permissions FROM resources AS r JOIN parents AS p ON r.id = p.parent) SELECT id, name, deleted, permissions FROM parents',
         variables: [
           Variable<String>(id)
         ],

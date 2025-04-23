@@ -15,11 +15,13 @@ CREATE TABLE IF NOT EXISTS resources(
     last_refresh DATETIME
 );
 
+-- Use `UNION` instead of `UNION ALL` to avoid infinite loops in case of
+-- accidental reparenting of a resource to itself.
 parents: WITH RECURSIVE parents(id, parent, name, deleted, permissions) AS (
     SELECT id, parent, name, deleted,permissions
         FROM resources
         WHERE id = :id
-    UNION ALL
+    UNION
     SELECT r.id, r.parent, r.name, r.deleted, r.permissions
         FROM resources r
         JOIN parents p
