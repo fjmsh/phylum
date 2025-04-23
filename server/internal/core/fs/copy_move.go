@@ -45,6 +45,9 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 	if !destParent.hasPermission(PermissionWrite) {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
+	if destParent.id == r.id {
+		return Resource{}, false, ErrResourceMoveTargetSubdirectory
+	}
 	if destAncestors, err := destParent.GetAncestors(); err != nil {
 		return Resource{}, false, err
 	} else {
