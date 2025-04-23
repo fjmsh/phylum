@@ -1,39 +1,50 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
-import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
+import 'package:phylum/ui/explorer/resource_sync_state.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
 import 'explorer_controller.dart';
 
-enum SyncState {
-  none(Icons.block),
-  waiting(Icons.cloud_queue),
-  error(Icons.sync_problem),
-  syncing(Icons.sync);
+const _rowPaddingV = 2.0;
+const _rowPaddingH = 0.0;
+const _iconPaddingV = 8.0;
+const _iconPaddingH = 16.0;
+const _iconSize = 24.0;
+const _subtitleIconSize = 14.0;
 
-  const SyncState(this.icon);
-
-  final IconData icon;
-
-  factory SyncState.fromStatus(ActionStatus status) {
-    if (status is ActionStatusReady || status is ActionStatusWaiting) {
-      return SyncState.waiting;
-    }
-    if (status is ActionStatusUploading) {
-      return SyncState.syncing;
-    }
-    if (status is ActionStatusError) {
-      return SyncState.error;
-    }
-    return SyncState.none;
-  }
+double calculateRowHeight(BuildContext context) {
+  final theme = Theme.of(context);
+  final scaler = MediaQuery.textScalerOf(context);
+  final titleSize = (TextPainter(
+          text: TextSpan(text: 'A', style: theme.textTheme.bodyLarge!),
+          maxLines: 1,
+          textScaler: scaler,
+          textDirection: TextDirection.ltr)
+        ..layout())
+      .size
+      .height;
+  final subtitleTextSize = (TextPainter(
+          text: TextSpan(text: 'A', style: theme.textTheme.bodyMedium!),
+          maxLines: 1,
+          textScaler: scaler,
+          textDirection: TextDirection.ltr)
+        ..layout())
+      .size
+      .height;
+  // final subtitleTextSize = scaler.scale(theme.textTheme.bodyMedium!.fontSize!);
+  final subtitleSize = subtitleTextSize > _subtitleIconSize ? subtitleTextSize : _subtitleIconSize;
+  final contentSize = titleSize + subtitleSize;
+  final iconSize = _iconSize + (_iconPaddingV * 2);
+  final totalSize = (2 * _rowPaddingV) + (iconSize > contentSize ? iconSize : contentSize);
+  // print('$totalSize $titleSize $subtitleSize ($subtitleTextSize $_subtitleIconSize)');
+  return totalSize;
 }
 
 class ResourceDetailsRow extends StatelessWidget {
@@ -47,10 +58,10 @@ class ResourceDetailsRow extends StatelessWidget {
     final showBorder = context.select<ExplorerState, bool>((state) => state.focusId == resource.id && state.showFocus);
     final highlight = context.select<ExplorerState, bool>((state) => state.isSelected(resource.id));
     final dim = context.select<ExplorerState, bool>((state) => state.isSelected(resource.id) && state.dragging);
-    final sync = context.select<PhylumActionQueueState, SyncState>((state) {
-      return state.actions.fold(SyncState.none, (acc, action) {
+    final sync = context.select<PhylumActionQueueState, ResourceSyncState>((state) {
+      return state.actions.fold(ResourceSyncState.none, (acc, action) {
         if (action is ResourceAction && action.resourceId == resource.id) {
-          final actionState = SyncState.fromStatus(action.status);
+          final actionState = ResourceSyncState.fromStatus(action.status);
           if (actionState.index > acc.index) return actionState;
         }
         return acc;
@@ -82,7 +93,7 @@ class ResourceDetailsRow extends StatelessWidget {
             : Colors.transparent;
     return IconTheme(
       data: IconThemeData(
-        size: 24,
+        size: _iconSize,
         color: colorScheme.onSurfaceVariant,
       ),
       child: Material(
@@ -91,11 +102,11 @@ class ResourceDetailsRow extends StatelessWidget {
               ? RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(4.0))
               : const Border(),
           child: Padding(
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.symmetric(vertical: _rowPaddingV, horizontal: _rowPaddingH),
             child: Row(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 9.0, horizontal: 16),
+                  padding: const EdgeInsets.symmetric(vertical: _iconPaddingV, horizontal: _iconPaddingH),
                   child: resource.getIcon(),
                 ),
                 Column(
@@ -117,20 +128,20 @@ class ResourceDetailsRow extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        if (sync != SyncState.none)
+                        if (sync != ResourceSyncState.none)
                           Padding(
                             padding: const EdgeInsets.only(right: 6.0),
-                            child: Icon(sync.icon, size: 14),
+                            child: Icon(sync.icon, size: _subtitleIconSize),
                           ),
                         if (resource.grants != null)
                           const Padding(
                             padding: EdgeInsets.only(right: 6.0),
-                            child: Icon(Icons.people_alt, size: 14),
+                            child: Icon(Icons.people_alt, size: _subtitleIconSize),
                           ),
                         if (resource.publinks != null)
                           const Padding(
                             padding: EdgeInsets.only(right: 6.0),
-                            child: Icon(Icons.public, size: 14),
+                            child: Icon(Icons.public, size: _subtitleIconSize),
                           ),
                         StreamBuilder<bool?>(
                             stream: (context.read<PhylumAccount>().db.bookmarks.select()
@@ -142,7 +153,7 @@ class ResourceDetailsRow extends StatelessWidget {
                               if (snapshot.data == true) {
                                 return const Padding(
                                   padding: EdgeInsets.only(right: 6.0),
-                                  child: Icon(Icons.bookmark, size: 14),
+                                  child: Icon(Icons.bookmark, size: _subtitleIconSize),
                                 );
                               }
                               return const SizedBox();

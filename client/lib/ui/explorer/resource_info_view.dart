@@ -7,7 +7,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:phylum/ui/explorer/resource_details_row.dart';
+import 'package:phylum/ui/explorer/resource_sync_state.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:phylum/util/time.dart';
@@ -169,7 +169,7 @@ class _PendingActionsTileState extends State<PendingActionsTile> {
           ListTile(
             visualDensity: VisualDensity.compact,
             dense: true,
-            leading: Icon(SyncState.fromStatus(e.value).icon),
+            leading: Icon(ResourceSyncState.fromStatus(e.value).icon),
             title: Text(e.key.description, maxLines: 1),
           ),
       ],

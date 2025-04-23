@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/ui/explorer/resource_details_row.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_item_gesture_handler.dart';
 import 'package:provider/provider.dart';
@@ -42,6 +43,7 @@ class _FolderListViewState extends State<FolderListView> {
         descendantsAreFocusable: false,
         child: ListView.builder(
             itemCount: resources.length,
+            itemExtent: calculateRowHeight(context),
             itemBuilder: (context, index) {
               final resource = resources[index];
               return (resource.dir)
