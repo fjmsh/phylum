@@ -171,6 +171,13 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     String localName = name;
     String? deletedId;
     if (performLocalNameCheck) {
+      final parents = await _account.db.parents(parent).get();
+      for (final p in parents) {
+        if (p.id == resource.id) {
+          throw "Cannot move a folder into itself.";
+        }
+      }
+
       var existing = await _account.db.getResourcesByName(parent: parent, name: name);
       if (existing.isNotEmpty) {
         switch (conflictResolution) {

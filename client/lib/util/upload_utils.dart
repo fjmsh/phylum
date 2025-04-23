@@ -17,7 +17,11 @@ final illegalChars = <int>{
 };
 
 bool validateName(String name) =>
-    !name.startsWith(' ') && name != '.' && name != '..' && name.trim().isNotEmpty && !name.runes.any((c) => c < 31 || illegalChars.contains(c));
+    !name.startsWith(' ') &&
+    name != '.' &&
+    name != '..' &&
+    name.trim().isNotEmpty &&
+    !name.runes.any((c) => c < 31 || illegalChars.contains(c));
 
 Future<void> createDirectory(BuildContext context, String folderId, {String? preset}) async {
   final account = context.read<PhylumAccount>();
@@ -69,7 +73,8 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
   final confirm = await showAlertDialog(
         context,
         title: 'Upload Files?',
-        message: 'Found ${tree.files.length} files and ${tree.dirs.length} directories.\n\nTotal Upload Size: ${tree.totalSize.formatForDisplay()}',
+        message:
+            'Found ${tree.files.length} files and ${tree.dirs.length} directories.\n\nTotal Upload Size: ${tree.totalSize.formatForDisplay()}',
         positiveText: 'YES',
         negativeText: 'NO',
       ) ??
@@ -189,6 +194,11 @@ Future<String?> handleNameConflict(
         }
         name = newName;
       }
+    } catch (e) {
+      if (context.mounted) {
+        await showAlertDialog(context, title: 'Unable to move $name', message: e.toString());
+      }
+      return null;
     }
   }
 
