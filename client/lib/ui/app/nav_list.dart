@@ -103,7 +103,9 @@ class NavList extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('Settings'),
-            onTap: () {},
+            onTap: () {
+              context.read<PhylumAccount>().logOut();
+            },
           ),
         ],
       ),

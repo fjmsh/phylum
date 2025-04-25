@@ -1,167 +1,101 @@
-import 'dart:io';
-
-import 'package:offtheline/offtheline.dart';
-import 'package:path/path.dart' as p;
-import 'package:phylum/integrations/directories.dart';
+import 'package:background_downloader/background_downloader.dart';
+import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/requests/resource_contents_request.dart';
-import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/util/logging.dart';
-import 'package:state_notifier/state_notifier.dart';
 
-const _keyDownloadTaskId = 'downloadTaskId';
+class DownloadManager with ChangeNotifier {
+  final _downloader = FileDownloader();
+  final PhylumAccount _account;
+  final Map<String, DownloadTaskStatusNotifier> _tasks = {};
+  Iterable<DownloadTaskStatusNotifier> get tasks => _tasks.values;
 
-class DownloadManagerState {
-  final List<DownloadTask> tasks;
-
-  const DownloadManagerState([this.tasks = const []]);
-}
-
-class DownloadManager extends StateNotifier<DownloadManagerState> {
-  final PhylumAccount account;
-
-  DownloadManager(this.account) : super(const DownloadManagerState());
+  DownloadManager(this._account) : super() {
+    _downloader.configure(globalConfig: (Config.runInForeground, Config.always));
+    _downloader.configureNotification(
+      running: TaskNotification("Downloading", "File: {filename}"),
+      paused: TaskNotification("Download Paused", "File: {filename}"),
+      error: TaskNotification("Download Error", "File: {filename}"),
+      complete: TaskNotification("Download Complete", "File: {filename}"),
+      progressBar: true,
+    );
+    _downloader.registerCallbacks(
+      taskProgressCallback: (update) {
+        final task = update.task;
+        if (task is DownloadTask) {
+          if (!_tasks.containsKey(task.taskId)) {
+            _tasks[task.taskId] = DownloadTaskStatusNotifier(
+              task: task,
+              status: TaskStatus.running,
+              progress: update,
+            );
+            notifyListeners();
+          } else {
+            _tasks[task.taskId]!.progress = update;
+          }
+        }
+      },
+      taskStatusCallback: (update) {
+        final task = update.task;
+        if (task is DownloadTask) {
+          if (update.status == TaskStatus.complete) {
+            _downloader.moveToSharedStorage(task, SharedStorage.downloads, mimeType: task.metaData);
+          }
+          if (!_tasks.containsKey(task.taskId)) {
+            _tasks[task.taskId] = DownloadTaskStatusNotifier(task: task, status: update.status);
+            notifyListeners();
+          } else {
+            _tasks[task.taskId]!.status = update.status;
+          }
+        }
+      },
+    );
+    _downloader.resumeFromBackground();
+  }
 
   Future<void> downloadResource(Resource r) async {
-    int id = account.getPersisted<int>(_keyDownloadTaskId) ?? 1;
-    await account.persist(_keyDownloadTaskId, id + 1);
-    final task = DownloadTask(id: id, resourceId: r.id, resourceName: r.name, expectedSize: r.contentLength);
+    await _downloader.ready;
+    final uri = _account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}');
+    final task = DownloadTask(
+      url: uri.toString(),
+      filename: r.name,
+      displayName: r.name,
+      headers: _account.apiClient.requestHeaders,
+      updates: Updates.statusAndProgress,
+      requiresWiFi: true,
+      retries: 5,
+      allowPause: true,
+      metaData: r.contentType,
+    );
 
-    RemoveListener? remove;
-    remove = task._statusNotifier.addListener((status) {
-      if (status is DownloadStatusError || status is DownloadStatusFinished) {
-        Future.microtask(() {
-          remove?.call();
-        });
-      }
-    });
+    _tasks[task.taskId] = DownloadTaskStatusNotifier(task: task);
 
-    state = DownloadManagerState([...state.tasks, task]);
-    try {
-      task.status = const DownloadStatusStarting();
-      final response = await account.apiClient.dispatchRequestRaw(ResourceContentsRequest(task.resourceId));
-      if (response.statusCode < 200 || response.statusCode > 300) {
-        final error = PhylumApiErrorResponse.fromResponseBody(await response.bodyString());
-        task.status = DownloadStatusError(error.message);
-        return;
-      }
-      final output = _createDownloadFile(PhylumDirectories.instance.downloads!, task.resourceName);
-      if (output == null) {
-        task.status = const DownloadStatusError('Unable to open output file');
-        return;
-      }
-      final sink = output.openWrite();
+    await _downloader.enqueue(task);
 
-      final length = response.contentLength ?? task.expectedSize;
-      int received = 0;
-      final stream = response.stream.map((s) {
-        received += s.length;
-        task.status = DownloadStatusRunning(received, length);
-        return s;
-      });
-      sink.addStream(stream).onError((err, _) {
-        logger.i('Download Error: ${err.toString()}');
-        sink.close();
-        task.status = DownloadStatusError(err.toString());
-        output.deleteSync();
-      }).whenComplete(() => task.status = DownloadStatusFinished(output.path));
-    } on SocketException {
-      task.status = const DownloadStatusError('Cannot reach server');
-    } catch (e) {
-      task.status = DownloadStatusError('Unknown Error - $e');
-    }
-  }
-
-  File? _createDownloadFile(Directory dir, String name) {
-    final file = File(p.join(dir.path, name));
-    if (!file.existsSync()) {
-      file.createSync();
-      return file;
-    }
-
-    final basename = p.basenameWithoutExtension(name);
-    final ext = p.extension(name);
-    for (int i = 1; i < 1000; i++) {
-      final file = File(p.join(dir.path, '$basename ($i)$ext'));
-      if (!file.existsSync()) {
-        file.createSync();
-        return file;
-      }
-    }
-
-    return null;
+    notifyListeners();
   }
 }
 
-class DownloadStatusNotifier extends StateNotifier<DownloadStatus> {
-  DownloadStatus get value => state;
-  set value(DownloadStatus status) => state = status;
+class DownloadTaskStatusNotifier with ChangeNotifier {
+  final Task task;
 
-  DownloadStatusNotifier() : super(const DownloadStatusWaiting());
-}
+  TaskStatus _status = TaskStatus.enqueued;
+  TaskStatus get status => _status;
+  set status(TaskStatus status) {
+    _status = status;
+    notifyListeners();
+  }
 
-class DownloadTask {
-  final int id;
-  final String resourceId;
-  final String resourceName;
-  final int expectedSize;
-  late final DownloadStatusNotifier _statusNotifier;
-  StateNotifier<DownloadStatus> get statusNotifier => _statusNotifier;
+  late TaskProgressUpdate _progress = TaskProgressUpdate(task, 0);
+  TaskProgressUpdate get progress => _progress;
+  set progress(TaskProgressUpdate progress) {
+    _progress = progress;
+    notifyListeners();
+  }
 
-  DownloadStatus get status => _statusNotifier.value;
-  set status(DownloadStatus status) => _statusNotifier.value = status;
-
-  DownloadTask({
-    required this.id,
-    required this.resourceId,
-    required this.resourceName,
-    required this.expectedSize,
-  }) : _statusNotifier = DownloadStatusNotifier();
-}
-
-sealed class DownloadStatus {
-  const DownloadStatus();
-}
-
-class DownloadStatusWaiting extends DownloadStatus {
-  const DownloadStatusWaiting();
-
-  @override
-  String toString() => 'Waiting';
-}
-
-class DownloadStatusStarting extends DownloadStatus {
-  const DownloadStatusStarting();
-
-  @override
-  String toString() => 'Starting';
-}
-
-class DownloadStatusRunning extends DownloadStatus {
-  final int received;
-  final int size;
-
-  const DownloadStatusRunning(this.received, this.size);
-
-  @override
-  String toString() => 'Running: $received / $size (${received / size * 100} %)';
-}
-
-class DownloadStatusFinished extends DownloadStatus {
-  final String path;
-
-  const DownloadStatusFinished(this.path);
-
-  @override
-  String toString() => 'Finished: $path';
-}
-
-class DownloadStatusError extends DownloadStatus {
-  final String error;
-
-  const DownloadStatusError(this.error);
-
-  @override
-  String toString() => 'Error: $error';
+  DownloadTaskStatusNotifier({
+    required this.task,
+    TaskStatus? status,
+    TaskProgressUpdate? progress,
+  })  : _status = status ?? TaskStatus.enqueued,
+        _progress = progress ?? TaskProgressUpdate(task, 0);
 }

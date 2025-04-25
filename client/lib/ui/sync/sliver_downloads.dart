@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:provider/provider.dart';
@@ -21,7 +22,7 @@ class _DownloadsSliverState extends State<DownloadsSliver> {
 
   @override
   Widget build(BuildContext context) {
-    final allTasks = context.select<DownloadManagerState, List<DownloadTask>>((state) => state.tasks);
+    final allTasks = context.watch<DownloadManager>().tasks.toList(growable: false);
     final tasks = allTasks.sublist(max(allTasks.length - _showedDownloads, 0)).toList(growable: false);
     return SliverList(
       delegate: SliverChildBuilderDelegate(
@@ -41,7 +42,7 @@ class _DownloadsSliverState extends State<DownloadsSliver> {
               ),
             );
           }
-          return _DownloadTaskView(task: tasks[tasks.length - i]);
+          return _DownloadTaskView(notifier: tasks[tasks.length - i]);
         },
         childCount: tasks.length + 1 + (allTasks.length >= _showedDownloads ? 1 : 0),
       ),
@@ -50,9 +51,9 @@ class _DownloadsSliverState extends State<DownloadsSliver> {
 }
 
 class _DownloadTaskView extends StatefulWidget {
-  final DownloadTask task;
+  final DownloadTaskStatusNotifier notifier;
 
-  _DownloadTaskView({required this.task}) : super(key: ValueKey(task.id));
+  _DownloadTaskView({required this.notifier}) : super(key: ValueKey(notifier.task.taskId));
 
   @override
   State<_DownloadTaskView> createState() => _DownloadTaskViewState();
@@ -66,21 +67,28 @@ class _DownloadTaskViewState extends State<_DownloadTaskView> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: widget.task.statusNotifier.stream,
-      initialData: widget.task.status,
-      builder: (contetx, snapshot) {
-        final status = snapshot.data!;
-        return ListTile(title: Text(widget.task.resourceName), subtitle: buildSubtitle(status));
+    return ListenableBuilder(
+      listenable: widget.notifier,
+      builder: (context, child) {
+        return ListTile(
+          title: Text(widget.notifier.task.displayName),
+          subtitle: buildSubtitle(),
+        );
       },
     );
   }
 
-  Widget buildSubtitle(DownloadStatus status) {
-    return switch (status) {
-      DownloadStatusStarting _ => const LinearProgressIndicator(value: null),
-      DownloadStatusRunning(received: int received, size: int size) => LinearProgressIndicator(value: (received * 1.0) / size),
-      _ => Text(status.toString()),
+  Widget buildSubtitle() {
+    return switch (widget.notifier.status) {
+      TaskStatus.enqueued => const LinearProgressIndicator(value: null),
+      TaskStatus.running => LinearProgressIndicator(
+          value: widget.notifier.progress.progress < 1 ? widget.notifier.progress.progress : null),
+      TaskStatus.canceled => const Text('Canceled'),
+      TaskStatus.complete => const Text('Complete'),
+      TaskStatus.notFound => const Text('Not Found'),
+      TaskStatus.failed => const Text('Failed'),
+      TaskStatus.waitingToRetry => const Text('Waiting to Retry'),
+      TaskStatus.paused => const Text('Paused'),
     };
   }
 }

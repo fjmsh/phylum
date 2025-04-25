@@ -13,61 +13,61 @@ class DownloadButton extends StatefulWidget {
 }
 
 class _DownloadButtonState extends State<DownloadButton> {
-  final listeners = <DownloadTask, RemoveListener>{};
-  final lastStatus = <DownloadTask, DownloadStatus>{};
-  late final StreamSubscription _subscription;
+  // final listeners = <DownloadTaskStatusNotifier, RemoveListener>{};
+  // final lastStatus = <DownloadTaskStatusNotifier, DownloadStatus>{};
+  // late final StreamSubscription _subscription;
   int ongoing = 0;
   int received = 0;
   int total = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _subscription = context.read<DownloadManager>().stream.listen((state) {
-      for (final task in state.tasks) {
-        if (!listeners.containsKey(task)) {
-          final status = task.status;
-          if (status is! DownloadStatusFinished && status is! DownloadStatusError) {
-            listeners[task] = task.statusNotifier.addListener((status) {
-              int ongoing = this.ongoing;
-              int received = this.received;
-              int total = this.total;
-              final last = lastStatus[task];
-              lastStatus[task] = status;
-              if (last == null) {
-                ongoing++;
-              } else if (last is DownloadStatusRunning) {
-                received -= last.received;
-                total -= last.size;
-              }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _subscription = context.read<DownloadManager>().stream.listen((state) {
+  //     for (final task in state.tasks) {
+  //       if (!listeners.containsKey(task)) {
+  //         final status = task.status;
+  //         if (status is! DownloadStatusFinished && status is! DownloadStatusError) {
+  //           listeners[task] = task.statusNotifier.addListener((status) {
+  //             int ongoing = this.ongoing;
+  //             int received = this.received;
+  //             int total = this.total;
+  //             final last = lastStatus[task];
+  //             lastStatus[task] = status;
+  //             if (last == null) {
+  //               ongoing++;
+  //             } else if (last is DownloadStatusRunning) {
+  //               received -= last.received;
+  //               total -= last.size;
+  //             }
 
-              if (status is DownloadStatusRunning) {
-                received += status.received;
-                total += status.size;
-              } else if (status is DownloadStatusFinished || status is DownloadStatusError) {
-                ongoing--;
-                Future.microtask(() {
-                  listeners.remove(task)?.call();
-                  lastStatus.remove(task);
-                });
-              }
-              setState(() {
-                this.ongoing = ongoing;
-                this.received = received;
-                this.total = total;
-              });
-            }, fireImmediately: true);
-          }
-        }
-      }
-    });
-  }
+  //             if (status is DownloadStatusRunning) {
+  //               received += status.received;
+  //               total += status.size;
+  //             } else if (status is DownloadStatusFinished || status is DownloadStatusError) {
+  //               ongoing--;
+  //               Future.microtask(() {
+  //                 listeners.remove(task)?.call();
+  //                 lastStatus.remove(task);
+  //               });
+  //             }
+  //             setState(() {
+  //               this.ongoing = ongoing;
+  //               this.received = received;
+  //               this.total = total;
+  //             });
+  //           }, fireImmediately: true);
+  //         }
+  //       }
+  //     }
+  //   });
+  // }
 
-  @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   _subscription.cancel();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {

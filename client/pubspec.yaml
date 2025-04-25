@@ -14,7 +14,7 @@ dependencies:
   drift_flutter: ^0.2.1
   file_selector: ^1.0.3
   flutter_state_notifier:
-  go_router:
+  background_downloader:
   hive:
   http:
   http_parser: 

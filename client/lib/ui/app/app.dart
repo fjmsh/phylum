@@ -18,7 +18,7 @@ class PhylumApp extends StatefulWidget {
         providers: [
           StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
           StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
-          StateNotifierProvider<DownloadManager, DownloadManagerState>(create: (context) => DownloadManager(account)),
+          ChangeNotifierProvider<DownloadManager>(create: (context) => DownloadManager(account)),
           ChangeNotifierProvider(create: (context) => ActionQueueStatusNotifier(account.actionQueue)),
         ],
         child: PhylumApp(),
