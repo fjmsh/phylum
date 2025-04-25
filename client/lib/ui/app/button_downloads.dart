@@ -1,9 +1,7 @@
-import 'dart:async';
-
+import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:provider/provider.dart';
-import 'package:state_notifier/state_notifier.dart';
 
 class DownloadButton extends StatefulWidget {
   const DownloadButton({super.key});
@@ -13,71 +11,59 @@ class DownloadButton extends StatefulWidget {
 }
 
 class _DownloadButtonState extends State<DownloadButton> {
-  // final listeners = <DownloadTaskStatusNotifier, RemoveListener>{};
-  // final lastStatus = <DownloadTaskStatusNotifier, DownloadStatus>{};
-  // late final StreamSubscription _subscription;
-  int ongoing = 0;
-  int received = 0;
-  int total = 0;
+  final ongoing = <DownloadTaskStatusNotifier, Function()>{};
+  late final DownloadManager _downloadManager;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _subscription = context.read<DownloadManager>().stream.listen((state) {
-  //     for (final task in state.tasks) {
-  //       if (!listeners.containsKey(task)) {
-  //         final status = task.status;
-  //         if (status is! DownloadStatusFinished && status is! DownloadStatusError) {
-  //           listeners[task] = task.statusNotifier.addListener((status) {
-  //             int ongoing = this.ongoing;
-  //             int received = this.received;
-  //             int total = this.total;
-  //             final last = lastStatus[task];
-  //             lastStatus[task] = status;
-  //             if (last == null) {
-  //               ongoing++;
-  //             } else if (last is DownloadStatusRunning) {
-  //               received -= last.received;
-  //               total -= last.size;
-  //             }
+  @override
+  void initState() {
+    super.initState();
+    _downloadManager = context.read<DownloadManager>();
+    _downloadManager.addListener(_onDownloadManagerChanged);
+    _onDownloadManagerChanged();
+  }
 
-  //             if (status is DownloadStatusRunning) {
-  //               received += status.received;
-  //               total += status.size;
-  //             } else if (status is DownloadStatusFinished || status is DownloadStatusError) {
-  //               ongoing--;
-  //               Future.microtask(() {
-  //                 listeners.remove(task)?.call();
-  //                 lastStatus.remove(task);
-  //               });
-  //             }
-  //             setState(() {
-  //               this.ongoing = ongoing;
-  //               this.received = received;
-  //               this.total = total;
-  //             });
-  //           }, fireImmediately: true);
-  //         }
-  //       }
-  //     }
-  //   });
-  // }
+  void _onDownloadManagerChanged() {
+    for (final task in _downloadManager.tasks) {
+      if (!ongoing.containsKey(task)) {
+        void listener() {
+          if (task.status.isFinalState) {
+            task.removeListener(ongoing.remove(task)!);
+          }
+          setState(() {});
+        }
 
-  // @override
-  // void dispose() {
-  //   _subscription.cancel();
-  //   super.dispose();
-  // }
+        ongoing[task] = listener;
+        task.addListener(listener);
+        listener();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _downloadManager.removeListener(_onDownloadManagerChanged);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    int total = 0;
+    var received = 0.0;
+    for (final status in ongoing.keys) {
+      if (status.status == TaskStatus.running) {
+        if (status.progress.hasExpectedFileSize) {
+          total += status.progress.expectedFileSize;
+          received += status.progress.expectedFileSize * status.progress.progress;
+        }
+      }
+    }
     return ListTile(
-      leading: ongoing == 0 ? const Icon(Icons.download) : const Icon(Icons.downloading),
-      title: ongoing == 0 ? const Text('Downloads') : Text('Downloading $ongoing files'),
-      subtitle: ongoing == 0
+      leading: ongoing.isEmpty ? const Icon(Icons.download) : const Icon(Icons.downloading),
+      title: ongoing.isEmpty ? const Text('Downloads') : Text('Downloading ${ongoing.length} files'),
+      subtitle: ongoing.isEmpty
           ? null
           : LinearProgressIndicator(
-              value: total == 0 ? null : (received * 1.0 / total),
+              value: total == 0 ? null : (received / total),
             ),
     );
   }
