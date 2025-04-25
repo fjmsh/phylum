@@ -28,6 +28,7 @@ dependencies:
   open_file:
   path:
   path_provider:
+  permission_handler:
   printing:
   provider:
   sqlite3: 

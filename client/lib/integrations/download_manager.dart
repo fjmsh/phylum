@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 
@@ -19,6 +22,15 @@ class DownloadManager with ChangeNotifier {
       progressBar: true,
     );
     _downloader.registerCallbacks(
+      taskNotificationTapCallback: (task, notificationType) async {
+        if (notificationType == NotificationType.complete) {
+          final path = await _downloader.pathInSharedStorage(await task.filePath(), SharedStorage.downloads);
+
+          if (path != null) {
+            _downloader.openFile(filePath: path);
+          }
+        }
+      },
       taskProgressCallback: (update) {
         final task = update.task;
         if (task is DownloadTask) {
@@ -54,6 +66,9 @@ class DownloadManager with ChangeNotifier {
 
   Future<void> downloadResource(Resource r) async {
     await _downloader.ready;
+    if (Platform.isAndroid || Platform.isAndroid) {
+      await Permission.notification.request();
+    }
     final uri = _account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}');
     final task = DownloadTask(
       url: uri.toString(),
