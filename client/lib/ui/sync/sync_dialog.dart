@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/sync/sliver_offline.dart';
-import 'package:phylum/ui/sync/sliver_downloads.dart';
 
 import 'sliver_actions.dart';
 
@@ -29,7 +28,10 @@ class SyncDialog extends StatelessWidget {
             margin: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                AppBar(title: const Text('Server Status'), leading: const CloseButton(), backgroundColor: Colors.transparent),
+                AppBar(
+                    title: const Text('Server Status'),
+                    leading: const CloseButton(),
+                    backgroundColor: Colors.transparent),
                 Expanded(child: buildContents(context)),
               ],
             ),
@@ -42,7 +44,6 @@ class SyncDialog extends StatelessWidget {
   Widget buildContents(BuildContext context) => const CustomScrollView(
         slivers: [
           OfflineSliver(),
-          DownloadsSliver(),
           ActionsSliver(),
         ],
       );

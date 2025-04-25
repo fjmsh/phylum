@@ -1,51 +1,17 @@
-import 'dart:math';
-
 import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:provider/provider.dart';
 
-const _showedDownloads = 3;
-
-class DownloadsSliver extends StatefulWidget {
-  const DownloadsSliver({super.key});
-
-  @override
-  State<DownloadsSliver> createState() => _DownloadsSliverState();
-}
-
-class _DownloadsSliverState extends State<DownloadsSliver> {
-  @override
-  void initState() {
-    super.initState();
-  }
+class DownloadsList extends StatelessWidget {
+  const DownloadsList({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final allTasks = context.watch<DownloadManager>().tasks.toList(growable: false);
-    final tasks = allTasks.sublist(max(allTasks.length - _showedDownloads, 0)).toList(growable: false);
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, i) {
-          if (i == 0) {
-            return const ListTile(dense: true, title: Text('Downloads'));
-          }
-          if (i > tasks.length) {
-            return Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {},
-                  child: Text('View All (${allTasks.length - _showedDownloads} More)'),
-                ),
-              ),
-            );
-          }
-          return _DownloadTaskView(notifier: tasks[tasks.length - i]);
-        },
-        childCount: tasks.length + 1 + (allTasks.length >= _showedDownloads ? 1 : 0),
-      ),
+    final tasks = context.watch<DownloadManager>().tasks.toList(growable: false);
+    return ListView.builder(
+      itemBuilder: (context, i) => _DownloadTaskView(notifier: tasks[tasks.length - i]),
+      itemCount: tasks.length,
     );
   }
 }

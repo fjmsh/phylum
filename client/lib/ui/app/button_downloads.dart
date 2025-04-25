@@ -1,6 +1,7 @@
 import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/integrations/download_manager.dart';
+import 'package:phylum/ui/downloads/downloads_dialog.dart';
 import 'package:provider/provider.dart';
 
 class DownloadButton extends StatefulWidget {
@@ -65,6 +66,7 @@ class _DownloadButtonState extends State<DownloadButton> {
           : LinearProgressIndicator(
               value: total == 0 ? null : (received / total),
             ),
+      onTap: () => DownloadsDialog.show(context),
     );
   }
 }
