@@ -7,12 +7,11 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/core/errors"
+	"github.com/spf13/viper"
 )
 
-func createEngine(debug, logBody bool, corsEnabled bool, corsOrigins []string) *gin.Engine {
-	if !debug {
-		gin.SetMode(gin.ReleaseMode)
-	}
+// func createEngine(logBody bool, corsEnabled bool, corsOrigins []string) *gin.Engine {
+func createEngine(config *viper.Viper) *gin.Engine {
 	engine := gin.New()
 	engine.Use(gin.Logger(), gin.CustomRecovery(func(c *gin.Context, err any) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
@@ -21,13 +20,13 @@ func createEngine(debug, logBody bool, corsEnabled bool, corsOrigins []string) *
 			"msg":    "Internal Server Error",
 		})
 	}))
-	if debug && logBody {
+	if config.GetBool("log_body") {
 		engine.Use(logBodyMiddleware)
 	}
 
-	if corsEnabled {
+	if config.GetBool("cors.enabled") {
 		engine.Use(cors.New(cors.Config{
-			AllowOrigins:     corsOrigins,
+			AllowOrigins:     config.GetStringSlice("cors.origins"),
 			AllowHeaders:     []string{"Origin", "Authorization", "Accept", "Accept-Language", "Content-Type"},
 			AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "PROPFIND", "PROPPATCH", "COPY", "MOVE"},
 			ExposeHeaders:    []string{"Content-Length"},

@@ -37,6 +37,7 @@ func SetupCommand() {
 	viper.BindPFlag("db.trace_queries", flags.Lookup("trace-queries"))
 
 	flags.StringP("working-dir", "W", "data", "Working Directory")
+	flags.MarkHidden("working-dir")
 	viper.BindPFlag("working_dir", flags.Lookup("working-dir"))
 
 	viper.SetDefault("db.host", "localhost")
@@ -45,6 +46,8 @@ func SetupCommand() {
 	viper.SetDefault("db.user", "phylum")
 	viper.SetDefault("db.trace_queries", "false")
 	viper.SetDefault("db.skip_migration", "false")
+
+	viper.SetDefault("storage.default_dir", "storage/default")
 
 	uuid.EnableRandPool()
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
@@ -61,7 +64,7 @@ func SetupCommand() {
 		}
 
 		db.Config = viper.Sub("db")
-		storage.DefaultStorageDir = viper.GetString("default_storage_dir")
+		storage.Config = viper.Sub("storage")
 	}
 
 	defer func() {

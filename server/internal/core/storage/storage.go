@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type Storage struct {
@@ -20,11 +21,11 @@ type Storage struct {
 }
 
 var s Storage
-var DefaultStorageDir string
+var Config *viper.Viper
 
 func Get() Storage {
 	if s.defaultBackend == nil {
-		if storage, err := create(DefaultStorageDir); err != nil {
+		if storage, err := create(Config.GetString("default_dir")); err != nil {
 			logrus.Fatal(err)
 		} else {
 			s = storage

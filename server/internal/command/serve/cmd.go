@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fvbock/endless"
+	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/publink"
 	apiv1 "github.com/shroff/phylum/server/internal/api/v1"
 	"github.com/shroff/phylum/server/internal/api/webdav"
@@ -22,8 +23,11 @@ func SetupCommand() *cobra.Command {
 		Short:   "Run the server",
 		GroupID: "server",
 		Run: func(cmd *cobra.Command, args []string) {
-			config := viper.GetViper()
-			engine := createEngine(config.GetBool("debug"), config.GetBool("log_body"), config.GetBool("cors_enabled"), config.GetStringSlice("cors_origins"))
+			config := viper.Sub("server")
+			if !viper.GetBool("debug") {
+				gin.SetMode(gin.ReleaseMode)
+			}
+			engine := createEngine(config)
 
 			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")))
 			apiv1.Setup(engine.Group("/api/v1"))
@@ -42,26 +46,20 @@ func SetupCommand() *cobra.Command {
 	}
 	flags := cmd.Flags()
 
-	flags.Bool("auto-migrate", true, "Automatically migrate database schema")
-	viper.BindPFlag("auto_migrate", flags.Lookup("auto-migrate"))
-
-	flags.StringP("default-storage-dir", "S", "storage/default", "Default Storage Directory")
-	viper.BindPFlag("default_storage_dir", flags.Lookup("default-storage-dir"))
-
-	flags.StringP("listen", "l", ":1234", "Listen Addres")
-	viper.BindPFlag("listen", flags.Lookup("listen"))
+	flags.StringP("listen", "l", ":2448", "Listen Addres")
+	viper.BindPFlag("server.listen", flags.Lookup("listen"))
 
 	flags.Bool("log-body", false, "Log Response Body (Must be used with --debug)")
-	viper.BindPFlag("log_body", flags.Lookup("log-body"))
+	viper.BindPFlag("server.log_body", flags.Lookup("log-body"))
 
-	flags.Bool("cors-enabled", false, "Enabled CORS")
-	viper.BindPFlag("cors_enabled", flags.Lookup("cors-enabled"))
+	flags.Bool("cors-enabled", false, "Enable CORS")
+	viper.BindPFlag("server.cors.enabled", flags.Lookup("cors-enabled"))
 
 	flags.StringSlice("cors-origins", []string{"*"}, "CORS origins")
-	viper.BindPFlag("cors_origins", flags.Lookup("cors-origins"))
+	viper.BindPFlag("server.cors.origins", flags.Lookup("cors-origins"))
 
 	flags.String("webdav-prefix", "/webdav", "Listen Addres")
-	viper.BindPFlag("webdav_prefix", flags.Lookup("webdav-prefix"))
+	viper.BindPFlag("server.webdav_prefix", flags.Lookup("webdav-prefix"))
 
 	return cmd
 }
