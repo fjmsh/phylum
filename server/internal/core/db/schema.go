@@ -15,7 +15,7 @@ var (
 	ErrMigrationNoAutoDowngrade = errors.New("will not auto-downgrade schema to prevent data loss")
 )
 
-func checkVersion(ctx context.Context, autoMigrate bool) error {
+func checkVersion(ctx context.Context, skipMigration bool) error {
 	conn, err := pool.Acquire(ctx)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func checkVersion(ctx context.Context, autoMigrate bool) error {
 		return BootstrapData(ctx)
 	}
 
-	if !autoMigrate {
+	if skipMigration {
 		logrus.Warn(fmt.Sprintf("Database schema is not at current version: %d/%d", currentSchemaVersion, latestSchemaVersion))
 		return nil
 	}
