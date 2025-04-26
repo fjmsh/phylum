@@ -48,18 +48,23 @@ func SetupCommand() *cobra.Command {
 
 	flags.StringP("listen", "l", ":2448", "Listen Addres")
 	viper.BindPFlag("server.listen", flags.Lookup("listen"))
+	viper.SetDefault("server.listen", ":2448")
 
 	flags.Bool("log-body", false, "Log Response Body (Must be used with --debug)")
 	viper.BindPFlag("server.log_body", flags.Lookup("log-body"))
+	viper.SetDefault("server.log_body", false)
 
 	flags.Bool("cors-enabled", false, "Enable CORS")
 	viper.BindPFlag("server.cors.enabled", flags.Lookup("cors-enabled"))
+	viper.SetDefault("server.cors.enabled", false)
 
 	flags.StringSlice("cors-origins", []string{"*"}, "CORS origins")
 	viper.BindPFlag("server.cors.origins", flags.Lookup("cors-origins"))
+	viper.SetDefault("server.cors.origins", []string{"*"})
 
 	flags.String("webdav-prefix", "/webdav", "Listen Addres")
 	viper.BindPFlag("server.webdav_prefix", flags.Lookup("webdav-prefix"))
+	viper.SetDefault("server.webdav_prefix", "/webdav")
 
 	return cmd
 }
