@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/repositories/bookmark_repository.dart';
@@ -30,8 +31,8 @@ class PhylumAccount extends Account<PhylumAccount> {
         TrashedResource: trashedResourcRepository,
       };
 
-  final _dispatcher = SimulatedBadNetworkDispatcher.good(dropRate: 0);
-  // final _dispatcher = HttpClientDispatcher();
+  final _dispatcher = kDebugMode ? SimulatedBadNetworkDispatcher.good(dropRate: 0) : HttpClientDispatcher();
+
   @override
   Dispatcher get dispatcher => _dispatcher;
 
