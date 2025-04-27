@@ -2,7 +2,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 final _random = Random();
-const _range = 1 << 32;
+const _range = 1 << 32 - 1; // Issue with web
 
 int _lastTimestamp = 0;
 
