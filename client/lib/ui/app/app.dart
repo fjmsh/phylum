@@ -1,8 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
+import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
@@ -18,7 +19,7 @@ class PhylumApp extends StatefulWidget {
         providers: [
           StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
           StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
-          ChangeNotifierProvider<DownloadManager>(create: (context) => DownloadManager(account)),
+          if (!kIsWeb) ChangeNotifierProvider<DownloadManager>(create: (context) => DownloadManager(account)),
           ChangeNotifierProvider(create: (context) => ActionQueueStatusNotifier(account.actionQueue)),
         ],
         child: PhylumApp(),

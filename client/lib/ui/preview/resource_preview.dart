@@ -6,8 +6,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/integrations/download_manager.dart';
+import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -124,7 +124,7 @@ class _ResourcePreviewState extends State<ResourcePreview> {
                   ),
                 ),
                 IconButton(
-                  onPressed: (_resource.dir) ? null : () => downloadResource(),
+                  onPressed: (_resource.dir) ? null : () => downloadResource(context, _resource),
                   icon: const Icon(Icons.download),
                 )
               ],
@@ -162,10 +162,6 @@ class _ResourcePreviewState extends State<ResourcePreview> {
         build: (_) => data,
         previewPageMargin: EdgeInsets.zero,
       );
-
-  Future<void> downloadResource() {
-    return context.read<DownloadManager>().downloadResource(_resource);
-  }
 }
 
 class ResourcePreviewBuilder extends StatefulWidget {

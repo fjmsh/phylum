@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -98,7 +99,7 @@ class NavList extends StatelessWidget {
             onTap: () => context.read<PhylumRouterDelegate>().go(ExplorerPageTrash()),
           ),
           const Divider(),
-          const DownloadButton(),
+          if (!kIsWeb) const DownloadButton(),
           const ServerStatusButton(),
           ListTile(
             leading: const Icon(Icons.settings),
