@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_layout.dart';
 import 'package:provider/provider.dart';
 
@@ -71,7 +72,9 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
 }
 
 class PhylumRouteInformationParser extends RouteInformationParser<ExplorerPage> {
-  const PhylumRouteInformationParser();
+  final PhylumAccount _account;
+
+  PhylumRouteInformationParser(PhylumAccount account) : _account = account;
 
   @override
   Future<ExplorerPage> parseRouteInformation(RouteInformation routeInformation) {
@@ -79,11 +82,11 @@ class PhylumRouteInformationParser extends RouteInformationParser<ExplorerPage> 
     final segments = uri.pathSegments;
 
     if (segments.isEmpty) {
-      return SynchronousFuture(const ExplorerPageHome());
+      return SynchronousFuture(ExplorerPageHome(_account));
     }
     if (segments.length == 1) {
       if (segments[0] == 'home') {
-        return SynchronousFuture(const ExplorerPageHome());
+        return SynchronousFuture(ExplorerPageHome(_account));
       }
       if (segments[0] == 'recents') {
         return SynchronousFuture(const ExplorerPageRecents());
@@ -97,7 +100,7 @@ class PhylumRouteInformationParser extends RouteInformationParser<ExplorerPage> 
       if (segments[0] == 'search') {
         final query = uri.queryParameters['q'];
         if (query == null || query.trim().isEmpty) {
-          return SynchronousFuture(const ExplorerPageHome());
+          return SynchronousFuture(ExplorerPageHome(_account));
         }
         return SynchronousFuture(ExplorerPageSearch(query: query));
       }

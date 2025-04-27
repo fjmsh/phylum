@@ -32,13 +32,15 @@ class PhylumApp extends StatefulWidget {
 class _PhylumAppState extends State<PhylumApp> {
   late final AppLifecycleListener _listener;
   late final PhylumRouterDelegate _routerDelegate;
+  late final PhylumRouteInformationParser _routeInformationParser;
 
   @override
   void initState() {
     super.initState();
+    final account = context.read<PhylumAccount>();
     _routerDelegate = PhylumRouterDelegate();
+    _routeInformationParser = PhylumRouteInformationParser(account);
     _listener = AppLifecycleListener(onResume: () {
-      final account = context.read<PhylumAccount>();
       account.userRepository.refresh();
       account.bookmarkRepository.refresh();
     });
@@ -71,7 +73,7 @@ class _PhylumAppState extends State<PhylumApp> {
         debugShowCheckedModeBanner: false,
         theme: theme,
         darkTheme: darkTheme,
-        routeInformationParser: const PhylumRouteInformationParser(),
+        routeInformationParser: _routeInformationParser,
         routerDelegate: _routerDelegate,
         shortcuts: appShortcuts,
       );

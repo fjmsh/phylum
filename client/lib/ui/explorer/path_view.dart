@@ -35,7 +35,8 @@ class PathView extends StatelessWidget {
                   if (path.isNotEmpty) {
                     path.clear();
                   }
-                  path.add(PathItem(title: 'My Files', dropTargetId: entry.id, targetPage: const ExplorerPageHome()));
+                  path.add(PathItem(
+                      title: 'My Files', dropTargetId: entry.id, targetPage: ExplorerPageHome(context.read())));
                 } else {
                   if (path.isEmpty) {
                     path.add(

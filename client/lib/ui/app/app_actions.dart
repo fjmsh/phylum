@@ -61,6 +61,9 @@ class AppActions extends StatelessWidget {
         NavIntent: CallbackAction<NavIntent>(
           onInvoke: (i) => context.read<PhylumRouterDelegate>().go(i.target),
         ),
+        NavHomeIntent: CallbackAction<NavHomeIntent>(
+          onInvoke: (i) => context.read<PhylumRouterDelegate>().go(ExplorerPageHome(context.read())),
+        ),
         NavBackIntent: CallbackAction<NavBackIntent>(
           onInvoke: (i) => context.read<PhylumRouterDelegate>().goBack(),
         ),

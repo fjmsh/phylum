@@ -19,21 +19,14 @@ sealed class ExplorerPage {
   Stream<List<Resource>> items(PhylumAccount account);
 }
 
-class ExplorerPageHome extends ExplorerPage {
+class ExplorerPageHome extends ExplorerPageFolder {
   @override
   Uri get uri => Uri(path: '/home');
 
   @override
   String get title => 'My Files';
 
-  const ExplorerPageHome();
-
-  @override
-  Future<bool> refresh(PhylumAccount account) =>
-      account.resourceRepository.requestResource(account.userHome).then((result) => result is ApiSuccessResponse);
-
-  @override
-  Stream<List<Resource>> items(PhylumAccount account) => account.db.watchChildren(account.userHome);
+  ExplorerPageHome(PhylumAccount account) : super(folderId: account.userHome);
 }
 
 class ExplorerPageFolder extends ExplorerPage {
