@@ -15,7 +15,7 @@ dependencies:
   file_selector: ^1.0.3
   flutter_state_notifier:
   background_downloader:
-  hive:
+  hive_ce: ^2.10.0
   http:
   http_parser: 
   intl:
@@ -24,7 +24,7 @@ dependencies:
   offtheline:
     git:
       url: https://codeberg.org/shroff/offtheline.git
-      ref: eb83200ee1bdcaf069c6ae978b90b0b2b6f15a1f
+      ref: 6cb005fcea01af5f5dd4c34e8d3f78e78ceb70fc
   open_file:
   path:
   path_provider:

@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:file_selector/file_selector.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart';

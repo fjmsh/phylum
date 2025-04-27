@@ -4,7 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart' as path;
