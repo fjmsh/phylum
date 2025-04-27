@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
@@ -48,7 +49,34 @@ Future<void> createDirectory(BuildContext context, String folderId, {String? pre
 void pickAndUploadFiles(BuildContext context, String folderId) async {
   final files = await openFiles();
   if (!context.mounted) return;
-  uploadRecursive(context, folderId, files.map((f) => f.path));
+  uploadDirect(context, folderId, files);
+}
+
+void uploadDirect(BuildContext context, String folderId, List<XFile> files) async {
+  final account = context.read<PhylumAccount>();
+  for (final file in files) {
+    String? id;
+    ensurefile:
+    while (id == null) {
+      id = await handleNameConflict(
+        // ignore: use_build_context_synchronously
+        context,
+        p.basename(file.name),
+        overwriteFn: (r) => r.dir ? nameConflictDelete : nameConflictOverwrite,
+        (name, conflictResolution) => account.resourceRepository.upload(
+          parent: folderId,
+          name: name,
+          file: file,
+          conflictResolution: conflictResolution,
+        ),
+      );
+      if (id == null && context.mounted) {
+        final confirm =
+            await showAlertDialog(context, title: 'Skip file?', positiveText: 'No', negativeText: 'Yes') ?? false;
+        if (!confirm) break ensurefile;
+      }
+    }
+  }
 }
 
 void pickAndUploadDirectory(BuildContext context, String folderId) async {
@@ -123,7 +151,8 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
         ),
       );
       if (id == null && context.mounted) {
-        final confirm = await showAlertDialog(context, title: 'Skip file?') ?? false;
+        final confirm =
+            await showAlertDialog(context, title: 'Skip file?', positiveText: 'No', negativeText: 'Yes') ?? false;
         if (!confirm) break ensurefile;
       }
     }
@@ -194,7 +223,8 @@ Future<String?> handleNameConflict(
         }
         name = newName;
       }
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrintStack(stackTrace: stack);
       if (context.mounted) {
         await showAlertDialog(context, title: 'Unable to move $name', message: e.toString());
       }

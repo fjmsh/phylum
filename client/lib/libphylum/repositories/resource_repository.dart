@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:hive/hive.dart';
 import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
@@ -117,8 +118,9 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
 
   Future<String> upload({
     required String parent,
-    required String path,
     required String name,
+    XFile? file,
+    String? path,
     NameConflictResolution conflictResolution = nameConflictError,
   }) async {
     String id = generateUuid();
@@ -144,16 +146,16 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
         }
       }
     }
-    final f = File(path);
-    final size = await f.length();
-    final contentType = lookupMimeType(path) ?? 'application/octet-stream';
+    assert((file == null) != (path == null));
+    final size = (file != null) ? (await file.length()) : (await File(path!).length());
+    final contentType = file?.mimeType ?? lookupMimeType(file?.name ?? path!) ?? 'application/octet-stream';
     await _account.addAction(ResourceUploadAction(
       resourceId: id,
       parent: parent,
       resourceName: name,
       conflictResolution: conflictResolution,
       timestamp: DateTime.now(),
-      path: path,
+      path: file?.path ?? path!,
       size: size,
       contentType: contentType,
       localName: localName,
