@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:http/http.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:offtheline/offtheline.dart';
@@ -18,8 +20,16 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   String get endpoint => '/api/v1/fs/upload/$resourceId';
 
   @override
-  Future<MultipartFile> get file =>
-      MultipartFile.fromPath('contents', path, filename: resourceName, contentType: MediaType.parse(contentType));
+  MultipartFile createFile(Uint8List data) {
+    var stream = ByteStream.fromBytes(data);
+    return MultipartFile(
+      'contents',
+      stream,
+      data.length,
+      filename: resourceName,
+      contentType: MediaType.parse(contentType),
+    );
+  }
 
   @override
   Map<String, String> get fields => {
@@ -55,7 +65,6 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
         'parent': parent,
         'resourceName': resourceName,
         'conflictResolution': conflictResolution,
-        'path': path,
         'size': size,
         'contentType': contentType,
         'timestamp': timestamp.millisecondsSinceEpoch,
@@ -63,7 +72,6 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
         'deletedId': deletedId,
       };
 
-  final String path;
   final int size;
   final String contentType;
   final DateTime timestamp;
@@ -75,7 +83,6 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
     required super.parent,
     required super.resourceName,
     required super.conflictResolution,
-    required this.path,
     required this.size,
     required this.contentType,
     required this.timestamp,
@@ -89,7 +96,6 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       parent: map['parent'],
       resourceName: map['resourceName'],
       conflictResolution: map['conflictResolution'],
-      path: map['path'],
       size: map['size'],
       contentType: map['contentType'],
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),

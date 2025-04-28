@@ -149,18 +149,20 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     assert((file == null) != (path == null));
     final size = (file != null) ? (await file.length()) : (await File(path!).length());
     final contentType = file?.mimeType ?? lookupMimeType(file?.name ?? path!) ?? 'application/octet-stream';
-    await _account.addAction(ResourceUploadAction(
-      resourceId: id,
-      parent: parent,
-      resourceName: name,
-      conflictResolution: conflictResolution,
-      timestamp: DateTime.now(),
-      path: file?.path ?? path!,
-      size: size,
-      contentType: contentType,
-      localName: localName,
-      deletedId: deletedId,
-    ));
+    final contents = (file != null) ? await file.readAsBytes() : (await File(path!).readAsBytes());
+    await _account.addAction(
+        ResourceUploadAction(
+          resourceId: id,
+          parent: parent,
+          resourceName: name,
+          conflictResolution: conflictResolution,
+          timestamp: DateTime.now(),
+          size: size,
+          contentType: contentType,
+          localName: localName,
+          deletedId: deletedId,
+        ),
+        data: contents);
     return id;
   }
 
