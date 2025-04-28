@@ -32,10 +32,15 @@ func SetupCommand() *cobra.Command {
 			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")))
 			apiv1.Setup(engine.Group("/api/v1"))
 			publink.Setup(engine.Group("/publink"))
-			engine.Group("/app", func(c *gin.Context) {
-				c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
-				c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
-			}).Static("/", "web")
+
+			webAppDir := config.GetString("web_app_dir")
+			if webAppDir != "" {
+				print("WebAppDir:" + webAppDir)
+				engine.Group("/app", func(c *gin.Context) {
+					c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
+					c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
+				}).Static("/", webAppDir)
+			}
 			setupTrashCompactor()
 
 			server := endless.NewServer(config.GetString("listen"), engine)
@@ -49,6 +54,10 @@ func SetupCommand() *cobra.Command {
 		},
 	}
 	flags := cmd.Flags()
+
+	flags.String("web-app-dir", "web", "Web App Directory")
+	viper.BindPFlag("server.web_app_dir", flags.Lookup("web-app-dir"))
+	viper.SetDefault("server.web_app_dir", "web")
 
 	flags.StringP("listen", "l", ":2448", "Listen Addres")
 	viper.BindPFlag("server.listen", flags.Lookup("listen"))
