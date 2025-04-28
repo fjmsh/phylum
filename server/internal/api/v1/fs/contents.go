@@ -31,9 +31,13 @@ func handleContentsRequest(c *gin.Context) {
 	if download {
 		name := c.Request.URL.Query().Get("name")
 		if name == "" {
-			name = r.Name() + ".zip"
+			name = r.Name()
+		}
+		if r.Dir() {
+			name += ".zip"
 		}
 		c.Writer.Header().Set("Content-Disposition", "attachment; filename=\""+name+"\"")
+		c.Writer.Header().Set("Content-Type", r.ContentType())
 	}
 	if !r.Dir() {
 		serve.Serve(c.Writer, c.Request, r)
