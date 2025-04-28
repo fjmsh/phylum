@@ -61,5 +61,6 @@ func handleSetCookie(c *gin.Context) {
 		panic(errors.NewError(http.StatusBadRequest, "missing_token", "Auth Token Not Specified"))
 	}
 	secure := c.Request.URL.Scheme == "https"
+	c.SetSameSite(http.SameSiteStrictMode)
 	c.SetCookie("auth_token", token, 3600, "", c.Request.URL.Hostname(), secure, true)
 }
