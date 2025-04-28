@@ -20,6 +20,14 @@ part 'user_list_response.dart';
 typedef JsonMapResponseParser = PhylumApiSuccessResponse Function(Map<String, dynamic> data);
 typedef JsonListResponseParser = PhylumApiSuccessResponse Function(List data);
 
+Future<ApiResponse<PhylumAccount>> parseEmptyResponse(StreamedResponse response) async {
+  if (response.statusCode >= 200 && response.statusCode < 300) {
+    return const EmptyResponse();
+  }
+  final body = await response.bodyString();
+  return PhylumApiErrorResponse.fromResponseBody(body);
+}
+
 Future<ApiResponse<PhylumAccount>> parseJsonMapResponse(
   StreamedResponse response,
   JsonMapResponseParser parseResponse,

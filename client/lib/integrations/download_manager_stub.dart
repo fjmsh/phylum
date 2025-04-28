@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 
-void downloadResource(BuildContext context, Resource r) => UnsupportedError('');
+Future<void> downloadResource(BuildContext context, Resource r) => throw UnimplementedError();
 
 class DownloadManager with ChangeNotifier {
   DownloadManager(PhylumAccount account) : super();

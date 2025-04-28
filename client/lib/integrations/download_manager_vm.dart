@@ -7,7 +7,10 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
 
-void downloadResource(BuildContext context, Resource r) => context.read<DownloadManager>().downloadResource(r);
+Future<bool> downloadResource(BuildContext context, Resource r) async {
+  await context.read<DownloadManager>().downloadResource(r);
+  return true;
+}
 
 class DownloadManager with ChangeNotifier {
   final _downloader = FileDownloader();

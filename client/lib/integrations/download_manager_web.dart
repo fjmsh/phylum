@@ -1,22 +1,27 @@
-import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
+import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/requests/set_cookie_request.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:provider/provider.dart';
+import 'package:web/web.dart' as web;
 
-void downloadResource(BuildContext context, Resource r) {
+Future<bool> downloadResource(BuildContext context, Resource r) async {
   final apiClient = context.read<PhylumAccount>().apiClient;
-  FileSaver().saveFile(
-    name: basenameWithoutExtension(r.name),
-    ext: extension(r.name),
-    link: LinkDetails(
-      link: apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}').toString(),
-      headers: apiClient.requestHeaders,
-    ),
-    mimeType: MimeType.custom,
-    customMimeType: r.contentType,
-  );
+  final success = await apiClient
+      .sendRequest(const SetCookieRequest(), (_, response) => parseEmptyResponse(response))
+      .then((result) => result is ApiSuccessResponse);
+  if (!success) {
+    return false;
+  }
+  final uri = apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}')..queryParameters['download'] = '';
+  web.HTMLAnchorElement()
+    ..target = '_blank'
+    ..href = uri.toString()
+    ..download = r.name
+    ..click();
+  return true;
 }
 
 class DownloadManager with ChangeNotifier {
