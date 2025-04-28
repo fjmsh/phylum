@@ -18,9 +18,15 @@ import 'package:phylum/ui/login/login_app.dart';
 import 'package:phylum/util/logging.dart';
 import 'package:provider/provider.dart';
 
+import 'presence_stub.dart' if (dart.library.js_interop) 'presence_web.dart';
+
 const storageDir = String.fromEnvironment("STORAGE_DIR");
 
 void main() async {
+  if (isAnother()) {
+    runApp(const AnotherRunningMessage());
+    return;
+  }
   WidgetsFlutterBinding.ensureInitialized();
 
   PhylumDirectories.instance.initialize();
@@ -65,6 +71,25 @@ void main() async {
   });
 
   runApp(AccountSelector(accountManager: accountManager));
+}
+
+class AnotherRunningMessage extends StatelessWidget {
+  const AnotherRunningMessage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Directionality(
+      textDirection: TextDirection.ltr,
+      child: Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text('Phylum is running in another tab or window.'),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class AccountSelector extends StatelessWidget {

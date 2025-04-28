@@ -33,6 +33,22 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body oncontextmenu="return false;">
+  <script>
+    const channel = new BroadcastChannel("the_one");
+    var another = false;
+    channel.onmessage = (event) => {
+      if (event.data == 'ping') {
+        channel.postMessage('pong');
+      }
+      if (event.data == 'pong') {
+        another = true;
+      }
+    };
+    channel.postMessage("ping");
+    function isAnother() {
+      return another;
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
