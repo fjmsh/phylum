@@ -45,6 +45,16 @@ func Require(c *gin.Context) {
 func extractUserDetails(c *gin.Context) (user.User, error) {
 	userManager := user.ManagerFromContext(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
+		if cookie, err := c.Request.Cookie("auth_token"); err == nil {
+			token := cookie.Value
+			if u, err := userManager.ReadAccessToken(token); err == nil {
+				return u, nil
+			} else {
+				return user.User{}, err
+			}
+		} else if err != http.ErrNoCookie {
+			return user.User{}, err
+		}
 		return user.User{}, errAuthRequired
 	} else if auth, ok := checkAuthHeader(header, "basic"); ok {
 		if username, password, ok := decodeBasicAuth(auth); ok {
