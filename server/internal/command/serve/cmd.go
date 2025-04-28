@@ -32,6 +32,10 @@ func SetupCommand() *cobra.Command {
 			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")))
 			apiv1.Setup(engine.Group("/api/v1"))
 			publink.Setup(engine.Group("/publink"))
+			engine.Group("/app", func(c *gin.Context) {
+				c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
+				c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
+			}).Static("/", "web")
 			setupTrashCompactor()
 
 			server := endless.NewServer(config.GetString("listen"), engine)
