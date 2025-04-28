@@ -36,10 +36,6 @@ func SetupCommand() {
 	flags.MarkHidden("trace-queries")
 	viper.BindPFlag("db.trace_queries", flags.Lookup("trace-queries"))
 
-	flags.StringP("working-dir", "W", "data", "Working Directory")
-	flags.MarkHidden("working-dir")
-	viper.BindPFlag("working_dir", flags.Lookup("working-dir"))
-
 	viper.SetDefault("db.host", "localhost")
 	viper.SetDefault("db.port", "5432")
 	viper.SetDefault("db.name", "phylum")
@@ -54,13 +50,6 @@ func SetupCommand() {
 		if viper.GetBool("debug") {
 			logrus.SetLevel(logrus.TraceLevel)
 			logrus.Debug("Running in debug mode")
-		}
-
-		workDir := viper.GetString("working_dir")
-		if workDir != "." {
-			logrus.Debug("Setting working directory to " + workDir)
-			os.Mkdir(workDir, 0750)
-			os.Chdir(workDir)
 		}
 
 		db.Config = viper.Sub("db")
