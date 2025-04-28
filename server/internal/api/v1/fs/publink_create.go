@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/api/authenticator"
 )
 
 type publinkParams struct {
@@ -32,7 +32,7 @@ func handlePublinkCreateRequest(c *gin.Context) {
 		panic(errResourceIDInvalid)
 	}
 
-	fs := auth.GetFileSystem(c)
+	fs := authenticator.GetFileSystem(c)
 	r, err := fs.ResourceByID(resourceID)
 	if err != nil {
 		panic(err)

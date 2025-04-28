@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/errors"
 )
@@ -17,7 +17,7 @@ func handleSearchRequest(c *gin.Context) {
 		panic(errSearchQueryEmpty)
 	}
 
-	fs := auth.GetFileSystem(c)
+	fs := authenticator.GetFileSystem(c)
 	res, err := fs.Search(query, false)
 	if err != nil {
 		panic(err)

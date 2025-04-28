@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/fs"
@@ -21,7 +21,7 @@ func handleContentsRequest(c *gin.Context) {
 		panic(errResourceIDInvalid)
 	}
 
-	f := auth.GetFileSystem(c)
+	f := authenticator.GetFileSystem(c)
 	r, err := f.ResourceByID(resourceID)
 	if err != nil {
 		panic(err)

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/user"
@@ -29,8 +29,8 @@ func SetupRoutes(r *gin.RouterGroup) {
 }
 
 func handleHomeRoute(c *gin.Context) {
-	user := auth.GetUser(c)
-	f := auth.GetFileSystem(c)
+	user := authenticator.GetUser(c)
+	f := authenticator.GetFileSystem(c)
 	r, err := f.ResourceByID(user.Home)
 	if err != nil {
 		panic(err)
@@ -43,7 +43,7 @@ func handleHomeRoute(c *gin.Context) {
 }
 
 func handleSharedRoute(c *gin.Context) {
-	f := auth.GetFileSystem(c)
+	f := authenticator.GetFileSystem(c)
 	shared, err := f.SharedResources()
 	if err != nil {
 		panic(err)

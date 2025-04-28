@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
@@ -29,7 +29,7 @@ func setupBookmarksRoutes(r *gin.RouterGroup) {
 }
 
 func handleBookmarksGetRoute(c *gin.Context) {
-	u := auth.GetUser(c)
+	u := authenticator.GetUser(c)
 	res, err := user.ManagerFromContext(c.Request.Context()).ListBookmarks(u)
 	if err != nil {
 		panic(err)
@@ -57,8 +57,8 @@ func handleBookmarksAddRoute(c *gin.Context) {
 	}
 	id := uuid.MustParse(idStr)
 
-	u := auth.GetUser(c)
-	r, err := auth.GetFileSystem(c).ResourceByID(id)
+	u := authenticator.GetUser(c)
+	r, err := authenticator.GetFileSystem(c).ResourceByID(id)
 	if err != nil {
 		panic(err)
 	}
@@ -76,7 +76,7 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 	}
 	id := uuid.MustParse(idStr)
 
-	u := auth.GetUser(c)
+	u := authenticator.GetUser(c)
 	if err := user.ManagerFromContext(c.Request.Context()).RemoveBookmark(u, id); err != nil {
 		panic(err)
 	}

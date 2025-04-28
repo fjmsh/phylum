@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
@@ -30,7 +30,7 @@ func handleUploadRequest(c *gin.Context) {
 	// TODO: Calculate and verify sha sum
 	// c.Request.FormValue("sha256sum")
 
-	f := auth.GetFileSystem(c)
+	f := authenticator.GetFileSystem(c)
 	err = f.RunInTx(func(f fs.FileSystem) error {
 		parent, err := f.ResourceByID(parentID)
 		if err != nil {

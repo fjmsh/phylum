@@ -3,7 +3,7 @@ package fs
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
@@ -26,7 +26,7 @@ func handleMkdirRequest(c *gin.Context) {
 		panic(errResourceIDInvalid)
 	}
 
-	fs := auth.GetFileSystem(c)
+	fs := authenticator.GetFileSystem(c)
 	parent, err := fs.ResourceByID(params.ParentID)
 	if err != nil {
 		panic(err)

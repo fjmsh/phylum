@@ -1,4 +1,4 @@
-package auth
+package authenticator
 
 import (
 	"encoding/base64"
@@ -7,29 +7,38 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/core/errors"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/user"
-)
-
-type authHeaderType = int
-
-const (
-	authHeaderNone    = -1
-	authHeaderUnknown = 0
-	authHeaderBasic   = 1
-	authHeaderBearer  = 2
 )
 
 var errAuthRequired = errors.NewError(http.StatusUnauthorized, "auth_required", "authorization required")
 
-func CreateHandler() func(c *gin.Context) {
-	return func(c *gin.Context) {
-		ctx := c.Request.Context()
-		if u, err := extractUserDetails(c); err != nil {
-			panic(err)
-		} else {
-			c.Set(keyUser, u)
-			c.Set(keyFileSystem, u.OpenFileSystem(ctx))
-		}
+const keyUser = "user"
+const keyFileSystem = "filesystem"
+
+func GetUser(c *gin.Context) user.User {
+	val, ok := c.Get(keyUser)
+	if !ok {
+		return user.User{}
+	}
+	return val.(user.User)
+}
+
+func GetFileSystem(c *gin.Context) fs.FileSystem {
+	val, ok := c.Get(keyFileSystem)
+	if !ok {
+		return nil
+	}
+	return val.(fs.FileSystem)
+}
+
+func Require(c *gin.Context) {
+	ctx := c.Request.Context()
+	if u, err := extractUserDetails(c); err != nil {
+		panic(err)
+	} else {
+		c.Set(keyUser, u)
+		c.Set(keyFileSystem, u.OpenFileSystem(ctx))
 	}
 }
 

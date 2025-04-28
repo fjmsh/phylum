@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/api/auth"
+	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/errors"
 )
@@ -31,7 +31,7 @@ type trashListResponse struct {
 func handleListRequest(c *gin.Context) {
 	cursor := c.Request.URL.Query().Get("cursor")
 
-	fs := auth.GetFileSystem(c)
+	fs := authenticator.GetFileSystem(c)
 	res, cursor, err := fs.TrashList(cursor, trashListLength)
 	if err != nil {
 		panic(err)
@@ -49,7 +49,7 @@ func handleListRequest(c *gin.Context) {
 }
 
 func handleEmptyRequest(c *gin.Context) {
-	fs := auth.GetFileSystem(c)
+	fs := authenticator.GetFileSystem(c)
 	_, err := fs.TrashEmpty()
 	if err != nil {
 		panic(err)
@@ -66,7 +66,7 @@ func handleRestoreRequest(c *gin.Context) {
 	name := c.Request.URL.Query().Get("name")
 	autoRename := c.Request.URL.Query().Has("auto_rename")
 
-	fs := auth.GetFileSystem(c)
+	fs := authenticator.GetFileSystem(c)
 	r, err := fs.ResourceByID(resourceID)
 	if err != nil {
 		panic(err)
