@@ -60,7 +60,7 @@ class BookmarkRepository extends Repository<PhylumAccount, Bookmark> {
 
   Future<ApiResult> refresh() async {
     return _account.apiClient.sendRequest(
-      BookmarksRequest(since: _account.getPersisted(keyLastBookmarkFetch) as int?),
+      BookmarksRequest(since: (_account.getPersisted(keyLastBookmarkFetch) as num?)?.toInt()),
       (request, response) => parseJsonMapResponse(response, BookmarkListResponse.fromResponse),
     );
   }

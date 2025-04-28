@@ -226,7 +226,7 @@ Future<String?> handleNameConflict(
     } catch (e, stack) {
       debugPrintStack(stackTrace: stack);
       if (context.mounted) {
-        await showAlertDialog(context, title: 'Unable to move $name', message: e.toString());
+        await showAlertDialog(context, title: 'Unable to create $name', message: e.toString());
       }
       return null;
     }
