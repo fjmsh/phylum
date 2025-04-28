@@ -13,6 +13,7 @@ dependencies:
   drift: ^2.19.1+1
   drift_flutter: ^0.2.1
   file_selector: ^1.0.3
+  file_saver:
   flutter_state_notifier:
   background_downloader:
   hive_ce: ^2.10.0
