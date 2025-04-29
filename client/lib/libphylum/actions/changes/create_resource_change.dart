@@ -29,10 +29,6 @@ class CreateResourceChange extends LocalChange<Resource> {
 
   @override
   Resource? apply(Resource? data) {
-    if (data != null) {
-      return data;
-    }
-
     return Resource(
       id: objectId,
       parent: parent,

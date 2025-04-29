@@ -45,9 +45,11 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
     for (final id in removedChildren) {
       await repo.reloadRemoteData(id);
     }
+    // Ancestors are partial updates, so they need to be reloaded
     for (final a in ancestors) {
       await repo.reloadRemoteData(a.id.value);
     }
+    // This resource and its children are fully parsed, so the incoming object can replace the existing one
     await repo.replaceRemoteData(resource.id, resource);
     for (final c in children) {
       await repo.replaceRemoteData(c.id, c);
