@@ -107,20 +107,21 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                TextField(
-                  decoration: InputDecoration(
-                    label: const Text('Server URL'),
-                    hintText: 'http://localhost:1234/',
-                    errorText: urlError,
+                if (!kIsWeb)
+                  TextField(
+                    decoration: InputDecoration(
+                      label: const Text('Server URL'),
+                      hintText: 'http://localhost:2448/',
+                      errorText: urlError,
+                    ),
+                    keyboardType: TextInputType.url,
+                    onChanged: (value) {
+                      setState(() {
+                        serverUrl = kIsWeb && value == '' ? Uri() : Uri.tryParse(value);
+                        urlError = serverUrl == null ? 'Invalid URL' : null;
+                      });
+                    },
                   ),
-                  keyboardType: TextInputType.url,
-                  onChanged: (value) {
-                    setState(() {
-                      serverUrl = kIsWeb && value == '' ? Uri() : Uri.tryParse(value);
-                      urlError = serverUrl == null ? 'Invalid URL' : null;
-                    });
-                  },
-                ),
                 TextField(
                   decoration: const InputDecoration(
                     label: Text('Username'),
