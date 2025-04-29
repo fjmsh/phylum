@@ -10,10 +10,11 @@ import 'package:phylum/util/permissions.dart';
 import 'package:provider/provider.dart';
 
 const reverse = false;
-const small = false;
 
 class PathView extends StatelessWidget {
-  const PathView({super.key});
+  final bool small;
+
+  const PathView({super.key, required this.small});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,7 @@ class PathView extends StatelessWidget {
           stream: account.db.watchParents(page.folderId),
           initialData: <ParentsResult>[ParentsResult(id: page.folderId, name: 'Folder')],
           builder: (context, snapshot) {
-            final path = <PathItem>[];
+            final path = <PathInfo>[];
             for (int i = snapshot.data!.length - 1; i >= 0; i--) {
               final entry = snapshot.data![i];
               final permission = (entry.permissions?.parsePermissionMap() ?? const {})[user] ?? 0;
@@ -35,14 +36,14 @@ class PathView extends StatelessWidget {
                   if (path.isNotEmpty) {
                     path.clear();
                   }
-                  path.add(PathItem(
+                  path.add(PathInfo(
                       title: 'My Files', dropTargetId: entry.id, targetPage: ExplorerPageHome(context.read())));
                 } else {
                   if (path.isEmpty) {
                     path.add(
-                        PathItem(title: 'Shared With Me', dropTargetId: null, targetPage: const ExplorerPageShared()));
+                        PathInfo(title: 'Shared With Me', dropTargetId: null, targetPage: const ExplorerPageShared()));
                   }
-                  path.add(PathItem(
+                  path.add(PathInfo(
                     title: entry.name,
                     dropTargetId: permission & permissionSetReadWrite == 0 ? null : entry.id,
                     targetPage: ExplorerPageFolder(folderId: entry.id),
@@ -51,7 +52,14 @@ class PathView extends StatelessWidget {
               }
             }
             if (path.isEmpty) {
-              path.add(PathItem(title: 'Folder', dropTargetId: null, targetPage: null));
+              path.add(const PathInfo(title: 'Folder', dropTargetId: null, targetPage: null, last: true));
+            } else {
+              path[path.length - 1] = PathInfo(
+                title: path.last.title,
+                dropTargetId: null,
+                targetPage: null,
+                last: true,
+              );
             }
             return Align(
               alignment: Alignment.centerLeft,
@@ -60,15 +68,13 @@ class PathView extends StatelessWidget {
                     ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
                     : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: Row(
-                  children: [
-                    ...path.getRange(0, path.length - 1),
-                    PathItem(title: path.last.title, dropTargetId: null, targetPage: null),
-                  ],
+                  children: path.map((info) => PathItem(info, small: small)).toList(growable: false),
                 ),
               ),
             );
           });
     }
+    final info = PathInfo(title: page.title, dropTargetId: null, targetPage: null, last: true);
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
@@ -76,57 +82,73 @@ class PathView extends StatelessWidget {
             ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
             : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
-          children: [PathItem(title: page.title, dropTargetId: null, targetPage: null)],
+          children: [PathItem(info, small: small)],
         ),
       ),
     );
   }
 }
 
-class PathItem extends StatelessWidget {
+class PathInfo {
   final String title;
   final String? dropTargetId;
   final ExplorerPage? targetPage;
+  final bool last;
 
-  const PathItem({
-    super.key,
+  const PathInfo({
     required this.title,
     required this.dropTargetId,
     required this.targetPage,
+    this.last = false,
   });
+}
+
+class PathItem extends StatelessWidget {
+  final PathInfo info;
+  final bool small;
+
+  const PathItem(this.info, {required this.small, super.key});
 
   @override
   Widget build(BuildContext context) {
-    return dropTargetId == null
-        ? buildCard(context, false)
+    return info.dropTargetId == null
+        ? buildView(context, false)
         : ResourceDragTarget(
-            resourceId: dropTargetId!,
-            buildItem: (context, dropTargetActive) => buildCard(context, dropTargetActive),
+            resourceId: info.dropTargetId!,
+            buildItem: (context, dropTargetActive) => buildView(context, dropTargetActive),
           );
+  }
+
+  Widget buildView(BuildContext context, bool dropTargetActive) {
+    if (info.last) return buildCard(context, dropTargetActive);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        buildCard(context, dropTargetActive),
+        Icon(Icons.chevron_right, size: small ? 15 : 18),
+      ],
+    );
   }
 
   Widget buildCard(BuildContext context, bool dropTargetActive) {
     final theme = Theme.of(context);
+    final textStyle = small ? theme.textTheme.bodyMedium! : theme.textTheme.bodyLarge!;
+    final color = info.targetPage == null ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant;
     return Card(
       shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.all(Radius.circular(4.0)),
-        side: dropTargetActive ? BorderSide(width: 2, color: theme.colorScheme.primary) : BorderSide.none,
+        borderRadius: small ? const BorderRadius.all(Radius.circular(3)) : const BorderRadius.all(Radius.circular(6)),
+        side: dropTargetActive ? BorderSide(width: small ? 1 : 2, color: theme.colorScheme.primary) : BorderSide.none,
       ),
-      elevation: targetPage == null ? 0 : null,
-      margin: EdgeInsets.symmetric(horizontal: 6),
+      elevation: info.targetPage == null ? 0 : null,
+      margin: small ? const EdgeInsets.symmetric(horizontal: 3) : const EdgeInsets.symmetric(horizontal: 6),
       child: InkWell(
-        onTap: targetPage == null ? null : () => Actions.maybeInvoke(context, NavIntent(target: targetPage!)),
+        onTap: info.targetPage == null ? null : () => Actions.maybeInvoke(context, NavIntent(target: info.targetPage!)),
         child: Padding(
           padding: small
-              ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+              ? const EdgeInsets.symmetric(horizontal: 6, vertical: 4)
               : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Text(title,
-              style: small
-                  ? theme.textTheme.bodyMedium!.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: targetPage == null ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant)
-                  : theme.textTheme.bodyLarge!.copyWith(
-                      color: targetPage == null ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant)),
+          child: Text(info.title, style: textStyle.copyWith(color: color)),
         ),
       ),
     );

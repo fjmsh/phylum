@@ -9,7 +9,9 @@ import 'folder_empty_view.dart';
 import 'folder_list_view.dart';
 
 class ExplorerView extends StatelessWidget {
-  const ExplorerView({super.key});
+  final bool small;
+
+  const ExplorerView({super.key, required this.small});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +19,7 @@ class ExplorerView extends StatelessWidget {
       child: ExplorerGestureHandler(
         child: Column(
           children: [
-            const PathView(),
+            PathView(small: small),
             Expanded(child: buildPage(context)),
           ],
         ),

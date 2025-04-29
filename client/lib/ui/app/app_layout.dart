@@ -115,7 +115,7 @@ class CollapsedAppLayout extends StatelessWidget {
               child: Icon(Icons.add),
             )
           : null,
-      body: const ExplorerView(),
+      body: const ExplorerView(small: true),
     );
   }
 
@@ -207,7 +207,7 @@ class ExpandedAppLayout extends StatelessWidget {
                   child: Card(
                     elevation: 0,
                     margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                    child: const ExplorerView(),
+                    child: const ExplorerView(small: false),
                   ),
                 ),
                 if (large)
