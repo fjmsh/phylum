@@ -35,7 +35,6 @@ func SetupCommand() *cobra.Command {
 
 			webAppDir := config.GetString("web_app_dir")
 			if webAppDir != "" {
-				print("WebAppDir:" + webAppDir)
 				engine.Group("/app", func(c *gin.Context) {
 					c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
 					c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
