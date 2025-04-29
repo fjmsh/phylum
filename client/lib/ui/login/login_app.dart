@@ -51,7 +51,9 @@ class LoginRouteInformationParser extends RouteInformationParser<LoginRouteConfi
     final uri = routeInformation.uri;
     final segments = uri.pathSegments;
 
-    final next = (segments.isEmpty || (segments.length == 1 && segments[0] == 'home')) ? null : uri.path;
+    final next = (segments.isEmpty || (segments.length == 1 && (segments[0] == 'home' || segments[0] == 'login')))
+        ? null
+        : uri.path;
     return SynchronousFuture(LoginRouteConfiguration(next));
   }
 
