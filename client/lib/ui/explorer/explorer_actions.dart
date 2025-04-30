@@ -16,20 +16,18 @@ import 'package:super_clipboard/super_clipboard.dart';
 import 'explorer_controller.dart';
 
 class ExplorerActions extends StatelessWidget {
+  final GlobalKey<RefreshIndicatorState> refreshKey;
   final Widget child;
 
-  const ExplorerActions({super.key, required this.child});
+  const ExplorerActions({super.key, required this.child, required this.refreshKey});
 
   @override
   Widget build(BuildContext context) {
     return Actions(
       actions: {
-        NextFocusIntent: CallbackAction<NextFocusIntent>(
-          onInvoke: (i) => null,
-        ),
-        PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(
-          onInvoke: (i) => null,
-        ),
+        NextFocusIntent: CallbackAction<NextFocusIntent>(onInvoke: (i) => null),
+        PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
+        RefreshIntent: CallbackAction<RefreshIntent>(onInvoke: (i) => refreshKey.currentState?.show()),
         PasteFromClipboardIntent: CallbackAction<PasteFromClipboardIntent>(
           onInvoke: (PasteFromClipboardIntent i) => handlePasteAction(i, context),
         ),

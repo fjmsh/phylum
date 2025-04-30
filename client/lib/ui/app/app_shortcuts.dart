@@ -100,6 +100,10 @@ class NavIntent extends Intent {
   const NavIntent({required this.target});
 }
 
+class RefreshIntent extends Intent {
+  const RefreshIntent();
+}
+
 class FocusSearchIntent extends Intent {
   const FocusSearchIntent();
 }
@@ -151,6 +155,7 @@ Map<ShortcutActivator, Intent> get appShortcuts => const {
       SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
       SingleActivator(LogicalKeyboardKey.keyH, alt: true): NavHomeIntent(),
       SingleActivator(LogicalKeyboardKey.keyS, alt: true): FocusSearchIntent(),
+      if (!kIsWeb) SingleActivator(LogicalKeyboardKey.keyR, control: true): RefreshIntent(),
       if (!kIsWeb) SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): NavBackIntent(),
       if (!kIsWeb) SingleActivator(LogicalKeyboardKey.arrowRight, alt: true): NavForwardIntent(),
     };

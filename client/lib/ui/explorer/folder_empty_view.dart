@@ -7,10 +7,11 @@ enum FolderEmptyViewType {
 }
 
 class FolderEmptyView extends StatelessWidget {
-  final Future<void> Function() onRefresh;
   final FolderEmptyViewType type;
+  final GlobalKey<RefreshIndicatorState> refreshKey;
+  final Future<void> Function() onRefresh;
 
-  const FolderEmptyView({super.key, required this.type, required this.onRefresh});
+  const FolderEmptyView({super.key, required this.refreshKey, required this.type, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +19,7 @@ class FolderEmptyView extends StatelessWidget {
       autofocus: true,
       child: LayoutBuilder(
         builder: (context, constraints) => RefreshIndicator(
+          key: refreshKey,
           onRefresh: onRefresh,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),

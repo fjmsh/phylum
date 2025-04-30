@@ -19,7 +19,7 @@ class ExplorerState {
   final bool showFocus;
   final int selectionStartIndex;
   final bool dragging;
-  final bool refreshing;
+  final Future? refresh;
   final bool refreshError;
 
   String? get folderId => page is ExplorerPageFolder ? (page as ExplorerPageFolder).folderId : null;
@@ -39,7 +39,7 @@ class ExplorerState {
     this.showFocus = false,
     this.selectionStartIndex = -1,
     this.dragging = false,
-    this.refreshing = false,
+    this.refresh,
     this.refreshError = false,
   });
 
@@ -52,7 +52,8 @@ class ExplorerState {
     bool? showFocus,
     int? selectionStartIndex,
     bool? dragging,
-    bool? refreshing,
+    Future? refresh,
+    bool updateRefresh = false,
     bool? refreshError,
   }) =>
       ExplorerState(
@@ -64,7 +65,7 @@ class ExplorerState {
         showFocus: showFocus ?? this.showFocus,
         selectionStartIndex: selectionStartIndex ?? this.selectionStartIndex,
         dragging: dragging ?? this.dragging,
-        refreshing: refreshing ?? this.refreshing,
+        refresh: updateRefresh ? refresh : this.refresh,
         refreshError: refreshError ?? this.refreshError,
       );
 
@@ -182,15 +183,21 @@ class ExplorerController extends StateNotifier<ExplorerState> {
   }
 
   Future refresh() {
-    if (state.refreshing) return Future.value(state);
-    state = state.copyWith(refreshing: true);
-    return state.page.refresh(_account).then((success) {
+    if (state.refresh != null) return state.refresh!;
+    final c = Completer();
+    state = state.copyWith(refresh: c.future, updateRefresh: true);
+    state.page.refresh(_account).then((success) {
+      c.complete();
       if (mounted) {
         state = state.copyWith(
-          refreshing: false,
+          refresh: null,
+          updateRefresh: true,
           refreshError: !success,
         );
       }
+    }).onError((err, stack) {
+      c.completeError(err!, stack);
     });
+    return c.future;
   }
 }
