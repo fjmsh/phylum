@@ -4,6 +4,7 @@ import 'package:background_downloader/background_downloader.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:open_file/open_file.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_restore.dart';
@@ -38,7 +39,8 @@ enum MenuOption {
   newFolder(Icons.create_new_folder_outlined, 'New Folder', isSingle),
   uploadFiles(Icons.upload_file_outlined, 'Upload File(s)', isSingle),
   uploadFolders(Icons.drive_folder_upload_outlined, 'Upload Folder(s)', isSingle),
-  share(Icons.share, 'Share', all),
+  share(Icons.share, 'Share', isFilesOnly),
+  openWith(Icons.open_with, 'Open With', isSingle),
   ;
 
   const MenuOption(this.icon, this.text, this.filter);
@@ -158,53 +160,28 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       break;
     case MenuOption.share:
       if (kIsWeb) return;
-      final List<DownloadTask> downloaded = [];
+      final List<String> downloaded = [];
       for (final r in resources) {
-        final uri = account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}');
-        final task = DownloadTask(
-          url: uri.toString(),
-          headers: account.apiClient.requestHeaders,
-          baseDirectory: BaseDirectory.temporary,
-          filename: r.name,
-          displayName: r.name,
-          group: 'immediate',
-          priority: 0,
-          updates: Updates.progress,
-        );
-        if (!context.mounted) {
-          return;
-        }
-        final downloadStreamController = StreamController<double?>();
-        bool dialogVisivle = true;
-        showProgresIndicatorDialog(
-          context,
-          title: r.name,
-          barrierDismissible: true,
-          progress: downloadStreamController.stream,
-        ).then((value) {
-          dialogVisivle = false;
-          if (value != true) {
-            // Task cancelled
-            FileDownloader().cancelTaskWithId(task.taskId);
+        if (context.mounted) {
+          final path = await downloadResourceSync(context, r);
+          if (path != null) {
+            downloaded.add(path);
           }
-        });
-        final status = await FileDownloader().download(task, onProgress: (progress) {
-          downloadStreamController.add(progress);
-        });
-        downloadStreamController.close();
-        if (context.mounted && dialogVisivle) Navigator.of(context).pop(true);
-        if (status.status == TaskStatus.complete) {
-          downloaded.add(task);
         }
       }
       if (downloaded.isEmpty) return;
 
-      final directory = await getApplicationCacheDirectory();
       final params = ShareParams(
-        files: downloaded.map((task) => XFile(path.join(directory.path, task.filename))).toList(growable: false),
-        fileNameOverrides: downloaded.map((task) => task.filename).toList(growable: false),
+        files: downloaded.map((p) => XFile(p)).toList(growable: false),
+        fileNameOverrides: downloaded.map((p) => path.basename(p)).toList(growable: false),
       );
       SharePlus.instance.share(params);
+      break;
+    case MenuOption.openWith:
+      if (kIsWeb || resources.isEmpty) return;
+      final p = await downloadResourceSync(context, resources.first);
+      if (p == null) return;
+      OpenFile.open(p, type: resources.first.contentType);
       break;
     case MenuOption.bookmarkAdd:
       if (resources.length == 1) {
@@ -238,6 +215,45 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
     case MenuOption.uploadFolders:
       Actions.maybeInvoke(context, const UploadFolderIntent());
   }
+}
+
+Future<String?> downloadResourceSync(BuildContext context, Resource r) async {
+  final account = context.read<PhylumAccount>();
+  final uri = account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}');
+  final task = DownloadTask(
+    url: uri.toString(),
+    headers: account.apiClient.requestHeaders,
+    baseDirectory: BaseDirectory.temporary,
+    filename: r.name,
+    displayName: r.name,
+    group: 'immediate',
+    priority: 0,
+    updates: Updates.progress,
+  );
+  final downloadStreamController = StreamController<double?>();
+  bool dialogVisivle = true;
+  showProgresIndicatorDialog(
+    context,
+    title: r.name,
+    barrierDismissible: true,
+    progress: downloadStreamController.stream,
+  ).then((value) {
+    dialogVisivle = false;
+    if (value != true) {
+      // Task cancelled
+      FileDownloader().cancelTaskWithId(task.taskId);
+    }
+  });
+  final status = await FileDownloader().download(task, onProgress: (progress) {
+    downloadStreamController.add(progress);
+  });
+  downloadStreamController.close();
+  if (context.mounted && dialogVisivle) Navigator.of(context).pop(true);
+  if (status.status == TaskStatus.complete) {
+    final directory = await getTemporaryDirectory();
+    return path.join(directory.path, task.filename);
+  }
+  return null;
 }
 
 bool isSingle(PhylumAccount account, Iterable<Resource> resources) => resources.length == 1;

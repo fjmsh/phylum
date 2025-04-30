@@ -13,6 +13,9 @@ MenuOptionGroups createOptions(BuildContext context) => [
       [
         MenuOption.download,
         if (!kIsWeb && Platform.isAndroid) MenuOption.share,
+        MenuOption.openWith,
+      ],
+      [
         MenuOption.rename,
         MenuOption.move,
         MenuOption.copy,
