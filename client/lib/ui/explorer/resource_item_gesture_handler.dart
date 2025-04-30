@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -42,70 +44,94 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (details) {
-        Focus.maybeOf(context)?.requestFocus();
-        final mode = HardwareKeyboard.instance.isControlPressed
-            ? SelectionMode.toggle
-            : HardwareKeyboard.instance.isShiftPressed
-                ? SelectionMode.range
-                : SelectionMode.single;
-        if (context.read<ExplorerState>().isSelected(widget.resource.id) && mode == SelectionMode.single) {
-          deferHandling = true;
-          context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.noChange, false);
-        } else {
-          deferHandling = false;
-          context.read<ExplorerController>().updateSelection((_) => widget.index, mode, false);
-        }
+      supportedDevices: {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.invertedStylus,
+        PointerDeviceKind.unknown,
       },
       onTap: () {
-        if (deferHandling) {
-          deferHandling = false;
+        if (context.read<ExplorerState>().selected.isEmpty) {
+          openResource(context, widget.index);
+        } else {
+          context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.toggle, false);
+        }
+      },
+      onLongPress: () {
+        if (context.read<ExplorerState>().selected.isEmpty) {
           context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.single, false);
         }
       },
-      onSecondaryTapUp: (details) async {
-        ExplorerState state = context.read<ExplorerState>();
-        if (!state.isSelected(widget.resource.id)) {
-          final mode = HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed
-              ? SelectionMode.add
-              : SelectionMode.single;
-          context.read<ExplorerController>().updateSelection((i) => widget.index, mode, false);
-          state = context.read<ExplorerState>();
-        } else {
-          context.read<ExplorerController>().updateSelection(null, SelectionMode.noChange, false);
-        }
-        final position = RelativeRect.fromLTRB(
-          details.globalPosition.dx,
-          details.globalPosition.dy,
-          details.globalPosition.dx,
-          details.globalPosition.dy,
-        );
-        final resources = state.selected;
-        var options = resourceOptions;
-        if (resources.every((r) => r.deleted != null)) {
-          options = trashedResourceOptions;
-        }
-        final items = await buildPopupMenuItems(context.read<PhylumAccount>(), options, resources);
-        if (!context.mounted) return;
-        final selection = await showMenu(
-          context: context,
-          position: position,
-          items: items.toList(growable: false),
-        );
-        if (context.mounted && selection != null) {
-          handleOption(context, resources, selection);
-        }
-      },
-      onDoubleTap: () {
-        context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.single, false);
-        Actions.maybeInvoke(context, const ActivateIntent());
-      },
-      child: ResourceDraggable(
-        resource: widget.resource,
-        index: widget.index,
-        dropTargetActive: dropTargetActive,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        supportedDevices: {PointerDeviceKind.mouse, PointerDeviceKind.trackpad},
+        onTapDown: (details) {
+          Focus.maybeOf(context)?.requestFocus();
+          final mode = HardwareKeyboard.instance.isControlPressed
+              ? SelectionMode.toggle
+              : HardwareKeyboard.instance.isShiftPressed
+                  ? SelectionMode.range
+                  : SelectionMode.single;
+          if (context.read<ExplorerState>().isSelected(widget.resource.id) && mode == SelectionMode.single) {
+            deferHandling = true;
+            context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.noChange, false);
+          } else {
+            deferHandling = false;
+            context.read<ExplorerController>().updateSelection((_) => widget.index, mode, false);
+          }
+        },
+        onTap: () {
+          if (deferHandling) {
+            deferHandling = false;
+            context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.single, false);
+          }
+        },
+        onSecondaryTapUp: (details) async {
+          ExplorerState state = context.read<ExplorerState>();
+          if (!state.isSelected(widget.resource.id)) {
+            final mode = HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed
+                ? SelectionMode.add
+                : SelectionMode.single;
+            context.read<ExplorerController>().updateSelection((i) => widget.index, mode, false);
+            state = context.read<ExplorerState>();
+          } else {
+            context.read<ExplorerController>().updateSelection(null, SelectionMode.noChange, false);
+          }
+          final position = RelativeRect.fromLTRB(
+            details.globalPosition.dx,
+            details.globalPosition.dy,
+            details.globalPosition.dx,
+            details.globalPosition.dy,
+          );
+          final resources = state.selected;
+          var options = resourceOptions;
+          if (resources.every((r) => r.deleted != null)) {
+            options = trashedResourceOptions;
+          }
+          final items = await buildPopupMenuItems(context.read<PhylumAccount>(), options, resources);
+          if (!context.mounted) return;
+          final selection = await showMenu(
+            context: context,
+            position: position,
+            items: items.toList(growable: false),
+          );
+          if (context.mounted && selection != null) {
+            handleOption(context, resources, selection);
+          }
+        },
+        onDoubleTap: () => openResource(context, widget.index),
+        child: ResourceDraggable(
+          resource: widget.resource,
+          index: widget.index,
+          dropTargetActive: dropTargetActive,
+        ),
       ),
     );
+  }
+
+  void openResource(BuildContext context, int index) {
+    Focus.maybeOf(context)?.requestFocus();
+    context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.single, false);
+    Actions.maybeInvoke(context, const ActivateIntent());
   }
 }
