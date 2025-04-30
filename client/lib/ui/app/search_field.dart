@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/page.dart';
 import 'package:provider/provider.dart';
 
@@ -15,22 +14,28 @@ class SearchField extends StatefulWidget {
 
 class _SearchFieldState extends State<SearchField> {
   final _controller = TextEditingController();
+  late final PhylumRouterDelegate _routerDelegate;
 
   @override
   void initState() {
     super.initState();
-    context.read<ExplorerController>().addListener((state) {
-      final page = state.page;
-      if (page is ExplorerPageSearch) {
-        _controller.text = page.query;
-      } else {
-        _controller.text = '';
-      }
-    });
+    _routerDelegate = context.read<PhylumRouterDelegate>();
+    _routerDelegate.addListener(_onUpdatePage);
+    _onUpdatePage();
+  }
+
+  void _onUpdatePage() {
+    final page = _routerDelegate.currentConfiguration;
+    if (page is ExplorerPageSearch) {
+      _controller.text = page.query;
+    } else {
+      _controller.text = '';
+    }
   }
 
   @override
   void dispose() {
+    _routerDelegate.removeListener(_onUpdatePage);
     _controller.dispose();
     super.dispose();
   }
