@@ -18,6 +18,9 @@ import 'package:phylum/ui/explorer/resource_permissions_view.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
+import 'package:share_plus/share_plus.dart';
 
 enum MenuOption {
   details(Icons.info_outline, 'Details', isSingle),
@@ -35,7 +38,7 @@ enum MenuOption {
   newFolder(Icons.create_new_folder_outlined, 'New Folder', isSingle),
   uploadFiles(Icons.upload_file_outlined, 'Upload File(s)', isSingle),
   uploadFolders(Icons.drive_folder_upload_outlined, 'Upload Folder(s)', isSingle),
-  share(Icons.share, 'share', all),
+  share(Icons.share, 'Share', all),
   ;
 
   const MenuOption(this.icon, this.text, this.filter);
@@ -166,6 +169,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
           displayName: r.name,
           group: 'immediate',
           priority: 0,
+          updates: Updates.progress,
         );
         if (!context.mounted) {
           return;
@@ -174,28 +178,33 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
         bool dialogVisivle = true;
         showProgresIndicatorDialog(
           context,
-          title: 'Downloading ${r.name}',
+          title: r.name,
           barrierDismissible: true,
           progress: downloadStreamController.stream,
         ).then((value) {
           dialogVisivle = false;
           if (value != true) {
             // Task cancelled
-            print('Cancelled');
             FileDownloader().cancelTaskWithId(task.taskId);
           }
         });
         final status = await FileDownloader().download(task, onProgress: (progress) {
           downloadStreamController.add(progress);
         });
-        print('Download Finished');
         downloadStreamController.close();
         if (context.mounted && dialogVisivle) Navigator.of(context).pop(true);
         if (status.status == TaskStatus.complete) {
           downloaded.add(task);
         }
       }
+      if (downloaded.isEmpty) return;
 
+      final directory = await getApplicationCacheDirectory();
+      final params = ShareParams(
+        files: downloaded.map((task) => XFile(path.join(directory.path, task.filename))).toList(growable: false),
+        fileNameOverrides: downloaded.map((task) => task.filename).toList(growable: false),
+      );
+      SharePlus.instance.share(params);
       break;
     case MenuOption.bookmarkAdd:
       if (resources.length == 1) {

@@ -47,8 +47,15 @@ Future showProgresIndicatorDialog(
       title: (title == null) ? null : Text(title),
       content: SizedBox(
         width: 360,
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
+            if (message != null)
+              Text(
+                message,
+                softWrap: true,
+                overflow: TextOverflow.fade,
+              ),
             Padding(
               padding: const EdgeInsets.only(right: 16),
               child: StreamBuilder(
@@ -56,12 +63,6 @@ Future showProgresIndicatorDialog(
                   initialData: null,
                   builder: (context, snapshot) => LinearProgressIndicator(value: snapshot.data)),
             ),
-            if (message != null)
-              Text(
-                message,
-                softWrap: true,
-                overflow: TextOverflow.fade,
-              ),
           ],
         ),
       ),
