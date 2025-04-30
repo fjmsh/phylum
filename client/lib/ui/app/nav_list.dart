@@ -8,7 +8,7 @@ import 'package:phylum/ui/explorer/page.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/button_downloads.dart';
 import 'package:phylum/ui/app/button_server_status.dart';
-import 'package:phylum/ui/app/fab_action.dart';
+import 'package:phylum/ui/app/create_action.dart';
 import 'package:phylum/ui/preview/resource_preview.dart';
 import 'package:provider/provider.dart';
 
@@ -30,7 +30,7 @@ class NavList extends StatelessWidget {
                 tooltip: 'Create',
                 position: PopupMenuPosition.under,
                 itemBuilder: (context) => [
-                  for (final action in popupMenuActions)
+                  for (final action in getCreateActions(context))
                     if (action == null)
                       const PopupMenuItem(enabled: false, height: 16, child: Divider())
                     else

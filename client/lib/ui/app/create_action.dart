@@ -1,7 +1,10 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 
-enum FabAction {
+enum CreateAction {
   newFolder(descripiton: 'New Folder', icon: Icon(Icons.create_new_folder), intent: NewFolderIntent()),
   uploadFiles(descripiton: 'Upload File(s)', icon: Icon(Icons.upload_file_rounded), intent: UploadFilesIntent()),
   uploadFolders(
@@ -11,12 +14,20 @@ enum FabAction {
   final Icon icon;
   final Intent intent;
 
-  const FabAction({required this.descripiton, required this.icon, required this.intent});
+  const CreateAction({required this.descripiton, required this.icon, required this.intent});
 }
 
-final popupMenuActions = [
-  FabAction.newFolder,
-  null,
-  FabAction.uploadFiles,
-  FabAction.uploadFolders,
-];
+List<CreateAction?> getCreateActions(BuildContext context) {
+  if (kIsWeb || Platform.isAndroid) {
+    return const [
+      CreateAction.newFolder,
+      CreateAction.uploadFiles,
+    ];
+  }
+  return const [
+    CreateAction.newFolder,
+    null,
+    CreateAction.uploadFiles,
+    CreateAction.uploadFolders,
+  ];
+}

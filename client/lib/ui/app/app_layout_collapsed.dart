@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/app/fab_action.dart';
+import 'package:phylum/ui/app/create_action.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
@@ -59,7 +59,7 @@ class AppLayoutCollapsed extends StatelessWidget {
           return ListView(
             shrinkWrap: true,
             children: [
-              for (final action in popupMenuActions)
+              for (final action in getCreateActions(ctx))
                 if (action == null)
                   const PopupMenuItem(enabled: false, height: 16, child: Divider())
                 else
