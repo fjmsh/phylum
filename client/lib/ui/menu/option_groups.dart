@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -6,24 +9,25 @@ import 'menu_option.dart';
 
 typedef MenuOptionGroups = Iterable<Iterable<MenuOption>>;
 
-const resourceOptions = [
-  [
-    MenuOption.download,
-    MenuOption.rename,
-    MenuOption.move,
-    MenuOption.copy,
-    MenuOption.delete,
-  ],
-  [
-    MenuOption.bookmarkAdd,
-    MenuOption.bookmarkRemove,
-    MenuOption.permissions,
-    MenuOption.publinks,
-  ],
-  [
-    MenuOption.details,
-  ],
-];
+MenuOptionGroups createOptions(BuildContext context) => [
+      [
+        MenuOption.download,
+        if (!kIsWeb && Platform.isAndroid) MenuOption.share,
+        MenuOption.rename,
+        MenuOption.move,
+        MenuOption.copy,
+        MenuOption.delete,
+      ],
+      [
+        MenuOption.bookmarkAdd,
+        MenuOption.bookmarkRemove,
+        MenuOption.permissions,
+        MenuOption.publinks,
+      ],
+      [
+        MenuOption.details,
+      ],
+    ];
 
 const trashedResourceOptions = [
   [

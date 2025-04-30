@@ -33,6 +33,42 @@ Future showProgressDialog(
   );
 }
 
+Future showProgresIndicatorDialog(
+  BuildContext context, {
+  required Stream<double?> progress,
+  bool barrierDismissible = false,
+  String? title,
+  String? message,
+}) {
+  return showDialog(
+    context: context,
+    barrierDismissible: barrierDismissible,
+    builder: (context) => AlertDialog(
+      title: (title == null) ? null : Text(title),
+      content: SizedBox(
+        width: 360,
+        child: Row(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: StreamBuilder(
+                  stream: progress,
+                  initialData: null,
+                  builder: (context, snapshot) => LinearProgressIndicator(value: snapshot.data)),
+            ),
+            if (message != null)
+              Text(
+                message,
+                softWrap: true,
+                overflow: TextOverflow.fade,
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 Future<bool?> showAlertDialog(
   BuildContext context, {
   bool barrierDismissible = false,

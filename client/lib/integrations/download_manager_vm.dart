@@ -29,6 +29,7 @@ class DownloadManager with ChangeNotifier {
     );
     _downloader.registerCallbacks(
       taskNotificationTapCallback: (task, notificationType) async {
+        if (task.group == 'immediate') return;
         if (notificationType == NotificationType.complete) {
           final path = await _downloader.pathInSharedStorage(await task.filePath(), SharedStorage.downloads);
 
@@ -39,6 +40,7 @@ class DownloadManager with ChangeNotifier {
       },
       taskProgressCallback: (update) {
         final task = update.task;
+        if (task.group == 'immediate') return;
         if (task is DownloadTask) {
           if (!_tasks.containsKey(task.taskId)) {
             _tasks[task.taskId] = DownloadTaskStatusNotifier(
@@ -54,6 +56,7 @@ class DownloadManager with ChangeNotifier {
       },
       taskStatusCallback: (update) {
         final task = update.task;
+        if (task.group == 'immediate') return;
         if (task is DownloadTask) {
           if (update.status == TaskStatus.complete) {
             _downloader.moveToSharedStorage(task, SharedStorage.downloads, mimeType: task.metaData);
@@ -82,7 +85,6 @@ class DownloadManager with ChangeNotifier {
       displayName: r.name,
       headers: _account.apiClient.requestHeaders,
       updates: Updates.statusAndProgress,
-      requiresWiFi: true,
       retries: 5,
       allowPause: true,
       metaData: r.contentType,

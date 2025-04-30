@@ -32,7 +32,7 @@ class AppLayoutCollapsed extends StatelessWidget {
                 IconButton(
                     onPressed: () {
                       final selected = context.read<ExplorerState>().selected;
-                      var options = resourceOptions;
+                      var options = createOptions(context);
                       if (selected.every((r) => r.deleted != null)) {
                         options = trashedResourceOptions;
                       }
