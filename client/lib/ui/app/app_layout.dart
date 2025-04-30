@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/app/app_actions.dart';
-import 'package:phylum/ui/app/fab_action.dart';
 import 'package:phylum/ui/app/nav_list.dart';
 import 'package:phylum/ui/app/search_field.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
-import 'package:phylum/ui/explorer/selection_mode.dart';
-import 'package:phylum/ui/menu/bottom_sheet.dart';
-import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:provider/provider.dart';
+
+import 'app_layout_collapsed.dart';
 
 class AppLayout extends StatefulWidget {
   const AppLayout._();
@@ -41,7 +39,7 @@ class _AppLayoutState extends State<AppLayout> {
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final layout = size.width <= 600
-        ? CollapsedAppLayout()
+        ? AppLayoutCollapsed()
         : ExpandedAppLayout(
             large: size.width > 1200,
             searchFocusNode: _searchFocusNode,
@@ -72,72 +70,6 @@ class _AppLayoutState extends State<AppLayout> {
         );
       },
     );
-  }
-}
-
-class CollapsedAppLayout extends StatelessWidget {
-  const CollapsedAppLayout({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = context.select<ExplorerState, int>((state) => state.selectedIds.length);
-    return Scaffold(
-      appBar: selected == 0
-          ? AppBar(title: const Text('Phylum'))
-          : AppBar(
-              leading: IconButton(
-                tooltip: 'Clear Selection',
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.none, false);
-                },
-              ),
-              title: Text('$selected selected'),
-              actions: [
-                IconButton(
-                    onPressed: () {
-                      final selected = context.read<ExplorerState>().selected;
-                      var options = resourceOptions;
-                      if (selected.every((r) => r.deleted != null)) {
-                        options = trashedResourceOptions;
-                      }
-                      showMenuOptionsBottomSheet(context, options, selected);
-                    },
-                    icon: Icon(Icons.adaptive.more))
-              ],
-            ),
-      drawer: selected == 0 ? const Drawer(child: NavList(showFab: false)) : null,
-      floatingActionButton: selected == 0
-          ? FloatingActionButton(
-              onPressed: () {
-                showCreateBottomSheet(context);
-              },
-              child: Icon(Icons.add),
-            )
-          : null,
-      body: const ExplorerView(small: true),
-    );
-  }
-
-  void showCreateBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-        context: context,
-        builder: (ctx) {
-          return ListView(
-            shrinkWrap: true,
-            children: [
-              for (final action in FabAction.values)
-                ListTile(
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    Actions.maybeInvoke(context, action.intent);
-                  },
-                  title: Text(action.descripiton),
-                  leading: action.icon,
-                ),
-            ],
-          );
-        });
   }
 }
 
