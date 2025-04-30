@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/nav_list.dart';
-import 'package:phylum/ui/app/search_field.dart';
+import 'package:phylum/ui/app/search.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
@@ -11,38 +11,29 @@ import 'package:provider/provider.dart';
 
 import 'app_layout_collapsed.dart';
 
-class AppLayout extends StatefulWidget {
+class AppLayout extends StatelessWidget {
   const AppLayout._();
 
   static Widget create() {
-    return StateNotifierProvider<ExplorerController, ExplorerState>(
-      create: (context) => ExplorerController(account: context.read(), routerDelegate: context.read()),
-      lazy: false,
-      child: AppLayout._(),
+    return MultiProvider(
+      providers: [
+        StateNotifierProvider<ExplorerController, ExplorerState>(
+          create: (context) => ExplorerController(account: context.read(), routerDelegate: context.read()),
+          lazy: false,
+        ),
+        ChangeNotifierProvider(create: (context) => PhylumSearchController(context)),
+      ],
+      child: const AppLayout._(),
     );
-  }
-
-  @override
-  State<AppLayout> createState() => _AppLayoutState();
-}
-
-class _AppLayoutState extends State<AppLayout> {
-  final _searchFocusNode = FocusNode();
-
-  @override
-  void dispose() {
-    _searchFocusNode.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final layout = size.width <= 600
-        ? AppLayoutCollapsed()
+        ? const AppLayoutCollapsed()
         : ExpandedAppLayout(
             large: size.width > 1200,
-            searchFocusNode: _searchFocusNode,
           );
     return ExternalDropRegion(
       buildItem: (context, dropTargetActive) {
@@ -54,18 +45,13 @@ class _AppLayoutState extends State<AppLayout> {
                     constraints: BoxConstraints.expand(),
                     child: Material(
                       color: Colors.white70,
-                      child: const Center(
-                          child: Text(
-                        'Drop Files to Upload',
-                        style: TextStyle(fontSize: 24),
-                      )),
+                      child: const Center(child: Text('Drop Files to Upload', style: TextStyle(fontSize: 24))),
                     ),
                   )
                 ],
               )
             : layout;
         return AppActions(
-          searchFocusNode: _searchFocusNode,
           child: child,
         );
       },
@@ -74,10 +60,9 @@ class _AppLayoutState extends State<AppLayout> {
 }
 
 class ExpandedAppLayout extends StatelessWidget {
-  final FocusNode searchFocusNode;
   final bool large;
 
-  const ExpandedAppLayout({super.key, required this.large, required this.searchFocusNode});
+  const ExpandedAppLayout({super.key, required this.large});
 
   @override
   Widget build(BuildContext context) {
@@ -111,9 +96,7 @@ class ExpandedAppLayout extends StatelessWidget {
                           child: Icon(Icons.search),
                         ),
                         Expanded(
-                          child: SearchField(
-                            focusNode: searchFocusNode,
-                          ),
+                          child: const SearchField(),
                         ),
                       ],
                     ),

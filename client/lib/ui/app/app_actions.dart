@@ -3,15 +3,15 @@ import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/ui/app/router.dart';
+import 'package:phylum/ui/app/search.dart';
 import 'package:phylum/ui/explorer/page.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 
 class AppActions extends StatelessWidget {
   final Widget child;
-  final FocusNode searchFocusNode;
 
-  const AppActions({super.key, required this.child, required this.searchFocusNode});
+  const AppActions({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +70,9 @@ class AppActions extends StatelessWidget {
         NavForwardIntent: CallbackAction<NavForwardIntent>(
           onInvoke: (i) => context.read<PhylumRouterDelegate>().goForward(),
         ),
-        FocusSearchIntent: CallbackAction<FocusSearchIntent>(onInvoke: (i) => searchFocusNode.requestFocus()),
+        FocusSearchIntent: CallbackAction<FocusSearchIntent>(
+          onInvoke: (i) => context.read<PhylumSearchController>().active = true,
+        ),
       },
       child: child,
     );
