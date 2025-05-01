@@ -34,22 +34,20 @@ class _ExplorerViewState extends State<ExplorerView> {
   void initState() {
     super.initState();
 
-    // Listen to media sharing coming from outside the app while the app is in the memory.
+    // Process share intents received while the app is alive
     _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
-      final files = value.map((f) => f.path).toList(growable: false);
-      handleShareIntent(files).then((value) => ReceiveSharingIntent.instance.reset());
-    }, onError: (err) {
-      print("getIntentDataStream error: $err");
+      handleShareIntent(value).then((value) => ReceiveSharingIntent.instance.reset());
     });
 
-    // Get the media sharing coming from outside the app while the app is closed.
+    // Process share intents received while the app is closed
     ReceiveSharingIntent.instance.getInitialMedia().then((value) {
-      final files = value.map((f) => f.path).toList(growable: false);
-      handleShareIntent(files).then((value) => ReceiveSharingIntent.instance.reset());
+      handleShareIntent(value).then((value) => ReceiveSharingIntent.instance.reset());
     });
   }
 
-  Future<void> handleShareIntent(List<String> paths) async {
+  Future<void> handleShareIntent(List<SharedMediaFile> files) async {
+    if (files.isEmpty) return;
+    final paths = files.map((f) => f.path).toList(growable: false);
     final account = context.read<PhylumAccount>();
     final dest = await DestinationPicker.show(context, account.userHome, allowInitialFolder: true);
     if (dest == null) {
