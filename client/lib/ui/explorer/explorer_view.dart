@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -28,21 +30,29 @@ class ExplorerView extends StatefulWidget {
 
 class _ExplorerViewState extends State<ExplorerView> {
   final _refreshKey = GlobalKey<RefreshIndicatorState>();
-  late StreamSubscription _intentSub;
+  StreamSubscription? _intentSub;
 
   @override
   void initState() {
     super.initState();
 
-    // Process share intents received while the app is alive
-    _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
-      handleShareIntent(value).then((value) => ReceiveSharingIntent.instance.reset());
-    });
+    if (!kIsWeb && Platform.isAndroid) {
+      // Process share intents received while the app is alive
+      _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
+        handleShareIntent(value).then((value) => ReceiveSharingIntent.instance.reset());
+      });
 
-    // Process share intents received while the app is closed
-    ReceiveSharingIntent.instance.getInitialMedia().then((value) {
-      handleShareIntent(value).then((value) => ReceiveSharingIntent.instance.reset());
-    });
+      // Process share intents received while the app is closed
+      ReceiveSharingIntent.instance.getInitialMedia().then((value) {
+        handleShareIntent(value).then((value) => ReceiveSharingIntent.instance.reset());
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _intentSub?.cancel();
+    super.dispose();
   }
 
   Future<void> handleShareIntent(List<SharedMediaFile> files) async {
@@ -70,12 +80,6 @@ class _ExplorerViewState extends State<ExplorerView> {
         ),
       );
     }
-  }
-
-  @override
-  void dispose() {
-    _intentSub.cancel();
-    super.dispose();
   }
 
   @override
