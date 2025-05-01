@@ -1,5 +1,5 @@
 name: phylum
-description: Self-hosted file storage
+description: Self-hosted cloud file browser
 publish_to: 'none'
 version: 0.1.0+10
 

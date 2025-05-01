@@ -1,7 +1,9 @@
 Phylum
 ======
 
-Phylum is a self-hosted cloud file storage with native clients on all platforms(*), meant as a replacement for Google Drive, Dropbox, etc.
+![Phylum Logo](https://codeberg.org/shroff/phylum/raw/commit/db7fa8bfe3cd9733e686f60dce74384d29ebc2f1/client/web/icons/icon-192.png)
+
+Phylum is a self-hosted cloud file browser with native clients on all platforms(*), meant as a replacement for Google Drive, Dropbox, etc.
 
 It is in very early stages of testing, so bugs are to be expected. While the backend is quite robust and its data model fairly fixed, don't even think about putting the only copy of any data that you care about.
 
@@ -60,6 +62,6 @@ It is usually easiest to work on the desktop app, and only test on devices/web i
 
 If you want to work on the web app using `flutter run`, then you will need to enable CORS on the server. This can be done by either passing in the `--cors-enabled` flag or by setting `PHYLUM_SERVER_CORS_ENABLED=1`. This is not required for mobile/desktop clients.
 ```
-.../phylum $ PHYLUM_DB_PASSWORD=phylum go run -C server cmd/phylum.go -W .. --web-app-dir client/build/web serve --cors-enabled
+$ PHYLUM_DB_PASSWORD=phylum go run -C server cmd/phylum.go -W .. --web-app-dir client/build/web serve --cors-enabled
 ```
 
