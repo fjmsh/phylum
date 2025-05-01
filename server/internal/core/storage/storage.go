@@ -7,6 +7,7 @@ import (
 	"errors"
 	"hash"
 	"io"
+	"path"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -22,10 +23,13 @@ type Storage struct {
 
 var s Storage
 var Config *viper.Viper
+var location string
 
 func Get() Storage {
 	if s.defaultBackend == nil {
-		if storage, err := create(Config.GetString("default_dir")); err != nil {
+		location = Config.GetString("location")
+		dir := path.Join(location, "default")
+		if storage, err := create(dir); err != nil {
 			logrus.Fatal(err)
 		} else {
 			s = storage

@@ -44,7 +44,7 @@ func SetupCommand() {
 	viper.SetDefault("db.trace_queries", "false")
 	viper.SetDefault("db.skip_migration", "false")
 
-	viper.SetDefault("storage.default_dir", "storage/default")
+	viper.SetDefault("storage.location", "storage")
 
 	uuid.EnableRandPool()
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
@@ -62,6 +62,7 @@ func SetupCommand() {
 		// TODO: Hack. flag bindings don't work in viper for nested keys
 		db.Config.BindPFlag("trace_queries", flags.Lookup("trace-queries"))
 		storage.Config = viper.Sub("storage")
+		storage.Config.BindPFlag("location", flags.Lookup("location"))
 	}
 
 	defer func() {

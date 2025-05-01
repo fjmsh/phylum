@@ -28,24 +28,25 @@ func SetupCommand() *cobra.Command {
 
 			flags := cmd.Flags()
 			// TODO: Hack. flag bindings don't work in viper for nested keys
-			config.BindPFlag("web_app_dir", flags.Lookup("web-app-dir"))
 			config.BindPFlag("host", flags.Lookup("host"))
 			config.BindPFlag("port", flags.Lookup("port"))
-			config.BindPFlag("log_body", flags.Lookup("log-body"))
 			config.BindPFlag("cors.enabled", flags.Lookup("cors-enabled"))
 			config.BindPFlag("cors.origins", flags.Lookup("cors-origins"))
-			config.BindPFlag("webdav_prefix", flags.Lookup("webdav-prefix"))
+			config.BindPFlag("log_body", flags.Lookup("log-body"))
+			config.BindPFlag("web_app_src", flags.Lookup("web-app-src"))
+			config.BindPFlag("publink_path", flags.Lookup("publink-path"))
+			config.BindPFlag("webdav_path", flags.Lookup("webdav-path"))
 
 			if !viper.GetBool("debug") {
 				gin.SetMode(gin.ReleaseMode)
 			}
 			engine := createEngine(config)
 
-			webdav.SetupHandler(engine.Group(config.GetString("webdav_prefix")))
+			webdav.SetupHandler(engine.Group(config.GetString("webdav_path")))
 			apiv1.Setup(engine.Group("/api/v1"))
-			publink.Setup(engine.Group("/publink"))
+			publink.Setup(engine.Group(config.GetString("publink_path")))
 
-			webAppDir := config.GetString("web_app_dir")
+			webAppDir := config.GetString("web_app_src")
 			if webAppDir != "" {
 				engine.Use(func(c *gin.Context) {
 					c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
@@ -67,13 +68,14 @@ func SetupCommand() *cobra.Command {
 	}
 	flags := cmd.Flags()
 
-	flags.String("web-app-dir", "web", "Web App Directory")
 	flags.String("host", "", "Server Host")
 	flags.String("port", "2448", "Server Port")
-	flags.Bool("log-body", false, "Log Response Body (Must be used with --debug)")
 	flags.Bool("cors-enabled", false, "Enable CORS")
 	flags.StringSlice("cors-origins", []string{"*"}, "CORS origins")
-	flags.String("webdav-prefix", "/webdav", "Listen Addres")
+	flags.Bool("log-body", false, "Log Response Body (Must be used with --debug)")
+	flags.String("web-app-src", "web", "Web App Source Directory")
+	flags.String("publink-path", "/publink", "Public Share path prefix")
+	flags.String("webdav-path", "/webdav", "WebDAV path prefix")
 
 	// Must be specified otherwise env variables won't be parsed
 	viper.SetDefault("server.host", "")
@@ -81,7 +83,9 @@ func SetupCommand() *cobra.Command {
 	viper.SetDefault("server.log_body", false)
 	viper.SetDefault("server.cors.enabled", false)
 	viper.SetDefault("server.cors.origins", []string{"*"})
-	viper.SetDefault("server.webdav_prefix", "/webdav")
+	viper.SetDefault("server.web_app_src", "web")
+	viper.SetDefault("server.publink_path", "/publink")
+	viper.SetDefault("server.webdav_path", "/webdav")
 
 	return cmd
 }
