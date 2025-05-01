@@ -69,7 +69,7 @@ class PhylumAccount extends Account<PhylumAccount> {
     // Set Authorization header
     _accessToken = _initialAccessToken ?? accessToken;
 
-    final dispatcherOverride = String.fromEnvironment('dispatcher');
+    final dispatcherOverride = const String.fromEnvironment('dispatcher');
     dispatcher = switch (dispatcherOverride) {
       'good' => SimulatedBadNetworkDispatcher.good(),
       'okay' => SimulatedBadNetworkDispatcher.okay(),

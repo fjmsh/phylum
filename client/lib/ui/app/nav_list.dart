@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
@@ -140,8 +141,20 @@ class NavList extends StatelessWidget {
                   if (!kIsWeb) const DownloadButton(),
                   const ServerStatusButton(),
                   ListTile(
-                    leading: const Icon(Icons.settings),
-                    title: const Text('Settings'),
+                    leading: const Icon(Icons.help),
+                    title: const Text('About'),
+                    onTap: () async {
+                      final info = await PackageInfo.fromPlatform();
+                      if (!context.mounted) return;
+                      showAboutDialog(
+                        context: context,
+                        applicationVersion: '${info.packageName} - ${info.version} (${info.buildNumber})',
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.logout),
+                    title: const Text('Log Out'),
                     onTap: () {
                       context.read<PhylumAccount>().logOut();
                     },
