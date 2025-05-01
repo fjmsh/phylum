@@ -28,6 +28,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
           objectId: resourceId,
           parent: parent,
           localName: localName,
+          dir: true,
           timestamp: timestamp,
           contentLength: 0,
           contentType: '',

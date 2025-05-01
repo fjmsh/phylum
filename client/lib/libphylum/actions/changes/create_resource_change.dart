@@ -6,6 +6,7 @@ class CreateResourceChange extends LocalChange<Resource> {
   final String objectId;
   final String parent;
   final String localName;
+  final bool dir;
   final DateTime timestamp;
   final int contentLength;
   final String contentType;
@@ -21,6 +22,7 @@ class CreateResourceChange extends LocalChange<Resource> {
     required this.objectId,
     required this.parent,
     required this.localName,
+    required this.dir,
     required this.timestamp,
     required this.contentLength,
     required this.contentType,
@@ -33,7 +35,7 @@ class CreateResourceChange extends LocalChange<Resource> {
       id: objectId,
       parent: parent,
       name: localName,
-      dir: true,
+      dir: dir,
       created: timestamp,
       modified: timestamp,
       contentLength: contentLength,

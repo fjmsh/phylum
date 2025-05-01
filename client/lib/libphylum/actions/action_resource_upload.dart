@@ -44,6 +44,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
           objectId: resourceId,
           parent: parent,
           localName: localName,
+          dir: false,
           timestamp: timestamp,
           contentLength: size,
           contentType: contentType,
