@@ -9,7 +9,7 @@ COPY client/pubspec.yaml client/pubspec.lock .
 COPY client/lib ./lib
 COPY client/web ./web
 RUN flutter pub get
-RUN flutter build web --wasm --base-href "/app/"
+RUN flutter build web --wasm
 
 FROM alpine
 WORKDIR /app
