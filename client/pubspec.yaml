@@ -1,7 +1,7 @@
 name: phylum
 description: Self-hosted file storage
 publish_to: 'none'
-version: 0.0.1+1
+version: 0.1.0+10
 
 environment:
   sdk: ^3.5.0
