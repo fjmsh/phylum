@@ -1,9 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/name_conflict.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/explorer_actions.dart';
 import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
+import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/upload_utils.dart';
+import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
@@ -31,9 +37,7 @@ class _ExplorerViewState extends State<ExplorerView> {
     // Listen to media sharing coming from outside the app while the app is in the memory.
     _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
       final files = value.map((f) => f.path).toList(growable: false);
-      print('Received files when in memory');
-      print(files);
-      ReceiveSharingIntent.instance.reset();
+      handleShareIntent(files).then((value) => ReceiveSharingIntent.instance.reset());
     }, onError: (err) {
       print("getIntentDataStream error: $err");
     });
@@ -41,10 +45,33 @@ class _ExplorerViewState extends State<ExplorerView> {
     // Get the media sharing coming from outside the app while the app is closed.
     ReceiveSharingIntent.instance.getInitialMedia().then((value) {
       final files = value.map((f) => f.path).toList(growable: false);
-      print('Received files when closed');
-      print(files);
-      ReceiveSharingIntent.instance.reset();
+      handleShareIntent(files).then((value) => ReceiveSharingIntent.instance.reset());
     });
+  }
+
+  Future<void> handleShareIntent(List<String> paths) async {
+    final account = context.read<PhylumAccount>();
+    final dest = await DestinationPicker.show(context, account.userHome, allowInitialFolder: true);
+    if (dest == null) {
+      return;
+    }
+    if (!context.mounted) return;
+    for (final path in paths) {
+      if (!mounted) return;
+      final name = await showInputDialog(context, hintText: 'File name', preset: p.basename(path));
+      if (!mounted || name == null) return;
+      await handleNameConflict(
+        context,
+        name,
+        overwriteFn: (r) => r.dir ? nameConflictDelete : nameConflictOverwrite,
+        (name, conflictResolution) => account.resourceRepository.upload(
+          parent: dest,
+          name: name,
+          path: path,
+          conflictResolution: conflictResolution,
+        ),
+      );
+    }
   }
 
   @override
