@@ -2,11 +2,13 @@ package serve
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/core/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -25,8 +27,10 @@ func createEngine(config *viper.Viper) *gin.Engine {
 	}
 
 	if config.GetBool("cors.enabled") {
+		origins := config.GetStringSlice("cors.origins")
+		logrus.Info("Enabling cors. Origins: " + strings.Join(origins, ", "))
 		engine.Use(cors.New(cors.Config{
-			AllowOrigins:     config.GetStringSlice("cors.origins"),
+			AllowOrigins:     origins,
 			AllowHeaders:     []string{"Origin", "Authorization", "Accept", "Accept-Language", "Content-Type"},
 			AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "PROPFIND", "PROPPATCH", "COPY", "MOVE"},
 			ExposeHeaders:    []string{"Content-Length"},

@@ -25,6 +25,17 @@ func SetupCommand() *cobra.Command {
 		GroupID: "server",
 		Run: func(cmd *cobra.Command, args []string) {
 			config := viper.Sub("server")
+
+			flags := cmd.Flags()
+			// TODO: Hack. flag bindings don't work in viper for nested keys
+			config.BindPFlag("web_app_dir", flags.Lookup("web-app-dir"))
+			config.BindPFlag("host", flags.Lookup("host"))
+			config.BindPFlag("port", flags.Lookup("port"))
+			config.BindPFlag("log_body", flags.Lookup("log-body"))
+			config.BindPFlag("cors.enabled", flags.Lookup("cors-enabled"))
+			config.BindPFlag("cors.origins", flags.Lookup("cors-origins"))
+			config.BindPFlag("webdav_prefix", flags.Lookup("webdav-prefix"))
+
 			if !viper.GetBool("debug") {
 				gin.SetMode(gin.ReleaseMode)
 			}
@@ -57,30 +68,19 @@ func SetupCommand() *cobra.Command {
 	flags := cmd.Flags()
 
 	flags.String("web-app-dir", "web", "Web App Directory")
-	viper.BindPFlag("server.web_app_dir", flags.Lookup("web-app-dir"))
-	viper.SetDefault("server.web_app_dir", "web")
-
-	flags.String("server-host", "", "Server Host")
-	viper.BindPFlag("server.host", flags.Lookup("server-host"))
-	viper.SetDefault("server.host", "")
-	flags.String("server-port", "2448", "Server Port")
-	viper.BindPFlag("server.port", flags.Lookup("server-port"))
-	viper.SetDefault("server.port", "2448")
-
+	flags.String("host", "", "Server Host")
+	flags.String("port", "2448", "Server Port")
 	flags.Bool("log-body", false, "Log Response Body (Must be used with --debug)")
-	viper.BindPFlag("server.log_body", flags.Lookup("log-body"))
-	viper.SetDefault("server.log_body", false)
-
 	flags.Bool("cors-enabled", false, "Enable CORS")
-	viper.BindPFlag("server.cors.enabled", flags.Lookup("cors-enabled"))
-	viper.SetDefault("server.cors.enabled", false)
-
 	flags.StringSlice("cors-origins", []string{"*"}, "CORS origins")
-	viper.BindPFlag("server.cors.origins", flags.Lookup("cors-origins"))
-	viper.SetDefault("server.cors.origins", []string{"*"})
-
 	flags.String("webdav-prefix", "/webdav", "Listen Addres")
-	viper.BindPFlag("server.webdav_prefix", flags.Lookup("webdav-prefix"))
+
+	// Must be specified otherwise env variables won't be parsed
+	viper.SetDefault("server.host", "")
+	viper.SetDefault("server.port", "2448")
+	viper.SetDefault("server.log_body", false)
+	viper.SetDefault("server.cors.enabled", false)
+	viper.SetDefault("server.cors.origins", []string{"*"})
 	viper.SetDefault("server.webdav_prefix", "/webdav")
 
 	return cmd

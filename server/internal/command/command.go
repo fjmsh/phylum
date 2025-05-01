@@ -34,7 +34,6 @@ func SetupCommand() {
 
 	flags.Bool("trace-queries", false, "Trace Database Queries")
 	flags.MarkHidden("trace-queries")
-	viper.BindPFlag("db.trace_queries", flags.Lookup("trace-queries"))
 
 	viper.SetDefault("db.host", "localhost")
 	viper.SetDefault("db.port", "5432")
@@ -53,6 +52,8 @@ func SetupCommand() {
 		}
 
 		db.Config = viper.Sub("db")
+		// TODO: Hack. flag bindings don't work in viper for nested keys
+		db.Config.BindPFlag("trace_queries", flags.Lookup("trace-queries"))
 		storage.Config = viper.Sub("storage")
 	}
 
