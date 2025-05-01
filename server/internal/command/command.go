@@ -28,6 +28,8 @@ func SetupCommand() {
 	var rootCmd = &cobra.Command{Use: path.Base(os.Args[0])}
 	flags := rootCmd.PersistentFlags()
 
+	flags.StringP("workdir", "W", "", "Set working directory")
+
 	flags.Bool("debug", false, "Debug mode")
 	flags.MarkHidden("debug")
 	viper.BindPFlag("debug", flags.Lookup("debug"))
@@ -46,6 +48,11 @@ func SetupCommand() {
 
 	uuid.EnableRandPool()
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		dir, _ := cmd.Flags().GetString("workdir")
+		if dir != "" && dir != "." {
+			logrus.Info("Changing directory to " + dir)
+			os.Chdir(dir)
+		}
 		if viper.GetBool("debug") {
 			logrus.SetLevel(logrus.TraceLevel)
 			logrus.Debug("Running in debug mode")

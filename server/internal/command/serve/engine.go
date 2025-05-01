@@ -28,7 +28,7 @@ func createEngine(config *viper.Viper) *gin.Engine {
 
 	if config.GetBool("cors.enabled") {
 		origins := config.GetStringSlice("cors.origins")
-		logrus.Info("Enabling cors. Origins: " + strings.Join(origins, ", "))
+		logrus.Info("Enabling cors (" + strings.Join(origins, ", ") + ")")
 		engine.Use(cors.New(cors.Config{
 			AllowOrigins:     origins,
 			AllowHeaders:     []string{"Origin", "Authorization", "Accept", "Accept-Language", "Content-Type"},
