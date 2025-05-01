@@ -35,14 +35,15 @@ func SetupCommand() *cobra.Command {
 
 			webAppDir := config.GetString("web_app_dir")
 			if webAppDir != "" {
-				engine.Group("/app", func(c *gin.Context) {
+				engine.Use(func(c *gin.Context) {
 					c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
 					c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
 				}).Static("/", webAppDir)
 			}
 			setupTrashCompactor()
 
-			server := endless.NewServer(config.GetString("listen"), engine)
+			listen := config.GetString("host") + ":" + config.GetString("port")
+			server := endless.NewServer(listen, engine)
 			server.BeforeBegin = func(addr string) {
 				logrus.Info("Listening on " + addr)
 			}
@@ -58,9 +59,12 @@ func SetupCommand() *cobra.Command {
 	viper.BindPFlag("server.web_app_dir", flags.Lookup("web-app-dir"))
 	viper.SetDefault("server.web_app_dir", "web")
 
-	flags.StringP("listen", "l", ":2448", "Listen Addres")
-	viper.BindPFlag("server.listen", flags.Lookup("listen"))
-	viper.SetDefault("server.listen", ":2448")
+	flags.String("server-host", "", "Server Host")
+	viper.BindPFlag("server.host", flags.Lookup("server-host"))
+	viper.SetDefault("server.host", "")
+	flags.String("server-port", "2448", "Server Port")
+	viper.BindPFlag("server.port", flags.Lookup("server-port"))
+	viper.SetDefault("server.port", "2448")
 
 	flags.Bool("log-body", false, "Log Response Body (Must be used with --debug)")
 	viper.BindPFlag("server.log_body", flags.Lookup("log-body"))
