@@ -28,6 +28,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
           objectId: resourceId,
           parent: parent,
           localName: localName,
+          dir: dir,
           timestamp: timestamp,
           contentLength: contentLength,
           contentType: contentType,
