@@ -135,6 +135,17 @@ class ExplorerController extends StateNotifier<ExplorerState> {
     state = state.copyWith(dragging: dragging);
   }
 
+  bool clearSelection() {
+    if (state.selectedIds.isEmpty) return false;
+    state = state.copyWith(
+      selectedIds: const {},
+      selectionStartIndex: state.selectionStartIndex,
+      focusIndex: state.focusIndex,
+      showFocus: false,
+    );
+    return true;
+  }
+
   void updateSelection(int Function(int)? indexFn, SelectionMode mode, bool highlight) {
     Set<String>? selectedIds;
     int index = indexFn?.call(state.focusIndex) ?? state.focusIndex;

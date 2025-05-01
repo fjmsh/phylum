@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/app/app_actions.dart';
 import 'package:phylum/ui/app/nav_list.dart';
+import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/search.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
@@ -23,6 +24,19 @@ class AppLayout extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (context) => PhylumSearchController(context)),
       ],
+      builder: (context, child) {
+        final canHandlePop =
+            context.watch<PhylumRouterDelegate>().canGoBack || context.watch<ExplorerState>().selectedIds.isNotEmpty;
+        return PopScope(
+            canPop: !canHandlePop,
+            onPopInvokedWithResult: (didPop, result) {
+              if (didPop) return;
+              if (!context.read<ExplorerController>().clearSelection()) {
+                context.read<PhylumRouterDelegate>().goBack();
+              }
+            },
+            child: child!);
+      },
       child: const AppLayout._(),
     );
   }

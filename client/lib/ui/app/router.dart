@@ -18,6 +18,8 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
 
   PhylumRouterDelegate({ExplorerPage? page}) : _current = page;
 
+  bool get canGoBack => _back.isNotEmpty;
+
   void go(ExplorerPage page) {
     if (_current != page) {
       _back = [..._back, _current!];
