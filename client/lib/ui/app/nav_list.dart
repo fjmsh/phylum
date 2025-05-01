@@ -14,8 +14,8 @@ import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
 class NavList extends StatelessWidget {
-  final bool showFab;
-  const NavList({super.key, required this.showFab});
+  final bool drawer;
+  const NavList({super.key, required this.drawer});
 
   @override
   Widget build(BuildContext context) {
@@ -24,35 +24,30 @@ class NavList extends StatelessWidget {
     return SafeArea(
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(right: 6.0),
-                  child: Image(
-                    image: AssetImage('assets/images/logo.png'),
-                    height: 36,
-                    width: 36,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                Text('PHYLUM', style: Theme.of(context).textTheme.headlineSmall
-                    // style: TextStyle(
-                    //   color: color,
-                    // ),
+          if (drawer)
+            DrawerHeader(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(right: 6.0),
+                    child: Image(
+                      image: AssetImage('assets/images/logo.png'),
+                      height: 36,
+                      width: 36,
+                      fit: BoxFit.contain,
                     ),
-              ],
+                  ),
+                  Text('PHYLUM', style: Theme.of(context).textTheme.headlineSmall),
+                ],
+              ),
             ),
-          ),
-          const Divider(),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (showFab)
+                  if (!drawer)
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: PopupMenuButton(

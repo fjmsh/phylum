@@ -56,7 +56,7 @@ class AppLayoutCollapsed extends StatelessWidget {
                     )
                   ],
                 ),
-      drawer: selected == 0 ? const Drawer(child: NavList(showFab: false)) : null,
+      drawer: selected == 0 ? const Drawer(child: NavList(drawer: true)) : null,
       floatingActionButton: selected == 0
           ? FloatingActionButton(
               onPressed: () {

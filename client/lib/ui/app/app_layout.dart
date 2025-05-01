@@ -91,9 +91,20 @@ class ExpandedAppLayout extends StatelessWidget {
             children: [
               SizedBox(
                 width: sidebarWidth,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                  child: Text('Phylum', style: Theme.of(context).textTheme.headlineLarge),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 16.0, right: 6.0),
+                      child: Image(
+                        image: AssetImage('assets/images/logo.png'),
+                        height: 36,
+                        width: 36,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    Text('PHYLUM', style: Theme.of(context).textTheme.headlineSmall),
+                  ],
                 ),
               ),
               Expanded(
@@ -129,7 +140,7 @@ class ExpandedAppLayout extends StatelessWidget {
                   child: Card(
                     elevation: 0,
                     margin: const EdgeInsets.only(left: 16, bottom: 16),
-                    child: ExcludeFocusTraversal(child: NavList(showFab: true)),
+                    child: ExcludeFocusTraversal(child: NavList(drawer: false)),
                   ),
                 ),
                 Expanded(
