@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/menu/menu_option.dart';
@@ -132,8 +133,7 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
   }
 
   void openResource(BuildContext context, int index) {
-    Focus.maybeOf(context)?.requestFocus();
-    context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.single, false);
-    Actions.maybeInvoke(context, const ActivateIntent());
+    final resource = context.read<ExplorerState>().resources[index];
+    Actions.maybeInvoke(context, OpenResourceIntent(resource));
   }
 }

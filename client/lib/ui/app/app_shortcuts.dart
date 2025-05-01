@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/ui/explorer/page.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
 
@@ -106,6 +107,12 @@ class RefreshIntent extends Intent {
 
 class FocusSearchIntent extends Intent {
   const FocusSearchIntent();
+}
+
+class OpenResourceIntent extends Intent {
+  final Resource resource;
+
+  const OpenResourceIntent(this.resource);
 }
 
 Map<ShortcutActivator, Intent> get appShortcuts => const {
