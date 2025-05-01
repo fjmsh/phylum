@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fvbock/endless"
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/publink"
 	apiv1 "github.com/shroff/phylum/server/internal/api/v1"
@@ -38,7 +39,7 @@ func SetupCommand() *cobra.Command {
 				engine.Use(func(c *gin.Context) {
 					c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
 					c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
-				}).Static("/", webAppDir)
+				}, static.Serve("/", static.LocalFile(webAppDir, false)))
 			}
 			setupTrashCompactor()
 
