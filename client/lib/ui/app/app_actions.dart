@@ -77,7 +77,7 @@ class AppActions extends StatelessWidget {
         OpenResourceIntent: CallbackAction<OpenResourceIntent>(onInvoke: (i) async {
           final resource = i.resource;
           if (resource.dir) {
-            Actions.maybeInvoke(context, NavIntent(target: ExplorerPageFolder(folderId: resource.id)));
+            context.read<PhylumRouterDelegate>().go(ExplorerPageFolder(folderId: resource.id));
             return null;
           }
           ResourcePreview.showPreview(context, [resource], 0);

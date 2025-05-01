@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:offtheline/offtheline.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
@@ -9,7 +10,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/button_downloads.dart';
 import 'package:phylum/ui/app/button_server_status.dart';
 import 'package:phylum/ui/app/create_action.dart';
-import 'package:phylum/ui/preview/resource_preview.dart';
+import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
 class NavList extends StatelessWidget {
@@ -81,11 +82,24 @@ class NavList extends StatelessWidget {
                                 return;
                               }
                               final resource = await account.db.getResource(b.resourceId);
-                              if (resource != null && context.mounted) {
-                                ResourcePreview.showPreview(context, [resource], 0);
-                                return;
+                              if (!context.mounted) return;
+                              if (resource == null) {
+                                final nav = Navigator.of(context);
+                                showProgressDialog(context, title: 'Downloading ${b.name}');
+                                final success = await account.resourceRepository
+                                    .requestResource(b.resourceId)
+                                    .then((result) => result is ApiSuccessResponse);
+                                nav.pop();
+                                if (!success) {
+                                  if (context.mounted) {
+                                    showAlertDialog(context, title: 'Unable to get file info');
+                                  }
+                                  return;
+                                }
                               }
-                              // TODO: load resource from server
+                              if (resource != null && context.mounted) {
+                                Actions.maybeInvoke(context, OpenResourceIntent(resource));
+                              }
                             },
                           ))
                       .toList(growable: false),
