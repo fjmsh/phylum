@@ -125,7 +125,9 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
       );
       if (id == null) {
         if (!context.mounted) return;
-        final confirm = await showAlertDialog(context, title: 'Cancel operation?') ?? false;
+        final confirm =
+            await showAlertDialog(context, title: 'Cancel operation?', positiveText: 'No', negativeText: 'Yes') ??
+                false;
         if (!confirm) return;
       }
     }

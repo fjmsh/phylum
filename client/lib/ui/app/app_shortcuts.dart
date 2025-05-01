@@ -156,7 +156,7 @@ Map<ShortcutActivator, Intent> get appShortcuts => const {
       SingleActivator(LogicalKeyboardKey.keyN, control: true): NewFolderIntent(),
       SingleActivator(LogicalKeyboardKey.keyU, control: true): UploadFilesIntent(),
       SingleActivator(LogicalKeyboardKey.keyU, control: true, shift: true): UploadFolderIntent(),
-      SingleActivator(LogicalKeyboardKey.keyV, control: true): PasteFromClipboardIntent(),
+      if (!kIsWeb) SingleActivator(LogicalKeyboardKey.keyV, control: true): PasteFromClipboardIntent(),
 
       // Top-level Navigation
       SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),

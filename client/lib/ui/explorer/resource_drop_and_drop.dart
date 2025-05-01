@@ -15,6 +15,7 @@ import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/logging.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
+import 'package:super_clipboard/super_clipboard.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 @pragma('vm:platform-const')
@@ -75,6 +76,56 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
   }
 }
 
+Future<String?> processDataReader(BuildContext context, String folderId, DataReader reader) async {
+  final uploadError = Completer<String?>();
+  reader.getFile(null, (file) async {
+    try {
+      final data = await file.readAll();
+      if (context.mounted) {
+        await uploadDirect(context, folderId, [
+          XFile.fromData(
+            data,
+            path: file.fileName,
+            name: file.fileName,
+            length: data.length,
+          )
+        ]);
+      }
+      uploadError.complete(null);
+    } catch (e) {
+      logger.d('Error reading file data', error: e);
+      uploadError.complete(e.toString());
+    }
+  }, onError: (err) {
+    logger.e('Error calling getFile', error: err);
+  });
+  final err = await uploadError.future;
+  if (err == null) {
+    return null;
+  }
+  if (kIsWeb) {
+    return err;
+  }
+
+  // Try reading paths from filesystem
+  final c = Completer<String?>();
+  reader.getValue(
+    Formats.fileUri,
+    (value) {
+      final path = value?.toFilePath(windows: Platform.isWindows);
+      if (path == null) {
+        c.complete('Unable to get file path');
+      } else {
+        if (context.mounted) {
+          uploadRecursive(context, folderId, [path]).then((value) => c.complete(null));
+        }
+      }
+    },
+    onError: (value) => c.complete(value.toString()),
+  );
+  return c.future;
+}
+
 class ExternalDropRegion extends StatefulWidget {
   final DropWidgetBuilder buildItem;
 
@@ -111,58 +162,14 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
       onPerformDrop: (event) async {
         final folderId = context.read<ExplorerState>().folderId;
         if (folderId == null) return;
-        final paths = <String>[];
         for (final item in event.session.items) {
           final reader = item.dataReader;
           if (reader == null) continue;
-          final uploadError = Completer<String?>();
-          reader.getFile(null, (file) async {
-            try {
-              final data = await file.readAll();
-              if (context.mounted) {
-                await uploadDirect(context, folderId, [
-                  XFile.fromData(
-                    data,
-                    path: file.fileName,
-                    name: file.fileName,
-                    length: data.length,
-                  )
-                ]);
-              }
-              uploadError.complete(null);
-              // ignore: empty_catches
-            } catch (e) {
-              logger.d('[onPerformDrop] Error reading file data', error: e);
-              uploadError.complete(e.toString());
-            }
-          }, onError: (err) {
-            logger.e('[onPerformDrop] error calling getFile', error: err);
-          });
-          final err = await uploadError.future;
-          if (err == null) {
-            continue;
-          }
-          if (kIsWeb) {
-            if (context.mounted) {
-              showAlertDialog(context, title: 'Error uploading file', message: err, barrierDismissible: true);
-            }
-            continue;
-          }
 
-          // Try reading paths from filesystem
-          final c = Completer<String?>();
-          reader.getValue(
-            Formats.fileUri,
-            (value) => c.complete(value?.toFilePath(windows: Platform.isWindows)),
-            onError: (value) => c.complete(null),
-          );
-          final path = await c.future;
-          if (path != null) {
-            paths.add(path);
-          }
-        }
-        if (context.mounted) {
-          uploadRecursive(context, folderId, paths);
+          if (!context.mounted) return;
+          final err = await processDataReader(context, folderId, reader);
+          if (!context.mounted) return;
+          showAlertDialog(context, title: 'Error uploading file', message: err, barrierDismissible: true);
         }
         setState(() => dropTargetActive = false);
       },

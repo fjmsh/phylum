@@ -9,11 +9,13 @@ import 'package:phylum/ui/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/explorer_actions.dart';
 import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
+import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:super_clipboard/super_clipboard.dart';
 
 import 'explorer_controller.dart';
 import 'folder_empty_view.dart';
@@ -47,12 +49,30 @@ class _ExplorerViewState extends State<ExplorerView> {
         handleShareIntent(value).then((value) => ReceiveSharingIntent.instance.reset());
       });
     }
+    ClipboardEvents.instance?.registerPasteEventListener(_handlePaste);
   }
 
   @override
   void dispose() {
     _intentSub?.cancel();
+    ClipboardEvents.instance?.unregisterPasteEventListener(_handlePaste);
     super.dispose();
+  }
+
+  void _handlePaste(ClipboardReadEvent event) async {
+    final folderId = context.read<ExplorerState>().folderId;
+    if (folderId == null) {
+      showAlertDialog(context, title: 'Cannot paste here');
+      return;
+    }
+    final reader = await event.getClipboardReader();
+    final items = reader.items;
+    for (final item in items) {
+      if (!mounted) return;
+      final err = await processDataReader(context, folderId, item);
+      if (!mounted || err == null) return;
+      showAlertDialog(context, title: 'Error uploading file', message: err, barrierDismissible: true);
+    }
   }
 
   Future<void> handleShareIntent(List<SharedMediaFile> files) async {
