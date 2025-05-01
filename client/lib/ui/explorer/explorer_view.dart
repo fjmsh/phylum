@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/explorer/explorer_actions.dart';
 import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
 import 'package:provider/provider.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import 'explorer_controller.dart';
 import 'folder_empty_view.dart';
@@ -19,6 +22,37 @@ class ExplorerView extends StatefulWidget {
 
 class _ExplorerViewState extends State<ExplorerView> {
   final _refreshKey = GlobalKey<RefreshIndicatorState>();
+  late StreamSubscription _intentSub;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Listen to media sharing coming from outside the app while the app is in the memory.
+    _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
+      final files = value.map((f) => f.path).toList(growable: false);
+      print('Received files when in memory');
+      print(files);
+      ReceiveSharingIntent.instance.reset();
+    }, onError: (err) {
+      print("getIntentDataStream error: $err");
+    });
+
+    // Get the media sharing coming from outside the app while the app is closed.
+    ReceiveSharingIntent.instance.getInitialMedia().then((value) {
+      final files = value.map((f) => f.path).toList(growable: false);
+      print('Received files when closed');
+      print(files);
+      ReceiveSharingIntent.instance.reset();
+    });
+  }
+
+  @override
+  void dispose() {
+    _intentSub.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ExplorerActions(

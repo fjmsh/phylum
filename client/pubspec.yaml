@@ -31,6 +31,7 @@ dependencies:
   permission_handler:
   printing:
   provider:
+  receive_sharing_intent:
   share_plus:
   sqlite3: 
   state_notifier:
