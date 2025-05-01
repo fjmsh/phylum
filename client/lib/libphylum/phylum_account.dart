@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/repositories/bookmark_repository.dart';
@@ -31,10 +30,8 @@ class PhylumAccount extends Account<PhylumAccount> {
         TrashedResource: trashedResourcRepository,
       };
 
-  final _dispatcher = kDebugMode ? SimulatedBadNetworkDispatcher.good(dropRate: 0) : HttpClientDispatcher();
-
   @override
-  Dispatcher get dispatcher => _dispatcher;
+  Dispatcher dispatcher = HttpClientDispatcher();
 
   String? _initialAccessToken;
   String? get accessToken => getPersisted(_persistKeyAccessToken);
@@ -71,6 +68,14 @@ class PhylumAccount extends Account<PhylumAccount> {
     await super.initialize();
     // Set Authorization header
     _accessToken = _initialAccessToken ?? accessToken;
+
+    final dispatcherOverride = String.fromEnvironment('dispatcher');
+    dispatcher = switch (dispatcherOverride) {
+      'good' => SimulatedBadNetworkDispatcher.good(),
+      'okay' => SimulatedBadNetworkDispatcher.okay(),
+      'bad' => SimulatedBadNetworkDispatcher.bad(),
+      _ => HttpClientDispatcher(),
+    };
 
     await userRepository.initialize();
     await bookmarkRepository.initialize();
