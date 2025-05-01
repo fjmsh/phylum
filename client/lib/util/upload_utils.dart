@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
@@ -46,13 +45,13 @@ Future<void> createDirectory(BuildContext context, String folderId, {String? pre
   );
 }
 
-void pickAndUploadFiles(BuildContext context, String folderId) async {
+Future<void> pickAndUploadFiles(BuildContext context, String folderId) async {
   final files = await openFiles();
   if (!context.mounted) return;
-  uploadDirect(context, folderId, files);
+  return uploadDirect(context, folderId, files);
 }
 
-void uploadDirect(BuildContext context, String folderId, List<XFile> files) async {
+Future<void> uploadDirect(BuildContext context, String folderId, List<XFile> files) async {
   final account = context.read<PhylumAccount>();
   for (final file in files) {
     String? id;
@@ -79,10 +78,10 @@ void uploadDirect(BuildContext context, String folderId, List<XFile> files) asyn
   }
 }
 
-void pickAndUploadDirectory(BuildContext context, String folderId) async {
+Future<void> pickAndUploadDirectory(BuildContext context, String folderId) async {
   final path = await getDirectoryPath();
   if (path == null || !context.mounted) return;
-  uploadRecursive(context, folderId, [path]);
+  return uploadRecursive(context, folderId, [path]);
 }
 
 Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<String> paths) async {

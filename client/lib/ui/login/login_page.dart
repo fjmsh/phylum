@@ -107,7 +107,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                if (!kIsWeb)
+                if (kDebugMode || !kIsWeb)
                   TextField(
                     decoration: InputDecoration(
                       label: const Text('Server URL'),

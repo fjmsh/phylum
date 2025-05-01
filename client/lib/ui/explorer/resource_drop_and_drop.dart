@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -10,6 +11,8 @@ import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_details_row.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
+import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/logging.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
@@ -108,46 +111,58 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
       onPerformDrop: (event) async {
         final folderId = context.read<ExplorerState>().folderId;
         if (folderId == null) return;
-        if (kIsWeb) {
-          for (final item in event.session.items) {
-            final reader = item.dataReader;
+        final paths = <String>[];
+        for (final item in event.session.items) {
+          final reader = item.dataReader;
+          if (reader == null) continue;
+          final uploadError = Completer<String?>();
+          reader.getFile(null, (file) async {
+            try {
+              final data = await file.readAll();
+              if (context.mounted) {
+                await uploadDirect(context, folderId, [
+                  XFile.fromData(
+                    data,
+                    path: file.fileName,
+                    name: file.fileName,
+                    length: data.length,
+                  )
+                ]);
+              }
+              uploadError.complete(null);
+              // ignore: empty_catches
+            } catch (e) {
+              logger.d('[onPerformDrop] Error reading file data', error: e);
+              uploadError.complete(e.toString());
+            }
+          }, onError: (err) {
+            logger.e('[onPerformDrop] error calling getFile', error: err);
+          });
+          final err = await uploadError.future;
+          if (err == null) {
+            continue;
+          }
+          if (kIsWeb) {
+            if (context.mounted) {
+              showAlertDialog(context, title: 'Error uploading file', message: err, barrierDismissible: true);
+            }
+            continue;
+          }
 
-            if (reader != null) {
-              final rawReader = reader.rawReader;
-              if (rawReader != null) {
-                final (entryFuture, _) = rawReader.getDataForFormat("web:entry");
-                final entry = (await entryFuture) as dynamic;
-                if (entry != null && !entry.isDirectory) {
-                  reader.getFile(null, (file) {
-                    debugPrint(file.fileName);
-                    debugPrint(file.fileSize.toString());
-                  }, onError: (err) {
-                    debugPrint(err.toString());
-                  });
-                }
-              }
-            }
+          // Try reading paths from filesystem
+          final c = Completer<String?>();
+          reader.getValue(
+            Formats.fileUri,
+            (value) => c.complete(value?.toFilePath(windows: Platform.isWindows)),
+            onError: (value) => c.complete(null),
+          );
+          final path = await c.future;
+          if (path != null) {
+            paths.add(path);
           }
-        } else {
-          final paths = <String>[];
-          for (final item in event.session.items) {
-            final reader = item.dataReader;
-            if (reader != null) {
-              final c = Completer<String?>();
-              reader.getValue(
-                Formats.fileUri,
-                (value) => c.complete(value?.toFilePath(windows: Platform.isWindows)),
-                onError: (value) => c.complete(null),
-              );
-              final path = await c.future;
-              if (path != null) {
-                paths.add(path);
-              }
-            }
-          }
-          if (context.mounted) {
-            uploadRecursive(context, folderId, paths);
-          }
+        }
+        if (context.mounted) {
+          uploadRecursive(context, folderId, paths);
         }
         setState(() => dropTargetActive = false);
       },
