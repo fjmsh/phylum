@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:offtheline/offtheline.dart';
@@ -27,6 +28,7 @@ void main() async {
     runApp(const AnotherRunningMessage());
     return;
   }
+  usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
 
   PhylumDirectories.instance.initialize();
