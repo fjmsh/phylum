@@ -68,6 +68,10 @@ class _ExplorerViewState extends State<ExplorerView> {
     final reader = await event.getClipboardReader();
     final items = reader.items;
     for (final item in items) {
+      final uri = await item.readValue(Formats.uri);
+      print('Value read: ${uri?.uri}');
+      if (4 < 5) return;
+
       if (!mounted) return;
       final err = await processDataReader(context, folderId, item);
       if (!mounted || err == null) return;

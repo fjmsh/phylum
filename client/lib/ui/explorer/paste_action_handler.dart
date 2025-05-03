@@ -1,6 +1,6 @@
-import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -18,64 +18,48 @@ void handlePasteAction(PasteFromClipboardIntent i, BuildContext context) async {
   if (folderId == null) {
     return;
   }
-  final openUri = account.apiClient.createUri('/open');
+  final openUri = kIsWeb ? Uri.base.replace(path: 'open') : account.apiClient.createUri('/open');
   final clipboard = SystemClipboard.instance;
   if (clipboard == null) {
     return;
   }
   final reader = await clipboard.read();
   final paths = <String>[];
-  final cutResources = <Resource>[];
-  final copyResources = <Resource>[];
+  final ids = <String>[];
+  var copyFn = account.resourceRepository.copy;
+
   for (final item in reader.items) {
-    final c = Completer<String?>();
-    item.getValue(
-      Formats.fileUri,
-      (value) => c.complete(value?.toFilePath(windows: Platform.isWindows)),
-      onError: (value) => c.complete(null),
-    );
-    final filePath = await c.future;
+    final filePath =
+        await item.readValue(Formats.fileUri).then((value) => value?.toFilePath(windows: Platform.isWindows));
     if (filePath != null) {
+      assert(ids.isEmpty);
       paths.add(filePath);
     } else {
-      final c = Completer<Uri?>();
-      item.getValue(Formats.uri, (value) {
-        c.complete(value?.uri);
-      }, onError: (value) => c.complete(null));
-      final uri = await c.future;
+      assert(paths.isEmpty);
+      final uri = await item.readValue(Formats.uri).then((value) => value?.uri);
       if (uri != null) {
         if (uri.authority == openUri.authority && uri.path == openUri.path && uri.queryParameters.containsKey('id')) {
-          final resourceId = uri.queryParameters['id']!;
-          final cut = uri.queryParameters.containsKey('cut');
-          final resource = await account.db.getResource(resourceId);
-          if (resource != null) {
-            (cut ? cutResources : copyResources).add(resource);
+          ids.add(uri.queryParameters['id']!);
+          if (uri.queryParameters.containsKey('cut')) {
+            copyFn = account.resourceRepository.move;
           }
         }
       }
     }
   }
   if (!context.mounted) return;
-  uploadRecursive(context, folderId, paths);
-  for (final r in cutResources) {
-    handleNameConflict(
-      context,
-      r.name,
-      overwriteFn: (r) => nameConflictDelete,
-      (name, conflictResolution) => account.resourceRepository.move(
-        resource: r,
-        name: name,
-        parent: folderId,
-        conflictResolution: conflictResolution,
-      ),
-    );
+  if (paths.isNotEmpty) {
+    uploadRecursive(context, folderId, paths);
   }
-  for (final r in copyResources) {
+  final resources =
+      await account.db.getResources(ids).then((resources) => resources.whereType<Resource>().toList(growable: false));
+  if (!context.mounted) return;
+  for (final r in resources) {
     handleNameConflict(
       context,
       r.name,
       overwriteFn: (r) => nameConflictDelete,
-      (name, conflictResolution) => account.resourceRepository.copy(
+      (name, conflictResolution) => copyFn(
         resource: r,
         name: name,
         parent: folderId,

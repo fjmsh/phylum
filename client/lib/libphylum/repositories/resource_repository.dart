@@ -22,6 +22,13 @@ import 'package:phylum/libphylum/util/uuid.dart';
 const performLocalNameCheck = true;
 const _remoteResourcesBoxName = 'remote_resources';
 
+typedef CopyMoveFn = Future<String> Function({
+  required Resource resource,
+  required String name,
+  required String parent,
+  required NameConflictResolution conflictResolution,
+});
+
 class ResourceRepository extends Repository<PhylumAccount, Resource> {
   late final PhylumAccount _account;
   late final LazyBox<Resource?> _remoteDataBox;

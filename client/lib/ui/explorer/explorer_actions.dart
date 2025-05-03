@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
@@ -12,6 +13,7 @@ import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
+import 'package:uri/uri.dart';
 
 import 'explorer_controller.dart';
 
@@ -83,8 +85,11 @@ class ExplorerActions extends StatelessWidget {
         CopyToClipboardIntent: CallbackAction<CopyToClipboardIntent>(onInvoke: (i) async {
           final account = context.read<PhylumAccount>();
           final selected = context.read<ExplorerState>().selected;
+          if (selected.isEmpty) return;
           final items = selected.map((r) {
-            final uri = account.apiClient.createUriBuilder('/open');
+            final uri = kIsWeb
+                ? UriBuilder.fromUri(Uri.base.replace(path: 'open'))
+                : account.apiClient.createUriBuilder('/open');
             uri.queryParameters['id'] = r.id;
             if (i.cut) {
               uri.queryParameters['cut'] = 'y';

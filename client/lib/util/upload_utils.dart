@@ -160,6 +160,7 @@ Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<Str
   }
 }
 
+// #TODO: handle permission errors as well
 Future<String?> handleNameConflict(
   BuildContext context,
   String name,
