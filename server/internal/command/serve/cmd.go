@@ -2,6 +2,8 @@ package serve
 
 import (
 	"context"
+	"net/http"
+	"path"
 	"time"
 
 	"github.com/fvbock/endless"
@@ -46,12 +48,9 @@ func SetupCommand() *cobra.Command {
 			apiv1.Setup(engine.Group("/api/v1"))
 			publink.Setup(engine.Group(config.GetString("publink_path")))
 
-			webAppDir := config.GetString("web_app_src")
-			if webAppDir != "" {
-				engine.Use(func(c *gin.Context) {
-					c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
-					c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
-				}, static.Serve("/", static.LocalFile(webAppDir, false)))
+			webAppSrcDir := config.GetString("web_app_src")
+			if webAppSrcDir != "" {
+				setupWebApp(engine, webAppSrcDir)
 			}
 			setupTrashCompactor()
 
@@ -88,6 +87,24 @@ func SetupCommand() *cobra.Command {
 	viper.SetDefault("server.webdav_path", "/webdav")
 
 	return cmd
+}
+
+func setupWebApp(r gin.IRoutes, webAppSrcDir string) {
+	fs := static.LocalFile(webAppSrcDir, false)
+	fileserver := http.FileServer(fs)
+	indexFilePath := path.Join(webAppSrcDir, "index.html")
+
+	staticFileHandler := func(c *gin.Context) {
+		if fs.Exists("/", c.Request.URL.Path) {
+			fileserver.ServeHTTP(c.Writer, c.Request)
+		} else {
+			http.ServeFile(c.Writer, c.Request, indexFilePath)
+		}
+	}
+	r.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
+		c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
+	}, staticFileHandler)
 }
 
 func setupTrashCompactor() {
