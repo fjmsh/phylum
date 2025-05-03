@@ -8,8 +8,8 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/explorer_actions.dart';
 import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
+import 'package:phylum/ui/explorer/paste_helpers.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
-import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:path/path.dart' as p;
@@ -66,17 +66,8 @@ class _ExplorerViewState extends State<ExplorerView> {
       return;
     }
     final reader = await event.getClipboardReader();
-    final items = reader.items;
-    for (final item in items) {
-      final uri = await item.readValue(Formats.uri);
-      print('Value read: ${uri?.uri}');
-      if (4 < 5) return;
-
-      if (!mounted) return;
-      final err = await processDataReader(context, folderId, item);
-      if (!mounted || err == null) return;
-      showAlertDialog(context, title: 'Error uploading file', message: err, barrierDismissible: true);
-    }
+    if (!mounted) return;
+    processPasteItems(context, folderId, reader.items);
   }
 
   Future<void> handleShareIntent(List<SharedMediaFile> files) async {

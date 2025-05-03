@@ -48,10 +48,10 @@ Future<void> createDirectory(BuildContext context, String folderId, {String? pre
 Future<void> pickAndUploadFiles(BuildContext context, String folderId) async {
   final files = await openFiles();
   if (!context.mounted) return;
-  return uploadDirect(context, folderId, files);
+  return uploadXFiles(context, folderId, files);
 }
 
-Future<void> uploadDirect(BuildContext context, String folderId, List<XFile> files) async {
+Future<void> uploadXFiles(BuildContext context, String folderId, Iterable<XFile> files) async {
   final account = context.read<PhylumAccount>();
   for (final file in files) {
     String? id;
@@ -81,10 +81,10 @@ Future<void> uploadDirect(BuildContext context, String folderId, List<XFile> fil
 Future<void> pickAndUploadDirectory(BuildContext context, String folderId) async {
   final path = await getDirectoryPath();
   if (path == null || !context.mounted) return;
-  return uploadRecursive(context, folderId, [path]);
+  return uploadPath(context, folderId, [path]);
 }
 
-Future<void> uploadRecursive(BuildContext context, String folderId, Iterable<String> paths) async {
+Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> paths) async {
   final account = context.read<PhylumAccount>();
   showProgressDialog(context, message: 'Counting Files');
   DirTree? tree;

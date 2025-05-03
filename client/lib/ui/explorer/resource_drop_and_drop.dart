@@ -1,21 +1,15 @@
-import 'dart:async';
-import 'dart:io';
-
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
+import 'package:phylum/ui/explorer/paste_helpers.dart';
 import 'package:phylum/ui/explorer/resource_details_row.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
-import 'package:phylum/util/dialogs.dart';
-import 'package:phylum/util/logging.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
-import 'package:super_clipboard/super_clipboard.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 @pragma('vm:platform-const')
@@ -76,56 +70,6 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
   }
 }
 
-Future<String?> processDataReader(BuildContext context, String folderId, DataReader reader) async {
-  final uploadError = Completer<String?>();
-  reader.getFile(null, (file) async {
-    try {
-      final data = await file.readAll();
-      if (context.mounted) {
-        await uploadDirect(context, folderId, [
-          XFile.fromData(
-            data,
-            path: file.fileName,
-            name: file.fileName,
-            length: data.length,
-          )
-        ]);
-      }
-      uploadError.complete(null);
-    } catch (e) {
-      logger.d('Error reading file data', error: e);
-      uploadError.complete(e.toString());
-    }
-  }, onError: (err) {
-    logger.e('Error calling getFile', error: err);
-  });
-  final err = await uploadError.future;
-  if (err == null) {
-    return null;
-  }
-  if (kIsWeb) {
-    return err;
-  }
-
-  // Try reading paths from filesystem
-  final c = Completer<String?>();
-  reader.getValue(
-    Formats.fileUri,
-    (value) {
-      final path = value?.toFilePath(windows: Platform.isWindows);
-      if (path == null) {
-        c.complete('Unable to get file path');
-      } else {
-        if (context.mounted) {
-          uploadRecursive(context, folderId, [path]).then((value) => c.complete(null));
-        }
-      }
-    },
-    onError: (value) => c.complete(value.toString()),
-  );
-  return c.future;
-}
-
 class ExternalDropRegion extends StatefulWidget {
   final DropWidgetBuilder buildItem;
 
@@ -162,15 +106,7 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
       onPerformDrop: (event) async {
         final folderId = context.read<ExplorerState>().folderId;
         if (folderId == null) return;
-        for (final item in event.session.items) {
-          final reader = item.dataReader;
-          if (reader == null) continue;
-
-          if (!context.mounted) return;
-          final err = await processDataReader(context, folderId, reader);
-          if (!context.mounted) return;
-          showAlertDialog(context, title: 'Error uploading file', message: err, barrierDismissible: true);
-        }
+        processPasteItems(context, folderId, event.session.items.map((item) => item.dataReader).whereType());
         setState(() => dropTargetActive = false);
       },
     );

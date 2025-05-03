@@ -6,7 +6,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/page.dart';
-import 'package:phylum/ui/explorer/paste_action_handler.dart';
+import 'package:phylum/ui/explorer/paste_helpers.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
 import 'package:phylum/ui/preview/resource_preview.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -31,7 +31,21 @@ class ExplorerActions extends StatelessWidget {
         PreviousFocusIntent: CallbackAction<PreviousFocusIntent>(onInvoke: (i) => null),
         RefreshIntent: CallbackAction<RefreshIntent>(onInvoke: (i) => refreshKey.currentState?.show()),
         PasteFromClipboardIntent: CallbackAction<PasteFromClipboardIntent>(
-          onInvoke: (PasteFromClipboardIntent i) => handlePasteAction(i, context),
+          onInvoke: (PasteFromClipboardIntent i) async {
+            final folderId = context.read<ExplorerState>().folderId;
+            if (folderId == null) return;
+
+            final clipboard = SystemClipboard.instance;
+            if (clipboard == null) return;
+
+            final reader = await clipboard.read();
+
+            if (!context.mounted) return;
+            processPasteItems(context, folderId, reader.items);
+
+            await SystemClipboard.instance?.write([]);
+            return null;
+          },
         ),
         SelectAllIntent: CallbackAction<SelectAllIntent>(
           onInvoke: (i) => context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.all, true),
