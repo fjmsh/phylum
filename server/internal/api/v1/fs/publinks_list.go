@@ -10,36 +10,24 @@ import (
 )
 
 type Publink struct {
-	ID          string     `json:"id"`
-	Created     time.Time  `json:"created"`
-	Deleted     *time.Time `json:"deleted"`
-	CreatedBy   string     `json:"creator"`
-	Root        uuid.UUID  `json:"root"`
-	Accessed    int32      `json:"accessed"`
-	AccessLimit int32      `json:"access_limit"`
-	Protected   bool       `json:"protected"`
-	Expires     *time.Time `json:"expires"`
+	ID          string    `json:"id"`
+	Created     time.Time `json:"created"`
+	Root        uuid.UUID `json:"root"`
+	Accessed    int32     `json:"accessed"`
+	AccessLimit int32     `json:"access_limit"`
+	Protected   bool      `json:"protected"`
+	Expires     int64     `json:"expires"`
 }
 
 func publinkFromFS(p fs.Publink) Publink {
-	var deleted *time.Time
-	if p.Deleted.Valid {
-		deleted = &p.Deleted.Time
-	}
-	var expires *time.Time
-	if p.Expires.Valid {
-		expires = &p.Expires.Time
-	}
 	return Publink{
 		ID:          p.ID,
 		Created:     p.Created,
-		Deleted:     deleted,
-		CreatedBy:   p.CreatedBy,
 		Root:        p.Root,
 		Accessed:    p.Accessed,
-		AccessLimit: p.MaxAccesses,
+		AccessLimit: p.AccessLimit,
 		Protected:   p.PasswordHash != "",
-		Expires:     expires,
+		Expires:     p.Expires,
 	}
 }
 

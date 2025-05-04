@@ -1,8 +1,6 @@
 CREATE TABLE publinks(
   id              TEXT        PRIMARY KEY,
   created         TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  deleted         TIMESTAMP,
-  created_by      TEXT        NOT NULL REFERENCES users(username) ON UPDATE CASCADE ON DELETE CASCADE,
   root            UUID        NOT NULL REFERENCES resources(id) ON UPDATE CASCADE ON DELETE CASCADE,
   accessed        INT         NOT NULL DEFAULT 0,
   access_limit    INT         NOT NULL DEFAULT 0,
@@ -10,7 +8,7 @@ CREATE TABLE publinks(
   expires         TIMESTAMP
 );
 
-CREATE INDEX publinks_by_root ON publinks(root, deleted);
+CREATE INDEX publinks_by_root ON publinks(root);
 
 CREATE INDEX publinks_by_creator ON publinks(created_by);
 

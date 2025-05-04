@@ -51,6 +51,6 @@ func ResourceFromFS(r fs.Resource) Resource {
 		ContentSHA256: r.ContentSHA256(),
 		Permissions:   string(r.Permissions()),
 		Grants:        string(r.Grants()),
-		Links:         string(r.Links()),
+		Links:         r.Links(),
 	}
 }

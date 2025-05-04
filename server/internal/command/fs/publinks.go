@@ -3,6 +3,7 @@ package fs
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/spf13/cobra"
@@ -28,19 +29,22 @@ func setupPublinksCommand() *cobra.Command {
 			}
 			for _, l := range links {
 				fmt.Print(l.ID)
-				if l.Deleted.Valid {
-					fmt.Print(" (deleted)")
-				}
 				fmt.Printf(": accessed %d", l.Accessed)
-				if l.MaxAccesses > 0 {
-					fmt.Printf("/%d", l.MaxAccesses)
+				if l.AccessLimit > 0 {
+					fmt.Printf("/%d", l.AccessLimit)
 				}
 				fmt.Print(" times")
 				if l.PasswordHash != "" {
 					fmt.Print(", password protected")
 				}
-				if l.Expires.Valid {
-					fmt.Printf(", expires " + l.Expires.Time.String())
+				if l.Expires != 0 {
+					expires := time.UnixMilli(l.Expires)
+					if expires.Before(time.Now()) {
+						fmt.Print(", EXPIRED ")
+					} else {
+						fmt.Print(", expires")
+					}
+					fmt.Printf(expires.Format(time.RFC1123))
 				}
 				fmt.Println()
 			}

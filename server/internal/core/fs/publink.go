@@ -13,36 +13,36 @@ import (
 type Publink struct {
 	ID           string
 	Created      time.Time
-	Deleted      pgtype.Timestamp
-	CreatedBy    string
 	Root         uuid.UUID
 	Accessed     int32
-	MaxAccesses  int32
+	AccessLimit  int32
 	PasswordHash string
-	Expires      pgtype.Timestamp
+	Expires      int64
 }
 
-const publinkFieldsQuery = "jsonb_agg(jsonb_build_object(" +
+const publinkFieldsQuery = "coalesce(jsonb_agg(jsonb_build_object(" +
 	"'id',l.id," +
 	"'expires',extract(epoch from l.expires)::integer," +
 	"'protected',l.password_hash <> ''," +
 	"'access_limit',l.access_limit," +
-	"'accessed',l.accessed))"
+	"'accessed',l.accessed)), '[]'::JSONB)"
 
 func scanPublink(row pgx.CollectableRow) (Publink, error) {
 	var p Publink
+	var expires *time.Time
 	if err := row.Scan(
 		&p.ID,
 		&p.Created,
-		&p.Deleted,
-		&p.CreatedBy,
 		&p.Root,
 		&p.Accessed,
-		&p.MaxAccesses,
+		&p.AccessLimit,
 		&p.PasswordHash,
-		&p.Expires,
+		&expires,
 	); err != nil {
 		return Publink{}, err
+	}
+	if expires != nil {
+		p.Expires = expires.UnixMilli()
 	}
 	return p, nil
 }
@@ -62,10 +62,10 @@ func (r Resource) CreatePublink(id, password string, expires pgtype.Timestamp, a
 		passwordHash = hash
 	}
 
-	const q = `INSERT INTO publinks(id, created_by, root, password_hash, expires, access_limit) VALUES
-	($1::text, $2::text, $3::uuid, $4::text, $5::timestamp, $6::int)`
+	const q = `INSERT INTO publinks(id, root, password_hash, expires, access_limit) VALUES
+	($1::text, $2::uuid, $3::text, $4::timestamp, $5::int)`
 
-	_, err := r.f.db.Exec(q, id, r.f.username, r.ID(), passwordHash, expires, accessLimit)
+	_, err := r.f.db.Exec(q, id, r.ID(), passwordHash, expires, accessLimit)
 	if err != nil && strings.Contains(err.Error(), "publinks_pkey") {
 		return ErrPublinkNameConflict
 	}

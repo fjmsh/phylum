@@ -90,12 +90,12 @@ func OpenFromPublink(ctx context.Context, id string, password string, path strin
 	}
 
 	// check expiration
-	if link.Expires.Valid && link.Expires.Time.Before(time.Now()) {
+	if link.Expires != 0 && time.UnixMilli(link.Expires).Before(time.Now()) {
 		return Resource{}, ErrResourceNotFound
 	}
 
 	// check max accesses
-	if link.MaxAccesses > 0 && link.MaxAccesses <= link.Accessed {
+	if link.AccessLimit > 0 && link.AccessLimit <= link.Accessed {
 		return Resource{}, ErrResourceNotFound
 	}
 
@@ -115,7 +115,7 @@ func OpenFromPublink(ctx context.Context, id string, password string, path strin
 }
 
 func getPublink(d db.Handler, id string) (Publink, error) {
-	q := "SELECT * FROM publinks p WHERE id = $1::TEXT AND deleted IS NULL"
+	q := "SELECT * FROM publinks p WHERE id = $1::TEXT"
 	if rows, err := d.Query(q, id); err != nil {
 		return Publink{}, err
 	} else if link, err := pgx.CollectExactlyOneRow(rows, scanPublink); err != nil {

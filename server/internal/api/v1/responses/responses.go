@@ -1,6 +1,8 @@
 package responses
 
 import (
+	"encoding/json"
+
 	"github.com/google/uuid"
 )
 
@@ -12,19 +14,19 @@ type Ancestor struct {
 }
 
 type Resource struct {
-	ID            uuid.UUID `json:"id"`
-	Name          string    `json:"name"`
-	ParentID      uuid.UUID `json:"parent"`
-	Dir           bool      `json:"dir"`
-	Created       int64     `json:"created"`
-	Modified      int64     `json:"modified"`
-	Deleted       int64     `json:"deleted"`
-	ContentLength int       `json:"c_len"`
-	ContentType   string    `json:"c_type"`
-	ContentSHA256 string    `json:"c_sha256"`
-	Permissions   string    `json:"permissions"`
-	Grants        string    `json:"grants"`
-	Links         string    `json:"publinks"`
+	ID            uuid.UUID       `json:"id"`
+	Name          string          `json:"name"`
+	ParentID      uuid.UUID       `json:"parent"`
+	Dir           bool            `json:"dir"`
+	Created       int64           `json:"created"`
+	Modified      int64           `json:"modified"`
+	Deleted       int64           `json:"deleted"`
+	ContentLength int             `json:"c_len"`
+	ContentType   string          `json:"c_type"`
+	ContentSHA256 string          `json:"c_sha256"`
+	Permissions   string          `json:"permissions"`
+	Grants        string          `json:"grants"`
+	Links         json.RawMessage `json:"publinks"`
 }
 
 type ResourceFull struct {
