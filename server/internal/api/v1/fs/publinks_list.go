@@ -10,8 +10,7 @@ import (
 )
 
 type Publink struct {
-	ID          int32      `json:"id"`
-	Name        string     `json:"name"`
+	ID          string     `json:"id"`
 	Created     time.Time  `json:"created"`
 	Deleted     *time.Time `json:"deleted"`
 	CreatedBy   string     `json:"creator"`
@@ -33,7 +32,6 @@ func publinkFromFS(p fs.Publink) Publink {
 	}
 	return Publink{
 		ID:          p.ID,
-		Name:        p.Name,
 		Created:     p.Created,
 		Deleted:     deleted,
 		CreatedBy:   p.CreatedBy,

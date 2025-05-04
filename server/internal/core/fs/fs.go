@@ -70,9 +70,9 @@ func Open(ctx context.Context, username string, root uuid.UUID, fullAccess bool)
 	}
 }
 
-func OpenFromPublink(ctx context.Context, name string, password string, path string) (Resource, error) {
+func OpenFromPublink(ctx context.Context, id string, password string, path string) (Resource, error) {
 	d := db.Get(ctx)
-	link, err := getPublink(d, ctx, name)
+	link, err := getPublink(d, id)
 	if err != nil {
 		return Resource{}, err
 	}
@@ -114,9 +114,9 @@ func OpenFromPublink(ctx context.Context, name string, password string, path str
 	return f.ResourceByPath(path)
 }
 
-func getPublink(d db.Handler, ctx context.Context, name string) (Publink, error) {
-	q := "SELECT * FROM publinks p WHERE name = $1::TEXT AND deleted IS NULL"
-	if rows, err := d.Query(q, name); err != nil {
+func getPublink(d db.Handler, id string) (Publink, error) {
+	q := "SELECT * FROM publinks p WHERE id = $1::TEXT AND deleted IS NULL"
+	if rows, err := d.Query(q, id); err != nil {
 		return Publink{}, err
 	} else if link, err := pgx.CollectExactlyOneRow(rows, scanPublink); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

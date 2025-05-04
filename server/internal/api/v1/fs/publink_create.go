@@ -10,7 +10,7 @@ import (
 )
 
 type publinkParams struct {
-	Name        string `json:"name" binding:"required"`
+	ID          string `json:"id" binding:"required"`
 	Password    string `json:"password"`
 	DurationStr string `json:"duration"`
 	ExpiresStr  string `json:"expires"`
@@ -20,7 +20,7 @@ type publinkParams struct {
 func handlePublinksCreateRequest(c *gin.Context) {
 	var params publinkParams
 	err := c.ShouldBindJSON(&params)
-	if err != nil || params.Name == "" {
+	if err != nil || params.ID == "" {
 		panic(errInvalidParams)
 	}
 
@@ -60,7 +60,7 @@ func handlePublinksCreateRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	if err := r.CreatePublink(params.Name, params.Password, expires, params.AccessLimit); err != nil {
+	if err := r.CreatePublink(params.ID, params.Password, expires, params.AccessLimit); err != nil {
 		panic(err)
 	}
 

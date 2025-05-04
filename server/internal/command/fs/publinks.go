@@ -27,7 +27,7 @@ func setupPublinksCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			for _, l := range links {
-				fmt.Print(l.Name)
+				fmt.Print(l.ID)
 				if l.Deleted.Valid {
 					fmt.Print(" (deleted)")
 				}

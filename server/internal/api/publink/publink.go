@@ -10,16 +10,15 @@ import (
 )
 
 func Setup(r *gin.RouterGroup) {
-	// r.Handle("OPTIONS", "/:id/*path", handler.HandleRequest)
-	r.Handle("GET", "/:name/*path", func(c *gin.Context) {
-		name := c.Param("name")
+	r.Handle("GET", "/:id/*path", func(c *gin.Context) {
+		id := c.Param("id")
 		path := c.Param("path")
 
 		_, password, _ := c.Request.BasicAuth()
-		r, err := fs.OpenFromPublink(c.Request.Context(), name, password, path)
+		r, err := fs.OpenFromPublink(c.Request.Context(), id, password, path)
 		if err != nil {
 			if errors.Is(err, fs.ErrInsufficientPermissions) {
-				c.Header("WWW-Authenticate", "Basic realm=\""+name+"\"")
+				c.Header("WWW-Authenticate", "Basic realm=\""+id+"\"")
 				c.AbortWithStatus(http.StatusUnauthorized)
 			} else if errors.Is(err, fs.ErrResourceNotFound) {
 				c.AbortWithStatus(http.StatusNotFound)

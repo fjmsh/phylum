@@ -1,6 +1,5 @@
 CREATE TABLE publinks(
-  id              SERIAL      PRIMARY KEY,
-  name            TEXT        NOT NULL,
+  id              TEXT        PRIMARY KEY,
   created         TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   deleted         TIMESTAMP,
   created_by      TEXT        NOT NULL REFERENCES users(username) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -11,8 +10,6 @@ CREATE TABLE publinks(
   expires         TIMESTAMP
 );
 
-CREATE UNIQUE INDEX unique_publink_name ON publinks(name) WHERE deleted IS NULL;
-
 CREATE INDEX publinks_by_root ON publinks(root, deleted);
 
 CREATE INDEX publinks_by_creator ON publinks(created_by);
@@ -22,7 +19,5 @@ CREATE INDEX publinks_by_creator ON publinks(created_by);
 DROP INDEX IF EXISTS publinks_by_creator;
 
 DROP INDEX IF EXISTS publinks_by_root;
-
-DROP INDEX IF EXISTS unique_publink_name;
 
 DROP TABLE publinks;

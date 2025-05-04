@@ -11,8 +11,7 @@ import (
 )
 
 type Publink struct {
-	ID           int32
-	Name         string
+	ID           string
 	Created      time.Time
 	Deleted      pgtype.Timestamp
 	CreatedBy    string
@@ -27,7 +26,6 @@ func scanPublink(row pgx.CollectableRow) (Publink, error) {
 	var p Publink
 	if err := row.Scan(
 		&p.ID,
-		&p.Name,
 		&p.Created,
 		&p.Deleted,
 		&p.CreatedBy,
@@ -42,7 +40,7 @@ func scanPublink(row pgx.CollectableRow) (Publink, error) {
 	return p, nil
 }
 
-func (r Resource) CreatePublink(name, password string, expires pgtype.Timestamp, accessLimit int) error {
+func (r Resource) CreatePublink(id, password string, expires pgtype.Timestamp, accessLimit int) error {
 	if !r.hasPermission(PermissionShare | PermissionRead) {
 		return ErrInsufficientPermissions
 	}
@@ -57,11 +55,11 @@ func (r Resource) CreatePublink(name, password string, expires pgtype.Timestamp,
 		passwordHash = hash
 	}
 
-	const q = `INSERT INTO publinks(name, created_by, root, password_hash, expires, max_accesses) VALUES
+	const q = `INSERT INTO publinks(id, created_by, root, password_hash, expires, max_accesses) VALUES
 	($1::text, $2::text, $3::uuid, $4::text, $5::timestamp, $6::int)`
 
-	_, err := r.f.db.Exec(q, name, r.f.username, r.ID(), passwordHash, expires, accessLimit)
-	if err != nil && strings.Contains(err.Error(), "unique_publink_name") {
+	_, err := r.f.db.Exec(q, id, r.f.username, r.ID(), passwordHash, expires, accessLimit)
+	if err != nil && strings.Contains(err.Error(), "publinks_pkey") {
 		return ErrPublinkNameConflict
 	}
 	return err

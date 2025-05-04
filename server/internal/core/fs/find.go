@@ -24,7 +24,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		UnionAll(sub)
 
 	l := goqu.T("publinks").As("l")
-	q := pg.Select(resources.All(), pg.Select(goqu.L("jsonb_agg(?)", l.Col("name"))).From(l).Where(l.Col("root").Eq(resources.Col("id")), l.Col("deleted").IsNull())).
+	q := pg.Select(resources.All(), pg.Select(goqu.L("jsonb_agg(?)", l.Col("id"))).From(l).Where(l.Col("root").Eq(resources.Col("id")))).
 		From(resources).
 		WithRecursive("nodes(id, parent, search, depth)", rec).
 		Join(nodes, goqu.On(resources.Col("id").Eq(nodes.Col("id")))).
@@ -40,7 +40,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 }
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	const query = "SELECT r.*, (SELECT jsonb_agg(l.name) FROM publinks l WHERE l.root = r.id AND l.deleted IS NULL) AS links FROM resources r WHERE id = $1::UUID"
+	const query = "SELECT r.*, (SELECT jsonb_agg(l.id) FROM publinks l WHERE l.root = r.id) AS links FROM resources r WHERE id = $1::UUID"
 	if rows, err := f.db.Query(query, id); err != nil {
 		return Resource{}, err
 	} else {

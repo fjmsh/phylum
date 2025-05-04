@@ -17,7 +17,7 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 	r := goqu.T("resources")
 	q := pg.From(t).
 		Join(r, goqu.On(t.Col("id").Eq(r.Col("id")))).
-		Select(r.All(), pg.Select(goqu.L("jsonb_agg(?)", l.Col("name"))).From(l).Where(l.Col("root").Eq(r.Col("id")), l.Col("deleted").IsNull()))
+		Select(r.All(), pg.Select(goqu.L("jsonb_agg(?)", l.Col("id"))).From(l).Where(l.Col("root").Eq(r.Col("id"))))
 	if !f.fullAccess {
 		q = q.Where(goqu.L("permissions[?]::INTEGER <> 0", f.username))
 	}
