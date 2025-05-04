@@ -52,7 +52,20 @@ Future<void> pickAndUploadFiles(BuildContext context, String folderId) async {
 }
 
 Future<void> uploadXFiles(BuildContext context, String folderId, Iterable<XFile> files) async {
+  if (files.isEmpty) return;
   final account = context.read<PhylumAccount>();
+  final size =
+      await Future.wait(files.map((files) => files.length())).then((sizes) => sizes.fold(0, (acc, s) => acc + s));
+  if (!context.mounted) return;
+  final confirm = await showAlertDialog(
+        context,
+        title: 'Upload ${files.length} Files?',
+        message: 'Total Upload Size: ${size.formatForDisplay()}',
+        positiveText: 'YES',
+        negativeText: 'NO',
+      ) ??
+      false;
+  if (!confirm || !context.mounted) return;
   for (final file in files) {
     String? id;
     ensurefile:
