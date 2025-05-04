@@ -5,7 +5,7 @@ CREATE TABLE publinks(
   created_by      TEXT        NOT NULL REFERENCES users(username) ON UPDATE CASCADE ON DELETE CASCADE,
   root            UUID        NOT NULL REFERENCES resources(id) ON UPDATE CASCADE ON DELETE CASCADE,
   accessed        INT         NOT NULL DEFAULT 0,
-  max_accesses    INT         NOT NULL DEFAULT 0,
+  access_limit    INT         NOT NULL DEFAULT 0,
   password_hash   TEXT        NOT NULL DEFAULT '',
   expires         TIMESTAMP
 );

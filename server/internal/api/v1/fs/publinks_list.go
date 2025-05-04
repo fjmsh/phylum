@@ -16,7 +16,7 @@ type Publink struct {
 	CreatedBy   string     `json:"creator"`
 	Root        uuid.UUID  `json:"root"`
 	Accessed    int32      `json:"accessed"`
-	MaxAccesses int32      `json:"max_accesses"`
+	AccessLimit int32      `json:"access_limit"`
 	Protected   bool       `json:"protected"`
 	Expires     *time.Time `json:"expires"`
 }
@@ -37,7 +37,7 @@ func publinkFromFS(p fs.Publink) Publink {
 		CreatedBy:   p.CreatedBy,
 		Root:        p.Root,
 		Accessed:    p.Accessed,
-		MaxAccesses: p.MaxAccesses,
+		AccessLimit: p.MaxAccesses,
 		Protected:   p.PasswordHash != "",
 		Expires:     expires,
 	}
