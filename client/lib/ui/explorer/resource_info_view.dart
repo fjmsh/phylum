@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:offtheline/offtheline.dart';
@@ -19,6 +20,7 @@ import 'package:phylum/util/permissions.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
+import 'package:uri/uri.dart';
 
 import 'resource_icon_extension.dart';
 
@@ -105,10 +107,10 @@ class ResourceInfoView extends StatelessWidget {
             onTap: () => showReponsiveDialog(
                 context, 'Permissions', (context) => ResourcePermissionsView(resourceId: resource.id)),
           ),
-          ListTile(
+          ExpansionTile(
             leading: const Icon(Icons.public),
             title: const Text('Public Shares'),
-            subtitle: publinks.isEmpty ? const Text('--') : Text(publinks.join(', ')),
+            subtitle: publinks.isEmpty ? const Text('--') : Text(publinks.length.toString()),
             trailing: IconButton(
               icon: const Icon(Icons.add),
               onPressed: () async {
@@ -124,6 +126,22 @@ class ResourceInfoView extends StatelessWidget {
                 ));
               },
             ),
+            initiallyExpanded: true,
+            children: publinks
+                .map((l) => ListTile(
+                      dense: true,
+                      title: Text(l),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.copy),
+                        onPressed: () {
+                          final uri = kIsWeb
+                              ? UriBuilder.fromUri(Uri.base).path = 'publink/$l'
+                              : account.apiClient.createUri('publink/$l');
+                          Clipboard.setData(ClipboardData(text: uri.toString()));
+                        },
+                      ),
+                    ))
+                .toList(growable: false),
           ),
           if (!resource.dir)
             ListTile(
