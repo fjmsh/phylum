@@ -54,7 +54,7 @@ func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted, includeLi
 	q := pg.
 		From(t)
 	if includeLinks {
-		q = q.Select(t.All(), pg.Select(goqu.L("jsonb_agg(?)", l.Col("id"))).From(l).Where(l.Col("root").Eq(t.Col("id"))))
+		q = q.Select(t.All(), pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(t.Col("id"))))
 	}
 	q = q.WithRecursive("nodes("+strings.Join(cols, ",")+")", base.UnionAll(rec)).
 		Where(t.Col("id").Eq(idSelect))
@@ -66,7 +66,7 @@ func selectDirectChildren(id uuid.UUID, deleted pgtype.Timestamp, includeDeleted
 	r := goqu.T("resources").As("r")
 	q := pg.
 		From(r).
-		Select(r.All(), pg.Select(goqu.L("jsonb_agg(?)", l.Col("id"))).From(l).Where(l.Col("root").Eq(r.Col("id")))).
+		Select(r.All(), pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(r.Col("id")))).
 		Where(r.Col("parent").Eq(goqu.V(id)))
 	if !includeDeleted {
 		q = q.Where(goqu.L("? IS NOT DISTINCT FROM ?", r.Col("deleted"), goqu.V(deleted)))

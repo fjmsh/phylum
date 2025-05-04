@@ -22,6 +22,13 @@ type Publink struct {
 	Expires      pgtype.Timestamp
 }
 
+const publinkFieldsQuery = "jsonb_agg(jsonb_build_object(" +
+	"'id',l.id," +
+	"'expires',extract(epoch from l.expires)::integer," +
+	"'protected',l.password_hash <> ''," +
+	"'access_limit',l.access_limit," +
+	"'accessed',l.accessed))"
+
 func scanPublink(row pgx.CollectableRow) (Publink, error) {
 	var p Publink
 	if err := row.Scan(
@@ -55,7 +62,7 @@ func (r Resource) CreatePublink(id, password string, expires pgtype.Timestamp, a
 		passwordHash = hash
 	}
 
-	const q = `INSERT INTO publinks(id, created_by, root, password_hash, expires, max_accesses) VALUES
+	const q = `INSERT INTO publinks(id, created_by, root, password_hash, expires, access_limit) VALUES
 	($1::text, $2::text, $3::uuid, $4::text, $5::timestamp, $6::int)`
 
 	_, err := r.f.db.Exec(q, id, r.f.username, r.ID(), passwordHash, expires, accessLimit)

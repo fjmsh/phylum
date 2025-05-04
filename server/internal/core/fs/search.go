@@ -8,7 +8,7 @@ import (
 
 func (f filesystem) Search(query string, includeDeleted bool) ([]Resource, error) {
 	qb := strings.Builder{}
-	qb.WriteString(`SELECT r.*, (SELECT jsonb_agg(l.id) FROM publinks l WHERE l.root = r.id) as links FROM resources r
+	qb.WriteString(`SELECT r.*, (SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) as links FROM resources r
 WHERE f_prepare_search(name) %> @query::TEXT`)
 	if !includeDeleted {
 		qb.WriteString("\nAND deleted IS NULL")
