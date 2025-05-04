@@ -12,7 +12,8 @@ type publinkParams struct {
 	Name        string `json:"name" binding:"required"`
 	Password    string `json:"password"`
 	DurationStr string `json:"duration"`
-	duration    time.Duration
+	ExpiresStr  string `json:"expires"`
+	expires     time.Time
 	Accesses    int `json:"accesses"`
 }
 
@@ -22,9 +23,22 @@ func handlePublinkCreateRequest(c *gin.Context) {
 	if err != nil || params.Name == "" {
 		panic(errInvalidParams)
 	}
-	params.duration, err = time.ParseDuration(params.DurationStr)
-	if err != nil || params.duration.Milliseconds() < 0 {
-		panic(errInvalidParams)
+
+	if params.ExpiresStr != "" {
+		params.expires, err = time.Parse(time.RFC3339, params.ExpiresStr)
+		if err != nil {
+			panic(errInvalidParams)
+		}
+	}
+	if params.DurationStr != "" {
+		if params.ExpiresStr != "" {
+			panic(errInvalidParams)
+		}
+		duration, err := time.ParseDuration(params.DurationStr)
+		if err != nil || duration.Milliseconds() < 0 {
+			panic(errInvalidParams)
+		}
+		params.expires = time.Now().Add(duration)
 	}
 
 	resourceID, err := uuid.Parse(c.Param("id"))
@@ -38,7 +52,7 @@ func handlePublinkCreateRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	if err := r.CreatePublink(params.Name, params.Password, params.duration, params.Accesses); err != nil {
+	if err := r.CreatePublink(params.Name, params.Password, params.expires, params.Accesses); err != nil {
 		panic(err)
 	}
 

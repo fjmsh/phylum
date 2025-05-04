@@ -36,17 +36,18 @@ func createPublink(f fs.FileSystem, name, pathOrUUID string, password string, du
 	if err != nil {
 		return err
 	}
-	var duration time.Duration
+	var expires time.Time
 	if durationStr != "" {
 		var err error
-		duration, err = time.ParseDuration(durationStr)
+		duration, err := time.ParseDuration(durationStr)
 		if err != nil {
 			return err
 		}
 		if duration < 0 {
 			return errors.New("duration cannot be negative: " + duration.String())
 		}
+		expires = time.Now().Add(duration)
 	}
 
-	return r.CreatePublink(name, password, duration, accesses)
+	return r.CreatePublink(name, password, expires, accesses)
 }

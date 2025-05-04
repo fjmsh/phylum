@@ -41,7 +41,7 @@ func scanPublink(row pgx.CollectableRow) (Publink, error) {
 	return p, nil
 }
 
-func (r Resource) CreatePublink(name, password string, duration time.Duration, accesses int) error {
+func (r Resource) CreatePublink(name, password string, exp time.Time, accesses int) error {
 	if !r.hasPermission(PermissionShare | PermissionRead) {
 		return ErrInsufficientPermissions
 	}
@@ -56,12 +56,9 @@ func (r Resource) CreatePublink(name, password string, duration time.Duration, a
 		passwordHash = hash
 	}
 
-	expires := pgtype.Timestamp{}
-	if duration != 0 {
-		expires = pgtype.Timestamp{
-			Time:  time.Now().Add(duration),
-			Valid: true,
-		}
+	expires := pgtype.Timestamp{
+		Time:  exp,
+		Valid: exp.UnixMilli() != 0,
 	}
 
 	const q = `INSERT INTO publinks(name, created_by, root, password_hash, expires, max_accesses) VALUES
