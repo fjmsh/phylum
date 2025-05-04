@@ -96,6 +96,7 @@ Future<bool?> showAlertDialog(
       actions: <Widget>[
         if (negativeText != null)
           TextButton(
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
             child: Text(negativeText),
             onPressed: () {
               Navigator.of(context).pop(false);

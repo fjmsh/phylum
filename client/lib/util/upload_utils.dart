@@ -201,7 +201,7 @@ Future<String?> handleNameConflict(
           actions: <Widget>[
             if (overwrite != null)
               TextButton(
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
                 child: const Text('Overwrite'),
                 onPressed: () {
                   Navigator.of(context).pop(overwrite);

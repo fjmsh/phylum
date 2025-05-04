@@ -8,6 +8,7 @@ import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
+import 'package:phylum/ui/explorer/create_publink_view.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/explorer/resource_permissions_view.dart';
@@ -109,7 +110,11 @@ class ResourceInfoView extends StatelessWidget {
             subtitle: publinks.isEmpty ? const Text('--') : Text(publinks.join(', ')),
             trailing: IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () {},
+              onPressed: () async {
+                final info = await CreatePublinkView.show(context, resource.id);
+                if (info == null) return;
+                print('Created');
+              },
             ),
           ),
           if (!resource.dir)
