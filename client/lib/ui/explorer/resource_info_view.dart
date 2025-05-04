@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
@@ -61,6 +62,8 @@ class ResourceInfoView extends StatelessWidget {
     final repository = context.read<PhylumAccount>().userRepository;
     final entries = p.entries.toList(growable: false)..sort(((a, b) => a.key.compareTo(b.key)));
     final other = entries.map((e) => repository.getUserDisplayName(e.key)).join(', ');
+    final publinks =
+        resource.publinks == null ? const <String>[] : (jsonDecode(resource.publinks!) as List).cast<String>();
 
     return ListTileTheme(
       data: ListTileThemeData(
@@ -105,6 +108,14 @@ class ResourceInfoView extends StatelessWidget {
           ListTile(
             title: const Text('Others with Access'),
             subtitle: other.isEmpty ? const Text('--') : Text(other),
+          ),
+          ListTile(
+            title: const Text('Public Shares'),
+            subtitle: publinks.isEmpty ? const Text('--') : Text(publinks.join(', ')),
+            trailing: IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () {},
+            ),
           ),
         ],
       ),
