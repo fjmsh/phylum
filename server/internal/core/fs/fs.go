@@ -115,7 +115,7 @@ func OpenFromPublink(ctx context.Context, name string, password string, path str
 }
 
 func getPublink(d db.Handler, ctx context.Context, name string) (Publink, error) {
-	q := "SELECT FROM publinks p WHERE name = $1::TEXT AND deleted IS NULL"
+	q := "SELECT * FROM publinks p WHERE name = $1::TEXT AND deleted IS NULL"
 	if rows, err := d.Query(q, name); err != nil {
 		return Publink{}, err
 	} else if link, err := pgx.CollectExactlyOneRow(rows, scanPublink); err != nil {

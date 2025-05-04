@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 )
 
@@ -14,7 +15,6 @@ type publinkParams struct {
 	DurationStr string `json:"duration"`
 	ExpiresStr  string `json:"expires"`
 	AccessLimit int    `json:"access_limit"`
-	expires     time.Time
 }
 
 func handlePublinksCreateRequest(c *gin.Context) {
@@ -24,10 +24,15 @@ func handlePublinksCreateRequest(c *gin.Context) {
 		panic(errInvalidParams)
 	}
 
+	var expires pgtype.Timestamp
 	if params.ExpiresStr != "" {
-		params.expires, err = time.Parse(time.RFC3339, params.ExpiresStr)
+		exp, err := time.Parse(time.RFC3339, params.ExpiresStr)
 		if err != nil {
 			panic(errInvalidParams)
+		}
+		expires = pgtype.Timestamp{
+			Time:  exp,
+			Valid: true,
 		}
 	}
 	if params.DurationStr != "" {
@@ -38,7 +43,10 @@ func handlePublinksCreateRequest(c *gin.Context) {
 		if err != nil || duration.Milliseconds() < 0 {
 			panic(errInvalidParams)
 		}
-		params.expires = time.Now().Add(duration)
+		expires = pgtype.Timestamp{
+			Time:  time.Now().Add(duration),
+			Valid: true,
+		}
 	}
 
 	resourceID, err := uuid.Parse(c.Param("id"))
@@ -52,7 +60,7 @@ func handlePublinksCreateRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	if err := r.CreatePublink(params.Name, params.Password, params.expires, params.AccessLimit); err != nil {
+	if err := r.CreatePublink(params.Name, params.Password, expires, params.AccessLimit); err != nil {
 		panic(err)
 	}
 

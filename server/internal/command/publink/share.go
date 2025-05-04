@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/spf13/cobra"
@@ -36,7 +37,7 @@ func createPublink(f fs.FileSystem, name, pathOrUUID string, password string, du
 	if err != nil {
 		return err
 	}
-	var expires time.Time
+	var expires pgtype.Timestamp
 	if durationStr != "" {
 		var err error
 		duration, err := time.ParseDuration(durationStr)
@@ -46,7 +47,10 @@ func createPublink(f fs.FileSystem, name, pathOrUUID string, password string, du
 		if duration < 0 {
 			return errors.New("duration cannot be negative: " + duration.String())
 		}
-		expires = time.Now().Add(duration)
+		expires = pgtype.Timestamp{
+			Time:  time.Now().Add(duration),
+			Valid: true,
+		}
 	}
 
 	return r.CreatePublink(name, password, expires, accesses)
