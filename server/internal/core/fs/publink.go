@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -60,6 +61,9 @@ func (r Resource) CreatePublink(name, password string, expires pgtype.Timestamp,
 	($1::text, $2::text, $3::uuid, $4::text, $5::timestamp, $6::int)`
 
 	_, err := r.f.db.Exec(q, name, r.f.username, r.ID(), passwordHash, expires, accessLimit)
+	if err != nil && strings.Contains(err.Error(), "unique_publink_name") {
+		return ErrPublinkNameConflict
+	}
 	return err
 }
 

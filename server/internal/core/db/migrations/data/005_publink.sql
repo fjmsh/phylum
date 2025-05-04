@@ -11,7 +11,7 @@ CREATE TABLE publinks(
   expires         TIMESTAMP
 );
 
-CREATE UNIQUE INDEX unique_publink ON publinks(name) WHERE deleted IS NULL;
+CREATE UNIQUE INDEX unique_publink_name ON publinks(name) WHERE deleted IS NULL;
 
 CREATE INDEX publinks_by_root ON publinks(root, deleted);
 
@@ -23,6 +23,6 @@ DROP INDEX IF EXISTS publinks_by_creator;
 
 DROP INDEX IF EXISTS publinks_by_root;
 
-DROP INDEX IF EXISTS unique_publink;
+DROP INDEX IF EXISTS unique_publink_name;
 
 DROP TABLE publinks;

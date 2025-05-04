@@ -7,7 +7,6 @@ import (
 	iofs "io/fs"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/command/common"
@@ -117,13 +116,8 @@ func setupImportCommand() *cobra.Command {
 					}
 					return err
 				}
-				if _, err := f.CreateResources(create); err != nil {
-					if strings.Contains(err.Error(), "unique_member_resource_name") {
-						return fs.ErrResourceNameConflict
-					}
-					return err
-				}
-				return nil
+				_, err := f.CreateResources(create)
+				return err
 			})
 
 			if err == nil {
