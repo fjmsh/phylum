@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bind.dart';
+import 'package:phylum/libphylum/actions/action_resource_publink_create.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
@@ -48,15 +49,18 @@ class ActionView extends StatelessWidget {
   }
 
   Widget buildErrorInfoTile(BuildContext context, PhylumAction action, ApiResult error) {
-    final showRenameOptions = error is PhylumApiErrorResponse &&
+    final showResourceRenameAction = error is PhylumApiErrorResponse &&
         (error.code == "resource_name_conflict" || error.code == "resource_name_invalid");
+    final showResourceOverwriteAction = error is PhylumApiErrorResponse && (error.code == "resource_name_conflict");
+    final showResourceAutoRenameAction = error is PhylumApiErrorResponse && (error.code == "resource_name_conflict");
+    final showPublinkRenameAction = error is PhylumApiErrorResponse && (error.code == "publink_name_conflict");
     return ListTile(
       title: Text(action.description, overflow: TextOverflow.fade),
-      subtitle: Text(error.description),
+      subtitle: Text('Error: ${error.description}'),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (showRenameOptions)
+          if (showResourceOverwriteAction)
             IconButton(
               icon: const Icon(Icons.warning),
               tooltip: 'Overwrite',
@@ -65,7 +69,7 @@ class ActionView extends StatelessWidget {
                 action.updateConflictResolution(nameConflictOverwrite);
               },
             ),
-          if (showRenameOptions)
+          if (showResourceAutoRenameAction)
             IconButton(
               icon: const Icon(Icons.healing),
               tooltip: 'Auto Rename',
@@ -74,7 +78,7 @@ class ActionView extends StatelessWidget {
                 action.updateConflictResolution(nameConflictRename);
               },
             ),
-          if (showRenameOptions)
+          if (showResourceRenameAction)
             IconButton(
               icon: const Icon(Icons.edit),
               tooltip: 'Rename',
@@ -88,6 +92,22 @@ class ActionView extends StatelessWidget {
                     validate: (name) => name.trim().isNotEmpty);
                 if (name == null || !context.mounted) return;
                 action.updateResourceName(name);
+              },
+            ),
+          if (showPublinkRenameAction)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              tooltip: 'Rename',
+              onPressed: () async {
+                if (action is! ResourcePublinkCreateAction) return;
+                final preset = action.publinkName;
+                final name = await showInputDialog(context,
+                    title: 'Edit Name',
+                    preset: preset,
+                    capitalization: TextCapitalization.words,
+                    validate: (name) => name.trim().isNotEmpty);
+                if (name == null || !context.mounted) return;
+                action.updatePublinkName(name);
               },
             ),
           IconButton(

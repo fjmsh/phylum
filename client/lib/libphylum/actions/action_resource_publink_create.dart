@@ -36,14 +36,15 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
   @override
   Map<String, dynamic> get props => {
         'resourceId': resourceId,
-        'publinkName': resourceId,
+        'publinkName': _publinkName,
         'password': password,
         'expires': expires?.millisecondsSinceEpoch,
         'accessLimit': accessLimit,
         'timestamp': timestamp.millisecondsSinceEpoch,
       };
 
-  final String publinkName;
+  String _publinkName;
+  String get publinkName => _publinkName;
   final String password;
   final DateTime? expires;
   final int accessLimit;
@@ -51,12 +52,13 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
 
   ResourcePublinkCreateAction({
     required super.resourceId,
-    required this.publinkName,
+    required String publinkName,
     required this.password,
     required DateTime? expires,
     required this.accessLimit,
     DateTime? timestamp,
-  })  : expires = expires?.toUtc(),
+  })  : _publinkName = publinkName,
+        expires = expires?.toUtc(),
         timestamp = timestamp ?? DateTime.now();
 
   factory ResourcePublinkCreateAction.fromMap(Map<String, dynamic> map) {
@@ -75,4 +77,11 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
       action is ResourceAction &&
       (action is ResourceCreateAction || action is ResourcePublinkCreateAction) &&
       action.resourceId == resourceId;
+
+  Future<void> updatePublinkName(String publinkName) {
+    return account.actionQueue.updateActions(
+      (action) => action == this,
+      (action) => (action as ResourcePublinkCreateAction)._publinkName = publinkName,
+    );
+  }
 }
