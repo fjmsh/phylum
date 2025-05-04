@@ -106,7 +106,14 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
       onPerformDrop: (event) async {
         final folderId = context.read<ExplorerState>().folderId;
         if (folderId == null) return;
-        processPasteItems(context, folderId, event.session.items.map((item) => item.dataReader).whereType());
+        if (!mounted) return;
+        processPasteItems(
+          context,
+          folderId,
+          event.session.items.map((item) => item.dataReader).whereType(),
+          copyMoveFn: context.read<PhylumAccount>().resourceRepository.copy,
+        );
+
         setState(() => dropTargetActive = false);
       },
     );

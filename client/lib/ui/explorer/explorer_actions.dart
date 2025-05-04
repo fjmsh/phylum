@@ -39,9 +39,13 @@ class ExplorerActions extends StatelessWidget {
             if (clipboard == null) return;
 
             final reader = await clipboard.read();
-
             if (!context.mounted) return;
-            processPasteItems(context, folderId, reader.items);
+            processPasteItems(
+              context,
+              folderId,
+              reader.items,
+              copyMoveFn: context.read<PhylumAccount>().resourceRepository.copy,
+            );
 
             await SystemClipboard.instance?.write([]);
             return null;

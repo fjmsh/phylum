@@ -8,6 +8,8 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/repositories/resource_repository.dart';
+import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
@@ -62,24 +64,25 @@ Future<PasteItem> extractPasteItem(PhylumAccount account, DataReader reader) asy
     }
   }
 
-  final xfileCompleter = Completer<XFile?>();
-  reader.getFile(null, (file) async {
-    try {
-      final data = await file.readAll();
-      xfileCompleter.complete(XFile.fromData(
-        data,
-        path: file.fileName,
-        name: file.fileName,
-        length: data.length,
-      ));
-    } catch (e) {
-      xfileCompleter.complete(null);
-    }
-  });
-  final xfile = await xfileCompleter.future;
-  if (xfile != null) return PasteItem.withXFile(file: xfile);
-
-  if (!kIsWeb) {
+// Maybe this needs to be done for all platforms without fs access
+  if (kIsWeb) {
+    final xfileCompleter = Completer<XFile?>();
+    reader.getFile(null, (file) async {
+      try {
+        final data = await file.readAll();
+        xfileCompleter.complete(XFile.fromData(
+          data,
+          path: file.fileName,
+          name: file.fileName,
+          length: data.length,
+        ));
+      } catch (e) {
+        xfileCompleter.complete(null);
+      }
+    });
+    final xfile = await xfileCompleter.future;
+    if (xfile != null) return PasteItem.withXFile(file: xfile);
+  } else {
     final path =
         await reader.readValue(Formats.fileUri).then((value) => value?.toFilePath(windows: Platform.isWindows));
     if (path != null) {
@@ -95,28 +98,52 @@ Future<PasteInfo> extractPasteInfo(PhylumAccount account, Iterable<DataReader> d
   return PasteInfo(items);
 }
 
-void processPasteItems(BuildContext context, String folderId, Iterable<DataReader> data) async {
+Future<void> processPasteItems(
+  BuildContext context,
+  String folderId,
+  Iterable<DataReader> data, {
+  CopyMoveFn? copyMoveFn,
+}) async {
   final account = context.read<PhylumAccount>();
   final info = await extractPasteInfo(account, data);
   final resources = await info.getResources(account);
 
   if (!context.mounted) return;
-  uploadXFiles(context, folderId, info.files);
-  uploadPath(context, folderId, info.paths);
 
-  var copyFn = account.resourceRepository.copy;
-  for (final r in resources) {
-    handleNameConflict(
-      context,
-      r.name,
-      overwriteFn: (r) => nameConflictDelete,
-      (name, conflictResolution) => copyFn(
-        resource: r,
-        name: name,
-        parent: folderId,
-        conflictResolution: conflictResolution,
-      ),
-    );
+  if (info.errors.isNotEmpty) {
+    final partial = info.errors.length != info._items.length;
+    final confirm = await showAlertDialog(
+          context,
+          title: 'Unable to import ${partial ? 'some ' : ''}items',
+          message: info.errors.join('\n'),
+          positiveText: partial ? 'Continue' : 'OK',
+          negativeText: partial ? 'Cancel' : null,
+        ) ??
+        false;
+    if (!confirm || !context.mounted) return;
+  }
+
+  if (!context.mounted) return;
+  await uploadXFiles(context, folderId, info.files);
+  if (!context.mounted) return;
+  await uploadPath(context, folderId, info.paths);
+
+  if (copyMoveFn != null) {
+    for (final r in resources) {
+      if (!context.mounted) return;
+
+      handleNameConflict(
+        context,
+        r.name,
+        overwriteFn: (r) => nameConflictDelete,
+        (name, conflictResolution) => copyMoveFn(
+          resource: r,
+          name: name,
+          parent: folderId,
+          conflictResolution: conflictResolution,
+        ),
+      );
+    }
   }
 }
 

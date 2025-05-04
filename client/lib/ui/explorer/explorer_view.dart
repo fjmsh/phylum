@@ -67,7 +67,12 @@ class _ExplorerViewState extends State<ExplorerView> {
     }
     final reader = await event.getClipboardReader();
     if (!mounted) return;
-    processPasteItems(context, folderId, reader.items);
+    processPasteItems(
+      context,
+      folderId,
+      reader.items,
+      copyMoveFn: context.read<PhylumAccount>().resourceRepository.copy,
+    );
   }
 
   Future<void> handleShareIntent(List<SharedMediaFile> files) async {
