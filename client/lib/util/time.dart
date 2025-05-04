@@ -3,20 +3,30 @@ import 'package:intl/intl.dart';
 final _formatTime = DateFormat.jm();
 final _formatMonthDate = DateFormat.MMMd();
 final _formatYearMonthDate = DateFormat.yMMMd();
+final _formatFullNoYear = DateFormat.MMMd().add_jm();
+final _formatFull = DateFormat.yMMMd().add_jm();
 
-final today = DateTime.now();
-final lastWeek = DateTime.now().subtract(const Duration(days: 7));
+DateTime get _today {
+  final now = DateTime.now();
+  return DateTime(now.year, now.month, now.day);
+}
 
 extension Formats on DateTime {
-  String formatForDisplay() {
-    DateFormat format = _formatYearMonthDate;
-    if (year == today.year) {
-      if (day == today.day && month == today.month) {
-        format = _formatTime;
-      } else {
-        format = _formatMonthDate;
-      }
+  String formatShort() {
+    final today = _today;
+    if (isAfter(today)) {
+      return _formatTime.format(this);
     }
-    return format.format(this);
+    if (year == today.year) {
+      return _formatMonthDate.format(this);
+    }
+    return _formatYearMonthDate.format(this);
+  }
+
+  String formatLong() {
+    if (year == _today.year) {
+      return _formatFullNoYear.format(this);
+    }
+    return _formatFull.format(this);
   }
 }

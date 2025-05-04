@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -41,8 +42,7 @@ class ReactiveResourceInfoView extends StatelessWidget {
             ),
           ),
           child: ListTile(
-            leading: resource.getIcon(),
-            title: Text(resource.name, style: TextStyle(fontSize: 20)),
+            title: Text(resource.name, style: Theme.of(context).textTheme.bodyLarge),
           ),
         ),
         Expanded(child: SingleChildScrollView(child: ResourceInfoView(resource: resource))),
@@ -77,43 +77,34 @@ class ResourceInfoView extends StatelessWidget {
         children: [
           PendingActionsTile(resourceId: resource.id),
           ListTile(
+            leading: resource.getIcon(),
             title: const Text('Type'),
             subtitle: Text(resource.dir ? 'Folder' : resource.contentType),
           ),
           ListTile(
+            leading: const Icon(Icons.event),
             title: const Text('Created'),
-            subtitle: Text(resource.created?.formatForDisplay() ?? '--'),
+            subtitle: Text(resource.created?.formatLong() ?? '--'),
           ),
           ListTile(
+            leading: const Icon(Icons.edit_calendar),
             title: const Text('Modified'),
-            subtitle: Text(resource.modified?.formatForDisplay() ?? '--'),
+            subtitle: Text(resource.modified?.formatLong() ?? '--'),
           ),
-          if (!resource.dir)
-            ListTile(
-              title: const Text('Size'),
-              subtitle: Text(resource.contentLength.formatForDisplay()),
-            ),
-          if (!resource.dir)
-            ListTile(
-              title: const Text('SHA-256'),
-              subtitle: Text(
-                resource.contentSha256,
-                maxLines: 1,
-                softWrap: false,
-                overflow: TextOverflow.fade,
-              ),
-            ),
           ListTile(
+            leading: const Icon(Icons.account_circle),
             title: const Text('My Permissions'),
             subtitle: Text(myPermission.toStringFull()),
           ),
           ListTile(
+            leading: const Icon(Icons.people),
             title: const Text('Others with Access'),
             subtitle: other.isEmpty ? const Text('--') : Text(other),
             onTap: () => showReponsiveDialog(
                 context, 'Permissions', (context) => ResourcePermissionsView(resourceId: resource.id)),
           ),
           ListTile(
+            leading: const Icon(Icons.public),
             title: const Text('Public Shares'),
             subtitle: publinks.isEmpty ? const Text('--') : Text(publinks.join(', ')),
             trailing: IconButton(
@@ -121,6 +112,30 @@ class ResourceInfoView extends StatelessWidget {
               onPressed: () {},
             ),
           ),
+          if (!resource.dir)
+            ListTile(
+              leading: const Icon(Icons.storage),
+              title: const Text('Size'),
+              subtitle: Text('${resource.contentLength.formatForDisplay()} (${resource.contentLength} B)'),
+            ),
+          if (!resource.dir)
+            ListTile(
+              leading: const Icon(Icons.shield),
+              title: const Text('SHA-256'),
+              onLongPress: () {
+                Clipboard.setData(ClipboardData(text: resource.contentSha256));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('SHA-256 checksum copied to clipboard'),
+                  duration: const Duration(seconds: 2),
+                ));
+              },
+              subtitle: Text(
+                resource.contentSha256,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.fade,
+              ),
+            ),
         ],
       ),
     );

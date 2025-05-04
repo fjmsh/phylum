@@ -76,7 +76,7 @@ class ResourceDetailsRow extends StatelessWidget {
             : const BorderSide(color: Colors.transparent, width: 2.0);
     String subtitle = "";
     if (resource.modified != null) {
-      subtitle = resource.modified!.formatForDisplay();
+      subtitle = resource.modified!.formatShort();
     }
     if (!resource.dir) {
       if (subtitle.isNotEmpty) {
