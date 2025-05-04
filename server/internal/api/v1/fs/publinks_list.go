@@ -45,7 +45,7 @@ func publinkFromFS(p fs.Publink) Publink {
 	}
 }
 
-func handlePublinkListRequest(c *gin.Context) {
+func handlePublinksListRequest(c *gin.Context) {
 	resourceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		panic(errResourceIDInvalid)

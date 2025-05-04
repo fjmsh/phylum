@@ -41,7 +41,7 @@ func scanPublink(row pgx.CollectableRow) (Publink, error) {
 	return p, nil
 }
 
-func (r Resource) CreatePublink(name, password string, exp time.Time, accesses int) error {
+func (r Resource) CreatePublink(name, password string, exp time.Time, accessLimit int) error {
 	if !r.hasPermission(PermissionShare | PermissionRead) {
 		return ErrInsufficientPermissions
 	}
@@ -64,7 +64,7 @@ func (r Resource) CreatePublink(name, password string, exp time.Time, accesses i
 	const q = `INSERT INTO publinks(name, created_by, root, password_hash, expires, max_accesses) VALUES
 	($1::text, $2::text, $3::uuid, $4::text, $5::timestamp, $6::int)`
 
-	_, err := r.f.db.Exec(q, name, r.f.username, r.ID(), passwordHash, expires, accesses)
+	_, err := r.f.db.Exec(q, name, r.f.username, r.ID(), passwordHash, expires, accessLimit)
 	return err
 }
 

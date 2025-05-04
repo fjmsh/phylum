@@ -13,11 +13,11 @@ type publinkParams struct {
 	Password    string `json:"password"`
 	DurationStr string `json:"duration"`
 	ExpiresStr  string `json:"expires"`
+	AccessLimit int    `json:"access_limit"`
 	expires     time.Time
-	Accesses    int `json:"accesses"`
 }
 
-func handlePublinkCreateRequest(c *gin.Context) {
+func handlePublinksCreateRequest(c *gin.Context) {
 	var params publinkParams
 	err := c.ShouldBindJSON(&params)
 	if err != nil || params.Name == "" {
@@ -52,7 +52,7 @@ func handlePublinkCreateRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	if err := r.CreatePublink(params.Name, params.Password, params.expires, params.Accesses); err != nil {
+	if err := r.CreatePublink(params.Name, params.Password, params.expires, params.AccessLimit); err != nil {
 		panic(err)
 	}
 
