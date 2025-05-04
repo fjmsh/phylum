@@ -3,13 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
-final TextInputFormatter validNameFormatter = FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9_\-]'));
+final TextInputFormatter validIdFormatter = FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9_\-]'));
 
 class PublinkInfo with ChangeNotifier {
-  String _name = '';
-  String get name => _name.trim();
-  set name(String value) {
-    _name = value;
+  String _id = '';
+  String get id => _id.trim();
+  set id(String value) {
+    _id = value;
     notifyListeners();
   }
 
@@ -68,7 +68,7 @@ class CreatePublinkView extends StatefulWidget {
                     child: Text('Cancel'),
                   ),
                   ElevatedButton(
-                    onPressed: context.select<PublinkInfo, bool>((info) => info.name.isNotEmpty)
+                    onPressed: context.select<PublinkInfo, bool>((info) => info.id.isNotEmpty)
                         ? () => Navigator.of(context).pop(context.read<PublinkInfo>())
                         : null,
                     child: Text('OK'),
@@ -98,12 +98,12 @@ class _CreatePublinkViewState extends State<CreatePublinkView> {
         ListTile(
           leading: const Icon(Icons.public),
           title: TextField(
-            decoration: InputDecoration(label: Text('Name')),
-            inputFormatters: [validNameFormatter],
+            decoration: InputDecoration(label: Text('ID')),
+            inputFormatters: [validIdFormatter],
             enableSuggestions: false,
             autocorrect: false,
             autofocus: true,
-            onChanged: (value) => context.read<PublinkInfo>().name = value,
+            onChanged: (value) => context.read<PublinkInfo>().id = value,
           ),
         ),
         ListTile(

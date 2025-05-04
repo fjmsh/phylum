@@ -119,7 +119,7 @@ class ResourceInfoView extends StatelessWidget {
                 if (info == null) return;
                 account.addAction(ResourcePublinkCreateAction(
                   resourceId: resource.id,
-                  publinkName: info.name,
+                  publinkId: info.id,
                   password: info.password,
                   expires: info.expiration,
                   accessLimit: info.accessLimit,

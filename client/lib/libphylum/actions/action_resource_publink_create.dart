@@ -18,7 +18,7 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-        'name': publinkName,
+        'id': publinkId,
         if (password.isNotEmpty) 'password': password,
         if (expires != null) 'expires': expires!.toIso8601String(),
         if (accessLimit != 0) 'access_limit': accessLimit,
@@ -31,20 +31,20 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
   List<LocalChange> get localChanges => [];
 
   @override
-  String get description => 'Creating Public Share: $publinkName';
+  String get description => 'Creating Public Share: $publinkId';
 
   @override
   Map<String, dynamic> get props => {
         'resourceId': resourceId,
-        'publinkName': _publinkName,
+        'publinkId': _publinkId,
         'password': password,
         'expires': expires?.millisecondsSinceEpoch,
         'accessLimit': accessLimit,
         'timestamp': timestamp.millisecondsSinceEpoch,
       };
 
-  String _publinkName;
-  String get publinkName => _publinkName;
+  String _publinkId;
+  String get publinkId => _publinkId;
   final String password;
   final DateTime? expires;
   final int accessLimit;
@@ -52,19 +52,19 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
 
   ResourcePublinkCreateAction({
     required super.resourceId,
-    required String publinkName,
+    required String publinkId,
     required this.password,
     required DateTime? expires,
     required this.accessLimit,
     DateTime? timestamp,
-  })  : _publinkName = publinkName,
+  })  : _publinkId = publinkId,
         expires = expires?.toUtc(),
         timestamp = timestamp ?? DateTime.now();
 
   factory ResourcePublinkCreateAction.fromMap(Map<String, dynamic> map) {
     return ResourcePublinkCreateAction(
       resourceId: map['resourceId'],
-      publinkName: map['publinkName'],
+      publinkId: map['publinkId'],
       password: map['password'],
       expires: map['expires'] == null ? null : DateTime.fromMillisecondsSinceEpoch(map['expires']),
       accessLimit: map['accessLimit'],
@@ -78,10 +78,10 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
       (action is ResourceCreateAction || action is ResourcePublinkCreateAction) &&
       action.resourceId == resourceId;
 
-  Future<void> updatePublinkName(String publinkName) {
+  Future<void> updatePublinkId(String publinkId) {
     return account.actionQueue.updateActions(
       (action) => action == this,
-      (action) => (action as ResourcePublinkCreateAction)._publinkName = publinkName,
+      (action) => (action as ResourcePublinkCreateAction)._publinkId = publinkId,
     );
   }
 }

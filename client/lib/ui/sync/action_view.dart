@@ -100,14 +100,13 @@ class ActionView extends StatelessWidget {
               tooltip: 'Rename',
               onPressed: () async {
                 if (action is! ResourcePublinkCreateAction) return;
-                final preset = action.publinkName;
                 final name = await showInputDialog(context,
-                    title: 'Edit Name',
-                    preset: preset,
+                    title: 'Edit ID',
+                    preset: action.publinkId,
                     capitalization: TextCapitalization.words,
                     validate: (name) => name.trim().isNotEmpty);
                 if (name == null || !context.mounted) return;
-                action.updatePublinkName(name);
+                action.updatePublinkId(name);
               },
             ),
           IconButton(
