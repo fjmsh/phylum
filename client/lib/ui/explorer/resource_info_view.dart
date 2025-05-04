@@ -6,8 +6,10 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/ui/explorer/resource_permissions_view.dart';
 import 'package:phylum/ui/explorer/resource_sync_state.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/permissions.dart';
@@ -108,6 +110,8 @@ class ResourceInfoView extends StatelessWidget {
           ListTile(
             title: const Text('Others with Access'),
             subtitle: other.isEmpty ? const Text('--') : Text(other),
+            onTap: () => showReponsiveDialog(
+                context, 'Permissions', (context) => ResourcePermissionsView(resourceId: resource.id)),
           ),
           ListTile(
             title: const Text('Public Shares'),
