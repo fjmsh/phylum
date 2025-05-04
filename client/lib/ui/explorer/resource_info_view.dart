@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
+import 'package:phylum/libphylum/actions/action_resource_publink_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
@@ -111,9 +112,16 @@ class ResourceInfoView extends StatelessWidget {
             trailing: IconButton(
               icon: const Icon(Icons.add),
               onPressed: () async {
+                final account = context.read<PhylumAccount>();
                 final info = await CreatePublinkView.show(context, resource.id);
                 if (info == null) return;
-                print('Created');
+                account.addAction(ResourcePublinkCreateAction(
+                  resourceId: resource.id,
+                  publinkName: info.name,
+                  password: info.password,
+                  expires: info.expiration,
+                  accessLimit: info.accessLimit,
+                ));
               },
             ),
           ),

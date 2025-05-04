@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
+final TextInputFormatter validNameFormatter = FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9_\-]'));
+
 class PublinkInfo with ChangeNotifier {
   String _name = '';
   String get name => _name.trim();
@@ -26,7 +28,7 @@ class PublinkInfo with ChangeNotifier {
   }
 
   int? _accessLimit;
-  int? get accessLimit => _accessLimit;
+  int get accessLimit => _accessLimit ?? 0;
   set accessLimit(int? value) {
     _accessLimit = value;
     notifyListeners();
@@ -97,8 +99,10 @@ class _CreatePublinkViewState extends State<CreatePublinkView> {
           leading: const Icon(Icons.public),
           title: TextField(
             decoration: InputDecoration(label: Text('Name')),
+            inputFormatters: [validNameFormatter],
             enableSuggestions: false,
             autocorrect: false,
+            autofocus: true,
             onChanged: (value) => context.read<PublinkInfo>().name = value,
           ),
         ),
