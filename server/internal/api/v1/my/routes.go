@@ -46,7 +46,8 @@ func handleHomeRoute(c *gin.Context) {
 
 func handleSharedRoute(c *gin.Context) {
 	f := authenticator.GetFileSystem(c)
-	shared, err := f.SharedResources()
+	u := authenticator.GetUser(c)
+	shared, err := f.SharedResources(u.Home)
 	if err != nil {
 		panic(err)
 	}

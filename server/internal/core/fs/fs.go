@@ -52,7 +52,7 @@ type FileSystem interface {
 	Search(query string, includeDeleted bool) ([]Resource, error)
 
 	// shared.go
-	SharedResources() ([]Resource, error)
+	SharedResources(excluded uuid.UUID) ([]Resource, error)
 
 	// trash.go
 	TrashList(cursor string, n uint) ([]Resource, string, error)
