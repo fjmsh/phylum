@@ -7,13 +7,12 @@ import (
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 var errInvalidParams = errors.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
 
 type homeResponse struct {
-	User user.User              `json:"user"`
+	User responses.User         `json:"user"`
 	Home responses.ResourceFull `json:"home"`
 }
 
@@ -37,7 +36,10 @@ func handleHomeRoute(c *gin.Context) {
 	}
 
 	c.JSON(200, homeResponse{
-		User: user,
+		User: responses.User{
+			Username:    user.Username,
+			DisplayName: user.DisplayName,
+		},
 		Home: responses.FullResourceFromFS(r),
 	})
 }

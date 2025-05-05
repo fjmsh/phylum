@@ -5,13 +5,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
-
-type User struct {
-	Username    string `json:"username"`
-	DisplayName string `json:"display"`
-}
 
 func SetupUserRoutes(r *gin.RouterGroup) {
 	group := r.Group("/users")
@@ -33,9 +29,9 @@ func handleUsersListRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	result := make([]User, len(users))
+	result := make([]responses.User, len(users))
 	for i, u := range users {
-		result[i] = User{
+		result[i] = responses.User{
 			Username:    u.Username,
 			DisplayName: u.DisplayName,
 		}

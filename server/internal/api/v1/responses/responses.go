@@ -34,3 +34,8 @@ type ResourceFull struct {
 	Ancestors []Ancestor `json:"ancestors"`
 	Children  []Resource `json:"children"`
 }
+
+type User struct {
+	Username    string `json:"username"`
+	DisplayName string `json:"display"`
+}
