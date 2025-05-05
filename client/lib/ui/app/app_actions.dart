@@ -52,8 +52,9 @@ class AppActions extends StatelessWidget {
           final routerDelegate = context.read<PhylumRouterDelegate>();
           final page = routerDelegate.currentConfiguration;
           final folderId = page is ExplorerPageFolder ? page.folderId : null;
-          if (folderId == null) return;
-          final folder = await context.read<PhylumAccount>().db.getResource(folderId);
+          final account = context.read<PhylumAccount>();
+          if (folderId == null || folderId == account.userHome) return;
+          final folder = await account.db.getResource(folderId);
           if (folder?.parent != null) {
             routerDelegate.go(ExplorerPageFolder(folderId: folder!.parent!));
           }
