@@ -108,7 +108,7 @@ class ResourceInfoView extends StatelessWidget {
               stream: context.read<PhylumAccount>().db.selectPublinks(resource.id).map((l) => l.id).watch(),
               initialData: const [],
               builder: (context, snapshot) {
-                final publinks = snapshot.data!;
+                final publinks = snapshot.data ?? const [];
                 return ExpansionTile(
                   leading: const Icon(Icons.public),
                   title: const Text('Public Shares'),

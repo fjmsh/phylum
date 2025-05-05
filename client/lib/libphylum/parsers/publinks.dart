@@ -1,10 +1,10 @@
 part of 'parsers.dart';
 
-Iterable<Publink>? parsePublinks(List? data, String? root) {
-  return data?.map((e) => parsePublink(e.cast(), root: root));
+Iterable<Publink> parsePublinks(List<Map> data, String? root) {
+  return data.map((e) => parsePublink(e, root: root));
 }
 
-Publink parsePublink(Map<String, dynamic> data, {String? root}) {
+Publink parsePublink(Map data, {String? root}) {
   return Publink(
     id: data['id'],
     created: data['created'] == null ? null : DateTime.fromMillisecondsSinceEpoch(data['created']),

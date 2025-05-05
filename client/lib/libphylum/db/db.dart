@@ -24,7 +24,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.fromExecutor({required this.accountId, required QueryExecutor executor}) : super(executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -33,17 +33,22 @@ class AppDatabase extends _$AppDatabase {
         },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
-            m.drop(orderedBookmarks);
-            m.drop(bookmarks);
-            m.create(bookmarks);
-            m.create(orderedBookmarks);
+            await m.drop(orderedBookmarks);
+            await m.drop(bookmarks);
+            await m.create(bookmarks);
+            await m.create(orderedBookmarks);
           }
           if (from < 3) {
-            m.drop(resources);
-            m.create(resources);
+            await m.drop(resources);
+            await m.create(resources);
           }
           if (from < 4) {
-            m.create(trashedResources);
+            await m.create(trashedResources);
+          }
+          if (from < 5) {
+            await m.drop(resources);
+            await m.create(resources);
+            await m.create(publinks);
           }
         },
       );

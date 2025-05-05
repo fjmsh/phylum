@@ -142,7 +142,7 @@ class ResourceDetailsRow extends StatelessWidget {
                             stream: context.read<PhylumAccount>().db.countPublinks(resource.id).watchSingle(),
                             initialData: 0,
                             builder: (context, snapshot) {
-                              if (snapshot.data! > 0) {
+                              if ((snapshot.data ?? 0) > 0) {
                                 return const Padding(
                                   padding: EdgeInsets.only(right: 6.0),
                                   child: Icon(Icons.public, size: _subtitleIconSize),

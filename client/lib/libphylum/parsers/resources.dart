@@ -29,8 +29,8 @@ FullResource parseFullResource(Map<String, dynamic> data) {
     permissions: data['permissions'].isEmpty ? null : data['permissions'],
     grants: data['grants'].isEmpty || data['grants'] == '{}' ? null : data['grants'],
   );
-  final publinks = parsePublinks(data['publinks'] as List, r.id);
-  return FullResource(resource: r, publinks: publinks!);
+  final publinks = parsePublinks((data['publinks'] as List).cast<Map>(), r.id);
+  return FullResource(resource: r, publinks: publinks);
 }
 
 ResourcesCompanion parseResourceAncestor(Map<String, dynamic> data) {
