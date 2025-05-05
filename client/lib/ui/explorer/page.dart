@@ -129,7 +129,7 @@ class ExplorerPageSearch extends ExplorerPage {
     )
         .then((result) {
       if (result is SearchResponse) {
-        _streamController.add(result.results);
+        _streamController.add(result.results.map((r) => r.resource).toList(growable: false));
       }
       return result is ApiSuccessResponse;
     });

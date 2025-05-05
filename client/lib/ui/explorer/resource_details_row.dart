@@ -138,11 +138,18 @@ class ResourceDetailsRow extends StatelessWidget {
                             padding: EdgeInsets.only(right: 6.0),
                             child: Icon(Icons.people_alt, size: _subtitleIconSize),
                           ),
-                        if (resource.publinks != null)
-                          const Padding(
-                            padding: EdgeInsets.only(right: 6.0),
-                            child: Icon(Icons.public, size: _subtitleIconSize),
-                          ),
+                        StreamBuilder<int>(
+                            stream: context.read<PhylumAccount>().db.countPublinks(resource.id).watchSingle(),
+                            initialData: 0,
+                            builder: (context, snapshot) {
+                              if (snapshot.data! > 0) {
+                                return const Padding(
+                                  padding: EdgeInsets.only(right: 6.0),
+                                  child: Icon(Icons.public, size: _subtitleIconSize),
+                                );
+                              }
+                              return const SizedBox();
+                            }),
                         StreamBuilder<bool?>(
                             stream: (context.read<PhylumAccount>().db.bookmarks.select()
                                   ..where((b) => b.resourceId.equals(resource.id)))

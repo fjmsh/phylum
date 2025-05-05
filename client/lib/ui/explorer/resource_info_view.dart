@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -68,8 +67,6 @@ class ResourceInfoView extends StatelessWidget {
     final repository = context.read<PhylumAccount>().userRepository;
     final entries = p.entries.toList(growable: false)..sort(((a, b) => a.key.compareTo(b.key)));
     final other = entries.map((e) => repository.getUserDisplayName(e.key)).join(', ');
-    final publinks =
-        resource.publinks == null ? const <String>[] : (jsonDecode(resource.publinks!) as List).cast<String>();
 
     return ListTileTheme(
       data: ListTileThemeData(
@@ -107,42 +104,48 @@ class ResourceInfoView extends StatelessWidget {
             onTap: () => showReponsiveDialog(
                 context, 'Permissions', (context) => ResourcePermissionsView(resourceId: resource.id)),
           ),
-          ExpansionTile(
-            leading: const Icon(Icons.public),
-            title: const Text('Public Shares'),
-            subtitle: publinks.isEmpty ? const Text('--') : Text(publinks.length.toString()),
-            trailing: IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () async {
-                final account = context.read<PhylumAccount>();
-                final info = await CreatePublinkView.show(context, resource.id);
-                if (info == null) return;
-                account.addAction(ResourcePublinkCreateAction(
-                  resourceId: resource.id,
-                  publinkId: info.id,
-                  password: info.password,
-                  expires: info.expiration,
-                  accessLimit: info.accessLimit,
-                ));
-              },
-            ),
-            initiallyExpanded: true,
-            children: publinks
-                .map((l) => ListTile(
-                      dense: true,
-                      title: Text(l),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.copy),
-                        onPressed: () {
-                          final uri = kIsWeb
-                              ? UriBuilder.fromUri(Uri.base).path = 'publink/$l'
-                              : account.apiClient.createUri('publink/$l');
-                          Clipboard.setData(ClipboardData(text: uri.toString()));
-                        },
-                      ),
-                    ))
-                .toList(growable: false),
-          ),
+          StreamBuilder<List<String>>(
+              stream: context.read<PhylumAccount>().db.selectPublinks(resource.id).map((l) => l.id).watch(),
+              initialData: const [],
+              builder: (context, snapshot) {
+                final publinks = snapshot.data!;
+                return ExpansionTile(
+                  leading: const Icon(Icons.public),
+                  title: const Text('Public Shares'),
+                  subtitle: publinks.isEmpty ? const Text('--') : Text(publinks.length.toString()),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () async {
+                      final account = context.read<PhylumAccount>();
+                      final info = await CreatePublinkView.show(context, resource.id);
+                      if (info == null) return;
+                      account.addAction(ResourcePublinkCreateAction(
+                        resourceId: resource.id,
+                        publinkId: info.id,
+                        password: info.password,
+                        expires: info.expiration,
+                        accessLimit: info.accessLimit,
+                      ));
+                    },
+                  ),
+                  initiallyExpanded: true,
+                  children: publinks
+                      .map((l) => ListTile(
+                            dense: true,
+                            title: Text(l),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.copy),
+                              onPressed: () {
+                                final uri = kIsWeb
+                                    ? UriBuilder.fromUri(Uri.base).path = 'publink/$l'
+                                    : account.apiClient.createUri('publink/$l');
+                                Clipboard.setData(ClipboardData(text: uri.toString()));
+                              },
+                            ),
+                          ))
+                      .toList(growable: false),
+                );
+              }),
           if (!resource.dir)
             ListTile(
               leading: const Icon(Icons.storage),

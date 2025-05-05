@@ -1,9 +1,9 @@
 part of 'responses.dart';
 
 class FullResourceResponse extends PhylumApiSuccessResponse {
-  final Resource resource;
+  final FullResource resource;
   final Iterable<ResourcesCompanion> ancestors;
-  final Iterable<Resource> children;
+  final Iterable<FullResource> children;
 
   FullResourceResponse({
     required this.resource,
@@ -12,7 +12,7 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
   });
 
   factory FullResourceResponse.fromResponse(Map<String, dynamic> data) {
-    final resource = parseFullResource(data['resource'])..copyWith(lastRefresh: Value(DateTime.now()));
+    final resource = parseFullResource(data['resource']);
     final ancestors =
         (data['ancestors'] as List).cast<Map>().map((a) => parseResourceAncestor(a.cast<String, dynamic>()));
     final children = (data['children'] as List).cast<Map>().map((c) => parseFullResource(c.cast<String, dynamic>()));
@@ -27,9 +27,9 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
   @override
   Future process(PhylumAccount account) async {
     final db = account.db;
-    final existing =
-        Set.of(await (db.select(db.resources)..where((t) => t.parent.equals(resource.id))).map((r) => r.id).get());
-    existing.removeAll(children.map((r) => r.id));
+    final existing = Set.of(
+        await (db.select(db.resources)..where((t) => t.parent.equals(resource.resource.id))).map((r) => r.id).get());
+    existing.removeAll(children.map((r) => r.resource.id));
     final removedChildren = List.of(existing, growable: false);
 
     await db.batch((batch) async {
@@ -37,8 +37,8 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
         batch.update(db.resources, ResourcesCompanion(parent: Value(null)), where: (o) => o.id.equals(id));
       }
       batch.insertAllOnConflictUpdate(db.resources, ancestors);
-      batch.insert(db.resources, resource, mode: InsertMode.insertOrReplace);
-      batch.insertAll(db.resources, children, mode: InsertMode.insertOrReplace);
+      batch.insert(db.resources, resource.resource, mode: InsertMode.insertOrReplace);
+      batch.insertAll(db.resources, children.map((r) => r.resource), mode: InsertMode.insertOrReplace);
     });
 
     final repo = account.datastore.get<Resource>();
@@ -50,9 +50,9 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
       await repo.reloadRemoteData(a.id.value);
     }
     // This resource and its children are fully parsed, so the incoming object can replace the existing one
-    await repo.replaceRemoteData(resource.id, resource);
+    await repo.replaceRemoteData(resource.resource.id, resource.resource);
     for (final c in children) {
-      await repo.replaceRemoteData(c.id, c);
+      await repo.replaceRemoteData(c.resource.id, c.resource);
     }
   }
 }

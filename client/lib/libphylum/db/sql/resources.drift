@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS resources(
     content_type TEXT NOT NULL DEFAULT '',
     permissions TEXT,
     grants TEXT,
-    publinks TEXT,
     last_refresh DATETIME
 );
 

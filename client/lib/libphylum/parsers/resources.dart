@@ -1,7 +1,21 @@
 part of 'parsers.dart';
 
-Resource parseFullResource(Map<String, dynamic> data) {
-  return Resource(
+class FullResource {
+  final Resource resource;
+  final Iterable<Publink> publinks;
+
+  FullResource({required this.resource, required this.publinks});
+}
+
+class PartialResource {
+  final ResourcesCompanion resource;
+  final Iterable<Publink>? publinks;
+
+  PartialResource({required this.resource, required this.publinks});
+}
+
+FullResource parseFullResource(Map<String, dynamic> data) {
+  final r = Resource(
     id: data['id'],
     parent: data['parent'],
     name: data['name'],
@@ -13,9 +27,10 @@ Resource parseFullResource(Map<String, dynamic> data) {
     contentSha256: data['c_sha256'],
     contentType: data['c_type'],
     permissions: data['permissions'].isEmpty ? null : data['permissions'],
-    publinks: data['publinks'].isEmpty ? null : data['publinks'],
     grants: data['grants'].isEmpty || data['grants'] == '{}' ? null : data['grants'],
   );
+  final publinks = parsePublinks(data['publinks'] as List, r.id);
+  return FullResource(resource: r, publinks: publinks!);
 }
 
 ResourcesCompanion parseResourceAncestor(Map<String, dynamic> data) {
@@ -27,8 +42,8 @@ ResourcesCompanion parseResourceAncestor(Map<String, dynamic> data) {
       permissions: data['permissions'].isEmpty ? Value(null) : Value(data['permissions']));
 }
 
-ResourcesCompanion parsePartialResource(Map<String, dynamic> data, [String? id]) {
-  return ResourcesCompanion(
+PartialResource parsePartialResource(Map<String, dynamic> data, [String? id]) {
+  final r = ResourcesCompanion(
     id: Value(data['id'] ?? id),
     parent: Value.absentIfNull(data['parent']),
     name: Value.absentIfNull(data['name']),
@@ -54,10 +69,7 @@ ResourcesCompanion parsePartialResource(Map<String, dynamic> data, [String? id])
             ? Value(null)
             : Value(data['grants'])
         : Value.absent(),
-    publinks: data.containsKey('publinks')
-        ? data['publinks'].isEmpty
-            ? Value(null)
-            : Value(data['publinks'])
-        : Value.absent(),
   );
+  final publinks = data.containsKey('publinks') ? parsePublinks(data['publinks'], r.id.value) : null;
+  return PartialResource(resource: r, publinks: publinks);
 }

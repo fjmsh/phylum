@@ -286,13 +286,6 @@ class Resources extends Table with TableInfo<Resources, Resource> {
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       $customConstraints: '');
-  static const VerificationMeta _publinksMeta =
-      const VerificationMeta('publinks');
-  late final GeneratedColumn<String> publinks = GeneratedColumn<String>(
-      'publinks', aliasedName, true,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      $customConstraints: '');
   static const VerificationMeta _lastRefreshMeta =
       const VerificationMeta('lastRefresh');
   late final GeneratedColumn<DateTime> lastRefresh = GeneratedColumn<DateTime>(
@@ -314,7 +307,6 @@ class Resources extends Table with TableInfo<Resources, Resource> {
         contentType,
         permissions,
         grants,
-        publinks,
         lastRefresh
       ];
   @override
@@ -388,10 +380,6 @@ class Resources extends Table with TableInfo<Resources, Resource> {
       context.handle(_grantsMeta,
           grants.isAcceptableOrUnknown(data['grants']!, _grantsMeta));
     }
-    if (data.containsKey('publinks')) {
-      context.handle(_publinksMeta,
-          publinks.isAcceptableOrUnknown(data['publinks']!, _publinksMeta));
-    }
     if (data.containsKey('last_refresh')) {
       context.handle(
           _lastRefreshMeta,
@@ -431,8 +419,6 @@ class Resources extends Table with TableInfo<Resources, Resource> {
           .read(DriftSqlType.string, data['${effectivePrefix}permissions']),
       grants: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}grants']),
-      publinks: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}publinks']),
       lastRefresh: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}last_refresh']),
     );
@@ -460,7 +446,6 @@ class Resource extends DataClass implements Insertable<Resource> {
   final String contentType;
   final String? permissions;
   final String? grants;
-  final String? publinks;
   final DateTime? lastRefresh;
   const Resource(
       {required this.id,
@@ -475,7 +460,6 @@ class Resource extends DataClass implements Insertable<Resource> {
       required this.contentType,
       this.permissions,
       this.grants,
-      this.publinks,
       this.lastRefresh});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -503,9 +487,6 @@ class Resource extends DataClass implements Insertable<Resource> {
     }
     if (!nullToAbsent || grants != null) {
       map['grants'] = Variable<String>(grants);
-    }
-    if (!nullToAbsent || publinks != null) {
-      map['publinks'] = Variable<String>(publinks);
     }
     if (!nullToAbsent || lastRefresh != null) {
       map['last_refresh'] = Variable<DateTime>(lastRefresh);
@@ -537,9 +518,6 @@ class Resource extends DataClass implements Insertable<Resource> {
           : Value(permissions),
       grants:
           grants == null && nullToAbsent ? const Value.absent() : Value(grants),
-      publinks: publinks == null && nullToAbsent
-          ? const Value.absent()
-          : Value(publinks),
       lastRefresh: lastRefresh == null && nullToAbsent
           ? const Value.absent()
           : Value(lastRefresh),
@@ -562,7 +540,6 @@ class Resource extends DataClass implements Insertable<Resource> {
       contentType: serializer.fromJson<String>(json['content_type']),
       permissions: serializer.fromJson<String?>(json['permissions']),
       grants: serializer.fromJson<String?>(json['grants']),
-      publinks: serializer.fromJson<String?>(json['publinks']),
       lastRefresh: serializer.fromJson<DateTime?>(json['last_refresh']),
     );
   }
@@ -582,7 +559,6 @@ class Resource extends DataClass implements Insertable<Resource> {
       'content_type': serializer.toJson<String>(contentType),
       'permissions': serializer.toJson<String?>(permissions),
       'grants': serializer.toJson<String?>(grants),
-      'publinks': serializer.toJson<String?>(publinks),
       'last_refresh': serializer.toJson<DateTime?>(lastRefresh),
     };
   }
@@ -600,7 +576,6 @@ class Resource extends DataClass implements Insertable<Resource> {
           String? contentType,
           Value<String?> permissions = const Value.absent(),
           Value<String?> grants = const Value.absent(),
-          Value<String?> publinks = const Value.absent(),
           Value<DateTime?> lastRefresh = const Value.absent()}) =>
       Resource(
         id: id ?? this.id,
@@ -615,7 +590,6 @@ class Resource extends DataClass implements Insertable<Resource> {
         contentType: contentType ?? this.contentType,
         permissions: permissions.present ? permissions.value : this.permissions,
         grants: grants.present ? grants.value : this.grants,
-        publinks: publinks.present ? publinks.value : this.publinks,
         lastRefresh: lastRefresh.present ? lastRefresh.value : this.lastRefresh,
       );
   Resource copyWithCompanion(ResourcesCompanion data) {
@@ -638,7 +612,6 @@ class Resource extends DataClass implements Insertable<Resource> {
       permissions:
           data.permissions.present ? data.permissions.value : this.permissions,
       grants: data.grants.present ? data.grants.value : this.grants,
-      publinks: data.publinks.present ? data.publinks.value : this.publinks,
       lastRefresh:
           data.lastRefresh.present ? data.lastRefresh.value : this.lastRefresh,
     );
@@ -659,7 +632,6 @@ class Resource extends DataClass implements Insertable<Resource> {
           ..write('contentType: $contentType, ')
           ..write('permissions: $permissions, ')
           ..write('grants: $grants, ')
-          ..write('publinks: $publinks, ')
           ..write('lastRefresh: $lastRefresh')
           ..write(')'))
         .toString();
@@ -679,7 +651,6 @@ class Resource extends DataClass implements Insertable<Resource> {
       contentType,
       permissions,
       grants,
-      publinks,
       lastRefresh);
   @override
   bool operator ==(Object other) =>
@@ -697,7 +668,6 @@ class Resource extends DataClass implements Insertable<Resource> {
           other.contentType == this.contentType &&
           other.permissions == this.permissions &&
           other.grants == this.grants &&
-          other.publinks == this.publinks &&
           other.lastRefresh == this.lastRefresh);
 }
 
@@ -714,7 +684,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   final Value<String> contentType;
   final Value<String?> permissions;
   final Value<String?> grants;
-  final Value<String?> publinks;
   final Value<DateTime?> lastRefresh;
   final Value<int> rowid;
   const ResourcesCompanion({
@@ -730,7 +699,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.contentType = const Value.absent(),
     this.permissions = const Value.absent(),
     this.grants = const Value.absent(),
-    this.publinks = const Value.absent(),
     this.lastRefresh = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -747,7 +715,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.contentType = const Value.absent(),
     this.permissions = const Value.absent(),
     this.grants = const Value.absent(),
-    this.publinks = const Value.absent(),
     this.lastRefresh = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -766,7 +733,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     Expression<String>? contentType,
     Expression<String>? permissions,
     Expression<String>? grants,
-    Expression<String>? publinks,
     Expression<DateTime>? lastRefresh,
     Expression<int>? rowid,
   }) {
@@ -783,7 +749,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       if (contentType != null) 'content_type': contentType,
       if (permissions != null) 'permissions': permissions,
       if (grants != null) 'grants': grants,
-      if (publinks != null) 'publinks': publinks,
       if (lastRefresh != null) 'last_refresh': lastRefresh,
       if (rowid != null) 'rowid': rowid,
     });
@@ -802,7 +767,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       Value<String>? contentType,
       Value<String?>? permissions,
       Value<String?>? grants,
-      Value<String?>? publinks,
       Value<DateTime?>? lastRefresh,
       Value<int>? rowid}) {
     return ResourcesCompanion(
@@ -818,7 +782,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       contentType: contentType ?? this.contentType,
       permissions: permissions ?? this.permissions,
       grants: grants ?? this.grants,
-      publinks: publinks ?? this.publinks,
       lastRefresh: lastRefresh ?? this.lastRefresh,
       rowid: rowid ?? this.rowid,
     );
@@ -863,9 +826,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     if (grants.present) {
       map['grants'] = Variable<String>(grants.value);
     }
-    if (publinks.present) {
-      map['publinks'] = Variable<String>(publinks.value);
-    }
     if (lastRefresh.present) {
       map['last_refresh'] = Variable<DateTime>(lastRefresh.value);
     }
@@ -890,7 +850,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
           ..write('contentType: $contentType, ')
           ..write('permissions: $permissions, ')
           ..write('grants: $grants, ')
-          ..write('publinks: $publinks, ')
           ..write('lastRefresh: $lastRefresh, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1455,6 +1414,398 @@ class RecentsCompanion extends UpdateCompanion<Recent> {
   }
 }
 
+class Publinks extends Table with TableInfo<Publinks, Publink> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  Publinks(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL PRIMARY KEY');
+  static const VerificationMeta _createdMeta =
+      const VerificationMeta('created');
+  late final GeneratedColumn<DateTime> created = GeneratedColumn<DateTime>(
+      'created', aliasedName, true,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      $customConstraints: '');
+  static const VerificationMeta _rootMeta = const VerificationMeta('root');
+  late final GeneratedColumn<String> root = GeneratedColumn<String>(
+      'root', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints:
+          'NOT NULL REFERENCES resources(id)ON UPDATE CASCADE ON DELETE CASCADE');
+  static const VerificationMeta _accessedMeta =
+      const VerificationMeta('accessed');
+  late final GeneratedColumn<int> accessed = GeneratedColumn<int>(
+      'accessed', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const CustomExpression('0'));
+  static const VerificationMeta _accessLimitMeta =
+      const VerificationMeta('accessLimit');
+  late final GeneratedColumn<int> accessLimit = GeneratedColumn<int>(
+      'access_limit', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const CustomExpression('0'));
+  static const VerificationMeta _protectedMeta =
+      const VerificationMeta('protected');
+  late final GeneratedColumn<bool> protected = GeneratedColumn<bool>(
+      'protected', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      $customConstraints: 'NOT NULL DEFAULT 0 CHECK (protected IN (0, 1))',
+      defaultValue: const CustomExpression('0'));
+  static const VerificationMeta _expiresMeta =
+      const VerificationMeta('expires');
+  late final GeneratedColumn<DateTime> expires = GeneratedColumn<DateTime>(
+      'expires', aliasedName, true,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      $customConstraints: '');
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, created, root, accessed, accessLimit, protected, expires];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'publinks';
+  @override
+  VerificationContext validateIntegrity(Insertable<Publink> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('created')) {
+      context.handle(_createdMeta,
+          created.isAcceptableOrUnknown(data['created']!, _createdMeta));
+    }
+    if (data.containsKey('root')) {
+      context.handle(
+          _rootMeta, root.isAcceptableOrUnknown(data['root']!, _rootMeta));
+    } else if (isInserting) {
+      context.missing(_rootMeta);
+    }
+    if (data.containsKey('accessed')) {
+      context.handle(_accessedMeta,
+          accessed.isAcceptableOrUnknown(data['accessed']!, _accessedMeta));
+    }
+    if (data.containsKey('access_limit')) {
+      context.handle(
+          _accessLimitMeta,
+          accessLimit.isAcceptableOrUnknown(
+              data['access_limit']!, _accessLimitMeta));
+    }
+    if (data.containsKey('protected')) {
+      context.handle(_protectedMeta,
+          protected.isAcceptableOrUnknown(data['protected']!, _protectedMeta));
+    }
+    if (data.containsKey('expires')) {
+      context.handle(_expiresMeta,
+          expires.isAcceptableOrUnknown(data['expires']!, _expiresMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Publink map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Publink(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      created: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created']),
+      root: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}root'])!,
+      accessed: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}accessed'])!,
+      accessLimit: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}access_limit'])!,
+      protected: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}protected'])!,
+      expires: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}expires']),
+    );
+  }
+
+  @override
+  Publinks createAlias(String alias) {
+    return Publinks(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class Publink extends DataClass implements Insertable<Publink> {
+  final String id;
+  final DateTime? created;
+  final String root;
+  final int accessed;
+  final int accessLimit;
+  final bool protected;
+  final DateTime? expires;
+  const Publink(
+      {required this.id,
+      this.created,
+      required this.root,
+      required this.accessed,
+      required this.accessLimit,
+      required this.protected,
+      this.expires});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    if (!nullToAbsent || created != null) {
+      map['created'] = Variable<DateTime>(created);
+    }
+    map['root'] = Variable<String>(root);
+    map['accessed'] = Variable<int>(accessed);
+    map['access_limit'] = Variable<int>(accessLimit);
+    map['protected'] = Variable<bool>(protected);
+    if (!nullToAbsent || expires != null) {
+      map['expires'] = Variable<DateTime>(expires);
+    }
+    return map;
+  }
+
+  PublinksCompanion toCompanion(bool nullToAbsent) {
+    return PublinksCompanion(
+      id: Value(id),
+      created: created == null && nullToAbsent
+          ? const Value.absent()
+          : Value(created),
+      root: Value(root),
+      accessed: Value(accessed),
+      accessLimit: Value(accessLimit),
+      protected: Value(protected),
+      expires: expires == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expires),
+    );
+  }
+
+  factory Publink.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Publink(
+      id: serializer.fromJson<String>(json['id']),
+      created: serializer.fromJson<DateTime?>(json['created']),
+      root: serializer.fromJson<String>(json['root']),
+      accessed: serializer.fromJson<int>(json['accessed']),
+      accessLimit: serializer.fromJson<int>(json['access_limit']),
+      protected: serializer.fromJson<bool>(json['protected']),
+      expires: serializer.fromJson<DateTime?>(json['expires']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'created': serializer.toJson<DateTime?>(created),
+      'root': serializer.toJson<String>(root),
+      'accessed': serializer.toJson<int>(accessed),
+      'access_limit': serializer.toJson<int>(accessLimit),
+      'protected': serializer.toJson<bool>(protected),
+      'expires': serializer.toJson<DateTime?>(expires),
+    };
+  }
+
+  Publink copyWith(
+          {String? id,
+          Value<DateTime?> created = const Value.absent(),
+          String? root,
+          int? accessed,
+          int? accessLimit,
+          bool? protected,
+          Value<DateTime?> expires = const Value.absent()}) =>
+      Publink(
+        id: id ?? this.id,
+        created: created.present ? created.value : this.created,
+        root: root ?? this.root,
+        accessed: accessed ?? this.accessed,
+        accessLimit: accessLimit ?? this.accessLimit,
+        protected: protected ?? this.protected,
+        expires: expires.present ? expires.value : this.expires,
+      );
+  Publink copyWithCompanion(PublinksCompanion data) {
+    return Publink(
+      id: data.id.present ? data.id.value : this.id,
+      created: data.created.present ? data.created.value : this.created,
+      root: data.root.present ? data.root.value : this.root,
+      accessed: data.accessed.present ? data.accessed.value : this.accessed,
+      accessLimit:
+          data.accessLimit.present ? data.accessLimit.value : this.accessLimit,
+      protected: data.protected.present ? data.protected.value : this.protected,
+      expires: data.expires.present ? data.expires.value : this.expires,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Publink(')
+          ..write('id: $id, ')
+          ..write('created: $created, ')
+          ..write('root: $root, ')
+          ..write('accessed: $accessed, ')
+          ..write('accessLimit: $accessLimit, ')
+          ..write('protected: $protected, ')
+          ..write('expires: $expires')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, created, root, accessed, accessLimit, protected, expires);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Publink &&
+          other.id == this.id &&
+          other.created == this.created &&
+          other.root == this.root &&
+          other.accessed == this.accessed &&
+          other.accessLimit == this.accessLimit &&
+          other.protected == this.protected &&
+          other.expires == this.expires);
+}
+
+class PublinksCompanion extends UpdateCompanion<Publink> {
+  final Value<String> id;
+  final Value<DateTime?> created;
+  final Value<String> root;
+  final Value<int> accessed;
+  final Value<int> accessLimit;
+  final Value<bool> protected;
+  final Value<DateTime?> expires;
+  final Value<int> rowid;
+  const PublinksCompanion({
+    this.id = const Value.absent(),
+    this.created = const Value.absent(),
+    this.root = const Value.absent(),
+    this.accessed = const Value.absent(),
+    this.accessLimit = const Value.absent(),
+    this.protected = const Value.absent(),
+    this.expires = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PublinksCompanion.insert({
+    required String id,
+    this.created = const Value.absent(),
+    required String root,
+    this.accessed = const Value.absent(),
+    this.accessLimit = const Value.absent(),
+    this.protected = const Value.absent(),
+    this.expires = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        root = Value(root);
+  static Insertable<Publink> custom({
+    Expression<String>? id,
+    Expression<DateTime>? created,
+    Expression<String>? root,
+    Expression<int>? accessed,
+    Expression<int>? accessLimit,
+    Expression<bool>? protected,
+    Expression<DateTime>? expires,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (created != null) 'created': created,
+      if (root != null) 'root': root,
+      if (accessed != null) 'accessed': accessed,
+      if (accessLimit != null) 'access_limit': accessLimit,
+      if (protected != null) 'protected': protected,
+      if (expires != null) 'expires': expires,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PublinksCompanion copyWith(
+      {Value<String>? id,
+      Value<DateTime?>? created,
+      Value<String>? root,
+      Value<int>? accessed,
+      Value<int>? accessLimit,
+      Value<bool>? protected,
+      Value<DateTime?>? expires,
+      Value<int>? rowid}) {
+    return PublinksCompanion(
+      id: id ?? this.id,
+      created: created ?? this.created,
+      root: root ?? this.root,
+      accessed: accessed ?? this.accessed,
+      accessLimit: accessLimit ?? this.accessLimit,
+      protected: protected ?? this.protected,
+      expires: expires ?? this.expires,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (created.present) {
+      map['created'] = Variable<DateTime>(created.value);
+    }
+    if (root.present) {
+      map['root'] = Variable<String>(root.value);
+    }
+    if (accessed.present) {
+      map['accessed'] = Variable<int>(accessed.value);
+    }
+    if (accessLimit.present) {
+      map['access_limit'] = Variable<int>(accessLimit.value);
+    }
+    if (protected.present) {
+      map['protected'] = Variable<bool>(protected.value);
+    }
+    if (expires.present) {
+      map['expires'] = Variable<DateTime>(expires.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PublinksCompanion(')
+          ..write('id: $id, ')
+          ..write('created: $created, ')
+          ..write('root: $root, ')
+          ..write('accessed: $accessed, ')
+          ..write('accessLimit: $accessLimit, ')
+          ..write('protected: $protected, ')
+          ..write('expires: $expires, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -1786,6 +2137,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Recents recents = Recents(this);
   late final Index recentAccesses = Index('recent_accesses',
       'CREATE INDEX IF NOT EXISTS recent_accesses ON recents (accessed DESC)');
+  late final Publinks publinks = Publinks(this);
+  late final Index publinksByRoot = Index('publinks_by_root',
+      'CREATE INDEX IF NOT EXISTS publinks_by_root ON publinks (root)');
   late final Bookmarks bookmarks = Bookmarks(this);
   late final Index orderedBookmarks = Index('ordered_bookmarks',
       'CREATE INDEX IF NOT EXISTS ordered_bookmarks ON bookmarks (created)');
@@ -1852,6 +2206,24 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         }).asyncMap(resources.mapFromRow);
   }
 
+  Selectable<int> countPublinks(String root) {
+    return customSelect('SELECT COUNT(*) AS _c0 FROM publinks WHERE root = ?1',
+        variables: [
+          Variable<String>(root)
+        ],
+        readsFrom: {
+          publinks,
+        }).map((QueryRow row) => row.read<int>('_c0'));
+  }
+
+  Selectable<Publink> selectPublinks(String root) {
+    return customSelect('SELECT * FROM publinks WHERE root = ?1', variables: [
+      Variable<String>(root)
+    ], readsFrom: {
+      publinks,
+    }).asyncMap(publinks.mapFromRow);
+  }
+
   Selectable<SelectBookmarksResult> selectBookmarks() {
     return customSelect(
         'SELECT resource_id, name, dir, created FROM bookmarks WHERE deleted = 0 ORDER BY created ASC',
@@ -1878,9 +2250,30 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         sharedResources,
         recents,
         recentAccesses,
+        publinks,
+        publinksByRoot,
         bookmarks,
         orderedBookmarks
       ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
+        [
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('resources',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('publinks', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('resources',
+                limitUpdateKind: UpdateKind.update),
+            result: [
+              TableUpdate('publinks', kind: UpdateKind.update),
+            ],
+          ),
+        ],
+      );
 }
 
 typedef $UsersCreateCompanionBuilder = UsersCompanion Function({
@@ -2013,7 +2406,6 @@ typedef $ResourcesCreateCompanionBuilder = ResourcesCompanion Function({
   Value<String> contentType,
   Value<String?> permissions,
   Value<String?> grants,
-  Value<String?> publinks,
   Value<DateTime?> lastRefresh,
   Value<int> rowid,
 });
@@ -2030,7 +2422,6 @@ typedef $ResourcesUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<String> contentType,
   Value<String?> permissions,
   Value<String?> grants,
-  Value<String?> publinks,
   Value<DateTime?> lastRefresh,
   Value<int> rowid,
 });
@@ -2065,6 +2456,20 @@ final class $ResourcesReferences
         .filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_recentsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<Publinks, List<Publink>> _publinksRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.publinks,
+          aliasName: $_aliasNameGenerator(db.resources.id, db.publinks.root));
+
+  $PublinksProcessedTableManager get publinksRefs {
+    final manager = $PublinksTableManager($_db, $_db.publinks)
+        .filter((f) => f.root.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_publinksRefsTable($_db));
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -2129,9 +2534,6 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
   ColumnFilters<String> get grants => $composableBuilder(
       column: $table.grants, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get publinks => $composableBuilder(
-      column: $table.publinks, builder: (column) => ColumnFilters(column));
-
   ColumnFilters<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => ColumnFilters(column));
 
@@ -2169,6 +2571,27 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
             $RecentsFilterComposer(
               $db: $db,
               $table: $db.recents,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> publinksRefs(
+      Expression<bool> Function($PublinksFilterComposer f) f) {
+    final $PublinksFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.publinks,
+        getReferencedColumn: (t) => t.root,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $PublinksFilterComposer(
+              $db: $db,
+              $table: $db.publinks,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -2245,9 +2668,6 @@ class $ResourcesOrderingComposer extends Composer<_$AppDatabase, Resources> {
   ColumnOrderings<String> get grants => $composableBuilder(
       column: $table.grants, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get publinks => $composableBuilder(
-      column: $table.publinks, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => ColumnOrderings(column));
 }
@@ -2296,9 +2716,6 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
   GeneratedColumn<String> get grants =>
       $composableBuilder(column: $table.grants, builder: (column) => column);
 
-  GeneratedColumn<String> get publinks =>
-      $composableBuilder(column: $table.publinks, builder: (column) => column);
-
   GeneratedColumn<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => column);
 
@@ -2344,6 +2761,27 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
     return f(composer);
   }
 
+  Expression<T> publinksRefs<T extends Object>(
+      Expression<T> Function($PublinksAnnotationComposer a) f) {
+    final $PublinksAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.publinks,
+        getReferencedColumn: (t) => t.root,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $PublinksAnnotationComposer(
+              $db: $db,
+              $table: $db.publinks,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
   Expression<T> bookmarksRefs<T extends Object>(
       Expression<T> Function($BookmarksAnnotationComposer a) f) {
     final $BookmarksAnnotationComposer composer = $composerBuilder(
@@ -2378,7 +2816,10 @@ class $ResourcesTableManager extends RootTableManager<
     (Resource, $ResourcesReferences),
     Resource,
     PrefetchHooks Function(
-        {bool sharedRefs, bool recentsRefs, bool bookmarksRefs})> {
+        {bool sharedRefs,
+        bool recentsRefs,
+        bool publinksRefs,
+        bool bookmarksRefs})> {
   $ResourcesTableManager(_$AppDatabase db, Resources table)
       : super(TableManagerState(
           db: db,
@@ -2402,7 +2843,6 @@ class $ResourcesTableManager extends RootTableManager<
             Value<String> contentType = const Value.absent(),
             Value<String?> permissions = const Value.absent(),
             Value<String?> grants = const Value.absent(),
-            Value<String?> publinks = const Value.absent(),
             Value<DateTime?> lastRefresh = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -2419,7 +2859,6 @@ class $ResourcesTableManager extends RootTableManager<
             contentType: contentType,
             permissions: permissions,
             grants: grants,
-            publinks: publinks,
             lastRefresh: lastRefresh,
             rowid: rowid,
           ),
@@ -2436,7 +2875,6 @@ class $ResourcesTableManager extends RootTableManager<
             Value<String> contentType = const Value.absent(),
             Value<String?> permissions = const Value.absent(),
             Value<String?> grants = const Value.absent(),
-            Value<String?> publinks = const Value.absent(),
             Value<DateTime?> lastRefresh = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -2453,7 +2891,6 @@ class $ResourcesTableManager extends RootTableManager<
             contentType: contentType,
             permissions: permissions,
             grants: grants,
-            publinks: publinks,
             lastRefresh: lastRefresh,
             rowid: rowid,
           ),
@@ -2464,12 +2901,14 @@ class $ResourcesTableManager extends RootTableManager<
           prefetchHooksCallback: (
               {sharedRefs = false,
               recentsRefs = false,
+              publinksRefs = false,
               bookmarksRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (sharedRefs) db.shared,
                 if (recentsRefs) db.recents,
+                if (publinksRefs) db.publinks,
                 if (bookmarksRefs) db.bookmarks
               ],
               addJoins: null,
@@ -2496,6 +2935,17 @@ class $ResourcesTableManager extends RootTableManager<
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.resourceId == item.id),
+                        typedResults: items),
+                  if (publinksRefs)
+                    await $_getPrefetchedData<Resource, Resources, Publink>(
+                        currentTable: table,
+                        referencedTable:
+                            $ResourcesReferences._publinksRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $ResourcesReferences(db, table, p0).publinksRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) =>
+                                referencedItems.where((e) => e.root == item.id),
                         typedResults: items),
                   if (bookmarksRefs)
                     await $_getPrefetchedData<Resource, Resources, Bookmark>(
@@ -2527,7 +2977,10 @@ typedef $ResourcesProcessedTableManager = ProcessedTableManager<
     (Resource, $ResourcesReferences),
     Resource,
     PrefetchHooks Function(
-        {bool sharedRefs, bool recentsRefs, bool bookmarksRefs})>;
+        {bool sharedRefs,
+        bool recentsRefs,
+        bool publinksRefs,
+        bool bookmarksRefs})>;
 typedef $TrashedResourcesCreateCompanionBuilder = TrashedResourcesCompanion
     Function({
   required String id,
@@ -3082,6 +3535,301 @@ typedef $RecentsProcessedTableManager = ProcessedTableManager<
     (Recent, $RecentsReferences),
     Recent,
     PrefetchHooks Function({bool resourceId})>;
+typedef $PublinksCreateCompanionBuilder = PublinksCompanion Function({
+  required String id,
+  Value<DateTime?> created,
+  required String root,
+  Value<int> accessed,
+  Value<int> accessLimit,
+  Value<bool> protected,
+  Value<DateTime?> expires,
+  Value<int> rowid,
+});
+typedef $PublinksUpdateCompanionBuilder = PublinksCompanion Function({
+  Value<String> id,
+  Value<DateTime?> created,
+  Value<String> root,
+  Value<int> accessed,
+  Value<int> accessLimit,
+  Value<bool> protected,
+  Value<DateTime?> expires,
+  Value<int> rowid,
+});
+
+final class $PublinksReferences
+    extends BaseReferences<_$AppDatabase, Publinks, Publink> {
+  $PublinksReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static Resources _rootTable(_$AppDatabase db) => db.resources
+      .createAlias($_aliasNameGenerator(db.publinks.root, db.resources.id));
+
+  $ResourcesProcessedTableManager get root {
+    final $_column = $_itemColumn<String>('root')!;
+
+    final manager = $ResourcesTableManager($_db, $_db.resources)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_rootTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $PublinksFilterComposer extends Composer<_$AppDatabase, Publinks> {
+  $PublinksFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get created => $composableBuilder(
+      column: $table.created, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get accessed => $composableBuilder(
+      column: $table.accessed, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get accessLimit => $composableBuilder(
+      column: $table.accessLimit, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get protected => $composableBuilder(
+      column: $table.protected, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get expires => $composableBuilder(
+      column: $table.expires, builder: (column) => ColumnFilters(column));
+
+  $ResourcesFilterComposer get root {
+    final $ResourcesFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.root,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesFilterComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $PublinksOrderingComposer extends Composer<_$AppDatabase, Publinks> {
+  $PublinksOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get created => $composableBuilder(
+      column: $table.created, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get accessed => $composableBuilder(
+      column: $table.accessed, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get accessLimit => $composableBuilder(
+      column: $table.accessLimit, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get protected => $composableBuilder(
+      column: $table.protected, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get expires => $composableBuilder(
+      column: $table.expires, builder: (column) => ColumnOrderings(column));
+
+  $ResourcesOrderingComposer get root {
+    final $ResourcesOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.root,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesOrderingComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $PublinksAnnotationComposer extends Composer<_$AppDatabase, Publinks> {
+  $PublinksAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get created =>
+      $composableBuilder(column: $table.created, builder: (column) => column);
+
+  GeneratedColumn<int> get accessed =>
+      $composableBuilder(column: $table.accessed, builder: (column) => column);
+
+  GeneratedColumn<int> get accessLimit => $composableBuilder(
+      column: $table.accessLimit, builder: (column) => column);
+
+  GeneratedColumn<bool> get protected =>
+      $composableBuilder(column: $table.protected, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get expires =>
+      $composableBuilder(column: $table.expires, builder: (column) => column);
+
+  $ResourcesAnnotationComposer get root {
+    final $ResourcesAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.root,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesAnnotationComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $PublinksTableManager extends RootTableManager<
+    _$AppDatabase,
+    Publinks,
+    Publink,
+    $PublinksFilterComposer,
+    $PublinksOrderingComposer,
+    $PublinksAnnotationComposer,
+    $PublinksCreateCompanionBuilder,
+    $PublinksUpdateCompanionBuilder,
+    (Publink, $PublinksReferences),
+    Publink,
+    PrefetchHooks Function({bool root})> {
+  $PublinksTableManager(_$AppDatabase db, Publinks table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $PublinksFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $PublinksOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $PublinksAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<DateTime?> created = const Value.absent(),
+            Value<String> root = const Value.absent(),
+            Value<int> accessed = const Value.absent(),
+            Value<int> accessLimit = const Value.absent(),
+            Value<bool> protected = const Value.absent(),
+            Value<DateTime?> expires = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              PublinksCompanion(
+            id: id,
+            created: created,
+            root: root,
+            accessed: accessed,
+            accessLimit: accessLimit,
+            protected: protected,
+            expires: expires,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            Value<DateTime?> created = const Value.absent(),
+            required String root,
+            Value<int> accessed = const Value.absent(),
+            Value<int> accessLimit = const Value.absent(),
+            Value<bool> protected = const Value.absent(),
+            Value<DateTime?> expires = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              PublinksCompanion.insert(
+            id: id,
+            created: created,
+            root: root,
+            accessed: accessed,
+            accessLimit: accessLimit,
+            protected: protected,
+            expires: expires,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) =>
+                  (e.readTable(table), $PublinksReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: ({root = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (root) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.root,
+                    referencedTable: $PublinksReferences._rootTable(db),
+                    referencedColumn: $PublinksReferences._rootTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $PublinksProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    Publinks,
+    Publink,
+    $PublinksFilterComposer,
+    $PublinksOrderingComposer,
+    $PublinksAnnotationComposer,
+    $PublinksCreateCompanionBuilder,
+    $PublinksUpdateCompanionBuilder,
+    (Publink, $PublinksReferences),
+    Publink,
+    PrefetchHooks Function({bool root})>;
 typedef $BookmarksCreateCompanionBuilder = BookmarksCompanion Function({
   required String resourceId,
   required String name,
@@ -3360,6 +4108,8 @@ class $AppDatabaseManager {
       $TrashedResourcesTableManager(_db, _db.trashedResources);
   $SharedTableManager get shared => $SharedTableManager(_db, _db.shared);
   $RecentsTableManager get recents => $RecentsTableManager(_db, _db.recents);
+  $PublinksTableManager get publinks =>
+      $PublinksTableManager(_db, _db.publinks);
   $BookmarksTableManager get bookmarks =>
       $BookmarksTableManager(_db, _db.bookmarks);
 }

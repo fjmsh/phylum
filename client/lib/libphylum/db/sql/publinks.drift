@@ -1,0 +1,17 @@
+import 'resources.drift';
+
+CREATE TABLE IF NOT EXISTS publinks(
+  id              TEXT        NOT NULL PRIMARY KEY,
+  created         DATETIME,
+  root            TEXT        NOT NULL REFERENCES resources(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  accessed        INT         NOT NULL DEFAULT 0,
+  access_limit    INT         NOT NULL DEFAULT 0,
+  protected       BOOLEAN     NOT NULL DEFAULT 0 CHECK (protected IN (0, 1)),
+  expires         DATETIME
+);
+
+CREATE INDEX IF NOT EXISTS publinks_by_root ON publinks(root);
+
+countPublinks: SELECT COUNT(*) FROM publinks WHERE root = :root;
+
+selectPublinks: SELECT * FROM publinks WHERE root = :root;

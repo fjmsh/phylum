@@ -1,7 +1,7 @@
 part of 'responses.dart';
 
 class TrashListResponse extends PhylumApiSuccessResponse {
-  final Iterable<Resource> resources;
+  final Iterable<FullResource> resources;
   final String? cursor;
   final bool clear;
 
@@ -26,17 +26,17 @@ class TrashListResponse extends PhylumApiSuccessResponse {
   @override
   Future process(PhylumAccount account) async {
     account.db.batch((batch) {
-      batch.insertAll(account.db.resources, resources, mode: InsertMode.insertOrReplace);
+      batch.insertAll(account.db.resources, resources.map((r) => r.resource), mode: InsertMode.insertOrReplace);
       if (clear) {
         batch.deleteAll(account.db.trashedResources);
       }
-      batch.insertAll(account.db.trashedResources, resources.map((r) => TrashedResource(id: r.id)),
+      batch.insertAll(account.db.trashedResources, resources.map((r) => TrashedResource(id: r.resource.id)),
           mode: InsertMode.insertOrReplace);
     });
 
     final repo = account.datastore.get<Resource>();
     for (final r in resources) {
-      await repo.replaceRemoteData(r.id, r);
+      await repo.replaceRemoteData(r.resource.id, r.resource);
     }
   }
 }

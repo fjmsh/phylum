@@ -8,6 +8,7 @@ part 'db.g.dart';
 
 @DriftDatabase(include: {
   'sql/bookmarks.drift',
+  'sql/publinks.drift',
   'sql/recents.drift',
   'sql/resources.drift',
   'sql/shared.drift',
