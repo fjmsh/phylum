@@ -19,8 +19,26 @@ class PartialResourceResponse extends PhylumApiSuccessResponse {
 
   @override
   Future process(PhylumAccount account) async {
-    final update = (account.db.resources.update()..where((o) => o.id.equals(id)));
-    await update.write(updates.resource);
+    final db = account.db;
+
+    final publinks = updates.publinks;
+    Iterable<String>? orphanedPublinks;
+    if (publinks != null) {
+      orphanedPublinks = Set.of(await (db.select(db.publinks)
+            ..where((l) => l.root.equals(id) & l.id.isNotIn(publinks.map((l) => l.id))))
+          .map((r) => r.id)
+          .get());
+    }
+
+    await db.batch((batch) async {
+      batch.update(db.resources, updates.resource, where: (o) => o.id.equals(id));
+      if (publinks != null) {
+        for (final id in orphanedPublinks!) {
+          batch.update(db.publinks, PublinksCompanion(root: Value('')), where: (o) => o.id.equals(id));
+        }
+        batch.insertAll(db.publinks, publinks, mode: InsertMode.insertOrReplace);
+      }
+    });
     await account.datastore.get<Resource>().reloadRemoteData(id);
   }
 }

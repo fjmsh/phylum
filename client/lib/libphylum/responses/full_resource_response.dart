@@ -27,6 +27,15 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
   @override
   Future process(PhylumAccount account) async {
     final db = account.db;
+
+    final fullResources = [resource, ...children];
+    final publinks = fullResources.map((r) => r.publinks).fold<List<Publink>>([], (acc, e) => acc..addAll(e));
+    final orphanedPubinks = Set.of(await (db.select(db.publinks)
+          ..where(
+              (l) => l.root.isIn(fullResources.map((r) => r.resource.id)) & l.id.isNotIn(publinks.map((l) => l.id))))
+        .map((r) => r.id)
+        .get());
+
     final existing = Set.of(
         await (db.select(db.resources)..where((t) => t.parent.equals(resource.resource.id))).map((r) => r.id).get());
     existing.removeAll(children.map((r) => r.resource.id));
@@ -39,6 +48,11 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
       batch.insertAllOnConflictUpdate(db.resources, ancestors);
       batch.insert(db.resources, resource.resource, mode: InsertMode.insertOrReplace);
       batch.insertAll(db.resources, children.map((r) => r.resource), mode: InsertMode.insertOrReplace);
+
+      for (final id in orphanedPubinks) {
+        batch.update(db.publinks, PublinksCompanion(root: Value('')), where: (o) => o.id.equals(id));
+      }
+      batch.insertAll(db.publinks, publinks, mode: InsertMode.insertOrReplace);
     });
 
     final repo = account.datastore.get<Resource>();

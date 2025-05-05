@@ -5,11 +5,23 @@ class SharedResourcesResponse extends PhylumApiSuccessResponse {
 
   @override
   Future<void> process(PhylumAccount account) async {
+    final db = account.db;
     final shared = resources.indexed.map((r) => SharedCompanion.insert(resourceId: r.$2.resource.id, seq: r.$1));
-    await account.db.batch((batch) {
-      batch.insertAll(account.db.resources, resources.map((r) => r.resource));
-      batch.deleteAll(account.db.shared);
-      batch.insertAll(account.db.shared, shared);
+    final publinks = resources.map((r) => r.publinks).fold<List<Publink>>([], (acc, e) => acc..addAll(e));
+    final orphanedPublinks = Set.of(await (db.select(db.publinks)
+          ..where((l) => l.root.isIn(resources.map((r) => r.resource.id)) & l.id.isNotIn(publinks.map((l) => l.id))))
+        .map((r) => r.id)
+        .get());
+
+    await db.batch((batch) {
+      batch.insertAll(db.resources, resources.map((r) => r.resource));
+      batch.deleteAll(db.shared);
+      batch.insertAll(db.shared, shared);
+
+      for (final id in orphanedPublinks) {
+        batch.update(db.publinks, PublinksCompanion(root: Value('')), where: (o) => o.id.equals(id));
+      }
+      batch.insertAll(db.publinks, publinks, mode: InsertMode.insertOrReplace);
     });
 
     final repo = account.datastore.get<Resource>();
