@@ -29,7 +29,7 @@ FullResource parseFullResource(Map<String, dynamic> data) {
     permissions: data['permissions'].isEmpty ? null : data['permissions'],
     grants: data['grants'].isEmpty || data['grants'] == '{}' ? null : data['grants'],
   );
-  final publinks = parsePublinks((data['publinks'] as List).cast<Map>(), r.id);
+  final publinks = parsePublinks(data['publinks'], r.id);
   return FullResource(resource: r, publinks: publinks);
 }
 

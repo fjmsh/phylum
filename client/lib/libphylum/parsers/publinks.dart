@@ -1,7 +1,7 @@
 part of 'parsers.dart';
 
-Iterable<Publink> parsePublinks(List<Map> data, String? root) {
-  return data.map((e) => parsePublink(e, root: root));
+Iterable<Publink> parsePublinks(List data, String? root) {
+  return data.cast<Map>().map((e) => parsePublink(e, root: root));
 }
 
 Publink parsePublink(Map data, {String? root}) {
