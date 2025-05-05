@@ -8,6 +8,7 @@ WORKDIR /src
 COPY client/pubspec.yaml client/pubspec.lock .
 COPY client/lib ./lib
 COPY client/web ./web
+COPY client/assets ./assets
 RUN flutter pub get
 RUN flutter build web --wasm
 
