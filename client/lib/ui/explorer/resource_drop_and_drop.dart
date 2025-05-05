@@ -40,7 +40,13 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
       builder: (context, candidate, rejected) => widget.buildItem(context, dropTargetActive),
       onWillAcceptWithDetails: (details) {
         final state = context.read<ExplorerState>();
-        if (state.selectedIds.contains(widget.resourceId) || state.folderId == widget.resourceId) {
+        // The drag gesture recognizer gets fired before the long press (otherwise it doesn't get fired at all)
+        // So the ExplorerState doesn't have a chance to update the selectedIds before this gets called for the first
+        // time for touch pointer devices
+        // tl;dr needed to fix long-press touch drag start.
+        if (details.data == widget.resourceId ||
+            state.selectedIds.contains(widget.resourceId) ||
+            state.folderId == widget.resourceId) {
           // Don't accept drops into selected resources or the parent
           return false;
         }
@@ -136,7 +142,7 @@ class ResourceDraggable extends StatelessWidget {
         PointerDeviceKind.trackpad,
         PointerDeviceKind.mouse,
       },
-      data: '__selected',
+      data: resource.id,
       dragAnchorStrategy: pointerDragAnchorStrategy,
       onDragStarted: () => _onDragStarted(context),
       onDragEnd: (details) {
@@ -144,6 +150,8 @@ class ResourceDraggable extends StatelessWidget {
       },
       feedback: _feedback(context),
       child: _CustomDraggable(
+          // delay cannot be longer than 500, otherwise the long press select gesture recognizer will win
+          // and this drag will be cancelled
           delay: const Duration(milliseconds: 500),
           supportedDevices: {
             PointerDeviceKind.touch,
@@ -152,7 +160,7 @@ class ResourceDraggable extends StatelessWidget {
             PointerDeviceKind.unknown,
           },
           hapticFeedbackOnStart: true,
-          data: '__selected',
+          data: resource.id,
           dragAnchorStrategy: pointerDragAnchorStrategy,
           onDragStarted: () => _onDragStarted(context),
           onDragEnd: (details) {
