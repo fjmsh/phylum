@@ -56,7 +56,7 @@ class ActionView extends StatelessWidget {
     final showPublinkRenameAction = error is PhylumApiErrorResponse && (error.code == "publink_name_conflict");
     return ListTile(
       title: Text(action.description, overflow: TextOverflow.fade),
-      subtitle: Text('Error: ${error.description}'),
+      subtitle: Text(error.description),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

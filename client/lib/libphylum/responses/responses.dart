@@ -61,7 +61,7 @@ class PhylumApiErrorResponse extends ApiErrorResponse<PhylumAccount> {
   final String message;
 
   @override
-  String get description => message;
+  String get description => 'Server Error: message';
 
   PhylumApiErrorResponse({required this.serverError, required this.code, required this.message});
 
