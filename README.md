@@ -22,17 +22,16 @@ It is in very early stages of testing, so bugs are to be expected. While the bac
 
 In no particular order, here are some things that are planned
 
- - App links
- - In-app user management
- - Email notifications
+ - User management
  - Storage backends like S3, B2, Minio, etc. (partially implemented)
  - Thumbnails and grid view
+ - Auth backends (LDAP, OAuth)
+ - Email notifications
  - Links / Shortcuts
  - Directory quota 
  - User Groups
- - Auth backends (LDAP, OAuth)
- - Keep files synced offline
- - Sync directory tree metadata
+ - Offline single file sync
+ - Sync full directory tree metadata
  - 2-way folder sync
 
 
@@ -63,5 +62,15 @@ It is usually easiest to work on the desktop app, and only test on devices/web i
 If you want to work on the web app using `flutter run`, then you will need to enable CORS on the server. This can be done by either passing in the `--cors-enabled` flag or by setting `PHYLUM_SERVER_CORS_ENABLED=1`. This is not required for mobile/desktop clients.
 ```
 $ PHYLUM_DB_PASSWORD=phylum go run -C server cmd/phylum.go -W .. --web-app-dir client/build/web serve --cors-enabled
+```
+
+#### Creating a user
+
+There is currently no interface for user management, so all users have to be added by cli. You will need to do this at least once initially to set up the first user.
+
+If you're already using compose, you can just run
+
+```
+podman exec -it phylum_server ./phylum user add <username>
 ```
 
