@@ -10,11 +10,7 @@ CREATE TABLE publinks(
 
 CREATE INDEX publinks_by_root ON publinks(root);
 
-CREATE INDEX publinks_by_creator ON publinks(created_by);
-
 ---- create above / drop below ----
-
-DROP INDEX IF EXISTS publinks_by_creator;
 
 DROP INDEX IF EXISTS publinks_by_root;
 
