@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:offtheline/offtheline.dart';
 import 'package:phylum/ui/app/action_queue_status_notifier.dart';
-import 'package:phylum/ui/sync/sync_dialog.dart';
 import 'package:provider/provider.dart';
-import 'package:state_notifier/state_notifier.dart';
 
 enum _ServerStatus {
   done(Icons.sync, 'Up-to-date'),
@@ -18,25 +15,9 @@ enum _ServerStatus {
   final String text;
 }
 
-class ServerStatusButton extends StatefulWidget {
-  const ServerStatusButton({super.key});
-
-  @override
-  State<ServerStatusButton> createState() => _ServerStatusButtonState();
-}
-
-class _ServerStatusButtonState extends State<ServerStatusButton> {
-  void watchStatus(StateNotifier<ActionStatus> notifier) {}
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
+class ServerStatusButton extends StatelessWidget {
+  final void Function()? onTap;
+  const ServerStatusButton({super.key, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +31,7 @@ class _ServerStatusButtonState extends State<ServerStatusButton> {
       leading: Icon(state.icon),
       title: const Text('Server Status'),
       subtitle: Text(state.text),
-      onTap: () {
-        SyncDialog.show(context);
-      },
+      onTap: onTap,
     );
   }
 }

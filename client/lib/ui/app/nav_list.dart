@@ -11,6 +11,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/button_downloads.dart';
 import 'package:phylum/ui/app/button_server_status.dart';
 import 'package:phylum/ui/app/create_action.dart';
+import 'package:phylum/ui/sync/sync_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
@@ -21,7 +22,6 @@ class NavList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final account = context.read<PhylumAccount>();
-    // final color = Theme.of(context).colorScheme.onSurface;
     return SafeArea(
       child: Column(
         children: [
@@ -74,17 +74,26 @@ class NavList extends StatelessWidget {
                   ListTile(
                     leading: const Icon(Icons.home),
                     title: const Text('Home'),
-                    onTap: () => Actions.maybeInvoke(context, NavIntent(target: ExplorerPageHome(context.read()))),
+                    onTap: () {
+                      Actions.maybeInvoke(context, NavIntent(target: ExplorerPageHome(context.read())));
+                      Scaffold.maybeOf(context)?.closeDrawer();
+                    },
                   ),
                   ListTile(
                     leading: const Icon(Icons.history),
                     title: const Text('Recents'),
-                    onTap: () => context.read<PhylumRouterDelegate>().go(ExplorerPageRecents()),
+                    onTap: () {
+                      context.read<PhylumRouterDelegate>().go(ExplorerPageRecents());
+                      Scaffold.maybeOf(context)?.closeDrawer();
+                    },
                   ),
                   ListTile(
                     leading: const Icon(Icons.people_outlined),
                     title: const Text('Shared With Me'),
-                    onTap: () => context.read<PhylumRouterDelegate>().go(ExplorerPageShared()),
+                    onTap: () {
+                      context.read<PhylumRouterDelegate>().go(ExplorerPageShared());
+                      Scaffold.maybeOf(context)?.closeDrawer();
+                    },
                   ),
                   StreamBuilder<List<SelectBookmarksResult>>(
                     stream: account.db.selectBookmarks().watch(),
@@ -124,6 +133,7 @@ class NavList extends StatelessWidget {
                                       }
                                       if (resource != null && context.mounted) {
                                         Actions.maybeInvoke(context, OpenResourceIntent(resource));
+                                        Scaffold.maybeOf(context)?.closeDrawer();
                                       }
                                     },
                                   ))
@@ -135,11 +145,19 @@ class NavList extends StatelessWidget {
                   ListTile(
                     leading: const Icon(Icons.delete),
                     title: const Text('Trash'),
-                    onTap: () => context.read<PhylumRouterDelegate>().go(ExplorerPageTrash()),
+                    onTap: () {
+                      context.read<PhylumRouterDelegate>().go(ExplorerPageTrash());
+                      Scaffold.maybeOf(context)?.closeDrawer();
+                    },
                   ),
                   const Divider(),
                   if (!kIsWeb) const DownloadButton(),
-                  const ServerStatusButton(),
+                  ServerStatusButton(
+                    onTap: () {
+                      SyncDialog.show(context);
+                      Scaffold.maybeOf(context)?.closeDrawer();
+                    },
+                  ),
                   ListTile(
                     leading: const Icon(Icons.help),
                     title: const Text('About'),
