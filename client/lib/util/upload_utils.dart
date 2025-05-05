@@ -5,7 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/name_conflict.dart';
+import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
@@ -33,7 +33,7 @@ Future<void> createDirectory(BuildContext context, String folderId, {String? pre
     validate: validateName,
   );
   if (name == null || !context.mounted) return;
-  await handleNameConflict(
+  await handleLocalErrors(
     context,
     name,
     overwriteFn: (r) => nameConflictDelete,
@@ -70,7 +70,7 @@ Future<void> uploadXFiles(BuildContext context, String folderId, Iterable<XFile>
     String? id;
     ensurefile:
     while (id == null) {
-      id = await handleNameConflict(
+      id = await handleLocalErrors(
         // ignore: use_build_context_synchronously
         context,
         p.basename(file.name),
@@ -125,7 +125,7 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
     final parent = dirIds[p.dirname(path)] ?? folderId;
     String? id;
     while (id == null) {
-      id = await handleNameConflict(
+      id = await handleLocalErrors(
         // ignore: use_build_context_synchronously
         context,
         p.basename(path),
@@ -152,7 +152,7 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
     String? id;
     ensurefile:
     while (id == null) {
-      id = await handleNameConflict(
+      id = await handleLocalErrors(
         // ignore: use_build_context_synchronously
         context,
         p.basename(path),
@@ -174,7 +174,7 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
 }
 
 // #TODO: handle permission errors as well
-Future<String?> handleNameConflict(
+Future<String?> handleLocalErrors(
   BuildContext context,
   String name,
   Future<String> Function(String name, NameConflictResolution conflictResolution) performAction, {
@@ -238,8 +238,12 @@ Future<String?> handleNameConflict(
         }
         name = newName;
       }
-    } catch (e, stack) {
-      debugPrintStack(stackTrace: stack);
+    } on DestinationCycleException catch (e) {
+      if (context.mounted) {
+        await showAlertDialog(context, message: 'Cannot move ${e.resource.name} into itself');
+      }
+      return null;
+    } catch (e) {
       if (context.mounted) {
         await showAlertDialog(context, title: 'Unable to create $name', message: e.toString());
       }

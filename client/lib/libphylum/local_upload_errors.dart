@@ -13,3 +13,9 @@ class NameConflictException {
 
   const NameConflictException(this.resource);
 }
+
+class DestinationCycleException {
+  final Resource resource;
+
+  const DestinationCycleException(this.resource);
+}

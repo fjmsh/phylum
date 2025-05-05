@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
-import 'package:phylum/libphylum/name_conflict.dart';
+import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -133,7 +133,7 @@ Future<void> processPasteItems(
     for (final r in resources) {
       if (!context.mounted) return;
 
-      handleNameConflict(
+      handleLocalErrors(
         context,
         r.name,
         overwriteFn: (r) => nameConflictDelete,

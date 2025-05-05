@@ -3,7 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/name_conflict.dart';
+import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/paste_helpers.dart';
@@ -60,7 +60,7 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
         final account = context.read<PhylumAccount>();
         final selected = context.read<ExplorerState>().selected;
         for (final r in selected) {
-          handleNameConflict(
+          handleLocalErrors(
             context,
             r.name,
             overwriteFn: (r) => nameConflictDelete,

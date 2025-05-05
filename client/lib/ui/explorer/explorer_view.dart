@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/name_conflict.dart';
+import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/explorer_actions.dart';
@@ -88,7 +88,7 @@ class _ExplorerViewState extends State<ExplorerView> {
       if (!mounted) return;
       final name = await showInputDialog(context, hintText: 'File name', preset: p.basename(path));
       if (!mounted || name == null) return;
-      await handleNameConflict(
+      await handleLocalErrors(
         context,
         name,
         overwriteFn: (r) => r.dir ? nameConflictDelete : nameConflictOverwrite,

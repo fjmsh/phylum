@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bind.dart';
 import 'package:phylum/libphylum/actions/action_resource_publink_create.dart';
-import 'package:phylum/libphylum/name_conflict.dart';
+import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/dialogs.dart';

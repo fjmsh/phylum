@@ -1,4 +1,4 @@
-import 'package:phylum/libphylum/name_conflict.dart';
+import 'package:phylum/libphylum/local_upload_errors.dart';
 
 import 'action_resource.dart';
 

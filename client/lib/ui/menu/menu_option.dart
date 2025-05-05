@@ -9,7 +9,7 @@ import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_restore.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/name_conflict.dart';
+import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
@@ -58,7 +58,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       final name = await showInputDialog(context, title: 'Rename', preset: resources.first.name);
       if (name != null && context.mounted) {
         final r = resources.first;
-        await handleNameConflict(
+        await handleLocalErrors(
           context,
           name,
           overwriteFn: (r) => nameConflictDelete,
@@ -80,7 +80,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       }
       if (!context.mounted) return;
       for (final r in resources) {
-        await handleNameConflict(
+        await handleLocalErrors(
           context,
           r.name,
           overwriteFn: (r) => nameConflictDelete,
@@ -102,7 +102,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       }
       if (!context.mounted) return;
       for (final r in resources) {
-        await handleNameConflict(
+        await handleLocalErrors(
           context,
           r.name,
           overwriteFn: (r) => nameConflictDelete,

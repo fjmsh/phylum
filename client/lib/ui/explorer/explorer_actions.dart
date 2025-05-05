@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/name_conflict.dart';
+import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/page.dart';
 import 'package:phylum/ui/explorer/paste_helpers.dart';
@@ -86,7 +86,7 @@ class ExplorerActions extends StatelessWidget {
           if (r == null) return;
           final name = await showInputDialog(context, title: 'Rename', preset: r.name);
           if (name != null && context.mounted) {
-            handleNameConflict(
+            handleLocalErrors(
               context,
               name,
               overwriteFn: (r) => nameConflictDelete,

@@ -13,7 +13,7 @@ import 'package:phylum/libphylum/actions/action_resource_move.dart';
 import 'package:phylum/libphylum/actions/action_resource_upload.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
-import 'package:phylum/libphylum/name_conflict.dart';
+import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_info_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
@@ -185,7 +185,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
       final parents = await _account.db.parents(parent).get();
       for (final p in parents) {
         if (p.id == resource.id) {
-          throw "Cannot move a folder into itself.";
+          throw DestinationCycleException(resource);
         }
       }
 
