@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/name_conflict.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -129,20 +131,52 @@ class ResourceDraggable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Draggable(
+    return _CustomDraggable(
+      supportedDevices: {
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.mouse,
+      },
       data: '__selected',
       dragAnchorStrategy: pointerDragAnchorStrategy,
-      onDragStarted: () {
-        final controller = context.read<ExplorerController>();
-        if (!context.read<ExplorerState>().isSelected(resource.id)) {
-          controller.updateSelection((_) => index, SelectionMode.single, false);
-        }
-        controller.setDragging(true);
-      },
+      onDragStarted: () => _onDragStarted(context),
       onDragEnd: (details) {
         context.read<ExplorerController>().setDragging(false);
       },
-      feedback: Builder(builder: (ctx) {
+      feedback: _feedback(context),
+      child: _CustomDraggable(
+          delay: const Duration(milliseconds: 500),
+          supportedDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.stylus,
+            PointerDeviceKind.invertedStylus,
+            PointerDeviceKind.unknown,
+          },
+          hapticFeedbackOnStart: true,
+          data: '__selected',
+          dragAnchorStrategy: pointerDragAnchorStrategy,
+          onDragStarted: () => _onDragStarted(context),
+          onDragEnd: (details) {
+            context.read<ExplorerController>().setDragging(false);
+          },
+          feedback: _feedback(context),
+          child: ResourceDetailsRow(
+            resource: resource,
+            dropTargetActive: dropTargetActive,
+          )),
+    );
+  }
+
+  void _onDragStarted(BuildContext context) {
+    final controller = context.read<ExplorerController>();
+    if (!context.read<ExplorerState>().isSelected(resource.id)) {
+      controller.updateSelection((_) => index, SelectionMode.single, false);
+    }
+    controller.setDragging(true);
+  }
+
+  Widget _feedback(BuildContext context) {
+    return Builder(
+      builder: (ctx) {
         final theme = Theme.of(context);
         final count = context.read<ExplorerState>().selectedIds.length;
         return Card(
@@ -165,11 +199,60 @@ class ResourceDraggable extends StatelessWidget {
             ),
           ),
         );
-      }),
-      child: ResourceDetailsRow(
-        resource: resource,
-        dropTargetActive: dropTargetActive,
-      ),
+      },
     );
+  }
+}
+
+class _CustomDraggable<T extends Object> extends Draggable<T> {
+  final Set<PointerDeviceKind>? supportedDevices;
+  final Duration? delay;
+  final bool hapticFeedbackOnStart;
+
+  const _CustomDraggable({
+    super.key,
+    required super.child,
+    required super.feedback,
+    super.data,
+    super.axis,
+    super.childWhenDragging,
+    super.feedbackOffset,
+    super.dragAnchorStrategy,
+    super.maxSimultaneousDrags,
+    super.onDragStarted,
+    super.onDragUpdate,
+    super.onDraggableCanceled,
+    super.onDragEnd,
+    super.onDragCompleted,
+    super.ignoringFeedbackSemantics,
+    super.ignoringFeedbackPointer,
+    super.allowedButtonsFilter,
+    super.hitTestBehavior,
+    super.rootOverlay,
+    this.delay,
+    this.hapticFeedbackOnStart = false,
+    this.supportedDevices,
+  });
+
+  @override
+  MultiDragGestureRecognizer createRecognizer(GestureMultiDragStartCallback onStart) {
+    final recognizer = delay == null
+        ? ImmediateMultiDragGestureRecognizer(
+            supportedDevices: supportedDevices,
+            allowedButtonsFilter: allowedButtonsFilter,
+          )
+        : DelayedMultiDragGestureRecognizer(
+            delay: delay!,
+            supportedDevices: supportedDevices,
+            allowedButtonsFilter: allowedButtonsFilter,
+          );
+    return recognizer
+      ..onStart = (Offset position) {
+        final Drag? result = onStart(position);
+        if (result != null && hapticFeedbackOnStart) {
+          HapticFeedback.selectionClick();
+        }
+        return result;
+      };
   }
 }
