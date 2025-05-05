@@ -399,12 +399,13 @@ packages:
     source: hosted
     version: "2.0.0"
   flutter_keyboard_visibility_web:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: flutter_keyboard_visibility_web
-      sha256: d3771a2e752880c79203f8d80658401d0c998e4183edca05a149f5098ce6e3d1
-      url: "https://pub.dev"
-    source: hosted
+      path: flutter_keyboard_visibility_web
+      ref: b8393c50c483fa6fd16148d43dff454e6e845201
+      resolved-ref: b8393c50c483fa6fd16148d43dff454e6e845201
+      url: "https://github.com/moshe5745/flutter_keyboard_visibility.git"
+    source: git
     version: "2.0.0"
   flutter_keyboard_visibility_windows:
     dependency: transitive
