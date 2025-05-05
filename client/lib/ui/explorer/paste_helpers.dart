@@ -72,7 +72,8 @@ Future<PasteItem> extractPasteItem(PhylumAccount account, DataReader reader) asy
         final data = await file.readAll();
         xfileCompleter.complete(XFile.fromData(
           data,
-          path: file.fileName,
+          // Setting path on web completely breaks this
+          path: kIsWeb ? null : file.fileName,
           name: file.fileName,
           length: data.length,
         ));
