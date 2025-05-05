@@ -70,6 +70,6 @@ PartialResource parsePartialResource(Map<String, dynamic> data, [String? id]) {
             : Value(data['grants'])
         : Value.absent(),
   );
-  final publinks = data.containsKey('publinks') ? parsePublinks(data['publinks'], r.id.value) : null;
+  final publinks = data['publinks'] != null ? parsePublinks(data['publinks'], r.id.value) : null;
   return PartialResource(resource: r, publinks: publinks);
 }
