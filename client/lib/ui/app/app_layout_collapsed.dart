@@ -15,47 +15,9 @@ class AppLayoutCollapsed extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = context.select<ExplorerState, int>((state) => state.selectedIds.length);
-    final searching =
-        context.select<PhylumSearchController, bool>((search) => search.pageQuery.isNotEmpty || search.active);
+    final searching = context.select<PhylumSearchController, bool>((search) => search.active);
     return Scaffold(
-      appBar: selected != 0
-          ? AppBar(
-              leading: IconButton(
-                tooltip: 'Clear Selection',
-                icon: Icon(Icons.close),
-                onPressed: () {
-                  context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.none, false);
-                },
-              ),
-              title: Text('$selected selected'),
-              actions: [
-                IconButton(
-                    onPressed: () {
-                      final selected = context.read<ExplorerState>().selected;
-                      var options = createOptions(context);
-                      if (selected.every((r) => r.deleted != null)) {
-                        options = trashedResourceOptions;
-                      }
-                      showMenuOptionsBottomSheet(context, options, selected);
-                    },
-                    icon: Icon(Icons.adaptive.more))
-              ],
-            )
-          : searching
-              ? AppBar(
-                  title: SearchField(),
-                )
-              : AppBar(
-                  title: const Text('Phylum'),
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: () {
-                        context.read<PhylumSearchController>().active = true;
-                      },
-                    )
-                  ],
-                ),
+      appBar: _buildAppBar(context, searching, selected),
       drawer: selected == 0 ? const Drawer(child: NavList(drawer: true)) : null,
       floatingActionButton: selected == 0
           ? FloatingActionButton(
@@ -66,6 +28,48 @@ class AppLayoutCollapsed extends StatelessWidget {
             )
           : null,
       body: const ExplorerView(small: true),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context, bool searching, int selected) {
+    if (searching) {
+      return AppBar(title: SearchField());
+    }
+    if (selected != 0) {
+      return AppBar(
+        leading: IconButton(
+          tooltip: 'Clear Selection',
+          icon: Icon(Icons.close),
+          onPressed: () {
+            context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.none, false);
+          },
+        ),
+        title: Text('$selected selected'),
+        actions: [
+          IconButton(
+              onPressed: () {
+                final selected = context.read<ExplorerState>().selected;
+                var options = createOptions(context);
+                if (selected.every((r) => r.deleted != null)) {
+                  options = trashedResourceOptions;
+                }
+                showMenuOptionsBottomSheet(context, options, selected);
+              },
+              icon: Icon(Icons.adaptive.more))
+        ],
+      );
+    }
+
+    return AppBar(
+      title: const Text('Phylum'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: () {
+            context.read<PhylumSearchController>().active = true;
+          },
+        )
+      ],
     );
   }
 
