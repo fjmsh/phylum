@@ -60,6 +60,7 @@ type Manager interface {
 	UpdateUserRoot(user User, root uuid.UUID) error
 	UpdateUserHome(user User, home uuid.UUID) error
 	UpdateUserDisplayName(user User, displayName string) error
+	UpdateUserPassword(user User, password string) error
 
 	// auth.go
 	VerifyUserPassword(email, password string) (User, error)

@@ -7,7 +7,6 @@ import (
 
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/user"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +34,8 @@ func setupBookmarksListCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			u := common.User(cmd)
 			if u == nil {
-				logrus.Fatal("unable to list bookmarks: user not specified")
+				fmt.Println("unable to list bookmarks: user not specified")
+				os.Exit(1)
 			}
 			if bookmarks, err := user.ManagerFromContext(context.Background()).ListBookmarks(*u); err != nil {
 				fmt.Println("unable to list bookmark: " + err.Error())
@@ -58,7 +58,8 @@ func setupBookmarksRemoveCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			u := common.User(cmd)
 			if u == nil {
-				logrus.Fatal("unable to remove bookmark: user not specified")
+				fmt.Println("unable to remove bookmark: user not specified")
+				os.Exit(1)
 			}
 
 			r, err := common.UserFileSystem(cmd).ResourceByPathOrUUID(args[0])
@@ -84,7 +85,8 @@ func setupBookmarksAddCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			u := common.User(cmd)
 			if u == nil {
-				logrus.Fatal("unable to add bookmark: user not specified")
+				fmt.Println("unable to add bookmark: user not specified")
+				os.Exit(1)
 			}
 			r, err := common.UserFileSystem(cmd).ResourceByPathOrUUID(args[0])
 			if err != nil {
