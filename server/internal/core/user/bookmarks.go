@@ -46,7 +46,7 @@ SET
     name = $3::TEXT
 RETURNING resource_id, name, dir, created`
 
-	if rows, err := m.db.Query(q, u.Username); err != nil {
+	if rows, err := m.db.Query(q, u.Username, resource.ID(), name, resource.Dir()); err != nil {
 		return Bookmark{}, err
 	} else if bookmark, err := pgx.CollectExactlyOneRow(rows, scanBookmark); err != nil {
 		return Bookmark{}, err

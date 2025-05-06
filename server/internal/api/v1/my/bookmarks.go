@@ -66,7 +66,14 @@ func handleBookmarksAddRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	c.JSON(200, b)
+	c.JSON(200,
+		Bookmark{
+			ResourceID: b.ResourceID,
+			Name:       b.Name,
+			Dir:        b.Dir,
+			Created:    b.Created.UnixMilli(),
+		},
+	)
 }
 
 func handleBookmarksRemoveRoute(c *gin.Context) {
