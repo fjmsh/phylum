@@ -34,7 +34,7 @@ func checkVersion(ctx context.Context, skipMigration bool) error {
 
 	// Nothing to do
 	if currentSchemaVersion == latestSchemaVersion {
-		return BootstrapData(ctx)
+		return nil
 	}
 
 	if skipMigration {
@@ -51,7 +51,7 @@ func checkVersion(ctx context.Context, skipMigration bool) error {
 	if err != nil {
 		return err
 	}
-	return BootstrapData(ctx)
+	return nil
 }
 
 func Migrate(ctx context.Context, version int) error {
@@ -86,7 +86,7 @@ func Migrate(ctx context.Context, version int) error {
 		return err
 	}
 	if version == latestSchemaVersion {
-		return BootstrapData(ctx)
+		return nil
 	}
 	return nil
 }

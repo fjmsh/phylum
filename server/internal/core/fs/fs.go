@@ -13,6 +13,7 @@ import (
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
+	"github.com/sirupsen/logrus"
 )
 
 type ResourceBindConflictResolution int32
@@ -67,6 +68,32 @@ func Open(ctx context.Context, username string, root uuid.UUID, fullAccess bool)
 		username:   username,
 		rootID:     root,
 		fullAccess: fullAccess,
+	}
+}
+
+func OpenOmniscient(ctx context.Context) FileSystem {
+	id, err := _readRootID(context.Background())
+	if err != nil {
+		logrus.Fatal("could not read root id: " + err.Error())
+	}
+	return Open(ctx, "", id, true)
+}
+
+func _readRootID(ctx context.Context) (uuid.UUID, error) {
+	const q = "SELECT id FROM resources WHERE parent IS NULL"
+	d := db.Get(ctx)
+	row := d.QueryRow(q)
+	var id uuid.UUID
+	if err := row.Scan(&id); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			const createDir = "INSERT INTO resources(id, name, dir) VALUES ($1::UUID, '', TRUE)"
+			id, _ := uuid.NewV7()
+			_, err = d.Exec(createDir, id, nil, "")
+			return id, err
+		}
+		return uuid.Nil, err
+	} else {
+		return id, nil
 	}
 }
 

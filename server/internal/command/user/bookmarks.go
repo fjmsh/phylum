@@ -7,6 +7,7 @@ import (
 
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +33,11 @@ func setupBookmarksListCommand() *cobra.Command {
 		Short: "List Bookmarks",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			if bookmarks, err := user.ManagerFromContext(context.Background()).ListBookmarks(common.User(cmd)); err != nil {
+			u := common.User(cmd)
+			if u == nil {
+				logrus.Fatal("unable to list bookmarks: user not specified")
+			}
+			if bookmarks, err := user.ManagerFromContext(context.Background()).ListBookmarks(*u); err != nil {
 				fmt.Println("unable to list bookmark: " + err.Error())
 				os.Exit(1)
 			} else {
@@ -51,13 +56,18 @@ func setupBookmarksRemoveCommand() *cobra.Command {
 		Short: "Remove Bookmark",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			u := common.User(cmd)
+			if u == nil {
+				logrus.Fatal("unable to remove bookmark: user not specified")
+			}
+
 			r, err := common.UserFileSystem(cmd).ResourceByPathOrUUID(args[0])
 			if err != nil {
 				fmt.Println("unable to remove bookmark: " + err.Error())
 				os.Exit(1)
 			}
 
-			if err := user.ManagerFromContext(context.Background()).RemoveBookmark(common.User(cmd), r.ID()); err != nil {
+			if err := user.ManagerFromContext(context.Background()).RemoveBookmark(*u, r.ID()); err != nil {
 				fmt.Println("unable to remove bookmark: " + err.Error())
 				os.Exit(1)
 			}
@@ -72,6 +82,10 @@ func setupBookmarksAddCommand() *cobra.Command {
 		Short: "Add Bookmark",
 		Args:  cobra.RangeArgs(1, 2),
 		Run: func(cmd *cobra.Command, args []string) {
+			u := common.User(cmd)
+			if u == nil {
+				logrus.Fatal("unable to add bookmark: user not specified")
+			}
 			r, err := common.UserFileSystem(cmd).ResourceByPathOrUUID(args[0])
 			if err != nil {
 				fmt.Println("unable to add bookmark: " + err.Error())
@@ -82,7 +96,7 @@ func setupBookmarksAddCommand() *cobra.Command {
 				name = args[1]
 			}
 
-			if _, err := user.ManagerFromContext(context.Background()).AddBookmark(common.User(cmd), r, name); err != nil {
+			if _, err := user.ManagerFromContext(context.Background()).AddBookmark(*u, r, name); err != nil {
 				fmt.Println("unable to add bookmark: " + err.Error())
 				os.Exit(1)
 			}
