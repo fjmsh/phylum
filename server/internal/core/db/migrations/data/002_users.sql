@@ -5,7 +5,6 @@ CREATE TABLE users(
   deleted       TIMESTAMP,
   display_name  TEXT        NOT NULL,
   password_hash TEXT        NOT NULL,
-  root          uuid        NOT NULL REFERENCES resources(id),
   home          uuid        NOT NULL REFERENCES resources(id),
   permissions   INTEGER     NOT NULL DEFAULT 0
 );

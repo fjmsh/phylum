@@ -28,19 +28,6 @@ func setupUserModCommand() *cobra.Command {
 			displayName, _ := cmd.Flags().GetString("name")
 
 			rootFS := common.RootFileSystem()
-			chrootID := uuid.Nil
-			if rootPathOrUUID, err := cmd.Flags().GetString("chroot"); err != nil {
-				fmt.Println("invalid value for flag 'chroot': " + err.Error())
-				os.Exit(1)
-			} else if rootPathOrUUID != "" {
-				if r, err := rootFS.ResourceByPathOrUUID(rootPathOrUUID); err != nil {
-					fmt.Println("invalid value for flag 'chroot': " + err.Error())
-					os.Exit(1)
-				} else {
-					chrootID = r.ID()
-				}
-			}
-
 			homeID := uuid.Nil
 			if pathOrUUID, err := cmd.Flags().GetString("home"); err != nil {
 				fmt.Println("invalid value for flag 'home': " + err.Error())
@@ -61,11 +48,6 @@ func setupUserModCommand() *cobra.Command {
 						return err
 					}
 				}
-				if chrootID != uuid.Nil {
-					if err := m.UpdateUserRoot(u, chrootID); err != nil {
-						return err
-					}
-				}
 				if homeID != uuid.Nil {
 					if err := m.UpdateUserHome(u, homeID); err != nil {
 						return err
@@ -79,8 +61,7 @@ func setupUserModCommand() *cobra.Command {
 			}
 		},
 	}
-	cmd.Flags().StringP("name", "n", "", "Full Name")
-	cmd.Flags().StringP("chroot", "R", "", "Chroot")
-	cmd.Flags().StringP("home", "d", "", "Home directory")
+	cmd.Flags().StringP("name", "n", "", "Display Name")
+	cmd.Flags().StringP("home", "d", "", "Home Directory")
 	return cmd
 }

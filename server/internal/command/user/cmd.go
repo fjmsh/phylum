@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 
-	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -18,7 +17,6 @@ func SetupCommand() *cobra.Command {
 	}
 	cmd.AddCommand([]*cobra.Command{
 		setupUserAddCommand(),
-		setupUserChrootCommand(),
 		setupUserModCommand(),
 		setupUserListCommand(),
 		setupUserPasswdCommand(),
@@ -29,29 +27,6 @@ func SetupCommand() *cobra.Command {
 	flags.Bool("auto-migrate", true, "Automatically migrate database schema")
 	viper.BindPFlag("auto_migrate", flags.Lookup("auto-migrate"))
 
-	return cmd
-}
-
-func setupUserChrootCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "chroot <username> [ <path> | <uuid> ]",
-		Short: "Set User Root",
-		Args:  cobra.ExactArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			email := args[0]
-			idOrPath := args[1]
-			userManager := user.ManagerFromContext(context.Background())
-			if user, err := userManager.UserByEmail(email); err != nil {
-				logrus.Fatal(err)
-			} else {
-				if res, err := common.RootFileSystem().ResourceByPathOrUUID(idOrPath); err != nil {
-					logrus.Fatal(err)
-				} else {
-					userManager.UpdateUserRoot(user, res.ID())
-				}
-			}
-		},
-	}
 	return cmd
 }
 

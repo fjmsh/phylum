@@ -60,13 +60,13 @@ func setupUserAddCommand() *cobra.Command {
 				}
 			}
 
-			rootFS := common.RootFileSystem()
-			root := rootFS.RootID()
+			f := common.RootFileSystem()
+			root := f.RootID()
 			if rootPathOrUUID, err := cmd.Flags().GetString("chroot"); err != nil {
 				fmt.Println("invalid value for flag 'chroot': " + err.Error())
 				os.Exit(2)
 			} else if rootPathOrUUID != "" {
-				if r, err := rootFS.ResourceByPathOrUUID(rootPathOrUUID); err != nil {
+				if r, err := f.ResourceByPathOrUUID(rootPathOrUUID); err != nil {
 					fmt.Println("invalid value for flag 'chroot': " + err.Error())
 					os.Exit(1)
 				} else {
@@ -77,17 +77,12 @@ func setupUserAddCommand() *cobra.Command {
 			noCreateHome, _ := cmd.Flags().GetBool("no-create-home")
 			homePath := ""
 			if !noCreateHome {
-				homePath, _ = cmd.Flags().GetString("home-dir")
-				if homePath == "" {
-					basePath, _ := cmd.Flags().GetString("base-dir")
-					if basePath == "" {
-						fmt.Println("home directory path not specified. try again with -d or -b")
-						os.Exit(1)
-					} else {
-						homePath = strings.TrimRight(basePath, "/") + "/" + username
-					}
+				basePath, _ := cmd.Flags().GetString("base-dir")
+				if basePath == "" {
+					fmt.Println("home directory path not specified. try again with -d or -b")
+					os.Exit(1)
 				} else {
-					homePath = strings.TrimRight(homePath, "/")
+					homePath = strings.TrimRight(basePath, "/") + "/" + username
 				}
 			}
 
@@ -101,8 +96,8 @@ func setupUserAddCommand() *cobra.Command {
 				}
 
 				if homePath != "" {
-					rootFS = rootFS.WithDb(db)
-					home, err := rootFS.CreateResourceByPath(homePath, true, true, fs.ResourceBindConflictResolutionEnsure)
+					f = f.WithDb(db)
+					home, err := f.CreateResourceByPath(homePath, true, true, fs.ResourceBindConflictResolutionEnsure)
 					if err != nil {
 						return err
 					}
@@ -122,9 +117,7 @@ func setupUserAddCommand() *cobra.Command {
 	}
 	cmd.Flags().StringP("name", "n", "", "Full Name")
 	cmd.Flags().StringP("password", "p", "", "Password")
-	cmd.Flags().StringP("chroot", "R", "", "Chroot")
-	cmd.Flags().StringP("base-dir", "b", "/home", "Base directory for home")
-	cmd.Flags().StringP("home-dir", "d", "", "Home directory")
+	cmd.Flags().StringP("base-dir", "b", "", "Base directory for home")
 	cmd.Flags().BoolP("no-create-home", "M", false, "Do not make home directory")
 	return cmd
 }

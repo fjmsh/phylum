@@ -51,16 +51,15 @@ func (m manager) CreateAccessToken(username string) (string, error) {
 }
 
 func (m manager) ReadAccessToken(accessToken string) (User, error) {
-	const q = `SELECT t.expires, u.username, u.display_name, u.permissions, u.root, u.home FROM access_tokens t JOIN users u ON t.username = u.username WHERE t.id = $1; `
+	const q = `SELECT t.expires, u.username, u.display_name, u.permissions, u.home FROM access_tokens t JOIN users u ON t.username = u.username WHERE t.id = $1; `
 	row := m.db.QueryRow(q, accessToken)
 
 	var expires pgtype.Timestamp
 	var username string
 	var displayName string
 	var permissions int32
-	var root uuid.UUID
 	var home uuid.UUID
-	if err := row.Scan(&expires, &username, &displayName, &permissions, &root, &home); err != nil {
+	if err := row.Scan(&expires, &username, &displayName, &permissions, &home); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrCredentialsInvalid
 		}
@@ -74,7 +73,6 @@ func (m manager) ReadAccessToken(accessToken string) (User, error) {
 				DisplayName: displayName,
 			},
 			Permissions: permissions,
-			Root:        root,
 			Home:        home,
 		}, nil
 	}

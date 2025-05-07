@@ -17,7 +17,6 @@ type BasicUser struct {
 type User struct {
 	BasicUser
 	PasswordHash string
-	Root         uuid.UUID
 	Home         uuid.UUID
 	Permissions  int32
 }
@@ -37,7 +36,6 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 		&u.Username,
 		&u.DisplayName,
 		&u.PasswordHash,
-		&u.Root,
 		&u.Home,
 		&u.Permissions,
 	)
@@ -45,19 +43,18 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 }
 
 func (u User) OpenFileSystem(ctx context.Context) fs.FileSystem {
-	return fs.Open(ctx, u.Username, u.Root, u.Permissions&PermissionAllFiles != 0)
+	return fs.Open(ctx, u.Username, u.Home, u.Permissions&PermissionAllFiles != 0)
 }
 
 type Manager interface {
 	// create.go
-	CreateUser(username, displayName, password string, root uuid.UUID) (User, error)
+	CreateUser(username, displayName, password string, home uuid.UUID) (User, error)
 
 	// select.go
 	ListUsers(since *time.Time) ([]BasicUser, error)
 	UserByEmail(email string) (User, error)
 
 	// update.go
-	UpdateUserRoot(user User, root uuid.UUID) error
 	UpdateUserHome(user User, home uuid.UUID) error
 	UpdateUserDisplayName(user User, displayName string) error
 	UpdateUserPassword(user User, password string) error

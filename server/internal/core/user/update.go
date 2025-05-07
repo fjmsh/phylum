@@ -5,14 +5,6 @@ import (
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
 
-func (m manager) UpdateUserRoot(user User, root uuid.UUID) error {
-	const q = "UPDATE users SET root = $2::UUID, modified = NOW() WHERE username = $1::TEXT"
-	if _, err := m.db.Exec(q, user.Username, root); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (m manager) UpdateUserHome(user User, home uuid.UUID) error {
 	const q = "UPDATE users SET home = $2::UUID, modified = NOW() WHERE username = $1::TEXT"
 	if _, err := m.db.Exec(q, user.Username, home); err != nil {
