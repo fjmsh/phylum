@@ -4,19 +4,20 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Ancestor struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	ParentID    uuid.UUID `json:"parent"`
-	Permissions string    `json:"permissions"`
+	ID          uuid.UUID   `json:"id"`
+	Name        string      `json:"name"`
+	ParentID    pgtype.UUID `json:"parent"`
+	Permissions string      `json:"permissions"`
 }
 
 type Resource struct {
 	ID            uuid.UUID       `json:"id"`
 	Name          string          `json:"name"`
-	ParentID      uuid.UUID       `json:"parent"`
+	ParentID      pgtype.UUID     `json:"parent"`
 	Dir           bool            `json:"dir"`
 	Created       int64           `json:"created"`
 	Modified      int64           `json:"modified"`

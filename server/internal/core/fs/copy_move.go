@@ -6,6 +6,7 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/sirupsen/logrus"
 )
 
@@ -15,17 +16,18 @@ type copySrcDest struct {
 }
 
 func (r Resource) Move(target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
-	if r.ParentID() == uuid.Nil {
-		return Resource{}, false, ErrInsufficientPermissions
-	}
-
 	// Check source directory permissions
-	parent, err := r.f.ResourceByID(r.ParentID())
-	if err != nil {
-		return Resource{}, false, err
-	}
-	if !parent.hasPermission(PermissionRead | PermissionWrite) {
-		return Resource{}, false, ErrInsufficientPermissions
+	if !r.f.fullAccess {
+		if !r.ParentID().Valid {
+			return Resource{}, false, ErrInsufficientPermissions
+		}
+		parent, err := r.f.ResourceByID(r.ParentID().Bytes)
+		if err != nil {
+			return Resource{}, false, err
+		}
+		if !parent.hasPermission(PermissionRead | PermissionWrite) {
+			return Resource{}, false, ErrInsufficientPermissions
+		}
 	}
 
 	// Check destParent directory permissions (if applicable)
@@ -36,7 +38,7 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 		}
 		return Resource{}, false, err
 	}
-	if r.parentID == destParent.id && r.name == destName {
+	if r.parentID.Bytes == destParent.id && r.name == destName {
 		return r, false, nil
 	}
 	if !destParent.Dir() {
@@ -69,34 +71,37 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 				return err
 			}
 		}
-		parent := destParent.id
-		if r.parentID == destParent.id {
-			parent = uuid.Nil
+		newParentID := pgtype.UUID{
+			Bytes: destParent.id,
+			Valid: true,
 		}
-		if err := f.updateResourceNameParent(r.id, destName, parent); err != nil {
+		if r.parentID.Bytes == destParent.id {
+			newParentID = pgtype.UUID{}
+		}
+		if err := f.updateResourceNameParent(r.id, destName, newParentID); err != nil {
 			return err
 		} else {
-			if parent != uuid.Nil {
+			res = r
+			res.name = destName
+			if newParentID.Valid {
 				if err := f.recomputePermissions(r.id); err != nil {
 					return err
 				}
+				res.parentID = newParentID
 			}
-			res = r
-			res.name = destName
-			res.parentID = destParent.id
 			return nil
 		}
 	})
 }
 
-func (f filesystem) updateResourceNameParent(id uuid.UUID, name string, parent uuid.UUID) error {
+func (f filesystem) updateResourceNameParent(id uuid.UUID, name string, parent pgtype.UUID) error {
 	updates := goqu.Record{
 		"modified": goqu.L("NOW()"),
 	}
 	if name != "" {
 		updates["name"] = name
 	}
-	if parent != uuid.Nil {
+	if parent.Valid {
 		updates["parent"] = parent
 	}
 	q, args, _ := pg.Update("resources").Where(goqu.C("id").Eq(id)).Set(updates).ToSQL()
@@ -176,7 +181,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 
 		for _, src := range tree {
 			id, _ := uuid.NewV7()
-			parent := newIDs[src.parentID]
+			parent := newIDs[src.parentID.Bytes]
 
 			children = append(children, CreateResourcesParams{
 				ID:            id,
@@ -263,7 +268,7 @@ func (f filesystem) targetByPathOrUUID(src Resource, pathOrUUID string) (Resourc
 		return Resource{}, "", ErrResourceNameInvalid
 	}
 
-	var parentID = src.ParentID()
+	var parentID = src.ParentID().Bytes
 	if index != 0 {
 		if id, err := uuid.Parse(pathOrUUID[0:index]); err != nil {
 			return Resource{}, "", err

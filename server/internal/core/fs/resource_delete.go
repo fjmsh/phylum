@@ -36,17 +36,17 @@ func (r Resource) DeleteChildRecursive(name string) (Resource, error) {
 }
 
 func (r Resource) DeleteRecursive(softDelete bool) (Resource, error) {
-	if r.ParentID() == uuid.Nil {
+	if !r.ParentID().Valid {
 		return Resource{}, ErrInsufficientPermissions
 	}
-	parent, err := r.f.ResourceByID(r.ParentID())
+	parent, err := r.f.ResourceByID(r.ParentID().Bytes)
 	if err == nil && !parent.hasPermission(PermissionWrite) {
 		err = ErrInsufficientPermissions
 	}
 	if err != nil {
 		return Resource{}, err
 	}
-	if err := r.f.deleteRecursive(r.ID(), r.ParentID(), softDelete, false); err != nil {
+	if err := r.f.deleteRecursive(r.ID(), r.ParentID().Bytes, softDelete, false); err != nil {
 		return Resource{}, err
 	}
 	if softDelete {
@@ -67,7 +67,11 @@ func (r Resource) DeleteRecursive(softDelete bool) (Resource, error) {
 func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRename bool) (res Resource, count int, size int64, err error) {
 	var p Resource
 	if parentPathOrUUID == "" {
-		p, err = r.f.ResourceByID(r.parentID)
+		if r.parentID.Valid {
+			p, err = r.f.ResourceByID(r.parentID.Bytes)
+		} else {
+			err = ErrResourceNotFound
+		}
 	} else {
 		p, err = r.f.ResourceByPathOrUUID(parentPathOrUUID)
 	}
@@ -116,12 +120,15 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 		if _, err := f.db.Exec(q, args...); err != nil {
 			return err
 		}
-		if p.id != r.parentID || r.name != name {
-			if err := f.updateResourceNameParent(r.ID(), name, p.id); err != nil {
+		if p.id != r.parentID.Bytes || r.name != name {
+			if err := f.updateResourceNameParent(r.ID(), name, pgtype.UUID{Bytes: p.id, Valid: true}); err != nil {
 				return err
 			} else {
 				r.name = name
-				r.parentID = p.id
+				r.parentID = pgtype.UUID{
+					Bytes: p.id,
+					Valid: true,
+				}
 			}
 		}
 		if del, err := f.markNotDeleted(r.id); err != nil {

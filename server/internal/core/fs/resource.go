@@ -12,7 +12,7 @@ import (
 type Resource struct {
 	f              filesystem
 	id             uuid.UUID
-	parentID       uuid.UUID
+	parentID       pgtype.UUID
 	name           string
 	dir            bool
 	created        time.Time
@@ -28,7 +28,7 @@ type Resource struct {
 }
 
 func (r Resource) ID() uuid.UUID             { return r.id }
-func (r Resource) ParentID() uuid.UUID       { return r.parentID }
+func (r Resource) ParentID() pgtype.UUID     { return r.parentID }
 func (r Resource) Name() string              { return r.name }
 func (r Resource) Dir() bool                 { return r.dir }
 func (r Resource) Created() time.Time        { return r.created }

@@ -5,11 +5,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ResourceAncestor struct {
 	ID          uuid.UUID
-	ParentID    uuid.UUID
+	ParentID    pgtype.UUID
 	Name        string
 	Permissions []byte
 }
