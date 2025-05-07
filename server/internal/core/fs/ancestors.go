@@ -34,14 +34,18 @@ const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, permissions) AS (
         SELECT r.id, r.name, r.parent, r.permissions
             FROM resources r
             JOIN nodes n ON r.id = n.parent
+			WHERE r.permissions[$2::TEXT]::INTEGER <> 0
+			OR $3::BOOLEAN
 )
 SELECT id, name, parent, permissions FROM nodes`
 
 func (r Resource) GetAncestors() ([]ResourceAncestor, error) {
-	if rows, err := r.f.db.Query(ancestorsQuery, r.parentID); err != nil {
+	if rows, err := r.f.db.Query(ancestorsQuery, r.id, r.f.username, r.f.fullAccess); err != nil {
+		return nil, err
+	} else if a, err := pgx.CollectRows(rows, r.f.scanResourceAncestor); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, r.f.scanResourceAncestor)
+		return a[1:], nil
 	}
 }
 
@@ -49,12 +53,15 @@ func (r Resource) GetPath() (string, error) {
 	if a, err := r.GetAncestors(); err != nil {
 		return "", err
 	} else {
-		if len(a) <= 1 {
+		if len(a) < 1 {
 			return "/", nil
 		}
 		b := strings.Builder{}
 		for i := len(a) - 1; i >= 0; i-- {
-			b.WriteString(a[i].Name)
+			// Don't write the name of the root resource
+			if b.Len() != 0 {
+				b.WriteString(a[i].Name)
+			}
 			b.WriteByte(byte('/'))
 		}
 		b.Write([]byte(r.name))

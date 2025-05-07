@@ -11,7 +11,7 @@ func SetupCommand() *cobra.Command {
 		GroupID: "app",
 	}
 	flags := cmd.PersistentFlags()
-	flags.StringP("user", "u", "phylum", "User")
+	flags.StringP("user", "u", "", "User")
 
 	cmd.AddCommand(
 		setupCreateCommand(),

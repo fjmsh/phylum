@@ -11,7 +11,7 @@ func SetupCommand() *cobra.Command {
 		Short:   "Filesystem",
 	}
 	flags := cmd.PersistentFlags()
-	flags.StringP("user", "u", "phylum", "User")
+	flags.StringP("user", "u", "", "User")
 
 	cmd.AddCommand(
 		setupCatCommand(),
