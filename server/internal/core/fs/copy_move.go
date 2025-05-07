@@ -17,17 +17,15 @@ type copySrcDest struct {
 
 func (r Resource) Move(target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	// Check source directory permissions
-	if !r.f.fullAccess {
-		if !r.ParentID().Valid {
-			return Resource{}, false, ErrInsufficientPermissions
-		}
-		parent, err := r.f.ResourceByID(r.ParentID().Bytes)
-		if err != nil {
-			return Resource{}, false, err
-		}
-		if !parent.hasPermission(PermissionRead | PermissionWrite) {
-			return Resource{}, false, ErrInsufficientPermissions
-		}
+	if !r.ParentID().Valid {
+		return Resource{}, false, ErrInsufficientPermissions
+	}
+	parent, err := r.f.ResourceByID(r.ParentID().Bytes)
+	if err != nil {
+		return Resource{}, false, err
+	}
+	if !parent.hasPermission(PermissionRead | PermissionWrite) {
+		return Resource{}, false, ErrInsufficientPermissions
 	}
 
 	// Check destParent directory permissions (if applicable)
