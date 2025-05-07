@@ -22,7 +22,19 @@ func SetupHandler(r *gin.RouterGroup) {
 		prefix:     r.BasePath(),
 		lockSystem: webdav.NewMemLS(),
 	}
-	r.Any("/:user/*path", handler.HandleRequest)
+	r.Handle("OPTIONS", "/:user/*path", handler.HandleRequest)
+	r.Handle("GET", "/:user/*path", handler.HandleRequest)
+	r.Handle("PUT", "/:user/*path", handler.HandleRequest)
+	r.Handle("HEAD", "/:user/*path", handler.HandleRequest)
+	r.Handle("POST", "/:user/*path", handler.HandleRequest)
+	r.Handle("DELETE", "/:user/*path", handler.HandleRequest)
+	r.Handle("MOVE", "/:user/*path", handler.HandleRequest)
+	r.Handle("COPY", "/:user/*path", handler.HandleRequest)
+	r.Handle("MKCOL", "/:user/*path", handler.HandleRequest)
+	r.Handle("PROPFIND", "/:user/*path", handler.HandleRequest)
+	r.Handle("PROPPATCH", "/:user/*path", handler.HandleRequest)
+	r.Handle("LOCK", "/:user/*path", handler.HandleRequest)
+	r.Handle("UNLOCK", "/:user/*path", handler.HandleRequest)
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
@@ -53,7 +65,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 	}
 
 	webdavHandler := webdav.Handler{
-		Prefix:     h.prefix,
+		Prefix:     h.prefix + "/" + c.Param("user"),
 		FileSystem: f,
 		LockSystem: h.lockSystem,
 	}
