@@ -7,6 +7,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/fs"
@@ -61,19 +63,6 @@ func setupUserAddCommand() *cobra.Command {
 			}
 
 			f := common.RootFileSystem()
-			root := f.RootID()
-			if rootPathOrUUID, err := cmd.Flags().GetString("chroot"); err != nil {
-				fmt.Println("invalid value for flag 'chroot': " + err.Error())
-				os.Exit(2)
-			} else if rootPathOrUUID != "" {
-				if r, err := f.ResourceByPathOrUUID(rootPathOrUUID); err != nil {
-					fmt.Println("invalid value for flag 'chroot': " + err.Error())
-					os.Exit(1)
-				} else {
-					root = r.ID()
-				}
-			}
-
 			noCreateHome, _ := cmd.Flags().GetBool("no-create-home")
 			homePath := ""
 			if !noCreateHome {
@@ -89,22 +78,33 @@ func setupUserAddCommand() *cobra.Command {
 			err = db.Get(context.Background()).RunInTx(func(db db.Handler) error {
 				userManager := user.ManagerFromDB(db)
 				var u user.User
-				if user, err := userManager.CreateUser(username, displayName, password, root); err != nil {
+				var home fs.Resource
+				if homePath != "" {
+					f = common.RootFileSystem().WithDb(db)
+					var err error
+					home, err = f.CreateResourceByPath(homePath, true, true, fs.ResourceBindConflictResolutionEnsure)
+					if err != nil {
+						return err
+					}
+				}
+
+				var homeID pgtype.UUID
+				if home.ID() != uuid.Nil {
+					homeID = pgtype.UUID{
+						Bytes: home.ID(),
+						Valid: true,
+					}
+				}
+				if user, err := userManager.CreateUser(username, displayName, password, homeID); err != nil {
 					return err
 				} else {
 					u = user
 				}
 
-				if homePath != "" {
-					f = f.WithDb(db)
-					home, err := f.CreateResourceByPath(homePath, true, true, fs.ResourceBindConflictResolutionEnsure)
-					if err != nil {
-						return err
-					}
+				if homeID.Valid {
 					if _, err := home.UpdatePermissions(u.Username, fs.PermissionRead|fs.PermissionWrite|fs.PermissionShare); err != nil {
 						return err
 					}
-					return userManager.UpdateUserHome(u, home.ID())
 				}
 
 				return nil

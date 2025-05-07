@@ -1,11 +1,11 @@
 package user
 
 import (
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
 
-func (m manager) UpdateUserHome(user User, home uuid.UUID) error {
+func (m manager) UpdateUserHome(user User, home pgtype.UUID) error {
 	const q = "UPDATE users SET home = $2::UUID, modified = NOW() WHERE username = $1::TEXT"
 	if _, err := m.db.Exec(q, user.Username, home); err != nil {
 		return err

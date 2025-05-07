@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/user"
@@ -28,7 +28,7 @@ func setupUserModCommand() *cobra.Command {
 			displayName, _ := cmd.Flags().GetString("name")
 
 			rootFS := common.RootFileSystem()
-			homeID := uuid.Nil
+			var homeID pgtype.UUID
 			if pathOrUUID, err := cmd.Flags().GetString("home"); err != nil {
 				fmt.Println("invalid value for flag 'home': " + err.Error())
 				os.Exit(1)
@@ -37,7 +37,10 @@ func setupUserModCommand() *cobra.Command {
 					fmt.Println("invalid value for flag 'home': " + err.Error())
 					os.Exit(1)
 				} else {
-					homeID = r.ID()
+					homeID = pgtype.UUID{
+						Bytes: r.ID(),
+						Valid: true,
+					}
 				}
 			}
 
@@ -48,7 +51,7 @@ func setupUserModCommand() *cobra.Command {
 						return err
 					}
 				}
-				if homeID != uuid.Nil {
+				if homeID.Valid {
 					if err := m.UpdateUserHome(u, homeID); err != nil {
 						return err
 					}

@@ -5,7 +5,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/errors"
@@ -58,7 +57,7 @@ func (m manager) ReadAccessToken(accessToken string) (User, error) {
 	var username string
 	var displayName string
 	var permissions int32
-	var home uuid.UUID
+	var home pgtype.UUID
 	if err := row.Scan(&expires, &username, &displayName, &permissions, &home); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrCredentialsInvalid

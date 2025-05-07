@@ -42,7 +42,7 @@ func UserFileSystem(cmd *cobra.Command) fs.FileSystem {
 		if user == nil {
 			f = fs.OpenOmniscient(context.Background())
 		} else {
-			f = user.OpenFileSystem(context.Background())
+			f = user.OpenHomeFileSystem(context.Background())
 		}
 	}
 	return f

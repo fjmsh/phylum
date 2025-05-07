@@ -10,6 +10,7 @@ import (
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
@@ -53,7 +54,7 @@ type FileSystem interface {
 	Search(query string, includeDeleted bool) ([]Resource, error)
 
 	// shared.go
-	SharedResources(excluded uuid.UUID) ([]Resource, error)
+	SharedResources(excluded pgtype.UUID) ([]Resource, error)
 
 	// trash.go
 	TrashList(cursor string, n uint) ([]Resource, string, error)

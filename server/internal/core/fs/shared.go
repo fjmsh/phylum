@@ -1,11 +1,11 @@
 package fs
 
 import (
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (f filesystem) SharedResources(excluded uuid.UUID) ([]Resource, error) {
+func (f filesystem) SharedResources(excluded pgtype.UUID) ([]Resource, error) {
 	const q = `SELECT r.*, (SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) as links FROM resources r
 WHERE grants ? $1::TEXT
 AND r.id != $2::UUID

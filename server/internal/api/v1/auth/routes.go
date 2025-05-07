@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/user"
@@ -15,9 +15,9 @@ type loginResponse struct {
 	User        loggedInUserResponse `json:"user"`
 }
 type loggedInUserResponse struct {
-	Username string    `json:"username"`
-	Display  string    `json:"display"`
-	Home     uuid.UUID `json:"home"`
+	Username string      `json:"username"`
+	Display  string      `json:"display"`
+	Home     pgtype.UUID `json:"home"`
 }
 
 func SetupRoutes(r *gin.RouterGroup) {

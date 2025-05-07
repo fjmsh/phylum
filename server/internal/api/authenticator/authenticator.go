@@ -38,7 +38,7 @@ func Require(c *gin.Context) {
 		panic(err)
 	} else {
 		c.Set(keyUser, u)
-		c.Set(keyFileSystem, u.OpenFileSystem(ctx))
+		c.Set(keyFileSystem, u.OpenHomeFileSystem(ctx))
 	}
 }
 

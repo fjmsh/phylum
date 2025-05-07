@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
@@ -17,7 +18,7 @@ type BasicUser struct {
 type User struct {
 	BasicUser
 	PasswordHash string
-	Home         uuid.UUID
+	Home         pgtype.UUID
 	Permissions  int32
 }
 
@@ -42,20 +43,23 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 	return u, err
 }
 
-func (u User) OpenFileSystem(ctx context.Context) fs.FileSystem {
-	return fs.Open(ctx, u.Username, u.Home, u.Permissions&PermissionAllFiles != 0)
+func (u User) OpenHomeFileSystem(ctx context.Context) fs.FileSystem {
+	if !u.Home.Valid {
+		return nil
+	}
+	return fs.Open(ctx, u.Username, u.Home.Bytes, u.Permissions&PermissionAllFiles != 0)
 }
 
 type Manager interface {
 	// create.go
-	CreateUser(username, displayName, password string, home uuid.UUID) (User, error)
+	CreateUser(username, displayName, password string, home pgtype.UUID) (User, error)
 
 	// select.go
 	ListUsers(since *time.Time) ([]BasicUser, error)
 	UserByEmail(email string) (User, error)
 
 	// update.go
-	UpdateUserHome(user User, home uuid.UUID) error
+	UpdateUserHome(user User, home pgtype.UUID) error
 	UpdateUserDisplayName(user User, displayName string) error
 	UpdateUserPassword(user User, password string) error
 

@@ -1,11 +1,13 @@
 package webdav
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	webdav "github.com/shroff/phylum/server/internal/api/webdav/impl"
 	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,29 +22,29 @@ func SetupHandler(r *gin.RouterGroup) {
 		prefix:     r.BasePath(),
 		lockSystem: webdav.NewMemLS(),
 	}
-	r.Use(createBasicAuthHandler())
-	r.Handle("OPTIONS", "*path", handler.HandleRequest)
-	r.Handle("GET", "*path", handler.HandleRequest)
-	r.Handle("PUT", "*path", handler.HandleRequest)
-	r.Handle("HEAD", "*path", handler.HandleRequest)
-	r.Handle("POST", "*path", handler.HandleRequest)
-	r.Handle("DELETE", "*path", handler.HandleRequest)
-	r.Handle("MOVE", "*path", handler.HandleRequest)
-	r.Handle("COPY", "*path", handler.HandleRequest)
-	r.Handle("MKCOL", "*path", handler.HandleRequest)
-	r.Handle("PROPFIND", "*path", handler.HandleRequest)
-	r.Handle("PROPPATCH", "*path", handler.HandleRequest)
-	r.Handle("LOCK", "*path", handler.HandleRequest)
-	r.Handle("UNLOCK", "*path", handler.HandleRequest)
+	r.Any("/:user/*path", handler.HandleRequest)
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
-	val, ok := c.Get(keyFileSystem)
-	if !ok {
-		c.AbortWithStatus(http.StatusInternalServerError)
+	authSuccess := false
+	var f fs.FileSystem
+	if username, pass, ok := c.Request.BasicAuth(); ok {
+		ctx := c.Request.Context()
+		if u, err := user.ManagerFromContext(ctx).VerifyUserPassword(username, pass); err == nil {
+			// TODO: consider allowing opening other users' home folders with permission checks
+			if u.Username == c.Param("user") {
+				f = u.OpenHomeFileSystem(ctx)
+				authSuccess = true
+			}
+		} else if !errors.Is(err, user.ErrCredentialsInvalid) {
+			panic(err)
+		}
+	}
+	if !authSuccess {
+		c.Header("WWW-Authenticate", "Basic realm=\"Phylum WebDAV\"")
+		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
-	f := val.(fs.FileSystem)
 
 	webdavHandler := webdav.Handler{
 		Prefix:     h.prefix,
