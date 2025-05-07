@@ -26,9 +26,9 @@ func (m manager) ListUsers(since *time.Time) ([]BasicUser, error) {
 	}
 }
 
-func (m manager) UserByEmail(email string) (User, error) {
+func (m manager) UserByUsername(username string) (User, error) {
 	const q = "SELECT username, display_name, password_hash, home, permissions FROM users WHERE username = $1"
-	if rows, err := m.db.Query(q, email); err != nil {
+	if rows, err := m.db.Query(q, username); err != nil {
 		return User{}, err
 	} else if u, err := pgx.CollectExactlyOneRow(rows, scanUser); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -37,5 +37,22 @@ func (m manager) UserByEmail(email string) (User, error) {
 		return User{}, err
 	} else {
 		return u, nil
+	}
+}
+
+func (m manager) UserHome(username string) (pgtype.UUID, error) {
+	const q = "SELECT home FROM users WHERE username = $1"
+	row := m.db.QueryRow(q, username)
+	var id pgtype.UUID
+	if err := row.Scan(&id); err == nil {
+		if !id.Valid {
+			err = ErrNotFound
+		}
+		return id, err
+	} else {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = ErrNotFound
+		}
+		return pgtype.UUID{}, err
 	}
 }

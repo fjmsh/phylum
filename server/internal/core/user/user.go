@@ -43,11 +43,15 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 	return u, err
 }
 
-func (u User) OpenHomeFileSystem(ctx context.Context) fs.FileSystem {
-	if !u.Home.Valid {
+func (u User) OpenFileSystem(ctx context.Context, id pgtype.UUID) fs.FileSystem {
+	if !id.Valid {
 		return nil
 	}
-	return fs.Open(ctx, u.Username, u.Home.Bytes, u.Permissions&PermissionAllFiles != 0)
+	return fs.Open(ctx, u.Username, id.Bytes, u.Permissions&PermissionAllFiles != 0)
+}
+
+func (u User) OpenHomeFileSystem(ctx context.Context) fs.FileSystem {
+	return u.OpenFileSystem(ctx, u.Home)
 }
 
 type Manager interface {
@@ -56,7 +60,8 @@ type Manager interface {
 
 	// select.go
 	ListUsers(since *time.Time) ([]BasicUser, error)
-	UserByEmail(email string) (User, error)
+	UserByUsername(email string) (User, error)
+	UserHome(username string) (pgtype.UUID, error)
 
 	// update.go
 	UpdateUserHome(user User, home pgtype.UUID) error

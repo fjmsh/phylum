@@ -21,8 +21,8 @@ var accessTokenValidity = pgtype.Interval{
 
 var ErrCredentialsInvalid = errors.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid Credentials")
 
-func (m manager) VerifyUserPassword(email, password string) (User, error) {
-	if user, err := m.UserByEmail(email); err != nil {
+func (m manager) VerifyUserPassword(username, password string) (User, error) {
+	if user, err := m.UserByUsername(username); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return User{}, ErrCredentialsInvalid
 		}

@@ -30,11 +30,17 @@ func (h *handler) HandleRequest(c *gin.Context) {
 	var f fs.FileSystem
 	if username, pass, ok := c.Request.BasicAuth(); ok {
 		ctx := c.Request.Context()
-		if u, err := user.ManagerFromContext(ctx).VerifyUserPassword(username, pass); err == nil {
-			// TODO: consider allowing opening other users' home folders with permission checks
+		userManager := user.ManagerFromContext(ctx)
+		if u, err := userManager.VerifyUserPassword(username, pass); err == nil {
+			authSuccess = true
 			if u.Username == c.Param("user") {
 				f = u.OpenHomeFileSystem(ctx)
-				authSuccess = true
+			} else {
+				id, err := userManager.UserHome(c.Param("user"))
+				if err != nil {
+					panic(err)
+				}
+				f = u.OpenFileSystem(ctx, id)
 			}
 		} else if !errors.Is(err, user.ErrCredentialsInvalid) {
 			panic(err)
