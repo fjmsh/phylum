@@ -6,6 +6,9 @@ import (
 )
 
 func (f filesystem) ResourceByPath(path string) (Resource, error) {
+	if !f.pathRoot.Valid {
+		return Resource{}, ErrResourceNotFound
+	}
 	nodes := goqu.T("nodes").As("n")
 	resources := goqu.T("resources").As("r")
 	sub := pg.
@@ -20,7 +23,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	rec := pg.
 		Select(resources.Col("id"), resources.Col("parent"), goqu.L("array_remove(string_to_array(?::TEXT, '/', NULL), '')", path), goqu.L("0")).
 		From(resources).
-		Where(resources.Col("id").Eq(goqu.V(f.rootID))).
+		Where(resources.Col("id").Eq(goqu.V(f.pathRoot))).
 		UnionAll(sub)
 
 	l := goqu.T("publinks").As("l")

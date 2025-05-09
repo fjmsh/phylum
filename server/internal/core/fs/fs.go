@@ -36,8 +36,6 @@ func init() {
 
 type FileSystem interface {
 	// filesystem.go
-	RootID() uuid.UUID
-	WithRoot(uuid.UUID) FileSystem
 	WithDb(db db.Handler) FileSystem
 	RunInTx(fn func(FileSystem) error) error
 
@@ -62,12 +60,12 @@ type FileSystem interface {
 	TrashEmpty() (int, error)
 }
 
-func Open(ctx context.Context, username string, root uuid.UUID, fullAccess bool) FileSystem {
+func Open(ctx context.Context, username string, root pgtype.UUID, fullAccess bool) FileSystem {
 	return filesystem{
 		db:         db.Get(ctx),
 		cs:         storage.Get(),
 		username:   username,
-		rootID:     root,
+		pathRoot:   root,
 		fullAccess: fullAccess,
 	}
 }
@@ -77,7 +75,7 @@ func OpenOmniscient(ctx context.Context) FileSystem {
 	if err != nil {
 		logrus.Fatal("could not read root id: " + err.Error())
 	}
-	return Open(ctx, "", id, true)
+	return Open(ctx, "", pgtype.UUID{Bytes: id, Valid: true}, true)
 }
 
 func _readRootID(ctx context.Context) (uuid.UUID, error) {
@@ -135,7 +133,7 @@ func OpenFromPublink(ctx context.Context, id string, password string, path strin
 	f := filesystem{
 		db:         d,
 		cs:         storage.Get(),
-		rootID:     link.Root,
+		pathRoot:   pgtype.UUID{Bytes: link.Root, Valid: true},
 		fullAccess: true, // TODO: #permissions Replace with permissions int
 	}
 

@@ -44,10 +44,7 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 }
 
 func (u User) OpenFileSystem(ctx context.Context, id pgtype.UUID) fs.FileSystem {
-	if !id.Valid {
-		return nil
-	}
-	return fs.Open(ctx, u.Username, id.Bytes, u.Permissions&PermissionAllFiles != 0)
+	return fs.Open(ctx, u.Username, id, u.Permissions&PermissionAllFiles != 0)
 }
 
 func (u User) OpenHomeFileSystem(ctx context.Context) fs.FileSystem {
