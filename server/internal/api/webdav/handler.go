@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	webdav "github.com/shroff/phylum/server/internal/api/webdav/impl"
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/user"
@@ -22,19 +24,19 @@ func SetupHandler(r *gin.RouterGroup) {
 		prefix:     r.BasePath(),
 		lockSystem: webdav.NewMemLS(),
 	}
-	r.Handle("OPTIONS", "/:user/*path", handler.HandleRequest)
-	r.Handle("GET", "/:user/*path", handler.HandleRequest)
-	r.Handle("PUT", "/:user/*path", handler.HandleRequest)
-	r.Handle("HEAD", "/:user/*path", handler.HandleRequest)
-	r.Handle("POST", "/:user/*path", handler.HandleRequest)
-	r.Handle("DELETE", "/:user/*path", handler.HandleRequest)
-	r.Handle("MOVE", "/:user/*path", handler.HandleRequest)
-	r.Handle("COPY", "/:user/*path", handler.HandleRequest)
-	r.Handle("MKCOL", "/:user/*path", handler.HandleRequest)
-	r.Handle("PROPFIND", "/:user/*path", handler.HandleRequest)
-	r.Handle("PROPPATCH", "/:user/*path", handler.HandleRequest)
-	r.Handle("LOCK", "/:user/*path", handler.HandleRequest)
-	r.Handle("UNLOCK", "/:user/*path", handler.HandleRequest)
+	r.Handle("OPTIONS", "/:root/*path", handler.HandleRequest)
+	r.Handle("GET", "/:root/*path", handler.HandleRequest)
+	r.Handle("PUT", "/:root/*path", handler.HandleRequest)
+	r.Handle("HEAD", "/:root/*path", handler.HandleRequest)
+	r.Handle("POST", "/:root/*path", handler.HandleRequest)
+	r.Handle("DELETE", "/:root/*path", handler.HandleRequest)
+	r.Handle("MOVE", "/:root/*path", handler.HandleRequest)
+	r.Handle("COPY", "/:root/*path", handler.HandleRequest)
+	r.Handle("MKCOL", "/:root/*path", handler.HandleRequest)
+	r.Handle("PROPFIND", "/:root/*path", handler.HandleRequest)
+	r.Handle("PROPPATCH", "/:root/*path", handler.HandleRequest)
+	r.Handle("LOCK", "/:root/*path", handler.HandleRequest)
+	r.Handle("UNLOCK", "/:root/*path", handler.HandleRequest)
 }
 
 func (h *handler) HandleRequest(c *gin.Context) {
@@ -45,14 +47,24 @@ func (h *handler) HandleRequest(c *gin.Context) {
 		userManager := user.ManagerFromContext(ctx)
 		if u, err := userManager.VerifyUserPassword(username, pass); err == nil {
 			authSuccess = true
-			if u.Username == c.Param("user") {
-				f = u.OpenHomeFileSystem(ctx)
-			} else {
-				id, err := userManager.UserHome(c.Param("user"))
+			root := c.Param("root")
+			f = u.OpenFileSystem(ctx)
+			if root[0] == '~' {
+				id, err := userManager.UserHome(root[1:])
 				if err != nil {
-					panic(err)
+					if errors.Is(err, user.ErrNotFound) {
+						c.AbortWithStatus(http.StatusNotFound)
+						return
+					} else {
+						panic(err)
+					}
 				}
-				f = u.OpenFileSystem(ctx, id)
+				f = f.WithPathRoot(id)
+			} else if id, err := uuid.Parse(root); err != nil {
+				f = f.WithPathRoot(pgtype.UUID{Bytes: id, Valid: false})
+			} else {
+				c.AbortWithStatus(http.StatusNotFound)
+				return
 			}
 		} else if !errors.Is(err, user.ErrCredentialsInvalid) {
 			panic(err)
@@ -65,7 +77,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 	}
 
 	webdavHandler := webdav.Handler{
-		Prefix:     h.prefix + "/" + c.Param("user"),
+		Prefix:     h.prefix + "/" + c.Param("root"),
 		FileSystem: f,
 		LockSystem: h.lockSystem,
 	}

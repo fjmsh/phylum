@@ -43,12 +43,8 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 	return u, err
 }
 
-func (u User) OpenFileSystem(ctx context.Context, id pgtype.UUID) fs.FileSystem {
-	return fs.Open(ctx, u.Username, id, u.Permissions&PermissionAllFiles != 0)
-}
-
-func (u User) OpenHomeFileSystem(ctx context.Context) fs.FileSystem {
-	return u.OpenFileSystem(ctx, u.Home)
+func (u User) OpenFileSystem(ctx context.Context) fs.FileSystem {
+	return fs.Open(ctx, u.Username, u.Home, u.Permissions&PermissionAllFiles != 0)
 }
 
 type Manager interface {

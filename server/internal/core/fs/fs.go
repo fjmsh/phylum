@@ -28,6 +28,7 @@ const (
 )
 
 var pg *goqu.Database
+var _rootID uuid.UUID
 
 func init() {
 	pg = goqu.New("postgres", nil)
@@ -37,6 +38,7 @@ func init() {
 type FileSystem interface {
 	// filesystem.go
 	WithDb(db db.Handler) FileSystem
+	WithPathRoot(pgtype.UUID) FileSystem
 	RunInTx(fn func(FileSystem) error) error
 
 	// create.go
@@ -71,11 +73,19 @@ func Open(ctx context.Context, username string, root pgtype.UUID, fullAccess boo
 }
 
 func OpenOmniscient(ctx context.Context) FileSystem {
-	id, err := _readRootID(context.Background())
-	if err != nil {
-		logrus.Fatal("could not read root id: " + err.Error())
-	}
+	id := rootID()
 	return Open(ctx, "", pgtype.UUID{Bytes: id, Valid: true}, true)
+}
+
+func rootID() uuid.UUID {
+	if _rootID == uuid.Nil {
+		var err error
+		_rootID, err = _readRootID(context.Background())
+		if err != nil {
+			logrus.Fatal("Could not read root ID: " + err.Error())
+		}
+	}
+	return _rootID
 }
 
 func _readRootID(ctx context.Context) (uuid.UUID, error) {

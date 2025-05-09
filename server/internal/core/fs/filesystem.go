@@ -28,6 +28,16 @@ func (f filesystem) withDb(db db.Handler) filesystem {
 	}
 }
 
+func (f filesystem) WithPathRoot(pathRoot pgtype.UUID) FileSystem {
+	return filesystem{
+		db:         f.db,
+		cs:         f.cs,
+		pathRoot:   pathRoot,
+		username:   f.username,
+		fullAccess: f.fullAccess,
+	}
+}
+
 func (f filesystem) RunInTx(fn func(FileSystem) error) error {
 	return f.db.RunInTx(func(db db.Handler) error {
 		return fn(f.WithDb(db))
