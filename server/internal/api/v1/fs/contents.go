@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/errors"
@@ -16,13 +15,10 @@ import (
 var errGetCollectionContents = errors.NewError(http.StatusBadRequest, "resource_is_collection", "Cannot get contents of collection")
 
 func handleContentsRequest(c *gin.Context) {
-	resourceID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		panic(errResourceIDInvalid)
-	}
+	path := c.Param("path")
 
 	f := authenticator.GetFileSystem(c)
-	r, err := f.ResourceByID(resourceID)
+	r, err := f.ResourceByPathWithMaybeRoot(path)
 	if err != nil {
 		panic(err)
 	}

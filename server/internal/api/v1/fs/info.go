@@ -2,19 +2,15 @@ package fs
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 )
 
 func handleInfoRequest(c *gin.Context) {
-	resourceID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		panic(errResourceIDInvalid)
-	}
+	path := c.Param("path")
 
 	fs := authenticator.GetFileSystem(c)
-	r, err := fs.ResourceByID(resourceID)
+	r, err := fs.ResourceByPathWithMaybeRoot(path)
 	if err != nil {
 		panic(err)
 	}

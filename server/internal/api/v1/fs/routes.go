@@ -15,8 +15,8 @@ var (
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/fs")
 
-	group.GET("/contents/:id", handleContentsRequest)
-	group.GET("/info/:id", handleInfoRequest)
+	group.GET("/info/*path", handleInfoRequest)
+	group.GET("/contents/*path", handleContentsRequest)
 	group.GET("/disk_usage/:id", handleDiskUsageRequest)
 	group.POST("/share/:id", handleShareRequest)
 	group.POST("/move/:id", handleMoveRequest)

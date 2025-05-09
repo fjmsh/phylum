@@ -29,6 +29,10 @@ func (f filesystem) withDb(db db.Handler) filesystem {
 }
 
 func (f filesystem) WithPathRoot(pathRoot pgtype.UUID) FileSystem {
+	return f.withPathRoot(pathRoot)
+}
+
+func (f filesystem) withPathRoot(pathRoot pgtype.UUID) filesystem {
 	return filesystem{
 		db:         f.db,
 		cs:         f.cs,

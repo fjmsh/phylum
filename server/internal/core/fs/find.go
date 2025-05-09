@@ -1,8 +1,11 @@
 package fs
 
 import (
+	"strings"
+
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (f filesystem) ResourceByPath(path string) (Resource, error) {
@@ -72,4 +75,21 @@ func (f filesystem) ResourceByPathOrUUID(pathOrUUID string) (Resource, error) {
 	} else {
 		return f.ResourceByID(id)
 	}
+}
+
+func (f filesystem) ResourceByPathWithMaybeRoot(ref string) (Resource, error) {
+	i := strings.Index(ref, ":")
+
+	if i >= 0 {
+		if ref[0] == '/' {
+			ref = ref[1:]
+			i -= 1
+		}
+		id, err := uuid.Parse(ref[:i])
+		if err != nil {
+			return Resource{}, ErrResourceNotFound
+		}
+		f = f.withPathRoot(pgtype.UUID{Bytes: id, Valid: true})
+	}
+	return f.ResourceByPath(ref[i+1:])
 }
