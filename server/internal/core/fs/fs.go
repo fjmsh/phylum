@@ -165,7 +165,7 @@ func getPublink(d db.Handler, id string) (Publink, error) {
 }
 
 func CheckNameInvalid(s string) bool {
-	return strings.ContainsFunc(s, func(r rune) bool {
+	return s == "" || s == "." || s == ".." || strings.ContainsFunc(s, func(r rune) bool {
 		return r == 0 || r == '/'
 	})
 }

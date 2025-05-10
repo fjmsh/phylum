@@ -61,7 +61,7 @@ func (r Resource) createMemberResource(name string, id uuid.UUID, dir bool, conf
 	if !r.hasPermission(PermissionWrite) {
 		return Resource{}, ErrInsufficientPermissions
 	}
-	if name == "" || CheckNameInvalid(name) {
+	if CheckNameInvalid(name) {
 		return Resource{}, ErrResourceNameInvalid
 	}
 	if id == uuid.Nil {
