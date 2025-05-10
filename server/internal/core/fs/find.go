@@ -98,7 +98,7 @@ func (f filesystem) targetNameParentByPathWithRoot(path string, src Resource) (s
 	i := strings.LastIndex(path, "/")
 	parentPath := ""
 	if i > 0 {
-		parentPath = path[i:]
+		parentPath = path[:i]
 	}
 	parent, err := f.ResourceByPath(parentPath)
 	if err != nil {
