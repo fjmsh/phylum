@@ -9,30 +9,33 @@ import (
 )
 
 type mkdirParams struct {
-	Name     string                            `json:"name" binding:"required"`
-	ParentID uuid.UUID                         `json:"parent_id" binding:"required"`
-	Conflict fs.ResourceBindConflictResolution `json:"conflict"`
+	Parent   string                            `json:"parent" form:"parent" binding:"required"`
+	Name     string                            `json:"name" form:"name" binding:"required"`
+	ID       uuid.UUID                         `json:"id" form:"id"`
+	Conflict fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
 }
 
 func handleMkdirRequest(c *gin.Context) {
 	var params mkdirParams
 	err := c.ShouldBindJSON(&params)
-	if err != nil || params.Name == "" {
-		panic(errInvalidParams)
-	}
-
-	resourceID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		panic(errResourceIDInvalid)
+		err = c.BindQuery(&params)
+		if err != nil {
+			panic(errInvalidParams)
+		}
 	}
 
 	fs := authenticator.GetFileSystem(c)
-	parent, err := fs.ResourceByID(params.ParentID)
+	parent, err := fs.ResourceByPathWithMaybeRoot(params.Parent)
 	if err != nil {
 		panic(err)
 	}
 
-	r, err := parent.CreateMemberResource(params.Name, resourceID, true, params.Conflict)
+	if params.ID == uuid.Nil {
+		params.ID, _ = uuid.NewV7()
+	}
+
+	r, err := parent.CreateMemberResource(params.Name, params.ID, true, params.Conflict)
 	if err != nil {
 		panic(err)
 	}

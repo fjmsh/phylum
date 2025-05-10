@@ -2,7 +2,6 @@ package fs
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 )
 
@@ -13,13 +12,10 @@ type DiskUsageResponse struct {
 }
 
 func handleDiskUsageRequest(c *gin.Context) {
-	resourceId, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		panic(errResourceIDInvalid)
-	}
+	path := c.Query("path")
 
 	fs := authenticator.GetFileSystem(c)
-	resource, err := fs.ResourceByID(resourceId)
+	resource, err := fs.ResourceByPathWithMaybeRoot(path)
 	if err != nil {
 		panic(err)
 	}

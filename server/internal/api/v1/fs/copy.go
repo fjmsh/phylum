@@ -8,31 +8,33 @@ import (
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
-type cpParams struct {
-	ID       uuid.UUID                         `json:"id" binding:"required"`
-	Target   string                            `json:"target"`
-	Conflict fs.ResourceBindConflictResolution `json:"conflict"`
+type copyParams struct {
+	Src      string                            `json:"src" form:"src" binding:"required"`
+	Dest     string                            `json:"dest" form:"dest" binding:"required"`
+	ID       uuid.UUID                         `json:"id" form:"id"`
+	Conflict fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
 }
 
 func handleCopyRequest(c *gin.Context) {
-	var params cpParams
+	var params copyParams
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
-		panic(errInvalidParams)
-	}
-
-	resourceID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		panic(errResourceIDInvalid)
+		err = c.BindQuery(&params)
+		if err != nil {
+			panic(errInvalidParams)
+		}
 	}
 
 	fs := authenticator.GetFileSystem(c)
-	r, err := fs.ResourceByID(resourceID)
+	src, err := fs.ResourceByPathWithMaybeRoot(params.Src)
 	if err != nil {
 		panic(err)
 	}
+	if params.ID == uuid.Nil {
+		params.ID, _ = uuid.NewV7()
+	}
 
-	if r, _, err := r.Copy(params.Target, params.ID, true, params.Conflict); err != nil {
+	if r, _, err := src.Copy(params.Dest, params.ID, true, params.Conflict); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, responses.ResourceFromFS(r))

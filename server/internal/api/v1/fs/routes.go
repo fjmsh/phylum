@@ -17,14 +17,15 @@ func SetupRoutes(r *gin.RouterGroup) {
 
 	group.GET("/info/*path", handleInfoRequest)
 	group.GET("/contents/*path", handleContentsRequest)
-	group.GET("/disk_usage/:id", handleDiskUsageRequest)
-	group.POST("/share/:id", handleShareRequest)
-	group.POST("/move/:id", handleMoveRequest)
-	group.POST("/copy/:id", handleCopyRequest)
-	group.DELETE("/delete/:id", handleDeleteRequest)
+	group.GET("/disk_usage/*path", handleDiskUsageRequest)
 
-	group.POST("/mkdir/:id", handleMkdirRequest)
-	group.PUT("/upload/:id", handleUploadRequest)
+	group.POST("/share", handleShareRequest)
+	group.POST("/move", handleMoveRequest)
+	group.POST("/copy", handleCopyRequest)
+	group.POST("/delete", handleDeleteRequest)
+
+	group.POST("/mkdir", handleMkdirRequest)
+	group.PUT("/upload", handleUploadRequest)
 
 	group.GET("/search", handleSearchRequest)
 
