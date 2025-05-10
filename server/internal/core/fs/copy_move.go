@@ -29,7 +29,7 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 	}
 
 	// Check destParent directory permissions (if applicable)
-	destParent, destName, err := r.f.targetByPathOrUUID(r, target)
+	destName, destParent, err := r.targetNameParentByPathWithRoot(target)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
@@ -120,7 +120,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	}
 
 	// Check dest directory permissions
-	destParent, destName, err := r.f.targetByPathOrUUID(r, target)
+	destName, destParent, err := r.targetNameParentByPathWithRoot(target)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
@@ -226,62 +226,4 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	targetRoot.f = r.f
 	targetRoot.userPermission = destParent.userPermission
 	return targetRoot, deleted, err
-}
-
-// targetByPathOrUUID splits a target path or uuid into its constituent components
-// `pathOrUUID` can be of the following formats:
-// 1. absolute path beginning with '/'
-// 2. uuid+name separated by ':'
-// For the latter, if either uuid or name is not provided then it is filled in from `src`
-func (f filesystem) targetByPathOrUUID(src Resource, pathOrUUID string) (Resource, string, error) {
-	index := strings.Index(pathOrUUID, ":")
-	if index == -1 {
-		if pathOrUUID[0] != '/' {
-			return Resource{}, "", ErrResourcePathInvalid
-		}
-		path := strings.TrimRight(pathOrUUID, "/")
-		// if dest, err := f.ResourceByPath(path); err == nil {
-		// 	return dest, src.Name, nil
-		// } else {
-		index := strings.LastIndex(path, "/")
-		name := path[index+1:]
-		path = path[0:index]
-		if parent, err := f.ResourceByPath(path); err != nil {
-			if errors.Is(err, ErrResourceNotFound) {
-				err = ErrParentNotFound
-			}
-			return Resource{}, "", err
-		} else if CheckNameInvalid(name) {
-			return Resource{}, "", ErrResourceNameInvalid
-		} else {
-			return parent, name, nil
-		}
-		// }
-	}
-
-	name := pathOrUUID[index+1:]
-	if name == "" {
-		name = src.Name()
-	} else if CheckNameInvalid(name) {
-		return Resource{}, "", ErrResourceNameInvalid
-	}
-
-	var parentID = src.ParentID().Bytes
-	if index != 0 {
-		if id, err := uuid.Parse(pathOrUUID[0:index]); err != nil {
-			return Resource{}, "", err
-		} else {
-			parentID = id
-		}
-	}
-
-	if res, err := f.ResourceByID(parentID); err != nil {
-		if errors.Is(err, ErrResourceNotFound) {
-			err = ErrParentNotFound
-		}
-		return Resource{}, "", err
-	} else {
-		return res, name, nil
-	}
-
 }

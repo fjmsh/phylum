@@ -17,23 +17,23 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	}
 }
 
-func (f filesystem) ResourceByPathWithRoot(ref string) (Resource, error) {
-	i := strings.Index(ref, ":")
-
-	if i >= 0 {
-		if ref[0] == '/' {
-			ref = ref[1:]
-			i -= 1
-		}
-		id, err := uuid.Parse(ref[:i])
-		if err != nil {
-			return Resource{}, ErrResourceNotFound
-		}
-		f = f.withPathRoot(pgtype.UUID{Bytes: id, Valid: true})
+// ResourceByPathWithRoot returns the resource at a given path from an optionally specified root.
+// The "<uuid>: prefix can be used to specify the path root.
+// Will default to using the filesystem's current path root if one is not specified.
+// An empty path or "/" will return the root resource.
+func (f filesystem) ResourceByPathWithRoot(path string) (Resource, error) {
+	id, path, err := parseUUIDPrefix(path)
+	if err != nil {
+		return Resource{}, ErrResourceNotFound
 	}
-	return f.ResourceByPath(ref[i+1:])
+	if id.Valid {
+		f = f.withPathRoot(id)
+	}
+	return f.ResourceByPath(path)
 }
 
+// ResourceByPath returns the resource at a given path from this filesystem's path root
+// An empty path or "/" will return the root resource.
 func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	if !f.pathRoot.Valid {
 		return Resource{}, ErrResourceNotFound
@@ -71,6 +71,37 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	}
 }
 
+// targetNameParentByPathWithRoot returns the resource at the parent of a given path from an
+// optionally specified root, along with the name of the target
+// The "<uuid>:" prefix can be used to specify the path root
+// Will default to using the filesystem's current path root if a new one is not specified
+// An empty path or "/" will return the root resource.
+func (r Resource) targetNameParentByPathWithRoot(path string) (string, Resource, error) {
+	id, path, err := parseUUIDPrefix(path)
+	if err != nil {
+		return "", Resource{}, err
+	}
+	f := r.f
+	if id.Valid {
+		f = f.withPathRoot(id)
+	} else if len(path) == 0 {
+		return "", Resource{}, ErrResourceNameInvalid
+	} else if path[0] != '/' {
+		f = f.withPathRoot(pgtype.UUID{Bytes: r.id, Valid: true})
+	}
+
+	i := strings.LastIndex(path, "/")
+	parentPath := ""
+	if i > 0 {
+		parentPath = path[i:]
+	}
+	parent, err := f.ResourceByPath(parentPath)
+	if err != nil {
+		return "", Resource{}, err
+	}
+	return path[i+1:], parent, nil
+}
+
 func (f filesystem) childResourceByName(parentID uuid.UUID, name string) (Resource, error) {
 	const query = "SELECT * FROM resources WHERE parent = $1::UUID AND name = $2::TEXT AND deleted IS NULL"
 	if rows, err := f.db.Query(query, parentID, name); err != nil {
@@ -78,4 +109,18 @@ func (f filesystem) childResourceByName(parentID uuid.UUID, name string) (Resour
 	} else {
 		return f.collectResource(rows, false)
 	}
+}
+
+func parseUUIDPrefix(path string) (pgtype.UUID, string, error) {
+	i := strings.Index(path, ":")
+
+	if i >= 0 {
+		if path[0] == '/' {
+			path = path[1:]
+			i -= 1
+		}
+		id, err := uuid.Parse(path[:i])
+		return pgtype.UUID{Bytes: id, Valid: true}, path[i+1:], err
+	}
+	return pgtype.UUID{}, path, nil
 }
