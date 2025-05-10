@@ -6,6 +6,7 @@ import (
 	"github.com/shroff/phylum/server/internal/api/v1/auth"
 	"github.com/shroff/phylum/server/internal/api/v1/fs"
 	"github.com/shroff/phylum/server/internal/api/v1/my"
+	"github.com/shroff/phylum/server/internal/api/v1/publinks"
 	"github.com/shroff/phylum/server/internal/api/v1/trash"
 	"github.com/shroff/phylum/server/internal/api/v1/users"
 )
@@ -18,6 +19,7 @@ func Setup(r *gin.RouterGroup) {
 	r.Use(authenticator.Require)
 	fs.SetupRoutes(r)
 	my.SetupRoutes(r)
+	publinks.SetupRoutes(r)
 	trash.SetupRoutes(r)
 	users.SetupUserRoutes(r)
 }

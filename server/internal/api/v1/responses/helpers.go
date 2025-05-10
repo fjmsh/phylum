@@ -54,3 +54,15 @@ func ResourceFromFS(r fs.Resource) Resource {
 		Links:         r.Links(),
 	}
 }
+
+func PublinkFromFS(p fs.Publink) Publink {
+	return Publink{
+		ID:          p.ID,
+		Created:     p.Created,
+		Root:        p.Root,
+		Accessed:    p.Accessed,
+		AccessLimit: p.AccessLimit,
+		Protected:   p.PasswordHash != "",
+		Expires:     p.Expires,
+	}
+}

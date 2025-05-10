@@ -28,7 +28,4 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group.PUT("/upload", handleUploadRequest)
 
 	group.GET("/search", handleSearchRequest)
-
-	group.GET("/publinks/:id/list", handlePublinksListRequest)
-	group.POST("/publinks/:id/create", handlePublinksCreateRequest)
 }

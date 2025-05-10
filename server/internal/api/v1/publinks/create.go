@@ -1,4 +1,4 @@
-package fs
+package publinks
 
 import (
 	"time"
@@ -9,19 +9,22 @@ import (
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 )
 
-type publinkParams struct {
-	ID          string `json:"id" binding:"required"`
-	Password    string `json:"password"`
-	DurationStr string `json:"duration"`
-	ExpiresStr  string `json:"expires"`
-	AccessLimit int    `json:"access_limit"`
+type createParams struct {
+	ID          string `json:"id" form:"id" binding:"required"`
+	Password    string `json:"password" form:"password"`
+	DurationStr string `json:"duration" form:"duration"`
+	ExpiresStr  string `json:"expires" form:"expires"`
+	AccessLimit int    `json:"access_limit" form:"access_limit"`
 }
 
-func handlePublinksCreateRequest(c *gin.Context) {
-	var params publinkParams
+func handleCreateRequest(c *gin.Context) {
+	var params createParams
 	err := c.ShouldBindJSON(&params)
-	if err != nil || params.ID == "" {
-		panic(errInvalidParams)
+	if err != nil {
+		err = c.BindQuery(&params)
+		if err != nil {
+			panic(errInvalidParams)
+		}
 	}
 
 	var expires pgtype.Timestamp

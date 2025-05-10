@@ -2,6 +2,7 @@ package responses
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -39,4 +40,14 @@ type ResourceFull struct {
 type User struct {
 	Username    string `json:"username"`
 	DisplayName string `json:"display"`
+}
+
+type Publink struct {
+	ID          string    `json:"id"`
+	Created     time.Time `json:"created"`
+	Root        uuid.UUID `json:"root"`
+	Accessed    int32     `json:"accessed"`
+	AccessLimit int32     `json:"access_limit"`
+	Protected   bool      `json:"protected"`
+	Expires     int64     `json:"expires"`
 }
