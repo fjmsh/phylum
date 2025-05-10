@@ -10,13 +10,13 @@ import (
 
 func setupRmCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "rm {path | uuid}",
+		Use:   "rm <path>",
 		Short: "Delete Resource",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			pathOrUUID := args[0]
-			r, err := f.ResourceByPathOrUUID(pathOrUUID)
+			r, err := f.ResourceByRootedPath(pathOrUUID)
 			if err != nil {
 				fmt.Println("cannot remove '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)

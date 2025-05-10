@@ -12,7 +12,7 @@ import (
 
 func setupSearchCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "search",
+		Use:   "search <terms>",
 		Short: "Search Resources",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

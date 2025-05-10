@@ -16,28 +16,30 @@ import (
 
 func setupImportCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "import {path | uuid} fs-path [name]",
+		Use:   "import <fs-path> <target> [name]",
 		Short: "Import from filesystem",
 		Args:  cobra.RangeArgs(2, 3),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
-			destParent, err := f.ResourceByPathOrUUID(args[0])
-			importPath := args[1]
-			if err != nil {
-				fmt.Println("could not import '" + importPath + "': " + err.Error())
-				os.Exit(1)
-			}
+			importPath := args[0]
 
 			stat, err := os.Stat(importPath)
 			if err != nil {
-				fmt.Println("could not import '" + importPath + "': " + err.Error())
+				fmt.Println("unable to stat '" + importPath + "': " + err.Error())
 				os.Exit(1)
 			}
+
+			destParent, err := f.ResourceByRootedPath(args[1])
+			if err != nil {
+				fmt.Println("unable to find '" + args[1] + "': " + err.Error())
+				os.Exit(1)
+			}
+
 			destName := stat.Name()
 			if len(args) > 2 {
 				destName = args[2]
 				if destName == "" || fs.CheckNameInvalid(destName) {
-					fmt.Println("could not import '" + importPath + "': name is invalid: '" + destName + "'")
+					fmt.Println("invalid name: '" + destName + "'")
 				}
 			}
 

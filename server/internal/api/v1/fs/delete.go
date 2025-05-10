@@ -22,7 +22,7 @@ func handleDeleteRequest(c *gin.Context) {
 	}
 
 	fs := authenticator.GetFileSystem(c)
-	r, err := fs.ResourceByPathWithMaybeRoot(params.Path)
+	r, err := fs.ResourceByRootedPath(params.Path)
 	if err != nil {
 		panic(err)
 	}

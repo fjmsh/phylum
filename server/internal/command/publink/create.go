@@ -32,8 +32,8 @@ func setupCreateCommand() *cobra.Command {
 	return &cmd
 }
 
-func createPublink(f fs.FileSystem, name, pathOrUUID string, password string, durationStr string, accesses int) error {
-	r, err := f.ResourceByPathOrUUID(pathOrUUID)
+func createPublink(f fs.FileSystem, name, path string, password string, durationStr string, accesses int) error {
+	r, err := f.ResourceByRootedPath(path)
 	if err != nil {
 		return err
 	}

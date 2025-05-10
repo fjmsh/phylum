@@ -31,7 +31,7 @@ func handleUploadRequest(c *gin.Context) {
 
 	f := authenticator.GetFileSystem(c)
 	err := f.RunInTx(func(f fs.FileSystem) error {
-		parent, err := f.ResourceByPathWithMaybeRoot(params.Parent)
+		parent, err := f.ResourceByRootedPath(params.Parent)
 		if err != nil {
 			return err
 		}

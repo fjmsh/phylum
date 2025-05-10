@@ -73,7 +73,7 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 			err = ErrResourceNotFound
 		}
 	} else {
-		p, err = r.f.ResourceByPathOrUUID(parentPathOrUUID)
+		p, err = r.f.ResourceByRootedPath(parentPathOrUUID)
 	}
 	if err == ErrResourceNotFound {
 		err = ErrParentNotFound

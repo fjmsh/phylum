@@ -11,15 +11,15 @@ import (
 
 func setupMvCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "mv {src-path | src-uuid} {dest-path | dest-name | dest-uuid/dest-name}",
+		Use:   "mv <src> <dest>",
 		Short: "Move Resource",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
-			srcPathOrUUID := args[0]
-			src, err := f.ResourceByPathOrUUID(srcPathOrUUID)
+			srcPath := args[0]
+			src, err := f.ResourceByRootedPath(srcPath)
 			if err != nil {
-				fmt.Println("cannot move'" + srcPathOrUUID + "': " + err.Error())
+				fmt.Println("cannot move'" + srcPath + "': " + err.Error())
 				os.Exit(1)
 			}
 
@@ -30,7 +30,7 @@ func setupMvCommand() *cobra.Command {
 				conflictResolution = fs.ResourceBindConflictResolutionDelete
 			}
 			if _, _, err := src.Move(args[1], conflictResolution); err != nil {
-				fmt.Println("cannot move'" + srcPathOrUUID + "' to '" + args[1] + "': " + err.Error())
+				fmt.Println("cannot move'" + srcPath + "' to '" + args[1] + "': " + err.Error())
 				os.Exit(1)
 			}
 		},

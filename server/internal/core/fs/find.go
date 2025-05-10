@@ -63,21 +63,7 @@ func (f filesystem) childResourceByName(parentID uuid.UUID, name string) (Resour
 	}
 }
 
-func (f filesystem) ResourceByPathOrUUID(pathOrUUID string) (Resource, error) {
-	if pathOrUUID == "" {
-		return Resource{}, ErrResourcePathInvalid
-	}
-	if pathOrUUID[0] == '/' {
-		return f.ResourceByPath(pathOrUUID)
-	}
-	if id, err := uuid.Parse(pathOrUUID); err != nil {
-		return Resource{}, err
-	} else {
-		return f.ResourceByID(id)
-	}
-}
-
-func (f filesystem) ResourceByPathWithMaybeRoot(ref string) (Resource, error) {
+func (f filesystem) ResourceByRootedPath(ref string) (Resource, error) {
 	i := strings.Index(ref, ":")
 
 	if i >= 0 {

@@ -26,7 +26,7 @@ func handleMkdirRequest(c *gin.Context) {
 	}
 
 	fs := authenticator.GetFileSystem(c)
-	parent, err := fs.ResourceByPathWithMaybeRoot(params.Parent)
+	parent, err := fs.ResourceByRootedPath(params.Parent)
 	if err != nil {
 		panic(err)
 	}

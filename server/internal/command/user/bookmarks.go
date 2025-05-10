@@ -52,7 +52,7 @@ func setupBookmarksListCommand() *cobra.Command {
 
 func setupBookmarksRemoveCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "remove [<path>|<uuid>]",
+		Use:   "remove <path>",
 		Short: "Remove Bookmark",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -62,7 +62,7 @@ func setupBookmarksRemoveCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			r, err := common.UserFileSystem(cmd).ResourceByPathOrUUID(args[0])
+			r, err := common.UserFileSystem(cmd).ResourceByRootedPath(args[0])
 			if err != nil {
 				fmt.Println("unable to remove bookmark: " + err.Error())
 				os.Exit(1)
@@ -88,7 +88,7 @@ func setupBookmarksAddCommand() *cobra.Command {
 				fmt.Println("unable to add bookmark: user not specified")
 				os.Exit(1)
 			}
-			r, err := common.UserFileSystem(cmd).ResourceByPathOrUUID(args[0])
+			r, err := common.UserFileSystem(cmd).ResourceByRootedPath(args[0])
 			if err != nil {
 				fmt.Println("unable to add bookmark: " + err.Error())
 				os.Exit(1)

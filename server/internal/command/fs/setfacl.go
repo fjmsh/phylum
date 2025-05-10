@@ -12,17 +12,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setupChpermCommand() *cobra.Command {
+func setupSetfaclCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "chperm {path | uuid} <user> {none|read|write|share}",
-		Short: "Change Permissions",
+		Use:   "setfacl <path> <user> (none|read|write|share)",
+		Short: "Access Control",
 		Args:  cobra.ExactArgs(3),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
-			pathOrUUID := args[0]
-			r, err := f.ResourceByPathOrUUID(pathOrUUID)
+			path := args[0]
+			r, err := f.ResourceByRootedPath(path)
 			if err != nil {
-				fmt.Println("cannot update permissions for '" + pathOrUUID + "': " + err.Error())
+				fmt.Println("cannot update permissions for '" + path + "': " + err.Error())
 				os.Exit(1)
 			}
 
@@ -34,12 +34,12 @@ func setupChpermCommand() *cobra.Command {
 
 			permission, err := parsePermissionString(args[2])
 			if err != nil {
-				fmt.Println("cannot update permissions for '" + pathOrUUID + "': " + err.Error())
+				fmt.Println("cannot update permissions for '" + path + "': " + err.Error())
 				os.Exit(1)
 			}
 
 			if _, err := r.UpdatePermissions(username, permission); err != nil {
-				fmt.Println("cannot update permissions for '" + pathOrUUID + "': " + err.Error())
+				fmt.Println("cannot update permissions for '" + path + "': " + err.Error())
 				os.Exit(1)
 			}
 		},

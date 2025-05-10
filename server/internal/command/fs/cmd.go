@@ -15,7 +15,7 @@ func SetupCommand() *cobra.Command {
 
 	cmd.AddCommand(
 		setupCatCommand(),
-		setupChpermCommand(),
+		setupSetfaclCommand(),
 		setupCpCommand(),
 		setupImportCommand(),
 		setupLsCommand(),

@@ -15,7 +15,7 @@ func handleDiskUsageRequest(c *gin.Context) {
 	path := c.Query("path")
 
 	fs := authenticator.GetFileSystem(c)
-	resource, err := fs.ResourceByPathWithMaybeRoot(path)
+	resource, err := fs.ResourceByRootedPath(path)
 	if err != nil {
 		panic(err)
 	}

@@ -16,15 +16,15 @@ import (
 
 func setupLsCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "ls {path | uuid}",
+		Use:   "ls <path>",
 		Short: "List Resource Details",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			pathOrUUID := args[0]
-			r, err := f.ResourceByPathOrUUID(pathOrUUID)
+			r, err := f.ResourceByRootedPath(pathOrUUID)
 			if err != nil {
-				fmt.Println("cannot access '" + pathOrUUID + "': " + err.Error())
+				fmt.Println("unable to find '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)
 			}
 

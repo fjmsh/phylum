@@ -11,13 +11,13 @@ import (
 
 func setupPublinksCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "publinks {path | uuid}",
+		Use:   "publinks <path>",
 		Short: "List Publinks",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			pathOrUUID := args[0]
-			r, err := f.ResourceByPathOrUUID(pathOrUUID)
+			r, err := f.ResourceByRootedPath(pathOrUUID)
 			if err != nil {
 				fmt.Println("cannot list publinks for '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)
@@ -44,7 +44,7 @@ func setupPublinksCommand() *cobra.Command {
 					} else {
 						fmt.Print(", expires")
 					}
-					fmt.Printf(expires.Format(time.RFC1123))
+					fmt.Print(expires.Format(time.RFC1123))
 				}
 				fmt.Println()
 			}

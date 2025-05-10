@@ -11,7 +11,7 @@ import (
 
 func setupMkdirCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "mkdir path",
+		Use:   "mkdir <path>",
 		Short: "Create Directory",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
