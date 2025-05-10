@@ -10,6 +10,11 @@ import (
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
+type passwordParams struct {
+	Username string `json:"username" form:"username" binding:"required"`
+	Password string `json:"password" form:"password" binding:"required"`
+}
+
 type loginResponse struct {
 	AccessToken string               `json:"access_token"`
 	User        loggedInUserResponse `json:"user"`
@@ -27,17 +32,14 @@ func SetupRoutes(r *gin.RouterGroup) {
 }
 
 func handlePasswordAuth(c *gin.Context) {
-	email, ok := c.GetQuery("email")
-	if !ok {
-		panic(errors.NewError(http.StatusBadRequest, "missing_email", "Email Not Specified"))
-	}
-	password, ok := c.GetQuery("password")
-	if !ok {
-		panic(errors.NewError(http.StatusBadRequest, "missing_password", "Password Not Specified"))
+	var params passwordParams
+	err := c.ShouldBind(&params)
+	if err != nil {
+		panic(errors.NewError(http.StatusBadRequest, "missing_params", "Username or password not specified"))
 	}
 
 	userManager := user.ManagerFromContext(c.Request.Context())
-	if user, err := userManager.VerifyUserPassword(email, password); err != nil {
+	if user, err := userManager.VerifyUserPassword(params.Username, params.Password); err != nil {
 		panic(err)
 	} else {
 		if token, err := userManager.CreateAccessToken(user.Username); err != nil {
