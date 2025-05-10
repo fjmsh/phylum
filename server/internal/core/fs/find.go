@@ -94,7 +94,8 @@ func (f filesystem) targetNameParentByPathWithRoot(path string, src Resource) (s
 		f = f.withPathRoot(pgtype.UUID{Bytes: src.id, Valid: true})
 	}
 
-	i := strings.LastIndex(strings.TrimRight(path, "/"), "/")
+	path = strings.TrimRight(path, "/")
+	i := strings.LastIndex(path, "/")
 	parentPath := ""
 	if i > 0 {
 		parentPath = path[i:]
