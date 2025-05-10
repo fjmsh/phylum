@@ -20,11 +20,11 @@ import (
 type ResourceBindConflictResolution int32
 
 const (
-	ResourceBindConflictResolutionError     = 0 // Error if exists
-	ResourceBindConflictResolutionEnsure    = 1 // Error if type mismatch
-	ResourceBindConflictResolutionRename    = 2 // Auto rename new resource
-	ResourceBindConflictResolutionOverwrite = 3 // Delete existing resource only if type mismatch (preserves props)
-	ResourceBindConflictResolutionDelete    = 4 // Delete existing resource before creating
+	ResourceBindConflictResolutionError     = ResourceBindConflictResolution(0) // Error if exists
+	ResourceBindConflictResolutionEnsure    = ResourceBindConflictResolution(1) // Error if type mismatch
+	ResourceBindConflictResolutionRename    = ResourceBindConflictResolution(2) // Auto rename new resource
+	ResourceBindConflictResolutionOverwrite = ResourceBindConflictResolution(3) // Delete existing resource only if type mismatch (preserves props)
+	ResourceBindConflictResolutionDelete    = ResourceBindConflictResolution(4) // Delete existing resource before creating
 )
 
 var pg *goqu.Database
@@ -42,7 +42,7 @@ type FileSystem interface {
 	RunInTx(fn func(FileSystem) error) error
 
 	// create.go
-	CreateResourceByPath(path string, dir, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, error)
+	CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error)
 	CreateResources(args []CreateResourcesParams) (int64, error)
 
 	// find.go

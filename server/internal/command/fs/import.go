@@ -29,12 +29,6 @@ func setupImportCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			destParent, err := f.ResourceByPathWithRoot(args[1])
-			if err != nil {
-				fmt.Println("unable to find '" + args[1] + "': " + err.Error())
-				os.Exit(1)
-			}
-
 			destName := stat.Name()
 			if len(args) > 2 {
 				destName = args[2]
@@ -58,12 +52,6 @@ func setupImportCommand() *cobra.Command {
 			ids := make(map[string]uuid.UUID)
 			targetRootID, _ := uuid.NewV7()
 			ids["."] = targetRootID
-			create = append(create, fs.CreateResourcesParams{
-				ID:     ids["."],
-				Parent: destParent.ID(),
-				Name:   destName,
-				Dir:    stat.IsDir(),
-			})
 
 			if stat.IsDir() {
 				dirFS := os.DirFS(importPath)
@@ -112,13 +100,13 @@ func setupImportCommand() *cobra.Command {
 				conflictResolution = fs.ResourceBindConflictResolutionDelete
 			}
 			err = f.RunInTx(func(f fs.FileSystem) error {
-				if _, err := destParent.CreateMemberResource(destName, targetRootID, stat.IsDir(), conflictResolution); err != nil {
+				if _, err = f.CreateResourceByPath(args[1]+"/"+destName, targetRootID, stat.IsDir(), false, conflictResolution); err != nil {
 					if err == fs.ErrResourceNameConflict {
 						err = errors.New("resource with name '" + destName + "' already exist. use -f to overwrite")
 					}
 					return err
 				}
-				_, err := f.CreateResources(create)
+				_, err = f.CreateResources(create)
 				return err
 			})
 

@@ -12,7 +12,8 @@ type DiskUsageResponse struct {
 }
 
 func handleDiskUsageRequest(c *gin.Context) {
-	path := c.Query("path")
+	// Trim leading '/'
+	path := c.Query("path")[1:]
 
 	fs := authenticator.GetFileSystem(c)
 	resource, err := fs.ResourceByPathWithRoot(path)

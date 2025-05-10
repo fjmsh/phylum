@@ -9,10 +9,10 @@ import (
 )
 
 type mkdirParams struct {
-	Parent   string                            `json:"parent" form:"parent" binding:"required"`
-	Name     string                            `json:"name" form:"name" binding:"required"`
-	ID       uuid.UUID                         `json:"id" form:"id"`
-	Conflict fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
+	Path          string                            `json:"path" form:"path" binding:"required"`
+	CreateParents bool                              `json:"create_parents" form:"create_parents"`
+	ID            uuid.UUID                         `json:"id" form:"id"`
+	Conflict      fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
 }
 
 func handleMkdirRequest(c *gin.Context) {
@@ -26,16 +26,8 @@ func handleMkdirRequest(c *gin.Context) {
 	}
 
 	fs := authenticator.GetFileSystem(c)
-	parent, err := fs.ResourceByPathWithRoot(params.Parent)
-	if err != nil {
-		panic(err)
-	}
 
-	if params.ID == uuid.Nil {
-		params.ID, _ = uuid.NewV7()
-	}
-
-	r, err := parent.CreateMemberResource(params.Name, params.ID, true, params.Conflict)
+	r, err := fs.CreateResourceByPath(params.Path, params.ID, true, params.CreateParents, params.Conflict)
 	if err != nil {
 		panic(err)
 	}

@@ -78,17 +78,20 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 // Splits the path to extract its last component as the name and traverses the rest of the path from the root as the parent
 // If no name is specified then return r.name as the name
 func (r Resource) targetNameParentByPathWithRoot(path string) (string, Resource, error) {
+	return r.f.targetNameParentByPathWithRoot(path, r)
+}
+
+func (f filesystem) targetNameParentByPathWithRoot(path string, src Resource) (string, Resource, error) {
 	id, path, err := parseUUIDPrefix(path)
 	if err != nil {
 		return "", Resource{}, err
 	}
-	f := r.f
 	if id.Valid {
 		f = f.withPathRoot(id)
 	} else if len(path) == 0 {
 		return "", Resource{}, ErrResourceNameInvalid
-	} else if path[0] != '/' {
-		f = f.withPathRoot(pgtype.UUID{Bytes: r.id, Valid: true})
+	} else if path[0] != '/' && src.id != uuid.Nil {
+		f = f.withPathRoot(pgtype.UUID{Bytes: src.id, Valid: true})
 	}
 
 	i := strings.LastIndex(strings.TrimRight(path, "/"), "/")
@@ -102,7 +105,7 @@ func (r Resource) targetNameParentByPathWithRoot(path string) (string, Resource,
 	}
 	name := path[i+1:]
 	if name == "" {
-		name = r.name
+		name = src.name
 	}
 	return name, parent, nil
 }
@@ -118,12 +121,10 @@ func (f filesystem) childResourceByName(parentID uuid.UUID, name string) (Resour
 
 func parseUUIDPrefix(path string) (pgtype.UUID, string, error) {
 	i := strings.Index(path, ":")
+	si := strings.Index(path, "/")
 
-	if i >= 0 {
-		if path[0] == '/' {
-			path = path[1:]
-			i -= 1
-		}
+	// Ignore ':' after '/'
+	if i >= 0 && (si < 0 || si > i) {
 		id, err := uuid.Parse(path[:i])
 		return pgtype.UUID{Bytes: id, Valid: true}, path[i+1:], err
 	}

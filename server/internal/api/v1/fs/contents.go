@@ -15,7 +15,8 @@ import (
 var errGetCollectionContents = errors.NewError(http.StatusBadRequest, "resource_is_collection", "Cannot get contents of collection")
 
 func handleContentsRequest(c *gin.Context) {
-	path := c.Param("path")
+	// Trim leading '/'
+	path := c.Param("path")[1:]
 
 	f := authenticator.GetFileSystem(c)
 	r, err := f.ResourceByPathWithRoot(path)

@@ -82,7 +82,7 @@ func setupUserAddCommand() *cobra.Command {
 				if homePath != "" {
 					f = common.RootFileSystem().WithDb(db)
 					var err error
-					home, err = f.CreateResourceByPath(homePath, true, true, fs.ResourceBindConflictResolutionEnsure)
+					home, err = f.CreateResourceByPath(homePath, uuid.Nil, true, true, fs.ResourceBindConflictResolutionEnsure)
 					if err != nil {
 						return err
 					}

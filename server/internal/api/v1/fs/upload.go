@@ -12,11 +12,11 @@ import (
 )
 
 type uploadParams struct {
-	Parent   string                            `json:"parent" form:"parent" binding:"required"`
-	Name     string                            `json:"name" form:"name" binding:"required"`
-	ID       uuid.UUID                         `json:"id" form:"id"`
-	Conflict fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
-	SHA256   string                            `json:"sha256" form:"sha256"`
+	Path          string                            `json:"path" form:"path" binding:"required"`
+	ID            uuid.UUID                         `json:"id" form:"id"`
+	CreateParents bool                              `json:"create_parents" form:"create_parents"`
+	Conflict      fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
+	SHA256        string                            `json:"sha256" form:"sha256"`
 }
 
 func handleUploadRequest(c *gin.Context) {
@@ -31,12 +31,7 @@ func handleUploadRequest(c *gin.Context) {
 
 	f := authenticator.GetFileSystem(c)
 	err := f.RunInTx(func(f fs.FileSystem) error {
-		parent, err := f.ResourceByPathWithRoot(params.Parent)
-		if err != nil {
-			return err
-		}
-
-		res, err := parent.CreateMemberResource(params.Name, params.ID, false, fs.ResourceBindConflictResolution(params.Conflict))
+		res, err := f.CreateResourceByPath(params.Path, params.ID, false, params.CreateParents, params.Conflict)
 		if err != nil {
 			return err
 		}

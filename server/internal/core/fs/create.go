@@ -13,29 +13,48 @@ import (
 const emptyContentType = "text/plain"
 const emptyContentSHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
-func (f filesystem) CreateResourceByPath(path string, dir, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
-	path = strings.TrimRight(path, "/")
-	index := strings.LastIndex(path, "/")
-	name := path[index+1:]
-	parentPath := path[0:index]
-	parent, err := f.ResourceByPathWithRoot(parentPath)
-	if err != nil {
-		if errors.Is(err, ErrResourceNotFound) {
-			if recursive {
-				// TODO: this is very inefficient, but used only directly from the command line
-				parent, err = f.CreateResourceByPath(parentPath, true, true, conflictResolution)
-			} else {
+func (f filesystem) CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+	if !createParents {
+		name, parent, err := f.targetNameParentByPathWithRoot(path, Resource{})
+		if err != nil {
+			if errors.Is(err, ErrResourceNotFound) {
 				err = ErrParentNotFound
 			}
+			return Resource{}, err
 		}
+		return parent.createMemberResource(name, id, dir, conflictResolution)
+	}
+
+	root, path, err := parseUUIDPrefix(path)
+	if err != nil {
+		return Resource{}, ErrResourcePathInvalid
+	}
+	if root.Valid {
+		f = f.withPathRoot(root)
+	}
+	segments := strings.Split(strings.TrimRight(strings.TrimLeft(path, "/"), "/"), "/")
+	r, err := f.ResourceByID(f.pathRoot.Bytes)
+	for i, s := range segments {
 		if err != nil {
 			return Resource{}, err
 		}
+		d := true
+		resourceID, _ := uuid.NewV7()
+		conflict := ResourceBindConflictResolutionEnsure
+		if i == len(segments)-1 {
+			d = dir
+			if id != uuid.Nil {
+				resourceID = id
+			}
+			conflict = conflictResolution
+		}
+		r, err = r.createMemberResource(s, resourceID, d, conflict)
 	}
-	return parent.CreateMemberResource(name, uuid.Nil, dir, conflictResolution)
+
+	return r, err
 }
 
-func (r Resource) CreateMemberResource(name string, id uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+func (r Resource) createMemberResource(name string, id uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	if !r.Dir() {
 		return Resource{}, ErrResourceNotCollection
 	}

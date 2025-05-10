@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
@@ -36,7 +37,7 @@ type Handler struct {
 // of host operating system convention.
 type FileSystem interface {
 	ResourceByPath(name string) (fs.Resource, error)
-	CreateResourceByPath(name string, dir, recursive bool, conflictResolution fs.ResourceBindConflictResolution) (fs.Resource, error)
+	CreateResourceByPath(name string, id uuid.UUID, dir, recursive bool, conflictResolution fs.ResourceBindConflictResolution) (fs.Resource, error)
 }
 
 func (h *Handler) stripPrefix(p string) (string, int, error) {
@@ -256,7 +257,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	// TODO(rost): Support the If-Match, If-None-Match headers? See bradfitz'
 	// comments in http.checkEtag.
 
-	res, err := h.FileSystem.CreateResourceByPath(reqPath, false, false, fs.ResourceBindConflictResolutionEnsure)
+	res, err := h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, false, false, fs.ResourceBindConflictResolutionEnsure)
 	if err != nil {
 		if errors.Is(err, fs.ErrParentNotFound) {
 			return http.StatusConflict, err
@@ -297,7 +298,7 @@ func (h *Handler) handleMkcol(_ http.ResponseWriter, r *http.Request) (status in
 	if r.ContentLength > 0 {
 		return http.StatusUnsupportedMediaType, nil
 	}
-	if _, err := h.FileSystem.CreateResourceByPath(reqPath, true, false, fs.ResourceBindConflictResolutionError); err != nil {
+	if _, err := h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, true, false, fs.ResourceBindConflictResolutionError); err != nil {
 		if errors.Is(err, fs.ErrParentNotFound) {
 			return http.StatusConflict, err
 		}
@@ -374,7 +375,7 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 
 		// Create the resource if it didn't previously exist.
 		if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-			_, err = h.FileSystem.CreateResourceByPath(reqPath, false, false, fs.ResourceBindConflictResolutionEnsure)
+			_, err = h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, false, false, fs.ResourceBindConflictResolutionEnsure)
 			if err != nil {
 				if errors.Is(err, fs.ErrParentNotFound) {
 					return http.StatusConflict, err

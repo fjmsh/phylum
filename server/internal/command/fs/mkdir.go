@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/spf13/cobra"
@@ -28,7 +29,7 @@ func setupMkdirCommand() *cobra.Command {
 					conflict = fs.ResourceBindConflictResolutionEnsure
 				}
 			}
-			if _, err := f.CreateResourceByPath(path, true, recursive, conflict); err != nil {
+			if _, err := f.CreateResourceByPath(path, uuid.Nil, true, recursive, conflict); err != nil {
 				fmt.Println("could not create directory: " + err.Error())
 				os.Exit(1)
 			}
