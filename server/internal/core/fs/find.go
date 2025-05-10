@@ -71,11 +71,12 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	}
 }
 
-// targetNameParentByPathWithRoot returns the resource at the parent of a given path from an
-// optionally specified root, along with the name of the target
-// The "<uuid>:" prefix can be used to specify the path root
-// Will default to using the filesystem's current path root if a new one is not specified
-// An empty path or "/" will return the root resource.
+// targetNameParentByPathWithRoot returns the target resource name and its parent
+// Optionally allows you to specify a root using a "<uuid>:" prefix
+// If no uuid prefix is supplied then uses r as the pathRoot if the path is not absolute (does not begin with '/')
+// If no uuid prefix is supplied and the path begins with '/' then r.f is used as the path root
+// Splits the path to extract its last component as the name and traverses the rest of the path from the root as the parent
+// If no name is specified then return r.name as the name
 func (r Resource) targetNameParentByPathWithRoot(path string) (string, Resource, error) {
 	id, path, err := parseUUIDPrefix(path)
 	if err != nil {
@@ -90,7 +91,7 @@ func (r Resource) targetNameParentByPathWithRoot(path string) (string, Resource,
 		f = f.withPathRoot(pgtype.UUID{Bytes: r.id, Valid: true})
 	}
 
-	i := strings.LastIndex(path, "/")
+	i := strings.LastIndex(strings.TrimRight(path, "/"), "/")
 	parentPath := ""
 	if i > 0 {
 		parentPath = path[i:]
@@ -99,7 +100,11 @@ func (r Resource) targetNameParentByPathWithRoot(path string) (string, Resource,
 	if err != nil {
 		return "", Resource{}, err
 	}
-	return path[i+1:], parent, nil
+	name := path[i+1:]
+	if name == "" {
+		name = r.name
+	}
+	return name, parent, nil
 }
 
 func (f filesystem) childResourceByName(parentID uuid.UUID, name string) (Resource, error) {
