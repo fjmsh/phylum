@@ -18,7 +18,7 @@ func (f filesystem) CreateResourceByPath(path string, dir, recursive bool, confl
 	index := strings.LastIndex(path, "/")
 	name := path[index+1:]
 	parentPath := path[0:index]
-	parent, err := f.ResourceByPath(parentPath)
+	parent, err := f.ResourceByPathWithRoot(parentPath)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			if recursive {

@@ -24,7 +24,7 @@ func handleMoveRequest(c *gin.Context) {
 	}
 
 	fs := authenticator.GetFileSystem(c)
-	r, err := fs.ResourceByRootedPath(params.Src)
+	r, err := fs.ResourceByPathWithRoot(params.Src)
 	if err != nil {
 		panic(err)
 	}

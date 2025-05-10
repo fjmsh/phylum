@@ -17,7 +17,7 @@ func setupMvCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			srcPath := args[0]
-			src, err := f.ResourceByRootedPath(srcPath)
+			src, err := f.ResourceByPathWithRoot(srcPath)
 			if err != nil {
 				fmt.Println("cannot move'" + srcPath + "': " + err.Error())
 				os.Exit(1)

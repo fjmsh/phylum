@@ -8,6 +8,32 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
+	const query = "SELECT r.*, (SELECT " + publinkFieldsQuery + " FROM publinks l WHERE l.root = r.id) AS links FROM resources r WHERE id = $1::UUID"
+	if rows, err := f.db.Query(query, id); err != nil {
+		return Resource{}, err
+	} else {
+		return f.collectResource(rows, true)
+	}
+}
+
+func (f filesystem) ResourceByPathWithRoot(ref string) (Resource, error) {
+	i := strings.Index(ref, ":")
+
+	if i >= 0 {
+		if ref[0] == '/' {
+			ref = ref[1:]
+			i -= 1
+		}
+		id, err := uuid.Parse(ref[:i])
+		if err != nil {
+			return Resource{}, ErrResourceNotFound
+		}
+		f = f.withPathRoot(pgtype.UUID{Bytes: id, Valid: true})
+	}
+	return f.ResourceByPath(ref[i+1:])
+}
+
 func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	if !f.pathRoot.Valid {
 		return Resource{}, ErrResourceNotFound
@@ -45,15 +71,6 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	}
 }
 
-func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	const query = "SELECT r.*, (SELECT " + publinkFieldsQuery + " FROM publinks l WHERE l.root = r.id) AS links FROM resources r WHERE id = $1::UUID"
-	if rows, err := f.db.Query(query, id); err != nil {
-		return Resource{}, err
-	} else {
-		return f.collectResource(rows, true)
-	}
-}
-
 func (f filesystem) childResourceByName(parentID uuid.UUID, name string) (Resource, error) {
 	const query = "SELECT * FROM resources WHERE parent = $1::UUID AND name = $2::TEXT AND deleted IS NULL"
 	if rows, err := f.db.Query(query, parentID, name); err != nil {
@@ -61,21 +78,4 @@ func (f filesystem) childResourceByName(parentID uuid.UUID, name string) (Resour
 	} else {
 		return f.collectResource(rows, false)
 	}
-}
-
-func (f filesystem) ResourceByRootedPath(ref string) (Resource, error) {
-	i := strings.Index(ref, ":")
-
-	if i >= 0 {
-		if ref[0] == '/' {
-			ref = ref[1:]
-			i -= 1
-		}
-		id, err := uuid.Parse(ref[:i])
-		if err != nil {
-			return Resource{}, ErrResourceNotFound
-		}
-		f = f.withPathRoot(pgtype.UUID{Bytes: id, Valid: true})
-	}
-	return f.ResourceByPath(ref[i+1:])
 }

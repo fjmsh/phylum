@@ -16,7 +16,7 @@ func setupRmCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			pathOrUUID := args[0]
-			r, err := f.ResourceByRootedPath(pathOrUUID)
+			r, err := f.ResourceByPathWithRoot(pathOrUUID)
 			if err != nil {
 				fmt.Println("cannot remove '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)

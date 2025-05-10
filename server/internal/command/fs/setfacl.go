@@ -20,7 +20,7 @@ func setupSetfaclCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			path := args[0]
-			r, err := f.ResourceByRootedPath(path)
+			r, err := f.ResourceByPathWithRoot(path)
 			if err != nil {
 				fmt.Println("cannot update permissions for '" + path + "': " + err.Error())
 				os.Exit(1)

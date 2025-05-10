@@ -24,7 +24,7 @@ func handleShareRequest(c *gin.Context) {
 	}
 
 	fs := authenticator.GetFileSystem(c)
-	r, err := fs.ResourceByRootedPath(params.Path)
+	r, err := fs.ResourceByPathWithRoot(params.Path)
 	if err != nil {
 		panic(err)
 	}

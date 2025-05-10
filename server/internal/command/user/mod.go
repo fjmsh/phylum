@@ -31,7 +31,7 @@ func setupUserModCommand() *cobra.Command {
 			var homeID pgtype.UUID
 			path, _ := cmd.Flags().GetString("home")
 			if path != "" {
-				if r, err := rootFS.ResourceByRootedPath(path); err != nil {
+				if r, err := rootFS.ResourceByPathWithRoot(path); err != nil {
 					fmt.Println("invalid value for flag 'home': " + err.Error())
 					os.Exit(1)
 				} else {

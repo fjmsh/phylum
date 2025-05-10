@@ -10,7 +10,7 @@ func handleInfoRequest(c *gin.Context) {
 	path := c.Param("path")
 
 	fs := authenticator.GetFileSystem(c)
-	r, err := fs.ResourceByRootedPath(path)
+	r, err := fs.ResourceByPathWithRoot(path)
 	if err != nil {
 		panic(err)
 	}

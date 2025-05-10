@@ -30,7 +30,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 func handleHomeRoute(c *gin.Context) {
 	user := authenticator.GetUser(c)
 	f := authenticator.GetFileSystem(c)
-	r, err := f.ResourceByRootedPath("")
+	r, err := f.ResourceByPathWithRoot("")
 	if err != nil {
 		panic(err)
 	}

@@ -26,7 +26,7 @@ func handleCopyRequest(c *gin.Context) {
 	}
 
 	fs := authenticator.GetFileSystem(c)
-	src, err := fs.ResourceByRootedPath(params.Src)
+	src, err := fs.ResourceByPathWithRoot(params.Src)
 	if err != nil {
 		panic(err)
 	}

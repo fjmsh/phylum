@@ -29,7 +29,7 @@ func setupImportCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			destParent, err := f.ResourceByRootedPath(args[1])
+			destParent, err := f.ResourceByPathWithRoot(args[1])
 			if err != nil {
 				fmt.Println("unable to find '" + args[1] + "': " + err.Error())
 				os.Exit(1)

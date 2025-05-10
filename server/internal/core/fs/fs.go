@@ -47,8 +47,8 @@ type FileSystem interface {
 
 	// find.go
 	ResourceByID(id uuid.UUID) (Resource, error)
-	ResourceByPath(path string) (Resource, error)
-	ResourceByRootedPath(ref string) (Resource, error)
+	ResourceByPath(ref string) (Resource, error)
+	ResourceByPathWithRoot(ref string) (Resource, error)
 
 	// search.go
 	Search(query string, includeDeleted bool) ([]Resource, error)
