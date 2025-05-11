@@ -251,6 +251,9 @@ func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, 
 	if rows, err := f.db.Query(query, args...); err != nil {
 		return Resource{}, err
 	} else {
-		return f.collectResource(rows, false)
+		r, err := f.collectResource(rows, false)
+		r.inheritedPermissions = permissions
+		r.links = []byte{'[', ']'}
+		return r, err
 	}
 }

@@ -5,12 +5,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type ResourceAncestor struct {
 	ID          uuid.UUID
-	ParentID    pgtype.UUID
 	Name        string
 	Permissions []byte
 }
@@ -20,7 +18,6 @@ func (f filesystem) scanResourceAncestor(row pgx.CollectableRow) (ResourceAncest
 	err := row.Scan(
 		&a.ID,
 		&a.Name,
-		&a.ParentID,
 		&a.Permissions,
 	)
 	return a, err
@@ -37,7 +34,7 @@ const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, permissions) AS (
 			WHERE r.permissions[$2::TEXT]::INTEGER <> 0
 			OR $3::BOOLEAN
 )
-SELECT id, name, parent, permissions FROM nodes`
+SELECT id, name, permissions FROM nodes`
 
 func (r Resource) GetAncestors() ([]ResourceAncestor, error) {
 	if rows, err := r.f.db.Query(ancestorsQuery, r.id, r.f.username, r.f.fullAccess); err != nil {

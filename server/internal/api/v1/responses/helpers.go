@@ -16,7 +16,6 @@ func FullResourceFromFS(r fs.Resource) ResourceFull {
 		response.Ancestors[i] = Ancestor{
 			ID:          a.ID,
 			Name:        a.Name,
-			ParentID:    a.ParentID,
 			Permissions: string(a.Permissions),
 		}
 	}
