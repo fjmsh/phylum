@@ -9,7 +9,10 @@ import (
 )
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	const query = "SELECT r.*, (SELECT " + publinkFieldsQuery + " FROM publinks l WHERE l.root = r.id) AS links FROM resources r WHERE id = $1::UUID"
+	const query = `SELECT r.*,
+(SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) AS links
+(SELECT p.permissions FROM resources p WHERE p.id = r.parent) AS inheritedPermissions
+FROM resources r WHERE id = $1::UUID`
 	if rows, err := f.db.Query(query, id); err != nil {
 		return Resource{}, err
 	} else {
@@ -56,7 +59,10 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		UnionAll(sub)
 
 	l := goqu.T("publinks").As("l")
-	q := pg.Select(resources.All(), pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(resources.Col("id")))).
+	q := pg.Select(resources.All(),
+		pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(resources.Col("id"))),
+		pg.Select(goqu.L("(SELECT p.permissions FROM resources p WHERE p.id = r.parent)")),
+	).
 		From(resources).
 		WithRecursive("nodes(id, parent, search, depth)", rec).
 		Join(nodes, goqu.On(resources.Col("id").Eq(nodes.Col("id")))).

@@ -39,18 +39,18 @@ func ResourceFromFS(r fs.Resource) Resource {
 		deleted = r.Deleted().Time.UnixMilli()
 	}
 	return Resource{
-		ID:            r.ID(),
-		Name:          r.Name(),
-		Dir:           r.Dir(),
-		Created:       r.Created().UnixMilli(),
-		Modified:      r.Modified().UnixMilli(),
-		Deleted:       deleted,
-		ContentLength: r.ContentLength(),
-		ContentType:   r.ContentType(),
-		ContentSHA256: r.ContentSHA256(),
-		Permissions:   string(r.Permissions()),
-		Grants:        string(r.Grants()),
-		Links:         r.Links(),
+		ID:                   r.ID(),
+		Name:                 r.Name(),
+		Dir:                  r.Dir(),
+		Created:              r.Created().UnixMilli(),
+		Modified:             r.Modified().UnixMilli(),
+		Deleted:              deleted,
+		ContentLength:        r.ContentLength(),
+		ContentType:          r.ContentType(),
+		ContentSHA256:        r.ContentSHA256(),
+		InheritedPermissions: string(r.InheritedPermissions()),
+		Grants:               string(r.Grants()),
+		Links:                r.Links(),
 	}
 }
 
