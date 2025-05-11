@@ -23,8 +23,8 @@ type Resource struct {
 	ContentLength        int             `json:"c_len"`
 	ContentType          string          `json:"c_type"`
 	ContentSHA256        string          `json:"c_sha256"`
-	InheritedPermissions string          `json:"inherited_permissions,omitempty"`
-	Grants               string          `json:"grants"`
+	InheritedPermissions json.RawMessage `json:"inherited_permissions,omitempty"`
+	Grants               json.RawMessage `json:"grants"`
 	Links                json.RawMessage `json:"publinks"`
 }
 

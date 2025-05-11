@@ -47,8 +47,8 @@ func ResourceFromFS(r fs.Resource) Resource {
 		ContentLength:        r.ContentLength(),
 		ContentType:          r.ContentType(),
 		ContentSHA256:        r.ContentSHA256(),
-		InheritedPermissions: string(r.InheritedPermissions()),
-		Grants:               string(r.Grants()),
+		InheritedPermissions: r.InheritedPermissions(),
+		Grants:               r.Grants(),
 		Links:                r.Links(),
 	}
 }
