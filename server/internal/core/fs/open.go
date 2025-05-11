@@ -19,6 +19,9 @@ func (r Resource) OpenWrite() (io.WriteCloser, error) {
 	if !r.hasPermission(PermissionWrite) {
 		return nil, ErrInsufficientPermissions
 	}
+	if r.deleted.Valid {
+		return nil, ErrResourceDeleted
+	}
 	return r.f.cs.OpenWrite(r.ID(), sha256.New, func(len int, sum, mime string) error {
 		return r.f.updateResourceContents(r.ID(), len, mime, sum)
 	})

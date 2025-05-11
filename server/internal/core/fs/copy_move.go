@@ -17,6 +17,9 @@ type copySrcDest struct {
 
 func (r Resource) Move(target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	// Check source directory permissions
+	if r.deleted.Valid {
+		return Resource{}, false, ErrResourceDeleted
+	}
 	if !r.ParentID().Valid {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
@@ -117,6 +120,9 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	// Check source directory permissions
 	if !r.hasPermission(PermissionRead) {
 		return Resource{}, false, ErrInsufficientPermissions
+	}
+	if r.deleted.Valid {
+		return Resource{}, false, ErrResourceDeleted
 	}
 
 	// Check dest directory permissions

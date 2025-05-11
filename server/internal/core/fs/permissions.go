@@ -16,6 +16,9 @@ const (
 )
 
 func (r Resource) UpdatePermissions(username string, permission Permission) (Resource, error) {
+	if r.deleted.Valid {
+		return r, ErrResourceDeleted
+	}
 	if !r.hasPermission(PermissionShare) {
 		return Resource{}, ErrInsufficientPermissions
 	}

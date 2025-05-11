@@ -51,6 +51,9 @@ func (r Resource) CreatePublink(id, password string, expires pgtype.Timestamp, a
 	if !r.hasPermission(PermissionShare | PermissionRead) {
 		return ErrInsufficientPermissions
 	}
+	if r.deleted.Valid {
+		return ErrResourceDeleted
+	}
 
 	passwordHash := ""
 

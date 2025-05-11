@@ -55,6 +55,9 @@ func (f filesystem) CreateResourceByPath(path string, id uuid.UUID, dir, createP
 }
 
 func (r Resource) createMemberResource(name string, id uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+	if r.deleted.Valid {
+		return Resource{}, ErrResourceDeleted
+	}
 	if !r.Dir() {
 		return Resource{}, ErrResourceNotCollection
 	}

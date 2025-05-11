@@ -17,6 +17,7 @@ var (
 	ErrResourceNameConflict           = errors.NewError(http.StatusPreconditionFailed, "resource_name_conflict", "Another resource with this name already exists")
 	ErrResourceMoveTargetSubdirectory = errors.NewError(http.StatusConflict, "move_target_subdirectory", "Cannot move a resource to its own subdirectory")
 	ErrResourceCopyTargetSelf         = errors.NewError(http.StatusConflict, "copy_target_self", "Cannot overwrite a resource with itself")
+	ErrResourceDeleted                = errors.NewError(http.StatusPreconditionFailed, "resource_deleted", "Resource is deleted")
 	ErrParentNotFound                 = errors.NewError(http.StatusConflict, "parent_not_found", "Parent not found")
 	ErrParentDeleted                  = errors.NewError(http.StatusConflict, "parent_deleted", "Parent deleted")
 	ErrPublinkNameConflict            = errors.NewError(http.StatusPreconditionFailed, "publink_name_conflict", "Another public share with this name already exists")
