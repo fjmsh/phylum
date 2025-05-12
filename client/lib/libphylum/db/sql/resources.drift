@@ -9,25 +9,23 @@ CREATE TABLE IF NOT EXISTS resources(
     content_length INTEGER NOT NULL DEFAULT 0,
     content_sha256 TEXT NOT NULL DEFAULT '',
     content_type TEXT NOT NULL DEFAULT '',
-    permissions TEXT,
+    inherited_permissions TEXT,
     grants TEXT,
+    user_permission INTEGER NOT NULL DEFAULT 0,
     last_refresh DATETIME
 );
 
 -- Use `UNION` instead of `UNION ALL` to avoid infinite loops in case of
 -- accidental reparenting of a resource to itself.
-parents: WITH RECURSIVE parents(id, parent, name, deleted, permissions) AS (
-    SELECT id, parent, name, deleted,permissions
+parents: WITH RECURSIVE parents(id, parent, name, deleted, user_permission) AS (
+    SELECT id, parent, name, deleted, user_permission
         FROM resources
         WHERE id = :id
     UNION
-    SELECT r.id, r.parent, r.name, r.deleted, r.permissions
+    SELECT r.id, r.parent, r.name, r.deleted, r.user_permission
         FROM resources r
         JOIN parents p
         ON r.id = p.parent
-) SELECT id, name, deleted, permissions from parents;
+) SELECT id, name, deleted, user_permission from parents;
 
-permissions: SELECT r.name, r.permissions, r.grants, p.permissions as inherited_permissions
-    FROM resources r
-    JOIN resources p ON r.parent = p.id
-    WhERE r.id = :id;
+permissions: SELECT name, inherited_permissions, grants, user_permission FROM resources WhERE id = :id;

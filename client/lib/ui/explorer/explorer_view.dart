@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/destination_picker/destination_picker.dart';
@@ -83,6 +84,7 @@ class _ExplorerViewState extends State<ExplorerView> {
     if (dest == null) {
       return;
     }
+    final userPermission = await account.db.getResource(dest).then((r) => r?.userPermission) ?? 0;
     if (!context.mounted) return;
     for (final path in paths) {
       if (!mounted) return;
@@ -97,6 +99,7 @@ class _ExplorerViewState extends State<ExplorerView> {
           name: name,
           path: path,
           conflictResolution: conflictResolution,
+          userPermission: userPermission,
         ),
       );
     }

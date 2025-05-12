@@ -32,7 +32,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
     sub = account.db.watchPermissions(widget.resourceId).listen((data) {
       setState(() {
         resourceName = data?.name;
-        userPermission = data?.permissions.parsePermissionMap()[account.userName] ?? 0;
+        userPermission = data?.userPermission;
         permissions = data?.inheritedPermissions.parsePermissionMap();
         grants = data?.grants.parseGrantsMap();
       });

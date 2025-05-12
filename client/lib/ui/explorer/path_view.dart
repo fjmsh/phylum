@@ -21,16 +21,15 @@ class PathView extends StatelessWidget {
     final page = context.select<ExplorerState, ExplorerPage>((state) => state.page);
     final account = context.read<PhylumAccount>();
     if (page is ExplorerPageFolder) {
-      final user = account.userName;
       final home = account.userHome;
       return StreamBuilder(
           stream: account.db.watchParents(page.folderId),
-          initialData: <ParentsResult>[ParentsResult(id: page.folderId, name: 'Folder')],
+          initialData: <ParentsResult>[ParentsResult(id: page.folderId, name: 'Folder', userPermission: 0)],
           builder: (context, snapshot) {
             final path = <PathInfo>[];
             for (int i = snapshot.data!.length - 1; i >= 0; i--) {
               final entry = snapshot.data![i];
-              final permission = (entry.permissions?.parsePermissionMap() ?? const {})[user] ?? 0;
+              final permission = entry.userPermission;
               if (permission != 0) {
                 if (entry.id == home) {
                   if (path.isNotEmpty) {

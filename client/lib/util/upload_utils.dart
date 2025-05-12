@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -23,7 +24,7 @@ bool validateName(String name) =>
     name.trim().isNotEmpty &&
     !name.runes.any((c) => c < 31 || illegalChars.contains(c));
 
-Future<void> createDirectory(BuildContext context, String folderId, {String? preset}) async {
+Future<void> createDirectory(BuildContext context, Resource parent, {String? preset}) async {
   final account = context.read<PhylumAccount>();
   final name = await showInputDialog(
     context,
@@ -38,9 +39,10 @@ Future<void> createDirectory(BuildContext context, String folderId, {String? pre
     name,
     overwriteFn: (r) => nameConflictDelete,
     (name, conflictResolution) => account.resourceRepository.mkdir(
-      parent: folderId,
+      parent: parent.id,
       name: name,
       conflictResolution: conflictResolution,
+      userPermission: parent.userPermission,
     ),
   );
 }
@@ -65,6 +67,7 @@ Future<void> uploadXFiles(BuildContext context, String folderId, Iterable<XFile>
         negativeText: 'NO',
       ) ??
       false;
+  final userPermission = await account.db.getResource(folderId).then((r) => r?.userPermission) ?? 0;
   if (!confirm || !context.mounted) return;
   for (final file in files) {
     String? id;
@@ -80,6 +83,7 @@ Future<void> uploadXFiles(BuildContext context, String folderId, Iterable<XFile>
           name: name,
           file: file,
           conflictResolution: conflictResolution,
+          userPermission: userPermission,
         ),
       );
       if (id == null && context.mounted) {
@@ -119,6 +123,7 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
         negativeText: 'NO',
       ) ??
       false;
+  final userPermission = await account.db.getResource(folderId).then((r) => r?.userPermission) ?? 0;
   if (!confirm || !context.mounted) return;
   final dirIds = <String, String>{};
   for (final path in tree.dirs) {
@@ -134,6 +139,7 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
           parent: parent,
           name: name,
           conflictResolution: conflictResolution,
+          userPermission: userPermission,
         ),
       );
       if (id == null) {
@@ -162,6 +168,7 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
           name: name,
           path: path,
           conflictResolution: conflictResolution,
+          userPermission: userPermission,
         ),
       );
       if (id == null && context.mounted) {

@@ -1,7 +1,7 @@
 part of 'responses.dart';
 
 class TrashListResponse extends PhylumApiSuccessResponse {
-  final Iterable<FullResource> resources;
+  final Iterable<PartialResource> resources;
   final String? cursor;
   final bool clear;
 
@@ -12,7 +12,8 @@ class TrashListResponse extends PhylumApiSuccessResponse {
   });
 
   factory TrashListResponse.fromResponse(Map<String, dynamic> data) {
-    final resources = (data['resources'] as List).cast<Map>().map((a) => parseFullResource(a.cast<String, dynamic>()));
+    final resources =
+        (data['resources'] as List).cast<Map>().map((a) => parsePartialResource(a.cast<String, dynamic>()));
     final cursor = data['cursor'] as String;
     final clear = data['clear'] as bool;
 
@@ -26,9 +27,10 @@ class TrashListResponse extends PhylumApiSuccessResponse {
   @override
   Future process(PhylumAccount account) async {
     final db = account.db;
-    final publinks = resources.map((r) => r.publinks).fold<List<Publink>>([], (acc, e) => acc..addAll(e));
+    final publinks = resources.map((r) => r.publinks).fold<List<Publink>>([], (acc, e) => acc..addAll(e ?? const []));
     final orphanedPublinks = Set.of(await (db.select(db.publinks)
-          ..where((l) => l.root.isIn(resources.map((r) => r.resource.id)) & l.id.isNotIn(publinks.map((l) => l.id))))
+          ..where(
+              (l) => l.root.isIn(resources.map((r) => r.resource.id.value)) & l.id.isNotIn(publinks.map((l) => l.id))))
         .map((r) => r.id)
         .get());
 
@@ -37,7 +39,7 @@ class TrashListResponse extends PhylumApiSuccessResponse {
       if (clear) {
         batch.deleteAll(db.trashedResources);
       }
-      batch.insertAll(db.trashedResources, resources.map((r) => TrashedResource(id: r.resource.id)),
+      batch.insertAll(db.trashedResources, resources.map((r) => TrashedResource(id: r.resource.id.value)),
           mode: InsertMode.insertOrReplace);
       for (final id in orphanedPublinks) {
         batch.update(db.publinks, PublinksCompanion(root: Value('')), where: (o) => o.id.equals(id));
@@ -47,7 +49,7 @@ class TrashListResponse extends PhylumApiSuccessResponse {
 
     final repo = account.datastore.get<Resource>();
     for (final r in resources) {
-      await repo.replaceRemoteData(r.resource.id, r.resource);
+      await repo.reloadRemoteData(r.resource.id.value);
     }
   }
 }

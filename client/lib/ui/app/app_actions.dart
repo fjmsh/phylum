@@ -19,12 +19,14 @@ class AppActions extends StatelessWidget {
     return Actions(
       actions: {
         NewFolderIntent: CallbackAction<NewFolderIntent>(
-          onInvoke: (intent) {
+          onInvoke: (intent) async {
             final page = context.read<PhylumRouterDelegate>().currentConfiguration;
             final folderId = page is ExplorerPageFolder ? page.folderId : null;
-            if (folderId != null) {
-              createDirectory(context, folderId);
-            }
+            final account = context.read<PhylumAccount>();
+            if (folderId == null) return;
+            final folder = await account.db.getResource(folderId);
+            if (folder == null || !context.mounted) return;
+            createDirectory(context, folder);
             return null;
           },
         ),

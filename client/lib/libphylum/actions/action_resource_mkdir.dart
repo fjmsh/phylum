@@ -3,6 +3,7 @@ import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/actions/changes/create_resource_change.dart';
 import 'package:phylum/libphylum/actions/changes/update_resource_deleted_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/util/permissions.dart';
 
 class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
   static const kActionName = 'resourceMkdir';
@@ -33,6 +34,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
           contentLength: 0,
           contentType: '',
           contentSha256: '',
+          userPermission: userPermission,
         ),
         if (deletedId != null)
           UpdateResourceDeletedChange(
@@ -53,11 +55,13 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
         'timestamp': timestamp.millisecondsSinceEpoch,
         'localName': localName,
         'deletedId': deletedId,
+        'userPermission': userPermission,
       };
 
   final DateTime timestamp;
   final String localName;
   final String? deletedId;
+  final Permission userPermission;
 
   ResourceMkdirAction({
     required super.resourceId,
@@ -67,6 +71,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
     required this.timestamp,
     required this.localName,
     required this.deletedId,
+    required this.userPermission,
   });
 
   static ResourceMkdirAction fromMap(Map<String, dynamic> map) {
@@ -78,6 +83,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
       localName: map['localName'],
       deletedId: map['deletedId'],
+      userPermission: map['userPermission'],
     );
   }
 

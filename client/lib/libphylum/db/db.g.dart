@@ -273,19 +273,27 @@ class Resources extends Table with TableInfo<Resources, Resource> {
       requiredDuringInsert: false,
       $customConstraints: 'NOT NULL DEFAULT \'\'',
       defaultValue: const CustomExpression('\'\''));
-  static const VerificationMeta _permissionsMeta =
-      const VerificationMeta('permissions');
-  late final GeneratedColumn<String> permissions = GeneratedColumn<String>(
-      'permissions', aliasedName, true,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      $customConstraints: '');
+  static const VerificationMeta _inheritedPermissionsMeta =
+      const VerificationMeta('inheritedPermissions');
+  late final GeneratedColumn<String> inheritedPermissions =
+      GeneratedColumn<String>('inherited_permissions', aliasedName, true,
+          type: DriftSqlType.string,
+          requiredDuringInsert: false,
+          $customConstraints: '');
   static const VerificationMeta _grantsMeta = const VerificationMeta('grants');
   late final GeneratedColumn<String> grants = GeneratedColumn<String>(
       'grants', aliasedName, true,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       $customConstraints: '');
+  static const VerificationMeta _userPermissionMeta =
+      const VerificationMeta('userPermission');
+  late final GeneratedColumn<int> userPermission = GeneratedColumn<int>(
+      'user_permission', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const CustomExpression('0'));
   static const VerificationMeta _lastRefreshMeta =
       const VerificationMeta('lastRefresh');
   late final GeneratedColumn<DateTime> lastRefresh = GeneratedColumn<DateTime>(
@@ -305,8 +313,9 @@ class Resources extends Table with TableInfo<Resources, Resource> {
         contentLength,
         contentSha256,
         contentType,
-        permissions,
+        inheritedPermissions,
         grants,
+        userPermission,
         lastRefresh
       ];
   @override
@@ -370,15 +379,21 @@ class Resources extends Table with TableInfo<Resources, Resource> {
           contentType.isAcceptableOrUnknown(
               data['content_type']!, _contentTypeMeta));
     }
-    if (data.containsKey('permissions')) {
+    if (data.containsKey('inherited_permissions')) {
       context.handle(
-          _permissionsMeta,
-          permissions.isAcceptableOrUnknown(
-              data['permissions']!, _permissionsMeta));
+          _inheritedPermissionsMeta,
+          inheritedPermissions.isAcceptableOrUnknown(
+              data['inherited_permissions']!, _inheritedPermissionsMeta));
     }
     if (data.containsKey('grants')) {
       context.handle(_grantsMeta,
           grants.isAcceptableOrUnknown(data['grants']!, _grantsMeta));
+    }
+    if (data.containsKey('user_permission')) {
+      context.handle(
+          _userPermissionMeta,
+          userPermission.isAcceptableOrUnknown(
+              data['user_permission']!, _userPermissionMeta));
     }
     if (data.containsKey('last_refresh')) {
       context.handle(
@@ -415,10 +430,12 @@ class Resources extends Table with TableInfo<Resources, Resource> {
           .read(DriftSqlType.string, data['${effectivePrefix}content_sha256'])!,
       contentType: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}content_type'])!,
-      permissions: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}permissions']),
+      inheritedPermissions: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}inherited_permissions']),
       grants: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}grants']),
+      userPermission: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}user_permission'])!,
       lastRefresh: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}last_refresh']),
     );
@@ -444,8 +461,9 @@ class Resource extends DataClass implements Insertable<Resource> {
   final int contentLength;
   final String contentSha256;
   final String contentType;
-  final String? permissions;
+  final String? inheritedPermissions;
   final String? grants;
+  final int userPermission;
   final DateTime? lastRefresh;
   const Resource(
       {required this.id,
@@ -458,8 +476,9 @@ class Resource extends DataClass implements Insertable<Resource> {
       required this.contentLength,
       required this.contentSha256,
       required this.contentType,
-      this.permissions,
+      this.inheritedPermissions,
       this.grants,
+      required this.userPermission,
       this.lastRefresh});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -482,12 +501,13 @@ class Resource extends DataClass implements Insertable<Resource> {
     map['content_length'] = Variable<int>(contentLength);
     map['content_sha256'] = Variable<String>(contentSha256);
     map['content_type'] = Variable<String>(contentType);
-    if (!nullToAbsent || permissions != null) {
-      map['permissions'] = Variable<String>(permissions);
+    if (!nullToAbsent || inheritedPermissions != null) {
+      map['inherited_permissions'] = Variable<String>(inheritedPermissions);
     }
     if (!nullToAbsent || grants != null) {
       map['grants'] = Variable<String>(grants);
     }
+    map['user_permission'] = Variable<int>(userPermission);
     if (!nullToAbsent || lastRefresh != null) {
       map['last_refresh'] = Variable<DateTime>(lastRefresh);
     }
@@ -513,11 +533,12 @@ class Resource extends DataClass implements Insertable<Resource> {
       contentLength: Value(contentLength),
       contentSha256: Value(contentSha256),
       contentType: Value(contentType),
-      permissions: permissions == null && nullToAbsent
+      inheritedPermissions: inheritedPermissions == null && nullToAbsent
           ? const Value.absent()
-          : Value(permissions),
+          : Value(inheritedPermissions),
       grants:
           grants == null && nullToAbsent ? const Value.absent() : Value(grants),
+      userPermission: Value(userPermission),
       lastRefresh: lastRefresh == null && nullToAbsent
           ? const Value.absent()
           : Value(lastRefresh),
@@ -538,8 +559,10 @@ class Resource extends DataClass implements Insertable<Resource> {
       contentLength: serializer.fromJson<int>(json['content_length']),
       contentSha256: serializer.fromJson<String>(json['content_sha256']),
       contentType: serializer.fromJson<String>(json['content_type']),
-      permissions: serializer.fromJson<String?>(json['permissions']),
+      inheritedPermissions:
+          serializer.fromJson<String?>(json['inherited_permissions']),
       grants: serializer.fromJson<String?>(json['grants']),
+      userPermission: serializer.fromJson<int>(json['user_permission']),
       lastRefresh: serializer.fromJson<DateTime?>(json['last_refresh']),
     );
   }
@@ -557,8 +580,9 @@ class Resource extends DataClass implements Insertable<Resource> {
       'content_length': serializer.toJson<int>(contentLength),
       'content_sha256': serializer.toJson<String>(contentSha256),
       'content_type': serializer.toJson<String>(contentType),
-      'permissions': serializer.toJson<String?>(permissions),
+      'inherited_permissions': serializer.toJson<String?>(inheritedPermissions),
       'grants': serializer.toJson<String?>(grants),
+      'user_permission': serializer.toJson<int>(userPermission),
       'last_refresh': serializer.toJson<DateTime?>(lastRefresh),
     };
   }
@@ -574,8 +598,9 @@ class Resource extends DataClass implements Insertable<Resource> {
           int? contentLength,
           String? contentSha256,
           String? contentType,
-          Value<String?> permissions = const Value.absent(),
+          Value<String?> inheritedPermissions = const Value.absent(),
           Value<String?> grants = const Value.absent(),
+          int? userPermission,
           Value<DateTime?> lastRefresh = const Value.absent()}) =>
       Resource(
         id: id ?? this.id,
@@ -588,8 +613,11 @@ class Resource extends DataClass implements Insertable<Resource> {
         contentLength: contentLength ?? this.contentLength,
         contentSha256: contentSha256 ?? this.contentSha256,
         contentType: contentType ?? this.contentType,
-        permissions: permissions.present ? permissions.value : this.permissions,
+        inheritedPermissions: inheritedPermissions.present
+            ? inheritedPermissions.value
+            : this.inheritedPermissions,
         grants: grants.present ? grants.value : this.grants,
+        userPermission: userPermission ?? this.userPermission,
         lastRefresh: lastRefresh.present ? lastRefresh.value : this.lastRefresh,
       );
   Resource copyWithCompanion(ResourcesCompanion data) {
@@ -609,9 +637,13 @@ class Resource extends DataClass implements Insertable<Resource> {
           : this.contentSha256,
       contentType:
           data.contentType.present ? data.contentType.value : this.contentType,
-      permissions:
-          data.permissions.present ? data.permissions.value : this.permissions,
+      inheritedPermissions: data.inheritedPermissions.present
+          ? data.inheritedPermissions.value
+          : this.inheritedPermissions,
       grants: data.grants.present ? data.grants.value : this.grants,
+      userPermission: data.userPermission.present
+          ? data.userPermission.value
+          : this.userPermission,
       lastRefresh:
           data.lastRefresh.present ? data.lastRefresh.value : this.lastRefresh,
     );
@@ -630,8 +662,9 @@ class Resource extends DataClass implements Insertable<Resource> {
           ..write('contentLength: $contentLength, ')
           ..write('contentSha256: $contentSha256, ')
           ..write('contentType: $contentType, ')
-          ..write('permissions: $permissions, ')
+          ..write('inheritedPermissions: $inheritedPermissions, ')
           ..write('grants: $grants, ')
+          ..write('userPermission: $userPermission, ')
           ..write('lastRefresh: $lastRefresh')
           ..write(')'))
         .toString();
@@ -649,8 +682,9 @@ class Resource extends DataClass implements Insertable<Resource> {
       contentLength,
       contentSha256,
       contentType,
-      permissions,
+      inheritedPermissions,
       grants,
+      userPermission,
       lastRefresh);
   @override
   bool operator ==(Object other) =>
@@ -666,8 +700,9 @@ class Resource extends DataClass implements Insertable<Resource> {
           other.contentLength == this.contentLength &&
           other.contentSha256 == this.contentSha256 &&
           other.contentType == this.contentType &&
-          other.permissions == this.permissions &&
+          other.inheritedPermissions == this.inheritedPermissions &&
           other.grants == this.grants &&
+          other.userPermission == this.userPermission &&
           other.lastRefresh == this.lastRefresh);
 }
 
@@ -682,8 +717,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   final Value<int> contentLength;
   final Value<String> contentSha256;
   final Value<String> contentType;
-  final Value<String?> permissions;
+  final Value<String?> inheritedPermissions;
   final Value<String?> grants;
+  final Value<int> userPermission;
   final Value<DateTime?> lastRefresh;
   final Value<int> rowid;
   const ResourcesCompanion({
@@ -697,8 +733,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.contentLength = const Value.absent(),
     this.contentSha256 = const Value.absent(),
     this.contentType = const Value.absent(),
-    this.permissions = const Value.absent(),
+    this.inheritedPermissions = const Value.absent(),
     this.grants = const Value.absent(),
+    this.userPermission = const Value.absent(),
     this.lastRefresh = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -713,8 +750,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.contentLength = const Value.absent(),
     this.contentSha256 = const Value.absent(),
     this.contentType = const Value.absent(),
-    this.permissions = const Value.absent(),
+    this.inheritedPermissions = const Value.absent(),
     this.grants = const Value.absent(),
+    this.userPermission = const Value.absent(),
     this.lastRefresh = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -731,8 +769,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     Expression<int>? contentLength,
     Expression<String>? contentSha256,
     Expression<String>? contentType,
-    Expression<String>? permissions,
+    Expression<String>? inheritedPermissions,
     Expression<String>? grants,
+    Expression<int>? userPermission,
     Expression<DateTime>? lastRefresh,
     Expression<int>? rowid,
   }) {
@@ -747,8 +786,10 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       if (contentLength != null) 'content_length': contentLength,
       if (contentSha256 != null) 'content_sha256': contentSha256,
       if (contentType != null) 'content_type': contentType,
-      if (permissions != null) 'permissions': permissions,
+      if (inheritedPermissions != null)
+        'inherited_permissions': inheritedPermissions,
       if (grants != null) 'grants': grants,
+      if (userPermission != null) 'user_permission': userPermission,
       if (lastRefresh != null) 'last_refresh': lastRefresh,
       if (rowid != null) 'rowid': rowid,
     });
@@ -765,8 +806,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       Value<int>? contentLength,
       Value<String>? contentSha256,
       Value<String>? contentType,
-      Value<String?>? permissions,
+      Value<String?>? inheritedPermissions,
       Value<String?>? grants,
+      Value<int>? userPermission,
       Value<DateTime?>? lastRefresh,
       Value<int>? rowid}) {
     return ResourcesCompanion(
@@ -780,8 +822,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       contentLength: contentLength ?? this.contentLength,
       contentSha256: contentSha256 ?? this.contentSha256,
       contentType: contentType ?? this.contentType,
-      permissions: permissions ?? this.permissions,
+      inheritedPermissions: inheritedPermissions ?? this.inheritedPermissions,
       grants: grants ?? this.grants,
+      userPermission: userPermission ?? this.userPermission,
       lastRefresh: lastRefresh ?? this.lastRefresh,
       rowid: rowid ?? this.rowid,
     );
@@ -820,11 +863,15 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     if (contentType.present) {
       map['content_type'] = Variable<String>(contentType.value);
     }
-    if (permissions.present) {
-      map['permissions'] = Variable<String>(permissions.value);
+    if (inheritedPermissions.present) {
+      map['inherited_permissions'] =
+          Variable<String>(inheritedPermissions.value);
     }
     if (grants.present) {
       map['grants'] = Variable<String>(grants.value);
+    }
+    if (userPermission.present) {
+      map['user_permission'] = Variable<int>(userPermission.value);
     }
     if (lastRefresh.present) {
       map['last_refresh'] = Variable<DateTime>(lastRefresh.value);
@@ -848,8 +895,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
           ..write('contentLength: $contentLength, ')
           ..write('contentSha256: $contentSha256, ')
           ..write('contentType: $contentType, ')
-          ..write('permissions: $permissions, ')
+          ..write('inheritedPermissions: $inheritedPermissions, ')
           ..write('grants: $grants, ')
+          ..write('userPermission: $userPermission, ')
           ..write('lastRefresh: $lastRefresh, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -2165,7 +2213,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 
   Selectable<ParentsResult> parents(String id) {
     return customSelect(
-        'WITH RECURSIVE parents (id, parent, name, deleted, permissions) AS (SELECT id, parent, name, deleted, permissions FROM resources WHERE id = ?1 UNION SELECT r.id, r.parent, r.name, r.deleted, r.permissions FROM resources AS r JOIN parents AS p ON r.id = p.parent) SELECT id, name, deleted, permissions FROM parents',
+        'WITH RECURSIVE parents (id, parent, name, deleted, user_permission) AS (SELECT id, parent, name, deleted, user_permission FROM resources WHERE id = ?1 UNION SELECT r.id, r.parent, r.name, r.deleted, r.user_permission FROM resources AS r JOIN parents AS p ON r.id = p.parent) SELECT id, name, deleted, user_permission FROM parents',
         variables: [
           Variable<String>(id)
         ],
@@ -2175,13 +2223,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
           id: row.read<String>('id'),
           name: row.read<String>('name'),
           deleted: row.readNullable<DateTime>('deleted'),
-          permissions: row.readNullable<String>('permissions'),
+          userPermission: row.read<int>('user_permission'),
         ));
   }
 
   Selectable<PermissionsResult> permissions(String id) {
     return customSelect(
-        'SELECT r.name, r.permissions, r.grants, p.permissions AS inherited_permissions FROM resources AS r JOIN resources AS p ON r.parent = p.id WHERE r.id = ?1',
+        'SELECT name, inherited_permissions, grants, user_permission FROM resources WHERE id = ?1',
         variables: [
           Variable<String>(id)
         ],
@@ -2189,10 +2237,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
           resources,
         }).map((QueryRow row) => PermissionsResult(
           name: row.read<String>('name'),
-          permissions: row.readNullable<String>('permissions'),
-          grants: row.readNullable<String>('grants'),
           inheritedPermissions:
               row.readNullable<String>('inherited_permissions'),
+          grants: row.readNullable<String>('grants'),
+          userPermission: row.read<int>('user_permission'),
         ));
   }
 
@@ -2404,8 +2452,9 @@ typedef $ResourcesCreateCompanionBuilder = ResourcesCompanion Function({
   Value<int> contentLength,
   Value<String> contentSha256,
   Value<String> contentType,
-  Value<String?> permissions,
+  Value<String?> inheritedPermissions,
   Value<String?> grants,
+  Value<int> userPermission,
   Value<DateTime?> lastRefresh,
   Value<int> rowid,
 });
@@ -2420,8 +2469,9 @@ typedef $ResourcesUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<int> contentLength,
   Value<String> contentSha256,
   Value<String> contentType,
-  Value<String?> permissions,
+  Value<String?> inheritedPermissions,
   Value<String?> grants,
+  Value<int> userPermission,
   Value<DateTime?> lastRefresh,
   Value<int> rowid,
 });
@@ -2528,11 +2578,16 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
   ColumnFilters<String> get contentType => $composableBuilder(
       column: $table.contentType, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get permissions => $composableBuilder(
-      column: $table.permissions, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get inheritedPermissions => $composableBuilder(
+      column: $table.inheritedPermissions,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get grants => $composableBuilder(
       column: $table.grants, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get userPermission => $composableBuilder(
+      column: $table.userPermission,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => ColumnFilters(column));
@@ -2662,11 +2717,16 @@ class $ResourcesOrderingComposer extends Composer<_$AppDatabase, Resources> {
   ColumnOrderings<String> get contentType => $composableBuilder(
       column: $table.contentType, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get permissions => $composableBuilder(
-      column: $table.permissions, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get inheritedPermissions => $composableBuilder(
+      column: $table.inheritedPermissions,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get grants => $composableBuilder(
       column: $table.grants, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get userPermission => $composableBuilder(
+      column: $table.userPermission,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => ColumnOrderings(column));
@@ -2710,11 +2770,14 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
   GeneratedColumn<String> get contentType => $composableBuilder(
       column: $table.contentType, builder: (column) => column);
 
-  GeneratedColumn<String> get permissions => $composableBuilder(
-      column: $table.permissions, builder: (column) => column);
+  GeneratedColumn<String> get inheritedPermissions => $composableBuilder(
+      column: $table.inheritedPermissions, builder: (column) => column);
 
   GeneratedColumn<String> get grants =>
       $composableBuilder(column: $table.grants, builder: (column) => column);
+
+  GeneratedColumn<int> get userPermission => $composableBuilder(
+      column: $table.userPermission, builder: (column) => column);
 
   GeneratedColumn<DateTime> get lastRefresh => $composableBuilder(
       column: $table.lastRefresh, builder: (column) => column);
@@ -2841,8 +2904,9 @@ class $ResourcesTableManager extends RootTableManager<
             Value<int> contentLength = const Value.absent(),
             Value<String> contentSha256 = const Value.absent(),
             Value<String> contentType = const Value.absent(),
-            Value<String?> permissions = const Value.absent(),
+            Value<String?> inheritedPermissions = const Value.absent(),
             Value<String?> grants = const Value.absent(),
+            Value<int> userPermission = const Value.absent(),
             Value<DateTime?> lastRefresh = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -2857,8 +2921,9 @@ class $ResourcesTableManager extends RootTableManager<
             contentLength: contentLength,
             contentSha256: contentSha256,
             contentType: contentType,
-            permissions: permissions,
+            inheritedPermissions: inheritedPermissions,
             grants: grants,
+            userPermission: userPermission,
             lastRefresh: lastRefresh,
             rowid: rowid,
           ),
@@ -2873,8 +2938,9 @@ class $ResourcesTableManager extends RootTableManager<
             Value<int> contentLength = const Value.absent(),
             Value<String> contentSha256 = const Value.absent(),
             Value<String> contentType = const Value.absent(),
-            Value<String?> permissions = const Value.absent(),
+            Value<String?> inheritedPermissions = const Value.absent(),
             Value<String?> grants = const Value.absent(),
+            Value<int> userPermission = const Value.absent(),
             Value<DateTime?> lastRefresh = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -2889,8 +2955,9 @@ class $ResourcesTableManager extends RootTableManager<
             contentLength: contentLength,
             contentSha256: contentSha256,
             contentType: contentType,
-            permissions: permissions,
+            inheritedPermissions: inheritedPermissions,
             grants: grants,
+            userPermission: userPermission,
             lastRefresh: lastRefresh,
             rowid: rowid,
           ),
@@ -4118,25 +4185,25 @@ class ParentsResult {
   final String id;
   final String name;
   final DateTime? deleted;
-  final String? permissions;
+  final int userPermission;
   ParentsResult({
     required this.id,
     required this.name,
     this.deleted,
-    this.permissions,
+    required this.userPermission,
   });
 }
 
 class PermissionsResult {
   final String name;
-  final String? permissions;
-  final String? grants;
   final String? inheritedPermissions;
+  final String? grants;
+  final int userPermission;
   PermissionsResult({
     required this.name,
-    this.permissions,
-    this.grants,
     this.inheritedPermissions,
+    this.grants,
+    required this.userPermission,
   });
 }
 

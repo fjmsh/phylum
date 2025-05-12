@@ -11,11 +11,20 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
     required this.children,
   });
 
-  factory FullResourceResponse.fromResponse(Map<String, dynamic> data) {
-    final resource = parseFullResource(data['resource']);
+  factory FullResourceResponse.fromResponse(Map<String, dynamic> data, String username) {
     final ancestors =
         (data['ancestors'] as List).cast<Map>().map((a) => parseResourceAncestor(a.cast<String, dynamic>()));
-    final children = (data['children'] as List).cast<Map>().map((c) => parseFullResource(c.cast<String, dynamic>()));
+    final resource = parseFullResource(
+      data['resource'],
+      parent: ancestors.isNotEmpty ? ancestors.first.id.value : null,
+      username: username,
+    );
+    final children = (data['children'] as List).cast<Map>().map((c) => parseFullResource(
+          c.cast<String, dynamic>(),
+          parent: resource.resource.id,
+          username: username,
+          inheritedPermissions: resource.permissions,
+        ));
 
     return FullResourceResponse(
       resource: resource,

@@ -3,6 +3,7 @@ import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/actions/changes/create_resource_change.dart';
 import 'package:phylum/libphylum/actions/changes/update_resource_deleted_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/util/permissions.dart';
 
 class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   static const kActionName = 'resourceCopy';
@@ -33,6 +34,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
           contentLength: contentLength,
           contentType: contentType,
           contentSha256: contentSha256,
+          userPermission: userPermission,
         ),
         if (deletedId != null)
           UpdateResourceDeletedChange(
@@ -69,6 +71,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   final String contentSha256;
   final DateTime timestamp;
   final String? deletedId;
+  final Permission userPermission;
 
   ResourceCopyAction({
     required this.srcId,
@@ -84,6 +87,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
     required this.description,
     required this.timestamp,
     required this.deletedId,
+    required this.userPermission,
   });
 
   factory ResourceCopyAction.fromMap(Map<String, dynamic> map) {
@@ -101,6 +105,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
       description: map['description'],
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
       deletedId: map['deletedId'],
+      userPermission: map['userPermission'],
     );
   }
 

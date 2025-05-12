@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/ui/explorer/page.dart';
@@ -83,7 +85,14 @@ class _DestinationPickerState extends State<DestinationPicker> {
           Builder(builder: (context) {
             final folderId = context.select<ExplorerState, String?>((state) => state.folderId);
             return IconButton(
-              onPressed: folderId == null ? null : () => createDirectory(context, folderId),
+              onPressed: folderId == null
+                  ? null
+                  : () async {
+                      final folder = await context.read<PhylumAccount>().db.getResource(folderId);
+                      if (folder != null && context.mounted) {
+                        createDirectory(context, folder);
+                      }
+                    },
               icon: Icon(Icons.create_new_folder_outlined),
             );
           })
@@ -119,7 +128,14 @@ class _DestinationPickerState extends State<DestinationPicker> {
                 trailing: Builder(builder: (context) {
                   final folderId = context.select<ExplorerState, String?>((state) => state.folderId);
                   return IconButton(
-                    onPressed: folderId == null ? null : () => createDirectory(context, folderId),
+                    onPressed: folderId == null
+                        ? null
+                        : () async {
+                            final folder = await context.read<PhylumAccount>().db.getResource(folderId);
+                            if (folder != null && context.mounted) {
+                              createDirectory(context, folder);
+                            }
+                          },
                     icon: Icon(Icons.create_new_folder_outlined),
                   );
                 }),

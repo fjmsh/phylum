@@ -7,6 +7,7 @@ import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/actions/changes/create_resource_change.dart';
 import 'package:phylum/libphylum/actions/changes/update_resource_deleted_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/util/permissions.dart';
 
 class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction {
   static const kActionName = 'resourceUpload';
@@ -49,6 +50,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
           contentLength: size,
           contentType: contentType,
           contentSha256: '<unknown>',
+          userPermission: userPermission,
         ),
         if (deletedId != null)
           UpdateResourceDeletedChange(
@@ -71,6 +73,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
         'timestamp': timestamp.millisecondsSinceEpoch,
         'localName': localName,
         'deletedId': deletedId,
+        'userPermission': userPermission,
       };
 
   final int size;
@@ -78,6 +81,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   final DateTime timestamp;
   final String localName;
   final String? deletedId;
+  final Permission userPermission;
 
   ResourceUploadAction({
     required super.resourceId,
@@ -89,6 +93,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
     required this.timestamp,
     required this.localName,
     required this.deletedId,
+    required this.userPermission,
   });
 
   factory ResourceUploadAction.fromMap(Map<String, dynamic> map) {
@@ -102,6 +107,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
       localName: map['localName'],
       deletedId: map['deletedId'],
+      userPermission: map['userPermission'],
     );
   }
 

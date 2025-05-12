@@ -18,6 +18,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_info_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
+import 'package:phylum/util/permissions.dart';
 
 const performLocalNameCheck = true;
 const _remoteResourcesBoxName = 'remote_resources';
@@ -51,7 +52,8 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
   Future<ApiResult> requestResource(String id) async {
     return _account.apiClient.sendRequest(
       ResourceInfoRequest(id),
-      (request, response) => parseJsonMapResponse(response, FullResourceResponse.fromResponse),
+      (request, response) =>
+          parseJsonMapResponse(response, (data) => FullResourceResponse.fromResponse(data, _account.userEmail)),
     );
   }
 
@@ -85,6 +87,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     required String parent,
     required String name,
     required NameConflictResolution conflictResolution,
+    required Permission userPermission,
     String? id,
   }) async {
     id ??= generateUuid();
@@ -118,6 +121,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
       timestamp: DateTime.now(),
       localName: localName,
       deletedId: deletedId,
+      userPermission: userPermission,
     ));
 
     return id;
@@ -126,6 +130,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
   Future<String> upload({
     required String parent,
     required String name,
+    required Permission userPermission,
     XFile? file,
     String? path,
     NameConflictResolution conflictResolution = nameConflictError,
@@ -168,6 +173,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
           contentType: contentType,
           localName: localName,
           deletedId: deletedId,
+          userPermission: userPermission,
         ),
         data: contents);
     return id;
@@ -267,6 +273,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
       description: 'Copying ${resource.name}',
       timestamp: DateTime.now(),
       deletedId: deletedId,
+      userPermission: resource.userPermission,
     ));
     return id;
   }

@@ -1,5 +1,6 @@
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/util/permissions.dart';
 
 class CreateResourceChange extends LocalChange<Resource> {
   @override
@@ -11,6 +12,7 @@ class CreateResourceChange extends LocalChange<Resource> {
   final int contentLength;
   final String contentType;
   final String contentSha256;
+  final Permission userPermission;
 
   @override
   bool get persist => false;
@@ -27,6 +29,7 @@ class CreateResourceChange extends LocalChange<Resource> {
     required this.contentLength,
     required this.contentType,
     required this.contentSha256,
+    required this.userPermission,
   });
 
   @override
@@ -41,6 +44,7 @@ class CreateResourceChange extends LocalChange<Resource> {
       contentLength: contentLength,
       contentType: contentType,
       contentSha256: contentSha256,
+      userPermission: userPermission,
     );
   }
 }
