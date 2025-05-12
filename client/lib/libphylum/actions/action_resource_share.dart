@@ -14,15 +14,14 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
   String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/fs/share/$resourceId';
+  String get endpoint => '/api/v1/fs/share';
 
   @override
-  Map<String, dynamic>? get requestBody {
-    return {
-      'username': username,
-      'permission': permission,
-    };
-  }
+  Map<String, dynamic>? get requestBody => {
+        'path': '$resourceId:',
+        'username': username,
+        'permission': permission,
+      };
 
   @override
   List<LocalChange> get localChanges => [

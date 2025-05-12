@@ -17,7 +17,12 @@ class ResourceBookmarkRemoveAction extends ResourceAction with JsonApiAction {
   String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/my/bookmarks/remove/$resourceId';
+  String get endpoint => '/api/v1/my/bookmarks/remove';
+
+  @override
+  Map<String, dynamic>? get requestBody => {
+        'id': resourceId,
+      };
 
   @override
   ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, BookmarkResponse.fromResponse);

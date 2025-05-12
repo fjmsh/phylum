@@ -14,12 +14,13 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/fs/copy/$srcId';
+  String get endpoint => '/api/v1/fs/copy';
 
   @override
   Map<String, dynamic>? get requestBody => {
         'id': resourceId,
-        'target': '$parent:$resourceName',
+        'src': '$srcId:',
+        'dest': '$parent:$resourceName',
         'conflict': conflictResolution,
       };
 

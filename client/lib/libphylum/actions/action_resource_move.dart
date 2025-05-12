@@ -20,7 +20,8 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
   @override
   Map<String, dynamic>? get requestBody => {
         // TODO: Do not send parent when only renaming
-        'target': '$parent:$resourceName',
+        'src': '$resourceId:',
+        'dest': '$parent:$resourceName',
         'conflict': conflictResolution,
       };
 

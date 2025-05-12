@@ -18,7 +18,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   String get method => 'PUT';
 
   @override
-  String get endpoint => '/api/v1/fs/upload/$resourceId';
+  String get endpoint => '/api/v1/fs/upload';
 
   @override
   MultipartFile createFile(Uint8List data) {
@@ -34,9 +34,10 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
 
   @override
   Map<String, String> get fields => {
-        'parent_id': parent,
-        'name': resourceName,
+        'path': '$parent:$resourceName',
+        'id': resourceId,
         'conflict': conflictResolution.toString(),
+        'sha256': '', // TODO: compute and send
       };
 
   @override

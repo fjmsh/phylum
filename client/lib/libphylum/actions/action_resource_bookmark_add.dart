@@ -16,10 +16,13 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
   String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/my/bookmarks/add/$resourceId';
+  String get endpoint => '/api/v1/my/bookmarks/add';
 
   @override
-  Map<String, String> get queryParamters => {'name': bookmarkName};
+  Map<String, dynamic>? get requestBody => {
+        'path': '$resourceId:',
+        'name': bookmarkName,
+      };
 
   @override
   ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, BookmarkResponse.fromResponse);

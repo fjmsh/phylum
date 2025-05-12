@@ -19,8 +19,12 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
 
   @override
   String get endpoint => '/api/v1/fs/delete/$resourceId';
+
   @override
-  Map<String, String> get queryParamters => permanent ? const {'permanent': 't'} : const {};
+  Map<String, dynamic>? get requestBody => {
+        'path': '$resourceId:',
+        'permanent': permanent,
+      };
 
   @override
   List<LocalChange> get localChanges => permanent

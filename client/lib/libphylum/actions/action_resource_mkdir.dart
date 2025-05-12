@@ -14,12 +14,11 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
   String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/fs/mkdir/$resourceId';
+  String get endpoint => '/api/v1/fs/mkdir';
 
   @override
   Map<String, dynamic>? get requestBody => {
-        'parent_id': parent,
-        'name': resourceName,
+        'path': '$parent:$resourceName',
         'conflict': conflictResolution,
       };
 
