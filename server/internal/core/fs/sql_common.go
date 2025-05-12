@@ -22,7 +22,7 @@ const fullResourceQuery = `SELECT r.*,
 (SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) AS links,
 CASE WHEN COALESCE(p.permissions[@username::TEXT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent,
 COALESCE(p.permissions, '{}'::JSONB) AS inherited_permissions
-FROM resources r JOIN resources p ON p.id = r.parent
+FROM resources r LEFT JOIN resources p ON p.id = r.parent
 `
 
 func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted, includeLinks bool, extraCols ...string) (exp.IdentifierExpression, exp.AliasedExpression, *goqu.SelectDataset) {
