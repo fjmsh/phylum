@@ -68,7 +68,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 	).
 		From(r).
-		Join(goqu.T("resources").As("p"), goqu.On(p.Col("id").Eq(r.Col("parent")))).
+		LeftJoin(goqu.T("resources").As("p"), goqu.On(p.Col("id").Eq(r.Col("parent")))).
 		WithRecursive("nodes(id, parent, search, depth)", rec).
 		Join(nodes, goqu.On(r.Col("id").Eq(nodes.Col("id")))).
 		Where(goqu.L("cardinality(n.search) = n.depth"))
