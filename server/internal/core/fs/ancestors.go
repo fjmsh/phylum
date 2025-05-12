@@ -23,7 +23,7 @@ func (f filesystem) scanResourceAncestor(row pgx.CollectableRow) (ResourceAncest
 	return a, err
 }
 
-const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, permissions) AS (
+const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, userPermission) AS (
     SELECT r.id, r.name, r.parent, r.permissions[$2::TEXT] as userPermission
         FROM resources r
         WHERE r.id = $1::UUID
