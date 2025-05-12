@@ -22,8 +22,8 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 		Select(
 			r.All(),
 			pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
-			pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent"), f.username),
-			pg.Select(goqu.L("COALESCE(p.permissions), '{}'::JSONB)")),
+			pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.username)),
+			pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 		)
 	if !f.fullAccess {
 		q = q.Where(goqu.L("permissions[?]::INTEGER <> 0", f.username))

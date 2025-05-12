@@ -64,8 +64,8 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 
 	q := pg.Select(r.All(),
 		pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
-		pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent"), f.username),
-		pg.Select(goqu.L("COALESCE(p.permissions), '{}'::JSONB)")),
+		pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.username)),
+		pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 	).
 		From(r).
 		Join(goqu.T("resources").As("p"), goqu.On(p.Col("id").Eq(r.Col("parent")))).
