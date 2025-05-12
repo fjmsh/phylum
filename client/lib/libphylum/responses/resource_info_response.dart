@@ -1,33 +1,31 @@
 part of 'responses.dart';
 
-class FullResourceResponse extends PhylumApiSuccessResponse {
-  final FullResource resource;
+class ResourceInfoResponse extends PhylumApiSuccessResponse {
+  final ResourceResponse root;
   final Iterable<ResourcesCompanion> ancestors;
-  final Iterable<FullResource> children;
+  final Iterable<ResourceResponse> children;
 
-  FullResourceResponse({
-    required this.resource,
+  ResourceInfoResponse({
+    required this.root,
     required this.ancestors,
     required this.children,
   });
 
-  factory FullResourceResponse.fromResponse(Map<String, dynamic> data, String username) {
+  factory ResourceInfoResponse.fromResponse(Map<String, dynamic> data, String username) {
     final ancestors =
         (data['ancestors'] as List).cast<Map>().map((a) => parseResourceAncestor(a.cast<String, dynamic>()));
-    final resource = parseFullResource(
+    final resource = ResourceResponse.fromResponse(
       data['resource'],
-      parent: ancestors.isNotEmpty ? ancestors.first.id.value : null,
       username: username,
     );
-    final children = (data['children'] as List).cast<Map>().map((c) => parseFullResource(
+    final children = (data['children'] as List).cast<Map>().map((c) => ResourceResponse.fromResponse(
           c.cast<String, dynamic>(),
-          parent: resource.resource.id,
           username: username,
           inheritedPermissions: resource.permissions,
         ));
 
-    return FullResourceResponse(
-      resource: resource,
+    return ResourceInfoResponse(
+      root: resource,
       ancestors: ancestors,
       children: children,
     );
@@ -37,7 +35,7 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
   Future process(PhylumAccount account) async {
     final db = account.db;
 
-    final fullResources = [resource, ...children];
+    final fullResources = [root, ...children];
     final publinks = fullResources.map((r) => r.publinks).fold<List<Publink>>([], (acc, e) => acc..addAll(e));
     final orphanedPubinks = Set.of(await (db.select(db.publinks)
           ..where(
@@ -45,8 +43,8 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
         .map((r) => r.id)
         .get());
 
-    final existing = Set.of(
-        await (db.select(db.resources)..where((t) => t.parent.equals(resource.resource.id))).map((r) => r.id).get());
+    final existing =
+        Set.of(await (db.select(db.resources)..where((t) => t.parent.equals(root.resource.id))).map((r) => r.id).get());
     existing.removeAll(children.map((r) => r.resource.id));
     final removedChildren = List.of(existing, growable: false);
 
@@ -55,7 +53,7 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
         batch.update(db.resources, ResourcesCompanion(parent: Value(null)), where: (o) => o.id.equals(id));
       }
       batch.insertAllOnConflictUpdate(db.resources, ancestors);
-      batch.insert(db.resources, resource.resource, mode: InsertMode.insertOrReplace);
+      batch.insert(db.resources, root.resource, mode: InsertMode.insertOrReplace);
       batch.insertAll(db.resources, children.map((r) => r.resource), mode: InsertMode.insertOrReplace);
 
       for (final id in orphanedPubinks) {
@@ -73,9 +71,18 @@ class FullResourceResponse extends PhylumApiSuccessResponse {
       await repo.reloadRemoteData(a.id.value);
     }
     // This resource and its children are fully parsed, so the incoming object can replace the existing one
-    await repo.replaceRemoteData(resource.resource.id, resource.resource);
+    await repo.replaceRemoteData(root.resource.id, root.resource);
     for (final c in children) {
       await repo.replaceRemoteData(c.resource.id, c.resource);
     }
   }
+}
+
+ResourcesCompanion parseResourceAncestor(Map<String, dynamic> data) {
+  return ResourcesCompanion(
+    id: Value(data['id']),
+    name: Value(data['name']),
+    dir: Value(true),
+    userPermission: Value(data['user_permission']),
+  );
 }

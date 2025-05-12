@@ -53,7 +53,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     return _account.apiClient.sendRequest(
       ResourceInfoRequest(id),
       (request, response) =>
-          parseJsonMapResponse(response, (data) => FullResourceResponse.fromResponse(data, _account.userEmail)),
+          parseJsonMapResponse(response, (data) => ResourceInfoResponse.fromResponse(data, _account.userEmail)),
     );
   }
 

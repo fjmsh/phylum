@@ -1,16 +1,15 @@
 part of 'responses.dart';
 
 class SharedResourcesResponse extends PhylumApiSuccessResponse {
-  final Iterable<PartialResource> resources;
+  final Iterable<ResourceResponse> resources;
 
   @override
   Future<void> process(PhylumAccount account) async {
     final db = account.db;
-    final shared = resources.indexed.map((r) => SharedCompanion.insert(resourceId: r.$2.resource.id.value, seq: r.$1));
-    final publinks = resources.map((r) => r.publinks).fold<List<Publink>>([], (acc, e) => acc..addAll(e ?? const []));
+    final shared = resources.indexed.map((r) => SharedCompanion.insert(resourceId: r.$2.resource.id, seq: r.$1));
+    final publinks = resources.map((r) => r.publinks).fold<List<Publink>>([], (acc, e) => acc..addAll(e));
     final orphanedPublinks = Set.of(await (db.select(db.publinks)
-          ..where(
-              (l) => l.root.isIn(resources.map((r) => r.resource.id.value)) & l.id.isNotIn(publinks.map((l) => l.id))))
+          ..where((l) => l.root.isIn(resources.map((r) => r.resource.id)) & l.id.isNotIn(publinks.map((l) => l.id))))
         .map((r) => r.id)
         .get());
 
@@ -27,14 +26,17 @@ class SharedResourcesResponse extends PhylumApiSuccessResponse {
 
     final repo = account.datastore.get<Resource>();
     for (final r in resources) {
-      await repo.reloadRemoteData(r.resource.id.value);
+      await repo.reloadRemoteData(r.resource.id);
     }
   }
 
   SharedResourcesResponse({required this.resources});
 
-  factory SharedResourcesResponse.fromResponse(Map<String, dynamic> data) {
-    final resources = (data["shared"] as List).cast<Map>().map((u) => parsePartialResource(u.cast<String, dynamic>()));
+  factory SharedResourcesResponse.fromResponse(Map<String, dynamic> data, String username) {
+    final resources = (data["shared"] as List).cast<Map>().map((u) => ResourceResponse.fromResponse(
+          u.cast<String, dynamic>(),
+          username: username,
+        ));
     return SharedResourcesResponse(resources: resources);
   }
 }

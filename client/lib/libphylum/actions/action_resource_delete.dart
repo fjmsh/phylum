@@ -89,6 +89,6 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   bool dependsOn(PhylumAction action) => action is ResourceAction && action.resourceId == resourceId;
 
   @override
-  ResponseParser get parseResponse => (_, response) =>
-      parseJsonMapResponse(response, permanent ? EmptyResponse.fromResponse : PartialResourceResponse.fromResponse);
+  ResponseParser get parseResponse =>
+      permanent ? (_, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse) : super.parseResponse;
 }

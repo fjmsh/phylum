@@ -6,12 +6,13 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/parsers/parsers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/util/permissions.dart';
 
 part 'bookmark_list_response.dart';
 part 'bookmark_response.dart';
 part 'empty_response.dart';
-part 'full_resource_response.dart';
-part 'partial_resource_response.dart';
+part 'resource_info_response.dart';
+part 'resource_response.dart';
 part 'search_response.dart';
 part 'shared_resources_response.dart';
 part 'trash_list_response.dart';

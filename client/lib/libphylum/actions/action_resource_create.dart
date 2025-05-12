@@ -16,11 +16,11 @@ abstract class ResourceCreateAction extends ResourceBindAction {
 
   @override
   FutureOr<void> processResponse(ApiResponse response) async {
-    if (response is PartialResourceResponse) {
-      if (response.id != resourceId) {
+    if (response is ResourceResponse) {
+      if (response.resource.id != resourceId) {
         account.actionQueue.updateActions(
           (PhylumAction action) => action is ResourceAction && action.resourceId == resourceId,
-          (action) => (action as ResourceAction).setResourceId(response.id),
+          (action) => (action as ResourceAction).setResourceId(response.resource.id),
         );
       }
     }

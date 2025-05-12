@@ -125,12 +125,14 @@ class ExplorerPageSearch extends ExplorerPage {
     return account.apiClient
         .sendRequest(
       SearchRequest(query: query),
-      (request, response) => parseJsonListResponse(response, SearchResponse.fromResponse),
+      (request, response) => parseJsonListResponse(
+        response,
+        (response) => SearchResponse.fromResponse(response, account.userEmail),
+      ),
     )
         .then((result) {
       if (result is SearchResponse) {
-        // _streamController.add(result.resources.map((r) => r.resource).toList(growable: false));
-        _streamController.add(const []);
+        _streamController.add(result.resources.map((r) => r.resource).toList(growable: false));
       }
       return result is ApiSuccessResponse;
     });

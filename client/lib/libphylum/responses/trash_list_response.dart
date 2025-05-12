@@ -1,7 +1,7 @@
 part of 'responses.dart';
 
 class TrashListResponse extends PhylumApiSuccessResponse {
-  final Iterable<PartialResource> resources;
+  final Iterable<ResourceResponse> resources;
   final String? cursor;
   final bool clear;
 
@@ -11,9 +11,10 @@ class TrashListResponse extends PhylumApiSuccessResponse {
     required this.clear,
   });
 
-  factory TrashListResponse.fromResponse(Map<String, dynamic> data) {
-    final resources =
-        (data['resources'] as List).cast<Map>().map((a) => parsePartialResource(a.cast<String, dynamic>()));
+  factory TrashListResponse.fromResponse(Map<String, dynamic> data, String username) {
+    final resources = (data['resources'] as List)
+        .cast<Map>()
+        .map((a) => ResourceResponse.fromResponse(a.cast<String, dynamic>(), username: username));
     final cursor = data['cursor'] as String;
     final clear = data['clear'] as bool;
 
@@ -27,10 +28,9 @@ class TrashListResponse extends PhylumApiSuccessResponse {
   @override
   Future process(PhylumAccount account) async {
     final db = account.db;
-    final publinks = resources.map((r) => r.publinks).fold<List<Publink>>([], (acc, e) => acc..addAll(e ?? const []));
+    final publinks = resources.map((r) => r.publinks).fold<List<Publink>>([], (acc, e) => acc..addAll(e));
     final orphanedPublinks = Set.of(await (db.select(db.publinks)
-          ..where(
-              (l) => l.root.isIn(resources.map((r) => r.resource.id.value)) & l.id.isNotIn(publinks.map((l) => l.id))))
+          ..where((l) => l.root.isIn(resources.map((r) => r.resource.id)) & l.id.isNotIn(publinks.map((l) => l.id))))
         .map((r) => r.id)
         .get());
 
@@ -39,7 +39,7 @@ class TrashListResponse extends PhylumApiSuccessResponse {
       if (clear) {
         batch.deleteAll(db.trashedResources);
       }
-      batch.insertAll(db.trashedResources, resources.map((r) => TrashedResource(id: r.resource.id.value)),
+      batch.insertAll(db.trashedResources, resources.map((r) => TrashedResource(id: r.resource.id)),
           mode: InsertMode.insertOrReplace);
       for (final id in orphanedPublinks) {
         batch.update(db.publinks, PublinksCompanion(root: Value('')), where: (o) => o.id.equals(id));
@@ -49,7 +49,7 @@ class TrashListResponse extends PhylumApiSuccessResponse {
 
     final repo = account.datastore.get<Resource>();
     for (final r in resources) {
-      await repo.reloadRemoteData(r.resource.id.value);
+      await repo.reloadRemoteData(r.resource.id);
     }
   }
 }

@@ -51,8 +51,10 @@ class TrashedResourceRepository extends Repository<PhylumAccount, TrashedResourc
 
   Future<ApiResult> refresh({String? cursor}) async {
     return _account.apiClient.sendRequest(
-      TrashListRequest(cursor: cursor),
-      (request, response) => parseJsonMapResponse(response, TrashListResponse.fromResponse),
-    );
+        TrashListRequest(cursor: cursor),
+        (request, response) => parseJsonMapResponse(
+              response,
+              (response) => TrashListResponse.fromResponse(response, _account.userEmail),
+            ));
   }
 }
