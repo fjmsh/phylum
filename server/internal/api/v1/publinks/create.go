@@ -4,17 +4,17 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 )
 
 type createParams struct {
-	ID          string `json:"id" form:"id" binding:"required"`
-	Password    string `json:"password" form:"password"`
-	DurationStr string `json:"duration" form:"duration"`
-	ExpiresStr  string `json:"expires" form:"expires"`
-	AccessLimit int    `json:"access_limit" form:"access_limit"`
+	ID           string `json:"id" form:"id" binding:"required"`
+	ResourcePath string `json:"resource_path" form:"resource_path" binding:"required"`
+	Password     string `json:"password" form:"password"`
+	DurationStr  string `json:"duration" form:"duration"`
+	ExpiresStr   string `json:"expires" form:"expires"`
+	AccessLimit  int    `json:"access_limit" form:"access_limit"`
 }
 
 func handleCreateRequest(c *gin.Context) {
@@ -52,13 +52,8 @@ func handleCreateRequest(c *gin.Context) {
 		}
 	}
 
-	resourceID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		panic(errResourceIDInvalid)
-	}
-
 	fs := authenticator.GetFileSystem(c)
-	r, err := fs.ResourceByID(resourceID)
+	r, err := fs.ResourceByPathWithRoot(params.ResourcePath)
 	if err != nil {
 		panic(err)
 	}
