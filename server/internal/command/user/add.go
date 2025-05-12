@@ -67,12 +67,7 @@ func setupUserAddCommand() *cobra.Command {
 			homePath := ""
 			if !noCreateHome {
 				basePath, _ := cmd.Flags().GetString("base-dir")
-				if basePath == "" {
-					fmt.Println("home directory path not specified. try again with -d or -b")
-					os.Exit(1)
-				} else {
-					homePath = strings.TrimRight(basePath, "/") + "/" + username
-				}
+				homePath = strings.TrimRight(basePath, "/") + "/" + username
 			}
 
 			err = db.Get(context.Background()).RunInTx(func(db db.Handler) error {
@@ -117,7 +112,7 @@ func setupUserAddCommand() *cobra.Command {
 	}
 	cmd.Flags().StringP("name", "n", "", "Full Name")
 	cmd.Flags().StringP("password", "p", "", "Password")
-	cmd.Flags().StringP("base-dir", "b", "", "Base directory for home")
+	cmd.Flags().StringP("base-dir", "b", "/home", "Base directory for home")
 	cmd.Flags().BoolP("no-create-home", "M", false, "Do not make home directory")
 	return cmd
 }
