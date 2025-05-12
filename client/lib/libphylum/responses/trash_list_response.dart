@@ -11,10 +11,9 @@ class TrashListResponse extends PhylumApiSuccessResponse {
     required this.clear,
   });
 
-  factory TrashListResponse.fromResponse(Map<String, dynamic> data, String username) {
-    final resources = (data['resources'] as List)
-        .cast<Map>()
-        .map((a) => ResourceResponse.fromResponse(a.cast<String, dynamic>(), username: username));
+  factory TrashListResponse.fromResponse(Map<String, dynamic> data) {
+    final resources =
+        (data['resources'] as List).cast<Map>().map((a) => ResourceResponse.fromResponse(a.cast<String, dynamic>()));
     final cursor = data['cursor'] as String;
     final clear = data['clear'] as bool;
 
@@ -33,6 +32,9 @@ class TrashListResponse extends PhylumApiSuccessResponse {
           ..where((l) => l.root.isIn(resources.map((r) => r.resource.id)) & l.id.isNotIn(publinks.map((l) => l.id))))
         .map((r) => r.id)
         .get());
+    for (final r in resources) {
+      r._updateUserPermissions(account);
+    }
 
     db.batch((batch) {
       batch.insertAll(db.resources, resources.map((r) => r.resource), mode: InsertMode.insertOrReplace);

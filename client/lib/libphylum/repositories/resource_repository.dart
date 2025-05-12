@@ -52,8 +52,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
   Future<ApiResult> requestResource(String id) async {
     return _account.apiClient.sendRequest(
       ResourceInfoRequest(id),
-      (request, response) =>
-          parseJsonMapResponse(response, (data) => ResourceInfoResponse.fromResponse(data, _account.userEmail)),
+      (request, response) => parseJsonMapResponse(response, ResourceInfoResponse.fromResponse),
     );
   }
 

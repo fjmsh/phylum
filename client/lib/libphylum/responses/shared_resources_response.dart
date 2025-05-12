@@ -13,6 +13,10 @@ class SharedResourcesResponse extends PhylumApiSuccessResponse {
         .map((r) => r.id)
         .get());
 
+    for (final r in resources) {
+      r._updateUserPermissions(account);
+    }
+
     await db.batch((batch) {
       batch.insertAll(db.resources, resources.map((r) => r.resource));
       batch.deleteAll(db.shared);
@@ -32,11 +36,9 @@ class SharedResourcesResponse extends PhylumApiSuccessResponse {
 
   SharedResourcesResponse({required this.resources});
 
-  factory SharedResourcesResponse.fromResponse(Map<String, dynamic> data, String username) {
-    final resources = (data["shared"] as List).cast<Map>().map((u) => ResourceResponse.fromResponse(
-          u.cast<String, dynamic>(),
-          username: username,
-        ));
+  factory SharedResourcesResponse.fromResponse(Map<String, dynamic> data) {
+    final resources =
+        (data["shared"] as List).cast<Map>().map((u) => ResourceResponse.fromResponse(u.cast<String, dynamic>()));
     return SharedResourcesResponse(resources: resources);
   }
 }

@@ -11,12 +11,7 @@ class SharedResourcesRepository {
   Future<ApiResult> refresh() async {
     return account.apiClient.sendRequest(
       SharedResourcesRequest(),
-      (request, response) => parseJsonMapResponse(
-          response,
-          (response) => SharedResourcesResponse.fromResponse(
-                response,
-                account.userEmail,
-              )),
+      (request, response) => parseJsonMapResponse(response, SharedResourcesResponse.fromResponse),
     );
   }
 }

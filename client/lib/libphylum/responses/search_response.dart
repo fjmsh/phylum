@@ -5,11 +5,9 @@ class SearchResponse extends PhylumApiSuccessResponse {
 
   SearchResponse({required this.resources});
 
-  factory SearchResponse.fromResponse(List data, String username) {
-    final results = data
-        .cast<Map>()
-        .map((u) => ResourceResponse.fromResponse(u.cast<String, dynamic>(), username: username))
-        .toList(growable: false);
+  factory SearchResponse.fromResponse(List data) {
+    final results =
+        data.cast<Map>().map((u) => ResourceResponse.fromResponse(u.cast<String, dynamic>())).toList(growable: false);
     return SearchResponse(resources: results);
   }
 
@@ -21,6 +19,9 @@ class SearchResponse extends PhylumApiSuccessResponse {
           ..where((l) => l.root.isIn(resources.map((r) => r.resource.id)) & l.id.isNotIn(publinks.map((l) => l.id))))
         .map((r) => r.id)
         .get());
+    for (final r in resources) {
+      r._updateUserPermissions(account);
+    }
 
     await db.batch((batch) {
       batch.insertAll(db.resources, resources.map((r) => r.resource), mode: InsertMode.insertOrReplace);

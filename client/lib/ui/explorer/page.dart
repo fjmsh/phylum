@@ -125,10 +125,7 @@ class ExplorerPageSearch extends ExplorerPage {
     return account.apiClient
         .sendRequest(
       SearchRequest(query: query),
-      (request, response) => parseJsonListResponse(
-        response,
-        (response) => SearchResponse.fromResponse(response, account.userEmail),
-      ),
+      (request, response) => parseJsonListResponse(response, SearchResponse.fromResponse),
     )
         .then((result) {
       if (result is SearchResponse) {

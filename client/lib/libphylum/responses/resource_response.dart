@@ -1,15 +1,16 @@
 part of 'responses.dart';
 
 class ResourceResponse extends PhylumApiSuccessResponse {
-  final Resource resource;
+  Resource _resource;
+  Resource get resource => _resource;
   final Iterable<Publink> publinks;
   final Map<String, Permission> permissions;
 
-  ResourceResponse({required this.resource, required this.publinks, required this.permissions});
+  ResourceResponse({required Resource resource, required this.publinks, required this.permissions})
+      : _resource = resource;
 
   factory ResourceResponse.fromResponse(
     Map<String, dynamic> data, {
-    required String username,
     String? parent,
     Map<String, Permission>? inheritedPermissions,
   }) {
@@ -32,14 +33,19 @@ class ResourceResponse extends PhylumApiSuccessResponse {
       contentType: data['c_type'],
       inheritedPermissions: jsonEncode(inheritedPermissions),
       grants: grants.isEmpty ? null : jsonEncode(grants),
-      userPermission: permissions[username] ?? 0,
+      userPermission: 0,
     );
     final publinks = parsePublinks(data['publinks'], r.id);
     return ResourceResponse(resource: r, publinks: publinks, permissions: permissions);
   }
 
+  void _updateUserPermissions(PhylumAccount account) {
+    _resource = _resource.copyWith(userPermission: permissions[account.userEmail] ?? 0);
+  }
+
   @override
   Future process(PhylumAccount account) async {
+    _updateUserPermissions(account);
     final db = account.db;
 
     final orphanedPubinks = Set.of(await (db.select(db.publinks)

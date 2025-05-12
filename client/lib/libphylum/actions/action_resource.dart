@@ -7,8 +7,7 @@ abstract class ResourceAction extends PhylumAction {
   String get resourceId => _resourceId;
 
   @override
-  ResponseParser get parseResponse => (_, response) =>
-      parseJsonMapResponse(response, (response) => ResourceResponse.fromResponse(response, username: ''));
+  ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, ResourceResponse.fromResponse);
 
   ResourceAction({required String resourceId}) : _resourceId = resourceId;
 
