@@ -21,10 +21,19 @@ type Bookmark struct {
 	Created    int64     `json:"created"`
 }
 
+type bookmarkAddParams struct {
+	Path string `json:"path" form:"path" binding:"required"`
+	Name string `json:"name" form:"name"`
+}
+
+type bookmarkRemoveParams struct {
+	ID uuid.UUID `json:"id" form:"id" binding:"required"`
+}
+
 func setupBookmarksRoutes(r *gin.RouterGroup) {
 	group := r.Group("/bookmarks")
-	group.POST("/add/:id", handleBookmarksAddRoute)
-	group.POST("/remove/:id", handleBookmarksRemoveRoute)
+	group.POST("/add", handleBookmarksAddRoute)
+	group.POST("/remove", handleBookmarksRemoveRoute)
 	group.GET("/list", handleBookmarksGetRoute)
 }
 
@@ -50,19 +59,15 @@ func handleBookmarksGetRoute(c *gin.Context) {
 }
 
 func handleBookmarksAddRoute(c *gin.Context) {
-	idStr, ok := c.Params.Get("id")
-	name := c.Query("name")
-	if !ok {
-		panic(errInvalidParams)
-	}
-	id := uuid.MustParse(idStr)
+	var params bookmarkAddParams
+	c.ShouldBind(&params)
 
 	u := authenticator.GetUser(c)
-	r, err := authenticator.GetFileSystem(c).ResourceByID(id)
+	r, err := authenticator.GetFileSystem(c).ResourceByPathWithRoot(params.Path)
 	if err != nil {
 		panic(err)
 	}
-	b, err := user.ManagerFromContext(c.Request.Context()).AddBookmark(u, r, name)
+	b, err := user.ManagerFromContext(c.Request.Context()).AddBookmark(u, r, params.Name)
 	if err != nil {
 		panic(err)
 	}
@@ -77,14 +82,11 @@ func handleBookmarksAddRoute(c *gin.Context) {
 }
 
 func handleBookmarksRemoveRoute(c *gin.Context) {
-	idStr, ok := c.Params.Get("id")
-	if !ok {
-		panic(errInvalidParams)
-	}
-	id := uuid.MustParse(idStr)
+	var params bookmarkRemoveParams
+	c.ShouldBind(&params)
 
 	u := authenticator.GetUser(c)
-	if err := user.ManagerFromContext(c.Request.Context()).RemoveBookmark(u, id); err != nil {
+	if err := user.ManagerFromContext(c.Request.Context()).RemoveBookmark(u, params.ID); err != nil {
 		panic(err)
 	}
 	c.JSON(200, gin.H{})
