@@ -9,14 +9,14 @@ import (
 func (f filesystem) Search(query string, includeDeleted bool) ([]Resource, error) {
 	qb := strings.Builder{}
 	qb.WriteString(fullResourceQuery)
-	qb.WriteString("WHERE f_prepare_search(name) %> @query::TEXT")
+	qb.WriteString("WHERE f_prepare_search(r.name) %> @query::TEXT")
 	if !includeDeleted {
-		qb.WriteString("\nAND deleted IS NULL")
+		qb.WriteString("\nAND r.deleted IS NULL")
 	}
 	if !f.fullAccess {
-		qb.WriteString("\nAND permissions[@username::TEXT]::integer <> 0")
+		qb.WriteString("\nAND r.permissions[@username::TEXT]::INTEGER <> 0")
 	}
-	qb.WriteString("\nORDER BY word_similarity(f_prepare_search(name), @query::TEXT) DESC ")
+	qb.WriteString("\nORDER BY word_similarity(f_prepare_search(r.name), @query::TEXT) DESC")
 
 	args := pgx.NamedArgs{
 		"query":    strings.ToLower(query),
