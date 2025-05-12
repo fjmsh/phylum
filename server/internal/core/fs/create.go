@@ -250,7 +250,7 @@ func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, 
 			"content_sha256": goqu.V(contentSha256),
 			"permissions":    goqu.V(permissions),
 		}).
-		Returning("*", goqu.L("[]::JSONB"), goqu.L("NULL"), goqu.L("'{}'::JSONB")).
+		Returning("*", goqu.L("'[]'::JSONB"), goqu.L("NULL"), goqu.L("'{}'::JSONB")).
 		ToSQL()
 	if rows, err := f.db.Query(query, args...); err != nil {
 		return Resource{}, err

@@ -10,7 +10,7 @@ import (
 )
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	const query = fullResourceQuery + "WHERE id = @id::UUID"
+	const query = fullResourceQuery + "WHERE r.id = @id::UUID"
 	args := pgx.NamedArgs{
 		"username": f.username,
 		"id":       id,

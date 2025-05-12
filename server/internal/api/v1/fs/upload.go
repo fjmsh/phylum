@@ -13,7 +13,7 @@ import (
 
 type uploadParams struct {
 	Path          string                            `json:"path" form:"path" binding:"required"`
-	ID            uuid.UUID                         `json:"id" form:"id"`
+	ID            string                            `json:"id" form:"id" binding:"omitempty,uuid"`
 	CreateParents bool                              `json:"create_parents" form:"create_parents"`
 	Conflict      fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
 	SHA256        string                            `json:"sha256" form:"sha256"`
@@ -21,20 +21,31 @@ type uploadParams struct {
 
 func handleUploadRequest(c *gin.Context) {
 	var params uploadParams
-	c.BindQuery(&params)
+	err := c.ShouldBindQuery(&params)
+	if err != nil {
+		panic(err)
+	}
+	var id uuid.UUID
+	if params.ID != "" {
+		id, err = uuid.Parse(params.ID)
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	// TODO: Calculate and verify sha sum
 	// c.Request.FormValue("sha256sum")
-	if params.ID == uuid.Nil {
-		params.ID, _ = uuid.NewV7()
+	if id == uuid.Nil {
+		id, _ = uuid.NewV7()
 	}
 
 	f := authenticator.GetFileSystem(c)
-	err := f.RunInTx(func(f fs.FileSystem) error {
-		res, err := f.CreateResourceByPath(params.Path, params.ID, false, params.CreateParents, params.Conflict)
+	err = f.RunInTx(func(f fs.FileSystem) error {
+		res, err := f.CreateResourceByPath(params.Path, id, false, params.CreateParents, params.Conflict)
 		if err != nil {
 			return err
 		}
+		id = res.ID()
 
 		file, err := c.FormFile("contents")
 		if err != nil {
@@ -65,7 +76,7 @@ func handleUploadRequest(c *gin.Context) {
 	}
 
 	// TODO: Avoid reading from db again if we can update size and etag
-	r, err := f.ResourceByID(params.ID)
+	r, err := f.ResourceByID(id)
 	if err != nil {
 		panic(err)
 	}
