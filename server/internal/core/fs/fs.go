@@ -97,7 +97,7 @@ func _readRootID(ctx context.Context) (uuid.UUID, error) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			const createDir = "INSERT INTO resources(id, name, dir) VALUES ($1::UUID, '', TRUE)"
 			id, _ := uuid.NewV7()
-			_, err = d.Exec(createDir, id, nil, "")
+			_, err = d.Exec(createDir, id)
 			return id, err
 		}
 		return uuid.Nil, err
