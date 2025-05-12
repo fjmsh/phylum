@@ -33,7 +33,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   }
 
   @override
-  Map<String, String> get fields => {
+  Map<String, String> get queryParameters => {
         'path': '$parent:$resourceName',
         'id': resourceId,
         'conflict': conflictResolution.toString(),
