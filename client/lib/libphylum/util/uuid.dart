@@ -10,10 +10,18 @@ final List<String> _byteToHex = List<String>.generate(256, (i) {
   return i.toRadixString(16).padLeft(2, '0');
 });
 
+/// Generates a V7 UUID.
+///
+/// Issue on JS web for the 2 most significant bytes.
+/// More details [here](https://dart.dev/resources/language/number-representation#bitwise-operations)
 String generateUuid() {
   var buf = Uint8List(16);
   final (ms, seq) = _getV7Time();
 
+  // Workaround for JS web:
+  // final msHigh = (ms / pow(2, 32)).toInt();
+  // buf[0] = msHigh >> 8;
+  // buf[1] = msHigh;
   buf[0] = ms >> 40;
   buf[1] = ms >> 32;
   buf[2] = ms >> 24;
