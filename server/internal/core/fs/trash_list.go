@@ -12,12 +12,19 @@ import (
 )
 
 func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error) {
-	l := goqu.T("publinks").As("l")
 	t := goqu.T("trash")
-	r := goqu.T("resources")
+	r := goqu.T("resources").As("r")
+	p := goqu.T("resources").As("p")
+	l := goqu.T("publinks").As("l")
 	q := pg.From(t).
 		Join(r, goqu.On(t.Col("id").Eq(r.Col("id")))).
-		Select(r.All(), pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))))
+		Join(p, goqu.On(r.Col("parent").Eq(p.Col("id")))).
+		Select(
+			r.All(),
+			pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
+			pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent"), f.username),
+			pg.Select(goqu.L("COALESCE(p.permissions), '{}'::JSONB)")),
+		)
 	if !f.fullAccess {
 		q = q.Where(goqu.L("permissions[?]::INTEGER <> 0", f.username))
 	}
@@ -48,7 +55,7 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 
 	if rows, err := f.db.Query(query, params...); err != nil {
 		return nil, "", err
-	} else if res, err := pgx.CollectRows(rows, f.scanLinkedResource); err != nil {
+	} else if res, err := pgx.CollectRows(rows, f.scanFullResource); err != nil {
 		return nil, "", err
 	} else {
 		cursor := ""

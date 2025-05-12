@@ -6,15 +6,18 @@ import (
 )
 
 func (f filesystem) SharedResources(excluded pgtype.UUID) ([]Resource, error) {
-	const q = `SELECT r.*, (SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) as links FROM resources r
-WHERE grants ? $1::TEXT
-AND r.id != $2::UUID
+	const q = fullResourceQuery + `WHERE grants ? @username::TEXT
+AND r.id != @excluded::UUID
 AND deleted IS NULL
-AND (grants -> $1::TEXT -> 'p')::INTEGER <> 0
-ORDER BY grants -> $1::TEXT -> 't' DESC`
-	if rows, err := f.db.Query(q, f.username, excluded); err != nil {
+AND (grants -> @username::TEXT -> 'p')::INTEGER <> 0
+ORDER BY grants -> @username::TEXT -> 't' DESC`
+	args := pgx.NamedArgs{
+		"username": f.username,
+		"excluded": excluded,
+	}
+	if rows, err := f.db.Query(q, args); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, f.scanLinkedResource)
+		return pgx.CollectRows(rows, f.scanFullResource)
 	}
 }

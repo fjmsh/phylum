@@ -8,8 +8,8 @@ import (
 
 func (f filesystem) Search(query string, includeDeleted bool) ([]Resource, error) {
 	qb := strings.Builder{}
-	qb.WriteString(`SELECT r.*, (SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) as links FROM resources r
-WHERE f_prepare_search(name) %> @query::TEXT`)
+	qb.WriteString(fullResourceQuery)
+	qb.WriteString("WHERE f_prepare_search(name) %> @query::TEXT")
 	if !includeDeleted {
 		qb.WriteString("\nAND deleted IS NULL")
 	}
@@ -26,6 +26,6 @@ WHERE f_prepare_search(name) %> @query::TEXT`)
 	if rows, err := f.db.Query(qb.String(), args); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, f.scanLinkedResource)
+		return pgx.CollectRows(rows, f.scanFullResource)
 	}
 }

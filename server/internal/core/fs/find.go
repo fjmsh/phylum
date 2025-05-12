@@ -5,18 +5,20 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	const query = `SELECT r.*,
-(SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) AS links,
-COALESCE((SELECT p.permissions FROM resources p WHERE p.id = r.parent), '{}'::JSONB)
-FROM resources r WHERE id = $1::UUID`
-	if rows, err := f.db.Query(query, id); err != nil {
+	const query = fullResourceQuery + "WHERE id = @id::UUID"
+	args := pgx.NamedArgs{
+		"username": f.username,
+		"id":       id,
+	}
+	if rows, err := f.db.Query(query, args); err != nil {
 		return Resource{}, err
 	} else {
-		return f.collectResource(rows, true)
+		return f.collectFullResource(rows)
 	}
 }
 
@@ -42,30 +44,33 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		return Resource{}, ErrResourceNotFound
 	}
 	nodes := goqu.T("nodes").As("n")
-	resources := goqu.T("resources").As("r")
+	r := goqu.T("resources").As("r")
+	p := goqu.T("resources").As("p")
+	l := goqu.T("publinks").As("l")
 	sub := pg.
-		Select(resources.Col("id"), resources.Col("parent"), nodes.Col("search"), goqu.L("n.depth + 1")).
-		From(resources).
-		Join(nodes, goqu.On(resources.Col("parent").Eq(nodes.Col("id")))).
+		Select(r.Col("id"), r.Col("parent"), nodes.Col("search"), goqu.L("n.depth + 1")).
+		From(r).
+		Join(nodes, goqu.On(r.Col("parent").Eq(nodes.Col("id")))).
 		Where(
-			resources.Col("deleted").IsNull(),
-			resources.Col("name").Eq(goqu.L("n.search[n.depth + 1]")),
+			r.Col("deleted").IsNull(),
+			r.Col("name").Eq(goqu.L("n.search[n.depth + 1]")),
 		)
 
 	rec := pg.
-		Select(resources.Col("id"), resources.Col("parent"), goqu.L("array_remove(string_to_array(?::TEXT, '/', NULL), '')", path), goqu.L("0")).
-		From(resources).
-		Where(resources.Col("id").Eq(goqu.V(f.pathRoot))).
+		Select(r.Col("id"), r.Col("parent"), goqu.L("array_remove(string_to_array(?::TEXT, '/', NULL), '')", path), goqu.L("0")).
+		From(r).
+		Where(r.Col("id").Eq(goqu.V(f.pathRoot))).
 		UnionAll(sub)
 
-	l := goqu.T("publinks").As("l")
-	q := pg.Select(resources.All(),
-		pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(resources.Col("id"))),
-		pg.Select(goqu.L("COALESCE((SELECT p.permissions FROM resources p WHERE p.id = r.parent), '{}'::JSONB)")),
+	q := pg.Select(r.All(),
+		pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
+		pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent"), f.username),
+		pg.Select(goqu.L("COALESCE(p.permissions), '{}'::JSONB)")),
 	).
-		From(resources).
+		From(r).
+		Join(goqu.T("resources").As("p"), goqu.On(p.Col("id").Eq(r.Col("parent")))).
 		WithRecursive("nodes(id, parent, search, depth)", rec).
-		Join(nodes, goqu.On(resources.Col("id").Eq(nodes.Col("id")))).
+		Join(nodes, goqu.On(r.Col("id").Eq(nodes.Col("id")))).
 		Where(goqu.L("cardinality(n.search) = n.depth"))
 
 	query, args, _ := q.ToSQL()
@@ -73,7 +78,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	if rows, err := f.db.Query(query, args...); err != nil {
 		return Resource{}, err
 	} else {
-		return f.collectResource(rows, true)
+		return f.collectFullResource(rows)
 	}
 }
 
@@ -118,14 +123,16 @@ func (f filesystem) targetNameParentByPathWithRoot(path string, src Resource) (s
 }
 
 func (f filesystem) childResourceByName(parentID uuid.UUID, name string) (Resource, error) {
-	const query = `SELECT r.*,
-(SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) AS links,
-COALESCE((SELECT p.permissions FROM resources p WHERE p.id = r.parent), '{}'::JSONB)
-FROM resources WHERE r.parent = $1::UUID AND r.name = $2::TEXT AND r.deleted IS NULL`
-	if rows, err := f.db.Query(query, parentID, name); err != nil {
+	const query = fullResourceQuery + "WHERE r.parent = @parent::UUID AND r.name = @name::TEXT AND r.deleted IS NULL"
+	args := pgx.NamedArgs{
+		"username": f.username,
+		"parent":   parentID,
+		"name":     name,
+	}
+	if rows, err := f.db.Query(query, args); err != nil {
 		return Resource{}, err
 	} else {
-		return f.collectResource(rows, true)
+		return f.collectFullResource(rows)
 	}
 }
 

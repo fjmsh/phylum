@@ -11,6 +11,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const publinkFieldsQuery = "COALESCE(JSONB_AGG(JSONB_BUILD_OBJECT(" +
+	"'id',l.id," +
+	"'expires',EXTRACT(EPOCH FROM l.expires)::integer," +
+	"'protected',l.password_hash <> ''," +
+	"'access_limit',l.access_limit," +
+	"'accessed',l.accessed)), '[]'::JSONB)"
+
+const fullResourceQuery = `SELECT r.*,
+(SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) AS links,
+CASE WHEN COALESCE(p.permissions[@username::TEXT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent,
+COALESCE(p.permissions, '{}'::JSONB} AS inherited_permissions
+FROM resources r JOIN resources p ON p.id = r.parent
+`
+
 func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted, includeLinks bool, extraCols ...string) (exp.IdentifierExpression, exp.AliasedExpression, *goqu.SelectDataset) {
 	t := goqu.T("resources")
 	r := t.As("r")

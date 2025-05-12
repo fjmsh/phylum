@@ -8,6 +8,7 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const emptyContentType = "text/plain"
@@ -249,14 +250,14 @@ func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, 
 			"content_sha256": goqu.V(contentSha256),
 			"permissions":    goqu.V(permissions),
 		}).
-		Returning("*").
+		Returning("*", goqu.L("[]::JSONB"), goqu.L("NULL"), goqu.L("'{}'::JSONB")).
 		ToSQL()
 	if rows, err := f.db.Query(query, args...); err != nil {
 		return Resource{}, err
 	} else {
-		r, err := f.collectResource(rows, false)
+		r, err := f.collectFullResource(rows)
+		r.parentID = pgtype.UUID{Bytes: parent, Valid: true}
 		r.inheritedPermissions = permissions
-		r.links = []byte{'[', ']'}
 		return r, err
 	}
 }

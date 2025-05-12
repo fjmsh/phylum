@@ -20,13 +20,6 @@ type Publink struct {
 	Expires      int64
 }
 
-const publinkFieldsQuery = "coalesce(jsonb_agg(jsonb_build_object(" +
-	"'id',l.id," +
-	"'expires',extract(epoch from l.expires)::integer," +
-	"'protected',l.password_hash <> ''," +
-	"'access_limit',l.access_limit," +
-	"'accessed',l.accessed)), '[]'::JSONB)"
-
 func scanPublink(row pgx.CollectableRow) (Publink, error) {
 	var p Publink
 	var expires *time.Time

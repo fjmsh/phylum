@@ -50,7 +50,7 @@ func (r Resource) ReadDirDeleted(recursive, includeDeleted bool) ([]Resource, er
 	if rows, err := r.f.db.Query(query, args...); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, r.f.scanLinkedResource)
+		return pgx.CollectRows(rows, r.f.scanResourceWithoutParent)
 	}
 }
 
