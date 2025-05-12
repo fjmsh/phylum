@@ -14,9 +14,9 @@ func FullResourceFromFS(r fs.Resource) ResourceFull {
 
 	for i, a := range ancestors {
 		response.Ancestors[i] = Ancestor{
-			ID:          a.ID,
-			Name:        a.Name,
-			Permissions: string(a.Permissions),
+			ID:             a.ID,
+			Name:           a.Name,
+			UserPermission: a.UserPermission,
 		}
 	}
 	if r.Dir() {

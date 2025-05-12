@@ -8,9 +8,9 @@ import (
 )
 
 type Ancestor struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Permissions string    `json:"permissions"`
+	ID             uuid.UUID `json:"id"`
+	Name           string    `json:"name"`
+	UserPermission int32     `json:"user_permission"`
 }
 
 type Resource struct {
