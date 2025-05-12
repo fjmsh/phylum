@@ -75,7 +75,13 @@ func (r Resource) createMemberResource(name string, id uuid.UUID, dir bool, conf
 	var created bool
 	err := r.f.runInTx(func(f filesystem) error {
 		var err error
-		if res, created, _, err = f.createResource(id, r.id, name, dir, 0, emptyContentType, emptyContentSHA256, r.permissions, conflictResolution); err != nil {
+		contentType := emptyContentType
+		contentSHA256 := emptyContentSHA256
+		if r.dir {
+			contentType = ""
+			contentSHA256 = ""
+		}
+		if res, created, _, err = f.createResource(id, r.id, name, dir, 0, contentType, contentSHA256, r.permissions, conflictResolution); err != nil {
 			if strings.Contains(err.Error(), "unique_member_resource_name") {
 				return ErrResourceNameConflict
 			}
