@@ -15,10 +15,10 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   String get actionName => kActionName;
 
   @override
-  String get method => 'DELETE';
+  String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/fs/delete/$resourceId';
+  String get endpoint => '/api/v1/fs/delete';
 
   @override
   Map<String, dynamic>? get requestBody => {
