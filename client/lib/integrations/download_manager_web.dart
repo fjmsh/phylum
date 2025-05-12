@@ -15,7 +15,7 @@ Future<bool> downloadResource(BuildContext context, Resource r) async {
   if (!success) {
     return false;
   }
-  final uri = apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}')..queryParameters['download'] = '';
+  final uri = apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}:')..queryParameters['download'] = '';
   web.HTMLAnchorElement()
     ..target = '_blank'
     ..href = uri.toString()

@@ -78,7 +78,7 @@ class DownloadManager with ChangeNotifier {
     if (Platform.isAndroid || Platform.isAndroid) {
       await Permission.notification.request();
     }
-    final uri = _account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}');
+    final uri = _account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}:');
     final task = DownloadTask(
       url: uri.toString(),
       filename: r.name,

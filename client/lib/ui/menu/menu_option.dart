@@ -219,7 +219,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
 
 Future<String?> downloadResourceSync(BuildContext context, Resource r) async {
   final account = context.read<PhylumAccount>();
-  final uri = account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}');
+  final uri = account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}:');
   final task = DownloadTask(
     url: uri.toString(),
     headers: account.apiClient.requestHeaders,

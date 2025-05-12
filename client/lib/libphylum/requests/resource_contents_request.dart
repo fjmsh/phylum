@@ -10,7 +10,7 @@ class ResourceContentsRequest extends ApiRequest {
 
   @override
   BaseRequest createRequest(ApiClient api, {Uint8List? data}) {
-    final uri = api.createUriBuilder('/api/v1/fs/contents/$resourceId');
+    final uri = api.createUriBuilder('/api/v1/fs/contents/$resourceId:');
     return Request('get', uri.build());
   }
 }
