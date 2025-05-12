@@ -39,6 +39,7 @@ func ResourceFromFS(r fs.Resource) Resource {
 	}
 	return Resource{
 		ID:                   r.ID(),
+		Parent:               r.VisibleParentID(),
 		Name:                 r.Name(),
 		Dir:                  r.Dir(),
 		Created:              r.Created().UnixMilli(),

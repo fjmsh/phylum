@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Ancestor struct {
@@ -15,6 +16,7 @@ type Ancestor struct {
 
 type Resource struct {
 	ID                   uuid.UUID       `json:"id"`
+	Parent               pgtype.UUID     `json:"parent"`
 	Name                 string          `json:"name"`
 	Dir                  bool            `json:"dir"`
 	Created              int64           `json:"created"`
