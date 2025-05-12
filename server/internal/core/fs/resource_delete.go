@@ -39,20 +39,20 @@ func (r Resource) DeleteChildRecursive(name string) (Resource, error) {
 }
 
 func (r Resource) DeleteRecursive(softDelete bool) (Resource, error) {
-	if !r.ParentID().Valid {
+	if !r.parentID.Valid {
 		return Resource{}, ErrInsufficientPermissions
 	}
 	if r.deleted.Valid && softDelete {
 		return Resource{}, ErrResourceDeleted
 	}
-	parent, err := r.f.ResourceByID(r.ParentID().Bytes)
+	parent, err := r.f.ResourceByID(r.parentID.Bytes)
 	if err == nil && !parent.hasPermission(PermissionWrite) {
 		err = ErrInsufficientPermissions
 	}
 	if err != nil {
 		return Resource{}, err
 	}
-	if err := r.f.deleteRecursive(r.ID(), r.ParentID().Bytes, softDelete, false); err != nil {
+	if err := r.f.deleteRecursive(r.ID(), r.parentID.Bytes, softDelete, false); err != nil {
 		return Resource{}, err
 	}
 	if softDelete {

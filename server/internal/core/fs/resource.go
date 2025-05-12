@@ -29,7 +29,6 @@ type Resource struct {
 }
 
 func (r Resource) ID() uuid.UUID                { return r.id }
-func (r Resource) ParentID() pgtype.UUID        { return r.parentID }
 func (r Resource) Name() string                 { return r.name }
 func (r Resource) Dir() bool                    { return r.dir }
 func (r Resource) Created() time.Time           { return r.created }
@@ -38,7 +37,6 @@ func (r Resource) Deleted() pgtype.Timestamp    { return r.deleted }
 func (r Resource) ContentLength() int           { return r.contentLength }
 func (r Resource) ContentSHA256() string        { return r.contentSHA256 }
 func (r Resource) ContentType() string          { return r.contentType }
-func (r Resource) Permissions() []byte          { return r.permissions }
 func (r Resource) InheritedPermissions() []byte { return r.inheritedPermissions }
 func (r Resource) Grants() []byte               { return r.grants }
 func (r Resource) Links() []byte                { return r.links }

@@ -34,12 +34,13 @@ func setupLsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			fmt.Println(path)
-			fmt.Println(formatPermissionsJson(r.Permissions()))
 			fmt.Println("Created:  " + r.Created().Local().Format(time.RFC1123))
 			fmt.Println("Modified: " + r.Modified().Local().Format(time.RFC1123))
 			if r.Deleted().Valid {
 				fmt.Println("Deleted:  " + r.Deleted().Time.Local().Format(time.RFC1123))
 			}
+			fmt.Println("Inherited Permissions: " + formatPermissionsJson(r.InheritedPermissions()))
+			fmt.Println("Permission Grants: " + formatGrantsJson(r.Grants()))
 			fmt.Println()
 			fmt.Println(common.FormatResourceSummary(r, ".", pgtype.Timestamp{}))
 
@@ -79,6 +80,24 @@ func formatPermissionsJson(j []byte) string {
 	perm := make([]string, 0, len(p))
 	for k, v := range p {
 		perm = append(perm, k+": "+common.FormatPermission(v))
+	}
+	return "[" + strings.Join(perm, ", ") + "]"
+}
+
+type Grant struct {
+	Permission fs.Permission `json:"p"`
+	Timestamp  int           `json:"t"`
+}
+
+func formatGrantsJson(j []byte) string {
+	g := make(map[string]Grant)
+	json.Unmarshal(j, &g)
+	if len(g) == 0 {
+		return ""
+	}
+	perm := make([]string, 0, len(g))
+	for k, v := range g {
+		perm = append(perm, k+": "+common.FormatPermission(v.Permission))
 	}
 	return "[" + strings.Join(perm, ", ") + "]"
 }

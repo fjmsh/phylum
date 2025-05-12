@@ -20,10 +20,10 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 	if r.deleted.Valid {
 		return Resource{}, false, ErrResourceDeleted
 	}
-	if !r.ParentID().Valid {
+	if !r.parentID.Valid {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
-	parent, err := r.f.ResourceByID(r.ParentID().Bytes)
+	parent, err := r.f.ResourceByID(r.parentID.Bytes)
 	if err != nil {
 		return Resource{}, false, err
 	}
@@ -165,7 +165,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			r.contentLength,
 			r.contentType,
 			r.contentSHA256,
-			r.permissions,
+			destParent.permissions,
 			conflictResolution,
 		)
 		// createResource may return an already existing resources, depending on the specified conflictResolution
