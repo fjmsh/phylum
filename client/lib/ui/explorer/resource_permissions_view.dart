@@ -34,7 +34,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
         resourceName = data?.name;
         userPermission = data?.userPermission;
         permissions = data?.inheritedPermissions.parsePermissionMap();
-        grants = data?.grants.parseGrantsMap();
+        grants = data?.grants.parsePermissionMap();
       });
     });
   }

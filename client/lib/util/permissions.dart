@@ -16,12 +16,12 @@ extension PermissionMapper on String? {
   Map<String, Permission> parsePermissionMap() =>
       this == null ? {} : (jsonDecode(this!) as Map).cast<String, Permission>();
 
-  Map<String, Permission> parseGrantsMap() => this == null
-      ? {}
-      : Map.fromEntries((jsonDecode(this!) as Map)
-          .cast<String, Map>()
-          .entries
-          .map((e) => MapEntry(e.key, e.value.cast<String, int>()['p']!)));
+  // Map<String, Permission> parseGrantsMap() => this == null
+  //     ? {}
+  //     : Map.fromEntries((jsonDecode(this!) as Map)
+  //         .cast<String, Map>()
+  //         .entries
+  //         .map((e) => MapEntry(e.key, e.value.cast<String, int>()['p']!)));
 }
 
 extension PermissionStringer on Permission {
