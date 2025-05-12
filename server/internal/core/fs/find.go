@@ -10,7 +10,7 @@ import (
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	const query = `SELECT r.*,
-(SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) AS links
+(SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) AS links,
 COALESCE((SELECT p.permissions FROM resources p WHERE p.id = r.parent), '{}'::JSONB)
 FROM resources r WHERE id = $1::UUID`
 	if rows, err := f.db.Query(query, id); err != nil {
@@ -119,7 +119,7 @@ func (f filesystem) targetNameParentByPathWithRoot(path string, src Resource) (s
 
 func (f filesystem) childResourceByName(parentID uuid.UUID, name string) (Resource, error) {
 	const query = `SELECT r.*,
-(SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) AS links
+(SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) AS links,
 COALESCE((SELECT p.permissions FROM resources p WHERE p.id = r.parent), '{}'::JSONB)
 FROM resources WHERE r.parent = $1::UUID AND r.name = $2::TEXT AND r.deleted IS NULL`
 	if rows, err := f.db.Query(query, parentID, name); err != nil {
