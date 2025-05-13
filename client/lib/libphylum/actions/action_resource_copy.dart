@@ -62,6 +62,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
         'description': description,
         'timestamp': timestamp.millisecondsSinceEpoch,
         'deletedId': deletedId,
+        'userPermission': userPermission,
       };
 
   final String srcId;
