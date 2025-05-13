@@ -26,7 +26,7 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 			pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 		)
 	if !f.fullAccess {
-		q = q.Where(goqu.L("permissions[?]::INTEGER <> 0", f.username))
+		q = q.Where(goqu.L("r.permissions[?]::INTEGER <> 0", f.username))
 	}
 	if cursor != "" {
 		if d, err := base64.StdEncoding.DecodeString(cursor); err != nil {
