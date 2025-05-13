@@ -19,7 +19,7 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
   @override
   Map<String, dynamic>? get requestBody => {
         'id': publinkId,
-        'resourcePath': '$resourceId:',
+        'resource_path': '$resourceId:',
         if (password.isNotEmpty) 'password': password,
         if (expires != null) 'expires': expires!.toIso8601String(),
         if (accessLimit != 0) 'access_limit': accessLimit,
