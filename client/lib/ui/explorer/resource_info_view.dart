@@ -1,25 +1,22 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
-import 'package:phylum/libphylum/actions/action_resource_publink_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
-import 'package:phylum/ui/explorer/create_publink_view.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/explorer/resource_permissions_view.dart';
+import 'package:phylum/ui/explorer/resource_publinks_view.dart';
 import 'package:phylum/ui/explorer/resource_sync_state.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
-import 'package:uri/uri.dart';
 
 import 'resource_icon_extension.dart';
 
@@ -104,46 +101,18 @@ class ResourceInfoView extends StatelessWidget {
             onTap: () => showReponsiveDialog(
                 context, 'Permissions', (context) => ResourcePermissionsView(resourceId: resource.id)),
           ),
-          StreamBuilder<List<String>>(
-              stream: context.read<PhylumAccount>().db.selectPublinks(resource.id).map((l) => l.id).watch(),
-              initialData: const [],
+          StreamBuilder<int>(
+              stream: context.read<PhylumAccount>().db.countPublinks(resource.id).watchSingle(),
+              initialData: 0,
               builder: (context, snapshot) {
-                final publinks = snapshot.data ?? const [];
-                return ExpansionTile(
+                final count = snapshot.data ?? const [];
+                return ListTile(
                   leading: const Icon(Icons.public),
                   title: const Text('Public Shares'),
-                  subtitle: publinks.isEmpty ? const Text('--') : Text(publinks.length.toString()),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () async {
-                      final account = context.read<PhylumAccount>();
-                      final info = await CreatePublinkView.show(context, resource.id);
-                      if (info == null) return;
-                      account.addAction(ResourcePublinkCreateAction(
-                        resourceId: resource.id,
-                        publinkId: info.id,
-                        password: info.password,
-                        expires: info.expiration,
-                        accessLimit: info.accessLimit,
-                      ));
-                    },
-                  ),
-                  initiallyExpanded: true,
-                  children: publinks
-                      .map((l) => ListTile(
-                            dense: true,
-                            title: Text(l),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.copy),
-                              onPressed: () {
-                                final uri = kIsWeb
-                                    ? UriBuilder.fromUri(Uri.base).path = 'publink/$l'
-                                    : account.apiClient.createUri('publink/$l');
-                                Clipboard.setData(ClipboardData(text: uri.toString()));
-                              },
-                            ),
-                          ))
-                      .toList(growable: false),
+                  subtitle: count == 0 ? const Text('--') : Text(count.toString()),
+                  onTap: () {
+                    showReponsiveDialog(context, resource.name, (context) => ResourcePublinksView(resource: resource));
+                  },
                 );
               }),
           if (!resource.dir)
