@@ -2,6 +2,7 @@ package user
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -28,7 +29,7 @@ func (m manager) ListUsers(since *time.Time) ([]User, error) {
 
 func (m manager) UserByEmail(email string) (User, error) {
 	const q = "SELECT id, email, display_name, home, permissions FROM users WHERE email = $1"
-	if rows, err := m.db.Query(q, email); err != nil {
+	if rows, err := m.db.Query(q, strings.ToLower(email)); err != nil {
 		return User{}, err
 	} else if u, err := pgx.CollectExactlyOneRow(rows, scanUser); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -42,7 +43,7 @@ func (m manager) UserByEmail(email string) (User, error) {
 
 func (m manager) userPasswordHashByEmail(email string) (user User, passwordHash string, err error) {
 	const q = "SELECT id, email, display_name, home, permissions, password_hash FROM users WHERE email = $1"
-	row := m.db.QueryRow(q, email)
+	row := m.db.QueryRow(q, strings.ToLower(email))
 	err = row.Scan(
 		&user.ID,
 		&user.Email,
@@ -58,7 +59,7 @@ func (m manager) userPasswordHashByEmail(email string) (user User, passwordHash 
 
 func (m manager) UserHome(email string) (pgtype.UUID, error) {
 	const q = "SELECT home FROM users WHERE email = $1"
-	row := m.db.QueryRow(q, email)
+	row := m.db.QueryRow(q, strings.ToLower(email))
 	var id pgtype.UUID
 	if err := row.Scan(&id); err == nil {
 		if !id.Valid {

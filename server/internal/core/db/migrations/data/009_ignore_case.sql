@@ -3,15 +3,11 @@ CREATE COLLATION case_insensitive (provider = icu, locale = 'und-u-ks-level2', d
 
 ALTER TABLE resources ALTER COLUMN name SET DATA TYPE TEXT COLLATE case_insensitive;
 
-ALTER TABLE users ALTER COLUMN email SET DATA TYPE TEXT COLLATE case_insensitive;
-
 ALTER TABLE publinks ALTER COLUMN id SET DATA TYPE TEXT COLLATE case_insensitive;
 
 ---- create above / drop below ----
 
 ALTER TABLE publinks ALTER COLUMN id SET DATA TYPE TEXT;
-
-ALTER TABLE users ALTER COLUMN email SET DATA TYPE TEXT;
 
 ALTER TABLE resources ALTER COLUMN name SET DATA TYPE TEXT;
 
