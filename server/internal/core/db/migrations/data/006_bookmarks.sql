@@ -1,5 +1,5 @@
 CREATE TABLE bookmarks(
-    user_id         TEXT        NOT NULL REFERENCES users(id),
+    user_id         INT         NOT NULL REFERENCES users(id),
     resource_id     UUID        NOT NULL REFERENCES resources(id),
     name            TEXT        NOT NULL,
     dir             BOOLEAN     NOT NULL,
