@@ -72,7 +72,7 @@ func setupUserAddCommand() *cobra.Command {
 
 			err = db.Get(context.Background()).RunInTx(func(db db.Handler) error {
 				userManager := user.ManagerFromDB(db)
-				var u user.User
+				var userID int32
 				var home fs.Resource
 				if homePath != "" {
 					f = f.WithDb(db)
@@ -93,11 +93,11 @@ func setupUserAddCommand() *cobra.Command {
 				if user, err := userManager.CreateUser(email, displayName, password, homeID); err != nil {
 					return err
 				} else {
-					u = user
+					userID = user.ID
 				}
 
 				if homeID.Valid {
-					if _, err := home.UpdatePermissions(u.ID, fs.PermissionRead|fs.PermissionWrite|fs.PermissionShare); err != nil {
+					if _, err := home.UpdatePermissions(userID, fs.PermissionRead|fs.PermissionWrite|fs.PermissionShare); err != nil {
 						return err
 					}
 				}

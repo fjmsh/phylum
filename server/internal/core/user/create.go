@@ -10,12 +10,12 @@ import (
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 )
 
-var ErrUserExists = errors.NewError(http.StatusNotFound, "user_already_exists", "user already exists")
+var ErrUserExists = errors.NewError(http.StatusBadRequest, "user_already_exists", "user already exists")
 
 func (m manager) CreateUser(email, displayName, password string, home pgtype.UUID) (User, error) {
 	const q = ` INSERT INTO users(email, display_name, password_hash, home)
 VALUES ($1, $2, $3, $4)
-RETURNING id, email, display_name, password_hash, home, permissions`
+RETURNING id, email, display_name, home, permissisons`
 
 	if hash, err := crypt.GenerateArgon2EncodedHash(password); err != nil {
 		return User{}, err

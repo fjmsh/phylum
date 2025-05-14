@@ -22,15 +22,15 @@ var accessTokenValidity = pgtype.Interval{
 var ErrCredentialsInvalid = errors.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid Credentials")
 
 func (m manager) VerifyUserPassword(email, password string) (User, error) {
-	if user, err := m.UserByEmail(email); err != nil {
+	if user, passwordHash, err := m.userPasswordHashByEmail(email); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return User{}, ErrCredentialsInvalid
 		}
 		return User{}, err
-	} else if user.PasswordHash == "" {
+	} else if passwordHash == "" {
 		return User{}, ErrCredentialsInvalid
 	} else {
-		if b, err := crypt.VerifyPassword(password, user.PasswordHash); err != nil {
+		if b, err := crypt.VerifyPassword(password, passwordHash); err != nil {
 			return User{}, err
 		} else if !b {
 			return User{}, ErrCredentialsInvalid
@@ -49,34 +49,20 @@ func (m manager) CreateAccessToken(userID string) (string, error) {
 	}
 }
 
-func (m manager) ReadAccessToken(accessToken string) (User, error) {
+func (m manager) ReadAccessToken(accessToken string) (user User, err error) {
 	const q = `SELECT t.expires, u.id, u.email, u.display_name, u.permissions, u.home FROM access_tokens t JOIN users u ON t.user_id = u.id WHERE t.id = $1; `
 	row := m.db.QueryRow(q, accessToken)
 
 	var expires pgtype.Timestamp
-	var userID int32
-	var email string
-	var displayName string
-	var permissions int32
-	var home pgtype.UUID
-	if err := row.Scan(&expires, &userID, &email, &displayName, &permissions, &home); err != nil {
+	err = row.Scan(&expires, &user.ID, &user.Email, &user.DisplayName, &user.Permissions, &user.Home)
+	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrCredentialsInvalid
 		}
-		return User{}, err
 	} else if time.Now().After(expires.Time) {
 		return User{}, ErrCredentialsInvalid
-	} else {
-		return User{
-			BasicUser: BasicUser{
-				Email:       email,
-				DisplayName: displayName,
-			},
-			ID:          userID,
-			Permissions: permissions,
-			Home:        home,
-		}, nil
 	}
+	return
 }
 
 const (
