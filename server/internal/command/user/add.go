@@ -19,18 +19,18 @@ import (
 
 func setupUserAddCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add username",
+		Use:   "add email",
 		Short: "Add User",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			username := args[0]
+			email := args[0]
 
-			displayName := username
+			displayName := email
 			if n, err := cmd.Flags().GetString("name"); err != nil {
 				fmt.Println("invalid value for flag 'name': " + err.Error())
 				os.Exit(1)
 			} else if n != "" {
-				displayName = username
+				displayName = email
 			}
 
 			password, err := cmd.Flags().GetString("password")
@@ -67,7 +67,7 @@ func setupUserAddCommand() *cobra.Command {
 			homePath := ""
 			if !noCreateHome {
 				basePath, _ := cmd.Flags().GetString("base-dir")
-				homePath = strings.TrimRight(basePath, "/") + "/" + username
+				homePath = strings.TrimRight(basePath, "/") + "/" + email
 			}
 
 			err = db.Get(context.Background()).RunInTx(func(db db.Handler) error {
@@ -90,14 +90,14 @@ func setupUserAddCommand() *cobra.Command {
 						Valid: true,
 					}
 				}
-				if user, err := userManager.CreateUser(username, displayName, password, homeID); err != nil {
+				if user, err := userManager.CreateUser(email, displayName, password, homeID); err != nil {
 					return err
 				} else {
 					u = user
 				}
 
 				if homeID.Valid {
-					if _, err := home.UpdatePermissions(u.Username, fs.PermissionRead|fs.PermissionWrite|fs.PermissionShare); err != nil {
+					if _, err := home.UpdatePermissions(u.ID, fs.PermissionRead|fs.PermissionWrite|fs.PermissionShare); err != nil {
 						return err
 					}
 				}

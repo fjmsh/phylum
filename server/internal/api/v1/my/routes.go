@@ -37,7 +37,7 @@ func handleHomeRoute(c *gin.Context) {
 
 	c.JSON(200, homeResponse{
 		User: responses.User{
-			Username:    user.Username,
+			Email:       user.Email,
 			DisplayName: user.DisplayName,
 		},
 		Home: responses.FullResourceFromFS(r),

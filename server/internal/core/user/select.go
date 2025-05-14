@@ -18,7 +18,7 @@ func (m manager) ListUsers(since *time.Time) ([]BasicUser, error) {
 	if since != nil {
 		s.Time = *since
 	}
-	const q = "SELECT username, display_name FROM users WHERE modified > $1::TIMESTAMP"
+	const q = "SELECT email, display_name FROM users WHERE modified > $1::TIMESTAMP"
 	if rows, err := m.db.Query(q, s); err != nil {
 		return nil, err
 	} else {
@@ -26,9 +26,9 @@ func (m manager) ListUsers(since *time.Time) ([]BasicUser, error) {
 	}
 }
 
-func (m manager) UserByUsername(username string) (User, error) {
-	const q = "SELECT username, display_name, password_hash, home, permissions FROM users WHERE username = $1"
-	if rows, err := m.db.Query(q, username); err != nil {
+func (m manager) UserByEmail(email string) (User, error) {
+	const q = "SELECT id, email, display_name, password_hash, home, permissions FROM users WHERE email = $1"
+	if rows, err := m.db.Query(q, email); err != nil {
 		return User{}, err
 	} else if u, err := pgx.CollectExactlyOneRow(rows, scanUser); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -40,9 +40,9 @@ func (m manager) UserByUsername(username string) (User, error) {
 	}
 }
 
-func (m manager) UserHome(username string) (pgtype.UUID, error) {
-	const q = "SELECT home FROM users WHERE username = $1"
-	row := m.db.QueryRow(q, username)
+func (m manager) UserHome(email string) (pgtype.UUID, error) {
+	const q = "SELECT home FROM users WHERE email = $1"
+	row := m.db.QueryRow(q, email)
 	var id pgtype.UUID
 	if err := row.Scan(&id); err == nil {
 		if !id.Valid {

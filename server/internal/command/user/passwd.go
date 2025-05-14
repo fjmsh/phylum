@@ -13,12 +13,12 @@ import (
 
 func setupUserPasswdCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "passwd username",
+		Use:   "passwd email",
 		Short: "Change User Password",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			username := args[0]
-			u, err := user.ManagerFromContext(context.Background()).UserByUsername(username)
+			email := args[0]
+			u, err := user.ManagerFromContext(context.Background()).UserByEmail(email)
 			if err != nil {
 				fmt.Println("unable to change password: " + err.Error())
 				os.Exit(1)

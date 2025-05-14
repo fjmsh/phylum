@@ -15,7 +15,7 @@ const (
 	PermissionSU    = Permission(-1)
 )
 
-func (r Resource) UpdatePermissions(username string, permission Permission) (Resource, error) {
+func (r Resource) UpdatePermissions(userID int32, permission Permission) (Resource, error) {
 	if r.deleted.Valid {
 		return r, ErrResourceDeleted
 	}
@@ -26,14 +26,14 @@ func (r Resource) UpdatePermissions(username string, permission Permission) (Res
 	permission = permission & r.userPermission
 	const qUpdate = `
 UPDATE resources SET
-	grants[@username::TEXT] = jsonb_build_object('p', @permission::INT, 't', EXTRACT(EPOCH FROM NOW())::INTEGER),
+	grants[@user_id::INT] = jsonb_build_object('p', @permission::INT, 't', EXTRACT(EPOCH FROM NOW())::INTEGER),
 	modified = NOW()
 WHERE id = @resource_id::UUID
 RETURNING grants`
 
 	const qRemove = `
 UPDATE resources SET
-	grants = grants - @username::TEXT,
+	grants = grants - @user_id::INT,
 	modified = NOW()
 WHERE id = @resource_id::UUID
 RETURNING grants`
@@ -47,7 +47,7 @@ RETURNING grants`
 	err := r.f.runInTx(func(f filesystem) error {
 		row := f.db.QueryRow(q, pgx.NamedArgs{
 			"resource_id": r.id,
-			"username":    username,
+			"user_id":     userID,
 			"permission":  permission,
 		})
 

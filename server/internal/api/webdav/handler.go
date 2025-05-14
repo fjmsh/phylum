@@ -42,10 +42,10 @@ func SetupHandler(r *gin.RouterGroup) {
 func (h *handler) HandleRequest(c *gin.Context) {
 	authSuccess := false
 	var f fs.FileSystem
-	if username, pass, ok := c.Request.BasicAuth(); ok {
+	if email, pass, ok := c.Request.BasicAuth(); ok {
 		ctx := c.Request.Context()
 		userManager := user.ManagerFromContext(ctx)
-		if u, err := userManager.VerifyUserPassword(username, pass); err == nil {
+		if u, err := userManager.VerifyUserPassword(email, pass); err == nil {
 			authSuccess = true
 			root := c.Param("root")
 			f = u.OpenFileSystem(ctx)

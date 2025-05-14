@@ -32,7 +32,7 @@ func handleUsersListRoute(c *gin.Context) {
 	result := make([]responses.User, len(users))
 	for i, u := range users {
 		result[i] = responses.User{
-			Username:    u.Username,
+			Email:       u.Email,
 			DisplayName: u.DisplayName,
 		}
 	}

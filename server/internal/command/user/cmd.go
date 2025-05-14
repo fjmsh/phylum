@@ -40,7 +40,7 @@ func setupUserListCommand() *cobra.Command {
 				logrus.Fatal(err)
 			}
 			for _, user := range users {
-				logrus.Infof("%24s : %s", user.Username, user.DisplayName)
+				logrus.Infof("%24s : %s", user.Email, user.DisplayName)
 			}
 		},
 	}

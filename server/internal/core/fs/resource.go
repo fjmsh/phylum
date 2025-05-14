@@ -84,7 +84,7 @@ func (f filesystem) scanFullResource(row pgx.CollectableRow) (Resource, error) {
 	permission := Permission(0)
 	if f.fullAccess {
 		permission = -1
-	} else if p, err := readPermissionFromJson(r.permissions, f.username); err != nil {
+	} else if p, err := readPermissionFromJson(r.permissions, f.userID); err != nil {
 		return Resource{}, err
 	} else {
 		permission = p
@@ -119,7 +119,7 @@ func (f filesystem) scanResourceWithoutParent(row pgx.CollectableRow) (Resource,
 	permission := Permission(0)
 	if f.fullAccess {
 		permission = -1
-	} else if p, err := readPermissionFromJson(r.permissions, f.username); err != nil {
+	} else if p, err := readPermissionFromJson(r.permissions, f.userID); err != nil {
 		return Resource{}, err
 	} else {
 		permission = p
@@ -131,16 +131,16 @@ func (f filesystem) scanResourceWithoutParent(row pgx.CollectableRow) (Resource,
 	return r, err
 }
 
-func readPermissionFromJson(j []byte, username string) (Permission, error) {
+func readPermissionFromJson(j []byte, userID int32) (Permission, error) {
 	if j == nil {
 		return PermissionNone, nil
 	}
-	p := make(map[string]Permission)
+	p := make(map[int32]Permission)
 	err := json.Unmarshal(j, &p)
 	if err != nil {
 		return PermissionNone, err
 	}
-	if p, ok := p[username]; ok {
+	if p, ok := p[userID]; ok {
 		return p, nil
 	}
 	return PermissionNone, nil

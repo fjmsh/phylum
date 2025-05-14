@@ -12,8 +12,8 @@ import (
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	const query = fullResourceQuery + "WHERE r.id = @id::UUID"
 	args := pgx.NamedArgs{
-		"username": f.username,
-		"id":       id,
+		"user_id": f.userID,
+		"id":      id,
 	}
 	if rows, err := f.db.Query(query, args); err != nil {
 		return Resource{}, err
@@ -64,7 +64,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 
 	q := pg.Select(r.All(),
 		pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
-		pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.username)),
+		pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID)),
 		pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 	).
 		From(r).
@@ -125,9 +125,9 @@ func (f filesystem) targetNameParentByPathWithRoot(path string, src Resource) (s
 func (f filesystem) childResourceByName(parentID uuid.UUID, name string) (Resource, error) {
 	const query = fullResourceQuery + "WHERE r.parent = @parent::UUID AND r.name = @name::TEXT AND r.deleted IS NULL"
 	args := pgx.NamedArgs{
-		"username": f.username,
-		"parent":   parentID,
-		"name":     name,
+		"user_id": f.userID,
+		"parent":  parentID,
+		"name":    name,
 	}
 	if rows, err := f.db.Query(query, args); err != nil {
 		return Resource{}, err

@@ -14,7 +14,7 @@ import (
 
 func setupSetfaclCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "setfacl <path> <user> (none|read|write|share)",
+		Use:   "setfacl <path> <user-email> (none|read|write|share)",
 		Short: "Access Control",
 		Args:  cobra.ExactArgs(3),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -25,23 +25,23 @@ func setupSetfaclCommand() *cobra.Command {
 				fmt.Println("cannot update permissions for '" + path + "': " + err.Error())
 				os.Exit(1)
 			}
-
-			username := args[1]
-			if _, err := user.ManagerFromContext(context.Background()).UserByUsername(username); err != nil {
-				fmt.Println("cannot update permissions for user '" + username + "': " + err.Error())
-				os.Exit(1)
-			}
-
 			permission, err := parsePermissionString(args[2])
 			if err != nil {
 				fmt.Println("cannot update permissions for '" + path + "': " + err.Error())
 				os.Exit(1)
 			}
 
-			if _, err := r.UpdatePermissions(username, permission); err != nil {
-				fmt.Println("cannot update permissions for '" + path + "': " + err.Error())
+			email := args[1]
+			if user, err := user.ManagerFromContext(context.Background()).UserByEmail(email); err != nil {
+				fmt.Println("cannot update permissions for user '" + email + "': " + err.Error())
 				os.Exit(1)
+			} else {
+				if _, err := r.UpdatePermissions(user.ID, permission); err != nil {
+					fmt.Println("cannot update permissions for '" + path + "': " + err.Error())
+					os.Exit(1)
+				}
 			}
+
 		},
 	}
 	return &cmd

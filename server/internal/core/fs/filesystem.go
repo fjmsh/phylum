@@ -10,7 +10,7 @@ type filesystem struct {
 	db         db.Handler
 	cs         storage.Storage
 	pathRoot   pgtype.UUID
-	username   string
+	userID     int32
 	fullAccess bool
 }
 
@@ -23,7 +23,7 @@ func (f filesystem) withDb(db db.Handler) filesystem {
 		db:         db,
 		cs:         f.cs,
 		pathRoot:   f.pathRoot,
-		username:   f.username,
+		userID:     f.userID,
 		fullAccess: f.fullAccess,
 	}
 }
@@ -37,7 +37,7 @@ func (f filesystem) withPathRoot(pathRoot pgtype.UUID) filesystem {
 		db:         f.db,
 		cs:         f.cs,
 		pathRoot:   pathRoot,
-		username:   f.username,
+		userID:     f.userID,
 		fullAccess: f.fullAccess,
 	}
 }

@@ -14,14 +14,14 @@ import (
 
 func setupUserModCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "mod username",
+		Use:   "mod email",
 		Short: "Add User",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			username := args[0]
-			u, err := user.ManagerFromContext(context.Background()).UserByUsername(username)
+			email := args[0]
+			u, err := user.ManagerFromContext(context.Background()).UserByEmail(email)
 			if err != nil {
-				fmt.Println("could not update user '" + username + "': " + err.Error())
+				fmt.Println("could not update user '" + email + "': " + err.Error())
 				os.Exit(1)
 			}
 
@@ -57,7 +57,7 @@ func setupUserModCommand() *cobra.Command {
 				return nil
 			})
 			if err != nil {
-				fmt.Println("could not update user '" + username + "': " + err.Error())
+				fmt.Println("could not update user '" + email + "': " + err.Error())
 				os.Exit(3)
 			}
 		},

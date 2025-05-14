@@ -12,14 +12,14 @@ import (
 
 var ErrUserExists = errors.NewError(http.StatusNotFound, "user_already_exists", "user already exists")
 
-func (m manager) CreateUser(username, displayName, password string, home pgtype.UUID) (User, error) {
-	const q = ` INSERT INTO users(username, display_name, password_hash, home)
+func (m manager) CreateUser(email, displayName, password string, home pgtype.UUID) (User, error) {
+	const q = ` INSERT INTO users(email, display_name, password_hash, home)
 VALUES ($1, $2, $3, $4)
-RETURNING username, display_name, password_hash, home, permissions`
+RETURNING id, email, display_name, password_hash, home, permissions`
 
 	if hash, err := crypt.GenerateArgon2EncodedHash(password); err != nil {
 		return User{}, err
-	} else if rows, err := m.db.Query(q, username, displayName, hash, home); err != nil {
+	} else if rows, err := m.db.Query(q, email, displayName, hash, home); err != nil {
 		if strings.Contains(err.Error(), "users_pkey") {
 			err = ErrUserExists
 		}

@@ -11,7 +11,7 @@ import (
 )
 
 type passwordParams struct {
-	Username string `json:"username" form:"username" binding:"required"`
+	Email    string `json:"email" form:"email" binding:"required"`
 	Password string `json:"password" form:"password" binding:"required"`
 }
 
@@ -20,9 +20,9 @@ type loginResponse struct {
 	User        loggedInUserResponse `json:"user"`
 }
 type loggedInUserResponse struct {
-	Username string      `json:"username"`
-	Display  string      `json:"display"`
-	Home     pgtype.UUID `json:"home"`
+	Email   string      `json:"email"`
+	Display string      `json:"display"`
+	Home    pgtype.UUID `json:"home"`
 }
 
 func SetupRoutes(r *gin.RouterGroup) {
@@ -35,22 +35,22 @@ func handlePasswordAuth(c *gin.Context) {
 	var params passwordParams
 	err := c.ShouldBind(&params)
 	if err != nil {
-		panic(errors.NewError(http.StatusBadRequest, "missing_params", "Username or password not specified"))
+		panic(errors.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
 	}
 
 	userManager := user.ManagerFromContext(c.Request.Context())
-	if user, err := userManager.VerifyUserPassword(params.Username, params.Password); err != nil {
+	if user, err := userManager.VerifyUserPassword(params.Email, params.Password); err != nil {
 		panic(err)
 	} else {
-		if token, err := userManager.CreateAccessToken(user.Username); err != nil {
+		if token, err := userManager.CreateAccessToken(user.Email); err != nil {
 			panic(err)
 		} else {
 			c.JSON(200, loginResponse{
 				AccessToken: token,
 				User: loggedInUserResponse{
-					Username: user.Username,
-					Display:  user.DisplayName,
-					Home:     user.Home,
+					Email:   user.Email,
+					Display: user.DisplayName,
+					Home:    user.Home,
 				},
 			})
 		}

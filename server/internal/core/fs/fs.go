@@ -62,11 +62,11 @@ type FileSystem interface {
 	TrashEmpty() (int, error)
 }
 
-func Open(ctx context.Context, username string, root pgtype.UUID, fullAccess bool) FileSystem {
+func Open(ctx context.Context, userID int32, root pgtype.UUID, fullAccess bool) FileSystem {
 	return filesystem{
 		db:         db.Get(ctx),
 		cs:         storage.Get(),
-		username:   username,
+		userID:     userID,
 		pathRoot:   root,
 		fullAccess: fullAccess,
 	}
@@ -74,7 +74,7 @@ func Open(ctx context.Context, username string, root pgtype.UUID, fullAccess boo
 
 func OpenOmniscient(ctx context.Context) FileSystem {
 	id := rootID()
-	return Open(ctx, "", pgtype.UUID{Bytes: id, Valid: true}, true)
+	return Open(ctx, -1, pgtype.UUID{Bytes: id, Valid: true}, true)
 }
 
 func rootID() uuid.UUID {

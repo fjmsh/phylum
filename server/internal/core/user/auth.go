@@ -21,8 +21,8 @@ var accessTokenValidity = pgtype.Interval{
 
 var ErrCredentialsInvalid = errors.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid Credentials")
 
-func (m manager) VerifyUserPassword(username, password string) (User, error) {
-	if user, err := m.UserByUsername(username); err != nil {
+func (m manager) VerifyUserPassword(email, password string) (User, error) {
+	if user, err := m.UserByEmail(email); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return User{}, ErrCredentialsInvalid
 		}
@@ -39,10 +39,10 @@ func (m manager) VerifyUserPassword(username, password string) (User, error) {
 	}
 }
 
-func (m manager) CreateAccessToken(username string) (string, error) {
-	const q = `INSERT INTO access_tokens(id, expires, username) VALUES ($1::text, NOW() + $2::interval, $3::text)`
+func (m manager) CreateAccessToken(userID string) (string, error) {
+	const q = `INSERT INTO access_tokens(id, expires, user_id) VALUES ($1::TEXT, NOW() + $2::INTERVAL, $3::INT)`
 	id := GenerateRandomString(accessTokenLength)
-	if _, err := m.db.Exec(q, id, accessTokenValidity, username); err != nil {
+	if _, err := m.db.Exec(q, id, accessTokenValidity, userID); err != nil {
 		return "", err
 	} else {
 		return id, nil
@@ -50,15 +50,16 @@ func (m manager) CreateAccessToken(username string) (string, error) {
 }
 
 func (m manager) ReadAccessToken(accessToken string) (User, error) {
-	const q = `SELECT t.expires, u.username, u.display_name, u.permissions, u.home FROM access_tokens t JOIN users u ON t.username = u.username WHERE t.id = $1; `
+	const q = `SELECT t.expires, u.id, u.email, u.display_name, u.permissions, u.home FROM access_tokens t JOIN users u ON t.user_id = u.id WHERE t.id = $1; `
 	row := m.db.QueryRow(q, accessToken)
 
 	var expires pgtype.Timestamp
-	var username string
+	var userID int32
+	var email string
 	var displayName string
 	var permissions int32
 	var home pgtype.UUID
-	if err := row.Scan(&expires, &username, &displayName, &permissions, &home); err != nil {
+	if err := row.Scan(&expires, &userID, &email, &displayName, &permissions, &home); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrCredentialsInvalid
 		}
@@ -68,9 +69,10 @@ func (m manager) ReadAccessToken(accessToken string) (User, error) {
 	} else {
 		return User{
 			BasicUser: BasicUser{
-				Username:    username,
+				Email:       email,
 				DisplayName: displayName,
 			},
+			ID:          userID,
 			Permissions: permissions,
 			Home:        home,
 		}, nil

@@ -24,11 +24,11 @@ func (f filesystem) scanResourceAncestor(row pgx.CollectableRow) (ResourceAncest
 }
 
 const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, userPermission) AS (
-    SELECT r.id, r.name, r.parent, COALESCE(r.permissions[$2::TEXT]::INTEGER, 0) as userPermission
+    SELECT r.id, r.name, r.parent, COALESCE(r.permissions[$2::INT]::INT, 0) as userPermission
         FROM resources r
         WHERE r.id = $1::UUID
     UNION ALL
-        SELECT r.id, r.name, r.parent, COALESCE(r.permissions[$2::TEXT]::INTEGER, 0) as userPermission
+        SELECT r.id, r.name, r.parent, COALESCE(r.permissions[$2::INT]::INT, 0) as userPermission
             FROM resources r
             JOIN nodes n ON r.id = n.parent
 			WHERE userPermission <> 0
@@ -37,7 +37,7 @@ const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, userPermission) A
 SELECT id, name, userPermission FROM nodes`
 
 func (r Resource) GetAncestors() ([]ResourceAncestor, error) {
-	if rows, err := r.f.db.Query(ancestorsQuery, r.id, r.f.username, r.f.fullAccess); err != nil {
+	if rows, err := r.f.db.Query(ancestorsQuery, r.id, r.f.userID, r.f.fullAccess); err != nil {
 		return nil, err
 	} else if a, err := pgx.CollectRows(rows, r.f.scanResourceAncestor); err != nil {
 		return nil, err

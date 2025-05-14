@@ -10,7 +10,7 @@ func (f filesystem) selectDeletedResources() *goqu.SelectDataset {
 		From("resources").
 		Where(goqu.C("deleted").IsNotNull())
 	if !f.fullAccess {
-		q = q.Where(goqu.L("permissions[?]::INTEGER <> 0", f.username))
+		q = q.Where(goqu.L("permissions[?]::INTEGER <> 0", f.userID))
 	}
 	return q
 }

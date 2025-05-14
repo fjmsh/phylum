@@ -1,8 +1,9 @@
 CREATE TABLE users(
-  username      TEXT        PRIMARY KEY,
+  id            SERIAL      PRIMARY KEY,
   created       TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   modified      TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   deleted       TIMESTAMP,
+  email         TEXT        NOT NULL UNIQUE,
   display_name  TEXT        NOT NULL,
   password_hash TEXT        NOT NULL,
   home          uuid        REFERENCES resources(id),

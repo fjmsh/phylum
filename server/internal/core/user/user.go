@@ -11,12 +11,13 @@ import (
 )
 
 type BasicUser struct {
-	Username    string
+	Email       string
 	DisplayName string
 }
 
 type User struct {
 	BasicUser
+	ID           int32
 	PasswordHash string
 	Home         pgtype.UUID
 	Permissions  int32
@@ -25,7 +26,7 @@ type User struct {
 func scanBasicUser(row pgx.CollectableRow) (BasicUser, error) {
 	var u BasicUser
 	err := row.Scan(
-		&u.Username,
+		&u.Email,
 		&u.DisplayName,
 	)
 	return u, err
@@ -34,7 +35,8 @@ func scanBasicUser(row pgx.CollectableRow) (BasicUser, error) {
 func scanUser(row pgx.CollectableRow) (User, error) {
 	var u User
 	err := row.Scan(
-		&u.Username,
+		&u.ID,
+		&u.Email,
 		&u.DisplayName,
 		&u.PasswordHash,
 		&u.Home,
@@ -44,17 +46,17 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 }
 
 func (u User) OpenFileSystem(ctx context.Context) fs.FileSystem {
-	return fs.Open(ctx, u.Username, u.Home, u.Permissions&PermissionAllFiles != 0)
+	return fs.Open(ctx, u.ID, u.Home, u.Permissions&PermissionAllFiles != 0)
 }
 
 type Manager interface {
 	// create.go
-	CreateUser(username, displayName, password string, home pgtype.UUID) (User, error)
+	CreateUser(email, displayName, password string, home pgtype.UUID) (User, error)
 
 	// select.go
 	ListUsers(since *time.Time) ([]BasicUser, error)
-	UserByUsername(email string) (User, error)
-	UserHome(username string) (pgtype.UUID, error)
+	UserByEmail(email string) (User, error)
+	UserHome(email string) (pgtype.UUID, error)
 
 	// update.go
 	UpdateUserHome(user User, home pgtype.UUID) error
@@ -63,7 +65,7 @@ type Manager interface {
 
 	// auth.go
 	VerifyUserPassword(email, password string) (User, error)
-	CreateAccessToken(username string) (string, error)
+	CreateAccessToken(email string) (string, error)
 	ReadAccessToken(accessToken string) (User, error)
 
 	// bookmarks.go

@@ -57,8 +57,8 @@ func extractUserDetails(c *gin.Context) (user.User, error) {
 		}
 		return user.User{}, errAuthRequired
 	} else if auth, ok := checkAuthHeader(header, "basic"); ok {
-		if username, password, ok := decodeBasicAuth(auth); ok {
-			if u, err := userManager.VerifyUserPassword(username, password); err == nil {
+		if email, password, ok := decodeBasicAuth(auth); ok {
+			if u, err := userManager.VerifyUserPassword(email, password); err == nil {
 				return u, nil
 			} else {
 				return user.User{}, err
@@ -82,15 +82,15 @@ func checkAuthHeader(header, prefix string) (string, bool) {
 	return header[len(prefix):], true
 }
 
-func decodeBasicAuth(auth string) (username, password string, ok bool) {
+func decodeBasicAuth(auth string) (email, password string, ok bool) {
 	c, err := base64.StdEncoding.DecodeString(auth)
 	if err != nil {
 		return "", "", false
 	}
 	cs := string(c)
-	username, password, ok = strings.Cut(cs, ":")
+	email, password, ok = strings.Cut(cs, ":")
 	if !ok {
 		return "", "", false
 	}
-	return username, password, true
+	return email, password, true
 }
