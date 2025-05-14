@@ -15,12 +15,12 @@ var ErrUserExists = errors.NewError(http.StatusBadRequest, "user_already_exists"
 func (m manager) CreateUser(email, displayName, password string, home pgtype.UUID) (User, error) {
 	const q = ` INSERT INTO users(email, display_name, password_hash, home)
 VALUES ($1, $2, $3, $4)
-RETURNING id, email, display_name, home, permissisons`
+RETURNING id, email, display_name, home, permissions`
 
 	if hash, err := crypt.GenerateArgon2EncodedHash(password); err != nil {
 		return User{}, err
 	} else if rows, err := m.db.Query(q, email, displayName, hash, home); err != nil {
-		if strings.Contains(err.Error(), "users_pkey") {
+		if strings.Contains(err.Error(), "users_email_key") {
 			err = ErrUserExists
 		}
 		return User{}, err
