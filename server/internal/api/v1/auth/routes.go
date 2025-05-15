@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
+	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
@@ -16,13 +16,8 @@ type passwordParams struct {
 }
 
 type loginResponse struct {
-	AccessToken string               `json:"access_token"`
-	User        loggedInUserResponse `json:"user"`
-}
-type loggedInUserResponse struct {
-	Email   string      `json:"email"`
-	Display string      `json:"display"`
-	Home    pgtype.UUID `json:"home"`
+	AccessToken string           `json:"access_token"`
+	User        responses.MyUser `json:"user"`
 }
 
 func SetupRoutes(r *gin.RouterGroup) {
@@ -47,10 +42,13 @@ func handlePasswordAuth(c *gin.Context) {
 		} else {
 			c.JSON(200, loginResponse{
 				AccessToken: token,
-				User: loggedInUserResponse{
-					Email:   user.Email,
-					Display: user.DisplayName,
-					Home:    user.Home,
+				User: responses.MyUser{
+					User: responses.User{
+						Email:       user.Email,
+						DisplayName: user.DisplayName,
+					},
+					ID:   user.ID,
+					Home: user.Home,
 				},
 			})
 		}

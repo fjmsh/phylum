@@ -41,6 +41,12 @@ type User struct {
 	DisplayName string `json:"display"`
 }
 
+type MyUser struct {
+	User
+	ID   int32       `json:"id"`
+	Home pgtype.UUID `json:"home"`
+}
+
 type Publink struct {
 	ID          string    `json:"id"`
 	Created     time.Time `json:"created"`

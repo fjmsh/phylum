@@ -1,18 +1,13 @@
 package my
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
-	"github.com/shroff/phylum/server/internal/core/errors"
 )
 
-var errInvalidParams = errors.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
-
 type homeResponse struct {
-	User responses.User         `json:"user"`
+	User responses.MyUser       `json:"user"`
 	Home responses.ResourceFull `json:"home"`
 }
 
@@ -36,9 +31,12 @@ func handleHomeRoute(c *gin.Context) {
 	}
 
 	c.JSON(200, homeResponse{
-		User: responses.User{
-			Email:       user.Email,
-			DisplayName: user.DisplayName,
+		User: responses.MyUser{
+			User: responses.User{
+				Email:       user.Email,
+				DisplayName: user.DisplayName,
+			},
+			ID: user.ID,
 		},
 		Home: responses.FullResourceFromFS(r),
 	})
