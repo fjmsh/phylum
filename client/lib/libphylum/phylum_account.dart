@@ -11,9 +11,11 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/logging.dart';
 
 const _persistKeyAccessToken = 'accessToken';
+const _persistKeyUserId = 'userId';
 const _persistKeyUserEmail = 'userEmail';
-const _persistKeyUserName = 'userName';
+const _persistKeyUserName = 'userDisplayName';
 const _persistKeyUserHome = 'userHome';
+const _persistKeyUserPermissions = 'userPermissions';
 
 class PhylumAccount extends Account<PhylumAccount> {
   late final db = AppDatabase(accountId: id);
@@ -42,6 +44,11 @@ class PhylumAccount extends Account<PhylumAccount> {
     apiClient.setHeader('Authorization', 'bearer $value');
   }
 
+  int get userId => getPersisted(_persistKeyUserId);
+  set userId(int value) {
+    persist(_persistKeyUserId, value);
+  }
+
   String get userEmail => getPersisted(_persistKeyUserEmail);
   set userEmail(String value) {
     persist(_persistKeyUserEmail, value);
@@ -55,6 +62,11 @@ class PhylumAccount extends Account<PhylumAccount> {
   String get userHome => getPersisted(_persistKeyUserHome);
   set userHome(String value) {
     persist(_persistKeyUserHome, value);
+  }
+
+  int get userPermissions => getPersisted(_persistKeyUserPermissions);
+  set userPermissions(int value) {
+    persist(_persistKeyUserPermissions, value);
   }
 
   PhylumAccount.create({required super.serverUri, required String accessToken})

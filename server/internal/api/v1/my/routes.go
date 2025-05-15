@@ -33,10 +33,10 @@ func handleHomeRoute(c *gin.Context) {
 	c.JSON(200, homeResponse{
 		User: responses.LoggedInUser{
 			User: responses.User{
+				ID:          user.ID,
 				Email:       user.Email,
 				DisplayName: user.DisplayName,
 			},
-			ID:          user.ID,
 			Home:        user.Home,
 			Permissions: user.Permissions,
 		},

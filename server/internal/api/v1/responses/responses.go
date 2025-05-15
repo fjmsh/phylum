@@ -38,13 +38,13 @@ type ResourceFull struct {
 }
 
 type User struct {
+	ID          int32  `json:"id"`
 	Email       string `json:"email"`
-	DisplayName string `json:"display"`
+	DisplayName string `json:"display_name"`
 }
 
 type LoggedInUser struct {
 	User
-	ID          int32           `json:"id"`
 	Home        pgtype.UUID     `json:"home"`
 	Permissions user.Permission `json:"permissions"`
 }
