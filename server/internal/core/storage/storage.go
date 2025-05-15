@@ -13,7 +13,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 type Storage struct {
@@ -22,13 +21,11 @@ type Storage struct {
 }
 
 var s Storage
-var Config *viper.Viper
-var location string
+var Cfg Config
 
 func Get() Storage {
 	if s.defaultBackend == nil {
-		location = Config.GetString("location")
-		dir := path.Join(location, "default")
+		dir := path.Join(Cfg.Location, "default")
 		if storage, err := create(dir); err != nil {
 			logrus.Fatal(err)
 		} else {

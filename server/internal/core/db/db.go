@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -35,7 +36,7 @@ func Close() {
 func initPool(ctx context.Context) error {
 	var dsn strings.Builder
 	dsn.WriteString("host=" + Cfg.Host)
-	dsn.WriteString(" port=" + Cfg.Password)
+	dsn.WriteString(" port=" + strconv.Itoa(Cfg.Port))
 	dsn.WriteString(" dbname=" + Cfg.DBName)
 	dsn.WriteString(" user=" + Cfg.User)
 	if Cfg.Password != "" {

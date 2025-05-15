@@ -49,8 +49,6 @@ func SetupCommand() {
 	flags.Bool("db_nomigrate", false, "Skip Database Migrations")
 	flags.MarkHidden("db_nomigrate")
 
-	viper.SetDefault("storage.location", "storage")
-
 	k := koanf.New(".")
 	k.Load(structs.Provider(defaultConfig, "koanf"), nil)
 
@@ -92,8 +90,7 @@ func SetupCommand() {
 		}
 
 		db.Cfg = cfg.DB
-		storage.Config = viper.Sub("storage")
-		storage.Config.BindPFlag("location", flags.Lookup("location"))
+		storage.Cfg = cfg.Storage
 	}
 
 	defer func() {

@@ -1,16 +1,22 @@
 package command
 
-import "github.com/shroff/phylum/server/internal/core/db"
+import (
+	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/core/storage"
+)
 
 var defaultConfig = Config{
+	Debug: false,
 	DB: db.Config{
-		Host:     "localhost",
-		Port:     5432,
-		DBName:   "phylum",
-		User:     "phylum",
-		Password: "phylum",
+		Host:      "localhost",
+		Port:      5432,
+		DBName:    "phylum",
+		User:      "phylum",
+		Password:  "phylum",
+		NoMigrate: false,
+		Trace:     false,
 	},
-	Storage: StorageConfig{
+	Storage: storage.Config{
 		Location: "storage",
 	},
 	Server: ServerConfig{
@@ -27,10 +33,10 @@ var defaultConfig = Config{
 }
 
 type Config struct {
-	Debug   bool          `koanf:"debug"`
-	DB      db.Config     `koanf:"db"`
-	Storage StorageConfig `koanf:"storage"`
-	Server  ServerConfig  `koanf:"server"`
+	Debug   bool           `koanf:"debug"`
+	DB      db.Config      `koanf:"db"`
+	Storage storage.Config `koanf:"storage"`
+	Server  ServerConfig   `koanf:"server"`
 }
 
 type ServerConfig struct {
@@ -45,8 +51,4 @@ type ServerConfig struct {
 type CORSConfig struct {
 	Enabled bool     `koanf:"enabled"`
 	Orifins []string `koanf:"origins"`
-}
-
-type StorageConfig struct {
-	Location string `koanf:"location"`
 }
