@@ -7,8 +7,8 @@ import 'package:phylum/libphylum/responses/responses.dart';
 
 class UserRepository {
   final PhylumAccount account;
-  Map<String, User> _users = const {};
-  Map<String, User> get users => _users;
+  Map<int, User> _users = const {};
+  Map<int, User> get users => _users;
 
   UserRepository({required this.account});
 
@@ -17,7 +17,7 @@ class UserRepository {
     await account.db.users
         .select()
         .get()
-        .then((users) => _users = Map.unmodifiable(Map.fromIterable(users, key: (u) => u.username)));
+        .then((users) => _users = Map.unmodifiable(Map<int, User>.fromIterable(users, key: (u) => u.id)));
   }
 
   Future<ApiResult> refresh() async {
@@ -25,12 +25,12 @@ class UserRepository {
         UsersListRequest(), (request, response) => parseJsonMapResponse(response, UserListResponse.fromResponse),
         callback: (request, response) async {
       if (response is UserListResponse) {
-        _users = Map.unmodifiable(Map.fromIterable(response.users, key: (u) => u.username));
+        _users = Map.unmodifiable(Map<int, User>.fromIterable(response.users, key: (u) => u.id));
       }
     });
   }
 
-  String getUserDisplayName(String username) {
-    return _users[username]?.display ?? username;
+  String getUserDisplayName(int userId) {
+    return _users[userId]?.displayName ?? 'Unknown User ($userId)';
   }
 }

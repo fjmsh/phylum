@@ -40,7 +40,7 @@ class ResourceResponse extends PhylumApiSuccessResponse {
   }
 
   void _updateUserPermissions(PhylumAccount account) {
-    _resource = _resource.copyWith(userPermission: permissions[account.userEmail] ?? 0);
+    _resource = _resource.copyWith(userPermission: permissions[account.userId.toString()] ?? 0);
   }
 
   @override

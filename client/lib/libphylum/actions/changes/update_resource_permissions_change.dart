@@ -7,7 +7,7 @@ import 'package:phylum/libphylum/db/db.dart';
 class UpdateResourcePermissionsChange extends LocalChange<Resource> {
   @override
   final String objectId;
-  final String username;
+  final int userId;
   final int permission;
   final DateTime timestamp;
 
@@ -16,7 +16,7 @@ class UpdateResourcePermissionsChange extends LocalChange<Resource> {
 
   const UpdateResourcePermissionsChange({
     required this.objectId,
-    required this.username,
+    required this.userId,
     required this.permission,
     required this.timestamp,
   });
@@ -24,22 +24,22 @@ class UpdateResourcePermissionsChange extends LocalChange<Resource> {
   @override
   Resource? apply(Resource? data) {
     if (data == null) return null;
-    var p = data.grants == null ? const <String, Map>{} : (jsonDecode(data.grants!) as Map).cast<String, Map>();
-    if ((p[username]?['p'] ?? 0) == permission) {
+    var p = data.grants == null ? const <int, Map>{} : (jsonDecode(data.grants!) as Map).cast<int, Map>();
+    if ((p[userId]?['p'] ?? 0) == permission) {
       return data;
     }
     if (permission == 0) {
-      p.remove(username);
+      p.remove(userId);
     } else if (p.isEmpty) {
       // Empty means const map, so we can't add to it
       p = {
-        username: <String, int>{
+        userId: <String, int>{
           'p': permission,
           't': DateTime.now().millisecondsSinceEpoch,
         },
       };
     } else {
-      p[username] = <String, int>{
+      p[userId] = <String, int>{
         'p': permission,
         't': DateTime.now().millisecondsSinceEpoch,
       };

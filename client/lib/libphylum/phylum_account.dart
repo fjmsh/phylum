@@ -13,7 +13,7 @@ import 'package:phylum/util/logging.dart';
 const _persistKeyAccessToken = 'accessToken';
 const _persistKeyUserId = 'userId';
 const _persistKeyUserEmail = 'userEmail';
-const _persistKeyUserName = 'userDisplayName';
+const _persistKeyUserDisplayName = 'userDisplayName';
 const _persistKeyUserHome = 'userHome';
 const _persistKeyUserPermissions = 'userPermissions';
 
@@ -54,9 +54,9 @@ class PhylumAccount extends Account<PhylumAccount> {
     persist(_persistKeyUserEmail, value);
   }
 
-  String get userName => getPersisted(_persistKeyUserName);
-  set userName(String value) {
-    persist(_persistKeyUserName, value);
+  String get userDisplayName => getPersisted(_persistKeyUserDisplayName);
+  set userDisplayName(String value) {
+    persist(_persistKeyUserDisplayName, value);
   }
 
   String get userHome => getPersisted(_persistKeyUserHome);
@@ -121,9 +121,11 @@ class PhylumAccount extends Account<PhylumAccount> {
     await account.initialized;
 
     final userMap = response['user'];
-    account.userEmail = userMap['username'];
-    account.userName = userMap['display'];
+    account.userEmail = userMap['email'];
+    account.userDisplayName = userMap['display_name'];
+    account.userId = userMap['id'];
     account.userHome = userMap['home'];
+    account.userPermissions = userMap['permissions'];
 
     return account;
   }

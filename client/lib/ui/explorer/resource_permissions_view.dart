@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart' show TableOrViewStatements;
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
@@ -19,8 +20,8 @@ class ResourcePermissionsView extends StatefulWidget {
 
 class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
   String? resourceName;
-  Map<String, Permission>? permissions;
-  Map<String, Permission>? grants;
+  Map<int, Permission>? permissions;
+  Map<int, Permission>? grants;
   Permission? userPermission;
 
   StreamSubscription? sub;
@@ -75,11 +76,11 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                   final users =
                       account.userRepository.users.entries.where((e) => !grants.containsKey(e.key)).map((e) => e.value);
                   final user = await showOptionsDialogBuilder(
-                      context, users.toList(growable: false), (user) => ListTile(title: Text(user.display)),
+                      context, users.toList(growable: false), (user) => ListTile(title: Text(user.displayName)),
                       filterList: (u, q) {
                     final query = q.toLowerCase();
                     return u
-                        .where((u) => u.username.contains(query) || u.display.contains(query))
+                        .where((u) => u.email.contains(query) || u.displayName.contains(query))
                         .toList(growable: false);
                   });
                   if (user == null || !context.mounted) return;
@@ -96,7 +97,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                   account.addAction(ResourceShareAction(
                     resourceId: widget.resourceId,
                     resourceName: resourceName!,
-                    username: user.username,
+                    user: user,
                     permission: permission,
                   ));
                 },
@@ -112,15 +113,19 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                 value: e.value,
                 onChanged: (userPermission! & permissionShare) == 0
                     ? null
-                    : (value) {
+                    : (value) async {
                         if (value == null || value == e.value) return;
                         if (value == permissions[e.key]) {
                           value = 0;
                         }
+                        final user =
+                            await (account.db.users.select()..where((u) => u.id.equals(e.key))).getSingleOrNull();
+                        if (user == null) return;
+
                         account.addAction(ResourceShareAction(
                           resourceId: widget.resourceId,
                           resourceName: resourceName!,
-                          username: e.key,
+                          user: user,
                           permission: value,
                         ));
                       },

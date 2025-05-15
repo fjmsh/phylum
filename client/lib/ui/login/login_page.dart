@@ -21,7 +21,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final Client _client = Client();
-  String _username = '';
+  String _email = '';
   String _password = '';
   Uri? serverUrl = kIsWeb ? Uri() : null;
   String? urlError;
@@ -35,7 +35,7 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
   }
 
-  void _performLogin(BuildContext context, String username, String password) async {
+  void _performLogin(BuildContext context, String email, String password) async {
     final serverUrl = this.serverUrl;
     if (!serverUrlValid) return;
     final builder = serverUrl == null ? UriBuilder() : UriBuilder.fromUri(serverUrl);
@@ -49,7 +49,7 @@ class _LoginPageState extends State<LoginPage> {
     );
     builder.path = '${builder.path}/api/v1/auth/password';
     final request = MultipartRequest('post', builder.build());
-    request.fields['username'] = username;
+    request.fields['email'] = email;
     request.fields['password'] = password;
 
     try {
@@ -124,12 +124,12 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 TextField(
                   decoration: const InputDecoration(
-                    label: Text('Username'),
+                    label: Text('Email'),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   onChanged: (value) {
                     setState(() {
-                      _username = value.trim();
+                      _email = value.trim();
                     });
                   },
                 ),
@@ -145,15 +145,15 @@ class _LoginPageState extends State<LoginPage> {
                     });
                   },
                   onSubmitted: (value) {
-                    _performLogin(context, _username, _password);
+                    _performLogin(context, _email, _password);
                   },
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 16.0),
                   child: ElevatedButton(
-                    onPressed: serverUrlValid && _username.isNotEmpty
+                    onPressed: serverUrlValid && _email.isNotEmpty
                         ? () async {
-                            _performLogin(context, _username, _password);
+                            _performLogin(context, _email, _password);
                           }
                         : null,
                     child: const Text('Login'),
