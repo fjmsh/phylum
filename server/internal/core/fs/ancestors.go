@@ -31,7 +31,7 @@ const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, userPermission) A
         SELECT r.id, r.name, r.parent, COALESCE(r.permissions[$2::INT]::INT, 0) as userPermission
             FROM resources r
             JOIN nodes n ON r.id = n.parent
-			WHERE userPermission <> 0
+			WHERE r.permissions[$2::INT]::INT <> 0
 			OR $3::BOOLEAN
 )
 SELECT id, name, userPermission FROM nodes`
