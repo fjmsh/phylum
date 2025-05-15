@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/providers/posflag"
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
 	"github.com/shroff/phylum/server/internal/command/fs"
@@ -22,6 +23,7 @@ import (
 	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
@@ -41,8 +43,8 @@ func SetupCommand() {
 	flags.MarkHidden("debug")
 	viper.BindPFlag("debug", flags.Lookup("debug"))
 
-	flags.Bool("trace-queries", false, "Trace Database Queries")
-	flags.MarkHidden("trace-queries")
+	flags.Bool("db_trace-queries", false, "Trace Database Queries")
+	flags.MarkHidden("db_trace-queries")
 
 	viper.SetDefault("db.host", "localhost")
 	viper.SetDefault("db.port", "5432")
@@ -75,6 +77,16 @@ func SetupCommand() {
 			}
 			logrus.Info("Loaded config from ", configFile)
 		}
+
+		if err := k.Load(posflag.ProviderWithFlag(cmd.Flags(), ".", k, func(f *pflag.Flag) (string, interface{}) {
+			if !f.Changed {
+				return "", ""
+			}
+			return strings.ReplaceAll(f.Name, "_", "."), posflag.FlagVal(cmd.Flags(), f)
+		}), nil); err != nil {
+			logrus.Fatalf("Unable to load flags: %v", err)
+		}
+
 		var cfg Config
 		k.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "koanf"})
 
@@ -85,7 +97,7 @@ func SetupCommand() {
 
 		db.Config = viper.Sub("db")
 		// TODO: Hack. flag bindings don't work in viper for nested keys
-		db.Config.BindPFlag("trace_queries", flags.Lookup("trace-queries"))
+		db.Config.BindPFlag("trace_queries", flags.Lookup("db_trace-queries"))
 		storage.Config = viper.Sub("storage")
 		storage.Config.BindPFlag("location", flags.Lookup("location"))
 	}

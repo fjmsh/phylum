@@ -1,7 +1,7 @@
 package command
 
 var defaultConfig = Config{
-	Database: DBConfig{
+	DB: DBConfig{
 		Host:     "localhost",
 		Port:     5432,
 		Username: "phylum",
@@ -24,10 +24,10 @@ var defaultConfig = Config{
 }
 
 type Config struct {
-	Debug    bool          `koanf:"debug"`
-	Database DBConfig      `kaonf:"db"`
-	Storage  StorageConfig `koanf:"storage"`
-	Server   ServerConfig  `koanf:"server"`
+	Debug   bool          `koanf:"debug"`
+	DB      DBConfig      `koanf:"db"`
+	Storage StorageConfig `koanf:"storage"`
+	Server  ServerConfig  `koanf:"server"`
 }
 
 type DBConfig struct {
@@ -35,8 +35,8 @@ type DBConfig struct {
 	Port          int    `koanf:"port"`
 	Username      string `koanf:"username"`
 	Password      string `koanf:"password"`
-	SkipMigration bool   `koanf:"skip_migration"`
-	TraceQueries  bool   `koanf:"trace_queries"`
+	SkipMigration bool   `koanf:"skip-migration"`
+	TraceQueries  bool   `koanf:"trace-queries"`
 }
 
 type ServerConfig struct {
