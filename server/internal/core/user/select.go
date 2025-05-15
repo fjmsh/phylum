@@ -19,7 +19,7 @@ func (m manager) ListUsers(since *time.Time) ([]User, error) {
 	if since != nil {
 		s.Time = *since
 	}
-	const q = "SELECT email, display_name, home, permissions FROM users WHERE modified > $1::TIMESTAMP"
+	const q = "SELECT id, email, display_name, home, permissions FROM users WHERE modified > $1::TIMESTAMP"
 	if rows, err := m.db.Query(q, s); err != nil {
 		return nil, err
 	} else {

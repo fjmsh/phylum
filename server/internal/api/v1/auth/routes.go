@@ -37,7 +37,7 @@ func handlePasswordAuth(c *gin.Context) {
 	if user, err := userManager.VerifyUserPassword(params.Email, params.Password); err != nil {
 		panic(err)
 	} else {
-		if token, err := userManager.CreateAccessToken(user.Email); err != nil {
+		if token, err := userManager.CreateAccessToken(user); err != nil {
 			panic(err)
 		} else {
 			c.JSON(200, loginResponse{

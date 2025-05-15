@@ -50,7 +50,7 @@ type Manager interface {
 
 	// auth.go
 	VerifyUserPassword(email, password string) (User, error)
-	CreateAccessToken(email string) (string, error)
+	CreateAccessToken(user User) (string, error)
 	ReadAccessToken(accessToken string) (User, error)
 
 	// bookmarks.go

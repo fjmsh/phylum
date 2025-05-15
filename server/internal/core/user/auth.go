@@ -39,10 +39,10 @@ func (m manager) VerifyUserPassword(email, password string) (User, error) {
 	}
 }
 
-func (m manager) CreateAccessToken(userID string) (string, error) {
+func (m manager) CreateAccessToken(user User) (string, error) {
 	const q = `INSERT INTO access_tokens(id, expires, user_id) VALUES ($1::TEXT, NOW() + $2::INTERVAL, $3::INT)`
 	id := GenerateRandomString(accessTokenLength)
-	if _, err := m.db.Exec(q, id, accessTokenValidity, userID); err != nil {
+	if _, err := m.db.Exec(q, id, accessTokenValidity, user.ID); err != nil {
 		return "", err
 	} else {
 		return id, nil
