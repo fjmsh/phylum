@@ -6,7 +6,6 @@ import (
 	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func SetupCommand() *cobra.Command {
@@ -22,10 +21,6 @@ func SetupCommand() *cobra.Command {
 		setupUserPasswdCommand(),
 		setupBookmarksCommand(),
 	}...)
-
-	flags := cmd.PersistentFlags()
-	flags.Bool("auto-migrate", true, "Automatically migrate database schema")
-	viper.BindPFlag("auto_migrate", flags.Lookup("auto-migrate"))
 
 	return cmd
 }

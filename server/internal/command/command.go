@@ -2,7 +2,6 @@ package command
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -25,14 +24,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 )
 
 func SetupCommand() {
-	viper.SetEnvPrefix("phylum")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
-
 	var rootCmd = &cobra.Command{Use: path.Base(os.Args[0])}
 	flags := rootCmd.PersistentFlags()
 
@@ -42,7 +36,6 @@ func SetupCommand() {
 
 	flags.Bool("debug", false, "Debug mode")
 	flags.MarkHidden("debug")
-	viper.BindPFlag("debug", flags.Lookup("debug"))
 
 	flags.Bool("db_trace", false, "Trace Database Queries")
 	flags.MarkHidden("db_trace")
@@ -78,7 +71,6 @@ func SetupCommand() {
 				return "", ""
 			}
 			k, v := strings.ReplaceAll(f.Name, "_", "."), posflag.FlagVal(cmd.Flags(), f)
-			fmt.Printf("%s: %v\n", k, v)
 			return k, v
 		}), nil); err != nil {
 			logrus.Fatalf("Unable to load flags: %v", err)
@@ -87,9 +79,10 @@ func SetupCommand() {
 		var cfg Config
 		k.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "koanf"})
 
-		if viper.GetBool("debug") {
+		if cfg.Debug {
 			logrus.SetLevel(logrus.TraceLevel)
 			logrus.Debug("Running in debug mode")
+			cfg.Server.Debug = true
 		}
 
 		db.Cfg = cfg.DB
