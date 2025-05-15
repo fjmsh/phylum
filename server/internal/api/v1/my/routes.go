@@ -7,7 +7,7 @@ import (
 )
 
 type homeResponse struct {
-	User responses.MyUser       `json:"user"`
+	User responses.LoggedInUser `json:"user"`
 	Home responses.ResourceFull `json:"home"`
 }
 
@@ -31,12 +31,14 @@ func handleHomeRoute(c *gin.Context) {
 	}
 
 	c.JSON(200, homeResponse{
-		User: responses.MyUser{
+		User: responses.LoggedInUser{
 			User: responses.User{
 				Email:       user.Email,
 				DisplayName: user.DisplayName,
 			},
-			ID: user.ID,
+			ID:          user.ID,
+			Home:        user.Home,
+			Permissions: user.Permissions,
 		},
 		Home: responses.FullResourceFromFS(r),
 	})

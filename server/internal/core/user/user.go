@@ -15,7 +15,7 @@ type User struct {
 	Email       string
 	DisplayName string
 	Home        pgtype.UUID
-	Permissions int32
+	Permissions Permission
 }
 
 func scanUser(row pgx.CollectableRow) (User, error) {

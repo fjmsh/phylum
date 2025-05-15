@@ -16,8 +16,8 @@ type passwordParams struct {
 }
 
 type loginResponse struct {
-	AccessToken string           `json:"access_token"`
-	User        responses.MyUser `json:"user"`
+	AccessToken string                 `json:"access_token"`
+	User        responses.LoggedInUser `json:"user"`
 }
 
 func SetupRoutes(r *gin.RouterGroup) {
@@ -42,13 +42,14 @@ func handlePasswordAuth(c *gin.Context) {
 		} else {
 			c.JSON(200, loginResponse{
 				AccessToken: token,
-				User: responses.MyUser{
+				User: responses.LoggedInUser{
 					User: responses.User{
 						Email:       user.Email,
 						DisplayName: user.DisplayName,
 					},
-					ID:   user.ID,
-					Home: user.Home,
+					ID:          user.ID,
+					Home:        user.Home,
+					Permissions: user.Permissions,
 				},
 			})
 		}
