@@ -1,11 +1,16 @@
 package command
 
 import (
+	"errors"
 	"os"
 	"path"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/providers/structs"
+	"github.com/knadh/koanf/v2"
 	"github.com/shroff/phylum/server/internal/command/fs"
 	"github.com/shroff/phylum/server/internal/command/publink"
 	"github.com/shroff/phylum/server/internal/command/schema"
@@ -28,7 +33,9 @@ func SetupCommand() {
 	var rootCmd = &cobra.Command{Use: path.Base(os.Args[0])}
 	flags := rootCmd.PersistentFlags()
 
+	// Flags only. Not part of config file
 	flags.StringP("workdir", "W", "", "Set working directory")
+	flags.StringP("config-file", "c", "config.yml", "Set working directory")
 
 	flags.Bool("debug", false, "Debug mode")
 	flags.MarkHidden("debug")
@@ -46,6 +53,9 @@ func SetupCommand() {
 
 	viper.SetDefault("storage.location", "storage")
 
+	k := koanf.New(".")
+	k.Load(structs.Provider(defaultConfig, "koanf"), nil)
+
 	uuid.EnableRandPool()
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		dir, _ := cmd.Flags().GetString("workdir")
@@ -53,6 +63,21 @@ func SetupCommand() {
 			logrus.Info("Changing directory to " + dir)
 			os.Chdir(dir)
 		}
+
+		configFile, _ := cmd.Flags().GetString("config-file")
+		if configFile != "" {
+			if err := k.Load(file.Provider(configFile), yaml.Parser()); err != nil {
+				if errors.Is(err, os.ErrNotExist) {
+					logrus.Info("Config file does not exist. Skipping")
+				} else {
+					logrus.Fatal("Unable to load config: ", err.Error())
+				}
+			}
+			logrus.Info("Loaded config from ", configFile)
+		}
+		var cfg Config
+		k.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "koanf"})
+
 		if viper.GetBool("debug") {
 			logrus.SetLevel(logrus.TraceLevel)
 			logrus.Debug("Running in debug mode")
