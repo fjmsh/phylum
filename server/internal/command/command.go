@@ -43,15 +43,11 @@ func SetupCommand() {
 	flags.MarkHidden("debug")
 	viper.BindPFlag("debug", flags.Lookup("debug"))
 
-	flags.Bool("db_trace-queries", false, "Trace Database Queries")
-	flags.MarkHidden("db_trace-queries")
+	flags.Bool("db_trace", false, "Trace Database Queries")
+	flags.MarkHidden("db_trace")
 
-	viper.SetDefault("db.host", "localhost")
-	viper.SetDefault("db.port", "5432")
-	viper.SetDefault("db.name", "phylum")
-	viper.SetDefault("db.user", "phylum")
-	viper.SetDefault("db.trace_queries", "false")
-	viper.SetDefault("db.skip_migration", "false")
+	flags.Bool("db_nomigrate", false, "Skip Database Migrations")
+	flags.MarkHidden("db_nomigrate")
 
 	viper.SetDefault("storage.location", "storage")
 
@@ -95,9 +91,7 @@ func SetupCommand() {
 			logrus.Debug("Running in debug mode")
 		}
 
-		db.Config = viper.Sub("db")
-		// TODO: Hack. flag bindings don't work in viper for nested keys
-		db.Config.BindPFlag("trace_queries", flags.Lookup("db_trace-queries"))
+		db.Cfg = cfg.DB
 		storage.Config = viper.Sub("storage")
 		storage.Config.BindPFlag("location", flags.Lookup("location"))
 	}

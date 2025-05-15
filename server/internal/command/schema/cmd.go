@@ -28,7 +28,7 @@ func setupSchemaResetCommand() *cobra.Command {
 		Use:   "reset",
 		Short: "Reset Database Schema",
 		Run: func(cmd *cobra.Command, args []string) {
-			db.Config.Set("skip_migration", true)
+			db.Cfg.NoMigrate = true
 			if err := db.DeleteSchema(context.Background()); err != nil {
 				fmt.Println("unable to delete database schema: " + err.Error())
 				os.Exit(1)
@@ -49,10 +49,10 @@ func setupSchemaMigrateCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
 			if args[0] == "auto" || args[0] == "latest" {
-				db.Config.Set("skip_migration", false)
+				db.Cfg.NoMigrate = false
 				db.Get(ctx)
 			} else {
-				db.Config.Set("skip_migration", true)
+				db.Cfg.NoMigrate = true
 				if v, err := strconv.Atoi(args[0]); err != nil {
 					fmt.Println(err.Error())
 					os.Exit(3)

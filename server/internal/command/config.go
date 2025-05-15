@@ -1,10 +1,13 @@
 package command
 
+import "github.com/shroff/phylum/server/internal/core/db"
+
 var defaultConfig = Config{
-	DB: DBConfig{
+	DB: db.Config{
 		Host:     "localhost",
 		Port:     5432,
-		Username: "phylum",
+		DBName:   "phylum",
+		User:     "phylum",
 		Password: "phylum",
 	},
 	Storage: StorageConfig{
@@ -25,18 +28,9 @@ var defaultConfig = Config{
 
 type Config struct {
 	Debug   bool          `koanf:"debug"`
-	DB      DBConfig      `koanf:"db"`
+	DB      db.Config     `koanf:"db"`
 	Storage StorageConfig `koanf:"storage"`
 	Server  ServerConfig  `koanf:"server"`
-}
-
-type DBConfig struct {
-	Host          string `koanf:"host"`
-	Port          int    `koanf:"port"`
-	Username      string `koanf:"username"`
-	Password      string `koanf:"password"`
-	SkipMigration bool   `koanf:"skip-migration"`
-	TraceQueries  bool   `koanf:"trace-queries"`
 }
 
 type ServerConfig struct {

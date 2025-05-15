@@ -8,10 +8,9 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
-var Config *viper.Viper
+var Cfg Config
 
 var pool *pgxpool.Pool
 
@@ -35,12 +34,12 @@ func Close() {
 
 func initPool(ctx context.Context) error {
 	var dsn strings.Builder
-	dsn.WriteString("host=" + Config.GetString("host"))
-	dsn.WriteString(" port=" + Config.GetString("port"))
-	dsn.WriteString(" dbname=" + Config.GetString("name"))
-	dsn.WriteString(" user=" + Config.GetString("user"))
-	if Config.GetString("password") != "" {
-		dsn.WriteString(" password=" + Config.GetString("password"))
+	dsn.WriteString("host=" + Cfg.Host)
+	dsn.WriteString(" port=" + Cfg.Password)
+	dsn.WriteString(" dbname=" + Cfg.DBName)
+	dsn.WriteString(" user=" + Cfg.User)
+	if Cfg.Password != "" {
+		dsn.WriteString(" password=" + Cfg.Password)
 	}
 
 	config, err := pgxpool.ParseConfig(dsn.String())
@@ -48,7 +47,7 @@ func initPool(ctx context.Context) error {
 		return errors.New("Unable to parse DSN: " + err.Error())
 	}
 
-	if Config.GetBool("trace_queries") {
+	if Cfg.Trace {
 		config.ConnConfig.Tracer = tracer{}
 	}
 
@@ -59,7 +58,7 @@ func initPool(ctx context.Context) error {
 
 	logrus.Debug("Connected to " + config.ConnConfig.Database + " at " + config.ConnConfig.Host + ":" + fmt.Sprint(config.ConnConfig.Port))
 
-	if err := checkVersion(ctx, Config.GetBool("skip_migration")); err != nil {
+	if err := checkVersion(ctx, Cfg.NoMigrate); err != nil {
 		return err
 	}
 
