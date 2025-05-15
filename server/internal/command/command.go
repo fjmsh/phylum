@@ -2,6 +2,7 @@ package command
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -36,8 +37,8 @@ func SetupCommand() {
 	flags := rootCmd.PersistentFlags()
 
 	// Flags only. Not part of config file
-	flags.StringP("workdir", "W", "", "Set working directory")
-	flags.StringP("config-file", "c", "config.yml", "Set working directory")
+	flags.StringP("workdir", "W", "", "Working Directory")
+	flags.StringP("config-file", "c", "config.yml", "Config File Path")
 
 	flags.Bool("debug", false, "Debug mode")
 	flags.MarkHidden("debug")
@@ -76,7 +77,9 @@ func SetupCommand() {
 			if !f.Changed {
 				return "", ""
 			}
-			return strings.ReplaceAll(f.Name, "_", "."), posflag.FlagVal(cmd.Flags(), f)
+			k, v := strings.ReplaceAll(f.Name, "_", "."), posflag.FlagVal(cmd.Flags(), f)
+			fmt.Printf("%s: %v\n", k, v)
+			return k, v
 		}), nil); err != nil {
 			logrus.Fatalf("Unable to load flags: %v", err)
 		}
@@ -91,6 +94,7 @@ func SetupCommand() {
 
 		db.Cfg = cfg.DB
 		storage.Cfg = cfg.Storage
+		serve.Cfg = cfg.Server
 	}
 
 	defer func() {

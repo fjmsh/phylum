@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/fvbock/endless"
@@ -15,76 +16,58 @@ import (
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 const trashRetainDuration = 30 * 24 * time.Hour
+
+var Cfg Config
 
 func SetupCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:     "serve",
 		Short:   "Run the server",
 		GroupID: "server",
-		Run: func(cmd *cobra.Command, args []string) {
-			config := viper.Sub("server")
-
-			flags := cmd.Flags()
-			// TODO: Hack. flag bindings don't work in viper for nested keys
-			config.BindPFlag("host", flags.Lookup("host"))
-			config.BindPFlag("port", flags.Lookup("port"))
-			config.BindPFlag("cors.enabled", flags.Lookup("cors-enabled"))
-			config.BindPFlag("cors.origins", flags.Lookup("cors-origins"))
-			config.BindPFlag("log_body", flags.Lookup("log-body"))
-			config.BindPFlag("web_app_src", flags.Lookup("web-app-src"))
-			config.BindPFlag("publink_path", flags.Lookup("publink-path"))
-			config.BindPFlag("webdav_path", flags.Lookup("webdav-path"))
-
-			if !viper.GetBool("debug") {
-				gin.SetMode(gin.ReleaseMode)
-			}
-			engine := createEngine(config)
-
-			webdav.SetupHandler(engine.Group(config.GetString("webdav_path")))
-			apiv1.Setup(engine.Group("/api/v1"))
-			publink.Setup(engine.Group(config.GetString("publink_path")))
-
-			webAppSrcDir := config.GetString("web_app_src")
-			if webAppSrcDir != "" {
-				setupWebApp(engine, webAppSrcDir)
-			}
-			setupTrashCompactor()
-
-			listen := config.GetString("host") + ":" + config.GetString("port")
-			server := endless.NewServer(listen, engine)
-			server.BeforeBegin = func(addr string) {
-				logrus.Info("Listening on " + addr)
-			}
-
-			if err := server.ListenAndServe(); err != nil {
-				logrus.Fatal(err.Error())
-			}
-		},
 	}
+
 	flags := cmd.Flags()
 
-	flags.String("host", "", "Server Host")
-	flags.String("port", "2448", "Server Port")
-	flags.Bool("cors-enabled", false, "Enable CORS")
-	flags.StringSlice("cors-origins", []string{"*"}, "CORS origins")
-	flags.Bool("log-body", false, "Log Response Body (Must be used with --debug)")
-	flags.String("web-app-src", "web", "Web App Source Directory")
-	flags.String("publink-path", "/publink", "Public Share path prefix")
-	flags.String("webdav-path", "/webdav", "WebDAV path prefix")
+	flags.Bool("db_trace", false, "Trace Database Queries")
+	flags.MarkHidden("db_trace")
 
-	// Must be specified otherwise env variables won't be parsed
-	viper.SetDefault("server.host", "")
-	viper.SetDefault("server.port", "2448")
-	viper.SetDefault("server.log_body", false)
-	viper.SetDefault("server.cors.enabled", false)
-	viper.SetDefault("server.cors.origins", []string{"*"})
-	viper.SetDefault("server.web_app_src", "web")
-	viper.SetDefault("server.publink_path", "/publink")
-	viper.SetDefault("server.webdav_path", "/webdav")
+	flags.String("server_host", "", "Server Host")
+	flags.String("server_port", "", "Server Port")
+	flags.String("server_webappsrc", "", "Web App Source Directory")
+	flags.String("server_publinkpath", "", "Public Share path prefix")
+	flags.String("server_webdavpath", "", "WebDAV path prefix")
+	flags.Bool("server_cors_enabled", false, "Enable CORS")
+	flags.StringSlice("server_cors_origins", nil, "CORS origins")
+	flags.Bool("server_logbody", false, "Log Response Body (Must be used with --debug)")
+
+	cmd.Run = func(cmd *cobra.Command, args []string) {
+		if !Cfg.Debug {
+			gin.SetMode(gin.ReleaseMode)
+		}
+		engine := createEngine()
+
+		webdav.SetupHandler(engine.Group(Cfg.WebDAVPath))
+		apiv1.Setup(engine.Group("/api/v1"))
+		publink.Setup(engine.Group(Cfg.PublinkPath))
+
+		if Cfg.WebAppSrc != "" {
+			setupWebApp(engine, Cfg.WebAppSrc)
+		}
+		setupTrashCompactor()
+
+		listen := Cfg.Host + ":" + strconv.Itoa(Cfg.Port)
+		server := endless.NewServer(listen, engine)
+		server.BeforeBegin = func(addr string) {
+			logrus.Info("Listening on " + addr)
+		}
+
+		if err := server.ListenAndServe(); err != nil {
+			logrus.Fatal(err.Error())
+		}
+	}
 
 	return cmd
 }
