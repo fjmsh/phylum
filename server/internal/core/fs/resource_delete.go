@@ -131,10 +131,8 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 				return err
 			} else {
 				r.name = name
-				r.parentID = pgtype.UUID{
-					Bytes: p.id,
-					Valid: true,
-				}
+				r.parentID = pgtype.UUID{Bytes: p.id, Valid: true}
+				r.visibleParent = r.parentID
 			}
 		}
 		if del, err := f.markNotDeleted(r.id); err != nil {

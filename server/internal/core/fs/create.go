@@ -263,6 +263,7 @@ func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, 
 	} else {
 		r, err := f.collectFullResource(rows)
 		r.parentID = pgtype.UUID{Bytes: parent, Valid: true}
+		r.visibleParent = r.parentID
 		r.inheritedPermissions = permissions
 		return r, err
 	}

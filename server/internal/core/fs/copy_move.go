@@ -89,6 +89,7 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 					return err
 				}
 				res.parentID = newParentID
+				res.visibleParent = newParentID
 			}
 			return nil
 		}
@@ -229,6 +230,10 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		return Resource{}, false, err
 	}
 
+	targetRoot.visibleParent = pgtype.UUID{
+		Bytes: r.id,
+		Valid: true,
+	}
 	targetRoot.f = r.f
 	targetRoot.userPermission = destParent.userPermission
 	return targetRoot, deleted, err
