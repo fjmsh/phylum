@@ -70,7 +70,7 @@ class DownloadManager with ChangeNotifier {
         }
       },
     );
-    _downloader.resumeFromBackground();
+    _downloader.start();
   }
 
   Future<void> downloadResource(Resource r) async {
