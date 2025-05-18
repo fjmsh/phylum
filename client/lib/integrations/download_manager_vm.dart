@@ -8,17 +8,16 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
 
 Future<bool> downloadResource(BuildContext context, Resource r) async {
-  await context.read<DownloadManager>().downloadResource(r);
+  await context.read<DownloadManager>().downloadResource(context.read(), r);
   return true;
 }
 
 class DownloadManager with ChangeNotifier {
   final _downloader = FileDownloader();
-  final PhylumAccount _account;
   final Map<String, DownloadTaskStatusNotifier> _tasks = {};
   Iterable<DownloadTaskStatusNotifier> get tasks => _tasks.values;
 
-  DownloadManager(this._account) : super() {
+  DownloadManager() : super() {
     _downloader.configure(globalConfig: (Config.runInForeground, Config.always));
     _downloader.configureNotification(
       running: TaskNotification("Downloading", "File: {filename}"),
@@ -73,17 +72,17 @@ class DownloadManager with ChangeNotifier {
     _downloader.start();
   }
 
-  Future<void> downloadResource(Resource r) async {
+  Future<void> downloadResource(PhylumAccount account, Resource r) async {
     await _downloader.ready;
     if (Platform.isAndroid || Platform.isAndroid) {
       await Permission.notification.request();
     }
-    final uri = _account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}:');
+    final uri = account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}:');
     final task = DownloadTask(
       url: uri.toString(),
       filename: r.name,
       displayName: r.name,
-      headers: _account.apiClient.requestHeaders,
+      headers: account.apiClient.requestHeaders,
       updates: Updates.statusAndProgress,
       retries: 5,
       allowPause: true,

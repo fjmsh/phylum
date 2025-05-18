@@ -25,7 +25,5 @@ Future<bool> downloadResource(BuildContext context, Resource r) async {
 }
 
 class DownloadManager with ChangeNotifier {
-  DownloadManager(PhylumAccount account) : super();
-
-  Future<void> downloadResource(Resource r) async {}
+  Future<void> downloadResource(PhylumAccount account, Resource r) async {}
 }
