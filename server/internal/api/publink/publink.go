@@ -26,6 +26,7 @@ func Setup(r *gin.RouterGroup) {
 				c.AbortWithStatus(http.StatusInternalServerError)
 			}
 		} else {
+			c.Writer.Header().Set("Content-Disposition", "attachment; filename=\""+r.Name()+"\"")
 			serve.Serve(c.Writer, c.Request, r)
 		}
 	})
