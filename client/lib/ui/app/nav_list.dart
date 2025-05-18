@@ -75,7 +75,7 @@ class NavList extends StatelessWidget {
                     leading: const Icon(Icons.home),
                     title: const Text('Home'),
                     onTap: () {
-                      Actions.maybeInvoke(context, NavIntent(target: ExplorerPageHome(context.read())));
+                      Actions.maybeInvoke(context, NavIntent(target: ExplorerPageHome()));
                       Scaffold.maybeOf(context)?.closeDrawer();
                     },
                   ),

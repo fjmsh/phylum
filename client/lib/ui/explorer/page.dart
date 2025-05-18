@@ -14,6 +14,8 @@ sealed class ExplorerPage {
 
   const ExplorerPage();
 
+  String? folderId(PhylumAccount account) => null;
+
   Future<bool> refresh(PhylumAccount account);
 
   Stream<List<Resource>> items(PhylumAccount account);
@@ -26,7 +28,10 @@ class ExplorerPageHome extends ExplorerPageFolder {
   @override
   String get title => 'My Files';
 
-  ExplorerPageHome(PhylumAccount account) : super(folderId: account.userHome);
+  ExplorerPageHome() : super(folderId: '');
+
+  @override
+  String folderId(PhylumAccount account) => account.userHome;
 }
 
 class ExplorerPageFolder extends ExplorerPage {
@@ -36,16 +41,19 @@ class ExplorerPageFolder extends ExplorerPage {
   @override
   String get title => 'Folder';
 
-  final String folderId;
+  final String _folderId;
 
-  ExplorerPageFolder({required this.folderId});
+  ExplorerPageFolder({required String folderId}) : _folderId = folderId;
+
+  @override
+  String folderId(PhylumAccount account) => _folderId;
 
   @override
   Future<bool> refresh(PhylumAccount account) =>
-      account.resourceRepository.requestResource(folderId).then((result) => result is ApiSuccessResponse);
+      account.resourceRepository.requestResource(folderId(account)).then((result) => result is ApiSuccessResponse);
 
   @override
-  Stream<List<Resource>> items(PhylumAccount account) => account.db.watchChildren(folderId);
+  Stream<List<Resource>> items(PhylumAccount account) => account.db.watchChildren(folderId(account));
 }
 
 class ExplorerPageRecents extends ExplorerPage {

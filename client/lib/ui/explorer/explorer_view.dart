@@ -33,11 +33,18 @@ class ExplorerView extends StatefulWidget {
 
 class _ExplorerViewState extends State<ExplorerView> {
   final _refreshKey = GlobalKey<RefreshIndicatorState>();
+  late final AppLifecycleListener _listener;
   StreamSubscription? _intentSub;
 
   @override
   void initState() {
     super.initState();
+
+    final account = context.read<PhylumAccount>();
+    _listener = AppLifecycleListener(onResume: () {
+      account.userRepository.refresh();
+      account.bookmarkRepository.refresh();
+    });
 
     if (!kIsWeb && Platform.isAndroid) {
       // Process share intents received while the app is alive
@@ -55,6 +62,7 @@ class _ExplorerViewState extends State<ExplorerView> {
 
   @override
   void dispose() {
+    _listener.dispose();
     _intentSub?.cancel();
     ClipboardEvents.instance?.unregisterPasteEventListener(_handlePaste);
     super.dispose();

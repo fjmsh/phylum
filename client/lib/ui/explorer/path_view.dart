@@ -20,23 +20,19 @@ class PathView extends StatelessWidget {
   Widget build(BuildContext context) {
     final page = context.select<ExplorerState, ExplorerPage>((state) => state.page);
     final account = context.read<PhylumAccount>();
-    if (page is ExplorerPageFolder) {
-      final home = account.userHome;
+    final folderId = page.folderId(account);
+    if (folderId != null) {
       return StreamBuilder(
-          stream: account.db.watchParents(page.folderId),
-          initialData: <ParentsResult>[ParentsResult(id: page.folderId, name: 'Folder', userPermission: 0)],
+          stream: account.db.watchParents(folderId),
+          initialData: <ParentsResult>[ParentsResult(id: folderId, name: 'Folder', userPermission: 0)],
           builder: (context, snapshot) {
             final path = <PathInfo>[];
             for (int i = snapshot.data!.length - 1; i >= 0; i--) {
               final entry = snapshot.data![i];
               final permission = entry.userPermission;
               if (permission != 0) {
-                if (entry.id == home) {
-                  if (path.isNotEmpty) {
-                    path.clear();
-                  }
-                  path.add(PathInfo(
-                      title: 'My Files', dropTargetId: entry.id, targetPage: ExplorerPageHome(context.read())));
+                if (entry.id == account.userHome) {
+                  path.add(PathInfo(title: 'My Files', dropTargetId: entry.id, targetPage: ExplorerPageHome()));
                 } else {
                   if (path.isEmpty) {
                     path.add(

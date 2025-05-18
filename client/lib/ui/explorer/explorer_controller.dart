@@ -12,6 +12,7 @@ import 'selection_mode.dart';
 
 class ExplorerState {
   final ExplorerPage page;
+  final String? folderId;
   final Resource? folder;
   final List<Resource> resources;
   final Set<String> selectedIds;
@@ -22,7 +23,6 @@ class ExplorerState {
   final Future? refresh;
   final bool refreshError;
 
-  String? get folderId => page is ExplorerPageFolder ? (page as ExplorerPageFolder).folderId : null;
   Resource? get focussed => focusIndex < 0 || focusIndex >= resources.length ? null : resources[focusIndex];
   String? get focusId => focussed?.id;
   Iterable<Resource> get selected => resources.where((r) => selectedIds.contains(r.id));
@@ -32,6 +32,7 @@ class ExplorerState {
 
   const ExplorerState({
     required this.page,
+    required this.folderId,
     this.folder,
     this.resources = const [],
     this.selectedIds = const {},
@@ -44,7 +45,6 @@ class ExplorerState {
   });
 
   ExplorerState copyWith({
-    ExplorerPage? page,
     Resource? folder,
     List<Resource>? resources,
     Set<String>? selectedIds,
@@ -57,7 +57,8 @@ class ExplorerState {
     bool? refreshError,
   }) =>
       ExplorerState(
-        page: page ?? this.page,
+        page: page,
+        folderId: folderId,
         folder: folder ?? this.folder,
         resources: resources ?? this.resources,
         selectedIds: selectedIds ?? this.selectedIds,
@@ -85,7 +86,10 @@ class ExplorerController extends StateNotifier<ExplorerState> {
     required PhylumRouterDelegate routerDelegate,
   })  : _account = account,
         _routerDelegate = routerDelegate,
-        super(ExplorerState(page: routerDelegate.currentConfiguration!)) {
+        super(ExplorerState(
+          page: routerDelegate.currentConfiguration!,
+          folderId: routerDelegate.currentConfiguration?.folderId(account),
+        )) {
     _routerDelegate.addListener(updatePage);
     updatePage();
   }
@@ -93,17 +97,18 @@ class ExplorerController extends StateNotifier<ExplorerState> {
   void updatePage() {
     final page = _routerDelegate.currentConfiguration!;
     _folderSubscription?.cancel();
-    if (page is ExplorerPageFolder) {
-      _folderSubscription = _account.db.watchResource(page.folderId).listen((e) => state = state.copyWith(folder: e));
+    final folderId = page.folderId(_account);
+    if (folderId != null) {
+      _folderSubscription = _account.db.watchResource(folderId).listen((e) => state = state.copyWith(folder: e));
       if (page.folderId != _account.userHome) {
-        _account.db.markResourceAccess(page.folderId);
+        _account.db.markResourceAccess(folderId);
       }
     } else {
       _folderSubscription = null;
     }
     _childrenSubscription?.cancel();
     _childrenSubscription = page.items(_account).listen((e) => _updateResourceList(e));
-    state = ExplorerState(page: page);
+    state = ExplorerState(page: page, folderId: folderId);
     refresh();
   }
 
