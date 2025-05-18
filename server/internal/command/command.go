@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/providers/posflag"
 	"github.com/knadh/koanf/providers/structs"
@@ -75,6 +76,11 @@ func SetupCommand() {
 		}), nil); err != nil {
 			logrus.Fatalf("Unable to load flags: %v", err)
 		}
+
+		k.Load(env.Provider("PHYLUM_", ".", func(s string) string {
+			return strings.Replace(strings.ToLower(
+				strings.TrimPrefix(s, "PHYLUM_")), "_", ".", -1)
+		}), nil)
 
 		var cfg Config
 		k.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "koanf"})
