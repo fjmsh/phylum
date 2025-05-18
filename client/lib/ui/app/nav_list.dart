@@ -174,7 +174,7 @@ class NavList extends StatelessWidget {
                     leading: const Icon(Icons.logout),
                     title: const Text('Log Out'),
                     onTap: () {
-                      context.read<PhylumAccount>().logOut();
+                      context.read<PhylumAccount>().close(clearData: true);
                     },
                   ),
                 ],

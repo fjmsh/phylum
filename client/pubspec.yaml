@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 0.3.0+30
 
 environment:
-  sdk: ^3.5.0
+  sdk: ^3.6.0
 
 dependencies:
   flutter:
@@ -27,7 +27,7 @@ dependencies:
   offtheline:
     git:
       url: https://codeberg.org/shroff/offtheline.git
-      ref: 2a01d7ce8e8c0964a133c74b2b019d66fd611a69
+      ref: 2365704ff865d530169124600b4753f51656e815
   open_file:
   package_info_plus:
   path:

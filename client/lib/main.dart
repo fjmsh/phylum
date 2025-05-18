@@ -3,31 +3,22 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:phylum/ui/app/app.dart';
 import 'package:phylum/integrations/directories.dart';
 import 'package:phylum/libphylum/actions/deserializers.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/login/login_app.dart';
 import 'package:phylum/util/logging.dart';
-import 'package:provider/provider.dart';
 
-import 'presence_stub.dart' if (dart.library.js_interop) 'presence_web.dart';
+import 'ui/account/presence_stub.dart' if (dart.library.js_interop) 'ui/account/presence_web.dart';
 
 const storageDir = String.fromEnvironment("STORAGE_DIR");
 
 void main() async {
-  if (isAnother()) {
-    runApp(const AnotherRunningMessage());
-    return;
-  }
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -62,57 +53,5 @@ void main() async {
   }
   Hive.registerAdapter(OfflineActionAdapter(actionDeserializers));
 
-  final accountManager = await AccountManager.restore((id) async {
-    final account = PhylumAccount.restore(id: id);
-    final err = await account.initialized;
-    if (err != null) {
-      logger.e("Unable to restore account: $err");
-      return null;
-    }
-    return account;
-  });
-
-  runApp(AccountSelector(accountManager: accountManager));
-}
-
-class AnotherRunningMessage extends StatelessWidget {
-  const AnotherRunningMessage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Directionality(
-      textDirection: TextDirection.ltr,
-      child: Center(
-        child: Card(
-          child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text('Phylum is running in another tab or window.'),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class AccountSelector extends StatelessWidget {
-  final AccountManager<PhylumAccount> accountManager;
-
-  const AccountSelector({
-    super.key,
-    required this.accountManager,
-  });
-
-  @override
-  Widget build(BuildContext context) =>
-      StateNotifierProvider<AccountManager<PhylumAccount>, AccountManagerState<PhylumAccount>>.value(
-          value: accountManager,
-          builder: (context, child) {
-            final account =
-                context.select<AccountManagerState<PhylumAccount>, PhylumAccount?>((state) => state.selectedAccount);
-
-            if (account == null) {
-              return const LoginApp(key: ValueKey('login'));
-            }
-            return PhylumApp.create(account);
-          });
+  runApp(buildApp());
 }

@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/integrations/download_manager.dart';
+import 'package:phylum/ui/account/account_selector_app.dart';
+import 'package:phylum/ui/account/logout_page.dart';
 import 'package:phylum/ui/app/app_shortcuts.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/app/action_queue_status_notifier.dart';
-import 'package:phylum/ui/logout/logout_app.dart';
 import 'package:provider/provider.dart';
 
 class PhylumApp extends StatefulWidget {
@@ -55,7 +56,6 @@ class _PhylumAppState extends State<PhylumApp> {
 
   @override
   Widget build(BuildContext context) {
-    final ready = context.select<AccountState, bool>((state) => state == AccountState.ready);
     final theme = ThemeData(
       colorScheme: ColorScheme.fromSeed(
         seedColor: Color(0xff769e57),
@@ -66,18 +66,21 @@ class _PhylumAppState extends State<PhylumApp> {
       colorScheme: theme.colorScheme.copyWith(brightness: Brightness.dark),
       brightness: Brightness.dark,
     );
-    if (ready) {
-      return MaterialApp.router(
-        key: ValueKey('ready'),
-        title: 'Phylum',
-        debugShowCheckedModeBanner: false,
-        theme: theme,
-        darkTheme: darkTheme,
-        routeInformationParser: _routeInformationParser,
-        routerDelegate: _routerDelegate,
-        shortcuts: appShortcuts,
-      );
+
+    final ready = context.select<AccountState, bool>((state) => state == AccountState.ready);
+
+    if (!ready) {
+      return const AccountSelectorApp(key: ValueKey('logout'), child: LogoutPage());
     }
-    return const LogoutApp(key: ValueKey('logout'));
+    return MaterialApp.router(
+      key: ValueKey('ready'),
+      title: 'Phylum',
+      debugShowCheckedModeBanner: false,
+      theme: theme,
+      darkTheme: darkTheme,
+      routeInformationParser: _routeInformationParser,
+      routerDelegate: _routerDelegate,
+      shortcuts: appShortcuts,
+    );
   }
 }

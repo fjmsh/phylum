@@ -2,17 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:uri/uri.dart';
 
-import 'login_page.dart';
-
-class LoginApp extends StatefulWidget {
-  const LoginApp({super.key});
+class AccountSelectorApp extends StatefulWidget {
+  final Widget child;
+  const AccountSelectorApp({super.key, required this.child});
 
   @override
-  State<LoginApp> createState() => _LoginAppState();
+  State<AccountSelectorApp> createState() => _AccountSelectorAppState();
 }
 
-class _LoginAppState extends State<LoginApp> {
-  final delegate = LoginRouterDelegate();
+class _AccountSelectorAppState extends State<AccountSelectorApp> {
+  late final delegate = AccountSelectorRouterDelegate(child: widget.child);
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +26,7 @@ class _LoginAppState extends State<LoginApp> {
       brightness: Brightness.dark,
     );
     return MaterialApp.router(
-      title: 'Login | Phylum',
+      title: 'Phylum',
       debugShowCheckedModeBanner: false,
       theme: theme,
       darkTheme: darkTheme,
@@ -37,28 +36,28 @@ class _LoginAppState extends State<LoginApp> {
   }
 }
 
-class LoginRouteConfiguration {
+class AccountSelectorRouteConfiguration {
   final String? next;
 
-  LoginRouteConfiguration(this.next);
+  AccountSelectorRouteConfiguration(this.next);
 }
 
-class LoginRouteInformationParser extends RouteInformationParser<LoginRouteConfiguration> {
+class LoginRouteInformationParser extends RouteInformationParser<AccountSelectorRouteConfiguration> {
   const LoginRouteInformationParser();
 
   @override
-  Future<LoginRouteConfiguration> parseRouteInformation(RouteInformation routeInformation) {
+  Future<AccountSelectorRouteConfiguration> parseRouteInformation(RouteInformation routeInformation) {
     final uri = routeInformation.uri;
     final segments = uri.pathSegments;
 
     final next = (segments.isEmpty || (segments.length == 1 && (segments[0] == 'home' || segments[0] == 'login')))
         ? null
         : uri.path;
-    return SynchronousFuture(LoginRouteConfiguration(next));
+    return SynchronousFuture(AccountSelectorRouteConfiguration(next));
   }
 
   @override
-  RouteInformation? restoreRouteInformation(LoginRouteConfiguration configuration) {
+  RouteInformation? restoreRouteInformation(AccountSelectorRouteConfiguration configuration) {
     final b = UriBuilder()..path = '/login';
     if (configuration.next != null) {
       b.queryParameters['next'] = configuration.next!;
@@ -68,27 +67,28 @@ class LoginRouteInformationParser extends RouteInformationParser<LoginRouteConfi
   }
 }
 
-class LoginRouterDelegate extends RouterDelegate<LoginRouteConfiguration>
-    with ChangeNotifier, PopNavigatorRouterDelegateMixin<LoginRouteConfiguration> {
+class AccountSelectorRouterDelegate extends RouterDelegate<AccountSelectorRouteConfiguration>
+    with ChangeNotifier, PopNavigatorRouterDelegateMixin<AccountSelectorRouteConfiguration> {
+  final Widget child;
   @override
   final navigatorKey = GlobalKey<NavigatorState>();
 
-  LoginRouterDelegate();
+  AccountSelectorRouterDelegate({required this.child});
 
-  LoginRouteConfiguration? _currentConfiguration;
+  AccountSelectorRouteConfiguration? _currentConfiguration;
   @override
-  LoginRouteConfiguration? get currentConfiguration => _currentConfiguration;
+  AccountSelectorRouteConfiguration? get currentConfiguration => _currentConfiguration;
 
   @override
   Widget build(BuildContext context) {
     return Navigator(
       key: navigatorKey,
-      onGenerateRoute: (settings) => MaterialPageRoute(builder: (context) => const LoginPage()),
+      onGenerateRoute: (settings) => MaterialPageRoute(builder: (context) => child),
     );
   }
 
   @override
-  Future<void> setNewRoutePath(LoginRouteConfiguration configuration) {
+  Future<void> setNewRoutePath(AccountSelectorRouteConfiguration configuration) {
     _currentConfiguration = configuration;
     notifyListeners();
     return SynchronousFuture(null);

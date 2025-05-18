@@ -17,7 +17,7 @@ class LogoutPage extends StatelessWidget {
         child: Card(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: state == AccountState.loggedOut ? buildLoggedOutView(context) : buildLoggingOutView(),
+            child: state == AccountState.closed ? buildLoggedOutView(context) : buildLoggingOutView(),
           ),
         ),
       ),

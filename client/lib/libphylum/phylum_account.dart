@@ -97,7 +97,7 @@ class PhylumAccount extends Account<PhylumAccount> {
       if (errorResponse is PhylumApiErrorResponse) {
         if (errorResponse.code == "credentials_invalid") {
           logger.i('Invalid Credentials - Logging out');
-          logOut();
+          close(clearData: true);
           l.call();
         }
       }
@@ -108,9 +108,11 @@ class PhylumAccount extends Account<PhylumAccount> {
   Future<void> transaction(Future<void> Function() fn) => db.transaction(fn);
 
   @override
-  Future<void> cleanup() async {
-    await super.cleanup();
-    await db.dropDatabase();
+  Future<void> cleanup(bool clearData) async {
+    await super.cleanup(clearData);
+    if (clearData) {
+      await db.dropDatabase();
+    }
   }
 
   static Future<PhylumAccount> createFromLoginResponse(

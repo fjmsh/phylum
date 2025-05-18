@@ -36,18 +36,24 @@
 <body oncontextmenu="return false;">
   <script>
     const channel = new BroadcastChannel("the_one");
-    var another = false;
+    var primary = true;
+
     channel.onmessage = (event) => {
-      if (event.data == 'ping') {
+      if (event.data == 'ping' && primary) {
         channel.postMessage('pong');
       }
       if (event.data == 'pong') {
-        another = true;
+        primary = false;
       }
     };
     channel.postMessage("ping");
-    function isAnother() {
-      return another;
+
+    function setPrimary(value) {
+      primary = value;
+    }
+
+    function isPrimary() {
+      return primary;
     }
   </script>
   <script src="flutter_bootstrap.js" async></script>

@@ -478,10 +478,10 @@ packages:
     dependency: "direct main"
     description:
       name: hive_ce
-      sha256: fdc19336f03ecd01dbc1d1afe69d87ed9336bdf996c5374a25f9c21ef5f2989e
+      sha256: "192b7334299e3672efa1f85d544fef0091c5c592be5caada61417e37723addc6"
       url: "https://pub.dev"
     source: hosted
-    version: "2.11.1"
+    version: "2.11.2"
   http:
     dependency: "direct main"
     description:
@@ -662,8 +662,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "2a01d7ce8e8c0964a133c74b2b019d66fd611a69"
-      resolved-ref: "2a01d7ce8e8c0964a133c74b2b019d66fd611a69"
+      ref: "2365704ff865d530169124600b4753f51656e815"
+      resolved-ref: "2365704ff865d530169124600b4753f51656e815"
       url: "https://codeberg.org/shroff/offtheline.git"
     source: git
     version: "0.16.0"
