@@ -27,8 +27,18 @@ class ResourcePreview extends StatefulWidget {
   const ResourcePreview({super.key, required this.resources, required this.index});
 
   static Future<void> showPreview(BuildContext context, List<Resource> resources, int index) async {
-    context.read<PhylumAccount>().db.markResourceAccess(resources[index].id);
-    return showDialog(context: context, builder: (context) => ResourcePreview(resources: resources, index: index));
+    final account = context.read<PhylumAccount>();
+    account.db.markResourceAccess(resources[index].id);
+    return showDialog(
+        context: context,
+        builder: (context) => MultiProvider(
+                providers: [
+                  Provider.value(value: account),
+                  Provider.value(value: account.actionQueue),
+                ],
+                builder: (context, child) {
+                  return ResourcePreview(resources: resources, index: index);
+                }));
   }
 
   @override

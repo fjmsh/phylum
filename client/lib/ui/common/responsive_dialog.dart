@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
 
@@ -11,8 +9,8 @@ Future showReponsiveDialog(BuildContext context, String title, WidgetBuilder bui
     builder: (_) {
       return MultiProvider(
         providers: [
-          StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
-          StateNotifierProvider<ApiActionQueue<PhylumAccount>, ApiActionQueueState>.value(value: account.actionQueue),
+          Provider.value(value: account),
+          Provider.value(value: account.actionQueue),
         ],
         builder: (_, __) {
           final width = MediaQuery.sizeOf(context).width;
