@@ -153,7 +153,7 @@ class ResourceDraggable extends StatelessWidget {
       child: _CustomDraggable(
           // delay cannot be longer than 500, otherwise the long press select gesture recognizer will win
           // and this drag will be cancelled
-          delay: const Duration(milliseconds: 500),
+          delay: const Duration(milliseconds: 600),
           supportedDevices: {
             PointerDeviceKind.touch,
             PointerDeviceKind.stylus,

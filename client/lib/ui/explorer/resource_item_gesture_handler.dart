@@ -58,11 +58,11 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
           context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.toggle, false);
         }
       },
-      onLongPress: () {
-        if (context.read<ExplorerState>().selected.isEmpty) {
-          context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.single, false);
-        }
-      },
+      onLongPress: context.select<ExplorerState, bool>((state) => state.selected.isNotEmpty)
+          ? null
+          : () {
+              context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.single, false);
+            },
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         supportedDevices: {PointerDeviceKind.mouse, PointerDeviceKind.trackpad},
