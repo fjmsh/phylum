@@ -72,6 +72,7 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
             ),
           );
         }
+        context.read<ExplorerController>().clearSelection();
         setState(() => dropTargetActive = false);
       },
     );
