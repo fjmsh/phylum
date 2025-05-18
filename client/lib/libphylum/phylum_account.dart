@@ -53,7 +53,7 @@ class PhylumAccount extends Account<PhylumAccount> {
     apiClient.setHeader('Authorization', 'bearer $value');
   }
 
-  int get userId => getPersisted(_persistKeyUserId);
+  int get userId => getPersisted<num>(_persistKeyUserId)?.toInt() ?? 0;
   set userId(int value) {
     persist(_persistKeyUserId, value);
   }
@@ -73,7 +73,7 @@ class PhylumAccount extends Account<PhylumAccount> {
     persist(_persistKeyUserHome, value);
   }
 
-  int get userPermissions => getPersisted(_persistKeyUserPermissions);
+  int get userPermissions => getPersisted<num>(_persistKeyUserPermissions)?.toInt() ?? 0;
   set userPermissions(int value) {
     persist(_persistKeyUserPermissions, value);
   }
