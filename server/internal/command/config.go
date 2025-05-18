@@ -11,7 +11,7 @@ var defaultConfig = Config{
 	DB: db.Config{
 		Host:      "localhost",
 		Port:      5432,
-		DBName:    "phylum",
+		Name:      "phylum",
 		User:      "phylum",
 		Password:  "phylum",
 		NoMigrate: false,

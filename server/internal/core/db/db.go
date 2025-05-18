@@ -37,7 +37,7 @@ func initPool(ctx context.Context) error {
 	var dsn strings.Builder
 	dsn.WriteString("host=" + Cfg.Host)
 	dsn.WriteString(" port=" + strconv.Itoa(Cfg.Port))
-	dsn.WriteString(" dbname=" + Cfg.DBName)
+	dsn.WriteString(" dbname=" + Cfg.Name)
 	dsn.WriteString(" user=" + Cfg.User)
 	if Cfg.Password != "" {
 		dsn.WriteString(" password=" + Cfg.Password)
