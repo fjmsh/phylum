@@ -69,8 +69,6 @@ class _ResourcePreviewState extends State<ResourcePreview> {
     _resource = widget.resources[index];
     if (_resource.dir) {
       _error = 'Cannot preview directory';
-    } else if (_resource.contentLength > maxPreviewSize) {
-      _error = 'Resource too large to preview';
     } else {
       if (_resource.contentType.startsWith('image/')) {
         _buildPreview = buildImagePreview;
@@ -82,7 +80,11 @@ class _ResourcePreviewState extends State<ResourcePreview> {
         _buildPreview = buildPdfPreview;
       }
       if (_buildPreview == null) {
-        _error = 'Unable to preview ${_resource.contentType}';
+        _error = 'Cannot generate preview';
+      }
+      if (_resource.contentLength > maxPreviewSize) {
+        _buildPreview = null;
+        _error = 'File too large to preview';
       }
     }
   }
@@ -143,7 +145,11 @@ class _ResourcePreviewState extends State<ResourcePreview> {
             ),
             body: Center(
                 child: _buildPreview == null
-                    ? Text(_error ?? 'Unknown error', style: Theme.of(context).textTheme.bodyLarge)
+                    ? Card(
+                        child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(_error ?? 'Unknown error', style: TextStyle(fontSize: 18)),
+                      ))
                     : ResourcePreviewBuilder(
                         resource: _resource,
                         buildPreview: _buildPreview!,
