@@ -157,8 +157,8 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       break;
     case MenuOption.download:
       for (final r in resources) {
-        if (r.dir) {
-          context.read<DownloadManager>().downloadResource(r);
+        if (!r.dir) {
+          downloadResource(context, r);
         }
       }
       break;
