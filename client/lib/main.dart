@@ -53,5 +53,5 @@ void main() async {
   }
   Hive.registerAdapter(OfflineActionAdapter(actionDeserializers));
 
-  runApp(buildApp());
+  runApp(const PhylumApp());
 }

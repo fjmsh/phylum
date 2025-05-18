@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/layout/app_shortcuts.dart';
+import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/ui/explorer/page.dart';
+import 'package:phylum/ui/app/page.dart';
 import 'package:provider/provider.dart';
 
 class PhylumSearchController with ChangeNotifier {

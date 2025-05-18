@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/layout/app_shortcuts.dart';
+import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/explorer/page.dart';
+import 'package:phylum/ui/app/page.dart';
 import 'package:phylum/ui/explorer/paste_helpers.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
 import 'package:phylum/ui/preview/resource_preview.dart';

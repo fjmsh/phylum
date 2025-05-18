@@ -5,20 +5,23 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/ui/layout/app_shortcuts.dart';
+import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:provider/provider.dart';
 
-export 'app_stub.dart' if (dart.library.ffi) 'app_vm.dart' if (dart.library.js_interop) 'app_web.dart';
+import 'account_selector_stub.dart'
+    if (dart.library.ffi) 'account_selector_vm.dart'
+    if (dart.library.js_interop) 'account_selector_web.dart';
 
-class PhylumApp extends StatelessWidget {
-  final PhylumRouterDelegate routerDelegate;
-  final AccountManager<PhylumAccount> accountManager;
+class PhylumApp extends StatefulWidget {
+  const PhylumApp({super.key});
 
-  const PhylumApp({
-    super.key,
-    required this.routerDelegate,
-    required this.accountManager,
-  });
+  @override
+  State<PhylumApp> createState() => _PhylumAppState();
+}
+
+class _PhylumAppState extends State<PhylumApp> {
+  final PhylumRouterDelegate routerDelegate = PhylumRouterDelegate((context) => const AccountSelector());
+  final AccountManager<PhylumAccount> accountManager = createAccountManager(isPrimary());
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +29,7 @@ class PhylumApp extends StatelessWidget {
         providers: [
           StateNotifierProvider<AccountManager<PhylumAccount>, AccountManagerState<PhylumAccount>>.value(
               value: accountManager),
+          ChangeNotifierProvider.value(value: routerDelegate),
           if (!kIsWeb) ChangeNotifierProvider<DownloadManager>(create: (context) => DownloadManager()),
         ],
         builder: (context, child) {

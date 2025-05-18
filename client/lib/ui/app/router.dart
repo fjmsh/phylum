@@ -1,9 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/app/account_watcher.dart';
-import 'package:provider/provider.dart';
 
-import '../explorer/page.dart';
+import 'page.dart';
 
 class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotifier, PopNavigatorRouterDelegateMixin {
   @override
@@ -11,11 +9,12 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
   @override
   ExplorerPage? get currentConfiguration => _current;
 
+  final Widget Function(BuildContext) builder;
   ExplorerPage? _current;
   List<ExplorerPage> _back = const [];
   List<ExplorerPage> _forward = const [];
 
-  PhylumRouterDelegate({ExplorerPage? page}) : _current = page;
+  PhylumRouterDelegate(this.builder, {ExplorerPage? page}) : _current = page;
 
   bool get canGoBack => _back.isNotEmpty;
 
@@ -50,12 +49,9 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: this,
-      child: Navigator(
-        key: navigatorKey,
-        onGenerateRoute: (settings) => MaterialPageRoute(builder: (context) => const AccountWatcher()),
-      ),
+    return Navigator(
+      key: navigatorKey,
+      onGenerateRoute: (settings) => MaterialPageRoute(builder: builder),
     );
   }
 

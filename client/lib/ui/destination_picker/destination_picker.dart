@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/layout/app_shortcuts.dart';
+import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/ui/explorer/page.dart';
+import 'package:phylum/ui/app/page.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
+import 'package:phylum/ui/layout/app_layout.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 
@@ -25,7 +26,8 @@ class DestinationPicker extends StatefulWidget {
     return showDialog(
       context: context,
       builder: (context) => ChangeNotifierProvider(
-        create: (context) => PhylumRouterDelegate(page: ExplorerPageFolder(folderId: initialFolderId)),
+        create: (context) => PhylumRouterDelegate((context) => AppLayout.create(context.read()),
+            page: ExplorerPageFolder(folderId: initialFolderId)),
         builder: (context, child) {
           final page = context.watch<PhylumRouterDelegate>().currentConfiguration!;
           return StateNotifierProvider<ExplorerController, ExplorerState>(

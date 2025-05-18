@@ -28,7 +28,7 @@ class AppLayout extends StatelessWidget {
         StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
         ChangeNotifierProvider(create: (context) => ActionQueueStatusNotifier(account.actionQueue)),
         StateNotifierProvider<ExplorerController, ExplorerState>(
-          create: (context) => ExplorerController(account: account, routerDelegate: context.read()),
+          create: (context) => ExplorerController(account: context.read(), routerDelegate: context.read()),
           lazy: false,
         ),
         ChangeNotifierProvider(create: (context) => PhylumSearchController(context)),

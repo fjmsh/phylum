@@ -7,7 +7,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-import 'page.dart';
+import '../app/page.dart';
 import 'selection_mode.dart';
 
 class ExplorerState {

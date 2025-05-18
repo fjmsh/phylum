@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/layout/app_shortcuts.dart';
+import 'package:phylum/ui/app/shortcuts.dart';
 
 enum CreateAction {
   newFolder(descripiton: 'New Folder', icon: Icon(Icons.create_new_folder), intent: NewFolderIntent()),

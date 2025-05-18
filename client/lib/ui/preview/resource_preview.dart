@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/integrations/download_manager.dart';
-import 'package:phylum/ui/layout/app_shortcuts.dart';
+import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
