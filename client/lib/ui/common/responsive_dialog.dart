@@ -5,11 +5,15 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
 
 Future showReponsiveDialog(BuildContext context, String title, WidgetBuilder builder) {
+  final account = context.read<PhylumAccount>();
   return showDialog(
     context: context,
     builder: (_) {
-      return StateNotifierProvider<PhylumAccount, AccountState>.value(
-        value: context.read(),
+      return MultiProvider(
+        providers: [
+          StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
+          StateNotifierProvider<ApiActionQueue<PhylumAccount>, ApiActionQueueState>.value(value: account.actionQueue),
+        ],
         builder: (_, __) {
           final width = MediaQuery.sizeOf(context).width;
           if (width <= 600) {
