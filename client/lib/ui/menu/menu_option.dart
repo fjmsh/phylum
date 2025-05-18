@@ -153,7 +153,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
     case MenuOption.publinks:
       final resource = resources.firstOrNull;
       if (resource == null) return;
-      showReponsiveDialog(context, resource.name, (context) => ResourcePublinksView(resource: resource));
+      showReponsiveDialog(context, 'Public Shares', (context) => ResourcePublinksView(resource: resource));
       break;
     case MenuOption.download:
       for (final r in resources) {
