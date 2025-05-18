@@ -9,12 +9,12 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
   @override
   ExplorerPage? get currentConfiguration => _current;
 
-  final Widget Function(BuildContext) builder;
+  final Widget Function(BuildContext)? builder;
   ExplorerPage? _current;
   List<ExplorerPage> _back = const [];
   List<ExplorerPage> _forward = const [];
 
-  PhylumRouterDelegate(this.builder, {ExplorerPage? page}) : _current = page;
+  PhylumRouterDelegate({this.builder, ExplorerPage? page}) : _current = page;
 
   bool get canGoBack => _back.isNotEmpty;
 
@@ -51,7 +51,7 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
   Widget build(BuildContext context) {
     return Navigator(
       key: navigatorKey,
-      onGenerateRoute: (settings) => MaterialPageRoute(builder: builder),
+      onGenerateRoute: builder == null ? null : (settings) => MaterialPageRoute(builder: builder!),
     );
   }
 

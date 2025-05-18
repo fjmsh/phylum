@@ -20,7 +20,7 @@ class PhylumApp extends StatefulWidget {
 }
 
 class _PhylumAppState extends State<PhylumApp> {
-  final PhylumRouterDelegate routerDelegate = PhylumRouterDelegate((context) => const AccountSelector());
+  final PhylumRouterDelegate routerDelegate = PhylumRouterDelegate(builder: (context) => const AccountSelector());
   final AccountManager<PhylumAccount> accountManager = createAccountManager(isPrimary());
 
   @override
