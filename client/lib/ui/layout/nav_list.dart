@@ -8,6 +8,7 @@ import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/page.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/layout/button_downloads.dart';
 import 'package:phylum/ui/layout/button_server_status.dart';
 import 'package:phylum/ui/layout/create_action.dart';
@@ -25,24 +26,7 @@ class NavList extends StatelessWidget {
     return SafeArea(
       child: Column(
         children: [
-          if (drawer)
-            DrawerHeader(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(right: 6.0),
-                    child: Image(
-                      image: AssetImage('assets/images/logo.png'),
-                      height: 36,
-                      width: 36,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  Text('PHYLUM', style: Theme.of(context).textTheme.headlineSmall),
-                ],
-              ),
-            ),
+          if (drawer) DrawerHeader(child: const LogoRow()),
           Expanded(
             child: SingleChildScrollView(
               child: Column(

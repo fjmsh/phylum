@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/ui/common/logo_row.dart';
 
 class PhylumDialogScaffold extends StatelessWidget {
   final Widget child;
@@ -14,21 +15,7 @@ class PhylumDialogScaffold extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(right: 6.0),
-                    child: Image(
-                      image: AssetImage('assets/images/logo.png'),
-                      height: 36,
-                      width: 36,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  Text('PHYLUM', style: Theme.of(context).textTheme.headlineSmall),
-                ],
-              ),
+              LogoRow(),
               SizedBox(height: 12),
               child,
             ],

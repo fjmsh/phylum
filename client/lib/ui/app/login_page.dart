@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
@@ -100,66 +101,73 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                if (kDebugMode || !kIsWeb)
-                  TextField(
-                    decoration: InputDecoration(
-                      label: const Text('Server URL'),
-                      hintText: 'http://localhost:2448/',
-                      errorText: urlError,
+        child: Card(
+          child: SizedBox(
+            width: 360,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12.0),
+                    child: LogoRow(),
+                  ),
+                  if (kDebugMode || !kIsWeb)
+                    TextField(
+                      decoration: InputDecoration(
+                        label: const Text('Server URL'),
+                        hintText: 'http://localhost:2448/',
+                        errorText: urlError,
+                      ),
+                      keyboardType: TextInputType.url,
+                      onChanged: (value) {
+                        setState(() {
+                          serverUrl = kIsWeb && value == '' ? Uri() : Uri.tryParse(value);
+                          urlError = serverUrl == null ? 'Invalid URL' : null;
+                        });
+                      },
                     ),
-                    keyboardType: TextInputType.url,
+                  TextField(
+                    decoration: const InputDecoration(
+                      label: Text('Email'),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
                     onChanged: (value) {
                       setState(() {
-                        serverUrl = kIsWeb && value == '' ? Uri() : Uri.tryParse(value);
-                        urlError = serverUrl == null ? 'Invalid URL' : null;
+                        _email = value.trim();
                       });
                     },
                   ),
-                TextField(
-                  decoration: const InputDecoration(
-                    label: Text('Email'),
+                  TextField(
+                    decoration: const InputDecoration(
+                      label: Text('Password'),
+                    ),
+                    obscureText: true,
+                    keyboardType: TextInputType.visiblePassword,
+                    onChanged: (value) {
+                      setState(() {
+                        _password = value.trim();
+                      });
+                    },
+                    onSubmitted: (value) {
+                      _performLogin(context, _email, _password);
+                    },
                   ),
-                  keyboardType: TextInputType.emailAddress,
-                  onChanged: (value) {
-                    setState(() {
-                      _email = value.trim();
-                    });
-                  },
-                ),
-                TextField(
-                  decoration: const InputDecoration(
-                    label: Text('Password'),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: ElevatedButton(
+                      onPressed: serverUrlValid && _email.isNotEmpty
+                          ? () async {
+                              _performLogin(context, _email, _password);
+                            }
+                          : null,
+                      child: const Text('Login'),
+                    ),
                   ),
-                  obscureText: true,
-                  keyboardType: TextInputType.visiblePassword,
-                  onChanged: (value) {
-                    setState(() {
-                      _password = value.trim();
-                    });
-                  },
-                  onSubmitted: (value) {
-                    _performLogin(context, _email, _password);
-                  },
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 16.0),
-                  child: ElevatedButton(
-                    onPressed: serverUrlValid && _email.isNotEmpty
-                        ? () async {
-                            _performLogin(context, _email, _password);
-                          }
-                        : null,
-                    child: const Text('Login'),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/common/logo_row.dart';
 import 'package:provider/provider.dart';
 
 class AccountStatePage extends StatelessWidget {
@@ -30,22 +31,28 @@ class AccountStatePage extends StatelessWidget {
     );
   }
 
-  Widget buildClosingOutView() => const Row(
-        mainAxisSize: MainAxisSize.min,
+  Widget buildClosingOutView() => const Column(
         children: [
-          Padding(
-            padding: EdgeInsets.only(right: 16.0),
-            child: CircularProgressIndicator(),
+          Padding(padding: EdgeInsets.only(bottom: 12), child: LogoRow()),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(right: 16.0),
+                child: CircularProgressIndicator(),
+              ),
+              Text('Logging Out'),
+            ],
           ),
-          Text('Logging Out'),
         ],
       );
 
   Widget buildClosedView(BuildContext context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          const LogoRow(),
           const Padding(
-            padding: EdgeInsets.only(bottom: 16.0),
+            padding: EdgeInsets.only(top: 16, bottom: 16.0),
             child: Text('You have been logged out'),
           ),
           ElevatedButton(

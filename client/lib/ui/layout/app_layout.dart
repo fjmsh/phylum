@@ -3,6 +3,7 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/layout/account_state_page.dart';
 import 'package:phylum/ui/layout/action_queue_status_notifier.dart';
 import 'package:phylum/ui/layout/app_actions.dart';
@@ -99,20 +100,9 @@ class ExpandedAppLayout extends StatelessWidget {
             children: [
               SizedBox(
                 width: sidebarWidth,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(left: 16.0, right: 6.0),
-                      child: Image(
-                        image: AssetImage('assets/images/logo.png'),
-                        height: 36,
-                        width: 36,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                    Text('PHYLUM', style: Theme.of(context).textTheme.headlineSmall),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: const LogoRow(),
                 ),
               ),
               Expanded(
