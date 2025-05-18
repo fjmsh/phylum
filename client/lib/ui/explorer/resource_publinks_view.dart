@@ -36,9 +36,12 @@ class ResourcePublinksView extends StatelessWidget {
                       trailing: IconButton(
                         icon: const Icon(Icons.copy),
                         onPressed: () {
-                          final uri = kIsWeb
-                              ? UriBuilder.fromUri(Uri.base).path = 'publink/$l'
-                              : account.apiClient.createUri('publink/$l');
+                          final Uri uri;
+                          if (kIsWeb) {
+                            uri = (UriBuilder.fromUri(Uri.base)..path = 'publink/$l').build();
+                          } else {
+                            uri = account.apiClient.createUri('publink/$l');
+                          }
                           Clipboard.setData(ClipboardData(text: uri.toString()));
                         },
                       ),
