@@ -1,7 +1,10 @@
 import 'dart:js_interop';
 
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/account/account_selector.dart';
+import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/app.dart';
+import 'package:phylum/ui/app/router.dart';
 import 'package:web/web.dart' as web;
 
 @JS()
@@ -20,20 +23,26 @@ class PrimaryNegotiator extends StatefulWidget {
 }
 
 class _PrimaryNegotiatorState extends State<PrimaryNegotiator> {
-  final key = GlobalKey<AccountSelectorState>();
+  final routerDelegate = PhylumRouterDelegate();
+  AccountManager<PhylumAccount>? accountManager;
   final channel = web.BroadcastChannel('takover');
-  bool primary = isPrimary();
 
   @override
   void initState() {
     super.initState();
     channel.onmessage = processMessage.toJS;
+    if (isPrimary()) {
+      accountManager = createAccountManager();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (primary) {
-      return AccountSelector(key: key);
+    if (accountManager != null) {
+      return PhylumApp(
+        accountManager: accountManager!,
+        routerDelegate: routerDelegate,
+      );
     }
 
     return Directionality(
@@ -71,14 +80,14 @@ class _PrimaryNegotiatorState extends State<PrimaryNegotiator> {
   void processMessage(web.MessageEvent event) {
     final msg = event.data.toString();
     if (msg == 'close') {
-      final state = key.currentState;
-      if (state != null) {
+      final accountManager = this.accountManager;
+      if (accountManager != null) {
         channel.postMessage('closing'.toJS);
-        state.closeAccountManager().then((v) {
+        accountManager.close().then((v) {
           channel.postMessage('closed'.toJS);
           setPrimary(false.toJS);
           setState(() {
-            primary = false;
+            this.accountManager = null;
           });
         });
       }
@@ -86,7 +95,7 @@ class _PrimaryNegotiatorState extends State<PrimaryNegotiator> {
     if (msg == 'closed') {
       setPrimary(true.toJS);
       setState(() {
-        primary = true;
+        accountManager = createAccountManager();
       });
     }
   }

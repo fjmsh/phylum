@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/app/app_shortcuts.dart';
+import 'package:phylum/ui/layout/app_shortcuts.dart';
 import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/ui/app/search.dart';
+import 'package:phylum/ui/layout/search.dart';
 import 'package:phylum/ui/explorer/page.dart';
 import 'package:phylum/ui/preview/resource_preview.dart';
 import 'package:phylum/util/upload_utils.dart';

@@ -14,7 +14,7 @@ import 'package:phylum/libphylum/actions/deserializers.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/util/logging.dart';
 
-import 'ui/account/presence_stub.dart' if (dart.library.js_interop) 'ui/account/presence_web.dart';
+import 'ui/app/app.dart';
 
 const storageDir = String.fromEnvironment("STORAGE_DIR");
 

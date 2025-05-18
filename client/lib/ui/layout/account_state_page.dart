@@ -3,12 +3,14 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
 
-class LogoutPage extends StatelessWidget {
-  const LogoutPage({super.key});
+class AccountStatePage extends StatelessWidget {
+  final Widget child;
+  const AccountStatePage({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AccountState>();
+    if (state == AccountState.ready) return child;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Phylum'),
@@ -16,15 +18,19 @@ class LogoutPage extends StatelessWidget {
       body: Center(
         child: Card(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: state == AccountState.closed ? buildLoggedOutView(context) : buildLoggingOutView(),
-          ),
+              padding: const EdgeInsets.all(16.0),
+              child: switch (state) {
+                AccountState.closed => buildClosedView(context),
+                _ => buildClosingOutView(),
+              }
+              // state == AccountState.closed ? buildLoggedOutView(context) : buildLoggingOutView(),
+              ),
         ),
       ),
     );
   }
 
-  Widget buildLoggingOutView() => const Row(
+  Widget buildClosingOutView() => const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
@@ -35,7 +41,7 @@ class LogoutPage extends StatelessWidget {
         ],
       );
 
-  Widget buildLoggedOutView(BuildContext context) => Column(
+  Widget buildClosedView(BuildContext context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Padding(

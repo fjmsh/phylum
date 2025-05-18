@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:phylum/ui/app/app_actions.dart';
-import 'package:phylum/ui/app/nav_list.dart';
+import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/ui/layout/account_state_page.dart';
+import 'package:phylum/ui/layout/action_queue_status_notifier.dart';
+import 'package:phylum/ui/layout/app_actions.dart';
+import 'package:phylum/ui/layout/nav_list.dart';
 import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/ui/app/search.dart';
+import 'package:phylum/ui/layout/search.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
@@ -15,11 +20,15 @@ import 'app_layout_collapsed.dart';
 class AppLayout extends StatelessWidget {
   const AppLayout._();
 
-  static Widget create() {
+  static Widget create(PhylumAccount account) {
     return MultiProvider(
+      key: ValueKey(account.id),
       providers: [
+        StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
+        StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
+        ChangeNotifierProvider(create: (context) => ActionQueueStatusNotifier(account.actionQueue)),
         StateNotifierProvider<ExplorerController, ExplorerState>(
-          create: (context) => ExplorerController(account: context.read(), routerDelegate: context.read()),
+          create: (context) => ExplorerController(account: account, routerDelegate: context.read()),
           lazy: false,
         ),
         ChangeNotifierProvider(create: (context) => PhylumSearchController(context)),
@@ -35,9 +44,8 @@ class AppLayout extends StatelessWidget {
                 context.read<PhylumRouterDelegate>().goBack();
               }
             },
-            child: child!);
+            child: AccountStatePage(child: const AppLayout._()));
       },
-      child: const AppLayout._(),
     );
   }
 

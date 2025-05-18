@@ -3,75 +3,53 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/integrations/download_manager.dart';
-import 'package:phylum/ui/account/account_selector_app.dart';
-import 'package:phylum/ui/account/logout_page.dart';
-import 'package:phylum/ui/app/app_shortcuts.dart';
-import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:phylum/ui/app/action_queue_status_notifier.dart';
+import 'package:phylum/ui/app/router.dart';
+import 'package:phylum/ui/layout/app_shortcuts.dart';
 import 'package:provider/provider.dart';
 
-class PhylumApp extends StatefulWidget {
-  const PhylumApp({super.key});
+export 'app_stub.dart' if (dart.library.ffi) 'app_vm.dart' if (dart.library.js_interop) 'app_web.dart';
 
-  static Widget create(PhylumAccount account) => MultiProvider(
-        key: ValueKey(account.id),
-        providers: [
-          StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
-          StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
-          if (!kIsWeb) ChangeNotifierProvider<DownloadManager>(create: (context) => DownloadManager()),
-          ChangeNotifierProvider(create: (context) => ActionQueueStatusNotifier(account.actionQueue)),
-        ],
-        child: PhylumApp(),
-      );
+class PhylumApp extends StatelessWidget {
+  final PhylumRouterDelegate routerDelegate;
+  final AccountManager<PhylumAccount> accountManager;
 
-  @override
-  State<PhylumApp> createState() => _PhylumAppState();
-}
-
-class _PhylumAppState extends State<PhylumApp> {
-  late final PhylumRouterDelegate _routerDelegate;
-
-  @override
-  void initState() {
-    super.initState();
-    _routerDelegate = PhylumRouterDelegate();
-  }
-
-  @override
-  void dispose() {
-    _routerDelegate.dispose();
-    super.dispose();
-  }
+  const PhylumApp({
+    super.key,
+    required this.routerDelegate,
+    required this.accountManager,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: Color(0xff769e57),
-        dynamicSchemeVariant: DynamicSchemeVariant.neutral,
-      ),
-    );
-    final darkTheme = ThemeData(
-      colorScheme: theme.colorScheme.copyWith(brightness: Brightness.dark),
-      brightness: Brightness.dark,
-    );
+    return MultiProvider(
+        providers: [
+          StateNotifierProvider<AccountManager<PhylumAccount>, AccountManagerState<PhylumAccount>>.value(
+              value: accountManager),
+          if (!kIsWeb) ChangeNotifierProvider<DownloadManager>(create: (context) => DownloadManager()),
+        ],
+        builder: (context, child) {
+          final theme = ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Color(0xff769e57),
+              dynamicSchemeVariant: DynamicSchemeVariant.neutral,
+            ),
+          );
+          final darkTheme = ThemeData(
+            colorScheme: theme.colorScheme.copyWith(brightness: Brightness.dark),
+            brightness: Brightness.dark,
+          );
 
-    final ready = context.select<AccountState, bool>((state) => state == AccountState.ready);
-
-    if (!ready) {
-      return const AccountSelectorApp(key: ValueKey('logout'), child: LogoutPage());
-    }
-    return MaterialApp.router(
-      key: ValueKey('ready'),
-      title: 'Phylum',
-      debugShowCheckedModeBanner: false,
-      theme: theme,
-      darkTheme: darkTheme,
-      routeInformationParser: const PhylumRouteInformationParser(),
-      routerDelegate: _routerDelegate,
-      shortcuts: appShortcuts,
-    );
+          // return const PhylumApp();
+          return MaterialApp.router(
+            title: 'Phylum',
+            debugShowCheckedModeBanner: false,
+            theme: theme,
+            darkTheme: darkTheme,
+            routeInformationParser: const PhylumRouteInformationParser(),
+            routerDelegate: routerDelegate,
+            shortcuts: appShortcuts,
+          );
+        });
   }
 }

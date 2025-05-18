@@ -36,7 +36,7 @@ class ExplorerPageHome extends ExplorerPageFolder {
 
 class ExplorerPageFolder extends ExplorerPage {
   @override
-  Uri get uri => Uri(path: '/folder/$folderId');
+  Uri get uri => Uri(path: '/folder/$_folderId');
 
   @override
   String get title => 'Folder';

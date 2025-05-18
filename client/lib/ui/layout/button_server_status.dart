@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/app/action_queue_status_notifier.dart';
+import 'package:phylum/ui/layout/action_queue_status_notifier.dart';
 import 'package:provider/provider.dart';
 
 enum _ServerStatus {

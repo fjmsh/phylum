@@ -17,6 +17,15 @@ const _persistKeyUserDisplayName = 'userDisplayName';
 const _persistKeyUserHome = 'userHome';
 const _persistKeyUserPermissions = 'userPermissions';
 
+AccountManager<PhylumAccount> createAccountManager() => AccountManager((id) async {
+      final account = PhylumAccount.restore(id: id);
+      final err = await account.initialized;
+      if (err != null) {
+        throw err;
+      }
+      return account;
+    });
+
 class PhylumAccount extends Account<PhylumAccount> {
   late final db = AppDatabase(accountId: id);
   final resourceRepository = ResourceRepository();

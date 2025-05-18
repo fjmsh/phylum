@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/app/app_layout.dart';
+import 'package:phylum/ui/app/account_watcher.dart';
 import 'package:provider/provider.dart';
 
 import '../explorer/page.dart';
@@ -54,7 +54,7 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
       value: this,
       child: Navigator(
         key: navigatorKey,
-        onGenerateRoute: (settings) => MaterialPageRoute(builder: (context) => AppLayout.create()),
+        onGenerateRoute: (settings) => MaterialPageRoute(builder: (context) => const AccountWatcher()),
       ),
     );
   }
