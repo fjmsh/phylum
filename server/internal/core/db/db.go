@@ -26,6 +26,7 @@ func Get(ctx context.Context) Handler {
 		tx:  pool,
 	}
 }
+
 func Close() {
 	if pool != nil {
 		pool.Close()

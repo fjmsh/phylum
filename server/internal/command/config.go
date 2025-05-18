@@ -4,6 +4,7 @@ import (
 	"github.com/shroff/phylum/server/internal/command/serve"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
+	"github.com/shroff/phylum/server/internal/mail"
 )
 
 var defaultConfig = Config{
@@ -31,6 +32,18 @@ var defaultConfig = Config{
 			Origins: []string{"*"},
 		},
 	},
+	Mail: mail.Config{
+		SMTP: mail.SMTPConfig{
+			Host:     "",
+			Port:     587,
+			Username: "",
+			Password: "",
+		},
+		From: mail.FromConfig{
+			Name:  "Phylum Drive",
+			Email: "",
+		},
+	},
 }
 
 type Config struct {
@@ -38,4 +51,5 @@ type Config struct {
 	DB      db.Config      `koanf:"db"`
 	Storage storage.Config `koanf:"storage"`
 	Server  serve.Config   `koanf:"server"`
+	Mail    mail.Config    `koanf:"mail"`
 }
