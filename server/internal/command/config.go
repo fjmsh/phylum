@@ -24,7 +24,7 @@ var defaultConfig = Config{
 		Host:        "",
 		Port:        2448,
 		WebAppSrc:   "web",
-		PublinkPath: "/publink",
+		PublinkPath: "/pub",
 		WebDAVPath:  "/webdav",
 		CORS: serve.CORSConfig{
 			Enabled: false,
