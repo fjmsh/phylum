@@ -28,7 +28,11 @@ class FolderEmptyView extends StatelessWidget {
                 minWidth: constraints.maxWidth,
                 minHeight: constraints.maxHeight,
               ),
-              child: Center(child: _buildContents()),
+              child: DefaultTextStyle.merge(
+                  style: TextStyle(fontSize: 18),
+                  child: Center(
+                    child: _buildContents(),
+                  )),
             ),
           ),
         ),
@@ -37,8 +41,17 @@ class FolderEmptyView extends StatelessWidget {
   }
 
   Widget _buildContents() => switch (type) {
-        FolderEmptyViewType.loading => const CircularProgressIndicator(),
-        FolderEmptyViewType.noData => const Text('Nothing Here...'),
+        FolderEmptyViewType.loading => const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(right: 16),
+                child: CircularProgressIndicator(),
+              ),
+              Text('Loading'),
+            ],
+          ),
+        FolderEmptyViewType.noData => const Text('No files here'),
         FolderEmptyViewType.error => const Text('Error Loading Data'),
       };
 }
