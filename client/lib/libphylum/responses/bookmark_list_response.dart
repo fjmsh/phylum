@@ -21,6 +21,5 @@ class BookmarkListResponse extends PhylumApiSuccessResponse {
     for (final b in bookmarks) {
       await account.datastore.get<Bookmark>().replaceRemoteData(b.resourceId, b);
     }
-    await account.persist(keyLastBookmarkFetch, until);
   }
 }

@@ -97,7 +97,6 @@ class PhylumAccount extends Account<PhylumAccount> {
     };
 
     await userRepository.initialize();
-    await bookmarkRepository.initialize();
 
     late final void Function() l;
     l = apiClient.addListener((request, errorResponse) {

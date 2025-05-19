@@ -10,12 +10,12 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/bookmarks_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
-const keyLastBookmarkFetch = "lastBookmarksFetch";
 const _remoteBookmarksBoxName = 'remote_bookmarks';
 
 class BookmarkRepository extends Repository<PhylumAccount, Bookmark> {
   late final PhylumAccount _account;
   late final LazyBox<Bookmark?> _remoteDataBox;
+  int? _lastBookmarkFetch;
 
   BookmarkRepository();
 
@@ -30,13 +30,6 @@ class BookmarkRepository extends Repository<PhylumAccount, Bookmark> {
     _account = account;
     _remoteDataBox = await _account.openLazyBox(_remoteBookmarksBoxName);
     return remoteData;
-  }
-
-  Future<void> initialize({bool clearLastFetchTimestamp = false}) async {
-    if (clearLastFetchTimestamp) {
-      await _account.persist(keyLastBookmarkFetch, null);
-    }
-    refresh();
   }
 
   Future<void> addBookmark({required Resource resource, String? name}) {
@@ -58,11 +51,15 @@ class BookmarkRepository extends Repository<PhylumAccount, Bookmark> {
     ));
   }
 
-  Future<ApiResult> refresh() async {
-    return _account.apiClient.sendRequest(
-      BookmarksRequest(since: (_account.getPersisted(keyLastBookmarkFetch) as num?)?.toInt()),
-      (request, response) => parseJsonMapResponse(response, BookmarkListResponse.fromResponse),
-    );
+  Future<void> refresh() async {
+    return _account.apiClient
+        .sendRequest(BookmarksRequest(since: _lastBookmarkFetch),
+            (request, response) => parseJsonMapResponse(response, BookmarkListResponse.fromResponse))
+        .then((response) {
+      if (response is BookmarkListResponse) {
+        _lastBookmarkFetch = response.until;
+      }
+    });
   }
 
   @override
