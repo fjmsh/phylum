@@ -32,6 +32,14 @@ class SharedResourcesResponse extends PhylumApiSuccessResponse {
     for (final r in resources) {
       await repo.reloadRemoteData(r.resource.id);
     }
+
+    final publinkRepo = account.datastore.get<Publink>();
+    for (final id in orphanedPublinks) {
+      publinkRepo.reloadRemoteData(id);
+    }
+    for (final link in publinks) {
+      publinkRepo.replaceRemoteData(link.id, link);
+    }
   }
 
   SharedResourcesResponse({required this.resources});

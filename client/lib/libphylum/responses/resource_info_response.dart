@@ -37,7 +37,7 @@ class ResourceInfoResponse extends PhylumApiSuccessResponse {
       r._updateUserPermissions(account);
     }
     final publinks = resources.map((r) => r.publinks).fold<List<Publink>>([], (acc, e) => acc..addAll(e));
-    final orphanedPubinks = Set.of(await (db.select(db.publinks)
+    final orphanedPublinks = Set.of(await (db.select(db.publinks)
           ..where((l) => l.root.isIn(resources.map((r) => r.resource.id)) & l.id.isNotIn(publinks.map((l) => l.id))))
         .map((r) => r.id)
         .get());
@@ -54,7 +54,7 @@ class ResourceInfoResponse extends PhylumApiSuccessResponse {
       batch.insertAllOnConflictUpdate(db.resources, ancestors);
       batch.insertAll(db.resources, resources.map((r) => r.resource), mode: InsertMode.insertOrReplace);
 
-      for (final id in orphanedPubinks) {
+      for (final id in orphanedPublinks) {
         batch.update(db.publinks, PublinksCompanion(root: Value('')), where: (o) => o.id.equals(id));
       }
       batch.insertAll(db.publinks, publinks, mode: InsertMode.insertOrReplace);
@@ -72,6 +72,14 @@ class ResourceInfoResponse extends PhylumApiSuccessResponse {
     await repo.replaceRemoteData(root.resource.id, root.resource);
     for (final r in resources) {
       await repo.replaceRemoteData(r.resource.id, r.resource);
+    }
+
+    final publinkRepo = account.datastore.get<Publink>();
+    for (final id in orphanedPublinks) {
+      publinkRepo.reloadRemoteData(id);
+    }
+    for (final link in publinks) {
+      publinkRepo.replaceRemoteData(link.id, link);
     }
   }
 }
