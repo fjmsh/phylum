@@ -1,5 +1,6 @@
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
+import 'package:phylum/libphylum/actions/changes/create_publink_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
@@ -29,7 +30,15 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
   ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse);
 
   @override
-  List<LocalChange> get localChanges => [];
+  List<LocalChange> get localChanges => [
+        CreatePublinkChange(
+            objectId: publinkId,
+            timestamp: timestamp,
+            root: resourceId,
+            accessLimit: accessLimit,
+            protected: password.isNotEmpty,
+            expires: expires),
+      ];
 
   @override
   String get description => 'Creating Public Share: $publinkId';
