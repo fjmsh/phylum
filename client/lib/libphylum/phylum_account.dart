@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/repositories/bookmark_repository.dart';
-import 'package:phylum/libphylum/repositories/shared_resources_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/repositories/trash_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
@@ -32,7 +31,6 @@ class PhylumAccount extends Account<PhylumAccount> {
   final bookmarkRepository = BookmarkRepository();
   final trashedResourcRepository = TrashedResourceRepository();
   late final userRepository = UserRepository(account: this);
-  late final sharedResourcesRepository = SharedResourcesRepository(account: this);
 
   @override
   Map<Type, Repository<PhylumAccount, dynamic>> get repositories => {

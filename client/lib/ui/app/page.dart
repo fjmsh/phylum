@@ -5,6 +5,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/search_request.dart';
+import 'package:phylum/libphylum/requests/shared_resources_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
 sealed class ExplorerPage {
@@ -107,7 +108,12 @@ class ExplorerPageShared extends ExplorerPage {
 
   @override
   Future<bool> refresh(PhylumAccount account) {
-    return account.sharedResourcesRepository.refresh().then((result) => result is ApiSuccessResponse);
+    return account.apiClient
+        .sendRequest(
+          SharedResourcesRequest(),
+          (request, response) => parseJsonMapResponse(response, SharedResourcesResponse.fromResponse),
+        )
+        .then((result) => result is ApiSuccessResponse);
   }
 
   @override
