@@ -81,8 +81,7 @@ class _ResourcePreviewState extends State<ResourcePreview> {
       }
       if (_buildPreview == null) {
         _error = 'Cannot generate preview';
-      }
-      if (_resource.contentLength > maxPreviewSize) {
+      } else if (_resource.contentLength > maxPreviewSize) {
         _buildPreview = null;
         _error = 'File too large to preview';
       }
