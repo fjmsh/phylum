@@ -30,13 +30,14 @@ class PhylumAccount extends Account<PhylumAccount> {
   final resourceRepository = ResourceRepository();
   final bookmarkRepository = BookmarkRepository();
   final trashedResourcRepository = TrashedResourceRepository();
-  late final userRepository = UserRepository(account: this);
+  final userRepository = UserRepository();
 
   @override
   Map<Type, Repository<PhylumAccount, dynamic>> get repositories => {
         Resource: resourceRepository,
         Bookmark: bookmarkRepository,
         TrashedResource: trashedResourcRepository,
+        User: userRepository,
       };
 
   @override
@@ -95,8 +96,6 @@ class PhylumAccount extends Account<PhylumAccount> {
       'bad' => SimulatedBadNetworkDispatcher.bad(),
       _ => HttpClientDispatcher(),
     };
-
-    await userRepository.initialize();
 
     late final void Function() l;
     l = apiClient.addListener((request, errorResponse) {
