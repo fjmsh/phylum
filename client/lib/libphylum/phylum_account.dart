@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/repositories/bookmark_repository.dart';
+import 'package:phylum/libphylum/repositories/publink_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/repositories/trash_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
@@ -27,15 +28,17 @@ AccountManager<PhylumAccount> createAccountManager(bool autoInitialize) => Accou
 
 class PhylumAccount extends Account<PhylumAccount> {
   late final db = AppDatabase(accountId: id);
-  final resourceRepository = ResourceRepository();
   final bookmarkRepository = BookmarkRepository();
-  final trashedResourcRepository = TrashedResourceRepository();
+  final resourceRepository = ResourceRepository();
   final userRepository = UserRepository();
+  final trashedResourcRepository = TrashedResourceRepository();
+  final publinkRepository = PublinkRepository();
 
   @override
   Map<Type, Repository<PhylumAccount, dynamic>> get repositories => {
-        Resource: resourceRepository,
         Bookmark: bookmarkRepository,
+        Resource: resourceRepository,
+        Publink: publinkRepository,
         TrashedResource: trashedResourcRepository,
         User: userRepository,
       };
