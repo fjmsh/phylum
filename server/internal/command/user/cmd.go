@@ -15,7 +15,7 @@ func SetupCommand() *cobra.Command {
 		Short:   "User Management",
 	}
 	cmd.AddCommand([]*cobra.Command{
-		setupUserAddCommand(),
+		setupInviteCommand(),
 		setupUserModCommand(),
 		setupUserListCommand(),
 		setupUserPasswdCommand(),
