@@ -1,18 +1,17 @@
 package mail
 
 import (
+	"io"
+
 	gomail "gopkg.in/mail.v2"
 )
 
 var Cfg Config
 var d *gomail.Dialer
 
-type Message struct {
-	ToName   string
-	ToEmail  string
-	Subject  string
-	Body     string
-	HTMLBody string
+type Recipient struct {
+	Name  string
+	Email string
 }
 
 func dialer() *gomail.Dialer {
@@ -22,15 +21,17 @@ func dialer() *gomail.Dialer {
 	return d
 }
 
-func Send(m Message) error {
+func send(e Email, rcpt Recipient, params any) error {
 	d := dialer()
 	msg := gomail.NewMessage()
 	msg.SetAddressHeader("From", Cfg.From.Email, Cfg.From.Name)
-	msg.SetAddressHeader("To", m.ToEmail, m.ToName)
-	msg.SetHeader("Subject", m.Subject)
-	msg.SetBody("text/plain", m.Body)
-	if m.HTMLBody != "" {
-		msg.AddAlternative("text/html", m.HTMLBody)
-	}
+	msg.SetAddressHeader("To", rcpt.Email, rcpt.Name)
+	msg.SetHeader("Subject", e.Subject)
+	msg.SetBodyWriter("text/plain", func(w io.Writer) error {
+		return e.Plain.Execute(w, params)
+	})
+	msg.AddAlternativeWriter("text/html", func(w io.Writer) error {
+		return e.HTML.Execute(w, params)
+	})
 	return d.DialAndSend(msg)
 }

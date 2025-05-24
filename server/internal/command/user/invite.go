@@ -116,19 +116,15 @@ func setupResetPasswordCommand() *cobra.Command {
 }
 
 func sendInviteEmail(user user.User) error {
-	return mail.Send(mail.Message{
-		ToName:  user.DisplayName,
-		ToEmail: user.Email,
-		Subject: "An account has been created for you",
-		Body:    "An account has been created for you at",
-	})
+	return mail.SendWelcomeEmail(
+		mail.Recipient{Email: user.Email, Name: user.DisplayName},
+		mail.WelcomeParams{Name: user.DisplayName},
+	)
 }
 
 func sendResetToken(user user.User, token string) error {
-	return mail.Send(mail.Message{
-		ToName:  user.DisplayName,
-		ToEmail: user.Email,
-		Subject: "Reset your password",
-		Body:    "Token: " + token,
-	})
+	return mail.SendWelcomeEmail(
+		mail.Recipient{Email: user.Email, Name: user.DisplayName},
+		mail.WelcomeParams{Name: user.DisplayName},
+	)
 }

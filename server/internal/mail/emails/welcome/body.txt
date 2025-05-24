@@ -1,0 +1,7 @@
+Hi {{.Name}},
+
+Someone invited you to use Phylum at {{.URL}}
+
+Please visit the URL above and reset your password to get started.
+
+Thank you,

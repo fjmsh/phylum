@@ -3,6 +3,7 @@ package mail
 type Config struct {
 	SMTP SMTPConfig `koanf:"smtp"`
 	From FromConfig `koanf:"from"`
+	URL  string     `koanf:"url"`
 }
 
 type SMTPConfig struct {
