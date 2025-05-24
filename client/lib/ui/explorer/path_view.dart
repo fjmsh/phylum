@@ -18,9 +18,9 @@ class PathView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final page = context.select<ExplorerState, ExplorerPage>((state) => state.page);
+    final route = context.select<ExplorerState, ExplorerRoute>((state) => state.route);
     final account = context.read<PhylumAccount>();
-    final folderId = page.folderId(account);
+    final folderId = route.folderId(account);
     if (folderId != null) {
       return StreamBuilder(
           stream: account.db.watchParents(folderId),
@@ -32,27 +32,27 @@ class PathView extends StatelessWidget {
               final permission = entry.userPermission;
               if (permission != 0) {
                 if (entry.id == account.userHome) {
-                  path.add(PathInfo(title: 'My Files', dropTargetId: entry.id, targetPage: ExplorerPageHome()));
+                  path.add(PathInfo(title: 'My Files', dropTargetId: entry.id, target: ExplorerRouteHome()));
                 } else {
                   if (path.isEmpty) {
                     path.add(
-                        PathInfo(title: 'Shared With Me', dropTargetId: null, targetPage: const ExplorerPageShared()));
+                        PathInfo(title: 'Shared With Me', dropTargetId: null, target: const ExplorerRouteShared()));
                   }
                   path.add(PathInfo(
                     title: entry.name,
                     dropTargetId: permission & permissionSetReadWrite == 0 ? null : entry.id,
-                    targetPage: ExplorerPageFolder(folderId: entry.id),
+                    target: ExplorerRouteFolder(folderId: entry.id),
                   ));
                 }
               }
             }
             if (path.isEmpty) {
-              path.add(const PathInfo(title: 'Folder', dropTargetId: null, targetPage: null, last: true));
+              path.add(const PathInfo(title: 'Folder', dropTargetId: null, target: null, last: true));
             } else {
               path[path.length - 1] = PathInfo(
                 title: path.last.title,
                 dropTargetId: null,
-                targetPage: null,
+                target: null,
                 last: true,
               );
             }
@@ -69,7 +69,7 @@ class PathView extends StatelessWidget {
             );
           });
     }
-    final info = PathInfo(title: page.title, dropTargetId: null, targetPage: null, last: true);
+    final info = PathInfo(title: route.title, dropTargetId: null, target: null, last: true);
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
@@ -87,13 +87,13 @@ class PathView extends StatelessWidget {
 class PathInfo {
   final String title;
   final String? dropTargetId;
-  final ExplorerPage? targetPage;
+  final ExplorerRoute? target;
   final bool last;
 
   const PathInfo({
     required this.title,
     required this.dropTargetId,
-    required this.targetPage,
+    required this.target,
     this.last = false,
   });
 }
@@ -129,16 +129,16 @@ class PathItem extends StatelessWidget {
   Widget buildCard(BuildContext context, bool dropTargetActive) {
     final theme = Theme.of(context);
     final textStyle = small ? theme.textTheme.bodyMedium! : theme.textTheme.bodyLarge!;
-    final color = info.targetPage == null ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant;
+    final color = info.target == null ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant;
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: small ? const BorderRadius.all(Radius.circular(3)) : const BorderRadius.all(Radius.circular(6)),
         side: dropTargetActive ? BorderSide(width: small ? 1 : 2, color: theme.colorScheme.primary) : BorderSide.none,
       ),
-      elevation: info.targetPage == null ? 0 : null,
+      elevation: info.target == null ? 0 : null,
       margin: small ? const EdgeInsets.symmetric(horizontal: 3) : const EdgeInsets.symmetric(horizontal: 6),
       child: InkWell(
-        onTap: info.targetPage == null ? null : () => Actions.maybeInvoke(context, NavIntent(target: info.targetPage!)),
+        onTap: info.target == null ? null : () => Actions.maybeInvoke(context, NavIntent(target: info.target!)),
         child: Padding(
           padding: small
               ? const EdgeInsets.symmetric(horizontal: 6, vertical: 4)

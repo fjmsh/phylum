@@ -3,25 +3,27 @@ import 'package:flutter/material.dart';
 
 import 'page.dart';
 
-class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotifier, PopNavigatorRouterDelegateMixin {
+class PhylumRouterDelegate extends RouterDelegate<PhylumRoute> with ChangeNotifier, PopNavigatorRouterDelegateMixin {
   @override
   final navigatorKey = GlobalKey<NavigatorState>();
   @override
-  ExplorerPage? get currentConfiguration => _current;
+  PhylumRoute? get currentConfiguration => _current;
 
   final Widget Function(BuildContext)? builder;
-  ExplorerPage? _current;
-  List<ExplorerPage> _back = const [];
-  List<ExplorerPage> _forward = const [];
+  PhylumRoute? _current;
+  List<ExplorerRoute> _back = const [];
+  List<ExplorerRoute> _forward = const [];
 
-  PhylumRouterDelegate({this.builder, ExplorerPage? page}) : _current = page;
+  PhylumRouterDelegate({this.builder, ExplorerRoute? page}) : _current = page;
 
   bool get canGoBack => _back.isNotEmpty;
 
-  void go(ExplorerPage page) {
+  void go(PhylumRoute page) {
     if (_current != page) {
-      _back = [..._back, _current!];
-      _forward = const [];
+      if (_current is ExplorerRoute) {
+        _back = [..._back, _current as ExplorerRoute];
+        _forward = const [];
+      }
       _current = page;
       notifyListeners();
     }
@@ -31,8 +33,10 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
     if (_back.isEmpty) return;
     int len = _back.length;
     final target = _back[len - 1];
-    _back = _back.sublist(0, len - 1);
-    _forward = [..._forward, _current!];
+    if (_current is ExplorerRoute) {
+      _back = _back.sublist(0, len - 1);
+      _forward = [..._forward, _current as ExplorerRoute];
+    }
     _current = target;
     notifyListeners();
   }
@@ -41,8 +45,10 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
     if (_forward.isEmpty) return;
     int len = _forward.length;
     final target = _forward[len - 1];
-    _back = [..._back, _current!];
-    _forward = _forward.sublist(0, len - 1);
+    if (_current is ExplorerRoute) {
+      _back = [..._back, _current as ExplorerRoute];
+      _forward = _forward.sublist(0, len - 1);
+    }
     _current = target;
     notifyListeners();
   }
@@ -56,57 +62,57 @@ class PhylumRouterDelegate extends RouterDelegate<ExplorerPage> with ChangeNotif
   }
 
   @override
-  Future<void> setInitialRoutePath(ExplorerPage configuration) {
+  Future<void> setInitialRoutePath(PhylumRoute configuration) {
     _current = configuration;
     return SynchronousFuture(null);
   }
 
   @override
-  Future<void> setNewRoutePath(ExplorerPage configuration) {
+  Future<void> setNewRoutePath(PhylumRoute configuration) {
     go(configuration);
     return SynchronousFuture(null);
   }
 }
 
-class PhylumRouteInformationParser extends RouteInformationParser<ExplorerPage> {
+class PhylumRouteInformationParser extends RouteInformationParser<ExplorerRoute> {
   const PhylumRouteInformationParser();
 
   @override
-  Future<ExplorerPage> parseRouteInformation(RouteInformation routeInformation) {
+  Future<ExplorerRoute> parseRouteInformation(RouteInformation routeInformation) {
     final uri = routeInformation.uri;
     final segments = uri.pathSegments;
 
     if (segments.isEmpty) {
-      return SynchronousFuture(ExplorerPageHome());
+      return SynchronousFuture(ExplorerRouteHome());
     }
     if (segments.length == 1) {
       if (segments[0] == 'home') {
-        return SynchronousFuture(ExplorerPageHome());
+        return SynchronousFuture(ExplorerRouteHome());
       }
       if (segments[0] == 'recents') {
-        return SynchronousFuture(const ExplorerPageRecents());
+        return SynchronousFuture(const ExplorerRouteRecents());
       }
       if (segments[0] == 'shared') {
-        return SynchronousFuture(const ExplorerPageShared());
+        return SynchronousFuture(const ExplorerRouteShared());
       }
       if (segments[0] == 'trash') {
-        return SynchronousFuture(const ExplorerPageTrash());
+        return SynchronousFuture(const ExplorerRouteTrash());
       }
       if (segments[0] == 'search') {
         final query = uri.queryParameters['q'];
         if (query == null || query.trim().isEmpty) {
-          return SynchronousFuture(ExplorerPageHome());
+          return SynchronousFuture(ExplorerRouteHome());
         }
-        return SynchronousFuture(ExplorerPageSearch(query: query));
+        return SynchronousFuture(ExplorerRouteSearch(query: query));
       }
     } else if (segments.length == 2 && segments[0] == 'folder') {
-      return SynchronousFuture(ExplorerPageFolder(folderId: segments[1]));
+      return SynchronousFuture(ExplorerRouteFolder(folderId: segments[1]));
     }
-    return SynchronousFuture(ExplorerPageFolder(folderId: 'unknown'));
+    return SynchronousFuture(ExplorerRouteFolder(folderId: 'unknown'));
   }
 
   @override
-  RouteInformation? restoreRouteInformation(ExplorerPage configuration) {
+  RouteInformation? restoreRouteInformation(ExplorerRoute configuration) {
     return RouteInformation(uri: configuration.uri);
   }
 }

@@ -59,7 +59,7 @@ class NavList extends StatelessWidget {
                     leading: const Icon(Icons.home),
                     title: const Text('Home'),
                     onTap: () {
-                      Actions.maybeInvoke(context, NavIntent(target: ExplorerPageHome()));
+                      Actions.maybeInvoke(context, NavIntent(target: ExplorerRouteHome()));
                       Scaffold.maybeOf(context)?.closeDrawer();
                     },
                   ),
@@ -67,7 +67,7 @@ class NavList extends StatelessWidget {
                     leading: const Icon(Icons.history),
                     title: const Text('Recents'),
                     onTap: () {
-                      context.read<PhylumRouterDelegate>().go(ExplorerPageRecents());
+                      context.read<PhylumRouterDelegate>().go(ExplorerRouteRecents());
                       Scaffold.maybeOf(context)?.closeDrawer();
                     },
                   ),
@@ -75,7 +75,7 @@ class NavList extends StatelessWidget {
                     leading: const Icon(Icons.people_outlined),
                     title: const Text('Shared With Me'),
                     onTap: () {
-                      context.read<PhylumRouterDelegate>().go(ExplorerPageShared());
+                      context.read<PhylumRouterDelegate>().go(ExplorerRouteShared());
                       Scaffold.maybeOf(context)?.closeDrawer();
                     },
                   ),
@@ -96,7 +96,7 @@ class NavList extends StatelessWidget {
                                     onTap: () async {
                                       if (b.dir) {
                                         Actions.maybeInvoke(
-                                            context, NavIntent(target: ExplorerPageFolder(folderId: b.resourceId)));
+                                            context, NavIntent(target: ExplorerRouteFolder(folderId: b.resourceId)));
                                         return;
                                       }
                                       final resource = await account.db.getResource(b.resourceId);
@@ -130,7 +130,7 @@ class NavList extends StatelessWidget {
                     leading: const Icon(Icons.delete),
                     title: const Text('Trash'),
                     onTap: () {
-                      context.read<PhylumRouterDelegate>().go(ExplorerPageTrash());
+                      context.read<PhylumRouterDelegate>().go(ExplorerRouteTrash());
                       Scaffold.maybeOf(context)?.closeDrawer();
                     },
                   ),

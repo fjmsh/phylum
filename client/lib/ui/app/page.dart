@@ -8,12 +8,21 @@ import 'package:phylum/libphylum/requests/search_request.dart';
 import 'package:phylum/libphylum/requests/shared_resources_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
-sealed class ExplorerPage {
+sealed class PhylumRoute {
   Uri get uri;
 
+  const PhylumRoute();
+}
+
+class LoginRoute extends PhylumRoute {
+  @override
+  Uri get uri => Uri(path: '/login');
+}
+
+sealed class ExplorerRoute extends PhylumRoute {
   String get title;
 
-  const ExplorerPage();
+  const ExplorerRoute();
 
   String? folderId(PhylumAccount account) => null;
 
@@ -22,20 +31,20 @@ sealed class ExplorerPage {
   Stream<List<Resource>> items(PhylumAccount account);
 }
 
-class ExplorerPageHome extends ExplorerPageFolder {
+class ExplorerRouteHome extends ExplorerRouteFolder {
   @override
   Uri get uri => Uri(path: '/home');
 
   @override
   String get title => 'My Files';
 
-  ExplorerPageHome() : super(folderId: '');
+  ExplorerRouteHome() : super(folderId: '');
 
   @override
   String folderId(PhylumAccount account) => account.userHome;
 }
 
-class ExplorerPageFolder extends ExplorerPage {
+class ExplorerRouteFolder extends ExplorerRoute {
   @override
   Uri get uri => Uri(path: '/folder/$_folderId');
 
@@ -44,7 +53,7 @@ class ExplorerPageFolder extends ExplorerPage {
 
   final String _folderId;
 
-  ExplorerPageFolder({required String folderId}) : _folderId = folderId;
+  ExplorerRouteFolder({required String folderId}) : _folderId = folderId;
 
   @override
   String folderId(PhylumAccount account) => _folderId;
@@ -57,14 +66,14 @@ class ExplorerPageFolder extends ExplorerPage {
   Stream<List<Resource>> items(PhylumAccount account) => account.db.watchChildren(folderId(account));
 }
 
-class ExplorerPageRecents extends ExplorerPage {
+class ExplorerRouteRecents extends ExplorerRoute {
   @override
   Uri get uri => Uri(path: '/recents');
 
   @override
   String get title => 'Recents';
 
-  const ExplorerPageRecents();
+  const ExplorerRouteRecents();
 
   @override
   Future<bool> refresh(PhylumAccount account) {
@@ -77,14 +86,14 @@ class ExplorerPageRecents extends ExplorerPage {
   }
 }
 
-class ExplorerPageTrash extends ExplorerPage {
+class ExplorerRouteTrash extends ExplorerRoute {
   @override
   Uri get uri => Uri(path: '/trash');
 
   @override
   String get title => 'Trash';
 
-  const ExplorerPageTrash();
+  const ExplorerRouteTrash();
 
   @override
   Future<bool> refresh(PhylumAccount account) {
@@ -97,14 +106,14 @@ class ExplorerPageTrash extends ExplorerPage {
   }
 }
 
-class ExplorerPageShared extends ExplorerPage {
+class ExplorerRouteShared extends ExplorerRoute {
   @override
   Uri get uri => Uri(path: '/shared');
 
   @override
   String get title => 'Shared';
 
-  const ExplorerPageShared();
+  const ExplorerRouteShared();
 
   @override
   Future<bool> refresh(PhylumAccount account) {
@@ -122,7 +131,7 @@ class ExplorerPageShared extends ExplorerPage {
   }
 }
 
-class ExplorerPageSearch extends ExplorerPage {
+class ExplorerRouteSearch extends ExplorerRoute {
   @override
   Uri get uri => Uri(path: '/search', queryParameters: {'q': query});
 
@@ -132,7 +141,7 @@ class ExplorerPageSearch extends ExplorerPage {
   final String query;
   final _streamController = StreamController<List<Resource>>.broadcast();
 
-  ExplorerPageSearch({required this.query});
+  ExplorerRouteSearch({required this.query});
 
   @override
   Future<bool> refresh(PhylumAccount account) {

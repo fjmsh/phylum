@@ -26,9 +26,9 @@ class PhylumSearchController with ChangeNotifier {
   }
 
   void _onUpdatePage() {
-    final page = _routerDelegate.currentConfiguration;
-    if (page is ExplorerPageSearch) {
-      _pageQuery = page.query;
+    final route = _routerDelegate.currentConfiguration;
+    if (route is ExplorerRouteSearch) {
+      _pageQuery = route.query;
     } else {
       _pageQuery = '';
     }
@@ -63,9 +63,9 @@ class _SearchFieldState extends State<SearchField> {
   }
 
   void _onUpdatePage() {
-    final page = _routerDelegate.currentConfiguration;
-    if (page is ExplorerPageSearch) {
-      _controller.text = page.query;
+    final route = _routerDelegate.currentConfiguration;
+    if (route is ExplorerRouteSearch) {
+      _controller.text = route.query;
     } else {
       _controller.text = '';
     }
@@ -154,7 +154,7 @@ class _SearchFieldState extends State<SearchField> {
   void _query() {
     final query = _controller.text.trim();
     if (query.isNotEmpty) {
-      context.read<PhylumRouterDelegate>().go(ExplorerPageSearch(query: query));
+      context.read<PhylumRouterDelegate>().go(ExplorerRouteSearch(query: query));
     }
   }
 }

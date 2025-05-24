@@ -11,7 +11,7 @@ import '../app/page.dart';
 import 'selection_mode.dart';
 
 class ExplorerState {
-  final ExplorerPage page;
+  final ExplorerRoute route;
   final String? folderId;
   final Resource? folder;
   final List<Resource> resources;
@@ -31,7 +31,7 @@ class ExplorerState {
   Resource? get focussedIfSelected => selectedIds.isEmpty ? null : focussed;
 
   const ExplorerState({
-    required this.page,
+    required this.route,
     required this.folderId,
     this.folder,
     this.resources = const [],
@@ -57,7 +57,7 @@ class ExplorerState {
     bool? refreshError,
   }) =>
       ExplorerState(
-        page: page,
+        route: route,
         folderId: folderId,
         folder: folder ?? this.folder,
         resources: resources ?? this.resources,
@@ -87,17 +87,17 @@ class ExplorerController extends StateNotifier<ExplorerState> {
   })  : _account = account,
         _routerDelegate = routerDelegate,
         super(ExplorerState(
-          page: routerDelegate.currentConfiguration!,
-          folderId: routerDelegate.currentConfiguration?.folderId(account),
+          route: routerDelegate.currentConfiguration as ExplorerRoute,
+          folderId: (routerDelegate.currentConfiguration as ExplorerRoute).folderId(account),
         )) {
     _routerDelegate.addListener(updatePage);
     updatePage();
   }
 
   void updatePage() {
-    final page = _routerDelegate.currentConfiguration!;
+    final route = _routerDelegate.currentConfiguration as ExplorerRoute;
     _folderSubscription?.cancel();
-    final folderId = page.folderId(_account);
+    final folderId = route.folderId(_account);
     if (folderId != null) {
       _folderSubscription = _account.db.watchResource(folderId).listen((e) => state = state.copyWith(folder: e));
       if (folderId != _account.userHome) {
@@ -107,8 +107,8 @@ class ExplorerController extends StateNotifier<ExplorerState> {
       _folderSubscription = null;
     }
     _childrenSubscription?.cancel();
-    _childrenSubscription = page.items(_account).listen((e) => _updateResourceList(e));
-    state = ExplorerState(page: page, folderId: folderId);
+    _childrenSubscription = route.items(_account).listen((e) => _updateResourceList(e));
+    state = ExplorerState(route: route, folderId: folderId);
     refresh();
   }
 
@@ -202,7 +202,7 @@ class ExplorerController extends StateNotifier<ExplorerState> {
     if (state.refresh != null) return state.refresh!;
     final c = Completer();
     state = state.copyWith(refresh: c.future, updateRefresh: true);
-    state.page.refresh(_account).then((success) {
+    state.route.refresh(_account).then((success) {
       c.complete();
       if (mounted) {
         state = state.copyWith(

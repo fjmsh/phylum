@@ -97,7 +97,7 @@ class NavHomeIntent extends Intent {
 }
 
 class NavIntent extends Intent {
-  final ExplorerPage target;
+  final ExplorerRoute target;
 
   const NavIntent({required this.target});
 }

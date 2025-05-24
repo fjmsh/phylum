@@ -30,13 +30,13 @@ class DestinationPicker extends StatefulWidget {
         providers: [
           StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
           ChangeNotifierProvider(
-            create: (context) => PhylumRouterDelegate(page: ExplorerPageFolder(folderId: initialFolderId)),
+            create: (context) => PhylumRouterDelegate(page: ExplorerRouteFolder(folderId: initialFolderId)),
           ),
         ],
         builder: (context, child) {
-          final page = context.watch<PhylumRouterDelegate>().currentConfiguration!;
+          final route = context.watch<PhylumRouterDelegate>().currentConfiguration as ExplorerRoute;
           return StateNotifierProvider<ExplorerController, ExplorerState>(
-            key: ValueKey(page),
+            key: ValueKey(route),
             create: (context) => ExplorerController(account: context.read(), routerDelegate: context.read()),
             child: child,
           );
@@ -72,7 +72,7 @@ class _DestinationPickerState extends State<DestinationPicker> {
           return BackButton(onPressed: () {
             final parentId = context.read<ExplorerState>().folder?.parent;
             if (parentId != null) {
-              context.read<PhylumRouterDelegate>().go(ExplorerPageFolder(folderId: parentId));
+              context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: parentId));
               node.requestFocus();
             } else {
               Navigator.of(context).pop();
@@ -124,7 +124,7 @@ class _DestinationPickerState extends State<DestinationPicker> {
                 leading: BackButton(onPressed: () {
                   final parentId = context.read<ExplorerState>().folder?.parent;
                   if (parentId != null) {
-                    context.read<PhylumRouterDelegate>().go(ExplorerPageFolder(folderId: parentId));
+                    context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: parentId));
                     node.requestFocus();
                   } else {
                     Navigator.of(context).pop();
@@ -211,7 +211,7 @@ class _FolderListView extends StatelessWidget {
                 leading: r.getIcon(),
                 title: Text(r.name),
                 enabled: r.dir,
-                onTap: () => context.read<PhylumRouterDelegate>().go(ExplorerPageFolder(folderId: r.id)),
+                onTap: () => context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: r.id)),
               );
             });
           },
@@ -234,7 +234,7 @@ class _ActionHandler extends StatelessWidget {
         NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) async {
           final parentId = context.read<ExplorerState>().folder?.parent;
           if (parentId != null) {
-            context.read<PhylumRouterDelegate>().go(ExplorerPageFolder(folderId: parentId));
+            context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: parentId));
           }
           focusNode.requestFocus();
           return null;
@@ -256,7 +256,7 @@ class _ActionHandler extends StatelessWidget {
         ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) async {
           final selected = context.read<ExplorerState>().selectedSingle;
           if (selected != null && selected.dir) {
-            context.read<PhylumRouterDelegate>().go(ExplorerPageFolder(folderId: selected.id));
+            context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: selected.id));
           }
           return null;
         }),

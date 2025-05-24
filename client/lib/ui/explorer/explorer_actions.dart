@@ -65,7 +65,7 @@ class ExplorerActions extends StatelessWidget {
           final r = state.selectedSingle ?? state.focussed;
           if (r == null) return;
           if (r.dir) {
-            Actions.maybeInvoke(context, NavIntent(target: ExplorerPageFolder(folderId: r.id)));
+            Actions.maybeInvoke(context, NavIntent(target: ExplorerRouteFolder(folderId: r.id)));
           } else {
             final resources = state.resources.where((r) => !r.dir).toList(growable: false);
             final index = resources.indexOf(r);
