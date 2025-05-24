@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/dialog_scaffold.dart';
-import 'package:phylum/ui/app/login_page.dart';
+import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/layout/app_layout.dart';
 import 'package:phylum/util/logging.dart';
 import 'package:provider/provider.dart';
