@@ -1,25 +1,27 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/common/logo_row.dart';
+import 'package:phylum/ui/login/instance_url_fragment.dart';
+import 'package:phylum/ui/login/password_login_fragment.dart';
 
 import 'login_request.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final Uri? fixedInstanceUrl;
+
+  const LoginPage({super.key, this.fixedInstanceUrl});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  String _email = '';
-  String _password = '';
-  Uri? serverUrl = kIsWeb ? Uri() : null;
-  String? urlError;
-  String? emailError;
+  Uri? _instanceUrl;
 
-  bool get serverUrlValid =>
-      (kIsWeb && serverUrl == Uri()) || (serverUrl?.hasScheme == true && serverUrl?.hasAuthority == true);
+  @override
+  void initState() {
+    super.initState();
+    _instanceUrl = widget.fixedInstanceUrl;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,60 +40,7 @@ class _LoginPageState extends State<LoginPage> {
                     padding: EdgeInsets.only(bottom: 12.0),
                     child: LogoRow(),
                   ),
-                  if (kDebugMode || !kIsWeb)
-                    TextField(
-                      decoration: InputDecoration(
-                        label: const Text('Server URL'),
-                        hintText: 'http://localhost:2448/',
-                        errorText: urlError,
-                      ),
-                      keyboardType: TextInputType.url,
-                      onChanged: (value) {
-                        setState(() {
-                          serverUrl = kIsWeb && value == '' ? Uri() : Uri.tryParse(value);
-                          urlError = serverUrl == null ? 'Invalid URL' : null;
-                        });
-                      },
-                    ),
-                  TextField(
-                    decoration: const InputDecoration(
-                      label: Text('Email'),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    onChanged: (value) {
-                      setState(() {
-                        _email = value.trim();
-                      });
-                    },
-                  ),
-                  TextField(
-                    decoration: const InputDecoration(
-                      label: Text('Password'),
-                    ),
-                    obscureText: true,
-                    keyboardType: TextInputType.visiblePassword,
-                    onChanged: (value) {
-                      setState(() {
-                        _password = value.trim();
-                      });
-                    },
-                    onSubmitted: serverUrlValid
-                        ? (value) {
-                            performLogin(context, serverUrl ?? Uri(), _email, _password);
-                          }
-                        : null,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16.0),
-                    child: ElevatedButton(
-                      onPressed: serverUrlValid && _email.isNotEmpty
-                          ? () async {
-                              performLogin(context, serverUrl ?? Uri(), _email, _password);
-                            }
-                          : null,
-                      child: const Text('Login'),
-                    ),
-                  ),
+                  _buildBody(context),
                 ],
               ),
             ),
@@ -99,5 +48,13 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    final instanceUrl = _instanceUrl;
+    if (instanceUrl == null) {
+      return InstanceUrlFragment(onSubmitted: (url) => setState(() => _instanceUrl = url));
+    }
+    return PasswordLoginFragment(onSubmitted: (email, password) => performLogin(context, instanceUrl, email, password));
   }
 }

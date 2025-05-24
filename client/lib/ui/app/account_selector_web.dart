@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:js_interop';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -79,7 +80,7 @@ class _AccountSelectorState extends State<AccountSelector> {
         context.select<AccountManagerState<PhylumAccount>, PhylumAccount?>((state) => state.selectedAccount);
 
     if (account == null) {
-      return const LoginPage();
+      return kDebugMode ? const LoginPage() : LoginPage(fixedInstanceUrl: Uri());
     }
     return AppLayout.create(account);
   }
