@@ -3,13 +3,12 @@ package user
 import (
 	"net/http"
 	"time"
-	"unsafe"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
-	"golang.org/x/exp/rand"
+	"github.com/shroff/phylum/server/internal/core/util/rand"
 )
 
 const accessTokenLength = 16
@@ -41,7 +40,7 @@ func (m manager) VerifyUserPassword(email, password string) (User, error) {
 
 func (m manager) CreateAccessToken(user User) (string, error) {
 	const q = `INSERT INTO access_tokens(id, expires, user_id) VALUES ($1::TEXT, NOW() + $2::INTERVAL, $3::INT)`
-	id := GenerateRandomString(accessTokenLength)
+	id := rand.GenerateRandomString(accessTokenLength)
 	if _, err := m.db.Exec(q, id, accessTokenValidity, user.ID); err != nil {
 		return "", err
 	} else {
@@ -63,29 +62,4 @@ func (m manager) ReadAccessToken(accessToken string) (user User, err error) {
 		return User{}, ErrCredentialsInvalid
 	}
 	return
-}
-
-const (
-	letterBytes   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
-	letterIdxBits = 6                    // 6 bits to represent a letter index
-	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-	letterIdxMax  = 64 / letterIdxBits   // # of letter indices fitting in 64 bits
-)
-
-func GenerateRandomString(n int) string {
-	src := rand.NewSource(uint64(time.Now().UnixNano()))
-	b := make([]byte, n)
-	for i, cache, remain := n-1, src.Uint64(), letterIdxMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = src.Uint64(), letterIdxMax
-		}
-		idx := int(cache & letterIdxMask)
-		// if idx < len(letterBytes)
-		b[i] = letterBytes[idx]
-		i--
-		cache >>= letterIdxBits
-		remain--
-	}
-
-	return *(*string)(unsafe.Pointer(&b))
 }
