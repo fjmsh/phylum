@@ -75,11 +75,12 @@ func setupInviteCommand() *cobra.Command {
 				return nil
 			})
 			if err != nil {
-				fmt.Println("could not create user: " + err.Error())
+				fmt.Println("unable to create user: " + err.Error())
 				os.Exit(1)
 			}
-			if sendInvite(u) != nil {
-				fmt.Println("could not send email: " + err.Error())
+			fmt.Println("User created")
+			if sendInviteEmail(u) != nil {
+				fmt.Println("unable to send email: " + err.Error())
 				os.Exit(1)
 			}
 		},
@@ -90,11 +91,44 @@ func setupInviteCommand() *cobra.Command {
 	return cmd
 }
 
-func sendInvite(user user.User) error {
+func setupResetPasswordCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pwreset email",
+		Short: "pwreset email",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			email := args[0]
+
+			manager := user.ManagerFromContext(context.Background())
+			if user, err := manager.UserByEmail(email); err != nil {
+				fmt.Println("unable to find user" + email + ": " + err.Error())
+				os.Exit(1)
+			} else if token, err := manager.CreateResetToken(user); err != nil {
+				fmt.Println("unable to create reset token: " + err.Error())
+				os.Exit(1)
+			} else if err := sendResetToken(user, token); err != nil {
+				fmt.Println("unable to send email: " + err.Error())
+				os.Exit(1)
+			}
+		},
+	}
+	return cmd
+}
+
+func sendInviteEmail(user user.User) error {
 	return mail.Send(mail.Message{
 		ToName:  user.DisplayName,
 		ToEmail: user.Email,
-		Subject: "Create your account",
-		Body:    "Create your account",
+		Subject: "An account has been created for you",
+		Body:    "An account has been created for you at",
+	})
+}
+
+func sendResetToken(user user.User, token string) error {
+	return mail.Send(mail.Message{
+		ToName:  user.DisplayName,
+		ToEmail: user.Email,
+		Subject: "Reset your password",
+		Body:    "Token: " + token,
 	})
 }

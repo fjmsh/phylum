@@ -53,6 +53,9 @@ type Manager interface {
 	CreateAccessToken(user User) (string, error)
 	ReadAccessToken(accessToken string) (User, error)
 
+	// reset.go
+	CreateResetToken(user User) (string, error)
+
 	// bookmarks.go
 	AddBookmark(u User, resource fs.Resource, name string) (Bookmark, error)
 	RemoveBookmark(u User, id uuid.UUID) error
