@@ -1,0 +1,1 @@
+Uri get webAppBaseUri => Uri();

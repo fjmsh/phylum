@@ -22,7 +22,11 @@ class ResetPasswordRoute extends PhylumRoute {
   ResetPasswordRoute({required this.instanceUri, required this.email, required this.token});
 
   @override
-  Uri get uri => Uri(path: '/reset_password');
+  Uri get uri => Uri(path: '/reset_password', queryParameters: {
+        'instance': instanceUri.toString(),
+        'email': email,
+        'token': token,
+      });
 }
 
 sealed class ExplorerRoute extends PhylumRoute {
@@ -39,7 +43,7 @@ sealed class ExplorerRoute extends PhylumRoute {
 
 class ExplorerRouteHome extends ExplorerRouteFolder {
   @override
-  Uri get uri => Uri(path: '/home');
+  Uri get uri => Uri(path: '/');
 
   @override
   String get title => 'My Files';

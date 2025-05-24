@@ -7,8 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/dialog_scaffold.dart';
+import 'package:phylum/ui/app/page.dart';
+import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/layout/app_layout.dart';
+import 'package:phylum/ui/login/reset_password_page.dart';
 import 'package:phylum/util/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:web/web.dart' as web;
@@ -74,6 +77,16 @@ class _AccountSelectorState extends State<AccountSelector> {
           Text('Initializing'),
         ],
       ));
+    }
+
+    final route = context.select<PhylumRouterDelegate, ResetPasswordRoute?>((state) =>
+        state.currentConfiguration is ResetPasswordRoute ? state.currentConfiguration as ResetPasswordRoute : null);
+    if (route != null) {
+      return ResetPasswordPage(
+        instanceUri: route.instanceUri,
+        email: route.email,
+        token: route.token,
+      );
     }
 
     final account =

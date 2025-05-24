@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/util/base_uri.dart';
 import 'package:phylum/util/logging.dart';
 
 import 'page.dart';
@@ -101,14 +102,14 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
       }
       if (segments[0] == 'reset_password') {
         Uri? instanceUrl = Uri.tryParse(uri.queryParameters['instance'] ?? '');
+
         if (instanceUrl == null) {
           logger.w('Unable to parse instance URL "${uri.queryParameters['instance']}"');
         } else if (kIsWeb) {
-          if (!kDebugMode && instanceUrl != Uri.base) {
-            logger.w('Instance URL "${uri.queryParameters['instance']}" does not match Uri.base ${Uri.base}');
-          } else {
-            instanceUrl = Uri();
+          if (kDebugMode && instanceUrl != webAppBaseUri) {
+            logger.w('Instance URL "${uri.queryParameters['instance']}" does not match Uri.base $webAppBaseUri');
           }
+          instanceUrl = Uri();
         }
 
         return SynchronousFuture(ResetPasswordRoute(
