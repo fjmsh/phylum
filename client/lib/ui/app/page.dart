@@ -14,9 +14,15 @@ sealed class PhylumRoute {
   const PhylumRoute();
 }
 
-class LoginRoute extends PhylumRoute {
+class ResetPasswordRoute extends PhylumRoute {
+  final Uri instanceUri;
+  final String email;
+  final String token;
+
+  ResetPasswordRoute({required this.instanceUri, required this.email, required this.token});
+
   @override
-  Uri get uri => Uri(path: '/login');
+  Uri get uri => Uri(path: '/reset_password');
 }
 
 sealed class ExplorerRoute extends PhylumRoute {

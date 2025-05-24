@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/util/logging.dart';
 
 import 'page.dart';
 
@@ -74,11 +75,11 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRoute> with ChangeNotifi
   }
 }
 
-class PhylumRouteInformationParser extends RouteInformationParser<ExplorerRoute> {
+class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
   const PhylumRouteInformationParser();
 
   @override
-  Future<ExplorerRoute> parseRouteInformation(RouteInformation routeInformation) {
+  Future<PhylumRoute> parseRouteInformation(RouteInformation routeInformation) {
     final uri = routeInformation.uri;
     final segments = uri.pathSegments;
 
@@ -98,6 +99,24 @@ class PhylumRouteInformationParser extends RouteInformationParser<ExplorerRoute>
       if (segments[0] == 'trash') {
         return SynchronousFuture(const ExplorerRouteTrash());
       }
+      if (segments[0] == 'reset_password') {
+        Uri? instanceUrl = Uri.tryParse(uri.queryParameters['instance'] ?? '');
+        if (instanceUrl == null) {
+          logger.w('Unable to parse instance URL "${uri.queryParameters['instance']}"');
+        } else if (kIsWeb) {
+          if (!kDebugMode && instanceUrl != Uri.base) {
+            logger.w('Instance URL "${uri.queryParameters['instance']}" does not match Uri.base ${Uri.base}');
+          } else {
+            instanceUrl = Uri();
+          }
+        }
+
+        return SynchronousFuture(ResetPasswordRoute(
+          instanceUri: instanceUrl ?? Uri(),
+          email: uri.queryParameters['email'] ?? '',
+          token: uri.queryParameters['token'] ?? '',
+        ));
+      }
       if (segments[0] == 'search') {
         final query = uri.queryParameters['q'];
         if (query == null || query.trim().isEmpty) {
@@ -112,7 +131,7 @@ class PhylumRouteInformationParser extends RouteInformationParser<ExplorerRoute>
   }
 
   @override
-  RouteInformation? restoreRouteInformation(ExplorerRoute configuration) {
+  RouteInformation? restoreRouteInformation(PhylumRoute configuration) {
     return RouteInformation(uri: configuration.uri);
   }
 }
