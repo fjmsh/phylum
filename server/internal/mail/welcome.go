@@ -1,15 +1,15 @@
 package mail
 
-type WelcomeParams struct {
-	Name string
-	URL  string
-}
+import "github.com/shroff/phylum/server/internal/core/user"
 
-func SendWelcomeEmail(rcpt Recipient, params WelcomeParams) error {
+func SendWelcomeEmail(u user.User) error {
 	email := emails["welcome"]
-	if params.Name == "" {
-		params.Name = "there"
+	params := map[string]string{
+		"name": u.DisplayName,
+		"url":  Cfg.URL,
 	}
-	params.URL = Cfg.URL
-	return send(email, rcpt, params)
+	if u.DisplayName == "" {
+		params["name"] = "there"
+	}
+	return send(email, u, params)
 }

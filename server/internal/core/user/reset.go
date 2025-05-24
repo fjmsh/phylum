@@ -7,7 +7,7 @@ import (
 	"github.com/shroff/phylum/server/internal/core/util/rand"
 )
 
-const resetTokenLength = 16
+const resetTokenLength = 64
 const resetTokenDuration = 10 * time.Minute
 
 func (m manager) CreateResetToken(user User) (string, error) {

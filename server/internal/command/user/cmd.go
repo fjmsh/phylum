@@ -16,7 +16,7 @@ func SetupCommand() *cobra.Command {
 	}
 	cmd.AddCommand([]*cobra.Command{
 		setupInviteCommand(),
-		setupResetPasswordCommand(),
+		setupPasswordResetCommand(),
 		setupUserModCommand(),
 		setupUserListCommand(),
 		setupUserPasswdCommand(),

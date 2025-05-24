@@ -3,6 +3,7 @@ package mail
 import (
 	"io"
 
+	"github.com/shroff/phylum/server/internal/core/user"
 	gomail "gopkg.in/mail.v2"
 )
 
@@ -21,11 +22,11 @@ func dialer() *gomail.Dialer {
 	return d
 }
 
-func send(e Email, rcpt Recipient, params any) error {
+func send(e Email, rcpt user.User, params any) error {
 	d := dialer()
 	msg := gomail.NewMessage()
 	msg.SetAddressHeader("From", Cfg.From.Email, Cfg.From.Name)
-	msg.SetAddressHeader("To", rcpt.Email, rcpt.Name)
+	msg.SetAddressHeader("To", rcpt.Email, rcpt.DisplayName)
 	msg.SetHeader("Subject", e.Subject)
 	msg.SetBodyWriter("text/plain", func(w io.Writer) error {
 		return e.Plain.Execute(w, params)

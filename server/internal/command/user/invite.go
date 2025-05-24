@@ -79,7 +79,7 @@ func setupInviteCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			fmt.Println("User created")
-			if sendInviteEmail(u) != nil {
+			if mail.SendWelcomeEmail(u) != nil {
 				fmt.Println("unable to send email: " + err.Error())
 				os.Exit(1)
 			}
@@ -89,42 +89,4 @@ func setupInviteCommand() *cobra.Command {
 	cmd.Flags().StringP("base-dir", "b", "/home", "Base directory for home")
 	cmd.Flags().BoolP("no-create-home", "M", false, "Do not make home directory")
 	return cmd
-}
-
-func setupResetPasswordCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "pwreset email",
-		Short: "pwreset email",
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			email := args[0]
-
-			manager := user.ManagerFromContext(context.Background())
-			if user, err := manager.UserByEmail(email); err != nil {
-				fmt.Println("unable to find user" + email + ": " + err.Error())
-				os.Exit(1)
-			} else if token, err := manager.CreateResetToken(user); err != nil {
-				fmt.Println("unable to create reset token: " + err.Error())
-				os.Exit(1)
-			} else if err := sendResetToken(user, token); err != nil {
-				fmt.Println("unable to send email: " + err.Error())
-				os.Exit(1)
-			}
-		},
-	}
-	return cmd
-}
-
-func sendInviteEmail(user user.User) error {
-	return mail.SendWelcomeEmail(
-		mail.Recipient{Email: user.Email, Name: user.DisplayName},
-		mail.WelcomeParams{Name: user.DisplayName},
-	)
-}
-
-func sendResetToken(user user.User, token string) error {
-	return mail.SendWelcomeEmail(
-		mail.Recipient{Email: user.Email, Name: user.DisplayName},
-		mail.WelcomeParams{Name: user.DisplayName},
-	)
 }
