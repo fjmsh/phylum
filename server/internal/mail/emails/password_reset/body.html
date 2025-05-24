@@ -1,12 +1,12 @@
 <html>
 <body>
-Hi {{.name}},
+<p>Hi {{.name}},</p>
 
-You can reset your password by clicking <a href="{{.base_url}}/reset_password?instance={{.base_url}}&email={{.email}}&token={{.token}}">here</a>.
+<p>You can reset your password by clicking <a href="{{.base_url}}/reset_password?instance={{.base_url}}&email={{.email}}&token={{.token}}">here</a>.</p>
 
-If the link above doesn't work, then you can enter the following token in the password reset prompt, along with your email address:
-
+<p>If the link above doesn't work, then you can enter the following token in the password reset prompt, along with your email address:<br/>
 {{.token}}
+</p>
 
 Thank you,
 </body>

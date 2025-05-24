@@ -15,5 +15,8 @@ func SendPasswordResetEmail(u user.User, token string) error {
 		"base_url": Cfg.URL,
 		"token":    token,
 	}
+	if u.DisplayName == "" {
+		params["name"] = "there"
+	}
 	return send(email, u, params)
 }
