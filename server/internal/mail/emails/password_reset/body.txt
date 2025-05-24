@@ -1,6 +1,6 @@
 Hi {{.name}},
 
-You can reset your password at {{.base_url}}/reset_password?email={{.email}}&token={{.token}} 
+You can reset your password at {{.base_url}}/reset_password?instance={{.base_url}}&email={{.email}}&token={{.token}} 
 
 If the link above doesn't work, then you can enter the following token in the password reset prompt, along with your email address:
 {{.token}}
