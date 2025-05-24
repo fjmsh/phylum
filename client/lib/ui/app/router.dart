@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:phylum/util/base_uri.dart';
 import 'package:phylum/util/logging.dart';
 
-import 'page.dart';
+import 'routes.dart';
 
 class PhylumRouterDelegate extends RouterDelegate<PhylumRoute> with ChangeNotifier, PopNavigatorRouterDelegateMixin {
   @override

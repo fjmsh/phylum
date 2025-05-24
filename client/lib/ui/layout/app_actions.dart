@@ -4,7 +4,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/layout/search.dart';
-import 'package:phylum/ui/app/page.dart';
+import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/preview/resource_preview.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';

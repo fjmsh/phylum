@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/dialog_scaffold.dart';
-import 'package:phylum/ui/app/page.dart';
+import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:provider/provider.dart';
 
