@@ -78,16 +78,17 @@ func setupWebApp(r gin.IRoutes, webAppSrcDir string) {
 	indexFilePath := path.Join(webAppSrcDir, "index.html")
 
 	staticFileHandler := func(c *gin.Context) {
-		if fs.Exists("/", c.Request.URL.Path) {
-			fileserver.ServeHTTP(c.Writer, c.Request)
-		} else {
-			http.ServeFile(c.Writer, c.Request, indexFilePath)
+		if c.Request.Method == "GET" {
+			c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
+			c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
+			if fs.Exists("/", c.Request.URL.Path) {
+				fileserver.ServeHTTP(c.Writer, c.Request)
+			} else {
+				http.ServeFile(c.Writer, c.Request, indexFilePath)
+			}
 		}
 	}
-	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
-		c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
-	}, staticFileHandler)
+	r.Use(staticFileHandler)
 }
 
 func setupTrashCompactor() {
