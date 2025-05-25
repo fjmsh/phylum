@@ -28,7 +28,7 @@ type loginResponse struct {
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/auth")
 	group.POST("/password", handlePasswordAuth)
-	group.POST("/reset-password", handlePasswordReset)
+	group.POST("/request-password-reset", handleRequestPasswordReset)
 	group.POST("/set-cookie", authenticator.RequireToken, handleSetCookie)
 }
 
@@ -62,7 +62,7 @@ func handlePasswordAuth(c *gin.Context) {
 	}
 }
 
-func handlePasswordReset(c *gin.Context) {
+func handleRequestPasswordReset(c *gin.Context) {
 	var params resetPasswordParams
 	err := c.ShouldBind(&params)
 	if err != nil {
