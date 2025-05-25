@@ -16,6 +16,7 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      spacing: 12.0,
       children: [
         TextField(
           decoration: InputDecoration(
@@ -23,7 +24,20 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
             hintText: 'http://localhost:2448/',
           ),
           keyboardType: TextInputType.url,
-          onChanged: (value) => setState(() => _url = kIsWeb && value == '' ? Uri() : Uri.tryParse(value)),
+          onChanged: (value) {
+            final Uri? url;
+            if (kIsWeb) {
+              url = value == '' ? Uri() : Uri.tryParse(value);
+            } else {
+              final tempUrl = Uri.tryParse(value);
+              if (tempUrl != null && tempUrl.hasAuthority && tempUrl.hasScheme) {
+                url = tempUrl;
+              } else {
+                url = null;
+              }
+            }
+            setState(() => _url = url);
+          },
           onSubmitted: _url == null ? null : (value) => widget.onSubmitted(_url!),
         ),
         ElevatedButton(onPressed: _url == null ? null : () => widget.onSubmitted(_url!), child: Text('Next'))
