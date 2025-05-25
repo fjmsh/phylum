@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:phylum/ui/app/dialog_scaffold.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/ui/login/requests.dart';
+import 'package:phylum/ui/login/request.dart';
+import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
+import 'package:uri/uri.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   final Uri instanceUrl;
@@ -52,7 +55,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             autofocus: true,
             keyboardType: TextInputType.visiblePassword,
             onChanged: (value) => _password = value,
-            onSubmitted: (value) => changePassword(context, widget.instanceUrl, widget.email, widget.token, value),
+            onSubmitted: (value) => changePassword(context),
           ),
           Row(
             mainAxisSize: MainAxisSize.max,
@@ -63,7 +66,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 onPressed: () => context.read<PhylumRouterDelegate>().go(ExplorerRouteHome()),
               ),
               ElevatedButton(
-                onPressed: () => changePassword(context, widget.instanceUrl, widget.email, widget.token, _password),
+                onPressed: () => changePassword(context),
                 child: Text('Change Password'),
               )
             ],
@@ -71,5 +74,27 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         ],
       ),
     );
+  }
+
+  void changePassword(
+    BuildContext context,
+  ) async {
+    final builder = UriBuilder.fromUri(widget.instanceUrl);
+    builder.path = '${builder.path}/api/v1/auth/reset-password';
+    final request = MultipartRequest('post', builder.build());
+    request.fields['email'] = widget.email;
+    request.fields['token'] = widget.token;
+    request.fields['password'] = _password;
+
+    final responseString = await sendRequest(context, 'Changing Password', request);
+    if (responseString == null) return;
+    if (context.mounted) {
+      final routerDelegate = context.read<PhylumRouterDelegate>();
+      await showAlertDialog(
+        context,
+        title: 'Password Changed',
+      );
+      routerDelegate.go(ExplorerRouteHome());
+    }
   }
 }
