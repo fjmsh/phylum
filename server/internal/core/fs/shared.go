@@ -6,11 +6,11 @@ import (
 )
 
 func (f filesystem) SharedResources(excluded pgtype.UUID) ([]Resource, error) {
-	const q = fullResourceQuery + `WHERE r.grants ? @user_id::INT
+	const q = fullResourceQuery + `WHERE r.grants ? @user_id::INT::TEXT
 AND r.id != @excluded::UUID
 AND r.deleted IS NULL
-AND (r.grants -> @user_id::INT -> 'p')::INTEGER <> 0
-ORDER BY r.grants -> @user_id::INT -> 't' DESC`
+AND (r.grants -> @user_id::INT::TEXT -> 'p')::INTEGER <> 0
+ORDER BY r.grants -> @user_id::INT::TEXT -> 't' DESC`
 	args := pgx.NamedArgs{
 		"user_id":  f.userID,
 		"excluded": excluded,
