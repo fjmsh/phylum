@@ -85,6 +85,7 @@ class _ExplorerViewState extends State<ExplorerView> {
   }
 
   Future<void> handleShareIntent(List<SharedMediaFile> files) async {
+    files.removeWhere((f) => f.type == SharedMediaType.text || f.type == SharedMediaType.url);
     if (files.isEmpty) return;
     final paths = files.map((f) => f.path).toList(growable: false);
     final account = context.read<PhylumAccount>();
