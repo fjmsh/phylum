@@ -76,13 +76,16 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                   final users =
                       account.userRepository.users.entries.where((e) => !grants.containsKey(e.key)).map((e) => e.value);
                   final user = await showOptionsDialogBuilder(
-                      context, users.toList(growable: false), (user) => ListTile(title: Text(user.displayName)),
-                      filterList: (u, q) {
-                    final query = q.toLowerCase();
-                    return u
-                        .where((u) => u.email.contains(query) || u.displayName.contains(query))
-                        .toList(growable: false);
-                  });
+                    context,
+                    users.toList(growable: false),
+                    (user) => ListTile(title: Text(repository.getUserDisplayName(user.id))),
+                    filterList: (u, q) {
+                      final query = q.toLowerCase();
+                      return u
+                          .where((u) => u.email.contains(query) || u.displayName.contains(query))
+                          .toList(growable: false);
+                    },
+                  );
                   if (user == null || !context.mounted) return;
                   final permission = await showOptionsDialogBuilder(
                     context,

@@ -50,7 +50,9 @@ class UserRepository extends Repository<PhylumAccount, User> {
   }
 
   String getUserDisplayName(int userId) {
-    return _users[userId]?.displayName ?? 'Unknown User ($userId)';
+    final user = _users[userId];
+    if (user == null) return 'Unknown User($userId)';
+    return user.displayName.isNotEmpty ? user.displayName : user.email;
   }
 
   @override
