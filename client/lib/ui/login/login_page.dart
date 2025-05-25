@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/login/instance_url_fragment.dart';
 import 'package:phylum/ui/login/password_login_fragment.dart';
+import 'package:phylum/util/dialogs.dart';
+import 'package:uri/uri.dart';
 
 import 'login_request.dart';
 
@@ -20,7 +22,9 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _instanceUrl = widget.fixedInstanceUrl;
+    if (widget.fixedInstanceUrl != null) {
+      _instanceUrl = _cleanUrl(widget.fixedInstanceUrl!);
+    }
   }
 
   @override
@@ -53,8 +57,42 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildBody(BuildContext context) {
     final instanceUrl = _instanceUrl;
     if (instanceUrl == null) {
-      return InstanceUrlFragment(onSubmitted: (url) => setState(() => _instanceUrl = url));
+      return InstanceUrlFragment(onSubmitted: (url) {
+        setState(() => _instanceUrl = _cleanUrl(url));
+      });
     }
-    return PasswordLoginFragment(onSubmitted: (email, password) => performLogin(context, instanceUrl, email, password));
+    return PasswordLoginFragment(
+      onSubmitted: (email, password) => performLogin(context, instanceUrl, email, password),
+      onBackPressed: widget.fixedInstanceUrl == null ? () => setState(() => _instanceUrl = null) : null,
+      onForgotPassword: (email) async {
+        if (email.isEmpty) {
+          showAlertDialog(
+            context,
+            message: 'Please enter email address to reset password',
+            barrierDismissible: true,
+          );
+          return;
+        }
+        final confirm = await showAlertDialog(
+              context,
+              title: 'Reset Password',
+              message: 'This will request a password reset for $email. Do you want to continue?',
+              negativeText: 'No',
+              positiveText: 'Yes',
+              barrierDismissible: true,
+            ) ??
+            false;
+        if (!confirm || !context.mounted) return;
+      },
+    );
+  }
+
+  Uri _cleanUrl(Uri url) {
+    if (url.path.endsWith('/')) {
+      final builder = UriBuilder.fromUri(url);
+      builder.path = url.pathSegments.where((s) => s.isNotEmpty).join('/');
+      return builder.build();
+    }
+    return url;
   }
 }

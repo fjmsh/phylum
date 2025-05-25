@@ -11,8 +11,6 @@ import 'package:uri/uri.dart';
 
 void performLogin(BuildContext context, Uri instanceUri, String email, String password) async {
   final builder = UriBuilder.fromUri(instanceUri);
-  builder.path = builder.path.split('/').where((s) => s.isNotEmpty).join('/');
-  final cleanServerUrl = builder.build();
 
   showProgressDialog(
     context,
@@ -40,7 +38,7 @@ void performLogin(BuildContext context, Uri instanceUri, String email, String pa
         );
       } else {
         final accountManager = context.read<AccountManager<PhylumAccount>>();
-        final account = await PhylumAccount.createFromLoginResponse(cleanServerUrl, json.cast<String, dynamic>());
+        final account = await PhylumAccount.createFromLoginResponse(instanceUri, json.cast<String, dynamic>());
         accountManager.addAccount(account);
       }
     }
