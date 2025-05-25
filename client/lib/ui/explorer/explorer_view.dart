@@ -80,7 +80,6 @@ class _ExplorerViewState extends State<ExplorerView> {
       context,
       folderId,
       reader.items,
-      copyMoveFn: context.read<PhylumAccount>().resourceRepository.copy,
     );
   }
 

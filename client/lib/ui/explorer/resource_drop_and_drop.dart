@@ -120,7 +120,6 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
           context,
           folderId,
           event.session.items.map((item) => item.dataReader).whereType(),
-          copyMoveFn: context.read<PhylumAccount>().resourceRepository.copy,
         );
 
         setState(() => dropTargetActive = false);

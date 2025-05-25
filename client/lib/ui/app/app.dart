@@ -4,6 +4,7 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/clipboard.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:provider/provider.dart';
@@ -31,6 +32,7 @@ class _PhylumAppState extends State<PhylumApp> {
               value: accountManager),
           ChangeNotifierProvider.value(value: routerDelegate),
           if (!kIsWeb) ChangeNotifierProvider<DownloadManager>(create: (context) => DownloadManager()),
+          Provider(create: (context) => CutToClipboard()),
         ],
         builder: (context, child) {
           const seedColor = Color(0xff769e57);

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/ui/app/clipboard.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -44,7 +45,6 @@ class ExplorerActions extends StatelessWidget {
               context,
               folderId,
               reader.items,
-              copyMoveFn: context.read<PhylumAccount>().resourceRepository.copy,
             );
 
             await SystemClipboard.instance?.write([]);
@@ -109,12 +109,12 @@ class ExplorerActions extends StatelessWidget {
                 ? UriBuilder.fromUri(Uri.base.replace(path: 'open'))
                 : account.apiClient.createUriBuilder('/open');
             uri.queryParameters['id'] = r.id;
-            if (i.cut) {
-              uri.queryParameters['cut'] = 'y';
-            }
             final uriData = Formats.uri(NamedUri(uri.build(), name: r.name));
             return DataWriterItem(suggestedName: r.name)..add(uriData);
           });
+
+          context.read<CutToClipboard>().ids = i.cut ? selected.map((r) => r.id).toList(growable: false) : const [];
+
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text('${items.length} items ${i.cut ? 'cut' : 'copied'} to clipboard')));
           await SystemClipboard.instance?.write(items);

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/repositories/resource_repository.dart';
+import 'package:phylum/ui/app/clipboard.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
@@ -102,10 +103,10 @@ Future<PasteInfo> extractPasteInfo(PhylumAccount account, Iterable<DataReader> d
 Future<void> processPasteItems(
   BuildContext context,
   String folderId,
-  Iterable<DataReader> data, {
-  CopyMoveFn? copyMoveFn,
-}) async {
+  Iterable<DataReader> data,
+) async {
   final account = context.read<PhylumAccount>();
+  final cutIds = context.read<CutToClipboard>().ids;
   final info = await extractPasteInfo(account, data);
   final resources = await info.getResources(account);
 
@@ -129,22 +130,23 @@ Future<void> processPasteItems(
   if (!context.mounted) return;
   await uploadPath(context, folderId, info.paths);
 
-  if (copyMoveFn != null) {
-    for (final r in resources) {
-      if (!context.mounted) return;
+  final copyMoveFn = ListEquality().equals(cutIds, info.resourceIds.toList(growable: false))
+      ? account.resourceRepository.move
+      : account.resourceRepository.copy;
+  for (final r in resources) {
+    if (!context.mounted) return;
 
-      handleLocalErrors(
-        context,
-        r.name,
-        overwriteFn: (r) => nameConflictDelete,
-        (name, conflictResolution) => copyMoveFn(
-          resource: r,
-          name: name,
-          parent: folderId,
-          conflictResolution: conflictResolution,
-        ),
-      );
-    }
+    handleLocalErrors(
+      context,
+      r.name,
+      overwriteFn: (r) => nameConflictDelete,
+      (name, conflictResolution) => copyMoveFn(
+        resource: r,
+        name: name,
+        parent: folderId,
+        conflictResolution: conflictResolution,
+      ),
+    );
   }
 }
 
