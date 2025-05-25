@@ -27,6 +27,7 @@ class PathView extends StatelessWidget {
           initialData: <ParentsResult>[ParentsResult(id: folderId, name: 'Folder', userPermission: 0)],
           builder: (context, snapshot) {
             final path = <PathInfo>[];
+            DateTime? deleted;
             for (int i = snapshot.data!.length - 1; i >= 0; i--) {
               final entry = snapshot.data![i];
               final permission = entry.userPermission;
@@ -37,6 +38,11 @@ class PathView extends StatelessWidget {
                   if (path.isEmpty) {
                     path.add(
                         PathInfo(title: 'Shared With Me', dropTargetId: null, target: const ExplorerRouteShared()));
+                  }
+                  if (deleted != entry.deleted) {
+                    deleted = entry.deleted;
+                    path.clear();
+                    path.add(PathInfo(title: 'Trash', dropTargetId: null, target: const ExplorerRouteTrash()));
                   }
                   path.add(PathInfo(
                     title: entry.name,
