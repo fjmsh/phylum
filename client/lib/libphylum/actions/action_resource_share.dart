@@ -28,7 +28,7 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
   List<LocalChange> get localChanges => [
         UpdateResourcePermissionsChange(
           objectId: resourceId,
-          userId: userId,
+          userId: userId.toString(),
           permission: permission,
           timestamp: modified,
         ),
