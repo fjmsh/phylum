@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>Phylum App Redirect</title>
+</head>
+<body>
+<p id="text">Redirecting you to <a id="link"></p>
+<script>
+  const url = new URL(window.location);
+  const instance = url.searchParams.get("instance");
+  if (instance != undefined) {
+      const instanceUrl = new URL(instance);
+      instanceUrl.pathname = url.pathname;
+      instanceUrl.search = url.search;
+      window.location.href = instanceUrl.toString();
+      const displayUrl = new URL(instanceUrl.toString());
+      displayUrl.search = "";
+      const e = document.getElementById('link');
+      e.setAttribute('href', instanceUrl.toString());
+      e.innerText = displayUrl.toString();
+  } else {
+      const e = document.getElementById('text');
+      e.innerText = "Instance URL not specified";
+  }
+</script>
+</body>
+</html>
