@@ -231,7 +231,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	}
 
 	targetRoot.visibleParent = pgtype.UUID{
-		Bytes: r.id,
+		Bytes: destParent.id,
 		Valid: true,
 	}
 	targetRoot.f = r.f
