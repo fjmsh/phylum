@@ -5,7 +5,7 @@ import 'package:phylum/ui/login/password_login_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:uri/uri.dart';
 
-import 'login_request.dart';
+import 'requests.dart';
 
 class LoginPage extends StatefulWidget {
   final Uri? fixedInstanceUrl;
@@ -83,6 +83,7 @@ class _LoginPageState extends State<LoginPage> {
             ) ??
             false;
         if (!confirm || !context.mounted) return;
+        requestPasswordReset(context, instanceUrl, email);
       },
     );
   }
