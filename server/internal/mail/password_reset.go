@@ -12,7 +12,7 @@ func SendPasswordResetEmail(u user.User, token string) error {
 	params := map[string]string{
 		"name":     u.DisplayName,
 		"email":    u.Email,
-		"base_url": Cfg.URL,
+		"instance": Cfg.Instance,
 		"token":    token,
 	}
 	if u.DisplayName == "" {

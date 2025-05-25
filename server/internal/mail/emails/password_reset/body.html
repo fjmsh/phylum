@@ -2,7 +2,7 @@
 <body>
 <p>Hi {{.name}},</p>
 
-<p>You can reset your password by clicking <a href="{{.base_url}}/reset_password?instance={{.base_url}}&email={{.email}}&token={{.token}}">here</a>.</p>
+<p>You can reset your password by clicking <a href="{{.instance}}/reset_password?instance={{.instance}}&email={{.email}}&token={{.token}}">here</a>.</p>
 
 <p>If the link above doesn't work, then you can enter the following token in the password reset prompt, along with your email address:<br/>
 {{.token}}
