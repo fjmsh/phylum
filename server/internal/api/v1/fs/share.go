@@ -9,9 +9,9 @@ import (
 )
 
 type shareParams struct {
-	Path        string        `json:"path" form:"path" binding:"required"`
-	Email       string        `json:"email" form:"email" binding:"required"`
-	Permissions fs.Permission `json:"permission" form:"permissions" binding:"required"`
+	Path       string        `json:"path" form:"path" binding:"required"`
+	Email      string        `json:"email" form:"email" binding:"required"`
+	Permission fs.Permission `json:"permission" form:"permission"`
 }
 
 func handleShareRequest(c *gin.Context) {
@@ -35,7 +35,7 @@ func handleShareRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	r, err = r.UpdatePermissions(user.ID, params.Permissions)
+	r, err = r.UpdatePermissions(user.ID, params.Permission)
 	if err != nil {
 		panic(err)
 	}

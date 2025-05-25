@@ -33,7 +33,7 @@ RETURNING grants`
 
 	const qRemove = `
 UPDATE resources SET
-	grants = grants - @user_id::INT,
+	grants = grants - @user_id::INT::TEXT,
 	modified = NOW()
 WHERE id = @resource_id::UUID
 RETURNING grants`
