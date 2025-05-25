@@ -62,7 +62,6 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
       ..sort(((a, b) {
         return a.value == b.value ? a.key.compareTo(b.key) : a.value.compareTo(b.value);
       }));
-    final theme = Theme.of(context);
     return DropdownButtonHideUnderline(
       child: Column(
         children: [
@@ -109,35 +108,40 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
           for (final e in grantEntries)
             ListTile(
               visualDensity: VisualDensity.adaptivePlatformDensity,
+              leading: Icon(e.value.icon),
               title: Text(repository.getUserDisplayName(e.key)),
-              trailing: DropdownButton<Permission>(
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-                items: _createPermissionsItems(theme, e.value),
-                value: e.value,
-                onChanged: (userPermission! & permissionShare) == 0
-                    ? null
-                    : (value) async {
-                        if (value == null || value == e.value) return;
-                        if (value == permissions[e.key]) {
-                          value = 0;
-                        }
-                        final user =
-                            await (account.db.users.select()..where((u) => u.id.equals(e.key))).getSingleOrNull();
-                        if (user == null) return;
+              subtitle: Text(e.value.text),
+              onTap: (userPermission! & permissionShare) == 0
+                  ? null
+                  : () async {
+                      final permission = await showOptionsDialogBuilder(
+                        context,
+                        [
+                          permissionSetNone,
+                          permissionSetReadOnly,
+                          permissionSetReadWrite,
+                          permissionSetReadWriteShare,
+                        ],
+                        (p) => ListTile(leading: Icon(p.icon), title: Text(p.text)),
+                      );
+                      if (permission == null || permission == e.value) return;
+                      final user =
+                          await (account.db.users.select()..where((u) => u.id.equals(e.key))).getSingleOrNull();
+                      if (user == null) return;
 
-                        account.addAction(ResourceShareAction(
-                          resourceId: widget.resourceId,
-                          resourceName: resourceName!,
-                          user: user,
-                          permission: value,
-                        ));
-                      },
-              ),
+                      account.addAction(ResourceShareAction(
+                        resourceId: widget.resourceId,
+                        resourceName: resourceName!,
+                        user: user,
+                        permission: permission,
+                      ));
+                    },
             ),
           ListTile(
             visualDensity: VisualDensity.compact,
             dense: true,
-            title: const Text('Inherited Permissions', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: const Text(
+                key: ValueKey('inherited'), 'Inherited Permissions', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
           for (final e in permissionEntries)
             ListTile(
@@ -146,45 +150,6 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
               title: Text(repository.getUserDisplayName(e.key)),
               subtitle: Text(e.value.text),
             ),
-        ],
-      ),
-    );
-  }
-
-  List<DropdownMenuItem<Permission>> _createPermissionsItems(ThemeData theme, Permission p) {
-    return [
-      _buildDropdownMenuItem(permissionSetNone, theme),
-      _buildDropdownMenuItem(permissionSetReadOnly, theme),
-      _buildDropdownMenuItem(permissionSetReadWrite, theme),
-      _buildDropdownMenuItem(permissionSetReadWriteShare, theme),
-      if (p == permissionSetAll) _buildDropdownMenuItem(permissionSetAll, theme),
-      if (p != permissionSetNone &&
-          p != permissionSetReadOnly &&
-          p != permissionSetReadWrite &&
-          p != permissionSetReadWriteShare &&
-          p != permissionSetAll)
-        _buildDropdownMenuItem(p, theme),
-    ];
-  }
-
-  DropdownMenuItem<Permission> _buildDropdownMenuItem(Permission p, ThemeData theme) {
-    final iconColor = theme.listTileTheme.iconColor;
-    final textColor = theme.listTileTheme.tileColor;
-
-    return DropdownMenuItem(
-      value: p,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: Icon(p.icon, color: iconColor),
-          ),
-          Text(
-            p.text,
-            style: TextStyle(color: textColor),
-          ),
         ],
       ),
     );
