@@ -19,6 +19,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/my")
 	group.GET("/home", handleHomeRoute)
 	group.GET("/shared", handleSharedRoute)
+	group.POST("/details", handleDetailsUpdateRoute)
 	setupBookmarksRoutes(group)
 }
 
