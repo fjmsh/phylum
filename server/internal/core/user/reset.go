@@ -1,11 +1,17 @@
 package user
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/util/rand"
 )
+
+var ErrTokenNotFound = errors.NewError(http.StatusBadRequest, "token_not_found", "Token Not Found")
 
 const resetTokenLength = 64
 const resetTokenDuration = 10 * time.Minute
@@ -25,4 +31,37 @@ ON CONFLICT(user_id) DO UPDATE SET token = @token::TEXT, expires = @expires::TIM
 		return "", err
 	}
 	return token, nil
+}
+
+func (m manager) ResetUserPassword(user User, token, password string) error {
+	const q = `DELETE FROM reset_tokens WHERE user_id = @user_id::INT AND token = @token::TEXT RETURNING expires`
+	args := pgx.NamedArgs{
+		"user_id": user.ID,
+		"token":   token,
+		"expires": time.Now().Add(resetTokenDuration),
+	}
+	return m.db.RunInTx(func(d db.Handler) error {
+		m := m.withDb(d)
+
+		// UpdateUserPassword will ensure the password strength
+		// Not incorrect to do this before token verification because we are in a transaction.
+		// TODO: Are there perf implications for this in case of malicious actors?
+		err := m.UpdateUserPassword(user, password)
+		if err != nil {
+			return err
+		}
+		row := m.db.QueryRow(q, args)
+		var expires pgtype.Timestamp
+		if err := row.Scan(&expires); err == nil {
+			if time.Now().After(expires.Time) {
+				return ErrTokenNotFound
+			}
+			return nil
+		} else if errors.Is(err, pgx.ErrNoRows) {
+			return ErrTokenNotFound
+		} else {
+			return err
+		}
+	})
+
 }

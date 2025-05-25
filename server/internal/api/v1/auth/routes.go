@@ -16,8 +16,14 @@ type passwordParams struct {
 	Password string `json:"password" form:"password" binding:"required"`
 }
 
-type resetPasswordParams struct {
+type requestPasswordResetParams struct {
 	Email string `json:"email" form:"email" binding:"required"`
+}
+
+type resetPasswordParams struct {
+	Email    string `json:"email" form:"email" binding:"required"`
+	Token    string `json:"token" form:"token" binding:"required"`
+	Password string `json:"password" form:"password" binding:"required"`
 }
 
 type loginResponse struct {
@@ -29,6 +35,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/auth")
 	group.POST("/password", handlePasswordAuth)
 	group.POST("/request-password-reset", handleRequestPasswordReset)
+	group.POST("/reset-password", handleResetPassword)
 	group.POST("/set-cookie", authenticator.RequireToken, handleSetCookie)
 }
 
@@ -63,10 +70,10 @@ func handlePasswordAuth(c *gin.Context) {
 }
 
 func handleRequestPasswordReset(c *gin.Context) {
-	var params resetPasswordParams
+	var params requestPasswordResetParams
 	err := c.ShouldBind(&params)
 	if err != nil {
-		panic(errors.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
+		panic(errors.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
 	}
 
 	userManager := user.ManagerFromContext(c.Request.Context())
@@ -85,6 +92,22 @@ func handleRequestPasswordReset(c *gin.Context) {
 		go func() {
 			mail.SendPasswordResetEmail(u, token)
 		}()
+	}
+	c.JSON(200, gin.H{})
+}
+
+func handleResetPassword(c *gin.Context) {
+	var params resetPasswordParams
+	err := c.ShouldBind(&params)
+	if err != nil {
+		panic(errors.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
+	}
+
+	userManager := user.ManagerFromContext(c.Request.Context())
+	if u, err := userManager.UserByEmail(params.Email); err != nil {
+		panic(err)
+	} else if err := userManager.ResetUserPassword(u, params.Token, params.Password); err != nil {
+		panic(err)
 	}
 	c.JSON(200, gin.H{})
 }

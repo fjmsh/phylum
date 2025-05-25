@@ -55,6 +55,7 @@ type Manager interface {
 
 	// reset.go
 	CreateResetToken(user User) (string, error)
+	ResetUserPassword(user User, token, password string) error
 
 	// bookmarks.go
 	AddBookmark(u User, resource fs.Resource, name string) (Bookmark, error)
