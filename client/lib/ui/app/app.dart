@@ -33,14 +33,19 @@ class _PhylumAppState extends State<PhylumApp> {
           if (!kIsWeb) ChangeNotifierProvider<DownloadManager>(create: (context) => DownloadManager()),
         ],
         builder: (context, child) {
+          const seedColor = Color(0xff769e57);
           final theme = ThemeData(
             colorScheme: ColorScheme.fromSeed(
-              seedColor: Color(0xff769e57),
+              seedColor: seedColor,
               dynamicSchemeVariant: DynamicSchemeVariant.neutral,
             ),
           );
           final darkTheme = ThemeData(
-            colorScheme: theme.colorScheme.copyWith(brightness: Brightness.dark),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: seedColor,
+              dynamicSchemeVariant: DynamicSchemeVariant.neutral,
+              brightness: Brightness.dark,
+            ),
             brightness: Brightness.dark,
           );
 
