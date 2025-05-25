@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/dialog_scaffold.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/app/router.dart';
+import 'package:phylum/ui/login/requests.dart';
 import 'package:provider/provider.dart';
 
 class ResetPasswordPage extends StatefulWidget {
-  final Uri instanceUri;
+  final Uri instanceUrl;
   final String email;
   final String token;
 
   const ResetPasswordPage({
     super.key,
-    required this.instanceUri,
+    required this.instanceUrl,
     required this.email,
     required this.token,
   });
@@ -21,6 +22,7 @@ class ResetPasswordPage extends StatefulWidget {
 }
 
 class _ResetPasswordPageState extends State<ResetPasswordPage> {
+  String _password = '';
   bool passwordVisible = false;
 
   @override
@@ -49,15 +51,21 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             autocorrect: false,
             autofocus: true,
             keyboardType: TextInputType.visiblePassword,
-            onChanged: (value) {},
-            onSubmitted: (value) {},
+            onChanged: (value) => _password = value,
+            onSubmitted: (value) => changePassword(context, widget.instanceUrl, widget.email, widget.token, value),
           ),
           Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                  onPressed: () => context.read<PhylumRouterDelegate>().go(ExplorerRouteHome()), child: Text('Cancel'))
+                child: Text('Cancel', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                onPressed: () => context.read<PhylumRouterDelegate>().go(ExplorerRouteHome()),
+              ),
+              ElevatedButton(
+                onPressed: () => changePassword(context, widget.instanceUrl, widget.email, widget.token, _password),
+                child: Text('Change Password'),
+              )
             ],
           ),
         ],

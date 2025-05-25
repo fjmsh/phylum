@@ -1,8 +1,12 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/ui/app/router.dart';
+import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/login/instance_url_fragment.dart';
 import 'package:phylum/ui/login/password_login_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
 import 'requests.dart';
@@ -73,10 +77,32 @@ class _LoginPageState extends State<LoginPage> {
           );
           return;
         }
+
+        final contents = RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(text: 'This will request a password reset for $email.\n\nDo you want to continue?\n\n'),
+              TextSpan(
+                text: 'Tap here if you already have a reset token',
+                style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () async {
+                    final token = await showInputDialog(context, labelText: 'Reset Token', barrierDismissable: true);
+                    if (token == null || !context.mounted) return;
+                    Navigator.of(context).pop(false);
+                    context
+                        .read<PhylumRouterDelegate>()
+                        .go(ResetPasswordRoute(instanceUri: instanceUrl, email: email, token: token));
+                  },
+              ),
+            ],
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        );
         final confirm = await showAlertDialog(
               context,
               title: 'Reset Password',
-              message: 'This will request a password reset for $email. Do you want to continue?',
+              contents: contents,
               negativeText: 'No',
               positiveText: 'Yes',
               barrierDismissible: true,

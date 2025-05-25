@@ -83,7 +83,7 @@ class _AccountSelectorState extends State<AccountSelector> {
         state.currentConfiguration is ResetPasswordRoute ? state.currentConfiguration as ResetPasswordRoute : null);
     if (route != null) {
       return ResetPasswordPage(
-        instanceUri: route.instanceUri,
+        instanceUrl: route.instanceUri,
         email: route.email,
         token: route.token,
       );

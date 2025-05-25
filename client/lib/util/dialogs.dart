@@ -75,23 +75,26 @@ Future<bool?> showAlertDialog(
   bool barrierDismissible = false,
   String? title,
   String? message,
+  Widget? contents,
   String? negativeText,
   String positiveText = 'OK',
 }) {
+  assert(message == null || contents == null);
   return showDialog(
     context: context,
     barrierDismissible: barrierDismissible,
     builder: (context) => AlertDialog(
       title: (title == null) ? null : Text(title),
       scrollable: (message?.length ?? 0) > 300,
-      content: (message == null)
+      content: (contents == null && message == null)
           ? null
           : ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 360),
-              child: Text(
-                message,
-                softWrap: true,
-              ),
+              child: contents ??
+                  Text(
+                    message!,
+                    softWrap: true,
+                  ),
             ),
       actions: <Widget>[
         if (negativeText != null)

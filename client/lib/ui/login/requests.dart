@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -39,15 +40,33 @@ void performLogin(BuildContext context, Uri instanceUri, String email, String pa
   });
 }
 
-void requestPasswordReset(BuildContext context, Uri instanceUrl, String email) async {
+Future<void> changePassword(BuildContext context, Uri instanceUrl, String email, String token, String password) async {
+  final builder = UriBuilder.fromUri(instanceUrl);
+  builder.path = '${builder.path}/api/v1/auth/reset-password';
+  final request = MultipartRequest('post', builder.build());
+  request.fields['email'] = email;
+  request.fields['token'] = token;
+  request.fields['password'] = password;
+
+  return sendRequest(context, 'Setting Password Password', request, (_) async {
+    if (context.mounted) {
+      await showAlertDialog(
+        context,
+        title: 'Password Changed!',
+      );
+    }
+  });
+}
+
+Future<void> requestPasswordReset(BuildContext context, Uri instanceUrl, String email) async {
   final builder = UriBuilder.fromUri(instanceUrl);
   builder.path = '${builder.path}/api/v1/auth/request-password-reset';
   final request = MultipartRequest('post', builder.build());
   request.fields['email'] = email;
 
-  sendRequest(context, 'Requesting Password Reset', request, (_) {
+  await sendRequest(context, 'Requesting Password Reset', request, (_) async {
     if (context.mounted) {
-      showAlertDialog(
+      await showAlertDialog(
         context,
         title: 'Password Reset Requested',
       );
@@ -55,7 +74,12 @@ void requestPasswordReset(BuildContext context, Uri instanceUrl, String email) a
   });
 }
 
-void sendRequest(BuildContext context, String title, BaseRequest request, Function(String) successCallback) async {
+Future<void> sendRequest(
+  BuildContext context,
+  String title,
+  BaseRequest request,
+  FutureOr Function(String) successCallback,
+) async {
   final navigator = Navigator.of(context);
   showProgressDialog(context, barrierDismissible: false, title: title);
 
@@ -68,7 +92,7 @@ void sendRequest(BuildContext context, String title, BaseRequest request, Functi
   } on SocketException {
     navigator.pop();
     if (context.mounted) {
-      showAlertDialog(
+      await showAlertDialog(
         context,
         barrierDismissible: false,
         title: 'Error',
@@ -79,7 +103,7 @@ void sendRequest(BuildContext context, String title, BaseRequest request, Functi
   } catch (e) {
     navigator.pop();
     if (context.mounted) {
-      showAlertDialog(
+      await showAlertDialog(
         context,
         barrierDismissible: false,
         title: 'Error',
@@ -93,12 +117,12 @@ void sendRequest(BuildContext context, String title, BaseRequest request, Functi
   // Dismiss progress dialog
   navigator.pop();
   if (responseStatusCode == 200) {
-    successCallback(responseString);
+    await successCallback(responseString);
   } else {
     if (context.mounted) {
       try {
         final reponse = jsonDecode(responseString) as Map;
-        showAlertDialog(
+        await showAlertDialog(
           context,
           barrierDismissible: false,
           title: 'Error',
@@ -106,7 +130,7 @@ void sendRequest(BuildContext context, String title, BaseRequest request, Functi
         );
       } catch (e) {
         if (context.mounted) {
-          showAlertDialog(
+          await showAlertDialog(
             context,
             barrierDismissible: false,
             title: 'Error',
