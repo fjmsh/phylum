@@ -86,6 +86,12 @@ func setupWebApp(r gin.IRoutes, webAppSrcDir string) {
 			} else {
 				http.ServeFile(c.Writer, c.Request, indexFilePath)
 			}
+		} else {
+			c.JSON(http.StatusNotFound, gin.H{
+				"status": 404,
+				"code":   "route_not_found",
+				"msg":    "Route Not Found",
+			})
 		}
 	}
 	r.Use(staticFileHandler)
