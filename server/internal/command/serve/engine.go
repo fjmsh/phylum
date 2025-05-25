@@ -21,6 +21,13 @@ func createEngine() *gin.Engine {
 			"msg":    "Internal Server Error",
 		})
 	}))
+	engine.NoRoute(func(c *gin.Context) {
+		c.JSON(http.StatusNotFound, gin.H{
+			"status": 404,
+			"code":   "route_not_found",
+			"msg":    "Route Not Found",
+		})
+	})
 	if Cfg.LogBody {
 		engine.Use(logBodyMiddleware)
 	}
