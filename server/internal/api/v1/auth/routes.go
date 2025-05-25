@@ -8,11 +8,16 @@ import (
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/shroff/phylum/server/internal/mail"
 )
 
 type passwordParams struct {
 	Email    string `json:"email" form:"email" binding:"required"`
 	Password string `json:"password" form:"password" binding:"required"`
+}
+
+type resetPasswordParams struct {
+	Email string `json:"email" form:"email" binding:"required"`
 }
 
 type loginResponse struct {
@@ -23,6 +28,7 @@ type loginResponse struct {
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/auth")
 	group.POST("/password", handlePasswordAuth)
+	group.POST("/reset-password", handlePasswordReset)
 	group.POST("/set-cookie", authenticator.RequireToken, handleSetCookie)
 }
 
@@ -54,6 +60,33 @@ func handlePasswordAuth(c *gin.Context) {
 			})
 		}
 	}
+}
+
+func handlePasswordReset(c *gin.Context) {
+	var params resetPasswordParams
+	err := c.ShouldBind(&params)
+	if err != nil {
+		panic(errors.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
+	}
+
+	userManager := user.ManagerFromContext(c.Request.Context())
+	u, err := userManager.UserByEmail(params.Email)
+	if err == user.ErrNotFound {
+		c.JSON(200, gin.H{})
+		return
+	}
+	if err != nil {
+		panic(err)
+	}
+
+	if token, err := userManager.CreateResetToken(u); err != nil {
+		panic(err)
+	} else {
+		go func() {
+			mail.SendPasswordResetEmail(u, token)
+		}()
+	}
+	c.JSON(200, gin.H{})
 }
 
 func handleSetCookie(c *gin.Context) {
