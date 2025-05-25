@@ -136,6 +136,7 @@ class _LoginPageState extends State<LoginPage> {
         final response = jsonDecode(responseString) as Map;
         final account = await PhylumAccount.createFromLoginResponse(instanceUri, response.cast<String, dynamic>());
         accountManager.addAccount(account);
+        navigator.pop();
       } catch (e) {
         navigator.pop();
         if (context.mounted) {
