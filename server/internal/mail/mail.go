@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/sirupsen/logrus"
 	gomail "gopkg.in/mail.v2"
 )
 
@@ -34,5 +35,9 @@ func send(e Email, rcpt user.User, params any) error {
 	msg.AddAlternativeWriter("text/html", func(w io.Writer) error {
 		return e.HTML.Execute(w, params)
 	})
-	return d.DialAndSend(msg)
+	err := d.DialAndSend(msg)
+	if err != nil {
+		logrus.Warn(err)
+	}
+	return err
 }
