@@ -2,26 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:provider/provider.dart';
 
-class OfflineSliver extends StatelessWidget {
-  const OfflineSliver({super.key});
+class PausedOfflineSliver extends StatelessWidget {
+  const PausedOfflineSliver({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final paused = context.select<PhylumActionQueueState, bool>((state) => state.paused);
     final unreachable = context.select<PhylumActionQueueState, bool>((state) => state.unreachable);
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, i) {
+          if (paused) {
+            return ListTile(
+              leading: const Icon(Icons.refresh),
+              title: const Text('Sync Paused'),
+              subtitle: const Text('Tap to resume'),
+              onTap: () {
+                context.read<PhylumActionQueue>().resume();
+              },
+            );
+          }
           return ListTile(
-            leading: Icon(Icons.refresh),
-            title: Text('Server Unreachable'),
-            subtitle: Text('Tap to retry'),
+            leading: const Icon(Icons.refresh),
+            title: const Text('Server Unreachable'),
+            subtitle: const Text('Tap to retry'),
             onTap: () {
               context.read<PhylumActionQueue>().retry();
             },
           );
         },
-        childCount: unreachable ? 1 : 0,
+        childCount: paused || unreachable ? 1 : 0,
       ),
     );
   }

@@ -61,7 +61,7 @@ class SyncDialog extends StatelessWidget {
 
   Widget buildContents(BuildContext context) => const CustomScrollView(
         slivers: [
-          OfflineSliver(),
+          PausedOfflineSliver(),
           ActionsSliver(),
         ],
       );

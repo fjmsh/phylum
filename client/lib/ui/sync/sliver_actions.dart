@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
@@ -26,8 +27,6 @@ class _ActionsSliverState extends State<ActionsSliver> {
   List<PhylumAction>? last;
   final Map<PhylumAction, RemoveListener> _listeners = {};
   final Map<PhylumAction, ActionStatus> _statusMap = {};
-  bool paused = false;
-  bool unreachable = false;
 
   List<PhylumAction> actions = const [];
 
@@ -67,8 +66,6 @@ class _ActionsSliverState extends State<ActionsSliver> {
         }
         last = state.actions;
       }
-      paused = state.paused;
-      unreachable = state.unreachable;
       if (mounted) {
         setState(() {});
       }
@@ -87,13 +84,25 @@ class _ActionsSliverState extends State<ActionsSliver> {
       delegate: SliverChildBuilderDelegate(
         (context, i) {
           if (i == 0) {
-            return ListTile(
-              dense: true,
-              title: Text(
-                'Pending Updates (${actions.length})',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            );
+            return Builder(
+                key: const ValueKey('heading'),
+                builder: (context) {
+                  final paused = context.select<PhylumActionQueueState, bool>((state) => state.paused);
+                  return ListTile(
+                      dense: true,
+                      title: Text(
+                        'Pending Updates (${actions.length})',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      leading: (kDebugMode && !paused)
+                          ? IconButton(
+                              icon: Icon(Icons.pause),
+                              onPressed: () {
+                                context.read<PhylumActionQueue>().pause();
+                              },
+                            )
+                          : null);
+                });
           }
           return ActionView(action: actions[i - 1]);
         },
