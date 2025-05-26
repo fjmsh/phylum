@@ -30,10 +30,10 @@ class UserRepository extends Repository<PhylumAccount, User> {
     await box.close();
     _account = account;
 
-    await account.db.users
+    account.db.users
         .select()
-        .get()
-        .then((users) => _users = Map.unmodifiable(Map<int, User>.fromIterable(users, key: (u) => u.id)));
+        .watch()
+        .listen((users) => _users = Map.unmodifiable(Map<int, User>.fromIterable(users, key: (u) => u.id)));
 
     _remoteDataBox = await _account.openLazyBox(_remoteUsersBoxName);
     return remoteData;
@@ -41,12 +41,9 @@ class UserRepository extends Repository<PhylumAccount, User> {
 
   Future<ApiResult> refresh() async {
     return _account.apiClient.sendRequest(
-        UsersListRequest(), (request, response) => parseJsonMapResponse(response, UserListResponse.fromResponse),
-        callback: (request, response) async {
-      if (response is UserListResponse) {
-        _users = Map.unmodifiable(Map<int, User>.fromIterable(response.users, key: (u) => u.id));
-      }
-    });
+      UsersListRequest(),
+      (request, response) => parseJsonMapResponse(response, UserListResponse.fromResponse),
+    );
   }
 
   String getUserDisplayName(int userId) {
