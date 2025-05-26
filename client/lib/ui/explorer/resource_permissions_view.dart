@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:drift/drift.dart' show TableOrViewStatements;
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/actions/action_user_invite.dart';
@@ -131,8 +132,9 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                                           onChanged: (value) {
                                             name = value;
                                           },
-                                          onSubmitted:
-                                              email.isEmpty ? null : (value) => Navigator.of(context).pop(true),
+                                          onSubmitted: EmailValidator.validate(email)
+                                              ? (value) => Navigator.of(context).pop(true)
+                                              : null,
                                         ),
                                       ],
                                     ),
@@ -148,7 +150,8 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                                       },
                                     ),
                                     ElevatedButton(
-                                      onPressed: email.isEmpty ? null : () => Navigator.of(context).pop(true),
+                                      onPressed:
+                                          EmailValidator.validate(email) ? () => Navigator.of(context).pop(true) : null,
                                       child: const Text('Invite'),
                                     )
                                   ],
