@@ -3,12 +3,14 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_user_invite.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/users_list_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
 const _remoteUsersBoxName = 'remote_users';
+const _keyLocalUserId = 'local_user_id';
 
 class UserRepository extends Repository<PhylumAccount, User> {
   late final PhylumAccount _account;
@@ -50,6 +52,14 @@ class UserRepository extends Repository<PhylumAccount, User> {
     final user = _users[userId];
     if (user == null) return 'Unknown User($userId)';
     return user.displayName.isNotEmpty ? user.displayName : user.email;
+  }
+
+  Future<User> invite(String email, String name) async {
+    final localId = _account.getPersisted<num>(_keyLocalUserId)?.toInt() ?? -1;
+    await _account.persist(_keyLocalUserId, localId - 1);
+    final user = User(id: localId, email: email, displayName: name);
+    await _account.addAction(UserInviteAction(localId: localId, email: email, displayName: name));
+    return user;
   }
 
   @override

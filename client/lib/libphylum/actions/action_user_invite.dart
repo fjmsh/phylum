@@ -1,4 +1,5 @@
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/changes/create_user_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
@@ -20,27 +21,33 @@ class UserInviteAction extends PhylumAction with JsonApiAction {
       };
 
   @override
-  List<LocalChange> get localChanges => [];
+  List<LocalChange> get localChanges => [
+        CreateUserChange(localId: localId, email: email, displayName: displayName),
+      ];
 
   @override
   String get description => "Inviting User $email";
 
   @override
   Map<String, dynamic> get props => {
+        'localId': localId,
         'email': email,
         'displayName': displayName,
       };
 
+  final int localId;
   final String email;
   final String displayName;
 
   UserInviteAction({
+    required this.localId,
     required this.email,
     required this.displayName,
   });
 
   static UserInviteAction fromMap(Map<String, dynamic> map) {
     return UserInviteAction(
+      localId: map['localId'],
       email: map['email'],
       displayName: map['displayName'],
     );

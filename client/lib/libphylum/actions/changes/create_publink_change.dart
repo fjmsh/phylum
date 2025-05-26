@@ -11,9 +11,6 @@ class CreatePublinkChange extends LocalChange<Publink> {
   final DateTime? expires;
 
   @override
-  bool get persist => false;
-
-  @override
   String get description => 'Creating';
 
   const CreatePublinkChange({
