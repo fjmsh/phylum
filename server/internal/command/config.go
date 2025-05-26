@@ -43,7 +43,7 @@ var defaultConfig = Config{
 			Name:  "Phylum Drive",
 			Email: "",
 		},
-		Instance: "http://localhost:2448",
+		Instance: "https://phylum.example.com",
 	},
 }
 
