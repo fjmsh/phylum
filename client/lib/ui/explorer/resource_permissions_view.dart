@@ -4,7 +4,6 @@ import 'package:drift/drift.dart' show TableOrViewStatements;
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/actions/action_resource_share.dart';
-import 'package:phylum/libphylum/actions/action_user_invite.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -73,122 +72,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
               child: ElevatedButton.icon(
                 label: Text('Add User'),
                 icon: Icon(Icons.person_add),
-                onPressed: () async {
-                  final allUsers = await (account.db.users.select()..where((u) => u.id.isNotIn(grants.keys))).get();
-                  final users = allUsers.toList(growable: false)
-                    ..sort((a, b) {
-                      final aName = (a.displayName.isNotEmpty ? a.displayName : a.email);
-                      final bName = b.displayName.isNotEmpty ? b.displayName : b.email;
-                      // TODO: not the most efficient
-                      return aName.toLowerCase().compareTo(bName.toLowerCase());
-                    });
-                  if (!context.mounted) return;
-                  final user = await showOptionsDialogBuilder(
-                    context,
-                    users,
-                    (user) => ListTile(title: Text(user.displayName.isNotEmpty ? user.displayName : user.email)),
-                    buildLastItem: (context) => ListTile(
-                      leading: Icon(Icons.person_add),
-                      title: Text('Invite'),
-                      onTap: () async {
-                        String email = '';
-                        String name = '';
-                        bool confirm = await showDialog(
-                              // ignore: use_build_context_synchronously
-                              context: context,
-                              barrierDismissible: true,
-                              builder: (context) => StatefulBuilder(builder: (context, setState) {
-                                return AlertDialog(
-                                  title: const Text('Invite User'),
-                                  content: SizedBox(
-                                    width: 360,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      spacing: 12.0,
-                                      children: [
-                                        TextField(
-                                          decoration: InputDecoration(
-                                            labelText: 'Email',
-                                            hintText: 'djarin@example.com',
-                                          ),
-                                          autofocus: true,
-                                          textCapitalization: TextCapitalization.none,
-                                          keyboardType: TextInputType.emailAddress,
-                                          textInputAction: TextInputAction.next,
-                                          onChanged: (value) {
-                                            setState(() {
-                                              email = value;
-                                            });
-                                          },
-                                        ),
-                                        TextField(
-                                          decoration: InputDecoration(
-                                            labelText: 'Name (optional)',
-                                            hintText: 'Din Djarin',
-                                          ),
-                                          textCapitalization: TextCapitalization.words,
-                                          keyboardType: TextInputType.name,
-                                          textInputAction: TextInputAction.go,
-                                          onChanged: (value) {
-                                            name = value;
-                                          },
-                                          onSubmitted: EmailValidator.validate(email)
-                                              ? (value) => Navigator.of(context).pop(true)
-                                              : null,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      child: Text(
-                                        'Cancel',
-                                        style: TextStyle(color: Theme.of(context).colorScheme.error),
-                                      ),
-                                      onPressed: () {
-                                        Navigator.of(context).pop(false);
-                                      },
-                                    ),
-                                    ElevatedButton(
-                                      onPressed:
-                                          EmailValidator.validate(email) ? () => Navigator.of(context).pop(true) : null,
-                                      child: const Text('Invite'),
-                                    )
-                                  ],
-                                );
-                              }),
-                            ) ??
-                            false;
-
-                        if (!confirm || !context.mounted) return;
-                        account.addAction(UserInviteAction(email: email, displayName: name));
-                      },
-                    ),
-                    filterList: (u, q) {
-                      final query = q.toLowerCase();
-                      return u
-                          .where((u) => u.email.contains(query) || u.displayName.contains(query))
-                          .toList(growable: false);
-                    },
-                  );
-                  if (user == null || !context.mounted) return;
-                  final permission = await showOptionsDialogBuilder(
-                    context,
-                    [
-                      permissionSetReadOnly,
-                      permissionSetReadWrite,
-                      permissionSetReadWriteShare,
-                    ],
-                    (p) => ListTile(leading: Icon(p.icon), title: Text(p.text)),
-                  );
-                  if (permission == null || !context.mounted) return;
-                  account.addAction(ResourceShareAction(
-                    resourceId: widget.resourceId,
-                    resourceName: resourceName!,
-                    user: user,
-                    permission: permission,
-                  ));
-                },
+                onPressed: () => addUser(context),
               ),
             ),
           for (final e in grantEntries)
@@ -200,16 +84,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
               onTap: (userPermission! & permissionShare) == 0
                   ? null
                   : () async {
-                      final permission = await showOptionsDialogBuilder(
-                        context,
-                        [
-                          permissionSetNone,
-                          permissionSetReadOnly,
-                          permissionSetReadWrite,
-                          permissionSetReadWriteShare,
-                        ],
-                        (p) => ListTile(leading: Icon(p.icon), title: Text(p.text)),
-                      );
+                      final permission = await _showPermissionsPicker(context, true);
                       if (permission == null || permission == e.value) return;
                       final user =
                           await (account.db.users.select()..where((u) => u.id.equals(e.key))).getSingleOrNull();
@@ -238,6 +113,138 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
             ),
         ],
       ),
+    );
+  }
+
+  Future<void> addUser(BuildContext context) async {
+    final account = context.read<PhylumAccount>();
+    final allUsers = await (account.db.users.select()..where((u) => u.id.isNotIn(grants!.keys))).get();
+    final users = allUsers.toList(growable: false)
+      ..sort((a, b) {
+        final aName = (a.displayName.isNotEmpty ? a.displayName : a.email);
+        final bName = b.displayName.isNotEmpty ? b.displayName : b.email;
+        // TODO: not the most efficient
+        return aName.toLowerCase().compareTo(bName.toLowerCase());
+      });
+    if (!context.mounted) return;
+    final user = await showOptionsDialogBuilder(
+      context,
+      users,
+      (user) => ListTile(title: Text(user.displayName.isNotEmpty ? user.displayName : user.email)),
+      buildLastItem: (context) => ListTile(
+          leading: Icon(Icons.person_add),
+          title: Text('Invite'),
+          onTap: () async {
+            final navigator = Navigator.of(context);
+            await inviteUser(context);
+            navigator.pop();
+          }),
+      filterList: (u, q) {
+        final query = q.toLowerCase();
+        return u.where((u) => u.email.contains(query) || u.displayName.contains(query)).toList(growable: false);
+      },
+    );
+    if (user == null || !context.mounted) return;
+    final permission = await _showPermissionsPicker(context, false);
+    if (permission == null || !context.mounted) return;
+    account.addAction(ResourceShareAction(
+      resourceId: widget.resourceId,
+      resourceName: resourceName!,
+      user: user,
+      permission: permission,
+    ));
+  }
+
+  Future<void> inviteUser(BuildContext context) async {
+    String email = '';
+    String name = '';
+    bool confirm = await showDialog(
+          // ignore: use_build_context_synchronously
+          context: context,
+          barrierDismissible: true,
+          builder: (context) => StatefulBuilder(builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Invite User'),
+              content: SizedBox(
+                width: 360,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 12.0,
+                  children: [
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        hintText: 'djarin@example.com',
+                      ),
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.none,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      onChanged: (value) {
+                        setState(() {
+                          email = value;
+                        });
+                      },
+                    ),
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: 'Name (optional)',
+                        hintText: 'Din Djarin',
+                      ),
+                      textCapitalization: TextCapitalization.words,
+                      keyboardType: TextInputType.name,
+                      textInputAction: TextInputAction.go,
+                      onChanged: (value) {
+                        name = value;
+                      },
+                      onSubmitted: EmailValidator.validate(email) ? (value) => Navigator.of(context).pop(true) : null,
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                  },
+                ),
+                ElevatedButton(
+                  onPressed: EmailValidator.validate(email) ? () => Navigator.of(context).pop(true) : null,
+                  child: const Text('Invite'),
+                )
+              ],
+            );
+          }),
+        ) ??
+        false;
+    if (!confirm || !context.mounted) return;
+
+    final permission = await _showPermissionsPicker(context, false);
+    if (permission == null || !context.mounted) return;
+    final account = context.read<PhylumAccount>();
+    final user = await account.userRepository.invite(email, name);
+    await account.addAction(ResourceShareAction(
+      resourceId: widget.resourceId,
+      resourceName: resourceName!,
+      user: user,
+      permission: permission,
+    ));
+  }
+
+  Future<Permission?> _showPermissionsPicker(BuildContext context, bool showNonePermission) {
+    return showOptionsDialogBuilder(
+      context,
+      [
+        if (showNonePermission) permissionSetNone,
+        permissionSetReadOnly,
+        permissionSetReadWrite,
+        permissionSetReadWriteShare,
+      ],
+      (p) => ListTile(leading: Icon(p.icon), title: Text(p.text)),
     );
   }
 }
