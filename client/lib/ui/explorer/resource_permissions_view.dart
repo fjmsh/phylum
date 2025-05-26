@@ -73,19 +73,19 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                 label: Text('Add User'),
                 icon: Icon(Icons.person_add),
                 onPressed: () async {
-                  final users = account.userRepository.users.entries
-                      .where((e) => !grants.containsKey(e.key))
-                      .map((e) => e.value)
-                      .toList(growable: false)
+                  final allUsers = await (account.db.users.select()..where((u) => u.id.isNotIn(grants.keys))).get();
+                  final users = allUsers.toList(growable: false)
                     ..sort((a, b) {
-                      final aName = a.displayName.isNotEmpty ? a.displayName : a.email;
+                      final aName = (a.displayName.isNotEmpty ? a.displayName : a.email);
                       final bName = b.displayName.isNotEmpty ? b.displayName : b.email;
-                      return aName.compareTo(bName);
+                      // TODO: not the most efficient
+                      return aName.toLowerCase().compareTo(bName.toLowerCase());
                     });
+                  if (!context.mounted) return;
                   final user = await showOptionsDialogBuilder(
                     context,
                     users,
-                    (user) => ListTile(title: Text(repository.getUserDisplayName(user.id))),
+                    (user) => ListTile(title: Text(user.displayName.isNotEmpty ? user.displayName : user.email)),
                     buildLastItem: (context) => ListTile(
                       leading: Icon(Icons.person_add),
                       title: Text('Invite'),
