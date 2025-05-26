@@ -1,4 +1,5 @@
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_user_invite.dart';
 import 'package:phylum/libphylum/actions/changes/update_resource_permissions_change.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
@@ -47,19 +48,20 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
         'description': description,
       };
 
-  final int userId;
+  int _userId;
+  int get userId => _userId;
   final String userEmail;
   final int permission;
   final DateTime modified;
 
   ResourceShareAction._({
     required super.resourceId,
-    required this.userId,
+    required int userId,
     required this.userEmail,
     required this.permission,
     required this.modified,
     required this.description,
-  });
+  }) : _userId = userId;
 
   ResourceShareAction({
     required String resourceId,
@@ -89,5 +91,6 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
   @override
   bool dependsOn(PhylumAction action) =>
       (action is ResourceCreateAction && action.resourceId == resourceId) ||
-      (action is ResourceShareAction && action.resourceId == resourceId && action.userEmail == userEmail);
+      (action is ResourceShareAction && action.resourceId == resourceId && action.userEmail == userEmail) ||
+      (action is UserInviteAction && action.localId == userId);
 }
