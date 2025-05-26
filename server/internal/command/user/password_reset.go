@@ -25,11 +25,19 @@ func setupPasswordResetCommand() *cobra.Command {
 			} else if token, err := manager.CreateResetToken(user); err != nil {
 				fmt.Println("unable to create reset token: " + err.Error())
 				os.Exit(1)
-			} else if err := mail.SendPasswordResetEmail(user, token); err != nil {
-				fmt.Println("unable to send email: " + err.Error())
-				os.Exit(1)
+			} else {
+				if b, _ := cmd.Flags().GetBool("no-email"); b {
+					fmt.Println("Created password reset token: " + token)
+				} else {
+					if err := mail.SendPasswordResetEmail(user, token); err != nil {
+						fmt.Println("unable to send email: " + err.Error())
+						fmt.Println("Use --no-email print the reset token instead instad of sending it by email")
+						os.Exit(1)
+					}
+				}
 			}
 		},
 	}
+	cmd.Flags().Bool("no-email", false, "Do not send email")
 	return cmd
 }

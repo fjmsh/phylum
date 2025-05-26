@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -72,15 +73,15 @@ func setupInviteCommand() *cobra.Command {
 					}
 				}
 
+				if b, _ := cmd.Flags().GetBool("no-email"); !b {
+					if err := mail.SendWelcomeEmail(u); err != nil {
+						return errors.New("unable to send welcome email: " + err.Error())
+					}
+				}
 				return nil
 			})
 			if err != nil {
 				fmt.Println("unable to create user: " + err.Error())
-				os.Exit(1)
-			}
-			fmt.Println("User created")
-			if mail.SendWelcomeEmail(u) != nil {
-				fmt.Println("unable to send email: " + err.Error())
 				os.Exit(1)
 			}
 		},
@@ -88,5 +89,6 @@ func setupInviteCommand() *cobra.Command {
 	cmd.Flags().StringP("name", "n", "", "Full Name")
 	cmd.Flags().StringP("base-dir", "b", "/home", "Base directory for home")
 	cmd.Flags().BoolP("no-create-home", "M", false, "Do not make home directory")
+	cmd.Flags().Bool("no-email", false, "Do not send email")
 	return cmd
 }
