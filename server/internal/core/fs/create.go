@@ -87,7 +87,7 @@ func (r Resource) createMemberResource(name string, id uuid.UUID, dir bool, conf
 			}
 			return err
 		} else if created {
-			if err := f.recomputePermissions(r.id); err != nil {
+			if err := f.recomputePermissions(id); err != nil {
 				return err
 			}
 			return f.updateResourceModified(r.id)
