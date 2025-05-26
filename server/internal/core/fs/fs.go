@@ -72,9 +72,14 @@ func Open(ctx context.Context, userID int32, root pgtype.UUID, fullAccess bool) 
 	}
 }
 
-func OpenOmniscient(ctx context.Context) FileSystem {
-	id := rootID()
-	return Open(ctx, -1, pgtype.UUID{Bytes: id, Valid: true}, true)
+func OpenOmniscient(db db.Handler) FileSystem {
+	return filesystem{
+		db:         db,
+		cs:         storage.Get(),
+		userID:     -1,
+		pathRoot:   pgtype.UUID{Bytes: rootID(), Valid: true},
+		fullAccess: true,
+	}
 }
 
 func rootID() uuid.UUID {

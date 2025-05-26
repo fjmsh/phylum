@@ -4,15 +4,49 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/errors"
+	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
-var ErrInvalidEmailAddress = errors.NewError(http.StatusBadRequest, "invalid_email_address", "Invalid email address")
-var ErrUserExists = errors.NewError(http.StatusBadRequest, "user_already_exists", "User already exists")
+var errInvalidEmailAddress = errors.NewError(http.StatusBadRequest, "invalid_email_address", "Invalid email address")
+var errEmailExists = errors.NewError(http.StatusBadRequest, "user_already_exists", "User already exists")
 
-func (m manager) CreateUser(email, displayName string, home pgtype.UUID) (User, error) {
+func (m manager) CreateUser(email, displayName string, homePath string) (User, error) {
+	var user User
+	err := m.db.RunInTx(func(db db.Handler) error {
+		var err error
+		var homeID pgtype.UUID
+		var home fs.Resource
+		if homePath != "" {
+			f := fs.OpenOmniscient(db)
+			var err error
+			home, err = f.CreateResourceByPath(homePath, uuid.Nil, true, true, fs.ResourceBindConflictResolutionEnsure)
+			if err != nil {
+				return err
+			}
+			homeID = pgtype.UUID{Bytes: home.ID(), Valid: true}
+		}
+
+		user, err = m.insertUser(email, displayName, homeID)
+		if err != nil {
+			return err
+		}
+
+		if homeID.Valid {
+			if _, err := home.UpdatePermissions(user.ID, fs.PermissionRead|fs.PermissionWrite|fs.PermissionShare); err != nil {
+				return err
+			}
+		}
+		return err
+	})
+	return user, err
+}
+
+func (m manager) insertUser(email, displayName string, home pgtype.UUID) (User, error) {
 	const q = ` INSERT INTO users(email, display_name, password_hash, home)
 VALUES ($1, $2, $3, $4)
 RETURNING id, email, display_name, home, permissions`
@@ -21,10 +55,10 @@ RETURNING id, email, display_name, home, permissions`
 		return User{}, err
 	} else if user, err := pgx.CollectExactlyOneRow(rows, scanUser); err != nil {
 		if strings.Contains(err.Error(), "valid_email") {
-			err = ErrInvalidEmailAddress
+			err = errInvalidEmailAddress
 		}
 		if strings.Contains(err.Error(), "users_email_key") {
-			err = ErrUserExists
+			err = errEmailExists
 		}
 		return user, err
 	} else {

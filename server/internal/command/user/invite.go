@@ -7,11 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/shroff/phylum/server/internal/mail"
 	"github.com/spf13/cobra"
@@ -33,7 +29,6 @@ func setupInviteCommand() *cobra.Command {
 				displayName = n
 			}
 
-			f := common.RootFileSystem()
 			noCreateHome, _ := cmd.Flags().GetBool("no-create-home")
 			homePath := ""
 			if !noCreateHome {
@@ -44,33 +39,10 @@ func setupInviteCommand() *cobra.Command {
 			var u user.User
 			err := db.Get(context.Background()).RunInTx(func(db db.Handler) error {
 				userManager := user.ManagerFromDB(db)
-				var home fs.Resource
-				if homePath != "" {
-					f = f.WithDb(db)
-					var err error
-					home, err = f.CreateResourceByPath(homePath, uuid.Nil, true, true, fs.ResourceBindConflictResolutionEnsure)
-					if err != nil {
-						return err
-					}
-				}
-
-				var homeID pgtype.UUID
-				if home.ID() != uuid.Nil {
-					homeID = pgtype.UUID{
-						Bytes: home.ID(),
-						Valid: true,
-					}
-				}
-				if user, err := userManager.CreateUser(email, displayName, homeID); err != nil {
+				if user, err := userManager.CreateUser(email, displayName, homePath); err != nil {
 					return err
 				} else {
 					u = user
-				}
-
-				if homeID.Valid {
-					if _, err := home.UpdatePermissions(u.ID, fs.PermissionRead|fs.PermissionWrite|fs.PermissionShare); err != nil {
-						return err
-					}
 				}
 
 				if b, _ := cmd.Flags().GetBool("no-email"); !b {

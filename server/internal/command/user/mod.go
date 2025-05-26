@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/spf13/cobra"
 )
@@ -27,11 +27,11 @@ func setupUserModCommand() *cobra.Command {
 
 			displayName, _ := cmd.Flags().GetString("name")
 
-			rootFS := common.RootFileSystem()
+			f := fs.OpenOmniscient(db.Get(context.Background()))
 			var homeID pgtype.UUID
 			path, _ := cmd.Flags().GetString("home")
 			if path != "" {
-				if r, err := rootFS.ResourceByPathWithRoot(path); err != nil {
+				if r, err := f.ResourceByPathWithRoot(path); err != nil {
 					fmt.Println("invalid value for flag 'home': " + err.Error())
 					os.Exit(1)
 				} else {

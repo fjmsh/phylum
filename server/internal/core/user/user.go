@@ -36,7 +36,7 @@ func (u User) OpenFileSystem(ctx context.Context) fs.FileSystem {
 
 type Manager interface {
 	// create.go
-	CreateUser(email, displayName string, home pgtype.UUID) (User, error)
+	CreateUser(email, displayName string, homePath string) (User, error)
 
 	// select.go
 	ListUsers(since *time.Time) ([]User, error)
