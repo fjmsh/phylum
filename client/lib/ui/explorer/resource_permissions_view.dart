@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:drift/drift.dart' show TableOrViewStatements;
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/actions/action_resource_share.dart';
+import 'package:phylum/libphylum/actions/action_user_invite.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -150,7 +151,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                             false;
 
                         if (!confirm || !context.mounted) return;
-                        print('Inviting $email ($name)');
+                        account.addAction(UserInviteAction(email: email, displayName: name));
                       },
                     ),
                     filterList: (u, q) {

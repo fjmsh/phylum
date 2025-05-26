@@ -17,6 +17,7 @@ part 'search_response.dart';
 part 'shared_resources_response.dart';
 part 'trash_list_response.dart';
 part 'user_list_response.dart';
+part 'user_response.dart';
 
 typedef JsonMapResponseParser = PhylumApiSuccessResponse Function(Map<String, dynamic> data);
 typedef JsonListResponseParser = PhylumApiSuccessResponse Function(List data);
