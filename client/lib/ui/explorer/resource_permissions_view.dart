@@ -78,6 +78,81 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                     context,
                     users.toList(growable: false),
                     (user) => ListTile(title: Text(repository.getUserDisplayName(user.id))),
+                    buildLastItem: (context) => ListTile(
+                      leading: Icon(Icons.person_add),
+                      title: Text('Invite'),
+                      onTap: () async {
+                        String email = '';
+                        String name = '';
+                        bool confirm = await showDialog(
+                              // ignore: use_build_context_synchronously
+                              context: context,
+                              barrierDismissible: true,
+                              builder: (context) => StatefulBuilder(builder: (context, setState) {
+                                return AlertDialog(
+                                  title: const Text('Invite User'),
+                                  content: SizedBox(
+                                    width: 360,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      spacing: 12.0,
+                                      children: [
+                                        TextField(
+                                          decoration: InputDecoration(
+                                            labelText: 'Email',
+                                            hintText: 'djarin@example.com',
+                                          ),
+                                          autofocus: true,
+                                          textCapitalization: TextCapitalization.none,
+                                          keyboardType: TextInputType.emailAddress,
+                                          textInputAction: TextInputAction.next,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              email = value;
+                                            });
+                                          },
+                                        ),
+                                        TextField(
+                                          decoration: InputDecoration(
+                                            labelText: 'Name (optional)',
+                                            hintText: 'Din Djarin',
+                                          ),
+                                          textCapitalization: TextCapitalization.words,
+                                          keyboardType: TextInputType.name,
+                                          textInputAction: TextInputAction.go,
+                                          onChanged: (value) {
+                                            name = value;
+                                          },
+                                          onSubmitted:
+                                              email.isEmpty ? null : (value) => Navigator.of(context).pop(true),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      child: Text(
+                                        'Cancel',
+                                        style: TextStyle(color: Theme.of(context).colorScheme.error),
+                                      ),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(false);
+                                      },
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: email.isEmpty ? null : () => Navigator.of(context).pop(true),
+                                      child: const Text('Invite'),
+                                    )
+                                  ],
+                                );
+                              }),
+                            ) ??
+                            false;
+
+                        if (!confirm || !context.mounted) return;
+                        print('Inviting $email ($name)');
+                      },
+                    ),
                     filterList: (u, q) {
                       final query = q.toLowerCase();
                       return u

@@ -189,6 +189,7 @@ Future<T?> showOptionsDialogBuilder<T>(
   String? titleText,
   List<T> Function(List<T>, String)? filterList,
   bool Function(T, String)? filterTerm,
+  Widget Function(BuildContext context)? buildLastItem,
 }) async {
   var results = options;
   filterList ??= filterTerm == null
@@ -208,7 +209,9 @@ Future<T?> showOptionsDialogBuilder<T>(
             height: 600,
             child: ListView.builder(
                 shrinkWrap: true,
-                itemCount: (results.isEmpty ? 1 : results.length) + (filterList == null ? 0 : 1),
+                itemCount: (results.isEmpty ? 1 : results.length) +
+                    (filterList == null ? 0 : 1) +
+                    (buildLastItem == null ? 0 : 1),
                 itemBuilder: (context, index) {
                   if (filterList != null) {
                     index--;
@@ -223,8 +226,8 @@ Future<T?> showOptionsDialogBuilder<T>(
                           });
                         });
                   }
-                  if (results.isEmpty && index >= 0) {
-                    return const ListTile(title: Text('No Matches'));
+                  if (index >= results.length) {
+                    return buildLastItem?.call(context) ?? const ListTile(title: Text('No Matches'));
                   }
                   return InkWell(
                     child: buildItem(results[index]),
