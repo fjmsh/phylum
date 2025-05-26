@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/actions/changes/create_user_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
@@ -58,4 +61,14 @@ class UserInviteAction extends PhylumAction with JsonApiAction {
 
   @override
   ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, UserResponse.fromResponse);
+
+  @override
+  FutureOr<void> processResponse(ApiResponse response) async {
+    if (response is UserResponse) {
+      account.actionQueue.updateActions(
+        (PhylumAction action) => action is ResourceShareAction && action.userId == localId,
+        (action) => (action as ResourceShareAction).setUserId(response.user.id),
+      );
+    }
+  }
 }

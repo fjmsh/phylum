@@ -93,4 +93,8 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
       (action is ResourceCreateAction && action.resourceId == resourceId) ||
       (action is ResourceShareAction && action.resourceId == resourceId && action.userEmail == userEmail) ||
       (action is UserInviteAction && action.localId == userId);
+
+  void setUserId(int userId) {
+    _userId = userId;
+  }
 }
