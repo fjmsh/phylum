@@ -21,7 +21,7 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
         TextField(
           decoration: InputDecoration(
             label: const Text('Instance URL'),
-            hintText: 'http://localhost:2448/',
+            hintText: 'https://phylum.example.com',
           ),
           keyboardType: TextInputType.url,
           onChanged: (value) {
