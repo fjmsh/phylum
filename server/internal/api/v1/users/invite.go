@@ -21,7 +21,7 @@ var errInvalidParams = errors.NewError(http.StatusBadRequest, "invalid_parameter
 
 func handleInviteRequest(c *gin.Context) {
 	var params inviteParams
-	err := c.ShouldBindJSON(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		err = c.BindQuery(&params)
 		if err != nil {

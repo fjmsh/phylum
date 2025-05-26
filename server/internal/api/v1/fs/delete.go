@@ -13,7 +13,7 @@ type deleteParams struct {
 
 func handleDeleteRequest(c *gin.Context) {
 	var params deleteParams
-	err := c.ShouldBindJSON(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		err = c.BindQuery(&params)
 		if err != nil {

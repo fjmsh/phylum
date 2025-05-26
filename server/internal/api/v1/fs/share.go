@@ -16,7 +16,7 @@ type shareParams struct {
 
 func handleShareRequest(c *gin.Context) {
 	var params shareParams
-	err := c.ShouldBindJSON(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		err = c.BindQuery(&params)
 		if err != nil {

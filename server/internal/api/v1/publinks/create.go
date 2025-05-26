@@ -19,7 +19,7 @@ type createParams struct {
 
 func handleCreateRequest(c *gin.Context) {
 	var params createParams
-	err := c.ShouldBindJSON(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		err = c.BindQuery(&params)
 		if err != nil {

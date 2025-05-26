@@ -17,7 +17,7 @@ type copyParams struct {
 
 func handleCopyRequest(c *gin.Context) {
 	var params copyParams
-	err := c.ShouldBindJSON(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		err = c.BindQuery(&params)
 		if err != nil {

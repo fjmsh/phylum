@@ -15,7 +15,7 @@ type moveParams struct {
 
 func handleMoveRequest(c *gin.Context) {
 	var params moveParams
-	err := c.ShouldBindJSON(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		err = c.BindQuery(&params)
 		if err != nil {

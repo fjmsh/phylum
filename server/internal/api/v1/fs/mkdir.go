@@ -17,7 +17,7 @@ type mkdirParams struct {
 
 func handleMkdirRequest(c *gin.Context) {
 	var params mkdirParams
-	err := c.ShouldBindJSON(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		err = c.BindQuery(&params)
 		if err != nil {
