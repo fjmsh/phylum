@@ -18,6 +18,7 @@ var errEmailExists = errors.NewError(http.StatusBadRequest, "user_already_exists
 func (m manager) CreateUser(email, displayName string, homePath string) (User, error) {
 	var user User
 	err := m.db.RunInTx(func(db db.Handler) error {
+		m := m.withDb(db)
 		var err error
 		var homeID pgtype.UUID
 		var home fs.Resource
