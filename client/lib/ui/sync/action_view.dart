@@ -33,9 +33,20 @@ class ActionView extends StatelessWidget {
     return ListTile(
       title: Text(action.description),
       subtitle: Text(status.toString()),
-      trailing: IconButton(
-        onPressed: () => context.read<PhylumActionQueue>().deleteAction(action),
-        icon: const Icon(Icons.delete),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (status is ActionStatusReady)
+            IconButton(
+              icon: const Icon(Icons.play_arrow),
+              tooltip: 'Sync Now',
+              onPressed: () => context.read<PhylumActionQueue>().retryAction(action),
+            ),
+          IconButton(
+            onPressed: () => context.read<PhylumActionQueue>().deleteAction(action),
+            icon: const Icon(Icons.delete),
+          ),
+        ],
       ),
     );
   }
