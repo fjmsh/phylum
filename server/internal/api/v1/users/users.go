@@ -12,6 +12,7 @@ import (
 func SetupUserRoutes(r *gin.RouterGroup) {
 	group := r.Group("/users")
 	group.GET("/list", handleUsersListRoute)
+	group.POST("/invite", handleInviteRequest)
 }
 
 func handleUsersListRoute(c *gin.Context) {
