@@ -13,9 +13,9 @@ func (m manager) UpdateUserHome(user User, home pgtype.UUID) error {
 	return nil
 }
 
-func (m manager) UpdateUserDisplayName(user User, displayName string) error {
-	const q = "UPDATE users SET display_name = $2::TEXT, modified = NOW() WHERE id = $1::INT"
-	if _, err := m.db.Exec(q, user.ID, displayName); err != nil {
+func (m manager) UpdateUserName(user User, name string) error {
+	const q = "UPDATE users SET name = $2::TEXT, modified = NOW() WHERE id = $1::INT"
+	if _, err := m.db.Exec(q, user.ID, name); err != nil {
 		return err
 	}
 	return nil

@@ -13,7 +13,7 @@ import (
 type User struct {
 	ID          int32
 	Email       string
-	DisplayName string
+	Name        string
 	Home        pgtype.UUID
 	Permissions Permission
 }
@@ -23,7 +23,7 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 	err := row.Scan(
 		&u.ID,
 		&u.Email,
-		&u.DisplayName,
+		&u.Name,
 		&u.Home,
 		&u.Permissions,
 	)
@@ -36,7 +36,7 @@ func (u User) OpenFileSystem(ctx context.Context) fs.FileSystem {
 
 type Manager interface {
 	// create.go
-	CreateUser(email, displayName string, homePath string) (User, error)
+	CreateUser(email, name string, homePath string) (User, error)
 
 	// select.go
 	ListUsers(since *time.Time) ([]User, error)
@@ -45,7 +45,7 @@ type Manager interface {
 
 	// update.go
 	UpdateUserHome(user User, home pgtype.UUID) error
-	UpdateUserDisplayName(user User, displayName string) error
+	UpdateUserName(user User, name string) error
 	UpdateUserPassword(user User, password string) error
 
 	// auth.go

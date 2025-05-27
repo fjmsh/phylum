@@ -12,7 +12,7 @@ import (
 
 type inviteParams struct {
 	Email        string `json:"email" form:"email" binding:"required"`
-	DisplayName  string `json:"display_name" form:"display_name"`
+	Name         string `json:"name" form:"name"`
 	NoCreateHome bool   `json:"no_create_home" form:"no_create_home"`
 	NoSendEmail  bool   `json:"no_send_email" form:"no_send_email"`
 }
@@ -34,7 +34,7 @@ func handleInviteRequest(c *gin.Context) {
 	if params.NoCreateHome {
 		homePath = ""
 	}
-	if user, err := userManager.CreateUser(params.Email, params.DisplayName, homePath); err != nil {
+	if user, err := userManager.CreateUser(params.Email, params.Name, homePath); err != nil {
 		panic(err)
 	} else {
 		if !params.NoSendEmail {
@@ -42,6 +42,6 @@ func handleInviteRequest(c *gin.Context) {
 				mail.SendWelcomeEmail(user)
 			}()
 		}
-		c.JSON(200, responses.User{ID: user.ID, Email: user.Email, DisplayName: user.DisplayName})
+		c.JSON(200, responses.User{ID: user.ID, Email: user.Email, Name: user.Name})
 	}
 }

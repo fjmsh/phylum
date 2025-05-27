@@ -9,7 +9,7 @@ import (
 )
 
 type detailsParams struct {
-	DisplayName string `json:"display_name" form:"display_name"`
+	Name string `json:"name" form:"name"`
 }
 
 func handleDetailsUpdateRoute(c *gin.Context) {
@@ -23,11 +23,11 @@ func handleDetailsUpdateRoute(c *gin.Context) {
 
 	err = db.Get(c.Request.Context()).RunInTx(func(d db.Handler) error {
 		userManager := user.ManagerFromDB(d)
-		if params.DisplayName != "" {
-			if err := userManager.UpdateUserDisplayName(u, params.DisplayName); err != nil {
+		if params.Name != "" {
+			if err := userManager.UpdateUserName(u, params.Name); err != nil {
 				return err
 			}
-			u.DisplayName = params.DisplayName
+			u.Name = params.Name
 		}
 		return nil
 	})
@@ -36,8 +36,8 @@ func handleDetailsUpdateRoute(c *gin.Context) {
 		panic(err)
 	}
 	c.JSON(200, responses.User{
-		ID:          u.ID,
-		Email:       u.Email,
-		DisplayName: u.DisplayName,
+		ID:    u.ID,
+		Email: u.Email,
+		Name:  u.Name,
 	})
 }

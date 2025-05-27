@@ -4,7 +4,7 @@ CREATE TABLE users(
   modified      TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   deleted       TIMESTAMP,
   email         TEXT        NOT NULL UNIQUE,
-  display_name  TEXT        NOT NULL,
+  name          TEXT        NOT NULL,
   password_hash TEXT        NOT NULL,
   home          uuid        REFERENCES resources(id),
   permissions   INTEGER     NOT NULL DEFAULT 0,

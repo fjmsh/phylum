@@ -19,7 +19,7 @@ func (m manager) ListUsers(since *time.Time) ([]User, error) {
 	if since != nil {
 		s.Time = *since
 	}
-	const q = "SELECT id, email, display_name, home, permissions FROM users WHERE modified > $1::TIMESTAMP"
+	const q = "SELECT id, email, name, home, permissions FROM users WHERE modified > $1::TIMESTAMP"
 	if rows, err := m.db.Query(q, s); err != nil {
 		return nil, err
 	} else {
@@ -28,7 +28,7 @@ func (m manager) ListUsers(since *time.Time) ([]User, error) {
 }
 
 func (m manager) UserByEmail(email string) (User, error) {
-	const q = "SELECT id, email, display_name, home, permissions FROM users WHERE email = $1"
+	const q = "SELECT id, email, name, home, permissions FROM users WHERE email = $1"
 	if rows, err := m.db.Query(q, strings.ToLower(email)); err != nil {
 		return User{}, err
 	} else if u, err := pgx.CollectExactlyOneRow(rows, scanUser); err != nil {
@@ -42,12 +42,12 @@ func (m manager) UserByEmail(email string) (User, error) {
 }
 
 func (m manager) userPasswordHashByEmail(email string) (user User, passwordHash string, err error) {
-	const q = "SELECT id, email, display_name, home, permissions, password_hash FROM users WHERE email = $1"
+	const q = "SELECT id, email, name, home, permissions, password_hash FROM users WHERE email = $1"
 	row := m.db.QueryRow(q, strings.ToLower(email))
 	err = row.Scan(
 		&user.ID,
 		&user.Email,
-		&user.DisplayName,
+		&user.Name,
 		&user.Home,
 		&user.Permissions,
 		&passwordHash)

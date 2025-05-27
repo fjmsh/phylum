@@ -27,7 +27,7 @@ func send(e Email, rcpt user.User, params any) error {
 	d := dialer()
 	msg := gomail.NewMessage()
 	msg.SetAddressHeader("From", Cfg.From.Email, Cfg.From.Name)
-	msg.SetAddressHeader("To", rcpt.Email, rcpt.DisplayName)
+	msg.SetAddressHeader("To", rcpt.Email, rcpt.Name)
 	msg.SetHeader("Subject", e.Subject)
 	msg.SetBodyWriter("text/plain", func(w io.Writer) error {
 		return e.Plain.Execute(w, params)

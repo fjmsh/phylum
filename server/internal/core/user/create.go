@@ -15,7 +15,7 @@ import (
 var errInvalidEmailAddress = errors.NewError(http.StatusBadRequest, "invalid_email_address", "Invalid email address")
 var errEmailExists = errors.NewError(http.StatusBadRequest, "user_already_exists", "User already exists")
 
-func (m manager) CreateUser(email, displayName string, homePath string) (User, error) {
+func (m manager) CreateUser(email, ame string, homePath string) (User, error) {
 	var user User
 	err := m.db.RunInTx(func(db db.Handler) error {
 		m := m.withDb(db)
@@ -32,7 +32,7 @@ func (m manager) CreateUser(email, displayName string, homePath string) (User, e
 			homeID = pgtype.UUID{Bytes: home.ID(), Valid: true}
 		}
 
-		user, err = m.insertUser(email, displayName, homeID)
+		user, err = m.insertUser(email, ame, homeID)
 		if err != nil {
 			return err
 		}
@@ -47,12 +47,12 @@ func (m manager) CreateUser(email, displayName string, homePath string) (User, e
 	return user, err
 }
 
-func (m manager) insertUser(email, displayName string, home pgtype.UUID) (User, error) {
-	const q = ` INSERT INTO users(email, display_name, password_hash, home)
+func (m manager) insertUser(email, name string, home pgtype.UUID) (User, error) {
+	const q = ` INSERT INTO users(email, name, password_hash, home)
 VALUES ($1, $2, $3, $4)
-RETURNING id, email, display_name, home, permissions`
+RETURNING id, email, name, home, permissions`
 
-	if rows, err := m.db.Query(q, strings.ToLower(email), displayName, "", home); err != nil {
+	if rows, err := m.db.Query(q, strings.ToLower(email), name, "", home); err != nil {
 		return User{}, err
 	} else if user, err := pgx.CollectExactlyOneRow(rows, scanUser); err != nil {
 		if strings.Contains(err.Error(), "valid_email") {

@@ -57,9 +57,9 @@ func handlePasswordAuth(c *gin.Context) {
 				AccessToken: token,
 				User: responses.LoggedInUser{
 					User: responses.User{
-						ID:          user.ID,
-						Email:       user.Email,
-						DisplayName: user.DisplayName,
+						ID:    user.ID,
+						Email: user.Email,
+						Name:  user.Name,
 					},
 					Home:        user.Home,
 					Permissions: user.Permissions,

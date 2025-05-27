@@ -49,11 +49,11 @@ func (m manager) CreateAccessToken(user User) (string, error) {
 }
 
 func (m manager) ReadAccessToken(accessToken string) (user User, err error) {
-	const q = `SELECT t.expires, u.id, u.email, u.display_name, u.permissions, u.home FROM access_tokens t JOIN users u ON t.user_id = u.id WHERE t.id = $1; `
+	const q = `SELECT t.expires, u.id, u.email, u.name, u.permissions, u.home FROM access_tokens t JOIN users u ON t.user_id = u.id WHERE t.id = $1; `
 	row := m.db.QueryRow(q, accessToken)
 
 	var expires pgtype.Timestamp
-	err = row.Scan(&expires, &user.ID, &user.Email, &user.DisplayName, &user.Permissions, &user.Home)
+	err = row.Scan(&expires, &user.ID, &user.Email, &user.Name, &user.Permissions, &user.Home)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrCredentialsInvalid

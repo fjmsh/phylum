@@ -38,9 +38,9 @@ type ResourceFull struct {
 }
 
 type User struct {
-	ID          int32  `json:"id"`
-	Email       string `json:"email"`
-	DisplayName string `json:"display_name"`
+	ID    int32  `json:"id"`
+	Email string `json:"email"`
+	Name  string `json:"name"`
 }
 
 type LoggedInUser struct {

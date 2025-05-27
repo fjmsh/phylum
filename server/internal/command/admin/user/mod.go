@@ -25,7 +25,7 @@ func setupModCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			displayName, _ := cmd.Flags().GetString("name")
+			name, _ := cmd.Flags().GetString("name")
 
 			f := fs.OpenOmniscient(db.Get(context.Background()))
 			var homeID pgtype.UUID
@@ -44,8 +44,8 @@ func setupModCommand() *cobra.Command {
 
 			err = db.Get(context.Background()).RunInTx(func(db db.Handler) error {
 				m := user.ManagerFromDB(db)
-				if displayName != "" {
-					if err := m.UpdateUserDisplayName(u, displayName); err != nil {
+				if name != "" {
+					if err := m.UpdateUserName(u, name); err != nil {
 						return err
 					}
 				}
@@ -62,7 +62,7 @@ func setupModCommand() *cobra.Command {
 			}
 		},
 	}
-	cmd.Flags().StringP("name", "n", "", "Display Name")
+	cmd.Flags().StringP("name", "n", "", "Name")
 	cmd.Flags().StringP("home", "d", "", "Home Directory")
 	return cmd
 }
