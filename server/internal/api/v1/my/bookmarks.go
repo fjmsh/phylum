@@ -1,24 +1,22 @@
 package my
 
 import (
+	"context"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
+	"github.com/shroff/phylum/server/internal/api/v1/responses"
+	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 type bookmarksResponse struct {
-	Bookmarks []Bookmark `json:"bookmarks"`
-	Until     int64      `json:"until"`
-}
-
-type Bookmark struct {
-	ResourceID uuid.UUID `json:"resource_id"`
-	Name       string    `json:"name"`
-	Dir        bool      `json:"dir"`
-	Created    int64     `json:"created"`
+	Bookmarks []responses.Bookmark `json:"bookmarks"`
+	Until     int64                `json:"until"`
 }
 
 type bookmarkAddParams struct {
@@ -38,24 +36,24 @@ func setupBookmarksRoutes(r *gin.RouterGroup) {
 }
 
 func handleBookmarksGetRoute(c *gin.Context) {
-	u := authenticator.GetUser(c)
-	res, err := user.ManagerFromContext(c.Request.Context()).ListBookmarks(u, 0)
-	if err != nil {
-		panic(err)
-	}
-	bookmarks := make([]Bookmark, len(res))
-	for i, b := range res {
-		bookmarks[i] = Bookmark{
-			ResourceID: b.ResourceID,
-			Name:       b.Name,
-			Dir:        b.Dir,
-			Created:    b.Created.UnixMilli(),
+	var since int64
+	if s := c.Request.URL.Query().Get("since"); s != "" {
+		var err error
+		since, err = strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			panic(errors.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Parameters"))
 		}
 	}
-	c.JSON(200, bookmarksResponse{
-		Bookmarks: bookmarks,
-		Until:     time.Now().UnixMilli() - 100,
-	})
+
+	u := authenticator.GetUser(c)
+	if bookmarks, err := ListBookmarks(c.Request.Context(), u, since); err != nil {
+		panic(err)
+	} else {
+		c.JSON(200, bookmarksResponse{
+			Bookmarks: bookmarks,
+			Until:     time.Now().UnixMilli() - 100,
+		})
+	}
 }
 
 func handleBookmarksAddRoute(c *gin.Context) {
@@ -72,7 +70,7 @@ func handleBookmarksAddRoute(c *gin.Context) {
 		panic(err)
 	}
 	c.JSON(200,
-		Bookmark{
+		responses.Bookmark{
 			ResourceID: b.ResourceID,
 			Name:       b.Name,
 			Dir:        b.Dir,
@@ -90,4 +88,22 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 		panic(err)
 	}
 	c.JSON(200, gin.H{})
+}
+
+func ListBookmarks(ctx context.Context, u user.User, since int64) ([]responses.Bookmark, error) {
+	var bookmarks []responses.Bookmark
+	if res, err := user.ManagerFromContext(ctx).ListBookmarks(u, since); err != nil {
+		return bookmarks, err
+	} else {
+		bookmarks = make([]responses.Bookmark, len(res))
+		for i, b := range res {
+			bookmarks[i] = responses.Bookmark{
+				ResourceID: b.ResourceID,
+				Name:       b.Name,
+				Dir:        b.Dir,
+				Created:    b.Created.UnixMilli(),
+			}
+		}
+		return bookmarks, nil
+	}
 }

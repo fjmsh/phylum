@@ -58,3 +58,22 @@ type Publink struct {
 	Protected   bool      `json:"protected"`
 	Expires     int64     `json:"expires"`
 }
+
+type Login struct {
+	AccessToken string `json:"access_token"`
+	Bootstrap
+}
+
+type Bookmark struct {
+	ResourceID uuid.UUID `json:"resource_id"`
+	Name       string    `json:"name"`
+	Dir        bool      `json:"dir"`
+	Created    int64     `json:"created"`
+}
+
+type Bootstrap struct {
+	User      LoggedInUser `json:"user"`
+	Bookmarks []Bookmark   `json:"bookmarks"`
+	Users     []User       `json:"users"`
+	Until     int          `json:"until"`
+}

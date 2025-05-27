@@ -1,6 +1,7 @@
 package my
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"time"
@@ -8,71 +9,48 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
+	"github.com/shroff/phylum/server/internal/api/v1/users"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
-type bootstrapResponse struct {
-	User      responses.LoggedInUser `json:"user"`
-	Bookmarks []Bookmark             `json:"bookmarks"`
-	Users     []responses.User       `json:"users"`
-	Until     int                    `json:"until"`
-}
-
 func handleBootstrapRoute(c *gin.Context) {
-	var since int
-	if sinceStr := c.Request.URL.Query().Get("since"); sinceStr != "" {
+	var since int64
+	if s := c.Request.URL.Query().Get("since"); s != "" {
 		var err error
-		since, err = strconv.Atoi(sinceStr)
+		since, err = strconv.ParseInt(s, 10, 64)
 		if err != nil {
 			panic(errors.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Parameters"))
 		}
 	}
 
-	u := authenticator.GetUser(c)
-	var bookmarks []Bookmark
-	var users []responses.User
-
-	if res, err := user.ManagerFromContext(c.Request.Context()).ListBookmarks(u, int64(since)); err != nil {
+	if response, err := Bootstrap(c.Request.Context(), authenticator.GetUser(c), since); err != nil {
 		panic(err)
 	} else {
-		bookmarks = make([]Bookmark, len(res))
-		for i, b := range res {
-			bookmarks[i] = Bookmark{
-				ResourceID: b.ResourceID,
-				Name:       b.Name,
-				Dir:        b.Dir,
-				Created:    b.Created.UnixMilli(),
-			}
-		}
+		c.JSON(200, response)
 	}
+}
 
-	if res, err := user.ManagerFromContext(c.Request.Context()).ListUsers(int64(since)); err != nil {
-		panic(err)
+func Bootstrap(ctx context.Context, u user.User, since int64) (responses.Bootstrap, error) {
+	if bookmarks, err := ListBookmarks(ctx, u, since); err != nil {
+		return responses.Bootstrap{}, err
+	} else if users, err := users.ListUsers(ctx, since); err != nil {
+		return responses.Bootstrap{}, err
 	} else {
-		users = make([]responses.User, len(res))
-		for i, u := range res {
-			users[i] = responses.User{
-				ID:    u.ID,
-				Email: u.Email,
-				Name:  u.Name,
-			}
-		}
-	}
-
-	response := bootstrapResponse{
-		User: responses.LoggedInUser{
-			User: responses.User{
-				ID:    u.ID,
-				Email: u.Email,
-				Name:  u.Name,
+		return responses.Bootstrap{
+			User: responses.LoggedInUser{
+				User: responses.User{
+					ID:    u.ID,
+					Email: u.Email,
+					Name:  u.Name,
+				},
+				Home:        u.Home,
+				Permissions: u.Permissions,
 			},
-			Home:        u.Home,
-			Permissions: u.Permissions,
-		},
-		Bookmarks: bookmarks,
-		Users:     users,
-		Until:     int(time.Now().UnixMilli()) - 100,
+			Bookmarks: bookmarks,
+			Users:     users,
+			Until:     int(time.Now().UnixMilli()) - 100,
+		}, nil
 	}
-	c.JSON(200, response)
+
 }

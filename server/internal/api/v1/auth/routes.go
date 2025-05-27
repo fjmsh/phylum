@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
+	"github.com/shroff/phylum/server/internal/api/v1/my"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/user"
@@ -26,11 +27,6 @@ type resetPasswordParams struct {
 	Password string `json:"password" form:"password" binding:"required"`
 }
 
-type loginResponse struct {
-	AccessToken string                 `json:"access_token"`
-	User        responses.LoggedInUser `json:"user"`
-}
-
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/auth")
 	group.POST("/password", handlePasswordAuth)
@@ -49,24 +45,17 @@ func handlePasswordAuth(c *gin.Context) {
 	userManager := user.ManagerFromContext(c.Request.Context())
 	if user, err := userManager.VerifyUserPassword(params.Email, params.Password); err != nil {
 		panic(err)
+	} else if token, err := userManager.CreateAccessToken(user); err != nil {
+		panic(err)
+	} else if bootstrap, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
+		panic(err)
 	} else {
-		if token, err := userManager.CreateAccessToken(user); err != nil {
-			panic(err)
-		} else {
-			c.JSON(200, loginResponse{
-				AccessToken: token,
-				User: responses.LoggedInUser{
-					User: responses.User{
-						ID:    user.ID,
-						Email: user.Email,
-						Name:  user.Name,
-					},
-					Home:        user.Home,
-					Permissions: user.Permissions,
-				},
-			})
-		}
+		c.JSON(200, responses.Login{
+			AccessToken: token,
+			Bootstrap:   bootstrap,
+		})
 	}
+
 }
 
 func handleRequestPasswordReset(c *gin.Context) {
