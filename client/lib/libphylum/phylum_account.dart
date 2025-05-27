@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/logged_in_user.dart';
 import 'package:phylum/libphylum/repositories/bookmark_repository.dart';
 import 'package:phylum/libphylum/repositories/publink_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
@@ -11,11 +13,7 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/logging.dart';
 
 const _persistKeyAccessToken = 'accessToken';
-const _persistKeyUserId = 'userId';
-const _persistKeyUserEmail = 'userEmail';
-const _persistKeyUserName = 'userName';
-const _persistKeyUserHome = 'userHome';
-const _persistKeyUserPermissions = 'userPermissions';
+const _persistKeyUser = 'user';
 
 AccountManager<PhylumAccount> createAccountManager(bool autoInitialize) => AccountManager((id) async {
       final account = PhylumAccount.restore(id: id);
@@ -47,6 +45,8 @@ class PhylumAccount extends Account<PhylumAccount> {
   Dispatcher dispatcher = HttpClientDispatcher();
 
   String? _initialAccessToken;
+  LoggedInUser? _initialLoggedInUser;
+
   String? get accessToken => getPersisted(_persistKeyAccessToken);
   set _accessToken(String? value) {
     if (value != accessToken) {
@@ -55,33 +55,23 @@ class PhylumAccount extends Account<PhylumAccount> {
     apiClient.setHeader('Authorization', 'bearer $value');
   }
 
-  int get userId => getPersisted<num>(_persistKeyUserId)?.toInt() ?? 0;
-  set userId(int value) {
-    persist(_persistKeyUserId, value);
+  late LoggedInUser _loggedInUser;
+  set loggedInUser(LoggedInUser value) {
+    if (_loggedInUser != value) {
+      _loggedInUser = value;
+      persist(_persistKeyUser, value.toJson());
+    }
   }
 
-  String get userEmail => getPersisted(_persistKeyUserEmail);
-  set userEmail(String value) {
-    persist(_persistKeyUserEmail, value);
-  }
+  int get userId => _loggedInUser.id;
+  String get userEmail => _loggedInUser.email;
+  String get userName => _loggedInUser.name;
+  String get userHome => _loggedInUser.home;
+  int get userPermissions => _loggedInUser.permissions;
 
-  String get userName => getPersisted(_persistKeyUserName);
-  set userName(String value) {
-    persist(_persistKeyUserName, value);
-  }
-
-  String get userHome => getPersisted(_persistKeyUserHome);
-  set userHome(String value) {
-    persist(_persistKeyUserHome, value);
-  }
-
-  int get userPermissions => getPersisted<num>(_persistKeyUserPermissions)?.toInt() ?? 0;
-  set userPermissions(int value) {
-    persist(_persistKeyUserPermissions, value);
-  }
-
-  PhylumAccount.create({required super.serverUri, required String accessToken})
+  PhylumAccount.create({required super.serverUri, required String accessToken, required LoggedInUser user})
       : _initialAccessToken = accessToken,
+        _initialLoggedInUser = user,
         super.create();
 
   PhylumAccount.restore({required super.id}) : super.restore();
@@ -110,6 +100,7 @@ class PhylumAccount extends Account<PhylumAccount> {
         }
       }
     });
+    _loggedInUser = _initialLoggedInUser ?? LoggedInUser.fromJson(jsonDecode(getPersisted(_persistKeyUser)));
   }
 
   @override

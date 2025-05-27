@@ -12,6 +12,7 @@ import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/login/instance_url_fragment.dart';
 import 'package:phylum/ui/login/password_login_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
@@ -136,13 +137,17 @@ class _LoginPageState extends State<LoginPage> {
       try {
         final response =
             BootstrapLoginResponse.fromResponse((jsonDecode(responseString) as Map).cast<String, dynamic>());
-        final account = PhylumAccount.create(serverUri: instanceUri, accessToken: response.accessToken!);
+        final account = PhylumAccount.create(
+          serverUri: instanceUri,
+          accessToken: response.accessToken!,
+          user: response.user,
+        );
         await account.initialized;
         await response.process(account);
 
         await accountManager.addAccount(account);
         navigator.pop();
-      } catch (e) {
+      } catch (e, stack) {
         navigator.pop();
         if (context.mounted) {
           showAlertDialog(
@@ -152,6 +157,7 @@ class _LoginPageState extends State<LoginPage> {
             message: e.toString(),
           );
         }
+        logger.w('Login Error', error: e, stackTrace: stack);
       }
     }
   }

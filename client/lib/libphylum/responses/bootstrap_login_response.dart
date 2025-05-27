@@ -40,11 +40,7 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
       batch.insertAll(account.db.users, users, mode: InsertMode.replace);
     });
 
-    account.userEmail = user.email;
-    account.userName = user.name;
-    account.userId = user.id;
-    account.userHome = user.home;
-    account.userPermissions = user.permissions;
+    account.loggedInUser = user;
 
     for (final b in bookmarks) {
       await account.datastore.get<Bookmark>().replaceRemoteData(b.resourceId, b);
