@@ -12,15 +12,13 @@ import (
 
 var ErrNotFound = errors.NewError(http.StatusNotFound, "user_not_found", "no such user")
 
-func (m manager) ListUsers(since *time.Time) ([]User, error) {
-	s := pgtype.Timestamp{
-		Valid: true,
+func (m manager) ListUsers(since int64) ([]User, error) {
+	sb := strings.Builder{}
+	sb.WriteString("SELECT id, email, name, home, permissions FROM users")
+	if since > 0 {
+		sb.WriteString(" WHERE modified >= @since::TIMESTAMP")
 	}
-	if since != nil {
-		s.Time = *since
-	}
-	const q = "SELECT id, email, name, home, permissions FROM users WHERE modified > $1::TIMESTAMP"
-	if rows, err := m.db.Query(q, s); err != nil {
+	if rows, err := m.db.Query(sb.String(), pgx.NamedArgs{"since": time.UnixMilli(since).UTC()}); err != nil {
 		return nil, err
 	} else {
 		return pgx.CollectRows(rows, scanUser)

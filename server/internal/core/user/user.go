@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -39,7 +38,7 @@ type Manager interface {
 	CreateUser(email, name string, homePath string) (User, error)
 
 	// select.go
-	ListUsers(since *time.Time) ([]User, error)
+	ListUsers(since int64) ([]User, error)
 	UserByEmail(email string) (User, error)
 	UserHome(email string) (pgtype.UUID, error)
 
