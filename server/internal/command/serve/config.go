@@ -1,14 +1,19 @@
 package serve
 
 type Config struct {
-	Host        string     `koanf:"host"`
-	Port        int        `koanf:"port"`
-	WebAppSrc   string     `koanf:"webappsrc"`
-	PublinkPath string     `koanf:"publinkpath"`
-	WebDAVPath  string     `koanf:"webdavpath"`
-	CORS        CORSConfig `koanf:"cors"`
-	Debug       bool       `koanf:"debug"`
-	LogBody     bool       `koanf:"logbody"`
+	Host        string       `koanf:"host"`
+	Port        int          `koanf:"port"`
+	WebAppSrc   string       `koanf:"webappsrc"`
+	PublinkPath string       `koanf:"publinkpath"`
+	WebDAV      WebDAVConfig `koanf:"webdav"`
+	CORS        CORSConfig   `koanf:"cors"`
+	Debug       bool         `koanf:"debug"`
+	LogBody     bool         `koanf:"logbody"`
+}
+
+type WebDAVConfig struct {
+	Enabled bool   `koanf:"enabled"`
+	Path    string `koanf:"path"`
 }
 
 type CORSConfig struct {

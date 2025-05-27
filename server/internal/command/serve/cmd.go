@@ -49,7 +49,9 @@ func SetupCommand() *cobra.Command {
 		}
 		engine := createEngine()
 
-		webdav.SetupHandler(engine.Group(Cfg.WebDAVPath))
+		if Cfg.WebDAV.Enabled {
+			webdav.SetupHandler(engine.Group(Cfg.WebDAV.Path))
+		}
 		apiv1.Setup(engine.Group("/api/v1"))
 		publink.Setup(engine.Group(Cfg.PublinkPath))
 
@@ -81,7 +83,7 @@ func setupWebApp(r gin.IRoutes, webAppSrcDir string) {
 		path := c.Request.URL.Path
 		if c.Request.Method == "GET" &&
 			!strings.HasPrefix(path, "/api") &&
-			!strings.HasPrefix(path, Cfg.WebDAVPath) &&
+			!strings.HasPrefix(path, Cfg.WebDAV.Path) &&
 			!strings.HasPrefix(path, Cfg.PublinkPath) {
 			c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
 			c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")

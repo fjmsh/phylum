@@ -15,7 +15,9 @@ server:
   port: 2448
   webappsrc: web
   publinkpath: /pub
-  webdavpath: /webdav
+  webdav:
+    enabled: true
+    path: /webdav
   cors:
     enabled: false
     origins:
