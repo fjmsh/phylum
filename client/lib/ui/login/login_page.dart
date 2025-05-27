@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/common/logo_row.dart';
@@ -133,9 +134,13 @@ class _LoginPageState extends State<LoginPage> {
       final navigator = Navigator.of(context);
       showProgressDialog(context, barrierDismissible: false, title: 'Processing Login Response');
       try {
-        final response = jsonDecode(responseString) as Map;
-        final account = await PhylumAccount.createFromLoginResponse(instanceUri, response.cast<String, dynamic>());
-        accountManager.addAccount(account);
+        final response =
+            BootstrapLoginResponse.fromResponse((jsonDecode(responseString) as Map).cast<String, dynamic>());
+        final account = PhylumAccount.create(serverUri: instanceUri, accessToken: response.accessToken!);
+        await account.initialized;
+        await response.process(account);
+
+        await accountManager.addAccount(account);
         navigator.pop();
       } catch (e) {
         navigator.pop();

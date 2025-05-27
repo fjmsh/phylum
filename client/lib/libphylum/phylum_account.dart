@@ -122,21 +122,4 @@ class PhylumAccount extends Account<PhylumAccount> {
       await db.dropDatabase();
     }
   }
-
-  static Future<PhylumAccount> createFromLoginResponse(
-    Uri serverUri,
-    Map<String, dynamic> response,
-  ) async {
-    final account = PhylumAccount.create(serverUri: serverUri, accessToken: response['access_token']);
-    await account.initialized;
-
-    final userMap = response['user'];
-    account.userEmail = userMap['email'];
-    account.userName = userMap['name'];
-    account.userId = userMap['id'];
-    account.userHome = userMap['home'];
-    account.userPermissions = userMap['permissions'];
-
-    return account;
-  }
 }

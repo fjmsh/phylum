@@ -13,11 +13,7 @@ class UserListResponse extends PhylumApiSuccessResponse {
   UserListResponse({required this.users});
 
   factory UserListResponse.fromResponse(Map<String, dynamic> data) {
-    final users = (data["users"] as List).cast<Map>().map((u) => User(
-          id: u['id'],
-          email: u['email'],
-          name: u['name'],
-        ));
+    final users = (data["users"] as List).cast<Map>().map((u) => parseUser(u));
     return UserListResponse(users: users);
   }
 }
