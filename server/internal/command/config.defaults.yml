@@ -13,7 +13,6 @@ storage:
 server:
   host:
   port: 2448
-  webappsrc: web
   publinkpath: /pub
   webdav:
     enabled: true

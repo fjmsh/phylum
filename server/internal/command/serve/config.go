@@ -3,7 +3,6 @@ package serve
 type Config struct {
 	Host        string       `koanf:"host"`
 	Port        int          `koanf:"port"`
-	WebAppSrc   string       `koanf:"webappsrc"`
 	PublinkPath string       `koanf:"publinkpath"`
 	WebDAV      WebDAVConfig `koanf:"webdav"`
 	CORS        CORSConfig   `koanf:"cors"`

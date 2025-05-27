@@ -55,9 +55,7 @@ func SetupCommand() *cobra.Command {
 		apiv1.Setup(engine.Group("/api/v1"))
 		publink.Setup(engine.Group(Cfg.PublinkPath))
 
-		if Cfg.WebAppSrc != "" {
-			setupWebApp(engine, Cfg.WebAppSrc)
-		}
+		setupWebApp(engine, "web")
 		setupTrashCompactor()
 
 		listen := Cfg.Host + ":" + strconv.Itoa(Cfg.Port)
