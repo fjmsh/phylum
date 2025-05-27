@@ -10,53 +10,49 @@ Phylum is a self-hosted cloud file browser with native clients on all platforms(
 It is in very early stages of testing, so bugs are to be expected. Fair warning: while the backend is quite robust and its data model fairly fixed, don't even think about putting the only copy of any data that you care about.
 
 
-### Features
+## Features
 
  - Offline-first native clients on all platforms (*)
- - Public shares
+    - Drag and Drop
+    - Keyboard navigation and shortcuts on web and desktop
+ - Public shares with password protection and expiration
  - Users and permissions
- - WebDAV-compatible server
+ - WebDAV-compatible
 
 * Not yet built/tested on MacOS, iOS, and Windows. 
 
-### Roadmap
+## Roadmap
 
-In no particular order, here are some things that are planned
+In rough order, here are some things that are planned
 
- - User management (invite, change/reset password, update display name/avatar)
- - Storage backends like S3, B2, Minio, etc. (partially implemented)
  - Thumbnails and icon view
- - Auth backends (LDAP, OAuth)
- - Demo instance
- - Email notifications
+ - Email share notifications
+ - In-app user management (update display name/avatar)
+ - Quota 
  - Links / Shortcuts
- - Directory quota 
- - User Groups
+ - Storage backends like S3, B2, Minio, etc. (partially implemented)
+ - Auth backends (LDAP, OAuth)
+ - Groups
  - Offline single file sync
  - Sync full directory tree metadata
  - 2-way folder sync
 
 
-### Development / Testing
+## Deployment / Testing
 
 The easiest way to get up and running is to use docker (or podman) compose go to `http://localhost:2448`.
 
+Configuration is read from `config.yml`, if it exists. Any config item can be overridden via environment variables and command-line flags, with '_' separating nested keys, and a`'PHYLUM_' prefix for env.
 
-#### Server
+See `config.defaults.yml` to see a list of all configuration options, and `example.env` for some common overrides.
+
+You must add the first user using the CLI using the `admin user invite` command. You may add others as well, or invite them directly from inside the app.
+
+## Development
+
+### Server
 
 The server is written in Go, and requires a postgres server to be running.
-
-Config is read in from a `config.yml`, if it exists. Configurations can be overridden via command-line flags, and environment variables, with '_' separating nested keys, and a`'PHYLUM_' prefix for env.
-
-The working directory can be changed by passing in the `-W` flag, which is useful for local development. The `data` folder in the repo root is intended to be the working directory for local development, and is ignored by git.
-
-Add the following lines to `data/config.yml`:
-```
-db:
-  password: <password>
-```
-
-And then
 
 ```
 $ podman run -it \
@@ -64,39 +60,42 @@ $ podman run -it \
     -e POSTGRES_PASSWORD=<password> \
     -v ./data/postgres:/var/lib/postgresql/data \
     docker.io/postgres:17
+```
+
+The working directory can be changed by passing in the `-W` flag, which is useful for local development. The `data` folder in the repo root is intended to be the working directory for local development, and is ignored by git.
+
+Add your db password to `data/config.yml`, and run the server:
+```
 $ go run -C server cmd/phylum.go -W ../data serve
 ```
 
-
-#### Client
+### Client
 
 The client is written using Flutter, and building requires no special configuration as long as your toolchian is [set up properly](https://docs.flutter.dev/get-started/). Of course, you will need a running server to connect to.
 
-It is usually easiest to work on the desktop app, and only test on devices/web if needed for platform integration.
+It is usually easiest to work on the desktop app, and only test on devices/web if needed for platform-specific integration.
 
-##### Web
+#### Web
 
-If you want to work on the web app, then you will need to enable CORS on the server, and/or point the server to serving the locally built copy. The easiest way to do this is to add the following lines to your `config.yml`.
+If you want to work on the web client specifically, then the simplest way is to create a link to the web client build folder from the server's working directory.
 ```
-server:
-  webappsrc: ../client/build/web
-  cors:
-    enabled: true
+$ ln -st data ../client/build/web/
 ```
-The compose container will not read this config, so if you only want to work on web app development without modifying the server then you can set `PHYLUM_SERVER_CORS_ENABLED=1` in your environment.
 
-All of this is not required for mobile/desktop clients.
+Please note that the web client must is built with WASM using `flutter build web --wasm`
 
-#### Creating a user
 
-There is currently no interface for user management, so all users have to be added by cli. You will need to do this at least once initially to set up the first user.
+## CLI
 
-If you're already using compose, you can just run:
+The CLI is a powerful way to interact with and manager a locally running phylum instance. It also enables some admin use-cases that are not possible using the app or API yet.
+
+Depending on whether you are running the program directly or via compose, you can use either 
 
 ```
-$ podman exec -it phylum_server ./phylum user add <email>
+$ go run -C server cmd/phylum.go -W ../data <cmd>
 ```
-Otherwise, for local development:
+or
 ```
-$ go run -C server cmd/phylum.go -W ../data user add <email>
+$ podman exec -it phylum_server ./phylum <cmd>
 ```
+
