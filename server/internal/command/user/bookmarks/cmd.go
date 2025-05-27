@@ -36,7 +36,7 @@ func setupListCommand() *cobra.Command {
 				fmt.Println("unable to list bookmarks: user not specified")
 				os.Exit(1)
 			}
-			if bookmarks, err := user.ManagerFromContext(context.Background()).ListBookmarks(*u); err != nil {
+			if bookmarks, err := user.ManagerFromContext(context.Background()).ListBookmarks(*u, 0); err != nil {
 				fmt.Println("unable to list bookmark: " + err.Error())
 				os.Exit(1)
 			} else {

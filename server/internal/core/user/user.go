@@ -60,5 +60,5 @@ type Manager interface {
 	// bookmarks.go
 	AddBookmark(u User, resource fs.Resource, name string) (Bookmark, error)
 	RemoveBookmark(u User, id uuid.UUID) error
-	ListBookmarks(u User) ([]Bookmark, error)
+	ListBookmarks(u User, since int64) ([]Bookmark, error)
 }

@@ -1,6 +1,7 @@
 package user
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -61,14 +62,20 @@ func (m manager) RemoveBookmark(u User, id uuid.UUID) error {
 	return err
 }
 
-func (m manager) ListBookmarks(u User) ([]Bookmark, error) {
-	const q = `SELECT resource_id, name, dir, created
+func (m manager) ListBookmarks(u User, since int64) ([]Bookmark, error) {
+	sb := strings.Builder{}
+	sb.WriteString(`SELECT resource_id, name, dir, created
 FROM bookmarks b
-WHERE user_id = $1::INT
-AND deleted IS NULL
-ORDER BY modified DESC`
+WHERE user_id = @user_id::INT
+`)
+	if since == 0 {
+		sb.WriteString("AND deleted IS NULL\n")
+	} else {
+		sb.WriteString("AND modified >= @since::TIMESTAMP\n")
+	}
+	sb.WriteString("ORDER BY modified DESC")
 
-	if rows, err := m.db.Query(q, u.ID); err != nil {
+	if rows, err := m.db.Query(sb.String(), pgx.NamedArgs{"user_id": u.ID, "since": time.UnixMilli(since).UTC()}); err != nil {
 		return nil, err
 	} else if bookmarks, err := pgx.CollectRows(rows, scanBookmark); err != nil {
 		return nil, err

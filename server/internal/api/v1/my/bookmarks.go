@@ -39,7 +39,7 @@ func setupBookmarksRoutes(r *gin.RouterGroup) {
 
 func handleBookmarksGetRoute(c *gin.Context) {
 	u := authenticator.GetUser(c)
-	res, err := user.ManagerFromContext(c.Request.Context()).ListBookmarks(u)
+	res, err := user.ManagerFromContext(c.Request.Context()).ListBookmarks(u, 0)
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +54,7 @@ func handleBookmarksGetRoute(c *gin.Context) {
 	}
 	c.JSON(200, bookmarksResponse{
 		Bookmarks: bookmarks,
-		Until:     time.Now().UnixMilli(),
+		Until:     time.Now().UnixMilli() - 100,
 	})
 }
 
