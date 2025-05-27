@@ -76,4 +76,5 @@ type Bootstrap struct {
 	Bookmarks []Bookmark   `json:"bookmarks"`
 	Users     []User       `json:"users"`
 	Until     int          `json:"until"`
+	Clear     bool         `json:"clear"`
 }

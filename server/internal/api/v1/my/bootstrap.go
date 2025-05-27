@@ -50,6 +50,7 @@ func Bootstrap(ctx context.Context, u user.User, since int64) (responses.Bootstr
 			Bookmarks: bookmarks,
 			Users:     users,
 			Until:     int(time.Now().UnixMilli()) - 100,
+			Clear:     since == 0,
 		}, nil
 	}
 
