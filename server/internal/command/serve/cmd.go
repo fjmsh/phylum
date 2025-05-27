@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/fvbock/endless"
@@ -77,7 +78,11 @@ func setupWebApp(r gin.IRoutes, webAppSrcDir string) {
 	indexFilePath := path.Join(webAppSrcDir, "index.html")
 
 	staticFileHandler := func(c *gin.Context) {
-		if c.Request.Method == "GET" {
+		path := c.Request.URL.Path
+		if c.Request.Method == "GET" &&
+			!strings.HasPrefix(path, "/api") &&
+			!strings.HasPrefix(path, Cfg.WebDAVPath) &&
+			!strings.HasPrefix(path, Cfg.PublinkPath) {
 			c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
 			c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
 			if fs.Exists("/", c.Request.URL.Path) {
