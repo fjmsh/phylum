@@ -20,12 +20,12 @@ class UserInviteAction extends PhylumAction with JsonApiAction {
   @override
   Map<String, dynamic>? get requestBody => {
         'email': email,
-        'display_name': displayName,
+        'name': userName,
       };
 
   @override
   List<LocalChange> get localChanges => [
-        CreateUserChange(localId: localId, email: email, displayName: displayName),
+        CreateUserChange(localId: localId, email: email, name: userName),
       ];
 
   @override
@@ -35,24 +35,24 @@ class UserInviteAction extends PhylumAction with JsonApiAction {
   Map<String, dynamic> get props => {
         'localId': localId,
         'email': email,
-        'displayName': displayName,
+        'userName': userName,
       };
 
   final int localId;
   final String email;
-  final String displayName;
+  final String userName;
 
   UserInviteAction({
     required this.localId,
     required this.email,
-    required this.displayName,
+    required this.userName,
   });
 
   static UserInviteAction fromMap(Map<String, dynamic> map) {
     return UserInviteAction(
       localId: map['localId'],
       email: map['email'],
-      displayName: map['displayName'],
+      userName: map['userName'],
     );
   }
 

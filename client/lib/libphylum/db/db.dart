@@ -24,7 +24,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.fromExecutor({required this.accountId, required QueryExecutor executor}) : super(executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -53,6 +53,10 @@ class AppDatabase extends _$AppDatabase {
           if (from < 6) {
             await m.drop(resources);
             await m.create(resources);
+          }
+          if (from < 7) {
+            await m.drop(users);
+            await m.create(users);
           }
         },
       );

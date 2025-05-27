@@ -20,15 +20,14 @@ class Users extends Table with TableInfo<Users, User> {
       type: DriftSqlType.string,
       requiredDuringInsert: true,
       $customConstraints: 'NOT NULL');
-  static const VerificationMeta _displayNameMeta =
-      const VerificationMeta('displayName');
-  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
-      'display_name', aliasedName, false,
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: true,
       $customConstraints: 'NOT NULL');
   @override
-  List<GeneratedColumn> get $columns => [id, email, displayName];
+  List<GeneratedColumn> get $columns => [id, email, name];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -48,13 +47,11 @@ class Users extends Table with TableInfo<Users, User> {
     } else if (isInserting) {
       context.missing(_emailMeta);
     }
-    if (data.containsKey('display_name')) {
+    if (data.containsKey('name')) {
       context.handle(
-          _displayNameMeta,
-          displayName.isAcceptableOrUnknown(
-              data['display_name']!, _displayNameMeta));
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
     } else if (isInserting) {
-      context.missing(_displayNameMeta);
+      context.missing(_nameMeta);
     }
     return context;
   }
@@ -69,8 +66,8 @@ class Users extends Table with TableInfo<Users, User> {
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       email: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}email'])!,
-      displayName: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}display_name'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
     );
   }
 
@@ -86,15 +83,14 @@ class Users extends Table with TableInfo<Users, User> {
 class User extends DataClass implements Insertable<User> {
   final int id;
   final String email;
-  final String displayName;
-  const User(
-      {required this.id, required this.email, required this.displayName});
+  final String name;
+  const User({required this.id, required this.email, required this.name});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['email'] = Variable<String>(email);
-    map['display_name'] = Variable<String>(displayName);
+    map['name'] = Variable<String>(name);
     return map;
   }
 
@@ -102,7 +98,7 @@ class User extends DataClass implements Insertable<User> {
     return UsersCompanion(
       id: Value(id),
       email: Value(email),
-      displayName: Value(displayName),
+      name: Value(name),
     );
   }
 
@@ -112,7 +108,7 @@ class User extends DataClass implements Insertable<User> {
     return User(
       id: serializer.fromJson<int>(json['id']),
       email: serializer.fromJson<String>(json['email']),
-      displayName: serializer.fromJson<String>(json['display_name']),
+      name: serializer.fromJson<String>(json['name']),
     );
   }
   @override
@@ -121,21 +117,20 @@ class User extends DataClass implements Insertable<User> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'email': serializer.toJson<String>(email),
-      'display_name': serializer.toJson<String>(displayName),
+      'name': serializer.toJson<String>(name),
     };
   }
 
-  User copyWith({int? id, String? email, String? displayName}) => User(
+  User copyWith({int? id, String? email, String? name}) => User(
         id: id ?? this.id,
         email: email ?? this.email,
-        displayName: displayName ?? this.displayName,
+        name: name ?? this.name,
       );
   User copyWithCompanion(UsersCompanion data) {
     return User(
       id: data.id.present ? data.id.value : this.id,
       email: data.email.present ? data.email.value : this.email,
-      displayName:
-          data.displayName.present ? data.displayName.value : this.displayName,
+      name: data.name.present ? data.name.value : this.name,
     );
   }
 
@@ -144,55 +139,55 @@ class User extends DataClass implements Insertable<User> {
     return (StringBuffer('User(')
           ..write('id: $id, ')
           ..write('email: $email, ')
-          ..write('displayName: $displayName')
+          ..write('name: $name')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, email, displayName);
+  int get hashCode => Object.hash(id, email, name);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is User &&
           other.id == this.id &&
           other.email == this.email &&
-          other.displayName == this.displayName);
+          other.name == this.name);
 }
 
 class UsersCompanion extends UpdateCompanion<User> {
   final Value<int> id;
   final Value<String> email;
-  final Value<String> displayName;
+  final Value<String> name;
   const UsersCompanion({
     this.id = const Value.absent(),
     this.email = const Value.absent(),
-    this.displayName = const Value.absent(),
+    this.name = const Value.absent(),
   });
   UsersCompanion.insert({
     this.id = const Value.absent(),
     required String email,
-    required String displayName,
+    required String name,
   })  : email = Value(email),
-        displayName = Value(displayName);
+        name = Value(name);
   static Insertable<User> custom({
     Expression<int>? id,
     Expression<String>? email,
-    Expression<String>? displayName,
+    Expression<String>? name,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (email != null) 'email': email,
-      if (displayName != null) 'display_name': displayName,
+      if (name != null) 'name': name,
     });
   }
 
   UsersCompanion copyWith(
-      {Value<int>? id, Value<String>? email, Value<String>? displayName}) {
+      {Value<int>? id, Value<String>? email, Value<String>? name}) {
     return UsersCompanion(
       id: id ?? this.id,
       email: email ?? this.email,
-      displayName: displayName ?? this.displayName,
+      name: name ?? this.name,
     );
   }
 
@@ -205,8 +200,8 @@ class UsersCompanion extends UpdateCompanion<User> {
     if (email.present) {
       map['email'] = Variable<String>(email.value);
     }
-    if (displayName.present) {
-      map['display_name'] = Variable<String>(displayName.value);
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
     }
     return map;
   }
@@ -216,7 +211,7 @@ class UsersCompanion extends UpdateCompanion<User> {
     return (StringBuffer('UsersCompanion(')
           ..write('id: $id, ')
           ..write('email: $email, ')
-          ..write('displayName: $displayName')
+          ..write('name: $name')
           ..write(')'))
         .toString();
   }
@@ -2350,12 +2345,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 typedef $UsersCreateCompanionBuilder = UsersCompanion Function({
   Value<int> id,
   required String email,
-  required String displayName,
+  required String name,
 });
 typedef $UsersUpdateCompanionBuilder = UsersCompanion Function({
   Value<int> id,
   Value<String> email,
-  Value<String> displayName,
+  Value<String> name,
 });
 
 class $UsersFilterComposer extends Composer<_$AppDatabase, Users> {
@@ -2372,8 +2367,8 @@ class $UsersFilterComposer extends Composer<_$AppDatabase, Users> {
   ColumnFilters<String> get email => $composableBuilder(
       column: $table.email, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get displayName => $composableBuilder(
-      column: $table.displayName, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
 }
 
 class $UsersOrderingComposer extends Composer<_$AppDatabase, Users> {
@@ -2390,8 +2385,8 @@ class $UsersOrderingComposer extends Composer<_$AppDatabase, Users> {
   ColumnOrderings<String> get email => $composableBuilder(
       column: $table.email, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get displayName => $composableBuilder(
-      column: $table.displayName, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
 }
 
 class $UsersAnnotationComposer extends Composer<_$AppDatabase, Users> {
@@ -2408,8 +2403,8 @@ class $UsersAnnotationComposer extends Composer<_$AppDatabase, Users> {
   GeneratedColumn<String> get email =>
       $composableBuilder(column: $table.email, builder: (column) => column);
 
-  GeneratedColumn<String> get displayName => $composableBuilder(
-      column: $table.displayName, builder: (column) => column);
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
 }
 
 class $UsersTableManager extends RootTableManager<
@@ -2437,22 +2432,22 @@ class $UsersTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> email = const Value.absent(),
-            Value<String> displayName = const Value.absent(),
+            Value<String> name = const Value.absent(),
           }) =>
               UsersCompanion(
             id: id,
             email: email,
-            displayName: displayName,
+            name: name,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String email,
-            required String displayName,
+            required String name,
           }) =>
               UsersCompanion.insert(
             id: id,
             email: email,
-            displayName: displayName,
+            name: name,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

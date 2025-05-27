@@ -15,7 +15,7 @@ class UserResponse extends PhylumApiSuccessResponse {
     final user = User(
       id: data['id'],
       email: data['email'],
-      displayName: data['display_name'],
+      name: data['name'],
     );
     return UserResponse(user: user);
   }

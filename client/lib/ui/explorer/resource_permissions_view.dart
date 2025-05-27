@@ -8,6 +8,7 @@ import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/permissions.dart';
+import 'package:phylum/util/user_display_name.dart';
 import 'package:provider/provider.dart';
 
 class ResourcePermissionsView extends StatefulWidget {
@@ -121,16 +122,14 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
     final allUsers = await (account.db.users.select()..where((u) => u.id.isNotIn(grants!.keys))).get();
     final users = allUsers.toList(growable: false)
       ..sort((a, b) {
-        final aName = (a.displayName.isNotEmpty ? a.displayName : a.email);
-        final bName = b.displayName.isNotEmpty ? b.displayName : b.email;
         // TODO: not the most efficient
-        return aName.toLowerCase().compareTo(bName.toLowerCase());
+        return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
       });
     if (!context.mounted) return;
     final user = await showOptionsDialogBuilder(
       context,
       users,
-      (user) => ListTile(title: Text(user.displayName.isNotEmpty ? user.displayName : user.email)),
+      (user) => ListTile(title: Text(user.displayName)),
       buildLastItem: (_) => ListTile(
           leading: Icon(Icons.person_add),
           title: Text('Invite'),
@@ -141,7 +140,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
           }),
       filterList: (u, q) {
         final query = q.toLowerCase();
-        return u.where((u) => u.email.contains(query) || u.displayName.contains(query)).toList(growable: false);
+        return u.where((u) => u.email.contains(query) || u.name.contains(query)).toList(growable: false);
       },
     );
     if (user == null || !context.mounted) return;

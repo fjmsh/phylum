@@ -8,6 +8,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/users_list_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
+import 'package:phylum/util/user_display_name.dart';
 
 const _remoteUsersBoxName = 'remote_users';
 const _keyLocalUserId = 'local_user_id';
@@ -49,16 +50,14 @@ class UserRepository extends Repository<PhylumAccount, User> {
   }
 
   String getUserDisplayName(int userId) {
-    final user = _users[userId];
-    if (user == null) return 'Unknown User($userId)';
-    return user.displayName.isNotEmpty ? user.displayName : user.email;
+    return _users[userId]?.displayName ?? 'Unknown User($userId)';
   }
 
   Future<User> invite(String email, String name) async {
     final localId = _account.getPersisted<num>(_keyLocalUserId)?.toInt() ?? -1;
     await _account.persist(_keyLocalUserId, localId - 1);
-    final user = User(id: localId, email: email, displayName: name);
-    await _account.addAction(UserInviteAction(localId: localId, email: email, displayName: name));
+    final user = User(id: localId, email: email, name: name);
+    await _account.addAction(UserInviteAction(localId: localId, email: email, userName: name));
     return user;
   }
 

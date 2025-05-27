@@ -16,7 +16,7 @@ class UserListResponse extends PhylumApiSuccessResponse {
     final users = (data["users"] as List).cast<Map>().map((u) => User(
           id: u['id'],
           email: u['email'],
-          displayName: u['display_name'],
+          name: u['name'],
         ));
     return UserListResponse(users: users);
   }

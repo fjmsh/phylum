@@ -74,7 +74,7 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
           userEmail: user.email,
           permission: permission,
           modified: DateTime.now(),
-          description: 'Sharing $resourceName with ${user.displayName}',
+          description: 'Sharing $resourceName with ${user.name}',
         );
 
   static ResourceShareAction fromMap(Map<String, dynamic> map) {
