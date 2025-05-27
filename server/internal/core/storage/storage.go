@@ -7,6 +7,7 @@ import (
 	"errors"
 	"hash"
 	"io"
+	"os"
 	"path"
 
 	"github.com/google/uuid"
@@ -25,8 +26,7 @@ var Cfg Config
 
 func Get() Storage {
 	if s.defaultBackend == nil {
-		dir := path.Join(Cfg.Location, "default")
-		if storage, err := create(dir); err != nil {
+		if storage, err := create(Cfg.Location); err != nil {
 			logrus.Fatal(err)
 		} else {
 			s = storage
@@ -35,10 +35,13 @@ func Get() Storage {
 	return s
 }
 
-func create(defaultStorageDir string) (Storage, error) {
+func create(storageLocation string) (Storage, error) {
+	if err := os.Chmod(storageLocation, 0700); err != nil {
+		return Storage{}, err
+	}
 	if backends, err := restoreBackends(); err != nil {
 		return Storage{}, err
-	} else if defaultBackend, err := newLocalStorage("<default>", defaultStorageDir); err != nil {
+	} else if defaultBackend, err := newLocalStorage("<default>", path.Join(storageLocation, "default")); err != nil {
 		return Storage{}, err
 	} else {
 		return Storage{
