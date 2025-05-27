@@ -11,7 +11,7 @@ import (
 	"golang.org/x/term"
 )
 
-func setupUserPasswdCommand() *cobra.Command {
+func setupPasswdCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "passwd email",
 		Short: "Change User Password",

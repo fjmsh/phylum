@@ -6,12 +6,9 @@ import (
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		GroupID: "app",
-		Use:     "trash",
-		Short:   "Trash",
+		Use:   "trash",
+		Short: "Trash",
 	}
-	flags := cmd.PersistentFlags()
-	flags.StringP("user", "u", "", "User")
 
 	cmd.AddCommand(
 		setupDeleteCommand(),

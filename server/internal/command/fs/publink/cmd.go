@@ -6,15 +6,13 @@ import (
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "publink",
-		Short:   "Publink Management",
-		GroupID: "app",
+		Use:   "publink",
+		Short: "Publink Management",
 	}
-	flags := cmd.PersistentFlags()
-	flags.StringP("user", "u", "", "User")
 
 	cmd.AddCommand(
 		setupCreateCommand(),
+		setupListCommand(),
 	)
 
 	return cmd

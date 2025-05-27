@@ -1,4 +1,4 @@
-package user
+package bookmarks
 
 import (
 	"context"
@@ -10,23 +10,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setupBookmarksCommand() *cobra.Command {
+func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bookmarks",
-		Short: "Manage User Bookmarks",
+		Short: "Manage Bookmarks",
 	}
 
-	cmd.PersistentFlags().StringP("user", "u", "", "User")
 	cmd.AddCommand(
-		setupBookmarksListCommand(),
-		setupBookmarksAddCommand(),
-		setupBookmarksRemoveCommand(),
+		setupListCommand(),
+		setupAddCommand(),
+		setupRemoveCommand(),
 	)
 
 	return cmd
 }
 
-func setupBookmarksListCommand() *cobra.Command {
+func setupListCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List Bookmarks",
@@ -50,7 +49,7 @@ func setupBookmarksListCommand() *cobra.Command {
 	return cmd
 }
 
-func setupBookmarksRemoveCommand() *cobra.Command {
+func setupRemoveCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove <path>",
 		Short: "Remove Bookmark",
@@ -77,7 +76,7 @@ func setupBookmarksRemoveCommand() *cobra.Command {
 	return cmd
 }
 
-func setupBookmarksAddCommand() *cobra.Command {
+func setupAddCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add (path | uuid) [name]",
 		Short: "Add Bookmark",

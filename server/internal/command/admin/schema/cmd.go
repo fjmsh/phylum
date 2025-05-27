@@ -12,21 +12,20 @@ import (
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		GroupID: "admin",
-		Use:     "schema",
-		Short:   "Database Schema Management",
+		Use:   "schema",
+		Short: "Database Schema Management",
 	}
 	cmd.AddCommand([]*cobra.Command{
-		setupSchemaMigrateCommand(),
-		setupSchemaResetCommand(),
+		setupMigrateCommand(),
+		setupResetCommand(),
 	}...)
 	return cmd
 }
 
-func setupSchemaResetCommand() *cobra.Command {
+func setupResetCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "reset",
-		Short: "Reset Database Schema",
+		Short: "Reset Schema",
 		Run: func(cmd *cobra.Command, args []string) {
 			db.Cfg.NoMigrate = true
 			if err := db.DeleteSchema(context.Background()); err != nil {
@@ -41,10 +40,10 @@ func setupSchemaResetCommand() *cobra.Command {
 	}
 }
 
-func setupSchemaMigrateCommand() *cobra.Command {
+func setupMigrateCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "migrate",
-		Short: "Migrate Database Schema",
+		Short: "Migrate Schema",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()

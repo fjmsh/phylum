@@ -1,4 +1,4 @@
-package fs
+package publink
 
 import (
 	"fmt"
@@ -9,9 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setupPublinksCommand() *cobra.Command {
+func setupListCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "publinks <path>",
+		Use:   "list <path>",
 		Short: "List Publinks",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -50,6 +50,5 @@ func setupPublinksCommand() *cobra.Command {
 			}
 		},
 	}
-	cmd.Flags().BoolP("parents", "p", false, "Make intermediate parents as needed")
 	return &cmd
 }

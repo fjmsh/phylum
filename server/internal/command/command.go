@@ -14,13 +14,9 @@ import (
 	"github.com/knadh/koanf/providers/posflag"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/knadh/koanf/v2"
+	"github.com/shroff/phylum/server/internal/command/admin"
 	"github.com/shroff/phylum/server/internal/command/fs"
-	"github.com/shroff/phylum/server/internal/command/publink"
-	"github.com/shroff/phylum/server/internal/command/schema"
 	"github.com/shroff/phylum/server/internal/command/serve"
-	storagecmd "github.com/shroff/phylum/server/internal/command/storage"
-	"github.com/shroff/phylum/server/internal/command/trash"
-	"github.com/shroff/phylum/server/internal/command/user"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/shroff/phylum/server/internal/mail"
@@ -33,8 +29,8 @@ import (
 var defaultConfig embed.FS
 
 func SetupCommand() {
-	var rootCmd = &cobra.Command{Use: path.Base(os.Args[0])}
-	flags := rootCmd.PersistentFlags()
+	var cmd = &cobra.Command{Use: path.Base(os.Args[0])}
+	flags := cmd.PersistentFlags()
 
 	// Flags only. Not part of config file
 	flags.StringP("workdir", "W", "", "Working Directory")
@@ -59,7 +55,7 @@ func SetupCommand() {
 	}
 
 	uuid.EnableRandPool()
-	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+	cmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		dir, _ := cmd.Flags().GetString("workdir")
 		if dir != "" && dir != "." {
 			logrus.Info("Changing directory to " + dir)
@@ -114,31 +110,13 @@ func SetupCommand() {
 		db.Close()
 	}()
 
-	rootCmd.AddGroup(&cobra.Group{
-		ID:    "admin",
-		Title: "Admin",
-	})
-	rootCmd.AddCommand(
-		schema.SetupCommand(),
-		user.SetupCommand(),
-		storagecmd.SetupCommand(),
-	)
-
-	rootCmd.AddGroup(&cobra.Group{
-		ID:    "app",
-		Title: "App",
-	})
-	rootCmd.AddCommand(
+	cmd.AddCommand(
+		admin.SetupCommand(),
 		fs.SetupCommand(),
-		publink.SetupCommand(),
-		trash.SetupCommand(),
+		serve.SetupCommand(),
 	)
-
-	rootCmd.AddGroup(&cobra.Group{
-		ID:    "server",
-		Title: "Server",
-	})
-	rootCmd.AddCommand(serve.SetupCommand())
-
-	rootCmd.Execute()
+	cmd.AddGroup(&cobra.Group{ID: "misc", Title: "Misc"})
+	cmd.SetHelpCommandGroupID("misc")
+	cmd.SetCompletionCommandGroupID("misc")
+	cmd.Execute()
 }

@@ -13,7 +13,7 @@ import (
 
 func setupCreateCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "create <name> (<path> | <uuid>)",
+		Use:   "create <name> <path>",
 		Short: "Create Publink",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {

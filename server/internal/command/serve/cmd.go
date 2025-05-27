@@ -24,9 +24,8 @@ var Cfg Config
 
 func SetupCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:     "serve",
-		Short:   "Run the server",
-		GroupID: "server",
+		Use:   "serve",
+		Short: "Run the server",
 	}
 
 	flags := cmd.Flags()

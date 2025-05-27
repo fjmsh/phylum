@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setupPasswordResetCommand() *cobra.Command {
+func setupPwresetResetCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pwreset email",
 		Short: "pwreset email",

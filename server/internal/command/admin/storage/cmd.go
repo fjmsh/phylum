@@ -15,20 +15,19 @@ import (
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		GroupID: "admin",
-		Use:     "storage",
-		Short:   "Storage Management",
+		Use:   "storage",
+		Short: "Storage Management",
 	}
 
 	cmd.AddCommand([]*cobra.Command{
-		setupStorageCreateCommand(),
-		setupStorageListCommand(),
+		setupCreateCommand(),
+		setupListCommand(),
 	}...)
 
 	return cmd
 }
 
-func setupStorageCreateCommand() *cobra.Command {
+func setupCreateCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "create name driver",
 		Short: "Create new storage backend",
@@ -62,7 +61,7 @@ func setupStorageCreateCommand() *cobra.Command {
 	}
 }
 
-func setupStorageListCommand() *cobra.Command {
+func setupListCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "List all storage backends",

@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setupUserModCommand() *cobra.Command {
+func setupModCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mod email",
 		Short: "Add User",

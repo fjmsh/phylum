@@ -1,17 +1,17 @@
 package fs
 
 import (
+	"github.com/shroff/phylum/server/internal/command/fs/publink"
+	"github.com/shroff/phylum/server/internal/command/fs/trash"
 	"github.com/spf13/cobra"
 )
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		GroupID: "app",
-		Use:     "fs",
-		Short:   "Filesystem",
+		Use:   "fs",
+		Short: "Filesystem",
 	}
-	flags := cmd.PersistentFlags()
-	flags.StringP("user", "u", "", "User")
+	cmd.PersistentFlags().StringP("user", "u", "", "User")
 
 	cmd.AddCommand(
 		setupCatCommand(),
@@ -21,9 +21,10 @@ func SetupCommand() *cobra.Command {
 		setupLsCommand(),
 		setupMkdirCommand(),
 		setupMvCommand(),
-		setupPublinksCommand(),
 		setupRmCommand(),
 		setupSearchCommand(),
+		publink.SetupCommand(),
+		trash.SetupCommand(),
 	)
 
 	return cmd
