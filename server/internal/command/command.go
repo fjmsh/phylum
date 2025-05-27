@@ -1,6 +1,7 @@
 package command
 
 import (
+	"embed"
 	"errors"
 	"os"
 	"path"
@@ -11,7 +12,7 @@ import (
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/providers/posflag"
-	"github.com/knadh/koanf/providers/structs"
+	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/knadh/koanf/v2"
 	"github.com/shroff/phylum/server/internal/command/fs"
 	"github.com/shroff/phylum/server/internal/command/publink"
@@ -27,6 +28,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
+
+//go:embed config.defaults.yml
+var defaultConfig embed.FS
 
 func SetupCommand() {
 	var rootCmd = &cobra.Command{Use: path.Base(os.Args[0])}
@@ -46,7 +50,13 @@ func SetupCommand() {
 	flags.MarkHidden("db_nomigrate")
 
 	k := koanf.New(".")
-	k.Load(structs.Provider(defaultConfig, "koanf"), nil)
+	if bytes, err := defaultConfig.ReadFile("config.defaults.yml"); err != nil {
+		logrus.Fatal(err.Error())
+	} else {
+		if err := k.Load(rawbytes.Provider(bytes), yaml.Parser()); err != nil {
+			logrus.Fatal("Unable to default load config: ", err.Error())
+		}
+	}
 
 	uuid.EnableRandPool()
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
@@ -64,8 +74,9 @@ func SetupCommand() {
 				} else {
 					logrus.Fatal("Unable to load config: ", err.Error())
 				}
+			} else {
+				logrus.Info("Loaded config from ", configFile)
 			}
-			logrus.Info("Loaded config from ", configFile)
 		}
 
 		if err := k.Load(posflag.ProviderWithFlag(cmd.Flags(), ".", k, func(f *pflag.Flag) (string, interface{}) {

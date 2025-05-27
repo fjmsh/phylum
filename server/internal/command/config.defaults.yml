@@ -1,0 +1,32 @@
+db:
+  host: localhost
+  port: 5432
+  name: phylum
+  user: phylum
+  password: phylum    # Probably need to change this
+  nomigrate: false    # Do not auto-migrate schema (dev)
+  trace: false        # Trace queries (dev)
+
+storage:
+  location: storage
+
+server:
+  host:
+  port: 2448
+  webappsrc: web
+  publinkpath: /pub
+  webdavpath: /webdav
+  cors:
+    enabled: false
+    origins:
+      - "*"
+mail:
+  smtp:
+    host:
+    port: 587
+    username:
+    password:
+  from:
+    name: Phylum Drive
+    email:  phylum@example.com
+  instance: https://phylum.example.com  # No trailing slash
