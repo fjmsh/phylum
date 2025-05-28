@@ -93,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
     if (context.mounted) {
       final accountManager = context.read<AccountManager<PhylumAccount>>();
       final navigator = Navigator.of(context);
-      showProgressDialog(context, barrierDismissible: false, title: 'Processing Login Response');
+      showProgressDialog(context, barrierDismissible: false, message: 'Logging In');
       try {
         final response =
             BootstrapLoginResponse.fromResponse((jsonDecode(responseString) as Map).cast<String, dynamic>());

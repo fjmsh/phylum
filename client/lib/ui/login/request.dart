@@ -9,11 +9,11 @@ import 'package:phylum/util/logging.dart';
 
 Future<String?> sendRequest(
   BuildContext context,
-  String title,
+  String message,
   BaseRequest request,
 ) async {
   final navigator = Navigator.of(context);
-  showProgressDialog(context, barrierDismissible: false, title: title);
+  showProgressDialog(context, barrierDismissible: false, message: message);
 
   try {
     final response = await Client().send(request);

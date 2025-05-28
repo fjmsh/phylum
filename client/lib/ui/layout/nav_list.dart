@@ -103,7 +103,7 @@ class NavList extends StatelessWidget {
                                       if (!context.mounted) return;
                                       if (resource == null) {
                                         final nav = Navigator.of(context);
-                                        showProgressDialog(context, title: 'Downloading ${b.name}');
+                                        showProgressDialog(context, title: 'Getting Details', message: b.name);
                                         final success = await account.resourceRepository
                                             .requestResource(b.resourceId)
                                             .then((result) => result is ApiSuccessResponse);
