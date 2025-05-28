@@ -2,12 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:phylum/libphylum/user_permission.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/common/dialogs/new_user_details_dialog.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/layout/button_downloads.dart';
 import 'package:phylum/ui/layout/button_server_status.dart';
@@ -135,6 +137,19 @@ class NavList extends StatelessWidget {
                     },
                   ),
                   const Divider(),
+                  if (account.hasPermission(permissionUsersInvite))
+                    ListTile(
+                      leading: const Icon(Icons.person_add),
+                      title: const Text('Invite'),
+                      onTap: () async {
+                        final result = await NewUserDetailsDialog.show(context);
+                        if (result == null || !context.mounted) return;
+                        final (email, name) = result;
+                        final account = context.read<PhylumAccount>();
+                        account.userRepository.invite(email, name);
+                      },
+                    ),
+                  if (account.hasPermission(permissionUsersInvite)) const Divider(),
                   if (!kIsWeb) const DownloadButton(),
                   ServerStatusButton(
                     onTap: () {
