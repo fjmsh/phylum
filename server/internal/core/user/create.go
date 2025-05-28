@@ -49,11 +49,11 @@ func (m manager) CreateUser(email, name string, noCreateHome bool) (User, error)
 }
 
 func (m manager) insertUser(email, name string, home pgtype.UUID) (User, error) {
-	const q = ` INSERT INTO users(email, name, password_hash, home)
-VALUES ($1, $2, $3, $4)
+	const q = ` INSERT INTO users(email, name, password_hash, home, permissions)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING id, email, name, home, permissions`
 
-	if rows, err := m.db.Query(q, strings.ToLower(email), name, "", home); err != nil {
+	if rows, err := m.db.Query(q, strings.ToLower(email), name, "", home, Cfg.Permisison); err != nil {
 		return User{}, err
 	} else if user, err := pgx.CollectExactlyOneRow(rows, scanUser); err != nil {
 		if strings.Contains(err.Error(), "valid_email") {

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/user"
@@ -17,8 +18,6 @@ type inviteParams struct {
 	NoSendEmail  bool   `json:"no_send_email" form:"no_send_email"`
 }
 
-var errInvalidParams = errors.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
-
 func handleInviteRequest(c *gin.Context) {
 	var params inviteParams
 	err := c.ShouldBind(&params)
@@ -30,6 +29,12 @@ func handleInviteRequest(c *gin.Context) {
 	}
 
 	userManager := user.ManagerFromContext(c.Request.Context())
+	u := authenticator.GetUser(c)
+
+	if u.Permissions&user.PermissionUsersInvite == 0 {
+		panic(errors.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to invite users"))
+	}
+
 	if user, err := userManager.CreateUser(params.Email, params.Name, params.NoCreateHome); err != nil {
 		panic(err)
 	} else {

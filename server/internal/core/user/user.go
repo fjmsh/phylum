@@ -32,7 +32,7 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 }
 
 func (u User) OpenFileSystem(ctx context.Context) fs.FileSystem {
-	return fs.Open(ctx, u.ID, u.Home, u.Permissions&PermissionAllFiles != 0)
+	return fs.Open(ctx, u.ID, u.Home, u.Permissions&PermissionFilesAll != 0)
 }
 
 type Manager interface {

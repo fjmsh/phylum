@@ -11,6 +11,8 @@ import (
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
+var errInvalidParams = errors.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
+
 func SetupUserRoutes(r *gin.RouterGroup) {
 	group := r.Group("/users")
 	group.GET("/list", handleUsersListRoute)
@@ -23,7 +25,7 @@ func handleUsersListRoute(c *gin.Context) {
 		var err error
 		since, err = strconv.ParseInt(s, 10, 64)
 		if err != nil {
-			panic(errors.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Parameters"))
+			panic(errInvalidParams)
 		}
 	}
 

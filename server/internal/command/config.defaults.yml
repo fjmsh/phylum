@@ -18,7 +18,7 @@ user:
     numeric: 1
     symbols: 1
   basedir: /home
-  perimission: 0
+  permission: 0x10    # Invite users
 
 crypt:
   hash: argon2
@@ -40,6 +40,7 @@ server:
     enabled: false
     origins:
       - "*"
+
 mail:
   smtp:
     host:
