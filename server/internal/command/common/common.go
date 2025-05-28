@@ -16,7 +16,7 @@ var f fs.FileSystem
 
 func User(cmd *cobra.Command) *user.User {
 	if u == nil {
-		if value, err := cmd.Flags().GetString("user"); err != nil {
+		if value, err := cmd.Flags().GetString("user-email"); err != nil {
 			fmt.Println("could not read user: " + err.Error())
 			os.Exit(1)
 		} else if value == "" {

@@ -10,7 +10,7 @@ func SetupCommand() *cobra.Command {
 		Use:   "user",
 		Short: "User Management",
 	}
-	cmd.PersistentFlags().StringP("user", "u", "", "User")
+	cmd.PersistentFlags().StringP("user-email", "u", "", "User")
 	cmd.AddCommand([]*cobra.Command{
 		bookmarks.SetupCommand(),
 	}...)

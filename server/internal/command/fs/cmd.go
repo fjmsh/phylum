@@ -11,7 +11,7 @@ func SetupCommand() *cobra.Command {
 		Use:   "fs",
 		Short: "Filesystem",
 	}
-	cmd.PersistentFlags().StringP("user", "u", "", "User")
+	cmd.PersistentFlags().StringP("user-email", "u", "", "User Email")
 
 	cmd.AddCommand(
 		setupCatCommand(),
