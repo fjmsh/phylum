@@ -1,5 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/app/dialog_scaffold.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/app/router.dart';
@@ -89,11 +94,21 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     final responseString = await sendRequest(context, 'Changing Password', request);
     if (responseString == null) return;
     if (context.mounted) {
+      final navigator = Navigator.of(context);
       final routerDelegate = context.read<PhylumRouterDelegate>();
-      await showAlertDialog(
-        context,
-        title: 'Password Changed',
+      final accountManager = context.read<AccountManager<PhylumAccount>>();
+      showProgressDialog(context, message: 'Password Changed. Logging In');
+
+      final response = BootstrapLoginResponse.fromResponse((jsonDecode(responseString) as Map).cast<String, dynamic>());
+      final account = PhylumAccount.create(
+        serverUri: widget.instanceUrl,
+        accessToken: response.accessToken!,
+        user: response.user,
       );
+      await account.initialized;
+      await response.process(account);
+      await accountManager.addAccount(account);
+      navigator.pop();
       routerDelegate.go(ExplorerRouteHome());
     }
   }
