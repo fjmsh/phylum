@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/user"
@@ -21,25 +20,13 @@ func setupInviteCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]
 
-			name := ""
-			if n, err := cmd.Flags().GetString("name"); err != nil {
-				fmt.Println("invalid value for flag 'name': " + err.Error())
-				os.Exit(1)
-			} else if n != "" {
-				name = n
-			}
-
+			name, _ := cmd.Flags().GetString("name")
 			noCreateHome, _ := cmd.Flags().GetBool("no-create-home")
-			homePath := ""
-			if !noCreateHome {
-				basePath, _ := cmd.Flags().GetString("base-dir")
-				homePath = strings.TrimRight(basePath, "/") + "/" + email
-			}
 
 			var u user.User
 			err := db.Get(context.Background()).RunInTx(func(db db.Handler) error {
 				userManager := user.ManagerFromDB(db)
-				if user, err := userManager.CreateUser(email, name, homePath); err != nil {
+				if user, err := userManager.CreateUser(email, name, noCreateHome); err != nil {
 					return err
 				} else {
 					u = user
@@ -59,7 +46,7 @@ func setupInviteCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringP("name", "n", "", "Name")
-	cmd.Flags().StringP("base-dir", "b", "/home", "Base directory for home")
+	cmd.Flags().StringP("user_basedir", "b", "", "Base directory for home")
 	cmd.Flags().BoolP("no-create-home", "M", false, "Do not make home directory")
 	cmd.Flags().Bool("no-email", false, "Do not send email")
 	return cmd

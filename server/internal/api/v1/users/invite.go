@@ -30,11 +30,7 @@ func handleInviteRequest(c *gin.Context) {
 	}
 
 	userManager := user.ManagerFromContext(c.Request.Context())
-	homePath := "/home/" + params.Email
-	if params.NoCreateHome {
-		homePath = ""
-	}
-	if user, err := userManager.CreateUser(params.Email, params.Name, homePath); err != nil {
+	if user, err := userManager.CreateUser(params.Email, params.Name, params.NoCreateHome); err != nil {
 		panic(err)
 	} else {
 		if !params.NoSendEmail {

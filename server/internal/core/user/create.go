@@ -15,16 +15,17 @@ import (
 var errInvalidEmailAddress = errors.NewError(http.StatusBadRequest, "invalid_email_address", "Invalid email address")
 var errEmailExists = errors.NewError(http.StatusBadRequest, "user_already_exists", "User already exists")
 
-func (m manager) CreateUser(email, ame string, homePath string) (User, error) {
+func (m manager) CreateUser(email, name string, noCreateHome bool) (User, error) {
 	var user User
 	err := m.db.RunInTx(func(db db.Handler) error {
 		m := m.withDb(db)
 		var err error
 		var homeID pgtype.UUID
 		var home fs.Resource
-		if homePath != "" {
+		if !noCreateHome {
 			f := fs.OpenOmniscient(db)
 			var err error
+			homePath := strings.TrimRight(Cfg.BaseDir, "/") + "/" + email
 			home, err = f.CreateResourceByPath(homePath, uuid.Nil, true, true, fs.ResourceBindConflictResolutionEnsure)
 			if err != nil {
 				return err
@@ -32,7 +33,7 @@ func (m manager) CreateUser(email, ame string, homePath string) (User, error) {
 			homeID = pgtype.UUID{Bytes: home.ID(), Valid: true}
 		}
 
-		user, err = m.insertUser(email, ame, homeID)
+		user, err = m.insertUser(email, name, homeID)
 		if err != nil {
 			return err
 		}
