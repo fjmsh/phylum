@@ -16,7 +16,7 @@ type User struct {
 	Email       string
 	Name        string
 	Home        pgtype.UUID
-	Permissions Permission
+	Permissions Permissions
 }
 
 func scanUser(row pgx.CollectableRow) (User, error) {
@@ -48,6 +48,8 @@ type Manager interface {
 	UpdateUserHome(user User, home pgtype.UUID) error
 	UpdateUserName(user User, name string) error
 	UpdateUserPassword(user User, password string) error
+	GrantUserPermissions(user User, permissions Permissions) error
+	RevokeUserPermissions(user User, permissions Permissions) error
 
 	// auth.go
 	VerifyUserPassword(email, password string) (User, error)

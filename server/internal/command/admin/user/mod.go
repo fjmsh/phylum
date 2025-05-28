@@ -15,7 +15,7 @@ import (
 func setupModCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mod email",
-		Short: "Add User",
+		Short: "Modify",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]

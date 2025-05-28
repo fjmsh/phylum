@@ -45,8 +45,8 @@ type User struct {
 
 type LoggedInUser struct {
 	User
-	Home        pgtype.UUID     `json:"home"`
-	Permissions user.Permission `json:"permissions"`
+	Home        pgtype.UUID      `json:"home"`
+	Permissions user.Permissions `json:"permissions"`
 }
 
 type Publink struct {

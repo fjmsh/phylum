@@ -19,6 +19,8 @@ func SetupCommand() *cobra.Command {
 		setupPwresetResetCommand(),
 		setupModCommand(),
 		setupPasswdCommand(),
+		setupGrantCommand(),
+		setupRevokeCommand(),
 	}...)
 
 	return cmd
@@ -34,7 +36,7 @@ func setupListCommand() *cobra.Command {
 				logrus.Fatal(err)
 			}
 			for _, user := range users {
-				logrus.Infof("%24s : %s", user.Email, user.Name)
+				logrus.Infof("%24s :%.4x: %s", user.Email, user.Permissions, user.Name)
 			}
 		},
 	}

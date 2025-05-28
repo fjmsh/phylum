@@ -12,8 +12,8 @@ import (
 
 func setupPwresetResetCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pwreset email",
-		Short: "pwreset email",
+		Use:   "pwreset <email>",
+		Short: "Send password reset email",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]

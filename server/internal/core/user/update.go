@@ -37,7 +37,7 @@ func (m manager) UpdateUserPassword(user User, password string) error {
 	return nil
 }
 
-func (m manager) GrantUserPermissions(user User, permissions int) error {
+func (m manager) GrantUserPermissions(user User, permissions Permissions) error {
 	const q = "UPDATE users SET permissions = permissions | $2::INTEGER, modified = NOW() WHERE id = $1::INT"
 	if _, err := m.db.Exec(q, user.ID, permissions); err != nil {
 		return err
@@ -45,7 +45,7 @@ func (m manager) GrantUserPermissions(user User, permissions int) error {
 	return nil
 }
 
-func (m manager) RevokeUserPermissions(user User, permissions int) error {
+func (m manager) RevokeUserPermissions(user User, permissions Permissions) error {
 	const q = "UPDATE users SET permissions = permissions & ~ $2::INTEGER, modified = NOW() WHERE id = $1::INT"
 	if _, err := m.db.Exec(q, user.ID, permissions); err != nil {
 		return err
