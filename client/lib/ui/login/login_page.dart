@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
@@ -73,51 +72,12 @@ class _LoginPageState extends State<LoginPage> {
       });
     }
     return PasswordLoginFragment(
-      onSubmitted: (email, password) => _performLogin(context, instanceUrl, email, password),
+      requestLogin: (email, password) => _performLogin(context, instanceUrl, email, password),
       onBackPressed: widget.fixedInstanceUrl == null ? () => setState(() => _instanceUrl = null) : null,
-      onForgotPassword: (email) async {
-        if (email.isEmpty) {
-          showAlertDialog(
-            context,
-            message: 'Please enter email address to reset password',
-            barrierDismissible: true,
-          );
-          return;
-        }
-
-        final contents = RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(text: 'This will request a password reset for $email.\n\nDo you want to continue?\n\n'),
-              TextSpan(
-                text: 'Tap here if you already have a reset token',
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                recognizer: TapGestureRecognizer()
-                  ..onTap = () async {
-                    final token = await showInputDialog(context, labelText: 'Reset Token', barrierDismissable: true);
-                    if (token == null || !context.mounted) return;
-                    Navigator.of(context).pop(false);
-                    context
-                        .read<PhylumRouterDelegate>()
-                        .go(ResetPasswordRoute(instanceUri: instanceUrl, email: email, token: token));
-                  },
-              ),
-            ],
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        );
-        final confirm = await showAlertDialog(
-              context,
-              title: 'Reset Password',
-              contents: contents,
-              negativeText: 'No',
-              positiveText: 'Yes',
-              barrierDismissible: true,
-            ) ??
-            false;
-        if (!confirm || !context.mounted) return;
-        _requestPasswordReset(context, instanceUrl, email);
-      },
+      requestPasswordReset: (email) => _requestPasswordReset(context, instanceUrl, email),
+      resetPassword: (email, token) => context
+          .read<PhylumRouterDelegate>()
+          .go(ResetPasswordRoute(instanceUri: instanceUrl, email: email, token: token)),
     );
   }
 
