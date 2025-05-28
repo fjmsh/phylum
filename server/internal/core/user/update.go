@@ -23,7 +23,7 @@ func (m manager) UpdateUserName(user User, name string) error {
 
 func (m manager) UpdateUserPassword(user User, password string) error {
 	const q = "UPDATE users SET password_hash = $2::TEXT, modified = NOW() WHERE id = $1::INT"
-	if hash, err := crypt.GenerateArgon2EncodedHash(password); err != nil {
+	if hash, err := crypt.Generate(password); err != nil {
 		return err
 	} else {
 		if _, err := m.db.Exec(q, user.ID, hash); err != nil {

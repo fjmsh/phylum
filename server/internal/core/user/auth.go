@@ -29,7 +29,7 @@ func (m manager) VerifyUserPassword(email, password string) (User, error) {
 	} else if passwordHash == "" {
 		return User{}, ErrCredentialsInvalid
 	} else {
-		if b, err := crypt.VerifyPassword(password, passwordHash); err != nil {
+		if b, err := crypt.Verify(password, passwordHash); err != nil {
 			return User{}, err
 		} else if !b {
 			return User{}, ErrCredentialsInvalid

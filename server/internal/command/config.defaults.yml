@@ -9,6 +9,20 @@ db:
 
 storage:
   location: storage
+  
+user:
+  password:
+  basedir: /home
+  perimission: 0
+
+crypt:
+  hash: argon2
+  argon2: 
+    memory: 2048
+    iterations: 6
+    parallelism: 4
+    salt: 32
+    key: 32
 
 server:
   host:

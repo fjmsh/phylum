@@ -9,6 +9,8 @@ import (
 	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
+var Cfg Config
+
 type User struct {
 	ID          int32
 	Email       string

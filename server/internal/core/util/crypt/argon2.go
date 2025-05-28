@@ -6,103 +6,75 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"strings"
 
 	"golang.org/x/crypto/argon2"
 )
 
-type Argon2Params struct {
-	salt        uint32
-	key         uint32
-	memory      uint32
-	iterations  uint32
-	parallelism uint8
-}
-
-func defaultArgon2Params() Argon2Params {
-	return Argon2Params{
-		salt:        32,
-		key:         32,
-		memory:      2048,
-		iterations:  6,
-		parallelism: 4,
-	}
-}
-
-func GenerateArgon2EncodedHash(password string) (string, error) {
-	p := defaultArgon2Params()
-	salt, err := generateRandomBytes(p.salt)
+func generateArgon2(password string) (string, error) {
+	p := Cfg.Argon2
+	fmt.Printf("%+v\n", p)
+	salt, err := generateRandomBytes(p.Salt)
 	if err != nil {
 		return "", err
 	}
 
-	key := argon2.IDKey([]byte(password), salt, p.iterations, p.memory, p.parallelism, p.key)
+	key := argon2.IDKey([]byte(password), salt, p.Iterations, p.Memory, p.Parallelism, p.Key)
 
 	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
 	b64Hash := base64.RawStdEncoding.EncodeToString(key)
 
-	// Return a string using the standard encoded hash representation.
-	return fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version, p.memory, p.iterations, p.parallelism, b64Salt, b64Hash), nil
+	return fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version, p.Memory, p.Iterations, p.Parallelism, b64Salt, b64Hash), nil
 }
 
-func VerifyPassword(password, encodedHash string) (bool, error) {
-	// Extract the parameters, salt and derived key from the encoded password
-	// hash.
-	p, salt, hash, err := decodeHash(encodedHash)
+func verifyArgon2(password string, hashParts []string) (bool, error) {
+	p, salt, storedHash, err := decodeHash(hashParts)
 	if err != nil {
 		return false, err
 	}
 
-	// Derive the key from the other password using the same parameters.
-	otherHash := argon2.IDKey([]byte(password), salt, p.iterations, p.memory, p.parallelism, p.key)
+	// Derive the key from the provided password using the same parameters.
+	computedHash := argon2.IDKey([]byte(password), salt, p.Iterations, p.Memory, p.Parallelism, p.Key)
 
-	// Check that the contents of the hashed passwords are identical. Note
-	// that we are using the subtle.ConstantTimeCompare() function for this
-	// to help prevent timing attacks.
-	if subtle.ConstantTimeCompare(hash, otherHash) == 1 {
+	if subtle.ConstantTimeCompare(storedHash, computedHash) == 1 {
 		return true, nil
 	}
 	return false, nil
 }
 
-func decodeHash(encodedHash string) (p *Argon2Params, salt, hash []byte, err error) {
-	vals := strings.Split(encodedHash, "$")
-	if vals[1] != "argon2id" {
-		return nil, nil, nil, errors.New("unrecognized hash")
-	}
-
-	if len(vals) != 6 {
-		return nil, nil, nil, errors.New("incorrect hash format for argon2id")
+func decodeHash(hashParts []string) (p Argon2Config, salt, hash []byte, err error) {
+	if len(hashParts) != 4 {
+		err = errors.New("incorrect hash format for argon2id")
+		return
 	}
 
 	var version int
-	_, err = fmt.Sscanf(vals[2], "v=%d", &version)
+	_, err = fmt.Sscanf(hashParts[0], "v=%d", &version)
 	if err != nil {
-		return nil, nil, nil, err
+		return
 	}
 	if version != argon2.Version {
-		return nil, nil, nil, errors.New("unrecognized version of argon2")
+		err = errors.New("unrecognized version of argon2")
+		return
 	}
 
-	p = &Argon2Params{}
-	_, err = fmt.Sscanf(vals[3], "m=%d,t=%d,p=%d", &p.memory, &p.iterations, &p.parallelism)
+	_, err = fmt.Sscanf(hashParts[1], "m=%d,t=%d,p=%d", &p.Memory, &p.Iterations, &p.Parallelism)
 	if err != nil {
-		return nil, nil, nil, err
+		return
 	}
 
-	salt, err = base64.RawStdEncoding.Strict().DecodeString(vals[4])
+	salt, err = base64.RawStdEncoding.Strict().DecodeString(hashParts[2])
 	if err != nil {
-		return nil, nil, nil, err
+		return
 	}
-	p.salt = uint32(len(salt))
+	p.Salt = uint32(len(salt))
 
-	hash, err = base64.RawStdEncoding.Strict().DecodeString(vals[5])
+	hash, err = base64.RawStdEncoding.Strict().DecodeString(hashParts[3])
 	if err != nil {
-		return nil, nil, nil, err
+		return
 	}
-	p.key = uint32(len(hash))
+	p.Key = uint32(len(hash))
 
-	return p, salt, hash, nil
+	return
 }
 
 // Generate a cryptographically secure random salt.

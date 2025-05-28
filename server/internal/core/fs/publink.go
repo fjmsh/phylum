@@ -51,7 +51,7 @@ func (r Resource) CreatePublink(id, password string, expires pgtype.Timestamp, a
 	passwordHash := ""
 
 	if password != "" {
-		hash, err := crypt.GenerateArgon2EncodedHash(password)
+		hash, err := crypt.Generate(password)
 		if err != nil {
 			return err
 		}

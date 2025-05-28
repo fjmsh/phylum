@@ -123,7 +123,7 @@ func OpenFromPublink(ctx context.Context, id string, password string, path strin
 		if password == "" {
 			return Resource{}, ErrInsufficientPermissions
 		}
-		if ok, err := crypt.VerifyPassword(password, link.PasswordHash); err != nil {
+		if ok, err := crypt.Verify(password, link.PasswordHash); err != nil {
 			return Resource{}, err
 		} else if !ok {
 			return Resource{}, ErrInsufficientPermissions

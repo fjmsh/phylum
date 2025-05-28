@@ -19,6 +19,8 @@ import (
 	"github.com/shroff/phylum/server/internal/command/serve"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
+	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/shroff/phylum/server/internal/core/util/crypt"
 	"github.com/shroff/phylum/server/internal/mail"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -103,6 +105,8 @@ func SetupCommand() {
 		storage.Cfg = cfg.Storage
 		serve.Cfg = cfg.Server
 		mail.Cfg = cfg.Mail
+		user.Cfg = cfg.User
+		crypt.Cfg = cfg.Crypt
 	}
 
 	defer func() {
