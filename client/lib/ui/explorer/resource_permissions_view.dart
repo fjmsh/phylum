@@ -5,6 +5,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
+import 'package:phylum/libphylum/logged_in_user.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/permissions.dart';
@@ -130,14 +131,16 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
       context,
       users,
       (user) => ListTile(title: Text(user.displayName)),
-      buildLastItem: (_) => ListTile(
-          leading: Icon(Icons.person_add),
-          title: Text('Invite'),
-          onTap: () async {
-            final navigator = Navigator.of(context);
-            await inviteUser(context);
-            navigator.pop();
-          }),
+      buildLastItem: account.hasPermission(permissionUsersInvite)
+          ? (_) => ListTile(
+              leading: Icon(Icons.person_add),
+              title: Text('Invite'),
+              onTap: () async {
+                final navigator = Navigator.of(context);
+                await inviteUser(context);
+                navigator.pop();
+              })
+          : null,
       filterList: (u, q) {
         final query = q.toLowerCase();
         return u.where((u) => u.email.contains(query) || u.name.contains(query)).toList(growable: false);

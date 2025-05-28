@@ -68,7 +68,7 @@ class PhylumAccount extends Account<PhylumAccount> {
   String get userEmail => _loggedInUser.email;
   String get userName => _loggedInUser.name;
   String get userHome => _loggedInUser.home;
-  int get userPermissions => _loggedInUser.permissions;
+  bool hasPermission(UserPermission p) => _loggedInUser.permissions & p != 0;
 
   int get bootstrapUntil => getPersisted<num>(_persistKeyBootstrapUntil)?.toInt() ?? 0;
   set bootstrapUntil(int value) {

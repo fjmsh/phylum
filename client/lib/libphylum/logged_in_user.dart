@@ -1,3 +1,9 @@
+import 'dart:convert';
+
+typedef UserPermission = int;
+
+const UserPermission permissionUsersInvite = 0x10;
+
 class LoggedInUser {
   final int id;
   final String email;
@@ -44,5 +50,10 @@ class LoggedInUser {
       home: map['home'],
       permissions: map['permissions'],
     );
+  }
+
+  @override
+  String toString() {
+    return jsonEncode(toJson());
   }
 }
