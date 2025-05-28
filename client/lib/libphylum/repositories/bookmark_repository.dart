@@ -7,15 +7,12 @@ import 'package:phylum/libphylum/actions/action_resource_bookmark_add.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_remove.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/requests/bookmarks_request.dart';
-import 'package:phylum/libphylum/responses/responses.dart';
 
 const _remoteBookmarksBoxName = 'remote_bookmarks';
 
 class BookmarkRepository extends Repository<PhylumAccount, Bookmark> {
   late final PhylumAccount _account;
   late final LazyBox<Bookmark?> _remoteDataBox;
-  int? _lastBookmarkFetch;
 
   BookmarkRepository();
 
@@ -49,17 +46,6 @@ class BookmarkRepository extends Repository<PhylumAccount, Bookmark> {
       resourceId: resource.id,
       bookmarkName: bookmark.name,
     ));
-  }
-
-  Future<void> refresh() async {
-    return _account.apiClient
-        .sendRequest(BookmarksRequest(since: _lastBookmarkFetch),
-            (request, response) => parseJsonMapResponse(response, BookmarkListResponse.fromResponse))
-        .then((response) {
-      if (response is BookmarkListResponse) {
-        _lastBookmarkFetch = response.until;
-      }
-    });
   }
 
   @override

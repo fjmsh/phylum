@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/requests/bootstrap_request.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/explorer_actions.dart';
 import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
@@ -42,8 +44,8 @@ class _ExplorerViewState extends State<ExplorerView> {
 
     final account = context.read<PhylumAccount>();
     _listener = AppLifecycleListener(onResume: () {
-      account.userRepository.refresh();
-      account.bookmarkRepository.refresh();
+      account.apiClient.sendRequest(BootstrapRequest(since: account.bootstrapUntil),
+          (request, response) => parseJsonMapResponse(response, BootstrapLoginResponse.fromResponse));
     });
 
     if (!kIsWeb && Platform.isAndroid) {

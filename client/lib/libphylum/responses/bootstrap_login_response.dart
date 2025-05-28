@@ -41,6 +41,7 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
     });
 
     account.loggedInUser = user;
+    account.bootstrapUntil = until;
 
     for (final b in bookmarks) {
       await account.datastore.get<Bookmark>().replaceRemoteData(b.resourceId, b);

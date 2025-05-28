@@ -14,6 +14,7 @@ import 'package:phylum/util/logging.dart';
 
 const _persistKeyAccessToken = 'accessToken';
 const _persistKeyUser = 'user';
+const _persistKeyBootstrapUntil = 'bootstrapUntil';
 
 AccountManager<PhylumAccount> createAccountManager(bool autoInitialize) => AccountManager((id) async {
       final account = PhylumAccount.restore(id: id);
@@ -59,7 +60,7 @@ class PhylumAccount extends Account<PhylumAccount> {
   set loggedInUser(LoggedInUser value) {
     if (_loggedInUser != value) {
       _loggedInUser = value;
-      persist(_persistKeyUser, value.toJson());
+      persist(_persistKeyUser, jsonEncode(value.toJson()));
     }
   }
 
@@ -68,6 +69,11 @@ class PhylumAccount extends Account<PhylumAccount> {
   String get userName => _loggedInUser.name;
   String get userHome => _loggedInUser.home;
   int get userPermissions => _loggedInUser.permissions;
+
+  int get bootstrapUntil => getPersisted<num>(_persistKeyBootstrapUntil)?.toInt() ?? 0;
+  set bootstrapUntil(int value) {
+    persist(_persistKeyBootstrapUntil, value);
+  }
 
   PhylumAccount.create({required super.serverUri, required String accessToken, required LoggedInUser user})
       : _initialAccessToken = accessToken,
@@ -100,7 +106,12 @@ class PhylumAccount extends Account<PhylumAccount> {
         }
       }
     });
-    _loggedInUser = _initialLoggedInUser ?? LoggedInUser.fromJson(jsonDecode(getPersisted(_persistKeyUser)));
+    if (_initialLoggedInUser != null) {
+      _loggedInUser = _initialLoggedInUser!;
+      persist(_persistKeyUser, jsonEncode(_initialLoggedInUser!.toJson()));
+    } else {
+      _loggedInUser = LoggedInUser.fromJson(jsonDecode(getPersisted(_persistKeyUser)));
+    }
   }
 
   @override

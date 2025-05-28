@@ -6,8 +6,6 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_user_invite.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/requests/users_list_request.dart';
-import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/user_display_name.dart';
 
 const _remoteUsersBoxName = 'remote_users';
@@ -40,13 +38,6 @@ class UserRepository extends Repository<PhylumAccount, User> {
 
     _remoteDataBox = await _account.openLazyBox(_remoteUsersBoxName);
     return remoteData;
-  }
-
-  Future<ApiResult> refresh() async {
-    return _account.apiClient.sendRequest(
-      UsersListRequest(),
-      (request, response) => parseJsonMapResponse(response, UserListResponse.fromResponse),
-    );
   }
 
   String getUserDisplayName(int userId) {
