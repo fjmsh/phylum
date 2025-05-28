@@ -9,7 +9,6 @@ import 'package:logger/logger.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:phylum/integrations/directories.dart';
 import 'package:phylum/libphylum/actions/deserializers.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/util/logging.dart';
@@ -22,7 +21,6 @@ void main() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
 
-  PhylumDirectories.instance.initialize();
   logger = Logger(level: Level.info, printer: PrettyPrinter(methodCount: 0, noBoxingByDefault: true));
   otlLogger = (LogLevel level, dynamic message, {dynamic error, StackTrace? stackTrace}) {
     final lvl = switch (level) {
