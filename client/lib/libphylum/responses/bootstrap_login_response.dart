@@ -40,7 +40,7 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
       batch.insertAll(account.db.users, users, mode: InsertMode.replace);
     });
 
-    account.loggedInUser = user;
+    account.user = user;
     account.bootstrapUntil = until;
 
     for (final b in bookmarks) {

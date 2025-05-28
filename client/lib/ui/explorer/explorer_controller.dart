@@ -100,7 +100,7 @@ class ExplorerController extends StateNotifier<ExplorerState> {
     final folderId = route.folderId(_account);
     if (folderId != null) {
       _folderSubscription = _account.db.watchResource(folderId).listen((e) => state = state.copyWith(folder: e));
-      if (folderId != _account.userHome) {
+      if (folderId != _account.user.home) {
         _account.db.markResourceAccess(folderId);
       }
     } else {

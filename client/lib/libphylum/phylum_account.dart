@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -11,9 +10,9 @@ import 'package:phylum/libphylum/repositories/trash_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/logging.dart';
+import 'package:state_notifier/state_notifier.dart';
 
 const _persistKeyAccessToken = 'accessToken';
-const _persistKeyUser = 'user';
 const _persistKeyBootstrapUntil = 'bootstrapUntil';
 
 AccountManager<PhylumAccount> createAccountManager(bool autoInitialize) => AccountManager((id) async {
@@ -56,19 +55,12 @@ class PhylumAccount extends Account<PhylumAccount> {
     apiClient.setHeader('Authorization', 'bearer $value');
   }
 
-  late LoggedInUser _loggedInUser;
-  set loggedInUser(LoggedInUser value) {
-    if (_loggedInUser != value) {
-      _loggedInUser = value;
-      persist(_persistKeyUser, jsonEncode(value.toJson()));
-    }
+  late LoggedInUserNotifier _userNotifier;
+  StateNotifier<LoggedInUser> get userNotifier => _userNotifier;
+  LoggedInUser get user => _userNotifier.user;
+  set user(LoggedInUser value) {
+    _userNotifier.user = value;
   }
-
-  int get userId => _loggedInUser.id;
-  String get userEmail => _loggedInUser.email;
-  String get userName => _loggedInUser.name;
-  String get userHome => _loggedInUser.home;
-  bool hasPermission(UserPermission p) => _loggedInUser.permissions & p != 0;
 
   int get bootstrapUntil => getPersisted<num>(_persistKeyBootstrapUntil)?.toInt() ?? 0;
   set bootstrapUntil(int value) {
@@ -107,10 +99,9 @@ class PhylumAccount extends Account<PhylumAccount> {
       }
     });
     if (_initialLoggedInUser != null) {
-      _loggedInUser = _initialLoggedInUser!;
-      persist(_persistKeyUser, jsonEncode(_initialLoggedInUser!.toJson()));
+      _userNotifier = LoggedInUserNotifier(this, _initialLoggedInUser!);
     } else {
-      _loggedInUser = LoggedInUser.fromJson(jsonDecode(getPersisted(_persistKeyUser)));
+      _userNotifier = LoggedInUserNotifier.fromAccount(this);
     }
   }
 

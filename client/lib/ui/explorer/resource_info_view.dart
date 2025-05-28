@@ -60,7 +60,7 @@ class ResourceInfoView extends StatelessWidget {
   Widget build(BuildContext context) {
     final account = context.read<PhylumAccount>();
     final p = resource.inheritedPermissions.parsePermissionMap()..addAll(resource.grants.parsePermissionMap());
-    final myPermission = p.remove(account.userId) ?? 0;
+    final myPermission = p.remove(account.user.id) ?? 0;
     final repository = context.read<PhylumAccount>().userRepository;
     final entries = p.entries.toList(growable: false)..sort(((a, b) => a.key.compareTo(b.key)));
     final other = entries.map((e) => repository.getUserDisplayName(e.key)).join(', ');

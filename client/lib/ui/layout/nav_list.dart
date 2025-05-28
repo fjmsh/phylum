@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:phylum/libphylum/user_permission.dart';
@@ -137,19 +138,28 @@ class NavList extends StatelessWidget {
                     },
                   ),
                   const Divider(),
-                  if (account.hasPermission(permissionUsersInvite))
-                    ListTile(
-                      leading: const Icon(Icons.person_add),
-                      title: const Text('Invite'),
-                      onTap: () async {
-                        final result = await NewUserDetailsDialog.show(context);
-                        if (result == null || !context.mounted) return;
-                        final (email, name) = result;
-                        final account = context.read<PhylumAccount>();
-                        account.userRepository.invite(email, name);
-                      },
-                    ),
-                  if (account.hasPermission(permissionUsersInvite)) const Divider(),
+                  StateNotifierBuilder(
+                      stateNotifier: account.userNotifier,
+                      builder: (context, state, child) {
+                        return state.hasPermission(permissionUsersInvite)
+                            ? Column(
+                                children: [
+                                  ListTile(
+                                    leading: const Icon(Icons.person_add),
+                                    title: const Text('Invite'),
+                                    onTap: () async {
+                                      final result = await NewUserDetailsDialog.show(context);
+                                      if (result == null || !context.mounted) return;
+                                      final (email, name) = result;
+                                      final account = context.read<PhylumAccount>();
+                                      account.userRepository.invite(email, name);
+                                    },
+                                  ),
+                                  Divider()
+                                ],
+                              )
+                            : SizedBox();
+                      }),
                   if (!kIsWeb) const DownloadButton(),
                   ServerStatusButton(
                     onTap: () {

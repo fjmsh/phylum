@@ -47,7 +47,7 @@ class ExplorerRouteHome extends ExplorerRouteFolder {
   ExplorerRouteHome() : super(folderId: '');
 
   @override
-  String folderId(PhylumAccount account) => account.userHome;
+  String folderId(PhylumAccount account) => account.user.home;
 }
 
 class ExplorerRouteFolder extends ExplorerRoute {

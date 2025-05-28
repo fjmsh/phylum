@@ -131,7 +131,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
       context,
       users,
       (user) => ListTile(title: Text(user.displayName)),
-      buildLastItem: account.hasPermission(permissionUsersInvite)
+      buildLastItem: account.user.hasPermission(permissionUsersInvite)
           ? (_) => ListTile(
               leading: Icon(Icons.person_add),
               title: Text('Invite'),

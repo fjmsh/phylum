@@ -32,7 +32,7 @@ class PathView extends StatelessWidget {
               final entry = snapshot.data![i];
               final permission = entry.userPermission;
               if (permission != 0) {
-                if (entry.id == account.userHome) {
+                if (entry.id == account.user.home) {
                   path.add(PathInfo(title: 'My Files', dropTargetId: entry.id, target: ExplorerRouteHome()));
                 } else {
                   if (path.isEmpty) {
