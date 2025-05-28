@@ -93,12 +93,20 @@ func handleResetPassword(c *gin.Context) {
 	}
 
 	userManager := user.ManagerFromContext(c.Request.Context())
-	if u, err := userManager.UserByEmail(params.Email); err != nil {
+	if user, err := userManager.UserByEmail(params.Email); err != nil {
 		panic(err)
-	} else if err := userManager.ResetUserPassword(u, params.Token, params.Password); err != nil {
+	} else if err := userManager.ResetUserPassword(user, params.Token, params.Password); err != nil {
 		panic(err)
+	} else if token, err := userManager.CreateAccessToken(user); err != nil {
+		panic(err)
+	} else if bootstrap, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
+		panic(err)
+	} else {
+		c.JSON(200, responses.Login{
+			AccessToken: token,
+			Bootstrap:   bootstrap,
+		})
 	}
-	c.JSON(200, gin.H{})
 }
 
 func handleSetCookie(c *gin.Context) {
