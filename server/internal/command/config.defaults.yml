@@ -12,6 +12,11 @@ storage:
   
 user:
   password:
+    length: 12
+    lower: 1
+    upper: 1
+    numeric: 1
+    symbols: 1
   basedir: /home
   perimission: 0
 
