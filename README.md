@@ -99,3 +99,4 @@ or
 $ podman exec -it phylum_server ./phylum <cmd>
 ```
 
+Use the `help` command (or leave out the command) to get a list of options
