@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:drift/drift.dart' show TableOrViewStatements;
-import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/logged_in_user.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/common/dialogs/new_user_details_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:phylum/util/user_display_name.dart';
@@ -158,72 +158,9 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
   }
 
   Future<void> inviteUser(BuildContext context) async {
-    String email = '';
-    String name = '';
-    bool confirm = await showDialog(
-          // ignore: use_build_context_synchronously
-          context: context,
-          barrierDismissible: true,
-          builder: (context) => StatefulBuilder(builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Invite User'),
-              content: SizedBox(
-                width: 360,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 12.0,
-                  children: [
-                    TextField(
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        hintText: 'djarin@example.com',
-                      ),
-                      autofocus: true,
-                      textCapitalization: TextCapitalization.none,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      onChanged: (value) {
-                        setState(() {
-                          email = value;
-                        });
-                      },
-                    ),
-                    TextField(
-                      decoration: InputDecoration(
-                        labelText: 'Name (optional)',
-                        hintText: 'Din Djarin',
-                      ),
-                      textCapitalization: TextCapitalization.words,
-                      keyboardType: TextInputType.name,
-                      textInputAction: TextInputAction.go,
-                      onChanged: (value) {
-                        name = value;
-                      },
-                      onSubmitted: EmailValidator.validate(email) ? (value) => Navigator.of(context).pop(true) : null,
-                    ),
-                  ],
-                ),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                  },
-                ),
-                ElevatedButton(
-                  onPressed: EmailValidator.validate(email) ? () => Navigator.of(context).pop(true) : null,
-                  child: const Text('Invite'),
-                )
-              ],
-            );
-          }),
-        ) ??
-        false;
-    if (!confirm || !context.mounted) return;
+    final result = await NewUserDetailsDialog.show(context);
+    if (result == null || !context.mounted) return;
+    final (email, name) = result;
 
     final permission = await _showPermissionsPicker(context, false);
     if (permission == null || !context.mounted) return;
