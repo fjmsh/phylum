@@ -97,14 +97,12 @@ class _LoginPageState extends State<LoginPage> {
       try {
         final response =
             BootstrapLoginResponse.fromResponse((jsonDecode(responseString) as Map).cast<String, dynamic>());
-        final account = PhylumAccount.create(
+        final account = await PhylumAccount.create(
           serverUrl: instanceUri,
           accessToken: response.accessToken!,
           user: response.user,
         );
-        await account.initialized;
         await response.process(account);
-
         await accountManager.addAccount(account);
         navigator.pop();
       } catch (e, stack) {

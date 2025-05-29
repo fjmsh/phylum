@@ -100,12 +100,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       showProgressDialog(context, message: 'Password Changed. Logging In');
 
       final response = BootstrapLoginResponse.fromResponse((jsonDecode(responseString) as Map).cast<String, dynamic>());
-      final account = PhylumAccount.create(
+      final account = await PhylumAccount.create(
         serverUrl: widget.instanceUrl,
         accessToken: response.accessToken!,
         user: response.user,
       );
-      await account.initialized;
       await response.process(account);
       await accountManager.addAccount(account);
       navigator.pop();

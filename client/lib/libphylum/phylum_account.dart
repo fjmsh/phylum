@@ -15,14 +15,10 @@ import 'package:state_notifier/state_notifier.dart';
 const _persistKeyAccessToken = 'accessToken';
 const _persistKeyBootstrapUntil = 'bootstrapUntil';
 
-AccountManager<PhylumAccount> createAccountManager(bool autoInitialize) => AccountManager((id) async {
-      final account = PhylumAccount.restore(id: id);
-      final err = await account.initialized;
-      if (err != null) {
-        throw err;
-      }
-      return account;
-    }, autoInitialize: autoInitialize);
+AccountManager<PhylumAccount> createAccountManager(bool autoInitialize) => AccountManager(
+      (id) => PhylumAccount.restore(id: id),
+      autoInitialize: autoInitialize,
+    );
 
 class PhylumAccount extends Account<PhylumAccount> {
   late final db = AppDatabase(accountId: id);
@@ -44,14 +40,12 @@ class PhylumAccount extends Account<PhylumAccount> {
   @override
   Dispatcher dispatcher = HttpClientDispatcher();
 
-  String? _initialAccessToken;
   LoggedInUser? _initialLoggedInUser;
 
-  String? get accessToken => getPersisted(_persistKeyAccessToken);
-  set _accessToken(String? value) {
-    if (value != accessToken) {
-      persist(_persistKeyAccessToken, value);
-    }
+  String? _accessToken;
+  set accessToken(String value) {
+    _accessToken = value;
+    persist(_persistKeyAccessToken, value);
     apiClient.setHeader('Authorization', 'bearer $value');
   }
 
@@ -67,18 +61,38 @@ class PhylumAccount extends Account<PhylumAccount> {
     persist(_persistKeyBootstrapUntil, value);
   }
 
-  PhylumAccount.create({required super.serverUrl, required String accessToken, required LoggedInUser user})
-      : _initialAccessToken = accessToken,
+  PhylumAccount._create({required super.serverUrl, required String accessToken, required LoggedInUser user})
+      : _accessToken = accessToken,
         _initialLoggedInUser = user,
         super.create();
 
   PhylumAccount.restore({required super.id}) : super.restore();
 
+  static Future<PhylumAccount> create(
+      {required Uri serverUrl, required String accessToken, required LoggedInUser user}) async {
+    final account = PhylumAccount._create(serverUrl: serverUrl, accessToken: accessToken, user: user);
+    await account.setup();
+    return account;
+  }
+
   @override
   Future<void> initialize() async {
     await super.initialize();
-    // Set Authorization header
-    _accessToken = _initialAccessToken ?? accessToken;
+    if (_accessToken == null) {
+      _accessToken = getPersisted(_persistKeyAccessToken);
+      if (_accessToken == null) {
+        throw 'Could not restore access token';
+      }
+    } else {
+      persist(_persistKeyAccessToken, _accessToken);
+    }
+    apiClient.setHeader('Authorization', 'bearer $_accessToken');
+
+    if (_initialLoggedInUser != null) {
+      _userNotifier = LoggedInUserNotifier.fromUser(this, _initialLoggedInUser!);
+    } else {
+      _userNotifier = LoggedInUserNotifier.fromAccount(this);
+    }
 
     final dispatcherOverride = const String.fromEnvironment('dispatcher');
     dispatcher = switch (dispatcherOverride) {
@@ -98,19 +112,14 @@ class PhylumAccount extends Account<PhylumAccount> {
         }
       }
     });
-    if (_initialLoggedInUser != null) {
-      _userNotifier = LoggedInUserNotifier.fromUser(this, _initialLoggedInUser!);
-    } else {
-      _userNotifier = LoggedInUserNotifier.fromAccount(this);
-    }
   }
 
   @override
   Future<void> transaction(Future<void> Function() fn) => db.transaction(fn);
 
   @override
-  Future<void> cleanup(bool clearData) async {
-    await super.cleanup(clearData);
+  Future<void> closePersistence(bool clearData) async {
+    await super.closePersistence(clearData);
     if (clearData) {
       await db.dropDatabase();
     }
