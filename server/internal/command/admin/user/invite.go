@@ -34,6 +34,7 @@ func setupInviteCommand() *cobra.Command {
 
 				if b, _ := cmd.Flags().GetBool("no-email"); !b {
 					if err := mail.SendWelcomeEmail(u); err != nil {
+						fmt.Println("Use --no-email if you want don't want to try sending the welcome email")
 						return errors.New("unable to send welcome email: " + err.Error())
 					}
 				}
