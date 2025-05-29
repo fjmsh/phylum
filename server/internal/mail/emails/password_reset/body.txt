@@ -6,3 +6,5 @@ If the link above doesn't work, then you can enter the following token in the pa
 {{.token}}
 
 Thank you,
+
+PS: You can download the Android app from https://codeberg.org/shroff/phylum/releases

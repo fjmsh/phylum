@@ -5,3 +5,5 @@ Someone invited you to use Phylum at https://app.phylum.cloud/?instance={{.base_
 Please visit the URL above and reset your password to get started.
 
 Thank you,
+
+PS: You can download the Android app from https://codeberg.org/shroff/phylum/releases
