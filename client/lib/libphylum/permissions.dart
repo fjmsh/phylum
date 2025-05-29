@@ -1,4 +1,4 @@
-part of 'logged_in_user.dart';
+part of 'account_user.dart';
 
 typedef UserPermission = int;
 

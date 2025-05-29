@@ -4,7 +4,7 @@ import 'package:drift/drift.dart' show TableOrViewStatements;
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
-import 'package:phylum/libphylum/logged_in_user.dart';
+import 'package:phylum/libphylum/account_user.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/dialogs/new_user_details_dialog.dart';
 import 'package:phylum/util/dialogs.dart';

@@ -1,5 +1,5 @@
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/logged_in_user.dart';
+import 'package:phylum/libphylum/account_user.dart';
 
 Bookmark parseBookmark(Map<String, dynamic> data) {
   return Bookmark(
@@ -35,8 +35,8 @@ User parseUser(Map data) {
   );
 }
 
-LoggedInUser parseLoggedInUser(Map data) {
-  return LoggedInUser(
+AccountUser parseAccountUser(Map data) {
+  return AccountUser(
     id: data['id'],
     email: data['email'],
     name: data['name'],

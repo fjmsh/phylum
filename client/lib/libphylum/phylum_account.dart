@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/logged_in_user.dart';
+import 'package:phylum/libphylum/account_user.dart';
 import 'package:phylum/libphylum/repositories/bookmark_repository.dart';
 import 'package:phylum/libphylum/repositories/publink_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
@@ -40,7 +40,7 @@ class PhylumAccount extends Account<PhylumAccount> {
   @override
   Dispatcher dispatcher = HttpClientDispatcher();
 
-  LoggedInUser? _initialLoggedInUser;
+  AccountUser? _initialUser;
 
   String? _accessToken;
   set accessToken(String value) {
@@ -49,10 +49,10 @@ class PhylumAccount extends Account<PhylumAccount> {
     apiClient.setHeader('Authorization', 'bearer $value');
   }
 
-  late LoggedInUserNotifier _userNotifier;
-  StateNotifier<LoggedInUser> get userNotifier => _userNotifier;
-  LoggedInUser get user => _userNotifier.user;
-  set user(LoggedInUser value) {
+  late AccountUserNotifier _userNotifier;
+  StateNotifier<AccountUser> get userNotifier => _userNotifier;
+  AccountUser get user => _userNotifier.user;
+  set user(AccountUser value) {
     _userNotifier.user = value;
   }
 
@@ -61,15 +61,15 @@ class PhylumAccount extends Account<PhylumAccount> {
     persist(_persistKeyBootstrapUntil, value);
   }
 
-  PhylumAccount._create({required super.serverUrl, required String accessToken, required LoggedInUser user})
+  PhylumAccount._create({required super.serverUrl, required String accessToken, required AccountUser user})
       : _accessToken = accessToken,
-        _initialLoggedInUser = user,
+        _initialUser = user,
         super.create();
 
   PhylumAccount.restore({required super.id}) : super.restore();
 
   static Future<PhylumAccount> create(
-      {required Uri serverUrl, required String accessToken, required LoggedInUser user}) async {
+      {required Uri serverUrl, required String accessToken, required AccountUser user}) async {
     final account = PhylumAccount._create(serverUrl: serverUrl, accessToken: accessToken, user: user);
     await account.setup();
     return account;
@@ -88,10 +88,10 @@ class PhylumAccount extends Account<PhylumAccount> {
     }
     apiClient.setHeader('Authorization', 'bearer $_accessToken');
 
-    if (_initialLoggedInUser != null) {
-      _userNotifier = LoggedInUserNotifier.fromUser(this, _initialLoggedInUser!);
+    if (_initialUser != null) {
+      _userNotifier = AccountUserNotifier.fromUser(this, _initialUser!);
     } else {
-      _userNotifier = LoggedInUserNotifier.fromAccount(this);
+      _userNotifier = AccountUserNotifier.fromAccount(this);
     }
 
     final dispatcherOverride = const String.fromEnvironment('dispatcher');

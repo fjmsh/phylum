@@ -8,14 +8,14 @@ part 'permissions.dart';
 
 const _persistKeyUser = 'user';
 
-class LoggedInUser {
+class AccountUser {
   final int id;
   final String email;
   final String name;
   final String home;
   final int permissions;
 
-  LoggedInUser({
+  AccountUser({
     required this.id,
     required this.email,
     required this.name,
@@ -28,7 +28,7 @@ class LoggedInUser {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    if (other is! LoggedInUser) return false;
+    if (other is! AccountUser) return false;
 
     return id == other.id &&
         email == other.email &&
@@ -48,8 +48,8 @@ class LoggedInUser {
         "permissions": permissions,
       };
 
-  factory LoggedInUser.fromJson(Map<String, dynamic> map) {
-    return LoggedInUser(
+  factory AccountUser.fromJson(Map<String, dynamic> map) {
+    return AccountUser(
       id: map['id'],
       email: map['email'],
       name: map['name'],
@@ -64,30 +64,30 @@ class LoggedInUser {
   }
 }
 
-class LoggedInUserNotifier extends StateNotifier<LoggedInUser> {
+class AccountUserNotifier extends StateNotifier<AccountUser> {
   final PhylumAccount _account;
 
-  LoggedInUser get user => state;
-  set user(LoggedInUser value) => state = value;
+  AccountUser get user => state;
+  set user(AccountUser value) => state = value;
 
-  LoggedInUserNotifier._(this._account, super.state) {
+  AccountUserNotifier._(this._account, super.state) {
     stream.listen((user) {
       _account.persist(_persistKeyUser, jsonEncode(user.toJson()));
     });
   }
 
-  factory LoggedInUserNotifier.fromUser(PhylumAccount account, LoggedInUser user) {
+  factory AccountUserNotifier.fromUser(PhylumAccount account, AccountUser user) {
     account.persist(_persistKeyUser, jsonEncode(user.toJson()));
-    return LoggedInUserNotifier._(account, user);
+    return AccountUserNotifier._(account, user);
   }
 
-  factory LoggedInUserNotifier.fromAccount(PhylumAccount account) {
-    final user = LoggedInUser.fromJson(jsonDecode(account.getPersisted(_persistKeyUser)));
-    return LoggedInUserNotifier._(account, user);
+  factory AccountUserNotifier.fromAccount(PhylumAccount account) {
+    final user = AccountUser.fromJson(jsonDecode(account.getPersisted(_persistKeyUser)));
+    return AccountUserNotifier._(account, user);
   }
 
   @override
-  bool updateShouldNotify(LoggedInUser old, LoggedInUser current) {
+  bool updateShouldNotify(AccountUser old, AccountUser current) {
     return old != current;
   }
 }
