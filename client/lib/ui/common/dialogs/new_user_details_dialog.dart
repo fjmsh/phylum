@@ -63,7 +63,7 @@ class _NewUserDetailsDialogState extends State<NewUserDetailsDialog> {
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
           onPressed: () {
-            Navigator.of(context).pop(false);
+            Navigator.of(context).pop(null);
           },
         ),
         ElevatedButton(
