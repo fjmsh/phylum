@@ -66,7 +66,10 @@ class _DownloadButtonState extends State<DownloadButton> {
           : LinearProgressIndicator(
               value: total == 0 ? null : (received / total),
             ),
-      onTap: () => DownloadsDialog.show(context),
+      onTap: () {
+        Scaffold.maybeOf(context)?.closeDrawer();
+        DownloadsDialog.show(context);
+      },
     );
   }
 }

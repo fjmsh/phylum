@@ -62,24 +62,24 @@ class NavList extends StatelessWidget {
                     leading: const Icon(Icons.home),
                     title: const Text('Home'),
                     onTap: () {
-                      Actions.maybeInvoke(context, NavIntent(target: ExplorerRouteHome()));
                       Scaffold.maybeOf(context)?.closeDrawer();
+                      Actions.maybeInvoke(context, NavIntent(target: ExplorerRouteHome()));
                     },
                   ),
                   ListTile(
                     leading: const Icon(Icons.history),
                     title: const Text('Recents'),
                     onTap: () {
-                      context.read<PhylumRouterDelegate>().go(ExplorerRouteRecents());
                       Scaffold.maybeOf(context)?.closeDrawer();
+                      context.read<PhylumRouterDelegate>().go(ExplorerRouteRecents());
                     },
                   ),
                   ListTile(
                     leading: const Icon(Icons.people_outlined),
                     title: const Text('Shared With Me'),
                     onTap: () {
-                      context.read<PhylumRouterDelegate>().go(ExplorerRouteShared());
                       Scaffold.maybeOf(context)?.closeDrawer();
+                      context.read<PhylumRouterDelegate>().go(ExplorerRouteShared());
                     },
                   ),
                   StreamBuilder<List<SelectBookmarksResult>>(
@@ -97,6 +97,7 @@ class NavList extends StatelessWidget {
                                     title: Text(b.name),
                                     leading: Icon(null),
                                     onTap: () async {
+                                      Scaffold.maybeOf(context)?.closeDrawer();
                                       if (b.dir) {
                                         Actions.maybeInvoke(
                                             context, NavIntent(target: ExplorerRouteFolder(folderId: b.resourceId)));
@@ -120,7 +121,6 @@ class NavList extends StatelessWidget {
                                       }
                                       if (resource != null && context.mounted) {
                                         Actions.maybeInvoke(context, OpenResourceIntent(resource));
-                                        Scaffold.maybeOf(context)?.closeDrawer();
                                       }
                                     },
                                   ))
@@ -133,8 +133,8 @@ class NavList extends StatelessWidget {
                     leading: const Icon(Icons.delete),
                     title: const Text('Trash'),
                     onTap: () {
-                      context.read<PhylumRouterDelegate>().go(ExplorerRouteTrash());
                       Scaffold.maybeOf(context)?.closeDrawer();
+                      context.read<PhylumRouterDelegate>().go(ExplorerRouteTrash());
                     },
                   ),
                   const Divider(),
@@ -148,6 +148,7 @@ class NavList extends StatelessWidget {
                                     leading: const Icon(Icons.person_add),
                                     title: const Text('Invite'),
                                     onTap: () async {
+                                      Scaffold.maybeOf(context)?.closeDrawer();
                                       final result = await NewUserDetailsDialog.show(context);
                                       if (result == null || !context.mounted) return;
                                       final (email, name) = result;
@@ -163,14 +164,15 @@ class NavList extends StatelessWidget {
                   if (!kIsWeb) const DownloadButton(),
                   ServerStatusButton(
                     onTap: () {
-                      SyncDialog.show(context);
                       Scaffold.maybeOf(context)?.closeDrawer();
+                      SyncDialog.show(context);
                     },
                   ),
                   ListTile(
                     leading: const Icon(Icons.help),
                     title: const Text('About'),
                     onTap: () async {
+                      Scaffold.maybeOf(context)?.closeDrawer();
                       final info = await PackageInfo.fromPlatform();
                       if (!context.mounted) return;
                       showAboutDialog(
@@ -183,6 +185,7 @@ class NavList extends StatelessWidget {
                     leading: const Icon(Icons.logout),
                     title: const Text('Log Out'),
                     onTap: () {
+                      Scaffold.maybeOf(context)?.closeDrawer();
                       context.read<PhylumAccount>().close(clearData: true);
                     },
                   ),
