@@ -7,12 +7,20 @@ import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/layout/app_layout.dart';
 import 'package:phylum/ui/login/reset_password_page.dart';
+import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
 bool isPrimary() => true;
 
-class AccountSelector extends StatelessWidget {
+class AccountSelector extends StatefulWidget {
   const AccountSelector({super.key});
+
+  @override
+  State<AccountSelector> createState() => _AccountSelectorState();
+}
+
+class _AccountSelectorState extends State<AccountSelector> {
+  bool errorsDismissed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +35,49 @@ class AccountSelector extends StatelessWidget {
           Text('Initializing'),
         ],
       ));
+    }
+    if (!errorsDismissed && state.invalidAccounts.isNotEmpty) {
+      return PhylumDialogScaffold(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6.0),
+              child: Text('Error', style: TextStyle(fontSize: 20)),
+            ),
+            Text('Some accounts could not be restored'),
+            for (final invalidAccount in state.invalidAccounts.entries)
+              ListTile(
+                title: Text(invalidAccount.value.serverUrl.host),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: () => showAlertDialog(context, message: invalidAccount.value.err.toString()),
+                      icon: Icon(Icons.info_outline),
+                    ),
+                    IconButton(
+                      onPressed: () => context.read<AccountManager<PhylumAccount>>().removeAccount(invalidAccount.key),
+                      icon: Icon(Icons.delete_forever_outlined),
+                    ),
+                  ],
+                ),
+              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                    onPressed: () {
+                      setState(() {
+                        errorsDismissed = true;
+                      });
+                    },
+                    child: Text('Skip', style: TextStyle(color: Theme.of(context).colorScheme.error)))
+              ],
+            )
+          ],
+        ),
+      );
     }
 
     final route = context.select<PhylumRouterDelegate, ResetPasswordRoute?>((state) =>

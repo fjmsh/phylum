@@ -67,7 +67,7 @@ class PhylumAccount extends Account<PhylumAccount> {
     persist(_persistKeyBootstrapUntil, value);
   }
 
-  PhylumAccount.create({required super.serverUri, required String accessToken, required LoggedInUser user})
+  PhylumAccount.create({required super.serverUrl, required String accessToken, required LoggedInUser user})
       : _initialAccessToken = accessToken,
         _initialLoggedInUser = user,
         super.create();

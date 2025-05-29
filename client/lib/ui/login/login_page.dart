@@ -98,7 +98,7 @@ class _LoginPageState extends State<LoginPage> {
         final response =
             BootstrapLoginResponse.fromResponse((jsonDecode(responseString) as Map).cast<String, dynamic>());
         final account = PhylumAccount.create(
-          serverUri: instanceUri,
+          serverUrl: instanceUri,
           accessToken: response.accessToken!,
           user: response.user,
         );
