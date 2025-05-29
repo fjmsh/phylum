@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/common/logo_row.dart';
+import 'package:phylum/ui/app/dialog_scaffold.dart';
 import 'package:provider/provider.dart';
 
 class AccountStatePage extends StatelessWidget {
@@ -12,56 +12,30 @@ class AccountStatePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AccountState>();
     if (state == AccountState.ready) return child;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Phylum'),
-      ),
-      body: Center(
-        child: Card(
-          child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: switch (state) {
-                AccountState.closed => buildClosedView(context),
-                _ => buildClosingOutView(),
-              }
-              // state == AccountState.closed ? buildLoggedOutView(context) : buildLoggingOutView(),
-              ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildClosingOutView() => const Column(
+    if (state == AccountState.closing) {
+      return PhylumDialogScaffold(
+          child: Column(
+        spacing: 16.0,
         children: [
-          Padding(padding: EdgeInsets.only(bottom: 12), child: LogoRow()),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: EdgeInsets.only(right: 16.0),
-                child: CircularProgressIndicator(),
-              ),
-              Text('Logging Out'),
-            ],
-          ),
-        ],
-      );
-
-  Widget buildClosedView(BuildContext context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const LogoRow(),
-          const Padding(
-            padding: EdgeInsets.only(top: 16, bottom: 16.0),
-            child: Text('You have been logged out'),
-          ),
+          Text('You have been logged out'),
           ElevatedButton(
-            onPressed: () {
-              final accountId = context.read<PhylumAccount>().id;
-              context.read<AccountManager<PhylumAccount>>().removeAccount(accountId);
-            },
+            onPressed: () =>
+                context.read<AccountManager<PhylumAccount>>().removeAccount(context.read<PhylumAccount>().id),
             child: const Text('OK'),
           ),
         ],
-      );
+      ));
+    }
+
+    return const PhylumDialogScaffold(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 16.0,
+        children: [
+          CircularProgressIndicator(),
+          Text('Logging Out'),
+        ],
+      ),
+    );
+  }
 }
