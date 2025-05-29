@@ -70,15 +70,20 @@ class LoggedInUserNotifier extends StateNotifier<LoggedInUser> {
   LoggedInUser get user => state;
   set user(LoggedInUser value) => state = value;
 
-  LoggedInUserNotifier(this._account, super.state) {
+  LoggedInUserNotifier._(this._account, super.state) {
     stream.listen((user) {
       _account.persist(_persistKeyUser, jsonEncode(user.toJson()));
     });
   }
 
+  factory LoggedInUserNotifier.fromUser(PhylumAccount account, LoggedInUser user) {
+    account.persist(_persistKeyUser, jsonEncode(user.toJson()));
+    return LoggedInUserNotifier._(account, user);
+  }
+
   factory LoggedInUserNotifier.fromAccount(PhylumAccount account) {
     final user = LoggedInUser.fromJson(jsonDecode(account.getPersisted(_persistKeyUser)));
-    return LoggedInUserNotifier(account, user);
+    return LoggedInUserNotifier._(account, user);
   }
 
   @override

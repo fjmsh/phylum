@@ -99,7 +99,7 @@ class PhylumAccount extends Account<PhylumAccount> {
       }
     });
     if (_initialLoggedInUser != null) {
-      _userNotifier = LoggedInUserNotifier(this, _initialLoggedInUser!);
+      _userNotifier = LoggedInUserNotifier.fromUser(this, _initialLoggedInUser!);
     } else {
       _userNotifier = LoggedInUserNotifier.fromAccount(this);
     }
