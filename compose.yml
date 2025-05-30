@@ -6,8 +6,8 @@ services:
     container_name: phylum_server
     image: shroff12/phylum
     volumes:
-      - ${DATA_ROOT}/${STORAGE_LOCATION:-storage}:/app/storage
-      - ${DATA_ROOT}/${CONFIG_LOCATION:-config.yml}:/app/config.yml
+      - ${DATA_ROOT:-./data}/${STORAGE_LOCATION:-storage}:/app/storage
+      - ${DATA_ROOT:-./data}/${CONFIG_LOCATION:-config.yml}:/app/config.yml
     env_file:
       - .env
     environment:
@@ -24,11 +24,11 @@ services:
     container_name: phylum_db
     image: docker.io/postgres:17
     environment:
-      POSTGRES_DB: ${PHYLUM_DB_NAME}
-      POSTGRES_USER: ${PHYLUM_DB_USER}
+      POSTGRES_DB: ${PHYLUM_DB_NAME:-phylum}
+      POSTGRES_USER: ${PHYLUM_DB_USER:-phylum}
       POSTGRES_PASSWORD: ${PHYLUM_DB_PASSWORD}
     volumes:
-      - ${DATA_ROOT}/${PG_DATA_LOCATION:-postgres}:/var/lib/postgresql/data
+      - ${DATA_ROOT:-./data}/${PG_DATA_LOCATION:-postgres}:/var/lib/postgresql/data
     networks:
     ports:
       - '5432:5432'
