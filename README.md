@@ -40,13 +40,12 @@ In rough order, here are some things that are planned
 
 ## Deployment / Testing
 
-The easiest way to get up and running is to use docker (or podman) compose go to `http://localhost:2448`.
+The easiest way to get up and running is to use docker (or podman) compose and go to `http://localhost:2448`. You must add the first user via CLI using the `admin user invite` command. You may add others as well, or invite them directly from inside the app.
 
-Configuration is read from `config.yml`, if it exists. Any config item can be overridden via environment variables and command-line flags, with '_' separating nested keys, and a`'PHYLUM_' prefix for env.
+At the very least, you must specify `PHYLUM_DB_PASSWORD` in your `.env` file. See `example.env` for more options. 
 
-See `config.defaults.yml` to see a list of all configuration options, and `example.env` for some common overrides.
+Configuration is read from `config.yml`, if it exists. See `config.defaults.yml` for a list of all configuration options.
 
-You must add the first user using the CLI using the `admin user invite` command. You may add others as well, or invite them directly from inside the app.
 
 ## Development
 
