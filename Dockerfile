@@ -5,6 +5,7 @@ RUN go build -o /bin/phylum cmd/phylum.go
 
 FROM ghcr.io/cirruslabs/flutter:stable AS webapp
 WORKDIR /src
+RUN flutter precache --no-universal --web
 COPY client/pubspec.yaml client/pubspec.lock .
 COPY client/lib ./lib
 COPY client/web ./web
