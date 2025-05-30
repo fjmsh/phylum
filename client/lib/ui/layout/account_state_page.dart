@@ -12,7 +12,7 @@ class AccountStatePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AccountState>();
     if (state == AccountState.ready) return child;
-    if (state == AccountState.closing) {
+    if (state == AccountState.closed) {
       return PhylumDialogScaffold(
           child: Column(
         spacing: 16.0,
