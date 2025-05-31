@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/spf13/cobra"
@@ -11,8 +13,9 @@ import (
 
 func setupGrantCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "grant <email> <permission-hex>",
+		Use:   "grant <email> <permissions>",
 		Short: "Grant Permissions",
+		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			userManager := user.ManagerFromContext(context.Background())
 			u, err := userManager.UserByEmail(args[0])
@@ -21,9 +24,18 @@ func setupGrantCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			var p user.Permissions
-			_, err = fmt.Sscanf(args[1], "0x%x", &p)
+			permString := strings.TrimSpace(args[1])
+			if strings.HasPrefix(permString, "0x") {
+				var perm int64
+				perm, err = strconv.ParseInt(permString[2:], 16, 32)
+				p = int32(perm)
+			} else {
+				var perm int64
+				perm, err = strconv.ParseInt(permString, 10, 32)
+				p = int32(perm)
+			}
 			if err != nil {
-				fmt.Println("permissions must be of the format 0x<hex>")
+				fmt.Println("unable to parse permissions " + permString)
 				os.Exit(1)
 			}
 
@@ -38,8 +50,9 @@ func setupGrantCommand() *cobra.Command {
 
 func setupRevokeCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "revoke <email> <permission-hex>",
+		Use:   "revoke <email> <permissions>",
 		Short: "Revoke Permissions",
+		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			userManager := user.ManagerFromContext(context.Background())
 			u, err := userManager.UserByEmail(args[0])
@@ -48,9 +61,18 @@ func setupRevokeCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			var p user.Permissions
-			_, err = fmt.Sscanf(args[1], "0x%x", &p)
+			permString := strings.TrimSpace(args[1])
+			if strings.HasPrefix(permString, "0x") {
+				var perm int64
+				perm, err = strconv.ParseInt(permString[2:], 16, 32)
+				p = int32(perm)
+			} else {
+				var perm int64
+				perm, err = strconv.ParseInt(permString, 10, 32)
+				p = int32(perm)
+			}
 			if err != nil {
-				fmt.Println("permissions must be of the format 0x<hex>")
+				fmt.Println("unable to parse permissions " + permString)
 				os.Exit(1)
 			}
 
