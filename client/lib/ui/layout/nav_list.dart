@@ -17,6 +17,7 @@ import 'package:phylum/ui/layout/button_server_status.dart';
 import 'package:phylum/ui/layout/create_action.dart';
 import 'package:phylum/ui/sync/sync_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/user_display_name.dart';
 import 'package:provider/provider.dart';
 
 class NavList extends StatelessWidget {
@@ -148,12 +149,17 @@ class NavList extends StatelessWidget {
                                     leading: const Icon(Icons.person_add),
                                     title: const Text('Invite'),
                                     onTap: () async {
+                                      final messenger = ScaffoldMessenger.maybeOf(context);
+                                      final account = context.read<PhylumAccount>();
                                       Scaffold.maybeOf(context)?.closeDrawer();
                                       final result = await NewUserDetailsDialog.show(context);
-                                      if (result == null || !context.mounted) return;
+                                      if (result == null) return;
                                       final (email, name) = result;
-                                      final account = context.read<PhylumAccount>();
-                                      account.userRepository.invite(email, name);
+                                      final user = await account.userRepository.invite(email, name);
+                                      messenger?.showSnackBar(SnackBar(
+                                        content: Text('Invited ${user.displayName}'),
+                                        duration: Duration(seconds: 2),
+                                      ));
                                     },
                                   ),
                                   Divider()
