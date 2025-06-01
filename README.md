@@ -21,21 +21,36 @@ It is in very early stages of testing, so bugs are to be expected. Fair warning:
 
 * Not yet built/tested on MacOS, iOS, and Windows. 
 
+Note: Please do not try to use multiple instances of the same client on one device (i.e. multiple instances of the app). Doing so will result in unexpected behavior, and possibly corrupt local data. It should not, however, have any impact on the remote server or the integrity its data. The web use-case is handled gracefully, though, so there is no need to worry about accidentally opening another tab.
+
+### Permissions
+
+Please be aware of a few things about permissions:
+
+1. There is no concept of resource owners.
+2. It is possible to revoke your own permissions from a folder. If you do so, and you are the only one with share permissions on that folder, you will need to use the cli to regain access
+3. It is not possible to revoke permissions down a folder tree, i.e. when you grant someone a permission on a folder, you are also doing so for all current and future sub-folders. Of course, you may revoke permissions on the original folder, or grant additional permissions on sub-folder, but you may not revoke permissions only on certain sub-folders.
+
 ## Roadmap
 
-In rough order, here are some things that are planned
-
+Here's the intended initial feature set for a release in the next few months:
+ - Remote storage backends (S3, B2, Minio, etc.)
+ - Auth backends (LDAP, OAuth)
  - Thumbnails and icon view
- - Email share notifications
  - In-app user management (update display name/avatar)
+ - Better email notifications
+ - Easy backup
+
+Other features to follow:
  - Quota 
  - Links / Shortcuts
- - Storage backends like S3, B2, Minio, etc. (partially implemented)
- - Auth backends (LDAP, OAuth)
  - Groups
- - Offline single file sync
+ - Extended resource metadata (media length, etc.)
+ - View more files (audio, video, epub)
+ - Offline sync
  - Sync full directory tree metadata
  - 2-way folder sync
+ - File versions history?
 
 
 ## Deployment / Testing
