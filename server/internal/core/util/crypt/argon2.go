@@ -12,7 +12,6 @@ import (
 
 func generateArgon2(password string) (string, error) {
 	p := Cfg.Argon2
-	fmt.Printf("%+v\n", p)
 	salt, err := generateRandomBytes(p.Salt)
 	if err != nil {
 		return "", err
