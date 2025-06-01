@@ -63,11 +63,12 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
           context,
           name,
           overwriteFn: (r) => nameConflictDelete,
-          (name, conflictResolution) => account.resourceRepository.move(
+          (name, conflictResolution, ensurePermission) => account.resourceRepository.move(
             resource: r,
             name: name,
             parent: r.parent!,
             conflictResolution: conflictResolution,
+            ensurePermission: ensurePermission,
           ),
         );
       }
@@ -85,11 +86,12 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
           context,
           r.name,
           overwriteFn: (r) => nameConflictDelete,
-          (name, conflictResolution) => account.resourceRepository.move(
+          (name, conflictResolution, ensurePermission) => account.resourceRepository.move(
             resource: r,
             name: name,
             parent: dest,
             conflictResolution: conflictResolution,
+            ensurePermission: ensurePermission,
           ),
         );
       }
@@ -107,12 +109,12 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
           context,
           r.name,
           overwriteFn: (r) => nameConflictDelete,
-          (name, conflictResolution) => account.resourceRepository.copy(
-            resource: r,
-            name: name,
-            parent: dest,
-            conflictResolution: conflictResolution,
-          ),
+          (name, conflictResolution, ensurePermission) => account.resourceRepository.copy(
+              resource: r,
+              name: name,
+              parent: dest,
+              conflictResolution: conflictResolution,
+              ensurePermission: ensurePermission),
         );
       }
       break;

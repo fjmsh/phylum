@@ -90,11 +90,12 @@ class ExplorerActions extends StatelessWidget {
               context,
               name,
               overwriteFn: (r) => nameConflictDelete,
-              (name, conflictResolution) => account.resourceRepository.move(
+              (name, conflictResolution, ensurePermission) => account.resourceRepository.move(
                 resource: r,
                 name: name,
                 parent: r.parent!,
                 conflictResolution: conflictResolution,
+                ensurePermission: ensurePermission,
               ),
             );
           }

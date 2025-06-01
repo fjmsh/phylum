@@ -140,11 +140,12 @@ Future<void> processPasteItems(
       context,
       r.name,
       overwriteFn: (r) => nameConflictDelete,
-      (name, conflictResolution) => copyMoveFn(
+      (name, conflictResolution, ensurePermission) => copyMoveFn(
         resource: r,
         name: name,
         parent: folderId,
         conflictResolution: conflictResolution,
+        ensurePermission: ensurePermission,
       ),
     );
   }

@@ -20,7 +20,7 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 import 'package:phylum/util/permissions.dart';
 
-const performLocalNameCheck = true;
+const performLocalChecks = true;
 const _remoteResourcesBoxName = 'remote_resources';
 
 typedef CopyMoveFn = Future<String> Function({
@@ -85,14 +85,19 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
   Future<String> mkdir({
     required String parent,
     required String name,
-    required NameConflictResolution conflictResolution,
     required Permission userPermission,
-    String? id,
+    required NameConflictResolution conflictResolution,
+    bool ensurePermission = true,
   }) async {
-    id ??= generateUuid();
+    final id = generateUuid();
+
     String localName = name;
     String? deletedId;
-    if (performLocalNameCheck) {
+    if (performLocalChecks) {
+      if (ensurePermission && userPermission & permissionWrite == 0) {
+        throw PermissionException();
+      }
+
       var existing = await _account.db.getResourcesByName(parent: parent, name: name);
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
@@ -132,12 +137,17 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     required Permission userPermission,
     XFile? file,
     String? path,
-    NameConflictResolution conflictResolution = nameConflictError,
+    required NameConflictResolution conflictResolution,
+    bool ensurePermission = true,
   }) async {
     String id = generateUuid();
     String localName = name;
     String? deletedId;
-    if (performLocalNameCheck) {
+    if (performLocalChecks) {
+      if (ensurePermission && userPermission & permissionWrite == 0) {
+        throw PermissionException();
+      }
+
       var existing = await _account.db.getResourcesByName(parent: parent, name: name);
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
@@ -183,10 +193,16 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     required String name,
     required String parent,
     required NameConflictResolution conflictResolution,
+    bool ensurePermission = true,
   }) async {
     String localName = name;
     String? deletedId;
-    if (performLocalNameCheck) {
+    if (performLocalChecks) {
+      final parentPermission = await _account.db.getResource(parent).then((p) => p?.userPermission ?? 0);
+      if (ensurePermission && parentPermission & permissionWrite == 0) {
+        throw PermissionException();
+      }
+
       final parents = await _account.db.parents(parent).get();
       for (final p in parents) {
         if (p.id == resource.id) {
@@ -231,6 +247,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     required String parent,
     required String name,
     required NameConflictResolution conflictResolution,
+    bool ensurePermission = true,
   }) async {
     if (parent == resource.parent && name == resource.name) {
       name = '${basenameWithoutExtension(name)} - copy${extension(name)}';
@@ -239,7 +256,12 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     String id = generateUuid();
     String? deletedId;
     String localName = name;
-    if (performLocalNameCheck) {
+    if (performLocalChecks) {
+      final parentPermission = await _account.db.getResource(parent).then((p) => p?.userPermission ?? 0);
+      if (ensurePermission && parentPermission & permissionWrite == 0) {
+        throw PermissionException();
+      }
+
       var existing = await _account.db.getResourcesByName(parent: parent, name: name);
       if (existing.isNotEmpty) {
         switch (conflictResolution) {

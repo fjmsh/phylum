@@ -38,11 +38,12 @@ Future<void> createDirectory(BuildContext context, Resource parent, {String? pre
     context,
     name,
     overwriteFn: (r) => nameConflictDelete,
-    (name, conflictResolution) => account.resourceRepository.mkdir(
+    (name, conflictResolution, ensurePermission) => account.resourceRepository.mkdir(
       parent: parent.id,
       name: name,
-      conflictResolution: conflictResolution,
       userPermission: parent.userPermission,
+      conflictResolution: conflictResolution,
+      ensurePermission: ensurePermission,
     ),
   );
 }
@@ -78,12 +79,13 @@ Future<void> uploadXFiles(BuildContext context, String folderId, Iterable<XFile>
         context,
         p.basename(file.name),
         overwriteFn: (r) => r.dir ? nameConflictDelete : nameConflictOverwrite,
-        (name, conflictResolution) => account.resourceRepository.upload(
+        (name, conflictResolution, ensurePermission) => account.resourceRepository.upload(
           parent: folderId,
           name: name,
           file: file,
-          conflictResolution: conflictResolution,
           userPermission: userPermission,
+          conflictResolution: conflictResolution,
+          ensurePermission: ensurePermission,
         ),
       );
       if (id == null && context.mounted) {
@@ -135,11 +137,12 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
         context,
         p.basename(path),
         overwriteFn: (r) => nameConflictDelete,
-        (name, conflictResolution) => account.resourceRepository.mkdir(
+        (name, conflictResolution, ensurePermission) => account.resourceRepository.mkdir(
           parent: parent,
           name: name,
-          conflictResolution: conflictResolution,
           userPermission: userPermission,
+          conflictResolution: conflictResolution,
+          ensurePermission: ensurePermission,
         ),
       );
       if (id == null) {
@@ -163,12 +166,13 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
         context,
         p.basename(path),
         overwriteFn: (r) => r.dir ? nameConflictDelete : nameConflictOverwrite,
-        (name, conflictResolution) => account.resourceRepository.upload(
+        (name, conflictResolution, ensurePermission) => account.resourceRepository.upload(
           parent: parent,
           name: name,
           path: path,
-          conflictResolution: conflictResolution,
           userPermission: userPermission,
+          conflictResolution: conflictResolution,
+          ensurePermission: ensurePermission,
         ),
       );
       if (id == null && context.mounted) {
@@ -180,81 +184,108 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
   }
 }
 
-// #TODO: handle permission errors as well
 Future<String?> handleLocalErrors(
   BuildContext context,
   String name,
-  Future<String> Function(String name, NameConflictResolution conflictResolution) performAction, {
+  Future<String> Function(String, NameConflictResolution, bool) performAction, {
   NameConflictResolution? Function(Resource)? overwriteFn,
+  NameConflictResolution conflictResolution = nameConflictError,
+  bool ensurePermission = true,
 }) async {
-  NameConflictResolution? conflictResolution = nameConflictError;
-  while (conflictResolution != null) {
-    try {
-      return await performAction(name, conflictResolution);
-    } on NameConflictException catch (e) {
-      if (!context.mounted) return null;
-      final overwrite = overwriteFn?.call(e.resource);
-      conflictResolution = await showDialog<NameConflictResolution>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Name Conflict'),
-          content: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: Text(
-              'There is already another item with the name \'$name\' in this folder.',
-              softWrap: true,
-            ),
-          ),
-          actions: <Widget>[
-            if (overwrite != null)
-              TextButton(
-                style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
-                child: const Text('Overwrite'),
-                onPressed: () {
-                  Navigator.of(context).pop(overwrite);
-                },
-              ),
-            TextButton(
-              child: const Text('Change Name'),
-              onPressed: () {
-                Navigator.of(context).pop(nameConflictError);
-              },
-            ),
-            ElevatedButton(
-              autofocus: true,
-              child: const Text('Auto Rename'),
-              onPressed: () {
-                Navigator.of(context).pop(nameConflictRename);
-              },
-            ),
-          ],
-        ),
-      );
-      if (conflictResolution == nameConflictError) {
-        if (!context.mounted) return null;
-        final newName = await showInputDialog(
+  try {
+    return await performAction(name, conflictResolution, ensurePermission);
+  } on PermissionException {
+    if (!context.mounted) return null;
+    final skip = await showAlertDialog(
           context,
-          title: 'Change Name',
-          labelText: 'New Name',
-          preset: name,
-          validate: validateName,
-        );
-        if (!context.mounted) return null;
-        if (newName == null) {
-          return null;
-        }
-        name = newName;
-      }
-    } on DestinationCycleException catch (e) {
-      if (context.mounted) {
-        await showAlertDialog(context, message: 'Cannot move ${e.resource.name} into itself');
-      }
+          title: 'Permissions Error',
+          message: 'You do not have permissions to write to this folder.',
+          positiveText: 'OK',
+          negativeText: 'Try Anyway',
+        ) ??
+        true;
+    if (!skip && context.mounted) {
+      return handleLocalErrors(
+        context,
+        name,
+        performAction,
+        overwriteFn: overwriteFn,
+        conflictResolution: conflictResolution,
+        ensurePermission: false,
+      );
+    }
+  } on NameConflictException catch (e) {
+    if (!context.mounted) return null;
+    final overwrite = overwriteFn?.call(e.resource);
+    final newResolution = await showDialog<NameConflictResolution>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Name Conflict'),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Text(
+            'There is already another item with the name \'$name\' in this folder.',
+            softWrap: true,
+          ),
+        ),
+        actions: <Widget>[
+          if (overwrite != null)
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+              child: const Text('Overwrite'),
+              onPressed: () {
+                Navigator.of(context).pop(overwrite);
+              },
+            ),
+          TextButton(
+            child: const Text('Change Name'),
+            onPressed: () {
+              Navigator.of(context).pop(nameConflictError);
+            },
+          ),
+          ElevatedButton(
+            autofocus: true,
+            child: const Text('Auto Rename'),
+            onPressed: () {
+              Navigator.of(context).pop(nameConflictRename);
+            },
+          ),
+        ],
+      ),
+    );
+    if (newResolution == null) {
       return null;
-    } catch (e) {
-      if (context.mounted) {
-        await showAlertDialog(context, title: 'Unable to create $name', message: e.toString());
+    }
+    if (newResolution == nameConflictError) {
+      if (!context.mounted) return null;
+      final newName = await showInputDialog(
+        context,
+        title: 'Change Name',
+        labelText: 'New Name',
+        preset: name,
+        validate: validateName,
+      );
+      if (newName == null) {
+        return null;
       }
-      return null;
+      name = newName;
+    }
+    if (!context.mounted) return null;
+    return handleLocalErrors(
+      context,
+      name,
+      performAction,
+      overwriteFn: overwriteFn,
+      conflictResolution: newResolution,
+      ensurePermission: ensurePermission,
+    );
+  } on DestinationCycleException catch (e) {
+    if (context.mounted) {
+      await showAlertDialog(context, message: 'Cannot move ${e.resource.name} into itself');
+    }
+  } catch (e) {
+    if (context.mounted) {
+      await showAlertDialog(context, title: 'Unable to create $name', message: e.toString());
     }
   }
 

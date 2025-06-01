@@ -104,12 +104,13 @@ class _ExplorerViewState extends State<ExplorerView> {
         context,
         name,
         overwriteFn: (r) => r.dir ? nameConflictDelete : nameConflictOverwrite,
-        (name, conflictResolution) => account.resourceRepository.upload(
+        (name, conflictResolution, ensurePermission) => account.resourceRepository.upload(
           parent: dest,
           name: name,
           path: path,
           conflictResolution: conflictResolution,
           userPermission: userPermission,
+          ensurePermission: ensurePermission,
         ),
       );
     }

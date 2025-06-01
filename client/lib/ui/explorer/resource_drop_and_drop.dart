@@ -64,11 +64,12 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
             context,
             r.name,
             overwriteFn: (r) => nameConflictDelete,
-            (name, conflictResolution) => account.resourceRepository.move(
+            (name, conflictResolution, ensurePermission) => account.resourceRepository.move(
               resource: r,
               name: name,
               parent: widget.resourceId,
               conflictResolution: conflictResolution,
+              ensurePermission: ensurePermission,
             ),
           );
         }

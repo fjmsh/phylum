@@ -19,3 +19,7 @@ class DestinationCycleException {
 
   const DestinationCycleException(this.resource);
 }
+
+class PermissionException {
+  const PermissionException();
+}
