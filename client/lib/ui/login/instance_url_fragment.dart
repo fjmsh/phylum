@@ -23,6 +23,7 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
             label: const Text('Instance URL'),
             hintText: 'https://phylum.example.com',
           ),
+          autofillHints: const [AutofillHints.url],
           keyboardType: TextInputType.url,
           onChanged: (value) {
             final Uri? url;

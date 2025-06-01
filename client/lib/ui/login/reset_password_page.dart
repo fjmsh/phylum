@@ -58,6 +58,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             enableSuggestions: false,
             autocorrect: false,
             autofocus: true,
+            autofillHints: const [AutofillHints.newPassword],
             keyboardType: TextInputType.visiblePassword,
             onChanged: (value) => _password = value,
             onSubmitted: (value) => changePassword(context),
