@@ -34,6 +34,12 @@ class PhylumSearchController with ChangeNotifier {
     }
     active = false;
   }
+
+  @override
+  void dispose() {
+    _routerDelegate.removeListener(_onUpdatePage);
+    super.dispose();
+  }
 }
 
 class SearchField extends StatefulWidget {
