@@ -31,7 +31,10 @@ import (
 var defaultConfig embed.FS
 
 func SetupCommand() {
-	var cmd = &cobra.Command{Use: path.Base(os.Args[0])}
+	var cmd = &cobra.Command{
+		Use:     path.Base(os.Args[0]),
+		Version: "0.3.0",
+	}
 	flags := cmd.PersistentFlags()
 
 	// Flags only. Not part of config file
