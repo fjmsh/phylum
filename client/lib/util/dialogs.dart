@@ -101,16 +101,12 @@ Future<bool?> showAlertDialog(
           TextButton(
             style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
             child: Text(negativeText),
-            onPressed: () {
-              Navigator.of(context).pop(false);
-            },
+            onPressed: () => Navigator.of(context).pop(false),
           ),
         ElevatedButton(
           autofocus: true,
-          onPressed: () {
-            Navigator.of(context).pop(true);
-          },
           child: Text(positiveText),
+          onPressed: () => Navigator.of(context).pop(true),
         ),
       ],
     ),
@@ -163,16 +159,13 @@ Future<String?> showInputDialog(
         ),
         actions: <Widget>[
           TextButton(
-            child: const Text('CANCEL'),
-            onPressed: () {
-              Navigator.of(context).pop(null);
-            },
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(null),
           ),
           ElevatedButton(
             onPressed: (validate == null || validate(controller.text))
-                ? () {
-                    Navigator.of(context).pop(controller.text);
-                  }
+                ? () => Navigator.of(context).pop(controller.text)
                 : null,
             child: const Text('OK'),
           )
