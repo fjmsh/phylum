@@ -36,8 +36,8 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
         batch.deleteAll(account.db.bookmarks);
         batch.deleteAll(account.db.users);
       }
-      batch.insertAll(account.db.bookmarks, bookmarks, mode: InsertMode.replace);
-      batch.insertAll(account.db.users, users, mode: InsertMode.replace);
+      batch.insertAll(account.db.bookmarks, bookmarks, mode: InsertMode.insertOrReplace);
+      batch.insertAll(account.db.users, users, mode: InsertMode.insertOrReplace);
     });
 
     account.user = user;

@@ -18,7 +18,7 @@ class SharedResourcesResponse extends PhylumApiSuccessResponse {
     }
 
     await db.batch((batch) {
-      batch.insertAll(db.resources, resources.map((r) => r.resource));
+      batch.insertAll(db.resources, resources.map((r) => r.resource), mode: InsertMode.insertOrReplace);
       batch.deleteAll(db.shared);
       batch.insertAll(db.shared, shared);
 
