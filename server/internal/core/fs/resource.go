@@ -2,13 +2,11 @@ package fs
 
 import (
 	"encoding/json"
-	"net/http"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/errors"
 )
 
 type Resource struct {
@@ -52,9 +50,19 @@ func (r Resource) InheritedPermissions() []byte { return r.inheritedPermissions 
 
 func (r Resource) LatestVersion() (Version, error) {
 	versions := make([]Version, 0, 1)
-	json.Unmarshal(r.versions, &versions)
+	err := json.Unmarshal(r.versions, &versions)
+	if err != nil {
+		return Version{}, err
+	}
 	if len(versions) == 0 {
-		return Version{}, errors.NewError(http.StatusInternalServerError, "no_versions", "Resource does not have any versions")
+		return Version{
+			ID:         uuid.Nil,
+			Created:    int(r.created.Unix()),
+			ResourceID: r.id,
+			Size:       0,
+			MimeType:   "text/plain",
+			SHA256:     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+		}, nil
 	}
 	version := Version{}
 	for _, v := range versions {

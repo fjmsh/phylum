@@ -93,15 +93,6 @@ func (r Resource) createMemberResource(name string, id uuid.UUID, dir bool, conf
 	if err != nil {
 		return Resource{}, err
 	}
-	if !r.Dir() {
-		out, err := r.f.cs.OpenWrite(id, nil, nil)
-		if err == nil {
-			err = out.Close()
-		}
-		if err != nil {
-			return Resource{}, err
-		}
-	}
 
 	res.f = r.f
 	res.userPermission = r.userPermission
