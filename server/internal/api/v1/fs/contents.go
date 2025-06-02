@@ -23,6 +23,10 @@ func handleContentsRequest(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
+	v, err := r.LatestVersion()
+	if err != nil {
+		panic(err)
+	}
 
 	download := c.Request.URL.Query().Has("download")
 	if download {
@@ -34,7 +38,7 @@ func handleContentsRequest(c *gin.Context) {
 			name += ".zip"
 		}
 		c.Writer.Header().Set("Content-Disposition", "attachment; filename=\""+name+"\"")
-		c.Writer.Header().Set("Content-Type", r.ContentType())
+		c.Writer.Header().Set("Content-Type", v.MimeType)
 	}
 	if !r.Dir() {
 		serve.Serve(c.Writer, c.Request, r)

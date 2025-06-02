@@ -5,13 +5,10 @@ import (
 )
 
 type CreateResourcesParams struct {
-	ID            uuid.UUID
-	Parent        uuid.UUID
-	Name          string
-	Dir           bool
-	ContentLength int
-	ContentType   string
-	ContentSha256 string
+	ID     uuid.UUID
+	Parent uuid.UUID
+	Name   string
+	Dir    bool
 }
 
 // iteratorForCreateResources implements pgx.CopyFromSource.
@@ -38,9 +35,6 @@ func (r iteratorForCreateResources) Values() ([]interface{}, error) {
 		r.rows[0].Parent,
 		r.rows[0].Name,
 		r.rows[0].Dir,
-		r.rows[0].ContentLength,
-		r.rows[0].ContentType,
-		r.rows[0].ContentSha256,
 	}, nil
 }
 
@@ -49,5 +43,5 @@ func (r iteratorForCreateResources) Err() error {
 }
 
 func (f filesystem) CreateResources(arg []CreateResourcesParams) (int64, error) {
-	return f.db.CopyFrom([]string{"resources"}, []string{"id", "parent", "name", "dir", "content_length", "content_type", "content_sha256"}, &iteratorForCreateResources{rows: arg})
+	return f.db.CopyFrom([]string{"resources"}, []string{"id", "parent", "name", "dir"}, &iteratorForCreateResources{rows: arg})
 }

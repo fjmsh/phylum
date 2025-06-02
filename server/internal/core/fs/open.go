@@ -5,25 +5,35 @@ import (
 	"io"
 
 	"github.com/doug-martin/goqu/v9"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
 func (r Resource) OpenRead(start, length int) (io.ReadCloser, error) {
-	if !r.hasPermission(PermissionRead) {
-		return nil, ErrInsufficientPermissions
+	if version, err := r.LatestVersion(); err != nil {
+		return nil, err
+	} else {
+		return r.f.cs.OpenRead(version.ID, start, length)
 	}
-	return r.f.cs.OpenRead(r.ID(), start, length)
 }
 
-func (r Resource) OpenWrite() (io.WriteCloser, error) {
+func (r Resource) OpenWrite(versionID uuid.UUID) (io.WriteCloser, error) {
 	if !r.hasPermission(PermissionWrite) {
 		return nil, ErrInsufficientPermissions
 	}
 	if r.deleted.Valid {
 		return nil, ErrResourceDeleted
 	}
-	return r.f.cs.OpenWrite(r.ID(), sha256.New, func(len int, sum, mime string) error {
-		return r.f.updateResourceContents(r.ID(), len, mime, sum)
+	if versionID == uuid.Nil {
+		versionID, _ = uuid.NewV7()
+	}
+	return r.f.cs.OpenWrite(versionID, sha256.New, func(len int, sum, mime string) error {
+		return r.f.runInTx(func(f filesystem) error {
+			if err := f.createResourceVersion(r.id, versionID, int64(len), mime, sum); err != nil {
+				return err
+			}
+			return f.updateResourceModified(r.id)
+		})
 	})
 }
 

@@ -167,8 +167,14 @@ func (h *Handler) confirmLocks(r *http.Request, src, dst string) (release func()
 		release, err = h.LockSystem.Confirm(time.Now(), lsrc, dst, func(path, etag string) (bool, error) {
 			if res, err := h.FileSystem.ResourceByPath(path); err != nil {
 				return false, err
+			} else if res.Dir() {
+				return false, errors.New("cannot check etag for directories")
 			} else {
-				return res.ContentSHA256() == etag, nil
+				if v, err := res.LatestVersion(); err != nil {
+					return false, err
+				} else {
+					return v.SHA256 == etag, nil
+				}
 			}
 		}, l.conditions...)
 		if err == ErrConfirmationFailed {
@@ -268,7 +274,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 		return http.StatusNotFound, err
 	}
 
-	f, err := res.OpenWrite()
+	f, err := res.OpenWrite(uuid.Nil)
 	_, copyErr := io.Copy(f, r.Body)
 	closeErr := f.Close()
 	if copyErr != nil {
@@ -281,7 +287,9 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	if statErr != nil {
 		return http.StatusInternalServerError, statErr
 	}
-	w.Header().Set("ETag", fi.ContentSHA256())
+	if v, err := fi.LatestVersion(); err == nil {
+		w.Header().Set("ETag", v.SHA256)
+	}
 	return http.StatusCreated, nil
 }
 

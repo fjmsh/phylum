@@ -2,6 +2,7 @@ package fs
 
 import (
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 func (f filesystem) updateResourceModified(id uuid.UUID) error {
@@ -9,14 +10,18 @@ func (f filesystem) updateResourceModified(id uuid.UUID) error {
 	_, err := f.db.Exec(q, id)
 	return err
 }
-func (f filesystem) updateResourceContents(id uuid.UUID, contentLength int, contentType, contentSHA256 string) error {
-	const q = `UPDATE resources SET
-    content_length = $2::INTEGER,
-    content_type = $3::TEXT, 
-    content_sha256 = $4::TEXT,
-    modified = NOW()
-WHERE id = $1::UUID
-`
-	_, err := f.db.Exec(q, id, contentLength, contentType, contentSHA256)
+
+func (f filesystem) createResourceVersion(id, versionID uuid.UUID, size int64, mimeType, sha256 string) error {
+	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256)
+	VALUES (@version_id::UUID, @resource_id::UUID, @size::INT, @mime_type::TEXT, @sha256::TEXT)`
+
+	args := pgx.NamedArgs{
+		"resource_id": id,
+		"version_id":  versionID,
+		"size":        size,
+		"mime_type":   mimeType,
+		"sha256":      sha256,
+	}
+	_, err := f.db.Exec(q, args)
 	return err
 }

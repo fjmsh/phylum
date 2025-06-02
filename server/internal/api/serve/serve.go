@@ -39,10 +39,10 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file fs.Resource) {
 		http.Redirect(w, r, r.URL.String()+"/", http.StatusMovedPermanently)
 		return
 	}
-	if checkIfModifiedSince(r, file) == condFalse {
-		writeNotModified(w)
-		return
-	}
+	// if checkIfModifiedSince(r, file) == condFalse {
+	// 	writeNotModified(w)
+	// 	return
+	// }
 	w.Header().Set("Last-Modified", file.Modified().Format(http.TimeFormat))
 
 	files, err := file.ReadDir(false)
@@ -88,7 +88,12 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file fs.Resource) {
 		if f.Dir() {
 			fmt.Fprintf(w, "<tr><td>%s</td></tr>\n", link)
 		} else {
-			fmt.Fprintf(w, "<tr><td>%s</td><td align=\"right\">%s</td><td>%s</td><td>%s</td></tr>\n", link, formatSize(f.ContentLength()), f.ContentType(), f.ContentSHA256()[0:12])
+			v, err := f.LatestVersion()
+			if err != nil {
+				fmt.Fprintf(w, "<tr><td>%s</td><td align=\"right\" colspan=3>Error: %s</td></tr>\n", link, err.Error())
+			} else {
+				fmt.Fprintf(w, "<tr><td>%s</td><td align=\"right\">%s</td><td>%s</td><td>%s</td></tr>\n", link, formatSize(int(v.Size)), v.MimeType, v.SHA256[0:12])
+			}
 		}
 	}
 	fmt.Fprintln(w, "</tbody></table></pre>")
@@ -104,20 +109,24 @@ func formatSize(size int) string {
 }
 
 func serveResource(w http.ResponseWriter, r *http.Request, file fs.Resource) {
-	w.Header().Set("Etag", file.ContentSHA256())
-	w.Header().Set("Last-Modified", file.Modified().Format(http.TimeFormat))
-	w.Header().Set("Content-Type", file.ContentType())
+	version, err := file.LatestVersion()
+	if err != nil {
+		panic(err)
+	}
+	w.Header().Set("Etag", version.SHA256)
+	w.Header().Set("Last-Modified", time.UnixMilli(int64(version.Created)).Format(http.TimeFormat))
+	w.Header().Set("Content-Type", version.MimeType)
 
-	done, rangeReq := checkPreconditions(w, r, file)
+	done, rangeReq := checkPreconditions(w, r, version)
 	if done {
 		return
 	}
 
 	code := http.StatusOK
-	sendSize := file.ContentLength()
-	ranges, err := parseRange(rangeReq, file.ContentLength())
+	size := int(version.Size)
+	ranges, err := parseRange(rangeReq, size)
 	if err != nil {
-		w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", file.ContentLength()))
+		w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", size))
 		http.Error(w, err.Error(), http.StatusRequestedRangeNotSatisfiable)
 		return
 	}
@@ -136,11 +145,11 @@ func serveResource(w http.ResponseWriter, r *http.Request, file fs.Resource) {
 		// does not request multiple parts might not support
 		// multipart responses."
 		ra := ranges[0]
-		sendSize = ra.length
+		size = ra.length
 		reader, err = file.OpenRead(ra.start, ra.length)
 		if err == nil {
 			code = http.StatusPartialContent
-			w.Header().Set("Content-Range", ra.contentRange(file.ContentLength()))
+			w.Header().Set("Content-Range", ra.contentRange(size))
 		} else if errors.Is(err, storage.ErrRangeNotSupported) {
 			err = nil
 		}
@@ -154,11 +163,11 @@ func serveResource(w http.ResponseWriter, r *http.Request, file fs.Resource) {
 	}
 
 	w.Header().Set("Accept-Ranges", "bytes")
-	w.Header().Set("Content-Length", strconv.Itoa(sendSize))
+	w.Header().Set("Content-Length", strconv.Itoa(size))
 	w.WriteHeader(code)
 
 	if r.Method != "HEAD" {
-		io.CopyN(w, reader, int64(sendSize))
+		io.CopyN(w, reader, int64(size))
 	}
 }
 
@@ -254,17 +263,17 @@ func parseRange(s string, size int) ([]httpRange, error) {
 
 // checkPreconditions evaluates request preconditions and reports whether a precondition
 // resulted in sending StatusNotModified or StatusPreconditionFailed.
-func checkPreconditions(w http.ResponseWriter, r *http.Request, ri fs.Resource) (done bool, rangeHeader string) {
+func checkPreconditions(w http.ResponseWriter, r *http.Request, v fs.Version) (done bool, rangeHeader string) {
 	// This function carefully follows RFC 7232 section 6.
-	ch := checkIfMatch(r, ri)
+	ch := checkIfMatch(r, v)
 	if ch == condNone {
-		ch = checkIfUnmodifiedSince(r, ri)
+		ch = checkIfUnmodifiedSince(r, v)
 	}
 	if ch == condFalse {
 		w.WriteHeader(http.StatusPreconditionFailed)
 		return true, ""
 	}
-	switch checkIfNoneMatch(r, ri) {
+	switch checkIfNoneMatch(r, v) {
 	case condFalse:
 		if r.Method == "GET" || r.Method == "HEAD" {
 			writeNotModified(w)
@@ -274,14 +283,14 @@ func checkPreconditions(w http.ResponseWriter, r *http.Request, ri fs.Resource) 
 			return true, ""
 		}
 	case condNone:
-		if checkIfModifiedSince(r, ri) == condFalse {
+		if checkIfModifiedSince(r, v) == condFalse {
 			writeNotModified(w)
 			return true, ""
 		}
 	}
 
 	rangeHeader = r.Header.Get("Range")
-	if rangeHeader != "" && checkIfRange(r, ri) == condFalse {
+	if rangeHeader != "" && checkIfRange(r, v) == condFalse {
 		rangeHeader = ""
 	}
 	return false, rangeHeader
@@ -337,7 +346,7 @@ const (
 	condFalse
 )
 
-func checkIfMatch(r *http.Request, ri fs.Resource) condResult {
+func checkIfMatch(r *http.Request, v fs.Version) condResult {
 	im := r.Header.Get("If-Match")
 	if im == "" {
 		return condNone
@@ -358,7 +367,7 @@ func checkIfMatch(r *http.Request, ri fs.Resource) condResult {
 		if etag == "" {
 			break
 		}
-		if etagStrongMatch(etag, ri.ContentSHA256()) {
+		if etagStrongMatch(etag, v.SHA256) {
 			return condTrue
 		}
 		im = remain
@@ -367,9 +376,9 @@ func checkIfMatch(r *http.Request, ri fs.Resource) condResult {
 	return condFalse
 }
 
-func checkIfUnmodifiedSince(r *http.Request, ri fs.Resource) condResult {
+func checkIfUnmodifiedSince(r *http.Request, v fs.Version) condResult {
 	ius := r.Header.Get("If-Unmodified-Since")
-	if ius == "" || isZeroTime(ri.Modified()) {
+	if ius == "" {
 		return condNone
 	}
 	t, err := http.ParseTime(ius)
@@ -379,14 +388,13 @@ func checkIfUnmodifiedSince(r *http.Request, ri fs.Resource) condResult {
 
 	// The Last-Modified header truncates sub-second precision so
 	// the modtime needs to be truncated too.
-	modtime := ri.Modified().Truncate(time.Second)
-	if ret := modtime.Compare(t); ret <= 0 {
+	if v.Created < int(t.Unix()) {
 		return condTrue
 	}
 	return condFalse
 }
 
-func checkIfNoneMatch(r *http.Request, ri fs.Resource) condResult {
+func checkIfNoneMatch(r *http.Request, v fs.Version) condResult {
 	inm := r.Header.Get("If-None-Match")
 	if inm == "" {
 		return condNone
@@ -408,7 +416,7 @@ func checkIfNoneMatch(r *http.Request, ri fs.Resource) condResult {
 		if etag == "" {
 			break
 		}
-		if etagWeakMatch(etag, ri.ContentSHA256()) {
+		if etagWeakMatch(etag, v.SHA256) {
 			return condFalse
 		}
 		buf = remain
@@ -416,12 +424,12 @@ func checkIfNoneMatch(r *http.Request, ri fs.Resource) condResult {
 	return condTrue
 }
 
-func checkIfModifiedSince(r *http.Request, ri fs.Resource) condResult {
+func checkIfModifiedSince(r *http.Request, v fs.Version) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}
 	ims := r.Header.Get("If-Modified-Since")
-	if ims == "" || isZeroTime(ri.Modified()) {
+	if ims == "" {
 		return condNone
 	}
 	t, err := http.ParseTime(ims)
@@ -430,14 +438,13 @@ func checkIfModifiedSince(r *http.Request, ri fs.Resource) condResult {
 	}
 	// The Last-Modified header truncates sub-second precision so
 	// the modtime needs to be truncated too.
-	modtime := ri.Modified().Truncate(time.Second)
-	if ret := modtime.Compare(t); ret <= 0 {
+	if v.Created <= int(t.Unix()) {
 		return condFalse
 	}
 	return condTrue
 }
 
-func checkIfRange(r *http.Request, ri fs.Resource) condResult {
+func checkIfRange(r *http.Request, v fs.Version) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}
@@ -447,32 +454,20 @@ func checkIfRange(r *http.Request, ri fs.Resource) condResult {
 	}
 	etag, _ := scanETag(ir)
 	if etag != "" {
-		if etagStrongMatch(etag, ri.ContentSHA256()) {
+		if etagStrongMatch(etag, v.SHA256) {
 			return condTrue
 		} else {
 			return condFalse
 		}
 	}
-	// The If-Range value is typically the ETag value, but it may also be
-	// the modtime date. See golang.org/issue/8367.
-	if ri.Modified().IsZero() {
-		return condFalse
-	}
 	t, err := http.ParseTime(ir)
 	if err != nil {
 		return condFalse
 	}
-	if t.Unix() == ri.Modified().Unix() {
+	if t.Unix() == int64(v.Created) {
 		return condTrue
 	}
 	return condFalse
-}
-
-var unixEpochTime = time.Unix(0, 0)
-
-// isZeroTime reports whether t is obviously unspecified (either zero or Unix()=0).
-func isZeroTime(t time.Time) bool {
-	return t.IsZero() || t.Equal(unixEpochTime)
 }
 
 func writeNotModified(w http.ResponseWriter) {

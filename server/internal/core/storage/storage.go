@@ -74,20 +74,30 @@ func (s Storage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, 
 	}
 }
 
-func (s Storage) CopyContents(src, dest uuid.UUID) error {
-	in, err := s.OpenRead(src, 0, -1)
+type ContentsCopy struct {
+	SrcVersion   uuid.UUID
+	DestResource uuid.UUID
+	Size         int64
+	MimeType     string
+	SHA256       string
+}
+
+func (s Storage) CopyContents(params ContentsCopy) (uuid.UUID, error) {
+	in, err := s.OpenRead(params.SrcVersion, 0, -1)
 	if err != nil {
-		return errors.New("Unable to open " + src.String() + ": " + err.Error())
+		return uuid.Nil, errors.New("Unable to open " + params.SrcVersion.String() + ": " + err.Error())
 	}
 	defer in.Close()
-	out, err := s.OpenWrite(dest, nil, nil)
+	id, _ := uuid.NewV7()
+
+	out, err := s.OpenWrite(id, nil, nil)
 	if err != nil {
-		return errors.New("Unable to open " + dest.String() + ": " + err.Error())
+		return uuid.Nil, errors.New("Unable to open " + id.String() + ": " + err.Error())
 	}
 	defer out.Close()
 
 	_, err = io.Copy(out, in)
-	return err
+	return id, err
 
 }
 

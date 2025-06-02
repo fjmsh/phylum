@@ -14,6 +14,7 @@ import (
 type uploadParams struct {
 	Path          string                            `json:"path" form:"path" binding:"required"`
 	ID            string                            `json:"id" form:"id" binding:"omitempty,uuid"`
+	VersionID     string                            `json:"version_id" form:"version_id" binding:"omitempty,uuid"`
 	CreateParents bool                              `json:"create_parents" form:"create_parents"`
 	Conflict      fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
 	SHA256        string                            `json:"sha256" form:"sha256"`
@@ -26,18 +27,21 @@ func handleUploadRequest(c *gin.Context) {
 		panic(err)
 	}
 	var id uuid.UUID
+	var versionID uuid.UUID
 	if params.ID != "" {
 		id, err = uuid.Parse(params.ID)
 		if err != nil {
 			panic(err)
 		}
 	}
+	if params.VersionID != "" {
+		versionID, err = uuid.Parse(params.VersionID)
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	// TODO: Calculate and verify sha sum
-	// c.Request.FormValue("sha256sum")
-	if id == uuid.Nil {
-		id, _ = uuid.NewV7()
-	}
 
 	f := authenticator.GetFileSystem(c)
 	err = f.RunInTx(func(f fs.FileSystem) error {
@@ -62,7 +66,7 @@ func handleUploadRequest(c *gin.Context) {
 		}
 		defer src.Close()
 
-		out, err := res.OpenWrite()
+		out, err := res.OpenWrite(versionID)
 		if err != nil {
 			return err
 		}

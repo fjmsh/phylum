@@ -25,7 +25,7 @@ const versionsQuery = "COALESCE(JSONB_AGG(JSONB_BUILD_OBJECT(" +
 	"'deleted',EXTRACT(EPOCH FROM v.deleted)::integer," +
 	"'mime_type',v.mime_type," +
 	"'size',v.size," +
-	"'sha256',v.sha256," +
+	"'sha256',v.sha256" +
 	")), '[]'::JSONB)"
 
 const fullResourceQuery = `SELECT r.*,
@@ -81,9 +81,9 @@ func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted, includeSu
 		v := goqu.T("resource_versions").As("v")
 		l := goqu.T("publinks").As("l")
 		q = q.Select(
-			r.All(),
-			pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
-			pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
+			t.All(),
+			pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(t.Col("id"))),
+			pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(t.Col("id"))),
 		)
 	}
 	q = q.WithRecursive("nodes("+strings.Join(cols, ",")+")", base.UnionAll(rec)).

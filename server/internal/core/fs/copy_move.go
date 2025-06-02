@@ -7,13 +7,9 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/sirupsen/logrus"
 )
-
-type copySrcDest struct {
-	src  uuid.UUID
-	dest uuid.UUID
-}
 
 func (r Resource) Move(target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	// Check source directory permissions
@@ -151,7 +147,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		}
 	}
 	children := make([]CreateResourcesParams, 0, len(tree))
-	var contents []copySrcDest
+	var contents []storage.ContentsCopy
 	newIDs := make(map[uuid.UUID]uuid.UUID)
 
 	var targetRoot Resource
@@ -163,9 +159,6 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			destParent.id,
 			destName,
 			r.dir,
-			r.contentLength,
-			r.contentType,
-			r.contentSHA256,
 			destParent.permissions,
 			conflictResolution,
 		)
@@ -181,7 +174,17 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		if targetRoot.dir {
 			newIDs[r.id] = id
 		} else {
-			contents = append(contents, copySrcDest{src: r.id, dest: id})
+			if version, err := r.LatestVersion(); err != nil {
+				logrus.Warn("Unable to copy " + r.id.String() + ": " + err.Error())
+			} else {
+				contents = append(contents, storage.ContentsCopy{
+					SrcVersion:   version.ID,
+					DestResource: id,
+					Size:         version.Size,
+					MimeType:     version.MimeType,
+					SHA256:       version.SHA256,
+				})
+			}
 		}
 
 		for _, src := range tree {
@@ -189,19 +192,26 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			parent := newIDs[src.parentID.Bytes]
 
 			children = append(children, CreateResourcesParams{
-				ID:            id,
-				Parent:        parent,
-				Name:          src.name,
-				Dir:           src.dir,
-				ContentLength: src.contentLength,
-				ContentType:   src.contentType,
-				ContentSha256: src.contentSHA256,
+				ID:     id,
+				Parent: parent,
+				Name:   src.name,
+				Dir:    src.dir,
 			})
 
 			if src.dir {
 				newIDs[src.id] = id
 			} else {
-				contents = append(contents, copySrcDest{src: src.id, dest: id})
+				if version, err := src.LatestVersion(); err != nil {
+					logrus.Warn("Unable to copy " + src.id.String() + ": " + err.Error())
+				} else {
+					contents = append(contents, storage.ContentsCopy{
+						SrcVersion:   version.ID,
+						DestResource: id,
+						Size:         version.Size,
+						MimeType:     version.MimeType,
+						SHA256:       version.SHA256,
+					})
+				}
 			}
 		}
 
@@ -220,8 +230,10 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	if err == nil {
 		func() {
 			for _, c := range contents {
-				if err := r.f.cs.CopyContents(c.src, c.dest); err != nil {
-					logrus.Warn("unable to copy " + c.src.String() + " to " + c.dest.String() + ": " + err.Error())
+				if id, err := r.f.cs.CopyContents(c); err != nil {
+					logrus.Warn("unable to copy " + c.SrcVersion.String() + " to " + c.DestResource.String() + ": " + err.Error())
+				} else if err := r.f.createResourceVersion(r.id, id, c.Size, c.MimeType, c.SHA256); err != nil {
+					logrus.Warn("unable to create version for " + c.DestResource.String() + ": " + err.Error())
 				}
 			}
 

@@ -23,9 +23,6 @@ type Resource struct {
 	Created              int64           `json:"created"`
 	Modified             int64           `json:"modified"`
 	Deleted              int64           `json:"deleted"`
-	ContentLength        int             `json:"c_len"`
-	ContentType          string          `json:"c_type"`
-	ContentSHA256        string          `json:"c_sha256"`
 	InheritedPermissions json.RawMessage `json:"inherited_permissions,omitempty"`
 	Grants               json.RawMessage `json:"grants"`
 	Versions             json.RawMessage `json:"versions"`

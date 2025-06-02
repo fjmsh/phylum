@@ -73,13 +73,10 @@ func setupImportCommand() *cobra.Command {
 						ids[p], _ = uuid.NewV7()
 						parent := ids[path.Dir(p)]
 						create = append(create, fs.CreateResourcesParams{
-							Parent:        parent,
-							ID:            ids[p],
-							Name:          d.Name(),
-							Dir:           d.IsDir(),
-							ContentLength: len,
-							ContentType:   "",
-							ContentSha256: "",
+							Parent: parent,
+							ID:     ids[p],
+							Name:   d.Name(),
+							Dir:    d.IsDir(),
 						})
 						if !d.IsDir() {
 							copy[p] = ids[p]
@@ -141,7 +138,7 @@ func copyContents(f fs.FileSystem, src string, id uuid.UUID) error {
 	if r, err := f.ResourceByID(id); err != nil {
 		return err
 	} else {
-		out, err := r.OpenWrite()
+		out, err := r.OpenWrite(uuid.Nil)
 		if err != nil {
 			return err
 		}

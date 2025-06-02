@@ -2,11 +2,13 @@ package fs
 
 import (
 	"encoding/json"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shroff/phylum/server/internal/core/errors"
 )
 
 type Resource struct {
@@ -18,9 +20,6 @@ type Resource struct {
 	created              time.Time
 	modified             time.Time
 	deleted              pgtype.Timestamp
-	contentLength        int
-	contentType          string
-	contentSHA256        string
 	permissions          []byte
 	grants               []byte
 	versions             []byte
@@ -30,20 +29,41 @@ type Resource struct {
 	userPermission       Permission
 }
 
+type Version struct {
+	ID         uuid.UUID `json:"id"`
+	Created    int       `json:"created"`
+	ResourceID uuid.UUID `json:"resource_id"`
+	Size       int64     `json:"size"`
+	MimeType   string    `json:"mime_type"`
+	SHA256     string    `json:"sha256"`
+}
+
 func (r Resource) ID() uuid.UUID                { return r.id }
 func (r Resource) Name() string                 { return r.name }
 func (r Resource) Dir() bool                    { return r.dir }
 func (r Resource) Created() time.Time           { return r.created }
 func (r Resource) Modified() time.Time          { return r.modified }
 func (r Resource) Deleted() pgtype.Timestamp    { return r.deleted }
-func (r Resource) ContentLength() int           { return r.contentLength }
-func (r Resource) ContentSHA256() string        { return r.contentSHA256 }
-func (r Resource) ContentType() string          { return r.contentType }
 func (r Resource) Grants() []byte               { return r.grants }
 func (r Resource) Versions() []byte             { return r.versions }
 func (r Resource) Links() []byte                { return r.links }
 func (r Resource) VisibleParentID() pgtype.UUID { return r.visibleParent }
 func (r Resource) InheritedPermissions() []byte { return r.inheritedPermissions }
+
+func (r Resource) LatestVersion() (Version, error) {
+	versions := make([]Version, 0, 1)
+	json.Unmarshal(r.versions, &versions)
+	if len(versions) == 0 {
+		return Version{}, errors.NewError(http.StatusInternalServerError, "no_versions", "Resource does not have any versions")
+	}
+	version := Version{}
+	for _, v := range versions {
+		if v.Created > version.Created {
+			version = v
+		}
+	}
+	return version, nil
+}
 
 func (r Resource) hasPermission(p Permission) bool {
 	return r.userPermission&p != 0

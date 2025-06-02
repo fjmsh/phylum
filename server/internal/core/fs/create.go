@@ -11,10 +11,11 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const emptyContentType = "text/plain"
-const emptyContentSHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-
 func (f filesystem) CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+	if id == uuid.Nil {
+		id, _ = uuid.NewV7()
+	}
+
 	if !createParents {
 		name, parent, err := f.targetNameParentByPathWithRoot(path, Resource{})
 		if err != nil {
@@ -44,9 +45,7 @@ func (f filesystem) CreateResourceByPath(path string, id uuid.UUID, dir, createP
 		conflict := ResourceBindConflictResolutionEnsure
 		if i == len(segments)-1 {
 			d = dir
-			if id != uuid.Nil {
-				resourceID = id
-			}
+			resourceID = id
 			conflict = conflictResolution
 		}
 		r, err = r.createMemberResource(s, resourceID, d, conflict)
@@ -75,13 +74,7 @@ func (r Resource) createMemberResource(name string, id uuid.UUID, dir bool, conf
 	var created bool
 	err := r.f.runInTx(func(f filesystem) error {
 		var err error
-		contentType := emptyContentType
-		contentSHA256 := emptyContentSHA256
-		if r.dir {
-			contentType = ""
-			contentSHA256 = ""
-		}
-		if res, created, _, err = f.createResource(id, r.id, name, dir, 0, contentType, contentSHA256, r.permissions, conflictResolution); err != nil {
+		if res, created, _, err = f.createResource(id, r.id, name, dir, r.permissions, conflictResolution); err != nil {
 			if strings.Contains(err.Error(), "unique_member_resource_name") {
 				return ErrResourceNameConflict
 			}
@@ -120,9 +113,6 @@ func (f filesystem) createResource(
 	parent uuid.UUID,
 	name string,
 	dir bool,
-	contentLength int,
-	contentType string,
-	contentSHA256 string,
 	permissions []byte,
 	conflictResolution ResourceBindConflictResolution,
 ) (res Resource, created, deleted bool, err error) {
@@ -132,9 +122,6 @@ func (f filesystem) createResource(
 			parent,
 			name,
 			dir,
-			contentLength,
-			contentType,
-			contentSHA256,
 			permissions,
 		)
 		return err
@@ -164,9 +151,6 @@ func (f filesystem) createResource(
 						parent,
 						name,
 						dir,
-						contentLength,
-						contentType,
-						contentSHA256,
 						permissions,
 					)
 					return err
@@ -188,16 +172,6 @@ func (f filesystem) createResource(
 				if res.dir == dir {
 					if dir {
 						err = f.deleteRecursive(res.id, parent, true, true)
-					} else {
-						err = f.updateResourceContents(
-							res.id,
-							contentLength,
-							contentType,
-							contentSHA256,
-						)
-						res.contentLength = contentLength
-						res.contentType = contentType
-						res.contentSHA256 = contentSHA256
 					}
 				} else {
 					err = f.deleteRecursive(res.id, parent, true, false)
@@ -207,9 +181,6 @@ func (f filesystem) createResource(
 							parent,
 							name,
 							dir,
-							contentLength,
-							contentType,
-							contentSHA256,
 							permissions,
 							ResourceBindConflictResolutionError,
 						)
@@ -227,9 +198,6 @@ func (f filesystem) createResource(
 						parent,
 						name,
 						dir,
-						contentLength,
-						contentType,
-						contentSHA256,
 						permissions,
 						ResourceBindConflictResolutionError,
 					)
@@ -243,20 +211,23 @@ func (f filesystem) createResource(
 	return
 }
 
-func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, contentLength int, contentType, contentSha256 string, permissions []byte) (Resource, error) {
+func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, permissions []byte) (Resource, error) {
 	query, args, _ := pg.From("resources").
 		Insert().
 		Rows(goqu.Record{
-			"id":             goqu.V(id),
-			"parent":         goqu.V(parent),
-			"name":           goqu.V(name),
-			"dir":            goqu.V(dir),
-			"content_length": goqu.V(contentLength),
-			"content_type":   goqu.V(contentType),
-			"content_sha256": goqu.V(contentSha256),
-			"permissions":    goqu.V(permissions),
+			"id":          goqu.V(id),
+			"parent":      goqu.V(parent),
+			"name":        goqu.V(name),
+			"dir":         goqu.V(dir),
+			"permissions": goqu.V(permissions),
 		}).
-		Returning("*", goqu.L("'[]'::JSONB"), goqu.L("NULL"), goqu.L("'{}'::JSONB")).
+		Returning(
+			"*",
+			goqu.L("'[]'::JSONB"), // versions
+			goqu.L("'[]'::JSONB"), // links
+			goqu.L("NULL"),        // visible parent
+			goqu.L("'{}'::JSONB"), // inherited permissions
+		).
 		ToSQL()
 	if rows, err := f.db.Query(query, args...); err != nil {
 		return Resource{}, err

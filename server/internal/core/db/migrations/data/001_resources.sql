@@ -10,6 +10,16 @@ CREATE TABLE resources (
   grants          JSONB     NOT NULL DEFAULT '{}'
 );
 
+CREATE TABLE resource_versions(
+    id              UUID        PRIMARY KEY,
+    resource_id     UUID        NOT NULL REFERENCES resources(id),
+    created         TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted         TIMESTAMP,
+    size            BIGINT      NOT NULL,
+    mime_type       TEXT        NOT NULL,
+    sha256          TEXT        NOT NULL
+);
+
 CREATE UNIQUE INDEX unique_member_resource_name ON resources(parent, name) WHERE deleted IS NULL;
 
 CREATE OR REPLACE FUNCTION phylum_merge_permission_grants(a JSONB, b JSONB)
@@ -32,5 +42,7 @@ $$;
 DROP FUNCTION phylum_merge_permission_grants;
 
 DROP INDEX unique_member_resource_name;
+
+DROP TABLE resource_versions;
 
 DROP TABLE resources;
