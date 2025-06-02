@@ -6,6 +6,7 @@ import 'package:phylum/libphylum/account_user.dart';
 import 'package:phylum/libphylum/repositories/bookmark_repository.dart';
 import 'package:phylum/libphylum/repositories/publink_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
+import 'package:phylum/libphylum/repositories/resource_version_repository.dart';
 import 'package:phylum/libphylum/repositories/trash_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
@@ -27,12 +28,14 @@ class PhylumAccount extends Account<PhylumAccount> {
   final userRepository = UserRepository();
   final trashedResourcRepository = TrashedResourceRepository();
   final publinkRepository = PublinkRepository();
+  final resourceVersionRepository = ResourceVersionRepository();
 
   @override
   Map<Type, Repository<PhylumAccount, dynamic>> get repositories => {
         Bookmark: bookmarkRepository,
-        Resource: resourceRepository,
         Publink: publinkRepository,
+        Resource: resourceRepository,
+        ResourceVersion: resourceVersionRepository,
         TrashedResource: trashedResourcRepository,
         User: userRepository,
       };
