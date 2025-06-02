@@ -23,6 +23,7 @@ type Resource struct {
 	contentSHA256        string
 	permissions          []byte
 	grants               []byte
+	versions             []byte
 	links                []byte
 	inheritedPermissions []byte
 	visibleParent        pgtype.UUID
@@ -39,6 +40,7 @@ func (r Resource) ContentLength() int           { return r.contentLength }
 func (r Resource) ContentSHA256() string        { return r.contentSHA256 }
 func (r Resource) ContentType() string          { return r.contentType }
 func (r Resource) Grants() []byte               { return r.grants }
+func (r Resource) Versions() []byte             { return r.versions }
 func (r Resource) Links() []byte                { return r.links }
 func (r Resource) VisibleParentID() pgtype.UUID { return r.visibleParent }
 func (r Resource) InheritedPermissions() []byte { return r.inheritedPermissions }
@@ -69,11 +71,9 @@ func (f filesystem) scanFullResource(row pgx.CollectableRow) (Resource, error) {
 		&r.created,
 		&r.modified,
 		&r.deleted,
-		&r.contentLength,
-		&r.contentType,
-		&r.contentSHA256,
 		&r.permissions,
 		&r.grants,
+		&r.versions,
 		&r.links,
 		&r.visibleParent,
 		&r.inheritedPermissions,
@@ -106,11 +106,9 @@ func (f filesystem) scanResourceWithoutParent(row pgx.CollectableRow) (Resource,
 		&r.created,
 		&r.modified,
 		&r.deleted,
-		&r.contentLength,
-		&r.contentType,
-		&r.contentSHA256,
 		&r.permissions,
 		&r.grants,
+		&r.versions,
 		&r.links,
 	)
 	if err != nil {

@@ -11,21 +11,32 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const publinkFieldsQuery = "COALESCE(JSONB_AGG(JSONB_BUILD_OBJECT(" +
+const publinksQuery = "COALESCE(JSONB_AGG(JSONB_BUILD_OBJECT(" +
 	"'id',l.id," +
 	"'expires',EXTRACT(EPOCH FROM l.expires)::integer," +
 	"'protected',l.password_hash <> ''," +
 	"'access_limit',l.access_limit," +
-	"'accessed',l.accessed)), '[]'::JSONB)"
+	"'accessed',l.accessed" +
+	")), '[]'::JSONB)"
+
+const versionsQuery = "COALESCE(JSONB_AGG(JSONB_BUILD_OBJECT(" +
+	"'id',v.id," +
+	"'created',EXTRACT(EPOCH FROM v.created)::integer," +
+	"'deleted',EXTRACT(EPOCH FROM v.deleted)::integer," +
+	"'mime_type',v.mime_type," +
+	"'size',v.size," +
+	"'sha256',v.sha256," +
+	")), '[]'::JSONB)"
 
 const fullResourceQuery = `SELECT r.*,
-(SELECT ` + publinkFieldsQuery + ` FROM publinks l WHERE l.root = r.id) AS links,
+(SELECT ` + versionsQuery + ` FROM resource_versions v WHERE v.resource_id = r.id) AS versions,
+(SELECT ` + publinksQuery + ` FROM publinks l WHERE l.root = r.id) AS links,
 CASE WHEN COALESCE(p.permissions[@user_id::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent,
 COALESCE(p.permissions, '{}'::JSONB) AS inherited_permissions
 FROM resources r LEFT JOIN resources p ON p.id = r.parent
 `
 
-func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted, includeLinks bool, extraCols ...string) (exp.IdentifierExpression, exp.AliasedExpression, *goqu.SelectDataset) {
+func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted, includeSubQueries bool, extraCols ...string) (exp.IdentifierExpression, exp.AliasedExpression, *goqu.SelectDataset) {
 	t := goqu.T("resources")
 	r := t.As("r")
 	n := goqu.T("nodes").As("n")
@@ -64,11 +75,16 @@ func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted, includeLi
 		idSelect = idSelect.Where(n.Col("depth").Gt(0))
 	}
 
-	l := goqu.T("publinks").As("l")
 	q := pg.
 		From(t)
-	if includeLinks {
-		q = q.Select(t.All(), pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(t.Col("id"))))
+	if includeSubQueries {
+		v := goqu.T("resource_versions").As("v")
+		l := goqu.T("publinks").As("l")
+		q = q.Select(
+			r.All(),
+			pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
+			pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
+		)
 	}
 	q = q.WithRecursive("nodes("+strings.Join(cols, ",")+")", base.UnionAll(rec)).
 		Where(t.Col("id").Eq(idSelect))
@@ -76,11 +92,16 @@ func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted, includeLi
 }
 
 func selectDirectChildren(id uuid.UUID, deleted pgtype.Timestamp, includeDeleted bool) (exp.AliasedExpression, *goqu.SelectDataset) {
+	v := goqu.T("resource_versions").As("v")
 	l := goqu.T("publinks").As("l")
 	r := goqu.T("resources").As("r")
 	q := pg.
 		From(r).
-		Select(r.All(), pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(r.Col("id")))).
+		Select(
+			r.All(),
+			pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
+			pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
+		).
 		Where(r.Col("parent").Eq(goqu.V(id)))
 	if !includeDeleted {
 		q = q.Where(goqu.L("? IS NOT DISTINCT FROM ?", r.Col("deleted"), goqu.V(deleted)))

@@ -46,7 +46,6 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	nodes := goqu.T("nodes").As("n")
 	r := goqu.T("resources").As("r")
 	p := goqu.T("resources").As("p")
-	l := goqu.T("publinks").As("l")
 	sub := pg.
 		Select(r.Col("id"), r.Col("parent"), nodes.Col("search"), goqu.L("n.depth + 1")).
 		From(r).
@@ -62,8 +61,11 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		Where(r.Col("id").Eq(goqu.V(f.pathRoot))).
 		UnionAll(sub)
 
+	l := goqu.T("publinks").As("l")
+	v := goqu.T("resource_versions").As("v")
 	q := pg.Select(r.All(),
-		pg.Select(goqu.L(publinkFieldsQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
+		pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
+		pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
 		pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID)),
 		pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 	).

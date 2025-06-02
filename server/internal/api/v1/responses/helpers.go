@@ -50,6 +50,7 @@ func ResourceFromFS(r fs.Resource) Resource {
 		ContentSHA256:        r.ContentSHA256(),
 		InheritedPermissions: r.InheritedPermissions(),
 		Grants:               r.Grants(),
+		Versions:             r.Versions(),
 		Links:                r.Links(),
 	}
 }

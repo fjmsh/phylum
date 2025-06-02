@@ -6,9 +6,6 @@ CREATE TABLE resources (
   created         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   modified        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   deleted         TIMESTAMP,
-  content_length  BIGINT    NOT NULL DEFAULT 0,
-  content_type    TEXT      NOT NULL DEFAULT '',
-  content_sha256  TEXT      NOT NULL DEFAULT '',
   permissions     JSONB     NOT NULL DEFAULT '{}',
   grants          JSONB     NOT NULL DEFAULT '{}'
 );

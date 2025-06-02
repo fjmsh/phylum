@@ -28,6 +28,7 @@ type Resource struct {
 	ContentSHA256        string          `json:"c_sha256"`
 	InheritedPermissions json.RawMessage `json:"inherited_permissions,omitempty"`
 	Grants               json.RawMessage `json:"grants"`
+	Versions             json.RawMessage `json:"versions"`
 	Links                json.RawMessage `json:"publinks"`
 }
 
