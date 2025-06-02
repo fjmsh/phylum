@@ -28,12 +28,11 @@ type Resource struct {
 }
 
 type Version struct {
-	ID         uuid.UUID `json:"id"`
-	Created    int       `json:"created"`
-	ResourceID uuid.UUID `json:"resource_id"`
-	Size       int64     `json:"size"`
-	MimeType   string    `json:"mime_type"`
-	SHA256     string    `json:"sha256"`
+	ID       uuid.UUID `json:"id"`
+	Created  int       `json:"created"`
+	Size     int64     `json:"size"`
+	MimeType string    `json:"mime_type"`
+	SHA256   string    `json:"sha256"`
 }
 
 func (r Resource) ID() uuid.UUID                { return r.id }
@@ -56,12 +55,11 @@ func (r Resource) LatestVersion() (Version, error) {
 	}
 	if len(versions) == 0 {
 		return Version{
-			ID:         uuid.Nil,
-			Created:    int(r.created.Unix()),
-			ResourceID: r.id,
-			Size:       0,
-			MimeType:   "text/plain",
-			SHA256:     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+			ID:       uuid.Nil,
+			Created:  int(r.created.Unix()),
+			Size:     0,
+			MimeType: "text/plain",
+			SHA256:   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 		}, nil
 	}
 	version := Version{}
