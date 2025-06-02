@@ -8,7 +8,8 @@ import 'package:provider/provider.dart';
 import 'option_groups.dart';
 
 void showMenuOptionsBottomSheet(BuildContext context, MenuOptionGroups options, Iterable<Resource> resources) async {
-  final items = await buildPopupMenuItems(context.read<PhylumAccount>(), options, resources);
+  final account = context.read<PhylumAccount>();
+  final items = await buildPopupMenuItems(account, options, resources);
   if (!context.mounted) return;
   final selected = await showModalBottomSheet(
       context: context,
@@ -24,7 +25,7 @@ void showMenuOptionsBottomSheet(BuildContext context, MenuOptionGroups options, 
                 ),
                 child: resources.length == 1
                     ? ListTile(
-                        leading: resources.first.getIcon(),
+                        leading: resources.first.getIcon(account),
                         title: Text(
                           resources.first.name,
                           softWrap: false,

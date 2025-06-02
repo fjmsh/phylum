@@ -208,7 +208,7 @@ class _FolderListView extends StatelessWidget {
                 key: ValueKey(r.id),
                 visualDensity: VisualDensity.compact,
                 selected: selected,
-                leading: r.getIcon(),
+                leading: r.getIcon(context.read()),
                 title: Text(r.name),
                 enabled: r.dir,
                 onTap: () => context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: r.id)),

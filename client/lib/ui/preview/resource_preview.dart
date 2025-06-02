@@ -51,6 +51,7 @@ class _ResourcePreviewState extends State<ResourcePreview> {
   final _focusNode = FocusNode();
   String? _error;
   Widget Function(Uint8List)? _buildPreview;
+  StreamSubscription? _versionSubscription;
 
   @override
   void initState() {
@@ -61,30 +62,43 @@ class _ResourcePreviewState extends State<ResourcePreview> {
 
   @override
   void dispose() {
+    _versionSubscription?.cancel();
     _focusNode.dispose();
     super.dispose();
   }
 
   void _updateResource() {
     _resource = widget.resources[index];
+    _versionSubscription?.cancel();
     if (_resource.dir) {
+      _buildPreview = null;
       _error = 'Cannot preview directory';
     } else {
-      if (_resource.contentType.startsWith('image/')) {
-        _buildPreview = buildImagePreview;
-      }
-      if (_resource.contentType.startsWith('text/')) {
-        _buildPreview = buildTextPreview;
-      }
-      if (_resource.contentType == 'application/pdf') {
-        _buildPreview = buildPdfPreview;
-      }
-      if (_buildPreview == null) {
-        _error = 'Cannot generate preview';
-      } else if (_resource.contentLength > maxPreviewSize) {
-        _buildPreview = null;
-        _error = 'File too large to preview';
-      }
+      _versionSubscription =
+          context.read<PhylumAccount>().db.latestVersion(_resource.id).watchSingleOrNull().listen((v) {
+        setState(() {
+          _buildPreview = null;
+          if (v == null) {
+            _error = 'No contents';
+          } else {
+            if (v.mimeType.startsWith('image/')) {
+              _buildPreview = buildImagePreview;
+            }
+            if (v.mimeType.startsWith('text/')) {
+              _buildPreview = buildTextPreview;
+            }
+            if (v.mimeType == 'application/pdf') {
+              _buildPreview = buildPdfPreview;
+            }
+            if (_buildPreview == null) {
+              _error = 'Cannot generate preview';
+            } else if (v.size > maxPreviewSize) {
+              _buildPreview = null;
+              _error = 'File too large to preview';
+            }
+          }
+        });
+      });
     }
   }
 
@@ -246,20 +260,23 @@ class _ResourcePreviewBuilderState extends State<ResourcePreviewBuilder> {
         return;
       }
 
-      final expected = (response.contentLength ?? widget.resource.contentLength).toDouble();
-      int received = 0;
-      _progress = 0;
-      if (mounted) {
-        setState(() {});
-      }
-      final stream = _toByteStream(response.stream.map((s) {
-        received += s.length;
-        _progress = received / expected;
+      final expected = response.contentLength?.toDouble();
+      ByteStream stream = response.stream;
+      if (expected != null) {
+        int received = 0;
+        _progress = 0;
         if (mounted) {
           setState(() {});
         }
-        return s;
-      }));
+        stream = _toByteStream(response.stream.map((s) {
+          received += s.length;
+          _progress = received / expected;
+          if (mounted) {
+            setState(() {});
+          }
+          return s;
+        }));
+      }
       final data = await _toBytes(stream);
       _data = data;
       _downloading = false;

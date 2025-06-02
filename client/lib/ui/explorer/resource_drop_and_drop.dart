@@ -197,7 +197,7 @@ class ResourceDraggable extends StatelessWidget {
             width: 240,
             height: 48,
             child: ListTile(
-              leading: resource.getIcon(),
+              leading: resource.getIcon(context.read()),
               title: Text(
                 resource.name,
                 softWrap: false,

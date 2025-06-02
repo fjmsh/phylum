@@ -185,9 +185,11 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       break;
     case MenuOption.openWith:
       if (kIsWeb || resources.isEmpty) return;
-      final p = await downloadResourceSync(context, resources.first);
-      if (p == null) return;
-      OpenFile.open(p, type: resources.first.contentType);
+      final r = resources.first;
+      final p = await downloadResourceSync(context, r);
+      if (p == null || !context.mounted) return;
+      final version = await context.read<PhylumAccount>().db.latestVersion(r.id).getSingleOrNull();
+      OpenFile.open(p, type: version?.mimeType);
       break;
     case MenuOption.bookmarkAdd:
       if (resources.length == 1) {

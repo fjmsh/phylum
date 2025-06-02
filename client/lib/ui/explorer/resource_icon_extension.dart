@@ -1,19 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
+
+const IconData folderIcon = Icons.folder;
+const IconData fileIcon = Icons.insert_drive_file;
 
 extension ResourceIconExtension on Resource {
-  Icon getIcon() {
-    if (dir) return const Icon(Icons.folder);
+  Widget getIcon(PhylumAccount account) {
+    if (dir) return const Icon(folderIcon);
 
-    if (contentType.startsWith("image")) {
+    return StreamBuilder(
+        stream: account.db.latestVersion(id).watchSingleOrNull(),
+        builder: (context, snapshot) {
+          return snapshot.data?.getIcon() ?? const Icon(Icons.insert_drive_file);
+        });
+  }
+}
+
+extension ResourceVersionIconExtension on ResourceVersion {
+  Icon getIcon() {
+    if (mimeType.startsWith("image")) {
       return const Icon(Icons.image);
-    } else if (contentType.startsWith("video")) {
+    } else if (mimeType.startsWith("video")) {
       return const Icon(Icons.movie);
-    } else if (contentType.startsWith("audio")) {
+    } else if (mimeType.startsWith("audio")) {
       return const Icon(Icons.headphones);
-    } else if (contentType.startsWith("text")) {
+    } else if (mimeType.startsWith("text")) {
       return const Icon(Icons.article);
     }
-    return const Icon(Icons.insert_drive_file);
+    return const Icon(fileIcon);
   }
 }

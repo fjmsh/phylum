@@ -55,6 +55,7 @@ class ResourceDetailsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final account = context.read<PhylumAccount>();
     final showBorder = context.select<ExplorerState, bool>((state) => state.focusId == resource.id && state.showFocus);
     final highlight = context.select<ExplorerState, bool>((state) => state.isSelected(resource.id));
     final dim = context.select<ExplorerState, bool>((state) => state.isSelected(resource.id) && state.dragging);
@@ -74,16 +75,6 @@ class ResourceDetailsRow extends StatelessWidget {
         : showBorder
             ? BorderSide(color: colorScheme.primary, width: 2.0)
             : const BorderSide(color: Colors.transparent, width: 2.0);
-    String subtitle = "";
-    if (resource.modified != null) {
-      subtitle = resource.modified!.formatShort();
-    }
-    if (!resource.dir) {
-      if (subtitle.isNotEmpty) {
-        subtitle += " \u2022 ";
-      }
-      subtitle += resource.contentLength.formatForDisplay();
-    }
     final color = highlight
         ? dim
             ? colorScheme.primaryContainer.withAlpha(192)
@@ -107,7 +98,7 @@ class ResourceDetailsRow extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: _iconPaddingV, horizontal: _iconPaddingH),
-                  child: resource.getIcon(),
+                  child: resource.getIcon(account),
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,7 +130,7 @@ class ResourceDetailsRow extends StatelessWidget {
                             child: Icon(Icons.people_alt, size: _subtitleIconSize),
                           ),
                         StreamBuilder<int>(
-                            stream: context.read<PhylumAccount>().db.countPublinks(resource.id).watchSingle(),
+                            stream: account.db.countPublinks(resource.id).watchSingle(),
                             initialData: 0,
                             builder: (context, snapshot) {
                               if ((snapshot.data ?? 0) > 0) {
@@ -151,8 +142,7 @@ class ResourceDetailsRow extends StatelessWidget {
                               return const SizedBox();
                             }),
                         StreamBuilder<bool?>(
-                            stream: (context.read<PhylumAccount>().db.bookmarks.select()
-                                  ..where((b) => b.resourceId.equals(resource.id)))
+                            stream: (account.db.bookmarks.select()..where((b) => b.resourceId.equals(resource.id)))
                                 .map((b) => !b.deleted)
                                 .watchSingleOrNull(),
                             initialData: false,
@@ -165,19 +155,34 @@ class ResourceDetailsRow extends StatelessWidget {
                               }
                               return const SizedBox();
                             }),
-                        Text(
-                          subtitle,
-                          maxLines: 1,
-                          softWrap: false,
-                          overflow: TextOverflow.fade,
-                          style: theme.textTheme.bodyMedium!.copyWith(
-                            color: highlight
-                                ? dim
-                                    ? colorScheme.primary.withAlpha(192)
-                                    : colorScheme.primary
-                                : colorScheme.onSurfaceVariant,
-                          ),
-                        ),
+                        StreamBuilder(
+                            stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
+                            builder: (context, snapshot) {
+                              String subtitle = "";
+                              if (resource.modified != null) {
+                                subtitle = resource.modified!.formatShort();
+                              }
+                              final data = snapshot.data;
+                              if (data != null) {
+                                if (subtitle.isNotEmpty) {
+                                  subtitle += " \u2022 ";
+                                }
+                                subtitle += data.size.formatForDisplay();
+                              }
+                              return Text(
+                                subtitle,
+                                maxLines: 1,
+                                softWrap: false,
+                                overflow: TextOverflow.fade,
+                                style: theme.textTheme.bodyMedium!.copyWith(
+                                  color: highlight
+                                      ? dim
+                                          ? colorScheme.primary.withAlpha(192)
+                                          : colorScheme.primary
+                                      : colorScheme.onSurfaceVariant,
+                                ),
+                              );
+                            }),
                       ],
                     ),
                   ],

@@ -31,9 +31,6 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
           localName: localName,
           dir: true,
           timestamp: timestamp,
-          contentLength: 0,
-          contentType: '',
-          contentSha256: '',
           userPermission: userPermission,
         ),
         if (deletedId != null)

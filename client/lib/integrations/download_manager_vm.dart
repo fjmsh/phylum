@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
+import 'package:mime/mime.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -78,6 +79,8 @@ class DownloadManager with ChangeNotifier {
       await Permission.notification.request();
     }
     final uri = account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}:');
+    final version = await account.db.latestVersion(r.id).getSingleOrNull();
+    final mimeType = version?.mimeType ?? MimeTypeResolver().lookup(r.name) ?? 'application/octet-stream';
     final task = DownloadTask(
       url: uri.toString(),
       filename: r.name,
@@ -86,7 +89,7 @@ class DownloadManager with ChangeNotifier {
       updates: Updates.statusAndProgress,
       retries: 5,
       allowPause: true,
-      metaData: r.contentType,
+      metaData: mimeType,
     );
 
     _tasks[task.taskId] = DownloadTaskStatusNotifier(task: task);

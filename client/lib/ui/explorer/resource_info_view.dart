@@ -74,11 +74,21 @@ class ResourceInfoView extends StatelessWidget {
       child: Column(
         children: [
           PendingActionsTile(resourceId: resource.id),
-          ListTile(
-            leading: resource.getIcon(),
-            title: const Text('Type'),
-            subtitle: Text(resource.dir ? 'Folder' : resource.contentType),
-          ),
+          resource.dir
+              ? const ListTile(
+                  leading: Icon(folderIcon),
+                  title: Text('Type'),
+                  subtitle: Text('Folder'),
+                )
+              : StreamBuilder(
+                  stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
+                  builder: (context, snapshot) {
+                    return ListTile(
+                      leading: snapshot.data?.getIcon() ?? Icon(Icons.insert_drive_file),
+                      title: const Text('Type'),
+                      subtitle: Text(snapshot.data?.mimeType ?? '<unknown>'),
+                    );
+                  }),
           ListTile(
             leading: const Icon(Icons.event),
             title: const Text('Created'),
@@ -116,29 +126,43 @@ class ResourceInfoView extends StatelessWidget {
                 );
               }),
           if (!resource.dir)
-            ListTile(
-              leading: const Icon(Icons.storage),
-              title: const Text('Size'),
-              subtitle: Text('${resource.contentLength.formatForDisplay()} (${resource.contentLength} B)'),
-            ),
-          if (!resource.dir)
-            ListTile(
-              leading: const Icon(Icons.shield),
-              title: const Text('SHA-256'),
-              onLongPress: () {
-                Clipboard.setData(ClipboardData(text: resource.contentSha256));
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('SHA-256 checksum copied to clipboard'),
-                  duration: const Duration(seconds: 2),
-                ));
-              },
-              subtitle: Text(
-                resource.contentSha256,
-                maxLines: 1,
-                softWrap: false,
-                overflow: TextOverflow.fade,
-              ),
-            ),
+            StreamBuilder(
+                stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
+                builder: (context, snapshot) {
+                  final data = snapshot.data;
+
+                  if (data == null) {
+                    return SizedBox();
+                  }
+
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.storage),
+                        title: const Text('Size'),
+                        subtitle: Text('${data.size.formatForDisplay()} (${data.size} B)'),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.shield),
+                        title: const Text('SHA-256'),
+                        onLongPress: () {
+                          Clipboard.setData(ClipboardData(text: data.sha256));
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text('SHA-256 checksum copied to clipboard'),
+                            duration: const Duration(seconds: 2),
+                          ));
+                        },
+                        subtitle: Text(
+                          data.sha256,
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.fade,
+                        ),
+                      ),
+                    ],
+                  );
+                }),
         ],
       ),
     );
