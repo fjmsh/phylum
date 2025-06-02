@@ -232,7 +232,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			for _, c := range contents {
 				if id, err := r.f.cs.CopyContents(c); err != nil {
 					logrus.Warn("unable to copy " + c.SrcVersion.String() + " to " + c.DestResource.String() + ": " + err.Error())
-				} else if err := r.f.createResourceVersion(r.id, id, c.Size, c.MimeType, c.SHA256); err != nil {
+				} else if err := r.f.createResourceVersion(c.DestResource, id, c.Size, c.MimeType, c.SHA256); err != nil {
 					logrus.Warn("unable to create version for " + c.DestResource.String() + ": " + err.Error())
 				}
 			}
