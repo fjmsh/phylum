@@ -6,13 +6,19 @@ CREATE TABLE IF NOT EXISTS resources(
     created DATETIME,
     modified DATETIME,
     deleted DATETIME,
-    content_length INTEGER NOT NULL DEFAULT 0,
-    content_sha256 TEXT NOT NULL DEFAULT '',
-    content_type TEXT NOT NULL DEFAULT '',
     inherited_permissions TEXT,
     grants TEXT,
     user_permission INTEGER NOT NULL DEFAULT 0,
     last_refresh DATETIME
+);
+
+CREATE TABLE IF NOT EXISTS resource_versions(
+    id TEXT NOT NULL PRIMARY KEY,
+    resource_id TEXT NOT NULL REFERENCES resources (id),
+    created DATETIME NOT NULL,
+    size INTEGER NOT NULL,
+    mime_type TEXT NOT NULL,
+    sha256 TEXT NOT NULL
 );
 
 -- Use `UNION` instead of `UNION ALL` to avoid infinite loops in case of
@@ -29,3 +35,5 @@ parents: WITH RECURSIVE parents(id, parent, name, deleted, user_permission) AS (
 ) SELECT id, name, deleted, user_permission from parents;
 
 permissions: SELECT name, inherited_permissions, grants, user_permission FROM resources WhERE id = :id;
+
+latestVersion: SELECT * from resource_versions WHERE resource_id = :id ORDER BY created DESC LIMIT 1;

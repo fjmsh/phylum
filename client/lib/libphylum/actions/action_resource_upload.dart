@@ -5,6 +5,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/actions/changes/create_resource_change.dart';
+import 'package:phylum/libphylum/actions/changes/create_resource_version_change.dart';
 import 'package:phylum/libphylum/actions/changes/update_resource_deleted_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/util/permissions.dart';
@@ -48,10 +49,15 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
           localName: localName,
           dir: false,
           timestamp: timestamp,
-          contentLength: size,
-          contentType: contentType,
-          contentSha256: '<unknown>',
           userPermission: userPermission,
+        ),
+        CreateResourceVersionChange(
+          objectId: versionId,
+          resourceId: resourceId,
+          created: timestamp,
+          size: size,
+          mimeType: contentType,
+          sha256: '<unknown>',
         ),
         if (deletedId != null)
           UpdateResourceDeletedChange(
@@ -75,6 +81,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
         'localName': localName,
         'deletedId': deletedId,
         'userPermission': userPermission,
+        'versionId': versionId,
       };
 
   final int size;
@@ -83,6 +90,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   final String localName;
   final String? deletedId;
   final Permission userPermission;
+  final String versionId;
 
   ResourceUploadAction({
     required super.resourceId,
@@ -95,6 +103,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
     required this.localName,
     required this.deletedId,
     required this.userPermission,
+    required this.versionId,
   });
 
   factory ResourceUploadAction.fromMap(Map<String, dynamic> map) {
@@ -109,6 +118,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
       localName: map['localName'],
       deletedId: map['deletedId'],
       userPermission: map['userPermission'],
+      versionId: map['versionId'],
     );
   }
 

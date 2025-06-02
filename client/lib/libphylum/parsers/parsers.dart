@@ -15,6 +15,10 @@ Iterable<Publink> parsePublinks(List data, String? root) {
   return data.cast<Map>().map((e) => parsePublink(e, root: root));
 }
 
+Iterable<ResourceVersion> parseResourceVersions(List data, String resourceId) {
+  return data.cast<Map>().map((e) => parseResourceVersion(e, resourceId));
+}
+
 Publink parsePublink(Map data, {String? root}) {
   return Publink(
     id: data['id'],
@@ -24,6 +28,17 @@ Publink parsePublink(Map data, {String? root}) {
     protected: data['protected'],
     accessed: data['accessed'],
     expires: data['expires'] == null ? null : DateTime.fromMillisecondsSinceEpoch(data['expires']),
+  );
+}
+
+ResourceVersion parseResourceVersion(Map data, String resourceId) {
+  return ResourceVersion(
+    id: data['id'],
+    created: DateTime.fromMillisecondsSinceEpoch(data['created'] * 1000),
+    resourceId: resourceId,
+    size: data['size'],
+    mimeType: data['mime_type'],
+    sha256: data['sha256'],
   );
 }
 

@@ -1,6 +1,7 @@
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/actions/changes/create_resource_change.dart';
+import 'package:phylum/libphylum/actions/changes/create_resource_version_change.dart';
 import 'package:phylum/libphylum/actions/changes/update_resource_deleted_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/util/permissions.dart';
@@ -18,9 +19,10 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-        'id': resourceId,
         'src': '$srcId:',
         'dest': '$parent:$resourceName',
+        'id': resourceId,
+        'version_id': versionId,
         'conflict': conflictResolution,
       };
 
@@ -32,11 +34,17 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
           localName: localName,
           dir: dir,
           timestamp: timestamp,
-          contentLength: contentLength,
-          contentType: contentType,
-          contentSha256: contentSha256,
           userPermission: userPermission,
         ),
+        if (!dir)
+          CreateResourceVersionChange(
+            objectId: versionId,
+            resourceId: resourceId,
+            created: timestamp,
+            size: contentLength,
+            mimeType: contentType,
+            sha256: contentSha256,
+          ),
         if (deletedId != null)
           UpdateResourceDeletedChange(
             objectId: deletedId!,
@@ -51,6 +59,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   Map<String, dynamic> get props => {
         'srcId': srcId,
         'resourceId': resourceId,
+        'versionId': versionId,
         'parent': parent,
         'resourceName': resourceName,
         'conflictResolution': conflictResolution,
@@ -66,6 +75,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
       };
 
   final String srcId;
+  final String versionId;
   final bool dir;
   final String localName;
   final String contentType;
@@ -77,6 +87,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
 
   ResourceCopyAction({
     required this.srcId,
+    required this.versionId,
     required super.resourceId,
     required super.parent,
     required super.resourceName,
@@ -96,6 +107,7 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
     return ResourceCopyAction(
       srcId: map['srcId'],
       resourceId: map['resourceId'],
+      versionId: map['versionId'],
       parent: map['parent'],
       resourceName: map['resourceName'],
       conflictResolution: map['conflictResolution'],

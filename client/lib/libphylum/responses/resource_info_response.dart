@@ -53,6 +53,8 @@ class ResourceInfoResponse extends PhylumApiSuccessResponse {
       }
       batch.insertAllOnConflictUpdate(db.resources, ancestors);
       batch.insertAll(db.resources, resources.map((r) => r.resource), mode: InsertMode.insertOrReplace);
+      final versions = resources.map((r) => r.versions).fold(<ResourceVersion>[], (acc, e) => acc..addAll(e));
+      batch.insertAll(db.resourceVersions, versions, mode: InsertMode.insertOrReplace);
 
       for (final id in orphanedPublinks) {
         batch.update(db.publinks, PublinksCompanion(root: Value('')), where: (o) => o.id.equals(id));

@@ -9,9 +9,6 @@ class CreateResourceChange extends LocalChange<Resource> {
   final String localName;
   final bool dir;
   final DateTime timestamp;
-  final int contentLength;
-  final String contentType;
-  final String contentSha256;
   final Permission userPermission;
 
   @override
@@ -26,9 +23,6 @@ class CreateResourceChange extends LocalChange<Resource> {
     required this.localName,
     required this.dir,
     required this.timestamp,
-    required this.contentLength,
-    required this.contentType,
-    required this.contentSha256,
     required this.userPermission,
   });
 
@@ -41,9 +35,6 @@ class CreateResourceChange extends LocalChange<Resource> {
       dir: dir,
       created: timestamp,
       modified: timestamp,
-      contentLength: contentLength,
-      contentType: contentType,
-      contentSha256: contentSha256,
       userPermission: userPermission,
     );
   }

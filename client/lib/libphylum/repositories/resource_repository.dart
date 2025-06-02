@@ -183,6 +183,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
           localName: localName,
           deletedId: deletedId,
           userPermission: userPermission,
+          versionId: generateUuid(),
         ),
         data: contents);
     return id;
@@ -280,17 +281,19 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
         }
       }
     }
+    final latestVersion = await _account.db.latestVersion(resource.id).getSingleOrNull();
     await _account.addAction(ResourceCopyAction(
       srcId: resource.id,
       resourceId: id,
+      versionId: generateUuid(),
       parent: parent,
       resourceName: name,
       conflictResolution: nameConflictRename,
       dir: resource.dir,
       localName: localName,
-      contentType: resource.contentType,
-      contentLength: resource.contentLength,
-      contentSha256: resource.contentSha256,
+      contentType: latestVersion?.mimeType ?? '',
+      contentLength: latestVersion?.size ?? 0,
+      contentSha256: latestVersion?.sha256 ?? '',
       description: 'Copying ${resource.name}',
       timestamp: DateTime.now(),
       deletedId: deletedId,

@@ -267,30 +267,6 @@ class Resources extends Table with TableInfo<Resources, Resource> {
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       $customConstraints: '');
-  static const VerificationMeta _contentLengthMeta =
-      const VerificationMeta('contentLength');
-  late final GeneratedColumn<int> contentLength = GeneratedColumn<int>(
-      'content_length', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      $customConstraints: 'NOT NULL DEFAULT 0',
-      defaultValue: const CustomExpression('0'));
-  static const VerificationMeta _contentSha256Meta =
-      const VerificationMeta('contentSha256');
-  late final GeneratedColumn<String> contentSha256 = GeneratedColumn<String>(
-      'content_sha256', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      $customConstraints: 'NOT NULL DEFAULT \'\'',
-      defaultValue: const CustomExpression('\'\''));
-  static const VerificationMeta _contentTypeMeta =
-      const VerificationMeta('contentType');
-  late final GeneratedColumn<String> contentType = GeneratedColumn<String>(
-      'content_type', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      $customConstraints: 'NOT NULL DEFAULT \'\'',
-      defaultValue: const CustomExpression('\'\''));
   static const VerificationMeta _inheritedPermissionsMeta =
       const VerificationMeta('inheritedPermissions');
   late final GeneratedColumn<String> inheritedPermissions =
@@ -328,9 +304,6 @@ class Resources extends Table with TableInfo<Resources, Resource> {
         created,
         modified,
         deleted,
-        contentLength,
-        contentSha256,
-        contentType,
         inheritedPermissions,
         grants,
         userPermission,
@@ -379,24 +352,6 @@ class Resources extends Table with TableInfo<Resources, Resource> {
       context.handle(_deletedMeta,
           deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta));
     }
-    if (data.containsKey('content_length')) {
-      context.handle(
-          _contentLengthMeta,
-          contentLength.isAcceptableOrUnknown(
-              data['content_length']!, _contentLengthMeta));
-    }
-    if (data.containsKey('content_sha256')) {
-      context.handle(
-          _contentSha256Meta,
-          contentSha256.isAcceptableOrUnknown(
-              data['content_sha256']!, _contentSha256Meta));
-    }
-    if (data.containsKey('content_type')) {
-      context.handle(
-          _contentTypeMeta,
-          contentType.isAcceptableOrUnknown(
-              data['content_type']!, _contentTypeMeta));
-    }
     if (data.containsKey('inherited_permissions')) {
       context.handle(
           _inheritedPermissionsMeta,
@@ -442,12 +397,6 @@ class Resources extends Table with TableInfo<Resources, Resource> {
           .read(DriftSqlType.dateTime, data['${effectivePrefix}modified']),
       deleted: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted']),
-      contentLength: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}content_length'])!,
-      contentSha256: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}content_sha256'])!,
-      contentType: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}content_type'])!,
       inheritedPermissions: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}inherited_permissions']),
       grants: attachedDatabase.typeMapping
@@ -476,9 +425,6 @@ class Resource extends DataClass implements Insertable<Resource> {
   final DateTime? created;
   final DateTime? modified;
   final DateTime? deleted;
-  final int contentLength;
-  final String contentSha256;
-  final String contentType;
   final String? inheritedPermissions;
   final String? grants;
   final int userPermission;
@@ -491,9 +437,6 @@ class Resource extends DataClass implements Insertable<Resource> {
       this.created,
       this.modified,
       this.deleted,
-      required this.contentLength,
-      required this.contentSha256,
-      required this.contentType,
       this.inheritedPermissions,
       this.grants,
       required this.userPermission,
@@ -516,9 +459,6 @@ class Resource extends DataClass implements Insertable<Resource> {
     if (!nullToAbsent || deleted != null) {
       map['deleted'] = Variable<DateTime>(deleted);
     }
-    map['content_length'] = Variable<int>(contentLength);
-    map['content_sha256'] = Variable<String>(contentSha256);
-    map['content_type'] = Variable<String>(contentType);
     if (!nullToAbsent || inheritedPermissions != null) {
       map['inherited_permissions'] = Variable<String>(inheritedPermissions);
     }
@@ -548,9 +488,6 @@ class Resource extends DataClass implements Insertable<Resource> {
       deleted: deleted == null && nullToAbsent
           ? const Value.absent()
           : Value(deleted),
-      contentLength: Value(contentLength),
-      contentSha256: Value(contentSha256),
-      contentType: Value(contentType),
       inheritedPermissions: inheritedPermissions == null && nullToAbsent
           ? const Value.absent()
           : Value(inheritedPermissions),
@@ -574,9 +511,6 @@ class Resource extends DataClass implements Insertable<Resource> {
       created: serializer.fromJson<DateTime?>(json['created']),
       modified: serializer.fromJson<DateTime?>(json['modified']),
       deleted: serializer.fromJson<DateTime?>(json['deleted']),
-      contentLength: serializer.fromJson<int>(json['content_length']),
-      contentSha256: serializer.fromJson<String>(json['content_sha256']),
-      contentType: serializer.fromJson<String>(json['content_type']),
       inheritedPermissions:
           serializer.fromJson<String?>(json['inherited_permissions']),
       grants: serializer.fromJson<String?>(json['grants']),
@@ -595,9 +529,6 @@ class Resource extends DataClass implements Insertable<Resource> {
       'created': serializer.toJson<DateTime?>(created),
       'modified': serializer.toJson<DateTime?>(modified),
       'deleted': serializer.toJson<DateTime?>(deleted),
-      'content_length': serializer.toJson<int>(contentLength),
-      'content_sha256': serializer.toJson<String>(contentSha256),
-      'content_type': serializer.toJson<String>(contentType),
       'inherited_permissions': serializer.toJson<String?>(inheritedPermissions),
       'grants': serializer.toJson<String?>(grants),
       'user_permission': serializer.toJson<int>(userPermission),
@@ -613,9 +544,6 @@ class Resource extends DataClass implements Insertable<Resource> {
           Value<DateTime?> created = const Value.absent(),
           Value<DateTime?> modified = const Value.absent(),
           Value<DateTime?> deleted = const Value.absent(),
-          int? contentLength,
-          String? contentSha256,
-          String? contentType,
           Value<String?> inheritedPermissions = const Value.absent(),
           Value<String?> grants = const Value.absent(),
           int? userPermission,
@@ -628,9 +556,6 @@ class Resource extends DataClass implements Insertable<Resource> {
         created: created.present ? created.value : this.created,
         modified: modified.present ? modified.value : this.modified,
         deleted: deleted.present ? deleted.value : this.deleted,
-        contentLength: contentLength ?? this.contentLength,
-        contentSha256: contentSha256 ?? this.contentSha256,
-        contentType: contentType ?? this.contentType,
         inheritedPermissions: inheritedPermissions.present
             ? inheritedPermissions.value
             : this.inheritedPermissions,
@@ -647,14 +572,6 @@ class Resource extends DataClass implements Insertable<Resource> {
       created: data.created.present ? data.created.value : this.created,
       modified: data.modified.present ? data.modified.value : this.modified,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
-      contentLength: data.contentLength.present
-          ? data.contentLength.value
-          : this.contentLength,
-      contentSha256: data.contentSha256.present
-          ? data.contentSha256.value
-          : this.contentSha256,
-      contentType:
-          data.contentType.present ? data.contentType.value : this.contentType,
       inheritedPermissions: data.inheritedPermissions.present
           ? data.inheritedPermissions.value
           : this.inheritedPermissions,
@@ -677,9 +594,6 @@ class Resource extends DataClass implements Insertable<Resource> {
           ..write('created: $created, ')
           ..write('modified: $modified, ')
           ..write('deleted: $deleted, ')
-          ..write('contentLength: $contentLength, ')
-          ..write('contentSha256: $contentSha256, ')
-          ..write('contentType: $contentType, ')
           ..write('inheritedPermissions: $inheritedPermissions, ')
           ..write('grants: $grants, ')
           ..write('userPermission: $userPermission, ')
@@ -689,21 +603,8 @@ class Resource extends DataClass implements Insertable<Resource> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id,
-      parent,
-      name,
-      dir,
-      created,
-      modified,
-      deleted,
-      contentLength,
-      contentSha256,
-      contentType,
-      inheritedPermissions,
-      grants,
-      userPermission,
-      lastRefresh);
+  int get hashCode => Object.hash(id, parent, name, dir, created, modified,
+      deleted, inheritedPermissions, grants, userPermission, lastRefresh);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -715,9 +616,6 @@ class Resource extends DataClass implements Insertable<Resource> {
           other.created == this.created &&
           other.modified == this.modified &&
           other.deleted == this.deleted &&
-          other.contentLength == this.contentLength &&
-          other.contentSha256 == this.contentSha256 &&
-          other.contentType == this.contentType &&
           other.inheritedPermissions == this.inheritedPermissions &&
           other.grants == this.grants &&
           other.userPermission == this.userPermission &&
@@ -732,9 +630,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
   final Value<DateTime?> created;
   final Value<DateTime?> modified;
   final Value<DateTime?> deleted;
-  final Value<int> contentLength;
-  final Value<String> contentSha256;
-  final Value<String> contentType;
   final Value<String?> inheritedPermissions;
   final Value<String?> grants;
   final Value<int> userPermission;
@@ -748,9 +643,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.created = const Value.absent(),
     this.modified = const Value.absent(),
     this.deleted = const Value.absent(),
-    this.contentLength = const Value.absent(),
-    this.contentSha256 = const Value.absent(),
-    this.contentType = const Value.absent(),
     this.inheritedPermissions = const Value.absent(),
     this.grants = const Value.absent(),
     this.userPermission = const Value.absent(),
@@ -765,9 +657,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.created = const Value.absent(),
     this.modified = const Value.absent(),
     this.deleted = const Value.absent(),
-    this.contentLength = const Value.absent(),
-    this.contentSha256 = const Value.absent(),
-    this.contentType = const Value.absent(),
     this.inheritedPermissions = const Value.absent(),
     this.grants = const Value.absent(),
     this.userPermission = const Value.absent(),
@@ -784,9 +673,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     Expression<DateTime>? created,
     Expression<DateTime>? modified,
     Expression<DateTime>? deleted,
-    Expression<int>? contentLength,
-    Expression<String>? contentSha256,
-    Expression<String>? contentType,
     Expression<String>? inheritedPermissions,
     Expression<String>? grants,
     Expression<int>? userPermission,
@@ -801,9 +687,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       if (created != null) 'created': created,
       if (modified != null) 'modified': modified,
       if (deleted != null) 'deleted': deleted,
-      if (contentLength != null) 'content_length': contentLength,
-      if (contentSha256 != null) 'content_sha256': contentSha256,
-      if (contentType != null) 'content_type': contentType,
       if (inheritedPermissions != null)
         'inherited_permissions': inheritedPermissions,
       if (grants != null) 'grants': grants,
@@ -821,9 +704,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       Value<DateTime?>? created,
       Value<DateTime?>? modified,
       Value<DateTime?>? deleted,
-      Value<int>? contentLength,
-      Value<String>? contentSha256,
-      Value<String>? contentType,
       Value<String?>? inheritedPermissions,
       Value<String?>? grants,
       Value<int>? userPermission,
@@ -837,9 +717,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       created: created ?? this.created,
       modified: modified ?? this.modified,
       deleted: deleted ?? this.deleted,
-      contentLength: contentLength ?? this.contentLength,
-      contentSha256: contentSha256 ?? this.contentSha256,
-      contentType: contentType ?? this.contentType,
       inheritedPermissions: inheritedPermissions ?? this.inheritedPermissions,
       grants: grants ?? this.grants,
       userPermission: userPermission ?? this.userPermission,
@@ -872,15 +749,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     if (deleted.present) {
       map['deleted'] = Variable<DateTime>(deleted.value);
     }
-    if (contentLength.present) {
-      map['content_length'] = Variable<int>(contentLength.value);
-    }
-    if (contentSha256.present) {
-      map['content_sha256'] = Variable<String>(contentSha256.value);
-    }
-    if (contentType.present) {
-      map['content_type'] = Variable<String>(contentType.value);
-    }
     if (inheritedPermissions.present) {
       map['inherited_permissions'] =
           Variable<String>(inheritedPermissions.value);
@@ -910,9 +778,6 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
           ..write('created: $created, ')
           ..write('modified: $modified, ')
           ..write('deleted: $deleted, ')
-          ..write('contentLength: $contentLength, ')
-          ..write('contentSha256: $contentSha256, ')
-          ..write('contentType: $contentType, ')
           ..write('inheritedPermissions: $inheritedPermissions, ')
           ..write('grants: $grants, ')
           ..write('userPermission: $userPermission, ')
@@ -1273,6 +1138,363 @@ class SharedCompanion extends UpdateCompanion<SharedData> {
     return (StringBuffer('SharedCompanion(')
           ..write('resourceId: $resourceId, ')
           ..write('seq: $seq, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class ResourceVersions extends Table
+    with TableInfo<ResourceVersions, ResourceVersion> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  ResourceVersions(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL PRIMARY KEY');
+  static const VerificationMeta _resourceIdMeta =
+      const VerificationMeta('resourceId');
+  late final GeneratedColumn<String> resourceId = GeneratedColumn<String>(
+      'resource_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL REFERENCES resources(id)');
+  static const VerificationMeta _createdMeta =
+      const VerificationMeta('created');
+  late final GeneratedColumn<DateTime> created = GeneratedColumn<DateTime>(
+      'created', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL');
+  static const VerificationMeta _sizeMeta = const VerificationMeta('size');
+  late final GeneratedColumn<int> size = GeneratedColumn<int>(
+      'size', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL');
+  static const VerificationMeta _mimeTypeMeta =
+      const VerificationMeta('mimeType');
+  late final GeneratedColumn<String> mimeType = GeneratedColumn<String>(
+      'mime_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL');
+  static const VerificationMeta _sha256Meta = const VerificationMeta('sha256');
+  late final GeneratedColumn<String> sha256 = GeneratedColumn<String>(
+      'sha256', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL');
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, resourceId, created, size, mimeType, sha256];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'resource_versions';
+  @override
+  VerificationContext validateIntegrity(Insertable<ResourceVersion> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('resource_id')) {
+      context.handle(
+          _resourceIdMeta,
+          resourceId.isAcceptableOrUnknown(
+              data['resource_id']!, _resourceIdMeta));
+    } else if (isInserting) {
+      context.missing(_resourceIdMeta);
+    }
+    if (data.containsKey('created')) {
+      context.handle(_createdMeta,
+          created.isAcceptableOrUnknown(data['created']!, _createdMeta));
+    } else if (isInserting) {
+      context.missing(_createdMeta);
+    }
+    if (data.containsKey('size')) {
+      context.handle(
+          _sizeMeta, size.isAcceptableOrUnknown(data['size']!, _sizeMeta));
+    } else if (isInserting) {
+      context.missing(_sizeMeta);
+    }
+    if (data.containsKey('mime_type')) {
+      context.handle(_mimeTypeMeta,
+          mimeType.isAcceptableOrUnknown(data['mime_type']!, _mimeTypeMeta));
+    } else if (isInserting) {
+      context.missing(_mimeTypeMeta);
+    }
+    if (data.containsKey('sha256')) {
+      context.handle(_sha256Meta,
+          sha256.isAcceptableOrUnknown(data['sha256']!, _sha256Meta));
+    } else if (isInserting) {
+      context.missing(_sha256Meta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ResourceVersion map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ResourceVersion(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      resourceId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}resource_id'])!,
+      created: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created'])!,
+      size: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}size'])!,
+      mimeType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}mime_type'])!,
+      sha256: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sha256'])!,
+    );
+  }
+
+  @override
+  ResourceVersions createAlias(String alias) {
+    return ResourceVersions(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
+  final String id;
+  final String resourceId;
+  final DateTime created;
+  final int size;
+  final String mimeType;
+  final String sha256;
+  const ResourceVersion(
+      {required this.id,
+      required this.resourceId,
+      required this.created,
+      required this.size,
+      required this.mimeType,
+      required this.sha256});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['resource_id'] = Variable<String>(resourceId);
+    map['created'] = Variable<DateTime>(created);
+    map['size'] = Variable<int>(size);
+    map['mime_type'] = Variable<String>(mimeType);
+    map['sha256'] = Variable<String>(sha256);
+    return map;
+  }
+
+  ResourceVersionsCompanion toCompanion(bool nullToAbsent) {
+    return ResourceVersionsCompanion(
+      id: Value(id),
+      resourceId: Value(resourceId),
+      created: Value(created),
+      size: Value(size),
+      mimeType: Value(mimeType),
+      sha256: Value(sha256),
+    );
+  }
+
+  factory ResourceVersion.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ResourceVersion(
+      id: serializer.fromJson<String>(json['id']),
+      resourceId: serializer.fromJson<String>(json['resource_id']),
+      created: serializer.fromJson<DateTime>(json['created']),
+      size: serializer.fromJson<int>(json['size']),
+      mimeType: serializer.fromJson<String>(json['mime_type']),
+      sha256: serializer.fromJson<String>(json['sha256']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'resource_id': serializer.toJson<String>(resourceId),
+      'created': serializer.toJson<DateTime>(created),
+      'size': serializer.toJson<int>(size),
+      'mime_type': serializer.toJson<String>(mimeType),
+      'sha256': serializer.toJson<String>(sha256),
+    };
+  }
+
+  ResourceVersion copyWith(
+          {String? id,
+          String? resourceId,
+          DateTime? created,
+          int? size,
+          String? mimeType,
+          String? sha256}) =>
+      ResourceVersion(
+        id: id ?? this.id,
+        resourceId: resourceId ?? this.resourceId,
+        created: created ?? this.created,
+        size: size ?? this.size,
+        mimeType: mimeType ?? this.mimeType,
+        sha256: sha256 ?? this.sha256,
+      );
+  ResourceVersion copyWithCompanion(ResourceVersionsCompanion data) {
+    return ResourceVersion(
+      id: data.id.present ? data.id.value : this.id,
+      resourceId:
+          data.resourceId.present ? data.resourceId.value : this.resourceId,
+      created: data.created.present ? data.created.value : this.created,
+      size: data.size.present ? data.size.value : this.size,
+      mimeType: data.mimeType.present ? data.mimeType.value : this.mimeType,
+      sha256: data.sha256.present ? data.sha256.value : this.sha256,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ResourceVersion(')
+          ..write('id: $id, ')
+          ..write('resourceId: $resourceId, ')
+          ..write('created: $created, ')
+          ..write('size: $size, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('sha256: $sha256')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, resourceId, created, size, mimeType, sha256);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ResourceVersion &&
+          other.id == this.id &&
+          other.resourceId == this.resourceId &&
+          other.created == this.created &&
+          other.size == this.size &&
+          other.mimeType == this.mimeType &&
+          other.sha256 == this.sha256);
+}
+
+class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
+  final Value<String> id;
+  final Value<String> resourceId;
+  final Value<DateTime> created;
+  final Value<int> size;
+  final Value<String> mimeType;
+  final Value<String> sha256;
+  final Value<int> rowid;
+  const ResourceVersionsCompanion({
+    this.id = const Value.absent(),
+    this.resourceId = const Value.absent(),
+    this.created = const Value.absent(),
+    this.size = const Value.absent(),
+    this.mimeType = const Value.absent(),
+    this.sha256 = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ResourceVersionsCompanion.insert({
+    required String id,
+    required String resourceId,
+    required DateTime created,
+    required int size,
+    required String mimeType,
+    required String sha256,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        resourceId = Value(resourceId),
+        created = Value(created),
+        size = Value(size),
+        mimeType = Value(mimeType),
+        sha256 = Value(sha256);
+  static Insertable<ResourceVersion> custom({
+    Expression<String>? id,
+    Expression<String>? resourceId,
+    Expression<DateTime>? created,
+    Expression<int>? size,
+    Expression<String>? mimeType,
+    Expression<String>? sha256,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (resourceId != null) 'resource_id': resourceId,
+      if (created != null) 'created': created,
+      if (size != null) 'size': size,
+      if (mimeType != null) 'mime_type': mimeType,
+      if (sha256 != null) 'sha256': sha256,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ResourceVersionsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? resourceId,
+      Value<DateTime>? created,
+      Value<int>? size,
+      Value<String>? mimeType,
+      Value<String>? sha256,
+      Value<int>? rowid}) {
+    return ResourceVersionsCompanion(
+      id: id ?? this.id,
+      resourceId: resourceId ?? this.resourceId,
+      created: created ?? this.created,
+      size: size ?? this.size,
+      mimeType: mimeType ?? this.mimeType,
+      sha256: sha256 ?? this.sha256,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (resourceId.present) {
+      map['resource_id'] = Variable<String>(resourceId.value);
+    }
+    if (created.present) {
+      map['created'] = Variable<DateTime>(created.value);
+    }
+    if (size.present) {
+      map['size'] = Variable<int>(size.value);
+    }
+    if (mimeType.present) {
+      map['mime_type'] = Variable<String>(mimeType.value);
+    }
+    if (sha256.present) {
+      map['sha256'] = Variable<String>(sha256.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ResourceVersionsCompanion(')
+          ..write('id: $id, ')
+          ..write('resourceId: $resourceId, ')
+          ..write('created: $created, ')
+          ..write('size: $size, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('sha256: $sha256, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2200,6 +2422,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Shared shared = Shared(this);
   late final Index sharedResources = Index('shared_resources',
       'CREATE INDEX IF NOT EXISTS shared_resources ON shared (seq)');
+  late final ResourceVersions resourceVersions = ResourceVersions(this);
   late final Recents recents = Recents(this);
   late final Index recentAccesses = Index('recent_accesses',
       'CREATE INDEX IF NOT EXISTS recent_accesses ON recents (accessed DESC)');
@@ -2262,6 +2485,17 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         ));
   }
 
+  Selectable<ResourceVersion> latestVersion(String id) {
+    return customSelect(
+        'SELECT * FROM resource_versions WHERE resource_id = ?1 ORDER BY created DESC LIMIT 1',
+        variables: [
+          Variable<String>(id)
+        ],
+        readsFrom: {
+          resourceVersions,
+        }).asyncMap(resourceVersions.mapFromRow);
+  }
+
   Selectable<Resource> selectRecents() {
     return customSelect(
         'SELECT r.* FROM recents AS h INNER JOIN resources AS r ON h.resource_id = r.id WHERE r.deleted IS NULL AND r.parent IS NOT NULL ORDER BY h.accessed DESC',
@@ -2314,6 +2548,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         trashedResources,
         shared,
         sharedResources,
+        resourceVersions,
         recents,
         recentAccesses,
         publinks,
@@ -2476,9 +2711,6 @@ typedef $ResourcesCreateCompanionBuilder = ResourcesCompanion Function({
   Value<DateTime?> created,
   Value<DateTime?> modified,
   Value<DateTime?> deleted,
-  Value<int> contentLength,
-  Value<String> contentSha256,
-  Value<String> contentType,
   Value<String?> inheritedPermissions,
   Value<String?> grants,
   Value<int> userPermission,
@@ -2493,9 +2725,6 @@ typedef $ResourcesUpdateCompanionBuilder = ResourcesCompanion Function({
   Value<DateTime?> created,
   Value<DateTime?> modified,
   Value<DateTime?> deleted,
-  Value<int> contentLength,
-  Value<String> contentSha256,
-  Value<String> contentType,
   Value<String?> inheritedPermissions,
   Value<String?> grants,
   Value<int> userPermission,
@@ -2518,6 +2747,22 @@ final class $ResourcesReferences
         .filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_sharedRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<ResourceVersions, List<ResourceVersion>>
+      _resourceVersionsRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.resourceVersions,
+              aliasName: $_aliasNameGenerator(
+                  db.resources.id, db.resourceVersions.resourceId));
+
+  $ResourceVersionsProcessedTableManager get resourceVersionsRefs {
+    final manager = $ResourceVersionsTableManager($_db, $_db.resourceVersions)
+        .filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache =
+        $_typedResult.readTableOrNull(_resourceVersionsRefsTable($_db));
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -2596,15 +2841,6 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
   ColumnFilters<DateTime> get deleted => $composableBuilder(
       column: $table.deleted, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get contentLength => $composableBuilder(
-      column: $table.contentLength, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get contentSha256 => $composableBuilder(
-      column: $table.contentSha256, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get contentType => $composableBuilder(
-      column: $table.contentType, builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get inheritedPermissions => $composableBuilder(
       column: $table.inheritedPermissions,
       builder: (column) => ColumnFilters(column));
@@ -2632,6 +2868,27 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
             $SharedFilterComposer(
               $db: $db,
               $table: $db.shared,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> resourceVersionsRefs(
+      Expression<bool> Function($ResourceVersionsFilterComposer f) f) {
+    final $ResourceVersionsFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.resourceVersions,
+        getReferencedColumn: (t) => t.resourceId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourceVersionsFilterComposer(
+              $db: $db,
+              $table: $db.resourceVersions,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -2733,17 +2990,6 @@ class $ResourcesOrderingComposer extends Composer<_$AppDatabase, Resources> {
   ColumnOrderings<DateTime> get deleted => $composableBuilder(
       column: $table.deleted, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get contentLength => $composableBuilder(
-      column: $table.contentLength,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get contentSha256 => $composableBuilder(
-      column: $table.contentSha256,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get contentType => $composableBuilder(
-      column: $table.contentType, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get inheritedPermissions => $composableBuilder(
       column: $table.inheritedPermissions,
       builder: (column) => ColumnOrderings(column));
@@ -2788,15 +3034,6 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
   GeneratedColumn<DateTime> get deleted =>
       $composableBuilder(column: $table.deleted, builder: (column) => column);
 
-  GeneratedColumn<int> get contentLength => $composableBuilder(
-      column: $table.contentLength, builder: (column) => column);
-
-  GeneratedColumn<String> get contentSha256 => $composableBuilder(
-      column: $table.contentSha256, builder: (column) => column);
-
-  GeneratedColumn<String> get contentType => $composableBuilder(
-      column: $table.contentType, builder: (column) => column);
-
   GeneratedColumn<String> get inheritedPermissions => $composableBuilder(
       column: $table.inheritedPermissions, builder: (column) => column);
 
@@ -2822,6 +3059,27 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
             $SharedAnnotationComposer(
               $db: $db,
               $table: $db.shared,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<T> resourceVersionsRefs<T extends Object>(
+      Expression<T> Function($ResourceVersionsAnnotationComposer a) f) {
+    final $ResourceVersionsAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.resourceVersions,
+        getReferencedColumn: (t) => t.resourceId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourceVersionsAnnotationComposer(
+              $db: $db,
+              $table: $db.resourceVersions,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -2907,6 +3165,7 @@ class $ResourcesTableManager extends RootTableManager<
     Resource,
     PrefetchHooks Function(
         {bool sharedRefs,
+        bool resourceVersionsRefs,
         bool recentsRefs,
         bool publinksRefs,
         bool bookmarksRefs})> {
@@ -2928,9 +3187,6 @@ class $ResourcesTableManager extends RootTableManager<
             Value<DateTime?> created = const Value.absent(),
             Value<DateTime?> modified = const Value.absent(),
             Value<DateTime?> deleted = const Value.absent(),
-            Value<int> contentLength = const Value.absent(),
-            Value<String> contentSha256 = const Value.absent(),
-            Value<String> contentType = const Value.absent(),
             Value<String?> inheritedPermissions = const Value.absent(),
             Value<String?> grants = const Value.absent(),
             Value<int> userPermission = const Value.absent(),
@@ -2945,9 +3201,6 @@ class $ResourcesTableManager extends RootTableManager<
             created: created,
             modified: modified,
             deleted: deleted,
-            contentLength: contentLength,
-            contentSha256: contentSha256,
-            contentType: contentType,
             inheritedPermissions: inheritedPermissions,
             grants: grants,
             userPermission: userPermission,
@@ -2962,9 +3215,6 @@ class $ResourcesTableManager extends RootTableManager<
             Value<DateTime?> created = const Value.absent(),
             Value<DateTime?> modified = const Value.absent(),
             Value<DateTime?> deleted = const Value.absent(),
-            Value<int> contentLength = const Value.absent(),
-            Value<String> contentSha256 = const Value.absent(),
-            Value<String> contentType = const Value.absent(),
             Value<String?> inheritedPermissions = const Value.absent(),
             Value<String?> grants = const Value.absent(),
             Value<int> userPermission = const Value.absent(),
@@ -2979,9 +3229,6 @@ class $ResourcesTableManager extends RootTableManager<
             created: created,
             modified: modified,
             deleted: deleted,
-            contentLength: contentLength,
-            contentSha256: contentSha256,
-            contentType: contentType,
             inheritedPermissions: inheritedPermissions,
             grants: grants,
             userPermission: userPermission,
@@ -2994,6 +3241,7 @@ class $ResourcesTableManager extends RootTableManager<
               .toList(),
           prefetchHooksCallback: (
               {sharedRefs = false,
+              resourceVersionsRefs = false,
               recentsRefs = false,
               publinksRefs = false,
               bookmarksRefs = false}) {
@@ -3001,6 +3249,7 @@ class $ResourcesTableManager extends RootTableManager<
               db: db,
               explicitlyWatchedTables: [
                 if (sharedRefs) db.shared,
+                if (resourceVersionsRefs) db.resourceVersions,
                 if (recentsRefs) db.recents,
                 if (publinksRefs) db.publinks,
                 if (bookmarksRefs) db.bookmarks
@@ -3015,6 +3264,19 @@ class $ResourcesTableManager extends RootTableManager<
                             $ResourcesReferences._sharedRefsTable(db),
                         managerFromTypedResult: (p0) =>
                             $ResourcesReferences(db, table, p0).sharedRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.resourceId == item.id),
+                        typedResults: items),
+                  if (resourceVersionsRefs)
+                    await $_getPrefetchedData<Resource, Resources,
+                            ResourceVersion>(
+                        currentTable: table,
+                        referencedTable:
+                            $ResourcesReferences._resourceVersionsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $ResourcesReferences(db, table, p0)
+                                .resourceVersionsRefs,
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.resourceId == item.id),
@@ -3072,6 +3334,7 @@ typedef $ResourcesProcessedTableManager = ProcessedTableManager<
     Resource,
     PrefetchHooks Function(
         {bool sharedRefs,
+        bool resourceVersionsRefs,
         bool recentsRefs,
         bool publinksRefs,
         bool bookmarksRefs})>;
@@ -3406,6 +3669,296 @@ typedef $SharedProcessedTableManager = ProcessedTableManager<
     $SharedUpdateCompanionBuilder,
     (SharedData, $SharedReferences),
     SharedData,
+    PrefetchHooks Function({bool resourceId})>;
+typedef $ResourceVersionsCreateCompanionBuilder = ResourceVersionsCompanion
+    Function({
+  required String id,
+  required String resourceId,
+  required DateTime created,
+  required int size,
+  required String mimeType,
+  required String sha256,
+  Value<int> rowid,
+});
+typedef $ResourceVersionsUpdateCompanionBuilder = ResourceVersionsCompanion
+    Function({
+  Value<String> id,
+  Value<String> resourceId,
+  Value<DateTime> created,
+  Value<int> size,
+  Value<String> mimeType,
+  Value<String> sha256,
+  Value<int> rowid,
+});
+
+final class $ResourceVersionsReferences
+    extends BaseReferences<_$AppDatabase, ResourceVersions, ResourceVersion> {
+  $ResourceVersionsReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static Resources _resourceIdTable(_$AppDatabase db) =>
+      db.resources.createAlias($_aliasNameGenerator(
+          db.resourceVersions.resourceId, db.resources.id));
+
+  $ResourcesProcessedTableManager get resourceId {
+    final $_column = $_itemColumn<String>('resource_id')!;
+
+    final manager = $ResourcesTableManager($_db, $_db.resources)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $ResourceVersionsFilterComposer
+    extends Composer<_$AppDatabase, ResourceVersions> {
+  $ResourceVersionsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get created => $composableBuilder(
+      column: $table.created, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get size => $composableBuilder(
+      column: $table.size, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get mimeType => $composableBuilder(
+      column: $table.mimeType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get sha256 => $composableBuilder(
+      column: $table.sha256, builder: (column) => ColumnFilters(column));
+
+  $ResourcesFilterComposer get resourceId {
+    final $ResourcesFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.resourceId,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesFilterComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $ResourceVersionsOrderingComposer
+    extends Composer<_$AppDatabase, ResourceVersions> {
+  $ResourceVersionsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get created => $composableBuilder(
+      column: $table.created, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get size => $composableBuilder(
+      column: $table.size, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get mimeType => $composableBuilder(
+      column: $table.mimeType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get sha256 => $composableBuilder(
+      column: $table.sha256, builder: (column) => ColumnOrderings(column));
+
+  $ResourcesOrderingComposer get resourceId {
+    final $ResourcesOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.resourceId,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesOrderingComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $ResourceVersionsAnnotationComposer
+    extends Composer<_$AppDatabase, ResourceVersions> {
+  $ResourceVersionsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get created =>
+      $composableBuilder(column: $table.created, builder: (column) => column);
+
+  GeneratedColumn<int> get size =>
+      $composableBuilder(column: $table.size, builder: (column) => column);
+
+  GeneratedColumn<String> get mimeType =>
+      $composableBuilder(column: $table.mimeType, builder: (column) => column);
+
+  GeneratedColumn<String> get sha256 =>
+      $composableBuilder(column: $table.sha256, builder: (column) => column);
+
+  $ResourcesAnnotationComposer get resourceId {
+    final $ResourcesAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.resourceId,
+        referencedTable: $db.resources,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $ResourcesAnnotationComposer(
+              $db: $db,
+              $table: $db.resources,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $ResourceVersionsTableManager extends RootTableManager<
+    _$AppDatabase,
+    ResourceVersions,
+    ResourceVersion,
+    $ResourceVersionsFilterComposer,
+    $ResourceVersionsOrderingComposer,
+    $ResourceVersionsAnnotationComposer,
+    $ResourceVersionsCreateCompanionBuilder,
+    $ResourceVersionsUpdateCompanionBuilder,
+    (ResourceVersion, $ResourceVersionsReferences),
+    ResourceVersion,
+    PrefetchHooks Function({bool resourceId})> {
+  $ResourceVersionsTableManager(_$AppDatabase db, ResourceVersions table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $ResourceVersionsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $ResourceVersionsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $ResourceVersionsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> resourceId = const Value.absent(),
+            Value<DateTime> created = const Value.absent(),
+            Value<int> size = const Value.absent(),
+            Value<String> mimeType = const Value.absent(),
+            Value<String> sha256 = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ResourceVersionsCompanion(
+            id: id,
+            resourceId: resourceId,
+            created: created,
+            size: size,
+            mimeType: mimeType,
+            sha256: sha256,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String resourceId,
+            required DateTime created,
+            required int size,
+            required String mimeType,
+            required String sha256,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ResourceVersionsCompanion.insert(
+            id: id,
+            resourceId: resourceId,
+            created: created,
+            size: size,
+            mimeType: mimeType,
+            sha256: sha256,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $ResourceVersionsReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({resourceId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (resourceId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.resourceId,
+                    referencedTable:
+                        $ResourceVersionsReferences._resourceIdTable(db),
+                    referencedColumn:
+                        $ResourceVersionsReferences._resourceIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $ResourceVersionsProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    ResourceVersions,
+    ResourceVersion,
+    $ResourceVersionsFilterComposer,
+    $ResourceVersionsOrderingComposer,
+    $ResourceVersionsAnnotationComposer,
+    $ResourceVersionsCreateCompanionBuilder,
+    $ResourceVersionsUpdateCompanionBuilder,
+    (ResourceVersion, $ResourceVersionsReferences),
+    ResourceVersion,
     PrefetchHooks Function({bool resourceId})>;
 typedef $RecentsCreateCompanionBuilder = RecentsCompanion Function({
   required String resourceId,
@@ -4201,6 +4754,8 @@ class $AppDatabaseManager {
   $TrashedResourcesTableManager get trashedResources =>
       $TrashedResourcesTableManager(_db, _db.trashedResources);
   $SharedTableManager get shared => $SharedTableManager(_db, _db.shared);
+  $ResourceVersionsTableManager get resourceVersions =>
+      $ResourceVersionsTableManager(_db, _db.resourceVersions);
   $RecentsTableManager get recents => $RecentsTableManager(_db, _db.recents);
   $PublinksTableManager get publinks =>
       $PublinksTableManager(_db, _db.publinks);

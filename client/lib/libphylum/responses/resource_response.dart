@@ -3,10 +3,12 @@ part of 'responses.dart';
 class ResourceResponse extends PhylumApiSuccessResponse {
   Resource _resource;
   Resource get resource => _resource;
+  final Iterable<ResourceVersion> versions;
   final Iterable<Publink> publinks;
   final Map<String, Permission> permissions;
 
-  ResourceResponse({required Resource resource, required this.publinks, required this.permissions})
+  ResourceResponse(
+      {required Resource resource, required this.versions, required this.publinks, required this.permissions})
       : _resource = resource;
 
   factory ResourceResponse.fromResponse(
@@ -28,15 +30,13 @@ class ResourceResponse extends PhylumApiSuccessResponse {
       created: DateTime.fromMillisecondsSinceEpoch(data['created']),
       modified: DateTime.fromMillisecondsSinceEpoch(data['modified']),
       deleted: data['deleted'] == 0 ? null : DateTime.fromMillisecondsSinceEpoch(data['deleted']),
-      contentLength: data['c_len'],
-      contentSha256: data['c_sha256'],
-      contentType: data['c_type'],
       inheritedPermissions: jsonEncode(inheritedPermissions),
       grants: grants.isEmpty ? null : jsonEncode(grants),
       userPermission: 0,
     );
+    final versions = parseResourceVersions(data['versions'], r.id);
     final publinks = parsePublinks(data['publinks'], r.id);
-    return ResourceResponse(resource: r, publinks: publinks, permissions: permissions);
+    return ResourceResponse(resource: r, versions: versions, publinks: publinks, permissions: permissions);
   }
 
   void _updateUserPermissions(PhylumAccount account) {
@@ -55,6 +55,7 @@ class ResourceResponse extends PhylumApiSuccessResponse {
 
     await db.batch((batch) async {
       batch.insert(db.resources, resource, mode: InsertMode.insertOrReplace);
+      batch.insertAll(db.resourceVersions, versions, mode: InsertMode.insertOrReplace);
 
       for (final id in orphanedPublinks) {
         batch.update(db.publinks, PublinksCompanion(root: Value('')), where: (o) => o.id.equals(id));
