@@ -11,6 +11,9 @@ typedef MenuOptionGroups = Iterable<Iterable<MenuOption>>;
 
 MenuOptionGroups createOptions(BuildContext context) => [
       [
+        MenuOption.details,
+      ],
+      [
         MenuOption.download,
         if (!kIsWeb && Platform.isAndroid) MenuOption.share,
         MenuOption.openWith,
@@ -27,22 +30,22 @@ MenuOptionGroups createOptions(BuildContext context) => [
         MenuOption.permissions,
         MenuOption.publinks,
       ],
-      [
-        MenuOption.details,
-      ],
     ];
 
 const trashedResourceOptions = [
   [
-    MenuOption.restore,
-    MenuOption.deleteForever,
+    MenuOption.details,
   ],
   [
-    MenuOption.details,
+    MenuOption.restore,
+    MenuOption.deleteForever,
   ],
 ];
 
 final parentFolderOptions = [
+  [
+    MenuOption.details,
+  ],
   [
     MenuOption.newFolder,
     MenuOption.uploadFiles,
@@ -54,9 +57,6 @@ final parentFolderOptions = [
     MenuOption.permissions,
     MenuOption.publinks,
   ],
-  [
-    MenuOption.details,
-  ]
 ];
 
 Future<Iterable<PopupMenuEntry<MenuOption>>> buildPopupMenuItems(
