@@ -9,10 +9,11 @@ import (
 )
 
 type copyParams struct {
-	Src      string                            `json:"src" form:"src" binding:"required"`
-	Dest     string                            `json:"dest" form:"dest" binding:"required"`
-	ID       uuid.UUID                         `json:"id" form:"id"`
-	Conflict fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
+	Src       string                            `json:"src" form:"src" binding:"required"`
+	Dest      string                            `json:"dest" form:"dest" binding:"required"`
+	ID        uuid.UUID                         `json:"id" form:"id"`
+	VersionID uuid.UUID                         `json:"version_id" form:"id"`
+	Conflict  fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
 }
 
 func handleCopyRequest(c *gin.Context) {
