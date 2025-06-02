@@ -3,7 +3,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 
 const IconData folderIcon = Icons.folder;
-const IconData fileIcon = Icons.insert_drive_file;
+const IconData defaultFileIcon = Icons.insert_drive_file;
 
 extension ResourceIconExtension on Resource {
   Widget getIcon(PhylumAccount account) {
@@ -28,6 +28,6 @@ extension ResourceVersionIconExtension on ResourceVersion {
     } else if (mimeType.startsWith("text")) {
       return const Icon(Icons.article);
     }
-    return const Icon(fileIcon);
+    return const Icon(defaultFileIcon);
   }
 }

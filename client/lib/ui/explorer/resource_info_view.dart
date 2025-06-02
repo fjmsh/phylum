@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -9,6 +8,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/ui/explorer/mime_type_names.dart';
 import 'package:phylum/ui/explorer/resource_permissions_view.dart';
 import 'package:phylum/ui/explorer/resource_publinks_view.dart';
 import 'package:phylum/ui/explorer/resource_sync_state.dart';
@@ -80,15 +80,7 @@ class ResourceInfoView extends StatelessWidget {
                   title: Text('Type'),
                   subtitle: Text('Folder'),
                 )
-              : StreamBuilder(
-                  stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
-                  builder: (context, snapshot) {
-                    return ListTile(
-                      leading: snapshot.data?.getIcon() ?? Icon(Icons.insert_drive_file),
-                      title: const Text('Type'),
-                      subtitle: Text(snapshot.data?.mimeType ?? '<unknown>'),
-                    );
-                  }),
+              : LatestVersionInfoView(resourceId: resource.id),
           ListTile(
             leading: const Icon(Icons.event),
             title: const Text('Created'),
@@ -125,47 +117,76 @@ class ResourceInfoView extends StatelessWidget {
                   },
                 );
               }),
-          if (!resource.dir)
-            StreamBuilder(
-                stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
-                builder: (context, snapshot) {
-                  final data = snapshot.data;
+          // if (!resource.dir)
+          //   StreamBuilder(
+          //       stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
+          //       builder: (context, snapshot) {
+          //         final data = snapshot.data;
 
-                  if (data == null) {
-                    return SizedBox();
-                  }
+          //         if (data == null) {
+          //           return SizedBox();
+          //         }
 
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.storage),
-                        title: const Text('Size'),
-                        subtitle: Text('${data.size.formatForDisplay()} (${data.size} B)'),
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.shield),
-                        title: const Text('SHA-256'),
-                        onLongPress: () {
-                          Clipboard.setData(ClipboardData(text: data.sha256));
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('SHA-256 checksum copied to clipboard'),
-                            duration: const Duration(seconds: 2),
-                          ));
-                        },
-                        subtitle: Text(
-                          data.sha256,
-                          maxLines: 1,
-                          softWrap: false,
-                          overflow: TextOverflow.fade,
-                        ),
-                      ),
-                    ],
-                  );
-                }),
+          //         return Column(
+          //           mainAxisSize: MainAxisSize.min,
+          //           children: [
+          //             ListTile(
+          //               leading: const Icon(Icons.storage),
+          //               title: const Text('Size'),
+          //               subtitle: Text('${data.size.formatForDisplay()} (${data.size} B)'),
+          //             ),
+          //             ListTile(
+          //               leading: const Icon(Icons.shield),
+          //               title: const Text('SHA-256'),
+          //               onLongPress: () {
+          //                 Clipboard.setData(ClipboardData(text: data.sha256));
+          //                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          //                   content: Text('SHA-256 checksum copied to clipboard'),
+          //                   duration: const Duration(seconds: 2),
+          //                 ));
+          //               },
+          //               subtitle: Text(
+          //                 data.sha256,
+          //                 maxLines: 1,
+          //                 softWrap: false,
+          //                 overflow: TextOverflow.fade,
+          //               ),
+          //             ),
+          //           ],
+          //         );
+          //       }),
         ],
       ),
     );
+  }
+}
+
+class LatestVersionInfoView extends StatelessWidget {
+  final String resourceId;
+
+  const LatestVersionInfoView({super.key, required this.resourceId});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+        stream: context.read<PhylumAccount>().db.latestVersion(resourceId).watchSingleOrNull(),
+        builder: (context, snapshot) {
+          final data = snapshot.data;
+
+          if (data == null) {
+            return const ListTile(
+              leading: Icon(defaultFileIcon),
+              title: Text('Type'),
+              subtitle: Text(''),
+            );
+          }
+
+          return ListTile(
+            leading: data.getIcon(),
+            title: Text('Type'),
+            subtitle: Text('${mimeTypeName(data.mimeType)} \u2022 ${data.size.formatForDisplay()}'),
+          );
+        });
   }
 }
 
