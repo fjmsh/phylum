@@ -35,6 +35,7 @@ ResourceVersion parseResourceVersion(Map data, String resourceId) {
   return ResourceVersion(
     id: data['id'],
     created: DateTime.fromMillisecondsSinceEpoch(data['created'] * 1000),
+    deleted: data['deleted'] != null,
     resourceId: resourceId,
     size: data['size'],
     mimeType: data['mime_type'],

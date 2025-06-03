@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS resource_versions(
     id TEXT NOT NULL PRIMARY KEY,
     resource_id TEXT NOT NULL REFERENCES resources (id),
     created DATETIME NOT NULL,
+    deleted BOOLEAN NOT NULL CHECK ("deleted" IN (0, 1)),
     size INTEGER NOT NULL,
     mime_type TEXT NOT NULL,
     sha256 TEXT NOT NULL
@@ -37,3 +38,5 @@ parents: WITH RECURSIVE parents(id, parent, name, deleted, user_permission) AS (
 permissions: SELECT name, inherited_permissions, grants, user_permission FROM resources WhERE id = :id;
 
 latestVersion: SELECT * from resource_versions WHERE resource_id = :id ORDER BY created DESC LIMIT 1;
+
+availableVersions: SELECT COUNT(*) from resource_versions WHERE resource_id = :id AND deleted = 0;

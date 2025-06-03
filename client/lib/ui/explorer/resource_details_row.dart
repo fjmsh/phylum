@@ -130,6 +130,19 @@ class ResourceDetailsRow extends StatelessWidget {
                             child: Icon(Icons.people_alt, size: _subtitleIconSize),
                           ),
                         StreamBuilder<int>(
+                            stream: context.read<PhylumAccount>().db.availableVersions(resource.id).watchSingle(),
+                            initialData: 0,
+                            builder: (context, snapshot) {
+                              if ((snapshot.data ?? 0) != 0) {
+                                return const Padding(
+                                  padding: EdgeInsets.only(right: 6.0),
+                                  // TODO: text Scaling and semantic label
+                                  child: Icon(Icons.history, size: _subtitleIconSize),
+                                );
+                              }
+                              return const SizedBox();
+                            }),
+                        StreamBuilder<int>(
                             stream: account.db.countPublinks(resource.id).watchSingle(),
                             initialData: 0,
                             builder: (context, snapshot) {

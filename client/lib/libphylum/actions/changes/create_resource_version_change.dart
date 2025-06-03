@@ -31,6 +31,7 @@ class CreateResourceVersionChange extends LocalChange<ResourceVersion> {
       id: objectId,
       resourceId: resourceId,
       created: created,
+      deleted: false,
       size: size,
       mimeType: mimeType,
       sha256: sha256,

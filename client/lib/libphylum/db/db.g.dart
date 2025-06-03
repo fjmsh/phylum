@@ -1170,6 +1170,13 @@ class ResourceVersions extends Table
       type: DriftSqlType.dateTime,
       requiredDuringInsert: true,
       $customConstraints: 'NOT NULL');
+  static const VerificationMeta _deletedMeta =
+      const VerificationMeta('deleted');
+  late final GeneratedColumn<bool> deleted = GeneratedColumn<bool>(
+      'deleted', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL CHECK (deleted IN (0, 1))');
   static const VerificationMeta _sizeMeta = const VerificationMeta('size');
   late final GeneratedColumn<int> size = GeneratedColumn<int>(
       'size', aliasedName, false,
@@ -1191,7 +1198,7 @@ class ResourceVersions extends Table
       $customConstraints: 'NOT NULL');
   @override
   List<GeneratedColumn> get $columns =>
-      [id, resourceId, created, size, mimeType, sha256];
+      [id, resourceId, created, deleted, size, mimeType, sha256];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1220,6 +1227,12 @@ class ResourceVersions extends Table
           created.isAcceptableOrUnknown(data['created']!, _createdMeta));
     } else if (isInserting) {
       context.missing(_createdMeta);
+    }
+    if (data.containsKey('deleted')) {
+      context.handle(_deletedMeta,
+          deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta));
+    } else if (isInserting) {
+      context.missing(_deletedMeta);
     }
     if (data.containsKey('size')) {
       context.handle(
@@ -1254,6 +1267,8 @@ class ResourceVersions extends Table
           .read(DriftSqlType.string, data['${effectivePrefix}resource_id'])!,
       created: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created'])!,
+      deleted: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}deleted'])!,
       size: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}size'])!,
       mimeType: attachedDatabase.typeMapping
@@ -1276,6 +1291,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
   final String id;
   final String resourceId;
   final DateTime created;
+  final bool deleted;
   final int size;
   final String mimeType;
   final String sha256;
@@ -1283,6 +1299,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
       {required this.id,
       required this.resourceId,
       required this.created,
+      required this.deleted,
       required this.size,
       required this.mimeType,
       required this.sha256});
@@ -1292,6 +1309,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
     map['id'] = Variable<String>(id);
     map['resource_id'] = Variable<String>(resourceId);
     map['created'] = Variable<DateTime>(created);
+    map['deleted'] = Variable<bool>(deleted);
     map['size'] = Variable<int>(size);
     map['mime_type'] = Variable<String>(mimeType);
     map['sha256'] = Variable<String>(sha256);
@@ -1303,6 +1321,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
       id: Value(id),
       resourceId: Value(resourceId),
       created: Value(created),
+      deleted: Value(deleted),
       size: Value(size),
       mimeType: Value(mimeType),
       sha256: Value(sha256),
@@ -1316,6 +1335,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
       id: serializer.fromJson<String>(json['id']),
       resourceId: serializer.fromJson<String>(json['resource_id']),
       created: serializer.fromJson<DateTime>(json['created']),
+      deleted: serializer.fromJson<bool>(json['deleted']),
       size: serializer.fromJson<int>(json['size']),
       mimeType: serializer.fromJson<String>(json['mime_type']),
       sha256: serializer.fromJson<String>(json['sha256']),
@@ -1328,6 +1348,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
       'id': serializer.toJson<String>(id),
       'resource_id': serializer.toJson<String>(resourceId),
       'created': serializer.toJson<DateTime>(created),
+      'deleted': serializer.toJson<bool>(deleted),
       'size': serializer.toJson<int>(size),
       'mime_type': serializer.toJson<String>(mimeType),
       'sha256': serializer.toJson<String>(sha256),
@@ -1338,6 +1359,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
           {String? id,
           String? resourceId,
           DateTime? created,
+          bool? deleted,
           int? size,
           String? mimeType,
           String? sha256}) =>
@@ -1345,6 +1367,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
         id: id ?? this.id,
         resourceId: resourceId ?? this.resourceId,
         created: created ?? this.created,
+        deleted: deleted ?? this.deleted,
         size: size ?? this.size,
         mimeType: mimeType ?? this.mimeType,
         sha256: sha256 ?? this.sha256,
@@ -1355,6 +1378,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
       resourceId:
           data.resourceId.present ? data.resourceId.value : this.resourceId,
       created: data.created.present ? data.created.value : this.created,
+      deleted: data.deleted.present ? data.deleted.value : this.deleted,
       size: data.size.present ? data.size.value : this.size,
       mimeType: data.mimeType.present ? data.mimeType.value : this.mimeType,
       sha256: data.sha256.present ? data.sha256.value : this.sha256,
@@ -1367,6 +1391,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
           ..write('id: $id, ')
           ..write('resourceId: $resourceId, ')
           ..write('created: $created, ')
+          ..write('deleted: $deleted, ')
           ..write('size: $size, ')
           ..write('mimeType: $mimeType, ')
           ..write('sha256: $sha256')
@@ -1376,7 +1401,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
 
   @override
   int get hashCode =>
-      Object.hash(id, resourceId, created, size, mimeType, sha256);
+      Object.hash(id, resourceId, created, deleted, size, mimeType, sha256);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1384,6 +1409,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
           other.id == this.id &&
           other.resourceId == this.resourceId &&
           other.created == this.created &&
+          other.deleted == this.deleted &&
           other.size == this.size &&
           other.mimeType == this.mimeType &&
           other.sha256 == this.sha256);
@@ -1393,6 +1419,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
   final Value<String> id;
   final Value<String> resourceId;
   final Value<DateTime> created;
+  final Value<bool> deleted;
   final Value<int> size;
   final Value<String> mimeType;
   final Value<String> sha256;
@@ -1401,6 +1428,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
     this.id = const Value.absent(),
     this.resourceId = const Value.absent(),
     this.created = const Value.absent(),
+    this.deleted = const Value.absent(),
     this.size = const Value.absent(),
     this.mimeType = const Value.absent(),
     this.sha256 = const Value.absent(),
@@ -1410,6 +1438,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
     required String id,
     required String resourceId,
     required DateTime created,
+    required bool deleted,
     required int size,
     required String mimeType,
     required String sha256,
@@ -1417,6 +1446,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
   })  : id = Value(id),
         resourceId = Value(resourceId),
         created = Value(created),
+        deleted = Value(deleted),
         size = Value(size),
         mimeType = Value(mimeType),
         sha256 = Value(sha256);
@@ -1424,6 +1454,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
     Expression<String>? id,
     Expression<String>? resourceId,
     Expression<DateTime>? created,
+    Expression<bool>? deleted,
     Expression<int>? size,
     Expression<String>? mimeType,
     Expression<String>? sha256,
@@ -1433,6 +1464,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
       if (id != null) 'id': id,
       if (resourceId != null) 'resource_id': resourceId,
       if (created != null) 'created': created,
+      if (deleted != null) 'deleted': deleted,
       if (size != null) 'size': size,
       if (mimeType != null) 'mime_type': mimeType,
       if (sha256 != null) 'sha256': sha256,
@@ -1444,6 +1476,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
       {Value<String>? id,
       Value<String>? resourceId,
       Value<DateTime>? created,
+      Value<bool>? deleted,
       Value<int>? size,
       Value<String>? mimeType,
       Value<String>? sha256,
@@ -1452,6 +1485,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
       id: id ?? this.id,
       resourceId: resourceId ?? this.resourceId,
       created: created ?? this.created,
+      deleted: deleted ?? this.deleted,
       size: size ?? this.size,
       mimeType: mimeType ?? this.mimeType,
       sha256: sha256 ?? this.sha256,
@@ -1470,6 +1504,9 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
     }
     if (created.present) {
       map['created'] = Variable<DateTime>(created.value);
+    }
+    if (deleted.present) {
+      map['deleted'] = Variable<bool>(deleted.value);
     }
     if (size.present) {
       map['size'] = Variable<int>(size.value);
@@ -1492,6 +1529,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
           ..write('id: $id, ')
           ..write('resourceId: $resourceId, ')
           ..write('created: $created, ')
+          ..write('deleted: $deleted, ')
           ..write('size: $size, ')
           ..write('mimeType: $mimeType, ')
           ..write('sha256: $sha256, ')
@@ -2494,6 +2532,17 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         readsFrom: {
           resourceVersions,
         }).asyncMap(resourceVersions.mapFromRow);
+  }
+
+  Selectable<int> availableVersions(String id) {
+    return customSelect(
+        'SELECT COUNT(*) AS _c0 FROM resource_versions WHERE resource_id = ?1 AND deleted = 0',
+        variables: [
+          Variable<String>(id)
+        ],
+        readsFrom: {
+          resourceVersions,
+        }).map((QueryRow row) => row.read<int>('_c0'));
   }
 
   Selectable<Resource> selectRecents() {
@@ -3675,6 +3724,7 @@ typedef $ResourceVersionsCreateCompanionBuilder = ResourceVersionsCompanion
   required String id,
   required String resourceId,
   required DateTime created,
+  required bool deleted,
   required int size,
   required String mimeType,
   required String sha256,
@@ -3685,6 +3735,7 @@ typedef $ResourceVersionsUpdateCompanionBuilder = ResourceVersionsCompanion
   Value<String> id,
   Value<String> resourceId,
   Value<DateTime> created,
+  Value<bool> deleted,
   Value<int> size,
   Value<String> mimeType,
   Value<String> sha256,
@@ -3725,6 +3776,9 @@ class $ResourceVersionsFilterComposer
 
   ColumnFilters<DateTime> get created => $composableBuilder(
       column: $table.created, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get deleted => $composableBuilder(
+      column: $table.deleted, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get size => $composableBuilder(
       column: $table.size, builder: (column) => ColumnFilters(column));
@@ -3771,6 +3825,9 @@ class $ResourceVersionsOrderingComposer
   ColumnOrderings<DateTime> get created => $composableBuilder(
       column: $table.created, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<bool> get deleted => $composableBuilder(
+      column: $table.deleted, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<int> get size => $composableBuilder(
       column: $table.size, builder: (column) => ColumnOrderings(column));
 
@@ -3815,6 +3872,9 @@ class $ResourceVersionsAnnotationComposer
 
   GeneratedColumn<DateTime> get created =>
       $composableBuilder(column: $table.created, builder: (column) => column);
+
+  GeneratedColumn<bool> get deleted =>
+      $composableBuilder(column: $table.deleted, builder: (column) => column);
 
   GeneratedColumn<int> get size =>
       $composableBuilder(column: $table.size, builder: (column) => column);
@@ -3872,6 +3932,7 @@ class $ResourceVersionsTableManager extends RootTableManager<
             Value<String> id = const Value.absent(),
             Value<String> resourceId = const Value.absent(),
             Value<DateTime> created = const Value.absent(),
+            Value<bool> deleted = const Value.absent(),
             Value<int> size = const Value.absent(),
             Value<String> mimeType = const Value.absent(),
             Value<String> sha256 = const Value.absent(),
@@ -3881,6 +3942,7 @@ class $ResourceVersionsTableManager extends RootTableManager<
             id: id,
             resourceId: resourceId,
             created: created,
+            deleted: deleted,
             size: size,
             mimeType: mimeType,
             sha256: sha256,
@@ -3890,6 +3952,7 @@ class $ResourceVersionsTableManager extends RootTableManager<
             required String id,
             required String resourceId,
             required DateTime created,
+            required bool deleted,
             required int size,
             required String mimeType,
             required String sha256,
@@ -3899,6 +3962,7 @@ class $ResourceVersionsTableManager extends RootTableManager<
             id: id,
             resourceId: resourceId,
             created: created,
+            deleted: deleted,
             size: size,
             mimeType: mimeType,
             sha256: sha256,
