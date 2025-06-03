@@ -21,4 +21,5 @@ var (
 	ErrParentNotFound                 = errors.NewError(http.StatusConflict, "parent_not_found", "Parent not found")
 	ErrParentDeleted                  = errors.NewError(http.StatusConflict, "parent_deleted", "Parent deleted")
 	ErrPublinkNameConflict            = errors.NewError(http.StatusPreconditionFailed, "publink_name_conflict", "Another public share with this name already exists")
+	ErrVersionNotFound                = errors.NewError(http.StatusNotFound, "version_not_found", "Version Not Foud")
 )

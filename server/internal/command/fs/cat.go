@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +29,7 @@ func setupCatCommand() *cobra.Command {
 				os.Exit(2)
 			}
 
-			in, err := r.OpenRead(0, -1)
+			in, err := r.OpenRead(0, -1, uuid.Nil)
 			if err != nil {
 				fmt.Println("cannot read'" + path + "': " + err.Error())
 				os.Exit(3)

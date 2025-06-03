@@ -2,11 +2,13 @@ package fs
 
 import (
 	"strings"
+	"time"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shroff/phylum/server/internal/core/errors"
 )
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
@@ -148,4 +150,24 @@ func parseUUIDPrefix(path string) (pgtype.UUID, string, error) {
 		return pgtype.UUID{Bytes: id, Valid: true}, path[i+1:], err
 	}
 	return pgtype.UUID{}, path, nil
+}
+
+func (r Resource) FindVersion(versionID uuid.UUID) (Version, error) {
+	const q = `SELECT id, created, deleted, size, mime_type, sha256 from resource_versions WHERE resource_id = $1::UUID AND id = $2::UUID`
+	row := r.f.db.QueryRow(q, r.id, versionID)
+	var v Version
+	var created time.Time
+	var deleted pgtype.Timestamp
+	err := row.Scan(&v.ID, &created, &deleted, &v.Size, &v.MimeType, &v.SHA256)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = ErrVersionNotFound
+		}
+		return v, err
+	}
+	v.Created = int(created.Unix())
+	if deleted.Valid {
+		return Version{}, ErrVersionNotFound
+	}
+	return v, nil
 }

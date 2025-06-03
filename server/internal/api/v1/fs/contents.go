@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core/errors"
@@ -17,13 +18,10 @@ var errGetCollectionContents = errors.NewError(http.StatusBadRequest, "resource_
 func handleContentsRequest(c *gin.Context) {
 	// Trim leading '/'
 	path := c.Param("path")[1:]
+	versionIDStr := c.Query("version")
 
 	f := authenticator.GetFileSystem(c)
 	r, err := f.ResourceByPathWithRoot(path)
-	if err != nil {
-		panic(err)
-	}
-	v, err := r.LatestVersion()
 	if err != nil {
 		panic(err)
 	}
@@ -36,14 +34,29 @@ func handleContentsRequest(c *gin.Context) {
 		}
 		if r.Dir() {
 			name += ".zip"
+			c.Writer.Header().Set("Content-Type", "application/zip")
 		}
 		c.Writer.Header().Set("Content-Disposition", "attachment; filename=\""+name+"\"")
-		c.Writer.Header().Set("Content-Type", v.MimeType)
 	}
-	if !r.Dir() {
-		serve.Serve(c.Writer, c.Request, r)
+	if r.Dir() {
+
+	} else {
+		if versionIDStr == "" {
+			serve.Serve(c.Writer, c.Request, r)
+		} else {
+			versionID, err := uuid.Parse(versionIDStr)
+			if err != nil {
+				panic(err)
+			}
+			if v, err := r.FindVersion(versionID); err != nil {
+				panic(err)
+			} else {
+				serve.ServeResourceVersion(c.Writer, c.Request, r, v)
+			}
+		}
 		return
 	}
+
 	if !download {
 		panic(errGetCollectionContents)
 	}
@@ -67,7 +80,7 @@ func handleContentsRequest(c *gin.Context) {
 		if err != nil {
 			return err
 		}
-		in, err := r.OpenRead(0, -1)
+		in, err := r.OpenRead(0, -1, uuid.Nil)
 		if err != nil {
 			return err
 		}

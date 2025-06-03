@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/storage"
 )
@@ -109,10 +110,23 @@ func formatSize(size int) string {
 }
 
 func serveResource(w http.ResponseWriter, r *http.Request, file fs.Resource) {
-	version, err := file.LatestVersion()
-	if err != nil {
+	if version, err := file.LatestVersion(); err != nil {
 		panic(err)
+	} else {
+		ServeResourceVersion(w, r, file, version)
 	}
+}
+
+func ServeResourceVersion(w http.ResponseWriter, r *http.Request, file fs.Resource, version fs.Version) {
+	if version.ID == uuid.Nil {
+		var err error
+		version, err = file.LatestVersion()
+		if err != nil {
+			panic(err)
+		}
+
+	}
+
 	w.Header().Set("Etag", version.SHA256)
 	w.Header().Set("Last-Modified", time.UnixMilli(int64(version.Created)).Format(http.TimeFormat))
 	w.Header().Set("Content-Type", version.MimeType)
@@ -146,7 +160,7 @@ func serveResource(w http.ResponseWriter, r *http.Request, file fs.Resource) {
 		// multipart responses."
 		ra := ranges[0]
 		size = ra.length
-		reader, err = file.OpenRead(ra.start, ra.length)
+		reader, err = file.OpenRead(ra.start, ra.length, version.ID)
 		if err == nil {
 			code = http.StatusPartialContent
 			w.Header().Set("Content-Range", ra.contentRange(size))
@@ -154,7 +168,7 @@ func serveResource(w http.ResponseWriter, r *http.Request, file fs.Resource) {
 			err = nil
 		}
 	} else {
-		reader, err = file.OpenRead(0, -1)
+		reader, err = file.OpenRead(0, -1, version.ID)
 	}
 
 	if err != nil {

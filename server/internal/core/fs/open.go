@@ -9,7 +9,10 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (r Resource) OpenRead(start, length int) (io.ReadCloser, error) {
+func (r Resource) OpenRead(start, length int, versionID uuid.UUID) (io.ReadCloser, error) {
+	if versionID != uuid.Nil {
+		return r.f.cs.OpenRead(versionID, start, length)
+	}
 	if version, err := r.LatestVersion(); err != nil {
 		return nil, err
 	} else {
