@@ -34,15 +34,15 @@ func setupCreateCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			name := args[0]
-			driver := args[1]
-			paramNames, err := storage.ParamNames(driver)
+			driverName := args[1]
+			driver, err := storage.FindDriver(driverName)
 			if err != nil {
 				logrus.Fatal(err)
 			}
 
 			params := map[string]string{}
 			reader := bufio.NewReader(os.Stdin)
-			for _, paramName := range paramNames {
+			for _, paramName := range driver.Params {
 				os.Stdout.WriteString(paramName + ": ")
 				val, err := reader.ReadString('\n')
 				if err != nil {

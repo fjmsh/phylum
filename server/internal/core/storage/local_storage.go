@@ -14,15 +14,17 @@ type localStorage struct {
 	root string
 }
 
-func newLocalStorage(root string) (Backend, error) {
-	if root == "" {
-		return nil, errors.New("local storage root not provided")
+func createLocalBackend(params map[string]string, validateParams bool) (Backend, error) {
+	if validateParams {
+		if params["root"] == "" {
+			return nil, errors.New("local storage root not provided")
+		}
+		err := os.MkdirAll(params["root"], 0750)
+		if err != nil {
+			return nil, err
+		}
 	}
-	err := os.MkdirAll(root, 0750)
-	if err != nil {
-		return nil, err
-	}
-	return localStorage{root: root}, nil
+	return localStorage{root: params["root"]}, nil
 }
 
 func (l localStorage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error) {

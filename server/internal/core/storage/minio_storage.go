@@ -22,40 +22,36 @@ type minioStorage struct {
 	prefix     string
 }
 
-func newMinioStorage(
-	endpoint,
-	keyId,
-	accessKey,
-	tmp,
-	bucketName,
-	prefix string) (Backend, error) {
-	if endpoint == "" {
-		return nil, errors.New("minio endpoint not provided")
+func createMinioBackend(params map[string]string, validateParams bool) (Backend, error) {
+	if validateParams {
+		if params["endpoint"] == "" {
+			return nil, errors.New("minio endpoint not provided")
+		}
+		if params["key_id"] == "" {
+			return nil, errors.New("minio key id not provided")
+		}
+		if params["access_key"] == "" {
+			return nil, errors.New("minio access key not provided")
+		}
+		if params["tmp"] == "" {
+			return nil, errors.New("minio tmp not provided")
+		}
+		if params["bucket_name"] == "" {
+			return nil, errors.New("minio bucket name not provided")
+		}
+		err := os.MkdirAll(params["tmp"], 0750)
+		if err != nil {
+			return nil, err
+		}
 	}
-	if keyId == "" {
-		return nil, errors.New("minio key id not provided")
-	}
-	if accessKey == "" {
-		return nil, errors.New("minio access key not provided")
-	}
-	if tmp == "" {
-		return nil, errors.New("minio tmp not provided")
-	}
-	if bucketName == "" {
-		return nil, errors.New("minio bucket name not provided")
-	}
-	err := os.MkdirAll(tmp, 0750)
-	if err != nil {
-		return nil, err
-	}
-	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(keyId, accessKey, ""),
+	client, err := minio.New(params["endpoint"], &minio.Options{
+		Creds:  credentials.NewStaticV4(params["key_id"], params["access_key"], ""),
 		Secure: true,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return minioStorage{client: client, tmp: tmp, bucketName: bucketName, prefix: prefix}, nil
+	return minioStorage{client: client, tmp: params["tmp"], bucketName: params["bucket_name"], prefix: params["prefix"]}, nil
 }
 
 func (s minioStorage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error) {
