@@ -131,9 +131,9 @@ class ResourceDetailsRow extends StatelessWidget {
                           ),
                         StreamBuilder<int>(
                             stream: context.read<PhylumAccount>().db.availableVersions(resource.id).watchSingle(),
-                            initialData: 0,
+                            initialData: 1,
                             builder: (context, snapshot) {
-                              if ((snapshot.data ?? 0) != 0) {
+                              if ((snapshot.data ?? 0) > 1) {
                                 return const Padding(
                                   padding: EdgeInsets.only(right: 6.0),
                                   // TODO: text Scaling and semantic label

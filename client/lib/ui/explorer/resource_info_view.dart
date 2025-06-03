@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart' show TableOrViewStatements;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -117,44 +119,53 @@ class ResourceInfoView extends StatelessWidget {
                   },
                 );
               }),
-          // if (!resource.dir)
-          //   StreamBuilder(
-          //       stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
-          //       builder: (context, snapshot) {
-          //         final data = snapshot.data;
+          StreamBuilder<List<ResourceVersion>>(
+              stream: (account.db.resourceVersions.select()..where((v) => v.resourceId.equals(resource.id))).watch(),
+              initialData: <ResourceVersion>[],
+              builder: (context, snapshot) {
+                final versions = snapshot.data;
 
-          //         if (data == null) {
-          //           return SizedBox();
-          //         }
+                if (versions == null || versions.isEmpty) {
+                  return SizedBox();
+                }
 
-          //         return Column(
-          //           mainAxisSize: MainAxisSize.min,
-          //           children: [
-          //             ListTile(
-          //               leading: const Icon(Icons.storage),
-          //               title: const Text('Size'),
-          //               subtitle: Text('${data.size.formatForDisplay()} (${data.size} B)'),
-          //             ),
-          //             ListTile(
-          //               leading: const Icon(Icons.shield),
-          //               title: const Text('SHA-256'),
-          //               onLongPress: () {
-          //                 Clipboard.setData(ClipboardData(text: data.sha256));
-          //                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          //                   content: Text('SHA-256 checksum copied to clipboard'),
-          //                   duration: const Duration(seconds: 2),
-          //                 ));
-          //               },
-          //               subtitle: Text(
-          //                 data.sha256,
-          //                 maxLines: 1,
-          //                 softWrap: false,
-          //                 overflow: TextOverflow.fade,
-          //               ),
-          //             ),
-          //           ],
-          //         );
-          //       }),
+                final latestVersion = versions.reduce((a, b) => a.created.isAfter(b.created) ? a : b);
+                final availableVersions = versions.fold(-1, (acc, e) => acc + (e.deleted ? 0 : 1));
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.storage),
+                      title: const Text('Size'),
+                      subtitle: Text('${latestVersion.size.formatForDisplay()} (${latestVersion.size} B)'),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.shield),
+                      title: const Text('SHA-256'),
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text: latestVersion.sha256));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('SHA-256 checksum copied to clipboard'),
+                          duration: const Duration(seconds: 2),
+                        ));
+                      },
+                      subtitle: Text(
+                        latestVersion.sha256.substring(0, 12),
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.fade,
+                      ),
+                    ),
+                    if (versions.length > 1)
+                      ListTile(
+                        leading: const Icon(Icons.history),
+                        title: const Text('Previous Versions'),
+                        subtitle: Text('$availableVersions / ${versions.length - 1} available'),
+                      ),
+                  ],
+                );
+              }),
         ],
       ),
     );
