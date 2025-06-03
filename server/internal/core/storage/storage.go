@@ -41,7 +41,7 @@ func create(storageLocation string) (Storage, error) {
 	}
 	if backends, err := restoreBackends(); err != nil {
 		return Storage{}, err
-	} else if defaultBackend, err := newLocalStorage("<default>", path.Join(storageLocation, "default")); err != nil {
+	} else if defaultBackend, err := newLocalStorage(path.Join(storageLocation, "default")); err != nil {
 		return Storage{}, err
 	} else {
 		return Storage{
@@ -127,7 +127,7 @@ func (s Storage) findStorageBackend(id uuid.UUID) (Backend, error) {
 }
 
 func (s Storage) CreateBackend(db db.Handler, name string, driver string, params map[string]string) error {
-	backend, err := openBackend(name, driver, params)
+	backend, err := openBackend(driver, params)
 	if err != nil {
 		return nil
 	}
@@ -151,35 +151,42 @@ func restoreBackends() (map[string]Backend, error) {
 	const q = "SELECT name, driver, params from storage_backends"
 	if rows, err := db.Get(context.Background()).Query(q); err != nil {
 		return nil, err
-	} else if backends, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (Backend, error) {
+	} else if backends, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (namedBackend, error) {
 		var name, driver string
 		var params []byte
 		if err := row.Scan(&name, &driver, &params); err != nil {
-			return nil, err
+			return namedBackend{}, err
 		}
 		p := make(map[string]string)
 		if err := json.Unmarshal(params, &p); err != nil {
-			return nil, err
+			return namedBackend{}, err
+		} else if b, err := openBackend(driver, p); err != nil {
+			return namedBackend{}, err
+		} else {
+			return namedBackend{name: name, backend: b}, nil
 		}
-		return openBackend(name, driver, p)
 	}); err != nil {
 		return nil, err
 	} else {
 		results := map[string]Backend{}
 		for _, b := range backends {
-			results[b.Name()] = b
+			results[b.name] = b.backend
 		}
 		return results, nil
 	}
 }
 
-func openBackend(name string, driver string, params map[string]string) (Backend, error) {
+type namedBackend struct {
+	name    string
+	backend Backend
+}
+
+func openBackend(driver string, params map[string]string) (Backend, error) {
 	switch driver {
 	case "local":
-		return newLocalStorage(name, params["root"])
+		return newLocalStorage(params["root"])
 	case "minio":
 		return newMinioStorage(
-			name,
 			params["endpoint"],
 			params["key_id"],
 			params["access_key"],
@@ -187,7 +194,6 @@ func openBackend(name string, driver string, params map[string]string) (Backend,
 			params["bucket_name"],
 			params["prefix"],
 		)
-
 	}
 	return nil, errors.New("unrecognized storage driver: " + driver)
 }

@@ -16,7 +16,6 @@ import (
 var ErrRangeNotSupported = errors.New("byte range not suppoered")
 
 type minioStorage struct {
-	name       string
 	client     *minio.Client
 	tmp        string
 	bucketName string
@@ -24,7 +23,6 @@ type minioStorage struct {
 }
 
 func newMinioStorage(
-	name,
 	endpoint,
 	keyId,
 	accessKey,
@@ -57,11 +55,7 @@ func newMinioStorage(
 	if err != nil {
 		return nil, err
 	}
-	return minioStorage{name: name, client: client, tmp: tmp, bucketName: bucketName, prefix: prefix}, nil
-}
-
-func (s minioStorage) Name() string {
-	return s.name
+	return minioStorage{client: client, tmp: tmp, bucketName: bucketName, prefix: prefix}, nil
 }
 
 func (s minioStorage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error) {

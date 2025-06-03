@@ -11,11 +11,10 @@ import (
 )
 
 type localStorage struct {
-	name string
 	root string
 }
 
-func newLocalStorage(name, root string) (Backend, error) {
+func newLocalStorage(root string) (Backend, error) {
 	if root == "" {
 		return nil, errors.New("local storage root not provided")
 	}
@@ -23,11 +22,7 @@ func newLocalStorage(name, root string) (Backend, error) {
 	if err != nil {
 		return nil, err
 	}
-	return localStorage{name: name, root: root}, nil
-}
-
-func (l localStorage) Name() string {
-	return l.name
+	return localStorage{root: root}, nil
 }
 
 func (l localStorage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error) {
