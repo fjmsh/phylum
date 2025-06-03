@@ -131,15 +131,18 @@ class ResourceInfoView extends StatelessWidget {
 
                 final latestVersion = versions.reduce((a, b) => a.created.isAfter(b.created) ? a : b);
                 final availableVersions = versions.fold(-1, (acc, e) => acc + (e.deleted ? 0 : 1));
-
+                bool showHumanSize = true;
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    ListTile(
-                      leading: const Icon(Icons.storage),
-                      title: const Text('Size'),
-                      subtitle: Text('${latestVersion.size.formatForDisplay()} (${latestVersion.size} B)'),
-                    ),
+                    StatefulBuilder(
+                        builder: (context, setState) => ListTile(
+                              leading: const Icon(Icons.storage),
+                              title: const Text('Size'),
+                              onTap: () => setState(() => showHumanSize = !showHumanSize),
+                              subtitle: Text(
+                                  showHumanSize ? latestVersion.size.formatForDisplay() : '${latestVersion.size} B'),
+                            )),
                     ListTile(
                       leading: const Icon(Icons.shield),
                       title: const Text('SHA-256'),
