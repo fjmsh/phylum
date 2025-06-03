@@ -14,6 +14,7 @@ import 'package:phylum/ui/explorer/mime_type_names.dart';
 import 'package:phylum/ui/explorer/resource_permissions_view.dart';
 import 'package:phylum/ui/explorer/resource_publinks_view.dart';
 import 'package:phylum/ui/explorer/resource_sync_state.dart';
+import 'package:phylum/ui/explorer/resource_versions_view.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:phylum/util/time.dart';
@@ -114,9 +115,8 @@ class ResourceInfoView extends StatelessWidget {
                   leading: const Icon(Icons.public),
                   title: const Text('Public Shares'),
                   subtitle: count == 0 ? const Text('--') : Text(count.toString()),
-                  onTap: () {
-                    showReponsiveDialog(context, resource.name, (context) => ResourcePublinksView(resource: resource));
-                  },
+                  onTap: () => showReponsiveDialog(
+                      context, 'Public Shares', (context) => ResourcePublinksView(resource: resource)),
                 );
               }),
           StreamBuilder<List<ResourceVersion>>(
@@ -165,6 +165,8 @@ class ResourceInfoView extends StatelessWidget {
                         leading: const Icon(Icons.history),
                         title: const Text('Previous Versions'),
                         subtitle: Text('$availableVersions / ${versions.length - 1} available'),
+                        onTap: () => showReponsiveDialog(
+                            context, 'Version History', (context) => ResourceVersionsView(resourceId: resource.id)),
                       ),
                   ],
                 );
