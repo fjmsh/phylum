@@ -2,7 +2,6 @@ package fs
 
 import (
 	"github.com/doug-martin/goqu/v9"
-	"github.com/shroff/phylum/server/internal/core/storage"
 )
 
 func (f filesystem) selectDeletedResources() *goqu.SelectDataset {
@@ -35,6 +34,6 @@ func (f filesystem) TrashEmpty() (int, error) {
 		Returning("id", "dir")
 	query, args, _ := q.ToSQL()
 	count, ids, err := collectNonDirResourceIDs(f.db.Query(query, args...))
-	storage.Get().DeleteAll(ids)
+	deleteResourcesContents(ids)
 	return count, err
 }

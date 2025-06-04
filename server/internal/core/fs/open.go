@@ -1,22 +1,35 @@
 package fs
 
 import (
-	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"hash"
 	"io"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/shroff/phylum/server/internal/core/storage"
 )
 
 func (r Resource) OpenRead(start, length int, versionID uuid.UUID) (io.ReadCloser, error) {
 	if versionID != uuid.Nil {
-		return r.f.cs.OpenRead(versionID, start, length)
+		// TODO: #backend
+		return r.f.openRead("", versionID, start, length)
 	}
 	if version, err := r.LatestVersion(); err != nil {
 		return nil, err
 	} else {
-		return r.f.cs.OpenRead(version.ID, start, length)
+		// TODO: #backend
+		return r.f.openRead("", version.ID, start, length)
+	}
+}
+
+func (f filesystem) openRead(backend string, versionID uuid.UUID, start, length int) (io.ReadCloser, error) {
+	if b := storage.GetBackend(backend); b == nil {
+		return nil, errors.New("storage backend not found: " + backend)
+	} else {
+		return b.OpenRead(versionID, start, length)
 	}
 }
 
@@ -30,14 +43,19 @@ func (r Resource) OpenWrite(versionID uuid.UUID) (io.WriteCloser, error) {
 	if versionID == uuid.Nil {
 		versionID, _ = uuid.NewV7()
 	}
-	return r.f.cs.OpenWrite(versionID, sha256.New, func(len int, sum, mime string) error {
-		return r.f.runInTx(func(f filesystem) error {
-			if err := f.createResourceVersion(r.id, versionID, int64(len), mime, sum); err != nil {
-				return err
-			}
-			return f.updateResourceModified(r.id)
-		})
-	})
+	if dest, err := storage.DefaultBackend().OpenWrite(versionID); err != nil {
+		return nil, err
+	} else {
+		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
+			sum := hex.EncodeToString(hash.Sum(nil))
+			return r.f.runInTx(func(f filesystem) error {
+				if err := f.createResourceVersion(r.id, versionID, int64(len), mimeType, sum); err != nil {
+					return err
+				}
+				return f.updateResourceModified(r.id)
+			})
+		}), nil
+	}
 }
 
 func (r Resource) ReadDir(recursive bool) ([]Resource, error) {

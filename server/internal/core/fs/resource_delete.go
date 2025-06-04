@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/sirupsen/logrus"
 )
 
 func (r Resource) DeleteChildRecursive(name string) (Resource, error) {
@@ -176,10 +175,7 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 	})
 
 	if err == nil && !softDelete {
-		errors := f.cs.DeleteAll(ids)
-		for _, err := range errors {
-			logrus.Warn(err)
-		}
+		deleteResourcesContents(ids)
 	}
 
 	return err
@@ -239,4 +235,15 @@ func (f filesystem) markNotDeleted(id uuid.UUID) ([]int64, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+func deleteResourcesContents(id uuid.UUIDs) {
+	// TODO: #implement
+}
+
+func deleteResourceContents(id uuid.UUID) {
+	// TODO: #implement
+}
+func deleteVersionContents(id uuid.UUID) {
+	// TODO: #implement
 }

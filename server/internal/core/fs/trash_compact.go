@@ -7,7 +7,6 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,9 +30,6 @@ func hardDeleteOldResources(ctx context.Context, t time.Time) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	errors := storage.Get().DeleteAll(ids)
-	for _, err := range errors {
-		logrus.Warn(err)
-	}
+	deleteResourcesContents(ids)
 	return count, err
 }

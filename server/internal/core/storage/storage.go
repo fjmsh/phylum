@@ -2,54 +2,71 @@ package storage
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"hash"
-	"io"
 	"os"
 	"path"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/sirupsen/logrus"
 )
 
-type Storage struct {
-	backends       map[string]Backend
-	defaultBackend Backend
-}
-
-var s Storage
 var Cfg Config
+var defaultBackend LocalBackend
+var backends map[string]Backend
 
-func Get() Storage {
-	if s.defaultBackend == nil {
-		if storage, err := create(Cfg.Location); err != nil {
-			logrus.Fatal(err)
-		} else {
-			s = storage
-		}
-		go processBackendUpdates()
-	}
-	return s
+type BackendConfig struct {
+	Name   string            `json:"name"`
+	Driver string            `json:"driver"`
+	Params map[string]string `json:"params"`
 }
 
-func create(storageLocation string) (Storage, error) {
-	if err := os.Chmod(storageLocation, 0700); err != nil {
-		return Storage{}, errors.New("failed to set permissions: " + err.Error())
+func Initialize(db db.Handler) error {
+	if err := os.Chmod(Cfg.Location, 0700); err != nil {
+		return errors.New("failed to set permissions: " + err.Error())
 	}
-	if backends, err := restoreBackends(); err != nil {
-		return Storage{}, errors.New("failed to restore backends: " + err.Error())
-	} else if defaultBackend, err := createLocalBackend(map[string]string{"root": path.Join(storageLocation, "default")}, true); err != nil {
-		return Storage{}, errors.New("failed to create default backend: " + err.Error())
+	if restoredBackends, err := restoreBackends(); err != nil {
+		return errors.New("failed to restore backends: " + err.Error())
+	} else if b, err := createLocalBackend(map[string]string{"root": path.Join(Cfg.Location, "default")}); err != nil {
+		return errors.New("failed to create default backend: " + err.Error())
 	} else {
-		return Storage{
-			backends:       backends,
-			defaultBackend: defaultBackend,
-		}, nil
+		restoredBackends[""] = b
+		backends = restoredBackends
+		defaultBackend = b
 	}
+
+	go processBackendUpdates(db)
+	return nil
+}
+
+func DefaultBackend() LocalBackend {
+	return defaultBackend
+}
+
+func GetBackend(name string) Backend {
+	return backends[name]
+}
+
+func ListBackends() map[string]Backend {
+	return backends
+}
+
+func InsertBackend(db db.Handler, name string, driver Driver, params map[string]string) error {
+	backend, err := driver.Create(params)
+	if err != nil {
+		return nil
+	}
+	const q = "INSERT INTO storage_backends(name, driver, params) VALUES ($1::TEXT, $2::TEXT, $3::JSONB)"
+	p, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	if _, err := db.Exec(q, name, driver, p); err != nil {
+		return err
+	}
+	backends[name] = backend
+	return nil
 }
 
 func restoreBackends() (map[string]Backend, error) {
@@ -83,8 +100,8 @@ func restoreBackends() (map[string]Backend, error) {
 	}
 }
 
-func processBackendUpdates() {
-	sub := db.Get(context.Background()).Notifier().Listen("backend_updates")
+func processBackendUpdates(db db.Handler) {
+	sub := db.Notifier().Listen("backend_updates")
 	for {
 		p := <-sub.NotificationC()
 		var c BackendConfig
@@ -93,120 +110,15 @@ func processBackendUpdates() {
 		} else if b, err := c.open(); err != nil {
 			logrus.Warn("failed to open backend: " + err.Error())
 		} else {
-			s.backends[c.Name] = b
+			backends[c.Name] = b
 		}
 	}
-}
-
-func (s Storage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error) {
-	if backend, err := s.findStorageBackend(id); err != nil {
-		return nil, err
-	} else {
-		return backend.OpenRead(id, start, length)
-	}
-}
-
-func (s Storage) OpenWrite(id uuid.UUID, h func() hash.Hash, callback func(int, string, string) error) (io.WriteCloser, error) {
-	if backend, err := s.findStorageBackend(id); err != nil {
-		return nil, err
-	} else if out, err := backend.OpenWrite(id); err != nil {
-		return nil, err
-	} else if callback == nil {
-		return out, nil
-	} else {
-		return &hasher{dest: out, sum: h(), contents: make([]byte, 0, 10*1024), closeCallback: func(len int, sum hash.Hash, mime string) error {
-			etag := hex.EncodeToString(sum.Sum(nil))
-			return callback(len, etag, mime)
-		}}, nil
-	}
-}
-
-type ContentsCopy struct {
-	SrcVersion   uuid.UUID
-	DestResource uuid.UUID
-	Size         int64
-	MimeType     string
-	SHA256       string
-}
-
-func (s Storage) CopyContents(params ContentsCopy) (uuid.UUID, error) {
-	in, err := s.OpenRead(params.SrcVersion, 0, -1)
-	if err != nil {
-		return uuid.Nil, errors.New("Unable to open " + params.SrcVersion.String() + ": " + err.Error())
-	}
-	defer in.Close()
-	id, _ := uuid.NewV7()
-
-	out, err := s.OpenWrite(id, nil, nil)
-	if err != nil {
-		return uuid.Nil, errors.New("Unable to open " + id.String() + ": " + err.Error())
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, in)
-	return id, err
-
-}
-
-func (s Storage) Delete(id uuid.UUID) error {
-	if backend, err := s.findStorageBackend(id); err != nil {
-		return err
-	} else {
-		return backend.Delete(id)
-	}
-}
-
-func (s Storage) DeleteAll(ids []uuid.UUID) []error {
-	// TODO: Batch delete
-	var errs []error
-	for _, id := range ids {
-		err := s.Delete(id)
-		if err != nil {
-			errs = append(errs, err)
-		}
-	}
-	return errs
-}
-
-func (s Storage) findStorageBackend(id uuid.UUID) (Backend, error) {
-	// TODO: implement
-	return s.defaultBackend, nil
-}
-
-func (s Storage) CreateBackend(db db.Handler, name string, driver Driver, params map[string]string) error {
-	backend, err := driver.Create(params, true)
-	if err != nil {
-		return nil
-	}
-	const q = "INSERT INTO storage_backends(name, driver, params) VALUES ($1::TEXT, $2::TEXT, $3::JSONB)"
-	p, err := json.Marshal(params)
-	if err != nil {
-		return err
-	}
-	if _, err := db.Exec(q, name, driver, p); err != nil {
-		return err
-	}
-	s.backends[name] = backend
-	return nil
-}
-
-func (s Storage) ListBackends() map[string]Backend {
-	return s.backends
-}
-
-type BackendConfig struct {
-	Name   string            `json:"name"`
-	Driver string            `json:"driver"`
-	Params map[string]string `json:"params"`
 }
 
 func (c BackendConfig) open() (Backend, error) {
 	if driver, err := FindDriver(c.Driver); err != nil {
 		return nil, err
-	} else if backend, err := driver.Create(c.Params, false); err != nil {
-		return nil, err
 	} else {
-		return backend, nil
+		return driver.Create(c.Params)
 	}
-
 }

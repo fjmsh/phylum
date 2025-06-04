@@ -7,7 +7,6 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/sirupsen/logrus"
 )
 
@@ -147,7 +146,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		}
 	}
 	children := make([]CreateResourcesParams, 0, len(tree))
-	var contents []storage.ContentsCopy
+	var contents []copyParams
 	newIDs := make(map[uuid.UUID]uuid.UUID)
 
 	var targetRoot Resource
@@ -177,7 +176,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			if version, err := r.LatestVersion(); err != nil {
 				logrus.Warn("Unable to copy " + r.id.String() + ": " + err.Error())
 			} else {
-				contents = append(contents, storage.ContentsCopy{
+				contents = append(contents, copyParams{
 					SrcVersion:   version.ID,
 					DestResource: id,
 					Size:         version.Size,
@@ -204,7 +203,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 				if version, err := src.LatestVersion(); err != nil {
 					logrus.Warn("Unable to copy " + src.id.String() + ": " + err.Error())
 				} else {
-					contents = append(contents, storage.ContentsCopy{
+					contents = append(contents, copyParams{
 						SrcVersion:   version.ID,
 						DestResource: id,
 						Size:         version.Size,
@@ -230,10 +229,8 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	if err == nil {
 		func() {
 			for _, c := range contents {
-				if id, err := r.f.cs.CopyContents(c); err != nil {
+				if err := r.f.CopyContents(c); err != nil {
 					logrus.Warn("unable to copy " + c.SrcVersion.String() + " to " + c.DestResource.String() + ": " + err.Error())
-				} else if err := r.f.createResourceVersion(c.DestResource, id, c.Size, c.MimeType, c.SHA256); err != nil {
-					logrus.Warn("unable to create version for " + c.DestResource.String() + ": " + err.Error())
 				}
 			}
 
@@ -249,4 +246,39 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	targetRoot.f = r.f
 	targetRoot.userPermission = destParent.userPermission
 	return targetRoot, deleted, err
+}
+
+type copyParams struct {
+	SrcVersion   uuid.UUID
+	DestResource uuid.UUID
+	Size         int64
+	MimeType     string
+	SHA256       string
+}
+
+func (f filesystem) CopyContents(params copyParams) error {
+	versionID, _ := uuid.NewV7()
+
+	if err := f.createResourceVersion(params.DestResource, versionID, params.Size, params.MimeType, params.SHA256); err != nil {
+		return errors.New("failed to create version for " + params.DestResource.String() + ": " + err.Error())
+	}
+
+	// TODO: #implement CopyContents
+	return errors.New("CopyContents not implemented")
+
+	// in, err := f.OpenRead(params.SrcVersion, 0, -1)
+	// if err != nil {
+	// 	return uuid.Nil, errors.New("Unable to open " + params.SrcVersion.String() + ": " + err.Error())
+	// }
+	// defer in.Close()
+	// id, _ := uuid.NewV7()
+
+	// out, err := s.OpenWrite(id, nil, nil)
+	// if err != nil {
+	// 	return uuid.Nil, errors.New("Unable to open " + id.String() + ": " + err.Error())
+	// }
+	// defer out.Close()
+
+	// _, err = io.Copy(out, in)
+	// return id, err
 }

@@ -52,7 +52,7 @@ func setupCreateCommand() *cobra.Command {
 				params[paramName] = val
 			}
 
-			if err := storage.Get().CreateBackend(db.Get(context.Background()), name, driver, params); err != nil {
+			if err := storage.InsertBackend(db.Get(context.Background()), name, driver, params); err != nil {
 				logrus.Fatal(err)
 			}
 
@@ -67,7 +67,7 @@ func setupListCommand() *cobra.Command {
 		Short: "List all storage backends",
 		Run: func(cmd *cobra.Command, args []string) {
 			logrus.Info("Available storage backends:")
-			for k, v := range storage.Get().ListBackends() {
+			for k, v := range storage.ListBackends() {
 				logrus.Info(fmt.Sprintf("%s: %s", k, v))
 			}
 		},

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
@@ -22,28 +21,27 @@ type minioStorage struct {
 	prefix     string
 }
 
-func createMinioBackend(params map[string]string, validateParams bool) (Backend, error) {
-	if validateParams {
-		if params["endpoint"] == "" {
-			return nil, errors.New("minio endpoint not provided")
-		}
-		if params["key_id"] == "" {
-			return nil, errors.New("minio key id not provided")
-		}
-		if params["access_key"] == "" {
-			return nil, errors.New("minio access key not provided")
-		}
-		if params["tmp"] == "" {
-			return nil, errors.New("minio tmp not provided")
-		}
-		if params["bucket_name"] == "" {
-			return nil, errors.New("minio bucket name not provided")
-		}
-		err := os.MkdirAll(params["tmp"], 0750)
-		if err != nil {
-			return nil, err
-		}
+func createMinioBackend(params map[string]string) (Backend, error) {
+	if params["endpoint"] == "" {
+		return nil, errors.New("minio endpoint not provided")
 	}
+	if params["key_id"] == "" {
+		return nil, errors.New("minio key id not provided")
+	}
+	if params["access_key"] == "" {
+		return nil, errors.New("minio access key not provided")
+	}
+	if params["tmp"] == "" {
+		return nil, errors.New("minio tmp not provided")
+	}
+	if params["bucket_name"] == "" {
+		return nil, errors.New("minio bucket name not provided")
+	}
+	err := os.MkdirAll(params["tmp"], 0750)
+	if err != nil {
+		return nil, err
+	}
+
 	client, err := minio.New(params["endpoint"], &minio.Options{
 		Creds:  credentials.NewStaticV4(params["key_id"], params["access_key"], ""),
 		Secure: true,
@@ -63,19 +61,23 @@ func (s minioStorage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, 
 	}
 }
 
-func (s minioStorage) OpenWrite(id uuid.UUID) (io.WriteCloser, error) {
-	path := filepath.Join(s.tmp, id.String())
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
-	if err != nil {
-		return nil, err
-	}
-	return &callbackWriteCloser{dest: file, closeCallback: func(len int) error {
-		_, err = s.client.FPutObject(context.Background(), s.bucketName, s.prefix+id.String(), path, minio.PutObjectOptions{Progress: &progressReader{len: len, callback: func() {
-			os.Remove(path)
-		}}})
-		return err
-	}}, nil
-}
+// func (s minioStorage) OpenWrite(id uuid.UUID) (io.WriteCloser, error) {
+// 	path := filepath.Join(s.tmp, id.String())
+// 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &callbackWriteCloser{dest: file, closeCallback: func(err error, len int) error {
+// 		if err != nil {
+// 			os.Remove(path)
+// 			return err
+// 		}
+// 		_, err = s.client.FPutObject(context.Background(), s.bucketName, s.prefix+id.String(), path, minio.PutObjectOptions{Progress: &progressReader{len: len, callback: func() {
+// 			os.Remove(path)
+// 		}}})
+// 		return err
+// 	}}, nil
+// }
 
 func (s minioStorage) Delete(id uuid.UUID) error {
 	return s.client.RemoveObject(context.Background(), s.bucketName, s.prefix+id.String(), minio.RemoveObjectOptions{})
@@ -103,20 +105,20 @@ func (s minioStorage) String() string {
 	return fmt.Sprintf("minio (endpoint: %s, bucket: %s, prefix: %s, tmp: %s)", s.client.EndpointURL(), s.bucketName, s.prefix, s.tmp)
 }
 
-type progressReader struct {
-	cur, len int
-	callback func()
-}
+// type progressReader struct {
+// 	cur, len int
+// 	callback func()
+// }
 
-func (r *progressReader) Read(p []byte) (n int, err error) {
-	max := r.len - r.cur
-	size := len(p)
-	if size > max {
-		size = max
-	}
-	r.cur += size
-	if r.cur == r.len && size == 0 {
-		r.callback()
-	}
-	return size, nil
-}
+// func (r *progressReader) Read(p []byte) (n int, err error) {
+// 	max := r.len - r.cur
+// 	size := len(p)
+// 	if size > max {
+// 		size = max
+// 	}
+// 	r.cur += size
+// 	if r.cur == r.len && size == 0 {
+// 		r.callback()
+// 	}
+// 	return size, nil
+// }

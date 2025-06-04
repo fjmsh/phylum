@@ -12,19 +12,27 @@ import (
 
 type localStorage struct {
 	root string
+	tmp  string
 }
 
-func createLocalBackend(params map[string]string, validateParams bool) (Backend, error) {
-	if validateParams {
-		if params["root"] == "" {
-			return nil, errors.New("local storage root not provided")
-		}
-		err := os.MkdirAll(params["root"], 0750)
-		if err != nil {
-			return nil, err
-		}
+func createLocalBackend(params map[string]string) (LocalBackend, error) {
+	if params["root"] == "" {
+		return nil, errors.New("local storage root not provided")
 	}
-	return localStorage{root: params["root"]}, nil
+
+	l := localStorage{
+		root: params["root"],
+		tmp:  filepath.Join(params["root"], "tmp"),
+	}
+
+	if err := os.RemoveAll(l.tmp); err != nil {
+		return nil, errors.New("failed to remove tmp directory: " + err.Error())
+	}
+	if err := os.MkdirAll(l.tmp, 0750); err != nil {
+		return nil, errors.New("failed to create tmp directory: " + err.Error())
+	}
+
+	return l, nil
 }
 
 func (l localStorage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error) {
@@ -40,7 +48,18 @@ func (l localStorage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, 
 }
 
 func (l localStorage) OpenWrite(id uuid.UUID) (io.WriteCloser, error) {
-	return os.OpenFile(l.path(id), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
+	f, err := os.CreateTemp(l.tmp, "upload-*")
+	tmpFilePath := filepath.Join(l.tmp, f.Name())
+	if err != nil {
+		return nil, err
+	}
+	return &callbackWriteCloser{dest: f, closeCallback: func(err error) error {
+		if err != nil {
+			os.Remove(tmpFilePath)
+			return err
+		}
+		return os.Rename(tmpFilePath, l.path(id))
+	}}, nil
 }
 
 func (l localStorage) Delete(id uuid.UUID) error {

@@ -12,7 +12,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
 	"github.com/sirupsen/logrus"
 )
@@ -65,7 +64,6 @@ type FileSystem interface {
 func Open(ctx context.Context, userID int32, root pgtype.UUID, fullAccess bool) FileSystem {
 	return filesystem{
 		db:         db.Get(ctx),
-		cs:         storage.Get(),
 		userID:     userID,
 		pathRoot:   root,
 		fullAccess: fullAccess,
@@ -75,7 +73,6 @@ func Open(ctx context.Context, userID int32, root pgtype.UUID, fullAccess bool) 
 func OpenOmniscient(db db.Handler) FileSystem {
 	return filesystem{
 		db:         db,
-		cs:         storage.Get(),
 		userID:     -1,
 		pathRoot:   pgtype.UUID{Bytes: rootID(), Valid: true},
 		fullAccess: true,
@@ -147,7 +144,6 @@ func OpenFromPublink(ctx context.Context, id string, password string, path strin
 
 	f := filesystem{
 		db:         d,
-		cs:         storage.Get(),
 		pathRoot:   pgtype.UUID{Bytes: link.Root, Valid: true},
 		fullAccess: true, // TODO: #permissions Replace with permissions int
 	}

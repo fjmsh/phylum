@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"embed"
 	"errors"
 	"os"
@@ -110,6 +111,8 @@ func SetupCommand() {
 		mail.Cfg = cfg.Mail
 		user.Cfg = cfg.User
 		crypt.Cfg = cfg.Crypt
+
+		storage.Initialize(db.Get(context.Background()))
 	}
 
 	defer func() {

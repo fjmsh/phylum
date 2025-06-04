@@ -3,12 +3,10 @@ package fs
 import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/storage"
 )
 
 type filesystem struct {
 	db         db.Handler
-	cs         storage.Storage
 	pathRoot   pgtype.UUID
 	userID     int32
 	fullAccess bool
@@ -21,7 +19,6 @@ func (f filesystem) WithDb(db db.Handler) FileSystem {
 func (f filesystem) withDb(db db.Handler) filesystem {
 	return filesystem{
 		db:         db,
-		cs:         f.cs,
 		pathRoot:   f.pathRoot,
 		userID:     f.userID,
 		fullAccess: f.fullAccess,
@@ -35,7 +32,6 @@ func (f filesystem) WithPathRoot(pathRoot pgtype.UUID) FileSystem {
 func (f filesystem) withPathRoot(pathRoot pgtype.UUID) filesystem {
 	return filesystem{
 		db:         f.db,
-		cs:         f.cs,
 		pathRoot:   pathRoot,
 		userID:     f.userID,
 		fullAccess: f.fullAccess,
