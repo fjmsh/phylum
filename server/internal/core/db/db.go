@@ -8,23 +8,33 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/shroff/phylum/server/internal/core/pubsub"
 	"github.com/sirupsen/logrus"
 )
 
 var Cfg Config
 
 var pool *pgxpool.Pool
+var notifier pubsub.Notifier
 
 func Get(ctx context.Context) Handler {
 	if pool == nil {
 		if err := initPool(context.Background()); err != nil {
 			logrus.Fatal(err)
+		} else if n, err := pubsub.Start(pool, context.Background()); err != nil {
+			logrus.Fatal(err)
+		} else {
+			notifier = n
 		}
 	}
 	return Handler{
 		ctx: ctx,
 		tx:  pool,
 	}
+}
+
+func (d Handler) Notifier() pubsub.Notifier {
+	return notifier
 }
 
 func Close() {
@@ -55,7 +65,7 @@ func initPool(ctx context.Context) error {
 
 	pool, err = pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		return errors.New("Unable to connect to database: " + err.Error())
+		return errors.New("Unable to create pool: " + err.Error())
 	}
 
 	logrus.Debug("Connected to " + config.ConnConfig.Database + " at " + config.ConnConfig.Host + ":" + fmt.Sprint(config.ConnConfig.Port))
