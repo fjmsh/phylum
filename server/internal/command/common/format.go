@@ -16,7 +16,7 @@ func FormatResourceSummary(r fs.Resource, name string, deleted pgtype.Timestamp)
 	if r.Dir() {
 		name += "/"
 	}
-	v, _ := r.LatestVersion()
+	v := r.LatestVersion()
 	sha256 := v.SHA256
 	sizeStr := "    -"
 	if r.Dir() {

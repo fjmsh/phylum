@@ -153,12 +153,15 @@ func parseUUIDPrefix(path string) (pgtype.UUID, string, error) {
 }
 
 func (r Resource) FindVersion(versionID uuid.UUID) (Version, error) {
-	const q = `SELECT id, created, deleted, size, mime_type, sha256 from resource_versions WHERE resource_id = $1::UUID AND id = $2::UUID`
+	const q = `SELECT id, created, size, mime_type, sha256, storage FROM resource_versions
+	WHERE resource_id = $1::UUID
+	AND id = $2::UUID
+	AND DELETED IS NULL`
+
 	row := r.f.db.QueryRow(q, r.id, versionID)
 	var v Version
 	var created time.Time
-	var deleted pgtype.Timestamp
-	err := row.Scan(&v.ID, &created, &deleted, &v.Size, &v.MimeType, &v.SHA256)
+	err := row.Scan(&v.ID, &created, &v.Size, &v.MimeType, &v.SHA256, &v.Storage)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrVersionNotFound
@@ -166,8 +169,5 @@ func (r Resource) FindVersion(versionID uuid.UUID) (Version, error) {
 		return v, err
 	}
 	v.Created = int(created.Unix())
-	if deleted.Valid {
-		return Version{}, ErrVersionNotFound
-	}
 	return v, nil
 }

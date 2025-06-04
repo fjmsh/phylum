@@ -1,4 +1,4 @@
-ALTER TABLE resource_versions ADD COLUMN storage TEXT NOT NULL DEFAULT '';
+ALTER TABLE resource_versions ADD COLUMN storage TEXT NOT NULL;
 
 ---- create above / drop below ----
 

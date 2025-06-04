@@ -31,7 +31,7 @@ func Serve(w http.ResponseWriter, r *http.Request, res fs.Resource) {
 	if res.Dir() {
 		serveCollection(w, r, res)
 	} else {
-		serveResource(w, r, res)
+		ServeResourceVersion(w, r, res, res.LatestVersion().ID)
 	}
 }
 
@@ -89,12 +89,8 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file fs.Resource) {
 		if f.Dir() {
 			fmt.Fprintf(w, "<tr><td>%s</td></tr>\n", link)
 		} else {
-			v, err := f.LatestVersion()
-			if err != nil {
-				fmt.Fprintf(w, "<tr><td>%s</td><td align=\"right\" colspan=3>Error: %s</td></tr>\n", link, err.Error())
-			} else {
-				fmt.Fprintf(w, "<tr><td>%s</td><td align=\"right\">%s</td><td>%s</td><td>%s</td></tr>\n", link, formatSize(int(v.Size)), v.MimeType, v.SHA256[0:12])
-			}
+			v := f.LatestVersion()
+			fmt.Fprintf(w, "<tr><td>%s</td><td align=\"right\">%s</td><td>%s</td><td>%s</td></tr>\n", link, formatSize(int(v.Size)), v.MimeType, v.SHA256[0:12])
 		}
 	}
 	fmt.Fprintln(w, "</tbody></table></pre>")
@@ -109,29 +105,20 @@ func formatSize(size int) string {
 	return fmt.Sprintf("%d%s", size, suffix[si])
 }
 
-func serveResource(w http.ResponseWriter, r *http.Request, file fs.Resource) {
-	if version, err := file.LatestVersion(); err != nil {
-		panic(err)
-	} else {
-		ServeResourceVersion(w, r, file, version)
+func ServeResourceVersion(w http.ResponseWriter, r *http.Request, file fs.Resource, versionID uuid.UUID) {
+	if versionID == uuid.Nil {
+		versionID = file.LatestVersion().ID
 	}
-}
-
-func ServeResourceVersion(w http.ResponseWriter, r *http.Request, file fs.Resource, version fs.Version) {
-	if version.ID == uuid.Nil {
-		var err error
-		version, err = file.LatestVersion()
-		if err != nil {
-			panic(err)
-		}
-
+	version, err := file.FindVersion(versionID)
+	if err != nil {
+		panic(err)
 	}
 
 	w.Header().Set("Etag", version.SHA256)
 	w.Header().Set("Last-Modified", time.UnixMilli(int64(version.Created)).Format(http.TimeFormat))
 	w.Header().Set("Content-Type", version.MimeType)
 
-	done, rangeReq := checkPreconditions(w, r, version)
+	done, rangeReq := checkPreconditions(w, r, version.VersionInfo)
 	if done {
 		return
 	}
@@ -160,7 +147,7 @@ func ServeResourceVersion(w http.ResponseWriter, r *http.Request, file fs.Resour
 		// multipart responses."
 		ra := ranges[0]
 		size = ra.length
-		reader, err = file.OpenRead(ra.start, ra.length, version.ID)
+		reader, err = version.OpenRead(ra.start, ra.length)
 		if err == nil {
 			code = http.StatusPartialContent
 			w.Header().Set("Content-Range", ra.contentRange(size))
@@ -168,7 +155,7 @@ func ServeResourceVersion(w http.ResponseWriter, r *http.Request, file fs.Resour
 			err = nil
 		}
 	} else {
-		reader, err = file.OpenRead(0, -1, version.ID)
+		reader, err = version.OpenRead(0, -1)
 	}
 
 	if err != nil {
@@ -277,7 +264,7 @@ func parseRange(s string, size int) ([]httpRange, error) {
 
 // checkPreconditions evaluates request preconditions and reports whether a precondition
 // resulted in sending StatusNotModified or StatusPreconditionFailed.
-func checkPreconditions(w http.ResponseWriter, r *http.Request, v fs.Version) (done bool, rangeHeader string) {
+func checkPreconditions(w http.ResponseWriter, r *http.Request, v fs.VersionInfo) (done bool, rangeHeader string) {
 	// This function carefully follows RFC 7232 section 6.
 	ch := checkIfMatch(r, v)
 	if ch == condNone {
@@ -360,7 +347,7 @@ const (
 	condFalse
 )
 
-func checkIfMatch(r *http.Request, v fs.Version) condResult {
+func checkIfMatch(r *http.Request, v fs.VersionInfo) condResult {
 	im := r.Header.Get("If-Match")
 	if im == "" {
 		return condNone
@@ -390,7 +377,7 @@ func checkIfMatch(r *http.Request, v fs.Version) condResult {
 	return condFalse
 }
 
-func checkIfUnmodifiedSince(r *http.Request, v fs.Version) condResult {
+func checkIfUnmodifiedSince(r *http.Request, v fs.VersionInfo) condResult {
 	ius := r.Header.Get("If-Unmodified-Since")
 	if ius == "" {
 		return condNone
@@ -408,7 +395,7 @@ func checkIfUnmodifiedSince(r *http.Request, v fs.Version) condResult {
 	return condFalse
 }
 
-func checkIfNoneMatch(r *http.Request, v fs.Version) condResult {
+func checkIfNoneMatch(r *http.Request, v fs.VersionInfo) condResult {
 	inm := r.Header.Get("If-None-Match")
 	if inm == "" {
 		return condNone
@@ -438,7 +425,7 @@ func checkIfNoneMatch(r *http.Request, v fs.Version) condResult {
 	return condTrue
 }
 
-func checkIfModifiedSince(r *http.Request, v fs.Version) condResult {
+func checkIfModifiedSince(r *http.Request, v fs.VersionInfo) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}
@@ -458,7 +445,7 @@ func checkIfModifiedSince(r *http.Request, v fs.Version) condResult {
 	return condTrue
 }
 
-func checkIfRange(r *http.Request, v fs.Version) condResult {
+func checkIfRange(r *http.Request, v fs.VersionInfo) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}

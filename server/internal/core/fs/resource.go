@@ -25,15 +25,7 @@ type Resource struct {
 	inheritedPermissions []byte
 	visibleParent        pgtype.UUID
 	userPermission       Permission
-}
-
-type Version struct {
-	ID       uuid.UUID `json:"id"`
-	Created  int       `json:"created"`
-	Deleted  int       `json:"deleted"`
-	Size     int64     `json:"size"`
-	MimeType string    `json:"mime_type"`
-	SHA256   string    `json:"sha256"`
+	latestVersionInfo    VersionInfo
 }
 
 func (r Resource) ID() uuid.UUID                { return r.id }
@@ -47,30 +39,7 @@ func (r Resource) Versions() []byte             { return r.versions }
 func (r Resource) Links() []byte                { return r.links }
 func (r Resource) VisibleParentID() pgtype.UUID { return r.visibleParent }
 func (r Resource) InheritedPermissions() []byte { return r.inheritedPermissions }
-
-func (r Resource) LatestVersion() (Version, error) {
-	versions := make([]Version, 0, 1)
-	err := json.Unmarshal(r.versions, &versions)
-	if err != nil {
-		return Version{}, err
-	}
-	if len(versions) == 0 {
-		return Version{
-			ID:       uuid.Nil,
-			Created:  int(r.created.Unix()),
-			Size:     0,
-			MimeType: "text/plain",
-			SHA256:   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-		}, nil
-	}
-	version := Version{}
-	for _, v := range versions {
-		if v.Created > version.Created {
-			version = v
-		}
-	}
-	return version, nil
-}
+func (r Resource) LatestVersion() VersionInfo   { return r.latestVersionInfo }
 
 func (r Resource) hasPermission(p Permission) bool {
 	return r.userPermission&p != 0
@@ -141,6 +110,7 @@ func (f filesystem) scanResourceWithoutParent(row pgx.CollectableRow) (Resource,
 	if err != nil {
 		return r, err
 	}
+
 	permission := Permission(0)
 	if f.fullAccess {
 		permission = -1
@@ -152,8 +122,34 @@ func (f filesystem) scanResourceWithoutParent(row pgx.CollectableRow) (Resource,
 	if permission&PermissionRead == 0 {
 		return Resource{}, ErrResourceNotFound
 	}
+
+	if v, err := latestVersion(r.versions); err != nil {
+		return Resource{}, err
+	} else {
+		r.latestVersionInfo = v
+	}
+
 	r.userPermission = permission
 	return r, err
+}
+
+func latestVersion(versionsJSON []byte) (VersionInfo, error) {
+	versions := make([]VersionInfo, 0, 1)
+	err := json.Unmarshal(versionsJSON, &versions)
+	if err != nil {
+		return VersionInfo{}, err
+	}
+	if len(versions) == 0 {
+		return VersionInfo{
+			ID:       uuid.Nil,
+			Created:  0,
+			Size:     0,
+			MimeType: "text/plain",
+			SHA256:   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+		}, nil
+	}
+	// TODO: add `ORDER BY` clause to queries to ensure correctness
+	return versions[0], nil
 }
 
 func readPermissionFromJson(j []byte, userID int32) (Permission, error) {

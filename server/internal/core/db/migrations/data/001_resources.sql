@@ -22,6 +22,8 @@ CREATE TABLE resource_versions(
 
 CREATE UNIQUE INDEX unique_member_resource_name ON resources(parent, name) WHERE deleted IS NULL;
 
+CREATE INDEX versions_by_resource ON resource_versions(resource_id, created DESC);
+
 CREATE OR REPLACE FUNCTION phylum_merge_permission_grants(a JSONB, b JSONB)
 RETURNS JSONB LANGUAGE SQL AS $$
     SELECT 
@@ -42,6 +44,8 @@ $$;
 DROP FUNCTION phylum_merge_permission_grants;
 
 DROP INDEX unique_member_resource_name;
+
+DROP INDEX versions_by_resource;
 
 DROP TABLE resource_versions;
 

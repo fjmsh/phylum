@@ -170,11 +170,7 @@ func (h *Handler) confirmLocks(r *http.Request, src, dst string) (release func()
 			} else if res.Dir() {
 				return false, errors.New("cannot check etag for directories")
 			} else {
-				if v, err := res.LatestVersion(); err != nil {
-					return false, err
-				} else {
-					return v.SHA256 == etag, nil
-				}
+				return res.LatestVersion().SHA256 == etag, nil
 			}
 		}, l.conditions...)
 		if err == ErrConfirmationFailed {
@@ -287,9 +283,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	if statErr != nil {
 		return http.StatusInternalServerError, statErr
 	}
-	if v, err := fi.LatestVersion(); err == nil {
-		w.Header().Set("ETag", v.SHA256)
-	}
+	w.Header().Set("ETag", fi.LatestVersion().SHA256)
 	return http.StatusCreated, nil
 }
 

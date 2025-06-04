@@ -173,17 +173,10 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		if targetRoot.dir {
 			newIDs[r.id] = id
 		} else {
-			if version, err := r.LatestVersion(); err != nil {
-				logrus.Warn("Unable to copy " + r.id.String() + ": " + err.Error())
-			} else {
-				contents = append(contents, copyParams{
-					SrcVersion:   version.ID,
-					DestResource: id,
-					Size:         version.Size,
-					MimeType:     version.MimeType,
-					SHA256:       version.SHA256,
-				})
-			}
+			contents = append(contents, copyParams{
+				src:          r.latestVersionInfo,
+				destResource: id,
+			})
 		}
 
 		for _, src := range tree {
@@ -200,17 +193,10 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 			if src.dir {
 				newIDs[src.id] = id
 			} else {
-				if version, err := src.LatestVersion(); err != nil {
-					logrus.Warn("Unable to copy " + src.id.String() + ": " + err.Error())
-				} else {
-					contents = append(contents, copyParams{
-						SrcVersion:   version.ID,
-						DestResource: id,
-						Size:         version.Size,
-						MimeType:     version.MimeType,
-						SHA256:       version.SHA256,
-					})
-				}
+				contents = append(contents, copyParams{
+					src:          src.latestVersionInfo,
+					destResource: id,
+				})
 			}
 		}
 
@@ -230,7 +216,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		func() {
 			for _, c := range contents {
 				if err := r.f.CopyContents(c); err != nil {
-					logrus.Warn("unable to copy " + c.SrcVersion.String() + " to " + c.DestResource.String() + ": " + err.Error())
+					logrus.Warn("unable to copy " + c.src.ID.String() + " to " + c.destResource.String() + ": " + err.Error())
 				}
 			}
 
@@ -249,18 +235,15 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 }
 
 type copyParams struct {
-	SrcVersion   uuid.UUID
-	DestResource uuid.UUID
-	Size         int64
-	MimeType     string
-	SHA256       string
+	src          VersionInfo
+	destResource uuid.UUID
 }
 
 func (f filesystem) CopyContents(params copyParams) error {
 	versionID, _ := uuid.NewV7()
 
-	if err := f.createResourceVersion(params.DestResource, versionID, params.Size, params.MimeType, params.SHA256); err != nil {
-		return errors.New("failed to create version for " + params.DestResource.String() + ": " + err.Error())
+	if err := f.createResourceVersion(params.destResource, versionID, params.src.Size, params.src.MimeType, params.src.SHA256); err != nil {
+		return errors.New("failed to create version for " + params.destResource.String() + ": " + err.Error())
 	}
 
 	// TODO: #implement CopyContents

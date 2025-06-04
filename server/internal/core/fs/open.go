@@ -2,7 +2,6 @@ package fs
 
 import (
 	"encoding/hex"
-	"errors"
 	"hash"
 	"io"
 
@@ -13,23 +12,14 @@ import (
 )
 
 func (r Resource) OpenRead(start, length int, versionID uuid.UUID) (io.ReadCloser, error) {
-	if versionID != uuid.Nil {
-		// TODO: #backend
-		return r.f.openRead("", versionID, start, length)
+	if versionID == uuid.Nil {
+		versionID = r.LatestVersion().ID
 	}
-	if version, err := r.LatestVersion(); err != nil {
+
+	if v, err := r.FindVersion(versionID); err != nil {
 		return nil, err
 	} else {
-		// TODO: #backend
-		return r.f.openRead("", version.ID, start, length)
-	}
-}
-
-func (f filesystem) openRead(backend string, versionID uuid.UUID, start, length int) (io.ReadCloser, error) {
-	if b := storage.GetBackend(backend); b == nil {
-		return nil, errors.New("storage backend not found: " + backend)
-	} else {
-		return b.OpenRead(versionID, start, length)
+		return v.OpenRead(start, length)
 	}
 }
 
@@ -52,7 +42,11 @@ func (r Resource) OpenWrite(versionID uuid.UUID) (io.WriteCloser, error) {
 				if err := f.createResourceVersion(r.id, versionID, int64(len), mimeType, sum); err != nil {
 					return err
 				}
-				return f.updateResourceModified(r.id)
+				err := f.updateResourceModified(r.id)
+
+				//TODO: #backend Move to correct storage backend
+
+				return err
 			})
 		}), nil
 	}

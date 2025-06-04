@@ -41,19 +41,15 @@ func handleContentsRequest(c *gin.Context) {
 	if r.Dir() {
 
 	} else {
-		if versionIDStr == "" {
-			serve.Serve(c.Writer, c.Request, r)
-		} else {
-			versionID, err := uuid.Parse(versionIDStr)
+		versionID := r.LatestVersion().ID
+		if versionIDStr != "" {
+			var err error
+			versionID, err = uuid.Parse(versionIDStr)
 			if err != nil {
 				panic(err)
 			}
-			if v, err := r.FindVersion(versionID); err != nil {
-				panic(err)
-			} else {
-				serve.ServeResourceVersion(c.Writer, c.Request, r, v)
-			}
 		}
+		serve.ServeResourceVersion(c.Writer, c.Request, r, versionID)
 		return
 	}
 

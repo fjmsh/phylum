@@ -264,11 +264,7 @@ func findDisplayName(fi fs.Resource) string {
 }
 
 func findContentLength(fi fs.Resource) string {
-	if v, err := fi.LatestVersion(); err != nil {
-		return "0"
-	} else {
-		return strconv.Itoa(int(v.Size))
-	}
+	return strconv.Itoa(int(fi.LatestVersion().Size))
 }
 
 func findCreationDate(fi fs.Resource) string {
@@ -280,19 +276,11 @@ func findLastModified(fi fs.Resource) string {
 }
 
 func findContentType(fi fs.Resource) string {
-	if v, err := fi.LatestVersion(); err != nil {
-		return ""
-	} else {
-		return v.MimeType
-	}
+	return fi.LatestVersion().MimeType
 }
 
 func findETag(fi fs.Resource) string {
-	if v, err := fi.LatestVersion(); err != nil {
-		return ""
-	} else {
-		return v.SHA256
-	}
+	return fi.LatestVersion().SHA256
 }
 
 func findSupportedLock(fi fs.Resource) string {

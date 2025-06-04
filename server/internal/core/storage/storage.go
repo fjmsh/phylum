@@ -31,7 +31,6 @@ func Initialize(db db.Handler) error {
 	} else if b, err := createLocalBackend(map[string]string{"root": path.Join(Cfg.Location, "default")}); err != nil {
 		return errors.New("failed to create default backend: " + err.Error())
 	} else {
-		restoredBackends[""] = b
 		backends = restoredBackends
 		defaultBackend = b
 	}
@@ -45,6 +44,9 @@ func DefaultBackend() LocalBackend {
 }
 
 func GetBackend(name string) Backend {
+	if name == "_" {
+		return defaultBackend
+	}
 	return backends[name]
 }
 

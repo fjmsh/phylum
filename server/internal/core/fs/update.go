@@ -12,8 +12,8 @@ func (f filesystem) updateResourceModified(id uuid.UUID) error {
 }
 
 func (f filesystem) createResourceVersion(id, versionID uuid.UUID, size int64, mimeType, sha256 string) error {
-	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256)
-	VALUES (@version_id::UUID, @resource_id::UUID, @size::INT, @mime_type::TEXT, @sha256::TEXT)`
+	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage)
+	VALUES (@version_id::UUID, @resource_id::UUID, @size::INT, @mime_type::TEXT, @sha256::TEXT, @storage::TEXT)`
 
 	args := pgx.NamedArgs{
 		"resource_id": id,
@@ -21,6 +21,7 @@ func (f filesystem) createResourceVersion(id, versionID uuid.UUID, size int64, m
 		"size":        size,
 		"mime_type":   mimeType,
 		"sha256":      sha256,
+		"storage":     "_",
 	}
 	_, err := f.db.Exec(q, args)
 	return err
