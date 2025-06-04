@@ -31,23 +31,70 @@ func Get() Storage {
 		} else {
 			s = storage
 		}
+		go processBackendUpdates()
 	}
 	return s
 }
 
 func create(storageLocation string) (Storage, error) {
 	if err := os.Chmod(storageLocation, 0700); err != nil {
-		return Storage{}, err
+		return Storage{}, errors.New("failed to set permissions: " + err.Error())
 	}
 	if backends, err := restoreBackends(); err != nil {
-		return Storage{}, err
+		return Storage{}, errors.New("failed to restore backends: " + err.Error())
 	} else if defaultBackend, err := createLocalBackend(map[string]string{"root": path.Join(storageLocation, "default")}, true); err != nil {
-		return Storage{}, err
+		return Storage{}, errors.New("failed to create default backend: " + err.Error())
 	} else {
 		return Storage{
 			backends:       backends,
 			defaultBackend: defaultBackend,
 		}, nil
+	}
+}
+
+func restoreBackends() (map[string]Backend, error) {
+	const q = "SELECT name, driver, params from storage_backends"
+	if rows, err := db.Get(context.Background()).Query(q); err != nil {
+		return nil, err
+	} else if backends, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (BackendConfig, error) {
+		var c BackendConfig
+		var paramsJSON []byte
+		if err := row.Scan(&c.Name, &c.Driver, &paramsJSON); err != nil {
+			return BackendConfig{}, errors.New("failed to scan backend config: " + err.Error())
+		}
+
+		c.Params = make(map[string]string)
+		if err := json.Unmarshal(paramsJSON, &c.Params); err != nil {
+			return BackendConfig{}, errors.New("failed to unmarshal backend params: " + err.Error())
+		}
+		return c, nil
+	}); err != nil {
+		return nil, err
+	} else {
+		results := map[string]Backend{}
+		for _, c := range backends {
+			if b, err := c.open(); err != nil {
+				return nil, errors.New("failed to open backend: " + err.Error())
+			} else {
+				results[c.Name] = b
+			}
+		}
+		return results, nil
+	}
+}
+
+func processBackendUpdates() {
+	sub := db.Get(context.Background()).Notifier().Listen("backend_updates")
+	for {
+		p := <-sub.NotificationC()
+		var c BackendConfig
+		if err := json.Unmarshal([]byte(p), &c); err != nil {
+			logrus.Warn("failed to unmarshal backend config: " + err.Error())
+		} else if b, err := c.open(); err != nil {
+			logrus.Warn("failed to open backend: " + err.Error())
+		} else {
+			s.backends[c.Name] = b
+		}
 	}
 }
 
@@ -147,38 +194,19 @@ func (s Storage) ListBackends() map[string]Backend {
 	return s.backends
 }
 
-func restoreBackends() (map[string]Backend, error) {
-	const q = "SELECT name, driver, params from storage_backends"
-	if rows, err := db.Get(context.Background()).Query(q); err != nil {
-		return nil, err
-	} else if backends, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (namedBackend, error) {
-		var name, driverName string
-		var paramsJSON []byte
-		if err := row.Scan(&name, &driverName, &paramsJSON); err != nil {
-			return namedBackend{}, err
-		}
-		params := make(map[string]string)
-		if err := json.Unmarshal(paramsJSON, &params); err != nil {
-			return namedBackend{}, err
-		} else if driver, err := FindDriver(driverName); err != nil {
-			return namedBackend{}, err
-		} else if backend, err := driver.Create(params, false); err != nil {
-			return namedBackend{}, err
-		} else {
-			return namedBackend{name: name, backend: backend}, nil
-		}
-	}); err != nil {
-		return nil, err
-	} else {
-		results := map[string]Backend{}
-		for _, b := range backends {
-			results[b.name] = b.backend
-		}
-		return results, nil
-	}
+type BackendConfig struct {
+	Name   string            `json:"name"`
+	Driver string            `json:"driver"`
+	Params map[string]string `json:"params"`
 }
 
-type namedBackend struct {
-	name    string
-	backend Backend
+func (c BackendConfig) open() (Backend, error) {
+	if driver, err := FindDriver(c.Driver); err != nil {
+		return nil, err
+	} else if backend, err := driver.Create(c.Params, false); err != nil {
+		return nil, err
+	} else {
+		return backend, nil
+	}
+
 }
