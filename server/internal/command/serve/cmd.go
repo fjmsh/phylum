@@ -14,7 +14,7 @@ import (
 	"github.com/shroff/phylum/server/internal/api/publink"
 	apiv1 "github.com/shroff/phylum/server/internal/api/v1"
 	"github.com/shroff/phylum/server/internal/api/webdav"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -106,8 +106,8 @@ func setupTrashCompactor() {
 	go func() {
 		for {
 			<-ticker.C
-			fs.TrashCompact(context.Background(), trashRetainDuration)
+			core.TrashCompact(context.Background(), trashRetainDuration)
 		}
 	}()
-	fs.TrashCompact(context.Background(), trashRetainDuration)
+	core.TrashCompact(context.Background(), trashRetainDuration)
 }

@@ -4,14 +4,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 type shareParams struct {
-	Path       string        `json:"path" form:"path" binding:"required"`
-	Email      string        `json:"email" form:"email" binding:"required"`
-	Permission fs.Permission `json:"permission" form:"permission"`
+	Path       string          `json:"path" form:"path" binding:"required"`
+	Email      string          `json:"email" form:"email" binding:"required"`
+	Permission core.Permission `json:"permission" form:"permission"`
 }
 
 func handleShareRequest(c *gin.Context) {

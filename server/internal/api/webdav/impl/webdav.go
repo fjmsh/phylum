@@ -17,7 +17,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/serve"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 type Handler struct {
@@ -36,13 +36,13 @@ type Handler struct {
 // in a file path are separated by slash ('/', U+002F) characters, regardless
 // of host operating system convention.
 type FileSystem interface {
-	fs.ROFileSystem
+	core.ROFileSystem
 
-	CreateResourceByPath(name string, id uuid.UUID, dir, recursive bool, conflictResolution fs.ResourceBindConflictResolution) (fs.Resource, error)
-	OpenWrite(fs.Resource, uuid.UUID) (io.WriteCloser, error)
-	Copy(fs.Resource, string, uuid.UUID, bool, fs.ResourceBindConflictResolution) (fs.Resource, bool, error)
-	Move(fs.Resource, string, fs.ResourceBindConflictResolution) (fs.Resource, bool, error)
-	DeleteRecursive(fs.Resource, bool) (fs.Resource, error)
+	CreateResourceByPath(name string, id uuid.UUID, dir, recursive bool, conflictResolution core.ResourceBindConflictResolution) (core.Resource, error)
+	OpenWrite(core.Resource, uuid.UUID) (io.WriteCloser, error)
+	Copy(core.Resource, string, uuid.UUID, bool, core.ResourceBindConflictResolution) (core.Resource, bool, error)
+	Move(core.Resource, string, core.ResourceBindConflictResolution) (core.Resource, bool, error)
+	DeleteRecursive(core.Resource, bool) (core.Resource, error)
 }
 
 func (h *Handler) stripPrefix(p string) (string, int, error) {
@@ -242,7 +242,7 @@ func (h *Handler) handleDelete(_ http.ResponseWriter, r *http.Request) (status i
 	defer release()
 
 	if r, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-		if errors.Is(err, fs.ErrResourceNotFound) {
+		if errors.Is(err, core.ErrResourceNotFound) {
 			return http.StatusNotFound, err
 		}
 		return http.StatusMethodNotAllowed, err
@@ -265,12 +265,12 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	// TODO(rost): Support the If-Match, If-None-Match headers? See bradfitz'
 	// comments in http.checkEtag.
 
-	res, err := h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, false, false, fs.ResourceBindConflictResolutionEnsure)
+	res, err := h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, false, false, core.ResourceBindConflictResolutionEnsure)
 	if err != nil {
-		if errors.Is(err, fs.ErrParentNotFound) {
+		if errors.Is(err, core.ErrParentNotFound) {
 			return http.StatusConflict, err
-		} else if errors.Is(err, fs.ErrResourceCollection) {
-			return http.StatusConflict, fs.ErrResourceCollection
+		} else if errors.Is(err, core.ErrResourceCollection) {
+			return http.StatusConflict, core.ErrResourceCollection
 		}
 		return http.StatusNotFound, err
 	}
@@ -306,8 +306,8 @@ func (h *Handler) handleMkcol(_ http.ResponseWriter, r *http.Request) (status in
 	if r.ContentLength > 0 {
 		return http.StatusUnsupportedMediaType, nil
 	}
-	if _, err := h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, true, false, fs.ResourceBindConflictResolutionError); err != nil {
-		if errors.Is(err, fs.ErrParentNotFound) {
+	if _, err := h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, true, false, core.ResourceBindConflictResolutionError); err != nil {
+		if errors.Is(err, core.ErrParentNotFound) {
 			return http.StatusConflict, err
 		}
 		return http.StatusMethodNotAllowed, err
@@ -383,9 +383,9 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 
 		// Create the resource if it didn't previously exist.
 		if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-			_, err = h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, false, false, fs.ResourceBindConflictResolutionEnsure)
+			_, err = h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, false, false, core.ResourceBindConflictResolutionEnsure)
 			if err != nil {
-				if errors.Is(err, fs.ErrParentNotFound) {
+				if errors.Is(err, core.ErrParentNotFound) {
 					return http.StatusConflict, err
 				}
 				return http.StatusNotFound, err
@@ -439,7 +439,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, request *http.Request) (
 	}
 	fi, err := h.FileSystem.ResourceByPath(reqPath)
 	if err != nil {
-		if errors.Is(err, fs.ErrResourceNotFound) {
+		if errors.Is(err, core.ErrResourceNotFound) {
 			return http.StatusNotFound, err
 		}
 		return http.StatusMethodNotAllowed, err
@@ -458,7 +458,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, request *http.Request) (
 
 	mw := multistatusWriter{w: w}
 
-	writePropStat := func(r fs.Resource, p string) error {
+	writePropStat := func(r core.Resource, p string) error {
 		var pstats []Propstat
 		if pf.Propname != nil {
 			pnames, err := propnames(h.FileSystem, h.LockSystem, r)
@@ -508,7 +508,7 @@ func (h *Handler) handleProppatch(w http.ResponseWriter, r *http.Request) (statu
 	defer release()
 
 	if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-		if errors.Is(err, fs.ErrResourceNotFound) {
+		if errors.Is(err, core.ErrResourceNotFound) {
 			return http.StatusNotFound, err
 		}
 		return http.StatusMethodNotAllowed, err

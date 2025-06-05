@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 )
 
@@ -25,9 +25,9 @@ func setupMvCommand() *cobra.Command {
 
 			force, _ := cmd.Flags().GetBool("force")
 
-			var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionError
+			var conflictResolution core.ResourceBindConflictResolution = core.ResourceBindConflictResolutionError
 			if force {
-				conflictResolution = fs.ResourceBindConflictResolutionDelete
+				conflictResolution = core.ResourceBindConflictResolutionDelete
 			}
 			if _, _, err := f.Move(src, args[1], conflictResolution); err != nil {
 				fmt.Println("cannot move'" + srcPath + "' to '" + args[1] + "': " + err.Error())

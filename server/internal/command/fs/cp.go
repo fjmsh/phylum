@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 )
 
@@ -33,9 +33,9 @@ func setupCpCommand() *cobra.Command {
 			}
 
 			id, _ := uuid.NewV7()
-			var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionError
+			var conflictResolution core.ResourceBindConflictResolution = core.ResourceBindConflictResolutionError
 			if force {
-				conflictResolution = fs.ResourceBindConflictResolutionOverwrite
+				conflictResolution = core.ResourceBindConflictResolutionOverwrite
 			}
 			if _, _, err := f.Copy(src, args[1], id, true, conflictResolution); err != nil {
 				fmt.Println("cannot copy'" + srcPath + "' to '" + args[1] + "': " + err.Error())

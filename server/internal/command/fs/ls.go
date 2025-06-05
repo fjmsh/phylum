@@ -10,7 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 )
 
@@ -72,7 +72,7 @@ func setupLsCommand() *cobra.Command {
 }
 
 func formatPermissionsJson(j []byte) string {
-	p := make(map[string]fs.Permission)
+	p := make(map[string]core.Permission)
 	json.Unmarshal(j, &p)
 	if len(p) == 0 {
 		return ""
@@ -85,8 +85,8 @@ func formatPermissionsJson(j []byte) string {
 }
 
 type Grant struct {
-	Permission fs.Permission `json:"p"`
-	Timestamp  int           `json:"t"`
+	Permission core.Permission `json:"p"`
+	Timestamp  int             `json:"t"`
 }
 
 func formatGrantsJson(j []byte) string {

@@ -5,14 +5,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 type mkdirParams struct {
-	Path          string                            `json:"path" form:"path" binding:"required"`
-	CreateParents bool                              `json:"create_parents" form:"create_parents"`
-	ID            uuid.UUID                         `json:"id" form:"id"`
-	Conflict      fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
+	Path          string                              `json:"path" form:"path" binding:"required"`
+	CreateParents bool                                `json:"create_parents" form:"create_parents"`
+	ID            uuid.UUID                           `json:"id" form:"id"`
+	Conflict      core.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
 }
 
 func handleMkdirRequest(c *gin.Context) {

@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
-func FormatResourceSummary(r fs.Resource, name string, deleted pgtype.Timestamp) string {
+func FormatResourceSummary(r core.Resource, name string, deleted pgtype.Timestamp) string {
 	if name == "" {
 		name = r.Name()
 	}
@@ -55,21 +55,21 @@ func formatGrantsJson(j []byte) string {
 	return "[" + strings.Join(perm, ", ") + "]"
 }
 
-func FormatPermission(p fs.Permission) string {
-	if p == fs.PermissionSU {
+func FormatPermission(p core.Permission) string {
+	if p == core.PermissionSU {
 		return "su"
 	}
 	str := ""
-	if p&fs.PermissionRead != 0 {
-		p -= fs.PermissionRead
+	if p&core.PermissionRead != 0 {
+		p -= core.PermissionRead
 		str += "r"
 	}
-	if p&fs.PermissionWrite != 0 {
-		p -= fs.PermissionWrite
+	if p&core.PermissionWrite != 0 {
+		p -= core.PermissionWrite
 		str += "w"
 	}
-	if p&fs.PermissionShare != 0 {
-		p -= fs.PermissionShare
+	if p&core.PermissionShare != 0 {
+		p -= core.PermissionShare
 		str += "s"
 	}
 	if p != 0 {

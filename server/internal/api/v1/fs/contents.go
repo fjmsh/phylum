@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/serve"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 var errGetCollectionContents = errors.NewError(http.StatusBadRequest, "resource_is_collection", "Cannot get contents of collection")
@@ -61,7 +61,7 @@ func handleContentsRequest(c *gin.Context) {
 
 	var zip = zip.NewWriter(c.Writer)
 	close := c.Writer.CloseNotify()
-	err = f.Walk(r, 2, func(r fs.Resource, p string) error {
+	err = f.Walk(r, 2, func(r core.Resource, p string) error {
 		if r.Dir() {
 			return nil
 		}

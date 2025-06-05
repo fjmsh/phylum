@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 var Cfg Config
@@ -31,8 +31,8 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 	return u, err
 }
 
-func (u User) OpenFileSystem(ctx context.Context) fs.FileSystem {
-	return fs.Open(ctx, u.ID, u.Home, u.Permissions&PermissionFilesAll != 0)
+func (u User) OpenFileSystem(ctx context.Context) core.FileSystem {
+	return core.Open(ctx, u.ID, u.Home, u.Permissions&PermissionFilesAll != 0)
 }
 
 type Manager interface {
@@ -61,7 +61,7 @@ type Manager interface {
 	ResetUserPassword(user User, token, password string) error
 
 	// bookmarks.go
-	AddBookmark(u User, resource fs.Resource, name string) (Bookmark, error)
+	AddBookmark(u User, resource core.Resource, name string) (Bookmark, error)
 	RemoveBookmark(u User, id uuid.UUID) error
 	ListBookmarks(u User, since int64) ([]Bookmark, error)
 }

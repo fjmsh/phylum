@@ -5,8 +5,8 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 func (h *Handler) handleCopyMove(_ http.ResponseWriter, r *http.Request) (status int, err error) {
@@ -91,9 +91,9 @@ func moveFiles(f FileSystem, srcPath, dstPath string, overwrite bool) (status in
 		}
 		return http.StatusInternalServerError, err
 	} else {
-		var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionError
+		var conflictResolution core.ResourceBindConflictResolution = core.ResourceBindConflictResolutionError
 		if overwrite {
-			conflictResolution = fs.ResourceBindConflictResolutionDelete
+			conflictResolution = core.ResourceBindConflictResolutionDelete
 		}
 		if _, deleted, err := f.Move(src, dstPath, conflictResolution); err != nil {
 			if e, ok := err.(*errors.Error); ok {
@@ -121,9 +121,9 @@ func copyFiles(f FileSystem, srcPath, dstPath string, overwrite bool, depth int)
 		return http.StatusInternalServerError, err
 	} else {
 		id, _ := uuid.NewV7()
-		var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionError
+		var conflictResolution core.ResourceBindConflictResolution = core.ResourceBindConflictResolutionError
 		if overwrite {
-			conflictResolution = fs.ResourceBindConflictResolutionOverwrite
+			conflictResolution = core.ResourceBindConflictResolutionOverwrite
 		}
 		if _, deleted, err := f.Copy(src, dstPath, id, depth != 0, conflictResolution); err != nil {
 			if e, ok := err.(*errors.Error); ok {

@@ -4,13 +4,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 type moveParams struct {
-	Src      string                            `json:"src" form:"src" binding:"required"`
-	Dest     string                            `json:"dest" form:"dest" binding:"required"`
-	Conflict fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
+	Src      string                              `json:"src" form:"src" binding:"required"`
+	Dest     string                              `json:"dest" form:"dest" binding:"required"`
+	Conflict core.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
 }
 
 func handleMoveRequest(c *gin.Context) {

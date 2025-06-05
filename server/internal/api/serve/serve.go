@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/storage"
 )
 
@@ -28,11 +28,11 @@ var htmlReplacer = strings.NewReplacer(
 )
 
 type FileSystem interface {
-	ReadDir(fs.Resource, bool) ([]fs.Resource, error)
-	FindVersion(fs.Resource, uuid.UUID) (fs.Version, error)
+	ReadDir(core.Resource, bool) ([]core.Resource, error)
+	FindVersion(core.Resource, uuid.UUID) (core.Version, error)
 }
 
-func Serve(w http.ResponseWriter, r *http.Request, f FileSystem, res fs.Resource) {
+func Serve(w http.ResponseWriter, r *http.Request, f FileSystem, res core.Resource) {
 	if res.Dir() {
 		serveCollection(w, r, f, res)
 	} else {
@@ -40,7 +40,7 @@ func Serve(w http.ResponseWriter, r *http.Request, f FileSystem, res fs.Resource
 	}
 }
 
-func serveCollection(w http.ResponseWriter, r *http.Request, f FileSystem, file fs.Resource) {
+func serveCollection(w http.ResponseWriter, r *http.Request, f FileSystem, file core.Resource) {
 	if !strings.HasSuffix(r.URL.Path, "/") {
 		http.Redirect(w, r, r.URL.String()+"/", http.StatusMovedPermanently)
 		return
@@ -110,7 +110,7 @@ func formatSize(size int) string {
 	return fmt.Sprintf("%d%s", size, suffix[si])
 }
 
-func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, res fs.Resource, versionID uuid.UUID) {
+func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, res core.Resource, versionID uuid.UUID) {
 	if versionID == uuid.Nil {
 		versionID = res.LatestVersion().ID
 	}
@@ -269,7 +269,7 @@ func parseRange(s string, size int) ([]httpRange, error) {
 
 // checkPreconditions evaluates request preconditions and reports whether a precondition
 // resulted in sending StatusNotModified or StatusPreconditionFailed.
-func checkPreconditions(w http.ResponseWriter, r *http.Request, v fs.VersionInfo) (done bool, rangeHeader string) {
+func checkPreconditions(w http.ResponseWriter, r *http.Request, v core.VersionInfo) (done bool, rangeHeader string) {
 	// This function carefully follows RFC 7232 section 6.
 	ch := checkIfMatch(r, v)
 	if ch == condNone {
@@ -352,7 +352,7 @@ const (
 	condFalse
 )
 
-func checkIfMatch(r *http.Request, v fs.VersionInfo) condResult {
+func checkIfMatch(r *http.Request, v core.VersionInfo) condResult {
 	im := r.Header.Get("If-Match")
 	if im == "" {
 		return condNone
@@ -382,7 +382,7 @@ func checkIfMatch(r *http.Request, v fs.VersionInfo) condResult {
 	return condFalse
 }
 
-func checkIfUnmodifiedSince(r *http.Request, v fs.VersionInfo) condResult {
+func checkIfUnmodifiedSince(r *http.Request, v core.VersionInfo) condResult {
 	ius := r.Header.Get("If-Unmodified-Since")
 	if ius == "" {
 		return condNone
@@ -400,7 +400,7 @@ func checkIfUnmodifiedSince(r *http.Request, v fs.VersionInfo) condResult {
 	return condFalse
 }
 
-func checkIfNoneMatch(r *http.Request, v fs.VersionInfo) condResult {
+func checkIfNoneMatch(r *http.Request, v core.VersionInfo) condResult {
 	inm := r.Header.Get("If-None-Match")
 	if inm == "" {
 		return condNone
@@ -430,7 +430,7 @@ func checkIfNoneMatch(r *http.Request, v fs.VersionInfo) condResult {
 	return condTrue
 }
 
-func checkIfModifiedSince(r *http.Request, v fs.VersionInfo) condResult {
+func checkIfModifiedSince(r *http.Request, v core.VersionInfo) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}
@@ -450,7 +450,7 @@ func checkIfModifiedSince(r *http.Request, v fs.VersionInfo) condResult {
 	return condTrue
 }
 
-func checkIfRange(r *http.Request, v fs.VersionInfo) condResult {
+func checkIfRange(r *http.Request, v core.VersionInfo) condResult {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		return condNone
 	}

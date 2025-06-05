@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/db"
-	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/spf13/cobra"
 )
 
 var u *user.User
-var f fs.FileSystem
+var f core.FileSystem
 
 func User(cmd *cobra.Command) *user.User {
 	if u == nil {
@@ -33,11 +33,11 @@ func User(cmd *cobra.Command) *user.User {
 	return u
 }
 
-func UserFileSystem(cmd *cobra.Command) fs.FileSystem {
+func UserFileSystem(cmd *cobra.Command) core.FileSystem {
 	if f == nil {
 		user := User(cmd)
 		if user == nil {
-			f = fs.OpenOmniscient(db.Get(context.Background()))
+			f = core.OpenOmniscient(db.Get(context.Background()))
 		} else {
 			f = user.OpenFileSystem(context.Background())
 		}

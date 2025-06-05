@@ -5,15 +5,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 type copyParams struct {
-	Src       string                            `json:"src" form:"src" binding:"required"`
-	Dest      string                            `json:"dest" form:"dest" binding:"required"`
-	ID        uuid.UUID                         `json:"id" form:"id"`
-	VersionID uuid.UUID                         `json:"version_id" form:"id"`
-	Conflict  fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
+	Src       string                              `json:"src" form:"src" binding:"required"`
+	Dest      string                              `json:"dest" form:"dest" binding:"required"`
+	ID        uuid.UUID                           `json:"id" form:"id"`
+	VersionID uuid.UUID                           `json:"version_id" form:"id"`
+	Conflict  core.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
 }
 
 func handleCopyRequest(c *gin.Context) {

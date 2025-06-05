@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +22,7 @@ func setupSummaryCommand() *cobra.Command {
 	return &cmd
 }
 
-func printTrashSummary(f fs.FileSystem) {
+func printTrashSummary(f core.FileSystem) {
 	items, size, err := f.TrashSummary()
 	if err != nil {
 		fmt.Println("cannot get trash summary: " + err.Error())

@@ -8,16 +8,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 type uploadParams struct {
-	Path          string                            `json:"path" form:"path" binding:"required"`
-	ID            string                            `json:"id" form:"id" binding:"omitempty,uuid"`
-	VersionID     string                            `json:"version_id" form:"version_id" binding:"omitempty,uuid"`
-	CreateParents bool                              `json:"create_parents" form:"create_parents"`
-	Conflict      fs.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
-	SHA256        string                            `json:"sha256" form:"sha256"`
+	Path          string                              `json:"path" form:"path" binding:"required"`
+	ID            string                              `json:"id" form:"id" binding:"omitempty,uuid"`
+	VersionID     string                              `json:"version_id" form:"version_id" binding:"omitempty,uuid"`
+	CreateParents bool                                `json:"create_parents" form:"create_parents"`
+	Conflict      core.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
+	SHA256        string                              `json:"sha256" form:"sha256"`
 }
 
 func handleUploadRequest(c *gin.Context) {
@@ -44,7 +44,7 @@ func handleUploadRequest(c *gin.Context) {
 	// TODO: Calculate and verify sha sum
 
 	f := authenticator.GetFileSystem(c)
-	err = f.RunInTx(func(f fs.FileSystem) error {
+	err = f.RunInTx(func(f core.FileSystem) error {
 		res, err := f.CreateResourceByPath(params.Path, id, false, params.CreateParents, params.Conflict)
 		if err != nil {
 			return err

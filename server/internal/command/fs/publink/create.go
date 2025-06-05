@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +32,7 @@ func setupCreateCommand() *cobra.Command {
 	return &cmd
 }
 
-func createPublink(f fs.FileSystem, name, path string, password string, durationStr string, accesses int) error {
+func createPublink(f core.FileSystem, name, path string, password string, durationStr string, accesses int) error {
 	r, err := f.ResourceByPathWithRoot(path)
 	if err != nil {
 		return err

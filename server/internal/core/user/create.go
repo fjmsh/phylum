@@ -7,9 +7,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/core/fs"
 )
 
 var errInvalidEmailAddress = errors.NewError(http.StatusBadRequest, "invalid_email_address", "Invalid email address")
@@ -21,12 +21,12 @@ func (m manager) CreateUser(email, name string, noCreateHome bool) (User, error)
 		m := m.withDb(db)
 		var err error
 		var homeID pgtype.UUID
-		var home fs.Resource
-		f := fs.OpenOmniscient(db)
+		var home core.Resource
+		f := core.OpenOmniscient(db)
 		if !noCreateHome {
 			var err error
 			homePath := strings.TrimRight(Cfg.BaseDir, "/") + "/" + email
-			home, err = f.CreateResourceByPath(homePath, uuid.Nil, true, true, fs.ResourceBindConflictResolutionEnsure)
+			home, err = f.CreateResourceByPath(homePath, uuid.Nil, true, true, core.ResourceBindConflictResolutionEnsure)
 			if err != nil {
 				return err
 			}
@@ -39,7 +39,7 @@ func (m manager) CreateUser(email, name string, noCreateHome bool) (User, error)
 		}
 
 		if homeID.Valid {
-			if _, err := f.UpdatePermissions(home, user.ID, fs.PermissionRead|fs.PermissionWrite|fs.PermissionShare); err != nil {
+			if _, err := f.UpdatePermissions(home, user.ID, core.PermissionRead|core.PermissionWrite|core.PermissionShare); err != nil {
 				return err
 			}
 		}

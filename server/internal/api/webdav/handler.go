@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	webdav "github.com/shroff/phylum/server/internal/api/webdav/impl"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/sirupsen/logrus"
 )
@@ -41,7 +41,7 @@ func SetupHandler(r *gin.RouterGroup) {
 
 func (h *handler) HandleRequest(c *gin.Context) {
 	authSuccess := false
-	var f fs.FileSystem
+	var f core.FileSystem
 	if email, pass, ok := c.Request.BasicAuth(); ok {
 		ctx := c.Request.Context()
 		userManager := user.ManagerFromContext(ctx)

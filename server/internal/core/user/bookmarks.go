@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 type Bookmark struct {
@@ -29,12 +29,12 @@ func scanBookmark(row pgx.CollectableRow) (Bookmark, error) {
 	return p, nil
 }
 
-func (m manager) AddBookmark(u User, resource fs.Resource, name string) (Bookmark, error) {
+func (m manager) AddBookmark(u User, resource core.Resource, name string) (Bookmark, error) {
 	if name == "" {
 		name = resource.Name()
 	}
-	if fs.CheckNameInvalid(name) {
-		return Bookmark{}, fs.ErrResourceNameInvalid
+	if core.CheckNameInvalid(name) {
+		return Bookmark{}, core.ErrResourceNameInvalid
 	}
 
 	const q = `INSERT INTO bookmarks(user_id, resource_id, name, dir)

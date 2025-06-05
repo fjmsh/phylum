@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 )
 
@@ -19,14 +19,14 @@ func setupMkdirCommand() *cobra.Command {
 			f := common.UserFileSystem(cmd)
 			path := args[0]
 			var recursive bool
-			var conflict fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionError
+			var conflict core.ResourceBindConflictResolution = core.ResourceBindConflictResolutionError
 			if b, err := cmd.Flags().GetBool("parents"); err != nil {
 				fmt.Println("could not read flag 'parents': " + err.Error())
 				os.Exit(1)
 			} else {
 				recursive = b
 				if recursive {
-					conflict = fs.ResourceBindConflictResolutionEnsure
+					conflict = core.ResourceBindConflictResolutionEnsure
 				}
 			}
 			if _, err := f.CreateResourceByPath(path, uuid.Nil, true, recursive, conflict); err != nil {

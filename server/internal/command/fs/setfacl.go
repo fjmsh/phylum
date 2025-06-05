@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/spf13/cobra"
 )
@@ -47,16 +47,16 @@ func setupSetfaclCommand() *cobra.Command {
 	return &cmd
 }
 
-func parsePermissionString(s string) (fs.Permission, error) {
+func parsePermissionString(s string) (core.Permission, error) {
 	switch s {
 	case "none":
-		return fs.PermissionNone, nil
+		return core.PermissionNone, nil
 	case "read":
-		return fs.PermissionRead, nil
+		return core.PermissionRead, nil
 	case "write":
-		return fs.PermissionRead | fs.PermissionWrite, nil
+		return core.PermissionRead | core.PermissionWrite, nil
 	case "share":
-		return fs.PermissionRead | fs.PermissionWrite | fs.PermissionShare, nil
+		return core.PermissionRead | core.PermissionWrite | core.PermissionShare, nil
 	}
-	return fs.PermissionNone, errors.New("unrecognized permission: " + s)
+	return core.PermissionNone, errors.New("unrecognized permission: " + s)
 }

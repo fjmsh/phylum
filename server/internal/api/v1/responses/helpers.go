@@ -1,8 +1,8 @@
 package responses
 
-import "github.com/shroff/phylum/server/internal/core/fs"
+import "github.com/shroff/phylum/server/internal/core"
 
-func FullResourceFromFS(f fs.FileSystem, r fs.Resource) ResourceFull {
+func FullResourceFromFS(f core.FileSystem, r core.Resource) ResourceFull {
 	response := ResourceFull{
 		Resource: ResourceFromFS(r),
 	}
@@ -32,7 +32,7 @@ func FullResourceFromFS(f fs.FileSystem, r fs.Resource) ResourceFull {
 	return response
 }
 
-func ResourceFromFS(r fs.Resource) Resource {
+func ResourceFromFS(r core.Resource) Resource {
 	var deleted int64 = 0
 	if r.Deleted().Valid {
 		deleted = r.Deleted().Time.UnixMilli()
@@ -52,7 +52,7 @@ func ResourceFromFS(r fs.Resource) Resource {
 	}
 }
 
-func PublinkFromFS(p fs.Publink) Publink {
+func PublinkFromFS(p core.Publink) Publink {
 	return Publink{
 		ID:          p.ID,
 		Created:     p.Created,

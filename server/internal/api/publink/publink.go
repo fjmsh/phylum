@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/serve"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 func Setup(r *gin.RouterGroup) {
@@ -15,18 +15,18 @@ func Setup(r *gin.RouterGroup) {
 		path := c.Param("path")
 
 		_, password, _ := c.Request.BasicAuth()
-		f, err := fs.OpenFromPublink(c.Request.Context(), id, password)
+		f, err := core.OpenFromPublink(c.Request.Context(), id, password)
 		if err != nil {
-			if errors.Is(err, fs.ErrInsufficientPermissions) {
+			if errors.Is(err, core.ErrInsufficientPermissions) {
 				c.Header("WWW-Authenticate", "Basic realm=\""+id+"\"")
 				c.AbortWithStatus(http.StatusUnauthorized)
-			} else if errors.Is(err, fs.ErrResourceNotFound) {
+			} else if errors.Is(err, core.ErrResourceNotFound) {
 				c.AbortWithStatus(http.StatusNotFound)
 			} else {
 				c.AbortWithStatus(http.StatusInternalServerError)
 			}
 		} else if r, err := f.ResourceByPath(path); err != nil {
-			if errors.Is(err, fs.ErrResourceNotFound) {
+			if errors.Is(err, core.ErrResourceNotFound) {
 				c.AbortWithStatus(http.StatusNotFound)
 			} else {
 				c.AbortWithStatus(http.StatusInternalServerError)

@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/shroff/phylum/server/internal/core/fs"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +32,7 @@ func setupImportCommand() *cobra.Command {
 			destName := stat.Name()
 			if len(args) > 2 {
 				destName = args[2]
-				if fs.CheckNameInvalid(destName) {
+				if core.CheckNameInvalid(destName) {
 					fmt.Println("invalid name: '" + destName + "'")
 				}
 			}
@@ -47,7 +47,7 @@ func setupImportCommand() *cobra.Command {
 			force, _ := cmd.Flags().GetBool("force")
 
 			var size int = 0
-			create := make([]fs.CreateResourcesParams, 0)
+			create := make([]core.CreateResourcesParams, 0)
 			copy := make(map[string]uuid.UUID)
 			ids := make(map[string]uuid.UUID)
 			targetRootID, _ := uuid.NewV7()
@@ -67,12 +67,12 @@ func setupImportCommand() *cobra.Command {
 							len = 0
 						}
 						size += len
-						if fs.CheckNameInvalid(d.Name()) {
-							return fs.ErrResourceNameInvalid
+						if core.CheckNameInvalid(d.Name()) {
+							return core.ErrResourceNameInvalid
 						}
 						ids[p], _ = uuid.NewV7()
 						parent := ids[path.Dir(p)]
-						create = append(create, fs.CreateResourcesParams{
+						create = append(create, core.CreateResourcesParams{
 							Parent: parent,
 							ID:     ids[p],
 							Name:   d.Name(),
@@ -92,13 +92,13 @@ func setupImportCommand() *cobra.Command {
 			}
 			fmt.Printf("Importing %d files (%d bytes) across %d dirs\n", len(copy), size, 1+len(create)-len(copy))
 
-			var conflictResolution fs.ResourceBindConflictResolution = fs.ResourceBindConflictResolutionError
+			var conflictResolution core.ResourceBindConflictResolution = core.ResourceBindConflictResolutionError
 			if force {
-				conflictResolution = fs.ResourceBindConflictResolutionDelete
+				conflictResolution = core.ResourceBindConflictResolutionDelete
 			}
-			err = f.RunInTx(func(f fs.FileSystem) error {
+			err = f.RunInTx(func(f core.FileSystem) error {
 				if _, err = f.CreateResourceByPath(args[1]+"/"+destName, targetRootID, stat.IsDir(), false, conflictResolution); err != nil {
-					if err == fs.ErrResourceNameConflict {
+					if err == core.ErrResourceNameConflict {
 						err = errors.New("resource with name '" + destName + "' already exist. use -f to overwrite")
 					}
 					return err
@@ -128,7 +128,7 @@ func setupImportCommand() *cobra.Command {
 	return &cmd
 }
 
-func copyContents(f fs.FileSystem, src string, id uuid.UUID) error {
+func copyContents(f core.FileSystem, src string, id uuid.UUID) error {
 	fmt.Println("importing " + src + " to " + id.String())
 	in, err := os.Open(src)
 	if err != nil {

@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/core/fs"
 	"github.com/shroff/phylum/server/internal/core/user"
 )
 
@@ -24,12 +24,12 @@ func GetUser(c *gin.Context) user.User {
 	return val.(user.User)
 }
 
-func GetFileSystem(c *gin.Context) fs.FileSystem {
+func GetFileSystem(c *gin.Context) core.FileSystem {
 	val, ok := c.Get(keyFileSystem)
 	if !ok {
 		return nil
 	}
-	return val.(fs.FileSystem)
+	return val.(core.FileSystem)
 }
 
 func Require(c *gin.Context) {

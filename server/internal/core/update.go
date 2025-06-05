@@ -1,4 +1,4 @@
-package fs
+package core
 
 import (
 	"github.com/google/uuid"
