@@ -6,9 +6,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/core/util/rand"
+	"github.com/shroff/phylum/server/internal/db"
 )
 
 var ErrTokenNotFound = errors.NewError(http.StatusBadRequest, "token_not_found", "Token Not Found")

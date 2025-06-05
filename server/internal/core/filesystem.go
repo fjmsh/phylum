@@ -2,7 +2,7 @@ package core
 
 import (
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/db"
 )
 
 type filesystem struct {

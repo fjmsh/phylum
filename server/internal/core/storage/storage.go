@@ -8,7 +8,7 @@ import (
 	"path"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/db"
 	"github.com/sirupsen/logrus"
 )
 

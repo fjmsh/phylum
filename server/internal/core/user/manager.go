@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 
-	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/db"
 )
 
 type manager struct {

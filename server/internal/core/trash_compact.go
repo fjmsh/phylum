@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/doug-martin/goqu/v9"
-	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/db"
 	"github.com/sirupsen/logrus"
 )
 

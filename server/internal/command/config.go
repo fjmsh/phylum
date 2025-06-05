@@ -2,10 +2,10 @@ package command
 
 import (
 	"github.com/shroff/phylum/server/internal/command/serve"
-	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
 	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/shroff/phylum/server/internal/core/util/crypt"
+	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/mail"
 )
 

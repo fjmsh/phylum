@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/mail"
 	"github.com/spf13/cobra"
 )

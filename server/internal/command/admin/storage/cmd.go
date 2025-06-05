@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/shroff/phylum/server/internal/core/db"
 	"github.com/shroff/phylum/server/internal/core/storage"
+	"github.com/shroff/phylum/server/internal/db"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

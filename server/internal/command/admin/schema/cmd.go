@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/shroff/phylum/server/internal/core/db"
+	"github.com/shroff/phylum/server/internal/db"
 	"github.com/spf13/cobra"
 )
 
