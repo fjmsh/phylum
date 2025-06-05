@@ -140,47 +140,45 @@ func _readRootID(ctx context.Context) (uuid.UUID, error) {
 	}
 }
 
-func OpenFromPublink(ctx context.Context, id string, password string, path string) (Resource, error) {
+func OpenFromPublink(ctx context.Context, id string, password string) (ROFileSystem, error) {
 	d := db.Get(ctx)
 	link, err := getPublink(d, id)
 	if err != nil {
-		return Resource{}, err
+		return nil, err
 	}
 
 	// check password
 	if link.PasswordHash != "" {
 		if password == "" {
-			return Resource{}, ErrInsufficientPermissions
+			return nil, ErrInsufficientPermissions
 		}
 		if ok, err := crypt.Verify(password, link.PasswordHash); err != nil {
-			return Resource{}, err
+			return nil, err
 		} else if !ok {
-			return Resource{}, ErrInsufficientPermissions
+			return nil, ErrInsufficientPermissions
 		}
 	}
 
 	// check expiration
 	if link.Expires != 0 && time.UnixMilli(link.Expires).Before(time.Now()) {
-		return Resource{}, ErrResourceNotFound
+		return nil, ErrResourceNotFound
 	}
 
 	// check max accesses
 	if link.AccessLimit > 0 && link.AccessLimit <= link.Accessed {
-		return Resource{}, ErrResourceNotFound
+		return nil, ErrResourceNotFound
 	}
 
 	const q = "UPDATE publinks SET accessed = accessed + 1 WHERE id = $1"
 	if _, err := d.Exec(q, link.ID); err != nil {
-		return Resource{}, err
+		return nil, err
 	}
 
-	f := filesystem{
+	return roFilesystem{f: filesystem{
 		db:         d,
 		pathRoot:   pgtype.UUID{Bytes: link.Root, Valid: true},
 		fullAccess: true, // TODO: #permissions Replace with permissions int
-	}
-
-	return f.ResourceByPath(path)
+	}}, nil
 }
 
 func getPublink(d db.Handler, id string) (Publink, error) {

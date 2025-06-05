@@ -36,12 +36,9 @@ type Handler struct {
 // in a file path are separated by slash ('/', U+002F) characters, regardless
 // of host operating system convention.
 type FileSystem interface {
-	ResourceByPath(name string) (fs.Resource, error)
-	CreateResourceByPath(name string, id uuid.UUID, dir, recursive bool, conflictResolution fs.ResourceBindConflictResolution) (fs.Resource, error)
+	fs.ROFileSystem
 
-	ReadDir(fs.Resource, bool) ([]fs.Resource, error)
-	Walk(fs.Resource, int, func(fs.Resource, string) error) error
-	FindVersion(fs.Resource, uuid.UUID) (fs.Version, error)
+	CreateResourceByPath(name string, id uuid.UUID, dir, recursive bool, conflictResolution fs.ResourceBindConflictResolution) (fs.Resource, error)
 	OpenWrite(fs.Resource, uuid.UUID) (io.WriteCloser, error)
 	Copy(fs.Resource, string, uuid.UUID, bool, fs.ResourceBindConflictResolution) (fs.Resource, bool, error)
 	Move(fs.Resource, string, fs.ResourceBindConflictResolution) (fs.Resource, bool, error)

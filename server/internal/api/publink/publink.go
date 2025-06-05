@@ -15,7 +15,7 @@ func Setup(r *gin.RouterGroup) {
 		path := c.Param("path")
 
 		_, password, _ := c.Request.BasicAuth()
-		r, err := fs.OpenFromPublink(c.Request.Context(), id, password, path)
+		f, err := fs.OpenFromPublink(c.Request.Context(), id, password)
 		if err != nil {
 			if errors.Is(err, fs.ErrInsufficientPermissions) {
 				c.Header("WWW-Authenticate", "Basic realm=\""+id+"\"")
@@ -25,9 +25,15 @@ func Setup(r *gin.RouterGroup) {
 			} else {
 				c.AbortWithStatus(http.StatusInternalServerError)
 			}
+		} else if r, err := f.ResourceByPath(path); err != nil {
+			if errors.Is(err, fs.ErrResourceNotFound) {
+				c.AbortWithStatus(http.StatusNotFound)
+			} else {
+				c.AbortWithStatus(http.StatusInternalServerError)
+			}
 		} else {
 			c.Writer.Header().Set("Content-Disposition", "attachment; filename=\""+r.Name()+"\"")
-			serve.Serve(c.Writer, c.Request, r)
+			serve.Serve(c.Writer, c.Request, f, r)
 		}
 	})
 }

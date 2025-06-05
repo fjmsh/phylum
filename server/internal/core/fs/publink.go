@@ -20,6 +20,32 @@ type Publink struct {
 	Expires      int64
 }
 
+type ROFileSystem interface {
+	ResourceByPath(string) (Resource, error)
+	ReadDir(Resource, bool) ([]Resource, error)
+	FindVersion(Resource, uuid.UUID) (Version, error)
+	Walk(Resource, int, func(Resource, string) error) error
+}
+
+type roFilesystem struct {
+	f filesystem
+}
+
+func (f roFilesystem) ResourceByPath(path string) (Resource, error) {
+	return f.f.ResourceByPath(path)
+}
+func (f roFilesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
+	return f.f.ReadDir(r, recursive)
+}
+
+func (f roFilesystem) FindVersion(r Resource, versionID uuid.UUID) (Version, error) {
+	return f.f.FindVersion(r, versionID)
+}
+
+func (f roFilesystem) Walk(r Resource, depth int, fn func(Resource, string) error) error {
+	return f.f.Walk(r, depth, fn)
+}
+
 func scanPublink(row pgx.CollectableRow) (Publink, error) {
 	var p Publink
 	var expires *time.Time
