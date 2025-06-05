@@ -22,6 +22,12 @@ const (
 	ResourceBindConflictResolutionDelete    = ResourceBindConflictResolution(4) // Delete existing resource before creating
 )
 
+func CheckResourceNameInvalid(s string) bool {
+	return s == "" || s == "." || s == ".." || strings.ContainsFunc(s, func(r rune) bool {
+		return r == 0 || r == '/'
+	})
+}
+
 func (f filesystem) CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	if id == uuid.Nil {
 		id, _ = uuid.NewV7()

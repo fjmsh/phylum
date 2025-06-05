@@ -49,10 +49,10 @@ type FileSystem interface {
 	Copy(r Resource, target string, id uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error)
 	Move(r Resource, target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error)
 
-	// permissions.go
+	// resource_permissions.go
 	UpdatePermissions(r Resource, user User, permission Permission) (Resource, error)
 
-	//publink.go
+	// resource_publink.go
 	CreatePublink(r Resource, id, password string, expires pgtype.Timestamp, accessLimit int) error
 	ListPublinks(r Resource) ([]Publink, error)
 

@@ -4,12 +4,11 @@ import (
 	"crypto/sha256"
 	"hash"
 	"io"
-	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
 )
 
-type contentPropsComputer struct {
+type contentProps struct {
 	dest            io.WriteCloser
 	len             int
 	sum             hash.Hash
@@ -17,8 +16,8 @@ type contentPropsComputer struct {
 	successCallback func(int, hash.Hash, string) error
 }
 
-func computeProps(dest io.WriteCloser, successCallback func(int, hash.Hash, string) error) *contentPropsComputer {
-	return &contentPropsComputer{
+func computeProps(dest io.WriteCloser, successCallback func(int, hash.Hash, string) error) io.WriteCloser {
+	return &contentProps{
 		dest:            dest,
 		sum:             sha256.New(),
 		contents:        make([]byte, 0, 3072),
@@ -26,7 +25,7 @@ func computeProps(dest io.WriteCloser, successCallback func(int, hash.Hash, stri
 	}
 }
 
-func (c *contentPropsComputer) Write(p []byte) (n int, err error) {
+func (c *contentProps) Write(p []byte) (n int, err error) {
 	n, err = c.dest.Write(p)
 	c.len += n
 	if c.sum != nil {
@@ -47,15 +46,9 @@ func min(a, b int) int {
 
 }
 
-func (c *contentPropsComputer) Close() error {
+func (c *contentProps) Close() error {
 	if err := c.dest.Close(); err != nil {
 		return err
 	}
 	return c.successCallback(c.len, c.sum, mimetype.Detect(c.contents).String())
-}
-
-func CheckResourceNameInvalid(s string) bool {
-	return s == "" || s == "." || s == ".." || strings.ContainsFunc(s, func(r rune) bool {
-		return r == 0 || r == '/'
-	})
 }
