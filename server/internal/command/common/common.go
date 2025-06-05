@@ -6,15 +6,14 @@ import (
 	"os"
 
 	"github.com/shroff/phylum/server/internal/core"
-	core1 "github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/spf13/cobra"
 )
 
-var u *core1.User
+var u *core.User
 var f core.FileSystem
 
-func User(cmd *cobra.Command) *core1.User {
+func User(cmd *cobra.Command) *core.User {
 	if u == nil {
 		if value, err := cmd.Flags().GetString("user-email"); err != nil {
 			fmt.Println("could not read user: " + err.Error())
@@ -22,7 +21,7 @@ func User(cmd *cobra.Command) *core1.User {
 		} else if value == "" {
 			u = nil
 		} else {
-			if user, err := core1.UserManagerFromContext(context.Background()).UserByEmail(value); err != nil {
+			if user, err := core.UserManagerFromContext(context.Background()).UserByEmail(value); err != nil {
 				fmt.Println("could not find user '" + value + "': " + err.Error())
 				os.Exit(1)
 			} else {

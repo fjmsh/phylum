@@ -5,7 +5,6 @@ import (
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core"
-	core1 "github.com/shroff/phylum/server/internal/core"
 )
 
 type shareParams struct {
@@ -30,7 +29,7 @@ func handleShareRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	user, err := core1.UserManagerFromContext(c).UserByEmail(params.Email)
+	user, err := core.UserManagerFromContext(c).UserByEmail(params.Email)
 	if err != nil {
 		panic(err)
 	}

@@ -8,10 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core"
-	core1 "github.com/shroff/phylum/server/internal/core"
 )
 
-var errInvalidParams = core1.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
+var errInvalidParams = core.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
 
 func SetupUserRoutes(r *gin.RouterGroup) {
 	group := r.Group("/users")

@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	webdav "github.com/shroff/phylum/server/internal/api/webdav/impl"
 	"github.com/shroff/phylum/server/internal/core"
-	core1 "github.com/shroff/phylum/server/internal/core"
 	"github.com/sirupsen/logrus"
 )
 
@@ -44,7 +43,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 	var f core.FileSystem
 	if email, pass, ok := c.Request.BasicAuth(); ok {
 		ctx := c.Request.Context()
-		userManager := core1.UserManagerFromContext(ctx)
+		userManager := core.UserManagerFromContext(ctx)
 		if u, err := userManager.VerifyUserPassword(email, pass); err == nil {
 			authSuccess = true
 			root := c.Param("root")
@@ -52,7 +51,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 			if root[0] == '~' {
 				id, err := userManager.UserHome(root[1:])
 				if err != nil {
-					if errors.Is(err, core1.ErrUserNotFound) {
+					if errors.Is(err, core.ErrUserNotFound) {
 						c.AbortWithStatus(http.StatusNotFound)
 						return
 					} else {
@@ -66,7 +65,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 				c.AbortWithStatus(http.StatusNotFound)
 				return
 			}
-		} else if !errors.Is(err, core1.ErrCredentialsInvalid) {
+		} else if !errors.Is(err, core.ErrCredentialsInvalid) {
 			panic(err)
 		}
 	}

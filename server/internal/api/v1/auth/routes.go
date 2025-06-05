@@ -9,7 +9,6 @@ import (
 	"github.com/shroff/phylum/server/internal/api/v1/my"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core"
-	core1 "github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/mail"
 )
 
@@ -40,7 +39,7 @@ func handlePasswordAuth(c *gin.Context) {
 	var params passwordParams
 	err := c.ShouldBind(&params)
 	if err != nil {
-		panic(core1.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
+		panic(core.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
 	}
 
 	userManager := core.UserManagerFromContext(c.Request.Context())
@@ -63,7 +62,7 @@ func handleRequestPasswordReset(c *gin.Context) {
 	var params requestPasswordResetParams
 	err := c.ShouldBind(&params)
 	if err != nil {
-		panic(core1.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
+		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
 	}
 
 	userManager := core.UserManagerFromContext(c.Request.Context())
@@ -90,7 +89,7 @@ func handleResetPassword(c *gin.Context) {
 	var params resetPasswordParams
 	err := c.ShouldBind(&params)
 	if err != nil {
-		panic(core1.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
+		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
 	}
 
 	userManager := core.UserManagerFromContext(c.Request.Context())
@@ -113,7 +112,7 @@ func handleResetPassword(c *gin.Context) {
 func handleSetCookie(c *gin.Context) {
 	token := authenticator.GetToken(c)
 	if token == "" {
-		panic(core1.NewError(http.StatusBadRequest, "missing_token", "Auth Token Not Specified"))
+		panic(core.NewError(http.StatusBadRequest, "missing_token", "Auth Token Not Specified"))
 	}
 	secure := c.Request.URL.Scheme == "https"
 	c.SetSameSite(http.SameSiteStrictMode)
