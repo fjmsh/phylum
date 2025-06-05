@@ -31,6 +31,6 @@ func (v Version) OpenRead(start, length int) (io.ReadCloser, error) {
 	if b := storage.GetBackend(v.Storage); b == nil {
 		return nil, errors.New("storage backend not found: " + v.Storage)
 	} else {
-		return b.OpenRead(v.ID, start, length)
+		return b.OpenRead(v.ID.String(), start, length)
 	}
 }

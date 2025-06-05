@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
@@ -52,9 +51,9 @@ func createMinioBackend(params map[string]string) (Backend, error) {
 	return minioStorage{client: client, tmp: params["tmp"], bucketName: params["bucket_name"], prefix: params["prefix"]}, nil
 }
 
-func (s minioStorage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error) {
+func (s minioStorage) OpenRead(name string, start, length int) (io.ReadCloser, error) {
 	// TODO: Range
-	if r, err := s.client.GetObject(context.Background(), s.bucketName, s.prefix+id.String(), minio.GetObjectOptions{}); err != nil {
+	if r, err := s.client.GetObject(context.Background(), s.bucketName, s.prefix+name, minio.GetObjectOptions{}); err != nil {
 		return nil, err
 	} else {
 		return r, ErrRangeNotSupported
@@ -79,17 +78,17 @@ func (s minioStorage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, 
 // 	}}, nil
 // }
 
-func (s minioStorage) Delete(id uuid.UUID) error {
-	return s.client.RemoveObject(context.Background(), s.bucketName, s.prefix+id.String(), minio.RemoveObjectOptions{})
+func (s minioStorage) Delete(name string) error {
+	return s.client.RemoveObject(context.Background(), s.bucketName, s.prefix+name, minio.RemoveObjectOptions{})
 }
 
-func (s minioStorage) DeleteAll(ids uuid.UUIDs) []error {
+func (s minioStorage) DeleteAll(names []string) []error {
 	objs := make(chan minio.ObjectInfo)
 	go func() {
 		defer close(objs)
-		for _, id := range ids {
+		for _, name := range names {
 			objs <- minio.ObjectInfo{
-				Key: s.prefix + id.String(),
+				Key: s.prefix + name,
 			}
 		}
 	}()

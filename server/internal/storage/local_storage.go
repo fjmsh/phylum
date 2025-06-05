@@ -35,8 +35,8 @@ func createLocalBackend(params map[string]string) (LocalBackend, error) {
 	return l, nil
 }
 
-func (l localStorage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, error) {
-	file, err := os.OpenFile(l.path(id), os.O_RDONLY, 0640)
+func (l localStorage) OpenRead(name string, start, length int) (io.ReadCloser, error) {
+	file, err := os.OpenFile(filepath.Join(l.root, name), os.O_RDONLY, 0640)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (l localStorage) OpenRead(id uuid.UUID, start, length int) (io.ReadCloser, 
 	return file, nil
 }
 
-func (l localStorage) OpenWrite(id uuid.UUID) (io.WriteCloser, error) {
+func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
 	f, err := os.CreateTemp(l.tmp, "upload-*")
 	tmpFilePath := filepath.Join(l.tmp, f.Name())
 	if err != nil {
@@ -58,18 +58,18 @@ func (l localStorage) OpenWrite(id uuid.UUID) (io.WriteCloser, error) {
 			os.Remove(tmpFilePath)
 			return err
 		}
-		return os.Rename(tmpFilePath, l.path(id))
+		return os.Rename(tmpFilePath, filepath.Join(l.root, name))
 	}}, nil
 }
 
-func (l localStorage) Delete(id uuid.UUID) error {
-	return os.Remove(l.path(id))
+func (l localStorage) Delete(name string) error {
+	return os.Remove(filepath.Join(l.root, name))
 }
 
-func (l localStorage) DeleteAll(ids uuid.UUIDs) []error {
+func (l localStorage) DeleteAll(names []string) []error {
 	errs := make([]error, 0)
-	for _, id := range ids {
-		err := l.Delete(id)
+	for _, name := range names {
+		err := l.Delete(name)
 		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			errs = append(errs, err)
 		}
@@ -78,7 +78,7 @@ func (l localStorage) DeleteAll(ids uuid.UUIDs) []error {
 }
 
 func (l localStorage) path(id uuid.UUID) string {
-	return filepath.Join(string(l.root), id.String())
+	return filepath.Join(l.root, id.String())
 }
 
 func (l localStorage) String() string {

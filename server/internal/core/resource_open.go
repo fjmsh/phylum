@@ -21,7 +21,7 @@ func (f filesystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, 
 	if versionID == uuid.Nil {
 		versionID, _ = uuid.NewV7()
 	}
-	if dest, err := storage.DefaultBackend().OpenWrite(versionID); err != nil {
+	if dest, err := storage.DefaultBackend().OpenWrite(versionID.String()); err != nil {
 		return nil, err
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
