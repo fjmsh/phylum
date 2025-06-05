@@ -62,6 +62,18 @@ func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
 	}}, nil
 }
 
+func (l localStorage) Move(name string, target Backend) error {
+	if target == l {
+		return nil
+	}
+	return target.move(filepath.Join(l.root, name), name)
+}
+
+func (l localStorage) move(localPath, name string) error {
+	path := filepath.Join(l.root, name)
+	return os.Rename(localPath, path)
+}
+
 func (l localStorage) Delete(name string) error {
 	return os.Remove(filepath.Join(l.root, name))
 }

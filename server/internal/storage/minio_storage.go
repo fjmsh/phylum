@@ -60,23 +60,19 @@ func (s minioStorage) OpenRead(name string, start, length int) (io.ReadCloser, e
 	}
 }
 
-// func (s minioStorage) OpenWrite(id uuid.UUID) (io.WriteCloser, error) {
-// 	path := filepath.Join(s.tmp, id.String())
-// 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return &callbackWriteCloser{dest: file, closeCallback: func(err error, len int) error {
-// 		if err != nil {
-// 			os.Remove(path)
-// 			return err
-// 		}
-// 		_, err = s.client.FPutObject(context.Background(), s.bucketName, s.prefix+id.String(), path, minio.PutObjectOptions{Progress: &progressReader{len: len, callback: func() {
-// 			os.Remove(path)
-// 		}}})
-// 		return err
-// 	}}, nil
-// }
+func (s minioStorage) move(localPath, name string) error {
+	_, err := s.client.FPutObject( //TODO: #context
+		context.Background(),
+		s.bucketName,
+		s.prefix+name,
+		localPath,
+		minio.PutObjectOptions{},
+	)
+	if err != nil {
+		return err
+	}
+	return os.Remove(localPath)
+}
 
 func (s minioStorage) Delete(name string) error {
 	return s.client.RemoveObject(context.Background(), s.bucketName, s.prefix+name, minio.RemoveObjectOptions{})
