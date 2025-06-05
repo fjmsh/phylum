@@ -10,8 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 type bookmarksResponse struct {
@@ -65,7 +65,7 @@ func handleBookmarksAddRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	b, err := user.ManagerFromContext(c.Request.Context()).AddBookmark(u, r, params.Name)
+	b, err := core.ManagerFromContext(c.Request.Context()).AddBookmark(u, r, params.Name)
 	if err != nil {
 		panic(err)
 	}
@@ -84,15 +84,15 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 	c.ShouldBind(&params)
 
 	u := authenticator.GetUser(c)
-	if err := user.ManagerFromContext(c.Request.Context()).RemoveBookmark(u, params.ID); err != nil {
+	if err := core.ManagerFromContext(c.Request.Context()).RemoveBookmark(u, params.ID); err != nil {
 		panic(err)
 	}
 	c.JSON(200, gin.H{})
 }
 
-func ListBookmarks(ctx context.Context, u user.User, since int64) ([]responses.Bookmark, error) {
+func ListBookmarks(ctx context.Context, u core.User, since int64) ([]responses.Bookmark, error) {
 	var bookmarks []responses.Bookmark
-	if res, err := user.ManagerFromContext(ctx).ListBookmarks(u, since); err != nil {
+	if res, err := core.ManagerFromContext(ctx).ListBookmarks(u, since); err != nil {
 		return bookmarks, err
 	} else {
 		bookmarks = make([]responses.Bookmark, len(res))

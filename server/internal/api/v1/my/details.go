@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
-	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/db"
 )
 
@@ -22,7 +22,7 @@ func handleDetailsUpdateRoute(c *gin.Context) {
 	u := authenticator.GetUser(c)
 
 	err = db.Get(c.Request.Context()).RunInTx(func(d db.Handler) error {
-		userManager := user.ManagerFromDB(d)
+		userManager := core.ManagerFromDB(d)
 		if params.Name != "" {
 			if err := userManager.UpdateUserName(u, params.Name); err != nil {
 				return err

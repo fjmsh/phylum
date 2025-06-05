@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/core"
+	core1 "github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 var errAuthRequired = errors.NewError(http.StatusUnauthorized, "auth_required", "authorization required")
@@ -16,12 +16,12 @@ var errAuthRequired = errors.NewError(http.StatusUnauthorized, "auth_required", 
 const keyUser = "user"
 const keyFileSystem = "filesystem"
 
-func GetUser(c *gin.Context) user.User {
+func GetUser(c *gin.Context) core1.User {
 	val, ok := c.Get(keyUser)
 	if !ok {
-		return user.User{}
+		return core1.User{}
 	}
-	return val.(user.User)
+	return val.(core1.User)
 }
 
 func GetFileSystem(c *gin.Context) core.FileSystem {
@@ -42,36 +42,36 @@ func Require(c *gin.Context) {
 	}
 }
 
-func extractUserDetails(c *gin.Context) (user.User, error) {
-	userManager := user.ManagerFromContext(c.Request.Context())
+func extractUserDetails(c *gin.Context) (core1.User, error) {
+	userManager := core1.ManagerFromContext(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		if cookie, err := c.Request.Cookie("auth_token"); err == nil {
 			token := cookie.Value
 			if u, err := userManager.ReadAccessToken(token); err == nil {
 				return u, nil
 			} else {
-				return user.User{}, err
+				return core1.User{}, err
 			}
 		} else if err != http.ErrNoCookie {
-			return user.User{}, err
+			return core1.User{}, err
 		}
-		return user.User{}, errAuthRequired
+		return core1.User{}, errAuthRequired
 	} else if auth, ok := checkAuthHeader(header, "basic"); ok {
 		if email, password, ok := decodeBasicAuth(auth); ok {
 			if u, err := userManager.VerifyUserPassword(email, password); err == nil {
 				return u, nil
 			} else {
-				return user.User{}, err
+				return core1.User{}, err
 			}
 		}
 	} else if token, ok := checkAuthHeader(header, "bearer"); ok {
 		if u, err := userManager.ReadAccessToken(token); err == nil {
 			return u, nil
 		} else {
-			return user.User{}, err
+			return core1.User{}, err
 		}
 	}
-	return user.User{}, errAuthRequired
+	return core1.User{}, errAuthRequired
 }
 
 func checkAuthHeader(header, prefix string) (string, bool) {

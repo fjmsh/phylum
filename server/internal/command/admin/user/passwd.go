@@ -6,7 +6,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -18,7 +18,7 @@ func setupPasswdCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]
-			u, err := user.ManagerFromContext(context.Background()).UserByEmail(email)
+			u, err := core.ManagerFromContext(context.Background()).UserByEmail(email)
 			if err != nil {
 				fmt.Println("unable to change password: " + err.Error())
 				os.Exit(1)
@@ -53,7 +53,7 @@ func setupPasswdCommand() *cobra.Command {
 				}
 			}
 
-			err = user.ManagerFromContext(context.Background()).UpdateUserPassword(u, password)
+			err = core.ManagerFromContext(context.Background()).UpdateUserPassword(u, password)
 			if err != nil {
 				fmt.Println("could not add user: " + err.Error())
 				os.Exit(1)

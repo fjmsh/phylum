@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/shroff/phylum/server/internal/mail"
 )
 
@@ -28,10 +28,10 @@ func handleInviteRequest(c *gin.Context) {
 		}
 	}
 
-	userManager := user.ManagerFromContext(c.Request.Context())
+	userManager := core.ManagerFromContext(c.Request.Context())
 	u := authenticator.GetUser(c)
 
-	if u.Permissions&user.PermissionUsersInvite == 0 {
+	if u.Permissions&core.PermissionUsersInvite == 0 {
 		panic(errors.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to invite users"))
 	}
 

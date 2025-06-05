@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core"
-	"github.com/shroff/phylum/server/internal/core/user"
+	core1 "github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +19,7 @@ func setupModCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]
-			u, err := user.ManagerFromContext(context.Background()).UserByEmail(email)
+			u, err := core1.ManagerFromContext(context.Background()).UserByEmail(email)
 			if err != nil {
 				fmt.Println("could not update user '" + email + "': " + err.Error())
 				os.Exit(1)
@@ -43,7 +43,7 @@ func setupModCommand() *cobra.Command {
 			}
 
 			err = db.Get(context.Background()).RunInTx(func(db db.Handler) error {
-				m := user.ManagerFromDB(db)
+				m := core1.ManagerFromDB(db)
 				if name != "" {
 					if err := m.UpdateUserName(u, name); err != nil {
 						return err

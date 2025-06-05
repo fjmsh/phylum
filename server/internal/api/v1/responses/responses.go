@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 type Ancestor struct {
@@ -44,7 +44,7 @@ type User struct {
 type LoggedInUser struct {
 	User
 	Home        pgtype.UUID      `json:"home"`
-	Permissions user.Permissions `json:"permissions"`
+	Permissions core.Permissions `json:"permissions"`
 }
 
 type Publink struct {

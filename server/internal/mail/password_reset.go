@@ -1,13 +1,13 @@
 package mail
 
-import "github.com/shroff/phylum/server/internal/core/user"
+import "github.com/shroff/phylum/server/internal/core"
 
 type ResetPasswordParams struct {
 	Name string
 	URL  string
 }
 
-func SendPasswordResetEmail(u user.User, token string) error {
+func SendPasswordResetEmail(u core.User, token string) error {
 	email := emails["password_reset"]
 	params := map[string]string{
 		"name":     u.Name,

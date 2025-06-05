@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 )
 
@@ -17,13 +17,13 @@ func setupGrantCommand() *cobra.Command {
 		Short: "Grant Permissions",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			userManager := user.ManagerFromContext(context.Background())
+			userManager := core.ManagerFromContext(context.Background())
 			u, err := userManager.UserByEmail(args[0])
 			if err != nil {
 				fmt.Println("unable to find user :" + err.Error())
 				os.Exit(1)
 			}
-			var p user.Permissions
+			var p core.Permissions
 			permString := strings.TrimSpace(args[1])
 			if strings.HasPrefix(permString, "0x") {
 				var perm int64
@@ -54,13 +54,13 @@ func setupRevokeCommand() *cobra.Command {
 		Short: "Revoke Permissions",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			userManager := user.ManagerFromContext(context.Background())
+			userManager := core.ManagerFromContext(context.Background())
 			u, err := userManager.UserByEmail(args[0])
 			if err != nil {
 				fmt.Println("unable to find user :" + err.Error())
 				os.Exit(1)
 			}
-			var p user.Permissions
+			var p core.Permissions
 			permString := strings.TrimSpace(args[1])
 			if strings.HasPrefix(permString, "0x") {
 				var perm int64

@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 
-	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -31,7 +31,7 @@ func setupListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List Users",
 		Run: func(cmd *cobra.Command, args []string) {
-			users, err := user.ManagerFromContext(context.Background()).ListUsers(0)
+			users, err := core.ManagerFromContext(context.Background()).ListUsers(0)
 			if err != nil {
 				logrus.Fatal(err)
 			}

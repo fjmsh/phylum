@@ -18,7 +18,7 @@ import (
 	"github.com/shroff/phylum/server/internal/command/admin"
 	"github.com/shroff/phylum/server/internal/command/fs"
 	"github.com/shroff/phylum/server/internal/command/serve"
-	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/crypt"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/mail"
@@ -109,7 +109,7 @@ func SetupCommand() {
 		storage.Cfg = cfg.Storage
 		serve.Cfg = cfg.Server
 		mail.Cfg = cfg.Mail
-		user.Cfg = cfg.User
+		core.Cfg = cfg.User
 		crypt.Cfg = cfg.Crypt
 
 		storage.Initialize(db.Get(context.Background()))

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/mail"
 	"github.com/spf13/cobra"
@@ -23,9 +23,9 @@ func setupInviteCommand() *cobra.Command {
 			name, _ := cmd.Flags().GetString("name")
 			noCreateHome, _ := cmd.Flags().GetBool("no-create-home")
 
-			var u user.User
+			var u core.User
 			err := db.Get(context.Background()).RunInTx(func(db db.Handler) error {
-				userManager := user.ManagerFromDB(db)
+				userManager := core.ManagerFromDB(db)
 				if user, err := userManager.CreateUser(email, name, noCreateHome); err != nil {
 					return err
 				} else {

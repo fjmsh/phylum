@@ -10,8 +10,8 @@ import (
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/api/v1/users"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 func handleBootstrapRoute(c *gin.Context) {
@@ -31,7 +31,7 @@ func handleBootstrapRoute(c *gin.Context) {
 	}
 }
 
-func Bootstrap(ctx context.Context, u user.User, since int64) (responses.Bootstrap, error) {
+func Bootstrap(ctx context.Context, u core.User, since int64) (responses.Bootstrap, error) {
 	if bookmarks, err := ListBookmarks(ctx, u, since); err != nil {
 		return responses.Bootstrap{}, err
 	} else if users, err := users.ListUsers(ctx, since); err != nil {

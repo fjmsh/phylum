@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shroff/phylum/server/internal/core/user"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/mail"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +18,7 @@ func setupPwresetResetCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]
 
-			manager := user.ManagerFromContext(context.Background())
+			manager := core.ManagerFromContext(context.Background())
 			if user, err := manager.UserByEmail(email); err != nil {
 				fmt.Println("unable to find user" + email + ": " + err.Error())
 				os.Exit(1)

@@ -1,4 +1,4 @@
-package user
+package core
 
 type Permissions = int32
 

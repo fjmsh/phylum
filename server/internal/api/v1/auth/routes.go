@@ -7,8 +7,8 @@ import (
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/my"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/core/user"
 	"github.com/shroff/phylum/server/internal/mail"
 )
 
@@ -42,7 +42,7 @@ func handlePasswordAuth(c *gin.Context) {
 		panic(errors.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
 	}
 
-	userManager := user.ManagerFromContext(c.Request.Context())
+	userManager := core.ManagerFromContext(c.Request.Context())
 	if user, err := userManager.VerifyUserPassword(params.Email, params.Password); err != nil {
 		panic(err)
 	} else if token, err := userManager.CreateAccessToken(user); err != nil {
@@ -65,9 +65,9 @@ func handleRequestPasswordReset(c *gin.Context) {
 		panic(errors.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
 	}
 
-	userManager := user.ManagerFromContext(c.Request.Context())
+	userManager := core.ManagerFromContext(c.Request.Context())
 	u, err := userManager.UserByEmail(params.Email)
-	if err == user.ErrNotFound {
+	if err == core.ErrNotFound {
 		c.JSON(200, gin.H{})
 		return
 	}
@@ -92,7 +92,7 @@ func handleResetPassword(c *gin.Context) {
 		panic(errors.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
 	}
 
-	userManager := user.ManagerFromContext(c.Request.Context())
+	userManager := core.ManagerFromContext(c.Request.Context())
 	if user, err := userManager.UserByEmail(params.Email); err != nil {
 		panic(err)
 	} else if err := userManager.ResetUserPassword(user, params.Token, params.Password); err != nil {

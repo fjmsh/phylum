@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/core/user"
 )
 
 var errInvalidParams = errors.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
@@ -41,7 +41,7 @@ func handleUsersListRoute(c *gin.Context) {
 
 func ListUsers(ctx context.Context, since int64) ([]responses.User, error) {
 	var users []responses.User
-	if res, err := user.ManagerFromContext(ctx).ListUsers(since); err != nil {
+	if res, err := core.ManagerFromContext(ctx).ListUsers(since); err != nil {
 		return users, err
 	} else {
 		users = make([]responses.User, len(res))
