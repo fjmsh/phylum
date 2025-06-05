@@ -19,8 +19,8 @@ func init() {
 	goqu.SetDefaultPrepared(true)
 }
 
+// filesystem.go
 type FileSystem interface {
-	// filesystem.go
 	WithDb(db.Handler) FileSystem
 	WithPathRoot(pgtype.UUID) FileSystem
 	RunInTx(func(FileSystem) error) error
@@ -59,9 +59,6 @@ type FileSystem interface {
 	// search.go
 	Search(query string, includeDeleted bool) ([]Resource, error)
 
-	// shared.go
-	SharedResources(excluded pgtype.UUID) ([]Resource, error)
-
 	// disk_usage.go
 	DiskUsage(r Resource) (DiskUsageInfo, error)
 
@@ -75,8 +72,16 @@ type FileSystem interface {
 	TrashEmpty() (int, error)
 }
 
+// filesystem_readonly.go
+type ReadFileSystem interface {
+	ResourceByPath(string) (Resource, error)
+	ReadDir(Resource, bool) ([]Resource, error)
+	FindVersion(Resource, uuid.UUID) (Version, error)
+	Walk(Resource, int, func(Resource, string) error) error
+}
+
+// user_manager.go
 type UserManager interface {
-	// user_manager.go
 	CreateUser(email, name string, noCreateHome bool) (User, error)
 	ListUsers(since int64) ([]User, error)
 	UserByEmail(email string) (User, error)
@@ -89,7 +94,7 @@ type UserManager interface {
 	CreateResetToken(user User) (string, error)
 	ResetUserPassword(user User, token, password string) error
 
-	// update.go
+	// user_update.go
 	UpdateUserHome(user User, home pgtype.UUID) error
 	UpdateUserName(user User, name string) error
 	UpdateUserPassword(user User, password string) error
@@ -100,4 +105,7 @@ type UserManager interface {
 	AddBookmark(u User, resource Resource, name string) (Bookmark, error)
 	RemoveBookmark(u User, id uuid.UUID) error
 	ListBookmarks(u User, since int64) ([]Bookmark, error)
+
+	// user_shared.go
+	SharedResources(u User) ([]Resource, error)
 }

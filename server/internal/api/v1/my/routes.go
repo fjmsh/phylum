@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 type homeResponse struct {
@@ -47,9 +48,8 @@ func handleHomeRoute(c *gin.Context) {
 }
 
 func handleSharedRoute(c *gin.Context) {
-	f := authenticator.GetFileSystem(c)
 	u := authenticator.GetUser(c)
-	shared, err := f.SharedResources(u.Home)
+	shared, err := core.UserManagerFromContext(c.Request.Context()).SharedResources(u)
 	if err != nil {
 		panic(err)
 	}

@@ -36,7 +36,7 @@ type Handler struct {
 // in a file path are separated by slash ('/', U+002F) characters, regardless
 // of host operating system convention.
 type FileSystem interface {
-	core.ROFileSystem
+	core.ReadFileSystem
 
 	CreateResourceByPath(name string, id uuid.UUID, dir, recursive bool, conflictResolution core.ResourceBindConflictResolution) (core.Resource, error)
 	OpenWrite(core.Resource, uuid.UUID) (io.WriteCloser, error)

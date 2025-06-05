@@ -76,19 +76,30 @@ func (f filesystem) scanFullResource(row pgx.CollectableRow) (Resource, error) {
 	if err != nil {
 		return r, err
 	}
-	permission := Permission(0)
-	if f.fullAccess {
-		permission = -1
-	} else if p, err := readPermissionFromJson(r.permissions, f.userID); err != nil {
-		return Resource{}, err
-	} else {
-		permission = p
+	return processResource(r, f.fullAccess, f.userID)
+}
+
+func (u User) scanFullResource(row pgx.CollectableRow) (Resource, error) {
+	var r Resource
+	err := row.Scan(
+		&r.id,
+		&r.name,
+		&r.parentID,
+		&r.dir,
+		&r.created,
+		&r.modified,
+		&r.deleted,
+		&r.permissions,
+		&r.grants,
+		&r.versions,
+		&r.links,
+		&r.visibleParent,
+		&r.inheritedPermissions,
+	)
+	if err != nil {
+		return r, err
 	}
-	if permission&PermissionRead == 0 {
-		return Resource{}, ErrResourceNotFound
-	}
-	r.userPermission = permission
-	return r, err
+	return processResource(r, u.Permissions&PermissionFilesAll != 0, u.ID)
 }
 
 func (f filesystem) scanResourceWithoutParent(row pgx.CollectableRow) (Resource, error) {
@@ -109,27 +120,29 @@ func (f filesystem) scanResourceWithoutParent(row pgx.CollectableRow) (Resource,
 	if err != nil {
 		return r, err
 	}
+	return processResource(r, f.fullAccess, f.userID)
+}
 
+func processResource(r Resource, fullAccess bool, userID int32) (Resource, error) {
 	permission := Permission(0)
-	if f.fullAccess {
+	if fullAccess {
 		permission = -1
-	} else if p, err := readPermissionFromJson(r.permissions, f.userID); err != nil {
-		return Resource{}, err
+	} else if p, err := readPermissionFromJson(r.permissions, userID); err != nil {
+		return r, err
 	} else {
 		permission = p
 	}
 	if permission&PermissionRead == 0 {
-		return Resource{}, ErrResourceNotFound
+		return r, ErrResourceNotFound
 	}
+	r.userPermission = permission
 
 	if v, err := latestVersion(r.versions); err != nil {
-		return Resource{}, err
+		return r, err
 	} else {
 		r.latestVersionInfo = v
 	}
-
-	r.userPermission = permission
-	return r, err
+	return r, nil
 }
 
 func latestVersion(versionsJSON []byte) (VersionInfo, error) {

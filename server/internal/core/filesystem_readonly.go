@@ -12,33 +12,26 @@ import (
 	"github.com/shroff/phylum/server/internal/db"
 )
 
-type ROFileSystem interface {
-	ResourceByPath(string) (Resource, error)
-	ReadDir(Resource, bool) ([]Resource, error)
-	FindVersion(Resource, uuid.UUID) (Version, error)
-	Walk(Resource, int, func(Resource, string) error) error
-}
-
-type roFilesystem struct {
+type proxyFileSystemReadOnly struct {
 	f filesystem
 }
 
-func (f roFilesystem) ResourceByPath(path string) (Resource, error) {
+func (f proxyFileSystemReadOnly) ResourceByPath(path string) (Resource, error) {
 	return f.f.ResourceByPath(path)
 }
-func (f roFilesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
+func (f proxyFileSystemReadOnly) ReadDir(r Resource, recursive bool) ([]Resource, error) {
 	return f.f.ReadDir(r, recursive)
 }
 
-func (f roFilesystem) FindVersion(r Resource, versionID uuid.UUID) (Version, error) {
+func (f proxyFileSystemReadOnly) FindVersion(r Resource, versionID uuid.UUID) (Version, error) {
 	return f.f.FindVersion(r, versionID)
 }
 
-func (f roFilesystem) Walk(r Resource, depth int, fn func(Resource, string) error) error {
+func (f proxyFileSystemReadOnly) Walk(r Resource, depth int, fn func(Resource, string) error) error {
 	return f.f.Walk(r, depth, fn)
 }
 
-func OpenFileSystemFromPublink(ctx context.Context, id string, password string) (ROFileSystem, error) {
+func OpenFileSystemFromPublink(ctx context.Context, id string, password string) (ReadFileSystem, error) {
 	d := db.Get(ctx)
 	link, err := getPublink(d, id)
 	if err != nil {
@@ -72,7 +65,7 @@ func OpenFileSystemFromPublink(ctx context.Context, id string, password string) 
 		return nil, err
 	}
 
-	return roFilesystem{f: filesystem{
+	return proxyFileSystemReadOnly{f: filesystem{
 		db:         d,
 		pathRoot:   pgtype.UUID{Bytes: link.Root, Valid: true},
 		fullAccess: true, // TODO: #permissions Replace with permissions int
