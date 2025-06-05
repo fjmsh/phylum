@@ -31,10 +31,6 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 	return u, err
 }
 
-func (u User) OpenFileSystem(ctx context.Context) FileSystem {
-	return Open(ctx, u.ID, u.Home, u.Permissions&PermissionFilesAll != 0)
-}
-
 type Manager interface {
 	// create.go
 	CreateUser(email, name string, noCreateHome bool) (User, error)

@@ -4,15 +4,12 @@ import (
 	"context"
 	"errors"
 	"io"
-	"strings"
-	"time"
 
 	"github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/crypt"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/sirupsen/logrus"
 )
@@ -93,13 +90,17 @@ type FileSystem interface {
 	TrashEmpty() (int, error)
 }
 
-func Open(ctx context.Context, userID int32, root pgtype.UUID, fullAccess bool) FileSystem {
+func OpenFileSystem(ctx context.Context, userID int32, root pgtype.UUID, fullAccess bool) FileSystem {
 	return filesystem{
 		db:         db.Get(ctx),
 		userID:     userID,
 		pathRoot:   root,
 		fullAccess: fullAccess,
 	}
+}
+
+func (u User) OpenFileSystem(ctx context.Context) FileSystem {
+	return OpenFileSystem(ctx, u.ID, u.Home, u.Permissions&PermissionFilesAll != 0)
 }
 
 func OpenOmniscient(db db.Handler) FileSystem {
@@ -138,65 +139,4 @@ func _readRootID(ctx context.Context) (uuid.UUID, error) {
 	} else {
 		return id, nil
 	}
-}
-
-func OpenFromPublink(ctx context.Context, id string, password string) (ROFileSystem, error) {
-	d := db.Get(ctx)
-	link, err := getPublink(d, id)
-	if err != nil {
-		return nil, err
-	}
-
-	// check password
-	if link.PasswordHash != "" {
-		if password == "" {
-			return nil, ErrInsufficientPermissions
-		}
-		if ok, err := crypt.Verify(password, link.PasswordHash); err != nil {
-			return nil, err
-		} else if !ok {
-			return nil, ErrInsufficientPermissions
-		}
-	}
-
-	// check expiration
-	if link.Expires != 0 && time.UnixMilli(link.Expires).Before(time.Now()) {
-		return nil, ErrResourceNotFound
-	}
-
-	// check max accesses
-	if link.AccessLimit > 0 && link.AccessLimit <= link.Accessed {
-		return nil, ErrResourceNotFound
-	}
-
-	const q = "UPDATE publinks SET accessed = accessed + 1 WHERE id = $1"
-	if _, err := d.Exec(q, link.ID); err != nil {
-		return nil, err
-	}
-
-	return roFilesystem{f: filesystem{
-		db:         d,
-		pathRoot:   pgtype.UUID{Bytes: link.Root, Valid: true},
-		fullAccess: true, // TODO: #permissions Replace with permissions int
-	}}, nil
-}
-
-func getPublink(d db.Handler, id string) (Publink, error) {
-	q := "SELECT * FROM publinks p WHERE id = $1::TEXT"
-	if rows, err := d.Query(q, id); err != nil {
-		return Publink{}, err
-	} else if link, err := pgx.CollectExactlyOneRow(rows, scanPublink); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			err = ErrParentNotFound
-		}
-		return Publink{}, err
-	} else {
-		return link, nil
-	}
-}
-
-func CheckNameInvalid(s string) bool {
-	return s == "" || s == "." || s == ".." || strings.ContainsFunc(s, func(r rune) bool {
-		return r == 0 || r == '/'
-	})
 }

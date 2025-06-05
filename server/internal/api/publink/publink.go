@@ -15,7 +15,7 @@ func Setup(r *gin.RouterGroup) {
 		path := c.Param("path")
 
 		_, password, _ := c.Request.BasicAuth()
-		f, err := core.OpenFromPublink(c.Request.Context(), id, password)
+		f, err := core.OpenFileSystemFromPublink(c.Request.Context(), id, password)
 		if err != nil {
 			if errors.Is(err, core.ErrInsufficientPermissions) {
 				c.Header("WWW-Authenticate", "Basic realm=\""+id+"\"")
