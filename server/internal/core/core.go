@@ -50,8 +50,7 @@ type FileSystem interface {
 	Move(r Resource, target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error)
 
 	// permissions.go
-	// TODO: #users
-	UpdatePermissions(r Resource, userID int32, permission Permission) (Resource, error)
+	UpdatePermissions(r Resource, user User, permission Permission) (Resource, error)
 
 	//publink.go
 	CreatePublink(r Resource, id, password string, expires pgtype.Timestamp, accessLimit int) error
@@ -94,8 +93,8 @@ type UserManager interface {
 	UpdateUserHome(user User, home pgtype.UUID) error
 	UpdateUserName(user User, name string) error
 	UpdateUserPassword(user User, password string) error
-	GrantUserPermissions(user User, permissions Permissions) error
-	RevokeUserPermissions(user User, permissions Permissions) error
+	GrantUserPermissions(user User, permissions UserPermissions) error
+	RevokeUserPermissions(user User, permissions UserPermissions) error
 
 	// user_bookmarks.go
 	AddBookmark(u User, resource Resource, name string) (Bookmark, error)

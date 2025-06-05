@@ -15,7 +15,7 @@ const (
 	PermissionSU    = Permission(-1)
 )
 
-func (f filesystem) UpdatePermissions(r Resource, userID int32, permission Permission) (Resource, error) {
+func (f filesystem) UpdatePermissions(r Resource, user User, permission Permission) (Resource, error) {
 	if r.deleted.Valid {
 		return r, ErrResourceDeleted
 	}
@@ -47,7 +47,7 @@ RETURNING grants`
 	err := f.runInTx(func(f filesystem) error {
 		row := f.db.QueryRow(q, pgx.NamedArgs{
 			"resource_id": r.id,
-			"user_id":     userID,
+			"user_id":     user.ID,
 			"permission":  permission,
 		})
 

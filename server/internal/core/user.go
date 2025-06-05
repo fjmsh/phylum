@@ -5,12 +5,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type UserPermissions = int32
+
+const (
+	PermissionUsersInvite = UserPermissions(0x10)
+	PermissionUsersGrant  = UserPermissions(0x20)
+	PermissionFilesAll    = UserPermissions(0x100)
+)
+
 type User struct {
 	ID          int32
 	Email       string
 	Name        string
 	Home        pgtype.UUID
-	Permissions Permissions
+	Permissions UserPermissions
 }
 
 func scanUser(row pgx.CollectableRow) (User, error) {

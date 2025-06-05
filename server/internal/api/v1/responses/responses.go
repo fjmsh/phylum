@@ -43,8 +43,8 @@ type User struct {
 
 type LoggedInUser struct {
 	User
-	Home        pgtype.UUID      `json:"home"`
-	Permissions core.Permissions `json:"permissions"`
+	Home        pgtype.UUID          `json:"home"`
+	Permissions core.UserPermissions `json:"permissions"`
 }
 
 type Publink struct {

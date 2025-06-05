@@ -1,9 +1,9 @@
 package core
 
 type Config struct {
-	Password   PasswordConfig `koanf:"password"`
-	BaseDir    string         `koanf:"basedir"`
-	Permisison Permissions    `koanf:"permission"`
+	Password   PasswordConfig  `koanf:"password"`
+	BaseDir    string          `koanf:"basedir"`
+	Permisison UserPermissions `koanf:"permission"`
 }
 
 type PasswordConfig struct {

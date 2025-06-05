@@ -23,7 +23,7 @@ func setupGrantCommand() *cobra.Command {
 				fmt.Println("unable to find user :" + err.Error())
 				os.Exit(1)
 			}
-			var p core.Permissions
+			var p core.UserPermissions
 			permString := strings.TrimSpace(args[1])
 			if strings.HasPrefix(permString, "0x") {
 				var perm int64
@@ -60,7 +60,7 @@ func setupRevokeCommand() *cobra.Command {
 				fmt.Println("unable to find user :" + err.Error())
 				os.Exit(1)
 			}
-			var p core.Permissions
+			var p core.UserPermissions
 			permString := strings.TrimSpace(args[1])
 			if strings.HasPrefix(permString, "0x") {
 				var perm int64

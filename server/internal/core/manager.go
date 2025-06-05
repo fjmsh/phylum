@@ -54,7 +54,7 @@ func (m manager) CreateUser(email, name string, noCreateHome bool) (User, error)
 		}
 
 		if homeID.Valid {
-			if _, err := f.UpdatePermissions(home, user.ID, PermissionRead|PermissionWrite|PermissionShare); err != nil {
+			if _, err := f.UpdatePermissions(home, user, PermissionRead|PermissionWrite|PermissionShare); err != nil {
 				return err
 			}
 		}
