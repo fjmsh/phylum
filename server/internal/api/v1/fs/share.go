@@ -30,7 +30,7 @@ func handleShareRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	user, err := core1.ManagerFromContext(c).UserByEmail(params.Email)
+	user, err := core1.UserManagerFromContext(c).UserByEmail(params.Email)
 	if err != nil {
 		panic(err)
 	}

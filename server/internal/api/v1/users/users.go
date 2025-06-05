@@ -41,7 +41,7 @@ func handleUsersListRoute(c *gin.Context) {
 
 func ListUsers(ctx context.Context, since int64) ([]responses.User, error) {
 	var users []responses.User
-	if res, err := core.ManagerFromContext(ctx).ListUsers(since); err != nil {
+	if res, err := core.UserManagerFromContext(ctx).ListUsers(since); err != nil {
 		return users, err
 	} else {
 		users = make([]responses.User, len(res))

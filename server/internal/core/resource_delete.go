@@ -237,6 +237,26 @@ func (f filesystem) markNotDeleted(id uuid.UUID) ([]int64, error) {
 	return items, nil
 }
 
+func collectNonDirResourceIDs(rows pgx.Rows, e error) (total int, ids []uuid.UUID, err error) {
+	if e != nil {
+		return 0, nil, e
+	}
+	defer rows.Close()
+	var id uuid.UUID
+	var dir bool
+	for rows.Next() {
+		if err := rows.Scan(&id, &dir); err != nil {
+			return total, nil, err
+		}
+		if !dir {
+			ids = append(ids, id)
+		}
+		total++
+	}
+	err = rows.Err()
+	return total, ids, err
+}
+
 func deleteResourcesContents(id uuid.UUIDs) {
 	// TODO: #implement
 }

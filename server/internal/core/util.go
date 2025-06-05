@@ -54,7 +54,7 @@ func (c *contentPropsComputer) Close() error {
 	return c.successCallback(c.len, c.sum, mimetype.Detect(c.contents).String())
 }
 
-func CheckNameInvalid(s string) bool {
+func CheckResourceNameInvalid(s string) bool {
 	return s == "" || s == "." || s == ".." || strings.ContainsFunc(s, func(r rune) bool {
 		return r == 0 || r == '/'
 	})

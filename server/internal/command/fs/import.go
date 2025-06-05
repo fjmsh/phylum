@@ -32,7 +32,7 @@ func setupImportCommand() *cobra.Command {
 			destName := stat.Name()
 			if len(args) > 2 {
 				destName = args[2]
-				if core.CheckNameInvalid(destName) {
+				if core.CheckResourceNameInvalid(destName) {
 					fmt.Println("invalid name: '" + destName + "'")
 				}
 			}
@@ -67,7 +67,7 @@ func setupImportCommand() *cobra.Command {
 							len = 0
 						}
 						size += len
-						if core.CheckNameInvalid(d.Name()) {
+						if core.CheckResourceNameInvalid(d.Name()) {
 							return core.ErrResourceNameInvalid
 						}
 						ids[p], _ = uuid.NewV7()

@@ -18,7 +18,7 @@ func setupPasswdCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]
-			u, err := core.ManagerFromContext(context.Background()).UserByEmail(email)
+			u, err := core.UserManagerFromContext(context.Background()).UserByEmail(email)
 			if err != nil {
 				fmt.Println("unable to change password: " + err.Error())
 				os.Exit(1)
@@ -53,7 +53,7 @@ func setupPasswdCommand() *cobra.Command {
 				}
 			}
 
-			err = core.ManagerFromContext(context.Background()).UpdateUserPassword(u, password)
+			err = core.UserManagerFromContext(context.Background()).UpdateUserPassword(u, password)
 			if err != nil {
 				fmt.Println("could not add user: " + err.Error())
 				os.Exit(1)

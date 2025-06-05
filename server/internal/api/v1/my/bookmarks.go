@@ -65,7 +65,7 @@ func handleBookmarksAddRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	b, err := core.ManagerFromContext(c.Request.Context()).AddBookmark(u, r, params.Name)
+	b, err := core.UserManagerFromContext(c.Request.Context()).AddBookmark(u, r, params.Name)
 	if err != nil {
 		panic(err)
 	}
@@ -84,7 +84,7 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 	c.ShouldBind(&params)
 
 	u := authenticator.GetUser(c)
-	if err := core.ManagerFromContext(c.Request.Context()).RemoveBookmark(u, params.ID); err != nil {
+	if err := core.UserManagerFromContext(c.Request.Context()).RemoveBookmark(u, params.ID); err != nil {
 		panic(err)
 	}
 	c.JSON(200, gin.H{})
@@ -92,7 +92,7 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 
 func ListBookmarks(ctx context.Context, u core.User, since int64) ([]responses.Bookmark, error) {
 	var bookmarks []responses.Bookmark
-	if res, err := core.ManagerFromContext(ctx).ListBookmarks(u, since); err != nil {
+	if res, err := core.UserManagerFromContext(ctx).ListBookmarks(u, since); err != nil {
 		return bookmarks, err
 	} else {
 		bookmarks = make([]responses.Bookmark, len(res))

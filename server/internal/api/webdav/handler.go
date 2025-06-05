@@ -44,7 +44,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 	var f core.FileSystem
 	if email, pass, ok := c.Request.BasicAuth(); ok {
 		ctx := c.Request.Context()
-		userManager := core1.ManagerFromContext(ctx)
+		userManager := core1.UserManagerFromContext(ctx)
 		if u, err := userManager.VerifyUserPassword(email, pass); err == nil {
 			authSuccess = true
 			root := c.Param("root")
@@ -52,7 +52,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 			if root[0] == '~' {
 				id, err := userManager.UserHome(root[1:])
 				if err != nil {
-					if errors.Is(err, core1.ErrNotFound) {
+					if errors.Is(err, core1.ErrUserNotFound) {
 						c.AbortWithStatus(http.StatusNotFound)
 						return
 					} else {

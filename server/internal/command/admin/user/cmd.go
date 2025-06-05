@@ -31,7 +31,7 @@ func setupListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List Users",
 		Run: func(cmd *cobra.Command, args []string) {
-			users, err := core.ManagerFromContext(context.Background()).ListUsers(0)
+			users, err := core.UserManagerFromContext(context.Background()).ListUsers(0)
 			if err != nil {
 				logrus.Fatal(err)
 			}

@@ -17,7 +17,7 @@ func setupGrantCommand() *cobra.Command {
 		Short: "Grant Permissions",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			userManager := core.ManagerFromContext(context.Background())
+			userManager := core.UserManagerFromContext(context.Background())
 			u, err := userManager.UserByEmail(args[0])
 			if err != nil {
 				fmt.Println("unable to find user :" + err.Error())
@@ -54,7 +54,7 @@ func setupRevokeCommand() *cobra.Command {
 		Short: "Revoke Permissions",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			userManager := core.ManagerFromContext(context.Background())
+			userManager := core.UserManagerFromContext(context.Background())
 			u, err := userManager.UserByEmail(args[0])
 			if err != nil {
 				fmt.Println("unable to find user :" + err.Error())

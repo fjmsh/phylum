@@ -36,7 +36,7 @@ func setupListCommand() *cobra.Command {
 				fmt.Println("unable to list bookmarks: user not specified")
 				os.Exit(1)
 			}
-			if bookmarks, err := core.ManagerFromContext(context.Background()).ListBookmarks(*u, 0); err != nil {
+			if bookmarks, err := core.UserManagerFromContext(context.Background()).ListBookmarks(*u, 0); err != nil {
 				fmt.Println("unable to list bookmark: " + err.Error())
 				os.Exit(1)
 			} else {
@@ -67,7 +67,7 @@ func setupRemoveCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if err := core.ManagerFromContext(context.Background()).RemoveBookmark(*u, r.ID()); err != nil {
+			if err := core.UserManagerFromContext(context.Background()).RemoveBookmark(*u, r.ID()); err != nil {
 				fmt.Println("unable to remove bookmark: " + err.Error())
 				os.Exit(1)
 			}
@@ -97,7 +97,7 @@ func setupAddCommand() *cobra.Command {
 				name = args[1]
 			}
 
-			if _, err := core.ManagerFromContext(context.Background()).AddBookmark(*u, r, name); err != nil {
+			if _, err := core.UserManagerFromContext(context.Background()).AddBookmark(*u, r, name); err != nil {
 				fmt.Println("unable to add bookmark: " + err.Error())
 				os.Exit(1)
 			}

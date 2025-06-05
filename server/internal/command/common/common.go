@@ -22,7 +22,7 @@ func User(cmd *cobra.Command) *core1.User {
 		} else if value == "" {
 			u = nil
 		} else {
-			if user, err := core1.ManagerFromContext(context.Background()).UserByEmail(value); err != nil {
+			if user, err := core1.UserManagerFromContext(context.Background()).UserByEmail(value); err != nil {
 				fmt.Println("could not find user '" + value + "': " + err.Error())
 				os.Exit(1)
 			} else {

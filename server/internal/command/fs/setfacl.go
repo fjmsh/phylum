@@ -32,7 +32,7 @@ func setupSetfaclCommand() *cobra.Command {
 			}
 
 			email := args[1]
-			if user, err := core1.ManagerFromContext(context.Background()).UserByEmail(email); err != nil {
+			if user, err := core1.UserManagerFromContext(context.Background()).UserByEmail(email); err != nil {
 				fmt.Println("cannot update permissions for user '" + email + "': " + err.Error())
 				os.Exit(1)
 			} else {

@@ -12,6 +12,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type ResourceBindConflictResolution int32
+
+const (
+	ResourceBindConflictResolutionError     = ResourceBindConflictResolution(0) // Error if exists
+	ResourceBindConflictResolutionEnsure    = ResourceBindConflictResolution(1) // Error if type mismatch
+	ResourceBindConflictResolutionRename    = ResourceBindConflictResolution(2) // Auto rename new resource
+	ResourceBindConflictResolutionOverwrite = ResourceBindConflictResolution(3) // Delete existing resource only if type mismatch (preserves props)
+	ResourceBindConflictResolutionDelete    = ResourceBindConflictResolution(4) // Delete existing resource before creating
+)
+
 func (f filesystem) CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	if id == uuid.Nil {
 		id, _ = uuid.NewV7()
@@ -55,6 +65,19 @@ func (f filesystem) CreateResourceByPath(path string, id uuid.UUID, dir, createP
 	return r, err
 }
 
+// For bulk insert
+type CreateResourcesParams struct {
+	ID     uuid.UUID
+	Parent uuid.UUID
+	Name   string
+	Dir    bool
+}
+
+// TODO: Make not public
+func (f filesystem) CreateResources(arg []CreateResourcesParams) (int64, error) {
+	return f.db.CopyFrom([]string{"resources"}, []string{"id", "parent", "name", "dir"}, &iteratorForCreateResources{rows: arg})
+}
+
 func (f filesystem) createMemberResource(r Resource, name string, id uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	if r.deleted.Valid {
 		return Resource{}, ErrResourceDeleted
@@ -65,7 +88,7 @@ func (f filesystem) createMemberResource(r Resource, name string, id uuid.UUID, 
 	if !r.hasPermission(PermissionWrite) {
 		return Resource{}, ErrInsufficientPermissions
 	}
-	if CheckNameInvalid(name) {
+	if CheckResourceNameInvalid(name) {
 		return Resource{}, ErrResourceNameInvalid
 	}
 	if id == uuid.Nil {
@@ -251,4 +274,35 @@ func (f filesystem) createResourceVersion(id, versionID uuid.UUID, size int64, m
 	}
 	_, err := f.db.Exec(q, args)
 	return err
+}
+
+// iteratorForCreateResources implements pgx.CopyFromSource.
+type iteratorForCreateResources struct {
+	rows                 []CreateResourcesParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForCreateResources) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForCreateResources) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ID,
+		r.rows[0].Parent,
+		r.rows[0].Name,
+		r.rows[0].Dir,
+	}, nil
+}
+
+func (r iteratorForCreateResources) Err() error {
+	return nil
 }

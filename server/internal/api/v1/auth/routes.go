@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +43,7 @@ func handlePasswordAuth(c *gin.Context) {
 		panic(core1.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
 	}
 
-	userManager := core.ManagerFromContext(c.Request.Context())
+	userManager := core.UserManagerFromContext(c.Request.Context())
 	if user, err := userManager.VerifyUserPassword(params.Email, params.Password); err != nil {
 		panic(err)
 	} else if token, err := userManager.CreateAccessToken(user); err != nil {
@@ -65,9 +66,9 @@ func handleRequestPasswordReset(c *gin.Context) {
 		panic(core1.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
 	}
 
-	userManager := core.ManagerFromContext(c.Request.Context())
+	userManager := core.UserManagerFromContext(c.Request.Context())
 	u, err := userManager.UserByEmail(params.Email)
-	if err == core.ErrNotFound {
+	if errors.Is(err, core.ErrUserNotFound) {
 		c.JSON(200, gin.H{})
 		return
 	}
@@ -92,7 +93,7 @@ func handleResetPassword(c *gin.Context) {
 		panic(core1.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
 	}
 
-	userManager := core.ManagerFromContext(c.Request.Context())
+	userManager := core.UserManagerFromContext(c.Request.Context())
 	if user, err := userManager.UserByEmail(params.Email); err != nil {
 		panic(err)
 	} else if err := userManager.ResetUserPassword(user, params.Token, params.Password); err != nil {

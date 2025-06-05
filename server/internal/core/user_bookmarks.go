@@ -32,7 +32,7 @@ func (m manager) AddBookmark(u User, resource Resource, name string) (Bookmark, 
 	if name == "" {
 		name = resource.Name()
 	}
-	if CheckNameInvalid(name) {
+	if CheckResourceNameInvalid(name) {
 		return Bookmark{}, ErrResourceNameInvalid
 	}
 

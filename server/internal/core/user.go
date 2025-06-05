@@ -1,15 +1,9 @@
 package core
 
 import (
-	"context"
-
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/db"
 )
-
-var Cfg Config
 
 type User struct {
 	ID          int32
@@ -29,43 +23,4 @@ func scanUser(row pgx.CollectableRow) (User, error) {
 		&u.Permissions,
 	)
 	return u, err
-}
-
-type Manager interface {
-	// create.go
-	CreateUser(email, name string, noCreateHome bool) (User, error)
-
-	// select.go
-	ListUsers(since int64) ([]User, error)
-	UserByEmail(email string) (User, error)
-	UserHome(email string) (pgtype.UUID, error)
-
-	// update.go
-	UpdateUserHome(user User, home pgtype.UUID) error
-	UpdateUserName(user User, name string) error
-	UpdateUserPassword(user User, password string) error
-	GrantUserPermissions(user User, permissions Permissions) error
-	RevokeUserPermissions(user User, permissions Permissions) error
-
-	// auth.go
-	VerifyUserPassword(email, password string) (User, error)
-	CreateAccessToken(user User) (string, error)
-	ReadAccessToken(accessToken string) (User, error)
-
-	// reset.go
-	CreateResetToken(user User) (string, error)
-	ResetUserPassword(user User, token, password string) error
-
-	// bookmarks.go
-	AddBookmark(u User, resource Resource, name string) (Bookmark, error)
-	RemoveBookmark(u User, id uuid.UUID) error
-	ListBookmarks(u User, since int64) ([]Bookmark, error)
-}
-
-func ManagerFromContext(ctx context.Context) Manager {
-	return manager{db: db.Get(ctx)}
-}
-
-func ManagerFromDB(db db.Handler) Manager {
-	return manager{db: db}
 }

@@ -18,7 +18,7 @@ func setupPwresetResetCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]
 
-			manager := core.ManagerFromContext(context.Background())
+			manager := core.UserManagerFromContext(context.Background())
 			if user, err := manager.UserByEmail(email); err != nil {
 				fmt.Println("unable to find user" + email + ": " + err.Error())
 				os.Exit(1)

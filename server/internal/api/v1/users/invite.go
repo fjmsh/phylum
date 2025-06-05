@@ -28,7 +28,7 @@ func handleInviteRequest(c *gin.Context) {
 		}
 	}
 
-	userManager := core.ManagerFromContext(c.Request.Context())
+	userManager := core.UserManagerFromContext(c.Request.Context())
 	u := authenticator.GetUser(c)
 
 	if u.Permissions&core.PermissionUsersInvite == 0 {

@@ -43,7 +43,7 @@ func Require(c *gin.Context) {
 }
 
 func extractUserDetails(c *gin.Context) (core1.User, error) {
-	userManager := core1.ManagerFromContext(c.Request.Context())
+	userManager := core1.UserManagerFromContext(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		if cookie, err := c.Request.Cookie("auth_token"); err == nil {
 			token := cookie.Value
