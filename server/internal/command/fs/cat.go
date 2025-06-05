@@ -20,23 +20,29 @@ func setupCatCommand() *cobra.Command {
 			path := args[0]
 			r, err := f.ResourceByPathWithRoot(path)
 			if err != nil {
-				fmt.Println("cannot open'" + path + "': " + err.Error())
+				fmt.Println("cannot locate '" + path + "': " + err.Error())
 				os.Exit(1)
 			}
 
 			if r.Dir() {
-				fmt.Println("cannot read'" + path + "': is a directory")
-				os.Exit(2)
+				fmt.Println("cannot read '" + path + "': is a directory")
+				os.Exit(1)
 			}
 
-			in, err := f.OpenRead(0, -1, r, uuid.Nil)
+			v, err := f.FindVersion(r, uuid.Nil)
+			if err != nil {
+				fmt.Println("cannot find latest version of '" + path + "': " + err.Error())
+				os.Exit(1)
+			}
+
+			in, err := v.OpenRead(0, -1)
 			if err != nil {
 				fmt.Println("cannot read'" + path + "': " + err.Error())
-				os.Exit(3)
+				os.Exit(1)
 			}
 			if _, err := io.Copy(os.Stdout, in); err != nil {
 				fmt.Println("cannot output'" + path + "': " + err.Error())
-				os.Exit(4)
+				os.Exit(1)
 			}
 		},
 	}

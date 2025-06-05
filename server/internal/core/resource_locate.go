@@ -148,6 +148,10 @@ func parseUUIDPrefix(path string) (pgtype.UUID, string, error) {
 }
 
 func (f filesystem) FindVersion(r Resource, versionID uuid.UUID) (Version, error) {
+	if versionID == uuid.Nil {
+		versionID = r.latestVersionInfo.ID
+	}
+
 	const q = `SELECT id, created, size, mime_type, sha256, storage FROM resource_versions
 	WHERE resource_id = $1::UUID
 	AND id = $2::UUID

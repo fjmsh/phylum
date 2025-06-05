@@ -111,9 +111,6 @@ func formatSize(size int) string {
 }
 
 func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, res core.Resource, versionID uuid.UUID) {
-	if versionID == uuid.Nil {
-		versionID = res.LatestVersion().ID
-	}
 	version, err := f.FindVersion(res, versionID)
 	if err != nil {
 		panic(err)

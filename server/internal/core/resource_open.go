@@ -11,18 +11,6 @@ import (
 	"github.com/shroff/phylum/server/internal/storage"
 )
 
-func (f filesystem) OpenRead(start, length int, r Resource, versionID uuid.UUID) (io.ReadCloser, error) {
-	if versionID == uuid.Nil {
-		versionID = r.LatestVersion().ID
-	}
-
-	if v, err := f.FindVersion(r, versionID); err != nil {
-		return nil, err
-	} else {
-		return v.OpenRead(start, length)
-	}
-}
-
 func (f filesystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
 	if !r.hasPermission(PermissionWrite) {
 		return nil, ErrInsufficientPermissions

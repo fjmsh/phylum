@@ -40,7 +40,6 @@ type FileSystem interface {
 	GetPath(Resource) (string, error)
 
 	// resource_open.go
-	OpenRead(start, length int, r Resource, versionID uuid.UUID) (io.ReadCloser, error)
 	OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error)
 	ReadDir(r Resource, recursive bool) ([]Resource, error)
 	ReadDirDeleted(r Resource, recursive, includeDeleted bool) ([]Resource, error)
