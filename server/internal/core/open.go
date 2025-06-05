@@ -8,7 +8,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/core/storage"
+	"github.com/shroff/phylum/server/internal/storage"
 )
 
 func (f filesystem) OpenRead(start, length int, r Resource, versionID uuid.UUID) (io.ReadCloser, error) {

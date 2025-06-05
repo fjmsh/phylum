@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"os"
@@ -26,7 +25,7 @@ func Initialize(db db.Handler) error {
 	if err := os.Chmod(Cfg.Location, 0700); err != nil {
 		return errors.New("failed to set permissions: " + err.Error())
 	}
-	if restoredBackends, err := restoreBackends(); err != nil {
+	if restoredBackends, err := restoreBackends(db); err != nil {
 		return errors.New("failed to restore backends: " + err.Error())
 	} else if b, err := createLocalBackend(map[string]string{"root": path.Join(Cfg.Location, "default")}); err != nil {
 		return errors.New("failed to create default backend: " + err.Error())
@@ -71,9 +70,9 @@ func InsertBackend(db db.Handler, name string, driver Driver, params map[string]
 	return nil
 }
 
-func restoreBackends() (map[string]Backend, error) {
+func restoreBackends(db db.Handler) (map[string]Backend, error) {
 	const q = "SELECT name, driver, params from storage_backends"
-	if rows, err := db.Get(context.Background()).Query(q); err != nil {
+	if rows, err := db.Query(q); err != nil {
 		return nil, err
 	} else if backends, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (BackendConfig, error) {
 		var c BackendConfig

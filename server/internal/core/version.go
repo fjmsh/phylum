@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/core/storage"
+	"github.com/shroff/phylum/server/internal/storage"
 )
 
 // VersionInfo represents a single version of a resource

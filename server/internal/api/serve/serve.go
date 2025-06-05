@@ -14,7 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core"
-	"github.com/shroff/phylum/server/internal/core/storage"
+	"github.com/shroff/phylum/server/internal/storage"
 )
 
 var htmlReplacer = strings.NewReplacer(
