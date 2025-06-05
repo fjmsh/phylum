@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/db"
 )
 
 var Cfg Config
@@ -64,4 +65,12 @@ type Manager interface {
 	AddBookmark(u User, resource core.Resource, name string) (Bookmark, error)
 	RemoveBookmark(u User, id uuid.UUID) error
 	ListBookmarks(u User, since int64) ([]Bookmark, error)
+}
+
+func ManagerFromContext(ctx context.Context) Manager {
+	return manager{db: db.Get(ctx)}
+}
+
+func ManagerFromDB(db db.Handler) Manager {
+	return manager{db: db}
 }
