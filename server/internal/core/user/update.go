@@ -2,7 +2,7 @@ package user
 
 import (
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/util/crypt"
+	"github.com/shroff/phylum/server/internal/crypt"
 )
 
 func (m manager) UpdateUserHome(user User, home pgtype.UUID) error {

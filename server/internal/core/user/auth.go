@@ -7,8 +7,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shroff/phylum/server/internal/core/errors"
-	"github.com/shroff/phylum/server/internal/core/util/crypt"
 	"github.com/shroff/phylum/server/internal/core/util/rand"
+	"github.com/shroff/phylum/server/internal/crypt"
 )
 
 const accessTokenLength = 16
