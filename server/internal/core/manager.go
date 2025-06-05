@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/db"
 )
 
@@ -61,10 +60,10 @@ RETURNING id, email, name, home, permissions`
 		return User{}, err
 	} else if user, err := pgx.CollectExactlyOneRow(rows, scanUser); err != nil {
 		if strings.Contains(err.Error(), "valid_email") {
-			err = errors.NewError(http.StatusBadRequest, "invalid_email_address", "Invalid email address")
+			err = NewError(http.StatusBadRequest, "invalid_email_address", "Invalid email address")
 		}
 		if strings.Contains(err.Error(), "users_email_key") {
-			err = errors.NewError(http.StatusBadRequest, "user_already_exists", "User already exists")
+			err = NewError(http.StatusBadRequest, "user_already_exists", "User already exists")
 		}
 		return user, err
 	} else {

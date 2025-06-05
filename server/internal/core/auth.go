@@ -6,7 +6,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/crypt"
 	"github.com/shroff/phylum/server/internal/rand"
 )
@@ -18,11 +17,11 @@ var accessTokenValidity = pgtype.Interval{
 	Valid: true,
 }
 
-var ErrCredentialsInvalid = errors.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid Credentials")
+var ErrCredentialsInvalid = NewError(http.StatusUnauthorized, "credentials_invalid", "invalid Credentials")
 
 func (m manager) VerifyUserPassword(email, password string) (User, error) {
 	if user, passwordHash, err := m.userPasswordHashByEmail(email); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if Is(err, pgx.ErrNoRows) {
 			return User{}, ErrCredentialsInvalid
 		}
 		return User{}, err
@@ -55,7 +54,7 @@ func (m manager) ReadAccessToken(accessToken string) (user User, err error) {
 	var expires pgtype.Timestamp
 	err = row.Scan(&expires, &user.ID, &user.Email, &user.Name, &user.Permissions, &user.Home)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if Is(err, pgx.ErrNoRows) {
 			err = ErrCredentialsInvalid
 		}
 	} else if time.Now().After(expires.Time) {

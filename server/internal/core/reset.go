@@ -6,12 +6,11 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/errors"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/rand"
 )
 
-var ErrTokenNotFound = errors.NewError(http.StatusBadRequest, "token_not_found", "Token Not Found")
+var ErrTokenNotFound = NewError(http.StatusBadRequest, "token_not_found", "Token Not Found")
 
 const resetTokenLength = 64
 const resetTokenDuration = 10 * time.Minute
@@ -57,7 +56,7 @@ func (m manager) ResetUserPassword(user User, token, password string) error {
 				return ErrTokenNotFound
 			}
 			return nil
-		} else if errors.Is(err, pgx.ErrNoRows) {
+		} else if Is(err, pgx.ErrNoRows) {
 			return ErrTokenNotFound
 		} else {
 			return err

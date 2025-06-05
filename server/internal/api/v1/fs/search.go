@@ -6,10 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
-	"github.com/shroff/phylum/server/internal/core/errors"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
-var errSearchQueryEmpty = errors.NewError(http.StatusBadRequest, "search_query_empty", "Empty Search Query")
+var errSearchQueryEmpty = core.NewError(http.StatusBadRequest, "search_query_empty", "Empty Search Query")
 
 func handleSearchRequest(c *gin.Context) {
 	query := c.Request.URL.Query().Get("q")

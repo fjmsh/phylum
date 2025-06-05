@@ -8,10 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shroff/phylum/server/internal/core"
 	core1 "github.com/shroff/phylum/server/internal/core"
-	"github.com/shroff/phylum/server/internal/core/errors"
+	core2 "github.com/shroff/phylum/server/internal/core"
 )
 
-var errAuthRequired = errors.NewError(http.StatusUnauthorized, "auth_required", "authorization required")
+var errAuthRequired = core2.NewError(http.StatusUnauthorized, "auth_required", "authorization required")
 
 const keyUser = "user"
 const keyFileSystem = "filesystem"

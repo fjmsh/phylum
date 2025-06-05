@@ -7,12 +7,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
-	"github.com/shroff/phylum/server/internal/core/errors"
+	"github.com/shroff/phylum/server/internal/core"
 )
 
 const trashListLength = 100
 
-var errResourceIDInvalid = errors.NewError(http.StatusBadRequest, "resource_id_invalid", "Invalid UUID")
+var errResourceIDInvalid = core.NewError(http.StatusBadRequest, "resource_id_invalid", "Invalid UUID")
 
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/trash")

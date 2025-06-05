@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/core/errors"
+	"github.com/shroff/phylum/server/internal/core"
 	"github.com/sirupsen/logrus"
 )
 
@@ -42,7 +42,7 @@ func createEngine() *gin.Engine {
 	engine.Use(func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				if e, ok := err.(*errors.Error); ok {
+				if e, ok := err.(*core.Error); ok {
 					c.AbortWithStatusJSON(e.Status, e)
 				} else {
 					// This will be caught by the regular gin error recovery handler

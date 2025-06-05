@@ -11,7 +11,7 @@ import (
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/api/v1/users"
 	"github.com/shroff/phylum/server/internal/core"
-	"github.com/shroff/phylum/server/internal/core/errors"
+	core1 "github.com/shroff/phylum/server/internal/core"
 )
 
 func handleBootstrapRoute(c *gin.Context) {
@@ -20,7 +20,7 @@ func handleBootstrapRoute(c *gin.Context) {
 		var err error
 		since, err = strconv.ParseInt(s, 10, 64)
 		if err != nil {
-			panic(errors.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Parameters"))
+			panic(core1.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Parameters"))
 		}
 	}
 

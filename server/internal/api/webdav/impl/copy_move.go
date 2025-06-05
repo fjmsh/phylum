@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/core"
-	"github.com/shroff/phylum/server/internal/core/errors"
+	core1 "github.com/shroff/phylum/server/internal/core"
 )
 
 func (h *Handler) handleCopyMove(_ http.ResponseWriter, r *http.Request) (status int, err error) {
@@ -86,7 +86,7 @@ func (h *Handler) handleCopyMove(_ http.ResponseWriter, r *http.Request) (status
 // See section 9.9.4 for when various HTTP status codes apply.
 func moveFiles(f FileSystem, srcPath, dstPath string, overwrite bool) (status int, err error) {
 	if src, err := f.ResourceByPath(srcPath); err != nil {
-		if e, ok := err.(*errors.Error); ok {
+		if e, ok := err.(*core1.Error); ok {
 			return e.Status, e
 		}
 		return http.StatusInternalServerError, err
@@ -96,7 +96,7 @@ func moveFiles(f FileSystem, srcPath, dstPath string, overwrite bool) (status in
 			conflictResolution = core.ResourceBindConflictResolutionDelete
 		}
 		if _, deleted, err := f.Move(src, dstPath, conflictResolution); err != nil {
-			if e, ok := err.(*errors.Error); ok {
+			if e, ok := err.(*core1.Error); ok {
 				return e.Status, e
 			}
 			return http.StatusForbidden, err
@@ -115,7 +115,7 @@ func moveFiles(f FileSystem, srcPath, dstPath string, overwrite bool) (status in
 // See section 9.8.5 for when various HTTP status codes apply.
 func copyFiles(f FileSystem, srcPath, dstPath string, overwrite bool, depth int) (status int, err error) {
 	if src, err := f.ResourceByPath(srcPath); err != nil {
-		if e, ok := err.(*errors.Error); ok {
+		if e, ok := err.(*core1.Error); ok {
 			return e.Status, e
 		}
 		return http.StatusInternalServerError, err
@@ -126,7 +126,7 @@ func copyFiles(f FileSystem, srcPath, dstPath string, overwrite bool, depth int)
 			conflictResolution = core.ResourceBindConflictResolutionOverwrite
 		}
 		if _, deleted, err := f.Copy(src, dstPath, id, depth != 0, conflictResolution); err != nil {
-			if e, ok := err.(*errors.Error); ok {
+			if e, ok := err.(*core1.Error); ok {
 				return e.Status, e
 			}
 			return http.StatusForbidden, err

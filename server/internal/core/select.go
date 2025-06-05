@@ -7,10 +7,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/errors"
 )
 
-var ErrNotFound = errors.NewError(http.StatusNotFound, "user_not_found", "no such user")
+var ErrNotFound = NewError(http.StatusNotFound, "user_not_found", "no such user")
 
 func (m manager) ListUsers(since int64) ([]User, error) {
 	sb := strings.Builder{}
@@ -30,7 +29,7 @@ func (m manager) UserByEmail(email string) (User, error) {
 	if rows, err := m.db.Query(q, strings.ToLower(email)); err != nil {
 		return User{}, err
 	} else if u, err := pgx.CollectExactlyOneRow(rows, scanUser); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if Is(err, pgx.ErrNoRows) {
 			err = ErrNotFound
 		}
 		return User{}, err
@@ -49,7 +48,7 @@ func (m manager) userPasswordHashByEmail(email string) (user User, passwordHash 
 		&user.Home,
 		&user.Permissions,
 		&passwordHash)
-	if errors.Is(err, pgx.ErrNoRows) {
+	if Is(err, pgx.ErrNoRows) {
 		err = ErrNotFound
 	}
 	return
@@ -65,7 +64,7 @@ func (m manager) UserHome(email string) (pgtype.UUID, error) {
 		}
 		return id, err
 	} else {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if Is(err, pgx.ErrNoRows) {
 			err = ErrNotFound
 		}
 		return pgtype.UUID{}, err

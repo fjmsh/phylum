@@ -10,10 +10,10 @@ import (
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/serve"
 	"github.com/shroff/phylum/server/internal/core"
-	"github.com/shroff/phylum/server/internal/core/errors"
+	core1 "github.com/shroff/phylum/server/internal/core"
 )
 
-var errGetCollectionContents = errors.NewError(http.StatusBadRequest, "resource_is_collection", "Cannot get contents of collection")
+var errGetCollectionContents = core1.NewError(http.StatusBadRequest, "resource_is_collection", "Cannot get contents of collection")
 
 func handleContentsRequest(c *gin.Context) {
 	// Trim leading '/'

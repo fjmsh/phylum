@@ -7,7 +7,7 @@ import (
 	"github.com/shroff/phylum/server/internal/api/authenticator"
 	"github.com/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/shroff/phylum/server/internal/core"
-	"github.com/shroff/phylum/server/internal/core/errors"
+	core1 "github.com/shroff/phylum/server/internal/core"
 	"github.com/shroff/phylum/server/internal/mail"
 )
 
@@ -32,7 +32,7 @@ func handleInviteRequest(c *gin.Context) {
 	u := authenticator.GetUser(c)
 
 	if u.Permissions&core.PermissionUsersInvite == 0 {
-		panic(errors.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to invite users"))
+		panic(core1.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to invite users"))
 	}
 
 	if user, err := userManager.CreateUser(params.Email, params.Name, params.NoCreateHome); err != nil {

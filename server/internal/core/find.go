@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core/errors"
 )
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
@@ -159,7 +158,7 @@ func (f filesystem) FindVersion(r Resource, versionID uuid.UUID) (Version, error
 	var created time.Time
 	err := row.Scan(&v.ID, &created, &v.Size, &v.MimeType, &v.SHA256, &v.Storage)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if Is(err, pgx.ErrNoRows) {
 			err = ErrVersionNotFound
 		}
 		return v, err

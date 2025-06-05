@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
@@ -9,6 +10,8 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/shroff/phylum/server/internal/db"
+	"github.com/sirupsen/logrus"
 )
 
 func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error) {
@@ -74,4 +77,62 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 		}
 		return res, cursor, nil
 	}
+}
+
+func TrashCompact(ctx context.Context, duration time.Duration) {
+	t := time.Now().Add(-duration)
+	if d, err := hardDeleteOldResources(ctx, t); err != nil {
+		logrus.Error(err)
+	} else {
+		logrus.Info(fmt.Sprintf("Removed %d files deleted before %s", d, t.Format(time.RFC1123)))
+	}
+}
+
+func (f filesystem) TrashSummary() (int, int, error) {
+	q := f.selectDeletedResources().
+		Select(
+			goqu.COALESCE(goqu.SUM("content_length"), 0),
+			goqu.COUNT("*"))
+
+	query, args, _ := q.ToSQL()
+	row := f.db.QueryRow(query, args...)
+	var size int
+	var items int
+	err := row.Scan(&size, &items)
+	return items, size, err
+}
+
+func (f filesystem) TrashEmpty() (int, error) {
+	q := f.selectDeletedResources().
+		Delete().
+		Returning("id", "dir")
+	query, args, _ := q.ToSQL()
+	count, ids, err := collectNonDirResourceIDs(f.db.Query(query, args...))
+	deleteResourcesContents(ids)
+	return count, err
+}
+
+func (f filesystem) selectDeletedResources() *goqu.SelectDataset {
+	q := pg.
+		From("resources").
+		Where(goqu.C("deleted").IsNotNull())
+	if !f.fullAccess {
+		q = q.Where(goqu.L("permissions[?]::INTEGER <> 0", f.userID))
+	}
+	return q
+}
+
+func hardDeleteOldResources(ctx context.Context, t time.Time) (int, error) {
+	q := pg.
+		From("resources").
+		Where(goqu.C("deleted").Lt(goqu.V(t.UTC()))).
+		Delete().
+		Returning("id", "dir")
+	query, args, _ := q.ToSQL()
+	count, ids, err := collectNonDirResourceIDs(db.Get(ctx).Query(query, args...))
+	if err != nil {
+		return 0, err
+	}
+	deleteResourcesContents(ids)
+	return count, err
 }
