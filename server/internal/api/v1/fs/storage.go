@@ -21,7 +21,7 @@ func handleDiskUsageRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	info, err := resource.DiskUsage()
+	info, err := fs.DiskUsage(resource)
 	if err != nil {
 		panic(err)
 	}

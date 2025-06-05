@@ -71,7 +71,7 @@ func handleRestoreRequest(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	r, _, _, err = r.RestoreDeleted(target, name, autoRename)
+	r, _, _, err = fs.RestoreDeleted(r, target, name, autoRename)
 	if err != nil {
 		panic(err)
 	}

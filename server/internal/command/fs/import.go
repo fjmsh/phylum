@@ -138,7 +138,7 @@ func copyContents(f fs.FileSystem, src string, id uuid.UUID) error {
 	if r, err := f.ResourceByID(id); err != nil {
 		return err
 	} else {
-		out, err := r.OpenWrite(uuid.Nil)
+		out, err := f.OpenWrite(r, uuid.Nil)
 		if err != nil {
 			return err
 		}

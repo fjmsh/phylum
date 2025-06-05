@@ -28,7 +28,7 @@ func setupLsCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			path, err := r.GetPath()
+			path, err := f.GetPath(r)
 			if err != nil {
 				fmt.Println("cannot get path:" + err.Error())
 				os.Exit(1)
@@ -46,7 +46,7 @@ func setupLsCommand() *cobra.Command {
 
 			if r.Dir() {
 				includeDeleted, _ := cmd.Flags().GetBool("include-deleted")
-				children, err := r.ReadDirDeleted(false, includeDeleted)
+				children, err := f.ReadDirDeleted(r, false, includeDeleted)
 				if err != nil {
 					fmt.Println("cannot access '" + pathOrUUID + "': " + err.Error())
 					os.Exit(1)

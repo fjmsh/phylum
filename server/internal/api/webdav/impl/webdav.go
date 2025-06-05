@@ -38,6 +38,14 @@ type Handler struct {
 type FileSystem interface {
 	ResourceByPath(name string) (fs.Resource, error)
 	CreateResourceByPath(name string, id uuid.UUID, dir, recursive bool, conflictResolution fs.ResourceBindConflictResolution) (fs.Resource, error)
+
+	ReadDir(fs.Resource, bool) ([]fs.Resource, error)
+	Walk(fs.Resource, int, func(fs.Resource, string) error) error
+	FindVersion(fs.Resource, uuid.UUID) (fs.Version, error)
+	OpenWrite(fs.Resource, uuid.UUID) (io.WriteCloser, error)
+	Copy(fs.Resource, string, uuid.UUID, bool, fs.ResourceBindConflictResolution) (fs.Resource, bool, error)
+	Move(fs.Resource, string, fs.ResourceBindConflictResolution) (fs.Resource, bool, error)
+	DeleteRecursive(fs.Resource, bool) (fs.Resource, error)
 }
 
 func (h *Handler) stripPrefix(p string) (string, int, error) {
@@ -220,7 +228,7 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 		return http.StatusNotFound, err
 	}
 	w.Header().Set("Content-Disposition", "attachment; filename=\""+res.Name()+"\"")
-	serve.Serve(w, r, res)
+	serve.Serve(w, r, h.FileSystem, res)
 
 	return 0, nil
 }
@@ -241,7 +249,7 @@ func (h *Handler) handleDelete(_ http.ResponseWriter, r *http.Request) (status i
 			return http.StatusNotFound, err
 		}
 		return http.StatusMethodNotAllowed, err
-	} else if _, err := r.DeleteRecursive(true); err != nil {
+	} else if _, err := h.FileSystem.DeleteRecursive(r, true); err != nil {
 		return http.StatusMethodNotAllowed, err
 	}
 	return http.StatusNoContent, nil
@@ -270,7 +278,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 		return http.StatusNotFound, err
 	}
 
-	f, err := res.OpenWrite(uuid.Nil)
+	f, err := h.FileSystem.OpenWrite(res, uuid.Nil)
 	_, copyErr := io.Copy(f, r.Body)
 	closeErr := f.Close()
 	if copyErr != nil {
@@ -480,7 +488,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, request *http.Request) (
 		return mw.write(makePropstatResponse(href, pstats))
 	}
 
-	walkErr := fi.Walk(depth, writePropStat)
+	walkErr := h.FileSystem.Walk(fi, depth, writePropStat)
 	closeErr := mw.close()
 	if walkErr != nil {
 		return http.StatusInternalServerError, walkErr

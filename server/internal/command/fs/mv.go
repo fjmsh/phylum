@@ -29,7 +29,7 @@ func setupMvCommand() *cobra.Command {
 			if force {
 				conflictResolution = fs.ResourceBindConflictResolutionDelete
 			}
-			if _, _, err := src.Move(args[1], conflictResolution); err != nil {
+			if _, _, err := f.Move(src, args[1], conflictResolution); err != nil {
 				fmt.Println("cannot move'" + srcPath + "' to '" + args[1] + "': " + err.Error())
 				os.Exit(1)
 			}

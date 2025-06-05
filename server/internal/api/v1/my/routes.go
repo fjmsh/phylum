@@ -42,7 +42,7 @@ func handleHomeRoute(c *gin.Context) {
 			Home:        user.Home,
 			Permissions: user.Permissions,
 		},
-		Home: responses.FullResourceFromFS(r),
+		Home: responses.FullResourceFromFS(f, r),
 	})
 }
 

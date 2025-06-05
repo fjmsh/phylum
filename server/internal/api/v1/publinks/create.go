@@ -58,7 +58,7 @@ func handleCreateRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	if err := r.CreatePublink(params.ID, params.Password, expires, params.AccessLimit); err != nil {
+	if err := fs.CreatePublink(r, params.ID, params.Password, expires, params.AccessLimit); err != nil {
 		panic(err)
 	}
 

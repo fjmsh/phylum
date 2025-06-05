@@ -2,11 +2,11 @@ package responses
 
 import "github.com/shroff/phylum/server/internal/core/fs"
 
-func FullResourceFromFS(r fs.Resource) ResourceFull {
+func FullResourceFromFS(f fs.FileSystem, r fs.Resource) ResourceFull {
 	response := ResourceFull{
 		Resource: ResourceFromFS(r),
 	}
-	ancestors, err := r.GetAncestors()
+	ancestors, err := f.GetAncestors(r)
 	if err != nil {
 		panic(err)
 	}
@@ -20,7 +20,7 @@ func FullResourceFromFS(r fs.Resource) ResourceFull {
 		}
 	}
 	if r.Dir() {
-		children, err := r.ReadDir(false)
+		children, err := f.ReadDir(r, false)
 		if err != nil {
 			panic(err)
 		}

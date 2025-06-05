@@ -22,7 +22,7 @@ func setupListCommand() *cobra.Command {
 				fmt.Println("cannot list publinks for '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)
 			}
-			links, err := r.ListPublinks()
+			links, err := f.ListPublinks(r)
 			if err != nil {
 				fmt.Println("cannot list publinks for '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)

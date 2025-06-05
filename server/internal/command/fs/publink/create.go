@@ -53,5 +53,5 @@ func createPublink(f fs.FileSystem, name, path string, password string, duration
 		}
 	}
 
-	return r.CreatePublink(name, password, expires, accesses)
+	return f.CreatePublink(r, name, password, expires, accesses)
 }

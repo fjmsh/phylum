@@ -36,13 +36,13 @@ func setupRestoreCommand() *cobra.Command {
 				p, _ := cmd.Flags().GetString("parent")
 				name, _ := cmd.Flags().GetString("name")
 				autoRename, _ := cmd.Flags().GetBool("auto-rename")
-				r, items, size, err := r.RestoreDeleted(p, name, autoRename)
+				r, items, size, err := f.RestoreDeleted(r, p, name, autoRename)
 				if err != nil {
 					fmt.Println("cannot restore '" + id.String() + "': " + err.Error())
 					os.Exit(1)
 				}
 
-				path, err := r.GetPath()
+				path, err := f.GetPath(r)
 				if err != nil {
 					fmt.Println("cannot get path: " + err.Error())
 					os.Exit(1)

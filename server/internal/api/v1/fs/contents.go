@@ -49,7 +49,7 @@ func handleContentsRequest(c *gin.Context) {
 				panic(err)
 			}
 		}
-		serve.ServeResourceVersion(c.Writer, c.Request, r, versionID)
+		serve.ServeResourceVersion(c.Writer, c.Request, f, r, versionID)
 		return
 	}
 
@@ -61,7 +61,7 @@ func handleContentsRequest(c *gin.Context) {
 
 	var zip = zip.NewWriter(c.Writer)
 	close := c.Writer.CloseNotify()
-	err = r.Walk(2, func(r fs.Resource, p string) error {
+	err = f.Walk(r, 2, func(r fs.Resource, p string) error {
 		if r.Dir() {
 			return nil
 		}
@@ -76,7 +76,7 @@ func handleContentsRequest(c *gin.Context) {
 		if err != nil {
 			return err
 		}
-		in, err := r.OpenRead(0, -1, uuid.Nil)
+		in, err := f.OpenRead(0, -1, r, uuid.Nil)
 		if err != nil {
 			return err
 		}

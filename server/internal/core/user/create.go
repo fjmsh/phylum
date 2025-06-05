@@ -22,8 +22,8 @@ func (m manager) CreateUser(email, name string, noCreateHome bool) (User, error)
 		var err error
 		var homeID pgtype.UUID
 		var home fs.Resource
+		f := fs.OpenOmniscient(db)
 		if !noCreateHome {
-			f := fs.OpenOmniscient(db)
 			var err error
 			homePath := strings.TrimRight(Cfg.BaseDir, "/") + "/" + email
 			home, err = f.CreateResourceByPath(homePath, uuid.Nil, true, true, fs.ResourceBindConflictResolutionEnsure)
@@ -39,7 +39,7 @@ func (m manager) CreateUser(email, name string, noCreateHome bool) (User, error)
 		}
 
 		if homeID.Valid {
-			if _, err := home.UpdatePermissions(user.ID, fs.PermissionRead|fs.PermissionWrite|fs.PermissionShare); err != nil {
+			if _, err := f.UpdatePermissions(home, user.ID, fs.PermissionRead|fs.PermissionWrite|fs.PermissionShare); err != nil {
 				return err
 			}
 		}

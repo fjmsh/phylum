@@ -35,7 +35,7 @@ func handleCopyRequest(c *gin.Context) {
 		params.ID, _ = uuid.NewV7()
 	}
 
-	if r, _, err := src.Copy(params.Dest, params.ID, true, params.Conflict); err != nil {
+	if r, _, err := fs.Copy(src, params.Dest, params.ID, true, params.Conflict); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, responses.ResourceFromFS(r))

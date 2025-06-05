@@ -37,7 +37,7 @@ func setupCpCommand() *cobra.Command {
 			if force {
 				conflictResolution = fs.ResourceBindConflictResolutionOverwrite
 			}
-			if _, _, err := src.Copy(args[1], id, true, conflictResolution); err != nil {
+			if _, _, err := f.Copy(src, args[1], id, true, conflictResolution); err != nil {
 				fmt.Println("cannot copy'" + srcPath + "' to '" + args[1] + "': " + err.Error())
 				os.Exit(1)
 			}

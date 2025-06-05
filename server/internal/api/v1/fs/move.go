@@ -29,7 +29,7 @@ func handleMoveRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	if r, _, err := r.Move(params.Dest, params.Conflict); err != nil {
+	if r, _, err := fs.Move(r, params.Dest, params.Conflict); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, responses.ResourceFromFS(r))

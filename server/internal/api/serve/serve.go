@@ -27,15 +27,20 @@ var htmlReplacer = strings.NewReplacer(
 	"'", "&#39;",
 )
 
-func Serve(w http.ResponseWriter, r *http.Request, res fs.Resource) {
+type FileSystem interface {
+	ReadDir(fs.Resource, bool) ([]fs.Resource, error)
+	FindVersion(fs.Resource, uuid.UUID) (fs.Version, error)
+}
+
+func Serve(w http.ResponseWriter, r *http.Request, f FileSystem, res fs.Resource) {
 	if res.Dir() {
-		serveCollection(w, r, res)
+		serveCollection(w, r, f, res)
 	} else {
-		ServeResourceVersion(w, r, res, res.LatestVersion().ID)
+		ServeResourceVersion(w, r, f, res, res.LatestVersion().ID)
 	}
 }
 
-func serveCollection(w http.ResponseWriter, r *http.Request, file fs.Resource) {
+func serveCollection(w http.ResponseWriter, r *http.Request, f FileSystem, file fs.Resource) {
 	if !strings.HasSuffix(r.URL.Path, "/") {
 		http.Redirect(w, r, r.URL.String()+"/", http.StatusMovedPermanently)
 		return
@@ -46,7 +51,7 @@ func serveCollection(w http.ResponseWriter, r *http.Request, file fs.Resource) {
 	// }
 	w.Header().Set("Last-Modified", file.Modified().Format(http.TimeFormat))
 
-	files, err := file.ReadDir(false)
+	files, err := f.ReadDir(file, false)
 	if err != nil {
 		http.Error(w, "Error reading directory", http.StatusInternalServerError)
 		return
@@ -105,11 +110,11 @@ func formatSize(size int) string {
 	return fmt.Sprintf("%d%s", size, suffix[si])
 }
 
-func ServeResourceVersion(w http.ResponseWriter, r *http.Request, file fs.Resource, versionID uuid.UUID) {
+func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, res fs.Resource, versionID uuid.UUID) {
 	if versionID == uuid.Nil {
-		versionID = file.LatestVersion().ID
+		versionID = res.LatestVersion().ID
 	}
-	version, err := file.FindVersion(versionID)
+	version, err := f.FindVersion(res, versionID)
 	if err != nil {
 		panic(err)
 	}

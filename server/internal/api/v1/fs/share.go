@@ -35,7 +35,7 @@ func handleShareRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	r, err = r.UpdatePermissions(user.ID, params.Permission)
+	r, err = fs.UpdatePermissions(r, user.ID, params.Permission)
 	if err != nil {
 		panic(err)
 	}

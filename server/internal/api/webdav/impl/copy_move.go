@@ -95,7 +95,7 @@ func moveFiles(f FileSystem, srcPath, dstPath string, overwrite bool) (status in
 		if overwrite {
 			conflictResolution = fs.ResourceBindConflictResolutionDelete
 		}
-		if _, deleted, err := src.Move(dstPath, conflictResolution); err != nil {
+		if _, deleted, err := f.Move(src, dstPath, conflictResolution); err != nil {
 			if e, ok := err.(*errors.Error); ok {
 				return e.Status, e
 			}
@@ -125,7 +125,7 @@ func copyFiles(f FileSystem, srcPath, dstPath string, overwrite bool, depth int)
 		if overwrite {
 			conflictResolution = fs.ResourceBindConflictResolutionOverwrite
 		}
-		if _, deleted, err := src.Copy(dstPath, id, depth != 0, conflictResolution); err != nil {
+		if _, deleted, err := f.Copy(src, dstPath, id, depth != 0, conflictResolution); err != nil {
 			if e, ok := err.(*errors.Error); ok {
 				return e.Status, e
 			}
