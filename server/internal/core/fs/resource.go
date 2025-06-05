@@ -10,7 +10,6 @@ import (
 )
 
 type Resource struct {
-	f                    filesystem
 	id                   uuid.UUID
 	parentID             pgtype.UUID
 	name                 string
@@ -58,7 +57,7 @@ func (f filesystem) collectFullResource(rows pgx.Rows) (Resource, error) {
 }
 
 func (f filesystem) scanFullResource(row pgx.CollectableRow) (Resource, error) {
-	r := Resource{f: f}
+	var r Resource
 	err := row.Scan(
 		&r.id,
 		&r.name,
@@ -93,7 +92,7 @@ func (f filesystem) scanFullResource(row pgx.CollectableRow) (Resource, error) {
 }
 
 func (f filesystem) scanResourceWithoutParent(row pgx.CollectableRow) (Resource, error) {
-	r := Resource{f: f}
+	var r Resource
 	err := row.Scan(
 		&r.id,
 		&r.name,

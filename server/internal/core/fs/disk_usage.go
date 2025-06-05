@@ -11,7 +11,8 @@ type DiskUsageInfo struct {
 	Dirs      int64
 }
 
-func (r Resource) DiskUsage() (DiskUsageInfo, error) {
+func (f filesystem) DiskUsage(r Resource) (DiskUsageInfo, error) {
+	// TODO: #versions This is broken
 	_, n, q := selectResourceTree(r.id, false, false, false, "content_length", "dir")
 
 	q = q.
@@ -24,7 +25,7 @@ func (r Resource) DiskUsage() (DiskUsageInfo, error) {
 
 	query, args, _ := q.ToSQL()
 
-	row := r.f.db.QueryRow(query, args...)
+	row := f.db.QueryRow(query, args...)
 	var size, count, dirs int64
 	err := row.Scan(&size, &count, &dirs)
 	return DiskUsageInfo{

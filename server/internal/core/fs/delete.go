@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (r Resource) DeleteChildRecursive(name string) (Resource, error) {
+func (f filesystem) deleteChildRecursive(r Resource, name string, softDelete bool) (Resource, error) {
 	if !r.hasPermission(PermissionWrite) {
 		return Resource{}, ErrInsufficientPermissions
 	}
@@ -20,14 +20,14 @@ func (r Resource) DeleteChildRecursive(name string) (Resource, error) {
 		return Resource{}, ErrResourceDeleted
 	}
 
-	c, err := r.f.childResourceByName(r.ID(), name)
+	c, err := f.childResourceByName(r.ID(), name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrResourceNotFound
 		}
 		return Resource{}, err
 	}
-	if err := r.f.deleteRecursive(c.ID(), r.ID(), true, false); err != nil {
+	if err := f.deleteRecursive(c.ID(), r.ID(), softDelete, false); err != nil {
 		return Resource{}, err
 	}
 	r.deleted = pgtype.Timestamp{
@@ -37,21 +37,21 @@ func (r Resource) DeleteChildRecursive(name string) (Resource, error) {
 	return r, nil
 }
 
-func (r Resource) DeleteRecursive(softDelete bool) (Resource, error) {
+func (f filesystem) DeleteRecursive(r Resource, softDelete bool) (Resource, error) {
 	if !r.parentID.Valid {
 		return Resource{}, ErrInsufficientPermissions
 	}
 	if r.deleted.Valid && softDelete {
 		return Resource{}, ErrResourceDeleted
 	}
-	parent, err := r.f.ResourceByID(r.parentID.Bytes)
+	parent, err := f.ResourceByID(r.parentID.Bytes)
 	if err == nil && !parent.hasPermission(PermissionWrite) {
 		err = ErrInsufficientPermissions
 	}
 	if err != nil {
 		return Resource{}, err
 	}
-	if err := r.f.deleteRecursive(r.ID(), r.parentID.Bytes, softDelete, false); err != nil {
+	if err := f.deleteRecursive(r.ID(), r.parentID.Bytes, softDelete, false); err != nil {
 		return Resource{}, err
 	}
 	if softDelete {
@@ -69,16 +69,16 @@ func (r Resource) DeleteRecursive(softDelete bool) (Resource, error) {
 //   - Parent must not be deleted
 //   - Parent must have write permission
 //   - No name conflict with exiting resource
-func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRename bool) (res Resource, count int, size int64, err error) {
+func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name string, autoRename bool) (res Resource, count int, size int64, err error) {
 	var p Resource
 	if parentPathOrUUID == "" {
 		if r.parentID.Valid {
-			p, err = r.f.ResourceByID(r.parentID.Bytes)
+			p, err = f.ResourceByID(r.parentID.Bytes)
 		} else {
 			err = ErrResourceNotFound
 		}
 	} else {
-		p, err = r.f.ResourceByPathWithRoot(parentPathOrUUID)
+		p, err = f.ResourceByPathWithRoot(parentPathOrUUID)
 	}
 	if err == ErrResourceNotFound {
 		err = ErrParentNotFound
@@ -99,14 +99,14 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 	if name == "" {
 		name = r.name
 	}
-	_, err = r.f.childResourceByName(p.id, name)
+	_, err = f.childResourceByName(p.id, name)
 	if autoRename && err == nil {
 		ext := path.Ext(name)
 		basename := name[:len(name)-len(ext)]
 		counter := 1
 		for {
 			name = fmt.Sprintf("%s (%d)%s", basename, counter, ext)
-			if _, err = r.f.childResourceByName(p.id, name); err == nil {
+			if _, err = f.childResourceByName(p.id, name); err == nil {
 				counter++
 			} else {
 				break
@@ -120,7 +120,7 @@ func (r Resource) RestoreDeleted(parentPathOrUUID string, name string, autoRenam
 		return
 	}
 
-	err = r.f.runInTx(func(f filesystem) error {
+	err = f.runInTx(func(f filesystem) error {
 		q, args, _ := pg.Delete(goqu.T("trash")).Where(goqu.C("id").Eq(r.id)).ToSQL()
 		if _, err := f.db.Exec(q, args...); err != nil {
 			return err

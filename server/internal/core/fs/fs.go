@@ -3,6 +3,7 @@ package fs
 import (
 	"context"
 	"errors"
+	"io"
 	"strings"
 	"time"
 
@@ -35,25 +36,53 @@ func init() {
 }
 
 type FileSystem interface {
+	// ancestors.go
+	GetAncestors(Resource) ([]ResourceAncestor, error)
+	GetPath(Resource) (string, error)
+
 	// filesystem.go
-	WithDb(db db.Handler) FileSystem
+	WithDb(db.Handler) FileSystem
 	WithPathRoot(pgtype.UUID) FileSystem
-	RunInTx(fn func(FileSystem) error) error
+	RunInTx(func(FileSystem) error) error
 
 	// create.go
 	CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error)
 	CreateResources(args []CreateResourcesParams) (int64, error)
 
 	// find.go
-	ResourceByID(id uuid.UUID) (Resource, error)
-	ResourceByPath(path string) (Resource, error)
-	ResourceByPathWithRoot(path string) (Resource, error)
+	ResourceByID(uuid.UUID) (Resource, error)
+	ResourceByPath(string) (Resource, error)
+	ResourceByPathWithRoot(string) (Resource, error)
+	FindVersion(Resource, uuid.UUID) (Version, error)
+
+	// open.go
+	OpenRead(start, length int, r Resource, versionID uuid.UUID) (io.ReadCloser, error)
+	OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error)
+	ReadDir(r Resource, recursive bool) ([]Resource, error)
+	ReadDirDeleted(r Resource, recursive, includeDeleted bool) ([]Resource, error)
+	Walk(r Resource, depth int, fn func(Resource, string) error) error
+
+	// copy_move.go
+	Copy(r Resource, target string, id uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error)
+	Move(r Resource, target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error)
+
+	// permissions.go
+	// TODO: #users
+	UpdatePermissions(r Resource, userID int32, permission Permission) (Resource, error)
+
+	//publink.go
+	CreatePublink(r Resource, id, password string, expires pgtype.Timestamp, accessLimit int) error
+	ListPublinks(r Resource) ([]Publink, error)
 
 	// search.go
 	Search(query string, includeDeleted bool) ([]Resource, error)
 
 	// shared.go
 	SharedResources(excluded pgtype.UUID) ([]Resource, error)
+
+	// delete.go
+	DeleteRecursive(r Resource, softDelete bool) (Resource, error)
+	RestoreDeleted(r Resource, parentPathOrUUID string, name string, autoRename bool) (res Resource, count int, size int64, err error)
 
 	// trash.go
 	TrashList(cursor string, n uint) ([]Resource, string, error)

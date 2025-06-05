@@ -24,7 +24,7 @@ func (f filesystem) CreateResourceByPath(path string, id uuid.UUID, dir, createP
 			}
 			return Resource{}, err
 		}
-		return parent.createMemberResource(name, id, dir, conflictResolution)
+		return f.createMemberResource(parent, name, id, dir, conflictResolution)
 	}
 
 	root, path, err := parseUUIDPrefix(path)
@@ -48,13 +48,13 @@ func (f filesystem) CreateResourceByPath(path string, id uuid.UUID, dir, createP
 			resourceID = id
 			conflict = conflictResolution
 		}
-		r, err = r.createMemberResource(s, resourceID, d, conflict)
+		r, err = f.createMemberResource(r, s, resourceID, d, conflict)
 	}
 
 	return r, err
 }
 
-func (r Resource) createMemberResource(name string, id uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+func (f filesystem) createMemberResource(r Resource, name string, id uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	if r.deleted.Valid {
 		return Resource{}, ErrResourceDeleted
 	}
@@ -72,7 +72,7 @@ func (r Resource) createMemberResource(name string, id uuid.UUID, dir bool, conf
 	}
 	var res Resource
 	var created bool
-	err := r.f.runInTx(func(f filesystem) error {
+	err := f.runInTx(func(f filesystem) error {
 		var err error
 		if res, created, _, err = f.createResource(id, r.id, name, dir, r.permissions, conflictResolution); err != nil {
 			if strings.Contains(err.Error(), "unique_member_resource_name") {
@@ -88,13 +88,12 @@ func (r Resource) createMemberResource(name string, id uuid.UUID, dir bool, conf
 		return nil
 	})
 	if err == ErrResourceIDConflict {
-		return r.f.ResourceByID(id)
+		return f.ResourceByID(id)
 	}
 	if err != nil {
 		return Resource{}, err
 	}
 
-	res.f = r.f
 	res.userPermission = r.userPermission
 	return res, nil
 }

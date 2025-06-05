@@ -40,7 +40,7 @@ func scanPublink(row pgx.CollectableRow) (Publink, error) {
 	return p, nil
 }
 
-func (r Resource) CreatePublink(id, password string, expires pgtype.Timestamp, accessLimit int) error {
+func (f filesystem) CreatePublink(r Resource, id, password string, expires pgtype.Timestamp, accessLimit int) error {
 	if !r.hasPermission(PermissionShare | PermissionRead) {
 		return ErrInsufficientPermissions
 	}
@@ -61,16 +61,16 @@ func (r Resource) CreatePublink(id, password string, expires pgtype.Timestamp, a
 	const q = `INSERT INTO publinks(id, root, password_hash, expires, access_limit) VALUES
 	($1::text, $2::uuid, $3::text, $4::timestamp, $5::int)`
 
-	_, err := r.f.db.Exec(q, id, r.ID(), passwordHash, expires, accessLimit)
+	_, err := f.db.Exec(q, id, r.ID(), passwordHash, expires, accessLimit)
 	if err != nil && strings.Contains(err.Error(), "publinks_pkey") {
 		return ErrPublinkNameConflict
 	}
 	return err
 }
 
-func (r Resource) ListPublinks() ([]Publink, error) {
+func (f filesystem) ListPublinks(r Resource) ([]Publink, error) {
 	const q = "SELECT * FROM publinks WHERE root = $1::UUID"
-	if rows, err := r.f.db.Query(q, r.id); err != nil {
+	if rows, err := f.db.Query(q, r.id); err != nil {
 		return nil, err
 	} else if links, err := pgx.CollectRows(rows, scanPublink); err != nil {
 		return nil, err

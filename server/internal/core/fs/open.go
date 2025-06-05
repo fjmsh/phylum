@@ -11,19 +11,19 @@ import (
 	"github.com/shroff/phylum/server/internal/core/storage"
 )
 
-func (r Resource) OpenRead(start, length int, versionID uuid.UUID) (io.ReadCloser, error) {
+func (f filesystem) OpenRead(start, length int, r Resource, versionID uuid.UUID) (io.ReadCloser, error) {
 	if versionID == uuid.Nil {
 		versionID = r.LatestVersion().ID
 	}
 
-	if v, err := r.FindVersion(versionID); err != nil {
+	if v, err := f.FindVersion(r, versionID); err != nil {
 		return nil, err
 	} else {
 		return v.OpenRead(start, length)
 	}
 }
 
-func (r Resource) OpenWrite(versionID uuid.UUID) (io.WriteCloser, error) {
+func (f filesystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
 	if !r.hasPermission(PermissionWrite) {
 		return nil, ErrInsufficientPermissions
 	}
@@ -38,7 +38,7 @@ func (r Resource) OpenWrite(versionID uuid.UUID) (io.WriteCloser, error) {
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
-			return r.f.runInTx(func(f filesystem) error {
+			return f.runInTx(func(f filesystem) error {
 				if err := f.createResourceVersion(r.id, versionID, int64(len), mimeType, sum); err != nil {
 					return err
 				}
@@ -52,11 +52,11 @@ func (r Resource) OpenWrite(versionID uuid.UUID) (io.WriteCloser, error) {
 	}
 }
 
-func (r Resource) ReadDir(recursive bool) ([]Resource, error) {
-	return r.ReadDirDeleted(recursive, false)
+func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
+	return f.ReadDirDeleted(r, recursive, false)
 }
 
-func (r Resource) ReadDirDeleted(recursive, includeDeleted bool) ([]Resource, error) {
+func (f filesystem) ReadDirDeleted(r Resource, recursive, includeDeleted bool) ([]Resource, error) {
 	if !r.hasPermission(PermissionRead) {
 		return nil, ErrInsufficientPermissions
 	}
@@ -72,14 +72,14 @@ func (r Resource) ReadDirDeleted(recursive, includeDeleted bool) ([]Resource, er
 	}
 
 	query, args, _ := q.ToSQL()
-	if rows, err := r.f.db.Query(query, args...); err != nil {
+	if rows, err := f.db.Query(query, args...); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, r.f.scanResourceWithoutParent)
+		return pgx.CollectRows(rows, f.scanResourceWithoutParent)
 	}
 }
 
-func (r Resource) Walk(depth int, fn func(Resource, string) error) error {
+func (f filesystem) Walk(r Resource, depth int, fn func(Resource, string) error) error {
 	suffix := ""
 	if r.Dir() {
 		suffix = "/"
@@ -92,11 +92,12 @@ func (r Resource) Walk(depth int, fn func(Resource, string) error) error {
 		return nil
 	}
 
-	children, err := r.ReadDir(depth > 1)
+	children, err := f.ReadDir(r, depth > 1)
 	if err != nil {
 		return err
 	}
 
+	// TODO: #Fix f.Walk
 	for _, c := range children {
 		if err := fn(c, suffix+c.Name()); err != nil {
 			return err

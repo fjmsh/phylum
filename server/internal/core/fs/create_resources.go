@@ -42,6 +42,7 @@ func (r iteratorForCreateResources) Err() error {
 	return nil
 }
 
+// TODO: Make not public
 func (f filesystem) CreateResources(arg []CreateResourcesParams) (int64, error) {
 	return f.db.CopyFrom([]string{"resources"}, []string{"id", "parent", "name", "dir"}, &iteratorForCreateResources{rows: arg})
 }

@@ -36,18 +36,18 @@ const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, userPermission) A
 )
 SELECT id, name, userPermission FROM nodes`
 
-func (r Resource) GetAncestors() ([]ResourceAncestor, error) {
-	if rows, err := r.f.db.Query(ancestorsQuery, r.id, r.f.userID, r.f.fullAccess); err != nil {
+func (f filesystem) GetAncestors(r Resource) ([]ResourceAncestor, error) {
+	if rows, err := f.db.Query(ancestorsQuery, r.id, f.userID, f.fullAccess); err != nil {
 		return nil, err
-	} else if a, err := pgx.CollectRows(rows, r.f.scanResourceAncestor); err != nil {
+	} else if a, err := pgx.CollectRows(rows, f.scanResourceAncestor); err != nil {
 		return nil, err
 	} else {
 		return a[1:], nil
 	}
 }
 
-func (r Resource) GetPath() (string, error) {
-	if a, err := r.GetAncestors(); err != nil {
+func (f filesystem) GetPath(r Resource) (string, error) {
+	if a, err := f.GetAncestors(r); err != nil {
 		return "", err
 	} else {
 		if len(a) < 1 {

@@ -92,10 +92,6 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 // If no uuid prefix is supplied and the path begins with '/' then r.f is used as the path root
 // Splits the path to extract its last component as the name and traverses the rest of the path from the root as the parent
 // If no name is specified then return r.name as the name
-func (r Resource) targetNameParentByPathWithRoot(path string) (string, Resource, error) {
-	return r.f.targetNameParentByPathWithRoot(path, r)
-}
-
 func (f filesystem) targetNameParentByPathWithRoot(path string, src Resource) (string, Resource, error) {
 	id, path, err := parseUUIDPrefix(path)
 	if err != nil {
@@ -152,13 +148,13 @@ func parseUUIDPrefix(path string) (pgtype.UUID, string, error) {
 	return pgtype.UUID{}, path, nil
 }
 
-func (r Resource) FindVersion(versionID uuid.UUID) (Version, error) {
+func (f filesystem) FindVersion(r Resource, versionID uuid.UUID) (Version, error) {
 	const q = `SELECT id, created, size, mime_type, sha256, storage FROM resource_versions
 	WHERE resource_id = $1::UUID
 	AND id = $2::UUID
 	AND DELETED IS NULL`
 
-	row := r.f.db.QueryRow(q, r.id, versionID)
+	row := f.db.QueryRow(q, r.id, versionID)
 	var v Version
 	var created time.Time
 	err := row.Scan(&v.ID, &created, &v.Size, &v.MimeType, &v.SHA256, &v.Storage)

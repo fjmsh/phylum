@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (r Resource) Move(target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
+func (f filesystem) Move(r Resource, target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	// Check source directory permissions
 	if r.deleted.Valid {
 		return Resource{}, false, ErrResourceDeleted
@@ -18,7 +18,7 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 	if !r.parentID.Valid {
 		return Resource{}, false, ErrInsufficientPermissions
 	}
-	parent, err := r.f.ResourceByID(r.parentID.Bytes)
+	parent, err := f.ResourceByID(r.parentID.Bytes)
 	if err != nil {
 		return Resource{}, false, err
 	}
@@ -27,7 +27,7 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 	}
 
 	// Check destParent directory permissions (if applicable)
-	destName, destParent, err := r.targetNameParentByPathWithRoot(target)
+	destName, destParent, err := f.targetNameParentByPathWithRoot(target, r)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
@@ -46,7 +46,7 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 	if destParent.id == r.id {
 		return Resource{}, false, ErrResourceMoveTargetSubdirectory
 	}
-	if destAncestors, err := destParent.GetAncestors(); err != nil {
+	if destAncestors, err := f.GetAncestors(r); err != nil {
 		return Resource{}, false, err
 	} else {
 		for _, a := range destAncestors {
@@ -58,10 +58,9 @@ func (r Resource) Move(target string, conflictResolution ResourceBindConflictRes
 
 	var res Resource
 	var deleted = false
-	return res, deleted, r.f.runInTx(func(f filesystem) error {
+	return res, deleted, f.runInTx(func(f filesystem) error {
 		if conflictResolution == ResourceBindConflictResolutionOverwrite || conflictResolution == ResourceBindConflictResolutionDelete {
-			// TODO: Use f directly instead of Resource
-			if _, err := destParent.DeleteChildRecursive(destName); err == nil {
+			if _, err := f.deleteChildRecursive(destParent, destName, true); err == nil {
 				deleted = true
 			} else if !errors.Is(err, ErrResourceNotFound) {
 				return err
@@ -112,7 +111,7 @@ func (f filesystem) updateResourceNameParent(id uuid.UUID, name string, parent p
 	return nil
 }
 
-func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
+func (f filesystem) Copy(r Resource, target string, id uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	// Check source directory permissions
 	if !r.hasPermission(PermissionRead) {
 		return Resource{}, false, ErrInsufficientPermissions
@@ -122,7 +121,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	}
 
 	// Check dest directory permissions
-	destName, destParent, err := r.targetNameParentByPathWithRoot(target)
+	destName, destParent, err := f.targetNameParentByPathWithRoot(target, r)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
@@ -140,7 +139,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	var tree []Resource
 	if recursive && r.dir {
 		var err error
-		tree, err = r.ReadDir(true)
+		tree, err = f.ReadDir(r, true)
 		if err != nil {
 			return Resource{}, false, err
 		}
@@ -152,7 +151,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	var targetRoot Resource
 	created := false
 	deleted := false
-	err = r.f.runInTx(func(f filesystem) error {
+	err = f.runInTx(func(f filesystem) error {
 		targetRoot, created, deleted, err = f.createResource(
 			id,
 			destParent.id,
@@ -215,7 +214,7 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 	if err == nil {
 		func() {
 			for _, c := range contents {
-				if err := r.f.CopyContents(c); err != nil {
+				if err := f.copyContents(c); err != nil {
 					logrus.Warn("unable to copy " + c.src.ID.String() + " to " + c.destResource.String() + ": " + err.Error())
 				}
 			}
@@ -229,7 +228,6 @@ func (r Resource) Copy(target string, id uuid.UUID, recursive bool, conflictReso
 		Bytes: destParent.id,
 		Valid: true,
 	}
-	targetRoot.f = r.f
 	targetRoot.userPermission = destParent.userPermission
 	return targetRoot, deleted, err
 }
@@ -239,14 +237,14 @@ type copyParams struct {
 	destResource uuid.UUID
 }
 
-func (f filesystem) CopyContents(params copyParams) error {
+// TODO: #implement copyContents
+func (f filesystem) copyContents(params copyParams) error {
 	versionID, _ := uuid.NewV7()
 
 	if err := f.createResourceVersion(params.destResource, versionID, params.src.Size, params.src.MimeType, params.src.SHA256); err != nil {
 		return errors.New("failed to create version for " + params.destResource.String() + ": " + err.Error())
 	}
 
-	// TODO: #implement CopyContents
 	return errors.New("CopyContents not implemented")
 
 	// in, err := f.OpenRead(params.SrcVersion, 0, -1)
