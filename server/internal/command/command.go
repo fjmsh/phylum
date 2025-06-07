@@ -111,8 +111,9 @@ func SetupCommand() {
 		mail.Cfg = cfg.Mail
 		core.Cfg = cfg.User
 		crypt.Cfg = cfg.Crypt
-
-		storage.Initialize(db.Get(context.Background()))
+		if err := storage.Initialize(db.Get(context.Background())); err != nil {
+			logrus.Fatal("Failed to initialize storage: " + err.Error())
+		}
 	}
 
 	defer func() {
