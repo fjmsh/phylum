@@ -72,8 +72,12 @@ func handleUploadRequest(c *gin.Context) {
 		}
 		defer out.Close()
 
-		_, err = io.Copy(out, src)
-		return err
+		if _, err := io.Copy(out, src); err != nil {
+			out.Close()
+			return err
+		} else {
+			return out.Close()
+		}
 	})
 	if err != nil {
 		panic(err)
