@@ -93,7 +93,7 @@ func InsertBackend(db db.Handler, name string, driver Driver, params map[string]
 	if err != nil {
 		return err
 	}
-	if _, err := db.Exec(q, name, driver, p); err != nil {
+	if _, err := db.Exec(q, name, driver.Name, p); err != nil {
 		return err
 	}
 	backends[name] = backend

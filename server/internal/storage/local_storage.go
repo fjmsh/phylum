@@ -101,5 +101,5 @@ func (l localStorage) path(name string) string {
 }
 
 func (l localStorage) String() string {
-	return "local (" + string(l.root) + ")"
+	return "local (root: " + string(l.root) + ")"
 }

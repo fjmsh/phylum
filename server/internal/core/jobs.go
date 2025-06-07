@@ -15,7 +15,6 @@ func moveVersionToTargetBackend(db db.Handler, versionID uuid.UUID) {
 	}
 }
 func moveVersionToTargetBackendErr(db db.Handler, versionID uuid.UUID) error {
-	logrus.Info("Moving to Target Storage: " + versionID.String())
 	if current, err := getCurrentStorage(db, versionID); err != nil {
 		return errors.New("failed to get current storage: " + err.Error())
 	} else if target, err := findTargetStorageForVersion(db, versionID); err != nil {
