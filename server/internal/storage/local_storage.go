@@ -11,16 +11,18 @@ import (
 )
 
 type localStorage struct {
+	name string
 	root string
 	tmp  string
 }
 
-func createLocalBackend(params map[string]string) (LocalBackend, error) {
+func createLocalBackend(name string, params map[string]string) (LocalBackend, error) {
 	if params["root"] == "" {
 		return nil, errors.New("local storage root not provided")
 	}
 
 	l := localStorage{
+		name: name,
 		root: params["root"],
 		tmp:  filepath.Join(params["root"], "tmp"),
 	}
@@ -33,6 +35,9 @@ func createLocalBackend(params map[string]string) (LocalBackend, error) {
 	}
 
 	return l, nil
+}
+func (l localStorage) Name() string {
+	return l.name
 }
 
 func (l localStorage) OpenRead(name string, start, length int) (io.ReadCloser, error) {

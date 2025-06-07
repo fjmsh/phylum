@@ -38,7 +38,7 @@ func Initialize(db db.Handler) error {
 	}
 	if restoredBackends, err := restoreBackends(db); err != nil {
 		return errors.New("failed to restore backends: " + err.Error())
-	} else if b, err := createLocalBackend(map[string]string{"root": path.Join(Cfg.Location, "default")}); err != nil {
+	} else if b, err := createLocalBackend(DefaultBackendName, map[string]string{"root": path.Join(Cfg.Location, "default")}); err != nil {
 		return errors.New("failed to create default backend: " + err.Error())
 	} else {
 		backends = restoredBackends
@@ -69,7 +69,7 @@ func ListBackends() map[string]Backend {
 }
 
 func InsertBackend(db db.Handler, name string, driver Driver, params map[string]string) error {
-	backend, err := driver.Create(params)
+	backend, err := driver.Create(name, params)
 	if err != nil {
 		return nil
 	}
@@ -135,6 +135,6 @@ func (c BackendConfig) open() (Backend, error) {
 	if driver, err := FindDriver(c.Driver); err != nil {
 		return nil, err
 	} else {
-		return driver.Create(c.Params)
+		return driver.Create(c.Name, c.Params)
 	}
 }

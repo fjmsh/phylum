@@ -1,14 +1,15 @@
 package core
 
 import (
+	"context"
 	"encoding/hex"
 	"hash"
 	"io"
-	"net/http"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 )
 
@@ -22,28 +23,28 @@ func (f filesystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, 
 	if versionID == uuid.Nil {
 		versionID, _ = uuid.NewV7()
 	}
-	defaultBackend := storage.DefaultBackend()
 	if dest, err := storage.DefaultBackend().OpenWrite(versionID.String()); err != nil {
 		return nil, err
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
-			return f.runInTx(func(f filesystem) error {
+			err := f.runInTx(func(f filesystem) error {
 				if err := f.createResourceVersion(r.id, versionID, int64(len), mimeType, sum); err != nil {
 					return err
 				}
 				if err := f.updateResourceModified(r.id); err != nil {
 					return err
 				}
-
-				backendName := "_"
-				if target := storage.GetBackend(backendName); target == nil {
-					return NewError(http.StatusPreconditionFailed, "storage_backend_does_not_exists", "Storage backend \""+backendName+"\" does not exist")
-				} else {
-					return defaultBackend.Move(versionID.String(), target)
-				}
+				return nil
 			})
+			if err != nil {
+				return err
+			}
+
+			go moveVersionToTargetBackend(db.Get(context.Background()), versionID)
+			return nil
 		}), nil
+
 	}
 }
 

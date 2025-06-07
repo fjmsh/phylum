@@ -14,13 +14,14 @@ import (
 var ErrRangeNotSupported = errors.New("byte range not suppoered")
 
 type minioStorage struct {
+	name       string
 	client     *minio.Client
 	tmp        string
 	bucketName string
 	prefix     string
 }
 
-func createMinioBackend(params map[string]string) (Backend, error) {
+func createMinioBackend(name string, params map[string]string) (Backend, error) {
 	if params["endpoint"] == "" {
 		return nil, errors.New("minio endpoint not provided")
 	}
@@ -48,7 +49,7 @@ func createMinioBackend(params map[string]string) (Backend, error) {
 	if err != nil {
 		return nil, err
 	}
-	return minioStorage{client: client, tmp: params["tmp"], bucketName: params["bucket_name"], prefix: params["prefix"]}, nil
+	return minioStorage{name: name, client: client, tmp: params["tmp"], bucketName: params["bucket_name"], prefix: params["prefix"]}, nil
 }
 
 func (s minioStorage) OpenRead(name string, start, length int) (io.ReadCloser, error) {

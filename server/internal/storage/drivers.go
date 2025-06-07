@@ -5,8 +5,8 @@ import "errors"
 var drivers = map[string]Driver{
 	"local": {
 		Params: []string{"root"},
-		Create: func(params map[string]string) (Backend, error) {
-			return createLocalBackend(params)
+		Create: func(name string, params map[string]string) (Backend, error) {
+			return createLocalBackend(name, params)
 		},
 	},
 	"minio": {
@@ -17,7 +17,7 @@ var drivers = map[string]Driver{
 
 type Driver struct {
 	Params []string
-	Create func(params map[string]string) (Backend, error)
+	Create func(name string, params map[string]string) (Backend, error)
 }
 
 func FindDriver(driverName string) (Driver, error) {
