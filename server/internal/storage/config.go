@@ -2,5 +2,5 @@ package storage
 
 type Config struct {
 	Root string `koanf:"root"`
-	Temp string `koanf:"tmp"`
+	Temp string `koanf:"temp"`
 }

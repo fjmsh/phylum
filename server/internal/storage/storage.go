@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -40,9 +39,9 @@ func Initialize(db db.Handler) error {
 
 	}
 
-	tempDir = filepath.Join(Cfg.Root, Cfg.Temp)
-	if strings.HasPrefix(Cfg.Temp, string(filepath.Separator)) {
-		tempDir = Cfg.Temp
+	tempDir := Cfg.Temp
+	if !strings.HasPrefix(Cfg.Temp, string(os.PathSeparator)) {
+		tempDir = filepath.Join(Cfg.Root, tempDir)
 	}
 	if err := os.RemoveAll(tempDir); err != nil {
 		return errors.New("failed to clear temp directory: " + err.Error())
@@ -53,7 +52,7 @@ func Initialize(db db.Handler) error {
 
 	if restoredBackends, err := restoreBackends(db); err != nil {
 		return errors.New("failed to restore backends: " + err.Error())
-	} else if b, err := createLocalBackend(DefaultBackendName, map[string]string{"root": path.Join(Cfg.Root, "default")}); err != nil {
+	} else if b, err := createLocalBackend(DefaultBackendName, map[string]string{"root": "default"}); err != nil {
 		return errors.New("failed to create default backend: " + err.Error())
 	} else {
 		backends = restoredBackends

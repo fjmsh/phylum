@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type localStorage struct {
@@ -18,9 +19,13 @@ func createLocalBackend(name string, params map[string]string) (LocalBackend, er
 		return nil, errors.New("local storage root not provided")
 	}
 
+	root := params["root"]
+	if !strings.HasPrefix(params[root], string(os.PathSeparator)) {
+		root = filepath.Join(Cfg.Root, root)
+	}
 	l := localStorage{
 		name: name,
-		root: params["root"],
+		root: root,
 	}
 
 	if err := os.MkdirAll(l.root, 0700); err != nil {

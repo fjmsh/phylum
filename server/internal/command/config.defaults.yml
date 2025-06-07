@@ -9,7 +9,7 @@ db:
 
 storage:
   root: storage
-  tmp: tmp            # relative to root. Must start with '/' for absolute path
+  temp: tmp            # relative to root, or absolute
   
 user:
   password:
