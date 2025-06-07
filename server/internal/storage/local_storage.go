@@ -11,7 +11,6 @@ import (
 type localStorage struct {
 	name string
 	root string
-	tmp  string
 }
 
 func createLocalBackend(name string, params map[string]string) (LocalBackend, error) {
@@ -22,14 +21,10 @@ func createLocalBackend(name string, params map[string]string) (LocalBackend, er
 	l := localStorage{
 		name: name,
 		root: params["root"],
-		tmp:  filepath.Join(params["root"], "tmp"),
 	}
 
-	if err := os.RemoveAll(l.tmp); err != nil {
-		return nil, errors.New("failed to remove tmp directory: " + err.Error())
-	}
-	if err := os.MkdirAll(l.tmp, 0750); err != nil {
-		return nil, errors.New("failed to create tmp directory: " + err.Error())
+	if err := os.MkdirAll(l.root, 0700); err != nil {
+		return nil, errors.New("failed to create root directory: " + err.Error())
 	}
 
 	return l, nil
@@ -51,7 +46,7 @@ func (l localStorage) OpenRead(name string, start, length int) (io.ReadCloser, e
 }
 
 func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
-	f, err := os.CreateTemp(l.tmp, "upload-*")
+	f, err := os.CreateTemp(tempDir, "phylum-*")
 	if err != nil {
 		return nil, err
 	}

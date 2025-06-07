@@ -8,7 +8,8 @@ db:
   trace: false        # Trace queries (dev)
 
 storage:
-  location: storage
+  root: storage
+  tmp: tmp            # relative to root. Must start with '/' for absolute path
   
 user:
   password:

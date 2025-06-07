@@ -1,5 +1,6 @@
 package storage
 
 type Config struct {
-	Location string `koanf:"location"`
+	Root string `koanf:"root"`
+	Temp string `koanf:"tmp"`
 }

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/db"
@@ -18,6 +20,7 @@ const DefaultBackendName = "_"
 
 var defaultBackend LocalBackend
 var backends map[string]Backend
+var tempDir string
 
 type BackendConfig struct {
 	Name   string            `json:"name"`
@@ -26,19 +29,31 @@ type BackendConfig struct {
 }
 
 func Initialize(db db.Handler) error {
-	if err := os.MkdirAll(Cfg.Location, 0700); err != nil {
-		return errors.New("failed to create storage location(" + Cfg.Location + "): " + err.Error())
+	if err := os.MkdirAll(Cfg.Root, 0700); err != nil {
+		return errors.New("failed to create storage root(" + Cfg.Root + "): " + err.Error())
 	} else {
-		if stat, err := os.Stat(Cfg.Location); err != nil {
-			return errors.New("failed to stat storage location(" + Cfg.Location + "): " + err.Error())
+		if stat, err := os.Stat(Cfg.Root); err != nil {
+			return errors.New("failed to stat storage root(" + Cfg.Root + "): " + err.Error())
 		} else if stat.Mode()&0xfff != 0700 {
-			return errors.New("storage location does not have correct permissions (0700): " + fmt.Sprintf("%o", stat.Mode()&0xfff))
+			return errors.New("storage root does not have correct permissions (0700): " + fmt.Sprintf("%o", stat.Mode()&0xfff))
 		}
 
 	}
+
+	tempDir = filepath.Join(Cfg.Root, Cfg.Temp)
+	if strings.HasPrefix(Cfg.Temp, string(filepath.Separator)) {
+		tempDir = Cfg.Temp
+	}
+	if err := os.RemoveAll(tempDir); err != nil {
+		return errors.New("failed to clear temp directory: " + err.Error())
+	}
+	if err := os.MkdirAll(tempDir, 0700); err != nil {
+		return errors.New("failed to create temp directory: " + err.Error())
+	}
+
 	if restoredBackends, err := restoreBackends(db); err != nil {
 		return errors.New("failed to restore backends: " + err.Error())
-	} else if b, err := createLocalBackend(DefaultBackendName, map[string]string{"root": path.Join(Cfg.Location, "default")}); err != nil {
+	} else if b, err := createLocalBackend(DefaultBackendName, map[string]string{"root": path.Join(Cfg.Root, "default")}); err != nil {
 		return errors.New("failed to create default backend: " + err.Error())
 	} else {
 		backends = restoredBackends

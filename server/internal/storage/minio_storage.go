@@ -16,30 +16,22 @@ var ErrRangeNotSupported = errors.New("byte range not suppoered")
 type minioStorage struct {
 	name       string
 	client     *minio.Client
-	tmp        string
 	bucketName string
 	prefix     string
 }
 
 func createMinioBackend(name string, params map[string]string) (Backend, error) {
 	if params["endpoint"] == "" {
-		return nil, errors.New("minio endpoint not provided")
+		return nil, errors.New("endpoint not provided")
 	}
 	if params["key_id"] == "" {
-		return nil, errors.New("minio key id not provided")
+		return nil, errors.New("key id not provided")
 	}
 	if params["access_key"] == "" {
-		return nil, errors.New("minio access key not provided")
-	}
-	if params["tmp"] == "" {
-		return nil, errors.New("minio tmp not provided")
+		return nil, errors.New("access key not provided")
 	}
 	if params["bucket_name"] == "" {
-		return nil, errors.New("minio bucket name not provided")
-	}
-	err := os.MkdirAll(params["tmp"], 0750)
-	if err != nil {
-		return nil, err
+		return nil, errors.New("bucket name not provided")
 	}
 
 	client, err := minio.New(params["endpoint"], &minio.Options{
@@ -49,7 +41,7 @@ func createMinioBackend(name string, params map[string]string) (Backend, error) 
 	if err != nil {
 		return nil, err
 	}
-	return minioStorage{name: name, client: client, tmp: params["tmp"], bucketName: params["bucket_name"], prefix: params["prefix"]}, nil
+	return minioStorage{name: name, client: client, bucketName: params["bucket_name"], prefix: params["prefix"]}, nil
 }
 
 func (s minioStorage) Name() string {
@@ -73,7 +65,7 @@ func (s minioStorage) Copy(name string, src Backend) error {
 	if l, ok := src.(LocalBackend); ok {
 		localPath = l.path(name)
 	} else {
-		f, err := os.CreateTemp(s.tmp, "phylum-*")
+		f, err := os.CreateTemp(tempDir, "phylum-*")
 		if err != nil {
 			return err
 		}
@@ -130,7 +122,7 @@ func (s minioStorage) DeleteAll(names []string) []error {
 }
 
 func (s minioStorage) String() string {
-	return fmt.Sprintf("minio (endpoint: %s, bucket: %s, prefix: %s, tmp: %s)", s.client.EndpointURL(), s.bucketName, s.prefix, s.tmp)
+	return fmt.Sprintf("minio (endpoint: %s, bucket: %s, prefix: %s)", s.client.EndpointURL(), s.bucketName, s.prefix)
 }
 
 // type progressReader struct {
