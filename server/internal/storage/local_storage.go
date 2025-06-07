@@ -6,8 +6,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-
-	"github.com/google/uuid"
 )
 
 type localStorage struct {
@@ -41,7 +39,7 @@ func (l localStorage) Name() string {
 }
 
 func (l localStorage) OpenRead(name string, start, length int) (io.ReadCloser, error) {
-	file, err := os.OpenFile(filepath.Join(l.root, name), os.O_RDONLY, 0640)
+	file, err := os.OpenFile(l.path(name), os.O_RDONLY, 0640)
 	if err != nil {
 		return nil, err
 	}
@@ -62,24 +60,34 @@ func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
 			os.Remove(f.Name())
 			return err
 		}
-		return os.Rename(f.Name(), filepath.Join(l.root, name))
+		return os.Rename(f.Name(), l.path(name))
 	}}, nil
 }
 
-func (l localStorage) Move(name string, target Backend) error {
-	if target == l {
-		return nil
+func (l localStorage) Copy(name string, src Backend) error {
+	if src == l {
+		return errors.New("cannot copy to self")
 	}
-	return target.move(filepath.Join(l.root, name), name)
-}
+	in, err := src.OpenRead(name, 0, -1)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
 
-func (l localStorage) move(localPath, name string) error {
-	path := filepath.Join(l.root, name)
-	return os.Rename(localPath, path)
+	out, err := l.OpenWrite(name)
+	if err != nil {
+		return err
+	}
+	_, copyErr := io.Copy(out, in)
+	closeErr := out.Close()
+	if copyErr != nil {
+		return copyErr
+	}
+	return closeErr
 }
 
 func (l localStorage) Delete(name string) error {
-	return os.Remove(filepath.Join(l.root, name))
+	return os.Remove(l.path(name))
 }
 
 func (l localStorage) DeleteAll(names []string) []error {
@@ -93,8 +101,8 @@ func (l localStorage) DeleteAll(names []string) []error {
 	return errs
 }
 
-func (l localStorage) path(id uuid.UUID) string {
-	return filepath.Join(l.root, id.String())
+func (l localStorage) path(name string) string {
+	return filepath.Join(l.root, name)
 }
 
 func (l localStorage) String() string {

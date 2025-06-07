@@ -1,6 +1,8 @@
 package core
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
@@ -8,21 +10,29 @@ import (
 )
 
 func moveVersionToTargetBackend(db db.Handler, versionID uuid.UUID) {
+	if err := moveVersionToTargetBackendErr(db, versionID); err != nil {
+		logrus.Warn("failed to move " + versionID.String() + " to target storage: " + err.Error())
+	}
+}
+func moveVersionToTargetBackendErr(db db.Handler, versionID uuid.UUID) error {
 	logrus.Info("Moving to Target Storage: " + versionID.String())
 	if current, err := getCurrentStorage(db, versionID); err != nil {
-		logrus.Warn("failed to get current storage for " + versionID.String() + ": " + err.Error())
+		return errors.New("failed to get current storage: " + err.Error())
 	} else if target, err := findTargetStorageForVersion(db, versionID); err != nil {
-		logrus.Warn("failed to find target storage for " + versionID.String() + ": " + err.Error())
+		return errors.New("failed to find target storage: " + err.Error())
+	} else if current.Name() == target.Name() {
+		return nil
 	} else if err := target.Copy(versionID.String(), current); err != nil {
-		logrus.Warn("failed to copy " + versionID.String() + ": " + err.Error())
+		return errors.New("failed to copy to target storage: " + err.Error())
 	} else if err := updateStorage(db, versionID, target.Name()); err != nil {
-		logrus.Warn("failed to update storage in DB for " + versionID.String() + ": " + err.Error())
 		if err := target.Delete(versionID.String()); err != nil {
-			logrus.Warn("failed to delete new copy for " + versionID.String() + ": " + err.Error())
+			logrus.Warn("failed to delete new copy: " + err.Error())
 		}
-	} else if current.Delete(versionID.String()); err != nil {
-		logrus.Warn("failed to delete old copy for " + versionID.String() + ": " + err.Error())
+		return errors.New("failed to update storage in db: " + err.Error())
+	} else if err := current.Delete(versionID.String()); err != nil {
+		return errors.New("failed to delete old copy: " + err.Error())
 	}
+	return nil
 }
 func getCurrentStorage(db db.Handler, versionID uuid.UUID) (storage.Backend, error) {
 	q := "SELECT storage FROM resource_versions WHERE id = $1::UUID"

@@ -52,6 +52,10 @@ func createMinioBackend(name string, params map[string]string) (Backend, error) 
 	return minioStorage{name: name, client: client, tmp: params["tmp"], bucketName: params["bucket_name"], prefix: params["prefix"]}, nil
 }
 
+func (s minioStorage) Name() string {
+	return s.name
+}
+
 func (s minioStorage) OpenRead(name string, start, length int) (io.ReadCloser, error) {
 	// TODO: Range
 	if r, err := s.client.GetObject(context.Background(), s.bucketName, s.prefix+name, minio.GetObjectOptions{}); err != nil {
@@ -61,7 +65,38 @@ func (s minioStorage) OpenRead(name string, start, length int) (io.ReadCloser, e
 	}
 }
 
-func (s minioStorage) move(localPath, name string) error {
+func (s minioStorage) Copy(name string, src Backend) error {
+	if src == s {
+		return errors.New("cannot copy to self")
+	}
+	var localPath string
+	if l, ok := src.(LocalBackend); ok {
+		localPath = l.path(name)
+	} else {
+		f, err := os.CreateTemp(s.tmp, "phylum-*")
+		if err != nil {
+			return err
+		}
+		defer func() {
+			os.Remove(f.Name())
+		}()
+
+		in, err := src.OpenRead(name, 0, -1)
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+
+		_, copyErr := io.Copy(f, in)
+		closeErr := f.Close()
+		if copyErr != nil {
+			return copyErr
+		}
+		if closeErr != nil {
+			return closeErr
+		}
+		localPath = f.Name()
+	}
 	_, err := s.client.FPutObject( //TODO: #context
 		context.Background(),
 		s.bucketName,
@@ -69,10 +104,7 @@ func (s minioStorage) move(localPath, name string) error {
 		localPath,
 		minio.PutObjectOptions{},
 	)
-	if err != nil {
-		return err
-	}
-	return os.Remove(localPath)
+	return err
 }
 
 func (s minioStorage) Delete(name string) error {
