@@ -49,16 +49,15 @@ func (l localStorage) OpenRead(name string, start, length int) (io.ReadCloser, e
 
 func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
 	f, err := os.CreateTemp(l.tmp, "upload-*")
-	tmpFilePath := filepath.Join(l.tmp, f.Name())
 	if err != nil {
 		return nil, err
 	}
 	return &callbackWriteCloser{dest: f, closeCallback: func(err error) error {
 		if err != nil {
-			os.Remove(tmpFilePath)
+			os.Remove(f.Name())
 			return err
 		}
-		return os.Rename(tmpFilePath, filepath.Join(l.root, name))
+		return os.Rename(f.Name(), filepath.Join(l.root, name))
 	}}, nil
 }
 
