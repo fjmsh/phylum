@@ -7,8 +7,8 @@ db:
   nomigrate: false    # Do not auto-migrate schema (dev)
   trace: false        # Trace queries (dev)
 
-fs:
-  storage: storage
+storage:
+  location: storage
   
 user:
   password:

@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path"
 
@@ -12,6 +13,9 @@ import (
 )
 
 var Cfg Config
+
+const DefaultBackendName = "_"
+
 var defaultBackend LocalBackend
 var backends map[string]Backend
 
@@ -22,8 +26,15 @@ type BackendConfig struct {
 }
 
 func Initialize(db db.Handler) error {
-	if err := os.Chmod(Cfg.Location, 0700); err != nil {
-		return errors.New("failed to set permissions: " + err.Error())
+	if err := os.MkdirAll(Cfg.Location, 0700); err != nil {
+		return errors.New("failed to create storage location(" + Cfg.Location + "): " + err.Error())
+	} else {
+		if stat, err := os.Stat(Cfg.Location); err != nil {
+			return errors.New("failed to stat storage location(" + Cfg.Location + "): " + err.Error())
+		} else if stat.Mode()&0xfff != 0700 {
+			return errors.New("storage location does not have correct permissions (0700): " + fmt.Sprintf("%o", stat.Mode()&0xfff))
+		}
+
 	}
 	if restoredBackends, err := restoreBackends(db); err != nil {
 		return errors.New("failed to restore backends: " + err.Error())
@@ -42,11 +53,15 @@ func DefaultBackend() LocalBackend {
 	return defaultBackend
 }
 
-func GetBackend(name string) Backend {
-	if name == "_" {
-		return defaultBackend
+func GetBackend(name string) (Backend, error) {
+	if name == DefaultBackendName {
+		return defaultBackend, nil
 	}
-	return backends[name]
+	if b, ok := backends[name]; !ok {
+		return nil, errors.New("no storage backend named \"" + name + "\"")
+	} else {
+		return b, nil
+	}
 }
 
 func ListBackends() map[string]Backend {

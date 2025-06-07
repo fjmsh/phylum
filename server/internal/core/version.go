@@ -28,8 +28,8 @@ func (v Version) OpenRead(start, length int) (io.ReadCloser, error) {
 	if v.Storage == "" {
 		return nil, errors.New("unknown storage backend")
 	}
-	if b := storage.GetBackend(v.Storage); b == nil {
-		return nil, errors.New("storage backend not found: " + v.Storage)
+	if b, err := storage.GetBackend(v.Storage); err != nil {
+		return nil, errors.New("failed to read " + v.ID.String() + ": " + err.Error())
 	} else {
 		return b.OpenRead(v.ID.String(), start, length)
 	}

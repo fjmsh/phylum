@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shroff/phylum/server/internal/storage"
 )
 
 type ResourceBindConflictResolution int32
@@ -276,7 +277,7 @@ func (f filesystem) createResourceVersion(id, versionID uuid.UUID, size int64, m
 		"size":        size,
 		"mime_type":   mimeType,
 		"sha256":      sha256,
-		"storage":     "_",
+		"storage":     storage.DefaultBackendName,
 	}
 	_, err := f.db.Exec(q, args)
 	return err
