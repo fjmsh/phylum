@@ -1,11 +1,10 @@
 package common
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
-	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -18,20 +17,23 @@ func FormatResourceSummary(r core.Resource, name string, deleted pgtype.Timestam
 	if r.Dir() {
 		name += "/"
 	}
-	v := r.LatestVersion()
+
+	size := ""
 	sha256 := ""
-	sizeStr := "    -"
-	versions := "-"
+	versions := ""
 	if r.Dir() {
+		size = "    -"
 		sha256 = "--      "
+		versions = "-"
 	} else {
-		sizeStr = FormatSize(int(v.Size))
+		v := r.LatestVersion()
+		size = FormatSize(int(v.Size))
 		if v.SHA256 == "" {
 			sha256 = "xxxxxxxx"
 		} else {
 			sha256 = v.SHA256[0:8]
 		}
-		versionCount := parseVersions(r.Versions())
+		versionCount := countJSONList(r.Versions())
 		versions = strconv.Itoa(versionCount)
 		if versionCount > 9 {
 			versions = "+"
@@ -42,101 +44,46 @@ func FormatResourceSummary(r core.Resource, name string, deleted pgtype.Timestam
 	if deleted != r.Deleted() {
 		delStr = "*"
 	}
-	return fmt.Sprintf("%s %d %s %s %s %s%-24s %s", r.ID().String(), len(parseLinks(r.Links())), versions, sizeStr, sha256, delStr, name, FormatGrantsJson(r.Grants()))
+	return fmt.Sprintf("%s %d %d %s %5s %s %s%-24s", r.ID().String(), countJSONMap(r.Grants()), countJSONList(r.Links()), versions, size, sha256, delStr, name)
 }
 
 func FormatSize(size int) string {
 	suffix := []string{"B", "K", "M", "G", "T"}
+	sz := float64(size)
 	si := 0
-	for ; size >= 1000 && si < len(suffix); si, size = si+1, size/1000 {
+	for ; sz >= 1000 && si < len(suffix); si, sz = si+1, sz/1024 {
 	}
-	return fmt.Sprintf("%4d%s", size, suffix[si])
+	if sz >= 10 || si == 0 {
+		return fmt.Sprintf("%4d%s", int(math.Ceil(sz)), suffix[si])
+	} else {
+		return fmt.Sprintf("%1.1f%s", sz, suffix[si])
+	}
 }
 
-func FormatPermissionsJson(j []byte) string {
-	p := make(map[string]core.Permission)
-	json.Unmarshal(j, &p)
-	if len(p) == 0 {
-		return ""
-	}
-	perm := make([]string, 0, len(p))
-	for k, v := range p {
-		email, err := userEmail(k)
-		if err != nil {
-			email = "unknown user (" + k + ")"
-		}
-		perm = append(perm, email+": "+formatPermission(v))
-	}
-	return "[" + strings.Join(perm, ", ") + "]"
-}
+// String formatForDisplay() {
+//     const suffixes = ['B', 'K', 'M', 'G'];
+//     var sz = toDouble();
+//     for (var i = 0; i < suffixes.length; i++) {
+//       if (sz < 1000) {
+//         return '${i == 0 ? sz.toInt() : _formatSize(sz)}${suffixes[i]}';
+//       }
+//       sz /= 1024;
+//     }
+//     return '${_formatSize(sz)}T';
+//   }
 
-func FormatGrantsJson(j []byte) string {
-	g := make(map[string]grant)
+//   String _formatSize(double size) {
+//     return size >= 10 ? '${size.toInt()}' : decimalPattern.format(size);
+//   }
+
+func countJSONMap(j []byte) int {
+	g := make(map[string]interface{})
 	json.Unmarshal(j, &g)
-	if len(g) == 0 {
-		return ""
-	}
-	perm := make([]string, 0, len(g))
-	for k, v := range g {
-		email, err := userEmail(k)
-		if err != nil {
-			email = "unknown user (" + k + ")"
-		}
-		perm = append(perm, email+": "+formatPermission(v.Permission))
-	}
-	return "[" + strings.Join(perm, ", ") + "]"
+	return len(g)
 }
 
-type grant struct {
-	Permission core.Permission `json:"p"`
-	Timestamp  int             `json:"t"`
-}
-
-func userEmail(s string) (string, error) {
-	id, err := strconv.Atoi(s)
-	if err != nil {
-		return "", err
-	}
-	return core.UserManagerFromContext(context.Background()).UserEmailByID(id)
-
-}
-
-func parseLinks(j []byte) []string {
+func countJSONList(j []byte) int {
 	l := make([]map[string]interface{}, 0)
 	json.Unmarshal(j, &l)
-
-	links := make([]string, 0, len(l))
-	for _, v := range l {
-		links = append(links, v["id"].(string))
-	}
-	return links
-}
-
-func parseVersions(j []byte) int {
-	v := make([]map[string]interface{}, 0)
-	json.Unmarshal(j, &v)
-	return len(v)
-}
-
-func formatPermission(p core.Permission) string {
-	if p == core.PermissionSU {
-		return "su"
-	}
-	str := ""
-	if p&core.PermissionRead != 0 {
-		p -= core.PermissionRead
-		str += "r"
-	}
-	if p&core.PermissionWrite != 0 {
-		p -= core.PermissionWrite
-		str += "w"
-	}
-	if p&core.PermissionShare != 0 {
-		p -= core.PermissionShare
-		str += "s"
-	}
-	if p != 0 {
-		str += fmt.Sprintf("u(%d)", p)
-	}
-	return str
+	return len(l)
 }

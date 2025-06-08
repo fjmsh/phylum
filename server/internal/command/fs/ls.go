@@ -1,21 +1,41 @@
 package fs
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/command/common"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 )
 
 func setupLsCommand() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "ls <path>",
-		Short: "List Resource Details",
-		Args:  cobra.ExactArgs(1),
+		Short: "Print Resource Details",
+		Long: `Prints all relevant details about a resource.
+
+Columns for children:
+ID
+Permission Grants ('+' if more than 9)
+Public Shares ('+' if more than 9)
+Version History ('+' if more than 9, '-' if directory)
+Size ('-' if directory)
+SHA-256 ('-' if directory)
+Deleted ('*' if deleted, blank otherwise)
+Name
+		
+NOTE: You may use '<id>:<path>' as the path to refer to the resource at a
+path relative to a root resource with the given ID, or simply '<id>:' to refer
+to the resource with a particular ID.`,
+
+		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			pathOrUUID := args[0]
@@ -30,24 +50,18 @@ func setupLsCommand() *cobra.Command {
 				fmt.Println("cannot get path:" + err.Error())
 				os.Exit(1)
 			}
-			fmt.Println("ID: " + r.ID().String())
-			fmt.Println("Path: " + path)
-			fmt.Println("Created:  " + r.Created().Local().Format(time.RFC1123))
+			fmt.Println("      ID: " + r.ID().String())
+			fmt.Println("    Path: " + path)
+			fmt.Println(" Created: " + r.Created().Local().Format(time.RFC1123))
 			fmt.Println("Modified: " + r.Modified().Local().Format(time.RFC1123))
 			if r.Deleted().Valid {
 				fmt.Println("Deleted:  " + r.Deleted().Time.Local().Format(time.RFC1123))
 			}
 			fmt.Println()
 
-			fmt.Println("Inherited Permissions: " + common.FormatPermissionsJson(r.InheritedPermissions()))
-			grants := common.FormatGrantsJson(r.Grants())
-			if grants == "" {
-				grants = "None"
-			}
-			fmt.Println("Permission Grants: " + grants)
-
+			fmt.Println("Inherited Permissions: " + formatPermissionsJson(r.InheritedPermissions()))
+			fmt.Println("Permission Grants: " + formatGrantsJson(r.Grants()))
 			fmt.Println()
-			// fmt.Println(common.FormatResourceSummary(r, ".", pgtype.Timestamp{}))
 
 			if r.Dir() {
 				fmt.Println("Children:")
@@ -70,9 +84,77 @@ func setupLsCommand() *cobra.Command {
 				for _, c := range children {
 					fmt.Println(common.FormatResourceSummary(c, "", r.Deleted()))
 				}
+			} else {
+				fmt.Println("   Size: " + common.FormatSize(int(r.LatestVersion().Size)))
+				fmt.Println("SHA-256: " + r.LatestVersion().SHA256[0:12])
 			}
 		},
 	}
 	cmd.Flags().BoolP("include-deleted", "x", false, "Include deleted files")
 	return &cmd
+}
+
+func formatPermissionsJson(j []byte) string {
+	p := make(map[string]core.Permission)
+	json.Unmarshal(j, &p)
+	if len(p) == 0 {
+		return "None"
+	}
+	perm := make([]string, 0, len(p))
+	for k, v := range p {
+		perm = append(perm, getUserEmail(k)+"("+formatPermission(v)+")")
+	}
+	return strings.Join(perm, ", ")
+}
+
+func formatGrantsJson(j []byte) string {
+	g := make(map[string]grant)
+	json.Unmarshal(j, &g)
+	if len(g) == 0 {
+		return "None"
+	}
+	perm := make([]string, 0, len(g))
+	for k, v := range g {
+		perm = append(perm, getUserEmail(k)+"("+formatPermission(v.Permission)+")")
+	}
+	return strings.Join(perm, ", ")
+}
+
+type grant struct {
+	Permission core.Permission `json:"p"`
+	Timestamp  int             `json:"t"`
+}
+
+func getUserEmail(s string) string {
+	if id, err := strconv.Atoi(s); err != nil {
+		return "[user " + s + "]"
+	} else if email, err := core.UserManagerFromContext(context.Background()).UserEmailByID(id); err != nil {
+		return "[user " + s + "]"
+	} else {
+		return email
+	}
+
+}
+
+func formatPermission(p core.Permission) string {
+	if p == core.PermissionSU {
+		return "su"
+	}
+	str := ""
+	if p&core.PermissionRead != 0 {
+		p -= core.PermissionRead
+		str += "r"
+	}
+	if p&core.PermissionWrite != 0 {
+		p -= core.PermissionWrite
+		str += "w"
+	}
+	if p&core.PermissionShare != 0 {
+		p -= core.PermissionShare
+		str += "s"
+	}
+	if p != 0 {
+		str += fmt.Sprintf("u(%d)", p)
+	}
+	return str
 }
