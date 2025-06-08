@@ -1,20 +1,35 @@
-package core
+package jobs
 
 import (
+	"context"
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/riverqueue/river"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
 )
 
-func migrateVersionContents(db db.Handler, versionID uuid.UUID) {
-	if err := moveVersionToTargetBackendErr(db, versionID); err != nil {
-		logrus.Warn("failed to move " + versionID.String() + " to target storage: " + err.Error())
-	}
+type MigrateArgs struct {
+	VersionID uuid.UUID `json:"version_id"`
 }
-func moveVersionToTargetBackendErr(db db.Handler, versionID uuid.UUID) error {
+
+func (MigrateArgs) Kind() string { return "migrate" }
+
+type MigrateWorker struct {
+	river.WorkerDefaults[MigrateArgs]
+}
+
+func (w *MigrateWorker) Work(ctx context.Context, job *river.Job[MigrateArgs]) error {
+	return migrateVersionContents(db.Get(ctx), job.Args.VersionID)
+}
+
+func MigrateVersionContents(versionID uuid.UUID) {
+	client.Insert(context.Background(), MigrateArgs{VersionID: versionID}, &river.InsertOpts{})
+}
+
+func migrateVersionContents(db db.Handler, versionID uuid.UUID) error {
 	if current, err := getCurrentStorage(db, versionID); err != nil {
 		return errors.New("failed to get current storage: " + err.Error())
 	} else if target, err := findTargetStorageForVersion(db, versionID); err != nil {

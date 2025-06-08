@@ -1,7 +1,6 @@
 package core
 
 import (
-	"context"
 	"encoding/hex"
 	"hash"
 	"io"
@@ -9,7 +8,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/db"
+	"github.com/shroff/phylum/server/internal/jobs"
 	"github.com/shroff/phylum/server/internal/storage"
 )
 
@@ -41,7 +40,7 @@ func (f filesystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, 
 				return err
 			}
 
-			go migrateVersionContents(db.Get(context.Background()), versionID)
+			jobs.MigrateVersionContents(versionID)
 			return nil
 		}), nil
 

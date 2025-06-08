@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shroff/phylum/server/internal/jobs"
 )
 
 func (f filesystem) deleteChildRecursive(r Resource, name string, softDelete bool) (Resource, error) {
@@ -175,7 +176,7 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 	})
 
 	if err == nil && !softDelete {
-		go deleteAllVersionContents(f.db, ids)
+		jobs.DeleteAllVersionContents(ids)
 	}
 
 	return err

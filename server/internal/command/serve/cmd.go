@@ -15,6 +15,8 @@ import (
 	apiv1 "github.com/shroff/phylum/server/internal/api/v1"
 	"github.com/shroff/phylum/server/internal/api/webdav"
 	"github.com/shroff/phylum/server/internal/core"
+	"github.com/shroff/phylum/server/internal/db"
+	"github.com/shroff/phylum/server/internal/jobs"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -56,6 +58,11 @@ func SetupCommand() *cobra.Command {
 		publink.Setup(engine.Group(Cfg.PublinkPath))
 
 		setupWebApp(engine, "web")
+
+		err := jobs.Initialize(context.Background(), db.Pool())
+		if err != nil {
+			logrus.Fatal("Failed to initializat jobs: " + err.Error())
+		}
 		setupTrashCompactor()
 
 		listen := Cfg.Host + ":" + strconv.Itoa(Cfg.Port)

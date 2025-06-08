@@ -33,6 +33,12 @@ func Get(ctx context.Context) Handler {
 	}
 }
 
+// Pool returns the pgx pool
+// Only to be used for jobs initialization
+func Pool() *pgxpool.Pool {
+	return pool
+}
+
 func (d Handler) Notifier() pubsub.Notifier {
 	return notifier
 }

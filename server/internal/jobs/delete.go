@@ -1,15 +1,36 @@
-package core
+package jobs
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/riverqueue/river"
 	"github.com/shroff/phylum/server/internal/db"
 	"github.com/shroff/phylum/server/internal/storage"
 )
 
+type DeleteArgs struct {
+	VersionIDS uuid.UUIDs `json:"version_ids"`
+}
+
+func (DeleteArgs) Kind() string { return "delete" }
+
+type DeleteWorker struct {
+	river.WorkerDefaults[DeleteArgs]
+}
+
+func (w *DeleteWorker) Work(ctx context.Context, job *river.Job[DeleteArgs]) error {
+	return deleteAllVersionContents(db.Get(ctx), job.Args.VersionIDS)
+}
+
 type versionInfo struct {
 	id      uuid.UUID
 	storage string
+}
+
+func DeleteAllVersionContents(ids uuid.UUIDs) {
+	client.Insert(context.Background(), DeleteArgs{VersionIDS: ids}, &river.InsertOpts{})
 }
 
 func deleteAllVersionContents(db db.Handler, ids uuid.UUIDs) error {

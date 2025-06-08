@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shroff/phylum/server/internal/db"
+	"github.com/shroff/phylum/server/internal/jobs"
 	"github.com/sirupsen/logrus"
 )
 
@@ -108,7 +109,7 @@ func (f filesystem) TrashEmpty() (int, error) {
 		Returning("id", "dir")
 	query, args, _ := q.ToSQL()
 	count, ids, err := collectNonDirResourceIDs(f.db.Query(query, args...))
-	deleteAllVersionContents(f.db, ids)
+	jobs.DeleteAllVersionContents(ids)
 	return count, err
 }
 
@@ -134,6 +135,6 @@ func hardDeleteOldResources(ctx context.Context, t time.Time) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	deleteAllVersionContents(db, ids)
+	jobs.DeleteAllVersionContents(ids)
 	return count, err
 }
