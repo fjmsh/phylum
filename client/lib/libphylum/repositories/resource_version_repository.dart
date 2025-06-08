@@ -51,7 +51,7 @@ class ResourceVersionRepository extends Repository<PhylumAccount, ResourceVersio
 
   @override
   Future<void> delete(String objectId) {
-    return _account.db.publinks.deleteWhere((o) => o.id.equals(objectId));
+    return _account.db.resourceVersions.deleteWhere((o) => o.id.equals(objectId));
   }
 }
 
