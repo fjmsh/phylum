@@ -85,6 +85,7 @@ type UserManager interface {
 	CreateUser(email, name string, noCreateHome bool) (User, error)
 	ListUsers(since int64) ([]User, error)
 	UserByEmail(email string) (User, error)
+	UserEmailByID(id int) (string, error)
 	UserHome(email string) (pgtype.UUID, error)
 
 	// user_auth.go

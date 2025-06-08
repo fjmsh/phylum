@@ -76,6 +76,17 @@ func (m manager) ListUsers(since int64) ([]User, error) {
 	}
 }
 
+func (m manager) UserEmailByID(id int) (string, error) {
+	const q = "SELECT email FROM users WHERE id = $1"
+	row := m.db.QueryRow(q, id)
+	var email string
+	if err := row.Scan(&email); err != nil {
+		return "", err
+	} else {
+		return email, nil
+	}
+}
+
 func (m manager) UserByEmail(email string) (User, error) {
 	const q = "SELECT id, email, name, home, permissions FROM users WHERE email = $1"
 	if rows, err := m.db.Query(q, strings.ToLower(email)); err != nil {
