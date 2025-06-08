@@ -41,7 +41,7 @@ func (f filesystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, 
 				return err
 			}
 
-			go moveVersionToTargetBackend(db.Get(context.Background()), versionID)
+			go migrateVersionContents(db.Get(context.Background()), versionID)
 			return nil
 		}), nil
 

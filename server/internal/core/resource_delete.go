@@ -175,7 +175,7 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 	})
 
 	if err == nil && !softDelete {
-		deleteResourcesContents(ids)
+		go deleteAllVersionContents(f.db, ids)
 	}
 
 	return err
@@ -255,15 +255,4 @@ func collectNonDirResourceIDs(rows pgx.Rows, e error) (total int, ids []uuid.UUI
 	}
 	err = rows.Err()
 	return total, ids, err
-}
-
-func deleteResourcesContents(id uuid.UUIDs) {
-	// TODO: #implement
-}
-
-func deleteResourceContents(id uuid.UUID) {
-	// TODO: #implement
-}
-func deleteVersionContents(id uuid.UUID) {
-	// TODO: #implement
 }

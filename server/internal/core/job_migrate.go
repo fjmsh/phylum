@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func moveVersionToTargetBackend(db db.Handler, versionID uuid.UUID) {
+func migrateVersionContents(db db.Handler, versionID uuid.UUID) {
 	if err := moveVersionToTargetBackendErr(db, versionID); err != nil {
 		logrus.Warn("failed to move " + versionID.String() + " to target storage: " + err.Error())
 	}

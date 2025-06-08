@@ -108,7 +108,7 @@ func (f filesystem) TrashEmpty() (int, error) {
 		Returning("id", "dir")
 	query, args, _ := q.ToSQL()
 	count, ids, err := collectNonDirResourceIDs(f.db.Query(query, args...))
-	deleteResourcesContents(ids)
+	deleteAllVersionContents(f.db, ids)
 	return count, err
 }
 
@@ -129,10 +129,11 @@ func hardDeleteOldResources(ctx context.Context, t time.Time) (int, error) {
 		Delete().
 		Returning("id", "dir")
 	query, args, _ := q.ToSQL()
-	count, ids, err := collectNonDirResourceIDs(db.Get(ctx).Query(query, args...))
+	db := db.Get(ctx)
+	count, ids, err := collectNonDirResourceIDs(db.Query(query, args...))
 	if err != nil {
 		return 0, err
 	}
-	deleteResourcesContents(ids)
+	deleteAllVersionContents(db, ids)
 	return count, err
 }
