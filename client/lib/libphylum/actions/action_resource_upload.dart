@@ -38,6 +38,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
         'path': '$parent:$resourceName',
         'id': resourceId,
         'conflict': conflictResolution.toString(),
+        'version_id': versionId,
         // 'sha256': '', // TODO: compute and send
       };
 
