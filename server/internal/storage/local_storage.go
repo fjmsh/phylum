@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"io"
 	"io/fs"
@@ -75,7 +76,7 @@ func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
 	}}, nil
 }
 
-func (l localStorage) Copy(name string, src Backend) error {
+func (l localStorage) Copy(ctx context.Context, name string, src Backend) error {
 	if src == l {
 		return errors.New("cannot copy to self")
 	}

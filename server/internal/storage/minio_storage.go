@@ -57,7 +57,7 @@ func (s minioStorage) OpenRead(name string, start, length int) (io.ReadCloser, e
 	}
 }
 
-func (s minioStorage) Copy(name string, src Backend) error {
+func (s minioStorage) Copy(ctx context.Context, name string, src Backend) error {
 	if src == s {
 		return errors.New("cannot copy to self")
 	}
@@ -89,8 +89,8 @@ func (s minioStorage) Copy(name string, src Backend) error {
 		}
 		localPath = f.Name()
 	}
-	_, err := s.client.FPutObject( //TODO: #context
-		context.Background(),
+	_, err := s.client.FPutObject(
+		ctx,
 		s.bucketName,
 		s.prefix+name,
 		localPath,

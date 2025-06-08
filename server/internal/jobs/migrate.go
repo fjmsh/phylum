@@ -22,21 +22,22 @@ type MigrateWorker struct {
 }
 
 func (w *MigrateWorker) Work(ctx context.Context, job *river.Job[MigrateArgs]) error {
-	return migrateVersionContents(db.Get(ctx), job.Args.VersionID)
+	return migrateVersionContents(ctx, job.Args.VersionID)
 }
 
 func MigrateVersionContents(versionID uuid.UUID) {
 	client.Insert(context.Background(), MigrateArgs{VersionID: versionID}, &river.InsertOpts{})
 }
 
-func migrateVersionContents(db db.Handler, versionID uuid.UUID) error {
+func migrateVersionContents(ctx context.Context, versionID uuid.UUID) error {
+	db := db.Get(ctx)
 	if current, err := getCurrentStorage(db, versionID); err != nil {
 		return errors.New("failed to get current storage: " + err.Error())
 	} else if target, err := findTargetStorageForVersion(db, versionID); err != nil {
 		return errors.New("failed to find target storage: " + err.Error())
 	} else if current.Name() == target.Name() {
 		return nil
-	} else if err := target.Copy(versionID.String(), current); err != nil {
+	} else if err := target.Copy(ctx, versionID.String(), current); err != nil {
 		return errors.New("failed to copy to target storage: " + err.Error())
 	} else if err := updateStorage(db, versionID, target.Name()); err != nil {
 		if err := target.Delete(versionID.String()); err != nil {
