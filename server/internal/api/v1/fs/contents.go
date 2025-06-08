@@ -76,7 +76,7 @@ func handleContentsRequest(c *gin.Context) {
 			return err
 		}
 
-		v, err := f.FindVersion(r, uuid.Nil)
+		v, err := f.GetVersion(r, uuid.Nil)
 		if err != nil {
 			return err
 		}

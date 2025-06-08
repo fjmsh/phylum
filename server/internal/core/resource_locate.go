@@ -2,7 +2,6 @@ package core
 
 import (
 	"strings"
-	"time"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
@@ -145,28 +144,4 @@ func parseUUIDPrefix(path string) (pgtype.UUID, string, error) {
 		return pgtype.UUID{Bytes: id, Valid: true}, path[i+1:], err
 	}
 	return pgtype.UUID{}, path, nil
-}
-
-func (f filesystem) FindVersion(r Resource, versionID uuid.UUID) (Version, error) {
-	if versionID == uuid.Nil {
-		versionID = r.latestVersionInfo.ID
-	}
-
-	const q = `SELECT id, created, size, mime_type, sha256, storage FROM resource_versions
-	WHERE resource_id = $1::UUID
-	AND id = $2::UUID
-	AND DELETED IS NULL`
-
-	row := f.db.QueryRow(q, r.id, versionID)
-	var v Version
-	var created time.Time
-	err := row.Scan(&v.ID, &created, &v.Size, &v.MimeType, &v.SHA256, &v.Storage)
-	if err != nil {
-		if Is(err, pgx.ErrNoRows) {
-			err = ErrVersionNotFound
-		}
-		return v, err
-	}
-	v.Created = int(created.Unix())
-	return v, nil
 }

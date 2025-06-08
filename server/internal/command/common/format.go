@@ -54,7 +54,8 @@ func FormatSize(size int) string {
 	for ; sz >= 1000 && si < len(suffix); si, sz = si+1, sz/1024 {
 	}
 	if sz >= 10 || si == 0 {
-		return fmt.Sprintf("%4d%s", int(math.Ceil(sz)), suffix[si])
+		return strconv.Itoa(int(math.Ceil(sz))) + suffix[si]
+		// return fmt.Sprintf("%d%s", int(math.Ceil(sz)), suffix[si])
 	} else {
 		return fmt.Sprintf("%1.1f%s", sz, suffix[si])
 	}

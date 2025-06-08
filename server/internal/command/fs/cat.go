@@ -29,7 +29,7 @@ func setupCatCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			v, err := f.FindVersion(r, uuid.Nil)
+			v, err := f.GetVersion(r, uuid.Nil)
 			if err != nil {
 				fmt.Println("cannot find latest version of '" + path + "': " + err.Error())
 				os.Exit(1)

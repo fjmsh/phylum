@@ -29,7 +29,7 @@ var htmlReplacer = strings.NewReplacer(
 
 type FileSystem interface {
 	ReadDir(core.Resource, bool) ([]core.Resource, error)
-	FindVersion(core.Resource, uuid.UUID) (core.Version, error)
+	GetVersion(core.Resource, uuid.UUID) (core.Version, error)
 }
 
 func Serve(w http.ResponseWriter, r *http.Request, f FileSystem, res core.Resource) {
@@ -111,7 +111,7 @@ func formatSize(size int) string {
 }
 
 func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, res core.Resource, versionID uuid.UUID) {
-	version, err := f.FindVersion(res, versionID)
+	version, err := f.GetVersion(res, versionID)
 	if err != nil {
 		panic(err)
 	}

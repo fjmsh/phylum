@@ -85,8 +85,24 @@ to the resource with a particular ID.`,
 					fmt.Println(common.FormatResourceSummary(c, "", r.Deleted()))
 				}
 			} else {
-				fmt.Println("   Size: " + common.FormatSize(int(r.LatestVersion().Size)))
-				fmt.Println("SHA-256: " + r.LatestVersion().SHA256[0:12])
+				fmt.Println("    Size: " + common.FormatSize(int(r.LatestVersion().Size)))
+				fmt.Println(" SHA-256: " + r.LatestVersion().SHA256[0:12])
+				versions, err := f.GetAllVersions(r)
+				if err != nil {
+					fmt.Println(err.Error())
+					os.Exit(1)
+				}
+				fmt.Println("Versions: " + strconv.Itoa(len(versions)))
+				for i, v := range versions {
+					extra := ""
+					if i == 0 {
+						extra += " [current]"
+					}
+					if v.Deleted != 0 {
+						extra += " [deleted]"
+					}
+					fmt.Printf("%s %5s %s %s%s\n", v.ID.String(), common.FormatSize(int(v.Size)), v.SHA256[0:12], time.Unix(int64(v.Created), 0).Local().Format(time.RFC1123), extra)
+				}
 			}
 		},
 	}

@@ -23,8 +23,8 @@ func (f proxyFileSystemReadOnly) ReadDir(r Resource, recursive bool) ([]Resource
 	return f.f.ReadDir(r, recursive)
 }
 
-func (f proxyFileSystemReadOnly) FindVersion(r Resource, versionID uuid.UUID) (Version, error) {
-	return f.f.FindVersion(r, versionID)
+func (f proxyFileSystemReadOnly) GetVersion(r Resource, versionID uuid.UUID) (Version, error) {
+	return f.f.GetVersion(r, versionID)
 }
 
 func (f proxyFileSystemReadOnly) Walk(r Resource, depth int, fn func(Resource, string) error) error {

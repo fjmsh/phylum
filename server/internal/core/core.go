@@ -33,7 +33,10 @@ type FileSystem interface {
 	ResourceByID(uuid.UUID) (Resource, error)
 	ResourceByPath(string) (Resource, error)
 	ResourceByPathWithRoot(string) (Resource, error)
-	FindVersion(Resource, uuid.UUID) (Version, error)
+
+	// resource_versions.go
+	GetVersion(Resource, uuid.UUID) (Version, error)
+	GetAllVersions(Resource) ([]Version, error)
 
 	// resource_ancestors.go
 	GetAncestors(Resource) ([]ResourceAncestor, error)
@@ -76,7 +79,7 @@ type FileSystem interface {
 type ReadFileSystem interface {
 	ResourceByPath(string) (Resource, error)
 	ReadDir(Resource, bool) ([]Resource, error)
-	FindVersion(Resource, uuid.UUID) (Version, error)
+	GetVersion(Resource, uuid.UUID) (Version, error)
 	Walk(Resource, int, func(Resource, string) error) error
 }
 

@@ -6,6 +6,8 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // VersionInfo represents a single version of a resource
@@ -22,6 +24,26 @@ type VersionInfo struct {
 type Version struct {
 	VersionInfo
 	Storage string
+}
+
+func scanVersion(row pgx.CollectableRow) (Version, error) {
+	var v Version
+	var created pgtype.Timestamp
+	var deleted pgtype.Timestamp
+	err := row.Scan(
+		&v.ID,
+		&created,
+		&deleted,
+		&v.Size,
+		&v.MimeType,
+		&v.SHA256,
+		&v.Storage,
+	)
+	v.Created = int(created.Time.Unix())
+	if deleted.Valid {
+		v.Deleted = int(deleted.Time.Unix())
+	}
+	return v, err
 }
 
 func (v Version) OpenRead(start, length int) (io.ReadCloser, error) {
