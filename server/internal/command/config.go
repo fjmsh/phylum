@@ -1,12 +1,12 @@
 package command
 
 import (
-	"github.com/shroff/phylum/server/internal/command/serve"
-	"github.com/shroff/phylum/server/internal/core"
-	"github.com/shroff/phylum/server/internal/crypt"
-	"github.com/shroff/phylum/server/internal/db"
-	"github.com/shroff/phylum/server/internal/mail"
-	"github.com/shroff/phylum/server/internal/storage"
+	"codeberg.org/shroff/phylum/server/internal/command/serve"
+	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/crypt"
+	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/mail"
+	"codeberg.org/shroff/phylum/server/internal/storage"
 )
 
 type Config struct {

@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/core"
 )
 
 var errAuthRequired = core.NewError(http.StatusUnauthorized, "auth_required", "authorization required")

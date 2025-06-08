@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/core"
-	"github.com/shroff/phylum/server/internal/storage"
 )
 
 var htmlReplacer = strings.NewReplacer(

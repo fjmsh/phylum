@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
+	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
+	"codeberg.org/shroff/phylum/server/internal/api/v1/users"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/api/authenticator"
-	"github.com/shroff/phylum/server/internal/api/v1/responses"
-	"github.com/shroff/phylum/server/internal/api/v1/users"
-	"github.com/shroff/phylum/server/internal/core"
 )
 
 func handleBootstrapRoute(c *gin.Context) {

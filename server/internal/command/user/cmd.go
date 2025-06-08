@@ -1,7 +1,7 @@
 package user
 
 import (
-	"github.com/shroff/phylum/server/internal/command/user/bookmarks"
+	"codeberg.org/shroff/phylum/server/internal/command/user/bookmarks"
 	"github.com/spf13/cobra"
 )
 

@@ -1,8 +1,8 @@
 package fs
 
 import (
-	"github.com/shroff/phylum/server/internal/command/fs/publink"
-	"github.com/shroff/phylum/server/internal/command/fs/trash"
+	"codeberg.org/shroff/phylum/server/internal/command/fs/publink"
+	"codeberg.org/shroff/phylum/server/internal/command/fs/trash"
 	"github.com/spf13/cobra"
 )
 

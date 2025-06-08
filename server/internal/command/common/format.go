@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/core"
 )
 
 func FormatResourceSummary(r core.Resource, name string, deleted pgtype.Timestamp) string {

@@ -1,9 +1,9 @@
 package admin
 
 import (
-	"github.com/shroff/phylum/server/internal/command/admin/schema"
-	"github.com/shroff/phylum/server/internal/command/admin/storage"
-	"github.com/shroff/phylum/server/internal/command/admin/user"
+	"codeberg.org/shroff/phylum/server/internal/command/admin/schema"
+	"codeberg.org/shroff/phylum/server/internal/command/admin/storage"
+	"codeberg.org/shroff/phylum/server/internal/command/admin/user"
 	"github.com/spf13/cobra"
 )
 

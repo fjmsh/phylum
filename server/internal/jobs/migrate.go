@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/google/uuid"
 	"github.com/riverqueue/river"
-	"github.com/shroff/phylum/server/internal/db"
-	"github.com/shroff/phylum/server/internal/storage"
 	"github.com/sirupsen/logrus"
 )
 

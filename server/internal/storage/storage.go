@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/db"
 	"github.com/sirupsen/logrus"
 )
 

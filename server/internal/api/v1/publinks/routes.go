@@ -3,8 +3,8 @@ package publinks
 import (
 	"net/http"
 
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/core"
 )
 
 var (

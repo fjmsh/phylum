@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/shroff/phylum/server/internal/core"
-	"github.com/shroff/phylum/server/internal/db"
-	"github.com/shroff/phylum/server/internal/mail"
+	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/spf13/cobra"
 )
 

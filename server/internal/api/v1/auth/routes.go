@@ -4,12 +4,12 @@ import (
 	"errors"
 	"net/http"
 
+	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
+	"codeberg.org/shroff/phylum/server/internal/api/v1/my"
+	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
+	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/api/authenticator"
-	"github.com/shroff/phylum/server/internal/api/v1/my"
-	"github.com/shroff/phylum/server/internal/api/v1/responses"
-	"github.com/shroff/phylum/server/internal/core"
-	"github.com/shroff/phylum/server/internal/mail"
 )
 
 type passwordParams struct {

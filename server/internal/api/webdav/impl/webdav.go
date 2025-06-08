@@ -15,9 +15,9 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/api/serve"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/api/serve"
-	"github.com/shroff/phylum/server/internal/core"
 )
 
 type Handler struct {

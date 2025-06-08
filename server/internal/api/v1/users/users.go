@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/api/v1/responses"
-	"github.com/shroff/phylum/server/internal/core"
 )
 
 var errInvalidParams = core.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")

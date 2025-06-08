@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 
-	"github.com/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

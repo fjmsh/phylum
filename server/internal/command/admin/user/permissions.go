@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 )
 

@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/core"
 	"github.com/sirupsen/logrus"
 )
 

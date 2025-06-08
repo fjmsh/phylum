@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/shroff/phylum/server/internal/command/common"
+	"codeberg.org/shroff/phylum/server/internal/command/common"
 	"github.com/spf13/cobra"
 )
 

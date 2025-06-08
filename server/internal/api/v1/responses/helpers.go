@@ -1,6 +1,6 @@
 package responses
 
-import "github.com/shroff/phylum/server/internal/core"
+import "codeberg.org/shroff/phylum/server/internal/core"
 
 func FullResourceFromFS(f core.FileSystem, r core.Resource) ResourceFull {
 	response := ResourceFull{

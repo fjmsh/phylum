@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"codeberg.org/shroff/phylum/server/internal/command/common"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/command/common"
 	"github.com/spf13/cobra"
 )
 

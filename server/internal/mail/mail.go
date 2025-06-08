@@ -3,7 +3,7 @@ package mail
 import (
 	"io"
 
-	"github.com/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/sirupsen/logrus"
 	gomail "gopkg.in/mail.v2"
 )

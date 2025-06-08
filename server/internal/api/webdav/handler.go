@@ -4,11 +4,11 @@ import (
 	"errors"
 	"net/http"
 
+	webdav "codeberg.org/shroff/phylum/server/internal/api/webdav/impl"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	webdav "github.com/shroff/phylum/server/internal/api/webdav/impl"
-	"github.com/shroff/phylum/server/internal/core"
 	"github.com/sirupsen/logrus"
 )
 

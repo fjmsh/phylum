@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
+	"codeberg.org/shroff/phylum/server/internal/api/serve"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
-	"github.com/shroff/phylum/server/internal/api/serve"
-	"github.com/shroff/phylum/server/internal/core"
 )
 
 func Setup(r *gin.RouterGroup) {

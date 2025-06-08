@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/core"
 )
 
 // Proppatch describes a property update instruction as defined in RFC 4918.

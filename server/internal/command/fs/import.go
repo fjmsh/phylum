@@ -8,9 +8,9 @@ import (
 	"os"
 	"path"
 
+	"codeberg.org/shroff/phylum/server/internal/command/common"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/command/common"
-	"github.com/shroff/phylum/server/internal/core"
 	"github.com/spf13/cobra"
 )
 

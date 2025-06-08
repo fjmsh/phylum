@@ -5,11 +5,11 @@ import (
 	"io"
 	"net/http"
 
+	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
+	"codeberg.org/shroff/phylum/server/internal/api/serve"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/api/authenticator"
-	"github.com/shroff/phylum/server/internal/api/serve"
-	"github.com/shroff/phylum/server/internal/core"
 )
 
 var errGetCollectionContents = core.NewError(http.StatusBadRequest, "resource_is_collection", "Cannot get contents of collection")

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/shroff/phylum/server/internal/db/migrations"
+	"codeberg.org/shroff/phylum/server/internal/db/migrations"
 	"github.com/sirupsen/logrus"
 )
 

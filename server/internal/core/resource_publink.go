@@ -3,9 +3,9 @@ package core
 import (
 	"strings"
 
+	"codeberg.org/shroff/phylum/server/internal/crypt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/crypt"
 )
 
 func (f filesystem) CreatePublink(r Resource, id, password string, expires pgtype.Timestamp, accessLimit int) error {

@@ -1,4 +1,4 @@
-module github.com/shroff/phylum/server
+module codeberg.org/shroff/phylum/server
 
 go 1.23.0
 

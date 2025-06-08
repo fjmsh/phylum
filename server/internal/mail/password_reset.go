@@ -1,6 +1,6 @@
 package mail
 
-import "github.com/shroff/phylum/server/internal/core"
+import "codeberg.org/shroff/phylum/server/internal/core"
 
 type ResetPasswordParams struct {
 	Name string

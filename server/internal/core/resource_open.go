@@ -5,11 +5,11 @@ import (
 	"hash"
 	"io"
 
+	"codeberg.org/shroff/phylum/server/internal/jobs"
+	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/shroff/phylum/server/internal/jobs"
-	"github.com/shroff/phylum/server/internal/storage"
 )
 
 func (f filesystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {

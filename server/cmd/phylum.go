@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/shroff/phylum/server/internal/command"
+	"codeberg.org/shroff/phylum/server/internal/command"
 )
 
 func main() {

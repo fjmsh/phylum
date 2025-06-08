@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"codeberg.org/shroff/phylum/server/internal/pubsub"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/shroff/phylum/server/internal/pubsub"
 	"github.com/sirupsen/logrus"
 )
 

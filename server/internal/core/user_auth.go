@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/crypt"
+	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/rand"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/crypt"
-	"github.com/shroff/phylum/server/internal/db"
-	"github.com/shroff/phylum/server/internal/rand"
 )
 
 const accessTokenLength = 16

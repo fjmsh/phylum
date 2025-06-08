@@ -1,8 +1,8 @@
 package core
 
 import (
+	"codeberg.org/shroff/phylum/server/internal/crypt"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/shroff/phylum/server/internal/crypt"
 )
 
 func (m manager) UpdateUserHome(user User, home pgtype.UUID) error {

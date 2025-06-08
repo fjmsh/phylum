@@ -4,8 +4,8 @@ import (
 	"errors"
 	"io"
 
+	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/google/uuid"
-	"github.com/shroff/phylum/server/internal/storage"
 )
 
 // VersionInfo represents a single version of a resource

@@ -1,6 +1,6 @@
 package mail
 
-import "github.com/shroff/phylum/server/internal/core"
+import "codeberg.org/shroff/phylum/server/internal/core"
 
 func SendWelcomeEmail(u core.User) error {
 	email := emails["welcome"]
