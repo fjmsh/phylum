@@ -126,10 +126,10 @@ func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, 
 	}
 
 	code := http.StatusOK
-	size := int(version.Size)
-	ranges, err := parseRange(rangeReq, size)
+	contentLength := int(version.Size)
+	ranges, err := parseRange(rangeReq, contentLength)
 	if err != nil {
-		w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", size))
+		w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", contentLength))
 		http.Error(w, err.Error(), http.StatusRequestedRangeNotSatisfiable)
 		return
 	}
@@ -148,11 +148,11 @@ func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, 
 		// does not request multiple parts might not support
 		// multipart responses."
 		ra := ranges[0]
-		size = ra.length
+		contentLength = ra.length
 		reader, err = version.OpenRead(ra.start, ra.length)
 		if err == nil {
 			code = http.StatusPartialContent
-			w.Header().Set("Content-Range", ra.contentRange(size))
+			w.Header().Set("Content-Range", ra.contentRange(int(version.Size)))
 		} else if errors.Is(err, storage.ErrRangeNotSupported) {
 			err = nil
 		}
@@ -166,11 +166,11 @@ func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, 
 	}
 
 	w.Header().Set("Accept-Ranges", "bytes")
-	w.Header().Set("Content-Length", strconv.Itoa(size))
+	w.Header().Set("Content-Length", strconv.Itoa(contentLength))
 	w.WriteHeader(code)
 
 	if r.Method != "HEAD" {
-		io.CopyN(w, reader, int64(size))
+		io.CopyN(w, reader, int64(contentLength))
 	}
 }
 
