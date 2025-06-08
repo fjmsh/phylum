@@ -33,7 +33,7 @@ class ResourceVersionsView extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ...versions.map((v) => ListTile(
-                      title: Text(v.sha256.substring(0, 12)),
+                      title: Text(v.sha256.isEmpty ? 'Unknown' : v.sha256.substring(0, 12)),
                       subtitle: Text('${v.created.formatShort()} \u2022 ${v.size.formatForDisplay()}'),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,

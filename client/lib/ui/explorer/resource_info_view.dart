@@ -146,15 +146,17 @@ class ResourceInfoView extends StatelessWidget {
                     ListTile(
                       leading: const Icon(Icons.shield),
                       title: const Text('SHA-256'),
-                      onTap: () {
-                        Clipboard.setData(ClipboardData(text: latestVersion.sha256));
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text('SHA-256 checksum copied to clipboard'),
-                          duration: const Duration(seconds: 2),
-                        ));
-                      },
+                      onTap: latestVersion.sha256.isEmpty
+                          ? null
+                          : () {
+                              Clipboard.setData(ClipboardData(text: latestVersion.sha256));
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text('SHA-256 checksum copied to clipboard'),
+                                duration: const Duration(seconds: 2),
+                              ));
+                            },
                       subtitle: Text(
-                        latestVersion.sha256.substring(0, 12),
+                        latestVersion.sha256.isEmpty ? 'Unknown' : latestVersion.sha256.substring(0, 12),
                         maxLines: 1,
                         softWrap: false,
                         overflow: TextOverflow.fade,

@@ -38,7 +38,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
         'path': '$parent:$resourceName',
         'id': resourceId,
         'conflict': conflictResolution.toString(),
-        'sha256': '', // TODO: compute and send
+        // 'sha256': '', // TODO: compute and send
       };
 
   @override
@@ -57,7 +57,7 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
           created: timestamp,
           size: size,
           mimeType: contentType,
-          sha256: '<unknown>',
+          sha256: '',
         ),
         if (deletedId != null)
           UpdateResourceDeletedChange(
