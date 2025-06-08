@@ -11,6 +11,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/command/admin"
 	"codeberg.org/shroff/phylum/server/internal/command/fs"
 	"codeberg.org/shroff/phylum/server/internal/command/serve"
+	"codeberg.org/shroff/phylum/server/internal/command/user"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/crypt"
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -62,6 +63,12 @@ func SetupCommand() {
 
 	uuid.EnableRandPool()
 	cmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		if cmd.Name() == "serve" {
+			logrus.SetLevel(logrus.InfoLevel)
+		} else {
+			logrus.SetLevel(logrus.WarnLevel)
+		}
+
 		dir, _ := cmd.Flags().GetString("workdir")
 		if dir != "" && dir != "." {
 			logrus.Info("Changing directory to " + dir)
@@ -124,6 +131,7 @@ func SetupCommand() {
 	cmd.AddCommand(
 		admin.SetupCommand(),
 		fs.SetupCommand(),
+		user.SetupCommand(),
 		serve.SetupCommand(),
 	)
 	cmd.AddGroup(&cobra.Group{ID: "misc", Title: "Misc"})

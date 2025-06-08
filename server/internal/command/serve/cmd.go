@@ -61,7 +61,7 @@ func SetupCommand() *cobra.Command {
 
 		err := jobs.Initialize(context.Background(), db.Pool())
 		if err != nil {
-			logrus.Fatal("Failed to initializat jobs: " + err.Error())
+			logrus.Fatal("Failed to initialize jobs: " + err.Error())
 		}
 		setupTrashCompactor()
 
