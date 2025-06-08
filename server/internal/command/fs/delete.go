@@ -8,11 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setupRmCommand() *cobra.Command {
+func setupDeleteCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "rm <path>",
-		Short: "Delete Resource",
-		Args:  cobra.ExactArgs(1),
+		Use:     "delete <path>",
+		Aliases: []string{"rm"},
+		Short:   "Delete Resource",
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			pathOrUUID := args[0]

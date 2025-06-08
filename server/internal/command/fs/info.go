@@ -15,10 +15,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setupLsCommand() *cobra.Command {
+func setupInfoCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "ls <path>",
-		Short: "Print Resource Details",
+		Use:     "info <path>",
+		Aliases: []string{"ls"},
+		Short:   "Print Resource Details",
 		Long: `Prints all relevant details about a resource.
 
 Columns for children:

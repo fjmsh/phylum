@@ -10,11 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setupCpCommand() *cobra.Command {
+func setupCopyCommand() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "cp <src> <dest>",
-		Short: "Copy Resource",
-		Args:  cobra.ExactArgs(2),
+		Use:     "copy <src> <dest>",
+		Aliases: []string{"cp"},
+		Short:   "Copy Resource",
+		Args:    cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			f := common.UserFileSystem(cmd)
 			srcPath := args[0]
