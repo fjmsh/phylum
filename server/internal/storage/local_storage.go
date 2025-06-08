@@ -31,6 +31,17 @@ func createLocalBackend(name string, params map[string]string) (LocalBackend, er
 	if err := os.MkdirAll(l.root, 0700); err != nil {
 		return nil, errors.New("failed to create root directory: " + err.Error())
 	}
+	if entries, err := os.ReadDir(l.root); err != nil {
+		return nil, err
+	} else {
+		for _, e := range entries {
+			if strings.HasPrefix(e.Name(), "upload-") {
+				if err := os.Remove(e.Name()); err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
 
 	return l, nil
 }
@@ -51,7 +62,7 @@ func (l localStorage) OpenRead(name string, start, length int) (io.ReadCloser, e
 }
 
 func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
-	f, err := os.CreateTemp(tempDir, "phylum-*")
+	f, err := os.CreateTemp(l.root, "upload-*")
 	if err != nil {
 		return nil, err
 	}
@@ -60,29 +71,7 @@ func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
 		if err != nil {
 			return err
 		}
-		if err := os.Rename(f.Name(), l.path(name)); err != nil {
-			if strings.Contains(err.Error(), "cross-device link") {
-				in, err := os.Open(f.Name())
-				if err != nil {
-					return err
-				}
-				defer in.Close()
-
-				out, err := os.OpenFile(l.path(name), os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0700)
-				if err != nil {
-					return err
-				}
-				_, copyErr := io.Copy(out, in)
-				closeErr := out.Close()
-				if copyErr != nil {
-					return copyErr
-				}
-				return closeErr
-			} else {
-				return err
-			}
-		}
-		return nil
+		return os.Rename(f.Name(), l.path(name))
 	}}, nil
 }
 
