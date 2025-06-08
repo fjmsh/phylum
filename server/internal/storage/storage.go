@@ -39,7 +39,7 @@ func Initialize(db db.Handler) error {
 
 	}
 
-	tempDir := Cfg.Temp
+	tempDir = Cfg.Temp
 	if !strings.HasPrefix(Cfg.Temp, string(os.PathSeparator)) {
 		tempDir = filepath.Join(Cfg.Root, tempDir)
 	}

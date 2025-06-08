@@ -56,11 +56,33 @@ func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
 		return nil, err
 	}
 	return &callbackWriteCloser{dest: f, closeCallback: func(err error) error {
+		defer os.Remove(f.Name())
 		if err != nil {
-			os.Remove(f.Name())
 			return err
 		}
-		return os.Rename(f.Name(), l.path(name))
+		if err := os.Rename(f.Name(), l.path(name)); err != nil {
+			if strings.Contains(err.Error(), "cross-device link") {
+				in, err := os.Open(f.Name())
+				if err != nil {
+					return err
+				}
+				defer in.Close()
+
+				out, err := os.OpenFile(l.path(name), os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0700)
+				if err != nil {
+					return err
+				}
+				_, copyErr := io.Copy(out, in)
+				closeErr := out.Close()
+				if copyErr != nil {
+					return copyErr
+				}
+				return closeErr
+			} else {
+				return err
+			}
+		}
+		return nil
 	}}, nil
 }
 
