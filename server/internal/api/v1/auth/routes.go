@@ -7,7 +7,9 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/my"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
+	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
 )
@@ -42,10 +44,9 @@ func handlePasswordAuth(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
 	}
 
-	userManager := core.UserManagerFromContext(c.Request.Context())
-	if user, err := userManager.VerifyUserPassword(params.Email, params.Password); err != nil {
+	if user, err := auth.VerifyUserPassword(c.Request.Context(), params.Email, params.Password); err != nil {
 		panic(err)
-	} else if token, err := userManager.CreateAccessToken(user); err != nil {
+	} else if token, err := auth.CreateAccessToken(c.Request.Context(), user); err != nil {
 		panic(err)
 	} else if bootstrap, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
 		panic(err)
@@ -75,7 +76,7 @@ func handleRequestPasswordReset(c *gin.Context) {
 		panic(err)
 	}
 
-	if token, err := userManager.CreateResetToken(u); err != nil {
+	if token, err := auth.CreateResetToken(db.Get(c.Request.Context()), u); err != nil {
 		panic(err)
 	} else {
 		go func() {
@@ -95,9 +96,9 @@ func handleResetPassword(c *gin.Context) {
 	userManager := core.UserManagerFromContext(c.Request.Context())
 	if user, err := userManager.UserByEmail(params.Email); err != nil {
 		panic(err)
-	} else if err := userManager.ResetUserPassword(user, params.Token, params.Password); err != nil {
+	} else if err := auth.ResetUserPassword(db.Get(c.Request.Context()), user, params.Token, params.Password); err != nil {
 		panic(err)
-	} else if token, err := userManager.CreateAccessToken(user); err != nil {
+	} else if token, err := auth.CreateAccessToken(c.Request.Context(), user); err != nil {
 		panic(err)
 	} else if bootstrap, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
 		panic(err)

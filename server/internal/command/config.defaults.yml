@@ -13,22 +13,26 @@ storage:
   
 user:
   password:
-    length: 12
-    lower: 1
-    upper: 1
-    numeric: 1
-    symbols: 1
   basedir: /home
   permission: 0x10    # Invite users
 
-crypt:
-  hash: argon2
-  argon2: 
-    memory: 2048
-    iterations: 6
-    parallelism: 4
-    salt: 32
-    key: 32
+auth:
+  password:
+    backend: crypt
+    crypt:
+      hash: argon2
+      argon2: 
+        memory: 2048
+        iterations: 6
+        parallelism: 4
+        salt: 32
+        key: 32
+    requirements:
+      length: 12
+      lower: 1
+      upper: 1
+      numeric: 1
+      symbols: 1
 
 server:
   host:

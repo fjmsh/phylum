@@ -91,17 +91,9 @@ type UserManager interface {
 	UserEmailByID(id int) (string, error)
 	UserHome(email string) (pgtype.UUID, error)
 
-	// user_auth.go
-	VerifyUserPassword(email, password string) (User, error)
-	CreateAccessToken(user User) (string, error)
-	ReadAccessToken(accessToken string) (User, error)
-	CreateResetToken(user User) (string, error)
-	ResetUserPassword(user User, token, password string) error
-
 	// user_update.go
 	UpdateUserHome(user User, home pgtype.UUID) error
 	UpdateUserName(user User, name string) error
-	UpdateUserPassword(user User, password string) error
 	GrantUserPermissions(user User, permissions UserPermissions) error
 	RevokeUserPermissions(user User, permissions UserPermissions) error
 

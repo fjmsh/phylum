@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	webdav "codeberg.org/shroff/phylum/server/internal/api/webdav/impl"
+	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -44,7 +45,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 	if email, pass, ok := c.Request.BasicAuth(); ok {
 		ctx := c.Request.Context()
 		userManager := core.UserManagerFromContext(ctx)
-		if u, err := userManager.VerifyUserPassword(email, pass); err == nil {
+		if u, err := auth.VerifyUserPassword(ctx, email, pass); err == nil {
 			authSuccess = true
 			root := c.Param("root")
 			f = u.OpenFileSystem(ctx)
@@ -65,7 +66,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 				c.AbortWithStatus(http.StatusNotFound)
 				return
 			}
-		} else if !errors.Is(err, core.ErrCredentialsInvalid) {
+		} else if !errors.Is(err, auth.ErrCredentialsInvalid) {
 			panic(err)
 		}
 	}

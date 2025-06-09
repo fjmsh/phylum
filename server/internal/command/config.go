@@ -1,9 +1,9 @@
 package command
 
 import (
+	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/command/serve"
 	"codeberg.org/shroff/phylum/server/internal/core"
-	"codeberg.org/shroff/phylum/server/internal/crypt"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
 	"codeberg.org/shroff/phylum/server/internal/storage"
@@ -16,5 +16,5 @@ type Config struct {
 	Server  serve.Config   `koanf:"server"`
 	Mail    mail.Config    `koanf:"mail"`
 	User    core.Config    `koanf:"user"`
-	Crypt   crypt.Config   `koanf:"crypt"`
+	Auth    auth.Config    `koanf:"auth"`
 }

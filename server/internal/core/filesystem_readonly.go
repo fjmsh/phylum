@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"codeberg.org/shroff/phylum/server/internal/crypt"
+	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"

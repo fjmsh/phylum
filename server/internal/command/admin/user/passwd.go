@@ -6,7 +6,9 @@ import (
 	"os"
 	"syscall"
 
+	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -53,7 +55,7 @@ func setupPasswdCommand() *cobra.Command {
 				}
 			}
 
-			err = core.UserManagerFromContext(context.Background()).UpdateUserPassword(u, password)
+			err = auth.UpdateUserPassword(db.Get(context.Background()), u, password)
 			if err != nil {
 				fmt.Println("could not add user: " + err.Error())
 				os.Exit(1)

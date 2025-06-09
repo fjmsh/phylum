@@ -8,12 +8,13 @@ import (
 	"path"
 	"strings"
 
+	"codeberg.org/shroff/phylum/server/internal/auth"
+	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"codeberg.org/shroff/phylum/server/internal/command/admin"
 	"codeberg.org/shroff/phylum/server/internal/command/fs"
 	"codeberg.org/shroff/phylum/server/internal/command/serve"
 	"codeberg.org/shroff/phylum/server/internal/command/user"
 	"codeberg.org/shroff/phylum/server/internal/core"
-	"codeberg.org/shroff/phylum/server/internal/crypt"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
 	"codeberg.org/shroff/phylum/server/internal/storage"
@@ -117,7 +118,9 @@ func SetupCommand() {
 		serve.Cfg = cfg.Server
 		mail.Cfg = cfg.Mail
 		core.Cfg = cfg.User
-		crypt.Cfg = cfg.Crypt
+		auth.Cfg = cfg.Auth
+		crypt.Cfg = cfg.Auth.Password.Crypt
+
 		if err := storage.Initialize(db.Get(context.Background())); err != nil {
 			logrus.Fatal("Failed to initialize storage: " + err.Error())
 		}

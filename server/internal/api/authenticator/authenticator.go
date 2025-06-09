@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
 )
@@ -41,11 +42,10 @@ func Require(c *gin.Context) {
 }
 
 func extractUserDetails(c *gin.Context) (core.User, error) {
-	userManager := core.UserManagerFromContext(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		if cookie, err := c.Request.Cookie("auth_token"); err == nil {
 			token := cookie.Value
-			if u, err := userManager.ReadAccessToken(token); err == nil {
+			if u, err := auth.ReadAccessToken(c.Request.Context(), token); err == nil {
 				return u, nil
 			} else {
 				return core.User{}, err
@@ -54,16 +54,16 @@ func extractUserDetails(c *gin.Context) (core.User, error) {
 			return core.User{}, err
 		}
 		return core.User{}, errAuthRequired
-	} else if auth, ok := checkAuthHeader(header, "basic"); ok {
-		if email, password, ok := decodeBasicAuth(auth); ok {
-			if u, err := userManager.VerifyUserPassword(email, password); err == nil {
+	} else if authHeader, ok := checkAuthHeader(header, "basic"); ok {
+		if email, password, ok := decodeBasicAuth(authHeader); ok {
+			if u, err := auth.VerifyUserPassword(c.Request.Context(), email, password); err == nil {
 				return u, nil
 			} else {
 				return core.User{}, err
 			}
 		}
 	} else if token, ok := checkAuthHeader(header, "bearer"); ok {
-		if u, err := userManager.ReadAccessToken(token); err == nil {
+		if u, err := auth.ReadAccessToken(c.Request.Context(), token); err == nil {
 			return u, nil
 		} else {
 			return core.User{}, err

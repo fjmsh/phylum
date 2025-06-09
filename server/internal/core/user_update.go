@@ -1,7 +1,6 @@
 package core
 
 import (
-	"codeberg.org/shroff/phylum/server/internal/crypt"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -17,22 +16,6 @@ func (m manager) UpdateUserName(user User, name string) error {
 	const q = "UPDATE users SET name = $2::TEXT, modified = NOW() WHERE id = $1::INT"
 	if _, err := m.db.Exec(q, user.ID, name); err != nil {
 		return err
-	}
-	return nil
-}
-
-func (m manager) UpdateUserPassword(user User, password string) error {
-	if err := checkPasswordStrength(password); err != nil {
-		return err
-	}
-
-	const q = "UPDATE users SET password_hash = $2::TEXT, modified = NOW() WHERE id = $1::INT"
-	if hash, err := crypt.Generate(password); err != nil {
-		return err
-	} else {
-		if _, err := m.db.Exec(q, user.ID, hash); err != nil {
-			return err
-		}
 	}
 	return nil
 }

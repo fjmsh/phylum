@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/spf13/cobra"
 )
@@ -22,7 +24,7 @@ func setupPwresetResetCommand() *cobra.Command {
 			if user, err := manager.UserByEmail(email); err != nil {
 				fmt.Println("unable to find user" + email + ": " + err.Error())
 				os.Exit(1)
-			} else if token, err := manager.CreateResetToken(user); err != nil {
+			} else if token, err := auth.CreateResetToken(db.Get(context.Background()), user); err != nil {
 				fmt.Println("unable to create reset token: " + err.Error())
 				os.Exit(1)
 			} else {

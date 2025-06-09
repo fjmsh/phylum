@@ -3,7 +3,7 @@ package core
 import (
 	"strings"
 
-	"codeberg.org/shroff/phylum/server/internal/crypt"
+	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )

@@ -137,19 +137,3 @@ RETURNING id, email, name, home, permissions`
 		return user, err
 	}
 }
-
-func (m manager) userPasswordHashByEmail(email string) (user User, passwordHash string, err error) {
-	const q = "SELECT id, email, name, home, permissions, password_hash FROM users WHERE email = $1"
-	row := m.db.QueryRow(q, strings.ToLower(email))
-	err = row.Scan(
-		&user.ID,
-		&user.Email,
-		&user.Name,
-		&user.Home,
-		&user.Permissions,
-		&passwordHash)
-	if Is(err, pgx.ErrNoRows) {
-		err = ErrUserNotFound
-	}
-	return
-}
