@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"strings"
 	"time"
@@ -9,15 +11,14 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
-	"codeberg.org/shroff/phylum/server/internal/rand"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var Cfg Config
 
-const accessTokenLength = 16
-const resetTokenLength = 64
+const apiTokenLength = 32
+const resetTokenLength = 24
 const resetTokenDuration = 10 * time.Minute
 
 var accessTokenValidity = pgtype.Interval{
@@ -146,7 +147,7 @@ func updateUserPassword(db db.Handler, userID int32, password string) error {
 func insertAccessToken(db db.Handler, userID int32) (string, error) {
 	const q = `INSERT INTO access_tokens(id, expires, user_id) VALUES ($1::TEXT, NOW() + $2::INTERVAL, $3::INT)`
 
-	token := rand.GenerateRandomString(accessTokenLength)
+	token := generateRandomString(apiTokenLength)
 	if _, err := db.Exec(q, token, accessTokenValidity, userID); err != nil {
 		return "", err
 	} else {
@@ -158,7 +159,7 @@ func insertResetToken(db db.Handler, userID int32) (string, error) {
 	const q = `INSERT INTO reset_tokens(user_id, token, expires)
 VALUES (@user_id::INT, @token::TEXT, @expires::TIMESTAMP)
 ON CONFLICT(user_id) DO UPDATE SET token = @token::TEXT, expires = @expires::TIMESTAMP`
-	token := rand.GenerateRandomString(resetTokenLength)
+	token := generateRandomString(resetTokenLength)
 
 	args := pgx.NamedArgs{
 		"user_id": userID,
@@ -203,4 +204,10 @@ func userPasswordHashByEmail(db db.Handler, email string) (user core.User, passw
 		err = ErrCredentialsInvalid
 	}
 	return
+}
+
+func generateRandomString(n int) string {
+	b := make([]byte, n*3/4)
+	rand.Read(b)
+	return base64.URLEncoding.EncodeToString(b)
 }
