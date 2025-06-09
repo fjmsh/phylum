@@ -6,6 +6,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
 )
@@ -27,14 +28,12 @@ func handleInviteRequest(c *gin.Context) {
 		}
 	}
 
-	userManager := core.UserManagerFromContext(c.Request.Context())
 	u := authenticator.GetUser(c)
-
 	if u.Permissions&core.PermissionUsersInvite == 0 {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to invite users"))
 	}
 
-	if user, err := userManager.CreateUser(params.Email, params.Name, params.NoCreateHome); err != nil {
+	if user, err := core.CreateUser(db.Get(c.Request.Context()), params.Email, params.Name, params.NoCreateHome); err != nil {
 		panic(err)
 	} else {
 		if !params.NoSendEmail {

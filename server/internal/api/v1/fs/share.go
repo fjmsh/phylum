@@ -4,6 +4,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,7 +30,7 @@ func handleShareRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	user, err := core.UserManagerFromContext(c).UserByEmail(params.Email)
+	user, err := core.UserByEmail(db.Get(c.Request.Context()), params.Email)
 	if err != nil {
 		panic(err)
 	}

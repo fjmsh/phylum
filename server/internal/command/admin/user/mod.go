@@ -18,7 +18,7 @@ func setupModCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]
-			u, err := core.UserManagerFromContext(context.Background()).UserByEmail(email)
+			u, err := core.UserByEmail(db.Get(context.Background()), email)
 			if err != nil {
 				fmt.Println("could not update user '" + email + "': " + err.Error())
 				os.Exit(1)
@@ -42,14 +42,13 @@ func setupModCommand() *cobra.Command {
 			}
 
 			err = db.Get(context.Background()).RunInTx(func(db db.Handler) error {
-				m := core.UserManagerFromDB(db)
 				if name != "" {
-					if err := m.UpdateUserName(u, name); err != nil {
+					if err := core.UpdateUserName(db, u, name); err != nil {
 						return err
 					}
 				}
 				if homeID.Valid {
-					if err := m.UpdateUserHome(u, homeID); err != nil {
+					if err := core.UpdateUserHome(db, u, homeID); err != nil {
 						return err
 					}
 				}

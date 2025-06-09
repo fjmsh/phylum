@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/spf13/cobra"
 )
 
@@ -17,8 +18,8 @@ func setupGrantCommand() *cobra.Command {
 		Short: "Grant Permissions",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			userManager := core.UserManagerFromContext(context.Background())
-			u, err := userManager.UserByEmail(args[0])
+			db := db.Get(context.Background())
+			u, err := core.UserByEmail(db, args[0])
 			if err != nil {
 				fmt.Println("unable to find user :" + err.Error())
 				os.Exit(1)
@@ -39,7 +40,7 @@ func setupGrantCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			userManager.GrantUserPermissions(u, p)
+			core.GrantUserPermissions(db, u, p)
 			if err != nil {
 				fmt.Println("unable to update permissions:" + err.Error())
 				os.Exit(1)
@@ -54,8 +55,8 @@ func setupRevokeCommand() *cobra.Command {
 		Short: "Revoke Permissions",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			userManager := core.UserManagerFromContext(context.Background())
-			u, err := userManager.UserByEmail(args[0])
+			db := db.Get(context.Background())
+			u, err := core.UserByEmail(db, args[0])
 			if err != nil {
 				fmt.Println("unable to find user :" + err.Error())
 				os.Exit(1)
@@ -76,7 +77,7 @@ func setupRevokeCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			userManager.RevokeUserPermissions(u, p)
+			core.RevokeUserPermissions(db, u, p)
 			if err != nil {
 				fmt.Println("unable to update permissions:" + err.Error())
 				os.Exit(1)

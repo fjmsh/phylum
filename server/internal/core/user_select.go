@@ -1,7 +1,6 @@
 package core
 
 import (
-	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -14,26 +13,9 @@ import (
 
 var ErrUserNotFound = NewError(http.StatusNotFound, "user_not_found", "no such user")
 
-type manager struct {
-	db db.Handler
-}
-
-func (m manager) withDb(db db.Handler) manager {
-	return manager{db: db}
-}
-
-func UserManagerFromContext(ctx context.Context) UserManager {
-	return manager{db: db.Get(ctx)}
-}
-
-func UserManagerFromDB(db db.Handler) UserManager {
-	return manager{db: db}
-}
-
-func (m manager) CreateUser(email, name string, noCreateHome bool) (User, error) {
+func CreateUser(d db.Handler, email, name string, noCreateHome bool) (User, error) {
 	var user User
-	err := m.db.RunInTx(func(db db.Handler) error {
-		m := m.withDb(db)
+	err := d.RunInTx(func(db db.Handler) error {
 		var err error
 		var homeID pgtype.UUID
 		var home Resource
@@ -48,7 +30,7 @@ func (m manager) CreateUser(email, name string, noCreateHome bool) (User, error)
 			homeID = pgtype.UUID{Bytes: home.ID(), Valid: true}
 		}
 
-		user, err = m.insertUser(email, name, homeID)
+		user, err = insertUser(db, email, name, homeID)
 		if err != nil {
 			return err
 		}
@@ -63,32 +45,28 @@ func (m manager) CreateUser(email, name string, noCreateHome bool) (User, error)
 	return user, err
 }
 
-func (m manager) ListUsers(since int64) ([]User, error) {
+func ListUsers(db db.Handler, since int64) ([]User, error) {
 	sb := strings.Builder{}
 	sb.WriteString("SELECT id, email, name, home, permissions FROM users")
 	if since > 0 {
 		sb.WriteString(" WHERE modified >= @since::TIMESTAMP")
 	}
-	if rows, err := m.db.Query(sb.String(), pgx.NamedArgs{"since": time.UnixMilli(since).UTC()}); err != nil {
+	if rows, err := db.Query(sb.String(), pgx.NamedArgs{"since": time.UnixMilli(since).UTC()}); err != nil {
 		return nil, err
 	} else {
 		return pgx.CollectRows(rows, scanUser)
 	}
 }
 
-func (m manager) UserEmailByID(id int) (string, error) {
+func UserEmailByID(db db.Handler, id int) (string, error) {
 	const q = "SELECT email FROM users WHERE id = $1"
-	row := m.db.QueryRow(q, id)
+	row := db.QueryRow(q, id)
 	var email string
 	if err := row.Scan(&email); err != nil {
 		return "", err
 	} else {
 		return email, nil
 	}
-}
-
-func (m manager) UserByEmail(email string) (User, error) {
-	return UserByEmail(m.db, email)
 }
 
 func UserByEmail(db db.Handler, email string) (User, error) {
@@ -105,9 +83,9 @@ func UserByEmail(db db.Handler, email string) (User, error) {
 	}
 }
 
-func (m manager) UserHome(email string) (pgtype.UUID, error) {
+func UserHome(db db.Handler, email string) (pgtype.UUID, error) {
 	const q = "SELECT home FROM users WHERE email = $1"
-	row := m.db.QueryRow(q, strings.ToLower(email))
+	row := db.QueryRow(q, strings.ToLower(email))
 	var id pgtype.UUID
 	if err := row.Scan(&id); err == nil {
 		if !id.Valid {
@@ -122,12 +100,12 @@ func (m manager) UserHome(email string) (pgtype.UUID, error) {
 	}
 }
 
-func (m manager) insertUser(email, name string, home pgtype.UUID) (User, error) {
+func insertUser(db db.Handler, email, name string, home pgtype.UUID) (User, error) {
 	const q = ` INSERT INTO users(email, name, password_hash, home, permissions)
 VALUES ($1, $2, $3, $4, $5)
 RETURNING id, email, name, home, permissions`
 
-	if rows, err := m.db.Query(q, strings.ToLower(email), name, "", home, Cfg.Permisison); err != nil {
+	if rows, err := db.Query(q, strings.ToLower(email), name, "", home, Cfg.Permisison); err != nil {
 		return User{}, err
 	} else if user, err := pgx.CollectExactlyOneRow(rows, scanUser); err != nil {
 		if strings.Contains(err.Error(), "valid_email") {

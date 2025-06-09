@@ -4,6 +4,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
 )
 
@@ -49,7 +50,7 @@ func handleHomeRoute(c *gin.Context) {
 
 func handleSharedRoute(c *gin.Context) {
 	u := authenticator.GetUser(c)
-	shared, err := core.UserManagerFromContext(c.Request.Context()).SharedResources(u)
+	shared, err := core.SharedResources(db.Get(c.Request.Context()), u)
 	if err != nil {
 		panic(err)
 	}

@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -28,7 +29,7 @@ func scanBookmark(row pgx.CollectableRow) (Bookmark, error) {
 	return p, nil
 }
 
-func (m manager) AddBookmark(u User, resource Resource, name string) (Bookmark, error) {
+func AddBookmark(db db.Handler, u User, resource Resource, name string) (Bookmark, error) {
 	if name == "" {
 		name = resource.Name()
 	}
@@ -46,7 +47,7 @@ SET
     name = $3::TEXT
 RETURNING resource_id, name, dir, created`
 
-	if rows, err := m.db.Query(q, u.ID, resource.ID(), name, resource.Dir()); err != nil {
+	if rows, err := db.Query(q, u.ID, resource.ID(), name, resource.Dir()); err != nil {
 		return Bookmark{}, err
 	} else if bookmark, err := pgx.CollectExactlyOneRow(rows, scanBookmark); err != nil {
 		return Bookmark{}, err
@@ -55,13 +56,13 @@ RETURNING resource_id, name, dir, created`
 	}
 }
 
-func (m manager) RemoveBookmark(u User, id uuid.UUID) error {
+func RemoveBookmark(db db.Handler, u User, id uuid.UUID) error {
 	const q = "DELETE FROM bookmarks WHERE user_id = $1::INT AND resource_id = $2::UUID"
-	_, err := m.db.Exec(q, u.ID, id)
+	_, err := db.Exec(q, u.ID, id)
 	return err
 }
 
-func (m manager) ListBookmarks(u User, since int64) ([]Bookmark, error) {
+func ListBookmarks(db db.Handler, u User, since int64) ([]Bookmark, error) {
 	sb := strings.Builder{}
 	sb.WriteString(`SELECT resource_id, name, dir, created
 FROM bookmarks b
@@ -74,7 +75,7 @@ WHERE user_id = @user_id::INT
 	}
 	sb.WriteString("ORDER BY modified DESC")
 
-	if rows, err := m.db.Query(sb.String(), pgx.NamedArgs{"user_id": u.ID, "since": time.UnixMilli(since).UTC()}); err != nil {
+	if rows, err := db.Query(sb.String(), pgx.NamedArgs{"user_id": u.ID, "since": time.UnixMilli(since).UTC()}); err != nil {
 		return nil, err
 	} else if bookmarks, err := pgx.CollectRows(rows, scanBookmark); err != nil {
 		return nil, err

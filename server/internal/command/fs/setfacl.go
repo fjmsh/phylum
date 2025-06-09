@@ -8,6 +8,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/command/common"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/spf13/cobra"
 )
 
@@ -31,7 +32,7 @@ func setupSetfaclCommand() *cobra.Command {
 			}
 
 			email := args[1]
-			if user, err := core.UserManagerFromContext(context.Background()).UserByEmail(email); err != nil {
+			if user, err := core.UserByEmail(db.Get(context.Background()), email); err != nil {
 				fmt.Println("cannot update permissions for user '" + email + "': " + err.Error())
 				os.Exit(1)
 			} else {

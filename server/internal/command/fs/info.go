@@ -12,6 +12,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/command/common"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/spf13/cobra"
 )
 
@@ -145,7 +146,7 @@ type grant struct {
 func getUserEmail(s string) string {
 	if id, err := strconv.Atoi(s); err != nil {
 		return "[user " + s + "]"
-	} else if email, err := core.UserManagerFromContext(context.Background()).UserEmailByID(id); err != nil {
+	} else if email, err := core.UserEmailByID(db.Get(context.Background()), id); err != nil {
 		return "[user " + s + "]"
 	} else {
 		return email

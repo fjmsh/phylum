@@ -9,6 +9,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -64,7 +65,7 @@ func handleBookmarksAddRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	b, err := core.UserManagerFromContext(c.Request.Context()).AddBookmark(u, r, params.Name)
+	b, err := core.AddBookmark(db.Get(c.Request.Context()), u, r, params.Name)
 	if err != nil {
 		panic(err)
 	}
@@ -83,7 +84,7 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 	c.ShouldBind(&params)
 
 	u := authenticator.GetUser(c)
-	if err := core.UserManagerFromContext(c.Request.Context()).RemoveBookmark(u, params.ID); err != nil {
+	if err := core.RemoveBookmark(db.Get(c.Request.Context()), u, params.ID); err != nil {
 		panic(err)
 	}
 	c.JSON(200, gin.H{})
@@ -91,7 +92,7 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 
 func ListBookmarks(ctx context.Context, u core.User, since int64) ([]responses.Bookmark, error) {
 	var bookmarks []responses.Bookmark
-	if res, err := core.UserManagerFromContext(ctx).ListBookmarks(u, since); err != nil {
+	if res, err := core.ListBookmarks(db.Get(ctx), u, since); err != nil {
 		return bookmarks, err
 	} else {
 		bookmarks = make([]responses.Bookmark, len(res))

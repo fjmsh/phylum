@@ -7,6 +7,7 @@ import (
 	webdav "codeberg.org/shroff/phylum/server/internal/api/webdav/impl"
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -44,13 +45,12 @@ func (h *handler) HandleRequest(c *gin.Context) {
 	var f core.FileSystem
 	if email, pass, ok := c.Request.BasicAuth(); ok {
 		ctx := c.Request.Context()
-		userManager := core.UserManagerFromContext(ctx)
 		if u, err := auth.VerifyUserPassword(ctx, email, pass); err == nil {
 			authSuccess = true
 			root := c.Param("root")
 			f = u.OpenFileSystem(ctx)
 			if root[0] == '~' {
-				id, err := userManager.UserHome(root[1:])
+				id, err := core.UserHome(db.Get(c.Request.Context()), root[1:])
 				if err != nil {
 					if errors.Is(err, core.ErrUserNotFound) {
 						c.AbortWithStatus(http.StatusNotFound)

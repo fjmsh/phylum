@@ -25,8 +25,7 @@ func setupInviteCommand() *cobra.Command {
 
 			var u core.User
 			err := db.Get(context.Background()).RunInTx(func(db db.Handler) error {
-				userManager := core.UserManagerFromDB(db)
-				if user, err := userManager.CreateUser(email, name, noCreateHome); err != nil {
+				if user, err := core.CreateUser(db, email, name, noCreateHome); err != nil {
 					return err
 				} else {
 					u = user

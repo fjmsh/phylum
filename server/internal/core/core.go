@@ -85,23 +85,4 @@ type ReadFileSystem interface {
 
 // user_manager.go
 type UserManager interface {
-	CreateUser(email, name string, noCreateHome bool) (User, error)
-	ListUsers(since int64) ([]User, error)
-	UserByEmail(email string) (User, error)
-	UserEmailByID(id int) (string, error)
-	UserHome(email string) (pgtype.UUID, error)
-
-	// user_update.go
-	UpdateUserHome(user User, home pgtype.UUID) error
-	UpdateUserName(user User, name string) error
-	GrantUserPermissions(user User, permissions UserPermissions) error
-	RevokeUserPermissions(user User, permissions UserPermissions) error
-
-	// user_bookmarks.go
-	AddBookmark(u User, resource Resource, name string) (Bookmark, error)
-	RemoveBookmark(u User, id uuid.UUID) error
-	ListBookmarks(u User, since int64) ([]Bookmark, error)
-
-	// user_shared.go
-	SharedResources(u User) ([]Resource, error)
 }
