@@ -9,7 +9,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
-	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
 )
@@ -44,9 +43,10 @@ func handlePasswordAuth(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
 	}
 
-	if user, err := auth.VerifyUserPassword(c.Request.Context(), params.Email, params.Password); err != nil {
-		panic(err)
-	} else if token, err := auth.CreateAccessToken(c.Request.Context(), user); err != nil {
+	if user, token, err := auth.CreateAccessToken(c.Request.Context(), params.Email, params.Password); err != nil {
+		if errors.Is(err, auth.ErrCredentialsInvalid) {
+			err = core.NewError(http.StatusBadRequest, "missing_params", "Username or password invalid")
+		}
 		panic(err)
 	} else if bootstrap, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
 		panic(err)
@@ -66,21 +66,16 @@ func handleRequestPasswordReset(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
 	}
 
-	userManager := core.UserManagerFromContext(c.Request.Context())
-	u, err := userManager.UserByEmail(params.Email)
-	if errors.Is(err, core.ErrUserNotFound) {
-		c.JSON(200, gin.H{})
-		return
-	}
-	if err != nil {
-		panic(err)
-	}
-
-	if token, err := auth.CreateResetToken(db.Get(c.Request.Context()), u); err != nil {
+	if user, token, err := auth.CreateResetToken(c.Request.Context(), params.Email); err != nil {
+		// Do not indicate that there was an error if no user was found
+		if errors.Is(err, core.ErrUserNotFound) {
+			c.JSON(200, gin.H{})
+			return
+		}
 		panic(err)
 	} else {
 		go func() {
-			mail.SendPasswordResetEmail(u, token)
+			mail.SendPasswordResetEmail(user, token)
 		}()
 	}
 	c.JSON(200, gin.H{})
@@ -93,12 +88,7 @@ func handleResetPassword(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
 	}
 
-	userManager := core.UserManagerFromContext(c.Request.Context())
-	if user, err := userManager.UserByEmail(params.Email); err != nil {
-		panic(err)
-	} else if err := auth.ResetUserPassword(db.Get(c.Request.Context()), user, params.Token, params.Password); err != nil {
-		panic(err)
-	} else if token, err := auth.CreateAccessToken(c.Request.Context(), user); err != nil {
+	if user, token, err := auth.ResetUserPassword(c.Request.Context(), params.Email, params.Token, params.Password); err != nil {
 		panic(err)
 	} else if bootstrap, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
 		panic(err)

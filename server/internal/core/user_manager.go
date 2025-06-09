@@ -88,8 +88,12 @@ func (m manager) UserEmailByID(id int) (string, error) {
 }
 
 func (m manager) UserByEmail(email string) (User, error) {
+	return UserByEmail(m.db, email)
+}
+
+func UserByEmail(db db.Handler, email string) (User, error) {
 	const q = "SELECT id, email, name, home, permissions FROM users WHERE email = $1"
-	if rows, err := m.db.Query(q, strings.ToLower(email)); err != nil {
+	if rows, err := db.Query(q, strings.ToLower(email)); err != nil {
 		return User{}, err
 	} else if u, err := pgx.CollectExactlyOneRow(rows, scanUser); err != nil {
 		if Is(err, pgx.ErrNoRows) {
