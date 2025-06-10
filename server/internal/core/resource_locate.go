@@ -120,18 +120,20 @@ func (f filesystem) targetNameParentByPathWithRoot(path string, src Resource) (s
 	return name, parent, nil
 }
 
-func (f filesystem) childResourceByName(parentID uuid.UUID, name string) (Resource, error) {
-	const query = fullResourceQuery + "WHERE r.parent = @parent::UUID AND r.name = @name::TEXT AND r.deleted IS NULL"
+func (f filesystem) childResourceIDByName(parentID uuid.UUID, name string) (uuid.UUID, bool, error) {
+	const query = "SELECT id, dir FROM resources WHERE parent = @parent::UUID AND name = @name::TEXT AND deleted IS NULL"
 	args := pgx.NamedArgs{
-		"user_id": f.userID,
-		"parent":  parentID,
-		"name":    name,
+		"parent": parentID,
+		"name":   name,
 	}
-	if rows, err := f.db.Query(query, args); err != nil {
-		return Resource{}, err
-	} else {
-		return f.collectFullResource(rows)
+	row := f.db.QueryRow(query, args)
+	var id uuid.UUID
+	var dir bool
+	err := row.Scan(&id, &dir)
+	if Is(err, pgx.ErrNoRows) {
+		err = ErrResourceNotFound
 	}
+	return id, dir, err
 }
 
 func parseUUIDPrefix(path string) (pgtype.UUID, string, error) {

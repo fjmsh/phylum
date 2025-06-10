@@ -1,42 +1,17 @@
 package core
 
 import (
-	"errors"
 	"fmt"
 	"path"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
-
-func (f filesystem) softDeleteChild(r Resource, name string) (Resource, error) {
-	if !r.hasPermission(PermissionWrite) {
-		return Resource{}, ErrInsufficientPermissions
-	}
-	if r.deleted.Valid {
-		return Resource{}, ErrResourceDeleted
-	}
-
-	c, err := f.childResourceByName(r.ID(), name)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			err = ErrResourceNotFound
-		}
-		return Resource{}, err
-	}
-	if err := f.deleteRecursive(c.ID(), r.ID(), true); err != nil {
-		return Resource{}, err
-	}
-	r.deleted = pgtype.Timestamp{
-		Valid: true,
-		Time:  time.Now(),
-	}
-	return r, nil
-}
 
 func (f filesystem) DeleteRecursive(r Resource, softDelete bool) (Resource, error) {
 	if !r.parentID.Valid {
@@ -100,14 +75,14 @@ func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name str
 	if name == "" {
 		name = r.name
 	}
-	_, err = f.childResourceByName(p.id, name)
+	_, _, err = f.childResourceIDByName(p.id, name)
 	if autoRename && err == nil {
 		ext := path.Ext(name)
 		basename := name[:len(name)-len(ext)]
 		counter := 1
 		for {
 			name = fmt.Sprintf("%s (%d)%s", basename, counter, ext)
-			if _, err = f.childResourceByName(p.id, name); err == nil {
+			if _, _, err = f.childResourceIDByName(p.id, name); err == nil {
 				counter++
 			} else {
 				break
@@ -177,13 +152,82 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete bool) error
 	return err
 }
 
-func (f filesystem) softDeleteChildren(id, parent uuid.UUID) error {
-	err := f.runInTx(func(f filesystem) error {
-		var err error
-		if _, _, err = f.markDeleted(id, true, true); err != nil {
+func softDelete(d db.Handler, id uuid.UUID) error {
+	return d.RunInTx(func(db db.Handler) error {
+		// Select all descendants, not including deleted ones
+		_, _, q := selectResourceTree(id, false, false, false)
+
+		// Set modified and deleted
+		query, params, _ := q.
+			Update().
+			Set(
+				goqu.Record{
+					"modified": goqu.L("NOW()"),
+					"deleted":  goqu.L("NOW()"),
+				}).
+			ToSQL()
+
+		if _, err := db.Exec(query, params...); err != nil {
 			return err
 		}
+
 		// Add to trash
+		query, params, _ = pg.Insert(goqu.T("trash")).Cols("id").Vals(goqu.Vals{id}).ToSQL()
+		_, err := db.Exec(query, params...)
+		return err
+	})
+}
+
+func (f filesystem) hardDelete(id, parent uuid.UUID) error {
+	return f.runInTx(func(f filesystem) error {
+		// Select all descendants, including deleted resources
+		v := goqu.T("resource_versions").As("v")
+		r, _, q := selectResourceTree(id, false, true, false)
+
+		// Delete resources and versions from db, returning version ids
+		query, params, _ := q.
+			LeftJoin(v, goqu.On(r.Col("id").Eq(v.Col("resource_id")))).
+			Delete().
+			Returning(v.Col("id")).
+			ToSQL()
+
+		if rows, err := f.db.Query(query, params...); err != nil {
+			return err
+		} else if ids, err := pgx.CollectRows(rows, scanID); err != nil {
+			return err
+		} else if err := f.updateResourceModified(parent); err != nil {
+			return err
+		} else {
+			jobs.DeleteAllVersionContents(ids)
+		}
+		return nil
+	})
+}
+
+func scanID(row pgx.CollectableRow) (uuid.UUID, error) {
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+func (f filesystem) softDeleteChildren(id, parent uuid.UUID) error {
+	err := f.runInTx(func(f filesystem) error {
+		// Select non-deleted descendents excluding the tree root (id)
+		_, _, s := selectResourceTree(id, true, false, false)
+
+		// Mark deleted
+		q, params, _ := s.Update().
+			Set(
+				goqu.Record{
+					"modified": goqu.L("NOW()"),
+					"deleted":  goqu.L("NOW()"),
+				}).
+			ToSQL()
+		if _, err := f.db.Exec(q, params...); err != nil {
+			return err
+		}
+
+		// Add children to trash
 		insert := pg.
 			Insert(goqu.T("trash")).
 			Cols("id").

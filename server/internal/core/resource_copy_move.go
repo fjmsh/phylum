@@ -60,10 +60,14 @@ func (f filesystem) Move(r Resource, target string, conflictResolution ResourceB
 	var deleted = false
 	return res, deleted, f.runInTx(func(f filesystem) error {
 		if conflictResolution == ResourceBindConflictResolutionOverwrite || conflictResolution == ResourceBindConflictResolutionDelete {
-			if _, err := f.softDeleteChild(destParent, destName); err == nil {
-				deleted = true
-			} else if !errors.Is(err, ErrResourceNotFound) {
+			if id, _, err := f.childResourceIDByName(r.ID(), destName); err != nil {
+				if !errors.Is(err, ErrResourceNotFound) {
+					return err
+				}
+			} else if err := softDelete(f.db, id); err != nil {
 				return err
+			} else {
+				deleted = true
 			}
 		}
 		newParentID := pgtype.UUID{

@@ -156,8 +156,9 @@ func (f filesystem) createResource(
 		case ResourceBindConflictResolutionError:
 			err = ErrResourceNameConflict
 		case ResourceBindConflictResolutionEnsure:
-			res, err = f.childResourceByName(parent, name)
-			if err == nil && res.dir != dir {
+			var rDir bool
+			_, rDir, err = f.childResourceIDByName(parent, name)
+			if err == nil && rDir != dir {
 				err = ErrResourceNameConflict
 			}
 		case ResourceBindConflictResolutionRename:
@@ -187,15 +188,21 @@ func (f filesystem) createResource(
 				}
 			}
 		case ResourceBindConflictResolutionOverwrite:
-			res, err = f.childResourceByName(parent, name)
+			var rID uuid.UUID
+			var rDir bool
+			rID, rDir, err = f.childResourceIDByName(parent, name)
 			if err == nil {
 				deleted = true
-				if res.dir == dir {
+				if rDir == dir {
 					if dir {
-						err = f.softDeleteChildren(res.id, parent)
+						err = f.softDeleteChildren(rID, parent)
+					}
+					if err == nil {
+						// Repurpose existing resource
+						res, err = f.ResourceByID(rID)
 					}
 				} else {
-					err = f.deleteRecursive(res.id, parent, true)
+					err = softDelete(f.db, res.id)
 					if err == nil {
 						res, created, _, err = f.createResource(
 							id,
@@ -209,10 +216,11 @@ func (f filesystem) createResource(
 				}
 			}
 		case ResourceBindConflictResolutionDelete:
-			res, err = f.childResourceByName(parent, name)
+			var rID uuid.UUID
+			rID, _, err = f.childResourceIDByName(parent, name)
 			if err == nil {
 				deleted = true
-				err = f.deleteRecursive(res.id, parent, true)
+				err = softDelete(f.db, rID)
 				if err == nil {
 					res, created, _, err = f.createResource(
 						id,
