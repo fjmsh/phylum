@@ -61,7 +61,8 @@ class PasteFromClipboardIntent extends Intent {
 }
 
 class DeleteIntent extends Intent {
-  const DeleteIntent();
+  final bool permanent;
+  const DeleteIntent(this.permanent);
 }
 
 class RenameIntent extends Intent {
@@ -147,7 +148,8 @@ Map<ShortcutActivator, Intent> get appShortcuts => const {
       // Actions for selection
       SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
       SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
-      SingleActivator(LogicalKeyboardKey.delete): DeleteIntent(),
+      SingleActivator(LogicalKeyboardKey.delete): DeleteIntent(false),
+      SingleActivator(LogicalKeyboardKey.delete, shift: true): DeleteIntent(true),
       SingleActivator(LogicalKeyboardKey.keyC, control: true): CopyToClipboardIntent(false),
       SingleActivator(LogicalKeyboardKey.keyX, control: true): CopyToClipboardIntent(true),
       SingleActivator(LogicalKeyboardKey.keyE, control: true): RenameIntent(),

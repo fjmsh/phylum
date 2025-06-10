@@ -77,7 +77,8 @@ class ExplorerActions extends StatelessWidget {
         }),
         DeleteIntent: CallbackAction<DeleteIntent>(onInvoke: (i) {
           final selected = context.read<ExplorerState>().selected;
-          _deleteResources(context, selected);
+          final permanent = i.permanent || selected.every((r) => r.deleted != null);
+          _deleteResources(context, selected, permanent);
           return null;
         }),
         RenameIntent: CallbackAction<RenameIntent>(onInvoke: (i) async {
@@ -126,8 +127,7 @@ class ExplorerActions extends StatelessWidget {
     );
   }
 
-  void _deleteResources(BuildContext context, Iterable<Resource> resources) async {
-    final permanent = resources.every((r) => r.deleted != null);
+  void _deleteResources(BuildContext context, Iterable<Resource> resources, bool permanent) async {
     final account = context.read<PhylumAccount>();
     final confirm = await showAlertDialog(
           context,
