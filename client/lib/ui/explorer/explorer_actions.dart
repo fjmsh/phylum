@@ -127,10 +127,11 @@ class ExplorerActions extends StatelessWidget {
   }
 
   void _deleteResources(BuildContext context, Iterable<Resource> resources) async {
+    final permanent = resources.every((r) => r.deleted != null);
     final account = context.read<PhylumAccount>();
     final confirm = await showAlertDialog(
           context,
-          title: 'Delete selected items?',
+          title: permanent ? 'Permanently delete selected items?' : 'Delete selected items?',
           barrierDismissible: true,
           positiveText: 'YES',
           negativeText: 'NO',
@@ -139,7 +140,7 @@ class ExplorerActions extends StatelessWidget {
 
     if (!confirm) return;
     for (final r in resources) {
-      account.addAction(ResourceDeleteAction(r: r, timestamp: DateTime.now()));
+      account.addAction(ResourceDeleteAction(r: r, timestamp: DateTime.now(), permanent: permanent));
     }
   }
 }
