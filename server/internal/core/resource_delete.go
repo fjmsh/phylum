@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (f filesystem) deleteChildRecursive(r Resource, name string, softDelete bool) (Resource, error) {
+func (f filesystem) softDeleteChild(r Resource, name string) (Resource, error) {
 	if !r.hasPermission(PermissionWrite) {
 		return Resource{}, ErrInsufficientPermissions
 	}
@@ -28,7 +28,7 @@ func (f filesystem) deleteChildRecursive(r Resource, name string, softDelete boo
 		}
 		return Resource{}, err
 	}
-	if err := f.deleteRecursive(c.ID(), r.ID(), softDelete, false); err != nil {
+	if err := f.deleteRecursive(c.ID(), r.ID(), true); err != nil {
 		return Resource{}, err
 	}
 	r.deleted = pgtype.Timestamp{
@@ -52,7 +52,7 @@ func (f filesystem) DeleteRecursive(r Resource, softDelete bool) (Resource, erro
 	if err != nil {
 		return Resource{}, err
 	}
-	if err := f.deleteRecursive(r.ID(), r.parentID.Bytes, softDelete, false); err != nil {
+	if err := f.deleteRecursive(r.ID(), r.parentID.Bytes, softDelete); err != nil {
 		return Resource{}, err
 	}
 	if softDelete {
@@ -151,21 +151,16 @@ func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name str
 	return
 }
 
-func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRoot bool) error {
+func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete bool) error {
 	var ids uuid.UUIDs
 	err := f.runInTx(func(f filesystem) error {
 		var err error
-		if _, ids, err = f.markDeleted(id, softDelete, preserveRoot); err != nil {
+		if _, ids, err = f.markDeleted(id, softDelete, false); err != nil {
 			return err
 		}
 		if softDelete {
 			// Add to trash
-			insert := pg.Insert(goqu.T("trash")).Cols("id")
-			if preserveRoot {
-				insert = insert.FromQuery(pg.From("resources").Select("id").Where(goqu.C("parent").Eq(id)))
-			} else {
-				insert = insert.Vals(goqu.Vals{id})
-			}
+			insert := pg.Insert(goqu.T("trash")).Cols("id").Vals(goqu.Vals{id})
 			q, args, _ := insert.ToSQL()
 			if _, err := f.db.Exec(q, args...); err != nil {
 				return err
@@ -178,6 +173,31 @@ func (f filesystem) deleteRecursive(id, parent uuid.UUID, softDelete, preserveRo
 	if err == nil && !softDelete {
 		jobs.DeleteAllVersionContents(ids)
 	}
+
+	return err
+}
+
+func (f filesystem) softDeleteChildren(id, parent uuid.UUID) error {
+	err := f.runInTx(func(f filesystem) error {
+		var err error
+		if _, _, err = f.markDeleted(id, true, true); err != nil {
+			return err
+		}
+		// Add to trash
+		insert := pg.
+			Insert(goqu.T("trash")).
+			Cols("id").
+			FromQuery(pg.
+				From("resources").
+				Select("id").
+				Where(goqu.C("parent").Eq(id)))
+		q, args, _ := insert.ToSQL()
+		if _, err := f.db.Exec(q, args...); err != nil {
+			return err
+		}
+
+		return f.updateResourceModified(parent)
+	})
 
 	return err
 }

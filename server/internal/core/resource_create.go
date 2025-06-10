@@ -192,10 +192,10 @@ func (f filesystem) createResource(
 				deleted = true
 				if res.dir == dir {
 					if dir {
-						err = f.deleteRecursive(res.id, parent, true, true)
+						err = f.softDeleteChildren(res.id, parent)
 					}
 				} else {
-					err = f.deleteRecursive(res.id, parent, true, false)
+					err = f.deleteRecursive(res.id, parent, true)
 					if err == nil {
 						res, created, _, err = f.createResource(
 							id,
@@ -212,7 +212,7 @@ func (f filesystem) createResource(
 			res, err = f.childResourceByName(parent, name)
 			if err == nil {
 				deleted = true
-				err = f.deleteRecursive(res.id, parent, true, false)
+				err = f.deleteRecursive(res.id, parent, true)
 				if err == nil {
 					res, created, _, err = f.createResource(
 						id,

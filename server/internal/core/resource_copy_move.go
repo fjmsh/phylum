@@ -60,7 +60,7 @@ func (f filesystem) Move(r Resource, target string, conflictResolution ResourceB
 	var deleted = false
 	return res, deleted, f.runInTx(func(f filesystem) error {
 		if conflictResolution == ResourceBindConflictResolutionOverwrite || conflictResolution == ResourceBindConflictResolutionDelete {
-			if _, err := f.deleteChildRecursive(destParent, destName, true); err == nil {
+			if _, err := f.softDeleteChild(destParent, destName); err == nil {
 				deleted = true
 			} else if !errors.Is(err, ErrResourceNotFound) {
 				return err
