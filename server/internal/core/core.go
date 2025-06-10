@@ -73,7 +73,7 @@ type FileSystem interface {
 	// trash.go
 	TrashList(cursor string, n uint) ([]Resource, string, error)
 	TrashSummary() (int, int, error)
-	TrashEmpty() (int, error)
+	TrashEmpty() error
 }
 
 // filesystem_readonly.go

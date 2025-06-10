@@ -10,6 +10,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"github.com/doug-martin/goqu/v9"
+	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/sirupsen/logrus"
@@ -82,18 +83,20 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 
 func TrashCompact(ctx context.Context, duration time.Duration) {
 	t := time.Now().Add(-duration)
-	if d, err := hardDeleteOldResources(ctx, t); err != nil {
+	logrus.Info(fmt.Sprintf("Removing files deleted before %s", t.Format(time.RFC1123)))
+	if err := hardDeleteOldResources(ctx, t); err != nil {
 		logrus.Error(err)
-	} else {
-		logrus.Info(fmt.Sprintf("Removed %d files deleted before %s", d, t.Format(time.RFC1123)))
 	}
 }
 
 func (f filesystem) TrashSummary() (int, int, error) {
-	q := f.selectDeletedResources().
+	v := goqu.T("resource_versions").As("v")
+
+	r, q := f.selectTrash()
+	q = q.LeftJoin(v, goqu.On(v.Col("resource_id").Eq(r.Col("id")))).
 		Select(
-			goqu.COALESCE(goqu.SUM("content_length"), 0),
-			goqu.COUNT("*"))
+			goqu.COALESCE(goqu.SUM(v.Col("size")), 0),
+			goqu.COUNT(goqu.L("DISTINCT(?)", r.Col("id"))))
 
 	query, args, _ := q.ToSQL()
 	row := f.db.QueryRow(query, args...)
@@ -103,40 +106,54 @@ func (f filesystem) TrashSummary() (int, int, error) {
 	return items, size, err
 }
 
-func (f filesystem) TrashEmpty() (int, error) {
-	q := f.selectDeletedResources().
-		Delete().
-		Returning("id", "dir")
-	query, args, _ := q.ToSQL()
-	count, ids, err := collectNonDirResourceIDs(f.db.Query(query, args...))
-	jobs.DeleteAllVersionContents(ids)
-	return count, err
+func (f filesystem) TrashEmpty() error {
+	r, q := f.selectTrash()
+	return hardDeleteAllVersions(f.db, q, r)
 }
 
-func (f filesystem) selectDeletedResources() *goqu.SelectDataset {
+func (f filesystem) selectTrash() (exp.IdentifierExpression, *goqu.SelectDataset) {
+	r := goqu.T("resources")
+	t := goqu.T("trash").As("t")
+
 	q := pg.
-		From("resources").
-		Where(goqu.C("deleted").IsNotNull())
+		From(r).
+		Join(t, goqu.On(r.Col("id").Eq(t.Col("id"))))
+
 	if !f.fullAccess {
-		q = q.Where(goqu.L("permissions[?]::INTEGER <> 0", f.userID))
+		q = q.Where(goqu.L("r.permissions[?]::INTEGER <> 0", f.userID))
 	}
-	return q
+	return r, q
 }
 
-func hardDeleteOldResources(ctx context.Context, t time.Time) (int, error) {
-	q := pg.
-		From("resources").
-		Where(goqu.C("deleted").Lt(goqu.V(t.UTC()))).
-		Delete().
-		Returning("id", "dir")
-	query, args, _ := q.ToSQL()
-	db := db.Get(ctx)
-	count, ids, err := collectNonDirResourceIDs(db.Query(query, args...))
-	if err != nil {
-		return 0, err
+func hardDeleteOldResources(ctx context.Context, t time.Time) error {
+	r := goqu.T("resources")
+	q := pg.From(r).Where(r.Col("deleted").Lt(goqu.V(t.UTC())))
+	return hardDeleteAllVersions(db.Get(ctx), q, r)
+}
+
+func hardDeleteAllVersions(db db.Handler, q *goqu.SelectDataset, r exp.IdentifierExpression) error {
+	v := goqu.T("resource_versions").As("v")
+	query, params, _ := q.
+		Join(v, goqu.On(r.Col("id").Eq(v.Col("resource_id")))).
+		Where(v.Col("deleted").IsNotNull()).
+		Select(v.Col("id"), v.Col("storage")).
+		ToSQL()
+
+	var versions []jobs.DeleteContentsArgs
+	if rows, err := db.Query(query, params...); err != nil {
+		return err
+	} else if versions, err = collectDeletedVersions(rows); err != nil {
+		return err
 	}
-	jobs.DeleteAllVersionContents(ids)
-	return count, err
+
+	query, args, _ := q.Delete().ToSQL()
+
+	if _, err := db.Exec(query, args...); err != nil {
+		return err
+	} else {
+		jobs.DeleteContents(versions)
+	}
+	return nil
 }
 
 func collectNonDirResourceIDs(rows pgx.Rows, e error) (total int, ids []uuid.UUID, err error) {

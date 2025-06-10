@@ -120,34 +120,13 @@ func (f filesystem) DeleteForever(r Resource) error {
 	}
 	return f.runInTx(func(f filesystem) error {
 		// Select all descendants, including deleted resources
-		v := goqu.T("resource_versions").As("v")
 		r, _, q := selectResourceTree(r.id, false, true, false)
 
-		// First find the versions to be deleted
-		query, params, _ := q.
-			Join(v, goqu.On(r.Col("id").Eq(v.Col("resource_id")))).
-			Where(v.Col("deleted").IsNotNull()).
-			Select(v.Col("id"), v.Col("storage")).
-			ToSQL()
-
-		var versions []jobs.DeleteContentsArgs
-		if rows, err := f.db.Query(query, params...); err != nil {
+		if err := f.updateResourceModified(parent.id); err != nil {
 			return err
-		} else if versions, err = collectDeletedVersions(rows); err != nil {
+			// deleteAllVersions needs to be called last, as it will enqueue the delete jobs
+		} else if err := hardDeleteAllVersions(f.db, q, r); err != nil {
 			return err
-		}
-
-		// Then delete the resource and cascade delete the versions from db
-		query, params, _ = q.
-			Delete().
-			ToSQL()
-
-		if _, err := f.db.Exec(query, params...); err != nil {
-			return err
-		} else if err := f.updateResourceModified(parent.id); err != nil {
-			return err
-		} else {
-			jobs.DeleteContents(versions)
 		}
 		return nil
 	})

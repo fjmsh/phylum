@@ -50,7 +50,7 @@ func handleListRequest(c *gin.Context) {
 
 func handleEmptyRequest(c *gin.Context) {
 	fs := authenticator.GetFileSystem(c)
-	_, err := fs.TrashEmpty()
+	err := fs.TrashEmpty()
 	if err != nil {
 		panic(err)
 	}
