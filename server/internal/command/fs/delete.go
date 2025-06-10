@@ -32,9 +32,9 @@ func setupDeleteCommand() *cobra.Command {
 
 			hard, _ := cmd.Flags().GetBool("hard")
 			if hard {
-				err = f.HardDelete(r)
+				err = f.DeleteForever(r)
 			} else {
-				_, err = f.Trash(r)
+				_, err = f.Delete(r)
 			}
 			if err != nil {
 				fmt.Println("cannot remove '" + pathOrUUID + "': " + err.Error())

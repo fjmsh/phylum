@@ -35,7 +35,7 @@ func setupDeleteCommand() *cobra.Command {
 					}
 				}
 
-				if err := f.HardDelete(r); err != nil {
+				if err := f.DeleteForever(r); err != nil {
 					fmt.Println("cannot remove '" + id.String() + "': " + err.Error())
 					os.Exit(1)
 				}

@@ -65,9 +65,9 @@ type FileSystem interface {
 	// disk_usage.go
 	DiskUsage(r Resource) (DiskUsageInfo, error)
 
-	// delete.go
-	Trash(r Resource) (Resource, error)
-	HardDelete(Resource) error
+	// resource_delete.go
+	Delete(r Resource) (Resource, error)
+	DeleteForever(Resource) error
 	RestoreDeleted(r Resource, parentPathOrUUID string, name string, autoRename bool) (res Resource, count int, size int64, err error)
 
 	// trash.go

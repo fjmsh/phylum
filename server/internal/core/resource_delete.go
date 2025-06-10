@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (f filesystem) Trash(r Resource) (Resource, error) {
+func (f filesystem) Delete(r Resource) (Resource, error) {
 	if !r.parentID.Valid {
 		return Resource{}, ErrInsufficientPermissions
 	}
@@ -109,7 +109,7 @@ func (f filesystem) softDeleteChildren(id, parent uuid.UUID) error {
 	return err
 }
 
-func (f filesystem) HardDelete(r Resource) error {
+func (f filesystem) DeleteForever(r Resource) error {
 	if !r.parentID.Valid {
 		return ErrInsufficientPermissions
 	}
