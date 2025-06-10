@@ -68,7 +68,7 @@ type FileSystem interface {
 	// resource_delete.go
 	Delete(r Resource) (Resource, error)
 	DeleteForever(Resource) error
-	RestoreDeleted(r Resource, parentPathOrUUID string, name string, autoRename bool) (res Resource, count int, size int64, err error)
+	RestoreDeleted(r Resource, parentPathOrUUID string, name string, autoRename bool) (res Resource, err error)
 
 	// trash.go
 	TrashList(cursor string, n uint) ([]Resource, string, error)

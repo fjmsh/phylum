@@ -1,8 +1,6 @@
 package core
 
 import (
-	"fmt"
-	"path"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -156,16 +154,17 @@ func scanID(row pgx.CollectableRow) (uuid.UUID, error) {
 //   - Parent must not be deleted
 //   - Parent must have write permission
 //   - No name conflict with exiting resource
-func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name string, autoRename bool) (res Resource, count int, size int64, err error) {
-	var p Resource
+func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name string, autoRename bool) (res Resource, err error) {
+	// Locate parent
+	var parent Resource
 	if parentPathOrUUID == "" {
 		if r.parentID.Valid {
-			p, err = f.ResourceByID(r.parentID.Bytes)
+			parent, err = f.ResourceByID(r.parentID.Bytes)
 		} else {
 			err = ErrResourceNotFound
 		}
 	} else {
-		p, err = f.ResourceByPathWithRoot(parentPathOrUUID)
+		parent, err = f.ResourceByPathWithRoot(parentPathOrUUID)
 	}
 	if err == ErrResourceNotFound {
 		err = ErrParentNotFound
@@ -174,11 +173,12 @@ func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name str
 		return
 	}
 
-	if p.deleted.Valid {
+	// Make sure parent is not deleted and has write permissions
+	if parent.deleted.Valid {
 		err = ErrParentDeleted
 		return
 	}
-	if !p.hasPermission(PermissionWrite) {
+	if !parent.hasPermission(PermissionWrite) {
 		err = ErrInsufficientPermissions
 		return
 	}
@@ -186,24 +186,7 @@ func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name str
 	if name == "" {
 		name = r.name
 	}
-	_, _, err = f.childResourceIDByName(p.id, name)
-	if autoRename && err == nil {
-		ext := path.Ext(name)
-		basename := name[:len(name)-len(ext)]
-		counter := 1
-		for {
-			name = fmt.Sprintf("%s (%d)%s", basename, counter, ext)
-			if _, _, err = f.childResourceIDByName(p.id, name); err == nil {
-				counter++
-			} else {
-				break
-			}
-		}
-	}
-	if err != ErrResourceNotFound {
-		if err == nil {
-			err = ErrResourceNameConflict
-		}
+	if name, err = f.detectNameConflict(parent.id, name, autoRename); err != nil {
 		return
 	}
 
@@ -212,22 +195,25 @@ func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name str
 		if _, err := f.db.Exec(q, args...); err != nil {
 			return err
 		}
-		if p.id != r.parentID.Bytes || r.name != name {
-			if err := f.updateResourceNameParent(r.ID(), name, pgtype.UUID{Bytes: p.id, Valid: true}); err != nil {
+
+		if parent.id != r.parentID.Bytes || r.name != name {
+			if err := f.updateResourceNameParent(r.ID(), name, pgtype.UUID{Bytes: parent.id, Valid: true}); err != nil {
 				return err
 			} else {
 				r.name = name
-				r.parentID = pgtype.UUID{Bytes: p.id, Valid: true}
+				r.parentID = pgtype.UUID{Bytes: parent.id, Valid: true}
 				r.visibleParent = r.parentID
 			}
 		}
-		if del, err := f.markNotDeleted(r.id); err != nil {
+		_, _, s := selectResourceTree(r.id, false, false, false)
+		query, params, _ := s.Update().Set(
+			goqu.Record{
+				"modified": goqu.L("NOW()"),
+				"deleted":  nil,
+			}).ToSQL()
+
+		if _, err := f.db.Exec(query, params...); err != nil {
 			return err
-		} else {
-			count = len(del)
-			for _, l := range del {
-				size += l
-			}
 		}
 
 		return f.recomputePermissions(r.id)
@@ -235,34 +221,4 @@ func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name str
 	r.deleted = pgtype.Timestamp{}
 	res = r
 	return
-}
-
-func (f filesystem) markNotDeleted(id uuid.UUID) ([]int64, error) {
-	r, _, s := selectResourceTree(id, false, false, false)
-	q := s.Update().Set(
-		goqu.Record{
-			"modified": goqu.L("NOW()"),
-			"deleted":  nil,
-		}).
-		Returning(r.Col("content_length"))
-
-	query, params, _ := q.ToSQL()
-
-	rows, err := f.db.Query(query, params...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int64
-	for rows.Next() {
-		var content_length int64
-		if err := rows.Scan(&content_length); err != nil {
-			return nil, err
-		}
-		items = append(items, content_length)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }

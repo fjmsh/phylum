@@ -162,30 +162,18 @@ func (f filesystem) createResource(
 				err = ErrResourceNameConflict
 			}
 		case ResourceBindConflictResolutionRename:
-			ext := path.Ext(name)
-			basename := name[:len(name)-len(ext)]
-			counter := 1
-			for {
-				name := fmt.Sprintf("%s (%d)%s", basename, counter, ext)
-				err = f.runInTx(func(f filesystem) error {
-					res, err = f.insertResource(
-						id,
-						parent,
-						name,
-						dir,
-						permissions,
-					)
-					return err
-				})
-				if err != nil {
-					if !strings.Contains(err.Error(), "unique_member_resource_name") {
-						return
-					}
-					counter++
-				} else {
-					created = true
-					return
-				}
+			var name string
+			if name, err = f.detectNameConflict(parent, name, true); err != nil {
+				return
+			} else {
+				res, err = f.insertResource(
+					id,
+					parent,
+					name,
+					dir,
+					permissions,
+				)
+				return
 			}
 		case ResourceBindConflictResolutionOverwrite:
 			var rID uuid.UUID
@@ -289,6 +277,32 @@ func (f filesystem) createResourceVersion(id, versionID uuid.UUID, size int64, m
 	}
 	_, err := f.db.Exec(q, args)
 	return err
+}
+
+func (f filesystem) detectNameConflict(parentID uuid.UUID, name string, autoRename bool) (string, error) {
+	if _, _, err := f.childResourceIDByName(parentID, name); err != nil {
+		// No name conflict. Good to go!
+		if errors.Is(err, ErrResourceNotFound) {
+			return name, nil
+		}
+		return "", err
+	} else if !autoRename {
+		return "", ErrResourceNameConflict
+	}
+
+	ext := path.Ext(name)
+	basename := name[:len(name)-len(ext)]
+	counter := 1
+	for {
+		name = fmt.Sprintf("%s (%d)%s", basename, counter, ext)
+		if _, _, err := f.childResourceIDByName(parentID, name); err == nil {
+			counter++
+		} else if errors.Is(err, ErrResourceNotFound) {
+			return name, nil
+		} else {
+			return "", err
+		}
+	}
 }
 
 // iteratorForCreateResources implements pgx.CopyFromSource.
