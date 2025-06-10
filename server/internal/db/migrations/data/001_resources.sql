@@ -12,7 +12,7 @@ CREATE TABLE resources (
 
 CREATE TABLE resource_versions(
     id              UUID        PRIMARY KEY,
-    resource_id     UUID        NOT NULL REFERENCES resources(id),
+    resource_id     UUID        NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
     created         TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted         TIMESTAMP,
     size            BIGINT      NOT NULL,

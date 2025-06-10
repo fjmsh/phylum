@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -123,21 +124,34 @@ func (f filesystem) DeleteForever(r Resource) error {
 		v := goqu.T("resource_versions").As("v")
 		r, _, q := selectResourceTree(r.id, false, true, false)
 
-		// Delete resources and versions from db, returning version ids
+		// First find the versions to be deleted
 		query, params, _ := q.
-			LeftJoin(v, goqu.On(r.Col("id").Eq(v.Col("resource_id")))).
-			Delete().
-			Returning(v.Col("id"), v.Col("storage")).
+			Join(v, goqu.On(r.Col("id").Eq(v.Col("resource_id")))).
+			Where(v.Col("deleted").IsNotNull()).
+			Select(v.Col("id"), v.Col("storage")).
 			ToSQL()
 
+		var versions []jobs.DeleteContentsArgs
 		if rows, err := f.db.Query(query, params...); err != nil {
 			return err
-		} else if args, err := collectDeletedVersions(rows); err != nil {
+		} else if versions, err = collectDeletedVersions(rows); err != nil {
+			return err
+		}
+
+		for _, v := range versions {
+			fmt.Println(v.Name)
+		}
+		// Then delete the resource and cascade delete the versions from db
+		query, params, _ = q.
+			Delete().
+			ToSQL()
+
+		if _, err := f.db.Exec(query, params...); err != nil {
 			return err
 		} else if err := f.updateResourceModified(parent.id); err != nil {
 			return err
 		} else {
-			jobs.DeleteContents(args)
+			jobs.DeleteContents(versions)
 		}
 		return nil
 	})
@@ -148,9 +162,10 @@ func collectDeletedVersions(rows pgx.Rows) ([]jobs.DeleteContentsArgs, error) {
 
 	var result []jobs.DeleteContentsArgs
 	var v jobs.DeleteContentsArgs
+	var storage pgtype.Text
 	var id uuid.UUID
 	for rows.Next() {
-		err := rows.Scan(&id, &v.Storage)
+		err := rows.Scan(&id, &storage)
 		if err != nil {
 			return nil, err
 		}
