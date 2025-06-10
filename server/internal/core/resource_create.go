@@ -162,7 +162,6 @@ func (f filesystem) createResource(
 				err = ErrResourceNameConflict
 			}
 		case ResourceBindConflictResolutionRename:
-			var name string
 			if name, err = f.detectNameConflict(parent, name, true); err != nil {
 				return
 			} else {

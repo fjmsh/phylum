@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -138,9 +137,6 @@ func (f filesystem) DeleteForever(r Resource) error {
 			return err
 		}
 
-		for _, v := range versions {
-			fmt.Println(v.Name)
-		}
 		// Then delete the resource and cascade delete the versions from db
 		query, params, _ = q.
 			Delete().
