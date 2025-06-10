@@ -26,7 +26,7 @@ func handleDeleteRequest(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	if r, err := fs.DeleteRecursive(r, !params.Hard); err != nil {
+	if r, err := fs.Delete(r, !params.Hard); err != nil {
 		panic(err)
 	} else if !params.Hard {
 		c.JSON(200, responses.ResourceFromFS(r))

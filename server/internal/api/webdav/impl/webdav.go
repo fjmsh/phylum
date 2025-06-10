@@ -42,7 +42,7 @@ type FileSystem interface {
 	OpenWrite(core.Resource, uuid.UUID) (io.WriteCloser, error)
 	Copy(core.Resource, string, uuid.UUID, bool, core.ResourceBindConflictResolution) (core.Resource, bool, error)
 	Move(core.Resource, string, core.ResourceBindConflictResolution) (core.Resource, bool, error)
-	DeleteRecursive(core.Resource, bool) (core.Resource, error)
+	Delete(core.Resource, bool) (core.Resource, error)
 }
 
 func (h *Handler) stripPrefix(p string) (string, int, error) {
@@ -246,7 +246,7 @@ func (h *Handler) handleDelete(_ http.ResponseWriter, r *http.Request) (status i
 			return http.StatusNotFound, err
 		}
 		return http.StatusMethodNotAllowed, err
-	} else if _, err := h.FileSystem.DeleteRecursive(r, true); err != nil {
+	} else if _, err := h.FileSystem.Delete(r, true); err != nil {
 		return http.StatusMethodNotAllowed, err
 	}
 	return http.StatusNoContent, nil

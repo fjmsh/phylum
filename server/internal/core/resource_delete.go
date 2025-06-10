@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (f filesystem) DeleteRecursive(r Resource, softDelete bool) (Resource, error) {
+func (f filesystem) Delete(r Resource, softDelete bool) (Resource, error) {
 	if !r.parentID.Valid {
 		return Resource{}, ErrInsufficientPermissions
 	}

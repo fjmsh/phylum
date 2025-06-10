@@ -31,7 +31,7 @@ func setupDeleteCommand() *cobra.Command {
 			}
 
 			hard, _ := cmd.Flags().GetBool("hard")
-			_, err = f.DeleteRecursive(r, !hard)
+			_, err = f.Delete(r, !hard)
 			if err != nil {
 				fmt.Println("cannot remove '" + pathOrUUID + "': " + err.Error())
 				os.Exit(1)
