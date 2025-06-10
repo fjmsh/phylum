@@ -127,26 +127,44 @@ func (f filesystem) DeleteForever(r Resource) error {
 		query, params, _ := q.
 			LeftJoin(v, goqu.On(r.Col("id").Eq(v.Col("resource_id")))).
 			Delete().
-			Returning(v.Col("id")).
+			Returning(v.Col("id"), v.Col("storage")).
 			ToSQL()
 
 		if rows, err := f.db.Query(query, params...); err != nil {
 			return err
-		} else if ids, err := pgx.CollectRows(rows, scanID); err != nil {
+		} else if args, err := collectDeletedVersions(rows); err != nil {
 			return err
 		} else if err := f.updateResourceModified(parent.id); err != nil {
 			return err
 		} else {
-			jobs.DeleteAllVersionContents(ids)
+			jobs.DeleteContents(args)
 		}
 		return nil
 	})
 }
 
-func scanID(row pgx.CollectableRow) (uuid.UUID, error) {
+func collectDeletedVersions(rows pgx.Rows) ([]jobs.DeleteContentsArgs, error) {
+	defer rows.Close()
+
+	var result []jobs.DeleteContentsArgs
+	var v jobs.DeleteContentsArgs
 	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	for rows.Next() {
+		err := rows.Scan(&id, &v.Storage)
+		if err != nil {
+			return nil, err
+		}
+		if id != uuid.Nil {
+			v.Name = id.String()
+			result = append(result, v)
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // RestoreDeleted restores a previously deleted resources
