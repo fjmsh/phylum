@@ -26,11 +26,17 @@ func handleDeleteRequest(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	if r, err := fs.Delete(r, !params.Hard); err != nil {
-		panic(err)
-	} else if !params.Hard {
-		c.JSON(200, responses.ResourceFromFS(r))
+	if params.Hard {
+		if err := fs.HardDelete(r); err != nil {
+			panic(err)
+		} else {
+			c.JSON(200, gin.H{"deleted": r.ID().String()})
+		}
 	} else {
-		c.JSON(200, gin.H{"deleted": r.ID().String()})
+		if r, err := fs.Trash(r); err != nil {
+			panic(err)
+		} else {
+			c.JSON(200, responses.ResourceFromFS(r))
+		}
 	}
 }
