@@ -72,19 +72,6 @@ func (f filesystem) CreateResourceByPath(path string, id uuid.UUID, dir, createP
 	return r, err
 }
 
-// For bulk insert
-type CreateResourcesParams struct {
-	ID     uuid.UUID
-	Parent uuid.UUID
-	Name   string
-	Dir    bool
-}
-
-// TODO: Make not public
-func (f filesystem) CreateResources(arg []CreateResourcesParams) (int64, error) {
-	return f.db.CopyFrom([]string{"resources"}, []string{"id", "parent", "name", "dir"}, &iteratorForCreateResources{rows: arg})
-}
-
 func (f filesystem) createMemberResource(r Resource, name string, id uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	if r.deleted.Valid {
 		return Resource{}, ErrResourceDeleted
@@ -302,6 +289,19 @@ func (f filesystem) detectNameConflict(parentID uuid.UUID, name string, autoRena
 			return "", err
 		}
 	}
+}
+
+// TODO: Make not public
+func (f filesystem) CreateResources(arg []CreateResourcesParams) (int64, error) {
+	return f.db.CopyFrom([]string{"resources"}, []string{"id", "parent", "name", "dir"}, &iteratorForCreateResources{rows: arg})
+}
+
+// For bulk insert
+type CreateResourcesParams struct {
+	ID     uuid.UUID
+	Parent uuid.UUID
+	Name   string
+	Dir    bool
 }
 
 // iteratorForCreateResources implements pgx.CopyFromSource.

@@ -1,15 +1,18 @@
 package fs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	iofs "io/fs"
 	"os"
-	"path"
+	"path/filepath"
 
 	"codeberg.org/shroff/phylum/server/internal/command/common"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
@@ -45,78 +48,46 @@ func setupImportCommand() *cobra.Command {
 			}
 
 			force, _ := cmd.Flags().GetBool("force")
-
-			var size int = 0
-			create := make([]core.CreateResourcesParams, 0)
-			copy := make(map[string]uuid.UUID)
-			ids := make(map[string]uuid.UUID)
 			targetRootID, _ := uuid.NewV7()
-			ids["."] = targetRootID
+			var conflictResolution core.ResourceBindConflictResolution = core.ResourceBindConflictResolutionError
+			if force {
+				conflictResolution = core.ResourceBindConflictResolutionDelete
+			}
+			if _, err = f.CreateResourceByPath(args[1]+"/"+destName, targetRootID, stat.IsDir(), false, conflictResolution); err != nil {
+				if err == core.ErrResourceNameConflict {
+					err = errors.New("resource with name '" + destName + "' already exist. use -f to overwrite")
+				}
+				fmt.Println("failed to create root resource: " + err.Error())
+				os.Exit(1)
+			}
 
 			if stat.IsDir() {
+				jobs.Initialize(context.Background(), db.Pool())
 				dirFS := os.DirFS(importPath)
 
-				err := iofs.WalkDir(dirFS, ".", func(p string, d iofs.DirEntry, err error) error {
+				err = iofs.WalkDir(dirFS, ".", func(p string, d iofs.DirEntry, err error) error {
 					if p != "." && err == nil {
-						info, err := d.Info()
-						if err != nil {
-							return err
-						}
-						len := int(info.Size())
-						if d.IsDir() {
-							len = 0
-						}
-						size += len
 						if core.CheckResourceNameInvalid(d.Name()) {
 							return core.ErrResourceNameInvalid
 						}
-						ids[p], _ = uuid.NewV7()
-						parent := ids[path.Dir(p)]
-						create = append(create, core.CreateResourcesParams{
-							Parent: parent,
-							ID:     ids[p],
-							Name:   d.Name(),
-							Dir:    d.IsDir(),
-						})
+						id, _ := uuid.NewV7()
+						res, err := f.CreateResourceByPath(targetRootID.String()+":"+p, id, d.IsDir(), false, core.ResourceBindConflictResolutionError)
+						if err != nil {
+							return err
+						}
+
 						if !d.IsDir() {
-							copy[p] = ids[p]
+							path := filepath.Join(importPath, p)
+							copyContents(f, path, res)
 						}
 
 					}
 					return err
 				})
-				if err != nil {
-					fmt.Println("could not import '" + importPath + "': " + err.Error())
-					os.Exit(1)
-				}
+				fmt.Println("Waiting for jobs to finish")
+				jobs.Shutdown(context.Background())
 			}
-			fmt.Printf("Importing %d files (%d bytes) across %d dirs\n", len(copy), size, 1+len(create)-len(copy))
 
-			var conflictResolution core.ResourceBindConflictResolution = core.ResourceBindConflictResolutionError
-			if force {
-				conflictResolution = core.ResourceBindConflictResolutionDelete
-			}
-			err = f.RunInTx(func(f core.FileSystem) error {
-				if _, err = f.CreateResourceByPath(args[1]+"/"+destName, targetRootID, stat.IsDir(), false, conflictResolution); err != nil {
-					if err == core.ErrResourceNameConflict {
-						err = errors.New("resource with name '" + destName + "' already exist. use -f to overwrite")
-					}
-					return err
-				}
-				_, err = f.CreateResources(create)
-				return err
-			})
-
-			if err == nil {
-				err = func() error {
-					for k, v := range copy {
-						if err := copyContents(f, path.Join(importPath, k), v); err != nil {
-							return errors.New("unable to copy " + k + " to " + v.String() + ": " + err.Error())
-						}
-					}
-					return nil
-				}()
-			}
 			if err != nil {
 				fmt.Println("could not import '" + importPath + "': " + err.Error())
 				os.Exit(1)
@@ -128,26 +99,22 @@ func setupImportCommand() *cobra.Command {
 	return &cmd
 }
 
-func copyContents(f core.FileSystem, src string, id uuid.UUID) error {
-	fmt.Println("importing " + src + " to " + id.String())
-	in, err := os.Open(src)
+func copyContents(f core.FileSystem, path string, res core.Resource) error {
+	in, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer in.Close()
-	if r, err := f.ResourceByID(id); err != nil {
+
+	out, err := f.OpenWrite(res, uuid.Nil)
+	if err != nil {
 		return err
-	} else {
-		out, err := f.OpenWrite(r, uuid.Nil)
-		if err != nil {
-			return err
-		}
-		defer out.Close()
-		_, err = io.Copy(out, in)
-		if err != nil {
-			return err
-		}
 	}
 
-	return nil
+	_, copyErr := io.Copy(out, in)
+	closeErr := out.Close()
+	if copyErr != nil {
+		return copyErr
+	}
+	return closeErr
 }
