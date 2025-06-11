@@ -53,7 +53,8 @@ func setupImportCommand() *cobra.Command {
 			if force {
 				conflictResolution = core.ResourceBindConflictResolutionDelete
 			}
-			if _, err = f.CreateResourceByPath(args[1]+"/"+destName, targetRootID, stat.IsDir(), false, conflictResolution); err != nil {
+			var res core.Resource
+			if res, err = f.CreateResourceByPath(args[1]+"/"+destName, targetRootID, stat.IsDir(), false, conflictResolution); err != nil {
 				if err == core.ErrResourceNameConflict {
 					err = errors.New("resource with name '" + destName + "' already exist. use -f to overwrite")
 				}
@@ -78,14 +79,15 @@ func setupImportCommand() *cobra.Command {
 
 						if !d.IsDir() {
 							path := filepath.Join(importPath, p)
-							copyContents(f, path, res)
+							return copyContents(f, path, res)
 						}
-
 					}
 					return err
 				})
 				fmt.Println("Waiting for jobs to finish")
 				jobs.Shutdown(context.Background())
+			} else {
+				err = copyContents(f, importPath, res)
 			}
 
 			if err != nil {
