@@ -3,7 +3,6 @@ package core
 import (
 	"io"
 
-	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/google/uuid"
@@ -21,8 +20,6 @@ func init() {
 
 // filesystem.go
 type FileSystem interface {
-	WithDb(db.Handler) FileSystem
-	WithPathRoot(pgtype.UUID) FileSystem
 	RunInTx(func(FileSystem) error) error
 
 	// resource_create.go

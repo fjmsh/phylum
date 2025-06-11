@@ -48,7 +48,6 @@ func (h *handler) HandleRequest(c *gin.Context) {
 		if u, err := auth.VerifyUserPassword(ctx, email, pass); err == nil {
 			authSuccess = true
 			root := c.Param("root")
-			f = u.OpenFileSystem(ctx)
 			if root[0] == '~' {
 				id, err := core.UserHome(db.Get(c.Request.Context()), root[1:])
 				if err != nil {
@@ -59,9 +58,9 @@ func (h *handler) HandleRequest(c *gin.Context) {
 						panic(err)
 					}
 				}
-				f = f.WithPathRoot(id)
+				f = core.OpenFileSystem(ctx, u, id)
 			} else if id, err := uuid.Parse(root); err != nil {
-				f = f.WithPathRoot(pgtype.UUID{Bytes: id, Valid: false})
+				f = core.OpenFileSystem(ctx, u, pgtype.UUID{Bytes: id, Valid: true})
 			} else {
 				c.AbortWithStatus(http.StatusNotFound)
 				return

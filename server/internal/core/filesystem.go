@@ -40,20 +40,12 @@ func openOmniscient(db db.Handler) filesystem {
 	}
 }
 
-func (f filesystem) WithDb(db db.Handler) FileSystem {
-	return f.withDb(db)
-}
-
 func (f filesystem) withDb(db db.Handler) filesystem {
 	return filesystem{
 		db:       db,
 		user:     f.user,
 		pathRoot: f.pathRoot,
 	}
-}
-
-func (f filesystem) WithPathRoot(pathRoot pgtype.UUID) FileSystem {
-	return f.withPathRoot(pathRoot)
 }
 
 func (f filesystem) withPathRoot(pathRoot pgtype.UUID) filesystem {
@@ -66,7 +58,7 @@ func (f filesystem) withPathRoot(pathRoot pgtype.UUID) filesystem {
 
 func (f filesystem) RunInTx(fn func(FileSystem) error) error {
 	return f.db.RunInTx(func(db db.Handler) error {
-		return fn(f.WithDb(db))
+		return fn(f.withDb(db))
 	})
 }
 
