@@ -84,7 +84,8 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 func TrashCompact(ctx context.Context, duration time.Duration) {
 	t := time.Now().Add(-duration)
 	logrus.Info(fmt.Sprintf("Removing files deleted before %s", t.Format(time.RFC1123)))
-	if err := hardDeleteOldResources(ctx, t); err != nil {
+	f := openOmniscient(db.Get(ctx))
+	if err := f.hardDeleteOldResources(t); err != nil {
 		logrus.Error(err)
 	}
 }
@@ -92,11 +93,11 @@ func TrashCompact(ctx context.Context, duration time.Duration) {
 func (f filesystem) TrashSummary() (int, int, error) {
 	v := goqu.T("resource_versions").As("v")
 
-	r, q := f.selectTrash()
-	q = q.LeftJoin(v, goqu.On(v.Col("resource_id").Eq(r.Col("id")))).
+	n, q := f.selectTrash()
+	q = q.LeftJoin(v, goqu.On(v.Col("resource_id").Eq(n.Col("id")))).
 		Select(
 			goqu.COALESCE(goqu.SUM(v.Col("size")), 0),
-			goqu.COUNT(goqu.L("DISTINCT(?)", r.Col("id"))))
+			goqu.COUNT(goqu.L("DISTINCT(?)", n.Col("id"))))
 
 	query, args, _ := q.ToSQL()
 	row := f.db.QueryRow(query, args...)
@@ -107,34 +108,39 @@ func (f filesystem) TrashSummary() (int, int, error) {
 }
 
 func (f filesystem) TrashEmpty() error {
-	r, q := f.selectTrash()
-	return hardDeleteAllVersions(f.db, q, r)
+	n, q := f.selectTrash()
+	return hardDeleteAllVersions(f.db, q, n)
 }
 
-func (f filesystem) selectTrash() (exp.IdentifierExpression, *goqu.SelectDataset) {
-	r := goqu.T("resources")
+func (f filesystem) selectTrash() (exp.AliasedExpression, *goqu.SelectDataset) {
+	r := goqu.T("resources").As("r")
+	n := goqu.T("nodes").As("n")
 	t := goqu.T("trash").As("t")
 
-	q := pg.
-		From(r).
-		Join(t, goqu.On(r.Col("id").Eq(t.Col("id"))))
-
+	base := goqu.From(r).Select(r.Col("id"), r.Col("parent"), r.Col("deleted")).Join(t, goqu.On(t.Col("id").Eq(r.Col("id"))))
 	if !f.fullAccess {
-		q = q.Where(goqu.L("r.permissions[?]::INTEGER <> 0", f.userID))
+		base = base.Where(goqu.L("r.permissions[?]::INTEGER <> 0", f.userID))
 	}
-	return r, q
+	rec := goqu.From(r).Select(r.Col("id"), r.Col("parent"), r.Col("deleted")).Join(n, goqu.On(r.Col("parent").Eq(n.Col("id"))))
+
+	q := pg.From(n).WithRecursive("nodes(id, parent, deleted)", base.UnionAll(rec))
+
+	return n, q
 }
 
-func hardDeleteOldResources(ctx context.Context, t time.Time) error {
-	r := goqu.T("resources")
-	q := pg.From(r).Where(r.Col("deleted").Lt(goqu.V(t.UTC())))
-	return hardDeleteAllVersions(db.Get(ctx), q, r)
+func (f filesystem) hardDeleteOldResources(t time.Time) error {
+	n, q := f.selectTrash()
+	q = q.Where(n.Col("deleted").Lt(goqu.V(t.UTC())))
+	return hardDeleteAllVersions(f.db, q, n)
 }
 
-func hardDeleteAllVersions(db db.Handler, q *goqu.SelectDataset, r exp.IdentifierExpression) error {
+func hardDeleteAllVersions(db db.Handler, q *goqu.SelectDataset, n interface {
+	exp.Expression
+	Col(interface{}) exp.IdentifierExpression
+}) error {
 	v := goqu.T("resource_versions").As("v")
 	query, params, _ := q.
-		Join(v, goqu.On(r.Col("id").Eq(v.Col("resource_id")))).
+		Join(v, goqu.On(n.Col("id").Eq(v.Col("resource_id")))).
 		Where(v.Col("deleted").IsNotNull()).
 		Select(v.Col("id"), v.Col("storage")).
 		ToSQL()
@@ -146,7 +152,8 @@ func hardDeleteAllVersions(db db.Handler, q *goqu.SelectDataset, r exp.Identifie
 		return err
 	}
 
-	query, args, _ := q.Delete().ToSQL()
+	r := goqu.T("resources")
+	query, args, _ := q.From(r).Join(n, goqu.On(n.Col("id").Eq(r.Col("id")))).Delete().ToSQL()
 
 	if _, err := db.Exec(query, args...); err != nil {
 		return err
@@ -154,24 +161,4 @@ func hardDeleteAllVersions(db db.Handler, q *goqu.SelectDataset, r exp.Identifie
 		jobs.DeleteContents(versions)
 	}
 	return nil
-}
-
-func collectNonDirResourceIDs(rows pgx.Rows, e error) (total int, ids []uuid.UUID, err error) {
-	if e != nil {
-		return 0, nil, e
-	}
-	defer rows.Close()
-	var id uuid.UUID
-	var dir bool
-	for rows.Next() {
-		if err := rows.Scan(&id, &dir); err != nil {
-			return total, nil, err
-		}
-		if !dir {
-			ids = append(ids, id)
-		}
-		total++
-	}
-	err = rows.Err()
-	return total, ids, err
 }

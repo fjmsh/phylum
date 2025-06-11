@@ -32,6 +32,9 @@ func (u User) OpenFileSystem(ctx context.Context) FileSystem {
 }
 
 func OpenOmniscient(db db.Handler) FileSystem {
+	return openOmniscient(db)
+}
+func openOmniscient(db db.Handler) filesystem {
 	return filesystem{
 		db:         db,
 		userID:     -1,
