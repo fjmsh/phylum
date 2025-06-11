@@ -79,8 +79,8 @@ func (f filesystem) createMemberResource(r Resource, name string, id uuid.UUID, 
 	if !r.Dir() {
 		return Resource{}, ErrResourceNotCollection
 	}
-	if !r.hasPermission(PermissionWrite) {
-		return Resource{}, ErrInsufficientPermissions
+	if err := r.checkPermission(f.user, PermissionWrite); err != nil {
+		return Resource{}, err
 	}
 	if CheckResourceNameInvalid(name) {
 		return Resource{}, ErrResourceNameInvalid
@@ -112,7 +112,6 @@ func (f filesystem) createMemberResource(r Resource, name string, id uuid.UUID, 
 		return Resource{}, err
 	}
 
-	res.userPermission = r.userPermission
 	return res, nil
 }
 
@@ -235,10 +234,11 @@ func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, 
 	if rows, err := f.db.Query(query, args...); err != nil {
 		return Resource{}, err
 	} else {
-		r, err := f.collectFullResource(rows)
+		r, err := collectFullResource(rows)
 		r.parentID = pgtype.UUID{Bytes: parent, Valid: true}
 		r.visibleParent = r.parentID
 		r.inheritedPermissions = permissions
+		r.permissions = permissions
 		return r, err
 	}
 }

@@ -19,6 +19,6 @@ ORDER BY r.grants -> @user_id::INT::TEXT -> 't' DESC`
 	if rows, err := db.Query(q, args); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, user.scanFullResource)
+		return pgx.CollectRows(rows, scanFullResource)
 	}
 }

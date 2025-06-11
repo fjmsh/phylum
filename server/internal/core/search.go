@@ -26,6 +26,6 @@ func (f filesystem) Search(query string, includeDeleted bool) ([]Resource, error
 	if rows, err := f.db.Query(qb.String(), args); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, f.user.scanFullResource)
+		return pgx.CollectRows(rows, scanFullResource)
 	}
 }

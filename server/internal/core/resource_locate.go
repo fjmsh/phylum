@@ -10,7 +10,10 @@ import (
 )
 
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	const query = fullResourceQuery + "WHERE r.id = @id::UUID"
+	query := fullResourceQuery + "\nWHERE r.id = @id::UUID"
+	if !f.user.hasPermission(PermissionFilesAll) {
+		query = query + "\nAND r.permissions[@user_id::INT]::INTEGER <> 0"
+	}
 	args := pgx.NamedArgs{
 		"user_id": f.user.ID,
 		"id":      id,
@@ -18,8 +21,15 @@ func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	if rows, err := f.db.Query(query, args); err != nil {
 		return Resource{}, err
 	} else {
-		return f.collectFullResource(rows)
+		return collectFullResource(rows)
 	}
+	// } else if r, err := collectFullResource(rows); err != nil {
+	// 	return Resource{}, err
+	// } else if err := r.checkPermission(f.user, PermissionRead); err != nil {
+	// 	return Resource{}, err
+	// } else {
+	// 	return r, nil
+	// }
 }
 
 // ResourceByPathWithRoot returns the resource at a given path from an optionally specified root.
@@ -75,13 +85,24 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		Join(nodes, goqu.On(r.Col("id").Eq(nodes.Col("id")))).
 		Where(goqu.L("cardinality(n.search) = n.depth"))
 
+	if !f.user.hasPermission(PermissionFilesAll) {
+		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.user.ID))
+	}
+
 	query, args, _ := q.ToSQL()
 
 	if rows, err := f.db.Query(query, args...); err != nil {
 		return Resource{}, err
 	} else {
-		return f.collectFullResource(rows)
+		return collectFullResource(rows)
 	}
+	// } else if r, err := collectFullResource(rows); err != nil {
+	// 	return Resource{}, err
+	// } else if err := r.checkPermission(f.user, PermissionRead); err != nil {
+	// 	return Resource{}, err
+	// } else {
+	// 	return r, nil
+	// }
 }
 
 // targetNameParentByPathWithRoot returns the target resource name and its parent

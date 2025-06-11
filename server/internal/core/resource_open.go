@@ -14,8 +14,8 @@ import (
 )
 
 func (f filesystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
-	if !r.hasPermission(PermissionWrite) {
-		return nil, ErrInsufficientPermissions
+	if err := r.checkPermission(f.user, PermissionWrite); err != nil {
+		return nil, err
 	}
 	if r.deleted.Valid {
 		return nil, ErrResourceDeleted
@@ -53,9 +53,6 @@ func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
 }
 
 func (f filesystem) ReadDirDeleted(r Resource, recursive, includeDeleted bool) ([]Resource, error) {
-	if !r.hasPermission(PermissionRead) {
-		return nil, ErrInsufficientPermissions
-	}
 	if !r.Dir() {
 		return nil, ErrResourceNotCollection
 	}
@@ -75,7 +72,7 @@ func (f filesystem) ReadDirDeleted(r Resource, recursive, includeDeleted bool) (
 	if rows, err := f.db.Query(query, args...); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, f.scanResourceWithoutParent)
+		return pgx.CollectRows(rows, scanResourceWithoutParent)
 	}
 }
 

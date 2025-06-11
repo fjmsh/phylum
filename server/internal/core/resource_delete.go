@@ -19,8 +19,8 @@ func (f filesystem) Delete(r Resource) (Resource, error) {
 		return Resource{}, ErrResourceDeleted
 	}
 	parent, err := f.ResourceByID(r.parentID.Bytes)
-	if err == nil && !parent.hasPermission(PermissionWrite) {
-		err = ErrInsufficientPermissions
+	if err == nil {
+		err = parent.checkPermission(f.user, PermissionWrite)
 	}
 	if err != nil {
 		return Resource{}, err
@@ -117,8 +117,8 @@ func (f filesystem) DeleteForever(r Resource) error {
 		return ErrInsufficientPermissions
 	}
 	parent, err := f.ResourceByID(r.parentID.Bytes)
-	if err == nil && !parent.hasPermission(PermissionWrite) {
-		return ErrInsufficientPermissions
+	if err == nil {
+		err = parent.checkPermission(f.user, PermissionWrite)
 	}
 	if err != nil {
 		return err
@@ -191,8 +191,8 @@ func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name str
 		err = ErrParentDeleted
 		return
 	}
-	if !parent.hasPermission(PermissionWrite) {
-		err = ErrInsufficientPermissions
+
+	if err = parent.checkPermission(f.user, PermissionWrite); err != nil {
 		return
 	}
 

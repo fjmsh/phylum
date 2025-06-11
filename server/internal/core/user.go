@@ -21,6 +21,10 @@ type User struct {
 	Permissions UserPermissions
 }
 
+func (u User) hasPermission(p UserPermissions) bool {
+	return u.Permissions&p != 0
+}
+
 func scanUser(row pgx.CollectableRow) (User, error) {
 	var u User
 	err := row.Scan(

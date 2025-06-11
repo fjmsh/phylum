@@ -23,7 +23,6 @@ type Resource struct {
 	links                []byte
 	inheritedPermissions []byte
 	visibleParent        pgtype.UUID
-	userPermission       Permission
 	latestVersionInfo    VersionInfo
 }
 
@@ -40,12 +39,25 @@ func (r Resource) VisibleParentID() pgtype.UUID { return r.visibleParent }
 func (r Resource) InheritedPermissions() []byte { return r.inheritedPermissions }
 func (r Resource) LatestVersion() VersionInfo   { return r.latestVersionInfo }
 
-func (r Resource) hasPermission(p Permission) bool {
-	return r.userPermission&p != 0
+func (r Resource) userPermission(user User) (Permission, error) {
+	if user.hasPermission(PermissionFilesAll) {
+		return -1, nil
+	}
+
+	return readPermissionFromJson(r.permissions, user.ID)
 }
 
-func (f filesystem) collectFullResource(rows pgx.Rows) (Resource, error) {
-	if r, err := pgx.CollectExactlyOneRow(rows, f.user.scanFullResource); err == nil {
+func (r Resource) checkPermission(user User, p Permission) error {
+	if up, err := r.userPermission(user); err != nil {
+		return err
+	} else if up&p == 0 {
+		return ErrInsufficientPermissions
+	}
+	return nil
+}
+
+func collectFullResource(rows pgx.Rows) (Resource, error) {
+	if r, err := pgx.CollectExactlyOneRow(rows, scanFullResource); err == nil {
 		return r, nil
 	} else {
 		if err == pgx.ErrNoRows {
@@ -56,7 +68,7 @@ func (f filesystem) collectFullResource(rows pgx.Rows) (Resource, error) {
 
 }
 
-func (u User) scanFullResource(row pgx.CollectableRow) (Resource, error) {
+func scanFullResource(row pgx.CollectableRow) (Resource, error) {
 	var r Resource
 	err := row.Scan(
 		&r.id,
@@ -76,10 +88,10 @@ func (u User) scanFullResource(row pgx.CollectableRow) (Resource, error) {
 	if err != nil {
 		return r, err
 	}
-	return processResource(r, u)
+	return processResource(r)
 }
 
-func (f filesystem) scanResourceWithoutParent(row pgx.CollectableRow) (Resource, error) {
+func scanResourceWithoutParent(row pgx.CollectableRow) (Resource, error) {
 	var r Resource
 	err := row.Scan(
 		&r.id,
@@ -97,26 +109,10 @@ func (f filesystem) scanResourceWithoutParent(row pgx.CollectableRow) (Resource,
 	if err != nil {
 		return r, err
 	}
-	return processResource(r, f.user)
+	return processResource(r)
 }
 
-func processResource(r Resource, user User) (Resource, error) {
-	fullAccess := user.Permissions&PermissionFilesAll != 0
-	userID := user.ID
-
-	permission := Permission(0)
-	if fullAccess {
-		permission = -1
-	} else if p, err := readPermissionFromJson(r.permissions, userID); err != nil {
-		return r, err
-	} else {
-		permission = p
-	}
-	if permission&PermissionRead == 0 {
-		return r, ErrResourceNotFound
-	}
-	r.userPermission = permission
-
+func processResource(r Resource) (Resource, error) {
 	if v, err := latestVersion(r.versions); err != nil {
 		return r, err
 	} else {

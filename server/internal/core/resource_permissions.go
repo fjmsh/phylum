@@ -19,11 +19,15 @@ func (f filesystem) UpdatePermissions(r Resource, user User, permission Permissi
 	if r.deleted.Valid {
 		return r, ErrResourceDeleted
 	}
-	if !r.hasPermission(PermissionShare) {
+	if userPermission, err := r.userPermission(user); err != nil {
+		return Resource{}, err
+	} else if userPermission&PermissionShare == 0 {
 		return Resource{}, ErrInsufficientPermissions
+	} else {
+		// Do not grant more than the user has
+		permission = permission & userPermission
 	}
-	// Do not grant more than what you have
-	permission = permission & r.userPermission
+
 	const qUpdate = `
 UPDATE resources SET
 	grants[@user_id::INT] = jsonb_build_object('p', @permission::INT, 't', EXTRACT(EPOCH FROM NOW())::INTEGER),

@@ -22,8 +22,8 @@ func (f filesystem) Move(r Resource, target string, conflictResolution ResourceB
 	if err != nil {
 		return Resource{}, false, err
 	}
-	if !parent.hasPermission(PermissionRead | PermissionWrite) {
-		return Resource{}, false, ErrInsufficientPermissions
+	if err := parent.checkPermission(f.user, PermissionRead|PermissionWrite); err != nil {
+		return Resource{}, false, err
 	}
 
 	// Check destParent directory permissions (if applicable)
@@ -40,8 +40,8 @@ func (f filesystem) Move(r Resource, target string, conflictResolution ResourceB
 	if !destParent.Dir() {
 		return Resource{}, false, ErrResourceNotCollection
 	}
-	if !destParent.hasPermission(PermissionWrite) {
-		return Resource{}, false, ErrInsufficientPermissions
+	if err := destParent.checkPermission(f.user, PermissionWrite); err != nil {
+		return Resource{}, false, err
 	}
 	if destParent.id == r.id {
 		return Resource{}, false, ErrResourceMoveTargetSubdirectory
@@ -117,8 +117,8 @@ func (f filesystem) updateResourceNameParent(id uuid.UUID, name string, parent p
 
 func (f filesystem) Copy(r Resource, target string, id uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	// Check source directory permissions
-	if !r.hasPermission(PermissionRead) {
-		return Resource{}, false, ErrInsufficientPermissions
+	if err := r.checkPermission(f.user, PermissionWrite); err != nil {
+		return Resource{}, false, err
 	}
 	if r.deleted.Valid {
 		return Resource{}, false, ErrResourceDeleted
@@ -136,8 +136,8 @@ func (f filesystem) Copy(r Resource, target string, id uuid.UUID, recursive bool
 		return Resource{}, false, ErrResourceNotCollection
 
 	}
-	if !destParent.hasPermission(PermissionWrite) {
-		return Resource{}, false, ErrInsufficientPermissions
+	if err := destParent.checkPermission(f.user, PermissionWrite); err != nil {
+		return Resource{}, false, err
 	}
 
 	var tree []Resource
@@ -228,11 +228,11 @@ func (f filesystem) Copy(r Resource, target string, id uuid.UUID, recursive bool
 		return Resource{}, false, err
 	}
 
+	// TODO: #verify Shouldn't be necessary
 	targetRoot.visibleParent = pgtype.UUID{
 		Bytes: destParent.id,
 		Valid: true,
 	}
-	targetRoot.userPermission = destParent.userPermission
 	return targetRoot, deleted, err
 }
 

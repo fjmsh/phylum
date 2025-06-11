@@ -9,8 +9,8 @@ import (
 )
 
 func (f filesystem) CreatePublink(r Resource, id, password string, expires pgtype.Timestamp, accessLimit int) error {
-	if !r.hasPermission(PermissionShare | PermissionRead) {
-		return ErrInsufficientPermissions
+	if err := r.checkPermission(f.user, PermissionShare|PermissionRead); err != nil {
+		return err
 	}
 	if r.deleted.Valid {
 		return ErrResourceDeleted
