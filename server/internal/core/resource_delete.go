@@ -46,11 +46,13 @@ func (f filesystem) Delete(r Resource) (Resource, error) {
 
 func softDelete(d db.Handler, id uuid.UUID) error {
 	return d.RunInTx(func(db db.Handler) error {
-		// Select all descendants, not including deleted ones
-		_, _, q := selectResourceTree(id, false, false, false)
+		n, q := selectResourceTree(id, false)
+		r := goqu.T("resources")
 
 		// Set modified and deleted
 		query, params, _ := q.
+			From(r).
+			Where(r.Col("id").Eq(pg.From(n).Select("id"))).
 			Update().
 			Set(
 				goqu.Record{
@@ -66,18 +68,21 @@ func softDelete(d db.Handler, id uuid.UUID) error {
 		// Add to trash
 		query, params, _ = pg.Insert(goqu.T("trash")).Cols("id").Vals(goqu.Vals{id}).ToSQL()
 		_, err := db.Exec(query, params...)
-
 		return err
 	})
 }
 
 func (f filesystem) softDeleteChildren(id, parent uuid.UUID) error {
 	err := f.runInTx(func(f filesystem) error {
-		// Select non-deleted descendents excluding the tree root (id)
-		_, _, s := selectResourceTree(id, true, false, false)
+		n, s := selectResourceTree(id, false)
+		r := goqu.T("resources")
 
 		// Mark deleted
-		q, params, _ := s.Update().
+		q, params, _ := s.
+			From(r).
+			Where(r.Col("id").Eq(pg.From(n).Select("id"))).
+			Where(r.Col("id").Neq(id)).
+			Update().
 			Set(
 				goqu.Record{
 					"modified": goqu.L("NOW()"),
@@ -120,12 +125,12 @@ func (f filesystem) DeleteForever(r Resource) error {
 	}
 	return f.runInTx(func(f filesystem) error {
 		// Select all descendants, including deleted resources
-		r, _, q := selectResourceTree(r.id, false, true, false)
+		n, q := selectResourceTree(r.id, true)
 
 		if err := f.updateResourceModified(parent.id); err != nil {
 			return err
 			// deleteAllVersions needs to be called last, as it will enqueue the delete jobs
-		} else if err := hardDeleteAllVersions(f.db, q, r); err != nil {
+		} else if err := hardDeleteAllVersions(f.db, q, n); err != nil {
 			return err
 		}
 		return nil
@@ -198,6 +203,7 @@ func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name str
 		return
 	}
 
+	id := r.id
 	err = f.runInTx(func(f filesystem) error {
 		q, args, _ := pg.Delete(goqu.T("trash")).Where(goqu.C("id").Eq(r.id)).ToSQL()
 		if _, err := f.db.Exec(q, args...); err != nil {
@@ -205,7 +211,7 @@ func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name str
 		}
 
 		if parent.id != r.parentID.Bytes || r.name != name {
-			if err := f.updateResourceNameParent(r.ID(), name, pgtype.UUID{Bytes: parent.id, Valid: true}); err != nil {
+			if err := f.updateResourceNameParent(id, name, pgtype.UUID{Bytes: parent.id, Valid: true}); err != nil {
 				return err
 			} else {
 				r.name = name
@@ -213,8 +219,12 @@ func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name str
 				r.visibleParent = r.parentID
 			}
 		}
-		_, _, s := selectResourceTree(r.id, false, false, false)
-		query, params, _ := s.Update().Set(
+		n, s := selectResourceTree(id, false)
+		r := goqu.T("resources")
+		query, params, _ := s.
+			From(r).
+			Where(r.Col("id").Eq(pg.From(n).Select("id"))).
+			Update().Set(
 			goqu.Record{
 				"modified": goqu.L("NOW()"),
 				"deleted":  nil,
@@ -224,7 +234,7 @@ func (f filesystem) RestoreDeleted(r Resource, parentPathOrUUID string, name str
 			return err
 		}
 
-		return f.recomputePermissions(r.id)
+		return f.recomputePermissions(id)
 	})
 	r.deleted = pgtype.Timestamp{}
 	res = r

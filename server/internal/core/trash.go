@@ -93,7 +93,7 @@ func TrashCompact(ctx context.Context, duration time.Duration) {
 func (f filesystem) TrashSummary() (int, int, error) {
 	v := goqu.T("resource_versions").As("v")
 
-	n, q := f.selectTrash()
+	n, q := f.selectTrash(time.Time{})
 	q = q.LeftJoin(v, goqu.On(v.Col("resource_id").Eq(n.Col("id")))).
 		Select(
 			goqu.COALESCE(goqu.SUM(v.Col("size")), 0),
@@ -108,20 +108,32 @@ func (f filesystem) TrashSummary() (int, int, error) {
 }
 
 func (f filesystem) TrashEmpty() error {
-	n, q := f.selectTrash()
+	n, q := f.selectTrash(time.Time{})
 	return hardDeleteAllVersions(f.db, q, n)
 }
 
-func (f filesystem) selectTrash() (exp.AliasedExpression, *goqu.SelectDataset) {
+func (f filesystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.SelectDataset) {
 	r := goqu.T("resources").As("r")
 	n := goqu.T("nodes").As("n")
 	t := goqu.T("trash").As("t")
 
-	base := goqu.From(r).Select(r.Col("id"), r.Col("parent"), r.Col("deleted")).Join(t, goqu.On(t.Col("id").Eq(r.Col("id"))))
+	base := pg.
+		From(r).
+		Select(r.Col("id"), r.Col("parent"), r.Col("deleted")).
+		Join(t, goqu.On(t.Col("id").Eq(r.Col("id"))))
 	if !f.fullAccess {
 		base = base.Where(goqu.L("r.permissions[?]::INTEGER <> 0", f.userID))
 	}
-	rec := goqu.From(r).Select(r.Col("id"), r.Col("parent"), r.Col("deleted")).Join(n, goqu.On(r.Col("parent").Eq(n.Col("id"))))
+	if !time.IsZero() {
+		base = base.Where(r.Col("deleted").Lt(goqu.V(time.UTC())))
+	}
+
+	rec := pg.
+		From(r).
+		Select(r.Col("id"), r.Col("parent"), r.Col("deleted")).
+		Join(n, goqu.On(r.Col("parent").Eq(n.Col("id")))).
+		// Some children may be independently trashed (at different times). Don't select those
+		Where(goqu.L("? IS NOT DISTINCT FROM ?", r.Col("deleted"), n.Col("deleted")))
 
 	q := pg.From(n).WithRecursive("nodes(id, parent, deleted)", base.UnionAll(rec))
 
@@ -129,8 +141,7 @@ func (f filesystem) selectTrash() (exp.AliasedExpression, *goqu.SelectDataset) {
 }
 
 func (f filesystem) hardDeleteOldResources(t time.Time) error {
-	n, q := f.selectTrash()
-	q = q.Where(n.Col("deleted").Lt(goqu.V(t.UTC())))
+	n, q := f.selectTrash(t)
 	return hardDeleteAllVersions(f.db, q, n)
 }
 
@@ -153,7 +164,11 @@ func hardDeleteAllVersions(db db.Handler, q *goqu.SelectDataset, n interface {
 	}
 
 	r := goqu.T("resources")
-	query, args, _ := q.From(r).Join(n, goqu.On(n.Col("id").Eq(r.Col("id")))).Delete().ToSQL()
+	fmt.Println("DELETE QUERY")
+	query, args, _ := q.
+		From(r).
+		Where(r.Col("id").Eq(pg.From(n).Select("id"))).
+		Delete().ToSQL()
 
 	if _, err := db.Exec(query, args...); err != nil {
 		return err

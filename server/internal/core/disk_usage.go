@@ -13,11 +13,9 @@ type DiskUsageInfo struct {
 
 func (f filesystem) DiskUsage(r Resource) (DiskUsageInfo, error) {
 	// TODO: #versions This is broken
-	_, n, q := selectResourceTree(r.id, false, false, false, "content_length", "dir")
+	n, q := selectResourceTree(r.id, false, "content_length", "dir")
 
 	q = q.
-		From(n).
-		ClearWhere().
 		Select(
 			goqu.SUM(n.Col("content_length")),
 			goqu.COUNT("*"),
@@ -28,6 +26,7 @@ func (f filesystem) DiskUsage(r Resource) (DiskUsageInfo, error) {
 	row := f.db.QueryRow(query, args...)
 	var size, count, dirs int64
 	err := row.Scan(&size, &count, &dirs)
+
 	return DiskUsageInfo{
 		TotalSize: size,
 		Entities:  count,

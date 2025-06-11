@@ -35,12 +35,11 @@ COALESCE(p.permissions, '{}'::JSONB) AS inherited_permissions
 FROM resources r LEFT JOIN resources p ON p.id = r.parent
 `
 
-func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted, includeSubQueries bool, extraCols ...string) (exp.IdentifierExpression, exp.AliasedExpression, *goqu.SelectDataset) {
-	t := goqu.T("resources")
-	r := t.As("r")
+func selectResourceTree(id uuid.UUID, includeDeleted bool, extraCols ...string) (exp.AliasedExpression, *goqu.SelectDataset) {
+	r := goqu.T("resources").As("r")
 	n := goqu.T("nodes").As("n")
 	rec := pg.From(r).
-		Select(r.Col("id"), r.Col("parent"), r.Col("deleted"), goqu.L("? + 1", goqu.I("n.depth")))
+		Select(r.Col("id"), r.Col("parent"), r.Col("deleted"))
 	if len(extraCols) != 0 {
 		s := make([]interface{}, len(extraCols))
 		for i, c := range extraCols {
@@ -56,7 +55,7 @@ func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted, includeSu
 
 	base := pg.
 		From(r).
-		Select(r.Col("id"), r.Col("parent"), r.Col("deleted"), goqu.L("0")).
+		Select(r.Col("id"), r.Col("parent"), r.Col("deleted")).
 		Where(r.Col("id").Eq(id))
 
 	if len(extraCols) != 0 {
@@ -67,27 +66,27 @@ func selectResourceTree(id uuid.UUID, excludeTreeRoot, includeDeleted, includeSu
 		base = base.SelectAppend(s...)
 	}
 
-	cols := []string{"id", "parent", "deleted", "depth"}
-	cols = slices.Insert(cols, 4, extraCols...)
-	idSelect := pg.From(n).Select(n.Col("id"))
-	if excludeTreeRoot {
-		idSelect = idSelect.Where(n.Col("depth").Gt(0))
-	}
+	cols := []string{"id", "parent", "deleted"}
+	cols = slices.Insert(cols, 3, extraCols...)
 
 	q := pg.
-		From(t)
-	if includeSubQueries {
-		v := goqu.T("resource_versions").As("v")
-		l := goqu.T("publinks").As("l")
-		q = q.Select(
-			t.All(),
-			pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(t.Col("id"))),
-			pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(t.Col("id"))),
+		From(n).
+		WithRecursive("nodes("+strings.Join(cols, ",")+")", base.UnionAll(rec))
+	return n, q
+}
+
+func selectResources(q *goqu.SelectDataset, n exp.AliasedExpression) (*goqu.SelectDataset, exp.AliasedExpression) {
+	r := goqu.T("resources").As("r")
+	v := goqu.T("resource_versions").As("v")
+	l := goqu.T("publinks").As("l")
+	q = q.From(r).
+		Join(n, goqu.On(r.Col("id").Eq(n.Col("id")))).
+		Select(
+			r.All(),
+			pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
+			pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
 		)
-	}
-	q = q.WithRecursive("nodes("+strings.Join(cols, ",")+")", base.UnionAll(rec)).
-		Where(t.Col("id").Eq(idSelect))
-	return t, n, q
+	return q, r
 }
 
 func selectDirectChildren(id uuid.UUID, deleted pgtype.Timestamp, includeDeleted bool) (exp.AliasedExpression, *goqu.SelectDataset) {

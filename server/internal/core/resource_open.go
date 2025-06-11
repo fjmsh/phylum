@@ -8,6 +8,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/doug-martin/goqu/v9"
+	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -63,7 +64,11 @@ func (f filesystem) ReadDirDeleted(r Resource, recursive, includeDeleted bool) (
 	if !recursive {
 		_, q = selectDirectChildren(r.id, r.deleted, includeDeleted)
 	} else {
-		_, _, q = selectResourceTree(r.id, true, includeDeleted, true)
+		n, qq := selectResourceTree(r.id, includeDeleted)
+		id := r.id
+		var r exp.AliasedExpression
+		q, r = selectResources(qq, n)
+		q = q.Where(r.Col("id").Neq(id))
 	}
 
 	query, args, _ := q.ToSQL()
