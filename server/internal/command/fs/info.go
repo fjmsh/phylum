@@ -52,21 +52,22 @@ to the resource with a particular ID.`,
 				fmt.Println("cannot get path:" + err.Error())
 				os.Exit(1)
 			}
-			fmt.Println("      ID: " + r.ID().String())
-			fmt.Println("    Path: " + path)
-			fmt.Println(" Created: " + r.Created().Local().Format(time.RFC1123))
-			fmt.Println("Modified: " + r.Modified().Local().Format(time.RFC1123))
+			fmt.Println("       ID: " + r.ID().String())
+			fmt.Println("   Parent: " + r.VisibleParentID().String())
+			fmt.Println("     Path: " + path)
+			fmt.Println("  Created: " + r.Created().Local().Format(time.RFC1123))
+			fmt.Println(" Modified: " + r.Modified().Local().Format(time.RFC1123))
 			if r.Deleted().Valid {
-				fmt.Println("Deleted:  " + r.Deleted().Time.Local().Format(time.RFC1123))
+				fmt.Println(" Deleted:  " + r.Deleted().Time.Local().Format(time.RFC1123))
 			}
 			fmt.Println()
 
-			fmt.Println("Inherited Permissions: " + formatPermissionsJson(r.InheritedPermissions()))
-			fmt.Println("Permission Grants: " + formatGrantsJson(r.Grants()))
+			fmt.Println("Inherited: " + formatPermissionsJson(r.InheritedPermissions()))
+			fmt.Println("  Granted: " + formatGrantsJson(r.Grants()))
 			fmt.Println()
 
 			if r.Dir() {
-				fmt.Println("Children:")
+				fmt.Println(" Children:")
 				includeDeleted, _ := cmd.Flags().GetBool("include-deleted")
 				children, err := f.ReadDirDeleted(r, false, includeDeleted)
 				if err != nil {
@@ -87,28 +88,32 @@ to the resource with a particular ID.`,
 					fmt.Println(common.FormatResourceSummary(c, "", r.Deleted()))
 				}
 			} else {
-				fmt.Println("    Size: " + common.FormatSize(int(r.LatestVersion().Size)))
-				fmt.Println(" SHA-256: " + r.LatestVersion().SHA256[0:12])
+				fmt.Println("     Size: " + common.FormatSize(int(r.LatestVersion().Size)))
+				fmt.Println("  SHA-256: " + r.LatestVersion().SHA256[0:12])
 				versions, err := f.GetAllVersions(r)
 				if err != nil {
 					fmt.Println(err.Error())
 					os.Exit(1)
 				}
-				fmt.Println("Versions: " + strconv.Itoa(len(versions)))
-				for i, v := range versions {
-					extra := ""
-					if i == 0 {
-						extra += " [current]"
+				fmt.Println(" Versions: " + strconv.Itoa(len(versions)))
+				if v, _ := cmd.Flags().GetBool("show-versions"); v {
+					fmt.Println()
+					for i, v := range versions {
+						extra := ""
+						if i == 0 {
+							extra += " [current]"
+						}
+						if v.Deleted != 0 {
+							extra += " [deleted]"
+						}
+						fmt.Printf("%s %5s %s %s%s\n", v.ID.String(), common.FormatSize(int(v.Size)), v.SHA256[0:12], time.Unix(int64(v.Created), 0).Local().Format(time.RFC1123), extra)
 					}
-					if v.Deleted != 0 {
-						extra += " [deleted]"
-					}
-					fmt.Printf("%s %5s %s %s%s\n", v.ID.String(), common.FormatSize(int(v.Size)), v.SHA256[0:12], time.Unix(int64(v.Created), 0).Local().Format(time.RFC1123), extra)
 				}
 			}
 		},
 	}
 	cmd.Flags().BoolP("include-deleted", "x", false, "Include deleted files")
+	cmd.Flags().BoolP("show-versions", "v", false, "Show previous versions")
 	return &cmd
 }
 
