@@ -12,23 +12,21 @@ import (
 )
 
 type filesystem struct {
-	db         db.Handler
-	pathRoot   pgtype.UUID
-	userID     int32
-	fullAccess bool
+	db       db.Handler
+	user     User
+	pathRoot pgtype.UUID
 }
 
-func OpenFileSystem(ctx context.Context, userID int32, root pgtype.UUID, fullAccess bool) FileSystem {
+func OpenFileSystem(ctx context.Context, user User, pathRoot pgtype.UUID) FileSystem {
 	return filesystem{
-		db:         db.Get(ctx),
-		userID:     userID,
-		pathRoot:   root,
-		fullAccess: fullAccess,
+		db:       db.Get(ctx),
+		user:     user,
+		pathRoot: pathRoot,
 	}
 }
 
 func (u User) OpenFileSystem(ctx context.Context) FileSystem {
-	return OpenFileSystem(ctx, u.ID, u.Home, u.Permissions&PermissionFilesAll != 0)
+	return OpenFileSystem(ctx, u, u.Home)
 }
 
 func OpenOmniscient(db db.Handler) FileSystem {
@@ -36,10 +34,9 @@ func OpenOmniscient(db db.Handler) FileSystem {
 }
 func openOmniscient(db db.Handler) filesystem {
 	return filesystem{
-		db:         db,
-		userID:     -1,
-		pathRoot:   pgtype.UUID{Bytes: rootID(), Valid: true},
-		fullAccess: true,
+		db:       db,
+		user:     User{ID: -1, Permissions: -1},
+		pathRoot: pgtype.UUID{Bytes: rootID(), Valid: true},
 	}
 }
 
@@ -49,10 +46,9 @@ func (f filesystem) WithDb(db db.Handler) FileSystem {
 
 func (f filesystem) withDb(db db.Handler) filesystem {
 	return filesystem{
-		db:         db,
-		pathRoot:   f.pathRoot,
-		userID:     f.userID,
-		fullAccess: f.fullAccess,
+		db:       db,
+		user:     f.user,
+		pathRoot: f.pathRoot,
 	}
 }
 
@@ -62,10 +58,9 @@ func (f filesystem) WithPathRoot(pathRoot pgtype.UUID) FileSystem {
 
 func (f filesystem) withPathRoot(pathRoot pgtype.UUID) filesystem {
 	return filesystem{
-		db:         f.db,
-		pathRoot:   pathRoot,
-		userID:     f.userID,
-		fullAccess: f.fullAccess,
+		db:       f.db,
+		user:     f.user,
+		pathRoot: pathRoot,
 	}
 }
 

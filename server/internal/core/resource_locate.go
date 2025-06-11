@@ -12,7 +12,7 @@ import (
 func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	const query = fullResourceQuery + "WHERE r.id = @id::UUID"
 	args := pgx.NamedArgs{
-		"user_id": f.userID,
+		"user_id": f.user.ID,
 		"id":      id,
 	}
 	if rows, err := f.db.Query(query, args); err != nil {
@@ -66,7 +66,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	q := pg.Select(r.All(),
 		pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
 		pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
-		pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID)),
+		pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.user.ID)),
 		pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 	).
 		From(r).

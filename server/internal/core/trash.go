@@ -30,11 +30,11 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 			pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
 			pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
 			// TODO: Always select p.id when fullAccess
-			pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID)),
+			pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.user.ID)),
 			pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 		)
-	if !f.fullAccess {
-		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.userID))
+	if f.user.Permissions&PermissionFilesAll == 0 {
+		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.user.ID))
 	}
 	if cursor != "" {
 		if d, err := base64.StdEncoding.DecodeString(cursor); err != nil {
@@ -63,7 +63,7 @@ func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error)
 
 	if rows, err := f.db.Query(query, params...); err != nil {
 		return nil, "", err
-	} else if res, err := pgx.CollectRows(rows, f.scanFullResource); err != nil {
+	} else if res, err := pgx.CollectRows(rows, f.user.scanFullResource); err != nil {
 		return nil, "", err
 	} else {
 		cursor := ""
@@ -121,8 +121,8 @@ func (f filesystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.Se
 		From(r).
 		Select(r.Col("id"), r.Col("parent"), r.Col("deleted")).
 		Join(t, goqu.On(t.Col("id").Eq(r.Col("id"))))
-	if !f.fullAccess {
-		base = base.Where(goqu.L("r.permissions[?]::INTEGER <> 0", f.userID))
+	if f.user.Permissions&PermissionFilesAll == 0 {
+		base = base.Where(goqu.L("r.permissions[?]::INTEGER <> 0", f.user.ID))
 	}
 	if !time.IsZero() {
 		base = base.Where(r.Col("deleted").Lt(goqu.V(time.UTC())))
