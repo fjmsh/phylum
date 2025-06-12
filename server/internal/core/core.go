@@ -21,6 +21,8 @@ func init() {
 type FileSystem interface {
 	// resource_create.go
 	CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error)
+	CreateFileByPath(path string, id, versionID uuid.UUID, conflictResolution ResourceBindConflictResolution) (io.WriteCloser, error)
+	OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error)
 
 	// resource_locate.go
 	ResourceByID(uuid.UUID) (Resource, error)
@@ -36,7 +38,6 @@ type FileSystem interface {
 	GetPath(Resource) (string, error)
 
 	// resource_open.go
-	OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error)
 	ReadDir(r Resource, recursive bool) ([]Resource, error)
 	ReadDirDeleted(r Resource, recursive, includeDeleted bool) ([]Resource, error)
 	Walk(r Resource, depth int, fn func(Resource, string) error) error

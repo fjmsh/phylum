@@ -84,6 +84,7 @@ func setupImportCommand() *cobra.Command {
 					}
 					return err
 				})
+				//TODO #jobs. We don't need to run or wait for all jobs
 				fmt.Println("Waiting for jobs to finish")
 				jobs.Shutdown(context.Background())
 			} else {

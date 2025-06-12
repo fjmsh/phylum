@@ -44,13 +44,7 @@ func handleUploadRequest(c *gin.Context) {
 	// TODO: Calculate and verify sha sum
 
 	f := authenticator.GetFileSystem(c)
-	err = f.RunInTx(func(f core.FileSystem) error {
-		res, err := f.CreateResourceByPath(params.Path, id, false, params.CreateParents, params.Conflict)
-		if err != nil {
-			return err
-		}
-		id = res.ID()
-
+	err = func() error {
 		file, err := c.FormFile("contents")
 		if err != nil {
 			if err == http.ErrMissingFile {
@@ -58,7 +52,6 @@ func handleUploadRequest(c *gin.Context) {
 			}
 			return err
 		}
-
 		// TODO: #perf disk I/O in tx
 		src, err := file.Open()
 		if err != nil {
@@ -66,11 +59,10 @@ func handleUploadRequest(c *gin.Context) {
 		}
 		defer src.Close()
 
-		out, err := f.OpenWrite(res, versionID)
+		out, err := f.CreateFileByPath(params.Path, id, versionID, params.Conflict)
 		if err != nil {
 			return err
 		}
-		defer out.Close()
 
 		if _, err := io.Copy(out, src); err != nil {
 			out.Close()
@@ -78,13 +70,13 @@ func handleUploadRequest(c *gin.Context) {
 		} else {
 			return out.Close()
 		}
-	})
+	}()
 	if err != nil {
 		panic(err)
 	}
 
-	// TODO: Avoid reading from db again if we can update size and etag
-	r, err := f.ResourceByID(id)
+	// id may have changed if this is an overwrite
+	r, err := f.ResourceByPath(params.Path)
 	if err != nil {
 		panic(err)
 	}

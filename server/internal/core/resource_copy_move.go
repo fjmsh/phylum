@@ -169,11 +169,11 @@ func (f txFileSystem) Copy(r Resource, target string, id uuid.UUID, recursive bo
 			return Resource{}, false, err
 		}
 	}
-	children := make([]CreateResourcesParams, 0, len(tree))
+	children := make([]insertResourcesFastParams, 0, len(tree))
 	var contents []copyParams
 	newIDs := make(map[uuid.UUID]uuid.UUID)
 
-	targetRoot, created, deleted, err := createResource(
+	targetRoot, created, deleted, err := resolveConflictAndInsertResource(
 		f.db,
 		id,
 		destParent.id,
@@ -204,7 +204,7 @@ func (f txFileSystem) Copy(r Resource, target string, id uuid.UUID, recursive bo
 		id, _ := uuid.NewV7()
 		parent := newIDs[src.parentID.Bytes]
 
-		children = append(children, CreateResourcesParams{
+		children = append(children, insertResourcesFastParams{
 			ID:     id,
 			Parent: parent,
 			Name:   src.name,
@@ -221,7 +221,7 @@ func (f txFileSystem) Copy(r Resource, target string, id uuid.UUID, recursive bo
 		}
 	}
 
-	if _, err := createResources(f.db, children); err != nil {
+	if _, err := insertResourcesFast(f.db, children); err != nil {
 		return Resource{}, false, err
 	}
 	if err := recomputePermissions(f.db, id); err != nil {
@@ -260,7 +260,7 @@ type copyParams struct {
 func (f txFileSystem) copyContents(params copyParams) error {
 	versionID, _ := uuid.NewV7()
 
-	if err := createResourceVersion(f.db, params.destResource, versionID, params.src.Size, params.src.MimeType, params.src.SHA256); err != nil {
+	if err := insertResourceVersion(f.db, params.destResource, versionID, params.src.Size, params.src.MimeType, params.src.SHA256); err != nil {
 		return errors.New("failed to create version for " + params.destResource.String() + ": " + err.Error())
 	}
 

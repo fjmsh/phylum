@@ -1,10 +1,14 @@
 package core
 
 import (
+	"encoding/hex"
 	"errors"
+	"hash"
+	"io"
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
@@ -39,6 +43,92 @@ func (f fileSystem) CreateResourceByPath(path string, id uuid.UUID, dir, createP
 	return res, err
 }
 
+func (f fileSystem) CreateFileByPath(path string, id, versionID uuid.UUID, conflictResolution ResourceBindConflictResolution) (io.WriteCloser, error) {
+	name, parent, err := f.targetNameParentByPathWithRoot(path, Resource{})
+	if err != nil {
+		if errors.Is(err, ErrResourceNotFound) {
+			err = ErrParentNotFound
+		}
+		return nil, err
+	}
+	if parent.deleted.Valid {
+		return nil, ErrParentNotFound
+	}
+
+	if err := parent.checkPermission(f.user, PermissionWrite); err != nil {
+		return nil, err
+	}
+	if versionID == uuid.Nil {
+		versionID, _ = uuid.NewV7()
+	}
+
+	// return f.createMemberResource(parent, name, id, dir, conflictResolution)
+	if dest, err := storage.DefaultBackend().OpenWrite(versionID.String()); err != nil {
+		return nil, err
+	} else {
+		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
+			sum := hex.EncodeToString(hash.Sum(nil))
+			err := f.runInTx(func(f txFileSystem) error {
+				if r, err := f.createMemberResource(parent, name, id, false, conflictResolution); err != nil {
+					return err
+				} else {
+					// ID could be different if we're overwriting an existing resource
+					id = r.id
+				}
+
+				if err := insertResourceVersion(f.db, id, versionID, int64(len), mimeType, sum); err != nil {
+					return err
+				}
+				if err := updateResourceModified(f.db, id); err != nil {
+					return err
+				}
+
+				// TODO: #jobs #tx pass in transaction
+				return jobs.MigrateVersionContents(versionID)
+			})
+			if err != nil {
+				storage.DefaultBackend().Delete(versionID.String())
+			}
+			return err
+		}), nil
+	}
+}
+
+func (f fileSystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
+	if err := r.checkPermission(f.user, PermissionWrite); err != nil {
+		return nil, err
+	}
+	if r.deleted.Valid {
+		return nil, ErrResourceDeleted
+	}
+	if versionID == uuid.Nil {
+		versionID, _ = uuid.NewV7()
+	}
+
+	if dest, err := storage.DefaultBackend().OpenWrite(versionID.String()); err != nil {
+		return nil, err
+	} else {
+		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
+			sum := hex.EncodeToString(hash.Sum(nil))
+			err := f.db.RunInTx(func(db db.TxHandler) error {
+				if err := insertResourceVersion(db, r.id, versionID, int64(len), mimeType, sum); err != nil {
+					return err
+				}
+				if err := updateResourceModified(db, r.id); err != nil {
+					return err
+				}
+
+				// TODO: #jobs #tx pass in transaction
+				return jobs.MigrateVersionContents(versionID)
+			})
+			if err != nil {
+				storage.DefaultBackend().Delete(versionID.String())
+			}
+			return err
+		}), nil
+	}
+}
+
 func (f txFileSystem) CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	if id == uuid.Nil {
 		id, _ = uuid.NewV7()
@@ -51,6 +141,9 @@ func (f txFileSystem) CreateResourceByPath(path string, id uuid.UUID, dir, creat
 				err = ErrParentNotFound
 			}
 			return Resource{}, err
+		}
+		if parent.deleted.Valid {
+			return Resource{}, ErrParentNotFound
 		}
 		return f.createMemberResource(parent, name, id, dir, conflictResolution)
 	}
@@ -89,9 +182,6 @@ func (f txFileSystem) createMemberResource(r Resource, name string, id uuid.UUID
 	if !r.Dir() {
 		return Resource{}, ErrResourceNotCollection
 	}
-	if err := r.checkPermission(f.user, PermissionWrite); err != nil {
-		return Resource{}, err
-	}
 	if CheckResourceNameInvalid(name) {
 		return Resource{}, ErrResourceNameInvalid
 	}
@@ -101,12 +191,15 @@ func (f txFileSystem) createMemberResource(r Resource, name string, id uuid.UUID
 	var res Resource
 	var created bool
 	var err error
-	if res, created, _, err = createResource(f.db, id, r.id, name, dir, r.permissions, conflictResolution); err != nil {
+	if res, created, _, err = resolveConflictAndInsertResource(f.db, id, r.id, name, dir, r.permissions, conflictResolution); err != nil {
 		if errors.Is(err, ErrResourceIDConflict) {
 			return resourceByID(f.db, id, f.user.ID)
 		}
 		return Resource{}, err
 	} else if created {
+		if err := r.checkPermission(f.user, PermissionWrite); err != nil {
+			return Resource{}, err
+		}
 		if err := recomputePermissions(f.db, id); err != nil {
 			return Resource{}, err
 		}
@@ -118,7 +211,7 @@ func (f txFileSystem) createMemberResource(r Resource, name string, id uuid.UUID
 	return res, nil
 }
 
-func createResource(
+func resolveConflictAndInsertResource(
 	db db.TxHandler,
 	id uuid.UUID,
 	parent uuid.UUID,
@@ -144,7 +237,7 @@ func createResource(
 		)
 		created = true
 		// maybe the request already succeeded in the previous attempt but the client didn't receive the response?
-		if strings.Contains(err.Error(), "resources_pkey") {
+		if err != nil && strings.Contains(err.Error(), "resources_pkey") {
 			err = ErrResourceIDConflict
 		}
 		return
@@ -181,15 +274,15 @@ func createResource(
 			} else {
 				err = softDelete(db, res.id)
 				if err == nil {
-					res, created, _, err = createResource(
+					res, err = insertResource(
 						db,
 						id,
 						parent,
 						name,
 						dir,
 						permissions,
-						ResourceBindConflictResolutionError,
 					)
+					created = true
 				}
 			}
 		}
@@ -200,15 +293,15 @@ func createResource(
 			deleted = true
 			err = softDelete(db, rID)
 			if err == nil {
-				res, created, _, err = createResource(
+				res, err = insertResource(
 					db,
 					id,
 					parent,
 					name,
 					dir,
 					permissions,
-					ResourceBindConflictResolutionError,
 				)
+				created = true
 			}
 		}
 	}
@@ -251,7 +344,7 @@ func updateResourceModified(db db.TxHandler, id uuid.UUID) error {
 	return err
 }
 
-func createResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64, mimeType, sha256 string) error {
+func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64, mimeType, sha256 string) error {
 	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage)
 	VALUES (@version_id::UUID, @resource_id::UUID, @size::INT, @mime_type::TEXT, @sha256::TEXT, @storage::TEXT)`
 
@@ -268,25 +361,25 @@ func createResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64,
 }
 
 // TODO: Make not public
-func createResources(db db.TxHandler, arg []CreateResourcesParams) (int64, error) {
-	return db.CopyFrom([]string{"resources"}, []string{"id", "parent", "name", "dir"}, &iteratorForCreateResources{rows: arg})
+func insertResourcesFast(db db.TxHandler, arg []insertResourcesFastParams) (int64, error) {
+	return db.CopyFrom([]string{"resources"}, []string{"id", "parent", "name", "dir"}, &iteratorForInsertResourcesFast{rows: arg})
 }
 
 // For bulk insert
-type CreateResourcesParams struct {
+type insertResourcesFastParams struct {
 	ID     uuid.UUID
 	Parent uuid.UUID
 	Name   string
 	Dir    bool
 }
 
-// iteratorForCreateResources implements pgx.CopyFromSource.
-type iteratorForCreateResources struct {
-	rows                 []CreateResourcesParams
+// iteratorForInsertResourcesFast implements pgx.CopyFromSource.
+type iteratorForInsertResourcesFast struct {
+	rows                 []insertResourcesFastParams
 	skippedFirstNextCall bool
 }
 
-func (r *iteratorForCreateResources) Next() bool {
+func (r *iteratorForInsertResourcesFast) Next() bool {
 	if len(r.rows) == 0 {
 		return false
 	}
@@ -298,7 +391,7 @@ func (r *iteratorForCreateResources) Next() bool {
 	return len(r.rows) > 0
 }
 
-func (r iteratorForCreateResources) Values() ([]interface{}, error) {
+func (r iteratorForInsertResourcesFast) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].ID,
 		r.rows[0].Parent,
@@ -307,6 +400,6 @@ func (r iteratorForCreateResources) Values() ([]interface{}, error) {
 	}, nil
 }
 
-func (r iteratorForCreateResources) Err() error {
+func (r iteratorForInsertResourcesFast) Err() error {
 	return nil
 }

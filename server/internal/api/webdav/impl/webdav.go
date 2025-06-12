@@ -39,7 +39,7 @@ type FileSystem interface {
 	core.ReadFileSystem
 
 	CreateResourceByPath(name string, id uuid.UUID, dir, recursive bool, conflictResolution core.ResourceBindConflictResolution) (core.Resource, error)
-	OpenWrite(core.Resource, uuid.UUID) (io.WriteCloser, error)
+	CreateFileByPath(path string, id, versionID uuid.UUID, conflictResolution core.ResourceBindConflictResolution) (io.WriteCloser, error)
 	Copy(core.Resource, string, uuid.UUID, bool, core.ResourceBindConflictResolution) (core.Resource, bool, error)
 	Move(core.Resource, string, core.ResourceBindConflictResolution) (core.Resource, bool, error)
 	Delete(core.Resource) (core.Resource, error)
@@ -265,25 +265,25 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	// TODO(rost): Support the If-Match, If-None-Match headers? See bradfitz'
 	// comments in http.checkEtag.
 
-	res, err := h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, false, false, core.ResourceBindConflictResolutionEnsure)
+	f, err := h.FileSystem.CreateFileByPath(reqPath, uuid.Nil, uuid.Nil, core.ResourceBindConflictResolutionEnsure)
 	if err != nil {
 		if errors.Is(err, core.ErrParentNotFound) {
 			return http.StatusConflict, err
-		} else if errors.Is(err, core.ErrResourceCollection) {
-			return http.StatusConflict, core.ErrResourceCollection
 		}
-		return http.StatusNotFound, err
+		return http.StatusInternalServerError, err
 	}
-
-	f, err := h.FileSystem.OpenWrite(res, uuid.Nil)
 	_, copyErr := io.Copy(f, r.Body)
 	closeErr := f.Close()
 	if copyErr != nil {
 		return http.StatusInternalServerError, copyErr
 	}
 	if closeErr != nil {
-		return http.StatusInternalServerError, closeErr
+		if errors.Is(closeErr, core.ErrResourceCollection) {
+			return http.StatusConflict, closeErr
+		}
+		return http.StatusNotFound, closeErr
 	}
+
 	fi, statErr := h.FileSystem.ResourceByPath(reqPath)
 	if statErr != nil {
 		return http.StatusInternalServerError, statErr
