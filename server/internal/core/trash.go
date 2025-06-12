@@ -16,7 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (f filesystem) TrashList(cursor string, n uint) ([]Resource, string, error) {
+func (f fileSystem) TrashList(cursor string, n uint) ([]Resource, string, error) {
 	t := goqu.T("trash")
 	r := goqu.T("resources").As("r")
 	p := goqu.T("resources").As("p")
@@ -90,7 +90,7 @@ func TrashCompact(ctx context.Context, duration time.Duration) {
 	}
 }
 
-func (f filesystem) TrashSummary() (int, int, error) {
+func (f fileSystem) TrashSummary() (int, int, error) {
 	v := goqu.T("resource_versions").As("v")
 
 	n, q := f.selectTrash(time.Time{})
@@ -107,12 +107,14 @@ func (f filesystem) TrashSummary() (int, int, error) {
 	return items, size, err
 }
 
-func (f filesystem) TrashEmpty() error {
+func (f fileSystem) TrashEmpty() error {
 	n, q := f.selectTrash(time.Time{})
-	return hardDeleteAllVersions(f.db, q, n)
+	return f.db.RunInTx(func(db db.TxHandler) error {
+		return hardDeleteAllVersions(db, q, n)
+	})
 }
 
-func (f filesystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.SelectDataset) {
+func (f fileSystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.SelectDataset) {
 	r := goqu.T("resources").As("r")
 	n := goqu.T("nodes").As("n")
 	t := goqu.T("trash").As("t")
@@ -140,12 +142,14 @@ func (f filesystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.Se
 	return n, q
 }
 
-func (f filesystem) hardDeleteOldResources(t time.Time) error {
+func (f fileSystem) hardDeleteOldResources(t time.Time) error {
 	n, q := f.selectTrash(t)
-	return hardDeleteAllVersions(f.db, q, n)
+	return f.db.RunInTx(func(db db.TxHandler) error {
+		return hardDeleteAllVersions(db, q, n)
+	})
 }
 
-func hardDeleteAllVersions(db db.Handler, q *goqu.SelectDataset, n interface {
+func hardDeleteAllVersions(db db.TxHandler, q *goqu.SelectDataset, n interface {
 	exp.Expression
 	Col(interface{}) exp.IdentifierExpression
 }) error {

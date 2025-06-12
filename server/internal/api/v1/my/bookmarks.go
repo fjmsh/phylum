@@ -65,7 +65,11 @@ func handleBookmarksAddRoute(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	b, err := core.AddBookmark(db.Get(c.Request.Context()), u, r, params.Name)
+	var b core.Bookmark
+	err = db.Get(c.Request.Context()).RunInTx(func(db db.TxHandler) error {
+		b, err = core.AddBookmark(db, u, r, params.Name)
+		return err
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -84,7 +88,9 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 	c.ShouldBind(&params)
 
 	u := authenticator.GetUser(c)
-	if err := core.RemoveBookmark(db.Get(c.Request.Context()), u, params.ID); err != nil {
+	if err := db.Get(c.Request.Context()).RunInTx(func(db db.TxHandler) error {
+		return core.RemoveBookmark(db, u, params.ID)
+	}); err != nil {
 		panic(err)
 	}
 	c.JSON(200, gin.H{})

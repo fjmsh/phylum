@@ -41,7 +41,7 @@ func setupModCommand() *cobra.Command {
 				}
 			}
 
-			err = db.Get(context.Background()).RunInTx(func(db db.Handler) error {
+			err = db.Get(context.Background()).RunInTx(func(db db.TxHandler) error {
 				if name != "" {
 					if err := core.UpdateUserName(db, u, name); err != nil {
 						return err

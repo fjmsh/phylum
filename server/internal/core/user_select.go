@@ -13,36 +13,31 @@ import (
 
 var ErrUserNotFound = NewError(http.StatusNotFound, "user_not_found", "no such user")
 
-func CreateUser(d db.Handler, email, name string, noCreateHome bool) (User, error) {
-	var user User
-	err := d.RunInTx(func(db db.Handler) error {
+func CreateUser(db db.TxHandler, email, name string, noCreateHome bool) (User, error) {
+	f := openOmniscientTx(db)
+	var homeID pgtype.UUID
+	var home Resource
+	if !noCreateHome {
 		var err error
-		var homeID pgtype.UUID
-		var home Resource
-		f := OpenOmniscient(db)
-		if !noCreateHome {
-			var err error
-			homePath := strings.TrimRight(Cfg.BaseDir, "/") + "/" + email
-			home, err = f.CreateResourceByPath(homePath, uuid.Nil, true, true, ResourceBindConflictResolutionEnsure)
-			if err != nil {
-				return err
-			}
-			homeID = pgtype.UUID{Bytes: home.ID(), Valid: true}
-		}
-
-		user, err = insertUser(db, email, name, homeID)
+		homePath := strings.TrimRight(Cfg.BaseDir, "/") + "/" + email
+		home, err = f.CreateResourceByPath(homePath, uuid.Nil, true, true, ResourceBindConflictResolutionEnsure)
 		if err != nil {
-			return err
+			return User{}, err
 		}
+		homeID = pgtype.UUID{Bytes: home.ID(), Valid: true}
+	}
 
-		if homeID.Valid {
-			if _, err := f.UpdatePermissions(home, user, PermissionRead|PermissionWrite|PermissionShare); err != nil {
-				return err
-			}
+	user, err := insertUser(db, email, name, homeID)
+	if err != nil {
+		return User{}, err
+	}
+
+	if homeID.Valid {
+		if _, err := f.UpdatePermissions(home, user, PermissionRead|PermissionWrite|PermissionShare); err != nil {
+			return User{}, err
 		}
-		return err
-	})
-	return user, err
+	}
+	return user, nil
 }
 
 func ListUsers(db db.Handler, since int64) ([]User, error) {

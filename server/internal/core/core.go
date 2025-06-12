@@ -18,13 +18,9 @@ func init() {
 	goqu.SetDefaultPrepared(true)
 }
 
-// filesystem.go
 type FileSystem interface {
-	RunInTx(func(FileSystem) error) error
-
 	// resource_create.go
 	CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error)
-	CreateResources(args []CreateResourcesParams) (int64, error)
 
 	// resource_locate.go
 	ResourceByID(uuid.UUID) (Resource, error)

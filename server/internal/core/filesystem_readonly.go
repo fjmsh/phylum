@@ -13,7 +13,7 @@ import (
 )
 
 type proxyFileSystemReadOnly struct {
-	f filesystem
+	f fileSystem
 }
 
 func (f proxyFileSystemReadOnly) ResourceByPath(path string) (Resource, error) {
@@ -61,10 +61,14 @@ func OpenFileSystemFromPublink(ctx context.Context, id string, password string) 
 	}
 
 	const q = "UPDATE publinks SET accessed = accessed + 1 WHERE id = $1"
-	if _, err := d.Exec(q, link.ID); err != nil {
+	if err := d.RunInTx(func(db db.TxHandler) error {
+		_, err := db.Exec(q, link.ID)
+		return err
+	}); err != nil {
 		return nil, err
 	}
 
+	// TODO: #redundant
 	// TODO: #do not use omniscient
 	return proxyFileSystemReadOnly{f: openOmniscient(d).withPathRoot(pgtype.UUID{Bytes: link.Root, Valid: true})}, nil
 }

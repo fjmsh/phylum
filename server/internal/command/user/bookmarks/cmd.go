@@ -68,7 +68,9 @@ func setupRemoveCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if err := core.RemoveBookmark(db.Get(context.Background()), *u, r.ID()); err != nil {
+			if err := db.Get(context.Background()).RunInTx(func(db db.TxHandler) error {
+				return core.RemoveBookmark(db, *u, r.ID())
+			}); err != nil {
 				fmt.Println("unable to remove bookmark: " + err.Error())
 				os.Exit(1)
 			}
@@ -98,7 +100,10 @@ func setupAddCommand() *cobra.Command {
 				name = args[1]
 			}
 
-			if _, err := core.AddBookmark(db.Get(context.Background()), *u, r, name); err != nil {
+			if err := db.Get(context.Background()).RunInTx(func(db db.TxHandler) error {
+				_, err := core.AddBookmark(db, *u, r, name)
+				return err
+			}); err != nil {
 				fmt.Println("unable to add bookmark: " + err.Error())
 				os.Exit(1)
 			}

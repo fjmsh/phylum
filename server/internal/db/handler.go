@@ -7,21 +7,45 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-type Handler struct {
+type Handler interface {
+	Query(stmt string, args ...interface{}) (pgx.Rows, error)
+	QueryRow(stmt string, args ...interface{}) pgx.Row
+	ExecNoTx(stmt string, args ...interface{}) (pgconn.CommandTag, error)
+	RunInTx(fn func(TxHandler) error) error
+}
+
+type TxHandler interface {
+	Handler
+	Exec(stmt string, args ...interface{}) (pgconn.CommandTag, error)
+	CopyFrom(tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error)
+	SendBatch(batch *pgx.Batch) pgx.BatchResults
+	Tx() pgx.Tx
+}
+
+type handler struct {
 	ctx context.Context
 	tx  interface {
 		Begin(context.Context) (pgx.Tx, error)
-		SendBatch(context.Context, *pgx.Batch) pgx.BatchResults
-		Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
 		Query(context.Context, string, ...interface{}) (pgx.Rows, error)
 		QueryRow(context.Context, string, ...interface{}) pgx.Row
-		CopyFrom(context.Context, pgx.Identifier, []string, pgx.CopyFromSource) (int64, error)
+		Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
 	}
 }
 
-func (h Handler) RunInTx(fn func(Handler) error) error {
+func (h handler) Query(stmt string, args ...interface{}) (pgx.Rows, error) {
+	return h.tx.Query(h.ctx, stmt, args...)
+}
+
+func (h handler) QueryRow(stmt string, args ...interface{}) pgx.Row {
+	return h.tx.QueryRow(h.ctx, stmt, args...)
+}
+func (h handler) ExecNoTx(stmt string, args ...interface{}) (pgconn.CommandTag, error) {
+	return h.tx.Exec(h.ctx, stmt, args...)
+}
+
+func (h handler) RunInTx(fn func(TxHandler) error) error {
 	return pgx.BeginFunc(h.ctx, h.tx, func(tx pgx.Tx) error {
-		h := Handler{
+		h := txHandler{
 			ctx: h.ctx,
 			tx:  tx,
 		}
@@ -29,22 +53,46 @@ func (h Handler) RunInTx(fn func(Handler) error) error {
 	})
 }
 
-func (h Handler) Exec(stmt string, args ...interface{}) (pgconn.CommandTag, error) {
-	return h.tx.Exec(h.ctx, stmt, args...)
+type txHandler struct {
+	ctx context.Context
+	tx  pgx.Tx
 }
 
-func (h Handler) Query(stmt string, args ...interface{}) (pgx.Rows, error) {
+func (h txHandler) Query(stmt string, args ...interface{}) (pgx.Rows, error) {
 	return h.tx.Query(h.ctx, stmt, args...)
 }
 
-func (h Handler) QueryRow(stmt string, args ...interface{}) pgx.Row {
+func (h txHandler) QueryRow(stmt string, args ...interface{}) pgx.Row {
 	return h.tx.QueryRow(h.ctx, stmt, args...)
 }
 
-func (h Handler) CopyFrom(tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error) {
+func (h txHandler) RunInTx(fn func(TxHandler) error) error {
+	return pgx.BeginFunc(h.ctx, h.tx, func(tx pgx.Tx) error {
+		h := txHandler{
+			ctx: h.ctx,
+			tx:  tx,
+		}
+		return fn(h)
+	})
+}
+
+func (h txHandler) Exec(stmt string, args ...interface{}) (pgconn.CommandTag, error) {
+	return h.tx.Exec(h.ctx, stmt, args...)
+}
+
+// Part of the interface
+func (h txHandler) ExecNoTx(stmt string, args ...interface{}) (pgconn.CommandTag, error) {
+	return h.tx.Exec(h.ctx, stmt, args...)
+}
+
+func (h txHandler) CopyFrom(tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error) {
 	return h.tx.CopyFrom(h.ctx, tableName, columnNames, rowSrc)
 }
 
-func (h Handler) SendBatch(batch *pgx.Batch) pgx.BatchResults {
+func (h txHandler) SendBatch(batch *pgx.Batch) pgx.BatchResults {
 	return h.tx.SendBatch(h.ctx, batch)
+}
+
+func (h txHandler) Tx() pgx.Tx {
+	return h.tx
 }

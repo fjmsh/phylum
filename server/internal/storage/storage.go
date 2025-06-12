@@ -59,7 +59,7 @@ func Initialize(db db.Handler) error {
 		defaultBackend = b
 	}
 
-	go processBackendUpdates(db)
+	go processBackendUpdates()
 	return nil
 }
 
@@ -82,7 +82,7 @@ func ListBackends() map[string]Backend {
 	return backends
 }
 
-func InsertBackend(db db.Handler, name string, driver Driver, params map[string]string) error {
+func InsertBackend(d db.Handler, name string, driver Driver, params map[string]string) error {
 	backend, err := driver.Create(name, params)
 	if err != nil {
 		return nil
@@ -92,7 +92,10 @@ func InsertBackend(db db.Handler, name string, driver Driver, params map[string]
 	if err != nil {
 		return err
 	}
-	if _, err := db.Exec(q, name, driver.Name, p); err != nil {
+	if err := d.RunInTx(func(tx db.TxHandler) error {
+		_, err := tx.Exec(q, name, driver.Name, p)
+		return err
+	}); err != nil {
 		return err
 	}
 	backends[name] = backend
@@ -130,7 +133,7 @@ func restoreBackends(db db.Handler) (map[string]Backend, error) {
 	}
 }
 
-func processBackendUpdates(db db.Handler) {
+func processBackendUpdates() {
 	sub := db.Notifier().Listen("backend_updates")
 	for {
 		p := <-sub.NotificationC()

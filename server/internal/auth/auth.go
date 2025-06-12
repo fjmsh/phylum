@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
@@ -28,12 +27,11 @@ var accessTokenValidity = pgtype.Interval{
 
 var ErrCredentialsInvalid = errors.New("invalid credentials")
 
-func VerifyUserPassword(ctx context.Context, email, password string) (core.User, error) {
-	return verifyUserPassword(db.Get(ctx), email, password)
+func VerifyUserPassword(db db.Handler, email, password string) (core.User, error) {
+	return verifyUserPassword(db, email, password)
 }
 
-func CreateAccessToken(ctx context.Context, email, password string) (core.User, string, error) {
-	db := db.Get(ctx)
+func CreateAccessToken(db db.TxHandler, email, password string) (core.User, string, error) {
 	if user, err := verifyUserPassword(db, email, password); err != nil {
 		return core.User{}, "", err
 	} else if token, err := insertAccessToken(db, user.ID); err != nil {
@@ -43,9 +41,9 @@ func CreateAccessToken(ctx context.Context, email, password string) (core.User, 
 	}
 }
 
-func ReadAccessToken(ctx context.Context, accessToken string) (user core.User, err error) {
+func ReadAccessToken(db db.Handler, accessToken string) (user core.User, err error) {
 	const q = `SELECT t.expires, u.id, u.email, u.name, u.permissions, u.home FROM access_tokens t JOIN users u ON t.user_id = u.id WHERE t.id = $1; `
-	row := db.Get(ctx).QueryRow(q, accessToken)
+	row := db.QueryRow(q, accessToken)
 
 	var expires pgtype.Timestamp
 	err = row.Scan(&expires, &user.ID, &user.Email, &user.Name, &user.Permissions, &user.Home)
@@ -59,8 +57,7 @@ func ReadAccessToken(ctx context.Context, accessToken string) (user core.User, e
 	return
 }
 
-func CreateResetToken(ctx context.Context, email string) (core.User, string, error) {
-	db := db.Get(ctx)
+func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) {
 	user, err := core.UserByEmail(db, email)
 	if err != nil {
 		return core.User{}, "", err
@@ -74,54 +71,46 @@ func CreateResetToken(ctx context.Context, email string) (core.User, string, err
 
 }
 
-func ResetUserPassword(ctx context.Context, email, resetToken, password string) (core.User, string, error) {
-	var user core.User
-	var apiToken string
-	err := db.Get(ctx).RunInTx(func(db db.Handler) error {
-		var err error
-		user, err = core.UserByEmail(db, email)
-		if err != nil {
-			return err
-		}
+func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (core.User, string, error) {
+	user, err := core.UserByEmail(db, email)
+	if err != nil {
+		return user, "", err
+	}
 
-		// UpdateUserPassword will ensure the password strength
-		// Not incorrect to do this before token verification because we are in a transaction.
-		// TODO: Are there perf implications for this in case of malicious actors?
-		err = updateUserPassword(db, user.ID, password)
-		if err != nil {
-			return err
-		}
+	// UpdateUserPassword will ensure the password strength
+	// Not incorrect to do this before token verification because we are in a transaction.
+	// TODO: Are there perf implications for this in case of malicious actors?
+	err = updateUserPassword(db, user.ID, password)
+	if err != nil {
+		return core.User{}, "", err
+	}
 
-		const q = `DELETE FROM reset_tokens WHERE user_id = @user_id::INT AND token = @token::TEXT RETURNING expires`
-		args := pgx.NamedArgs{
-			"user_id": user.ID,
-			"token":   resetToken,
-			"expires": time.Now().Add(resetTokenDuration),
+	const q = `DELETE FROM reset_tokens WHERE user_id = @user_id::INT AND token = @token::TEXT RETURNING expires`
+	args := pgx.NamedArgs{
+		"user_id": user.ID,
+		"token":   resetToken,
+		"expires": time.Now().Add(resetTokenDuration),
+	}
+	row := db.QueryRow(q, args)
+	var expires pgtype.Timestamp
+	if err := row.Scan(&expires); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = ErrCredentialsInvalid
 		}
-		row := db.QueryRow(q, args)
-		var expires pgtype.Timestamp
-		if err := row.Scan(&expires); err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				return ErrCredentialsInvalid
-			}
-			return err
-		}
-		if time.Now().After(expires.Time) {
-			return ErrCredentialsInvalid
-		}
+		return core.User{}, "", err
+	}
+	if time.Now().After(expires.Time) {
+		return core.User{}, "", ErrCredentialsInvalid
+	}
 
-		apiToken, err = insertAccessToken(db, user.ID)
-		return err
-	})
-
+	apiToken, err := insertAccessToken(db, user.ID)
 	if err != nil {
 		return core.User{}, "", err
 	}
 	return user, apiToken, nil
 }
 
-func UpdateUserPassword(ctx context.Context, email, password string) error {
-	db := db.Get(ctx)
+func UpdateUserPassword(db db.TxHandler, email, password string) error {
 	user, err := core.UserByEmail(db, email)
 	if err != nil {
 		return err
@@ -129,7 +118,7 @@ func UpdateUserPassword(ctx context.Context, email, password string) error {
 	return updateUserPassword(db, user.ID, password)
 }
 
-func updateUserPassword(db db.Handler, userID int32, password string) error {
+func updateUserPassword(db db.TxHandler, userID int32, password string) error {
 	if err := checkPasswordStrength(password); err != nil {
 		return err
 	}
@@ -144,7 +133,7 @@ func updateUserPassword(db db.Handler, userID int32, password string) error {
 	return nil
 }
 
-func insertAccessToken(db db.Handler, userID int32) (string, error) {
+func insertAccessToken(db db.TxHandler, userID int32) (string, error) {
 	const q = `INSERT INTO access_tokens(id, expires, user_id) VALUES ($1::TEXT, NOW() + $2::INTERVAL, $3::INT)`
 
 	token := generateRandomString(apiTokenLength)
@@ -155,7 +144,7 @@ func insertAccessToken(db db.Handler, userID int32) (string, error) {
 	}
 }
 
-func insertResetToken(db db.Handler, userID int32) (string, error) {
+func insertResetToken(db db.TxHandler, userID int32) (string, error) {
 	const q = `INSERT INTO reset_tokens(user_id, token, expires)
 VALUES (@user_id::INT, @token::TEXT, @expires::TIMESTAMP)
 ON CONFLICT(user_id) DO UPDATE SET token = @token::TEXT, expires = @expires::TIMESTAMP`

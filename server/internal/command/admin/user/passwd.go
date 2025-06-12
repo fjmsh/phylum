@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"codeberg.org/shroff/phylum/server/internal/auth"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -47,8 +48,9 @@ func setupPasswdCommand() *cobra.Command {
 				}
 			}
 
-			err = auth.UpdateUserPassword(context.Background(), email, password)
-			if err != nil {
+			if err := db.Get(context.Background()).RunInTx(func(db db.TxHandler) error {
+				return auth.UpdateUserPassword(db, email, password)
+			}); err != nil {
 				fmt.Println("could not change password: " + err.Error())
 				os.Exit(1)
 			}

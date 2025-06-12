@@ -13,7 +13,7 @@ type ResourceAncestor struct {
 	UserPermission Permission
 }
 
-func (f filesystem) scanResourceAncestor(row pgx.CollectableRow) (ResourceAncestor, error) {
+func (f fileSystem) scanResourceAncestor(row pgx.CollectableRow) (ResourceAncestor, error) {
 	var a ResourceAncestor
 	err := row.Scan(
 		&a.ID,
@@ -36,7 +36,7 @@ const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, userPermission) A
 )
 SELECT id, name, userPermission FROM nodes`
 
-func (f filesystem) GetAncestors(r Resource) ([]ResourceAncestor, error) {
+func (f fileSystem) GetAncestors(r Resource) ([]ResourceAncestor, error) {
 	if rows, err := f.db.Query(ancestorsQuery, r.id, f.user.ID, f.user.Permissions&PermissionFilesAll != 0); err != nil {
 		return nil, err
 	} else if a, err := pgx.CollectRows(rows, f.scanResourceAncestor); err != nil {
@@ -46,7 +46,7 @@ func (f filesystem) GetAncestors(r Resource) ([]ResourceAncestor, error) {
 	}
 }
 
-func (f filesystem) GetPath(r Resource) (string, error) {
+func (f fileSystem) GetPath(r Resource) (string, error) {
 	if a, err := f.GetAncestors(r); err != nil {
 		return "", err
 	} else {

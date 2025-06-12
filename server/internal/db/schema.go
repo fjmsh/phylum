@@ -94,20 +94,20 @@ func Migrate(ctx context.Context, version int) error {
 func DeleteSchema(ctx context.Context) error {
 	h := Get(ctx)
 	user := pool.Config().ConnConfig.User
-	return h.RunInTx(func(d Handler) (err error) {
-		if _, err = d.Exec("DROP SCHEMA public CASCADE"); err != nil {
+	return h.RunInTx(func(tx TxHandler) (err error) {
+		if _, err = tx.Exec("DROP SCHEMA public CASCADE"); err != nil {
 			return
 		}
-		if _, err = d.Exec("CREATE SCHEMA public"); err != nil {
+		if _, err = tx.Exec("CREATE SCHEMA public"); err != nil {
 			return
 		}
-		if _, err = d.Exec("GRANT ALL ON SCHEMA public TO " + user); err != nil {
+		if _, err = tx.Exec("GRANT ALL ON SCHEMA public TO " + user); err != nil {
 			return
 		}
-		if _, err = d.Exec("GRANT ALL ON SCHEMA public TO public"); err != nil {
+		if _, err = tx.Exec("GRANT ALL ON SCHEMA public TO public"); err != nil {
 			return
 		}
-		_, err = d.Exec("COMMENT ON SCHEMA public IS 'standard public schema'")
+		_, err = tx.Exec("COMMENT ON SCHEMA public IS 'standard public schema'")
 		return
 	})
 }

@@ -25,8 +25,9 @@ func (w *MigrateWorker) Work(ctx context.Context, job *river.Job[MigrateArgs]) e
 	return migrateVersionContents(ctx, job.Args.VersionID)
 }
 
-func MigrateVersionContents(versionID uuid.UUID) {
-	client.Insert(context.Background(), MigrateArgs{VersionID: versionID}, &river.InsertOpts{})
+func MigrateVersionContents(versionID uuid.UUID) error {
+	_, err := client.Insert(context.Background(), MigrateArgs{VersionID: versionID}, &river.InsertOpts{})
+	return err
 }
 
 func migrateVersionContents(ctx context.Context, versionID uuid.UUID) error {
@@ -84,8 +85,10 @@ UNION ALL
 	return storage.DefaultBackend(), nil
 }
 
-func updateStorage(db db.Handler, versionID uuid.UUID, storage string) error {
+func updateStorage(d db.Handler, versionID uuid.UUID, storage string) error {
 	q := "UPDATE resource_versions SET storage = $2::TEXT WHERE id = $1::UUID"
-	_, err := db.Exec(q, versionID, storage)
-	return err
+	return d.RunInTx(func(db db.TxHandler) error {
+		_, err := db.Exec(q, versionID, storage)
+		return err
+	})
 }

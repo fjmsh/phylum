@@ -31,7 +31,6 @@ func Initialize(ctx context.Context, pool *pgxpool.Pool) error {
 
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &MigrateWorker{})
-	river.AddWorker(workers, &DeleteWorker{})
 	river.AddWorker(workers, &DeleteContentsWorker{})
 
 	if c, err := river.NewClient(riverpgxv5.New(pool), &river.Config{

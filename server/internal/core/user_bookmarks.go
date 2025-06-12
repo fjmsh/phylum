@@ -29,7 +29,7 @@ func scanBookmark(row pgx.CollectableRow) (Bookmark, error) {
 	return p, nil
 }
 
-func AddBookmark(db db.Handler, u User, resource Resource, name string) (Bookmark, error) {
+func AddBookmark(db db.TxHandler, u User, resource Resource, name string) (Bookmark, error) {
 	if name == "" {
 		name = resource.Name()
 	}
@@ -56,7 +56,7 @@ RETURNING resource_id, name, dir, created`
 	}
 }
 
-func RemoveBookmark(db db.Handler, u User, id uuid.UUID) error {
+func RemoveBookmark(db db.TxHandler, u User, id uuid.UUID) error {
 	const q = "DELETE FROM bookmarks WHERE user_id = $1::INT AND resource_id = $2::UUID"
 	_, err := db.Exec(q, u.ID, id)
 	return err

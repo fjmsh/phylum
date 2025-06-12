@@ -1,42 +1,46 @@
 package core
 
 import (
+	"errors"
+	"fmt"
+	"path"
 	"strings"
 
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (f filesystem) ResourceByID(id uuid.UUID) (Resource, error) {
-	query := fullResourceQuery + "\nWHERE r.id = @id::UUID"
-	if !f.user.hasPermission(PermissionFilesAll) {
-		query = query + "\nAND r.permissions[@user_id::INT]::INTEGER <> 0"
+func (f fileSystem) ResourceByID(id uuid.UUID) (Resource, error) {
+	if r, err := resourceByID(f.db, id, f.user.ID); err != nil {
+		return Resource{}, err
+	} else if err := r.checkPermission(f.user, PermissionRead); err != nil {
+		return Resource{}, err
+	} else {
+		return r, nil
 	}
+}
+
+func resourceByID(db db.Handler, id uuid.UUID, userID int32) (Resource, error) {
+	query := fullResourceQuery + "\nWHERE r.id = @id::UUID"
 	args := pgx.NamedArgs{
-		"user_id": f.user.ID,
+		"user_id": userID,
 		"id":      id,
 	}
-	if rows, err := f.db.Query(query, args); err != nil {
+	if rows, err := db.Query(query, args); err != nil {
 		return Resource{}, err
 	} else {
 		return collectFullResource(rows)
 	}
-	// } else if r, err := collectFullResource(rows); err != nil {
-	// 	return Resource{}, err
-	// } else if err := r.checkPermission(f.user, PermissionRead); err != nil {
-	// 	return Resource{}, err
-	// } else {
-	// 	return r, nil
-	// }
 }
 
 // ResourceByPathWithRoot returns the resource at a given path from an optionally specified root.
 // The "<uuid>: prefix can be used to specify the path root.
 // Will default to using the filesystem's current path root if one is not specified.
 // An empty path or "/" will return the root resource.
-func (f filesystem) ResourceByPathWithRoot(path string) (Resource, error) {
+func (f fileSystem) ResourceByPathWithRoot(path string) (Resource, error) {
 	id, path, err := parseUUIDPrefix(path)
 	if err != nil {
 		return Resource{}, ErrResourceNotFound
@@ -47,12 +51,16 @@ func (f filesystem) ResourceByPathWithRoot(path string) (Resource, error) {
 	return f.ResourceByPath(path)
 }
 
-// ResourceByPath returns the resource at a given path from this filesystem's path root
-// An empty path or "/" will return the root resource.
-func (f filesystem) ResourceByPath(path string) (Resource, error) {
+func (f fileSystem) ResourceByPath(path string) (Resource, error) {
 	if !f.pathRoot.Valid {
 		return Resource{}, ErrResourceNotFound
 	}
+	return resourceByPath(f.db, f.pathRoot.Bytes, path, f.user)
+}
+
+// ResourceByPath returns the resource at a given path from this filesystem's path root
+// An empty path or "/" will return the root resource.
+func resourceByPath(db db.Handler, root uuid.UUID, path string, user User) (Resource, error) {
 	nodes := goqu.T("nodes").As("n")
 	r := goqu.T("resources").As("r")
 	p := goqu.T("resources").As("p")
@@ -68,7 +76,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	rec := pg.
 		Select(r.Col("id"), r.Col("parent"), goqu.L("array_remove(string_to_array(?::TEXT, '/', NULL), '')", path), goqu.L("0")).
 		From(r).
-		Where(r.Col("id").Eq(goqu.V(f.pathRoot))).
+		Where(r.Col("id").Eq(goqu.V(root))).
 		UnionAll(sub)
 
 	l := goqu.T("publinks").As("l")
@@ -76,7 +84,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 	q := pg.Select(r.All(),
 		pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
 		pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
-		pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.user.ID)),
+		pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", user.ID)),
 		pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 	).
 		From(r).
@@ -85,13 +93,13 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 		Join(nodes, goqu.On(r.Col("id").Eq(nodes.Col("id")))).
 		Where(goqu.L("cardinality(n.search) = n.depth"))
 
-	if !f.user.hasPermission(PermissionFilesAll) {
-		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.user.ID))
+	if !user.hasPermission(PermissionFilesAll) {
+		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", user.ID))
 	}
 
 	query, args, _ := q.ToSQL()
 
-	if rows, err := f.db.Query(query, args...); err != nil {
+	if rows, err := db.Query(query, args...); err != nil {
 		return Resource{}, err
 	} else {
 		return collectFullResource(rows)
@@ -111,7 +119,7 @@ func (f filesystem) ResourceByPath(path string) (Resource, error) {
 // If no uuid prefix is supplied and the path begins with '/' then r.f is used as the path root
 // Splits the path to extract its last component as the name and traverses the rest of the path from the root as the parent
 // If no name is specified then return r.name as the name
-func (f filesystem) targetNameParentByPathWithRoot(path string, src Resource) (string, Resource, error) {
+func (f fileSystem) targetNameParentByPathWithRoot(path string, src Resource) (string, Resource, error) {
 	id, path, err := parseUUIDPrefix(path)
 	if err != nil {
 		return "", Resource{}, err
@@ -141,13 +149,39 @@ func (f filesystem) targetNameParentByPathWithRoot(path string, src Resource) (s
 	return name, parent, nil
 }
 
-func (f filesystem) childResourceIDByName(parentID uuid.UUID, name string) (uuid.UUID, bool, error) {
+func detectNameConflict(db db.Handler, parentID uuid.UUID, name string, autoRename bool) (string, error) {
+	if _, _, err := childResourceIDByName(db, parentID, name); err != nil {
+		// No name conflict. Good to go!
+		if errors.Is(err, ErrResourceNotFound) {
+			return name, nil
+		}
+		return "", err
+	} else if !autoRename {
+		return "", ErrResourceNameConflict
+	}
+
+	ext := path.Ext(name)
+	basename := name[:len(name)-len(ext)]
+	counter := 1
+	for {
+		name = fmt.Sprintf("%s (%d)%s", basename, counter, ext)
+		if _, _, err := childResourceIDByName(db, parentID, name); err == nil {
+			counter++
+		} else if errors.Is(err, ErrResourceNotFound) {
+			return name, nil
+		} else {
+			return "", err
+		}
+	}
+}
+
+func childResourceIDByName(db db.Handler, parentID uuid.UUID, name string) (uuid.UUID, bool, error) {
 	const query = "SELECT id, dir FROM resources WHERE parent = @parent::UUID AND name = @name::TEXT AND deleted IS NULL"
 	args := pgx.NamedArgs{
 		"parent": parentID,
 		"name":   name,
 	}
-	row := f.db.QueryRow(query, args)
+	row := db.QueryRow(query, args)
 	var id uuid.UUID
 	var dir bool
 	err := row.Scan(&id, &dir)

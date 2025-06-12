@@ -27,7 +27,7 @@ func Get(ctx context.Context) Handler {
 			notifier = n
 		}
 	}
-	return Handler{
+	return handler{
 		ctx: ctx,
 		tx:  pool,
 	}
@@ -39,7 +39,7 @@ func Pool() *pgxpool.Pool {
 	return pool
 }
 
-func (d Handler) Notifier() pubsub.Notifier {
+func Notifier() pubsub.Notifier {
 	return notifier
 }
 

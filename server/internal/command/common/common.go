@@ -35,10 +35,11 @@ func User(cmd *cobra.Command) *core.User {
 func UserFileSystem(cmd *cobra.Command) core.FileSystem {
 	if f == nil {
 		user := User(cmd)
+		db := db.Get(context.Background())
 		if user == nil {
-			f = core.OpenOmniscient(db.Get(context.Background()))
+			f = core.OpenOmniscient(db)
 		} else {
-			f = user.OpenFileSystem(context.Background())
+			f = user.OpenFileSystem(db)
 		}
 	}
 	return f

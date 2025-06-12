@@ -11,7 +11,7 @@ type DiskUsageInfo struct {
 	Dirs      int64
 }
 
-func (f filesystem) DiskUsage(r Resource) (DiskUsageInfo, error) {
+func (f fileSystem) DiskUsage(r Resource) (DiskUsageInfo, error) {
 	// TODO: #versions This is broken
 	n, q := selectResourceTree(r.id, false, "content_length", "dir")
 

@@ -13,7 +13,13 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (f filesystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
+// TODO: #tx Change to Write(Resource, uuid.UUID, func(io.WriteCloser) error) error
+func (f fileSystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
+	// TODO: #implement
+	return nil, nil
+}
+
+func (f txFileSystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
 	if err := r.checkPermission(f.user, PermissionWrite); err != nil {
 		return nil, err
 	}
@@ -28,31 +34,25 @@ func (f filesystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, 
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
-			err := f.runInTx(func(f filesystem) error {
-				if err := f.createResourceVersion(r.id, versionID, int64(len), mimeType, sum); err != nil {
-					return err
-				}
-				if err := f.updateResourceModified(r.id); err != nil {
-					return err
-				}
-				return nil
-			})
-			if err != nil {
+			if err := createResourceVersion(f.db, r.id, versionID, int64(len), mimeType, sum); err != nil {
+				return err
+			}
+			if err := updateResourceModified(f.db, r.id); err != nil {
 				return err
 			}
 
-			jobs.MigrateVersionContents(versionID)
-			return nil
+			// TODO: #tx pass in transaction
+			return jobs.MigrateVersionContents(versionID)
 		}), nil
 
 	}
 }
 
-func (f filesystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
+func (f fileSystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
 	return f.ReadDirDeleted(r, recursive, false)
 }
 
-func (f filesystem) ReadDirDeleted(r Resource, recursive, includeDeleted bool) ([]Resource, error) {
+func (f fileSystem) ReadDirDeleted(r Resource, recursive, includeDeleted bool) ([]Resource, error) {
 	if !r.Dir() {
 		return nil, ErrResourceNotCollection
 	}
@@ -76,7 +76,7 @@ func (f filesystem) ReadDirDeleted(r Resource, recursive, includeDeleted bool) (
 	}
 }
 
-func (f filesystem) Walk(r Resource, depth int, fn func(Resource, string) error) error {
+func (f fileSystem) Walk(r Resource, depth int, fn func(Resource, string) error) error {
 	suffix := ""
 	if r.Dir() {
 		suffix = "/"

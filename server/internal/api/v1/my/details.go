@@ -21,7 +21,7 @@ func handleDetailsUpdateRoute(c *gin.Context) {
 
 	u := authenticator.GetUser(c)
 
-	err = db.Get(c.Request.Context()).RunInTx(func(db db.Handler) error {
+	err = db.Get(c.Request.Context()).RunInTx(func(db db.TxHandler) error {
 		if params.Name != "" {
 			if err := core.UpdateUserName(db, u, params.Name); err != nil {
 				return err

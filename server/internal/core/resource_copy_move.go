@@ -4,13 +4,25 @@ import (
 	"errors"
 	"strings"
 
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/sirupsen/logrus"
 )
 
-func (f filesystem) Move(r Resource, target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
+func (f fileSystem) Move(r Resource, target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
+	var res Resource
+	var deleted bool
+	var err error
+	err = f.runInTx(func(f txFileSystem) error {
+		res, deleted, err = f.Move(r, target, conflictResolution)
+		return err
+	})
+	return res, deleted, err
+}
+
+func (f txFileSystem) Move(r Resource, target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	// Check source directory permissions
 	if r.deleted.Valid {
 		return Resource{}, false, ErrResourceDeleted
@@ -58,43 +70,41 @@ func (f filesystem) Move(r Resource, target string, conflictResolution ResourceB
 
 	var res Resource
 	var deleted = false
-	return res, deleted, f.runInTx(func(f filesystem) error {
-		if conflictResolution == ResourceBindConflictResolutionOverwrite || conflictResolution == ResourceBindConflictResolutionDelete {
-			if id, _, err := f.childResourceIDByName(r.ID(), destName); err != nil {
-				if !errors.Is(err, ErrResourceNotFound) {
-					return err
-				}
-			} else if err := softDelete(f.db, id); err != nil {
-				return err
-			} else {
-				deleted = true
+	if conflictResolution == ResourceBindConflictResolutionOverwrite || conflictResolution == ResourceBindConflictResolutionDelete {
+		if id, _, err := childResourceIDByName(f.db, r.ID(), destName); err != nil {
+			if !errors.Is(err, ErrResourceNotFound) {
+				return res, deleted, err
 			}
-		}
-		newParentID := pgtype.UUID{
-			Bytes: destParent.id,
-			Valid: true,
-		}
-		if r.parentID.Bytes == destParent.id {
-			newParentID = pgtype.UUID{}
-		}
-		if err := f.updateResourceNameParent(r.id, destName, newParentID); err != nil {
-			return err
+		} else if err := softDelete(f.db, id); err != nil {
+			return res, deleted, err
 		} else {
-			res = r
-			res.name = destName
-			if newParentID.Valid {
-				if err := f.recomputePermissions(r.id); err != nil {
-					return err
-				}
-				res.parentID = newParentID
-				res.visibleParent = newParentID
-			}
-			return nil
+			deleted = true
 		}
-	})
+	}
+	newParentID := pgtype.UUID{
+		Bytes: destParent.id,
+		Valid: true,
+	}
+	if r.parentID.Bytes == destParent.id {
+		newParentID = pgtype.UUID{}
+	}
+	if err := updateResourceNameParent(f.db, r.id, destName, newParentID); err != nil {
+		return res, deleted, err
+	} else {
+		res = r
+		res.name = destName
+		if newParentID.Valid {
+			if err := recomputePermissions(f.db, r.id); err != nil {
+				return res, deleted, err
+			}
+			res.parentID = newParentID
+			res.visibleParent = newParentID
+		}
+		return res, deleted, nil
+	}
 }
 
-func (f filesystem) updateResourceNameParent(id uuid.UUID, name string, parent pgtype.UUID) error {
+func updateResourceNameParent(db db.TxHandler, id uuid.UUID, name string, parent pgtype.UUID) error {
 	updates := goqu.Record{
 		"modified": goqu.L("NOW()"),
 	}
@@ -106,7 +116,7 @@ func (f filesystem) updateResourceNameParent(id uuid.UUID, name string, parent p
 	}
 	q, args, _ := pg.Update("resources").Where(goqu.C("id").Eq(id)).Set(updates).ToSQL()
 
-	if _, err := f.db.Exec(q, args...); err != nil {
+	if _, err := db.Exec(q, args...); err != nil {
 		if strings.Contains(err.Error(), "unique_member_resource_name") {
 			return ErrResourceNameConflict
 		}
@@ -115,7 +125,18 @@ func (f filesystem) updateResourceNameParent(id uuid.UUID, name string, parent p
 	return nil
 }
 
-func (f filesystem) Copy(r Resource, target string, id uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
+func (f fileSystem) Copy(r Resource, target string, id uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
+	var res Resource
+	var deleted bool
+	var err error
+	err = f.runInTx(func(f txFileSystem) error {
+		res, deleted, err = f.Copy(r, target, id, recursive, conflictResolution)
+		return err
+	})
+	return res, deleted, err
+}
+
+func (f txFileSystem) Copy(r Resource, target string, id uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	// Check source directory permissions
 	if err := r.checkPermission(f.user, PermissionWrite); err != nil {
 		return Resource{}, false, err
@@ -152,87 +173,81 @@ func (f filesystem) Copy(r Resource, target string, id uuid.UUID, recursive bool
 	var contents []copyParams
 	newIDs := make(map[uuid.UUID]uuid.UUID)
 
-	var targetRoot Resource
-	created := false
-	deleted := false
-	err = f.runInTx(func(f filesystem) error {
-		targetRoot, created, deleted, err = f.createResource(
-			id,
-			destParent.id,
-			destName,
-			r.dir,
-			destParent.permissions,
-			conflictResolution,
-		)
-		// createResource may return an already existing resources, depending on the specified conflictResolution
-		id = targetRoot.id
-		if err == nil && r.id == id {
-			err = ErrResourceCopyTargetSelf
-		}
-		if err != nil {
-			return err
-		}
-
-		if targetRoot.dir {
-			newIDs[r.id] = id
-		} else {
-			contents = append(contents, copyParams{
-				src:          r.latestVersionInfo,
-				destResource: id,
-			})
-		}
-
-		for _, src := range tree {
-			id, _ := uuid.NewV7()
-			parent := newIDs[src.parentID.Bytes]
-
-			children = append(children, CreateResourcesParams{
-				ID:     id,
-				Parent: parent,
-				Name:   src.name,
-				Dir:    src.dir,
-			})
-
-			if src.dir {
-				newIDs[src.id] = id
-			} else {
-				contents = append(contents, copyParams{
-					src:          src.latestVersionInfo,
-					destResource: id,
-				})
-			}
-		}
-
-		if _, err := f.CreateResources(children); err != nil {
-			return err
-		}
-		if err := f.recomputePermissions(id); err != nil {
-			return err
-		}
-		if created {
-			return f.updateResourceModified(destParent.ID())
-		}
-		return nil
-	})
-
-	if err == nil {
-		func() {
-			for _, c := range contents {
-				if err := f.copyContents(c); err != nil {
-					logrus.Warn("unable to copy " + c.src.ID.String() + " to " + c.destResource.String() + ": " + err.Error())
-				}
-			}
-
-		}()
-	} else {
+	targetRoot, created, deleted, err := createResource(
+		f.db,
+		id,
+		destParent.id,
+		destName,
+		r.dir,
+		destParent.permissions,
+		conflictResolution,
+	)
+	// createResource may return an already existing resources, depending on the specified conflictResolution
+	id = targetRoot.id
+	if err == nil && r.id == id {
+		err = ErrResourceCopyTargetSelf
+	}
+	if err != nil {
 		return Resource{}, false, err
 	}
 
-	// TODO: #verify Shouldn't be necessary
-	targetRoot.visibleParent = pgtype.UUID{
-		Bytes: destParent.id,
-		Valid: true,
+	if targetRoot.dir {
+		newIDs[r.id] = id
+	} else {
+		contents = append(contents, copyParams{
+			src:          r.latestVersionInfo,
+			destResource: id,
+		})
 	}
+
+	for _, src := range tree {
+		id, _ := uuid.NewV7()
+		parent := newIDs[src.parentID.Bytes]
+
+		children = append(children, CreateResourcesParams{
+			ID:     id,
+			Parent: parent,
+			Name:   src.name,
+			Dir:    src.dir,
+		})
+
+		if src.dir {
+			newIDs[src.id] = id
+		} else {
+			contents = append(contents, copyParams{
+				src:          src.latestVersionInfo,
+				destResource: id,
+			})
+		}
+	}
+
+	if _, err := createResources(f.db, children); err != nil {
+		return Resource{}, false, err
+	}
+	if err := recomputePermissions(f.db, id); err != nil {
+		return Resource{}, false, err
+	}
+	if created {
+		if err := updateResourceModified(f.db, destParent.ID()); err != nil {
+			return Resource{}, false, err
+		}
+	}
+
+	func() {
+		// TODO: #jobs
+		for _, c := range contents {
+			if err := f.copyContents(c); err != nil {
+				logrus.Warn("unable to copy " + c.src.ID.String() + " to " + c.destResource.String() + ": " + err.Error())
+			}
+		}
+
+	}()
+
+	// TODO: #verify this shouldn't be necessary
+	// targetRoot.visibleParent = pgtype.UUID{
+	// 	Bytes: destParent.id,
+	// 	Valid: true,
+	// }
 	return targetRoot, deleted, err
 }
 
@@ -242,10 +257,10 @@ type copyParams struct {
 }
 
 // TODO: #implement copyContents
-func (f filesystem) copyContents(params copyParams) error {
+func (f txFileSystem) copyContents(params copyParams) error {
 	versionID, _ := uuid.NewV7()
 
-	if err := f.createResourceVersion(params.destResource, versionID, params.src.Size, params.src.MimeType, params.src.SHA256); err != nil {
+	if err := createResourceVersion(f.db, params.destResource, versionID, params.src.Size, params.src.MimeType, params.src.SHA256); err != nil {
 		return errors.New("failed to create version for " + params.destResource.String() + ": " + err.Error())
 	}
 

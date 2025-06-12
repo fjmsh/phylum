@@ -23,16 +23,16 @@ func setupInviteCommand() *cobra.Command {
 			name, _ := cmd.Flags().GetString("name")
 			noCreateHome, _ := cmd.Flags().GetBool("no-create-home")
 
-			var u core.User
-			err := db.Get(context.Background()).RunInTx(func(db db.Handler) error {
-				if user, err := core.CreateUser(db, email, name, noCreateHome); err != nil {
+			err := db.Get(context.Background()).RunInTx(func(db db.TxHandler) error {
+				var user core.User
+				if u, err := core.CreateUser(db, email, name, noCreateHome); err != nil {
 					return err
 				} else {
-					u = user
+					user = u
 				}
 
 				if b, _ := cmd.Flags().GetBool("no-email"); !b {
-					if err := mail.SendWelcomeEmail(u); err != nil {
+					if err := mail.SendWelcomeEmail(user); err != nil {
 						fmt.Println("Use --no-email if you want don't want to try sending the welcome email")
 						return errors.New("unable to send welcome email: " + err.Error())
 					}
@@ -46,7 +46,9 @@ func setupInviteCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringP("name", "n", "", "Name")
+	// TODO: #flags/#config
 	cmd.Flags().StringP("user_basedir", "b", "", "Base directory for home")
+	// TODO: #flags/#config
 	cmd.Flags().BoolP("no-create-home", "M", false, "Do not make home directory")
 	cmd.Flags().Bool("no-email", false, "Do not send email")
 	return cmd

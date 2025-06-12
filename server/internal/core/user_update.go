@@ -5,7 +5,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func UpdateUserHome(db db.Handler, user User, home pgtype.UUID) error {
+func UpdateUserHome(db db.TxHandler, user User, home pgtype.UUID) error {
 	const q = "UPDATE users SET home = $2::UUID, modified = NOW() WHERE id = $1::INT"
 	if _, err := db.Exec(q, user.ID, home); err != nil {
 		return err
@@ -13,7 +13,7 @@ func UpdateUserHome(db db.Handler, user User, home pgtype.UUID) error {
 	return nil
 }
 
-func UpdateUserName(db db.Handler, user User, name string) error {
+func UpdateUserName(db db.TxHandler, user User, name string) error {
 	const q = "UPDATE users SET name = $2::TEXT, modified = NOW() WHERE id = $1::INT"
 	if _, err := db.Exec(q, user.ID, name); err != nil {
 		return err
@@ -21,7 +21,7 @@ func UpdateUserName(db db.Handler, user User, name string) error {
 	return nil
 }
 
-func GrantUserPermissions(db db.Handler, user User, permissions UserPermissions) error {
+func GrantUserPermissions(db db.TxHandler, user User, permissions UserPermissions) error {
 	const q = "UPDATE users SET permissions = permissions | $2::INTEGER, modified = NOW() WHERE id = $1::INT"
 	if _, err := db.Exec(q, user.ID, permissions); err != nil {
 		return err
@@ -29,7 +29,7 @@ func GrantUserPermissions(db db.Handler, user User, permissions UserPermissions)
 	return nil
 }
 
-func RevokeUserPermissions(db db.Handler, user User, permissions UserPermissions) error {
+func RevokeUserPermissions(db db.TxHandler, user User, permissions UserPermissions) error {
 	const q = "UPDATE users SET permissions = permissions & ~ $2::INTEGER, modified = NOW() WHERE id = $1::INT"
 	if _, err := db.Exec(q, user.ID, permissions); err != nil {
 		return err

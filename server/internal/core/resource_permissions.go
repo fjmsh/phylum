@@ -1,6 +1,7 @@
 package core
 
 import (
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -15,7 +16,16 @@ const (
 	PermissionSU    = Permission(-1)
 )
 
-func (f filesystem) UpdatePermissions(r Resource, user User, permission Permission) (Resource, error) {
+func (f fileSystem) UpdatePermissions(r Resource, user User, permission Permission) (res Resource, err error) {
+	err = f.runInTx(func(f txFileSystem) error {
+		var err error
+		res, err = f.UpdatePermissions(r, user, permission)
+		return err
+	})
+	return res, err
+}
+
+func (f txFileSystem) UpdatePermissions(r Resource, user User, permission Permission) (Resource, error) {
 	if r.deleted.Valid {
 		return r, ErrResourceDeleted
 	}
@@ -48,20 +58,17 @@ RETURNING grants`
 	}
 
 	var grants []byte
-	err := f.runInTx(func(f filesystem) error {
-		row := f.db.QueryRow(q, pgx.NamedArgs{
-			"resource_id": r.id,
-			"user_id":     user.ID,
-			"permission":  permission,
-		})
-
-		if err := row.Scan(&grants); err != nil {
-			return err
-		}
-
-		return f.recomputePermissions(r.id)
+	row := f.db.QueryRow(q, pgx.NamedArgs{
+		"resource_id": r.id,
+		"user_id":     user.ID,
+		"permission":  permission,
 	})
-	if err != nil {
+
+	if err := row.Scan(&grants); err != nil {
+		return Resource{}, err
+	}
+
+	if err := recomputePermissions(f.db, r.id); err != nil {
 		return Resource{}, err
 	}
 
@@ -69,7 +76,7 @@ RETURNING grants`
 	return r, nil
 }
 
-func (f filesystem) recomputePermissions(id uuid.UUID) error {
+func recomputePermissions(db db.TxHandler, id uuid.UUID) error {
 	const q = `
 WITH RECURSIVE nodes(id, parent, permissions) AS (
     SELECT r.id, r.parent, phylum_merge_permission_grants(COALESCE(p.permissions, '{}'::JSONB), r.grants) END
@@ -86,6 +93,6 @@ UPDATE resources
     FROM nodes
     WHERE resources.id = nodes.id`
 
-	_, err := f.db.Exec(q, id)
+	_, err := db.Exec(q, id)
 	return err
 }

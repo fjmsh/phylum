@@ -2,15 +2,15 @@ package core
 
 import (
 	"errors"
-	"fmt"
-	"path"
 	"strings"
 
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/sirupsen/logrus"
 )
 
 type ResourceBindConflictResolution int32
@@ -29,7 +29,17 @@ func CheckResourceNameInvalid(s string) bool {
 	})
 }
 
-func (f filesystem) CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+func (f fileSystem) CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+	var res Resource
+	err := f.runInTx(func(f txFileSystem) error {
+		var err error
+		res, err = f.CreateResourceByPath(path, id, dir, createParents, conflictResolution)
+		return err
+	})
+	return res, err
+}
+
+func (f txFileSystem) CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	if id == uuid.Nil {
 		id, _ = uuid.NewV7()
 	}
@@ -50,7 +60,7 @@ func (f filesystem) CreateResourceByPath(path string, id uuid.UUID, dir, createP
 		return Resource{}, ErrResourcePathInvalid
 	}
 	if root.Valid {
-		f = f.withPathRoot(root)
+		f.fileSystem = f.fileSystem.withPathRoot(root)
 	}
 	segments := strings.Split(strings.TrimRight(strings.TrimLeft(path, "/"), "/"), "/")
 	r, err := f.ResourceByID(f.pathRoot.Bytes)
@@ -72,7 +82,7 @@ func (f filesystem) CreateResourceByPath(path string, id uuid.UUID, dir, createP
 	return r, err
 }
 
-func (f filesystem) createMemberResource(r Resource, name string, id uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+func (f txFileSystem) createMemberResource(r Resource, name string, id uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	if r.deleted.Valid {
 		return Resource{}, ErrResourceDeleted
 	}
@@ -90,32 +100,26 @@ func (f filesystem) createMemberResource(r Resource, name string, id uuid.UUID, 
 	}
 	var res Resource
 	var created bool
-	err := f.runInTx(func(f filesystem) error {
-		var err error
-		if res, created, _, err = f.createResource(id, r.id, name, dir, r.permissions, conflictResolution); err != nil {
-			if strings.Contains(err.Error(), "unique_member_resource_name") {
-				return ErrResourceNameConflict
-			}
-			return err
-		} else if created {
-			if err := f.recomputePermissions(id); err != nil {
-				return err
-			}
-			return f.updateResourceModified(r.id)
+	var err error
+	if res, created, _, err = createResource(f.db, id, r.id, name, dir, r.permissions, conflictResolution); err != nil {
+		if errors.Is(err, ErrResourceIDConflict) {
+			return resourceByID(f.db, id, f.user.ID)
 		}
-		return nil
-	})
-	if err == ErrResourceIDConflict {
-		return f.ResourceByID(id)
-	}
-	if err != nil {
 		return Resource{}, err
+	} else if created {
+		if err := recomputePermissions(f.db, id); err != nil {
+			return Resource{}, err
+		}
+		if err := updateResourceModified(f.db, r.id); err != nil {
+			return Resource{}, err
+		}
 	}
 
 	return res, nil
 }
 
-func (f filesystem) createResource(
+func createResource(
+	db db.TxHandler,
 	id uuid.UUID,
 	parent uuid.UUID,
 	name string,
@@ -123,79 +127,62 @@ func (f filesystem) createResource(
 	permissions []byte,
 	conflictResolution ResourceBindConflictResolution,
 ) (res Resource, created, deleted bool, err error) {
-	err = f.runInTx(func(f filesystem) error {
-		res, err = f.insertResource(
+	if name, err = detectNameConflict(db, parent, name, conflictResolution == ResourceBindConflictResolutionRename); err != nil {
+		// Name conflicts will be handled outside of this if-block
+		if !errors.Is(err, ErrResourceNameConflict) {
+			return
+		}
+	} else {
+		// No name conflict. Just insert and move along
+		res, err = insertResource(
+			db,
 			id,
 			parent,
 			name,
 			dir,
 			permissions,
 		)
-		return err
-	})
-	if err == nil {
 		created = true
+		// maybe the request already succeeded in the previous attempt but the client didn't receive the response?
+		if strings.Contains(err.Error(), "resources_pkey") {
+			err = ErrResourceIDConflict
+		}
 		return
 	}
-	if strings.Contains(err.Error(), "unique_member_resource_name") {
-		switch conflictResolution {
-		case ResourceBindConflictResolutionError:
+
+	switch conflictResolution {
+	case ResourceBindConflictResolutionError:
+		err = ErrResourceNameConflict
+	case ResourceBindConflictResolutionEnsure:
+		var rDir bool
+		_, rDir, err = childResourceIDByName(db, parent, name)
+		if err == nil && rDir != dir {
 			err = ErrResourceNameConflict
-		case ResourceBindConflictResolutionEnsure:
-			var rDir bool
-			_, rDir, err = f.childResourceIDByName(parent, name)
-			if err == nil && rDir != dir {
-				err = ErrResourceNameConflict
-			}
-		case ResourceBindConflictResolutionRename:
-			if name, err = f.detectNameConflict(parent, name, true); err != nil {
-				return
-			} else {
-				res, err = f.insertResource(
-					id,
-					parent,
-					name,
-					dir,
-					permissions,
-				)
-				return
-			}
-		case ResourceBindConflictResolutionOverwrite:
-			var rID uuid.UUID
-			var rDir bool
-			rID, rDir, err = f.childResourceIDByName(parent, name)
-			if err == nil {
-				deleted = true
-				if rDir == dir {
-					if dir {
-						err = f.softDeleteChildren(rID, parent)
-					}
-					if err == nil {
-						// Repurpose existing resource
-						res, err = f.ResourceByID(rID)
-					}
-				} else {
-					err = softDelete(f.db, res.id)
-					if err == nil {
-						res, created, _, err = f.createResource(
-							id,
-							parent,
-							name,
-							dir,
-							permissions,
-							ResourceBindConflictResolutionError,
-						)
-					}
+		}
+	case ResourceBindConflictResolutionRename:
+		logrus.Warn("Rename case reached?!")
+		// This case is should already be handled above
+	case ResourceBindConflictResolutionOverwrite:
+		var rID uuid.UUID
+		var rDir bool
+		rID, rDir, err = childResourceIDByName(db, parent, name)
+		if err == nil {
+			deleted = true
+			if rDir == dir {
+				if dir {
+					err = softDeleteChildren(db, rID, parent)
 				}
-			}
-		case ResourceBindConflictResolutionDelete:
-			var rID uuid.UUID
-			rID, _, err = f.childResourceIDByName(parent, name)
-			if err == nil {
-				deleted = true
-				err = softDelete(f.db, rID)
 				if err == nil {
-					res, created, _, err = f.createResource(
+					// Repurpose existing resource
+					res, err = resourceByID(db, rID, -1)
+					// This is set from the query using the user id, which we passed in as '-1' above.
+					res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
+				}
+			} else {
+				err = softDelete(db, res.id)
+				if err == nil {
+					res, created, _, err = createResource(
+						db,
 						id,
 						parent,
 						name,
@@ -206,14 +193,29 @@ func (f filesystem) createResource(
 				}
 			}
 		}
-	} else if strings.Contains(err.Error(), "resources_pkey") {
-		// TODO: maybe the request already succeeded in the previous attempt but the client didn't receive the response?
-		err = ErrResourceIDConflict
+	case ResourceBindConflictResolutionDelete:
+		var rID uuid.UUID
+		rID, _, err = childResourceIDByName(db, parent, name)
+		if err == nil {
+			deleted = true
+			err = softDelete(db, rID)
+			if err == nil {
+				res, created, _, err = createResource(
+					db,
+					id,
+					parent,
+					name,
+					dir,
+					permissions,
+					ResourceBindConflictResolutionError,
+				)
+			}
+		}
 	}
 	return
 }
 
-func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, permissions []byte) (Resource, error) {
+func insertResource(db db.TxHandler, id, parent uuid.UUID, name string, dir bool, permissions []byte) (Resource, error) {
 	query, args, _ := pg.From("resources").
 		Insert().
 		Rows(goqu.Record{
@@ -231,7 +233,7 @@ func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, 
 			goqu.L("'{}'::JSONB"), // inherited permissions
 		).
 		ToSQL()
-	if rows, err := f.db.Query(query, args...); err != nil {
+	if rows, err := db.Query(query, args...); err != nil {
 		return Resource{}, err
 	} else {
 		r, err := collectFullResource(rows)
@@ -243,13 +245,13 @@ func (f filesystem) insertResource(id, parent uuid.UUID, name string, dir bool, 
 	}
 }
 
-func (f filesystem) updateResourceModified(id uuid.UUID) error {
+func updateResourceModified(db db.TxHandler, id uuid.UUID) error {
 	const q = "UPDATE resources SET modified = NOW() WHERE id = $1"
-	_, err := f.db.Exec(q, id)
+	_, err := db.Exec(q, id)
 	return err
 }
 
-func (f filesystem) createResourceVersion(id, versionID uuid.UUID, size int64, mimeType, sha256 string) error {
+func createResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64, mimeType, sha256 string) error {
 	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage)
 	VALUES (@version_id::UUID, @resource_id::UUID, @size::INT, @mime_type::TEXT, @sha256::TEXT, @storage::TEXT)`
 
@@ -261,39 +263,13 @@ func (f filesystem) createResourceVersion(id, versionID uuid.UUID, size int64, m
 		"sha256":      sha256,
 		"storage":     storage.DefaultBackendName,
 	}
-	_, err := f.db.Exec(q, args)
+	_, err := db.Exec(q, args)
 	return err
 }
 
-func (f filesystem) detectNameConflict(parentID uuid.UUID, name string, autoRename bool) (string, error) {
-	if _, _, err := f.childResourceIDByName(parentID, name); err != nil {
-		// No name conflict. Good to go!
-		if errors.Is(err, ErrResourceNotFound) {
-			return name, nil
-		}
-		return "", err
-	} else if !autoRename {
-		return "", ErrResourceNameConflict
-	}
-
-	ext := path.Ext(name)
-	basename := name[:len(name)-len(ext)]
-	counter := 1
-	for {
-		name = fmt.Sprintf("%s (%d)%s", basename, counter, ext)
-		if _, _, err := f.childResourceIDByName(parentID, name); err == nil {
-			counter++
-		} else if errors.Is(err, ErrResourceNotFound) {
-			return name, nil
-		} else {
-			return "", err
-		}
-	}
-}
-
 // TODO: Make not public
-func (f filesystem) CreateResources(arg []CreateResourcesParams) (int64, error) {
-	return f.db.CopyFrom([]string{"resources"}, []string{"id", "parent", "name", "dir"}, &iteratorForCreateResources{rows: arg})
+func createResources(db db.TxHandler, arg []CreateResourcesParams) (int64, error) {
+	return db.CopyFrom([]string{"resources"}, []string{"id", "parent", "name", "dir"}, &iteratorForCreateResources{rows: arg})
 }
 
 // For bulk insert

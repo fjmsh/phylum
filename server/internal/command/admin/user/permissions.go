@@ -18,8 +18,8 @@ func setupGrantCommand() *cobra.Command {
 		Short: "Grant Permissions",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			db := db.Get(context.Background())
-			u, err := core.UserByEmail(db, args[0])
+			d := db.Get(context.Background())
+			u, err := core.UserByEmail(d, args[0])
 			if err != nil {
 				fmt.Println("unable to find user :" + err.Error())
 				os.Exit(1)
@@ -29,20 +29,21 @@ func setupGrantCommand() *cobra.Command {
 			if strings.HasPrefix(permString, "0x") {
 				var perm int64
 				perm, err = strconv.ParseInt(permString[2:], 16, 32)
-				p = int32(perm)
+				p = core.UserPermissions(perm)
 			} else {
 				var perm int64
 				perm, err = strconv.ParseInt(permString, 10, 32)
-				p = int32(perm)
+				p = core.UserPermissions(perm)
 			}
 			if err != nil {
-				fmt.Println("unable to parse permissions " + permString)
+				fmt.Println("failed to parse permission: " + err.Error())
 				os.Exit(1)
 			}
 
-			core.GrantUserPermissions(db, u, p)
-			if err != nil {
-				fmt.Println("unable to update permissions:" + err.Error())
+			if err := d.RunInTx(func(db db.TxHandler) error {
+				return core.GrantUserPermissions(db, u, p)
+			}); err != nil {
+				fmt.Println("failed to grant permission: " + err.Error())
 				os.Exit(1)
 			}
 		},
@@ -55,8 +56,8 @@ func setupRevokeCommand() *cobra.Command {
 		Short: "Revoke Permissions",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			db := db.Get(context.Background())
-			u, err := core.UserByEmail(db, args[0])
+			d := db.Get(context.Background())
+			u, err := core.UserByEmail(d, args[0])
 			if err != nil {
 				fmt.Println("unable to find user :" + err.Error())
 				os.Exit(1)
@@ -66,20 +67,22 @@ func setupRevokeCommand() *cobra.Command {
 			if strings.HasPrefix(permString, "0x") {
 				var perm int64
 				perm, err = strconv.ParseInt(permString[2:], 16, 32)
-				p = int32(perm)
+				p = core.UserPermissions(perm)
 			} else {
 				var perm int64
 				perm, err = strconv.ParseInt(permString, 10, 32)
-				p = int32(perm)
+				p = core.UserPermissions(perm)
 			}
 			if err != nil {
-				fmt.Println("unable to parse permissions " + permString)
+				fmt.Println("failed to parse permission: " + err.Error())
 				os.Exit(1)
 			}
 
-			core.RevokeUserPermissions(db, u, p)
-			if err != nil {
-				fmt.Println("unable to update permissions:" + err.Error())
+			if err := d.RunInTx(func(db db.TxHandler) error {
+				// TODO: Accept email directly instead of having to separately fetch the user
+				return core.RevokeUserPermissions(db, u, p)
+			}); err != nil {
+				fmt.Println("failed to revoke permission: " + err.Error())
 				os.Exit(1)
 			}
 		},
