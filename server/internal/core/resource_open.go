@@ -5,6 +5,7 @@ import (
 	"hash"
 	"io"
 
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/doug-martin/goqu/v9"
@@ -15,11 +16,6 @@ import (
 
 // TODO: #tx Change to Write(Resource, uuid.UUID, func(io.WriteCloser) error) error
 func (f fileSystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
-	// TODO: #implement
-	return nil, nil
-}
-
-func (f txFileSystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
 	if err := r.checkPermission(f.user, PermissionWrite); err != nil {
 		return nil, err
 	}
@@ -29,22 +25,26 @@ func (f txFileSystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser
 	if versionID == uuid.Nil {
 		versionID, _ = uuid.NewV7()
 	}
+
 	if dest, err := storage.DefaultBackend().OpenWrite(versionID.String()); err != nil {
 		return nil, err
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
-			if err := createResourceVersion(f.db, r.id, versionID, int64(len), mimeType, sum); err != nil {
-				return err
-			}
-			if err := updateResourceModified(f.db, r.id); err != nil {
-				return err
-			}
+			err := f.db.RunInTx(func(db db.TxHandler) error {
+				if err := createResourceVersion(db, r.id, versionID, int64(len), mimeType, sum); err != nil {
+					return err
+				}
+				if err := updateResourceModified(db, r.id); err != nil {
+					return err
+				}
 
-			// TODO: #tx pass in transaction
-			return jobs.MigrateVersionContents(versionID)
+				// TODO: #jobs #tx pass in transaction
+				return jobs.MigrateVersionContents(versionID)
+			})
+			storage.DefaultBackend().Delete(versionID.String())
+			return err
 		}), nil
-
 	}
 }
 
