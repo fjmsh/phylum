@@ -33,14 +33,23 @@ func handleInviteRequest(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to invite users"))
 	}
 
-	if user, err := core.CreateUser(db.Get(c.Request.Context()), params.Email, params.Name, params.NoCreateHome); err != nil {
+	var user core.User
+	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
+		if u, err := core.CreateUser(db, params.Email, params.Name, params.NoCreateHome); err != nil {
+			return err
+		} else {
+			user = u
+			if !params.NoSendEmail {
+				// TODO: #jobs #mail
+				go func() {
+					mail.SendWelcomeEmail(u)
+				}()
+			}
+			return nil
+		}
+	}); err != nil {
 		panic(err)
 	} else {
-		if !params.NoSendEmail {
-			go func() {
-				mail.SendWelcomeEmail(user)
-			}()
-		}
 		c.JSON(200, responses.User{ID: user.ID, Email: user.Email, Name: user.Name})
 	}
 }

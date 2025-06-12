@@ -91,8 +91,13 @@ func _readRootID(d db.Handler) (uuid.UUID, error) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			const createDir = "INSERT INTO resources(id, name, dir) VALUES ($1::UUID, '', TRUE)"
 			id, _ := uuid.NewV7()
-			_, err = d.ExecNoTx(createDir, id)
-			return id, err
+			if err := d.RunInTx(func(db db.TxHandler) error {
+				_, err = db.Exec(createDir, id)
+				return err
+			}); err != nil {
+				return uuid.Nil, err
+			}
+			return id, nil
 		}
 		return uuid.Nil, err
 	} else {

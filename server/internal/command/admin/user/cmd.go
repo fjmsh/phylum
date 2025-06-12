@@ -17,7 +17,6 @@ func SetupCommand() *cobra.Command {
 	cmd.AddCommand([]*cobra.Command{
 		setupListCommand(),
 		setupInviteCommand(),
-		setupPwresetResetCommand(),
 		setupModCommand(),
 		setupPasswdCommand(),
 		setupGrantCommand(),

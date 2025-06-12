@@ -9,6 +9,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
 )
@@ -43,20 +44,27 @@ func handlePasswordAuth(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
 	}
 
-	if user, token, err := auth.CreateAccessToken(c.Request.Context(), params.Email, params.Password); err != nil {
-		if errors.Is(err, auth.ErrCredentialsInvalid) {
-			err = core.NewError(http.StatusBadRequest, "missing_params", "Username or password invalid")
+	var token string
+	var response responses.Bootstrap
+	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
+		if user, t, err := auth.CreateAccessToken(db, params.Email, params.Password); err != nil {
+			return err
+		} else if r, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
+			return err
+		} else {
+			token = t
+			response = r
+			return nil
 		}
-		panic(err)
-	} else if bootstrap, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
+	}); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, responses.Login{
 			AccessToken: token,
-			Bootstrap:   bootstrap,
+			Bootstrap:   response,
 		})
-	}
 
+	}
 }
 
 func handleRequestPasswordReset(c *gin.Context) {
@@ -66,19 +74,24 @@ func handleRequestPasswordReset(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
 	}
 
-	if user, token, err := auth.CreateResetToken(c.Request.Context(), params.Email); err != nil {
-		// Do not indicate that there was an error if no user was found
-		if errors.Is(err, core.ErrUserNotFound) {
-			c.JSON(200, gin.H{})
-			return
+	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
+		if user, token, err := auth.CreateResetToken(db, params.Email); err != nil {
+			// Do not indicate that there was an error if no user was found
+			if !errors.Is(err, core.ErrUserNotFound) {
+				return err
+			}
+		} else {
+			// TODO: #jobs #mail
+			go func() {
+				mail.SendPasswordResetEmail(user, token)
+			}()
 		}
+		return nil
+	}); err != nil {
 		panic(err)
 	} else {
-		go func() {
-			mail.SendPasswordResetEmail(user, token)
-		}()
+		c.JSON(http.StatusOK, gin.H{})
 	}
-	c.JSON(200, gin.H{})
 }
 
 func handleResetPassword(c *gin.Context) {
@@ -88,15 +101,26 @@ func handleResetPassword(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
 	}
 
-	if user, token, err := auth.ResetUserPassword(c.Request.Context(), params.Email, params.Token, params.Password); err != nil {
-		panic(err)
-	} else if bootstrap, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
+	var token string
+	var response responses.Bootstrap
+	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
+		if user, t, err := auth.ResetUserPassword(db, params.Email, params.Token, params.Password); err != nil {
+			return err
+		} else if r, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
+			return err
+		} else {
+			token = t
+			response = r
+			return nil
+		}
+	}); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, responses.Login{
 			AccessToken: token,
-			Bootstrap:   bootstrap,
+			Bootstrap:   response,
 		})
+
 	}
 }
 

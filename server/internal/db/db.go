@@ -33,6 +33,10 @@ func Get(ctx context.Context) Handler {
 	}
 }
 
+func RunInTx(ctx context.Context, fn func(TxHandler) error) error {
+	return Get(ctx).RunInTx(fn)
+}
+
 // Pool returns the pgx pool
 // Only to be used for jobs initialization
 func Pool() *pgxpool.Pool {

@@ -10,7 +10,6 @@ import (
 type Handler interface {
 	Query(stmt string, args ...interface{}) (pgx.Rows, error)
 	QueryRow(stmt string, args ...interface{}) pgx.Row
-	ExecNoTx(stmt string, args ...interface{}) (pgconn.CommandTag, error)
 	RunInTx(fn func(TxHandler) error) error
 }
 
@@ -38,9 +37,6 @@ func (h handler) Query(stmt string, args ...interface{}) (pgx.Rows, error) {
 
 func (h handler) QueryRow(stmt string, args ...interface{}) pgx.Row {
 	return h.tx.QueryRow(h.ctx, stmt, args...)
-}
-func (h handler) ExecNoTx(stmt string, args ...interface{}) (pgconn.CommandTag, error) {
-	return h.tx.Exec(h.ctx, stmt, args...)
 }
 
 func (h handler) RunInTx(fn func(TxHandler) error) error {
@@ -77,11 +73,6 @@ func (h txHandler) RunInTx(fn func(TxHandler) error) error {
 }
 
 func (h txHandler) Exec(stmt string, args ...interface{}) (pgconn.CommandTag, error) {
-	return h.tx.Exec(h.ctx, stmt, args...)
-}
-
-// Part of the interface
-func (h txHandler) ExecNoTx(stmt string, args ...interface{}) (pgconn.CommandTag, error) {
 	return h.tx.Exec(h.ctx, stmt, args...)
 }
 
