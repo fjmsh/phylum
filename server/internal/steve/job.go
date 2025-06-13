@@ -2,6 +2,8 @@ package steve
 
 import (
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Job[T JobArgs] struct {
@@ -14,15 +16,15 @@ type JobArgs interface {
 }
 
 type JobRow struct {
-	ID          int32          `json:"id"`
-	State       JobState       `json:"state"`
-	Attempt     int            `json:"attempt"`
-	CreatedAt   time.Time      `json:"created_at"`
-	AttemptedAt *time.Time     `json:"attempted_at"`
-	FinalizedAt *time.Time     `json:"finalized_at"`
-	EncodedArgs []byte         `json:"args"`
-	Errors      []AttemptError `json:"errors"`
-	Kind        string         `json:"kind"`
+	ID          int32              `json:"id"`
+	State       JobState           `json:"state"`
+	Attempt     int                `json:"attempt"`
+	CreatedAt   time.Time          `json:"created_at"`
+	AttemptedAt pgtype.Timestamptz `json:"attempted_at"`
+	FinalizedAt pgtype.Timestamptz `json:"finalized_at"`
+	EncodedArgs []byte             `json:"args"`
+	Errors      []AttemptError     `json:"errors"`
+	Kind        string             `json:"kind"`
 }
 
 type AttemptError struct {

@@ -2,6 +2,7 @@ package steve
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -156,6 +157,18 @@ func (w Workers) add(jobArgs JobArgs, workUnitFactory WorkUnitFactory) error {
 	w.workersMap[kind] = workerInfo
 
 	return nil
+}
+
+func (w Workers) pkg(row *JobRow) (WorkUnit, error) {
+	if w, ok := w.workersMap[row.Kind]; !ok {
+		return nil, errors.New("unknown job kind: " + row.Kind)
+	} else {
+		unit := w.workUnitFactory.MakeUnit(row)
+		if err := unit.UnmarshalJob(); err != nil {
+			return nil, err
+		}
+		return unit, nil
+	}
 }
 
 // workFunc implements JobArgs and is used to wrap a function given to WorkFunc.
