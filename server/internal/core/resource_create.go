@@ -360,7 +360,6 @@ func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64,
 	return err
 }
 
-// TODO: Make not public
 func insertResourcesFast(db db.TxHandler, arg []insertResourcesFastParams) (int64, error) {
 	return db.CopyFrom([]string{"resources"}, []string{"id", "parent", "name", "dir"}, &iteratorForInsertResourcesFast{rows: arg})
 }
@@ -401,5 +400,51 @@ func (r iteratorForInsertResourcesFast) Values() ([]interface{}, error) {
 }
 
 func (r iteratorForInsertResourcesFast) Err() error {
+	return nil
+}
+
+func insertResourceVersionsFast(db db.TxHandler, arg []insertResourceVersionsFastParams) (int64, error) {
+	return db.CopyFrom([]string{"resource_versions"}, []string{"id", "resource_id", "size", "mime_type", "sha256", "storage"}, &iteratorForInsertResourceVersionsFast{rows: arg})
+}
+
+// For bulk insert
+type insertResourceVersionsFastParams struct {
+	ID         uuid.UUID
+	ResourceID uuid.UUID
+	Size       int32
+	MimeType   string
+	SHA256     string
+}
+
+// iteratorForInsertResourcesFast implements pgx.CopyFromSource.
+type iteratorForInsertResourceVersionsFast struct {
+	rows                 []insertResourceVersionsFastParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForInsertResourceVersionsFast) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForInsertResourceVersionsFast) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ID,
+		r.rows[0].ResourceID,
+		r.rows[0].Size,
+		r.rows[0].MimeType,
+		r.rows[0].SHA256,
+		storage.DefaultBackendName,
+	}, nil
+}
+
+func (r iteratorForInsertResourceVersionsFast) Err() error {
 	return nil
 }

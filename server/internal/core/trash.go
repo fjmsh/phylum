@@ -168,7 +168,6 @@ func hardDeleteAllVersions(db db.TxHandler, q *goqu.SelectDataset, n interface {
 	}
 
 	r := goqu.T("resources")
-	fmt.Println("DELETE QUERY")
 	query, args, _ := q.
 		From(r).
 		Where(r.Col("id").Eq(pg.From(n).Select("id"))).

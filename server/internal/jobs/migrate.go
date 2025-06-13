@@ -38,7 +38,7 @@ func migrateVersionContents(ctx context.Context, versionID uuid.UUID) error {
 		return errors.New("failed to find target storage: " + err.Error())
 	} else if current.Name() == target.Name() {
 		return nil
-	} else if err := target.Copy(ctx, versionID.String(), current); err != nil {
+	} else if err := target.Copy(ctx, current, versionID.String(), versionID.String()); err != nil {
 		return errors.New("failed to copy to target storage: " + err.Error())
 	} else if err := updateStorage(db, versionID, target.Name()); err != nil {
 		if err := target.Delete(versionID.String()); err != nil {
@@ -50,6 +50,7 @@ func migrateVersionContents(ctx context.Context, versionID uuid.UUID) error {
 	}
 	return nil
 }
+
 func getCurrentStorage(db db.Handler, versionID uuid.UUID) (storage.Backend, error) {
 	q := "SELECT storage FROM resource_versions WHERE id = $1::UUID"
 	var s string

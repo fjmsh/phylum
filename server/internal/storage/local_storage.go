@@ -76,17 +76,17 @@ func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
 	}}, nil
 }
 
-func (l localStorage) Copy(ctx context.Context, name string, src Backend) error {
-	if src == l {
+func (l localStorage) Copy(ctx context.Context, src Backend, srcName, destName string) error {
+	if src == l && srcName == destName {
 		return errors.New("cannot copy to self")
 	}
-	in, err := src.OpenRead(name, 0, -1)
+	in, err := src.OpenRead(srcName, 0, -1)
 	if err != nil {
 		return err
 	}
 	defer in.Close()
 
-	out, err := l.OpenWrite(name)
+	out, err := l.OpenWrite(destName)
 	if err != nil {
 		return err
 	}

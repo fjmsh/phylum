@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/sirupsen/logrus"
 )
 
 func (f fileSystem) Move(r Resource, target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
@@ -136,17 +136,17 @@ func (f fileSystem) Copy(r Resource, target string, id uuid.UUID, recursive bool
 	return res, deleted, err
 }
 
-func (f txFileSystem) Copy(r Resource, target string, id uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
+func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	// Check source directory permissions
-	if err := r.checkPermission(f.user, PermissionWrite); err != nil {
+	if err := src.checkPermission(f.user, PermissionWrite); err != nil {
 		return Resource{}, false, err
 	}
-	if r.deleted.Valid {
+	if src.deleted.Valid {
 		return Resource{}, false, ErrResourceDeleted
 	}
 
 	// Check dest directory permissions
-	destName, destParent, err := f.targetNameParentByPathWithRoot(target, r)
+	destName, destParent, err := f.targetNameParentByPathWithRoot(target, src)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
@@ -162,69 +162,88 @@ func (f txFileSystem) Copy(r Resource, target string, id uuid.UUID, recursive bo
 	}
 
 	var tree []Resource
-	if recursive && r.dir {
+	if recursive && src.dir {
 		var err error
-		tree, err = f.ReadDir(r, true)
+		tree, err = f.ReadDir(src, true)
 		if err != nil {
 			return Resource{}, false, err
 		}
 	}
-	children := make([]insertResourcesFastParams, 0, len(tree))
-	var contents []copyParams
+	createResources := make([]insertResourcesFastParams, 0, len(tree))
+	var createVersions []insertResourceVersionsFastParams
+	var copyContents []jobs.CopyContentsArgs
 	newIDs := make(map[uuid.UUID]uuid.UUID)
 
-	targetRoot, created, deleted, err := resolveConflictAndInsertResource(
+	dest, created, deleted, err := resolveConflictAndInsertResource(
 		f.db,
-		id,
+		requestedID,
 		destParent.id,
 		destName,
-		r.dir,
+		src.dir,
 		destParent.permissions,
 		conflictResolution,
 	)
 	// createResource may return an already existing resources, depending on the specified conflictResolution
-	id = targetRoot.id
-	if err == nil && r.id == id {
+	if err == nil && src.id == dest.id {
 		err = ErrResourceCopyTargetSelf
 	}
 	if err != nil {
 		return Resource{}, false, err
 	}
 
-	if targetRoot.dir {
-		newIDs[r.id] = id
+	if src.dir {
+		newIDs[src.id] = dest.id
 	} else {
-		contents = append(contents, copyParams{
-			src:          r.latestVersionInfo,
-			destResource: id,
+		versionID, _ := uuid.NewV7()
+		createVersions = append(createVersions, insertResourceVersionsFastParams{
+			ID:         versionID,
+			ResourceID: dest.id,
+			Size:       int32(src.latestVersionInfo.Size),
+			MimeType:   src.latestVersionInfo.MimeType,
+			SHA256:     src.latestVersionInfo.SHA256,
+		})
+		copyContents = append(copyContents, jobs.CopyContentsArgs{
+			Src:  src.latestVersionInfo.ID,
+			Dest: versionID,
 		})
 	}
 
 	for _, src := range tree {
-		id, _ := uuid.NewV7()
+		resourceID, _ := uuid.NewV7()
 		parent := newIDs[src.parentID.Bytes]
 
-		children = append(children, insertResourcesFastParams{
-			ID:     id,
+		createResources = append(createResources, insertResourcesFastParams{
+			ID:     resourceID,
 			Parent: parent,
 			Name:   src.name,
 			Dir:    src.dir,
 		})
 
 		if src.dir {
-			newIDs[src.id] = id
+			newIDs[src.id] = resourceID
 		} else {
-			contents = append(contents, copyParams{
-				src:          src.latestVersionInfo,
-				destResource: id,
+			versionID, _ := uuid.NewV7()
+			createVersions = append(createVersions, insertResourceVersionsFastParams{
+				ID:         versionID,
+				ResourceID: resourceID,
+				Size:       int32(src.latestVersionInfo.Size),
+				MimeType:   src.latestVersionInfo.MimeType,
+				SHA256:     src.latestVersionInfo.SHA256,
+			})
+			copyContents = append(copyContents, jobs.CopyContentsArgs{
+				Src:  src.latestVersionInfo.ID,
+				Dest: versionID,
 			})
 		}
 	}
 
-	if _, err := insertResourcesFast(f.db, children); err != nil {
+	if _, err := insertResourcesFast(f.db, createResources); err != nil {
 		return Resource{}, false, err
 	}
-	if err := recomputePermissions(f.db, id); err != nil {
+	if _, err := insertResourceVersionsFast(f.db, createVersions); err != nil {
+		return Resource{}, false, err
+	}
+	if err := recomputePermissions(f.db, dest.id); err != nil {
 		return Resource{}, false, err
 	}
 	if created {
@@ -233,52 +252,14 @@ func (f txFileSystem) Copy(r Resource, target string, id uuid.UUID, recursive bo
 		}
 	}
 
-	func() {
-		// TODO: #jobs
-		for _, c := range contents {
-			if err := f.copyContents(c); err != nil {
-				logrus.Warn("unable to copy " + c.src.ID.String() + " to " + c.destResource.String() + ": " + err.Error())
-			}
-		}
-
-	}()
+	if err := jobs.CopyContents(copyContents); err != nil {
+		return Resource{}, false, err
+	}
 
 	// TODO: #verify this shouldn't be necessary
 	// targetRoot.visibleParent = pgtype.UUID{
 	// 	Bytes: destParent.id,
 	// 	Valid: true,
 	// }
-	return targetRoot, deleted, err
-}
-
-type copyParams struct {
-	src          VersionInfo
-	destResource uuid.UUID
-}
-
-// TODO: #implement copyContents
-func (f txFileSystem) copyContents(params copyParams) error {
-	versionID, _ := uuid.NewV7()
-
-	if err := insertResourceVersion(f.db, params.destResource, versionID, params.src.Size, params.src.MimeType, params.src.SHA256); err != nil {
-		return errors.New("failed to create version for " + params.destResource.String() + ": " + err.Error())
-	}
-
-	return errors.New("CopyContents not implemented")
-
-	// in, err := f.OpenRead(params.SrcVersion, 0, -1)
-	// if err != nil {
-	// 	return uuid.Nil, errors.New("Unable to open " + params.SrcVersion.String() + ": " + err.Error())
-	// }
-	// defer in.Close()
-	// id, _ := uuid.NewV7()
-
-	// out, err := s.OpenWrite(id, nil, nil)
-	// if err != nil {
-	// 	return uuid.Nil, errors.New("Unable to open " + id.String() + ": " + err.Error())
-	// }
-	// defer out.Close()
-
-	// _, err = io.Copy(out, in)
-	// return id, err
+	return dest, deleted, err
 }

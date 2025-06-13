@@ -57,13 +57,13 @@ func (s minioStorage) OpenRead(name string, start, length int) (io.ReadCloser, e
 	}
 }
 
-func (s minioStorage) Copy(ctx context.Context, name string, src Backend) error {
-	if src == s {
+func (s minioStorage) Copy(ctx context.Context, src Backend, srcName, destName string) error {
+	if src == s && srcName == destName {
 		return errors.New("cannot copy to self")
 	}
 	var localPath string
 	if l, ok := src.(LocalBackend); ok {
-		localPath = l.path(name)
+		localPath = l.path(srcName)
 	} else {
 		f, err := os.CreateTemp(tempDir, "phylum-*")
 		if err != nil {
@@ -73,7 +73,7 @@ func (s minioStorage) Copy(ctx context.Context, name string, src Backend) error 
 			os.Remove(f.Name())
 		}()
 
-		in, err := src.OpenRead(name, 0, -1)
+		in, err := src.OpenRead(srcName, 0, -1)
 		if err != nil {
 			return err
 		}
@@ -92,7 +92,7 @@ func (s minioStorage) Copy(ctx context.Context, name string, src Backend) error 
 	_, err := s.client.FPutObject(
 		ctx,
 		s.bucketName,
-		s.prefix+name,
+		s.prefix+destName,
 		localPath,
 		minio.PutObjectOptions{},
 	)
