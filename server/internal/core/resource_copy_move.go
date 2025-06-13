@@ -71,7 +71,7 @@ func (f txFileSystem) Move(r Resource, target string, conflictResolution Resourc
 	var res Resource
 	var deleted = false
 	if conflictResolution == ResourceBindConflictResolutionOverwrite || conflictResolution == ResourceBindConflictResolutionDelete {
-		if id, _, err := childResourceIDByName(f.db, r.ID(), destName); err != nil {
+		if id, _, err := childResourceIDByName(f.db, destParent.id, destName); err != nil {
 			if !errors.Is(err, ErrResourceNotFound) {
 				return res, deleted, err
 			}
