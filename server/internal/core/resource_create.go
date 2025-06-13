@@ -14,7 +14,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/sirupsen/logrus"
 )
 
 type ResourceBindConflictResolution int32
@@ -219,98 +218,65 @@ func resolveConflictAndInsertResource(
 	dir bool,
 	permissions []byte,
 	conflictResolution ResourceBindConflictResolution,
-) (res Resource, created, deleted bool, err error) {
-	if name, err = detectNameConflict(db, parent, name, conflictResolution == ResourceBindConflictResolutionRename); err != nil {
-		// Name conflicts will be handled outside of this if-block
-		if !errors.Is(err, ErrResourceNameConflict) {
-			return
-		}
-	} else {
-		// No name conflict. Just insert and move along
-		res, err = insertResource(
-			db,
-			requestedID,
-			parent,
-			name,
-			dir,
-			permissions,
-		)
-		created = true
-		// maybe the request already succeeded in the previous attempt but the client didn't receive the response?
-		if err != nil && strings.Contains(err.Error(), "resources_pkey") {
-			err = ErrResourceIDConflict
-		}
-		return
-	}
-
+) (res Resource, created bool, deleted bool, err error) {
 	switch conflictResolution {
 	case ResourceBindConflictResolutionError:
-		err = ErrResourceNameConflict
+		// Nothing to do. We will try inserting below, and fail in case of name conflict
 	case ResourceBindConflictResolutionEnsure:
 		var rID uuid.UUID
 		var rDir bool
-		rID, rDir, err = childResourceIDByName(db, parent, name)
-		if err == nil && rDir != dir {
-			err = ErrResourceNameConflict
+		if rID, rDir, err = childResourceIDByName(db, parent, name); err == nil {
+			if rDir == dir {
+				// Return the existing resourc
+				res, err := resourceByID(db, rID, -1)
+				res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
+				return res, false, false, err
+			} else {
+				return Resource{}, false, false, ErrResourceNameConflict
+			}
 		} else {
-			res, err = resourceByID(db, rID, -1)
-			// This is set from the query using the user id, which we passed in as '-1' above.
-			res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
+			// There is no name conflict. Proceed as usual
+			err = nil
 		}
 	case ResourceBindConflictResolutionRename:
-		logrus.Warn("Rename case reached?!")
-		// This case is should already be handled above
+		name, err = detectNameConflict(db, parent, name, true)
 	case ResourceBindConflictResolutionOverwrite:
 		var rID uuid.UUID
 		var rDir bool
-		rID, rDir, err = childResourceIDByName(db, parent, name)
-		if err == nil {
-			deleted = true
+		if rID, rDir, err = childResourceIDByName(db, parent, name); err == nil {
 			if rDir == dir {
 				if dir {
 					err = softDeleteChildren(db, rID, parent)
 				}
 				if err == nil {
-					// Repurpose existing resource
-					res, err = resourceByID(db, rID, -1)
-					// This is set from the query using the user id, which we passed in as '-1' above.
+					res, err := resourceByID(db, rID, -1)
 					res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
+					return res, false, true, err
 				}
 			} else {
+				deleted = true
 				err = softDelete(db, rID)
-				if err == nil {
-					res, err = insertResource(
-						db,
-						requestedID,
-						parent,
-						name,
-						dir,
-						permissions,
-					)
-					created = true
-				}
 			}
 		}
 	case ResourceBindConflictResolutionDelete:
 		var rID uuid.UUID
-		rID, _, err = childResourceIDByName(db, parent, name)
-		if err == nil {
+		if rID, _, err = childResourceIDByName(db, parent, name); err != nil {
 			deleted = true
 			err = softDelete(db, rID)
-			if err == nil {
-				res, err = insertResource(
-					db,
-					requestedID,
-					parent,
-					name,
-					dir,
-					permissions,
-				)
-				created = true
-			}
 		}
 	}
-	return
+	if err != nil {
+		return Resource{}, false, false, err
+	}
+	res, err = insertResource(
+		db,
+		requestedID,
+		parent,
+		name,
+		dir,
+		permissions,
+	)
+	return res, true, deleted, err
 }
 
 func insertResource(db db.TxHandler, id, parent uuid.UUID, name string, dir bool, permissions []byte) (Resource, error) {
@@ -331,15 +297,24 @@ func insertResource(db db.TxHandler, id, parent uuid.UUID, name string, dir bool
 			goqu.L("'{}'::JSONB"), // inherited permissions
 		).
 		ToSQL()
+
 	if rows, err := db.Query(query, args...); err != nil {
 		return Resource{}, err
+	} else if r, err := collectFullResource(rows); err != nil {
+		if strings.Contains(err.Error(), "unique_member_resource_name") {
+			err = ErrResourceNameConflict
+		}
+		if strings.Contains(err.Error(), "resources_pkey") {
+			// maybe the request already succeeded in the previous attempt but the client didn't receive the response?
+			err = ErrResourceIDConflict
+		}
+		return Resource{}, err
 	} else {
-		r, err := collectFullResource(rows)
 		r.parentID = pgtype.UUID{Bytes: parent, Valid: true}
 		r.visibleParent = r.parentID
 		r.inheritedPermissions = permissions
 		r.permissions = permissions
-		return r, err
+		return r, nil
 	}
 }
 
