@@ -43,7 +43,7 @@ func (f fileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, dir
 }
 
 func (f fileSystem) CreateFileByPath(path string, requestedID, versionID uuid.UUID, conflictResolution ResourceBindConflictResolution) (io.WriteCloser, error) {
-	name, parent, err := f.targetNameParentByPathWithRoot(path, Resource{})
+	name, parent, err := f.targetByPathWithRoot(path, Resource{})
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
@@ -93,7 +93,7 @@ func (f fileSystem) CreateFileByPath(path string, requestedID, versionID uuid.UU
 	}
 }
 
-func (f fileSystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
+func (f fileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
 	if err := r.checkPermission(f.user, PermissionWrite); err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (f txFileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, d
 	}
 
 	if !createParents {
-		name, parent, err := f.targetNameParentByPathWithRoot(path, Resource{})
+		name, parent, err := f.targetByPathWithRoot(path, Resource{})
 		if err != nil {
 			if errors.Is(err, ErrResourceNotFound) {
 				err = ErrParentNotFound
@@ -210,6 +210,24 @@ func (f txFileSystem) createMemberResource(r Resource, name string, requestedID 
 	return res, nil
 }
 
+// resolveConflictAndInsertResource tries to insert a resource with the
+// provided details if there isn't a name conflict. If there is one, then what
+// happens depends on [conflictResolution].
+//
+// [ResourceBindConflictResolutionError] returns [ErrResourceNameConcflict]
+//
+// [ResourceBindConflictResolutionEnsure] returns the existing resource if
+// [dir] matches. Returns [ErrResourceNameConflict] otherwise
+//
+// [ResourceBindConflictResolutionRename] finds the first available numbered
+// suffix and creates that instead
+//
+// [ResourceBindConflictResolutionOverwrite] returns existing resource if [dir]
+// matches after deleting children in case [dir] is `true`. If not, then
+// deletes the existing resource and creates a new one.
+//
+// [ResourceBindConflictResolutionDelete] deletes the existing resource and
+// creates a new one.
 func resolveConflictAndInsertResource(
 	db db.TxHandler,
 	requestedID uuid.UUID,
@@ -396,7 +414,7 @@ type insertResourceVersionsFastParams struct {
 	SHA256     string
 }
 
-// iteratorForInsertResourcesFast implements pgx.CopyFromSource.
+// iteratorForInsertResourceVersionsFast implements pgx.CopyFromSource.
 type iteratorForInsertResourceVersionsFast struct {
 	rows                 []insertResourceVersionsFastParams
 	skippedFirstNextCall bool

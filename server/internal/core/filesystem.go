@@ -72,6 +72,10 @@ func (f fileSystem) withPathRoot(pathRoot pgtype.UUID) fileSystem {
 	}
 }
 
+func (f fileSystem) PathRoot() pgtype.UUID {
+	return f.pathRoot
+}
+
 func rootID(db db.Handler) uuid.UUID {
 	if _rootID == uuid.Nil {
 		var err error

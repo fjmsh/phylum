@@ -176,6 +176,7 @@ func hardDeleteAllVersions(db db.TxHandler, q *goqu.SelectDataset, n interface {
 	if _, err := db.Exec(query, args...); err != nil {
 		return err
 	} else {
+		// TODO: #jobs #tx
 		jobs.DeleteContents(versions)
 	}
 	return nil

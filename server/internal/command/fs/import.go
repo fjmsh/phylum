@@ -109,7 +109,7 @@ func copyContents(f core.FileSystem, path string, res core.Resource) error {
 	}
 	defer in.Close()
 
-	out, err := f.OpenWrite(res, uuid.Nil)
+	out, err := f.CreateFileVersion(res, uuid.Nil)
 	if err != nil {
 		return err
 	}

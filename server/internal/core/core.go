@@ -19,10 +19,12 @@ func init() {
 }
 
 type FileSystem interface {
+	PathRoot() pgtype.UUID
+
 	// resource_create.go
 	CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error)
 	CreateFileByPath(path string, id, versionID uuid.UUID, conflictResolution ResourceBindConflictResolution) (io.WriteCloser, error)
-	OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, error)
+	CreateFileVersion(r Resource, versionID uuid.UUID) (io.WriteCloser, error)
 
 	// resource_locate.go
 	ResourceByID(uuid.UUID) (Resource, error)
@@ -76,8 +78,4 @@ type ReadFileSystem interface {
 	ReadDir(Resource, bool) ([]Resource, error)
 	GetVersion(Resource, uuid.UUID) (Version, error)
 	Walk(Resource, int, func(Resource, string) error) error
-}
-
-// user_manager.go
-type UserManager interface {
 }

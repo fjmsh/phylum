@@ -36,21 +36,37 @@ func resourceByID(db db.Handler, id uuid.UUID, userID int32) (Resource, error) {
 	}
 }
 
-// ResourceByPathWithRoot returns the resource at a given path from an optionally specified root.
-// The "<uuid>: prefix can be used to specify the path root.
-// Will default to using the filesystem's current path root if one is not specified.
+// ResourceByPathWithRoot locates the resource at [path]. [path] may begin with
+// a "<uuid>:" prefix, which will traverse the path relative to that root
+// instead of this [FileSystem]'s default [PathRoot].
+//
 // An empty path or "/" will return the root resource.
+//
+// A permission check will be performed to ensure that the [FileSystem]'s [User]
+// has read permissions on the resource. If not, then [ErrResourceNotFound] will
+// be returned.
 func (f fileSystem) ResourceByPathWithRoot(path string) (Resource, error) {
-	id, path, err := parseUUIDPrefix(path)
+	parsedID, path, err := parseUUIDPrefix(path)
 	if err != nil {
 		return Resource{}, ErrResourceNotFound
 	}
-	if id.Valid {
-		f = f.withPathRoot(id)
+	id := f.pathRoot.Bytes
+	if parsedID.Valid {
+		id = parsedID.Bytes
+	} else if !f.pathRoot.Valid {
+		return Resource{}, ErrResourceNotFound
 	}
-	return f.ResourceByPath(path)
+
+	return resourceByPath(f.db, id, path, f.user)
 }
 
+// ResourceByPath locates the resource at [path].
+//
+// An empty path or "/" will return the root resource.
+//
+// A permission check will be performed to ensure that the [FileSystem]'s [User]
+// has read permissions on the resource. If not, then [ErrResourceNotFound] will
+// be returned.
 func (f fileSystem) ResourceByPath(path string) (Resource, error) {
 	if !f.pathRoot.Valid {
 		return Resource{}, ErrResourceNotFound
@@ -58,8 +74,6 @@ func (f fileSystem) ResourceByPath(path string) (Resource, error) {
 	return resourceByPath(f.db, f.pathRoot.Bytes, path, f.user)
 }
 
-// ResourceByPath returns the resource at a given path from this filesystem's path root
-// An empty path or "/" will return the root resource.
 func resourceByPath(db db.Handler, root uuid.UUID, path string, user User) (Resource, error) {
 	nodes := goqu.T("nodes").As("n")
 	r := goqu.T("resources").As("r")
@@ -113,13 +127,22 @@ func resourceByPath(db db.Handler, root uuid.UUID, path string, user User) (Reso
 	// }
 }
 
-// targetNameParentByPathWithRoot returns the target resource name and its parent
-// Optionally allows you to specify a root using a "<uuid>:" prefix
-// If no uuid prefix is supplied then uses r as the pathRoot if the path is not absolute (does not begin with '/')
-// If no uuid prefix is supplied and the path begins with '/' then r.f is used as the path root
-// Splits the path to extract its last component as the name and traverses the rest of the path from the root as the parent
-// If no name is specified then return r.name as the name
-func (f fileSystem) targetNameParentByPathWithRoot(path string, src Resource) (string, Resource, error) {
+// targetByPathWithRoot extracts the [name] and [parent] resource of from
+// the given [path].
+//
+// Uses the last segment of [path] as the [name] and traverses the previous
+// segments to locate [parent]. If [path] has no segments then [src].[name]
+// is used as the [name] instead.
+//
+// If [path] begins with a "<uuid>:", then the path traversed is relative to
+// that root.
+//
+// If [path] does not begin with a "<uuid>:" prefix, and is absolute (begins
+// with '/') then the path traversed is relative to [f].[pathRoot]
+//
+// If [path] does not begin with a "<uuid>:" prefix, and is not absolute (does
+// not begin with '/') then the path traversed is relative to [src]
+func (f fileSystem) targetByPathWithRoot(path string, src Resource) (name string, parent Resource, err error) {
 	id, path, err := parseUUIDPrefix(path)
 	if err != nil {
 		return "", Resource{}, err
@@ -138,17 +161,29 @@ func (f fileSystem) targetNameParentByPathWithRoot(path string, src Resource) (s
 	if i > 0 {
 		parentPath = path[:i]
 	}
-	parent, err := f.ResourceByPath(parentPath)
+	parent, err = f.ResourceByPath(parentPath)
 	if err != nil {
+		if errors.Is(err, ErrResourceNotFound) {
+			err = ErrParentNotFound
+		}
+
 		return "", Resource{}, err
 	}
-	name := path[i+1:]
+	name = path[i+1:]
 	if name == "" {
 		name = src.name
 	}
 	return name, parent, nil
 }
 
+// detectNameConflict checks if there already exists a [Resource] with parent
+// [parentID] and name [name]. If there isn't then it simply returns [name]
+//
+// If there is a conflict and [autoRename] is `false`, then it returns
+// [ErrResourceNameConflict], along with the name passed in.
+//
+// If there is a conflict and [autoRename] is `true` then it returns a name with
+// the first available numbered suffix.
 func detectNameConflict(db db.Handler, parentID uuid.UUID, name string, autoRename bool) (string, error) {
 	if _, _, err := childResourceIDByName(db, parentID, name); err != nil {
 		// No name conflict. Good to go!
