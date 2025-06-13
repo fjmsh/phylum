@@ -247,10 +247,15 @@ func resolveConflictAndInsertResource(
 	case ResourceBindConflictResolutionError:
 		err = ErrResourceNameConflict
 	case ResourceBindConflictResolutionEnsure:
+		var rID uuid.UUID
 		var rDir bool
-		_, rDir, err = childResourceIDByName(db, parent, name)
+		rID, rDir, err = childResourceIDByName(db, parent, name)
 		if err == nil && rDir != dir {
 			err = ErrResourceNameConflict
+		} else {
+			res, err = resourceByID(db, rID, -1)
+			// This is set from the query using the user id, which we passed in as '-1' above.
+			res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
 		}
 	case ResourceBindConflictResolutionRename:
 		logrus.Warn("Rename case reached?!")
