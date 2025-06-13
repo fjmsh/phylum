@@ -26,12 +26,16 @@ func (w *DeleteContentsWorker) Work(ctx context.Context, job *river.Job[DeleteCo
 	}
 }
 
-func DeleteContents(args []DeleteContentsArgs) {
+func DeleteContents(args []DeleteContentsArgs) error {
+	if len(args) == 0 {
+		return nil
+	}
 	params := make([]river.InsertManyParams, len(args))
 	for i, a := range args {
 		params[i] = river.InsertManyParams{
 			Args: a,
 		}
 	}
-	client.InsertMany(context.Background(), params)
+	_, err := client.InsertMany(context.Background(), params)
+	return err
 }

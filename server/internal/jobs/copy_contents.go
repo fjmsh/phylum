@@ -36,6 +36,9 @@ func copyContents(ctx context.Context, src, dest uuid.UUID) error {
 }
 
 func CopyContents(args []CopyContentsArgs) error {
+	if len(args) == 0 {
+		return nil
+	}
 	params := make([]river.InsertManyParams, len(args))
 	for i, a := range args {
 		params[i] = river.InsertManyParams{
