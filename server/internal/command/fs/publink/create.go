@@ -32,7 +32,7 @@ func setupCreateCommand() *cobra.Command {
 	return &cmd
 }
 
-func createPublink(f core.FileSystem, name, path string, password string, durationStr string, accesses int) error {
+func createPublink(f *core.FileSystem, name, path string, password string, durationStr string, accesses int) error {
 	r, err := f.ResourceByPathWithRoot(path)
 	if err != nil {
 		return err

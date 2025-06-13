@@ -22,7 +22,7 @@ func setupSummaryCommand() *cobra.Command {
 	return &cmd
 }
 
-func printTrashSummary(f core.FileSystem) {
+func printTrashSummary(f *core.FileSystem) {
 	items, size, err := f.TrashSummary()
 	if err != nil {
 		fmt.Println("cannot get trash summary: " + err.Error())

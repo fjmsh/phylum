@@ -16,7 +16,7 @@ const (
 	PermissionSU    = Permission(-1)
 )
 
-func (f fileSystem) UpdatePermissions(r Resource, user User, permission Permission) (res Resource, err error) {
+func (f *FileSystem) UpdatePermissions(r Resource, user User, permission Permission) (res Resource, err error) {
 	err = f.runInTx(func(f txFileSystem) error {
 		var err error
 		res, err = f.UpdatePermissions(r, user, permission)

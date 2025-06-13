@@ -23,7 +23,7 @@ func GetUser(c *gin.Context) core.User {
 	return val.(core.User)
 }
 
-func GetFileSystem(c *gin.Context) core.FileSystem {
+func GetFileSystem(c *gin.Context) *core.FileSystem {
 	user := GetUser(c)
 	return user.OpenFileSystem(db.Get(c.Request.Context()))
 }

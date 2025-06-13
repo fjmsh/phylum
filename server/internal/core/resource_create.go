@@ -32,7 +32,7 @@ func CheckResourceNameInvalid(s string) bool {
 	})
 }
 
-func (f fileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+func (f *FileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	var res Resource
 	err := f.runInTx(func(f txFileSystem) error {
 		var err error
@@ -42,7 +42,7 @@ func (f fileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, dir
 	return res, err
 }
 
-func (f fileSystem) CreateFileByPath(path string, requestedID, versionID uuid.UUID, conflictResolution ResourceBindConflictResolution) (io.WriteCloser, error) {
+func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.UUID, conflictResolution ResourceBindConflictResolution) (io.WriteCloser, error) {
 	name, parent, err := f.targetByPathWithRoot(path, Resource{})
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
@@ -93,7 +93,7 @@ func (f fileSystem) CreateFileByPath(path string, requestedID, versionID uuid.UU
 	}
 }
 
-func (f fileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
+func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
 	if err := r.checkPermission(f.user, PermissionWrite); err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func (f txFileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, d
 		return Resource{}, ErrResourcePathInvalid
 	}
 	if root.Valid {
-		f.fileSystem = f.fileSystem.withPathRoot(root)
+		f.FileSystem = f.FileSystem.withPathRoot(root)
 	}
 	segments := strings.Split(strings.TrimRight(strings.TrimLeft(path, "/"), "/"), "/")
 	r, err := f.ResourceByID(f.pathRoot.Bytes)

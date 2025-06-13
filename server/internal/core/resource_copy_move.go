@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (f fileSystem) Move(r Resource, target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
+func (f *FileSystem) Move(r Resource, target string, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	var res Resource
 	var deleted bool
 	var err error
@@ -125,7 +125,7 @@ func updateResourceNameParent(db db.TxHandler, id uuid.UUID, name string, parent
 	return nil
 }
 
-func (f fileSystem) Copy(r Resource, target string, id uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
+func (f *FileSystem) Copy(r Resource, target string, id uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	var res Resource
 	var deleted bool
 	var err error

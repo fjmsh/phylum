@@ -6,11 +6,11 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (f fileSystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
+func (f *FileSystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
 	return f.ReadDirDeleted(r, recursive, false)
 }
 
-func (f fileSystem) ReadDirDeleted(r Resource, recursive, includeDeleted bool) ([]Resource, error) {
+func (f *FileSystem) ReadDirDeleted(r Resource, recursive, includeDeleted bool) ([]Resource, error) {
 	if !r.Dir() {
 		return nil, ErrResourceNotCollection
 	}
@@ -34,7 +34,7 @@ func (f fileSystem) ReadDirDeleted(r Resource, recursive, includeDeleted bool) (
 	}
 }
 
-func (f fileSystem) Walk(r Resource, depth int, fn func(Resource, string) error) error {
+func (f *FileSystem) Walk(r Resource, depth int, fn func(Resource, string) error) error {
 	suffix := ""
 	if r.Dir() {
 		suffix = "/"

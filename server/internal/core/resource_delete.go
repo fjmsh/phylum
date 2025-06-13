@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (f fileSystem) Delete(r Resource) (Resource, error) {
+func (f *FileSystem) Delete(r Resource) (Resource, error) {
 	var res Resource
 	err := f.runInTx(func(f txFileSystem) error {
 		var err error
@@ -112,7 +112,7 @@ func softDeleteChildren(db db.TxHandler, id, parent uuid.UUID) error {
 	return updateResourceModified(db, parent)
 }
 
-func (f fileSystem) DeleteForever(r Resource) error {
+func (f *FileSystem) DeleteForever(r Resource) error {
 	return f.runInTx(func(f txFileSystem) error {
 		return f.DeleteForever(r)
 	})
@@ -166,7 +166,7 @@ func collectDeletedVersions(rows pgx.Rows) ([]jobs.DeleteContentsArgs, error) {
 	return result, nil
 }
 
-func (f fileSystem) RestoreDeleted(r Resource, parentPathOrUUID string, name string, autoRename bool) (res Resource, err error) {
+func (f *FileSystem) RestoreDeleted(r Resource, parentPathOrUUID string, name string, autoRename bool) (res Resource, err error) {
 	err = f.runInTx(func(f txFileSystem) error {
 		var err error
 		res, err = f.RestoreDeleted(r, parentPathOrUUID, name, autoRename)

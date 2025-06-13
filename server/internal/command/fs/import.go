@@ -102,7 +102,7 @@ func setupImportCommand() *cobra.Command {
 	return &cmd
 }
 
-func copyContents(f core.FileSystem, path string, res core.Resource) error {
+func copyContents(f *core.FileSystem, path string, res core.Resource) error {
 	in, err := os.Open(path)
 	if err != nil {
 		return err

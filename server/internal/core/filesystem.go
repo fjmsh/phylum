@@ -10,34 +10,34 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type fileSystem struct {
+type FileSystem struct {
 	db       db.Handler
 	user     User
 	pathRoot pgtype.UUID
 }
 
 type txFileSystem struct {
-	fileSystem
+	*FileSystem
 	db db.TxHandler
 }
 
-func OpenFileSystem(db db.Handler, user User, pathRoot pgtype.UUID) FileSystem {
-	return fileSystem{
+func OpenFileSystem(db db.Handler, user User, pathRoot pgtype.UUID) *FileSystem {
+	return &FileSystem{
 		db:       db,
 		user:     user,
 		pathRoot: pathRoot,
 	}
 }
 
-func (u User) OpenFileSystem(db db.Handler) FileSystem {
+func (u User) OpenFileSystem(db db.Handler) *FileSystem {
 	return OpenFileSystem(db, u, u.Home)
 }
 
-func OpenOmniscient(db db.Handler) FileSystem {
+func OpenOmniscient(db db.Handler) *FileSystem {
 	return openOmniscient(db)
 }
-func openOmniscient(db db.Handler) fileSystem {
-	return fileSystem{
+func openOmniscient(db db.Handler) *FileSystem {
+	return &FileSystem{
 		db:       db,
 		user:     User{ID: -1, Permissions: -1},
 		pathRoot: pgtype.UUID{Bytes: rootID(db), Valid: true},
@@ -46,7 +46,7 @@ func openOmniscient(db db.Handler) fileSystem {
 
 func openOmniscientTx(db db.TxHandler) txFileSystem {
 	return txFileSystem{
-		fileSystem: fileSystem{
+		FileSystem: &FileSystem{
 			db:       db,
 			user:     User{ID: -1, Permissions: -1},
 			pathRoot: pgtype.UUID{Bytes: rootID(db), Valid: true},
@@ -55,24 +55,24 @@ func openOmniscientTx(db db.TxHandler) txFileSystem {
 	}
 }
 
-func (f fileSystem) runInTx(fn func(f txFileSystem) error) error {
+func (f *FileSystem) runInTx(fn func(f txFileSystem) error) error {
 	return f.db.RunInTx(func(tx db.TxHandler) error {
 		return fn(txFileSystem{
-			fileSystem: f,
+			FileSystem: f,
 			db:         tx,
 		})
 	})
 }
 
-func (f fileSystem) withPathRoot(pathRoot pgtype.UUID) fileSystem {
-	return fileSystem{
+func (f *FileSystem) withPathRoot(pathRoot pgtype.UUID) *FileSystem {
+	return &FileSystem{
 		db:       f.db,
 		user:     f.user,
 		pathRoot: pathRoot,
 	}
 }
 
-func (f fileSystem) PathRoot() pgtype.UUID {
+func (f *FileSystem) PathRoot() pgtype.UUID {
 	return f.pathRoot
 }
 

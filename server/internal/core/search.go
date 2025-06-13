@@ -6,7 +6,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (f fileSystem) Search(query string, includeDeleted bool) ([]Resource, error) {
+func (f *FileSystem) Search(query string, includeDeleted bool) ([]Resource, error) {
 	qb := strings.Builder{}
 	qb.WriteString(fullResourceQuery)
 	qb.WriteString("WHERE f_prepare_search(r.name) %> @query::TEXT")

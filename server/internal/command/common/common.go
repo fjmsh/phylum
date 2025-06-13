@@ -11,7 +11,7 @@ import (
 )
 
 var u *core.User
-var f core.FileSystem
+var f *core.FileSystem
 
 func User(cmd *cobra.Command) *core.User {
 	if u == nil {
@@ -32,7 +32,7 @@ func User(cmd *cobra.Command) *core.User {
 	return u
 }
 
-func UserFileSystem(cmd *cobra.Command) core.FileSystem {
+func UserFileSystem(cmd *cobra.Command) *core.FileSystem {
 	if f == nil {
 		user := User(cmd)
 		db := db.Get(context.Background())

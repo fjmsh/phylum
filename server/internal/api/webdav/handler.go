@@ -42,7 +42,7 @@ func SetupHandler(r *gin.RouterGroup) {
 
 func (h *handler) HandleRequest(c *gin.Context) {
 	authSuccess := false
-	var f core.FileSystem
+	var f *core.FileSystem
 	if email, pass, ok := c.Request.BasicAuth(); ok {
 		ctx := c.Request.Context()
 		db := db.Get(ctx)

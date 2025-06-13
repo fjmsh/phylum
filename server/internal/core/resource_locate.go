@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (f fileSystem) ResourceByID(id uuid.UUID) (Resource, error) {
+func (f *FileSystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	if r, err := resourceByID(f.db, id, f.user.ID); err != nil {
 		return Resource{}, err
 	} else if err := r.checkPermission(f.user, PermissionRead); err != nil {
@@ -45,7 +45,7 @@ func resourceByID(db db.Handler, id uuid.UUID, userID int32) (Resource, error) {
 // A permission check will be performed to ensure that the [FileSystem]'s [User]
 // has read permissions on the resource. If not, then [ErrResourceNotFound] will
 // be returned.
-func (f fileSystem) ResourceByPathWithRoot(path string) (Resource, error) {
+func (f *FileSystem) ResourceByPathWithRoot(path string) (Resource, error) {
 	parsedID, path, err := parseUUIDPrefix(path)
 	if err != nil {
 		return Resource{}, ErrResourceNotFound
@@ -67,7 +67,7 @@ func (f fileSystem) ResourceByPathWithRoot(path string) (Resource, error) {
 // A permission check will be performed to ensure that the [FileSystem]'s [User]
 // has read permissions on the resource. If not, then [ErrResourceNotFound] will
 // be returned.
-func (f fileSystem) ResourceByPath(path string) (Resource, error) {
+func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 	if !f.pathRoot.Valid {
 		return Resource{}, ErrResourceNotFound
 	}
@@ -142,7 +142,7 @@ func resourceByPath(db db.Handler, root uuid.UUID, path string, user User) (Reso
 //
 // If [path] does not begin with a "<uuid>:" prefix, and is not absolute (does
 // not begin with '/') then the path traversed is relative to [src]
-func (f fileSystem) targetByPathWithRoot(path string, src Resource) (name string, parent Resource, err error) {
+func (f *FileSystem) targetByPathWithRoot(path string, src Resource) (name string, parent Resource, err error) {
 	id, path, err := parseUUIDPrefix(path)
 	if err != nil {
 		return "", Resource{}, err

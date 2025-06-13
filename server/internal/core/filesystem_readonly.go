@@ -13,7 +13,7 @@ import (
 )
 
 type proxyFileSystemReadOnly struct {
-	f fileSystem
+	f *FileSystem
 }
 
 func (f proxyFileSystemReadOnly) ResourceByPath(path string) (Resource, error) {

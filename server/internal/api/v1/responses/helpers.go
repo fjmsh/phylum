@@ -2,7 +2,7 @@ package responses
 
 import "codeberg.org/shroff/phylum/server/internal/core"
 
-func FullResourceFromFS(f core.FileSystem, r core.Resource) ResourceFull {
+func FullResourceFromFS(f *core.FileSystem, r core.Resource) ResourceFull {
 	response := ResourceFull{
 		Resource: ResourceFromFS(r),
 	}

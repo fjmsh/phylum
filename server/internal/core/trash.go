@@ -16,7 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (f fileSystem) TrashList(cursor string, n uint) ([]Resource, string, error) {
+func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error) {
 	t := goqu.T("trash")
 	r := goqu.T("resources").As("r")
 	p := goqu.T("resources").As("p")
@@ -90,7 +90,7 @@ func TrashCompact(ctx context.Context, duration time.Duration) {
 	}
 }
 
-func (f fileSystem) TrashSummary() (int, int, error) {
+func (f *FileSystem) TrashSummary() (int, int, error) {
 	v := goqu.T("resource_versions").As("v")
 
 	n, q := f.selectTrash(time.Time{})
@@ -107,14 +107,14 @@ func (f fileSystem) TrashSummary() (int, int, error) {
 	return items, size, err
 }
 
-func (f fileSystem) TrashEmpty() error {
+func (f *FileSystem) TrashEmpty() error {
 	n, q := f.selectTrash(time.Time{})
 	return f.db.RunInTx(func(db db.TxHandler) error {
 		return hardDeleteAllVersions(db, q, n)
 	})
 }
 
-func (f fileSystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.SelectDataset) {
+func (f *FileSystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.SelectDataset) {
 	r := goqu.T("resources").As("r")
 	n := goqu.T("nodes").As("n")
 	t := goqu.T("trash").As("t")
@@ -142,7 +142,7 @@ func (f fileSystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.Se
 	return n, q
 }
 
-func (f fileSystem) hardDeleteOldResources(t time.Time) error {
+func (f *FileSystem) hardDeleteOldResources(t time.Time) error {
 	n, q := f.selectTrash(t)
 	return f.db.RunInTx(func(db db.TxHandler) error {
 		return hardDeleteAllVersions(db, q, n)

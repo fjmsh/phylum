@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (f fileSystem) CreatePublink(r Resource, id, password string, expires pgtype.Timestamp, accessLimit int) error {
+func (f *FileSystem) CreatePublink(r Resource, id, password string, expires pgtype.Timestamp, accessLimit int) error {
 	return f.runInTx(func(f txFileSystem) error {
 		return f.CreatePublink(r, id, password, expires, accessLimit)
 	})
@@ -42,7 +42,7 @@ func (f txFileSystem) CreatePublink(r Resource, id, password string, expires pgt
 	return err
 }
 
-func (f fileSystem) ListPublinks(r Resource) ([]Publink, error) {
+func (f *FileSystem) ListPublinks(r Resource) ([]Publink, error) {
 	const q = "SELECT * FROM publinks WHERE root = $1::UUID"
 	if rows, err := f.db.Query(q, r.id); err != nil {
 		return nil, err

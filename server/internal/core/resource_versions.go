@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (f fileSystem) GetVersion(r Resource, versionID uuid.UUID) (Version, error) {
+func (f *FileSystem) GetVersion(r Resource, versionID uuid.UUID) (Version, error) {
 	if versionID == uuid.Nil {
 		versionID = r.latestVersionInfo.ID
 	}
@@ -33,7 +33,7 @@ AND DELETED IS NULL`
 	return v, nil
 }
 
-func (f fileSystem) GetAllVersions(r Resource) ([]Version, error) {
+func (f *FileSystem) GetAllVersions(r Resource) ([]Version, error) {
 	const q = `SELECT id, created, deleted, size, mime_type, sha256, storage FROM resource_versions
 WHERE resource_id = $1::UUID
 ORDER BY created DESC`
