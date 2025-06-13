@@ -157,7 +157,7 @@ func detectNameConflict(db db.Handler, parentID uuid.UUID, name string, autoRena
 		}
 		return "", err
 	} else if !autoRename {
-		return "", ErrResourceNameConflict
+		return name, ErrResourceNameConflict
 	}
 
 	ext := path.Ext(name)
