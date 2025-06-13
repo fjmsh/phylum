@@ -33,17 +33,17 @@ func CheckResourceNameInvalid(s string) bool {
 	})
 }
 
-func (f fileSystem) CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+func (f fileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	var res Resource
 	err := f.runInTx(func(f txFileSystem) error {
 		var err error
-		res, err = f.CreateResourceByPath(path, id, dir, createParents, conflictResolution)
+		res, err = f.CreateResourceByPath(path, requestedID, dir, createParents, conflictResolution)
 		return err
 	})
 	return res, err
 }
 
-func (f fileSystem) CreateFileByPath(path string, id, versionID uuid.UUID, conflictResolution ResourceBindConflictResolution) (io.WriteCloser, error) {
+func (f fileSystem) CreateFileByPath(path string, requestedID, versionID uuid.UUID, conflictResolution ResourceBindConflictResolution) (io.WriteCloser, error) {
 	name, parent, err := f.targetNameParentByPathWithRoot(path, Resource{})
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
@@ -69,17 +69,17 @@ func (f fileSystem) CreateFileByPath(path string, id, versionID uuid.UUID, confl
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
 			err := f.runInTx(func(f txFileSystem) error {
-				if r, err := f.createMemberResource(parent, name, id, false, conflictResolution); err != nil {
+				if r, err := f.createMemberResource(parent, name, requestedID, false, conflictResolution); err != nil {
 					return err
 				} else {
 					// ID could be different if we're overwriting an existing resource
-					id = r.id
+					requestedID = r.id
 				}
 
-				if err := insertResourceVersion(f.db, id, versionID, int64(len), mimeType, sum); err != nil {
+				if err := insertResourceVersion(f.db, requestedID, versionID, int64(len), mimeType, sum); err != nil {
 					return err
 				}
-				if err := updateResourceModified(f.db, id); err != nil {
+				if err := updateResourceModified(f.db, requestedID); err != nil {
 					return err
 				}
 
@@ -129,9 +129,9 @@ func (f fileSystem) OpenWrite(r Resource, versionID uuid.UUID) (io.WriteCloser, 
 	}
 }
 
-func (f txFileSystem) CreateResourceByPath(path string, id uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
-	if id == uuid.Nil {
-		id, _ = uuid.NewV7()
+func (f txFileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+	if requestedID == uuid.Nil {
+		requestedID, _ = uuid.NewV7()
 	}
 
 	if !createParents {
@@ -145,7 +145,7 @@ func (f txFileSystem) CreateResourceByPath(path string, id uuid.UUID, dir, creat
 		if parent.deleted.Valid {
 			return Resource{}, ErrParentNotFound
 		}
-		return f.createMemberResource(parent, name, id, dir, conflictResolution)
+		return f.createMemberResource(parent, name, requestedID, dir, conflictResolution)
 	}
 
 	root, path, err := parseUUIDPrefix(path)
@@ -166,7 +166,7 @@ func (f txFileSystem) CreateResourceByPath(path string, id uuid.UUID, dir, creat
 		conflict := ResourceBindConflictResolutionEnsure
 		if i == len(segments)-1 {
 			d = dir
-			resourceID = id
+			resourceID = requestedID
 			conflict = conflictResolution
 		}
 		r, err = f.createMemberResource(r, s, resourceID, d, conflict)
@@ -175,7 +175,7 @@ func (f txFileSystem) CreateResourceByPath(path string, id uuid.UUID, dir, creat
 	return r, err
 }
 
-func (f txFileSystem) createMemberResource(r Resource, name string, id uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+func (f txFileSystem) createMemberResource(r Resource, name string, requestedID uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	if r.deleted.Valid {
 		return Resource{}, ErrResourceDeleted
 	}
@@ -185,22 +185,22 @@ func (f txFileSystem) createMemberResource(r Resource, name string, id uuid.UUID
 	if CheckResourceNameInvalid(name) {
 		return Resource{}, ErrResourceNameInvalid
 	}
-	if id == uuid.Nil {
-		id, _ = uuid.NewV7()
+	if requestedID == uuid.Nil {
+		requestedID, _ = uuid.NewV7()
 	}
 	var res Resource
 	var created bool
 	var err error
-	if res, created, _, err = resolveConflictAndInsertResource(f.db, id, r.id, name, dir, r.permissions, conflictResolution); err != nil {
+	if res, created, _, err = resolveConflictAndInsertResource(f.db, requestedID, r.id, name, dir, r.permissions, conflictResolution); err != nil {
 		if errors.Is(err, ErrResourceIDConflict) {
-			return resourceByID(f.db, id, f.user.ID)
+			return resourceByID(f.db, requestedID, f.user.ID)
 		}
 		return Resource{}, err
 	} else if created {
 		if err := r.checkPermission(f.user, PermissionWrite); err != nil {
 			return Resource{}, err
 		}
-		if err := recomputePermissions(f.db, id); err != nil {
+		if err := recomputePermissions(f.db, requestedID); err != nil {
 			return Resource{}, err
 		}
 		if err := updateResourceModified(f.db, r.id); err != nil {
@@ -213,7 +213,7 @@ func (f txFileSystem) createMemberResource(r Resource, name string, id uuid.UUID
 
 func resolveConflictAndInsertResource(
 	db db.TxHandler,
-	id uuid.UUID,
+	requestedID uuid.UUID,
 	parent uuid.UUID,
 	name string,
 	dir bool,
@@ -229,7 +229,7 @@ func resolveConflictAndInsertResource(
 		// No name conflict. Just insert and move along
 		res, err = insertResource(
 			db,
-			id,
+			requestedID,
 			parent,
 			name,
 			dir,
@@ -272,11 +272,11 @@ func resolveConflictAndInsertResource(
 					res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
 				}
 			} else {
-				err = softDelete(db, res.id)
+				err = softDelete(db, rID)
 				if err == nil {
 					res, err = insertResource(
 						db,
-						id,
+						requestedID,
 						parent,
 						name,
 						dir,
@@ -295,7 +295,7 @@ func resolveConflictAndInsertResource(
 			if err == nil {
 				res, err = insertResource(
 					db,
-					id,
+					requestedID,
 					parent,
 					name,
 					dir,
