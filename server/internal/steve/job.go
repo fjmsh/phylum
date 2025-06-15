@@ -31,9 +31,8 @@ type JobRow struct {
 }
 
 type AttemptError struct {
-	At      time.Time `json:"at"`
-	Attempt int       `json:"attempt"`
-	Error   string    `json:"error"`
+	At    time.Time `json:"at"`
+	Error string    `json:"error"`
 }
 
 type JobStatus uint8
