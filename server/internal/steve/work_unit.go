@@ -31,8 +31,10 @@ type typedWorkUnitFactory[T JobArgs] struct {
 }
 
 func (w *typedWorkUnitFactory[T]) makeUnit(info *JobInfo) (workUnit, error) {
-	unit := &typedWorkUnit[T]{worker: w.worker}
-	return unit, json.Unmarshal(info.EncodedArgs, unit.job.Args)
+	var job Job[T]
+	job.JobInfo = info
+	unit := &typedWorkUnit[T]{worker: w.worker, job: &job}
+	return unit, json.Unmarshal(info.EncodedArgs, &job.Args)
 }
 
 // typedWorkUnit implements workUnit for a job and Worker.

@@ -1,21 +1,13 @@
 package steve
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
-
-type db interface {
-	BeginFunc(context.Context, func(pgx.Tx) error) error
-	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
-	Query(context.Context, string, ...interface{}) (pgx.Rows, error)
-	QueryRow(context.Context, string, ...interface{}) (pgx.Row, error)
-}
 
 var errNoJobs = errors.New("no jobs in queue")
 
@@ -25,23 +17,23 @@ type insertJobParams struct {
 	EncodedArgs []byte
 }
 
-func insertJobs(ctx context.Context, tx pgx.Tx, arg []insertJobParams) (int64, error) {
-	return tx.CopyFrom(ctx, []string{"jobs"}, []string{"kind", "args"}, &iteratorForInsertJobParams{rows: arg})
+func insertJobs(db db.Handler, arg []insertJobParams) (int64, error) {
+	return db.CopyFrom([]string{"jobs"}, []string{"kind", "args"}, &iteratorForInsertJobParams{rows: arg})
 }
 
-func updateJobStatus(ctx context.Context, tx pgx.Tx, jobID int32, status JobStatus) error {
+func updateJobStatus(db db.Handler, jobID int32, status JobStatus) error {
 	const q = `UPDATE jobs SET status = $2::SMALLINT WHERE id = $1::INT`
-	_, err := tx.Exec(ctx, q, jobID, status)
+	_, err := db.Exec(q, jobID, status)
 	return err
 }
 
-func updateJobStatusError(ctx context.Context, tx pgx.Tx, jobID int32, attemptError AttemptError, scheduleAt pgtype.Timestamptz) error {
+func updateJobStatusError(db db.Handler, jobID int32, attemptError AttemptError, scheduleAt pgtype.Timestamptz) error {
 	const q = `-- updateJobStatusError
 UPDATE jobs SET
-	attempts = attempts+1,
+	attempt = attempt+1,
 	errors = errors || $2::JSONB, 
 	status = $3::SMALLINT,
-	retry_at = $4::TIMESTAMPTZ
+	scheduled_at = $4::TIMESTAMPTZ
 WHERE id = $1::INT`
 	if errJson, err := json.Marshal(attemptError); err != nil {
 		return err
@@ -50,29 +42,27 @@ WHERE id = $1::INT`
 		if !scheduleAt.Valid {
 			status = JobStatusFailed
 		}
-		_, err := tx.Exec(ctx, q, jobID, errJson, status, scheduleAt)
+		_, err := db.Exec(q, jobID, errJson, status, scheduleAt)
 		return err
 	}
 }
 
-func resetRunningJobs(ctx context.Context, db db) error {
+func resetRunningJobs(db db.Handler) error {
 	const q = "UPDATE jobs SET status = 0 WHERE status = 1"
-	_, err := db.Exec(ctx, q)
+	_, err := db.Exec(q)
 	return err
 }
 
-func enqueueScheduledJobs(ctx context.Context, db db) (int, error) {
-	const q = "UPDATE jobs SET status = 0 WHERE status = 3 AND scheduled_at < NOW() RETURNING COUNT(*)"
-	row, err := db.QueryRow(ctx, q)
-	if err != nil {
+func enqueueScheduledJobs(db db.Handler) (int, error) {
+	const q = "UPDATE jobs SET status = 0 WHERE status = 3 AND scheduled_at < NOW()"
+	if tag, err := db.Exec(q); err != nil {
 		return 0, err
+	} else {
+		return int(tag.RowsAffected()), err
 	}
-	var count int
-	err = row.Scan(&count)
-	return count, err
 }
 
-func claimNextJob(ctx context.Context, db db) (*JobInfo, error) {
+func claimNextJob(db db.Handler) (*JobInfo, error) {
 	const q = `-- ClaimNextJob
 WITH cte (id) AS (
 	SELECT id FROM jobs
@@ -86,7 +76,7 @@ WITH cte (id) AS (
 WHERE id = (SELECT id FROM cte)
 RETURNING id, status, attempt, kind, args`
 
-	if rows, err := db.Query(ctx, q); err != nil {
+	if rows, err := db.Query(q); err != nil {
 		return nil, err
 	} else {
 		info, err := pgx.CollectExactlyOneRow(rows, scanJobInfo)
@@ -105,7 +95,7 @@ func scanJobInfo(row pgx.CollectableRow) (*JobInfo, error) {
 		&job.Kind,
 		&job.EncodedArgs,
 	)
-	if err == nil {
+	if err != nil {
 		return nil, err
 	}
 

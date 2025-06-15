@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/pubsub"
-	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog"
 )
 
@@ -17,10 +17,12 @@ const channelName = "job_inserted"
 const maxAttempts = 6
 
 type Client struct {
-	db               db
+	config           Config
+	db               db.Handler
 	logger           zerolog.Logger
 	factories        map[string]workUnitFactory
 	availableWorkers chan struct{}
+	muJobAvailable   *sync.Mutex
 	condJobAvailable *sync.Cond
 	sub              pubsub.Subscription
 	cancelListen     context.CancelFunc
@@ -30,15 +32,12 @@ type Client struct {
 	defaultTimeout time.Duration
 }
 
-func NewClient(db db, logger zerolog.Logger, config Config) *Client {
-	cond := &sync.Cond{}
+func NewClient(db db.Handler, logger zerolog.Logger, config Config) *Client {
 	return &Client{
-		db:               db,
-		logger:           logger.With().Str("component", "steve").Logger(),
-		factories:        make(map[string]workUnitFactory),
-		availableWorkers: make(chan struct{}, config.Workers),
-		condJobAvailable: cond,
-		defaultTimeout:   time.Duration(config.Timeout) * time.Second,
+		config:    config,
+		db:        db,
+		logger:    logger.With().Str("mod", "steve").Logger(),
+		factories: make(map[string]workUnitFactory),
 	}
 }
 
@@ -62,10 +61,18 @@ func (c *Client) Start(ctx context.Context, notifier pubsub.Notifier) error {
 	if c.sub != nil {
 		return errors.New("already started")
 	}
-	c.logger.Info().Msg("Starting Job Processing")
+	if c.config.Workers <= 0 {
+		return errors.New("workers must be a positive integer")
+	}
+	c.availableWorkers = make(chan struct{}, c.config.Workers)
+	c.muJobAvailable = &sync.Mutex{}
+	c.condJobAvailable = &sync.Cond{L: c.muJobAvailable}
+	c.defaultTimeout = time.Duration(c.config.Timeout) * time.Second
+
+	c.logger.Info().Int("workers", c.config.Workers).Msg("Starting Job Processing")
 	c.sub = notifier.Listen(channelName)
 
-	if err := resetRunningJobs(ctx, c.db); err != nil {
+	if err := resetRunningJobs(c.db); err != nil {
 		return err
 	}
 
@@ -95,7 +102,7 @@ func (c *Client) produceJobs(ctx context.Context) {
 			c.logger.Debug().Msg("Job available")
 			c.condJobAvailable.Signal()
 		case <-t.C:
-			if n, err := enqueueScheduledJobs(ctx, c.db); err != nil {
+			if n, err := enqueueScheduledJobs(c.db); err != nil {
 				c.logger.Warn().Err(err).Msg("Error enqueueing scheduled jobs")
 			} else if n > 0 {
 				c.logger.Debug().Int("count", n).Msg("Enqueued scheduled jobs")
@@ -113,11 +120,13 @@ loop:
 			break loop
 		// Wait for worker to become available
 		case c.availableWorkers <- struct{}{}:
-			if info, err := claimNextJob(runCtx, c.db); err != nil {
+			if info, err := claimNextJob(c.db); err != nil {
 				if errors.Is(err, errNoJobs) {
 					c.logger.Debug().Msg("No jobs available. Sleeping until notified")
 					// No available jobs. Wait for signal
+					c.muJobAvailable.Lock()
 					c.condJobAvailable.Wait()
+					c.muJobAvailable.Unlock()
 					c.logger.Debug().Msg("New job!!")
 					// Make sure to mark the worker as available
 					<-c.availableWorkers
@@ -144,7 +153,7 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) {
 	}
 
 	if err != nil {
-		c.recordError(ctx, info, err)
+		c.recordError(info, err)
 		return
 	}
 
@@ -159,39 +168,34 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) {
 			<-c.availableWorkers
 		}()
 		if err := w.Work(ctx); err != nil {
-			c.recordError(ctx, info, err)
+			c.recordError(info, err)
 		} else {
-			c.db.BeginFunc(context.Background(), func(tx pgx.Tx) error {
-				return updateJobStatus(ctx, tx, info.ID, JobStatusCompleted)
-			})
+			updateJobStatus(c.db, info.ID, JobStatusCompleted)
 		}
 	}()
 }
 
-func (c *Client) recordError(ctx context.Context, info *JobInfo, err error) error {
+func (c *Client) recordError(info *JobInfo, err error) error {
 	scheduleAt := computeBackoff(info.Attempt + 1)
 	c.logger.Warn().Err(err).Int32("id", info.ID).Str("kind", info.Kind).Bytes("args", info.EncodedArgs).Time("schedule_at", scheduleAt.Time).Msg("Error executing jobs")
-	return c.db.BeginFunc(context.Background(), func(tx pgx.Tx) error {
-		return updateJobStatusError(
-			ctx,
-			tx,
-			info.ID,
-			AttemptError{
-				At:      time.Now(),
-				Attempt: info.Attempt + 1,
-				Error:   err.Error(),
-			},
-			scheduleAt,
-		)
-	})
+	return updateJobStatusError(
+		c.db,
+		info.ID,
+		AttemptError{
+			At:      time.Now(),
+			Attempt: info.Attempt + 1,
+			Error:   err.Error(),
+		},
+		scheduleAt,
+	)
 
 }
 
-func (c *Client) InsertJob(ctx context.Context, tx pgx.Tx, args JobArgs) error {
-	return c.InsertJobs(ctx, tx, []JobArgs{args})
+func (c *Client) InsertJob(db db.Handler, args JobArgs) error {
+	return c.InsertJobs(db, []JobArgs{args})
 }
 
-func (c *Client) InsertJobs(ctx context.Context, tx pgx.Tx, args []JobArgs) error {
+func (c *Client) InsertJobs(db db.Handler, args []JobArgs) error {
 	params := make([]insertJobParams, len(args))
 	for i, a := range args {
 		encodedArgs, err := json.Marshal(a)
@@ -204,6 +208,6 @@ func (c *Client) InsertJobs(ctx context.Context, tx pgx.Tx, args []JobArgs) erro
 			EncodedArgs: encodedArgs,
 		}
 	}
-	_, err := insertJobs(ctx, tx, params)
+	_, err := insertJobs(db, params)
 	return err
 }
