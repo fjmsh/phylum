@@ -90,7 +90,11 @@ func (c *Client) produceJobs(ctx context.Context) {
 		case <-c.sub.NotificationC():
 			c.condJobAvailable.Signal()
 		case <-t.C:
-			enqueueScheduledJobs(ctx, c.db)
+			if n, err := enqueueScheduledJobs(ctx, c.db); err != nil {
+				logrus.Warn("Error enqueueing scheduled jobs: ", err.Error())
+			} else if n > 0 {
+				c.condJobAvailable.Signal()
+			}
 		}
 	}
 }
