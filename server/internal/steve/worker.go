@@ -108,7 +108,7 @@ func AddWorker[T JobArgs](workers *Workers, worker Worker[T]) {
 //	river.AddWorkerSafely[SortArgs](workers, &SortWorker{}).
 func AddWorkerSafely[T JobArgs](workers *Workers, worker Worker[T]) error {
 	var jobArgs T
-	return workers.add(jobArgs, &workUnitFactoryWrapper[T]{worker: worker})
+	return workers.add(jobArgs, &typedWorkUnitFactory[T]{worker: worker})
 }
 
 // Workers is a list of available job workers. A Worker must be registered for
@@ -159,15 +159,11 @@ func (w Workers) add(jobArgs JobArgs, workUnitFactory WorkUnitFactory) error {
 	return nil
 }
 
-func (w Workers) pkg(row *JobRow) (WorkUnit, error) {
-	if w, ok := w.workersMap[row.Kind]; !ok {
-		return nil, errors.New("unknown job kind: " + row.Kind)
+func (w Workers) createWork(info *JobInfo) (WorkUnit, error) {
+	if w, ok := w.workersMap[info.Kind]; !ok {
+		return nil, errors.New("unknown job kind: " + info.Kind)
 	} else {
-		unit := w.workUnitFactory.MakeUnit(row)
-		if err := unit.UnmarshalJob(); err != nil {
-			return nil, err
-		}
-		return unit, nil
+		return w.workUnitFactory.MakeUnit(info)
 	}
 }
 

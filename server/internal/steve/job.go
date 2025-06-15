@@ -7,7 +7,7 @@ import (
 )
 
 type Job[T JobArgs] struct {
-	*JobRow
+	*JobInfo
 	Args T
 }
 
@@ -15,16 +15,19 @@ type JobArgs interface {
 	Kind() string
 }
 
+type JobInfo struct {
+	ID          int32     `json:"id"`
+	Status      JobStatus `json:"status"`
+	Attempt     int       `json:"attempt"`
+	EncodedArgs []byte    `json:"args"`
+	Kind        string    `json:"kind"`
+}
+
 type JobRow struct {
-	ID          int32              `json:"id"`
-	State       JobState           `json:"state"`
-	Attempt     int                `json:"attempt"`
+	JobInfo
 	CreatedAt   time.Time          `json:"created_at"`
-	AttemptedAt pgtype.Timestamptz `json:"attempted_at"`
-	FinalizedAt pgtype.Timestamptz `json:"finalized_at"`
-	EncodedArgs []byte             `json:"args"`
+	ScheduledAt pgtype.Timestamptz `json:"scheduled_at"`
 	Errors      []AttemptError     `json:"errors"`
-	Kind        string             `json:"kind"`
 }
 
 type AttemptError struct {
@@ -33,13 +36,13 @@ type AttemptError struct {
 	Error   string    `json:"error"`
 }
 
-type JobState uint8
+type JobStatus uint8
 
 const (
-	JobStateQueued        JobState = 0
-	JobStateRunning       JobState = 1
-	JobStateCompleted     JobState = 2
-	JobStateAwaitingRetry JobState = 3
-	JobStateFailed        JobState = 4
-	JobStateCancelled     JobState = 5
+	JobStatusQueued    JobStatus = 0
+	JobStatusRunning   JobStatus = 1
+	JobStatusCompleted JobStatus = 2
+	JobStatusScheduled JobStatus = 3
+	JobStatusFailed    JobStatus = 4
+	JobStatusCancelled JobStatus = 5
 )

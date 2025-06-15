@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sync"
+	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/pubsub"
 	"github.com/jackc/pgx/v5"
@@ -11,42 +13,46 @@ import (
 )
 
 const channelName = "job_inserted"
+const maxAttempts = 6
 
 type Client struct {
-	workers *Workers
-	queue   chan WorkUnit
-	sub     pubsub.Subscription
+	db               db
+	workers          *Workers
+	sem              chan struct{}
+	condJobAvailable *sync.Cond
 
+	sub          pubsub.Subscription
 	cancelListen context.CancelFunc
 	cancelRun    context.CancelFunc
 	cancelWork   context.CancelFunc
 }
 
-func NewClient(workers *Workers) *Client {
+func NewClient(db db, workers *Workers, queueSize, concurrency int) *Client {
+	cond := &sync.Cond{}
 	return &Client{
-		workers: workers,
-		queue:   make(chan WorkUnit, 100000),
+		db:               db,
+		workers:          workers,
+		sem:              make(chan struct{}, concurrency),
+		condJobAvailable: cond,
 	}
 }
 
-func (c *Client) Start(ctx context.Context, notifier pubsub.Notifier, db db) error {
+func (c *Client) Start(ctx context.Context, notifier pubsub.Notifier) error {
 	if c.sub != nil {
 		return errors.New("already started")
 	}
 	c.sub = notifier.Listen(channelName)
 
-	if work, err := restoreJobQueue(ctx, db, c.workers); err != nil {
-		for _, w := range work {
-			c.queue <- w
-		}
+	if err := resetRunningJobs(ctx, c.db); err != nil {
+		return err
 	}
 
 	var listenCtx, runCtx, workCtx context.Context
 	listenCtx, c.cancelListen = context.WithCancel(ctx)
 	runCtx, c.cancelRun = context.WithCancel(ctx)
 	workCtx, c.cancelWork = context.WithCancel(ctx)
-	go c.listenForJobs(listenCtx)
-	go c.run(runCtx, workCtx)
+	go c.produceJobs(listenCtx)
+	go c.consumeJobs(runCtx, workCtx)
 
 	// Wait until the listener is established
 	select {
@@ -57,34 +63,83 @@ func (c *Client) Start(ctx context.Context, notifier pubsub.Notifier, db db) err
 	return nil
 }
 
-// listenForJobs listens for job insert notifications and adds them to the queue
-func (c *Client) listenForJobs(ctx context.Context) {
+func (c *Client) produceJobs(ctx context.Context) {
+	t := time.NewTicker(5 * time.Second)
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case payload := <-c.sub.NotificationC():
-			var job JobRow
-			json.Unmarshal([]byte(payload), &job)
-			if w, err := c.workers.pkg(&job); err != nil {
-				logrus.Warn("Unable to package job: " + err.Error())
+		case <-c.sub.NotificationC():
+			c.condJobAvailable.Signal()
+		case <-t.C:
+			enqueueScheduledJobs(ctx, c.db)
+		}
+	}
+}
+
+func (c *Client) consumeJobs(runCtx context.Context, workCtx context.Context) {
+loop:
+	for {
+		select {
+		case <-runCtx.Done():
+			break loop
+		// Wait for worker to become available
+		case c.sem <- struct{}{}:
+			if info, err := claimNextJob(runCtx, c.db); err != nil {
+				if errors.Is(err, errNoJobs) {
+					// No available jobs. Wait for signal
+					c.condJobAvailable.Wait()
+					// Make sure to put the worker back in the queue
+					<-c.sem
+				} else {
+					// Unknown error
+					// TODO: Maybe try again (after a short delay) a couple of times before fatal?
+					logrus.Fatal(err)
+				}
 			} else {
-				c.queue <- w
+				c.execute(workCtx, info)
 			}
 		}
 	}
 }
 
-func (c *Client) run(ctx context.Context, workCtx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case w := <-c.queue:
-			err := w.Work(workCtx)
-			logrus.Warn(err)
-		}
+func (c *Client) execute(ctx context.Context, info *JobInfo) {
+	w, err := c.workers.createWork(info)
+
+	if err != nil {
+		logrus.Warn("Error executing job: " + err.Error())
+		c.db.BeginFunc(context.Background(), func(tx pgx.Tx) error {
+			return updateJobStatusError(ctx, tx, info.ID, AttemptError{
+				At:      time.Now(),
+				Attempt: info.Attempt + 1,
+				Error:   err.Error(),
+			}, computeBackoff(info.Attempt+1))
+		})
 	}
+
+	if t := w.Timeout(); t != 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, t)
+		defer cancel()
+	}
+
+	go func() {
+		defer func() {
+			<-c.sem
+		}()
+		if err := w.Work(ctx); err != nil {
+			logrus.Warn(err)
+			// computeBackoff(int(w.JobID())
+			// w.NextRetry()
+			// TODO: log error?
+			// TODO: record error in db
+			// TODO: reschedule
+		} else {
+			c.db.BeginFunc(context.Background(), func(tx pgx.Tx) error {
+				return updateJobStatus(ctx, tx, info.ID, JobStatusCompleted)
+			})
+		}
+	}()
 }
 
 func (c *Client) InsertJob(ctx context.Context, tx pgx.Tx, args JobArgs) error {

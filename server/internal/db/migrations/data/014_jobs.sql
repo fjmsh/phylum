@@ -1,20 +1,20 @@
-
 CREATE TABLE jobs(
   id            SERIAL      PRIMARY KEY,
-  state         SMALLINT    NOT NULL DEFAULT 0,
+  status        SMALLINT    NOT NULL DEFAULT 0,
   attempt       SMALLINT    NOT NULL DEFAULT 0,
-
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  scheduled_at  TIMESTAMPTZ,
   attempted_at  TIMESTAMPTZ,
-  finalized_at  TIMESTAMPTZ,
 
   -- types stored out-of-band
-  args          JSONB,
-  errors        JSONB[],
   kind          TEXT NOT NULL,
-
-  CONSTRAINT finalized_or_finalized_at_null CHECK ((state IN (2, 4, 5) AND finalized_at IS NOT NULL) OR finalized_at IS NULL)
+  args          JSONB,
+  errors        JSONB[]
 );
+
+CREATE INDEX next_available_job ON jobs(id) WHERE status = 0;
+
+CREATE INDEX scheduled_jobs ON jobs(scheduled_at);
 
 CREATE FUNCTION notify_job_inserted() RETURNS trigger AS $$
 BEGIN
@@ -31,6 +31,12 @@ CREATE TRIGGER job_inserted
 
 ---- create above / drop below ----
 
+DROP INDEX next_available_job;
+
+DROP INDEX scheduled_jobs;
+
 DROP TRIGGER job_inserted ON jobs;
 
 DROP FUNCTION notify_job_inserted();
+
+DROP TABLE jobs
