@@ -107,7 +107,7 @@ loop:
 				if errors.Is(err, errNoJobs) {
 					// No available jobs. Wait for signal
 					c.condJobAvailable.Wait()
-					// Make sure to put the worker back in the queue
+					// Make sure to mark the worker as available
 					<-c.availableWorkers
 				} else {
 					// Unknown error
@@ -131,14 +131,8 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) {
 	}
 
 	if err != nil {
-		logrus.Warn("Error executing job: " + err.Error())
-		c.db.BeginFunc(context.Background(), func(tx pgx.Tx) error {
-			return updateJobStatusError(ctx, tx, info.ID, AttemptError{
-				At:      time.Now(),
-				Attempt: info.Attempt + 1,
-				Error:   err.Error(),
-			}, computeBackoff(info.Attempt+1))
-		})
+		c.recordError(ctx, info, err)
+		return
 	}
 
 	if t := w.Timeout(); t != 0 {
@@ -152,20 +146,25 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) {
 			<-c.availableWorkers
 		}()
 		if err := w.Work(ctx); err != nil {
-			logrus.Warnf("Error executing job : %s", err.Error())
-			c.db.BeginFunc(context.Background(), func(tx pgx.Tx) error {
-				return updateJobStatusError(ctx, tx, info.ID, AttemptError{
-					At:      time.Now(),
-					Attempt: info.Attempt + 1,
-					Error:   err.Error(),
-				}, computeBackoff(info.Attempt+1))
-			})
+			c.recordError(ctx, info, err)
 		} else {
 			c.db.BeginFunc(context.Background(), func(tx pgx.Tx) error {
 				return updateJobStatus(ctx, tx, info.ID, JobStatusCompleted)
 			})
 		}
 	}()
+}
+
+func (c *Client) recordError(ctx context.Context, info *JobInfo, err error) error {
+	logrus.Warn("Error executing job: " + err.Error())
+	return c.db.BeginFunc(context.Background(), func(tx pgx.Tx) error {
+		return updateJobStatusError(ctx, tx, info.ID, AttemptError{
+			At:      time.Now(),
+			Attempt: info.Attempt + 1,
+			Error:   err.Error(),
+		}, computeBackoff(info.Attempt+1))
+	})
+
 }
 
 func (c *Client) InsertJob(ctx context.Context, tx pgx.Tx, args JobArgs) error {
