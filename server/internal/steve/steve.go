@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -17,24 +18,41 @@ const maxAttempts = 6
 
 type Client struct {
 	db               db
-	workers          *Workers
-	sem              chan struct{}
+	factories        map[string]workUnitFactory
+	availableWorkers chan struct{}
 	condJobAvailable *sync.Cond
-
-	sub          pubsub.Subscription
-	cancelListen context.CancelFunc
-	cancelRun    context.CancelFunc
-	cancelWork   context.CancelFunc
+	sub              pubsub.Subscription
+	cancelListen     context.CancelFunc
+	cancelRun        context.CancelFunc
+	cancelWork       context.CancelFunc
+	// Config
+	defaultTimeout time.Duration
 }
 
-func NewClient(db db, workers *Workers, queueSize, concurrency int) *Client {
+func NewClient(db db, config Config) *Client {
 	cond := &sync.Cond{}
 	return &Client{
 		db:               db,
-		workers:          workers,
-		sem:              make(chan struct{}, concurrency),
+		factories:        make(map[string]workUnitFactory),
+		availableWorkers: make(chan struct{}, config.Workers),
 		condJobAvailable: cond,
+		defaultTimeout:   time.Duration(config.Timeout) * time.Second,
 	}
+}
+
+// RegisterWorker registers a Worker on the provided client. Each Worker must
+// be registered so that the Client knows it should handle a specific kind of
+// job (as returned by its `Kind()` method).
+//
+// Note that RegisterWorker will panic if a worker of this kind is already
+// registered for this Client
+func RegisterWorker[T JobArgs](client *Client, worker Worker[T]) {
+	var jobArgs T
+	kind := jobArgs.Kind()
+	if _, ok := client.factories[kind]; ok {
+		panic(fmt.Errorf("worker for kind %q is already registered", kind))
+	}
+	client.factories[kind] = &typedWorkUnitFactory[T]{worker: worker}
 }
 
 func (c *Client) Start(ctx context.Context, notifier pubsub.Notifier) error {
@@ -84,13 +102,13 @@ loop:
 		case <-runCtx.Done():
 			break loop
 		// Wait for worker to become available
-		case c.sem <- struct{}{}:
+		case c.availableWorkers <- struct{}{}:
 			if info, err := claimNextJob(runCtx, c.db); err != nil {
 				if errors.Is(err, errNoJobs) {
 					// No available jobs. Wait for signal
 					c.condJobAvailable.Wait()
 					// Make sure to put the worker back in the queue
-					<-c.sem
+					<-c.availableWorkers
 				} else {
 					// Unknown error
 					// TODO: Maybe try again (after a short delay) a couple of times before fatal?
@@ -104,7 +122,13 @@ loop:
 }
 
 func (c *Client) execute(ctx context.Context, info *JobInfo) {
-	w, err := c.workers.createWork(info)
+	var w workUnit
+	var err error
+	if f, ok := c.factories[info.Kind]; !ok {
+		err = errors.New("unknown job kind: " + info.Kind)
+	} else {
+		w, err = f.makeUnit(info)
+	}
 
 	if err != nil {
 		logrus.Warn("Error executing job: " + err.Error())
@@ -125,15 +149,17 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) {
 
 	go func() {
 		defer func() {
-			<-c.sem
+			<-c.availableWorkers
 		}()
 		if err := w.Work(ctx); err != nil {
-			logrus.Warn(err)
-			// computeBackoff(int(w.JobID())
-			// w.NextRetry()
-			// TODO: log error?
-			// TODO: record error in db
-			// TODO: reschedule
+			logrus.Warnf("Error executing job : %s", err.Error())
+			c.db.BeginFunc(context.Background(), func(tx pgx.Tx) error {
+				return updateJobStatusError(ctx, tx, info.ID, AttemptError{
+					At:      time.Now(),
+					Attempt: info.Attempt + 1,
+					Error:   err.Error(),
+				}, computeBackoff(info.Attempt+1))
+			})
 		} else {
 			c.db.BeginFunc(context.Background(), func(tx pgx.Tx) error {
 				return updateJobStatus(ctx, tx, info.ID, JobStatusCompleted)

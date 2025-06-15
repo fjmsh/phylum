@@ -2,49 +2,12 @@ package steve
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"time"
 )
 
-// Worker is an interface that can perform a job with args of type T. A typical
-// implementation will be a JSON-serializable `JobArgs` struct that implements
-// `Kind()`, along with a Worker that embeds WorkerDefaults and implements `Work()`.
-// Workers may optionally override other methods to provide job-specific
-// configuration for all jobs of that type:
-//
-//	type SleepArgs struct {
-//		Duration time.Duration `json:"duration"`
-//	}
-//
-//	func (SleepArgs) Kind() string { return "sleep" }
-//
-//	type SleepWorker struct {
-//		WorkerDefaults[SleepArgs]
-//	}
-//
-//	func (w *SleepWorker) Work(ctx context.Context, job *Job[SleepArgs]) error {
-//		select {
-//		case <-ctx.Done():
-//			return ctx.Err()
-//		case <-time.After(job.Args.Duration):
-//			return nil
-//		}
-//	}
-//
-// In addition to fulfilling the Worker interface, workers must be registered
-// with the client using the AddWorker function.
+// Worker is an interface that can perform a job with args of type T.
+// Workers must be registered with the client using the AddWorker function.
 type Worker[T JobArgs] interface {
-	// NextRetry calculates when the next retry for a failed job should take
-	// place given when it was last attempted and its number of attempts, or any
-	// other of the job's properties a user-configured retry policy might want
-	// to consider.
-	//
-	// Note that this method on a worker overrides any client-level retry policy.
-	// To use the client-level retry policy, return an empty `time.Time{}` or
-	// include WorkerDefaults to do this for you.
-	NextRetry(job *Job[T]) time.Time
-
 	// Timeout is the maximum amount of time the job is allowed to run before
 	// its context is cancelled. A timeout of zero (the default) means the job
 	// will inherit the Client-level timeout. A timeout of -1 means the job's
@@ -69,84 +32,9 @@ type Worker[T JobArgs] interface {
 // struct to make it fulfill the Worker interface with default values.
 type WorkerDefaults[T JobArgs] struct{}
 
-// NextRetry returns an empty time.Time{} to avoid setting any job or
-// Worker-specific overrides on the next retry time. This means that the
-// Client-level retry policy schedule will be used instead.
-func (w WorkerDefaults[T]) NextRetry(*Job[T]) time.Time { return time.Time{} }
-
 // Timeout returns the job-specific timeout. Override this method to set a
 // job-specific timeout, otherwise the Client-level timeout will be applied.
 func (w WorkerDefaults[T]) Timeout(*Job[T]) time.Duration { return 0 }
-
-// AddWorker registers a Worker on the provided Workers bundle. Each Worker must
-// be registered so that the Client knows it should handle a specific kind of
-// job (as returned by its `Kind()` method).
-//
-// Use by explicitly specifying a JobArgs type and then passing an instance of a
-// worker for the same type:
-//
-//	river.AddWorker(workers, &SortWorker{})
-//
-// Note that AddWorker can panic in some situations, such as if the worker is
-// already registered or if its configuration is otherwise invalid. This default
-// probably makes sense for most applications because you wouldn't want to start
-// an application with invalid hardcoded runtime configuration. If you want to
-// avoid panics, use AddWorkerSafely instead.
-func AddWorker[T JobArgs](workers *Workers, worker Worker[T]) {
-	if err := AddWorkerSafely(workers, worker); err != nil {
-		panic(err)
-	}
-}
-
-// AddWorkerSafely registers a worker on the provided Workers bundle. Unlike AddWorker,
-// AddWorkerSafely does not panic and instead returns an error if the worker
-// is already registered or if its configuration is invalid.
-//
-// Use by explicitly specifying a JobArgs type and then passing an instance of a
-// worker for the same type:
-//
-//	river.AddWorkerSafely[SortArgs](workers, &SortWorker{}).
-func AddWorkerSafely[T JobArgs](workers *Workers, worker Worker[T]) error {
-	var jobArgs T
-	return workers.add(jobArgs, &typedWorkUnitFactory[T]{worker: worker})
-}
-
-// Workers is a list of available job workers. A Worker must be registered for
-// each type of Job to be handled.
-//
-// Use the top-level AddWorker function combined with a Workers to register a
-// worker.
-type Workers struct {
-	factories map[string]workUnitFactory // job kind -> worker info
-}
-
-// NewWorkers initializes a new registry of available job workers.
-//
-// Use the top-level AddWorker function combined with a Workers registry to
-// register each available worker.
-func NewWorkers() *Workers {
-	return &Workers{
-		factories: make(map[string]workUnitFactory),
-	}
-}
-
-func (w Workers) add(jobArgs JobArgs, workUnitFactory workUnitFactory) error {
-	kind := jobArgs.Kind()
-	if _, ok := w.factories[kind]; ok {
-		return fmt.Errorf("worker for kind %q is already registered", kind)
-	}
-	w.factories[kind] = workUnitFactory
-
-	return nil
-}
-
-func (w Workers) makeWorkUnit(info *JobInfo) (workUnit, error) {
-	if f, ok := w.factories[info.Kind]; !ok {
-		return nil, errors.New("unknown job kind: " + info.Kind)
-	} else {
-		return f.makeUnit(info)
-	}
-}
 
 // workFunc implements JobArgs and is used to wrap a function given to WorkFunc.
 type workFunc[T JobArgs] struct {
