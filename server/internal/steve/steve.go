@@ -10,7 +10,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/pubsub"
 	"github.com/jackc/pgx/v5"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 )
 
 const channelName = "job_inserted"
@@ -18,6 +18,7 @@ const maxAttempts = 6
 
 type Client struct {
 	db               db
+	logger           zerolog.Logger
 	factories        map[string]workUnitFactory
 	availableWorkers chan struct{}
 	condJobAvailable *sync.Cond
@@ -29,10 +30,11 @@ type Client struct {
 	defaultTimeout time.Duration
 }
 
-func NewClient(db db, config Config) *Client {
+func NewClient(db db, logger zerolog.Logger, config Config) *Client {
 	cond := &sync.Cond{}
 	return &Client{
 		db:               db,
+		logger:           logger.With().Str("component", "steve").Logger(),
 		factories:        make(map[string]workUnitFactory),
 		availableWorkers: make(chan struct{}, config.Workers),
 		condJobAvailable: cond,
@@ -49,6 +51,7 @@ func NewClient(db db, config Config) *Client {
 func RegisterWorker[T JobArgs](client *Client, worker Worker[T]) {
 	var jobArgs T
 	kind := jobArgs.Kind()
+	client.logger.Debug().Str("kind", kind).Msg("Registering worker")
 	if _, ok := client.factories[kind]; ok {
 		panic(fmt.Errorf("worker for kind %q is already registered", kind))
 	}
@@ -59,6 +62,7 @@ func (c *Client) Start(ctx context.Context, notifier pubsub.Notifier) error {
 	if c.sub != nil {
 		return errors.New("already started")
 	}
+	c.logger.Info().Msg("Starting Job Processing")
 	c.sub = notifier.Listen(channelName)
 
 	if err := resetRunningJobs(ctx, c.db); err != nil {
@@ -88,11 +92,13 @@ func (c *Client) produceJobs(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-c.sub.NotificationC():
+			c.logger.Debug().Msg("Job available")
 			c.condJobAvailable.Signal()
 		case <-t.C:
 			if n, err := enqueueScheduledJobs(ctx, c.db); err != nil {
-				logrus.Warn("Error enqueueing scheduled jobs: ", err.Error())
+				c.logger.Warn().Err(err).Msg("Error enqueueing scheduled jobs")
 			} else if n > 0 {
+				c.logger.Debug().Int("count", n).Msg("Enqueued scheduled jobs")
 				c.condJobAvailable.Signal()
 			}
 		}
@@ -109,16 +115,19 @@ loop:
 		case c.availableWorkers <- struct{}{}:
 			if info, err := claimNextJob(runCtx, c.db); err != nil {
 				if errors.Is(err, errNoJobs) {
+					c.logger.Debug().Msg("No jobs available. Sleeping until notified")
 					// No available jobs. Wait for signal
 					c.condJobAvailable.Wait()
+					c.logger.Debug().Msg("New job!!")
 					// Make sure to mark the worker as available
 					<-c.availableWorkers
 				} else {
 					// Unknown error
 					// TODO: Maybe try again (after a short delay) a couple of times before fatal?
-					logrus.Fatal(err)
+					c.logger.Fatal().Err(err).Msg("Failed to claim job")
 				}
 			} else {
+				c.logger.Debug().Int32("id", info.ID).Str("kind", info.Kind).Bytes("args", info.EncodedArgs).Msg("Executing job")
 				c.execute(workCtx, info)
 			}
 		}
@@ -160,13 +169,20 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) {
 }
 
 func (c *Client) recordError(ctx context.Context, info *JobInfo, err error) error {
-	logrus.Warn("Error executing job: " + err.Error())
+	scheduleAt := computeBackoff(info.Attempt + 1)
+	c.logger.Warn().Err(err).Int32("id", info.ID).Str("kind", info.Kind).Bytes("args", info.EncodedArgs).Time("schedule_at", scheduleAt.Time).Msg("Error executing jobs")
 	return c.db.BeginFunc(context.Background(), func(tx pgx.Tx) error {
-		return updateJobStatusError(ctx, tx, info.ID, AttemptError{
-			At:      time.Now(),
-			Attempt: info.Attempt + 1,
-			Error:   err.Error(),
-		}, computeBackoff(info.Attempt+1))
+		return updateJobStatusError(
+			ctx,
+			tx,
+			info.ID,
+			AttemptError{
+				At:      time.Now(),
+				Attempt: info.Attempt + 1,
+				Error:   err.Error(),
+			},
+			scheduleAt,
+		)
 	})
 
 }
