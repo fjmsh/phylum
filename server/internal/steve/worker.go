@@ -117,14 +117,7 @@ func AddWorkerSafely[T JobArgs](workers *Workers, worker Worker[T]) error {
 // Use the top-level AddWorker function combined with a Workers to register a
 // worker.
 type Workers struct {
-	workersMap map[string]workerInfo // job kind -> worker info
-}
-
-// workerInfo bundles information about a registered worker for later lookup
-// in a Workers bundle.
-type workerInfo struct {
-	jobArgs         JobArgs
-	workUnitFactory WorkUnitFactory
+	factories map[string]workUnitFactory // job kind -> worker info
 }
 
 // NewWorkers initializes a new registry of available job workers.
@@ -133,37 +126,25 @@ type workerInfo struct {
 // register each available worker.
 func NewWorkers() *Workers {
 	return &Workers{
-		workersMap: make(map[string]workerInfo),
+		factories: make(map[string]workUnitFactory),
 	}
 }
 
-func (w Workers) add(jobArgs JobArgs, workUnitFactory WorkUnitFactory) error {
-	checkRegistered := func(kind string) error {
-		if _, ok := w.workersMap[kind]; ok {
-			return fmt.Errorf("worker for kind %q is already registered", kind)
-		}
-		return nil
-	}
-
-	workerInfo := workerInfo{
-		jobArgs:         jobArgs,
-		workUnitFactory: workUnitFactory,
-	}
-
+func (w Workers) add(jobArgs JobArgs, workUnitFactory workUnitFactory) error {
 	kind := jobArgs.Kind()
-	if err := checkRegistered(kind); err != nil {
-		return err
+	if _, ok := w.factories[kind]; ok {
+		return fmt.Errorf("worker for kind %q is already registered", kind)
 	}
-	w.workersMap[kind] = workerInfo
+	w.factories[kind] = workUnitFactory
 
 	return nil
 }
 
-func (w Workers) createWork(info *JobInfo) (WorkUnit, error) {
-	if w, ok := w.workersMap[info.Kind]; !ok {
+func (w Workers) makeWorkUnit(info *JobInfo) (workUnit, error) {
+	if f, ok := w.factories[info.Kind]; !ok {
 		return nil, errors.New("unknown job kind: " + info.Kind)
 	} else {
-		return w.workUnitFactory.MakeUnit(info)
+		return f.makeUnit(info)
 	}
 }
 
