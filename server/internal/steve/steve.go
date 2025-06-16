@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,6 +17,14 @@ import (
 
 const channelName = "job_inserted"
 const maxAttempts = 6
+
+type errWaiting struct {
+	sequences []string
+}
+
+func (e errWaiting) Error() string {
+	return "Waiting for " + strings.Join(e.sequences, ",")
+}
 
 type Client struct {
 	db     db.Handler
@@ -29,6 +39,11 @@ type Client struct {
 	subJobInserted   pubsub.Subscription
 	muJobAvailable   *sync.Mutex
 	condJobAvailable *sync.Cond
+	// Dependencies
+	muSeq       *sync.Mutex
+	sequences   map[string][]int32
+	waitingJobs map[int32][]string
+
 	// Shutdown
 	wg           sync.WaitGroup
 	done         chan struct{}
@@ -69,7 +84,7 @@ func (c *Client) Start(ctx context.Context, notifier pubsub.Notifier) error {
 	if c.config.Workers <= 0 {
 		return errors.New("workers must be a positive integer")
 	}
-	if err := resetRunningJobs(c.db); err != nil {
+	if err := resetDB(c.db); err != nil {
 		return err
 	}
 	if _, err := enqueueScheduledJobs(c.db); err != nil {
@@ -80,6 +95,10 @@ func (c *Client) Start(ctx context.Context, notifier pubsub.Notifier) error {
 	c.muJobAvailable = &sync.Mutex{}
 	c.condJobAvailable = &sync.Cond{L: c.muJobAvailable}
 	c.defaultTimeout = time.Duration(c.config.Timeout) * time.Second
+
+	c.muSeq = &sync.Mutex{}
+	c.sequences = make(map[string][]int32)
+	c.waitingJobs = make(map[int32][]string)
 
 	c.logger.Info().Int("workers", c.config.Workers).Msg("Starting")
 	c.subJobInserted = notifier.Listen(channelName)
@@ -105,6 +124,7 @@ func (c *Client) Stop(ctx context.Context, hard bool) bool {
 	c.logger.Info().Bool("hard", hard).Msg("Stop")
 	c.cancelListen()
 	c.cancelRun()
+	c.condJobAvailable.Signal()
 	if hard {
 		c.cancelWork()
 	}
@@ -158,8 +178,27 @@ loop:
 					c.logger.Fatal().Err(err).Msg("Failed to claim job")
 				}
 			} else {
-				c.logger.Trace().Int32("id", info.ID).Str("kind", info.Kind).Bytes("args", info.EncodedArgs).Msg("Executing job")
-				c.execute(workCtx, info)
+				if err := c.execute(workCtx, info); err != nil {
+					if e, ok := err.(*errWaiting); ok {
+						c.logger.
+							Trace().
+							Int32("id", info.ID).
+							Str("kind", info.Kind).
+							Str("args", string(info.EncodedArgs)).
+							Str("waiting", strings.Join(e.sequences, ",")).
+							Msg("Job Waiting")
+					} else {
+						c.recordError(info, err)
+					}
+					<-c.availableWorkers
+				} else {
+					c.logger.
+						Trace().
+						Int32("id", info.ID).
+						Str("kind", info.Kind).
+						Str("args", string(info.EncodedArgs)).
+						Msg("Executing job")
+				}
 			}
 		}
 	}
@@ -167,7 +206,7 @@ loop:
 	close(c.done)
 }
 
-func (c *Client) execute(ctx context.Context, info *JobInfo) {
+func (c *Client) execute(ctx context.Context, info *JobInfo) error {
 	var w workUnit
 	var err error
 	if f, ok := c.factories[info.Kind]; !ok {
@@ -177,14 +216,31 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) {
 	}
 
 	if err != nil {
-		c.recordError(info, err)
-		return
+		return err
 	}
 
-	if t := w.Timeout(); t != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, t)
-		defer cancel()
+	c.muSeq.Lock()
+	defer c.muSeq.Unlock()
+
+	var waiting []string
+	for _, s := range w.Sequences() {
+		j, ok := c.sequences[s]
+		if ok {
+			// This job is already at the head of the queue for this sequence
+			// i.e. we've been through here before
+			if j[0] == info.ID {
+				continue
+			}
+			waiting = append(waiting, s)
+		}
+		c.sequences[s] = append(j, info.ID)
+	}
+	if waiting != nil {
+		updateJobStatus(c.db, info.ID, JobStatusWaiting)
+		c.waitingJobs[info.ID] = waiting
+		return &errWaiting{
+			sequences: waiting,
+		}
 	}
 
 	c.wg.Add(1)
@@ -193,17 +249,51 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) {
 			c.wg.Done()
 			<-c.availableWorkers
 		}()
+
+		if t := w.Timeout(); t != 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, t)
+			defer cancel()
+		}
+
 		if err := w.Work(ctx); err != nil {
 			c.recordError(info, err)
 		} else {
 			updateJobStatus(c.db, info.ID, JobStatusCompleted)
 			c.logger.
 				Trace().
-				Int32("id", info.ID).
 				Int("attempt", info.Attempt).
+				Int32("id", info.ID).
 				Msg("Job Completed")
+
+			c.muSeq.Lock()
+			defer c.muSeq.Unlock()
+			for _, s := range w.Sequences() {
+				j := c.sequences[s]
+				if len(j) == 1 {
+					delete(c.sequences, s)
+				} else {
+					c.sequences[s] = j[1:]
+					nextJobID := j[1]
+					if waiting := c.waitingJobs[nextJobID]; len(waiting) <= 1 {
+						c.logger.
+							Trace().
+							Int32("id", nextJobID).
+							Msg("Job Available")
+						delete(c.waitingJobs, nextJobID)
+						updateJobStatus(c.db, nextJobID, JobStatusQueued)
+						c.condJobAvailable.Signal()
+					} else {
+						// TODO: #untested
+						c.waitingJobs[nextJobID] = slices.DeleteFunc(waiting, func(seq string) bool {
+							return seq == s
+						})
+					}
+				}
+			}
 		}
 	}()
+	return nil
 }
 
 func (c *Client) recordError(info *JobInfo, err error) error {
@@ -211,8 +301,8 @@ func (c *Client) recordError(info *JobInfo, err error) error {
 	c.logger.
 		Warn().
 		Err(err).
-		Int32("id", info.ID).
 		Int("attempt", info.Attempt).
+		Int32("id", info.ID).
 		Msg("Job Error")
 	return updateJobStatusError(
 		c.db,

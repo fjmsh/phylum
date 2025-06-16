@@ -47,9 +47,9 @@ WHERE id = $1::INT`
 	}
 }
 
-func resetRunningJobs(db db.Handler) error {
-	const q = "UPDATE jobs SET status = 0 WHERE status = 1"
-	_, err := db.Exec(q)
+func resetDB(db db.Handler) error {
+	const qResetStatus = "UPDATE jobs SET status = 0 WHERE status = 1 OR status = 6"
+	_, err := db.Exec(qResetStatus)
 	return err
 }
 

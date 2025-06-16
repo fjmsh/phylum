@@ -13,6 +13,7 @@ type Job[T JobArgs] struct {
 
 type JobArgs interface {
 	Kind() string
+	Sequences() []string
 }
 
 type JobInfo struct {
@@ -44,4 +45,5 @@ const (
 	JobStatusScheduled JobStatus = 3
 	JobStatusFailed    JobStatus = 4
 	JobStatusCancelled JobStatus = 5
+	JobStatusWaiting   JobStatus = 6
 )
