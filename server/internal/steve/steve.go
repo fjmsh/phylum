@@ -197,6 +197,11 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) {
 			c.recordError(info, err)
 		} else {
 			updateJobStatus(c.db, info.ID, JobStatusCompleted)
+			c.logger.
+				Trace().
+				Int32("id", info.ID).
+				Int("attempt", info.Attempt).
+				Msg("Job Completed")
 		}
 	}()
 }
@@ -207,8 +212,8 @@ func (c *Client) recordError(info *JobInfo, err error) error {
 		Warn().
 		Err(err).
 		Int32("id", info.ID).
-		Int("attempt", info.Attempt+1).
-		Msg("Error executing job")
+		Int("attempt", info.Attempt).
+		Msg("Job Error")
 	return updateJobStatusError(
 		c.db,
 		info.ID,
@@ -232,6 +237,7 @@ func (c *Client) InsertJobs(db db.Handler, args []JobArgs) error {
 		if err != nil {
 			return err
 		}
+		c.logger.Trace().Str("kind", a.Kind()).Str("args", string(encodedArgs)).Msg("Job Enqueued")
 
 		params[i] = insertJobParams{
 			Kind:        a.Kind(),
