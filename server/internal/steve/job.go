@@ -40,10 +40,10 @@ type JobStatus uint8
 
 const (
 	JobStatusQueued    JobStatus = 0
-	JobStatusRunning   JobStatus = 1
-	JobStatusCompleted JobStatus = 2
-	JobStatusScheduled JobStatus = 3
-	JobStatusFailed    JobStatus = 4
-	JobStatusCancelled JobStatus = 5
-	JobStatusWaiting   JobStatus = 6
+	JobStatusBlocked   JobStatus = 1
+	JobStatusReady     JobStatus = 2
+	JobStatusRunning   JobStatus = 3
+	JobStatusCompleted JobStatus = 4
+	JobStatusScheduled JobStatus = 5
+	JobStatusFailed    JobStatus = 6
 )

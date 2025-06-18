@@ -12,9 +12,24 @@ CREATE TABLE jobs(
   errors        JSONB[]
 );
 
-CREATE INDEX next_available_job ON jobs(id) WHERE status = 0;
+CREATE TABLE job_sequences(
+  job_id        INTEGER REFERENCES jobs(id) ON DELETE CASCADE,
+  sequence      TEXT NOT NULL,
+  PRIMARY KEY(job_id, sequence)
+);
+
+CREATE TABLE job_dependencies(
+  job_id        INTEGER REFERENCES jobs(id) ON DELETE CASCADE,
+  dependency    INTEGER REFERENCES jobs(id) ON DELETE CASCADE,
+  PRIMARY KEY(job_id, dependency)
+);
+
+
+CREATE INDEX next_available_job ON jobs(id) WHERE (status = 0 OR status = 2);
 
 CREATE INDEX scheduled_jobs ON jobs(scheduled_at);
+
+CREATE INDEX job_sequences_by_sequence ON job_sequences(sequence);
 
 CREATE FUNCTION notify_job_inserted() RETURNS trigger AS $$
 BEGIN
@@ -31,12 +46,18 @@ CREATE TRIGGER job_inserted
 
 ---- create above / drop below ----
 
-DROP INDEX next_available_job;
-
-DROP INDEX scheduled_jobs;
-
 DROP TRIGGER job_inserted ON jobs;
 
 DROP FUNCTION notify_job_inserted();
 
-DROP TABLE jobs
+DROP INDEX job_sequences_by_sequence;
+
+DROP INDEX next_available_job;
+
+DROP INDEX scheduled_jobs;
+
+DROP TABLE sequence_jobs;
+
+DROP TABLE job_dependencies;
+
+DROP TABLE jobs;

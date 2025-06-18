@@ -47,14 +47,32 @@ WHERE id = $1::INT`
 	}
 }
 
-func resetDB(db db.Handler) error {
-	const qResetStatus = "UPDATE jobs SET status = 0 WHERE status = 1 OR status = 6"
+func resetRunningStatus(db db.Handler) error {
+	const qResetStatus = "UPDATE jobs SET status = 0 WHERE status = 3"
 	_, err := db.Exec(qResetStatus)
 	return err
 }
 
-func enqueueScheduledJobs(db db.Handler) (int, error) {
-	const q = "UPDATE jobs SET status = 0 WHERE status = 3 AND scheduled_at < NOW()"
+func scheduleReadyJobs(db db.Handler) (int, error) {
+	const q = "UPDATE jobs SET status = 2 WHERE status = 5 AND scheduled_at < NOW()"
+	if tag, err := db.Exec(q); err != nil {
+		return 0, err
+	} else {
+		return int(tag.RowsAffected()), err
+	}
+}
+
+func unblockReadyJobs(db db.Handler) (int, error) {
+	const q = `-- unblockJobs
+WITH cte (id, count) AS (
+	SELECT id, count(dependency) FROM jobs
+	LEFT JOIN job_dependencies
+	ON id = job_id
+	WHERE status = 1
+	GROUP BY id
+) UPDATE jobs SET
+	status = 2
+WHERE id IN (SELECT id FROM cte WHERE count = 0)`
 	if tag, err := db.Exec(q); err != nil {
 		return 0, err
 	} else {
@@ -64,17 +82,18 @@ func enqueueScheduledJobs(db db.Handler) (int, error) {
 
 func claimNextJob(db db.Handler) (*JobInfo, error) {
 	const q = `-- ClaimNextJob
-WITH cte (id) AS (
-	SELECT id FROM jobs
-	WHERE status = 0
+WITH cte (id, status) AS (
+	SELECT id, status FROM jobs
+	WHERE status = 0 OR status = 2
 	ORDER BY id
 	FOR UPDATE SKIP LOCKED
 	LIMIT 1
 ) UPDATE jobs SET
-	status = 1,
+	status = 3,
 	attempted_at = now()
-WHERE id = (SELECT id FROM cte)
-RETURNING id, status, attempt, kind, args`
+FROM cte
+	WHERE jobs.id = (SELECT id FROM cte)
+	RETURNING jobs.id, cte.status, jobs.attempt, jobs.kind, jobs.args`
 
 	if rows, err := db.Query(q); err != nil {
 		return nil, err
@@ -86,6 +105,42 @@ RETURNING id, status, attempt, kind, args`
 		return info, err
 	}
 }
+
+func insertDependencies(db db.Handler, jobID int32, sequences []string) (int, error) {
+	const q = `-- InsertDependencies
+INSERT INTO job_dependencies(job_id, dependency)
+	(SELECT $1::INTEGER, job_id from job_sequences WHERE sequence = ANY ($2::TEXT[]))`
+	if tag, err := db.Exec(q, jobID, sequences); err != nil {
+		return 0, err
+	} else {
+		return int(tag.RowsAffected()), err
+	}
+}
+
+func insertSequences(db db.Handler, jobID int32, sequences []string) (int, error) {
+	const q = `-- InsertSequences
+INSERT INTO job_sequences(job_id, sequence)
+	(SELECT $1::INTEGER, unnest($2::TEXT[]))`
+
+	if tag, err := db.Exec(q, jobID, sequences); err != nil {
+		return 0, err
+	} else {
+		return int(tag.RowsAffected()), err
+	}
+}
+
+func deleteDependencies(db db.Handler, jobID int32) error {
+	const q = `DELETE FROM job_dependencies WHERE dependency = $1::INTEGER`
+	_, err := db.Exec(q, jobID)
+	return err
+}
+
+func deleteSequences(db db.Handler, jobID int32) error {
+	const q = ` DELETE FROM job_sequences WHERE job_id = $1::INTEGER`
+	_, err := db.Exec(q, jobID)
+	return err
+}
+
 func scanJobInfo(row pgx.CollectableRow) (*JobInfo, error) {
 	var job JobInfo
 	err := row.Scan(
