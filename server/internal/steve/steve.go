@@ -120,19 +120,34 @@ func (c *Client) Start(ctx context.Context, notifier pubsub.Notifier) error {
 	return nil
 }
 
-func (c *Client) Stop(ctx context.Context, hard bool) bool {
-	c.logger.Info().Bool("hard", hard).Msg("Stop")
+func (c *Client) Stop(ctx context.Context, waitTimeout time.Duration) bool {
 	c.cancelListen()
 	c.cancelRun()
-	c.condJobAvailable.Signal()
-	if hard {
-		c.cancelWork()
+	c.condJobAvailable.Signal() // Make sure the run loop isn't waiting
+
+	select {
+	case <-c.done:
+		return true
+	default:
 	}
+	c.logger.Info().Msg("Waiting to finish jobs")
+
+	ctx, cancel := context.WithTimeout(ctx, waitTimeout)
+	defer cancel()
 
 	select {
 	case <-ctx.Done(): // stop context cancelled
-		c.logger.Warn().Msg("Stop timeout reached. Some jobs still running")
-		return false
+		c.logger.Warn().Msg("Hammer Time")
+		c.cancelWork()
+		ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+		select {
+		case <-ctx.Done(): // stop context cancelled
+			return false
+		case <-c.done:
+			return true
+		}
+
 	case <-c.done:
 		return true
 	}
