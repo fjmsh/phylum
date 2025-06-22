@@ -47,13 +47,13 @@ WHERE id = $1::INT`
 	}
 }
 
-func resetRunningStatus(db db.Handler) error {
-	const qResetStatus = "UPDATE jobs SET status = 0 WHERE status = 3"
+func resetRunningJobs(db db.Handler) error {
+	const qResetStatus = "UPDATE jobs SET status = 2 WHERE status = 3"
 	_, err := db.Exec(qResetStatus)
 	return err
 }
 
-func scheduleReadyJobs(db db.Handler) (int, error) {
+func readyScheduledJobs(db db.Handler) (int, error) {
 	const q = "UPDATE jobs SET status = 2 WHERE status = 5 AND scheduled_at < NOW()"
 	if tag, err := db.Exec(q); err != nil {
 		return 0, err
@@ -62,7 +62,7 @@ func scheduleReadyJobs(db db.Handler) (int, error) {
 	}
 }
 
-func unblockReadyJobs(db db.Handler) (int, error) {
+func readyBlockedJobs(db db.Handler) (int, error) {
 	const q = `-- unblockJobs
 WITH cte (id, count) AS (
 	SELECT id, count(dependency) FROM jobs

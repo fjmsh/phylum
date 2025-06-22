@@ -16,7 +16,10 @@ import (
 const channelName = "job_inserted"
 const maxAttempts = 6
 
+var ErrShutdown = errors.New("shutdown")
 var errWaiting = errors.New("waiting for jobs")
+
+var instance *Client
 
 type Client struct {
 	db     db.Handler
@@ -28,8 +31,7 @@ type Client struct {
 	factories        map[string]workUnitFactory
 	availableWorkers chan struct{}
 	// Job availability
-	subJobInserted pubsub.Subscription
-	jobAvailable   chan struct{}
+	jobAvailable chan struct{}
 
 	// Shutdown
 	wg           sync.WaitGroup
@@ -39,13 +41,19 @@ type Client struct {
 	cancelWork   context.CancelFunc
 }
 
-func NewClient(db db.Handler, logger zerolog.Logger, config Config) *Client {
-	return &Client{
-		config:    config,
-		db:        db,
-		logger:    logger.With().Str("mod", "steve").Logger(),
-		factories: make(map[string]workUnitFactory),
+func Initialize(db db.Handler, logger zerolog.Logger, config Config) {
+	if instance == nil {
+		instance = &Client{
+			config:    config,
+			db:        db,
+			logger:    logger.With().Str("mod", "steve").Logger(),
+			factories: make(map[string]workUnitFactory),
+		}
 	}
+}
+
+func Get() *Client {
+	return instance
 }
 
 // RegisterWorker registers a Worker on the provided client. Each Worker must
@@ -64,20 +72,17 @@ func RegisterWorker[T JobArgs](client *Client, worker Worker[T]) {
 	client.factories[kind] = &typedWorkUnitFactory[T]{worker: worker}
 }
 
-func (c *Client) Start(ctx context.Context, notifier pubsub.Notifier) error {
-	if c.subJobInserted != nil {
-		return errors.New("already started")
-	}
+func (c *Client) Run(ctx context.Context, notifier pubsub.Notifier) error {
 	if c.config.Workers <= 0 {
 		return errors.New("workers must be a positive integer")
 	}
-	if err := resetRunningStatus(c.db); err != nil {
+	if err := resetRunningJobs(c.db); err != nil {
 		return err
 	}
-	if _, err := scheduleReadyJobs(c.db); err != nil {
+	if _, err := readyScheduledJobs(c.db); err != nil {
 		return err
 	}
-	if _, err := unblockReadyJobs(c.db); err != nil {
+	if _, err := readyBlockedJobs(c.db); err != nil {
 		return err
 	}
 
@@ -86,71 +91,58 @@ func (c *Client) Start(ctx context.Context, notifier pubsub.Notifier) error {
 	c.defaultTimeout = time.Duration(c.config.Timeout) * time.Second
 
 	c.logger.Info().Int("workers", c.config.Workers).Msg("Starting")
-	c.subJobInserted = notifier.Listen(channelName)
 	c.done = make(chan struct{})
 
 	var listenCtx, runCtx, workCtx context.Context
 	listenCtx, c.cancelListen = context.WithCancel(ctx)
 	runCtx, c.cancelRun = context.WithCancel(ctx)
 	workCtx, c.cancelWork = context.WithCancel(ctx)
-	go c.produceJobs(listenCtx)
-	go c.consumeJobs(runCtx, workCtx)
-
-	// Wait until the listener is established
-	select {
-	case <-c.subJobInserted.EstablishedC():
-	default:
-	}
-
-	return nil
+	go c.produceJobs(listenCtx, notifier)
+	return c.consumeJobs(runCtx, workCtx)
 }
 
-func (c *Client) Stop(ctx context.Context, waitTimeout time.Duration) bool {
+func (c *Client) Shutdown(ctx context.Context) error {
 	c.cancelListen()
 	c.cancelRun()
 	close(c.jobAvailable)
 
 	select {
 	case <-c.done:
-		return true
+		return nil
 	default:
 	}
 	c.logger.Info().Msg("Waiting to finish jobs")
 
-	ctx, cancel := context.WithTimeout(ctx, waitTimeout)
-	defer cancel()
-
 	select {
 	case <-ctx.Done(): // stop context cancelled
-		c.logger.Warn().Msg("Hammer Time")
-		c.cancelWork()
-		ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-		defer cancel()
-		select {
-		case <-ctx.Done(): // stop context cancelled
-			return false
-		case <-c.done:
-			return true
-		}
-
+		return ctx.Err()
 	case <-c.done:
-		return true
+		return nil
 	}
 }
 
-func (c *Client) produceJobs(ctx context.Context) {
+func (c *Client) produceJobs(ctx context.Context, notifier pubsub.Notifier) {
+	// Wait until the listener is established
+	subJobInserted := notifier.Listen(channelName)
+	select {
+	case <-subJobInserted.EstablishedC():
+	default:
+	}
+
 	t := time.NewTicker(5 * time.Second)
+
+loop:
 	for {
 		select {
 		case <-ctx.Done():
-			return
-		case <-c.subJobInserted.NotificationC():
+			break loop
+		case <-subJobInserted.NotificationC():
 			select {
 			case c.jobAvailable <- struct{}{}:
 			default:
 			}
 		case <-t.C:
-			if n, err := scheduleReadyJobs(c.db); err != nil {
+			if n, err := readyScheduledJobs(c.db); err != nil {
 				c.logger.Warn().Err(err).Msg("Error scheduling ready jobs")
 			} else if n > 0 {
 				c.logger.Trace().Int("n", n).Msg("Scheduled ready jobs")
@@ -159,7 +151,7 @@ func (c *Client) produceJobs(ctx context.Context) {
 				default:
 				}
 			}
-			if n, err := unblockReadyJobs(c.db); err != nil {
+			if n, err := readyBlockedJobs(c.db); err != nil {
 				c.logger.Warn().Err(err).Msg("Error unblocking ready jobs")
 			} else if n > 0 {
 				c.logger.Trace().Int("n", n).Msg("Unblocked ready jobs")
@@ -170,9 +162,10 @@ func (c *Client) produceJobs(ctx context.Context) {
 			}
 		}
 	}
+	subJobInserted.Cancel()
 }
 
-func (c *Client) consumeJobs(runCtx context.Context, workCtx context.Context) {
+func (c *Client) consumeJobs(runCtx context.Context, workCtx context.Context) error {
 loop:
 	for {
 		select {
@@ -221,6 +214,7 @@ loop:
 	}
 	c.wg.Wait()
 	close(c.done)
+	return ErrShutdown
 }
 
 func (c *Client) execute(ctx context.Context, info *JobInfo) error {
