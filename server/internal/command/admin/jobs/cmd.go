@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/steve"
@@ -44,7 +43,7 @@ func setupListCommand() *cobra.Command {
 			os.Exit(1)
 		}
 		for _, j := range jobs {
-			fmt.Printf("%4d %s %5s %s %s\n", j.ID, j.CreatedAt.Format(time.DateTime), j.Status.String(), j.Kind, j.EncodedArgs)
+			fmt.Printf("%4d %5s %s %s\n", j.ID, j.Status.String(), j.Kind, j.EncodedArgs)
 		}
 	}
 	cmd.Flags().StringSlice("status-only", []string{}, "Show only jobs matching the given status(es)")

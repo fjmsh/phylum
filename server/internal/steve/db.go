@@ -101,11 +101,14 @@ FROM cte
 	if rows, err := db.Query(q); err != nil {
 		return nil, err
 	} else {
-		info, err := pgx.CollectExactlyOneRow(rows, scanJobInfo)
-		if errors.Is(err, pgx.ErrNoRows) {
-			err = errNoJobs
+		if info, err := pgx.CollectExactlyOneRow(rows, scanJobInfo); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				err = errNoJobs
+			}
+			return nil, err
+		} else {
+			return &info, nil
 		}
-		return info, err
 	}
 }
 
@@ -144,9 +147,9 @@ func deleteSequences(db db.Handler, jobID int32) error {
 	return err
 }
 
-func ListJobs(db db.Handler, only, exclude []JobStatus) ([]JobRow, error) {
+func ListJobs(db db.Handler, only, exclude []JobStatus) ([]JobInfo, error) {
 	qb := strings.Builder{}
-	qb.WriteString("SELECT id, status, attempts, created_at, scheduled_at, kind, args, errors FROM jobs")
+	qb.WriteString("SELECT id, status, attempts, kind, args FROM jobs")
 	if len(only) > 0 {
 		qb.WriteString(" WHERE status = ANY (@only::SMALLINT[])")
 	} else if len(exclude) > 0 {
@@ -161,11 +164,11 @@ func ListJobs(db db.Handler, only, exclude []JobStatus) ([]JobRow, error) {
 	if rows, err := db.Query(qb.String(), args); err != nil {
 		return nil, err
 	} else {
-		return pgx.CollectRows(rows, (scanJobRow))
+		return pgx.CollectRows(rows, scanJobInfo)
 	}
 }
 
-func scanJobInfo(row pgx.CollectableRow) (*JobInfo, error) {
+func scanJobInfo(row pgx.CollectableRow) (JobInfo, error) {
 	var job JobInfo
 	err := row.Scan(
 		&job.ID,
@@ -174,11 +177,7 @@ func scanJobInfo(row pgx.CollectableRow) (*JobInfo, error) {
 		&job.Kind,
 		&job.EncodedArgs,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &job, nil
+	return job, err
 }
 func scanJobRow(row pgx.CollectableRow) (JobRow, error) {
 	var job JobRow
