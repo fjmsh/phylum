@@ -81,16 +81,19 @@ WHERE id IN (SELECT id FROM cte WHERE count = 0)`
 	}
 }
 
-func claimNextJob(db db.Handler) (*JobInfo, error) {
-	const q = `-- ClaimNextJob
+func claimNextJob(db db.Handler, includeReady bool) (*JobInfo, error) {
+	q := `-- ClaimNextJob
 WITH cte (id, status) AS (
 	SELECT id, status FROM jobs
-	WHERE status = 0 OR status = 2
-	ORDER BY id
+	WHERE status = 0`
+	if includeReady {
+		q += " OR status = 2"
+	}
+	q += ` ORDER BY id
 	FOR UPDATE SKIP LOCKED
 	LIMIT 1
 ) UPDATE jobs SET
-	status = 3,
+	status = 3
 FROM cte
 	WHERE jobs.id = (SELECT id FROM cte)
 	RETURNING jobs.id, cte.status, jobs.attempts, jobs.kind, jobs.args`

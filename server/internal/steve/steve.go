@@ -101,6 +101,36 @@ func (c *Client) Run(ctx context.Context) error {
 	return ErrShutdown
 }
 
+func (c *Client) Triage() (int, error) {
+	var count int
+	if n, err := readyScheduledJobs(c.db); err != nil {
+		return 0, err
+	} else {
+		count += n
+	}
+	if n, err := readyBlockedJobs(c.db); err != nil {
+		return 0, err
+	} else {
+		count += n
+	}
+
+	for {
+		if info, err := claimNextJob(c.db, false); err != nil {
+			if errors.Is(err, errNoJobs) {
+				return count, nil
+			} else {
+				return 0, err
+			}
+		} else {
+			if err := c.triage(info); err != nil {
+				return 0, err
+			} else {
+				count++
+			}
+		}
+	}
+}
+
 func (c *Client) Shutdown(ctx context.Context) error {
 	c.cancelListen()
 	c.cancelRun()
@@ -173,7 +203,7 @@ loop:
 			break loop
 		// Wait for worker to become available
 		case c.availableWorkers <- struct{}{}:
-			if info, err := claimNextJob(c.db); err != nil {
+			if info, err := claimNextJob(c.db, true); err != nil {
 				if errors.Is(err, errNoJobs) {
 					// No available jobs. Wait for signal
 					select {
@@ -214,6 +244,35 @@ loop:
 	}
 	c.wg.Wait()
 	close(c.done)
+}
+
+func (c *Client) triage(info *JobInfo) error {
+	var w workUnit
+	var err error
+	if f, ok := c.factories[info.Kind]; !ok {
+		err = errors.New("unknown job kind: " + info.Kind)
+	} else {
+		w, err = f.makeUnit(info)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return c.db.RunInTx(func(db db.TxHandler) error {
+		// Needs to happen before inserting sequences
+		if n, err := insertDependencies(db, info.ID, w.Sequences()); err != nil {
+			return err
+		} else if _, err := insertSequences(db, info.ID, w.Sequences()); err != nil {
+			return err
+		} else {
+			status := JobStatusReady
+			if n > 0 {
+				status = JobStatusBlocked
+			}
+			return updateJobStatus(c.db, info.ID, status)
+		}
+	})
 }
 
 func (c *Client) execute(ctx context.Context, info *JobInfo) error {

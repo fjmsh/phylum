@@ -18,6 +18,7 @@ func SetupCommand() *cobra.Command {
 	}
 	cmd.AddCommand([]*cobra.Command{
 		setupListCommand(),
+		setupTriageCommand(),
 	}...)
 
 	return cmd
@@ -48,5 +49,21 @@ func setupListCommand() *cobra.Command {
 	}
 	cmd.Flags().StringSlice("status-only", []string{}, "Show only jobs matching the given status(es)")
 	cmd.Flags().StringSlice("status-exclude", []string{}, "Exclude jobs matching the given status(es)")
+	return cmd
+}
+
+func setupTriageCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "triage",
+		Short: "Triage Jobs",
+		Run: func(cmd *cobra.Command, args []string) {
+			if n, err := steve.Get().Triage(); err != nil {
+				fmt.Println("failed to triage jobs: " + err.Error())
+				os.Exit(1)
+			} else {
+				fmt.Printf("%d job statues updated\n", n)
+			}
+		},
+	}
 	return cmd
 }
