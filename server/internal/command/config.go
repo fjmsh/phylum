@@ -6,6 +6,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
+	"codeberg.org/shroff/phylum/server/internal/steve"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 )
 
@@ -17,4 +18,5 @@ type Config struct {
 	Mail    mail.Config    `koanf:"mail"`
 	User    core.Config    `koanf:"user"`
 	Auth    auth.Config    `koanf:"auth"`
+	Steve   steve.Config   `koanf:"jobs"`
 }

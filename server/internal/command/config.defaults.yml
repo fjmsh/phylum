@@ -9,7 +9,7 @@ db:
 
 storage:
   root: storage
-  temp: tmp            # relative to root, or absolute
+  temp: tmp           # relative to root, or absolute
   
 user:
   password:
@@ -33,6 +33,10 @@ auth:
       upper: 1
       numeric: 1
       symbols: 1
+      
+jobs: 
+  workers: 5
+  timeout: 0          # In seconds
 
 server:
   host:

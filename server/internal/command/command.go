@@ -129,6 +129,7 @@ func SetupCommand() {
 		core.Cfg = cfg.User
 		auth.Cfg = cfg.Auth
 		crypt.Cfg = cfg.Auth.Password.Crypt
+		steve.Cfg = cfg.Steve
 
 		if !isCmd(cmd, "schema") {
 			// This will initialize the db, which we don't want yet.
@@ -168,7 +169,7 @@ func isCmd(cmd *cobra.Command, s string) bool {
 
 func initializeSteve() {
 	ctx := context.Background()
-	steve.Initialize(db.Get(ctx), log.Logger, steve.Config{Workers: 3})
+	steve.Initialize(db.Get(ctx), log.Logger)
 	client := steve.Get()
 	steve.RegisterWorker(client, &jobs.MigrateWorker{})
 	steve.RegisterWorker(client, &jobs.CopyContentsWorker{})
