@@ -72,7 +72,7 @@ func RegisterWorker[T JobArgs](client *Client, worker Worker[T]) {
 	client.factories[kind] = &typedWorkUnitFactory[T]{worker: worker}
 }
 
-func (c *Client) Run(ctx context.Context, notifier pubsub.Notifier) error {
+func (c *Client) Run(ctx context.Context) error {
 	if c.config.Workers <= 0 {
 		return errors.New("workers must be a positive integer")
 	}
@@ -97,8 +97,9 @@ func (c *Client) Run(ctx context.Context, notifier pubsub.Notifier) error {
 	listenCtx, c.cancelListen = context.WithCancel(ctx)
 	runCtx, c.cancelRun = context.WithCancel(ctx)
 	workCtx, c.cancelWork = context.WithCancel(ctx)
-	go c.produceJobs(listenCtx, notifier)
-	return c.consumeJobs(runCtx, workCtx)
+	go c.produceJobs(listenCtx, db.Notifier())
+	c.consumeJobs(runCtx, workCtx)
+	return ErrShutdown
 }
 
 func (c *Client) Shutdown(ctx context.Context) error {
@@ -165,7 +166,7 @@ loop:
 	subJobInserted.Cancel()
 }
 
-func (c *Client) consumeJobs(runCtx context.Context, workCtx context.Context) error {
+func (c *Client) consumeJobs(runCtx context.Context, workCtx context.Context) {
 loop:
 	for {
 		select {
@@ -214,7 +215,6 @@ loop:
 	}
 	c.wg.Wait()
 	close(c.done)
-	return ErrShutdown
 }
 
 func (c *Client) execute(ctx context.Context, info *JobInfo) error {
@@ -329,6 +329,9 @@ func (c *Client) InsertJob(db db.Handler, args JobArgs) error {
 }
 
 func (c *Client) InsertJobs(db db.Handler, args []JobArgs) error {
+	if len(args) == 0 {
+		return nil
+	}
 	params := make([]insertJobParams, len(args))
 	for i, a := range args {
 		encodedArgs, err := json.Marshal(a)

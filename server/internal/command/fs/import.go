@@ -1,7 +1,6 @@
 package fs
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -11,8 +10,6 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/command/common"
 	"codeberg.org/shroff/phylum/server/internal/core"
-	"codeberg.org/shroff/phylum/server/internal/db"
-	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
@@ -63,7 +60,6 @@ func setupImportCommand() *cobra.Command {
 			}
 
 			if stat.IsDir() {
-				jobs.Initialize(context.Background(), db.Pool())
 				dirFS := os.DirFS(importPath)
 
 				err = iofs.WalkDir(dirFS, ".", func(p string, d iofs.DirEntry, err error) error {
@@ -86,7 +82,6 @@ func setupImportCommand() *cobra.Command {
 				})
 				//TODO #jobs. We don't need to run or wait for all jobs
 				fmt.Println("Waiting for jobs to finish")
-				jobs.Shutdown(context.Background())
 			} else {
 				err = copyContents(f, importPath, res)
 			}

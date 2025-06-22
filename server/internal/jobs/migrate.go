@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/steve"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/google/uuid"
-	"github.com/riverqueue/river"
 	"github.com/sirupsen/logrus"
 )
 
@@ -15,19 +15,19 @@ type MigrateArgs struct {
 	VersionID uuid.UUID `json:"version_id"`
 }
 
-func (MigrateArgs) Kind() string { return "migrate" }
+func (a MigrateArgs) Kind() string        { return "migrate" }
+func (a MigrateArgs) Sequences() []string { return []string{a.VersionID.String()} }
 
 type MigrateWorker struct {
-	river.WorkerDefaults[MigrateArgs]
+	steve.WorkerDefaults[MigrateArgs]
 }
 
-func (w *MigrateWorker) Work(ctx context.Context, job *river.Job[MigrateArgs]) error {
+func (w *MigrateWorker) Work(ctx context.Context, job *steve.Job[MigrateArgs]) error {
 	return migrateVersionContents(ctx, job.Args.VersionID)
 }
 
-func MigrateVersionContents(versionID uuid.UUID) error {
-	_, err := client.Insert(context.Background(), MigrateArgs{VersionID: versionID}, &river.InsertOpts{})
-	return err
+func MigrateVersionContents(db db.Handler, versionID uuid.UUID) error {
+	return steve.Get().InsertJob(db, MigrateArgs{VersionID: versionID})
 }
 
 func migrateVersionContents(ctx context.Context, versionID uuid.UUID) error {

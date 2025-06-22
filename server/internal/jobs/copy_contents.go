@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/steve"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/google/uuid"
-	"github.com/riverqueue/river"
 )
 
 type CopyContentsArgs struct {
@@ -15,13 +15,14 @@ type CopyContentsArgs struct {
 	Dest uuid.UUID `json:"dest"`
 }
 
-func (CopyContentsArgs) Kind() string { return "copy_contents" }
+func (a CopyContentsArgs) Kind() string        { return "copy_contents" }
+func (a CopyContentsArgs) Sequences() []string { return []string{a.Src.String(), a.Dest.String()} }
 
 type CopyContentsWorker struct {
-	river.WorkerDefaults[CopyContentsArgs]
+	steve.WorkerDefaults[CopyContentsArgs]
 }
 
-func (w *CopyContentsWorker) Work(ctx context.Context, job *river.Job[CopyContentsArgs]) error {
+func (w *CopyContentsWorker) Work(ctx context.Context, job *steve.Job[CopyContentsArgs]) error {
 	return copyContents(ctx, job.Args.Src, job.Args.Dest)
 }
 
@@ -35,16 +36,10 @@ func copyContents(ctx context.Context, src, dest uuid.UUID) error {
 	}
 }
 
-func CopyContents(args []CopyContentsArgs) error {
-	if len(args) == 0 {
-		return nil
-	}
-	params := make([]river.InsertManyParams, len(args))
+func CopyContents(db db.Handler, args []CopyContentsArgs) error {
+	params := make([]steve.JobArgs, len(args))
 	for i, a := range args {
-		params[i] = river.InsertManyParams{
-			Args: a,
-		}
+		params[i] = a
 	}
-	_, err := client.InsertMany(context.Background(), params)
-	return err
+	return steve.Get().InsertJobs(db, params)
 }

@@ -82,8 +82,7 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 					return err
 				}
 
-				// TODO: #jobs #tx pass in transaction
-				return jobs.MigrateVersionContents(versionID)
+				return jobs.MigrateVersionContents(f.db, versionID)
 			})
 			if err != nil {
 				storage.DefaultBackend().Delete(versionID.String())
@@ -118,7 +117,7 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 				}
 
 				// TODO: #jobs #tx pass in transaction
-				return jobs.MigrateVersionContents(versionID)
+				return jobs.MigrateVersionContents(db, versionID)
 			})
 			if err != nil {
 				storage.DefaultBackend().Delete(versionID.String())

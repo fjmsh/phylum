@@ -252,7 +252,7 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 		}
 	}
 
-	if err := jobs.CopyContents(copyContents); err != nil {
+	if err := jobs.CopyContents(f.db, copyContents); err != nil {
 		return Resource{}, false, err
 	}
 

@@ -3,8 +3,9 @@ package jobs
 import (
 	"context"
 
+	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/steve"
 	"codeberg.org/shroff/phylum/server/internal/storage"
-	"github.com/riverqueue/river"
 )
 
 type DeleteContentsArgs struct {
@@ -12,13 +13,14 @@ type DeleteContentsArgs struct {
 	Storage string `json:"storage"`
 }
 
-func (DeleteContentsArgs) Kind() string { return "delete_contents" }
+func (a DeleteContentsArgs) Kind() string        { return "delete_contents" }
+func (a DeleteContentsArgs) Sequences() []string { return []string{a.Name} }
 
 type DeleteContentsWorker struct {
-	river.WorkerDefaults[DeleteContentsArgs]
+	steve.WorkerDefaults[DeleteContentsArgs]
 }
 
-func (w *DeleteContentsWorker) Work(ctx context.Context, job *river.Job[DeleteContentsArgs]) error {
+func (w *DeleteContentsWorker) Work(ctx context.Context, job *steve.Job[DeleteContentsArgs]) error {
 	if b, err := storage.GetBackend(job.Args.Storage); err != nil {
 		return err
 	} else {
@@ -26,16 +28,10 @@ func (w *DeleteContentsWorker) Work(ctx context.Context, job *river.Job[DeleteCo
 	}
 }
 
-func DeleteContents(args []DeleteContentsArgs) error {
-	if len(args) == 0 {
-		return nil
-	}
-	params := make([]river.InsertManyParams, len(args))
+func DeleteContents(db db.Handler, args []DeleteContentsArgs) error {
+	params := make([]steve.JobArgs, len(args))
 	for i, a := range args {
-		params[i] = river.InsertManyParams{
-			Args: a,
-		}
+		params[i] = a
 	}
-	_, err := client.InsertMany(context.Background(), params)
-	return err
+	return steve.Get().InsertJobs(db, params)
 }

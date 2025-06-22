@@ -2,19 +2,22 @@ package serve
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"os"
+	"os/signal"
 	"path"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/api/publink"
 	apiv1 "codeberg.org/shroff/phylum/server/internal/api/v1"
 	"codeberg.org/shroff/phylum/server/internal/api/webdav"
 	"codeberg.org/shroff/phylum/server/internal/core"
-	"codeberg.org/shroff/phylum/server/internal/db"
-	"codeberg.org/shroff/phylum/server/internal/jobs"
-	"github.com/fvbock/endless"
+	"codeberg.org/shroff/phylum/server/internal/steve"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -59,21 +62,47 @@ func SetupCommand() *cobra.Command {
 
 		setupWebApp(engine, "web")
 
-		err := jobs.Initialize(context.Background(), db.Pool())
-		if err != nil {
-			logrus.Fatal("Failed to initialize jobs: " + err.Error())
-		}
 		setupTrashCompactor()
 
 		listen := Cfg.Host + ":" + strconv.Itoa(Cfg.Port)
-		server := endless.NewServer(listen, engine)
-		server.BeforeBegin = func(addr string) {
-			logrus.Info("Listening on " + addr)
+		server := http.Server{
+			Addr:              listen,
+			Handler:           engine,
+			ReadHeaderTimeout: 10 * time.Second,
 		}
 
-		if err := server.ListenAndServe(); err != nil {
-			logrus.Fatal(err.Error())
-		}
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT)
+		closeWG := &sync.WaitGroup{}
+
+		closeWG.Add(1)
+		go func() {
+			defer closeWG.Done()
+			if err := server.ListenAndServe(); err != nil {
+				if !errors.Is(err, http.ErrServerClosed) {
+					logrus.Fatal("Failed to start server: " + err.Error())
+				}
+			}
+		}()
+
+		closeWG.Add(1)
+		go func() {
+			defer closeWG.Done()
+			if err := steve.Get().Run(context.Background()); err != nil {
+				if !errors.Is(err, http.ErrServerClosed) {
+					logrus.Fatal("Failed to start jobs client: " + err.Error())
+				}
+			}
+		}()
+
+		<-sigChan
+		logrus.Info("Shutting Down")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		go server.Shutdown(ctx)
+		go steve.Get().Shutdown(ctx)
+
+		closeWG.Wait()
 	}
 
 	return cmd

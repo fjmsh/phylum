@@ -16,7 +16,9 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/command/user"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"codeberg.org/shroff/phylum/server/internal/mail"
+	"codeberg.org/shroff/phylum/server/internal/steve"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/google/uuid"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -25,6 +27,8 @@ import (
 	"github.com/knadh/koanf/providers/posflag"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/knadh/koanf/v2"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -62,11 +66,15 @@ func SetupCommand() {
 		}
 	}
 
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05.999"})
+
 	uuid.EnableRandPool()
 	cmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if cmd.Name() == "serve" {
+			zerolog.SetGlobalLevel(zerolog.InfoLevel)
 			logrus.SetLevel(logrus.InfoLevel)
 		} else {
+			zerolog.SetGlobalLevel(zerolog.WarnLevel)
 			logrus.SetLevel(logrus.WarnLevel)
 		}
 
@@ -108,6 +116,7 @@ func SetupCommand() {
 		k.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "koanf"})
 
 		if cfg.Debug {
+			zerolog.SetGlobalLevel(zerolog.TraceLevel)
 			logrus.SetLevel(logrus.TraceLevel)
 			logrus.Debug("Running in debug mode")
 			cfg.Server.Debug = true
@@ -120,6 +129,11 @@ func SetupCommand() {
 		core.Cfg = cfg.User
 		auth.Cfg = cfg.Auth
 		crypt.Cfg = cfg.Auth.Password.Crypt
+
+		if !isCmd(cmd, "schema") {
+			// This will initialize the db, which we don't want yet.
+			initializeSteve()
+		}
 
 		if err := storage.Initialize(db.Get(context.Background())); err != nil {
 			logrus.Fatal("Failed to initialize storage: " + err.Error())
@@ -141,4 +155,22 @@ func SetupCommand() {
 	cmd.SetHelpCommandGroupID("misc")
 	cmd.SetCompletionCommandGroupID("misc")
 	cmd.Execute()
+}
+
+func isCmd(cmd *cobra.Command, s string) bool {
+	for c := cmd; c != nil; c = c.Parent() {
+		if cmd.Name() == s {
+			return true
+		}
+	}
+	return false
+}
+
+func initializeSteve() {
+	ctx := context.Background()
+	steve.Initialize(db.Get(ctx), log.Logger, steve.Config{Workers: 3})
+	client := steve.Get()
+	steve.RegisterWorker(client, &jobs.MigrateWorker{})
+	steve.RegisterWorker(client, &jobs.CopyContentsWorker{})
+	steve.RegisterWorker(client, &jobs.DeleteContentsWorker{})
 }

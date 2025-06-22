@@ -56,7 +56,7 @@ DROP INDEX next_available_job;
 
 DROP INDEX scheduled_jobs;
 
-DROP TABLE sequence_jobs;
+DROP TABLE job_sequences;
 
 DROP TABLE job_dependencies;
 
