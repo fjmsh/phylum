@@ -25,11 +25,13 @@ type JobInfo struct {
 	EncodedArgs []byte    `json:"args"`
 }
 
-type JobRow struct {
+type JobDetails struct {
 	JobInfo
-	CreatedAt   time.Time          `json:"created_at"`
-	ScheduledAt pgtype.Timestamptz `json:"scheduled_at"`
-	Errors      []AttemptError     `json:"errors"`
+	CreatedAt    time.Time          `json:"created_at"`
+	ScheduledAt  pgtype.Timestamptz `json:"scheduled_at"`
+	Errors       []AttemptError     `json:"errors"`
+	Dependents   []JobInfo          `json:"dependents"`
+	Dependencies []JobInfo          `json:"dependencies"`
 }
 
 type AttemptError struct {

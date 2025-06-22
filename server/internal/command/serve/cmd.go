@@ -89,7 +89,7 @@ func SetupCommand() *cobra.Command {
 		go func() {
 			defer closeWG.Done()
 			if err := steve.Get().Run(context.Background()); err != nil {
-				if !errors.Is(err, http.ErrServerClosed) {
+				if !errors.Is(err, steve.ErrShutdown) {
 					logrus.Fatal("Failed to start jobs client: " + err.Error())
 				}
 			}

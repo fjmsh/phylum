@@ -11,6 +11,7 @@ import (
 )
 
 var errNoJobs = errors.New("no jobs in queue")
+var ErrJobNotFound = errors.New("job not found")
 
 // For bulk insert
 type insertJobParams struct {
@@ -168,6 +169,26 @@ func ListJobs(db db.Handler, only, exclude []JobStatus) ([]JobInfo, error) {
 	}
 }
 
+func GetJobDetails(db db.Handler, id int) (JobDetails, error) {
+	const q = `SELECT id, status, attempts, created_at, scheduled_at, kind, args, errors,
+	(SELECT COALESCE(JSONB_AGG(ROW_TO_JSON(row)), '[]'::JSONB)
+		FROM (SELECT j.id, j.status, j.attempts, j.kind, j.args FROM jobs j JOIN job_dependencies d ON j.id = d.job_id WHERE d.dependency = $1::INTEGER) row) AS dependents,
+	(SELECT COALESCE(JSONB_AGG(ROW_TO_JSON(row)), '[]'::JSONB)
+		FROM (SELECT j.id, j.status, j.attempts, j.kind, j.args FROM jobs j JOIN job_dependencies d ON j.id = d.dependency WHERE d.job_id = $1::INTEGER) row) AS dependencies
+	FROM jobs WHERE id = $1::INTEGER`
+
+	if rows, err := db.Query(q, id); err != nil {
+		return JobDetails{}, err
+	} else if job, err := pgx.CollectExactlyOneRow(rows, scanJobRow); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = ErrJobNotFound
+		}
+		return JobDetails{}, err
+	} else {
+		return job, nil
+	}
+}
+
 func scanJobInfo(row pgx.CollectableRow) (JobInfo, error) {
 	var job JobInfo
 	err := row.Scan(
@@ -179,8 +200,10 @@ func scanJobInfo(row pgx.CollectableRow) (JobInfo, error) {
 	)
 	return job, err
 }
-func scanJobRow(row pgx.CollectableRow) (JobRow, error) {
-	var job JobRow
+func scanJobRow(row pgx.CollectableRow) (JobDetails, error) {
+	var job JobDetails
+	var dependents []byte
+	var dependencies []byte
 	err := row.Scan(
 		&job.ID,
 		&job.Status,
@@ -190,9 +213,13 @@ func scanJobRow(row pgx.CollectableRow) (JobRow, error) {
 		&job.Kind,
 		&job.EncodedArgs,
 		&job.Errors,
+		&dependents,
+		&dependencies,
 	)
+	json.Unmarshal(dependents, &job.Dependents)
+	json.Unmarshal(dependencies, &job.Dependencies)
 	if err != nil {
-		return JobRow{}, err
+		return JobDetails{}, err
 	}
 
 	return job, nil
