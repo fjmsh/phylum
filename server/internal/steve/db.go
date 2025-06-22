@@ -3,6 +3,7 @@ package steve
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/jackc/pgx/v5"
@@ -30,7 +31,7 @@ func updateJobStatus(db db.Handler, jobID int32, status JobStatus) error {
 func updateJobStatusError(db db.Handler, jobID int32, attemptError AttemptError, scheduleAt pgtype.Timestamptz) error {
 	const q = `-- updateJobStatusError
 UPDATE jobs SET
-	attempt = attempt+1,
+	attempts = attempts+1,
 	errors = errors || $2::JSONB, 
 	status = $3::SMALLINT,
 	scheduled_at = $4::TIMESTAMPTZ
@@ -38,7 +39,7 @@ WHERE id = $1::INT`
 	if errJson, err := json.Marshal(attemptError); err != nil {
 		return err
 	} else {
-		status := JobStatusScheduled
+		status := JobStatusErrorRetry
 		if !scheduleAt.Valid {
 			status = JobStatusFailed
 		}
@@ -90,10 +91,9 @@ WITH cte (id, status) AS (
 	LIMIT 1
 ) UPDATE jobs SET
 	status = 3,
-	attempted_at = now()
 FROM cte
 	WHERE jobs.id = (SELECT id FROM cte)
-	RETURNING jobs.id, cte.status, jobs.attempt, jobs.kind, jobs.args`
+	RETURNING jobs.id, cte.status, jobs.attempts, jobs.kind, jobs.args`
 
 	if rows, err := db.Query(q); err != nil {
 		return nil, err
@@ -141,12 +141,33 @@ func deleteSequences(db db.Handler, jobID int32) error {
 	return err
 }
 
+func ListJobs(db db.Handler, only, exclude []JobStatus) ([]JobRow, error) {
+	qb := strings.Builder{}
+	qb.WriteString("SELECT id, status, attempts, created_at, scheduled_at, kind, args, errors FROM jobs")
+	if len(only) > 0 {
+		qb.WriteString(" WHERE status = ANY (@only::SMALLINT[])")
+	} else if len(exclude) > 0 {
+		qb.WriteString(" WHERE status <> ANY (@exclude::SMALLINT[])")
+	}
+	qb.WriteString(" ORDER BY id")
+
+	args := pgx.NamedArgs{
+		"only":    only,
+		"exclude": exclude,
+	}
+	if rows, err := db.Query(qb.String(), args); err != nil {
+		return nil, err
+	} else {
+		return pgx.CollectRows(rows, (scanJobRow))
+	}
+}
+
 func scanJobInfo(row pgx.CollectableRow) (*JobInfo, error) {
 	var job JobInfo
 	err := row.Scan(
 		&job.ID,
 		&job.Status,
-		&job.Attempt,
+		&job.Attempts,
 		&job.Kind,
 		&job.EncodedArgs,
 	)
@@ -155,6 +176,24 @@ func scanJobInfo(row pgx.CollectableRow) (*JobInfo, error) {
 	}
 
 	return &job, nil
+}
+func scanJobRow(row pgx.CollectableRow) (JobRow, error) {
+	var job JobRow
+	err := row.Scan(
+		&job.ID,
+		&job.Status,
+		&job.Attempts,
+		&job.CreatedAt,
+		&job.ScheduledAt,
+		&job.Kind,
+		&job.EncodedArgs,
+		&job.Errors,
+	)
+	if err != nil {
+		return JobRow{}, err
+	}
+
+	return job, nil
 }
 
 // iteratorForInsertResourceVersionsFast implements pgx.CopyFromSource.

@@ -153,6 +153,7 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 		}
 		return Resource{}, false, err
 	}
+	// fmt.Printf("%+v", destParent)
 	if !destParent.dir {
 		return Resource{}, false, ErrResourceNotCollection
 

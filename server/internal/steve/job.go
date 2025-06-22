@@ -1,6 +1,7 @@
 package steve
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -19,9 +20,9 @@ type JobArgs interface {
 type JobInfo struct {
 	ID          int32     `json:"id"`
 	Status      JobStatus `json:"status"`
-	Attempt     int       `json:"attempt"`
-	EncodedArgs []byte    `json:"args"`
+	Attempts    int       `json:"attempts"`
 	Kind        string    `json:"kind"`
+	EncodedArgs []byte    `json:"args"`
 }
 
 type JobRow struct {
@@ -39,11 +40,31 @@ type AttemptError struct {
 type JobStatus uint8
 
 const (
-	JobStatusQueued    JobStatus = 0
-	JobStatusBlocked   JobStatus = 1
-	JobStatusReady     JobStatus = 2
-	JobStatusRunning   JobStatus = 3
-	JobStatusCompleted JobStatus = 4
-	JobStatusScheduled JobStatus = 5
-	JobStatusFailed    JobStatus = 6
+	JobStatusQueued     JobStatus = 0
+	JobStatusBlocked    JobStatus = 1
+	JobStatusReady      JobStatus = 2
+	JobStatusRunning    JobStatus = 3
+	JobStatusCompleted  JobStatus = 4
+	JobStatusErrorRetry JobStatus = 5
+	JobStatusFailed     JobStatus = 6
 )
+
+func (j JobStatus) String() string {
+	switch j {
+	case JobStatusQueued:
+		return "QUEUE"
+	case JobStatusBlocked:
+		return "BLOCK"
+	case JobStatusReady:
+		return "READY"
+	case JobStatusRunning:
+		return "RUN"
+	case JobStatusCompleted:
+		return "DONE"
+	case JobStatusErrorRetry:
+		return "ERROR"
+	case JobStatusFailed:
+		return "FAIL"
+	}
+	return "Unknown (" + strconv.Itoa(int(j)) + ")"
+}

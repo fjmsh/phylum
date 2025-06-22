@@ -141,7 +141,7 @@ func resourceByPath(db db.Handler, root uuid.UUID, path string, user User) (Reso
 // with '/') then the path traversed is relative to [f].[pathRoot]
 //
 // If [path] does not begin with a "<uuid>:" prefix, and is not absolute (does
-// not begin with '/') then the path traversed is relative to [src]
+// not begin with '/') then the path traversed is relative to the [src].parent
 func (f *FileSystem) targetByPathWithRoot(path string, src Resource) (name string, parent Resource, err error) {
 	id, path, err := parseUUIDPrefix(path)
 	if err != nil {
@@ -152,7 +152,7 @@ func (f *FileSystem) targetByPathWithRoot(path string, src Resource) (name strin
 	} else if len(path) == 0 {
 		return "", Resource{}, ErrResourceNameInvalid
 	} else if path[0] != '/' && src.id != uuid.Nil {
-		f = f.withPathRoot(pgtype.UUID{Bytes: src.id, Valid: true})
+		f = f.withPathRoot(pgtype.UUID{Bytes: src.parentID.Bytes, Valid: true})
 	}
 
 	path = strings.TrimRight(path, "/")

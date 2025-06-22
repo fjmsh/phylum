@@ -1,10 +1,9 @@
 CREATE TABLE jobs(
   id            SERIAL      PRIMARY KEY,
   status        SMALLINT    NOT NULL DEFAULT 0,
-  attempt       SMALLINT    NOT NULL DEFAULT 0,
+  attempts       SMALLINT    NOT NULL DEFAULT 0,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   scheduled_at  TIMESTAMPTZ,
-  attempted_at  TIMESTAMPTZ,
 
   -- types stored out-of-band
   kind          TEXT NOT NULL,

@@ -290,13 +290,13 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) error {
 				c.logger.
 					Warn().
 					Err(err).
-					Int("attempt", info.Attempt).
+					Int("attempt", info.Attempts).
 					Int32("id", info.ID).
 					Msg("Error marking job as completed")
 			} else {
 				c.logger.
 					Trace().
-					Int("attempt", info.Attempt).
+					Int("attempt", info.Attempts).
 					Int32("id", info.ID).
 					Msg("Job Completed")
 			}
@@ -307,11 +307,11 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) error {
 }
 
 func (c *Client) recordError(info *JobInfo, err error) error {
-	scheduleAt := computeBackoff(info.Attempt)
+	scheduleAt := computeBackoff(info.Attempts)
 	c.logger.
 		Warn().
 		Err(err).
-		Int("attempt", info.Attempt).
+		Int("attempt", info.Attempts).
 		Int32("id", info.ID).
 		Msg("Job Error")
 	return updateJobStatusError(
