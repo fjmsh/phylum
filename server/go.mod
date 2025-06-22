@@ -6,7 +6,6 @@ toolchain go1.24.2
 
 require (
 	github.com/doug-martin/goqu/v9 v9.19.0
-	github.com/fvbock/endless v0.0.0-20170109170031-447134032cb6
 	github.com/gabriel-vasile/mimetype v1.4.8
 	github.com/gin-contrib/cors v1.5.0
 	github.com/gin-contrib/static v1.1.5
@@ -20,8 +19,7 @@ require (
 	github.com/knadh/koanf/providers/rawbytes v1.0.0
 	github.com/knadh/koanf/v2 v2.2.0
 	github.com/minio/minio-go/v7 v7.0.69
-	github.com/riverqueue/river v0.23.1
-	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.23.1
+	github.com/rs/zerolog v1.34.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.6
@@ -31,17 +29,9 @@ require (
 
 require (
 	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/riverqueue/river/riverdriver v0.23.1 // indirect
-	github.com/riverqueue/river/rivershared v0.23.1 // indirect
-	github.com/riverqueue/river/rivertype v0.23.1 // indirect
-	github.com/rs/zerolog v1.34.0 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
-	github.com/tidwall/gjson v1.18.0 // indirect
-	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.1 // indirect
-	github.com/tidwall/sjson v1.2.5 // indirect
-	go.uber.org/goleak v1.3.0 // indirect
+	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 )
 
