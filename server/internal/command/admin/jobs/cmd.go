@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
-	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/steve"
 	"github.com/spf13/cobra"
 )
@@ -32,15 +32,25 @@ func setupListCommand() *cobra.Command {
 		Short: "List Jobs",
 	}
 	cmd.Run = func(cmd *cobra.Command, args []string) {
-		// only, _ := cmd.Flags().GetStringSlice("status-only")
-		// exclude, _ := cmd.Flags().GetStringSlice("status-exclude")
-		// for _, s := range only {
-		// 	fmt.Println(s)
-		// }
-		// for _, s := range exclude {
-		// 	fmt.Println(s)
-		// }
-		jobs, err := steve.ListJobs(db.Get(context.Background()), nil, nil)
+		onlyStr, _ := cmd.Flags().GetStringSlice("status-only")
+		excludeStr, _ := cmd.Flags().GetStringSlice("status-exclude")
+		var only, exclude []steve.JobStatus
+
+		for _, s := range onlyStr {
+			if st, err := strToStatus(s); err != nil {
+				fmt.Println("failed to list jobs: " + err.Error())
+			} else {
+				only = append(only, st)
+			}
+		}
+		for _, s := range excludeStr {
+			if st, err := strToStatus(s); err != nil {
+				fmt.Println("failed to list jobs: " + err.Error())
+			} else {
+				exclude = append(exclude, st)
+			}
+		}
+		jobs, err := steve.Get().ListJobs(only, exclude)
 		if err != nil {
 			fmt.Println("failed to list jobs: " + err.Error())
 			os.Exit(1)
@@ -49,9 +59,28 @@ func setupListCommand() *cobra.Command {
 			printJobInfo(j)
 		}
 	}
-	cmd.Flags().StringSlice("status-only", []string{}, "Show only jobs matching the given status(es)")
-	cmd.Flags().StringSlice("status-exclude", []string{}, "Exclude jobs matching the given status(es)")
+	cmd.Flags().StringSliceP("status-only", "o", []string{}, "Show only jobs matching the given status(es)")
+	cmd.Flags().StringSliceP("status-exclude", "x", []string{}, "Exclude jobs matching the given status(es)")
 	return cmd
+}
+func strToStatus(s string) (steve.JobStatus, error) {
+	switch strings.TrimSpace(strings.ToLower(s)) {
+	case "queue":
+		return steve.JobStatusQueued, nil
+	case "block":
+		return steve.JobStatusBlocked, nil
+	case "ready":
+		return steve.JobStatusReady, nil
+	case "run":
+		return steve.JobStatusRunning, nil
+	case "done":
+		return steve.JobStatusCompleted, nil
+	case "error":
+		return steve.JobStatusErrorRetry, nil
+	case "fail":
+		return steve.JobStatusFailed, nil
+	}
+	return steve.JobStatus(0), fmt.Errorf("failed to parse job status %q", s)
 }
 
 func printJobInfo(info steve.JobInfo) {
@@ -78,7 +107,7 @@ func setupInfoCommand() *cobra.Command {
 			os.Exit(1)
 		}
 
-		job, err := steve.GetJobDetails(db.Get(context.Background()), int32(id))
+		job, err := steve.Get().GetJobDetails(int32(id))
 		if err != nil {
 			fmt.Println("failed to get job details: " + err.Error())
 			os.Exit(1)

@@ -161,7 +161,7 @@ func deleteSequences(db db.Handler, jobID int32) error {
 	return err
 }
 
-func ListJobs(db db.Handler, only, exclude []JobStatus) ([]JobInfo, error) {
+func listJobs(db db.Handler, only, exclude []JobStatus) ([]JobInfo, error) {
 	qb := strings.Builder{}
 	qb.WriteString("SELECT id, status, attempts, kind, args FROM jobs")
 	if len(only) > 0 {
@@ -182,7 +182,7 @@ func ListJobs(db db.Handler, only, exclude []JobStatus) ([]JobInfo, error) {
 	}
 }
 
-func GetJobDetails(db db.Handler, id int32) (JobDetails, error) {
+func getJobDetails(db db.Handler, id int32) (JobDetails, error) {
 	const q = `SELECT id, status, attempts, created_at, scheduled_at, kind, args, errors,
 	(SELECT COALESCE(JSONB_AGG(ROW_TO_JSON(row)), '[]'::JSONB)
 		FROM (SELECT j.id, j.status, j.attempts, j.kind, j.args FROM jobs j JOIN job_dependencies d ON j.id = d.job_id WHERE d.dependency = $1::INTEGER) row) AS dependents,
@@ -192,13 +192,8 @@ func GetJobDetails(db db.Handler, id int32) (JobDetails, error) {
 
 	if rows, err := db.Query(q, id); err != nil {
 		return JobDetails{}, err
-	} else if job, err := pgx.CollectExactlyOneRow(rows, scanJobRow); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			err = ErrJobNotFound
-		}
-		return JobDetails{}, err
 	} else {
-		return job, nil
+		return pgx.CollectExactlyOneRow(rows, scanJobRow)
 	}
 }
 

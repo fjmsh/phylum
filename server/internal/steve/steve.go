@@ -10,6 +10,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/pubsub"
+	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog"
 )
 
@@ -130,12 +131,25 @@ func (c *Client) Triage() (int, error) {
 		}
 	}
 }
+func (c *Client) ListJobs(only, exclude []JobStatus) ([]JobInfo, error) {
+	c.Triage()
+	return listJobs(c.db, only, exclude)
+}
+
+func (c *Client) GetJobDetails(id int32) (JobDetails, error) {
+	c.Triage()
+	if job, err := getJobDetails(c.db, id); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = ErrJobNotFound
+		}
+		return job, err
+	} else {
+		return job, nil
+	}
+}
 
 func (c *Client) RunJob(ctx context.Context, id int32) error {
-	if _, err := c.Triage(); err != nil {
-		return err
-	}
-	if job, err := GetJobDetails(c.db, id); err != nil {
+	if job, err := c.GetJobDetails(id); err != nil {
 		return err
 	} else {
 		if job.Status == JobStatusQueued {
