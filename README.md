@@ -18,6 +18,8 @@ It is in very early stages of testing, so bugs are to be expected. Fair warning:
  - Public shares with password protection and expiration
  - Users and permissions
  - WebDAV-compatible
+ - File version history
+ - Remote storage backends
 
 * Not yet built/tested on MacOS, iOS, and Windows. 
 
@@ -34,24 +36,21 @@ Please be aware of a few things about permissions:
 ## Roadmap
 
 Here's the intended initial feature set for a release in the next few months:
- - Remote storage backends (S3, B2, Minio, etc.)
  - Auth backends (LDAP, OAuth)
- - Thumbnails and icon view
  - In-app user management (update display name/avatar)
- - Better email notifications
  - Easy backup
 
 Other features to follow:
+ - Thumbnails and icon view
  - Quota 
  - Links / Shortcuts
+ - In-app share notifications
  - Groups
  - Extended resource metadata (media length, etc.)
- - View more files (audio, video, epub)
+ - View more files (audio, video, ebooks)
  - Offline sync
  - Sync full directory tree metadata
  - 2-way folder sync
- - File versions history?
-
 
 ## Deployment / Testing
 
