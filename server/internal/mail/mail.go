@@ -30,10 +30,10 @@ func send(e Email, rcpt core.User, params any) error {
 	msg.SetAddressHeader("To", rcpt.Email, rcpt.Name)
 	msg.SetHeader("Subject", e.Subject)
 	msg.SetBodyWriter("text/plain", func(w io.Writer) error {
-		return e.Plain.Execute(w, params)
+		return e.Plain.ExecuteTemplate(w, "base", params)
 	})
 	msg.AddAlternativeWriter("text/html", func(w io.Writer) error {
-		return e.HTML.Execute(w, params)
+		return e.HTML.ExecuteTemplate(w, "base", params)
 	})
 	err := d.DialAndSend(msg)
 	if err != nil {

@@ -1,0 +1,7 @@
+{{define "base"}}
+Hi {{.name}},
+{{template "contents" .}}
+Thank you,
+
+PS: You can download the Android app from https://codeberg.org/shroff/phylum/releases
+{{end}}

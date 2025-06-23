@@ -4,10 +4,14 @@ import (
 	"embed"
 	"html/template"
 	"path"
+	"path/filepath"
 )
 
-//go:embed emails/**
-var emailFS embed.FS
+//go:embed emails/contents/**
+var contentsFS embed.FS
+
+//go:embed emails/base/**
+var baseFS embed.FS
 var emails = make(map[string]Email)
 
 type Email struct {
@@ -17,18 +21,28 @@ type Email struct {
 }
 
 func init() {
-	dir, err := emailFS.ReadDir("emails")
+	baseHTML, err := baseFS.ReadFile(filepath.Join("emails", "base", "base.html"))
+	if err != nil {
+		panic(err)
+	}
+	baseText, err := baseFS.ReadFile(filepath.Join("emails", "base", "base.txt"))
+	if err != nil {
+		panic(err)
+	}
+
+	dirName := filepath.Join("emails", "contents")
+	dir, err := contentsFS.ReadDir(dirName)
 	if err != nil {
 		panic(err)
 	}
 	for _, e := range dir {
 		name := e.Name()
-		subject, err := emailFS.ReadFile(path.Join("emails", name, "subject"))
+		subject, err := contentsFS.ReadFile(path.Join(dirName, name, "subject"))
 		if err != nil {
 			panic(err)
 		}
 
-		textBody, err := emailFS.ReadFile(path.Join("emails", name, "body.txt"))
+		textBody, err := contentsFS.ReadFile(path.Join(dirName, name, "body.txt"))
 		if err != nil {
 			panic(err)
 		}
@@ -36,12 +50,20 @@ func init() {
 		if err != nil {
 			panic(err)
 		}
+		textTemplate, err = textTemplate.Parse(string(baseText))
+		if err != nil {
+			panic(err)
+		}
 
-		htmlBody, err := emailFS.ReadFile(path.Join("emails", name, "body.html"))
+		htmlBody, err := contentsFS.ReadFile(path.Join(dirName, name, "body.html"))
 		if err != nil {
 			panic(err)
 		}
 		htmlTemplate, err := template.New("").Parse(string(htmlBody))
+		if err != nil {
+			panic(err)
+		}
+		htmlTemplate, err = htmlTemplate.Parse(string(baseHTML))
 		if err != nil {
 			panic(err)
 		}

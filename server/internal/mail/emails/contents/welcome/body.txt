@@ -1,0 +1,5 @@
+{{define "contents"}}
+Someone invited you to use Phylum at https://app.phylum.cloud/?instance={{.instance}}
+
+Please visit the URL above and reset your password to get started.
+{{end}}
