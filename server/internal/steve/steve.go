@@ -131,6 +131,52 @@ func (c *Client) Triage() (int, error) {
 	}
 }
 
+func (c *Client) RunJob(ctx context.Context, id int32) error {
+	if _, err := c.Triage(); err != nil {
+		return err
+	}
+	if job, err := GetJobDetails(c.db, id); err != nil {
+		return err
+	} else {
+		if job.Status == JobStatusQueued {
+			// This shouldn't happen
+			return errors.New("this shouldn't happen. try again")
+		}
+		if job.Status == JobStatusBlocked {
+			return &ErrJobBlocked{dependencies: job.Dependencies}
+		}
+		if job.Status == JobStatusCompleted {
+			return errors.New("job already completed")
+		}
+		if f, ok := c.factories[job.Kind]; !ok {
+			return errors.New("unknown job kind: " + job.Kind)
+		} else if w, err := f.makeUnit(&job.JobInfo); err != nil {
+			return err
+		} else {
+			if err := w.Work(ctx); err != nil {
+				c.recordError(&job.JobInfo, err)
+				return err
+			} else {
+				return c.db.RunInTx(func(db db.TxHandler) error {
+					if err := deleteDependencies(c.db, job.ID); err != nil {
+						return err
+					}
+					if err := deleteSequences(c.db, job.ID); err != nil {
+						return err
+					}
+
+					if err := updateJobStatus(c.db, job.ID, JobStatusCompleted); err != nil {
+						return err
+					}
+					return nil
+				})
+
+			}
+		}
+
+	}
+}
+
 func (c *Client) Shutdown(ctx context.Context) error {
 	c.cancelListen()
 	c.cancelRun()
@@ -229,6 +275,12 @@ loop:
 							Msg("Job Waiting")
 					} else {
 						c.recordError(info, err)
+						c.logger.
+							Warn().
+							Err(err).
+							Int("attempt", info.Attempts).
+							Int32("id", info.ID).
+							Msg("Job Error")
 					}
 					<-c.availableWorkers
 				} else {
@@ -331,6 +383,12 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) error {
 
 		if err := w.Work(ctx); err != nil {
 			c.recordError(info, err)
+			c.logger.
+				Warn().
+				Err(err).
+				Int("attempt", info.Attempts).
+				Int32("id", info.ID).
+				Msg("Job Error")
 		} else {
 			err := c.db.RunInTx(func(db db.TxHandler) error {
 				if err := deleteDependencies(c.db, info.ID); err != nil {
@@ -367,12 +425,6 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) error {
 
 func (c *Client) recordError(info *JobInfo, err error) error {
 	scheduleAt := computeBackoff(info.Attempts)
-	c.logger.
-		Warn().
-		Err(err).
-		Int("attempt", info.Attempts).
-		Int32("id", info.ID).
-		Msg("Job Error")
 	return updateJobStatusError(
 		c.db,
 		info.ID,

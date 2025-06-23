@@ -20,7 +20,7 @@ func SetupCommand() *cobra.Command {
 	cmd.AddCommand([]*cobra.Command{
 		setupListCommand(),
 		setupInfoCommand(),
-		setupTriageCommand(),
+		setupExecuteCommand(),
 	}...)
 
 	return cmd
@@ -78,7 +78,7 @@ func setupInfoCommand() *cobra.Command {
 			os.Exit(1)
 		}
 
-		job, err := steve.GetJobDetails(db.Get(context.Background()), int(id))
+		job, err := steve.GetJobDetails(db.Get(context.Background()), int32(id))
 		if err != nil {
 			fmt.Println("failed to get job details: " + err.Error())
 			os.Exit(1)
@@ -118,18 +118,25 @@ func setupInfoCommand() *cobra.Command {
 	return cmd
 }
 
-func setupTriageCommand() *cobra.Command {
+func setupExecuteCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "triage",
-		Short: "Triage Jobs",
-		Run: func(cmd *cobra.Command, args []string) {
-			if n, err := steve.Get().Triage(); err != nil {
-				fmt.Println("failed to triage jobs: " + err.Error())
-				os.Exit(1)
-			} else {
-				fmt.Printf("%d job statues updated\n", n)
-			}
-		},
+		Use:   "execute <id>",
+		Short: "Execute Job",
+		Args:  cobra.ExactArgs(1),
+	}
+	cmd.Run = func(cmd *cobra.Command, args []string) {
+		client := steve.Get()
+
+		id, err := strconv.ParseInt(args[0], 10, 32)
+		if err != nil {
+			fmt.Printf("failed to parse job id %q: %s", args[1], err.Error())
+			os.Exit(1)
+		}
+
+		if err := client.RunJob(context.Background(), int32(id)); err != nil {
+			fmt.Println("failed to execute jobs: " + err.Error())
+			os.Exit(1)
+		}
 	}
 	return cmd
 }

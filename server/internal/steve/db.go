@@ -3,6 +3,7 @@ package steve
 import (
 	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -12,6 +13,18 @@ import (
 
 var errNoJobs = errors.New("no jobs in queue")
 var ErrJobNotFound = errors.New("job not found")
+
+type ErrJobBlocked struct {
+	dependencies []JobInfo
+}
+
+func (e *ErrJobBlocked) Error() string {
+	ids := make([]string, len(e.dependencies))
+	for i, d := range e.dependencies {
+		ids[i] = strconv.Itoa(int(d.ID))
+	}
+	return "job blocked by " + strings.Join(ids, ",")
+}
 
 // For bulk insert
 type insertJobParams struct {
@@ -169,7 +182,7 @@ func ListJobs(db db.Handler, only, exclude []JobStatus) ([]JobInfo, error) {
 	}
 }
 
-func GetJobDetails(db db.Handler, id int) (JobDetails, error) {
+func GetJobDetails(db db.Handler, id int32) (JobDetails, error) {
 	const q = `SELECT id, status, attempts, created_at, scheduled_at, kind, args, errors,
 	(SELECT COALESCE(JSONB_AGG(ROW_TO_JSON(row)), '[]'::JSONB)
 		FROM (SELECT j.id, j.status, j.attempts, j.kind, j.args FROM jobs j JOIN job_dependencies d ON j.id = d.job_id WHERE d.dependency = $1::INTEGER) row) AS dependents,
