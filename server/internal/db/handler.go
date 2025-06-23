@@ -22,7 +22,7 @@ type TxHandler interface {
 
 type handler struct {
 	ctx context.Context
-	tx  interface {
+	db  interface {
 		Begin(context.Context) (pgx.Tx, error)
 		Query(context.Context, string, ...interface{}) (pgx.Rows, error)
 		QueryRow(context.Context, string, ...interface{}) pgx.Row
@@ -32,36 +32,62 @@ type handler struct {
 }
 
 func (h handler) RunInTx(fn func(TxHandler) error) error {
-	return pgx.BeginFunc(h.ctx, h.tx, func(tx pgx.Tx) error {
+	return pgx.BeginFunc(h.ctx, h.db, func(tx pgx.Tx) error {
 		h := txHandler{
-			handler: h,
-			tx:      tx,
+			ctx: h.ctx,
+			tx:  tx,
 		}
 		return fn(h)
 	})
 }
 
 func (h handler) Query(stmt string, args ...interface{}) (pgx.Rows, error) {
-	return h.tx.Query(h.ctx, stmt, args...)
+	return h.db.Query(h.ctx, stmt, args...)
 }
 
 func (h handler) QueryRow(stmt string, args ...interface{}) pgx.Row {
-	return h.tx.QueryRow(h.ctx, stmt, args...)
+	return h.db.QueryRow(h.ctx, stmt, args...)
 }
 
 func (h handler) Exec(stmt string, args ...interface{}) (pgconn.CommandTag, error) {
-	return h.tx.Exec(h.ctx, stmt, args...)
+	return h.db.Exec(h.ctx, stmt, args...)
 }
 
 func (h handler) CopyFrom(tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error) {
-	return h.tx.CopyFrom(h.ctx, tableName, columnNames, rowSrc)
+	return h.db.CopyFrom(h.ctx, tableName, columnNames, rowSrc)
 }
 
 type txHandler struct {
-	handler
-	tx pgx.Tx
+	ctx context.Context
+	tx  pgx.Tx
+}
+
+func (h txHandler) RunInTx(fn func(TxHandler) error) error {
+	return pgx.BeginFunc(h.ctx, h.tx, func(tx pgx.Tx) error {
+		h := txHandler{
+			ctx: h.ctx,
+			tx:  tx,
+		}
+		return fn(h)
+	})
 }
 
 func (h txHandler) Tx() pgx.Tx {
 	return h.tx
+}
+
+func (h txHandler) Query(stmt string, args ...interface{}) (pgx.Rows, error) {
+	return h.tx.Query(h.ctx, stmt, args...)
+}
+
+func (h txHandler) QueryRow(stmt string, args ...interface{}) pgx.Row {
+	return h.tx.QueryRow(h.ctx, stmt, args...)
+}
+
+func (h txHandler) Exec(stmt string, args ...interface{}) (pgconn.CommandTag, error) {
+	return h.tx.Exec(h.ctx, stmt, args...)
+}
+
+func (h txHandler) CopyFrom(tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error) {
+	return h.tx.CopyFrom(h.ctx, tableName, columnNames, rowSrc)
 }

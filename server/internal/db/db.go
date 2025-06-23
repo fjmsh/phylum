@@ -29,7 +29,7 @@ func Get(ctx context.Context) Handler {
 	}
 	return handler{
 		ctx: ctx,
-		tx:  pool,
+		db:  pool,
 	}
 }
 
