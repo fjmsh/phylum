@@ -6,6 +6,7 @@ import 'package:mime/mime.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
 Future<bool> downloadResource(BuildContext context, Resource r, {ResourceVersion? version}) async {
@@ -86,7 +87,7 @@ class DownloadManager with ChangeNotifier {
     final mimeType = v?.mimeType ?? MimeTypeResolver().lookup(r.name) ?? 'application/octet-stream';
     final task = DownloadTask(
       url: uri.toString(),
-      filename: version == null ? r.name : '${r.name}-${version.created.toIso8601String()}',
+      filename: version == null ? r.name : '${r.name}-${version.created.formatNumericDateTime()}',
       displayName: r.name,
       headers: account.apiClient.requestHeaders,
       updates: Updates.statusAndProgress,

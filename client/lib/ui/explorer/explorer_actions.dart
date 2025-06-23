@@ -70,7 +70,7 @@ class ExplorerActions extends StatelessWidget {
             final resources = state.resources.where((r) => !r.dir).toList(growable: false);
             final index = resources.indexOf(r);
             if (index >= 0) {
-              ResourcePreview.showPreview(context, resources, index);
+              ResourcePreview.showResources(context, resources, index);
             }
           }
           return;

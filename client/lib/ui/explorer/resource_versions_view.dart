@@ -1,9 +1,11 @@
+import 'package:collection/collection.dart';
 import 'package:drift/drift.dart' show TableOrViewStatements, OrderingTerm;
 import 'package:flutter/material.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/preview/resource_preview.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
@@ -34,13 +36,19 @@ class ResourceVersionsView extends StatelessWidget {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ...versions.map((v) => ListTile(
+                ...versions.mapIndexed((i, v) => ListTile(
                       title: Text(v.sha256.isEmpty ? 'Unknown' : v.sha256.substring(0, 12)),
                       subtitle: Text('${v.created.formatShort()} \u2022 ${v.size.formatForDisplay()}'),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          IconButton(icon: Icon(Icons.remove_red_eye), onPressed: () {}),
+                          IconButton(
+                              icon: Icon(Icons.remove_red_eye),
+                              onPressed: () async {
+                                final resource = await account.db.getResource(resourceId);
+                                if (resource == null || !context.mounted) return;
+                                ResourcePreview.showVersions(context, resource, versions, i);
+                              }),
                           IconButton(
                               icon: Icon(Icons.download),
                               onPressed: () async {

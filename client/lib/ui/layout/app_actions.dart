@@ -84,7 +84,7 @@ class AppActions extends StatelessWidget {
             context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: resource.id));
             return null;
           }
-          ResourcePreview.showPreview(context, [resource], 0);
+          ResourcePreview.showResources(context, [resource], 0);
           return null;
         })
       },

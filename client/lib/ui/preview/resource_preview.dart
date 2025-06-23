@@ -15,20 +15,45 @@ import 'package:phylum/libphylum/requests/resource_contents_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
+import 'package:phylum/util/time.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 const maxPreviewSize = 1 * 1024 * 1024;
 
+class VersionedResource {
+  final Resource r;
+  final ResourceVersion v;
+  final bool latest;
+
+  VersionedResource({required this.r, required this.v, required this.latest});
+
+  String get name => latest ? r.name : '${r.name} - ${v.created.formatNumericDateTime()}';
+}
+
 class ResourcePreview extends StatefulWidget {
-  final List<Resource> resources;
+  final List<VersionedResource> resources;
   final int index;
 
   const ResourcePreview({super.key, required this.resources, required this.index});
 
-  static Future<void> showPreview(BuildContext context, List<Resource> resources, int index) async {
+  static Future<void> showResources(BuildContext context, List<Resource> resources, int index) async {
     final account = context.read<PhylumAccount>();
-    account.db.markResourceAccess(resources[index].id);
+    final r = await Future.wait(resources
+        .map((r) async => VersionedResource(r: r, v: await account.db.latestVersion(r.id).getSingle(), latest: true)));
+    if (!context.mounted) return;
+    show(context, r, index);
+  }
+
+  static Future<void> showVersions(
+      BuildContext context, Resource resource, Iterable<ResourceVersion> versions, int index) async {
+    final r = versions.map((v) => VersionedResource(r: resource, v: v, latest: false)).toList(growable: false);
+    show(context, r, index);
+  }
+
+  static Future<void> show(BuildContext context, List<VersionedResource> resources, int index) async {
+    final account = context.read<PhylumAccount>();
+    account.db.markResourceAccess(resources[index].r.id);
     return showDialog(
         context: context,
         builder: (context) => MultiProvider(
@@ -47,11 +72,10 @@ class ResourcePreview extends StatefulWidget {
 
 class _ResourcePreviewState extends State<ResourcePreview> {
   late int index;
-  late Resource _resource;
   final _focusNode = FocusNode();
   String? _error;
   Widget Function(Uint8List)? _buildPreview;
-  StreamSubscription? _versionSubscription;
+  late VersionedResource _resource;
 
   @override
   void initState() {
@@ -62,42 +86,33 @@ class _ResourcePreviewState extends State<ResourcePreview> {
 
   @override
   void dispose() {
-    _versionSubscription?.cancel();
     _focusNode.dispose();
     super.dispose();
   }
 
   void _updateResource() {
     _resource = widget.resources[index];
-    _versionSubscription?.cancel();
-    if (_resource.dir) {
+    if (_resource.r.dir) {
       _buildPreview = null;
       _error = 'Cannot preview directory';
     } else {
-      _versionSubscription =
-          context.read<PhylumAccount>().db.latestVersion(_resource.id).watchSingleOrNull().listen((v) {
-        setState(() {
+      setState(() {
+        _buildPreview = null;
+        if (_resource.v.mimeType.startsWith('image/')) {
+          _buildPreview = buildImagePreview;
+        }
+        if (_resource.v.mimeType.startsWith('text/')) {
+          _buildPreview = buildTextPreview;
+        }
+        if (_resource.v.mimeType == 'application/pdf') {
+          _buildPreview = buildPdfPreview;
+        }
+        if (_buildPreview == null) {
+          _error = 'Cannot generate preview';
+        } else if (_resource.v.size > maxPreviewSize) {
           _buildPreview = null;
-          if (v == null) {
-            _error = 'No contents';
-          } else {
-            if (v.mimeType.startsWith('image/')) {
-              _buildPreview = buildImagePreview;
-            }
-            if (v.mimeType.startsWith('text/')) {
-              _buildPreview = buildTextPreview;
-            }
-            if (v.mimeType == 'application/pdf') {
-              _buildPreview = buildPdfPreview;
-            }
-            if (_buildPreview == null) {
-              _error = 'Cannot generate preview';
-            } else if (v.size > maxPreviewSize) {
-              _buildPreview = null;
-              _error = 'File too large to preview';
-            }
-          }
-        });
+          _error = 'File too large to preview';
+        }
       });
     }
   }
@@ -144,12 +159,13 @@ class _ResourcePreviewState extends State<ResourcePreview> {
                   icon: const Icon(Icons.info_outline),
                   onPressed: () => showReponsiveDialog(
                     context,
-                    _resource.name,
-                    (context) => ResourceInfoView(resource: _resource),
+                    _resource.r.name,
+                    (context) => ResourceInfoView(resource: _resource.r),
                   ),
                 ),
                 IconButton(
-                  onPressed: (_resource.dir) ? null : () => downloadResource(context, _resource),
+                  onPressed:
+                      (_resource.r.dir) ? null : () => downloadResource(context, _resource.r, version: _resource.v),
                   icon: const Icon(Icons.download),
                 )
               ],
@@ -163,8 +179,9 @@ class _ResourcePreviewState extends State<ResourcePreview> {
                         padding: const EdgeInsets.all(16.0),
                         child: Text(_error ?? 'Unknown error', style: TextStyle(fontSize: 18)),
                       ))
-                    : ResourcePreviewBuilder(
-                        resource: _resource,
+                    : ResourcePreviewDownloader(
+                        resourceId: _resource.r.id,
+                        versionId: _resource.v.id,
                         buildPreview: _buildPreview!,
                       )),
           ),
@@ -172,38 +189,21 @@ class _ResourcePreviewState extends State<ResourcePreview> {
       ),
     );
   }
-
-  Widget buildImagePreview(Uint8List data) => Image.memory(data);
-
-  Widget buildTextPreview(Uint8List data) => Material(
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: TextFormField(
-            decoration: const InputDecoration(border: InputBorder.none),
-            initialValue: String.fromCharCodes(data),
-            readOnly: true,
-            maxLines: 30,
-          ),
-        ),
-      );
-
-  Widget buildPdfPreview(Uint8List data) => PdfPreview(
-        build: (_) => data,
-        previewPageMargin: EdgeInsets.zero,
-      );
 }
 
-class ResourcePreviewBuilder extends StatefulWidget {
-  final Resource resource;
+class ResourcePreviewDownloader extends StatefulWidget {
+  final String resourceId;
+  final String versionId;
   final Widget Function(Uint8List data) buildPreview;
 
-  ResourcePreviewBuilder({required this.resource, required this.buildPreview}) : super(key: ValueKey(resource.id));
+  ResourcePreviewDownloader({required this.resourceId, required this.buildPreview, required this.versionId})
+      : super(key: ValueKey(versionId));
 
   @override
-  State<ResourcePreviewBuilder> createState() => _ResourcePreviewBuilderState();
+  State<ResourcePreviewDownloader> createState() => _ResourcePreviewDownloaderState();
 }
 
-class _ResourcePreviewBuilderState extends State<ResourcePreviewBuilder> {
+class _ResourcePreviewDownloaderState extends State<ResourcePreviewDownloader> {
   bool _downloading = false;
   String? _error;
   double? _progress;
@@ -249,7 +249,10 @@ class _ResourcePreviewBuilderState extends State<ResourcePreviewBuilder> {
         _progress = null;
       });
       final account = context.read<PhylumAccount>();
-      final response = await account.apiClient.dispatchRequestRaw(ResourceContentsRequest(widget.resource.id));
+      final response = await account.apiClient.dispatchRequestRaw(ResourceContentsRequest(
+        widget.resourceId,
+        versionId: widget.versionId,
+      ));
       if (response.statusCode < 200 || response.statusCode > 300) {
         final error = PhylumApiErrorResponse.fromResponseBody(await response.bodyString()).message;
         _error = error;
@@ -312,3 +315,22 @@ class _ResourcePreviewBuilderState extends State<ResourcePreviewBuilder> {
     return completer.future;
   }
 }
+
+Widget buildImagePreview(Uint8List data) => Image.memory(data);
+
+Widget buildTextPreview(Uint8List data) => Material(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: TextFormField(
+          decoration: const InputDecoration(border: InputBorder.none),
+          initialValue: String.fromCharCodes(data),
+          readOnly: true,
+          maxLines: 30,
+        ),
+      ),
+    );
+
+Widget buildPdfPreview(Uint8List data) => PdfPreview(
+      build: (_) => data,
+      previewPageMargin: EdgeInsets.zero,
+    );

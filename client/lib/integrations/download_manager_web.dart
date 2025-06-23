@@ -4,6 +4,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/set_cookie_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
+import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 import 'package:web/web.dart' as web;
 
@@ -23,7 +24,7 @@ Future<bool> downloadResource(BuildContext context, Resource r, {ResourceVersion
   web.HTMLAnchorElement()
     ..target = '_blank'
     ..href = uri.toString()
-    ..download = version == null ? r.name : '${r.name}-${version.created.toIso8601String()}'
+    ..download = version == null ? r.name : '${r.name}-${version.created.formatNumericDateTime()}'
     ..click();
   return true;
 }

@@ -5,6 +5,7 @@ final _formatMonthDate = DateFormat.MMMd();
 final _formatYearMonthDate = DateFormat.yMMMd();
 final _formatFullNoYear = DateFormat.MMMd().add_jm();
 final _formatFull = DateFormat.yMMMd().add_jm();
+final _formatNumericDateTime = DateFormat('yyyy-MM-ddTHH:mm:ss');
 
 DateTime get _today {
   final now = DateTime.now();
@@ -28,5 +29,9 @@ extension Formats on DateTime {
       return _formatFullNoYear.format(this);
     }
     return _formatFull.format(this);
+  }
+
+  String formatNumericDateTime() {
+    return _formatNumericDateTime.format(this);
   }
 }
