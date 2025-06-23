@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart' show TableOrViewStatements, OrderingTerm;
 import 'package:flutter/material.dart';
+import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/time.dart';
@@ -39,7 +41,13 @@ class ResourceVersionsView extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(icon: Icon(Icons.remove_red_eye), onPressed: () {}),
-                          IconButton(icon: Icon(Icons.download), onPressed: () {}),
+                          IconButton(
+                              icon: Icon(Icons.download),
+                              onPressed: () async {
+                                final r = await account.db.getResource(resourceId);
+                                if (r == null || !context.mounted) return;
+                                downloadResource(context, r, version: v);
+                              }),
                         ],
                       ),
                     )),

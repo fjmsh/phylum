@@ -8,8 +8,8 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
 
-Future<bool> downloadResource(BuildContext context, Resource r) async {
-  await context.read<DownloadManager>().downloadResource(context.read(), r);
+Future<bool> downloadResource(BuildContext context, Resource r, {ResourceVersion? version}) async {
+  await context.read<DownloadManager>().downloadResource(context.read(), r, version: version);
   return true;
 }
 
@@ -73,17 +73,20 @@ class DownloadManager with ChangeNotifier {
     _downloader.start();
   }
 
-  Future<void> downloadResource(PhylumAccount account, Resource r) async {
+  Future<void> downloadResource(PhylumAccount account, Resource r, {ResourceVersion? version}) async {
     await _downloader.ready;
     if (Platform.isAndroid || Platform.isAndroid) {
       await Permission.notification.request();
     }
     final uri = account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}:');
-    final version = await account.db.latestVersion(r.id).getSingleOrNull();
-    final mimeType = version?.mimeType ?? MimeTypeResolver().lookup(r.name) ?? 'application/octet-stream';
+    if (version != null) {
+      uri.queryParameters['version'] = version.id;
+    }
+    final v = version ?? await account.db.latestVersion(r.id).getSingleOrNull();
+    final mimeType = v?.mimeType ?? MimeTypeResolver().lookup(r.name) ?? 'application/octet-stream';
     final task = DownloadTask(
       url: uri.toString(),
-      filename: r.name,
+      filename: version == null ? r.name : '${r.name}-${version.created.toIso8601String()}',
       displayName: r.name,
       headers: account.apiClient.requestHeaders,
       updates: Updates.statusAndProgress,
