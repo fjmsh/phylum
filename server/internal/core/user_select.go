@@ -111,6 +111,6 @@ RETURNING id, email, name, home, permissions`
 		}
 		return user, err
 	} else {
-		return user, err
+		return user, nil
 	}
 }
