@@ -14,6 +14,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type PasswordConfigResponse struct {
+	Password      bool `json:"password"`
+	PasswordReset bool `json:"password_reset"`
+}
+
 type passwordParams struct {
 	Email    string `json:"email" form:"email" binding:"required"`
 	Password string `json:"password" form:"password" binding:"required"`
@@ -31,10 +36,19 @@ type resetPasswordParams struct {
 
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/auth")
+	group.GET("/config", handleConfig)
 	group.POST("/password", handlePasswordAuth)
 	group.POST("/request-password-reset", handleRequestPasswordReset)
 	group.POST("/reset-password", handleResetPassword)
 	group.POST("/set-cookie", authenticator.RequireToken, handleSetCookie)
+}
+
+func handleConfig(c *gin.Context) {
+	response := PasswordConfigResponse{
+		Password:      auth.SupportsPasswordAuth(),
+		PasswordReset: auth.SupportsPasswordReset(),
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func handlePasswordAuth(c *gin.Context) {

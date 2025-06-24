@@ -7,7 +7,7 @@ type Config struct {
 }
 
 type PasswordConfig struct {
-	Backend      string               `koanf:"backend" `
+	Backend      string               `koanf:"backend"`
 	Crypt        crypt.Config         `koanf:"crypt"`
 	Requirements PasswordRequirements `koanf:"requirements"`
 }

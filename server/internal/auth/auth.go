@@ -27,6 +27,14 @@ var accessTokenValidity = pgtype.Interval{
 
 var ErrCredentialsInvalid = errors.New("invalid credentials")
 
+func SupportsPasswordAuth() bool {
+	return Cfg.Password.Backend == "crypt"
+}
+
+func SupportsPasswordReset() bool {
+	return Cfg.Password.Backend == "crypt"
+}
+
 func VerifyUserPassword(db db.Handler, email, password string) (core.User, error) {
 	return verifyUserPassword(db, email, password)
 }
