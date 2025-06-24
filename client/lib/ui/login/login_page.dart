@@ -8,6 +8,7 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/common/logo_row.dart';
+import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/ui/login/instance_url_fragment.dart';
 import 'package:phylum/ui/login/password_login_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -27,14 +28,11 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  Uri? _instanceUrl;
+  InstanceConfig? _instanceConfig;
 
   @override
   void initState() {
     super.initState();
-    if (widget.fixedInstanceUrl != null) {
-      _instanceUrl = _cleanUrl(widget.fixedInstanceUrl!);
-    }
   }
 
   @override
@@ -65,19 +63,24 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildBody(BuildContext context) {
-    final instanceUrl = _instanceUrl;
-    if (instanceUrl == null) {
-      return InstanceUrlFragment(onSubmitted: (url) {
-        setState(() => _instanceUrl = _cleanUrl(url));
+    final instanceConfig = _instanceConfig;
+    if (instanceConfig == null) {
+      return InstanceUrlFragment(onInstanceSelected: (instanceConfig) {
+        setState(() => _instanceConfig = instanceConfig);
       });
     }
     return PasswordLoginFragment(
-      requestLogin: (email, password) => _performLogin(context, instanceUrl, email, password),
-      onBackPressed: widget.fixedInstanceUrl == null ? () => setState(() => _instanceUrl = null) : null,
-      requestPasswordReset: (email) => _requestPasswordReset(context, instanceUrl, email),
-      resetPassword: (email, token) => context
-          .read<PhylumRouterDelegate>()
-          .go(ResetPasswordRoute(instanceUri: instanceUrl, email: email, token: token)),
+      onBackPressed: () => setState(() => _instanceConfig = null),
+      requestLogin: instanceConfig.password
+          ? (email, password) => _performLogin(context, instanceConfig.url, email, password)
+          : null,
+      requestPasswordReset:
+          instanceConfig.passwordReset ? (email) => _requestPasswordReset(context, instanceConfig.url, email) : null,
+      resetPassword: instanceConfig.passwordReset
+          ? (email, token) => context
+              .read<PhylumRouterDelegate>()
+              .go(ResetPasswordRoute(instanceUri: instanceConfig.url, email: email, token: token))
+          : null,
     );
   }
 
@@ -134,14 +137,5 @@ class _LoginPageState extends State<LoginPage> {
         title: 'Password Reset Requested',
       );
     }
-  }
-
-  Uri _cleanUrl(Uri url) {
-    if (url.path.endsWith('/')) {
-      final builder = UriBuilder.fromUri(url);
-      builder.path = url.pathSegments.where((s) => s.isNotEmpty).join('/');
-      return builder.build();
-    }
-    return url;
   }
 }

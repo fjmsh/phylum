@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:phylum/util/dialogs.dart';
 
 class PasswordLoginFragment extends StatefulWidget {
-  final Function(String, String) requestLogin;
   final Function()? onBackPressed;
-  final Function(String) requestPasswordReset;
-  final Function(String, String) resetPassword;
+  final Function(String, String)? requestLogin;
+  final Function(String)? requestPasswordReset;
+  final Function(String, String)? resetPassword;
 
   const PasswordLoginFragment({
     super.key,
-    required this.requestLogin,
     required this.onBackPressed,
+    required this.requestLogin,
     required this.requestPasswordReset,
     required this.resetPassword,
   });
@@ -38,17 +38,20 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
             autofillHints: const [AutofillHints.email],
             onChanged: (value) => setState(() => _email = value.trim()),
           ),
-          TextField(
-            decoration: const InputDecoration(
-              label: Text('Password'),
+          if (widget.requestLogin != null)
+            TextField(
+              decoration: const InputDecoration(
+                label: Text('Password'),
+              ),
+              obscureText: true,
+              keyboardType: TextInputType.visiblePassword,
+              autofillHints: const [AutofillHints.password],
+              onChanged: (value) => setState(() => _password = value),
+              onSubmitted: _email.isEmpty ? null : (value) => widget.requestLogin!(_email, _password),
             ),
-            obscureText: true,
-            keyboardType: TextInputType.visiblePassword,
-            autofillHints: const [AutofillHints.password],
-            onChanged: (value) => setState(() => _password = value),
-            onSubmitted: _email.isEmpty ? null : (value) => widget.requestLogin(_email, _password),
-          ),
-          TextButton(
+          if (widget.requestPasswordReset != null)
+            TextButton(
+              child: Text('Reset Password', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
               onPressed: () async {
                 if (_email.isEmpty) {
                   showAlertDialog(
@@ -72,7 +75,7 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
                                 await showInputDialog(context, labelText: 'Reset Token', barrierDismissable: true);
                             if (token == null || !context.mounted) return;
                             Navigator.of(context).pop(false);
-                            widget.resetPassword(_email, token);
+                            widget.resetPassword!(_email, token);
                           },
                       ),
                     ],
@@ -89,12 +92,9 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
                     ) ??
                     false;
                 if (!confirm || !context.mounted) return;
-                widget.requestPasswordReset(_email);
+                widget.requestPasswordReset!(_email);
               },
-              child: Text(
-                'Forgot Password',
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
-              )),
+            ),
           Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.end,
@@ -108,10 +108,11 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
                     style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 ),
-              ElevatedButton(
-                onPressed: _email.isEmpty || _password.isEmpty ? null : () => widget.requestLogin(_email, _password),
-                child: Text('Login'),
-              ),
+              if (widget.requestLogin != null)
+                ElevatedButton(
+                  onPressed: _email.isEmpty || _password.isEmpty ? null : () => widget.requestLogin!(_email, _password),
+                  child: Text('Login'),
+                ),
             ],
           ),
         ],
