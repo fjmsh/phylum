@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"net/http"
 	"strings"
 	"time"
 
@@ -25,7 +26,7 @@ var accessTokenValidity = pgtype.Interval{
 	Valid: true,
 }
 
-var ErrCredentialsInvalid = errors.New("invalid credentials")
+var ErrCredentialsInvalid = core.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid credentials")
 
 func SupportsPasswordAuth() bool {
 	return Cfg.Password.Backend == "crypt"
