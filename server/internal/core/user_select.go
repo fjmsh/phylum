@@ -19,7 +19,7 @@ func CreateUser(db db.TxHandler, email, name string, noCreateHome bool) (User, e
 	var home Resource
 	if !noCreateHome {
 		var err error
-		homePath := strings.TrimRight(Cfg.BaseDir, "/") + "/" + email
+		homePath := strings.TrimRight(Cfg.User.BaseDir, "/") + "/" + email
 		home, err = f.CreateResourceByPath(homePath, uuid.Nil, true, true, ResourceBindConflictResolutionEnsure)
 		if err != nil {
 			return User{}, err
@@ -100,7 +100,7 @@ func insertUser(db db.Handler, email, name string, home pgtype.UUID) (User, erro
 VALUES ($1, $2, $3, $4, $5)
 RETURNING id, email, name, home, permissions`
 
-	if rows, err := db.Query(q, strings.ToLower(email), name, "", home, Cfg.Permisison); err != nil {
+	if rows, err := db.Query(q, strings.ToLower(email), name, "", home, Cfg.User.Permisison); err != nil {
 		return User{}, err
 	} else if user, err := pgx.CollectExactlyOneRow(rows, scanUser); err != nil {
 		if strings.Contains(err.Error(), "valid_email") {

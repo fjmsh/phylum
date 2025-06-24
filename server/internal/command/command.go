@@ -126,7 +126,7 @@ func SetupCommand() {
 		storage.Cfg = cfg.Storage
 		serve.Cfg = cfg.Server
 		mail.Cfg = cfg.Mail
-		core.Cfg = cfg.User
+		core.Cfg = cfg.Core
 		auth.Cfg = cfg.Auth
 		crypt.Cfg = cfg.Auth.Password.Crypt
 		steve.Cfg = cfg.Steve

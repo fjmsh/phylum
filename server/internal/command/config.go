@@ -16,7 +16,7 @@ type Config struct {
 	Storage storage.Config `koanf:"storage"`
 	Server  serve.Config   `koanf:"server"`
 	Mail    mail.Config    `koanf:"mail"`
-	User    core.Config    `koanf:"user"`
+	Core    core.Config    `koanf:"core"`
 	Auth    auth.Config    `koanf:"auth"`
 	Steve   steve.Config   `koanf:"jobs"`
 }

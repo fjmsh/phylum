@@ -10,11 +10,11 @@ db:
 storage:
   root: storage
   temp: tmp           # relative to root, or absolute
-  
-user:
-  password:
-  basedir: /home
-  permission: 0x10    # Invite users
+
+core: 
+  user:               # Config for new users
+    basedir: /home
+    permission: 0x10  # Invite users
 
 auth:
   password:
