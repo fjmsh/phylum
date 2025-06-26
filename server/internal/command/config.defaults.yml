@@ -17,6 +17,8 @@ core:
     permission: 0x10  # Invite users
 
 auth:
+  auto_create:
+    - "@example.com"
   password:
     backend: crypt
     crypt:
@@ -39,12 +41,12 @@ auth:
       starttls: false
       connect_timeout: 30s
       request_timeout: 30s
-      dn_template: cn={email},ou=people,dc=example,dc=com
+      dn_template: 
       search:
-        bind_dn: cn=phylum,ou=people,dc=example,dc=com
+        bind_dn:
         bind_password: 
-        base_dn: dc=example,dc=com
-        filter_template: (&(objectclass=person)(mail={email}))
+        base_dn:
+        filter_template:
 
       
 jobs: 

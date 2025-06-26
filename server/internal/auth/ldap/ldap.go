@@ -63,7 +63,7 @@ func NewAuth(cfg Config, log zerolog.Logger) (*Auth, error) {
 			return nil, errors.New("filter template not set")
 		}
 		info = info.Str("base_dn", cfg.Search.BaseDN)
-		info = info.Str("filter_template", cfg.DNTemplate)
+		info = info.Str("filter_template", cfg.Search.FilterTemplate)
 	} else {
 		info = info.Str("dn_template", cfg.DNTemplate)
 	}
@@ -141,14 +141,12 @@ func (a *Auth) VerifyUserPassword(_ db.Handler, email, password string) (bool, e
 	if a.dnTemplate != "" {
 		userDN = strings.ReplaceAll(a.dnTemplate, "{email}", email)
 	} else {
-		if b, err := a.conn.SimpleBind(&ldap.SimpleBindRequest{
+		if _, err := a.conn.SimpleBind(&ldap.SimpleBindRequest{
 			Username:           a.search.BindDN,
 			Password:           a.search.BindPassword,
 			AllowEmptyPassword: true,
 		}); err != nil {
 			return false, err
-		} else {
-			fmt.Printf("%+v", b)
 		}
 
 		req := ldap.NewSearchRequest(
