@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"errors"
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -150,11 +151,27 @@ func SetupCommand() {
 		fs.SetupCommand(),
 		user.SetupCommand(),
 		serve.SetupCommand(),
+		createLDAPTestCommand(),
 	)
 	cmd.AddGroup(&cobra.Group{ID: "misc", Title: "Misc"})
 	cmd.SetHelpCommandGroupID("misc")
 	cmd.SetCompletionCommandGroupID("misc")
 	cmd.Execute()
+}
+
+func createLDAPTestCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "ldap",
+	}
+	cmd.Run = func(c *cobra.Command, args []string) {
+		if u, err := auth.VerifyUserPassword(db.Get(context.Background()), "ldaptest@kudosoft.net", "asdfasdf"); err != nil {
+			fmt.Println(err.Error())
+		} else {
+			fmt.Printf("%+v\n", u)
+		}
+
+	}
+	return cmd
 }
 
 func isCmd(cmd *cobra.Command, s string) bool {

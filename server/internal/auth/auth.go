@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
@@ -53,13 +54,24 @@ func Init(cfg Config, log zerolog.Logger) error {
 	return nil
 }
 
-func VerifyUserPassword(db db.Handler, email, password string) (core.User, error) {
-	if b, err := passwordBackend.VerifyUserPassword(db, email, password); err != nil {
+func VerifyUserPassword(d db.Handler, email, password string) (core.User, error) {
+	if b, err := passwordBackend.VerifyUserPassword(d, email, password); err != nil {
 		return core.User{}, err
 	} else if !b {
 		return core.User{}, ErrCredentialsInvalid
 	}
-	return core.UserByEmail(db, email)
+	user, err := core.UserByEmail(d, email)
+	if errors.Is(err, core.ErrUserNotFound) {
+		for _, domain := range cfg.AutoCreateDomains {
+			if strings.HasSuffix(strings.ToLower(email), "@"+strings.ToLower(domain)) {
+				err = d.RunInTx(func(db db.TxHandler) error {
+					user, err = core.CreateUser(db, email, "", false)
+					return err
+				})
+			}
+		}
+	}
+	return user, err
 }
 
 func CreateAccessToken(db db.TxHandler, email, password string) (core.User, string, error) {

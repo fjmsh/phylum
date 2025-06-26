@@ -6,7 +6,8 @@ import (
 )
 
 type Config struct {
-	Password PasswordConfig `koanf:"password"`
+	AutoCreateDomains []string       `koanf:"auto_create_domains"`
+	Password          PasswordConfig `koanf:"password"`
 }
 
 type PasswordConfig struct {
