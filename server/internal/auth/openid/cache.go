@@ -33,19 +33,21 @@ func getOpenIDConfiguration(issuerURL string) (*OpenIDConfiguration, error) {
 	var config OpenIDConfiguration
 	if url, err := url.JoinPath(issuerURL, ".well-known/openid-configuration"); err != nil {
 		return nil, err
-	} else if response, err := http.DefaultClient.Get(url); err != nil {
+	} else if req, err := http.NewRequest("GET", url, nil); err != nil {
+		return nil, err
+	} else if res, err := http.DefaultClient.Do(req); err != nil {
 		return nil, err
 	} else {
-		if response.StatusCode == http.StatusNotModified {
-			return renewCached(issuerURL, response)
+		if res.StatusCode == http.StatusNotModified {
+			return renewCached(issuerURL, req, res)
 		} else {
-			defer response.Body.Close()
-			if body, err := io.ReadAll(response.Body); err != nil {
+			defer res.Body.Close()
+			if body, err := io.ReadAll(res.Body); err != nil {
 				return nil, err
 			} else if err := json.Unmarshal(body, &config); err != nil {
 				return nil, err
 			} else {
-				putCached(issuerURL, &config, response)
+				putCached(issuerURL, &config, req, res)
 				return &config, nil
 			}
 		}
@@ -70,14 +72,14 @@ func getCached(issuerURL string) *OpenIDConfiguration {
 	}
 }
 
-func putCached(issuerURL string, config *OpenIDConfiguration, response *http.Response) {
+func putCached(issuerURL string, config *OpenIDConfiguration, req *http.Request, res *http.Response) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	reasons, expires, err := cachecontrol.CachableResponse(nil, response, cachecontrol.Options{})
+	reasons, expires, err := cachecontrol.CachableResponse(req, res, cachecontrol.Options{})
 	if err == nil && reasons == nil {
 		lastModified := ""
-		lastModifiedHeader := response.Header["Last-Modified"]
+		lastModifiedHeader := res.Header["Last-Modified"]
 		if lastModifiedHeader != nil {
 			lastModified = lastModifiedHeader[0]
 		}
@@ -89,7 +91,7 @@ func putCached(issuerURL string, config *OpenIDConfiguration, response *http.Res
 	}
 }
 
-func renewCached(issuerURL string, response *http.Response) (*OpenIDConfiguration, error) {
+func renewCached(issuerURL string, req *http.Request, res *http.Response) (*OpenIDConfiguration, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -98,7 +100,7 @@ func renewCached(issuerURL string, response *http.Response) (*OpenIDConfiguratio
 		return nil, errors.New("trying to refresh issuer that is not in cache")
 	}
 
-	if reasons, expires, err := cachecontrol.CachableResponse(nil, response, cachecontrol.Options{}); err != nil {
+	if reasons, expires, err := cachecontrol.CachableResponse(req, res, cachecontrol.Options{}); err != nil {
 		delete(cache, issuerURL)
 		return nil, err
 	} else if reasons != nil {
