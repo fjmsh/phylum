@@ -33,6 +33,19 @@ auth:
       upper: 1
       numeric: 1
       symbols: 1
+    ldap:
+      debug: false
+      url: ldap://ldap.example.com:1389
+      starttls: false
+      connect_timeout: 30s
+      request_timeout: 30s
+      dn_template: cn={email},ou=people,dc=example,dc=com
+      search:
+        bind_dn: cn=phylum,ou=people,dc=example,dc=com
+        bind_password: 
+        base_dn: dc=example,dc=com
+        filter_template: (&(objectclass=person)(mail={email}))
+
       
 jobs: 
   workers: 5
