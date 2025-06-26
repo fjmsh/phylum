@@ -58,7 +58,7 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
       nav.pop();
       if (config == null) {
         if (mounted) {
-          showAlertDialog(context, message: 'No server foud at $url');
+          showAlertDialog(context, message: 'No server found at $url');
         }
       } else {
         widget.onInstanceSelected(config);
