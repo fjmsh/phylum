@@ -8,6 +8,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/v1/my"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/auth"
+	"codeberg.org/shroff/phylum/server/internal/auth/openid"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
@@ -15,8 +16,9 @@ import (
 )
 
 type PasswordConfigResponse struct {
-	Password      bool `json:"password"`
-	PasswordReset bool `json:"password_reset"`
+	Password        bool              `json:"password"`
+	PasswordReset   bool              `json:"password_reset"`
+	OpenIDProviders []openid.Provider `json:"openid_providers"`
 }
 
 type passwordParams struct {
@@ -45,8 +47,9 @@ func SetupRoutes(r *gin.RouterGroup) {
 
 func handleConfig(c *gin.Context) {
 	response := PasswordConfigResponse{
-		Password:      auth.SupportsPasswordAuth(),
-		PasswordReset: auth.SupportsPasswordReset(),
+		Password:        auth.SupportsPasswordAuth(),
+		PasswordReset:   auth.SupportsPasswordReset(),
+		OpenIDProviders: auth.OpenIDProviders(),
 	}
 	c.JSON(http.StatusOK, response)
 }

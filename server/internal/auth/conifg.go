@@ -3,11 +3,13 @@ package auth
 import (
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"codeberg.org/shroff/phylum/server/internal/auth/ldap"
+	"codeberg.org/shroff/phylum/server/internal/auth/openid"
 )
 
 type Config struct {
-	AutoCreateDomains []string       `koanf:"auto_create_domains"`
-	Password          PasswordConfig `koanf:"password"`
+	AutoCreateDomains []string                `koanf:"auto_create_domains"`
+	Password          PasswordConfig          `koanf:"password"`
+	OpenIDProviders   []openid.ProviderConfig `koanf:"openid_providers"`
 }
 
 type PasswordConfig struct {

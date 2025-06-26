@@ -10,6 +10,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"codeberg.org/shroff/phylum/server/internal/auth/ldap"
+	"codeberg.org/shroff/phylum/server/internal/auth/openid"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/jackc/pgx/v5"
@@ -39,6 +40,10 @@ func SupportsPasswordReset() bool {
 	return passwordBackend != nil && passwordBackend.SupportsPasswordUpdate()
 }
 
+func OpenIDProviders() []openid.Provider {
+	return openid.Providers()
+}
+
 func Init(cfg Config, log zerolog.Logger) error {
 	if cfg.Password.Backend == "crypt" {
 		passwordBackend = &crypt.Auth{}
@@ -51,7 +56,8 @@ func Init(cfg Config, log zerolog.Logger) error {
 	} else if cfg.Password.Backend != "" {
 		return errors.New("password backend not recognized: " + cfg.Password.Backend)
 	}
-	return nil
+
+	return openid.Init(cfg.OpenIDProviders, log)
 }
 
 func VerifyUserPassword(d db.Handler, email, password string) (core.User, error) {
