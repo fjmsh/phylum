@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/go-ldap/ldap/v3"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -47,7 +48,7 @@ type Auth struct {
 
 var a Auth
 
-func Init(cfg Config, log zerolog.Logger) error {
+func NewAuth(cfg Config, log zerolog.Logger) (*Auth, error) {
 	a.log = log.With().Str("c", "ldap").Logger()
 	if cfg.Debug {
 		a.log = log.Level(zerolog.DebugLevel)
@@ -56,10 +57,10 @@ func Init(cfg Config, log zerolog.Logger) error {
 	info := a.log.Debug()
 	if cfg.DNTemplate == "" {
 		if cfg.Search.BaseDN == "" {
-			return errors.New("base_dn not set")
+			return nil, errors.New("base DN not set")
 		}
 		if cfg.Search.FilterTemplate == "" {
-			return errors.New("filter_template not set")
+			return nil, errors.New("filter template not set")
 		}
 		info = info.Str("base_dn", cfg.Search.BaseDN)
 		info = info.Str("filter_template", cfg.DNTemplate)
@@ -69,7 +70,7 @@ func Init(cfg Config, log zerolog.Logger) error {
 	info.Msg("Using ldap auth")
 
 	if parsedURL, err := url.Parse(cfg.URL); err != nil {
-		return errors.New("invalid server URL: " + err.Error())
+		return nil, errors.New("invalid server URL: " + err.Error())
 	} else {
 		a.url = cfg.URL
 		a.startTLS = cfg.StartTLS
@@ -79,7 +80,7 @@ func Init(cfg Config, log zerolog.Logger) error {
 	if cfg.ConnectTimeout == "" {
 		a.connectTimeout = 60 * time.Second
 	} else if d, err := time.ParseDuration(cfg.ConnectTimeout); err != nil {
-		return errors.New("failed to parse connect timeout: " + err.Error())
+		return nil, errors.New("failed to parse connect timeout: " + err.Error())
 	} else {
 		a.connectTimeout = d
 	}
@@ -87,7 +88,7 @@ func Init(cfg Config, log zerolog.Logger) error {
 	if cfg.RequestTimeout == "" {
 		a.readTimeout = 60 * time.Second
 	} else if d, err := time.ParseDuration(cfg.RequestTimeout); err != nil {
-		return errors.New("failed to parse read timeout: " + err.Error())
+		return nil, errors.New("failed to parse read timeout: " + err.Error())
 	} else {
 		a.readTimeout = d
 	}
@@ -97,9 +98,9 @@ func Init(cfg Config, log zerolog.Logger) error {
 	var err error
 	a.conn, err = a.newConn()
 	if err != nil {
-		return errors.New("failed to connect: " + err.Error())
+		return nil, errors.New("failed to connect: " + err.Error())
 	}
-	return nil
+	return &a, nil
 }
 
 func (a *Auth) newConn() (*ldap.Conn, error) {
@@ -124,7 +125,15 @@ func (a *Auth) newConn() (*ldap.Conn, error) {
 	return conn, nil
 }
 
-func (a *Auth) VerifyNew(email, password string) (bool, error) {
+func (a *Auth) SupportsPasswordUpdate() bool {
+	return false
+}
+
+func (a *Auth) UpdateUserPassword(db db.Handler, username, password string) error {
+	return errors.New("password update not supported")
+}
+
+func (a *Auth) VerifyUserPassword(_ db.Handler, email, password string) (bool, error) {
 	a.connLock.Lock()
 	defer a.connLock.Unlock()
 
@@ -162,6 +171,9 @@ func (a *Auth) VerifyNew(email, password string) (bool, error) {
 	}
 
 	if err := a.conn.Bind(userDN, password); err != nil {
+		if e, ok := err.(*ldap.Error); ok && e.ResultCode == 49 {
+			err = nil
+		}
 		return false, err
 	}
 

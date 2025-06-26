@@ -43,7 +43,7 @@ func OpenFileSystemFromPublink(ctx context.Context, id string, password string) 
 		if password == "" {
 			return nil, ErrInsufficientPermissions
 		}
-		if ok, err := crypt.Verify(password, link.PasswordHash); err != nil {
+		if ok, err := crypt.VerifyPasswordHash(password, link.PasswordHash); err != nil {
 			return nil, err
 		} else if !ok {
 			return nil, ErrInsufficientPermissions

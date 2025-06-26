@@ -1,6 +1,9 @@
 package auth
 
-import "codeberg.org/shroff/phylum/server/internal/auth/crypt"
+import (
+	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
+	"codeberg.org/shroff/phylum/server/internal/auth/ldap"
+)
 
 type Config struct {
 	Password PasswordConfig `koanf:"password"`
@@ -9,6 +12,7 @@ type Config struct {
 type PasswordConfig struct {
 	Backend      string               `koanf:"backend"`
 	Crypt        crypt.Config         `koanf:"crypt"`
+	LDAP         ldap.Config          `koanf:"ldap"`
 	Requirements PasswordRequirements `koanf:"requirements"`
 }
 

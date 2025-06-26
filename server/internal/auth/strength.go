@@ -40,25 +40,25 @@ func init() {
 }
 
 func checkPasswordStrength(password string) error {
-	if len(password) < Cfg.Password.Requirements.Length {
-		return &PasswordStrengthError{Reason: "password must be at least " + strconv.Itoa(Cfg.Password.Requirements.Length) + " characters long."}
+	if len(password) < cfg.Password.Requirements.Length {
+		return &PasswordStrengthError{Reason: "password must be at least " + strconv.Itoa(cfg.Password.Requirements.Length) + " characters long."}
 	}
 	count := map[charType]int{}
 	for _, c := range password {
 		count[charTypes[c]]++
 	}
 
-	if count[charTypeLower] < Cfg.Password.Requirements.Lower {
-		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(Cfg.Password.Requirements.Lower) + " lower case."}
+	if count[charTypeLower] < cfg.Password.Requirements.Lower {
+		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(cfg.Password.Requirements.Lower) + " lower case."}
 	}
-	if count[charTypeUpper] < Cfg.Password.Requirements.Upper {
-		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(Cfg.Password.Requirements.Upper) + " upper case."}
+	if count[charTypeUpper] < cfg.Password.Requirements.Upper {
+		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(cfg.Password.Requirements.Upper) + " upper case."}
 	}
-	if count[charTypeNumeric] < Cfg.Password.Requirements.Numeric {
-		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(Cfg.Password.Requirements.Numeric) + " numeric."}
+	if count[charTypeNumeric] < cfg.Password.Requirements.Numeric {
+		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(cfg.Password.Requirements.Numeric) + " numeric."}
 	}
-	if count[charTypeSymbol] < Cfg.Password.Requirements.Symbols {
-		return &PasswordStrengthError{"password must have at least " + strconv.Itoa(Cfg.Password.Requirements.Symbols) + " symbols."}
+	if count[charTypeSymbol] < cfg.Password.Requirements.Symbols {
+		return &PasswordStrengthError{"password must have at least " + strconv.Itoa(cfg.Password.Requirements.Symbols) + " symbols."}
 	}
 	return nil
 }

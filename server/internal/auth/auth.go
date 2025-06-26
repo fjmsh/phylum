@@ -5,17 +5,19 @@ import (
 	"encoding/base64"
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
+	"codeberg.org/shroff/phylum/server/internal/auth/ldap"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/rs/zerolog"
 )
 
-var Cfg Config
+var cfg Config
+var passwordBackend PasswordBackend
 
 const apiTokenLength = 32
 const resetTokenLength = 24
@@ -29,19 +31,39 @@ var accessTokenValidity = pgtype.Interval{
 var ErrCredentialsInvalid = core.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid credentials")
 
 func SupportsPasswordAuth() bool {
-	return Cfg.Password.Backend == "crypt"
+	return passwordBackend != nil
 }
 
 func SupportsPasswordReset() bool {
-	return Cfg.Password.Backend == "crypt"
+	return passwordBackend != nil && passwordBackend.SupportsPasswordUpdate()
+}
+
+func Init(cfg Config, log zerolog.Logger) error {
+	if cfg.Password.Backend == "crypt" {
+		passwordBackend = &crypt.Auth{}
+	} else if cfg.Password.Backend == "ldap" {
+		if a, err := ldap.NewAuth(cfg.Password.LDAP, log); err != nil {
+			return err
+		} else {
+			passwordBackend = a
+		}
+	} else if cfg.Password.Backend != "" {
+		return errors.New("password backend not recognized: " + cfg.Password.Backend)
+	}
+	return nil
 }
 
 func VerifyUserPassword(db db.Handler, email, password string) (core.User, error) {
-	return verifyUserPassword(db, email, password)
+	if b, err := passwordBackend.VerifyUserPassword(db, email, password); err != nil {
+		return core.User{}, err
+	} else if !b {
+		return core.User{}, ErrCredentialsInvalid
+	}
+	return core.UserByEmail(db, email)
 }
 
 func CreateAccessToken(db db.TxHandler, email, password string) (core.User, string, error) {
-	if user, err := verifyUserPassword(db, email, password); err != nil {
+	if user, err := VerifyUserPassword(db, email, password); err != nil {
 		return core.User{}, "", err
 	} else if token, err := insertAccessToken(db, user.ID); err != nil {
 		return core.User{}, "", err
@@ -67,6 +89,9 @@ func ReadAccessToken(db db.Handler, accessToken string) (user core.User, err err
 }
 
 func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) {
+	if !passwordBackend.SupportsPasswordUpdate() {
+		return core.User{}, "", errors.New("password update not supported")
+	}
 	user, err := core.UserByEmail(db, email)
 	if err != nil {
 		return core.User{}, "", err
@@ -81,6 +106,9 @@ func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) 
 }
 
 func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (core.User, string, error) {
+	if !passwordBackend.SupportsPasswordUpdate() {
+		return core.User{}, "", errors.New("password update not supported")
+	}
 	user, err := core.UserByEmail(db, email)
 	if err != nil {
 		return user, "", err
@@ -89,7 +117,7 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (cor
 	// UpdateUserPassword will ensure the password strength
 	// Not incorrect to do this before token verification because we are in a transaction.
 	// TODO: Are there perf implications for this in case of malicious actors?
-	err = updateUserPassword(db, user.ID, password)
+	err = UpdateUserPassword(db, email, password)
 	if err != nil {
 		return core.User{}, "", err
 	}
@@ -120,26 +148,10 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (cor
 }
 
 func UpdateUserPassword(db db.TxHandler, email, password string) error {
-	user, err := core.UserByEmail(db, email)
-	if err != nil {
-		return err
-	}
-	return updateUserPassword(db, user.ID, password)
-}
-
-func updateUserPassword(db db.TxHandler, userID int32, password string) error {
 	if err := checkPasswordStrength(password); err != nil {
 		return err
 	}
-	const q = "UPDATE users SET password_hash = $2::TEXT, modified = NOW() WHERE id = $1::INT"
-	if hash, err := crypt.Generate(password); err != nil {
-		return err
-	} else {
-		if _, err := db.Exec(q, userID, hash); err != nil {
-			return err
-		}
-	}
-	return nil
+	return passwordBackend.UpdateUserPassword(db, email, password)
 }
 
 func insertAccessToken(db db.TxHandler, userID int32) (string, error) {
@@ -168,40 +180,6 @@ ON CONFLICT(user_id) DO UPDATE SET token = @token::TEXT, expires = @expires::TIM
 		return "", err
 	}
 	return token, nil
-}
-
-func verifyUserPassword(db db.Handler, email, password string) (core.User, error) {
-	if user, passwordHash, err := userPasswordHashByEmail(db, email); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return core.User{}, ErrCredentialsInvalid
-		}
-		return core.User{}, err
-	} else if passwordHash == "" {
-		return core.User{}, ErrCredentialsInvalid
-	} else {
-		if b, err := crypt.Verify(password, passwordHash); err != nil {
-			return core.User{}, err
-		} else if !b {
-			return core.User{}, ErrCredentialsInvalid
-		}
-		return user, nil
-	}
-}
-
-func userPasswordHashByEmail(db db.Handler, email string) (user core.User, passwordHash string, err error) {
-	const q = "SELECT id, email, name, home, permissions, password_hash FROM users WHERE email = $1"
-	row := db.QueryRow(q, strings.ToLower(email))
-	err = row.Scan(
-		&user.ID,
-		&user.Email,
-		&user.Name,
-		&user.Home,
-		&user.Permissions,
-		&passwordHash)
-	if errors.Is(err, pgx.ErrNoRows) {
-		err = ErrCredentialsInvalid
-	}
-	return
 }
 
 func generateRandomString(n int) string {

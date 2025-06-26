@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/auth"
-	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"codeberg.org/shroff/phylum/server/internal/command/admin"
 	"codeberg.org/shroff/phylum/server/internal/command/fs"
 	"codeberg.org/shroff/phylum/server/internal/command/serve"
@@ -127,9 +126,9 @@ func SetupCommand() {
 		serve.Cfg = cfg.Server
 		mail.Cfg = cfg.Mail
 		core.Cfg = cfg.Core
-		auth.Cfg = cfg.Auth
-		crypt.Cfg = cfg.Auth.Password.Crypt
 		steve.Cfg = cfg.Steve
+
+		auth.Init(cfg.Auth, log.Logger)
 
 		if !isCmd(cmd, "schema") {
 			// This will initialize the db, which we don't want yet.
