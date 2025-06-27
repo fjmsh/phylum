@@ -1,19 +1,26 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:uri/uri.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PasswordLoginFragment extends StatefulWidget {
   final Function()? onBackPressed;
+  final Uri instanceUrl;
   final Function(String, String)? requestLogin;
   final Function(String)? requestPasswordReset;
   final Function(String, String)? resetPassword;
+  final List<OpenIDProvider> openIDProviders;
 
   const PasswordLoginFragment({
     super.key,
     required this.onBackPressed,
+    required this.instanceUrl,
     required this.requestLogin,
     required this.requestPasswordReset,
     required this.resetPassword,
+    required this.openIDProviders,
   });
 
   @override
@@ -30,14 +37,15 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
       child: Column(
         spacing: 12.0,
         children: [
-          TextField(
-            decoration: const InputDecoration(
-              label: Text('Email'),
+          if (widget.requestLogin != null)
+            TextField(
+              decoration: const InputDecoration(
+                label: Text('Email'),
+              ),
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              onChanged: (value) => setState(() => _email = value.trim()),
             ),
-            keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email],
-            onChanged: (value) => setState(() => _email = value.trim()),
-          ),
           if (widget.requestLogin != null)
             TextField(
               decoration: const InputDecoration(
@@ -95,6 +103,22 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
                 widget.requestPasswordReset!(_email);
               },
             ),
+          ...widget.openIDProviders.map((p) => ElevatedButton(
+              onPressed: () async {
+                final builder = UriBuilder.fromUri(Uri.parse(p.endpoint));
+                final redirectBuilder = UriBuilder.fromUri(widget.instanceUrl);
+                redirectBuilder.path = '/login/oauth';
+                builder.queryParameters['client_id'] = p.clientID;
+                builder.queryParameters['response_type'] = 'code';
+                builder.queryParameters['redirect_uri'] = redirectBuilder.toString();
+                builder.queryParameters['scope'] = 'openid email profile';
+
+                for (final m in LaunchMode.values) {
+                  print('$m: ${await supportsLaunchMode(m)}');
+                }
+                launchUrl(builder.build());
+              },
+              child: Text('Log In with ${p.name}'))),
           Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.end,

@@ -42,6 +42,7 @@ dependencies:
   state_notifier:
   super_clipboard:
   super_drag_and_drop:
+  url_launcher:
   uri:
   web:
   meta: ^1.15.0

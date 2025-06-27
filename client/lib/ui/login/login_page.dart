@@ -71,6 +71,7 @@ class _LoginPageState extends State<LoginPage> {
     }
     return PasswordLoginFragment(
       onBackPressed: () => setState(() => _instanceConfig = null),
+      instanceUrl: instanceConfig.url,
       requestLogin: instanceConfig.password
           ? (email, password) => _performLogin(context, instanceConfig.url, email, password)
           : null,
@@ -81,6 +82,7 @@ class _LoginPageState extends State<LoginPage> {
               .read<PhylumRouterDelegate>()
               .go(ResetPasswordRoute(instanceUri: instanceConfig.url, email: email, token: token))
           : null,
+      openIDProviders: instanceConfig.openIDProviers,
     );
   }
 
