@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:uri/uri.dart';
-import 'package:url_launcher/url_launcher.dart';
+
+import 'oauth_stub.dart' if (dart.library.js_interop) 'oauth_web.dart' if (dart.library.ffi) 'oauth_vm.dart';
 
 class PasswordLoginFragment extends StatefulWidget {
   final Function()? onBackPressed;
@@ -112,11 +113,7 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
                 builder.queryParameters['response_type'] = 'code';
                 builder.queryParameters['redirect_uri'] = redirectBuilder.toString();
                 builder.queryParameters['scope'] = 'openid email profile';
-
-                for (final m in LaunchMode.values) {
-                  print('$m: ${await supportsLaunchMode(m)}');
-                }
-                launchUrl(builder.build());
+                startOAuthFlow(builder.build());
               },
               child: Text('Log In with ${p.name}'))),
           Row(

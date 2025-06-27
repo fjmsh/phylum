@@ -125,14 +125,21 @@ class _AccountSelectorState extends State<AccountSelector> {
       );
     }
 
-    final route = context.select<PhylumRouterDelegate, ResetPasswordRoute?>((state) =>
+    final resetRoute = context.select<PhylumRouterDelegate, ResetPasswordRoute?>((state) =>
         state.currentConfiguration is ResetPasswordRoute ? state.currentConfiguration as ResetPasswordRoute : null);
-    if (route != null) {
+    if (resetRoute != null) {
       return ResetPasswordPage(
-        instanceUrl: route.instanceUri,
-        email: route.email,
-        token: route.token,
+        instanceUrl: resetRoute.instanceUri,
+        email: resetRoute.email,
+        token: resetRoute.token,
       );
+    }
+
+    final oauthLoginRoute = context.select<PhylumRouterDelegate, OAuthLoginRoute?>((state) {
+      return state.currentConfiguration is OAuthLoginRoute ? state.currentConfiguration as OAuthLoginRoute : null;
+    });
+    if (oauthLoginRoute != null) {
+      print('Code: ${oauthLoginRoute.code}');
     }
 
     final account =

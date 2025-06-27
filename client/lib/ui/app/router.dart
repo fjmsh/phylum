@@ -125,8 +125,15 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
         }
         return SynchronousFuture(ExplorerRouteSearch(query: query));
       }
-    } else if (segments.length == 2 && segments[0] == 'folder') {
-      return SynchronousFuture(ExplorerRouteFolder(folderId: segments[1]));
+    } else if (segments.length == 2) {
+      if (segments[0] == 'login' && segments[1] == 'oauth') {
+        return SynchronousFuture(OAuthLoginRoute(
+          code: uri.queryParameters['code'] ?? '',
+        ));
+      }
+      if (segments[0] == 'folder') {
+        return SynchronousFuture(ExplorerRouteFolder(folderId: segments[1]));
+      }
     }
     return SynchronousFuture(ExplorerRouteFolder(folderId: 'unknown'));
   }

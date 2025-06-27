@@ -14,6 +14,15 @@ sealed class PhylumRoute {
   const PhylumRoute();
 }
 
+class OAuthLoginRoute extends PhylumRoute {
+  final String code;
+
+  OAuthLoginRoute({required this.code});
+
+  @override
+  Uri get uri => Uri(path: '/login/oauth');
+}
+
 class ResetPasswordRoute extends PhylumRoute {
   final Uri instanceUri;
   final String email;
