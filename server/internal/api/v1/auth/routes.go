@@ -64,7 +64,7 @@ func handlePasswordAuth(c *gin.Context) {
 	var token string
 	var response responses.Bootstrap
 	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
-		if user, t, err := auth.CreateAccessToken(db, params.Email, params.Password); err != nil {
+		if user, t, err := auth.PerformPasswordLogin(db, params.Email, params.Password); err != nil {
 			return err
 		} else if r, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
 			return err

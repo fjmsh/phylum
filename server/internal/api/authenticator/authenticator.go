@@ -41,7 +41,7 @@ func extractUserDetails(c *gin.Context) (core.User, error) {
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		if cookie, err := c.Request.Cookie("auth_token"); err == nil {
 			token := cookie.Value
-			if u, err := auth.ReadAccessToken(db, token); err == nil {
+			if u, err := auth.VerifyAccessToken(db, token); err == nil {
 				return u, nil
 			} else {
 				return core.User{}, err
@@ -59,7 +59,7 @@ func extractUserDetails(c *gin.Context) (core.User, error) {
 			}
 		}
 	} else if token, ok := checkAuthHeader(header, "bearer"); ok {
-		if u, err := auth.ReadAccessToken(db, token); err == nil {
+		if u, err := auth.VerifyAccessToken(db, token); err == nil {
 			return u, nil
 		} else {
 			return core.User{}, err
