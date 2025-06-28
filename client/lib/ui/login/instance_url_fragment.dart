@@ -1,9 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:uri/uri.dart';
+
+import 'package:phylum/util/base_uri_stub.dart' if (dart.library.js_interop) 'package:phylum/util/base_uri_web.dart';
 
 class InstanceUrlFragment extends StatefulWidget {
   final Function(InstanceConfig) onInstanceSelected;
@@ -15,35 +16,30 @@ class InstanceUrlFragment extends StatefulWidget {
 }
 
 class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
-  Uri? _url;
+  Uri? _url = webAppBaseUri;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       spacing: 12.0,
       children: [
-        TextField(
+        TextFormField(
           decoration: InputDecoration(
             label: const Text('Instance URL'),
             hintText: 'https://phylum.example.com',
           ),
+          initialValue: webAppBaseUri?.toString(),
+          autofocus: true,
           autofillHints: const [AutofillHints.url],
           keyboardType: TextInputType.url,
           onChanged: (value) {
-            final Uri? url;
-            if (kIsWeb) {
-              url = value == '' ? Uri() : Uri.tryParse(value);
-            } else {
-              final tempUrl = Uri.tryParse(value);
-              if (tempUrl != null && (kIsWeb || tempUrl.hasAuthority && tempUrl.hasScheme)) {
-                url = tempUrl;
-              } else {
-                url = null;
-              }
+            var url = value == '' ? webAppBaseUri : Uri.tryParse(value);
+            if (url != null && (!url.hasAuthority || !url.hasScheme)) {
+              url = null;
             }
             setState(() => _url = url);
           },
-          onSubmitted: _url == null ? null : (value) => checkConfig(_url!),
+          onFieldSubmitted: _url == null ? null : (value) => checkConfig(_url!),
         ),
         ElevatedButton(onPressed: _url == null ? null : () => checkConfig(_url!), child: Text('Next'))
       ],

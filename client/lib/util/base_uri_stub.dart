@@ -1,1 +1,1 @@
-Uri get webAppBaseUri => Uri();
+Uri? get webAppBaseUri => null;

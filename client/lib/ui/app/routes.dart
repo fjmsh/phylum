@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -11,6 +10,7 @@ import 'package:phylum/libphylum/requests/shared_resources_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/layout/app_layout.dart';
 import 'package:phylum/ui/login/login_page.dart';
+import 'package:phylum/ui/login/oauth_login_page.dart';
 import 'package:phylum/ui/login/reset_password_page.dart';
 import 'package:provider/provider.dart';
 
@@ -24,15 +24,19 @@ sealed class PhylumRoute {
 
 class OAuthLoginRoute extends PhylumRoute {
   final String code;
+  final String state;
 
-  OAuthLoginRoute({required this.code});
+  OAuthLoginRoute({required this.code, required this.state});
 
   @override
   Uri get uri => Uri(path: '/login/oauth');
 
   @override
   Widget buildPage(BuildContext context) {
-    return const LoginPage();
+    return OAuthLoginPage(
+      code: code,
+      state: state,
+    );
   }
 }
 
@@ -71,7 +75,7 @@ sealed class ExplorerRoute extends PhylumRoute {
         context.select<AccountManagerState<PhylumAccount>, PhylumAccount?>((state) => state.selectedAccount);
 
     if (account == null) {
-      return kDebugMode ? const LoginPage() : LoginPage(fixedInstanceUrl: Uri());
+      return const LoginPage();
     }
     return AppLayout.create(account);
   }

@@ -1,1 +1,3 @@
-void startOAuthFlow(Uri oAuthUrl) => throw UnimplementedError();
+import 'package:uri/uri.dart';
+
+void startOAuthFlow(UriBuilder oAuthUriBuilder, Uri instanceUrl) => throw UnimplementedError();

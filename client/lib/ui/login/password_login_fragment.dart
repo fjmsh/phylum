@@ -1,27 +1,30 @@
+import 'dart:convert';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
+import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
+import 'package:phylum/ui/app/router.dart';
+import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/login/instance_config.dart';
+import 'package:phylum/ui/login/request.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/logging.dart';
+import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
 import 'oauth_stub.dart' if (dart.library.js_interop) 'oauth_web.dart' if (dart.library.ffi) 'oauth_vm.dart';
 
 class PasswordLoginFragment extends StatefulWidget {
+  final InstanceConfig instanceConfig;
   final Function()? onBackPressed;
-  final Uri instanceUrl;
-  final Function(String, String)? requestLogin;
-  final Function(String)? requestPasswordReset;
-  final Function(String, String)? resetPassword;
-  final List<OpenIDProvider> openIDProviders;
 
   const PasswordLoginFragment({
     super.key,
+    required this.instanceConfig,
     required this.onBackPressed,
-    required this.instanceUrl,
-    required this.requestLogin,
-    required this.requestPasswordReset,
-    required this.resetPassword,
-    required this.openIDProviders,
   });
 
   @override
@@ -38,7 +41,11 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
       child: Column(
         spacing: 12.0,
         children: [
-          if (widget.requestLogin != null)
+          ListTile(
+            title: Text(widget.instanceConfig.url.toString()),
+            trailing: IconButton(onPressed: widget.onBackPressed, icon: Icon(Icons.edit)),
+          ),
+          if (widget.instanceConfig.hasEmailLogin)
             TextField(
               decoration: const InputDecoration(
                 label: Text('Email'),
@@ -47,7 +54,7 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
               autofillHints: const [AutofillHints.email],
               onChanged: (value) => setState(() => _email = value.trim()),
             ),
-          if (widget.requestLogin != null)
+          if (widget.instanceConfig.password)
             TextField(
               decoration: const InputDecoration(
                 label: Text('Password'),
@@ -56,9 +63,17 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
               keyboardType: TextInputType.visiblePassword,
               autofillHints: const [AutofillHints.password],
               onChanged: (value) => setState(() => _password = value),
-              onSubmitted: _email.isEmpty ? null : (value) => widget.requestLogin!(_email, _password),
+              onSubmitted: _email.isEmpty
+                  ? null
+                  : (value) => _performLogin(context, widget.instanceConfig.url, _email, _password),
             ),
-          if (widget.requestPasswordReset != null)
+          ElevatedButton(
+            onPressed: _email.isEmpty || _password.isEmpty
+                ? null
+                : () => _performLogin(context, widget.instanceConfig.url, _email, _password),
+            child: Text('Login'),
+          ),
+          if (widget.instanceConfig.passwordReset)
             TextButton(
               child: Text('Reset Password', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
               onPressed: () async {
@@ -84,7 +99,8 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
                                 await showInputDialog(context, labelText: 'Reset Token', barrierDismissable: true);
                             if (token == null || !context.mounted) return;
                             Navigator.of(context).pop(false);
-                            widget.resetPassword!(_email, token);
+                            context.read<PhylumRouterDelegate>().go(ResetPasswordRoute(
+                                instanceUri: widget.instanceConfig.url, email: _email, token: token));
                           },
                       ),
                     ],
@@ -101,43 +117,75 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
                     ) ??
                     false;
                 if (!confirm || !context.mounted) return;
-                widget.requestPasswordReset!(_email);
+                _requestPasswordReset(context, widget.instanceConfig.url, _email);
               },
             ),
-          ...widget.openIDProviders.map((p) => ElevatedButton(
+          ...widget.instanceConfig.openIDProviers.map((p) => ElevatedButton(
               onPressed: () async {
                 final builder = UriBuilder.fromUri(Uri.parse(p.endpoint));
-                final redirectBuilder = UriBuilder.fromUri(widget.instanceUrl);
-                redirectBuilder.path = '/login/oauth';
                 builder.queryParameters['client_id'] = p.clientID;
                 builder.queryParameters['response_type'] = 'code';
-                builder.queryParameters['redirect_uri'] = redirectBuilder.toString();
                 builder.queryParameters['scope'] = 'openid email profile';
-                startOAuthFlow(builder.build());
+                startOAuthFlow(builder, widget.instanceConfig.url);
               },
               child: Text('Log In with ${p.name}'))),
-          Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.end,
-            spacing: 12.0,
-            children: [
-              if (widget.onBackPressed != null)
-                TextButton(
-                  onPressed: widget.onBackPressed,
-                  child: Text(
-                    'Back',
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
-                  ),
-                ),
-              if (widget.requestLogin != null)
-                ElevatedButton(
-                  onPressed: _email.isEmpty || _password.isEmpty ? null : () => widget.requestLogin!(_email, _password),
-                  child: Text('Login'),
-                ),
-            ],
-          ),
         ],
       ),
     );
+  }
+
+  Future<void> _performLogin(BuildContext context, Uri instanceUri, String email, String password) async {
+    final builder = UriBuilder.fromUri(instanceUri);
+    builder.path = '${builder.path}/api/v1/auth/password';
+    final request = MultipartRequest('post', builder.build());
+    request.fields['email'] = email;
+    request.fields['password'] = password;
+
+    final responseString = await sendRequest(context, 'Logging In', request);
+    if (responseString == null) return;
+    if (context.mounted) {
+      final accountManager = context.read<AccountManager<PhylumAccount>>();
+      final navigator = Navigator.of(context);
+      showProgressDialog(context, barrierDismissible: false, message: 'Logging In');
+      try {
+        final response =
+            BootstrapLoginResponse.fromResponse((jsonDecode(responseString) as Map).cast<String, dynamic>());
+        final account = await PhylumAccount.create(
+          serverUrl: instanceUri,
+          accessToken: response.accessToken!,
+          user: response.user,
+        );
+        await response.process(account);
+        await accountManager.addAccount(account);
+        navigator.pop();
+      } catch (e, stack) {
+        navigator.pop();
+        if (context.mounted) {
+          showAlertDialog(
+            context,
+            barrierDismissible: false,
+            title: 'Error',
+            message: e.toString(),
+          );
+        }
+        logger.w('Login Error', error: e, stackTrace: stack);
+      }
+    }
+  }
+
+  Future<void> _requestPasswordReset(BuildContext context, Uri instanceUrl, String email) async {
+    final builder = UriBuilder.fromUri(instanceUrl);
+    builder.path = '${builder.path}/api/v1/auth/request-password-reset';
+    final request = MultipartRequest('post', builder.build());
+    request.fields['email'] = email;
+
+    final responseString = await sendRequest(context, 'Requesting Password Reset', request);
+    if (responseString == null) return;
+    if (context.mounted) {
+      await showAlertDialog(
+        context,
+        title: 'Password Reset Requested',
+      );
+    }
   }
 }
