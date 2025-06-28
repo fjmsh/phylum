@@ -54,7 +54,7 @@ func Init(cfg Config, log zerolog.Logger) error {
 		return errors.New("password backend not recognized: " + cfg.Password.Backend)
 	}
 
-	return openid.Init(cfg.OpenIDProviders, log)
+	return openid.Init(cfg.OpenID, log)
 }
 
 func generateRandomString(n int) string {

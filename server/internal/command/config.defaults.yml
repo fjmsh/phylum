@@ -47,12 +47,13 @@ auth:
         bind_password: 
         base_dn:
         filter_template:
-  # openid_providers:
-  #   - id: google
-  #     name: Google
-  #     issuer_url: https://accounts.google.com
-  #     client_id:
-  #     client_secret:
+  # openid:
+  #   clients:
+  #     - id: google
+  #       name: Google
+  #       issuer_url: https://accounts.google.com
+  #       client_id:
+  #       client_secret:
 
       
 jobs: 

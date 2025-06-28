@@ -23,9 +23,9 @@ type Provider struct {
 
 var log zerolog.Logger
 
-func Init(cfg []ClientConfig, l zerolog.Logger) error {
+func Init(cfg Config, l zerolog.Logger) error {
 	log = l.With().Str("c", "auth.openid").Logger()
-	for _, c := range cfg {
+	for _, c := range cfg.Clients {
 		clients[c.ID] = c
 		if _, err := getProviderConfig(c.IssuerURL); err != nil {
 			log.Warn().Err(err).Str("id", c.ID).Str("issuer_url", c.IssuerURL).Msg("Unable to get OpenID config")

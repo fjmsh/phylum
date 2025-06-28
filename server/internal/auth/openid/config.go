@@ -1,5 +1,9 @@
 package openid
 
+type Config struct {
+	Clients []ClientConfig `koanf:"clients"`
+}
+
 type ClientConfig struct {
 	ID           string `koanf:"id"`
 	Name         string `koanf:"name"`
