@@ -12,25 +12,26 @@ import (
 	"github.com/pquerna/cachecontrol"
 )
 
-type cachedConfiguration struct {
+type cachedProviderConfig struct {
 	expires       time.Time
 	lastModified  string
-	configuration *OpenIDConfiguration
+	configuration *ProviderConfig
 }
 
-type OpenIDConfiguration struct {
+type ProviderConfig struct {
 	AuthorizationEndpoint string `json:"authorization_endpoint"`
+	TokenEndpoint         string `json:"token_endpoint"`
 }
 
 var mu = &sync.RWMutex{}
-var cache = make(map[string]cachedConfiguration)
+var cache = make(map[string]cachedProviderConfig)
 
-func getOpenIDConfiguration(issuerURL string) (*OpenIDConfiguration, error) {
+func getProviderConfig(issuerURL string) (*ProviderConfig, error) {
 	if cached := getCached(issuerURL); cached != nil {
 		return cached, nil
 	}
 
-	var config OpenIDConfiguration
+	var config ProviderConfig
 	if url, err := url.JoinPath(issuerURL, ".well-known/openid-configuration"); err != nil {
 		return nil, err
 	} else if req, err := http.NewRequest("GET", url, nil); err != nil {
@@ -54,7 +55,7 @@ func getOpenIDConfiguration(issuerURL string) (*OpenIDConfiguration, error) {
 	}
 }
 
-func getCached(issuerURL string) *OpenIDConfiguration {
+func getCached(issuerURL string) *ProviderConfig {
 	mu.RLock()
 	c, ok := cache[issuerURL]
 	mu.RUnlock()
@@ -72,7 +73,7 @@ func getCached(issuerURL string) *OpenIDConfiguration {
 	}
 }
 
-func putCached(issuerURL string, config *OpenIDConfiguration, req *http.Request, res *http.Response) {
+func putCached(issuerURL string, config *ProviderConfig, req *http.Request, res *http.Response) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -83,7 +84,7 @@ func putCached(issuerURL string, config *OpenIDConfiguration, req *http.Request,
 		if lastModifiedHeader != nil {
 			lastModified = lastModifiedHeader[0]
 		}
-		cache[issuerURL] = cachedConfiguration{
+		cache[issuerURL] = cachedProviderConfig{
 			expires:       expires,
 			lastModified:  lastModified,
 			configuration: config,
@@ -91,7 +92,7 @@ func putCached(issuerURL string, config *OpenIDConfiguration, req *http.Request,
 	}
 }
 
-func renewCached(issuerURL string, req *http.Request, res *http.Response) (*OpenIDConfiguration, error) {
+func renewCached(issuerURL string, req *http.Request, res *http.Response) (*ProviderConfig, error) {
 	mu.Lock()
 	defer mu.Unlock()
 

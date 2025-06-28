@@ -1,6 +1,6 @@
 package openid
 
-type ProviderConfig struct {
+type ClientConfig struct {
 	ID           string `koanf:"id"`
 	Name         string `koanf:"name"`
 	IssuerURL    string `koanf:"issuer_url"`

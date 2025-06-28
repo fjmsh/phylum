@@ -7,9 +7,9 @@ import (
 )
 
 type Config struct {
-	AutoCreateDomains []string                `koanf:"auto_create_domains"`
-	Password          PasswordConfig          `koanf:"password"`
-	OpenIDProviders   []openid.ProviderConfig `koanf:"openid_providers"`
+	AutoCreateDomains []string              `koanf:"auto_create_domains"`
+	Password          PasswordConfig        `koanf:"password"`
+	OpenIDProviders   []openid.ClientConfig `koanf:"openid_providers"`
 }
 
 type PasswordConfig struct {
