@@ -8,7 +8,7 @@ import (
 )
 
 func (f FileSystem) CreateMount(path string, backend storage.Backend) error {
-	r, err := f.ResourceByPath(path)
+	r, err := f.ResourceByPathWithRoot(path)
 	if err != nil {
 		fmt.Println("failed to locate resource: " + err.Error())
 		os.Exit(1)
