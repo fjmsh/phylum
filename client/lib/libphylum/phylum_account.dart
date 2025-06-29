@@ -13,7 +13,7 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/logging.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-const _persistKeyAccessToken = 'accessToken';
+const _persistKeyApiKey = 'apiKey';
 const _persistKeyBootstrapUntil = 'bootstrapUntil';
 
 AccountManager<PhylumAccount> createAccountManager(bool autoInitialize) => AccountManager(
@@ -45,11 +45,11 @@ class PhylumAccount extends Account<PhylumAccount> {
 
   AccountUser? _initialUser;
 
-  String? _accessToken;
-  set accessToken(String value) {
-    _accessToken = value;
-    persist(_persistKeyAccessToken, value);
-    apiClient.setHeader('Authorization', 'bearer $value');
+  String? _apiKey;
+  set apiKey(String value) {
+    _apiKey = value;
+    persist(_persistKeyApiKey, value);
+    apiClient.setHeader('Authorization', 'api-key $value');
   }
 
   late AccountUserNotifier _userNotifier;
@@ -64,16 +64,16 @@ class PhylumAccount extends Account<PhylumAccount> {
     persist(_persistKeyBootstrapUntil, value);
   }
 
-  PhylumAccount._create({required super.serverUrl, required String accessToken, required AccountUser user})
-      : _accessToken = accessToken,
+  PhylumAccount._create({required super.serverUrl, required String apiKey, required AccountUser user})
+      : _apiKey = apiKey,
         _initialUser = user,
         super.create();
 
   PhylumAccount.restore({required super.id}) : super.restore();
 
   static Future<PhylumAccount> create(
-      {required Uri serverUrl, required String accessToken, required AccountUser user}) async {
-    final account = PhylumAccount._create(serverUrl: serverUrl, accessToken: accessToken, user: user);
+      {required Uri serverUrl, required String apiKey, required AccountUser user}) async {
+    final account = PhylumAccount._create(serverUrl: serverUrl, apiKey: apiKey, user: user);
     await account.setup();
     return account;
   }
@@ -81,15 +81,15 @@ class PhylumAccount extends Account<PhylumAccount> {
   @override
   Future<void> initialize() async {
     await super.initialize();
-    if (_accessToken == null) {
-      _accessToken = getPersisted(_persistKeyAccessToken);
-      if (_accessToken == null) {
+    if (_apiKey == null) {
+      _apiKey = getPersisted(_persistKeyApiKey);
+      if (_apiKey == null) {
         throw 'Could not restore access token';
       }
     } else {
-      persist(_persistKeyAccessToken, _accessToken);
+      persist(_persistKeyApiKey, _apiKey);
     }
-    apiClient.setHeader('Authorization', 'bearer $_accessToken');
+    apiClient.setHeader('Authorization', 'api-key $_apiKey');
 
     if (_initialUser != null) {
       _userNotifier = AccountUserNotifier.fromUser(this, _initialUser!);

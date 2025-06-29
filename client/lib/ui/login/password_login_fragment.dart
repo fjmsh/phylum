@@ -151,7 +151,7 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
             BootstrapLoginResponse.fromResponse((jsonDecode(responseString) as Map).cast<String, dynamic>());
         final account = await PhylumAccount.create(
           serverUrl: instanceUri,
-          accessToken: response.accessToken!,
+          apiKey: response.apiKey!,
           user: response.user,
         );
         await response.process(account);

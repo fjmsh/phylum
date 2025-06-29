@@ -84,7 +84,7 @@ class _OAuthLoginPageState extends State<OAuthLoginPage> {
           final response = BootstrapLoginResponse.fromResponse(responseMap);
           final account = await PhylumAccount.create(
             serverUrl: instanceUrl,
-            accessToken: response.accessToken!,
+            apiKey: response.apiKey!,
             user: response.user,
           );
           await response.process(account);

@@ -1,7 +1,7 @@
 part of 'responses.dart';
 
 class BootstrapLoginResponse extends PhylumApiSuccessResponse {
-  final String? accessToken;
+  final String? apiKey;
   final AccountUser user;
   final Iterable<Bookmark> bookmarks;
   final Iterable<User> users;
@@ -9,7 +9,7 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
   final int until;
 
   BootstrapLoginResponse._({
-    required this.accessToken,
+    required this.apiKey,
     required this.user,
     required this.bookmarks,
     required this.users,
@@ -21,7 +21,7 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
     final bookmarks = (data["bookmarks"] as List).cast<Map>().map((u) => parseBookmark(u.cast<String, dynamic>()));
     final users = (data["users"] as List).cast<Map>().map((u) => parseUser(u.cast<String, dynamic>()));
     return BootstrapLoginResponse._(
-        accessToken: data['access_token'],
+        apiKey: data['api_key'],
         user: parseAccountUser(data['user']),
         bookmarks: bookmarks,
         users: users,
