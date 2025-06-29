@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"errors"
 	"io"
 	"net/http"
 
@@ -71,7 +72,7 @@ func handleUploadRequest(c *gin.Context) {
 			return out.Close()
 		}
 	}()
-	if err != nil {
+	if err != nil && !errors.Is(err, core.ErrIDConflict) {
 		panic(err)
 	}
 

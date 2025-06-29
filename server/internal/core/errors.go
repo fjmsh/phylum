@@ -36,11 +36,11 @@ func Is(err, target error) bool {
 }
 
 var (
+	ErrIDConflict                     = NewError(http.StatusConflict, "id_conflict", "ID conflict detected. A previous attempt may have succeeded")
 	ErrInsufficientPermissions        = NewError(http.StatusUnauthorized, "insufficient_permissions", "Insufficient permissions")
 	ErrResourceNotFound               = NewError(http.StatusNotFound, "resource_not_found", "No such file or directory")
 	ErrResourceNotCollection          = NewError(http.StatusMethodNotAllowed, "resource_not_collection", "Cannot add a member to a non-collection resource")
 	ErrResourceCollection             = NewError(http.StatusMethodNotAllowed, "resource_collection", "Cannot write contents to a collection resource")
-	ErrResourceIDConflict             = NewError(http.StatusConflict, "resource_id_conflict", "Another resource with this ID already exists on the server. A previous attempt may have succeeded")
 	ErrResourcePathInvalid            = NewError(http.StatusBadRequest, "resource_path_invalid", "Resource path is invalid")
 	ErrResourceNameInvalid            = NewError(http.StatusBadRequest, "resource_name_invalid", "Resource name is invalid")
 	ErrResourceNameConflict           = NewError(http.StatusPreconditionFailed, "resource_name_conflict", "Another resource with this name already exists")

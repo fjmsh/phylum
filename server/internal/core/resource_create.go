@@ -235,7 +235,21 @@ func resolveConflictAndInsertResource(
 ) (res Resource, created bool, deleted bool, err error) {
 	switch conflictResolution {
 	case ResourceBindConflictResolutionError:
-		// Nothing to do. We will try inserting below, and fail in case of name conflict
+		var rID uuid.UUID
+		if rID, _, err = childResourceIDByName(db, parent, name); err == nil {
+			if rID == requestedID {
+				res, err = resourceByID(db, rID, -1)
+				res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
+				res.inheritedPermissions = permissions
+				res.permissions = permissions
+				return res, true, false, err
+			} else {
+				return Resource{}, false, false, ErrResourceNameConflict
+			}
+		} else {
+			// There is no name conflict. Proceed as usual
+			err = nil
+		}
 	case ResourceBindConflictResolutionEnsure:
 		var rID uuid.UUID
 		var rDir bool
@@ -244,6 +258,8 @@ func resolveConflictAndInsertResource(
 				// Return the existing resourc
 				res, err := resourceByID(db, rID, -1)
 				res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
+				res.inheritedPermissions = permissions
+				res.permissions = permissions
 				return res, false, false, err
 			} else {
 				return Resource{}, false, false, ErrResourceNameConflict
@@ -265,6 +281,8 @@ func resolveConflictAndInsertResource(
 				if err == nil {
 					res, err := resourceByID(db, rID, -1)
 					res.visibleParent = pgtype.UUID{Bytes: parent, Valid: true}
+					res.inheritedPermissions = permissions
+					res.permissions = permissions
 					return res, false, true, err
 				}
 			} else {
@@ -327,7 +345,7 @@ func insertResource(db db.TxHandler, id, parent uuid.UUID, name string, dir bool
 		}
 		if strings.Contains(err.Error(), "resources_pkey") {
 			// maybe the request already succeeded in the previous attempt but the client didn't receive the response?
-			err = ErrResourceIDConflict
+			err = ErrIDConflict
 		}
 		return Resource{}, err
 	} else {
@@ -358,6 +376,9 @@ func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64,
 		"storage":     storage.DefaultBackendName,
 	}
 	_, err := db.Exec(q, args)
+	if err != nil && strings.Contains(err.Error(), "resource_versions_pkey") {
+		return ErrIDConflict
+	}
 	return err
 }
 
