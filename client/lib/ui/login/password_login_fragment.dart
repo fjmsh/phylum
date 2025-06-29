@@ -125,6 +125,7 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
                 final builder = UriBuilder.fromUri(widget.instanceConfig.url);
                 builder.path += '/api/v1/auth/oauth/start';
                 builder.queryParameters['provider'] = p.id;
+                showProgressDialog(context, barrierDismissible: false, message: 'Logging in with ${p.name}...');
                 startOAuthFlow(builder);
               },
               child: Text('Log In with ${p.name}'))),
