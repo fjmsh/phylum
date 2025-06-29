@@ -46,6 +46,7 @@ class ResourceInfoResponse extends PhylumApiSuccessResponse {
         Set.of(await (db.select(db.resources)..where((t) => t.parent.equals(root.resource.id))).map((r) => r.id).get());
     existing.removeAll(children.map((r) => r.resource.id));
     final removedChildren = List.of(existing, growable: false);
+    final versions = resources.map((r) => r.versions).fold(<ResourceVersion>[], (acc, e) => acc..addAll(e));
 
     await db.batch((batch) async {
       for (final id in removedChildren) {
@@ -53,7 +54,6 @@ class ResourceInfoResponse extends PhylumApiSuccessResponse {
       }
       batch.insertAllOnConflictUpdate(db.resources, ancestors);
       batch.insertAll(db.resources, resources.map((r) => r.resource), mode: InsertMode.insertOrReplace);
-      final versions = resources.map((r) => r.versions).fold(<ResourceVersion>[], (acc, e) => acc..addAll(e));
       batch.insertAll(db.resourceVersions, versions, mode: InsertMode.insertOrReplace);
 
       for (final id in orphanedPublinks) {
@@ -71,9 +71,13 @@ class ResourceInfoResponse extends PhylumApiSuccessResponse {
       await repo.reloadRemoteData(a.id.value);
     }
     // This resource and its children are fully parsed, so the incoming object can replace the existing one
-    await repo.replaceRemoteData(root.resource.id, root.resource);
     for (final r in resources) {
       await repo.replaceRemoteData(r.resource.id, r.resource);
+    }
+
+    final versionRepo = account.datastore.get<ResourceVersion>();
+    for (final v in versions) {
+      await versionRepo.replaceRemoteData(v.id, v);
     }
 
     final publinkRepo = account.datastore.get<Publink>();

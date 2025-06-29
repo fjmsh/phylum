@@ -63,8 +63,12 @@ class ResourceResponse extends PhylumApiSuccessResponse {
       batch.insertAll(db.publinks, publinks, mode: InsertMode.insertOrReplace);
     });
 
-    final repo = account.datastore.get<Resource>();
-    await repo.replaceRemoteData(resource.id, resource);
+    await account.datastore.get<Resource>().replaceRemoteData(resource.id, resource);
+
+    final versionRepo = account.datastore.get<ResourceVersion>();
+    for (final v in versions) {
+      await versionRepo.replaceRemoteData(v.id, v);
+    }
 
     final publinkRepo = account.datastore.get<Publink>();
     for (final id in orphanedPublinks) {
