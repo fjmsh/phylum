@@ -19,6 +19,14 @@ func NewError(httpStatus int, code, msg string) error {
 	}
 }
 
+func NewServerError(msg string) error {
+	return &Error{
+		Status:  http.StatusInternalServerError,
+		Code:    "internal_server_error",
+		Message: msg,
+	}
+}
+
 func (e Error) Error() string {
 	return e.Message
 }

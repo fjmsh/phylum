@@ -2,7 +2,6 @@ package openid
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -75,6 +74,8 @@ func GetIDToken(providerName, authCode, redirectURI string) (idToken IDToken, er
 			return idToken, errors.New("failed to create token request: " + err.Error())
 		} else if res, err := http.DefaultClient.Do(req); err != nil {
 			return idToken, errors.New("failed to get token response: " + err.Error())
+		} else if res.StatusCode != http.StatusOK {
+			return idToken, fmt.Errorf("id token request failed with status %d (%s)", res.StatusCode, res.Status)
 		} else {
 			return extractIDToken(res)
 		}
@@ -82,8 +83,6 @@ func GetIDToken(providerName, authCode, redirectURI string) (idToken IDToken, er
 }
 
 func extractIDToken(res *http.Response) (idToken IDToken, err error) {
-	if res.StatusCode != http.StatusOK {
-	}
 	var response tokenResponse
 	defer res.Body.Close()
 	if bodyBytes, err := io.ReadAll(res.Body); err != nil {
@@ -108,10 +107,4 @@ type tokenResponse struct {
 type IDToken struct {
 	Email    string `json:"email"`
 	FullName string `json:"full_name"`
-}
-
-func generateRandomString(n int) string {
-	b := make([]byte, n*3/4)
-	rand.Read(b)
-	return base64.URLEncoding.EncodeToString(b)
 }

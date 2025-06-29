@@ -15,7 +15,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var cfg Config
+var autoCreateDomains []string
+var passwordConfig PasswordConfig
 var passwordBackend PasswordBackend
 
 const apiTokenLength = 32
@@ -42,6 +43,9 @@ func OpenIDProviders() []openid.Provider {
 }
 
 func Init(cfg Config, log zerolog.Logger) error {
+	autoCreateDomains = cfg.AutoCreateDomains
+	passwordConfig = cfg.Password
+
 	if cfg.Password.Backend == "crypt" {
 		passwordBackend = &crypt.Auth{}
 	} else if cfg.Password.Backend == "ldap" {

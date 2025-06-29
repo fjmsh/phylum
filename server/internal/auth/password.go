@@ -22,7 +22,7 @@ func VerifyUserPassword(d db.Handler, email, password string) (core.User, error)
 	}
 	user, err := core.UserByEmail(d, email)
 	if errors.Is(err, core.ErrUserNotFound) {
-		for _, domain := range cfg.AutoCreateDomains {
+		for _, domain := range autoCreateDomains {
 			if strings.HasSuffix(strings.ToLower(email), "@"+strings.ToLower(domain)) {
 				err = d.RunInTx(func(db db.TxHandler) error {
 					user, err = core.CreateUser(db, email, "", false)
