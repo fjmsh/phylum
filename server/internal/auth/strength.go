@@ -40,25 +40,25 @@ func init() {
 }
 
 func checkPasswordStrength(password string) error {
-	if len(password) < passwordConfig.Requirements.Length {
-		return &PasswordStrengthError{Reason: "password must be at least " + strconv.Itoa(passwordConfig.Requirements.Length) + " characters long."}
+	if len(password) < passwordRequirements.Length {
+		return &PasswordStrengthError{Reason: "password must be at least " + strconv.Itoa(passwordRequirements.Length) + " characters long."}
 	}
 	count := map[charType]int{}
 	for _, c := range password {
 		count[charTypes[c]]++
 	}
 
-	if count[charTypeLower] < passwordConfig.Requirements.Lower {
-		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(passwordConfig.Requirements.Lower) + " lower case."}
+	if count[charTypeLower] < passwordRequirements.Lower {
+		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(passwordRequirements.Lower) + " lower case."}
 	}
-	if count[charTypeUpper] < passwordConfig.Requirements.Upper {
-		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(passwordConfig.Requirements.Upper) + " upper case."}
+	if count[charTypeUpper] < passwordRequirements.Upper {
+		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(passwordRequirements.Upper) + " upper case."}
 	}
-	if count[charTypeNumeric] < passwordConfig.Requirements.Numeric {
-		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(passwordConfig.Requirements.Numeric) + " numeric."}
+	if count[charTypeNumeric] < passwordRequirements.Numeric {
+		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(passwordRequirements.Numeric) + " numeric."}
 	}
-	if count[charTypeSymbol] < passwordConfig.Requirements.Symbols {
-		return &PasswordStrengthError{"password must have at least " + strconv.Itoa(passwordConfig.Requirements.Symbols) + " symbols."}
+	if count[charTypeSymbol] < passwordRequirements.Symbols {
+		return &PasswordStrengthError{"password must have at least " + strconv.Itoa(passwordRequirements.Symbols) + " symbols."}
 	}
 	return nil
 }

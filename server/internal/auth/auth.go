@@ -18,7 +18,7 @@ import (
 )
 
 var autoCreate []*regexp.Regexp
-var passwordConfig PasswordConfig
+var passwordRequirements PasswordRequirements
 var passwordBackend PasswordBackend
 
 const apiKeyLength = 32
@@ -45,9 +45,10 @@ func OpenIDProviders() []openid.Provider {
 }
 
 func Init(cfg Config, log zerolog.Logger) error {
-	passwordConfig = cfg.Password
+	passwordRequirements = cfg.Password.Requirements
 
 	if cfg.Password.Backend == "crypt" {
+		crypt.Cfg = cfg.Password.Crypt
 		passwordBackend = &crypt.Auth{}
 	} else if cfg.Password.Backend == "ldap" {
 		if a, err := ldap.NewAuth(cfg.Password.LDAP, log); err != nil {
