@@ -76,7 +76,7 @@ func handleUploadRequest(c *gin.Context) {
 	}
 
 	// id may have changed if this is an overwrite
-	r, err := f.ResourceByPath(params.Path)
+	r, err := f.ResourceByPathWithRoot(params.Path)
 	if err != nil {
 		panic(err)
 	}

@@ -68,8 +68,8 @@ func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
 		return nil, err
 	}
 	return &callbackWriteCloser{dest: f, closeCallback: func(err error) error {
-		defer os.Remove(f.Name())
 		if err != nil {
+			os.Remove(f.Name())
 			return err
 		}
 		return os.Rename(f.Name(), l.path(name))
