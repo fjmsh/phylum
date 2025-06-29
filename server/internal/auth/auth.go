@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
@@ -59,6 +60,15 @@ func Init(cfg Config, log zerolog.Logger) error {
 	}
 
 	return openid.Init(cfg.OpenID, log)
+}
+
+func shouldAutoCreate(email string) bool {
+	for _, domain := range autoCreateDomains {
+		if strings.HasSuffix(strings.ToLower(email), "@"+strings.ToLower(domain)) {
+			return true
+		}
+	}
+	return false
 }
 
 func generateRandomString(n int) string {

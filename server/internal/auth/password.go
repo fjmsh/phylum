@@ -15,21 +15,18 @@ type PasswordBackend interface {
 }
 
 func VerifyUserPassword(d db.Handler, email, password string) (core.User, error) {
+	email = strings.ToLower(email)
 	if b, err := passwordBackend.VerifyUserPassword(d, email, password); err != nil {
 		return core.User{}, err
 	} else if !b {
 		return core.User{}, ErrCredentialsInvalid
 	}
 	user, err := core.UserByEmail(d, email)
-	if errors.Is(err, core.ErrUserNotFound) {
-		for _, domain := range autoCreateDomains {
-			if strings.HasSuffix(strings.ToLower(email), "@"+strings.ToLower(domain)) {
-				err = d.RunInTx(func(db db.TxHandler) error {
-					user, err = core.CreateUser(db, email, "", false)
-					return err
-				})
-			}
-		}
+	if errors.Is(err, core.ErrUserNotFound) && shouldAutoCreate(email) {
+		err = d.RunInTx(func(db db.TxHandler) error {
+			user, err = core.CreateUser(db, email, "", false)
+			return err
+		})
 	}
 	return user, err
 }

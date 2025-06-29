@@ -57,18 +57,15 @@ func OpenIDValidateAuthCode(d db.Handler, token, authCode, redirecURI string) (O
 	} else if idToken, err := openid.GetIDToken(providerName, authCode, redirecURI); err != nil {
 		return OpenIDClientNone, err
 	} else {
-		user, err := core.UserByEmail(d, idToken.Email)
+		email := strings.ToLower(idToken.Email)
+		user, err := core.UserByEmail(d, email)
 		err = d.RunInTx(func(db db.TxHandler) error {
-			if errors.Is(err, core.ErrUserNotFound) {
-				for _, domain := range autoCreateDomains {
-					if strings.HasSuffix(strings.ToLower(idToken.Email), "@"+strings.ToLower(domain)) {
-						name := idToken.Name
-						if name == "" {
-							name = idToken.GivenName + " " + idToken.FamilyName
-						}
-						user, err = core.CreateUser(db, idToken.Email, name, false)
-					}
+			if errors.Is(err, core.ErrUserNotFound) && shouldAutoCreate(email) {
+				name := idToken.Name
+				if name == "" {
+					name = idToken.GivenName + " " + idToken.FamilyName
 				}
+				user, err = core.CreateUser(db, idToken.Email, name, false)
 			}
 			if err != nil {
 				return err
