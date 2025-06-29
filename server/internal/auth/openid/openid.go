@@ -26,11 +26,6 @@ func Init(cfg Config, l zerolog.Logger) error {
 	log = l.With().Str("c", "auth.openid").Logger()
 	for _, c := range cfg.Clients {
 		clients[c.ID] = c
-		if _, err := getProviderConfig(c.IssuerURL); err != nil {
-			log.Warn().Err(err).Str("id", c.ID).Str("issuer_url", c.IssuerURL).Msg("Unable to get OpenID config")
-			return fmt.Errorf("failed to get openid configuration for %q at %q: %w", c.ID, c.IssuerURL, err)
-		}
-
 	}
 	return nil
 }
