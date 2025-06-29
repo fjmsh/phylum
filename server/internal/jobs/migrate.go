@@ -65,13 +65,13 @@ func findTargetStorageForVersion(db db.Handler, versionID uuid.UUID) (storage.Ba
 	q := `WITH RECURSIVE nodes(id, parent, storage) AS (
 SELECT r.id, r.parent, s.storage
 	FROM resources r
-	LEFT JOIN resource_storage s
+	LEFT JOIN storage_mounts s
 	ON r.id = s.id
 	WHERE r.id = (SELECT resource_id FROM resource_versions WHERE id = $1::UUID)
 UNION ALL
 	SELECT r.id, r.parent, COALESCE(n.storage, s.storage)
 		FROM resources r
-		LEFT JOIN resource_storage s ON r.id = s.id
+		LEFT JOIN storage_mounts s ON r.id = s.id
 		JOIN nodes n ON r.id = n.parent
 ) SELECT storage from nodes n WHERE n.parent IS NULL;
  `
