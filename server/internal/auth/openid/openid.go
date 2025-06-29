@@ -53,7 +53,7 @@ func GetProviderDetails(providerName string) (string, string, error) {
 	} else if config, err := getProviderConfig(c.IssuerURL); err != nil {
 		return "", "", err
 	} else {
-		return c.ID, config.AuthorizationEndpoint, nil
+		return c.ClientID, config.AuthorizationEndpoint, nil
 	}
 }
 
@@ -82,6 +82,8 @@ func GetIDToken(providerName, authCode, redirectURI string) (idToken IDToken, er
 }
 
 func extractIDToken(res *http.Response) (idToken IDToken, err error) {
+	if res.StatusCode != http.StatusOK {
+	}
 	var response tokenResponse
 	defer res.Body.Close()
 	if bodyBytes, err := io.ReadAll(res.Body); err != nil {
@@ -90,7 +92,7 @@ func extractIDToken(res *http.Response) (idToken IDToken, err error) {
 		return idToken, errors.New("failed to read id token from body: " + err.Error())
 	} else if parts := strings.Split(response.IDToken, "."); len(parts) != 3 {
 		return idToken, errors.New("id token is not JWT")
-	} else if jsonToken, err := base64.URLEncoding.DecodeString(strings.Split(response.IDToken, ".")[1]); err != nil {
+	} else if jsonToken, err := base64.RawURLEncoding.DecodeString(parts[1]); err != nil {
 		return idToken, errors.New("failed to decode id token: " + err.Error())
 	} else if err := json.Unmarshal(jsonToken, &idToken); err != nil {
 		return idToken, errors.New("failed to parse id token: " + err.Error())

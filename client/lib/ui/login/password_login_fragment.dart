@@ -122,11 +122,10 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
             ),
           ...widget.instanceConfig.openIDProviers.map((p) => ElevatedButton(
               onPressed: () async {
-                final builder = UriBuilder.fromUri(Uri.parse(p.endpoint));
-                builder.queryParameters['client_id'] = p.clientID;
-                builder.queryParameters['response_type'] = 'code';
-                builder.queryParameters['scope'] = 'openid email profile';
-                startOAuthFlow(builder, widget.instanceConfig.url);
+                final builder = UriBuilder.fromUri(widget.instanceConfig.url);
+                builder.path += '/api/v1/auth/oauth/start';
+                builder.queryParameters['provider'] = p.id;
+                startOAuthFlow(builder);
               },
               child: Text('Log In with ${p.name}'))),
         ],

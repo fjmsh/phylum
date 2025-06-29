@@ -78,6 +78,20 @@ func UserByEmail(db db.Handler, email string) (User, error) {
 	}
 }
 
+func UserByID(db db.Handler, userID int32) (User, error) {
+	const q = "SELECT id, email, name, home, permissions FROM users WHERE id = $1"
+	if rows, err := db.Query(q, userID); err != nil {
+		return User{}, err
+	} else if u, err := pgx.CollectExactlyOneRow(rows, scanUser); err != nil {
+		if Is(err, pgx.ErrNoRows) {
+			err = ErrUserNotFound
+		}
+		return User{}, err
+	} else {
+		return u, nil
+	}
+}
+
 func UserHome(db db.Handler, email string) (pgtype.UUID, error) {
 	const q = "SELECT home FROM users WHERE email = $1"
 	row := db.QueryRow(q, strings.ToLower(email))

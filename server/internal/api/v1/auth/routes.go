@@ -3,6 +3,7 @@ package auth
 import (
 	"errors"
 	"net/http"
+	"net/url"
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/my"
@@ -42,6 +43,9 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group.POST("/password", handlePasswordAuth)
 	group.POST("/request-password-reset", handleRequestPasswordReset)
 	group.POST("/reset-password", handleResetPassword)
+	group.GET("/oauth/start", handleOAuthStart)
+	group.GET("/oauth/redirect", handleOAuthRedirect)
+	group.POST("/oauth/login", handleOAuthLogin)
 	group.POST("/set-cookie", authenticator.RequireToken, handleSetCookie)
 }
 
@@ -52,6 +56,59 @@ func handleConfig(c *gin.Context) {
 		OpenIDProviders: auth.OpenIDProviders(),
 	}
 	c.JSON(http.StatusOK, response)
+}
+
+func handleOAuthStart(c *gin.Context) {
+	provider := c.Query("provider")
+	clientType := auth.OpenIDClientWeb
+	if c.Query("client_type") == "native" {
+		clientType = auth.OpenIDClientNative
+	}
+	db := db.Get(c.Request.Context())
+	if authURL, err := auth.OpenIDStart(db, provider, getRedirectURL(c.Request), clientType); err != nil {
+		panic(err)
+	} else {
+		c.Redirect(http.StatusFound, authURL)
+	}
+}
+
+func handleOAuthRedirect(c *gin.Context) {
+	db := db.Get(c.Request.Context())
+
+	authCode := c.Query("code")
+	sessionID := c.Query("state")
+
+	if clientType, err := auth.OpenIDValidateAuthCode(db, sessionID, authCode, getRedirectURL(c.Request)); err != nil {
+		panic(err)
+	} else {
+		var clientURI url.URL
+		if clientType == auth.OpenIDClientWeb {
+			clientURI = *c.Request.URL
+			clientURI.RawQuery = ""
+		} else {
+			clientURI = url.URL{Scheme: "drive.phylum.cloud"}
+		}
+		clientURI.Path = "/login/oauth"
+		c.Redirect(http.StatusFound, clientURI.String())
+	}
+}
+func getRedirectURL(req *http.Request) string {
+	uri := url.URL{
+		Scheme: "https",
+		Host:   req.Host,
+		Path:   "/api/v1/auth/oauth/redirect",
+	}
+
+	if proto := req.Header.Get("X-Forwarded-Proto"); proto != "" {
+		uri.Scheme = proto
+	} else if req.TLS == nil {
+		uri.Scheme = "http"
+	}
+	return uri.String()
+}
+
+func handleOAuthLogin(c *gin.Context) {
+
 }
 
 func handlePasswordAuth(c *gin.Context) {

@@ -38,17 +38,13 @@ class InstanceConfig {
 class OpenIDProvider {
   final String id;
   final String name;
-  final String clientID;
-  final String endpoint;
 
-  OpenIDProvider({required this.id, required this.name, required this.clientID, required this.endpoint});
+  OpenIDProvider({required this.id, required this.name});
 
   factory OpenIDProvider.fromResponse(Uri url, Map<String, dynamic> response) {
     return OpenIDProvider(
       id: response['id'],
       name: response['name'],
-      clientID: response['client_id'],
-      endpoint: response['endpoint'],
     );
   }
 }
