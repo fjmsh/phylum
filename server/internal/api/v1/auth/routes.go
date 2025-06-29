@@ -76,9 +76,9 @@ func handleOAuthRedirect(c *gin.Context) {
 	db := db.Get(c.Request.Context())
 
 	authCode := c.Query("code")
-	sessionID := c.Query("state")
+	token := c.Query("state")
 
-	if clientType, err := auth.OpenIDValidateAuthCode(db, sessionID, authCode, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect")); err != nil {
+	if clientType, err := auth.OpenIDValidateAuthCode(db, token, authCode, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect")); err != nil {
 		panic(err)
 	} else {
 		var clientURI url.URL
@@ -88,9 +88,9 @@ func handleOAuthRedirect(c *gin.Context) {
 		} else {
 			clientURI = url.URL{Scheme: "drive.phylum.cloud"}
 		}
-		clientURI.Path = "/login/oauth"
+		clientURI.Path = "/login/token"
 		q := url.Values{}
-		q.Add("session_id", sessionID)
+		q.Add("login_token", token)
 		q.Add("instance_url", getInstanceURL(c.Request, ""))
 		clientURI.RawQuery = q.Encode()
 		c.Redirect(http.StatusFound, clientURI.String())
