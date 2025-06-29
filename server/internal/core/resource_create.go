@@ -190,9 +190,6 @@ func (f txFileSystem) createMemberResource(r Resource, name string, requestedID 
 	var created bool
 	var err error
 	if res, created, _, err = resolveConflictAndInsertResource(f.db, requestedID, r.id, name, dir, r.permissions, conflictResolution); err != nil {
-		if errors.Is(err, ErrResourceIDConflict) {
-			return resourceByID(f.db, requestedID, f.user.ID)
-		}
 		return Resource{}, err
 	} else if created {
 		if err := r.checkPermission(f.user, PermissionWrite); err != nil {
