@@ -17,8 +17,10 @@ core:
     permission: 0x10  # Invite users
 
 auth:
-  auto_create_domains:
-    - example.com
+  auto_create:
+    # - "*@example.com"
+    # - "user@example.com"
+    # - "user*@example.com"
   password:
     backend: crypt
     crypt:

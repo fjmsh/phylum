@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var autoCreateDomains []string
+var autoCreate []*regexp.Regexp
 var passwordConfig PasswordConfig
 var passwordBackend PasswordBackend
 
@@ -44,7 +45,6 @@ func OpenIDProviders() []openid.Provider {
 }
 
 func Init(cfg Config, log zerolog.Logger) error {
-	autoCreateDomains = cfg.AutoCreateDomains
 	passwordConfig = cfg.Password
 
 	if cfg.Password.Backend == "crypt" {
@@ -59,12 +59,17 @@ func Init(cfg Config, log zerolog.Logger) error {
 		return errors.New("password backend not recognized: " + cfg.Password.Backend)
 	}
 
+	autoCreate = make([]*regexp.Regexp, len(cfg.AutoCreate))
+	for i, w := range cfg.AutoCreate {
+		autoCreate[i] = regexp.MustCompile(strings.ReplaceAll(strings.ToLower(w), "*", ".*"))
+	}
+
 	return openid.Init(cfg.OpenID, log)
 }
 
 func shouldAutoCreate(email string) bool {
-	for _, domain := range autoCreateDomains {
-		if strings.HasSuffix(strings.ToLower(email), "@"+strings.ToLower(domain)) {
+	for _, p := range autoCreate {
+		if p.MatchString(email) {
 			return true
 		}
 	}
