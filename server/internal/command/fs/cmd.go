@@ -20,6 +20,7 @@ func SetupCommand() *cobra.Command {
 		setupImportCommand(),
 		setupInfoCommand(),
 		setupMkdirCommand(),
+		setupMountCommand(),
 		setupMoveCommand(),
 		setupDeleteCommand(),
 		setupSearchCommand(),
