@@ -8,12 +8,12 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func PerformTokenLogin(db db.TxHandler, loginToken string) (core.User, string, error) {
-	row := db.QueryRow("DELETE FROM openid_sessions WHERE id = $1 AND user_id IS NOT NULL RETURNING user_id", loginToken)
+func PerformTokenLogin(db db.TxHandler, token string) (core.User, string, error) {
+	row := db.QueryRow("DELETE FROM pending_logins WHERE token = $1 AND user_id IS NOT NULL RETURNING user_id", token)
 	var userID int32
 	if err := row.Scan(&userID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			err = errors.New("state token invalid")
+			err = errors.New("login token invalid")
 		}
 		return core.User{}, "", err
 	} else if user, err := core.UserByID(db, userID); err != nil {

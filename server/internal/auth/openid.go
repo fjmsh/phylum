@@ -25,10 +25,10 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 	if clientID, endpoint, err := openid.GetProviderDetails(providerName); err != nil {
 		return "", err
 	} else {
-		sessionID := generateRandomString(openidLoginSessionIDLength)
-		_, err := db.Exec("INSERT INTO openid_sessions(id, provider, client_type) VALUES ($1, $2, $3)", sessionID, providerName, clientType)
+		token := generateRandomString(openidLoginSessionIDLength)
+		_, err := db.Exec("INSERT INTO pending_logins(token, oidc_provider, oidc_client_type) VALUES ($1, $2, $3)", token, providerName, clientType)
 		if err != nil {
-			return "", errors.New("failed to insert openid session: " + err.Error())
+			return "", errors.New("failed to create login token: " + err.Error())
 		}
 		authURL, err := url.Parse(endpoint)
 		if err != nil {
@@ -38,20 +38,20 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 		q.Add("client_id", clientID)
 		q.Add("response_type", "code")
 		q.Add("scope", "openid email profile")
-		q.Add("state", sessionID)
+		q.Add("state", token)
 		q.Add("redirect_uri", redirectURI)
 		authURL.RawQuery = q.Encode()
 		return authURL.String(), nil
 	}
 }
 
-func OpenIDValidateAuthCode(d db.Handler, sessionID, authCode, redirecURI string) (OpenIDClientType, error) {
-	row := d.QueryRow("SELECT provider, client_type FROM openid_sessions WHERE id = $1 AND user_id IS NULL", sessionID)
+func OpenIDValidateAuthCode(d db.Handler, token, authCode, redirecURI string) (OpenIDClientType, error) {
+	row := d.QueryRow("SELECT oidc_provider, oidc_client_type FROM pending_logins WHERE token = $1 AND user_id IS NULL", token)
 	var providerName string
 	var clientType OpenIDClientType
 	if err := row.Scan(&providerName, &clientType); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			err = errors.New("state token invalid")
+			err = errors.New("login token invalid")
 		}
 		return OpenIDClientNone, err
 	} else if idToken, err := openid.GetIDToken(providerName, authCode, redirecURI); err != nil {
@@ -69,13 +69,13 @@ func OpenIDValidateAuthCode(d db.Handler, sessionID, authCode, redirecURI string
 			if err != nil {
 				return err
 			}
-			_, err = db.Exec("UPDATE openid_sessions SET user_id = $2 WHERE id = $1", sessionID, user.ID)
+			_, err = db.Exec("UPDATE pending_logins SET user_id = $2 WHERE token = $1", token, user.ID)
 			return err
 		})
 
 		if err != nil {
 			// This session ID is no longer valid, since we've already used the auth code once
-			d.Exec("DELETE FROM openid_sessions WHERE id = $1", sessionID)
+			d.Exec("DELETE FROM pending_logins WHERE token = $1", token)
 			return OpenIDClientNone, err
 		}
 		return clientType, nil

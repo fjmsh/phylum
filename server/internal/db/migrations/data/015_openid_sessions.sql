@@ -1,12 +1,12 @@
-CREATE UNLOGGED TABLE openid_sessions(
-  id            TEXT        PRIMARY KEY,
-  provider      TEXT        NOT NULL,
-  client_type   SMALLINT    NOT NULL,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  user_id       INTEGER     REFERENCES users(id) ON DELETE CASCADE
+CREATE UNLOGGED TABLE pending_logins(
+  token             TEXT        PRIMARY KEY,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  user_id           INTEGER     REFERENCES users(id) ON DELETE CASCADE,
+  oidc_provider     TEXT,
+  oidc_client_type  SMALLINT
 );
 
 ---- create above / drop below ----
 
 
-DROP TABLE openid_sessions;
+DROP TABLE pending_logins;
