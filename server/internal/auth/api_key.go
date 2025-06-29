@@ -11,7 +11,7 @@ import (
 )
 
 func VerifyAPIKey(db db.Handler, apiKey string) (user core.User, err error) {
-	const q = `SELECT t.expires, u.id, u.email, u.name, u.permissions, u.home FROM api_keys k JOIN users u ON k.user_id = u.id WHERE k.id = $1; `
+	const q = `SELECT k.expires, u.id, u.email, u.name, u.permissions, u.home FROM api_keys k JOIN users u ON k.user_id = u.id WHERE k.id = $1; `
 	row := db.QueryRow(q, apiKey)
 
 	var expires pgtype.Timestamp
