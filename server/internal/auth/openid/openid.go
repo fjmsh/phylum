@@ -96,6 +96,7 @@ func extractIDToken(res *http.Response) (idToken IDToken, err error) {
 	} else if err := json.Unmarshal(jsonToken, &idToken); err != nil {
 		return idToken, errors.New("failed to parse id token: " + err.Error())
 	} else {
+		fmt.Println(string(jsonToken))
 		return idToken, nil
 	}
 }
@@ -105,6 +106,8 @@ type tokenResponse struct {
 }
 
 type IDToken struct {
-	Email    string `json:"email"`
-	FullName string `json:"full_name"`
+	Email      string `json:"email"`
+	Name       string `json:"name"`
+	GivenName  string `json:"given_name"`
+	FamilyName string `json:"family_name"`
 }

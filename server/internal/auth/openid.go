@@ -62,7 +62,11 @@ func OpenIDValidateAuthCode(d db.Handler, token, authCode, redirecURI string) (O
 			if errors.Is(err, core.ErrUserNotFound) {
 				for _, domain := range autoCreateDomains {
 					if strings.HasSuffix(strings.ToLower(idToken.Email), "@"+strings.ToLower(domain)) {
-						user, err = core.CreateUser(db, idToken.Email, idToken.FullName, false)
+						name := idToken.Name
+						if name == "" {
+							name = idToken.GivenName + " " + idToken.FamilyName
+						}
+						user, err = core.CreateUser(db, idToken.Email, name, false)
 					}
 				}
 			}
