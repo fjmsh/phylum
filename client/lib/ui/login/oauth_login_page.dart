@@ -68,7 +68,7 @@ class _TokenLoginPageState extends State<TokenLoginPage> {
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/token/login';
     final request = MultipartRequest('post', builder.build());
-    request.fields['session_id'] = widget.loginToken;
+    request.fields['login_token'] = widget.loginToken;
 
     try {
       final response = await Client().send(request);

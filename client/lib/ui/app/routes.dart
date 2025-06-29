@@ -29,7 +29,7 @@ class TokenLoginRoute extends PhylumRoute {
   TokenLoginRoute({required this.instanceUrl, required this.loginToken});
 
   @override
-  Uri get uri => Uri(path: '/login/oauth');
+  Uri get uri => Uri(path: '/login/token');
 
   @override
   Widget buildPage(BuildContext context) {
