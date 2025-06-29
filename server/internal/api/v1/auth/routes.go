@@ -31,6 +31,10 @@ type requestPasswordResetParams struct {
 	Email string `json:"email" form:"email" binding:"required"`
 }
 
+type tokenLoginParams struct {
+	LoginToken string `json:"login_token" form:"login_token" binding:"required"`
+}
+
 type resetPasswordParams struct {
 	Email    string `json:"email" form:"email" binding:"required"`
 	Token    string `json:"token" form:"token" binding:"required"`
@@ -112,15 +116,16 @@ func getInstanceURL(req *http.Request, path string) string {
 }
 
 func handleTokenLogin(c *gin.Context) {
-	token := c.Query("token")
-	if token == "" {
+	var params tokenLoginParams
+	err := c.ShouldBind(&params)
+	if err != nil {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "login token not specified"))
 	}
 
 	var apiKey string
 	var response responses.Bootstrap
 	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
-		if user, t, err := auth.PerformTokenLogin(db, token); err != nil {
+		if user, t, err := auth.PerformTokenLogin(db, params.LoginToken); err != nil {
 			return err
 		} else if r, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
 			return err
