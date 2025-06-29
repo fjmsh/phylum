@@ -9,7 +9,6 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +36,8 @@ func setupCreateCommand() *cobra.Command {
 			driverName := args[1]
 			driver, err := storage.FindDriver(driverName)
 			if err != nil {
-				logrus.Fatal(err)
+				fmt.Printf("storage driver %q does not exist\n", name)
+				os.Exit(1)
 			}
 
 			params := map[string]string{}
@@ -46,17 +46,19 @@ func setupCreateCommand() *cobra.Command {
 				os.Stdout.WriteString(paramName + ": ")
 				val, err := reader.ReadString('\n')
 				if err != nil {
-					logrus.Fatal(err)
+					fmt.Printf("failed to read parameter %q: %s\n", paramName, err.Error())
+					os.Exit(1)
 				}
 				val = strings.TrimSpace(val)
 				params[paramName] = val
 			}
 
 			if err := storage.InsertBackend(db.Get(context.Background()), name, driver, params); err != nil {
-				logrus.Fatal(err)
+				fmt.Printf("failed to insert: %s\n", err.Error())
+				os.Exit(1)
 			}
 
-			logrus.Info("Storage backend created: " + name)
+			fmt.Println("Storage backend created: " + name)
 		},
 	}
 }
@@ -66,9 +68,9 @@ func setupListCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List all storage backends",
 		Run: func(cmd *cobra.Command, args []string) {
-			logrus.Info("Available storage backends:")
+			fmt.Println("Available storage backends:")
 			for k, v := range storage.ListBackends() {
-				logrus.Info(fmt.Sprintf("%s: %s", k, v))
+				fmt.Printf("%s: %s\n", k, v)
 			}
 		},
 	}
