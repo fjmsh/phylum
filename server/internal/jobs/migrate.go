@@ -73,8 +73,7 @@ UNION ALL
 		FROM resources r
 		LEFT JOIN storage_mounts s ON r.id = s.id
 		JOIN nodes n ON r.id = n.parent
-) SELECT storage from nodes n WHERE n.parent IS NULL;
- `
+) SELECT COALESCE(storage, '_') from nodes n WHERE n.parent IS NULL`
 
 	row := db.QueryRow(q, versionID)
 	var s string
