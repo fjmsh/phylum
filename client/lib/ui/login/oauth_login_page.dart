@@ -12,21 +12,21 @@ import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 import 'package:phylum/ui/app/dialog_scaffold.dart';
 
-class OAuthLoginPage extends StatefulWidget {
+class TokenLoginPage extends StatefulWidget {
   final String instanceUrl;
-  final String sessionId;
+  final String loginToken;
 
-  const OAuthLoginPage({
+  const TokenLoginPage({
     super.key,
     required this.instanceUrl,
-    required this.sessionId,
+    required this.loginToken,
   });
 
   @override
-  State<OAuthLoginPage> createState() => _OAuthLoginPageState();
+  State<TokenLoginPage> createState() => _TokenLoginPageState();
 }
 
-class _OAuthLoginPageState extends State<OAuthLoginPage> {
+class _TokenLoginPageState extends State<TokenLoginPage> {
   String? error;
 
   @override
@@ -66,9 +66,9 @@ class _OAuthLoginPageState extends State<OAuthLoginPage> {
   void performLogin(BuildContext context) async {
     final instanceUrl = Uri.parse(widget.instanceUrl);
     final builder = UriBuilder.fromUri(instanceUrl);
-    builder.path = '${builder.path}/api/v1/auth/oauth/login';
+    builder.path = '${builder.path}/api/v1/auth/token/login';
     final request = MultipartRequest('post', builder.build());
-    request.fields['session_id'] = widget.sessionId;
+    request.fields['session_id'] = widget.loginToken;
 
     try {
       final response = await Client().send(request);

@@ -22,20 +22,20 @@ sealed class PhylumRoute {
   Widget buildPage(BuildContext context);
 }
 
-class OAuthLoginRoute extends PhylumRoute {
+class TokenLoginRoute extends PhylumRoute {
   final String instanceUrl;
-  final String sessionId;
+  final String loginToken;
 
-  OAuthLoginRoute({required this.instanceUrl, required this.sessionId});
+  TokenLoginRoute({required this.instanceUrl, required this.loginToken});
 
   @override
   Uri get uri => Uri(path: '/login/oauth');
 
   @override
   Widget buildPage(BuildContext context) {
-    return OAuthLoginPage(
+    return TokenLoginPage(
       instanceUrl: instanceUrl,
-      sessionId: sessionId,
+      loginToken: loginToken,
     );
   }
 }
