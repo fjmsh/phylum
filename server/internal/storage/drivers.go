@@ -12,7 +12,7 @@ var drivers = map[string]Driver{
 	},
 	"minio": {
 		Name:   "minio",
-		Params: []string{"endpoint", "key_id", "access_key", "bucket_name", "prefix"},
+		Params: []string{"endpoint", "key_id", "key", "bucket_name", "prefix"},
 		Create: createMinioBackend,
 	},
 }

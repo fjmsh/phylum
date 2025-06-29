@@ -27,7 +27,7 @@ func createMinioBackend(name string, params map[string]string) (Backend, error) 
 	if params["key_id"] == "" {
 		return nil, errors.New("key id not provided")
 	}
-	if params["access_key"] == "" {
+	if params["key"] == "" {
 		return nil, errors.New("access key not provided")
 	}
 	if params["bucket_name"] == "" {
@@ -35,7 +35,7 @@ func createMinioBackend(name string, params map[string]string) (Backend, error) 
 	}
 
 	client, err := minio.New(params["endpoint"], &minio.Options{
-		Creds:  credentials.NewStaticV4(params["key_id"], params["access_key"], ""),
+		Creds:  credentials.NewStaticV4(params["key_id"], params["key"], ""),
 		Secure: true,
 	})
 	if err != nil {
@@ -49,8 +49,12 @@ func (s minioStorage) Name() string {
 }
 
 func (s minioStorage) OpenRead(name string, start, length int) (io.ReadCloser, error) {
-	// TODO: Range
-	if r, err := s.client.GetObject(context.Background(), s.bucketName, s.prefix+name, minio.GetObjectOptions{}); err != nil {
+	opts := minio.GetObjectOptions{}
+	// if length != -1 {
+	// 	opts.SetRange(int64(start), int64(start+length))
+	// }
+
+	if r, err := s.client.GetObject(context.Background(), s.bucketName, s.prefix+name, opts); err != nil {
 		return nil, err
 	} else {
 		return r, ErrRangeNotSupported
