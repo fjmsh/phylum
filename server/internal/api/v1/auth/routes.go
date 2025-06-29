@@ -45,7 +45,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group.POST("/reset-password", handleResetPassword)
 	group.GET("/oauth/start", handleOAuthStart)
 	group.GET("/oauth/redirect", handleOAuthRedirect)
-	group.POST("/oauth/login", handleOAuthLogin)
+	group.POST("/token/login", handleTokenLogin)
 	group.POST("/set-cookie", authenticator.RequireToken, handleSetCookie)
 }
 
@@ -65,7 +65,7 @@ func handleOAuthStart(c *gin.Context) {
 		clientType = auth.OpenIDClientNative
 	}
 	db := db.Get(c.Request.Context())
-	if authURL, err := auth.OpenIDStart(db, provider, getRedirectURL(c.Request), clientType); err != nil {
+	if authURL, err := auth.OpenIDStart(db, provider, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect"), clientType); err != nil {
 		panic(err)
 	} else {
 		c.Redirect(http.StatusFound, authURL)
@@ -78,7 +78,7 @@ func handleOAuthRedirect(c *gin.Context) {
 	authCode := c.Query("code")
 	sessionID := c.Query("state")
 
-	if clientType, err := auth.OpenIDValidateAuthCode(db, sessionID, authCode, getRedirectURL(c.Request)); err != nil {
+	if clientType, err := auth.OpenIDValidateAuthCode(db, sessionID, authCode, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect")); err != nil {
 		panic(err)
 	} else {
 		var clientURI url.URL
@@ -89,14 +89,18 @@ func handleOAuthRedirect(c *gin.Context) {
 			clientURI = url.URL{Scheme: "drive.phylum.cloud"}
 		}
 		clientURI.Path = "/login/oauth"
+		q := url.Values{}
+		q.Add("session_id", sessionID)
+		q.Add("instance_url", getInstanceURL(c.Request, ""))
+		clientURI.RawQuery = q.Encode()
 		c.Redirect(http.StatusFound, clientURI.String())
 	}
 }
-func getRedirectURL(req *http.Request) string {
+func getInstanceURL(req *http.Request, path string) string {
 	uri := url.URL{
 		Scheme: "https",
 		Host:   req.Host,
-		Path:   "/api/v1/auth/oauth/redirect",
+		Path:   path,
 	}
 
 	if proto := req.Header.Get("X-Forwarded-Proto"); proto != "" {
@@ -107,8 +111,32 @@ func getRedirectURL(req *http.Request) string {
 	return uri.String()
 }
 
-func handleOAuthLogin(c *gin.Context) {
+func handleTokenLogin(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		panic(core.NewError(http.StatusBadRequest, "missing_params", "login token not specified"))
+	}
 
+	var apiKey string
+	var response responses.Bootstrap
+	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
+		if user, t, err := auth.PerformTokenLogin(db, token); err != nil {
+			return err
+		} else if r, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
+			return err
+		} else {
+			apiKey = t
+			response = r
+			return nil
+		}
+	}); err != nil {
+		panic(err)
+	} else {
+		c.JSON(200, responses.Login{
+			AccessToken: apiKey,
+			Bootstrap:   response,
+		})
+	}
 }
 
 func handlePasswordAuth(c *gin.Context) {
@@ -137,7 +165,6 @@ func handlePasswordAuth(c *gin.Context) {
 			AccessToken: token,
 			Bootstrap:   response,
 		})
-
 	}
 }
 
