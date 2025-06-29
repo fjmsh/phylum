@@ -155,6 +155,7 @@ func collectDeletedVersions(rows pgx.Rows) ([]jobs.DeleteContentsArgs, error) {
 		}
 		if id != uuid.Nil {
 			v.Name = id.String()
+			v.Storage = storage.String
 			result = append(result, v)
 		}
 	}
