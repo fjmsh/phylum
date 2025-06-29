@@ -129,8 +129,8 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
       if (segments[0] == 'login' && segments[1] == 'oauth') {
         print(uri.toString());
         return SynchronousFuture(OAuthLoginRoute(
-          code: uri.queryParameters['code'] ?? '',
-          state: uri.queryParameters['state'] ?? '',
+          instanceUrl: uri.queryParameters['instance_url'] ?? '',
+          sessionId: uri.queryParameters['session_id'] ?? '',
         ));
       }
       if (segments[0] == 'folder') {

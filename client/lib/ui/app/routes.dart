@@ -23,10 +23,10 @@ sealed class PhylumRoute {
 }
 
 class OAuthLoginRoute extends PhylumRoute {
-  final String code;
-  final String state;
+  final String instanceUrl;
+  final String sessionId;
 
-  OAuthLoginRoute({required this.code, required this.state});
+  OAuthLoginRoute({required this.instanceUrl, required this.sessionId});
 
   @override
   Uri get uri => Uri(path: '/login/oauth');
@@ -34,8 +34,8 @@ class OAuthLoginRoute extends PhylumRoute {
   @override
   Widget buildPage(BuildContext context) {
     return OAuthLoginPage(
-      code: code,
-      state: state,
+      instanceUrl: instanceUrl,
+      sessionId: sessionId,
     );
   }
 }

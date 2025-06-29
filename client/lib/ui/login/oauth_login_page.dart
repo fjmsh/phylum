@@ -13,13 +13,13 @@ import 'package:uri/uri.dart';
 import 'package:phylum/ui/app/dialog_scaffold.dart';
 
 class OAuthLoginPage extends StatefulWidget {
-  final String code;
-  final String state;
+  final String instanceUrl;
+  final String sessionId;
 
   const OAuthLoginPage({
     super.key,
-    required this.code,
-    required this.state,
+    required this.instanceUrl,
+    required this.sessionId,
   });
 
   @override
@@ -64,11 +64,11 @@ class _OAuthLoginPageState extends State<OAuthLoginPage> {
   }
 
   void performLogin(BuildContext context) async {
-    final instanceUrl = Uri.parse(widget.state);
+    final instanceUrl = Uri.parse(widget.instanceUrl);
     final builder = UriBuilder.fromUri(instanceUrl);
-    builder.path = '${builder.path}/api/v1/auth/oauth';
+    builder.path = '${builder.path}/api/v1/auth/oauth/login';
     final request = MultipartRequest('post', builder.build());
-    request.fields['code'] = widget.code;
+    request.fields['session_id'] = widget.sessionId;
 
     try {
       final response = await Client().send(request);
