@@ -46,7 +46,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group.GET("/oauth/start", handleOAuthStart)
 	group.GET("/oauth/redirect", handleOAuthRedirect)
 	group.POST("/token/login", handleTokenLogin)
-	group.POST("/set-cookie", authenticator.RequireToken, handleSetCookie)
+	group.POST("/set-cookie", authenticator.RequireAPIKey, handleSetCookie)
 }
 
 func handleConfig(c *gin.Context) {
@@ -133,8 +133,8 @@ func handleTokenLogin(c *gin.Context) {
 		panic(err)
 	} else {
 		c.JSON(200, responses.Login{
-			AccessToken: apiKey,
-			Bootstrap:   response,
+			APIKey:    apiKey,
+			Bootstrap: response,
 		})
 	}
 }
@@ -162,8 +162,8 @@ func handlePasswordAuth(c *gin.Context) {
 		panic(err)
 	} else {
 		c.JSON(200, responses.Login{
-			AccessToken: token,
-			Bootstrap:   response,
+			APIKey:    token,
+			Bootstrap: response,
 		})
 	}
 }
@@ -218,19 +218,19 @@ func handleResetPassword(c *gin.Context) {
 		panic(err)
 	} else {
 		c.JSON(200, responses.Login{
-			AccessToken: token,
-			Bootstrap:   response,
+			APIKey:    token,
+			Bootstrap: response,
 		})
 
 	}
 }
 
 func handleSetCookie(c *gin.Context) {
-	token := authenticator.GetToken(c)
+	token := authenticator.GetAPIKey(c)
 	if token == "" {
-		panic(core.NewError(http.StatusBadRequest, "missing_token", "Auth Token Not Specified"))
+		panic(core.NewError(http.StatusBadRequest, "missing_token", "API Key Not Specified"))
 	}
-	secure := c.Request.URL.Scheme == "https"
+	secure := c.Request.URL.Scheme == "https" || c.Request.TLS != nil
 	c.SetSameSite(http.SameSiteStrictMode)
-	c.SetCookie("auth_token", token, 3600, "", c.Request.URL.Hostname(), secure, true)
+	c.SetCookie("api_key", token, 3600, "", c.Request.URL.Hostname(), secure, true)
 }

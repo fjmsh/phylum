@@ -10,8 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func VerifyAccessToken(db db.Handler, accessToken string) (user core.User, err error) {
-	const q = `SELECT t.expires, u.id, u.email, u.name, u.permissions, u.home FROM access_tokens t JOIN users u ON t.user_id = u.id WHERE t.id = $1; `
+func VerifyAPIKey(db db.Handler, accessToken string) (user core.User, err error) {
+	const q = `SELECT t.expires, u.id, u.email, u.name, u.permissions, u.home FROM api_keys k JOIN users u ON k.user_id = u.id WHERE k.id = $1; `
 	row := db.QueryRow(q, accessToken)
 
 	var expires pgtype.Timestamp
@@ -26,11 +26,11 @@ func VerifyAccessToken(db db.Handler, accessToken string) (user core.User, err e
 	return
 }
 
-func insertAccessToken(db db.TxHandler, userID int32) (string, error) {
-	const q = `INSERT INTO access_tokens(id, expires, user_id) VALUES ($1::TEXT, NOW() + $2::INTERVAL, $3::INT)`
+func insertAPIKey(db db.TxHandler, userID int32) (string, error) {
+	const q = `INSERT INTO api_keys(id, expires, user_id) VALUES ($1::TEXT, NOW() + $2::INTERVAL, $3::INT)`
 
-	token := generateRandomString(apiTokenLength)
-	if _, err := db.Exec(q, token, accessTokenValidity, userID); err != nil {
+	token := generateRandomString(apiKeyLength)
+	if _, err := db.Exec(q, token, apiKeyValidity, userID); err != nil {
 		return "", err
 	} else {
 		return token, nil

@@ -62,7 +62,7 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (cor
 		return core.User{}, "", ErrCredentialsInvalid
 	}
 
-	apiToken, err := insertAccessToken(db, user.ID)
+	apiToken, err := insertAPIKey(db, user.ID)
 	if err != nil {
 		return core.User{}, "", err
 	}

@@ -18,7 +18,7 @@ func PerformTokenLogin(db db.TxHandler, token string) (core.User, string, error)
 		return core.User{}, "", err
 	} else if user, err := core.UserByID(db, userID); err != nil {
 		return core.User{}, "", err
-	} else if token, err := insertAccessToken(db, userID); err != nil {
+	} else if token, err := insertAPIKey(db, userID); err != nil {
 		return core.User{}, "", err
 	} else {
 		return user, token, err

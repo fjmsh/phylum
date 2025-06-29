@@ -1,4 +1,4 @@
-CREATE TABLE access_tokens(
+CREATE TABLE api_keys(
     id          TEXT NOT NULL PRIMARY KEY,
     created     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires     TIMESTAMP NOT NULL,
@@ -7,4 +7,4 @@ CREATE TABLE access_tokens(
 
 ---- create above / drop below ----
 
-DROP TABLE access_tokens;
+DROP TABLE api_keys;

@@ -4,22 +4,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const keyToken = "token"
+const keyAPIKey = "api_key"
 
-func GetToken(c *gin.Context) string {
-	val, ok := c.Get(keyToken)
+func GetAPIKey(c *gin.Context) string {
+	val, ok := c.Get(keyAPIKey)
 	if !ok {
 		return ""
 	}
 	return val.(string)
 }
 
-func RequireToken(c *gin.Context) {
+func RequireAPIKey(c *gin.Context) {
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		panic(errAuthRequired)
-	} else if token, ok := checkAuthHeader(header, "bearer"); !ok {
+	} else if apiKey, ok := checkAuthHeader(header, "api-key"); !ok {
 		panic(errAuthRequired)
 	} else {
-		c.Set(keyToken, token)
+		c.Set(keyAPIKey, apiKey)
 	}
 }

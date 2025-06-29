@@ -39,9 +39,9 @@ func Require(c *gin.Context) {
 func extractUserDetails(c *gin.Context) (core.User, error) {
 	db := db.Get(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
-		if cookie, err := c.Request.Cookie("auth_token"); err == nil {
-			token := cookie.Value
-			if u, err := auth.VerifyAccessToken(db, token); err == nil {
+		if cookie, err := c.Request.Cookie("api_key"); err == nil {
+			apiKey := cookie.Value
+			if u, err := auth.VerifyAPIKey(db, apiKey); err == nil {
 				return u, nil
 			} else {
 				return core.User{}, err
@@ -58,8 +58,8 @@ func extractUserDetails(c *gin.Context) (core.User, error) {
 				return core.User{}, err
 			}
 		}
-	} else if token, ok := checkAuthHeader(header, "bearer"); ok {
-		if u, err := auth.VerifyAccessToken(db, token); err == nil {
+	} else if apiKey, ok := checkAuthHeader(header, "api-key"); ok {
+		if u, err := auth.VerifyAPIKey(db, apiKey); err == nil {
 			return u, nil
 		} else {
 			return core.User{}, err

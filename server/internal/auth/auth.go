@@ -19,11 +19,11 @@ var autoCreateDomains []string
 var passwordConfig PasswordConfig
 var passwordBackend PasswordBackend
 
-const apiTokenLength = 32
+const apiKeyLength = 32
 const resetTokenLength = 24
 const resetTokenDuration = 10 * time.Minute
 
-var accessTokenValidity = pgtype.Interval{
+var apiKeyValidity = pgtype.Interval{
 	Days:  30,
 	Valid: true,
 }
