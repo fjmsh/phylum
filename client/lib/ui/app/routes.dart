@@ -10,7 +10,7 @@ import 'package:phylum/libphylum/requests/shared_resources_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/layout/app_layout.dart';
 import 'package:phylum/ui/login/login_page.dart';
-import 'package:phylum/ui/login/oauth_login_page.dart';
+import 'package:phylum/ui/login/token_login_page.dart';
 import 'package:phylum/ui/login/reset_password_page.dart';
 import 'package:provider/provider.dart';
 

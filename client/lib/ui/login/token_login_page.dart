@@ -77,7 +77,6 @@ class _TokenLoginPageState extends State<TokenLoginPage> {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (context.mounted) {
-          final navigator = Navigator.of(context);
           final routerDelegate = context.read<PhylumRouterDelegate>();
           final accountManager = context.read<AccountManager<PhylumAccount>>();
 
@@ -89,7 +88,6 @@ class _TokenLoginPageState extends State<TokenLoginPage> {
           );
           await response.process(account);
           await accountManager.addAccount(account);
-          navigator.pop();
           routerDelegate.go(ExplorerRouteHome());
         }
       } else {
