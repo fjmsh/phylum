@@ -1,8 +1,10 @@
 package core
 
 import (
+	"encoding/json"
 	"errors"
 	"strings"
+	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/jobs"
@@ -204,6 +206,14 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 			MimeType:   src.latestVersionInfo.MimeType,
 			SHA256:     src.latestVersionInfo.SHA256,
 		})
+		v := []VersionInfo{{
+			ID:       versionID,
+			Created:  int(time.Now().Unix()),
+			Size:     src.latestVersionInfo.Size,
+			MimeType: src.latestVersionInfo.MimeType,
+			SHA256:   src.latestVersionInfo.SHA256,
+		}}
+		dest.versions, _ = json.Marshal(v)
 		copyContents = append(copyContents, jobs.CopyContentsArgs{
 			Src:  src.latestVersionInfo.ID,
 			Dest: versionID,
@@ -263,10 +273,5 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 		return Resource{}, false, err
 	}
 
-	// TODO: #verify this shouldn't be necessary
-	// targetRoot.visibleParent = pgtype.UUID{
-	// 	Bytes: destParent.id,
-	// 	Valid: true,
-	// }
 	return dest, deleted, err
 }

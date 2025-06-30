@@ -15,7 +15,7 @@ import (
 type VersionInfo struct {
 	ID       uuid.UUID `json:"id"`
 	Created  int       `json:"created"`
-	Deleted  int       `json:"deleted"`
+	Deleted  int       `json:"deleted,omitempty"`
 	Size     int64     `json:"size"`
 	MimeType string    `json:"mime_type"`
 	SHA256   string    `json:"sha256"`
