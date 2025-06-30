@@ -43,16 +43,16 @@ auth:
       starttls: false
       connect_timeout: 30s
       request_timeout: 30s
-      dn_template: 
-      search:
-        bind_dn:
-        bind_password: 
-        base_dn:
-        filter_template:
+      # dn_template: cn={email},ou=people,dc=example,dc=com
+      # search:
+      #   bind_dn: cn=phylumbind,ou=people,dc=example,dc=com
+      #   bind_password: ldap_password_for_phylumbind_user
+      #   base_dn: dc=example,dc=com
+      #   filter_template: (mail={email})
   # openid:
   #   clients:
-  #     - id: google
-  #       name: Google
+  #     - id: google        # internal ID, prefer lower-kebab-case or lower_camel_case
+  #       name: Google      # to be displayed to the user as 'Log In with <name>'
   #       issuer_url: https://accounts.google.com
   #       client_id:
   #       client_secret:

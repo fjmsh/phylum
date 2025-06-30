@@ -17,16 +17,16 @@ import (
 )
 
 type Config struct {
-	Debug          bool         `koanf:"debug"`
-	URL            string       `koanf:"url"`
-	StartTLS       bool         `koanf:"starttls"`
-	ConnectTimeout string       `koanf:"connect_timeout"`
-	RequestTimeout string       `koanf:"request_timeout"`
-	DNTemplate     string       `koanf:"dn_template"`
-	Search         SearchConfig `koanf:"search"`
+	Debug          bool           `koanf:"debug"`
+	URL            string         `koanf:"url"`
+	StartTLS       bool           `koanf:"starttls"`
+	ConnectTimeout string         `koanf:"connect_timeout"`
+	RequestTimeout string         `koanf:"request_timeout"`
+	DNTemplate     string         `koanf:"dn_template"`
+	DNLookup       DNLookupConfig `koanf:"dn_lookup"`
 }
 
-type SearchConfig struct {
+type DNLookupConfig struct {
 	BindDN         string `koanf:"bind_dn"`
 	BindPassword   string `koanf:"bind_password"`
 	BaseDN         string `koanf:"base_dn"`
@@ -43,7 +43,7 @@ type Auth struct {
 	connectTimeout time.Duration
 	readTimeout    time.Duration
 	dnTemplate     string
-	search         SearchConfig
+	search         DNLookupConfig
 }
 
 var a Auth
@@ -56,14 +56,14 @@ func NewAuth(cfg Config, log zerolog.Logger) (*Auth, error) {
 
 	info := a.log.Debug()
 	if cfg.DNTemplate == "" {
-		if cfg.Search.BaseDN == "" {
+		if cfg.DNLookup.BaseDN == "" {
 			return nil, errors.New("base DN not set")
 		}
-		if cfg.Search.FilterTemplate == "" {
+		if cfg.DNLookup.FilterTemplate == "" {
 			return nil, errors.New("filter template not set")
 		}
-		info = info.Str("base_dn", cfg.Search.BaseDN)
-		info = info.Str("filter_template", cfg.Search.FilterTemplate)
+		info = info.Str("base_dn", cfg.DNLookup.BaseDN)
+		info = info.Str("filter_template", cfg.DNLookup.FilterTemplate)
 	} else {
 		info = info.Str("dn_template", cfg.DNTemplate)
 	}
@@ -93,7 +93,7 @@ func NewAuth(cfg Config, log zerolog.Logger) (*Auth, error) {
 		a.readTimeout = d
 	}
 	a.dnTemplate = cfg.DNTemplate
-	a.search = cfg.Search
+	a.search = cfg.DNLookup
 
 	var err error
 	a.conn, err = a.newConn()
