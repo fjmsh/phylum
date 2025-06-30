@@ -173,6 +173,7 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 	createResources := make([]insertResourcesFastParams, 0, len(tree))
 	var createVersions []insertResourceVersionsFastParams
 	var copyContents []jobs.CopyContentsArgs
+	var migrateContents []jobs.MigrateArgs
 	newIDs := make(map[uuid.UUID]uuid.UUID)
 
 	dest, created, deleted, err := resolveConflictAndInsertResource(
@@ -207,6 +208,9 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 			Src:  src.latestVersionInfo.ID,
 			Dest: versionID,
 		})
+		migrateContents = append(migrateContents, jobs.MigrateArgs{
+			VersionID: versionID,
+		})
 	}
 
 	for _, src := range tree {
@@ -231,9 +235,8 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 				MimeType:   src.latestVersionInfo.MimeType,
 				SHA256:     src.latestVersionInfo.SHA256,
 			})
-			copyContents = append(copyContents, jobs.CopyContentsArgs{
-				Src:  src.latestVersionInfo.ID,
-				Dest: versionID,
+			migrateContents = append(migrateContents, jobs.MigrateArgs{
+				VersionID: versionID,
 			})
 		}
 	}
@@ -254,6 +257,9 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 	}
 
 	if err := jobs.CopyContents(f.db, copyContents); err != nil {
+		return Resource{}, false, err
+	}
+	if err := jobs.MigrateContentsMany(f.db, migrateContents); err != nil {
 		return Resource{}, false, err
 	}
 

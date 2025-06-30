@@ -26,6 +26,14 @@ func (w *MigrateWorker) Work(ctx context.Context, job *steve.Job[MigrateArgs]) e
 	return migrateVersionContents(ctx, job.Args.VersionID)
 }
 
+func MigrateContentsMany(db db.Handler, args []MigrateArgs) error {
+	params := make([]steve.JobArgs, len(args))
+	for i, a := range args {
+		params[i] = a
+	}
+	return steve.Get().InsertJobs(db, params)
+}
+
 func MigrateVersionContents(db db.Handler, versionID uuid.UUID) error {
 	return steve.Get().InsertJob(db, MigrateArgs{VersionID: versionID})
 }
