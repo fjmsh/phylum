@@ -83,22 +83,29 @@ func ListBackends() map[string]Backend {
 }
 
 func InsertBackend(d db.Handler, name string, driver Driver, params map[string]string) error {
-	backend, err := driver.Create(name, params)
-	if err != nil {
-		return err
-	}
-	const q = "INSERT INTO storage_backends(name, driver, params) VALUES ($1::TEXT, $2::TEXT, $3::JSONB)"
 	p, err := json.Marshal(params)
 	if err != nil {
 		return err
 	}
+	const q = "INSERT INTO storage_backends(name, driver, params) VALUES ($1::TEXT, $2::TEXT, $3::JSONB)"
+
 	if err := d.RunInTx(func(tx db.TxHandler) error {
 		_, err := tx.Exec(q, name, driver.Name, p)
-		return err
+		if err != nil {
+			return err
+		}
+
+		backend, err := driver.Create(name, params)
+		if err != nil {
+			return err
+		}
+		backends[name] = backend
+
+		return nil
 	}); err != nil {
 		return err
 	}
-	backends[name] = backend
+
 	return nil
 }
 
