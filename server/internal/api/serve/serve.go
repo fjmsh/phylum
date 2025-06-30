@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
-	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/google/uuid"
 )
 
@@ -153,8 +152,6 @@ func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, 
 		if err == nil {
 			code = http.StatusPartialContent
 			w.Header().Set("Content-Range", ra.contentRange(int(version.Size)))
-		} else if errors.Is(err, storage.ErrRangeNotSupported) {
-			err = nil
 		}
 	} else {
 		reader, err = version.OpenRead(0, -1)

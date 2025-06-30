@@ -11,8 +11,6 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-var ErrRangeNotSupported = errors.New("byte range not suppoered")
-
 type minioStorage struct {
 	name       string
 	client     *minio.Client
@@ -50,15 +48,11 @@ func (s minioStorage) Name() string {
 
 func (s minioStorage) OpenRead(name string, start, length int) (io.ReadCloser, error) {
 	opts := minio.GetObjectOptions{}
-	// if length != -1 {
-	// 	opts.SetRange(int64(start), int64(start+length))
-	// }
-
-	if r, err := s.client.GetObject(context.Background(), s.bucketName, s.prefix+name, opts); err != nil {
-		return nil, err
-	} else {
-		return r, ErrRangeNotSupported
+	if length != -1 {
+		opts.SetRange(int64(start), int64(start+length))
 	}
+
+	return s.client.GetObject(context.Background(), s.bucketName, s.prefix+name, opts)
 }
 
 func (s minioStorage) Copy(ctx context.Context, src Backend, srcName, destName string) error {
