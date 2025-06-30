@@ -90,7 +90,7 @@ func handleOAuthRedirect(c *gin.Context) {
 			clientURI = *c.Request.URL
 			clientURI.RawQuery = ""
 		} else {
-			clientURI = url.URL{Scheme: "drive.phylum.cloud"}
+			clientURI = url.URL{Scheme: "cloud.phylum.drive"}
 		}
 		clientURI.Path = "/login/token"
 		q := url.Values{}
