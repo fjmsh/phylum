@@ -10,7 +10,6 @@
     <application
         android:label="Phylum (Dev)"
         android:icon="@mipmap/ic_launcher_dev"
-        tools:replace="android:label,android:icon"
-        android:usesCleartextTraffic="true">
+        tools:replace="android:label,android:icon">
     </application>
 </manifest>
