@@ -151,7 +151,7 @@ class ExplorerController extends StateNotifier<ExplorerState> {
     return true;
   }
 
-  void updateSelection(int Function(int)? indexFn, SelectionMode mode, bool highlight) {
+  int updateSelection(int Function(int)? indexFn, SelectionMode mode, bool highlight) {
     Set<String>? selectedIds;
     int index = indexFn?.call(state.focusIndex) ?? state.focusIndex;
     index = min(state.resources.length - 1, max(0, index));
@@ -196,6 +196,7 @@ class ExplorerController extends StateNotifier<ExplorerState> {
       focusIndex: index,
       showFocus: highlight,
     );
+    return index;
   }
 
   Future refresh() {
