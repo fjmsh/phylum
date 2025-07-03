@@ -10,8 +10,8 @@ import 'package:phylum/ui/menu/bottom_sheet.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:provider/provider.dart';
 
-class AppLayoutCollapsed extends StatelessWidget {
-  const AppLayoutCollapsed({super.key});
+class ExplorerPageCollapsed extends StatelessWidget {
+  const ExplorerPageCollapsed({super.key});
 
   @override
   Widget build(BuildContext context) {

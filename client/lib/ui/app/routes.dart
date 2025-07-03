@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -8,7 +9,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/search_request.dart';
 import 'package:phylum/libphylum/requests/shared_resources_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/ui/layout/app_layout.dart';
+import 'package:phylum/ui/layout/explorer_page.dart';
 import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/login/token_login_page.dart';
 import 'package:phylum/ui/login/reset_password_page.dart';
@@ -69,6 +70,7 @@ sealed class ExplorerRoute extends PhylumRoute {
 
   Stream<List<Resource>> items(PhylumAccount account);
 
+  @nonVirtual
   @override
   Widget buildPage(BuildContext context) {
     final account =
@@ -77,7 +79,7 @@ sealed class ExplorerRoute extends PhylumRoute {
     if (account == null) {
       return const LoginPage();
     }
-    return AppLayout.create(account);
+    return ExplorerPage.create(account);
   }
 }
 
