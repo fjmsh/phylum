@@ -5,7 +5,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/layout/account_state_page.dart';
-import 'package:phylum/ui/layout/action_queue_status_notifier.dart';
+import 'package:phylum/ui/layout/sync_status_notifier.dart';
 import 'package:phylum/ui/layout/app_actions.dart';
 import 'package:phylum/ui/layout/nav_list.dart';
 import 'package:phylum/ui/app/router.dart';
@@ -27,7 +27,7 @@ class AppLayout extends StatelessWidget {
       providers: [
         StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
         StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
-        ChangeNotifierProvider(create: (context) => ActionQueueStatusNotifier(account.actionQueue)),
+        ChangeNotifierProvider(create: (context) => SyncStatusNotifier(account.actionQueue)),
         StateNotifierProvider<ExplorerController, ExplorerState>(
           create: (context) => ExplorerController(account: context.read(), routerDelegate: context.read()),
           lazy: false,
