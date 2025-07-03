@@ -13,7 +13,6 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/dialogs/new_user_details_dialog.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/layout/button_downloads.dart';
-import 'package:phylum/ui/layout/button_sync_status.dart';
 import 'package:phylum/ui/layout/create_action.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/user_display_name.dart';
@@ -167,7 +166,6 @@ class NavList extends StatelessWidget {
                             : SizedBox();
                       }),
                   if (!kIsWeb) const DownloadButton(),
-                  const SyncStatusButton(),
                   ListTile(
                     leading: const Icon(Icons.help),
                     title: const Text('About'),

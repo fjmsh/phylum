@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/layout/create_action.dart';
-import 'package:phylum/ui/layout/nav_list.dart';
-import 'package:phylum/ui/layout/search.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
+import 'package:phylum/ui/layout/create_action.dart';
+import 'package:phylum/ui/layout/nav_list.dart';
+import 'package:phylum/ui/layout/search.dart';
+import 'package:phylum/ui/layout/sync_status_button.dart';
 import 'package:phylum/ui/menu/bottom_sheet.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:provider/provider.dart';
@@ -63,6 +64,7 @@ class AppLayoutCollapsed extends StatelessWidget {
     return AppBar(
       title: const Text('Phylum'),
       actions: [
+        const SyncStatusButton(),
         IconButton(
           icon: const Icon(Icons.search),
           onPressed: () {

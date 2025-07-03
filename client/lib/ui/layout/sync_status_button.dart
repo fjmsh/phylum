@@ -9,10 +9,9 @@ class SyncStatusButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.select<SyncStatusNotifier, SyncStatus>((notifier) => notifier.status);
-    return ListTile(
-      leading: Icon(state.icon),
-      title: Text(state.text, style: state == SyncStatus.done ? null : TextStyle(fontWeight: FontWeight.bold)),
-      onTap: () {
+    return IconButton(
+      icon: Icon(state.icon),
+      onPressed: () {
         Scaffold.maybeOf(context)?.closeDrawer();
         SyncDialog.show(context);
       },

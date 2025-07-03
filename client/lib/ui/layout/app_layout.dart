@@ -5,6 +5,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/layout/account_state_page.dart';
+import 'package:phylum/ui/layout/sync_status_button.dart';
 import 'package:phylum/ui/layout/sync_status_notifier.dart';
 import 'package:phylum/ui/layout/app_actions.dart';
 import 'package:phylum/ui/layout/nav_list.dart';
@@ -102,7 +103,13 @@ class ExpandedAppLayout extends StatelessWidget {
                 width: sidebarWidth,
                 child: Padding(
                   padding: const EdgeInsets.only(left: 16),
-                  child: const LogoRow(),
+                  child: const Row(
+                    spacing: 6.0,
+                    children: [
+                      LogoRow(),
+                      SyncStatusButton(),
+                    ],
+                  ),
                 ),
               ),
               Expanded(
