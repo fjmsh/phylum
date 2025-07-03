@@ -3,7 +3,7 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:phylum/ui/sync/sliver_offline.dart';
+import 'package:phylum/ui/sync/sliver_paused_unreachable.dart';
 import 'package:provider/provider.dart';
 
 import 'sliver_actions.dart';
@@ -34,7 +34,7 @@ class SyncDialog extends StatelessWidget {
     if (size.width < 600) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Server Status'),
+          title: const Text('Server Sync'),
         ),
         body: buildContents(context),
       );
@@ -47,7 +47,7 @@ class SyncDialog extends StatelessWidget {
             child: Column(
               children: [
                 AppBar(
-                    title: const Text('Server Status'),
+                    title: const Text('Server Sync'),
                     leading: const CloseButton(),
                     backgroundColor: Colors.transparent),
                 Expanded(child: buildContents(context)),

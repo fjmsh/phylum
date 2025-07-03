@@ -168,12 +168,7 @@ class NavList extends StatelessWidget {
                             : SizedBox();
                       }),
                   if (!kIsWeb) const DownloadButton(),
-                  ServerStatusButton(
-                    onTap: () {
-                      Scaffold.maybeOf(context)?.closeDrawer();
-                      SyncDialog.show(context);
-                    },
-                  ),
+                  const SyncStatusButton(),
                   ListTile(
                     leading: const Icon(Icons.help),
                     title: const Text('About'),

@@ -15,7 +15,7 @@ class PausedOfflineSliver extends StatelessWidget {
         (context, i) {
           if (paused) {
             return ListTile(
-              leading: const Icon(Icons.refresh),
+              leading: const Icon(Icons.play_arrow),
               title: const Text('Sync Paused'),
               subtitle: const Text('Tap to resume'),
               onTap: () {
