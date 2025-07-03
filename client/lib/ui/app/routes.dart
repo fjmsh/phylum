@@ -13,6 +13,7 @@ import 'package:phylum/ui/layout/explorer_page.dart';
 import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/login/token_login_page.dart';
 import 'package:phylum/ui/login/reset_password_page.dart';
+import 'package:phylum/ui/open/open_resource_page.dart';
 import 'package:provider/provider.dart';
 
 sealed class PhylumRoute {
@@ -59,16 +60,8 @@ class ResetPasswordRoute extends PhylumRoute {
       );
 }
 
-sealed class ExplorerRoute extends PhylumRoute {
-  String get title;
-
-  const ExplorerRoute();
-
-  String? folderId(PhylumAccount account) => null;
-
-  Future<bool> refresh(PhylumAccount account);
-
-  Stream<List<Resource>> items(PhylumAccount account);
+sealed class LoggedInRoute extends PhylumRoute {
+  const LoggedInRoute();
 
   @nonVirtual
   @override
@@ -79,6 +72,40 @@ sealed class ExplorerRoute extends PhylumRoute {
     if (account == null) {
       return const LoginPage();
     }
+    return buildAccountPage(account);
+  }
+
+  @protected
+  Widget buildAccountPage(PhylumAccount account);
+}
+
+class OpenResourceRoute extends LoggedInRoute {
+  final String resourceId;
+
+  @override
+  Uri get uri => Uri(path: '/open/$resourceId');
+
+  OpenResourceRoute({required this.resourceId}) : super();
+
+  @override
+  Widget buildAccountPage(PhylumAccount account) {
+    return OpenResourcePage(account: account, resourceId: resourceId);
+  }
+}
+
+sealed class ExplorerRoute extends LoggedInRoute {
+  String get title;
+
+  const ExplorerRoute();
+
+  String? folderId(PhylumAccount account) => null;
+
+  Future<bool> refresh(PhylumAccount account);
+
+  Stream<List<Resource>> items(PhylumAccount account);
+
+  @override
+  Widget buildAccountPage(PhylumAccount account) {
     return ExplorerPage.create(account);
   }
 }
@@ -90,7 +117,7 @@ class ExplorerRouteHome extends ExplorerRouteFolder {
   @override
   String get title => 'My Files';
 
-  ExplorerRouteHome() : super(folderId: '');
+  const ExplorerRouteHome() : super(folderId: '');
 
   @override
   String folderId(PhylumAccount account) => account.user.home;
@@ -105,7 +132,7 @@ class ExplorerRouteFolder extends ExplorerRoute {
 
   final String _folderId;
 
-  ExplorerRouteFolder({required String folderId}) : _folderId = folderId;
+  const ExplorerRouteFolder({required String folderId}) : _folderId = folderId;
 
   @override
   String folderId(PhylumAccount account) => _folderId;

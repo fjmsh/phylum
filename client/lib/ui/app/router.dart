@@ -91,6 +91,11 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
       if (segments[0] == 'home') {
         return SynchronousFuture(ExplorerRouteHome());
       }
+      if (segments[0] == 'open') {
+        final resourceId = uri.queryParameters['id'];
+        return SynchronousFuture(
+            resourceId == null ? const ExplorerRouteHome() : OpenResourceRoute(resourceId: resourceId));
+      }
       if (segments[0] == 'recents') {
         return SynchronousFuture(const ExplorerRouteRecents());
       }
