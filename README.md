@@ -14,7 +14,7 @@ It is in very early stages of testing, so bugs are to be expected. Fair warning:
 
  - Offline-first native clients on all platforms (*)
     - Drag and Drop
-    - Keyboard navigation and shortcuts on web and desktop
+    - Keyboard navigation and shortcuts on web(+) and desktop
  - Public shares with password protection and expiration
  - Users and permissions
  - WebDAV-compatible
@@ -22,27 +22,32 @@ It is in very early stages of testing, so bugs are to be expected. Fair warning:
  - Remote storage backends
  - Auth backends (LDAP, OAuth)
 
-* Not yet built/tested on MacOS, iOS, and Windows. 
+*: Not yet built/tested on MacOS, iOS, and Windows. 
++: Not all shortcuts work on web
 
 Note: Please do not try to use multiple instances of the same client on one device (i.e. multiple instances of the app). Doing so will result in unexpected behavior, and possibly corrupt local data. It should not, however, have any impact on the remote server or the integrity its data. The web use-case is handled gracefully, though, so there is no need to worry about accidentally opening another tab.
 
 ### Roadmap
 
-In no particular order, here is a list of what to expect:
+Here is a list of what is planned, in rough order:
  - macOS/iOS clients
+ - Login via magic link (no password)
  - Grid icon view with thumbnails
  - Links / Shortcuts
+ - Version management (auto/manual delete old versions)
+ - Bookmark management
+ - User management (list, update display name/avatar)
+ - Share with all users
+ - Background uploads on mobile
  - In-app share notifications
- - Quota 
- - Groups
- - Better version management
- - In-app user management (update display name/avatar)
- - Better backup
+ - Easy db backup
  - Extended metadata (media length, pages, etc.)
  - View more files (audio, video, ebooks)
  - Offline sync
  - Sync full directory tree metadata
  - 2-way folder sync
+ - Storage Quota 
+ - Groups
 
 ## Deployment / Testing
 
