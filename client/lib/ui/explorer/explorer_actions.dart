@@ -8,7 +8,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/explorer/paste_helpers.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
-import 'package:phylum/ui/preview/resource_preview.dart';
+import 'package:phylum/ui/file_preview/file_preview_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
@@ -68,7 +68,7 @@ class ExplorerActions extends StatelessWidget {
             final resources = state.resources.where((r) => !r.dir).toList(growable: false);
             final index = resources.indexOf(r);
             if (index >= 0) {
-              ResourcePreview.showResources(context, resources, index);
+              FilePreviewDialog.showResources(context, resources, index);
             }
           }
           return;

@@ -14,6 +14,7 @@ import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/login/token_login_page.dart';
 import 'package:phylum/ui/login/reset_password_page.dart';
 import 'package:phylum/ui/open/open_resource_page.dart';
+import 'package:phylum/ui/file_preview/file_preview_page.dart';
 import 'package:provider/provider.dart';
 
 sealed class PhylumRoute {
@@ -83,13 +84,27 @@ class OpenResourceRoute extends LoggedInRoute {
   final String resourceId;
 
   @override
-  Uri get uri => Uri(path: '/open/$resourceId');
+  Uri get uri => Uri(path: '/open', queryParameters: {'id': resourceId});
 
   OpenResourceRoute({required this.resourceId}) : super();
 
   @override
   Widget buildAccountPage(PhylumAccount account) {
     return OpenResourcePage(account: account, resourceId: resourceId);
+  }
+}
+
+class FilePreviewRoute extends LoggedInRoute {
+  final String fileId;
+
+  @override
+  Uri get uri => Uri(path: '/file/$fileId');
+
+  const FilePreviewRoute({required this.fileId}) : super();
+
+  @override
+  Widget buildAccountPage(PhylumAccount account) {
+    return FilePreviewPage.create(account: account, resourceId: fileId);
   }
 }
 

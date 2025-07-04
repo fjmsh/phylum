@@ -4,7 +4,7 @@ import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:uri/uri.dart';
 
-import 'package:phylum/util/base_uri_stub.dart' if (dart.library.js_interop) 'package:phylum/util/base_uri_web.dart';
+import 'base_uri_stub.dart' if (dart.library.js_interop) 'base_uri_web.dart';
 
 class InstanceUrlFragment extends StatefulWidget {
   final Function(InstanceConfig) onInstanceSelected;
@@ -24,10 +24,7 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
       spacing: 12.0,
       children: [
         TextFormField(
-          decoration: InputDecoration(
-            label: const Text('Instance URL'),
-            hintText: 'https://phylum.example.com',
-          ),
+          decoration: InputDecoration(label: const Text('Instance URL'), hintText: 'https://phylum.example.com'),
           initialValue: webAppBaseUri?.toString(),
           autofocus: true,
           autofillHints: const [AutofillHints.url],
@@ -41,7 +38,7 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
           },
           onFieldSubmitted: _url == null ? null : (value) => checkConfig(_url!),
         ),
-        ElevatedButton(onPressed: _url == null ? null : () => checkConfig(_url!), child: Text('Next'))
+        ElevatedButton(onPressed: _url == null ? null : () => checkConfig(_url!), child: Text('Next')),
       ],
     );
   }

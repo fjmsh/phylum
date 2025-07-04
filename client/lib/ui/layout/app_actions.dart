@@ -5,7 +5,7 @@ import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/layout/search.dart';
 import 'package:phylum/ui/app/routes.dart';
-import 'package:phylum/ui/preview/resource_preview.dart';
+import 'package:phylum/ui/file_preview/file_preview_dialog.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 
@@ -84,7 +84,7 @@ class AppActions extends StatelessWidget {
             context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: resource.id));
             return null;
           }
-          ResourcePreview.showResources(context, [resource], 0);
+          FilePreviewDialog.showResources(context, [resource], 0);
           return null;
         })
       },

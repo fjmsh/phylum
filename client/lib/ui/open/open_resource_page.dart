@@ -5,7 +5,6 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/app/dialog_scaffold.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
-import 'package:phylum/ui/preview/resource_preview.dart';
 import 'package:provider/provider.dart';
 
 class OpenResourcePage extends StatefulWidget {
@@ -43,12 +42,7 @@ class _OpenResourcePageState extends State<OpenResourcePage> {
       if (r.dir) {
         router.go(ExplorerRouteFolder(folderId: r.id));
       } else {
-        if (r.parent != null) {
-          router.go(ExplorerRouteFolder(folderId: r.parent!));
-        } else {
-          router.go(const ExplorerRouteHome());
-        }
-        ResourcePreview.showResources(context, [r], 0);
+        router.go(FilePreviewRoute(fileId: r.id));
       }
     } else if (response is ApiErrorResponse) {
       if (mounted) {

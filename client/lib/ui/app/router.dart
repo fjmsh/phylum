@@ -1,7 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/util/base_uri.dart';
-import 'package:phylum/util/logging.dart';
 
 import 'routes.dart';
 
@@ -106,19 +104,9 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
         return SynchronousFuture(const ExplorerRouteTrash());
       }
       if (segments[0] == 'reset_password') {
-        Uri? instanceUrl = Uri.tryParse(uri.queryParameters['instance'] ?? '');
-
-        if (instanceUrl == null) {
-          logger.w('Unable to parse instance URL "${uri.queryParameters['instance']}"');
-        } else if (kIsWeb) {
-          if (kDebugMode && instanceUrl != webAppBaseUri) {
-            logger.w('Instance URL "${uri.queryParameters['instance']}" does not match Uri.base $webAppBaseUri');
-          }
-          instanceUrl = Uri();
-        }
-
         return SynchronousFuture(ResetPasswordRoute(
-          instanceUri: instanceUrl ?? Uri(),
+          // TODO: Don't fallback to empty instance uri
+          instanceUri: Uri.tryParse(uri.queryParameters['instance'] ?? '') ?? Uri(),
           email: uri.queryParameters['email'] ?? '',
           token: uri.queryParameters['token'] ?? '',
         ));
@@ -133,12 +121,16 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
     } else if (segments.length == 2) {
       if (segments[0] == 'login' && segments[1] == 'token') {
         return SynchronousFuture(TokenLoginRoute(
+          // TODO: Rename to instance
           instanceUrl: uri.queryParameters['instance_url'] ?? '',
           loginToken: uri.queryParameters['login_token'] ?? '',
         ));
       }
       if (segments[0] == 'folder') {
         return SynchronousFuture(ExplorerRouteFolder(folderId: segments[1]));
+      }
+      if (segments[0] == 'file') {
+        return SynchronousFuture(FilePreviewRoute(fileId: segments[1]));
       }
     }
     return SynchronousFuture(ExplorerRouteFolder(folderId: 'unknown'));
