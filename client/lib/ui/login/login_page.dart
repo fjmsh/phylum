@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/ui/login/instance_url_fragment.dart';
-import 'package:phylum/ui/login/password_login_fragment.dart';
+import 'package:phylum/ui/login/login_fragment.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -53,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
         setState(() => _instanceConfig = instanceConfig);
       });
     }
-    return PasswordLoginFragment(
+    return LoginFragment(
       onBackPressed: () => setState(() => _instanceConfig = null),
       instanceConfig: instanceConfig,
     );

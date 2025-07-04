@@ -17,21 +17,21 @@ import 'package:uri/uri.dart';
 
 import 'oauth_stub.dart' if (dart.library.js_interop) 'oauth_web.dart' if (dart.library.ffi) 'oauth_vm.dart';
 
-class PasswordLoginFragment extends StatefulWidget {
+class LoginFragment extends StatefulWidget {
   final InstanceConfig instanceConfig;
   final Function()? onBackPressed;
 
-  const PasswordLoginFragment({
+  const LoginFragment({
     super.key,
     required this.instanceConfig,
     required this.onBackPressed,
   });
 
   @override
-  State<PasswordLoginFragment> createState() => _PasswordLoginFragmentState();
+  State<LoginFragment> createState() => _LoginFragmentState();
 }
 
-class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
+class _LoginFragmentState extends State<LoginFragment> {
   String _email = '';
   String _password = '';
 
