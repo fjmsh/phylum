@@ -57,15 +57,15 @@ class PasteItem {
 
 Future<PasteItem> extractPasteItem(PhylumAccount account, DataReader reader) async {
   final uri = await reader.readValue(Formats.uri).then((value) => value?.uri);
-  if (uri != null && (uri.isScheme('http') || uri.isScheme('https'))) {
-    final openUri = kIsWeb ? Uri.base.replace(path: 'open') : account.apiClient.createUri('/open');
-    if (uri.authority == openUri.authority && uri.path == openUri.path && uri.queryParameters.containsKey('id')) {
-      final id = uri.queryParameters['id']!;
-      return PasteItem.withResourceId(resourceId: id);
+  if (uri != null &&
+      (uri.isScheme(account.apiClient.serverUrl.scheme) && uri.authority == account.apiClient.serverUrl.authority)) {
+    final segments = uri.pathSegments;
+    if (segments.length == 2 && (segments[0] == 'file' || segments[0] == 'folder')) {
+      return PasteItem.withResourceId(resourceId: segments[1]);
     }
   }
 
-// Maybe this needs to be done for all platforms without fs access
+  // TODO: Maybe this needs to be done for all platforms without fs access
   if (kIsWeb) {
     final xfileCompleter = Completer<XFile?>();
     reader.getFile(null, (file) async {

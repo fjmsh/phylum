@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phylum/libphylum/actions/action_resource_publink_create.dart';
@@ -6,7 +5,6 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/create_publink_view.dart';
 import 'package:provider/provider.dart';
-import 'package:uri/uri.dart';
 
 class ResourcePublinksView extends StatelessWidget {
   final Resource resource;
@@ -36,13 +34,7 @@ class ResourcePublinksView extends StatelessWidget {
                       trailing: IconButton(
                         icon: const Icon(Icons.copy),
                         onPressed: () {
-                          final Uri uri;
-                          if (kIsWeb) {
-                            uri = (UriBuilder.fromUri(Uri.base)..path = 'pub/$l').build();
-                          } else {
-                            uri = account.apiClient.createUri('pub/$l');
-                          }
-                          Clipboard.setData(ClipboardData(text: uri.toString()));
+                          Clipboard.setData(ClipboardData(text: account.apiClient.createUri('/pub/$l').toString()));
                         },
                       ),
                     )),

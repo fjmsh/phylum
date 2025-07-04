@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/clipboard.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
@@ -14,7 +13,6 @@ import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
-import 'package:uri/uri.dart';
 
 import 'explorer_controller.dart';
 
@@ -107,10 +105,7 @@ class ExplorerActions extends StatelessWidget {
           final selected = context.read<ExplorerState>().selected;
           if (selected.isEmpty) return;
           final items = selected.map((r) {
-            final uri = kIsWeb
-                ? UriBuilder.fromUri(Uri.base.replace(path: 'open'))
-                : account.apiClient.createUriBuilder('/open');
-            uri.queryParameters['id'] = r.id;
+            final uri = account.apiClient.createUriBuilder(r.dir ? '/folder/${r.id}' : '/file/${r.id}');
             final uriData = Formats.uri(NamedUri(uri.build(), name: r.name));
             return DataWriterItem(suggestedName: r.name)..add(uriData);
           });
