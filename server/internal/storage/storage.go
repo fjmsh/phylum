@@ -3,7 +3,6 @@ package storage
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,13 +27,14 @@ type BackendConfig struct {
 }
 
 func Initialize(db db.Handler) error {
-	if err := os.MkdirAll(Cfg.Root, 0700); err != nil {
+	if err := os.MkdirAll(Cfg.Root, 0o700); err != nil {
 		return errors.New("failed to create storage root(" + Cfg.Root + "): " + err.Error())
 	} else {
 		if stat, err := os.Stat(Cfg.Root); err != nil {
 			return errors.New("failed to stat storage root(" + Cfg.Root + "): " + err.Error())
-		} else if stat.Mode()&0xfff != 0700 {
-			return errors.New("storage root does not have correct permissions (0700): " + fmt.Sprintf("%o", stat.Mode()&0xfff))
+		} else if stat.Mode()&0xfff != 0o700 {
+			os.Chmod(Cfg.Root, 0o700)
+			// return errors.New("storage root does not have correct permissions: " + fmt.Sprintf("%o", stat.Mode()&0xfff))
 		}
 
 	}
