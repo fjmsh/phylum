@@ -95,7 +95,7 @@ func handleOAuthRedirect(c *gin.Context) {
 		clientURI.Path = "/login/token"
 		q := url.Values{}
 		q.Add("login_token", token)
-		q.Add("instance_url", getInstanceURL(c.Request, ""))
+		q.Add("instance", getInstanceURL(c.Request, ""))
 		clientURI.RawQuery = q.Encode()
 		c.Redirect(http.StatusFound, clientURI.String())
 	}
