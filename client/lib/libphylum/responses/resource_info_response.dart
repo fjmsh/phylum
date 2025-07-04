@@ -3,7 +3,7 @@ part of 'responses.dart';
 class ResourceInfoResponse extends PhylumApiSuccessResponse {
   final ResourceResponse root;
   final Iterable<ResourcesCompanion> ancestors;
-  final Iterable<ResourceResponse> children;
+  final Iterable<ResourceResponse>? children;
 
   ResourceInfoResponse({
     required this.root,
@@ -15,7 +15,7 @@ class ResourceInfoResponse extends PhylumApiSuccessResponse {
     final ancestors =
         (data['ancestors'] as List).cast<Map>().map((a) => parseResourceAncestor(a.cast<String, dynamic>()));
     final root = ResourceResponse.fromResponse(data['resource']);
-    final children = (data['children'] as List).cast<Map>().map((c) => ResourceResponse.fromResponse(
+    final children = (data['children'] as List?)?.cast<Map>().map((c) => ResourceResponse.fromResponse(
           c.cast<String, dynamic>(),
           parent: root.resource.id,
           inheritedPermissions: root.permissions,
@@ -32,7 +32,7 @@ class ResourceInfoResponse extends PhylumApiSuccessResponse {
   Future process(PhylumAccount account) async {
     final db = account.db;
 
-    final resources = [root, ...children];
+    final resources = [root, ...?children];
     for (final r in resources) {
       r._updateUserPermissions(account);
     }
@@ -44,7 +44,7 @@ class ResourceInfoResponse extends PhylumApiSuccessResponse {
 
     final existing =
         Set.of(await (db.select(db.resources)..where((t) => t.parent.equals(root.resource.id))).map((r) => r.id).get());
-    existing.removeAll(children.map((r) => r.resource.id));
+    existing.removeAll(children?.map((r) => r.resource.id) ?? const []);
     final removedChildren = List.of(existing, growable: false);
     final versions = resources.map((r) => r.versions).fold(<ResourceVersion>[], (acc, e) => acc..addAll(e));
 
