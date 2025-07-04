@@ -14,9 +14,9 @@ import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
 class ResetPasswordPage extends StatefulWidget {
-  final Uri instanceUrl;
-  final String email;
-  final String token;
+  final String? instanceUrl;
+  final String? email;
+  final String? token;
 
   const ResetPasswordPage({
     super.key,
@@ -35,6 +35,18 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.instanceUrl == null || widget.email == null || widget.token == null) {
+      return PhylumDialogScaffold(
+          child: Column(
+        children: [
+          const Text('Mising parameters'),
+          ElevatedButton(
+            child: Text('OK'),
+            onPressed: () => context.read<PhylumRouterDelegate>().go(ExplorerRouteHome()),
+          ),
+        ],
+      ));
+    }
     return PhylumDialogScaffold(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -85,11 +97,12 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   void changePassword(
     BuildContext context,
   ) async {
-    final builder = UriBuilder.fromUri(widget.instanceUrl);
+    final instanceUrl = Uri.parse(widget.instanceUrl!);
+    final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/reset-password';
     final request = MultipartRequest('post', builder.build());
-    request.fields['email'] = widget.email;
-    request.fields['token'] = widget.token;
+    request.fields['email'] = widget.email!;
+    request.fields['token'] = widget.token!;
     request.fields['password'] = _password;
 
     final responseString = await sendRequest(context, 'Changing Password', request);
@@ -102,7 +115,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
       final response = BootstrapLoginResponse.fromResponse((jsonDecode(responseString) as Map).cast<String, dynamic>());
       final account = await PhylumAccount.create(
-        serverUrl: widget.instanceUrl,
+        serverUrl: instanceUrl,
         apiKey: response.apiKey!,
         user: response.user,
       );

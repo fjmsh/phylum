@@ -13,8 +13,8 @@ import 'package:uri/uri.dart';
 import 'package:phylum/ui/app/dialog_scaffold.dart';
 
 class TokenLoginPage extends StatefulWidget {
-  final String instanceUrl;
-  final String loginToken;
+  final String? instanceUrl;
+  final String? loginToken;
 
   const TokenLoginPage({
     super.key,
@@ -54,21 +54,23 @@ class _TokenLoginPageState extends State<TokenLoginPage> {
               children: [
                 Text('Error: $error'),
                 ElevatedButton(
-                    onPressed: () {
-                      context.read<PhylumRouterDelegate>().go(ExplorerRouteHome());
-                    },
-                    child: Text('OK'))
+                  onPressed: () => context.read<PhylumRouterDelegate>().go(ExplorerRouteHome()),
+                  child: Text('OK'),
+                ),
               ],
             ),
     );
   }
 
   void performLogin(BuildContext context) async {
-    final instanceUrl = Uri.parse(widget.instanceUrl);
+    if (widget.instanceUrl == null || widget.loginToken == null) {
+      Future.microtask(() => setState(() => error = 'Missing Parameters'));
+    }
+    final instanceUrl = Uri.parse(widget.instanceUrl!);
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/token/login';
     final request = MultipartRequest('post', builder.build());
-    request.fields['login_token'] = widget.loginToken;
+    request.fields['login_token'] = widget.loginToken!;
 
     try {
       final response = await Client().send(request);

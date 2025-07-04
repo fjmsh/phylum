@@ -100,7 +100,10 @@ class _PasswordLoginFragmentState extends State<PasswordLoginFragment> {
                             if (token == null || !context.mounted) return;
                             Navigator.of(context).pop(false);
                             context.read<PhylumRouterDelegate>().go(ResetPasswordRoute(
-                                instanceUri: widget.instanceConfig.url, email: _email, token: token));
+                                  instanceUrl: widget.instanceConfig.url.toString(),
+                                  email: _email,
+                                  token: token,
+                                ));
                           },
                       ),
                     ],

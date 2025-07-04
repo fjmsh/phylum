@@ -26,8 +26,8 @@ sealed class PhylumRoute {
 }
 
 class TokenLoginRoute extends PhylumRoute {
-  final String instanceUrl;
-  final String loginToken;
+  final String? instanceUrl;
+  final String? loginToken;
 
   TokenLoginRoute({required this.instanceUrl, required this.loginToken});
 
@@ -44,18 +44,18 @@ class TokenLoginRoute extends PhylumRoute {
 }
 
 class ResetPasswordRoute extends PhylumRoute {
-  final Uri instanceUri;
-  final String email;
-  final String token;
+  final String? instanceUrl;
+  final String? email;
+  final String? token;
 
-  ResetPasswordRoute({required this.instanceUri, required this.email, required this.token});
+  ResetPasswordRoute({required this.instanceUrl, required this.email, required this.token});
 
   @override
   Uri get uri => Uri(path: '/reset_password');
 
   @override
   Widget buildPage(BuildContext context) => ResetPasswordPage(
-        instanceUrl: instanceUri,
+        instanceUrl: instanceUrl,
         email: email,
         token: token,
       );

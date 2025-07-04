@@ -105,10 +105,9 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
       }
       if (segments[0] == 'reset_password') {
         return SynchronousFuture(ResetPasswordRoute(
-          // TODO: Don't fallback to empty instance uri
-          instanceUri: Uri.tryParse(uri.queryParameters['instance'] ?? '') ?? Uri(),
-          email: uri.queryParameters['email'] ?? '',
-          token: uri.queryParameters['token'] ?? '',
+          instanceUrl: uri.queryParameters['instance'],
+          email: uri.queryParameters['email'],
+          token: uri.queryParameters['token'],
         ));
       }
       if (segments[0] == 'search') {
@@ -121,8 +120,7 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
     } else if (segments.length == 2) {
       if (segments[0] == 'login' && segments[1] == 'token') {
         return SynchronousFuture(TokenLoginRoute(
-          // TODO: Rename to instance
-          instanceUrl: uri.queryParameters['instance_url'] ?? '',
+          instanceUrl: uri.queryParameters['instance'] ?? '',
           loginToken: uri.queryParameters['login_token'] ?? '',
         ));
       }
