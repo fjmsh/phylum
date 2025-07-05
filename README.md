@@ -3,8 +3,6 @@ Phylum
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-![Phylum Logo](https://codeberg.org/shroff/phylum/raw/commit/db7fa8bfe3cd9733e686f60dce74384d29ebc2f1/client/web/icons/icon-192.png)
-
 Phylum is a self-hosted file storage platform with offline-first web and native clients, meant as a replacement for Google Drive, Dropbox, etc. It is licensed under GNU Affero GPL 3.0, and is intended to be forever free and non-commercial.
 
 Fair warning: Phylum is under very active development. Don't even think about putting the only copy of any data that you care about.
@@ -26,6 +24,10 @@ Fair warning: Phylum is under very active development. Don't even think about pu
 
 +: Not all shortcuts work on web
 
+
+![Desktop Screnshot](https://codeberg.org/shroff/phylum/raw/commit/b5c0db5f5981ace52d681039ba1cf352d5e5e90e/screenshots/desktop.png)
+
+![Mobile Screenshot](https://codeberg.org/shroff/phylum/raw/commit/b5c0db5f5981ace52d681039ba1cf352d5e5e90e/screenshots/mobile.png)
 
 Note: Please do not try to use multiple instances of the same client on one device (i.e. multiple instances of the desktop app). Doing so will result in unexpected behavior, and possibly corrupt local data. It should not, however, have any impact on the remote server or the integrity its data. The web use-case is handled gracefully, though, so there is no need to worry about accidentally opening another tab.
 
