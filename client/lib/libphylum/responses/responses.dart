@@ -12,6 +12,7 @@ import 'package:phylum/util/permissions.dart';
 part 'bookmark_response.dart';
 part 'bootstrap_login_response.dart';
 part 'empty_response.dart';
+part 'publink_response.dart';
 part 'resource_info_response.dart';
 part 'resource_response.dart';
 part 'search_response.dart';

@@ -27,7 +27,7 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
       };
 
   @override
-  ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse);
+  ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, PublinkResponse.fromResponse);
 
   @override
   List<LocalChange> get localChanges => [

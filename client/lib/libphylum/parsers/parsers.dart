@@ -22,12 +22,12 @@ Iterable<ResourceVersion> parseResourceVersions(List data, String resourceId) {
 Publink parsePublink(Map data, {String? root}) {
   return Publink(
     id: data['id'],
-    created: data['created'] == null ? null : DateTime.fromMillisecondsSinceEpoch(data['created']),
+    created: data['created'] == null ? null : DateTime.fromMillisecondsSinceEpoch(data['created'] * 1000),
     root: root ?? data['root'],
     accessLimit: data['access_limit'],
     protected: data['protected'],
     accessed: data['accessed'],
-    expires: data['expires'] == null ? null : DateTime.fromMillisecondsSinceEpoch(data['expires']),
+    expires: data['expires'] == null ? null : DateTime.fromMillisecondsSinceEpoch(data['expires'] * 1000),
   );
 }
 
@@ -35,7 +35,7 @@ ResourceVersion parseResourceVersion(Map data, String resourceId) {
   return ResourceVersion(
     id: data['id'],
     created: DateTime.fromMillisecondsSinceEpoch(data['created'] * 1000),
-    deleted: data['deleted'] != null,
+    deleted: (data['deleted'] ?? 0) != 0,
     resourceId: resourceId,
     size: data['size'],
     mimeType: data['mime_type'],
