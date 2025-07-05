@@ -25,7 +25,7 @@ class ResourceBookmarkRemoveAction extends ResourceAction with JsonApiAction {
       };
 
   @override
-  ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, BookmarkResponse.fromResponse);
+  ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse);
 
   @override
   List<LocalChange> get localChanges => [RemoveBookmarkChange(resourceId)];
@@ -65,6 +65,9 @@ class RemoveBookmarkChange extends LocalChange<Bookmark> {
 
   @override
   String get description => 'Removing Bookmark';
+
+  @override
+  bool get persist => true;
 
   const RemoveBookmarkChange(this.objectId);
 
