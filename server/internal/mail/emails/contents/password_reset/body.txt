@@ -1,4 +1,6 @@
+{{define "contents"}}
 You can reset your password at https://app.phylum.cloud/reset_password?instance={{.instance}}&email={{.email}}&token={{.token}} 
 
 If the link above doesn't work, then you can enter the following token in the password reset prompt, along with your email address:
 {{.token}}
+{{end}}
