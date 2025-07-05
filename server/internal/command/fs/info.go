@@ -69,7 +69,7 @@ to the resource with a particular ID.`,
 			if r.Dir() {
 				fmt.Println(" Children:")
 				includeDeleted, _ := cmd.Flags().GetBool("include-deleted")
-				children, err := f.ReadDirDeleted(r, false, includeDeleted)
+				children, err := f.ReadDirExtended(r, false, includeDeleted, false)
 				if err != nil {
 					fmt.Println("cannot access '" + pathOrUUID + "': " + err.Error())
 					os.Exit(1)

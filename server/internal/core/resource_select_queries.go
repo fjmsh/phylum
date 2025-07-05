@@ -39,7 +39,7 @@ func selectResourceTree(id uuid.UUID, includeDeleted bool, extraCols ...string) 
 	r := goqu.T("resources").As("r")
 	n := goqu.T("nodes").As("n")
 	rec := pg.From(r).
-		Select(r.Col("id"), r.Col("parent"), r.Col("deleted"))
+		Select(r.Col("id"), r.Col("parent"), r.Col("deleted"), goqu.L("? + 1", n.Col("depth")))
 	if len(extraCols) != 0 {
 		s := make([]interface{}, len(extraCols))
 		for i, c := range extraCols {
@@ -55,7 +55,7 @@ func selectResourceTree(id uuid.UUID, includeDeleted bool, extraCols ...string) 
 
 	base := pg.
 		From(r).
-		Select(r.Col("id"), r.Col("parent"), r.Col("deleted")).
+		Select(r.Col("id"), r.Col("parent"), r.Col("deleted"), goqu.L("0")).
 		Where(r.Col("id").Eq(id))
 
 	if len(extraCols) != 0 {
@@ -66,8 +66,8 @@ func selectResourceTree(id uuid.UUID, includeDeleted bool, extraCols ...string) 
 		base = base.SelectAppend(s...)
 	}
 
-	cols := []string{"id", "parent", "deleted"}
-	cols = slices.Insert(cols, 3, extraCols...)
+	cols := []string{"id", "parent", "deleted", "depth"}
+	cols = slices.Insert(cols, 4, extraCols...)
 
 	q := pg.
 		From(n).

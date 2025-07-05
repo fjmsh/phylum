@@ -1,16 +1,19 @@
 package core
 
 import (
+	"fmt"
+
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
 func (f *FileSystem) ReadDir(r Resource, recursive bool) ([]Resource, error) {
-	return f.ReadDirDeleted(r, recursive, false)
+	return f.ReadDirExtended(r, recursive, false, false)
 }
 
-func (f *FileSystem) ReadDirDeleted(r Resource, recursive, includeDeleted bool) ([]Resource, error) {
+func (f *FileSystem) ReadDirExtended(r Resource, recursive, includeDeleted, orderByDepth bool) ([]Resource, error) {
 	if !r.Dir() {
 		return nil, ErrResourceNotCollection
 	}
@@ -24,6 +27,9 @@ func (f *FileSystem) ReadDirDeleted(r Resource, recursive, includeDeleted bool) 
 		var r exp.AliasedExpression
 		q, r = selectResources(qq, n)
 		q = q.Where(r.Col("id").Neq(id))
+		if orderByDepth {
+			q = q.Order(n.Col("depth").Asc())
+		}
 	}
 
 	query, args, _ := q.ToSQL()
@@ -35,27 +41,33 @@ func (f *FileSystem) ReadDirDeleted(r Resource, recursive, includeDeleted bool) 
 }
 
 func (f *FileSystem) Walk(r Resource, depth int, fn func(Resource, string) error) error {
-	suffix := ""
-	if r.Dir() {
-		suffix = "/"
+	if !r.dir {
+		return fn(r, r.name)
 	}
-	err := fn(r, suffix)
+
+	pathMap := make(map[uuid.UUID]string)
+	pathMap[r.id] = ""
+	err := fn(r, "/")
 	if err != nil {
 		return err
 	}
-	if !r.Dir() || depth <= 0 {
+	if depth <= 0 {
 		return nil
 	}
 
-	children, err := f.ReadDir(r, depth > 1)
+	children, err := f.ReadDirExtended(r, depth > 1, false, true)
 	if err != nil {
 		return err
 	}
 
-	// TODO: #Fix f.Walk
 	for _, c := range children {
-		if err := fn(c, suffix+c.Name()); err != nil {
+		path := pathMap[c.parentID.Bytes] + "/" + c.name
+		fmt.Println(c.name, path)
+		if err := fn(c, path); err != nil {
 			return err
+		}
+		if c.dir {
+			pathMap[c.id] = path
 		}
 	}
 	return nil
