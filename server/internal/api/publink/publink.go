@@ -20,7 +20,7 @@ func Setup(r *gin.RouterGroup) {
 			if errors.Is(err, core.ErrInsufficientPermissions) {
 				c.Header("WWW-Authenticate", "Basic realm=\""+id+"\"")
 				c.AbortWithStatus(http.StatusUnauthorized)
-			} else if errors.Is(err, core.ErrResourceNotFound) {
+			} else if errors.Is(err, core.ErrParentNotFound) {
 				c.AbortWithStatus(http.StatusNotFound)
 			} else {
 				c.AbortWithStatus(http.StatusInternalServerError)

@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
@@ -33,6 +34,7 @@ func (f proxyFileSystemReadOnly) Walk(r Resource, depth int, fn func(Resource, s
 
 func OpenFileSystemFromPublink(ctx context.Context, id string, password string) (ReadFileSystem, error) {
 	d := db.Get(ctx)
+	fmt.Println(id)
 	link, err := getPublink(d, id)
 	if err != nil {
 		return nil, err
@@ -74,7 +76,7 @@ func OpenFileSystemFromPublink(ctx context.Context, id string, password string) 
 }
 
 func getPublink(d db.Handler, id string) (Publink, error) {
-	q := "SELECT * FROM publinks p WHERE id = $1::TEXT"
+	q := "SELECT * FROM publinks WHERE id = $1::TEXT"
 	if rows, err := d.Query(q, id); err != nil {
 		return Publink{}, err
 	} else if link, err := pgx.CollectExactlyOneRow(rows, scanPublink); err != nil {
