@@ -55,7 +55,7 @@ func ResourceFromFS(r core.Resource) Resource {
 func PublinkFromFS(p core.Publink) Publink {
 	return Publink{
 		ID:          p.ID,
-		Created:     p.Created,
+		Created:     p.Created.UnixMilli(),
 		Root:        p.Root,
 		Accessed:    p.Accessed,
 		AccessLimit: p.AccessLimit,

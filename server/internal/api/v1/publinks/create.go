@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
+	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -61,6 +62,14 @@ func handleCreateRequest(c *gin.Context) {
 	if err := fs.CreatePublink(r, params.ID, params.Password, expires, params.AccessLimit); err != nil {
 		panic(err)
 	}
+	response := responses.Publink{
+		ID:          params.ID,
+		Created:     time.Now().Unix(),
+		Expires:     expires.Time.Unix(),
+		Root:        r.ID(),
+		AccessLimit: int32(params.AccessLimit),
+		Protected:   params.Password != "",
+	}
 
-	c.JSON(200, gin.H{})
+	c.JSON(200, response)
 }

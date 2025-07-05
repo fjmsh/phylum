@@ -2,7 +2,6 @@ package responses
 
 import (
 	"encoding/json"
-	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/google/uuid"
@@ -49,7 +48,7 @@ type LoggedInUser struct {
 
 type Publink struct {
 	ID          string    `json:"id"`
-	Created     time.Time `json:"created"`
+	Created     int64     `json:"created"`
 	Root        uuid.UUID `json:"root"`
 	Accessed    int32     `json:"accessed"`
 	AccessLimit int32     `json:"access_limit"`
