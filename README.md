@@ -151,25 +151,25 @@ In order to access files, you need to specify the path root, which is of the for
 ### Keyboard shortcuts
 Apart from navigation of resource list, including multi-select using <ctrl> or <shift>, here is the list of keyboard shortcuts
 
-+---+---+
-| Enter/Space | Open |
-| Delete | Send to Trash |
-| Shift+Delete | Permanently Delete |
-| Ctrl+A | Select All |
-| Ctrl+N | New Folder |
-| Ctrl+U | Upload File |
-| Ctrl+Shift+U | Upload Folder (not on web) |
-| F2/Ctrl+E | Rename |
-| Ctrl+C | Copy |
-| Ctrl+X | Cut |
-| Ctrl+V | Paste |
-| Ctrl+R | Refresh |
-| Alt+H | Home |
-| Alt+S | Search |
-| Alt+Up | Go to Parent |
-| Alt+Left | Go Back |
-| Alt+Right | Go Forward |
-+---+---+
+| Key Combo    | Action               |
+| ------------ | -------------------- |
+| Enter/Space  | Open                 |
+| Delete       | Send to Trash        |
+| Shift+Delete | Permanently Delete   |
+| Ctrl+A       | Select All           |
+| Ctrl+N       | New Folder           |
+| Ctrl+U       | Upload File          |
+| Ctrl+Shift+U | Upload Folder        |
+| F2/Ctrl+E    | Rename               |
+| Ctrl+C       | Copy to clipboard    |
+| Ctrl+X       | Cut to clipboard     |
+| Ctrl+V       | Paste from clipboard |
+| Ctrl+R       | Refresh              |
+| Alt+H        | Home                 |
+| Alt+S        | Search               |
+| Alt+Up       | Go to Parent         |
+| Alt+Left     | Go Back              |
+| Alt+Right    | Go Forward           |
 
 These shortcuts were tested on linux, many of these don't quite work as expected on web because of default handlers, and are not yet adapted to macOS.
 
