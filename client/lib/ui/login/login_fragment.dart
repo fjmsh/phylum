@@ -128,8 +128,7 @@ class _LoginFragmentState extends State<LoginFragment> {
                 final builder = UriBuilder.fromUri(widget.instanceConfig.url);
                 builder.path += '/api/v1/auth/oauth/start';
                 builder.queryParameters['provider'] = p.id;
-                showProgressDialog(context, barrierDismissible: false, message: 'Logging in with ${p.name}...');
-                startOAuthFlow(builder);
+                startOAuthFlow(context, builder, p.name);
               },
               child: Text('Log In with ${p.name}'))),
         ],
