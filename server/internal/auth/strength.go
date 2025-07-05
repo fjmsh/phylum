@@ -1,7 +1,10 @@
 package auth
 
 import (
+	"net/http"
 	"strconv"
+
+	"codeberg.org/shroff/phylum/server/internal/core"
 )
 
 type charType int
@@ -41,7 +44,7 @@ func init() {
 
 func checkPasswordStrength(password string) error {
 	if len(password) < passwordRequirements.Length {
-		return &PasswordStrengthError{Reason: "password must be at least " + strconv.Itoa(passwordRequirements.Length) + " characters long."}
+		return core.NewError(http.StatusBadRequest, "invalid_password", "password must be at least "+strconv.Itoa(passwordRequirements.Length)+" characters long.")
 	}
 	count := map[charType]int{}
 	for _, c := range password {
@@ -49,16 +52,16 @@ func checkPasswordStrength(password string) error {
 	}
 
 	if count[charTypeLower] < passwordRequirements.Lower {
-		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(passwordRequirements.Lower) + " lower case."}
+		return core.NewError(http.StatusBadRequest, "invalid_password", "password must have at least "+strconv.Itoa(passwordRequirements.Lower)+" lower case.")
 	}
 	if count[charTypeUpper] < passwordRequirements.Upper {
-		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(passwordRequirements.Upper) + " upper case."}
+		return core.NewError(http.StatusBadRequest, "invalid_password", "password must have at least "+strconv.Itoa(passwordRequirements.Upper)+" upper case.")
 	}
 	if count[charTypeNumeric] < passwordRequirements.Numeric {
-		return &PasswordStrengthError{Reason: "password must have at least " + strconv.Itoa(passwordRequirements.Numeric) + " numeric."}
+		return core.NewError(http.StatusBadRequest, "invalid_request", "password must have at least "+strconv.Itoa(passwordRequirements.Numeric)+" numeric.")
 	}
 	if count[charTypeSymbol] < passwordRequirements.Symbols {
-		return &PasswordStrengthError{"password must have at least " + strconv.Itoa(passwordRequirements.Symbols) + " symbols."}
+		return core.NewError(http.StatusBadRequest, "invalid_password", "password must have at least "+strconv.Itoa(passwordRequirements.Symbols)+" symbols.")
 	}
 	return nil
 }
