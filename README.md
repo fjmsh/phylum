@@ -5,14 +5,14 @@ Phylum
 
 ![Phylum Logo](https://codeberg.org/shroff/phylum/raw/commit/db7fa8bfe3cd9733e686f60dce74384d29ebc2f1/client/web/icons/icon-192.png)
 
-Phylum is a self-hosted cloud file browser with native clients on all platforms(*), meant as a replacement for Google Drive, Dropbox, etc. It is licensed under GNU Affero GPL 3.0, and is intended to be forever free and non-commercial.
+Phylum is a self-hosted file storage platform with offline-first web and native clients, meant as a replacement for Google Drive, Dropbox, etc. It is licensed under GNU Affero GPL 3.0, and is intended to be forever free and non-commercial.
 
-It is in very early stages of testing, so bugs are to be expected. Fair warning: while the backend is quite robust and its data model fairly fixed, don't even think about putting the only copy of any data that you care about.
+Fair warning: Phylum is under very active development. Don't even think about putting the only copy of any data that you care about.
 
 
 ## Features
 
- - Offline-first native clients on all platforms (*)
+ - Offline-first native clients (*)
     - Drag and Drop
     - Keyboard navigation and shortcuts on web(+) and desktop
  - Public shares with password protection and expiration
@@ -23,9 +23,12 @@ It is in very early stages of testing, so bugs are to be expected. Fair warning:
  - Auth backends (LDAP, OAuth)
 
 *: Not yet built/tested on MacOS, iOS, and Windows. 
+
 +: Not all shortcuts work on web
 
-Note: Please do not try to use multiple instances of the same client on one device (i.e. multiple instances of the app). Doing so will result in unexpected behavior, and possibly corrupt local data. It should not, however, have any impact on the remote server or the integrity its data. The web use-case is handled gracefully, though, so there is no need to worry about accidentally opening another tab.
+
+Note: Please do not try to use multiple instances of the same client on one device (i.e. multiple instances of the desktop app). Doing so will result in unexpected behavior, and possibly corrupt local data. It should not, however, have any impact on the remote server or the integrity its data. The web use-case is handled gracefully, though, so there is no need to worry about accidentally opening another tab.
+
 
 ### Roadmap
 
@@ -49,6 +52,7 @@ Here is a list of what is planned, in rough order:
  - Storage Quota 
  - Groups
 
+
 ## Deployment / Testing
 
 The easiest way to get up and running is to use docker (or podman) compose and go to `http://localhost:2448`.
@@ -56,6 +60,7 @@ The easiest way to get up and running is to use docker (or podman) compose and g
 At the very least, you must specify `PHYLUM_DB_PASSWORD` in your `.env` file. See `example.env` for more options.
 
 Configuration is read from `config.yml`, if it exists. See `config.defaults.yml` for a list of all configuration options.
+
 
 ### CLI
 
