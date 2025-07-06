@@ -7,6 +7,29 @@ Phylum is a self-hosted file storage platform with offline-first web and native 
 
 Fair warning: Phylum is under very active development. Don't even think about putting the only copy of any data that you care about.
 
+- [Features](#features)
+  * [Screenshots](#screenshots)
+  * [Roadmap](#roadmap)
+- [Deployment](#deployment)
+  * [Using Compose (Podman, Docker)](#using-compose--podman--docker-)
+  * [Local build](#local-build)
+- [Configuration and Management](#configuration-and-management)
+  * [Adding users](#adding-users)
+    + [Permissions](#permissions)
+  * [CLI](#cli)
+  * [Auth Backends](#auth-backends)
+    + [LDAP](#ldap)
+    + [OpenID (OAuth)](#openid--oauth-)
+  * [Content Storage](#content-storage)
+  * [Version History](#version-history)
+  * [WebDAV](#webdav)
+  * [Keyboard shortcuts](#keyboard-shortcuts)
+- [Development](#development)
+  * [Server](#server)
+  * [API](#api)
+  * [Client](#client)
+    + [Web](#web)
+
 
 ## Features
 
@@ -24,6 +47,8 @@ Fair warning: Phylum is under very active development. Don't even think about pu
 
 +: Not all shortcuts work on web
 
+
+### Screenshots
 
 ![Desktop Screnshot](https://codeberg.org/shroff/phylum/raw/commit/b5c0db5f5981ace52d681039ba1cf352d5e5e90e/screenshots/desktop.png)
 
