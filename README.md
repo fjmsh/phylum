@@ -11,7 +11,7 @@ Fair warning: Phylum is under very active development. Don't even think about pu
   * [Screenshots](#screenshots)
   * [Roadmap](#roadmap)
 - [Deployment](#deployment)
-  * [Using Compose (Podman, Docker)](#using-compose--podman--docker-)
+  * [Using Compose (Podman, Docker)](#using-compose-podman-docker)
   * [Local build](#local-build)
 - [Configuration and Management](#configuration-and-management)
   * [Adding users](#adding-users)
@@ -19,7 +19,7 @@ Fair warning: Phylum is under very active development. Don't even think about pu
   * [CLI](#cli)
   * [Auth Backends](#auth-backends)
     + [LDAP](#ldap)
-    + [OpenID (OAuth)](#openid--oauth-)
+    + [OpenID (OAuth)](#openid-oauth)
   * [Content Storage](#content-storage)
   * [Version History](#version-history)
   * [WebDAV](#webdav)
@@ -33,15 +33,16 @@ Fair warning: Phylum is under very active development. Don't even think about pu
 
 ## Features
 
- - Offline-first native clients (*)
-    - Drag and Drop
-    - Keyboard navigation and shortcuts on web(+) and desktop
- - Public shares with password protection and expiration
- - Users and permissions
- - WebDAV-compatible
- - File version history
- - Remote storage backends
- - Auth backends (LDAP, OAuth)
+- Offline-first native clients (*)
+  * Keyboard navigation
+  * Drag and Drop
+  * Designed to work well with unreliable/no internet connection. Changes are synced on regaining connectivity
+- Public shares with password protection and expiration
+- Users and permissions
+- WebDAV-compatible
+- File version history
+- Remote storage backends
+- Auth backends (LDAP, OAuth)
 
 *: Not yet built/tested on MacOS, iOS, and Windows. 
 
