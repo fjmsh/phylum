@@ -1,4 +1,3 @@
-version: '3'
 name: phylum
 
 services:
@@ -12,7 +11,6 @@ services:
       - .env
     environment:
       PHYLUM_DB_HOST: db
-    networks:
     ports:
       - '2448:2448'
     depends_on:
@@ -29,7 +27,6 @@ services:
       POSTGRES_PASSWORD: ${PHYLUM_DB_PASSWORD}
     volumes:
       - ${DATA_ROOT:-./data}/${PG_DATA_LOCATION:-postgres}:/var/lib/postgresql/data
-    networks:
     ports:
       - '5432:5432'
     healthcheck:
