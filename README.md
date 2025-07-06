@@ -55,29 +55,24 @@ Here is a list of what is planned, in rough order:
  - Groups
 
 
-## Deployment / Testing
+## Deployment
 
-The easiest way to get up and running is to use docker (or podman) compose and go to `http://localhost:2448`.
+### Using Compose (Podman, Docker)
 
-At the very least, you must specify `PHYLUM_DB_PASSWORD` in your `.env` file. See `example.env` for more options.
+1. Download `compose.yml`
+2. Create a `.env` file with at least `PHYLUM_DB_PASSWORD` (See `example.env`)
+3. Create `data/config.yml` (or `${PHYLUM_DATA_ROOT}/config.yml`)
+4. `docker compose up`
+5. go to `http://localhost:2448`
 
 Configuration is read from `config.yml`, if it exists. See `config.defaults.yml` for a list of all configuration options.
 
+### Local build
 
-### CLI
+See [Development](#development)
 
-The CLI is a powerful way to interact with and manage a locally running phylum instance. It also enables many advanced admin use-cases that are not yet possible using the app or API yet. You can run it on docker using
 
-Depending on whether you are running the program directly or via compose, you can use either 
-
-```
-$ podman exec -it phylum_server ./phylum <cmd>
-```
-
-Use the `help` command (or leave out the command) to get a list of options
-
-Please note that for `fs` operations, `<path>`s can have a `<uuid>:` prefix to make the path relative to that UUID. This also means that if you know the UUID of the resource, you can simply use `<uuid>:` as the path. If no `<uuid>:` prefix is specified then the path is relative to the root directory, or the home directory of the user if one is specified using the `--user-email` flag.
-
+## Configuration and Management
 
 ### Adding users
 There are a few ways to add users:
@@ -95,6 +90,20 @@ Please be aware of a few things about the permission model:
 1. There is no concept of owners.
 2. It is possible to revoke your own permissions from a folder. If you do so, and you are the only one with share permissions on that folder, you will need to use the cli to regain access
 3. It is not possible to revoke permissions down a folder tree, i.e. when you grant someone a permission on a folder, you are also doing so for all current and future sub-folders. Of course, you may revoke permissions on the original folder, or grant additional permissions on sub-folder, but you may not revoke permissions only on certain sub-folders.
+
+### CLI
+
+The CLI is a powerful way to interact with and manage a locally running phylum instance. It also enables many advanced admin use-cases that are not yet possible using the app or API yet. You can run it on docker using
+
+Depending on whether you are running the program directly or via compose, you can use either 
+
+```
+$ podman exec -it phylum_server ./phylum <cmd>
+```
+
+Use the `help` command (or leave out the command) to get a list of options
+
+Please note that for `fs` operations, `<path>`s can have a `<uuid>:` prefix to make the path relative to that UUID. This also means that if you know the UUID of the resource, you can simply use `<uuid>:` as the path. If no `<uuid>:` prefix is specified then the path is relative to the root directory, or the home directory of the user if one is specified using the `--user-email` flag.
 
 
 
@@ -206,7 +215,7 @@ To use the CLI, you can use:
 $ go run -C server cmd/phylum.go -W ../data <cmd>
 ```
 
-#### API
+### API
 An OpenAPI document is a work in progress. If you do intend to look around, note that almost all `<path>`s can have a `<uuid>:` prefix to make the path relative to that UUID. This also means that if you know the UUID of the resource, you can simply use `<uuid>:` as the path. This is the recommended way, and is the way the client app uses the API.
 
 
