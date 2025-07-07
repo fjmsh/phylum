@@ -29,7 +29,6 @@ import (
 	"github.com/knadh/koanf/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -43,6 +42,7 @@ func SetupCommand() {
 		Version: "0.4.0",
 	}
 	flags := cmd.PersistentFlags()
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05.999"})
 
 	// Flags only. Not part of config file
 	flags.StringP("workdir", "W", "", "Working Directory")
@@ -59,28 +59,24 @@ func SetupCommand() {
 
 	k := koanf.New(".")
 	if bytes, err := defaultConfig.ReadFile("config.defaults.yml"); err != nil {
-		logrus.Fatal(err.Error())
+		log.Fatal().Err(err).Msg("failed to read default config file")
 	} else {
 		if err := k.Load(rawbytes.Provider(bytes), yaml.Parser()); err != nil {
-			logrus.Fatal("Unable to default load config: ", err.Error())
+			log.Fatal().Err(err).Msg("failed to load default config")
 		}
 	}
-
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05.999"})
 
 	uuid.EnableRandPool()
 	cmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if cmd.Name() == "serve" {
 			zerolog.SetGlobalLevel(zerolog.InfoLevel)
-			logrus.SetLevel(logrus.InfoLevel)
 		} else {
 			zerolog.SetGlobalLevel(zerolog.WarnLevel)
-			logrus.SetLevel(logrus.WarnLevel)
 		}
 
 		dir, _ := cmd.Flags().GetString("workdir")
 		if dir != "" && dir != "." {
-			logrus.Info("Changing directory to " + dir)
+			log.Info().Str("dir", dir).Msg("Changing working directory")
 			os.Chdir(dir)
 		}
 
@@ -88,12 +84,12 @@ func SetupCommand() {
 		if configFile != "" {
 			if err := k.Load(file.Provider(configFile), yaml.Parser()); err != nil {
 				if errors.Is(err, os.ErrNotExist) {
-					logrus.Info("Config file does not exist. Skipping")
+					log.Info().Msg("config file does not exist. Skipping")
 				} else {
-					logrus.Fatal("Unable to load config: ", err.Error())
+					log.Fatal().Err(err).Msg("failed to load config")
 				}
 			} else {
-				logrus.Info("Loaded config from ", configFile)
+				log.Info().Msg("loaded config")
 			}
 		}
 
@@ -104,7 +100,7 @@ func SetupCommand() {
 			k, v := strings.ReplaceAll(f.Name, "_", "."), posflag.FlagVal(cmd.Flags(), f)
 			return k, v
 		}), nil); err != nil {
-			logrus.Fatalf("Unable to load flags: %v", err)
+			log.Fatal().Err(err).Msg("failed to load flags")
 		}
 
 		k.Load(env.Provider("PHYLUM_", ".", func(s string) string {
@@ -117,8 +113,7 @@ func SetupCommand() {
 
 		if cfg.Debug {
 			zerolog.SetGlobalLevel(zerolog.TraceLevel)
-			logrus.SetLevel(logrus.TraceLevel)
-			logrus.Debug("Running in debug mode")
+			log.Debug().Msg("Running in debug mode")
 			cfg.Server.Debug = true
 		}
 
@@ -137,12 +132,11 @@ func SetupCommand() {
 		}
 
 		if err := storage.Initialize(db.Get(context.Background())); err != nil {
-			logrus.Fatal("Failed to initialize storage: " + err.Error())
+			log.Fatal().Err(err).Msg("failed to initialize storage")
 		}
 	}
 
 	defer func() {
-		logrus.Debug("Shutting Down App")
 		db.Close()
 	}()
 

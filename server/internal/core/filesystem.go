@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 type FileSystem struct {
@@ -81,7 +81,7 @@ func rootID(db db.Handler) uuid.UUID {
 		var err error
 		_rootID, err = _readRootID(db)
 		if err != nil {
-			logrus.Fatal("Could not read root ID: " + err.Error())
+			log.Fatal().Err(err).Msg("failed to read filesystem root")
 		}
 	}
 	return _rootID

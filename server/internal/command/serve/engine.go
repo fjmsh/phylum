@@ -2,13 +2,12 @@ package serve
 
 import (
 	"net/http"
-	"strings"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 // func createEngine(logBody bool, corsEnabled bool, corsOrigins []string) *gin.Engine {
@@ -27,7 +26,7 @@ func createEngine() *gin.Engine {
 
 	if Cfg.CORS.Enabled {
 		origins := Cfg.CORS.Origins
-		logrus.Info("Enabling cors (" + strings.Join(origins, ", ") + ")")
+		log.Info().Strs("origins", origins).Msg("Enabling CORS")
 		engine.Use(cors.New(cors.Config{
 			AllowOrigins:     origins,
 			AllowHeaders:     []string{"Origin", "Authorization", "Accept", "Accept-Language", "Content-Type"},

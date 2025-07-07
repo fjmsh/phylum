@@ -3,13 +3,12 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/pubsub"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 var Cfg Config
@@ -20,9 +19,9 @@ var notifier pubsub.Notifier
 func Get(ctx context.Context) Handler {
 	if pool == nil {
 		if err := initPool(context.Background()); err != nil {
-			logrus.Fatal(err)
+			log.Fatal().Err(err).Msg("failed to initialize db pool")
 		} else if n, err := pubsub.Start(pool, context.Background()); err != nil {
-			logrus.Fatal(err)
+			log.Fatal().Err(err).Msg("failed to initialize pubsub client")
 		} else {
 			notifier = n
 		}
@@ -75,10 +74,12 @@ func initPool(ctx context.Context) error {
 
 	pool, err = pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		return errors.New("Unable to create pool: " + err.Error())
+		return err
 	}
 
-	logrus.Debug("Connected to " + config.ConnConfig.Database + " at " + config.ConnConfig.Host + ":" + fmt.Sprint(config.ConnConfig.Port))
+	log.Debug().Str("host", config.ConnConfig.Host+":"+strconv.Itoa(int(config.ConnConfig.Port))).
+		Str("db", config.ConnConfig.Database).
+		Msg("Connected to database")
 
 	if err := checkVersion(ctx, Cfg.NoMigrate); err != nil {
 		return err

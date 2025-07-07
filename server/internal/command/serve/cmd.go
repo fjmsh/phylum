@@ -20,7 +20,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/steve"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -55,7 +55,9 @@ func SetupCommand() *cobra.Command {
 		engine := createEngine()
 
 		if Cfg.WebDAV.Enabled {
-			webdav.SetupHandler(engine.Group(Cfg.WebDAV.Path))
+			r := engine.Group(Cfg.WebDAV.Path)
+			webdav.SetupHandler(r)
+			log.Info().Str("path", r.BasePath()).Msg("WebDAV Enabled")
 		}
 		apiv1.Setup(engine.Group("/api/v1"))
 		publink.Setup(engine.Group(Cfg.PublinkPath))
@@ -80,7 +82,7 @@ func SetupCommand() *cobra.Command {
 			defer closeWG.Done()
 			if err := server.ListenAndServe(); err != nil {
 				if !errors.Is(err, http.ErrServerClosed) {
-					logrus.Fatal("Failed to start server: " + err.Error())
+					log.Fatal().Err(err).Msg("failed to start server")
 				}
 			}
 		}()
@@ -90,13 +92,13 @@ func SetupCommand() *cobra.Command {
 			defer closeWG.Done()
 			if err := steve.Get().Run(context.Background()); err != nil {
 				if !errors.Is(err, steve.ErrShutdown) {
-					logrus.Fatal("Failed to start jobs client: " + err.Error())
+					log.Fatal().Err(err).Msg("failed to start jobs")
 				}
 			}
 		}()
 
 		<-sigChan
-		logrus.Info("Shutting Down")
+		log.Info().Msg("Shutting Down")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		go server.Shutdown(ctx)

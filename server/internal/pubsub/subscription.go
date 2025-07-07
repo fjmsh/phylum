@@ -3,7 +3,7 @@ package pubsub
 import (
 	"sync"
 
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 type Subscription interface {
@@ -34,7 +34,7 @@ func (s *subscription) EstablishedC() <-chan struct{} { return s.establishedChan
 func (s *subscription) Cancel() {
 	s.unlistenOnce.Do(func() {
 		if err := s.notifier.unsubscribe(s); err != nil {
-			logrus.Errorf("error cancelling subscription on %s: %s", s.channelName, err)
+			log.Warn().Err(err).Str("channel", s.channelName).Msg("failed to cancel subscription")
 		}
 	})
 }

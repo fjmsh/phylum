@@ -4,9 +4,8 @@ import (
 	"bytes"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
-
 
 type logBodyWriter struct {
 	gin.ResponseWriter
@@ -25,6 +24,5 @@ func logBodyMiddleware(c *gin.Context) {
 	}
 	c.Writer = logBodyWriter
 	c.Next()
-	logrus.Trace(c.Request.URL)
-	logrus.Trace(logBodyWriter.body.String())
+	log.Trace().Str("url", c.Request.URL.String()).Str("body", logBodyWriter.body.String()).Send()
 }

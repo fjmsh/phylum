@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/sirupsen/logrus"
 )
 
 type handler struct {
@@ -20,7 +19,6 @@ type handler struct {
 }
 
 func SetupHandler(r *gin.RouterGroup) {
-	logrus.Debug("Setting up WebDAV access at " + r.BasePath())
 	handler := &handler{
 		prefix:     r.BasePath(),
 		lockSystem: webdav.NewMemLS(),

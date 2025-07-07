@@ -9,7 +9,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/jackc/pgx/v5"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 var Cfg Config
@@ -146,9 +146,9 @@ func processBackendUpdates() {
 		p := <-sub.NotificationC()
 		var c BackendConfig
 		if err := json.Unmarshal([]byte(p), &c); err != nil {
-			logrus.Warn("failed to unmarshal backend config: " + err.Error())
+			log.Warn().Err(err).Msg("failed to unmarshal backend config")
 		} else if b, err := c.open(); err != nil {
-			logrus.Warn("failed to open backend: " + err.Error())
+			log.Warn().Err(err).Msg("failed to open backend")
 		} else {
 			backends[c.Name] = b
 		}
