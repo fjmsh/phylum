@@ -136,14 +136,13 @@ func SetupCommand() {
 			steve.RegisterWorker(client, &jobs.CopyContentsWorker{})
 			steve.RegisterWorker(client, &jobs.DeleteContentsWorker{})
 		}
-		storage.Cfg = cfg.Storage
 		serve.Cfg = cfg.Server
 		mail.Cfg = cfg.Mail
 		core.Cfg = cfg.Core
 
 		auth.Init(cfg.Auth, logger)
 
-		if err := storage.Initialize(db.Get(context.Background())); err != nil {
+		if err := storage.Initialize(db.Get(context.Background()), cfg.Storage); err != nil {
 			log.Fatal().Err(err).Msg("failed to initialize storage")
 		}
 	}

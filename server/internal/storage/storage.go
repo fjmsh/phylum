@@ -13,8 +13,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var Cfg Config
-
 const DefaultBackendName = "_"
 
 var defaultBackend LocalBackend
@@ -27,22 +25,20 @@ type BackendConfig struct {
 	Params map[string]string `json:"params"`
 }
 
-func Initialize(db db.Handler) error {
-	if err := os.MkdirAll(Cfg.Root, 0o700); err != nil {
-		return errors.New("failed to create storage root(" + Cfg.Root + "): " + err.Error())
+func Initialize(db db.Handler, cfg Config) error {
+	if err := os.MkdirAll(cfg.Root, 0o700); err != nil {
+		return errors.New("failed to create storage root(" + cfg.Root + "): " + err.Error())
 	} else {
-		if stat, err := os.Stat(Cfg.Root); err != nil {
-			return errors.New("failed to stat storage root(" + Cfg.Root + "): " + err.Error())
+		if stat, err := os.Stat(cfg.Root); err != nil {
+			return errors.New("failed to stat storage root(" + cfg.Root + "): " + err.Error())
 		} else if stat.Mode()&0xfff != 0o700 {
-			os.Chmod(Cfg.Root, 0o700)
-			// return errors.New("storage root does not have correct permissions: " + fmt.Sprintf("%o", stat.Mode()&0xfff))
+			os.Chmod(cfg.Root, 0o700)
 		}
-
 	}
 
-	tempDir = Cfg.Temp
-	if !strings.HasPrefix(Cfg.Temp, string(os.PathSeparator)) {
-		tempDir = filepath.Join(Cfg.Root, tempDir)
+	tempDir = cfg.Temp
+	if !strings.HasPrefix(cfg.Temp, string(os.PathSeparator)) {
+		tempDir = filepath.Join(cfg.Root, tempDir)
 	}
 	if err := os.RemoveAll(tempDir); err != nil {
 		return errors.New("failed to clear temp directory: " + err.Error())
