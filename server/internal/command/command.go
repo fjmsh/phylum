@@ -137,9 +137,15 @@ func SetupCommand() {
 			steve.RegisterWorker(client, &jobs.DeleteContentsWorker{})
 		}
 		serve.Cfg = cfg.Server
-		mail.Cfg = cfg.Mail
 		core.Cfg = cfg.Core
 
+		if err := mail.Initialize(cfg.Mail); err != nil {
+			if errors.Is(err, mail.EmailNotConfigured) {
+				log.Info().Msg("mail not configured")
+			} else {
+				log.Fatal().Err(err).Msg("failed to initialize mail")
+			}
+		}
 		auth.Init(cfg.Auth, logger)
 
 		if err := storage.Initialize(db.Get(context.Background()), cfg.Storage); err != nil {

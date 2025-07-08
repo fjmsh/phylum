@@ -187,7 +187,7 @@ func handleRequestPasswordReset(c *gin.Context) {
 				return err
 			}
 		} else {
-			// TODO: #jobs #mail
+			// TODO: #jobs #mail #error
 			go func() {
 				mail.SendPasswordResetEmail(user, token)
 			}()
