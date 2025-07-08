@@ -1,10 +1,12 @@
 package user
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
@@ -21,9 +23,20 @@ func setupInviteCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			email := args[0]
 
-			name, _ := cmd.Flags().GetString("name")
 			noCreateHome, _ := cmd.Flags().GetBool("no-create-home")
 			noPassword, _ := cmd.Flags().GetBool("no-passwd")
+			name, _ := cmd.Flags().GetString("name")
+			reader := bufio.NewReader(os.Stdin)
+			if name == "" {
+				fmt.Print("Full Name: ")
+				if val, err := reader.ReadString('\n'); err != nil {
+					fmt.Println("failed to read stdin: " + err.Error())
+					os.Exit(1)
+				} else {
+					name = strings.TrimSpace(val)
+				}
+			}
+
 			password := ""
 			if !noPassword {
 				if p, err := readPassword(); err != nil {
