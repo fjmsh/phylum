@@ -20,11 +20,11 @@ const maxAttempts = 6
 var ErrShutdown = errors.New("shutdown")
 var errWaiting = errors.New("waiting for jobs")
 
-var Cfg Config
 var instance *Client
 
 type Client struct {
 	db     db.Handler
+	cfg    Config
 	logger zerolog.Logger
 	// Config
 	defaultTimeout time.Duration
@@ -42,14 +42,16 @@ type Client struct {
 	cancelWork   context.CancelFunc
 }
 
-func Initialize(db db.Handler, logger zerolog.Logger) {
+func Initialize(db db.Handler, cfg Config, logger zerolog.Logger) *Client {
 	if instance == nil {
 		instance = &Client{
 			db:        db,
+			cfg:       cfg,
 			logger:    logger.With().Str("mod", "steve").Logger(),
 			factories: make(map[string]workUnitFactory),
 		}
 	}
+	return instance
 }
 
 func Get() *Client {
@@ -73,7 +75,7 @@ func RegisterWorker[T JobArgs](client *Client, worker Worker[T]) {
 }
 
 func (c *Client) Run(ctx context.Context) error {
-	if Cfg.Workers <= 0 {
+	if c.cfg.Workers <= 0 {
 		return errors.New("workers must be a positive integer")
 	}
 	if err := resetRunningJobs(c.db); err != nil {
@@ -86,18 +88,18 @@ func (c *Client) Run(ctx context.Context) error {
 		return err
 	}
 
-	c.availableWorkers = make(chan struct{}, Cfg.Workers)
+	c.availableWorkers = make(chan struct{}, c.cfg.Workers)
 	c.jobAvailable = make(chan struct{})
-	c.defaultTimeout = time.Duration(Cfg.Timeout) * time.Second
+	c.defaultTimeout = time.Duration(c.cfg.Timeout) * time.Second
 
-	c.logger.Info().Int("workers", Cfg.Workers).Msg("Starting")
+	c.logger.Info().Int("workers", c.cfg.Workers).Msg("Starting")
 	c.done = make(chan struct{})
 
 	var listenCtx, runCtx, workCtx context.Context
 	listenCtx, c.cancelListen = context.WithCancel(ctx)
 	runCtx, c.cancelRun = context.WithCancel(ctx)
 	workCtx, c.cancelWork = context.WithCancel(ctx)
-	go c.produceJobs(listenCtx, db.Notifier())
+	go c.produceJobs(listenCtx, pubsub.Get())
 	c.consumeJobs(runCtx, workCtx)
 	return ErrShutdown
 }

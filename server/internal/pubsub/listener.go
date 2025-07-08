@@ -16,7 +16,7 @@ type listener struct {
 	mu   sync.Mutex
 }
 
-func newListener(pool *pgxpool.Pool, ctx context.Context) (*listener, error) {
+func newListener(ctx context.Context, pool *pgxpool.Pool) (*listener, error) {
 	l := listener{
 		pool: pool,
 		mu:   sync.Mutex{},

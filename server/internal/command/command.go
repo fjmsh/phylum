@@ -10,6 +10,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/command/admin"
+	"codeberg.org/shroff/phylum/server/internal/command/admin/schema"
 	"codeberg.org/shroff/phylum/server/internal/command/fs"
 	"codeberg.org/shroff/phylum/server/internal/command/serve"
 	"codeberg.org/shroff/phylum/server/internal/command/user"
@@ -17,6 +18,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"codeberg.org/shroff/phylum/server/internal/mail"
+	"codeberg.org/shroff/phylum/server/internal/pubsub"
 	"codeberg.org/shroff/phylum/server/internal/steve"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/google/uuid"
@@ -41,7 +43,8 @@ func SetupCommand() {
 		Version: "0.4.0",
 	}
 	flags := cmd.PersistentFlags()
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05.999"})
+	logger := log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05.999"})
+	log.Logger = logger
 
 	// Flags only. Not part of config file
 	flags.StringP("workdir", "W", "", "Working Directory")
@@ -116,19 +119,29 @@ func SetupCommand() {
 			cfg.Server.Debug = true
 		}
 
-		db.Cfg = cfg.DB
+		if isCmd(cmd, "schema") {
+			schema.DBConfig = cfg.DB
+			// No need to do further setup
+			return
+		}
+
+		ctx := context.Background()
+		if pool, err := db.Initialize(ctx, cfg.DB, logger); err != nil {
+			log.Fatal().Err(err).Msg("failed to initialize db pool")
+		} else {
+			pubsub.Initialize(ctx, pool, logger)
+
+			client := steve.Initialize(db.Get(context.Background()), cfg.Steve, logger)
+			steve.RegisterWorker(client, &jobs.MigrateWorker{})
+			steve.RegisterWorker(client, &jobs.CopyContentsWorker{})
+			steve.RegisterWorker(client, &jobs.DeleteContentsWorker{})
+		}
 		storage.Cfg = cfg.Storage
 		serve.Cfg = cfg.Server
 		mail.Cfg = cfg.Mail
 		core.Cfg = cfg.Core
-		steve.Cfg = cfg.Steve
 
-		auth.Init(cfg.Auth, log.Logger)
-
-		if !isCmd(cmd, "schema") {
-			// This will initialize the db, which we don't want yet.
-			initializeSteve()
-		}
+		auth.Init(cfg.Auth, logger)
 
 		if err := storage.Initialize(db.Get(context.Background())); err != nil {
 			log.Fatal().Err(err).Msg("failed to initialize storage")
@@ -153,18 +166,9 @@ func SetupCommand() {
 
 func isCmd(cmd *cobra.Command, s string) bool {
 	for c := cmd; c != nil; c = c.Parent() {
-		if cmd.Name() == s {
+		if c.Name() == s {
 			return true
 		}
 	}
 	return false
-}
-
-func initializeSteve() {
-	ctx := context.Background()
-	steve.Initialize(db.Get(ctx), log.Logger)
-	client := steve.Get()
-	steve.RegisterWorker(client, &jobs.MigrateWorker{})
-	steve.RegisterWorker(client, &jobs.CopyContentsWorker{})
-	steve.RegisterWorker(client, &jobs.DeleteContentsWorker{})
 }

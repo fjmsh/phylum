@@ -6,26 +6,41 @@ import (
 	"strconv"
 	"strings"
 
-	"codeberg.org/shroff/phylum/server/internal/pubsub"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 )
 
-var Cfg Config
-
 var pool *pgxpool.Pool
-var notifier pubsub.Notifier
 
-func Get(ctx context.Context) Handler {
-	if pool == nil {
-		if err := initPool(context.Background()); err != nil {
-			log.Fatal().Err(err).Msg("failed to initialize db pool")
-		} else if n, err := pubsub.Start(pool, context.Background()); err != nil {
-			log.Fatal().Err(err).Msg("failed to initialize pubsub client")
+func Initialize(ctx context.Context, cfg Config, log zerolog.Logger) (*pgxpool.Pool, error) {
+	if pool != nil {
+		return nil, errors.New("db pool already initialized")
+	}
+
+	if p, err := Connect(ctx, cfg, log); err != nil {
+		return nil, errors.New("failed to initialize db pool: " + err.Error())
+	} else {
+		pool = p
+	}
+
+	// Migrate schema
+	if s, err := GetSchemaInfo(ctx, pool); err != nil {
+		return nil, errors.New("failed to get schema info: " + err.Error())
+	} else if s.CurrentVersion != s.LatestVersion {
+		if cfg.NoMigrate {
+			log.Warn().Int32("current", s.CurrentVersion).Int32("latest", s.LatestVersion).Msg("Database schema is not at current version")
 		} else {
-			notifier = n
+			log.Info().Int32("current", s.CurrentVersion).Int32("latest", s.LatestVersion).Msg("Performing schema migration")
+			if err := s.MigrateTo(ctx, int32(s.LatestVersion)); err != nil {
+				return nil, errors.New("failed to perform schema migration")
+			}
 		}
 	}
+
+	return pool, nil
+}
+
+func Get(ctx context.Context) Handler {
 	return handler{
 		ctx: ctx,
 		db:  pool,
@@ -36,16 +51,6 @@ func RunInTx(ctx context.Context, fn func(TxHandler) error) error {
 	return Get(ctx).RunInTx(fn)
 }
 
-// Pool returns the pgx pool
-// Only to be used for jobs initialization
-func Pool() *pgxpool.Pool {
-	return pool
-}
-
-func Notifier() pubsub.Notifier {
-	return notifier
-}
-
 func Close() {
 	if pool != nil {
 		pool.Close()
@@ -53,37 +58,36 @@ func Close() {
 	}
 }
 
-func initPool(ctx context.Context) error {
+func Connect(ctx context.Context, cfg Config, log zerolog.Logger) (*pgxpool.Pool, error) {
 	var dsn strings.Builder
-	dsn.WriteString("host=" + Cfg.Host)
-	dsn.WriteString(" port=" + strconv.Itoa(Cfg.Port))
-	dsn.WriteString(" dbname=" + Cfg.Name)
-	dsn.WriteString(" user=" + Cfg.User)
-	if Cfg.Password != "" {
-		dsn.WriteString(" password=" + Cfg.Password)
+	dsn.WriteString("host=" + cfg.Host)
+	dsn.WriteString(" port=" + strconv.Itoa(cfg.Port))
+	dsn.WriteString(" dbname=" + cfg.Name)
+	dsn.WriteString(" user=" + cfg.User)
+	if cfg.Password != "" {
+		dsn.WriteString(" password=" + cfg.Password)
 	}
 
 	config, err := pgxpool.ParseConfig(dsn.String())
 	if err != nil {
-		return errors.New("Unable to parse DSN: " + err.Error())
+		return nil, errors.New("failed to parse DSN: " + err.Error())
 	}
 
-	if Cfg.Trace {
-		config.ConnConfig.Tracer = tracer{}
+	if cfg.Trace {
+		config.ConnConfig.Tracer = tracer{
+			log: log.With().Str("c", "db.trace").Logger(),
+		}
 	}
 
-	pool, err = pgxpool.NewWithConfig(ctx, config)
+	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		return err
+		return nil, errors.New("failed to connect to database: " + err.Error())
 	}
 
-	log.Debug().Str("host", config.ConnConfig.Host+":"+strconv.Itoa(int(config.ConnConfig.Port))).
+	log.Debug().
+		Str("host", config.ConnConfig.Host+":"+strconv.Itoa(int(config.ConnConfig.Port))).
 		Str("db", config.ConnConfig.Database).
 		Msg("Connected to database")
 
-	if err := checkVersion(ctx, Cfg.NoMigrate); err != nil {
-		return err
-	}
-
-	return nil
+	return pool, nil
 }

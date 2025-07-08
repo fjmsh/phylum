@@ -2,112 +2,94 @@ package db
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"embed"
+	"io/fs"
 
-	"codeberg.org/shroff/phylum/server/internal/db/migrations"
-	"github.com/sirupsen/logrus"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/tern/v2/migrate"
 )
 
-var (
-	ErrMigrationTargetTooLow    = errors.New("schema migration target cannot be less than 0")
-	ErrMigrationTargetTooHigh   = errors.New("schema migration target cannot be greater than latest")
-	ErrMigrationNoAutoDowngrade = errors.New("will not auto-downgrade schema to prevent data loss")
-)
+const versionTable = "db_version"
 
-func checkVersion(ctx context.Context, skipMigration bool) error {
+//go:embed migrations/*.sql
+var migrationFiles embed.FS
+
+type SchemaInfo struct {
+	pool           *pgxpool.Pool
+	CurrentVersion int32
+	LatestVersion  int32
+}
+
+func GetSchemaInfo(ctx context.Context, pool *pgxpool.Pool) (SchemaInfo, error) {
 	conn, err := pool.Acquire(ctx)
+	if err != nil {
+		return SchemaInfo{}, err
+	}
+	defer conn.Release()
+
+	migrator, err := createMigrator(ctx, conn.Conn())
+	if err != nil {
+		return SchemaInfo{}, err
+	}
+
+	currentVersion, err := migrator.GetCurrentVersion(ctx)
+	if err != nil {
+		return SchemaInfo{}, err
+	}
+
+	return SchemaInfo{
+		pool:           pool,
+		CurrentVersion: currentVersion,
+		LatestVersion:  int32(len(migrator.Migrations)),
+	}, nil
+}
+
+// MigrateTo migrates to a specific version of the schema. Use '0' to undo all migrations.
+func (s SchemaInfo) MigrateTo(ctx context.Context, ver int32) error {
+	conn, err := s.pool.Acquire(ctx)
 	if err != nil {
 		return err
 	}
 	defer conn.Release()
-
-	migrator, err := migrations.NewMigrator(ctx, conn.Conn())
-	if err != nil {
+	if migrator, err := createMigrator(ctx, conn.Conn()); err != nil {
 		return err
+	} else {
+		return migrator.MigrateTo(ctx, ver)
 	}
-	currentSchemaVersion, err := migrator.GetCurrentVersion(ctx)
-	if err != nil {
-		return err
-	}
-	latestSchemaVersion := migrator.GetLatestVersion()
-
-	// Nothing to do
-	if currentSchemaVersion == latestSchemaVersion {
-		return nil
-	}
-
-	if skipMigration {
-		logrus.Warn(fmt.Sprintf("Database schema is not at current version: %d/%d", currentSchemaVersion, latestSchemaVersion))
-		return nil
-	}
-	if currentSchemaVersion > latestSchemaVersion {
-		logrus.Warn(fmt.Sprintf("Not automatically downgrading schema from %d to %d", currentSchemaVersion, latestSchemaVersion))
-		return nil
-	}
-
-	logrus.Info(fmt.Sprintf("Migrating database from version %d to %d", currentSchemaVersion, latestSchemaVersion))
-	err = migrator.MigrateTo(ctx, int32(latestSchemaVersion))
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
-func Migrate(ctx context.Context, version int) error {
-	Get(ctx) // Initialize the pool, just in case
-	conn, err := pool.Acquire(ctx)
+func createMigrator(ctx context.Context, conn *pgx.Conn) (*migrate.Migrator, error) {
+	m, err := migrate.NewMigratorEx(ctx, conn, versionTable, &migrate.MigratorOptions{DisableTx: false})
 	if err != nil {
-		return err
-	}
-	defer conn.Release()
-
-	migrator, err := migrations.NewMigrator(ctx, conn.Conn())
-	if err != nil {
-		return err
-	}
-	currentSchemaVersion, err := migrator.GetCurrentVersion(ctx)
-	if err != nil {
-		return err
-	}
-	latestSchemaVersion := migrator.GetLatestVersion()
-	if version < 0 {
-		version = latestSchemaVersion
-	} else if version == 0 {
-		logrus.Info("Deleting database schema")
-		return DeleteSchema(ctx)
-	} else if version > latestSchemaVersion {
-		return ErrMigrationTargetTooHigh
+		return nil, err
 	}
 
-	logrus.Info(fmt.Sprintf("Migrating database from version %d to %d", currentSchemaVersion, version))
-	err = migrator.MigrateTo(ctx, int32(version))
-	if err != nil {
-		return err
+	migrationRoot, _ := fs.Sub(migrationFiles, "migrations")
+	if err := m.LoadMigrations(migrationRoot); err != nil {
+		return nil, err
 	}
-	if version == latestSchemaVersion {
-		return nil
-	}
-	return nil
+	return m, nil
 }
 
-func DeleteSchema(ctx context.Context) error {
-	h := Get(ctx)
+func ResetSchema(ctx context.Context, pool *pgxpool.Pool) error {
 	user := pool.Config().ConnConfig.User
-	return h.RunInTx(func(tx TxHandler) (err error) {
-		if _, err = tx.Exec("DROP SCHEMA public CASCADE"); err != nil {
-			return
+	return pgx.BeginFunc(ctx, pool, func(tx pgx.Tx) error {
+		if _, err := tx.Exec(ctx, "DROP SCHEMA public CASCADE"); err != nil {
+			return err
 		}
-		if _, err = tx.Exec("CREATE SCHEMA public"); err != nil {
-			return
+		if _, err := tx.Exec(ctx, "CREATE SCHEMA public"); err != nil {
+			return err
 		}
-		if _, err = tx.Exec("GRANT ALL ON SCHEMA public TO " + user); err != nil {
-			return
+		if _, err := tx.Exec(ctx, "GRANT ALL ON SCHEMA public TO "+user); err != nil {
+			return err
 		}
-		if _, err = tx.Exec("GRANT ALL ON SCHEMA public TO public"); err != nil {
-			return
+		if _, err := tx.Exec(ctx, "GRANT ALL ON SCHEMA public TO public"); err != nil {
+			return err
 		}
-		_, err = tx.Exec("COMMENT ON SCHEMA public IS 'standard public schema'")
-		return
+		if _, err := tx.Exec(ctx, "COMMENT ON SCHEMA public IS 'standard public schema'"); err != nil {
+			return err
+		}
+		return nil
 	})
 }

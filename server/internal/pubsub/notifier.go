@@ -3,14 +3,13 @@ package pubsub
 import (
 	"context"
 	"errors"
-	"os"
 	"slices"
 	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 )
 
 const waitTimeout = 30 * time.Second
@@ -22,6 +21,7 @@ type Notifier interface {
 
 type notifier struct {
 	mu                        sync.RWMutex
+	log                       zerolog.Logger
 	listener                  *listener
 	subscriptions             map[string][]*subscription
 	pendingOps                []pendingOp
@@ -41,14 +41,17 @@ const (
 	pendingOpTypeUnlisten = iota
 )
 
-func Start(pool *pgxpool.Pool, ctx context.Context) (Notifier, error) {
-	listener, err := newListener(pool, ctx)
+var n Notifier
+
+func Initialize(ctx context.Context, pool *pgxpool.Pool, log zerolog.Logger) error {
+	listener, err := newListener(ctx, pool)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	notifier := notifier{
 		mu:                        sync.RWMutex{},
+		log:                       log.With().Str("c", "notifier").Logger(),
 		listener:                  listener,
 		subscriptions:             make(map[string][]*subscription),
 		pendingOps:                []pendingOp{},
@@ -61,10 +64,9 @@ func Start(pool *pgxpool.Pool, ctx context.Context) (Notifier, error) {
 			notification, err := notifier.waitOnce(ctx)
 			if err != nil {
 				if err.Error() == "conn closed" {
-					logrus.Error("PGX Connection Closed. Exiting")
-					os.Exit(1)
+					notifier.log.Fatal().Msg("connection closed. Exiting")
 				}
-				logrus.Error(err)
+				notifier.log.Warn().Err(err).Msg("error in notifier.waitOnce")
 			}
 			if notification != nil {
 				notifier.notifyListeners(notification)
@@ -72,7 +74,12 @@ func Start(pool *pgxpool.Pool, ctx context.Context) (Notifier, error) {
 		}
 	}()
 
-	return &notifier, nil
+	n = &notifier
+	return nil
+}
+
+func Get() Notifier {
+	return n
 }
 
 func (n *notifier) Listen(channel string) Subscription {
@@ -122,7 +129,7 @@ func (n *notifier) processPendingOps(ctx context.Context) {
 			}
 
 			if err != nil {
-				logrus.Warnf("error completing op %v on channel %s: %s", u.op, u.channelName, err.Error())
+				n.log.Warn().Err(err).Str("channel", u.channelName).Uint8("op", u.op).Msg("error completing op")
 			}
 			u.callback()
 		}()
@@ -160,7 +167,7 @@ func (n *notifier) notifyListeners(notification *pgconn.Notification) {
 		select {
 		case sub.listenChan <- notification.Payload:
 		default:
-			logrus.Warn("dropped notification due to full buffer", "payload", notification.Payload)
+			n.log.Warn().Str("channel", notification.Channel).Msg("dropped notification")
 		}
 	}
 }

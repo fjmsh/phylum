@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/pubsub"
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
 )
@@ -141,7 +142,7 @@ func restoreBackends(db db.Handler) (map[string]Backend, error) {
 }
 
 func processBackendUpdates() {
-	sub := db.Notifier().Listen("backend_updates")
+	sub := pubsub.Get().Listen("backend_updates")
 	for {
 		p := <-sub.NotificationC()
 		var c BackendConfig

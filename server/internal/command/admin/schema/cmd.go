@@ -7,8 +7,12 @@ import (
 	"strconv"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
+
+var DBConfig db.Config
+var Logger zerolog.Logger
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -27,14 +31,16 @@ func setupResetCommand() *cobra.Command {
 		Use:   "reset",
 		Short: "Reset Schema",
 		Run: func(cmd *cobra.Command, args []string) {
-			db.Cfg.NoMigrate = true
-			if err := db.DeleteSchema(context.Background()); err != nil {
-				fmt.Println("unable to delete database schema: " + err.Error())
+			ctx := context.Background()
+			if pool, err := db.Connect(ctx, DBConfig, Logger); err != nil {
+				fmt.Println(err.Error())
 				os.Exit(1)
-			}
-			if err := db.Migrate(context.Background(), -1); err != nil {
-				fmt.Println("unable to migrate database schema: " + err.Error())
-				os.Exit(1)
+			} else {
+				if err := db.ResetSchema(context.Background(), pool); err != nil {
+					fmt.Println("unable to delete database schema: " + err.Error())
+					os.Exit(1)
+				}
+				fmt.Println("Database schema successfully reset")
 			}
 		},
 	}
@@ -44,20 +50,36 @@ func setupMigrateCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "migrate",
 		Short: "Migrate Schema",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			if args[0] == "auto" || args[0] == "latest" {
-				db.Cfg.NoMigrate = false
-				db.Get(ctx)
+			if pool, err := db.Connect(ctx, DBConfig, Logger); err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			} else if s, err := db.GetSchemaInfo(ctx, pool); err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
 			} else {
-				db.Cfg.NoMigrate = true
-				if v, err := strconv.Atoi(args[0]); err != nil {
-					fmt.Println(err.Error())
-					os.Exit(3)
-				} else if err := db.Migrate(ctx, v); err != nil {
-					fmt.Println(err.Error())
-					os.Exit(4)
+				v := s.LatestVersion
+				if len(args) == 1 {
+					version, err := strconv.Atoi(args[0])
+					if err != nil {
+						fmt.Println("failed to parse target version: " + err.Error())
+						os.Exit(1)
+					}
+					v = int32(version)
+				}
+				if s.CurrentVersion == v {
+					if len(args) == 1 {
+						fmt.Println("Database schema is already at the requested version")
+					} else {
+						fmt.Println("Database schema is up-to-date")
+					}
+				} else if err := s.MigrateTo(ctx, v); err != nil {
+					fmt.Println("failed to perform migration: " + err.Error())
+					os.Exit(1)
+				} else {
+					fmt.Printf("Database schema successfully migrated to version %d\n", v)
 				}
 			}
 		},
