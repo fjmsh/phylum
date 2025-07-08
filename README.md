@@ -87,7 +87,7 @@ Here is a list of what is planned, in rough order:
 
 1. Download `compose.yml`
 2. Create a `.env` file with at least `PHYLUM_DB_PASSWORD` (See `example.env`)
-3. Create `data/config.yml` (or `${PHYLUM_DATA_ROOT}/config.yml`)
+3. Create `data/config.yml` (or `${DATA_ROOT}/config.yml`)
 4. Spin it up using `docker compose up -d`
 5. Create a user using `docker exec -it phylum_server phylum admin user create`
 6. Go to `http://localhost:2448`
