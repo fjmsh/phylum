@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/url"
 	"strings"
+	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/auth/openid"
 	"codeberg.org/shroff/phylum/server/internal/core"
@@ -24,7 +25,15 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 		return "", err
 	} else {
 		token := generateSecureKey(loginTokenLength)
-		_, err := db.Exec("INSERT INTO pending_logins(token, oidc_provider, oidc_client_type) VALUES ($1, $2, $3)", token, providerName, clientType)
+		args := pgx.NamedArgs{
+			"token":            token,
+			"expires":          time.Now().Add(resetTokenDuration),
+			"oidc_provider":    providerName,
+			"oidc_client_type": clientType,
+		}
+		const query = `INSERT INTO pending_logins(token, expires, oidc_provider, oidc_client_type)
+VALUES (@token::TEXT, @expires::TIMESTAMPTZ, @oidc_provider::TEXT, @oidc_client_type::SMALLINT)`
+		_, err := db.Exec(query, args)
 		if err != nil {
 			return "", errors.New("failed to create login token: " + err.Error())
 		}
@@ -32,6 +41,7 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 		if err != nil {
 			return "", errors.New("failed to parse authoriation endpoint: " + err.Error())
 		}
+
 		q := url.Values{}
 		q.Add("client_id", clientID)
 		q.Add("response_type", "code")
@@ -44,7 +54,7 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 }
 
 func OpenIDValidateAuthCode(d db.Handler, token, authCode, redirecURI string) (OpenIDClientType, error) {
-	row := d.QueryRow("SELECT oidc_provider, oidc_client_type FROM pending_logins WHERE token = $1 AND user_id IS NULL", token)
+	row := d.QueryRow("SELECT oidc_provider, oidc_client_type FROM pending_logins WHERE token = $1 AND user_id IS NULL AND expires >= NOW()", token)
 	var providerName string
 	var clientType OpenIDClientType
 	if err := row.Scan(&providerName, &clientType); err != nil {
