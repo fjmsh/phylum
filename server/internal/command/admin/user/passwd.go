@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"syscall"
@@ -24,26 +25,9 @@ func setupPasswdCommand() *cobra.Command {
 				fmt.Println("invalid password: " + err.Error())
 				os.Exit(1)
 			} else if password == "" {
-				os.Stdout.WriteString("Password: ")
-				bytes, err := term.ReadPassword(syscall.Stdin)
-				os.Stdout.WriteString("\n")
+				password, err = readPassword()
 				if err != nil {
-					fmt.Println("unable to read password: " + err.Error())
-					os.Exit(1)
-				}
-				password = string(bytes)
-
-				os.Stdout.WriteString("Confirm Password: ")
-				bytes, err = term.ReadPassword(syscall.Stdin)
-				os.Stdout.WriteString("\n")
-				if err != nil {
-					fmt.Println("unable to read password: " + err.Error())
-					os.Exit(1)
-				}
-				passwordConf := string(bytes)
-
-				if password != passwordConf {
-					fmt.Println("password does not match confirmation")
+					fmt.Println("unable to read password from stdin: " + err.Error())
 					os.Exit(1)
 				}
 			}
@@ -58,4 +42,27 @@ func setupPasswdCommand() *cobra.Command {
 	}
 	cmd.Flags().StringP("password", "p", "", "Password")
 	return cmd
+}
+
+func readPassword() (string, error) {
+	os.Stdout.WriteString("Password: ")
+	bytes, err := term.ReadPassword(syscall.Stdin)
+	os.Stdout.WriteString("\n")
+	if err != nil {
+		return "", err
+	}
+	password := string(bytes)
+
+	os.Stdout.WriteString("Confirm Password: ")
+	bytes, err = term.ReadPassword(syscall.Stdin)
+	os.Stdout.WriteString("\n")
+	if err != nil {
+		return "", err
+	}
+	passwordConf := string(bytes)
+
+	if password != passwordConf {
+		return "", errors.New("password does not match confirmation")
+	}
+	return password, nil
 }
