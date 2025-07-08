@@ -3,9 +3,9 @@ CREATE TABLE bookmarks(
     resource_id     UUID        NOT NULL REFERENCES resources(id),
     name            TEXT        NOT NULL,
     dir             BOOLEAN     NOT NULL,
-    created         TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    modified        TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted         TIMESTAMP,
+    created         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    modified        TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted         TIMESTAMPTZ,
     PRIMARY KEY(user_id, resource_id)
 );
 

@@ -8,5 +8,4 @@ CREATE UNLOGGED TABLE pending_logins(
 
 ---- create above / drop below ----
 
-
 DROP TABLE pending_logins;

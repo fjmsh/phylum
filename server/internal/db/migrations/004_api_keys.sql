@@ -1,8 +1,8 @@
 CREATE TABLE api_keys(
-    id          TEXT NOT NULL PRIMARY KEY,
-    created     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires     TIMESTAMP NOT NULL,
-    user_id     INT NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
+    id          TEXT        NOT NULL PRIMARY KEY,
+    created     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires     TIMESTAMPTZ NOT NULL,
+    user_id     INT         NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 ---- create above / drop below ----

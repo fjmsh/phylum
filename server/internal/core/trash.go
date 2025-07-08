@@ -44,7 +44,7 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 		} else {
 			t := int64(binary.LittleEndian.Uint64(d[16:]))
 			lastID, _ := uuid.FromBytes(d[:16])
-			lastTimestamp := time.Unix(t/1e9, t%1e9).UTC()
+			lastTimestamp := time.Unix(t/1e9, t%1e9)
 			q = q.Where(
 				goqu.Or(
 					goqu.I("deleted").Lt(goqu.V(lastTimestamp)),
@@ -127,7 +127,7 @@ func (f *FileSystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.S
 		base = base.Where(goqu.L("r.permissions[?]::INTEGER <> 0", f.user.ID))
 	}
 	if !time.IsZero() {
-		base = base.Where(r.Col("deleted").Lt(goqu.V(time.UTC())))
+		base = base.Where(r.Col("deleted").Lt(goqu.V(time)))
 	}
 
 	rec := pg.

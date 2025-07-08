@@ -44,9 +44,9 @@ func ListUsers(db db.Handler, since int64) ([]User, error) {
 	sb := strings.Builder{}
 	sb.WriteString("SELECT id, email, name, home, permissions FROM users")
 	if since > 0 {
-		sb.WriteString(" WHERE modified >= @since::TIMESTAMP")
+		sb.WriteString(" WHERE modified >= @since::TIMESTAMPTZ ")
 	}
-	if rows, err := db.Query(sb.String(), pgx.NamedArgs{"since": time.UnixMilli(since).UTC()}); err != nil {
+	if rows, err := db.Query(sb.String(), pgx.NamedArgs{"since": time.UnixMilli(since)}); err != nil {
 		return nil, err
 	} else {
 		return pgx.CollectRows(rows, scanUser)

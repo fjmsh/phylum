@@ -71,11 +71,11 @@ WHERE user_id = @user_id::INT
 	if since == 0 {
 		sb.WriteString("AND deleted IS NULL\n")
 	} else {
-		sb.WriteString("AND modified >= @since::TIMESTAMP\n")
+		sb.WriteString("AND modified >= @since::TIMESTAMPTZ\n")
 	}
 	sb.WriteString("ORDER BY modified DESC")
 
-	if rows, err := db.Query(sb.String(), pgx.NamedArgs{"user_id": u.ID, "since": time.UnixMilli(since).UTC()}); err != nil {
+	if rows, err := db.Query(sb.String(), pgx.NamedArgs{"user_id": u.ID, "since": time.UnixMilli(since)}); err != nil {
 		return nil, err
 	} else if bookmarks, err := pgx.CollectRows(rows, scanBookmark); err != nil {
 		return nil, err

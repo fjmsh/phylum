@@ -1,20 +1,20 @@
 CREATE TABLE resources (
-  id              uuid      PRIMARY KEY,
-  name            TEXT      NOT NULL,
-  parent          uuid      REFERENCES resources(id) ON UPDATE CASCADE ON DELETE CASCADE,
-  dir             BOOLEAN   NOT NULL,
-  created         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  modified        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  deleted         TIMESTAMP,
-  permissions     JSONB     NOT NULL DEFAULT '{}',
-  grants          JSONB     NOT NULL DEFAULT '{}'
+  id              uuid          PRIMARY KEY,
+  name            TEXT          NOT NULL,
+  parent          uuid          REFERENCES resources(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  dir             BOOLEAN       NOT NULL,
+  created         TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  modified        TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted         TIMESTAMPTZ,
+  permissions     JSONB         NOT NULL DEFAULT '{}',
+  grants          JSONB         NOT NULL DEFAULT '{}'
 );
 
 CREATE TABLE resource_versions(
     id              UUID        PRIMARY KEY,
     resource_id     UUID        NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
-    created         TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted         TIMESTAMP,
+    created         TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted         TIMESTAMPTZ,
     size            BIGINT      NOT NULL,
     mime_type       TEXT        NOT NULL,
     sha256          TEXT        NOT NULL
