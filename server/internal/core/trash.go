@@ -13,7 +13,7 @@ import (
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 )
 
 func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error) {
@@ -81,12 +81,12 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 	}
 }
 
-func TrashCompact(ctx context.Context, duration time.Duration) {
+func TrashCompact(ctx context.Context, logger zerolog.Logger, duration time.Duration) {
 	t := time.Now().Add(-duration)
-	logrus.Info(fmt.Sprintf("Removing files deleted before %s", t.Format(time.RFC1123)))
+	logger.Info().Str("older", t.Format(time.RFC1123)).Msg("deleting old files")
 	f := openOmniscient(db.Get(ctx))
 	if err := f.hardDeleteOldResources(t); err != nil {
-		logrus.Error(err)
+		logger.Error().Err(err).Msg("error deleting old files")
 	}
 }
 

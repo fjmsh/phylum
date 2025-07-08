@@ -22,7 +22,6 @@ require (
 	github.com/minio/minio-go/v7 v7.0.69
 	github.com/pquerna/cachecontrol v0.2.0
 	github.com/rs/zerolog v1.34.0
-	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.6
 	golang.org/x/crypto v0.37.0

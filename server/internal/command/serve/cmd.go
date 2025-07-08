@@ -20,6 +20,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/steve"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -64,7 +65,7 @@ func SetupCommand() *cobra.Command {
 
 		setupWebApp(engine, "web")
 
-		setupTrashCompactor()
+		setupTrashCompactor(log.Logger)
 
 		listen := Cfg.Host + ":" + strconv.Itoa(Cfg.Port)
 		server := http.Server{
@@ -139,13 +140,13 @@ func setupWebApp(r gin.IRoutes, webAppSrcDir string) {
 	r.Use(staticFileHandler)
 }
 
-func setupTrashCompactor() {
+func setupTrashCompactor(logger zerolog.Logger) {
 	ticker := time.NewTimer(24 * time.Hour)
 	go func() {
 		for {
 			<-ticker.C
-			core.TrashCompact(context.Background(), trashRetainDuration)
+			core.TrashCompact(context.Background(), logger, trashRetainDuration)
 		}
 	}()
-	core.TrashCompact(context.Background(), trashRetainDuration)
+	core.TrashCompact(context.Background(), logger, trashRetainDuration)
 }
