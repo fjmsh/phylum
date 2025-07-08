@@ -15,7 +15,8 @@ RUN flutter build web --wasm
 
 FROM alpine
 WORKDIR /app
+ENV PATH="/app:$PATH"
 COPY --from=server /bin/phylum /app/phylum
 COPY --from=webapp /src/build/web /app/web
-ENTRYPOINT ["/app/phylum"]
+ENTRYPOINT ["phylum"]
 CMD ["serve"]
