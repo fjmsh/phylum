@@ -1,13 +1,13 @@
 package openid
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/rs/zerolog"
@@ -57,22 +57,23 @@ func GetIDToken(providerName, authCode, redirectURI string) (idToken IDToken, er
 	} else if config, err := getProviderConfig(c.IssuerURL); err != nil {
 		return idToken, err
 	} else {
-		body := map[string]string{
-			"client_id":     c.ClientID,
-			"client_secret": c.ClientSecret,
-			"grant_type":    "authorization_code",
-			"code":          authCode,
-			"redirect_uri":  redirectURI,
-		}
-		bodyBytes, _ := json.Marshal(body)
-		if req, err := http.NewRequest("POST", config.TokenEndpoint, bytes.NewBuffer(bodyBytes)); err != nil {
+		data := url.Values{}
+		data.Set("grant_type", "authorization_code")
+		data.Set("code", authCode)
+		data.Set("redirect_uri", redirectURI)
+		if req, err := http.NewRequest("POST", config.TokenEndpoint, strings.NewReader(data.Encode())); err != nil {
 			return idToken, errors.New("failed to create token request: " + err.Error())
-		} else if res, err := http.DefaultClient.Do(req); err != nil {
-			return idToken, errors.New("failed to get token response: " + err.Error())
-		} else if res.StatusCode != http.StatusOK {
-			return idToken, fmt.Errorf("id token request failed with status %d (%s)", res.StatusCode, res.Status)
 		} else {
-			return extractIDToken(res)
+			credentials := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", c.ClientID, c.ClientSecret)))
+			req.Header.Add("Authorization", fmt.Sprintf("Basic %s", credentials))
+			req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+			if res, err := http.DefaultClient.Do(req); err != nil {
+				return idToken, errors.New("failed to get token response: " + err.Error())
+			} else if res.StatusCode != http.StatusOK {
+				return idToken, fmt.Errorf("id token request failed with status %d (%s)", res.StatusCode, res.Status)
+			} else {
+				return extractIDToken(res)
+			}
 		}
 	}
 }
