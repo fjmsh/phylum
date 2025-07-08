@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/rs/zerolog/log"
 )
 
 type FileSystem struct {
@@ -40,7 +39,7 @@ func openOmniscient(db db.Handler) *FileSystem {
 	return &FileSystem{
 		db:       db,
 		user:     User{ID: -1, Permissions: -1},
-		pathRoot: pgtype.UUID{Bytes: rootID(db), Valid: true},
+		pathRoot: pathRoot,
 	}
 }
 
@@ -49,7 +48,7 @@ func openOmniscientTx(db db.TxHandler) txFileSystem {
 		FileSystem: &FileSystem{
 			db:       db,
 			user:     User{ID: -1, Permissions: -1},
-			pathRoot: pgtype.UUID{Bytes: rootID(db), Valid: true},
+			pathRoot: pathRoot,
 		},
 		db: db,
 	}
@@ -76,18 +75,7 @@ func (f *FileSystem) PathRoot() pgtype.UUID {
 	return f.pathRoot
 }
 
-func rootID(db db.Handler) uuid.UUID {
-	if _rootID == uuid.Nil {
-		var err error
-		_rootID, err = _readRootID(db)
-		if err != nil {
-			log.Fatal().Err(err).Msg("failed to read filesystem root")
-		}
-	}
-	return _rootID
-}
-
-func _readRootID(d db.Handler) (uuid.UUID, error) {
+func insertOrSelectRootID(d db.Handler) (uuid.UUID, error) {
 	const q = "SELECT id FROM resources WHERE parent IS NULL"
 	row := d.QueryRow(q)
 	var id uuid.UUID

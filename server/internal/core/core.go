@@ -1,18 +1,31 @@
 package core
 
 import (
+	"errors"
+
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
-var Cfg Config
 var pg *goqu.Database
-var _rootID uuid.UUID
+var userConfig UserConfig
+var pathRoot pgtype.UUID
 
-func init() {
+func Initialize(db db.Handler, cfg Config) error {
 	pg = goqu.New("postgres", nil)
 	goqu.SetDefaultPrepared(true)
+
+	if rootID, err := insertOrSelectRootID(db); err != nil {
+		return errors.New("failed to read filesystem root")
+	} else {
+		pathRoot = pgtype.UUID{Bytes: rootID, Valid: true}
+	}
+	userConfig = cfg.User
+
+	return nil
 }
 
 // filesystem_readonly.go

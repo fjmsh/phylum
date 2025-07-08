@@ -119,8 +119,10 @@ func SetupCommand() {
 			cfg.Server.Debug = true
 		}
 
+		serve.Cfg = cfg.Server
+		schema.DBConfig = cfg.DB
+
 		if isCmd(cmd, "schema") {
-			schema.DBConfig = cfg.DB
 			// No need to do further setup
 			return
 		}
@@ -131,14 +133,15 @@ func SetupCommand() {
 		} else {
 			pubsub.Initialize(ctx, pool, logger)
 
-			client := steve.Initialize(db.Get(context.Background()), cfg.Steve, logger)
+			client := steve.Initialize(db.Get(ctx), cfg.Steve, logger)
 			steve.RegisterWorker(client, &jobs.MigrateWorker{})
 			steve.RegisterWorker(client, &jobs.CopyContentsWorker{})
 			steve.RegisterWorker(client, &jobs.DeleteContentsWorker{})
 		}
-		serve.Cfg = cfg.Server
-		core.Cfg = cfg.Core
 
+		if err := core.Initialize(db.Get(ctx), cfg.Core); err != nil {
+			logger.Fatal().Err(err)
+		}
 		if err := mail.Initialize(cfg.Mail); err != nil {
 			if errors.Is(err, mail.EmailNotConfigured) {
 				logger.Info().Msg("mail not configured")
@@ -150,7 +153,7 @@ func SetupCommand() {
 			logger.Fatal().Err(err)
 		}
 
-		if err := storage.Initialize(db.Get(context.Background()), cfg.Storage); err != nil {
+		if err := storage.Initialize(db.Get(ctx), cfg.Storage); err != nil {
 			logger.Fatal().Err(err).Msg("failed to initialize storage")
 		}
 	}
