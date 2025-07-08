@@ -10,13 +10,13 @@ Fair warning: Phylum is under very active development. Don't even think about pu
 - [Features](#features)
   * [Screenshots](#screenshots)
   * [Roadmap](#roadmap)
-- [Deployment](#deployment)
+- [Quick Start](#quick-start)
   * [Using Compose (Podman, Docker)](#using-compose-podman-docker)
   * [Local build](#local-build)
+- [CLI](#cli)
 - [Configuration and Management](#configuration-and-management)
   * [Adding users](#adding-users)
     + [Permissions](#permissions)
-  * [CLI](#cli)
   * [Auth Backends](#auth-backends)
     + [LDAP](#ldap)
     + [OpenID (OAuth)](#openid-oauth)
@@ -81,30 +81,51 @@ Here is a list of what is planned, in rough order:
  - Groups
 
 
-## Deployment
+## Quick-Start
 
 ### Using Compose (Podman, Docker)
 
 1. Download `compose.yml`
 2. Create a `.env` file with at least `PHYLUM_DB_PASSWORD` (See `example.env`)
 3. Create `data/config.yml` (or `${PHYLUM_DATA_ROOT}/config.yml`)
-4. `docker compose up`
-5. go to `http://localhost:2448`
+4. Spin it up using `docker compose up -d`
+5. Create a user using `docker exec -it phylum_server phylum admin user create`
+6. Go to `http://localhost:2448`
 
-Configuration is read from `config.yml`, if it exists. See `config.defaults.yml` for a list of all configuration options.
+It is highly recommended to take a look at `config.defaults.yml` to see a full list of configuration options.
+
+
 
 ### Local build
 
 See [Development](#development)
 
 
+## CLI
+
+The CLI is a powerful way to interact with and manage a locally running phylum instance. It also enables many advanced admin use-cases that are not yet possible using the app or API yet. You can run it on docker using
+
+Depending on whether you are running the program directly or via compose, you can use either 
+
+```
+$ docker exec -it phylum_server phylum
+```
+
+Use the `help` command (or leave out the command) to get a list of options
+
+Please note that for `fs` operations, `<path>`s can have a `<uuid>:` prefix to make the path relative to that UUID. This also means that if you know the UUID of the resource, you can simply use `<uuid>:` as the path. If no `<uuid>:` prefix is specified then the path is relative to the root directory, or the home directory of the user if one is specified using the `--user-email` flag.
+
+
+
 ## Configuration and Management
+
+Configuration is read from `config.yml`, if it exists. See `config.defaults.yml` for a full list of all configuration options.
 
 ### Adding users
 There are a few ways to add users:
-1. Use the `admin user invite` command
+1. Use the `admin user create` command in the [CLI](#cli)
 
-2. Add entries to your `config.yaml` under `auth.auto_create`. The '`*`' wildcard is supported, so you can add something like `"*@domain.com"` (be sure to add the quotes in case your entry starts with a `*`)
+2. Add entries to your `config.yaml` under `auth.auto_create`. The '`*`' wildcard is supported, so you can add something like `"*@domain.com"` (be sure to add the quotes in case your entry starts with a `*`). This works best in conjunction with external auth like LDAP or OIDC.
 
 3. Invite directly from the app by sharing a file or folder.
 
@@ -116,20 +137,6 @@ Please be aware of a few things about the permission model:
 1. There is no concept of owners.
 2. It is possible to revoke your own permissions from a folder. If you do so, and you are the only one with share permissions on that folder, you will need to use the cli to regain access
 3. It is not possible to revoke permissions down a folder tree, i.e. when you grant someone a permission on a folder, you are also doing so for all current and future sub-folders. Of course, you may revoke permissions on the original folder, or grant additional permissions on sub-folder, but you may not revoke permissions only on certain sub-folders.
-
-### CLI
-
-The CLI is a powerful way to interact with and manage a locally running phylum instance. It also enables many advanced admin use-cases that are not yet possible using the app or API yet. You can run it on docker using
-
-Depending on whether you are running the program directly or via compose, you can use either 
-
-```
-$ podman exec -it phylum_server ./phylum <cmd>
-```
-
-Use the `help` command (or leave out the command) to get a list of options
-
-Please note that for `fs` operations, `<path>`s can have a `<uuid>:` prefix to make the path relative to that UUID. This also means that if you know the UUID of the resource, you can simply use `<uuid>:` as the path. If no `<uuid>:` prefix is specified then the path is relative to the root directory, or the home directory of the user if one is specified using the `--user-email` flag.
 
 
 
@@ -222,7 +229,7 @@ These shortcuts were tested on linux, many of these don't quite work as expected
 The server is written in Go, and requires a postgres server to be running.
 
 ```
-$ podman run -it \
+$ docker run -it \
     -e POSTGRES_USER=phylum \
     -e POSTGRES_PASSWORD=<password> \
     -v ./data/postgres:/var/lib/postgresql/data \
