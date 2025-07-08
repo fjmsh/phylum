@@ -2,10 +2,11 @@ package user
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +17,7 @@ func SetupCommand() *cobra.Command {
 	}
 	cmd.AddCommand([]*cobra.Command{
 		setupListCommand(),
-		setupInviteCommand(),
+		setupCreateCommand(),
 		setupModCommand(),
 		setupPasswdCommand(),
 		setupGrantCommand(),
@@ -33,10 +34,11 @@ func setupListCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			users, err := core.ListUsers(db.Get(context.Background()), 0)
 			if err != nil {
-				logrus.Fatal(err)
+				fmt.Println("failed to list users: " + err.Error())
+				os.Exit(1)
 			}
 			for _, user := range users {
-				logrus.Infof("%24s :%.4x: %s", user.Email, user.Permissions, user.Name)
+				fmt.Printf("%24s :%.4x: %s\n", user.Email, user.Permissions, user.Name)
 			}
 		},
 	}

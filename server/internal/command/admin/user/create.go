@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setupInviteCommand() *cobra.Command {
+func setupCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create <email>",
 		Short: "Create User",
