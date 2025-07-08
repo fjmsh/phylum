@@ -2,7 +2,7 @@ package auth
 
 import (
 	"crypto/rand"
-	"encoding/base64"
+	"encoding/base32"
 	"errors"
 	"net/http"
 	"regexp"
@@ -21,8 +21,10 @@ var autoCreate []*regexp.Regexp
 var passwordRequirements PasswordRequirements
 var passwordBackend PasswordBackend
 
-const apiKeyLength = 32
-const resetTokenLength = 24
+const apiKeyLength = 15
+const resetTokenLength = 15
+const loginTokenLength = 15
+
 const resetTokenDuration = 10 * time.Minute
 
 var apiKeyValidity = pgtype.Interval{
@@ -77,8 +79,11 @@ func shouldAutoCreate(email string) bool {
 	return false
 }
 
-func generateRandomString(n int) string {
-	b := make([]byte, n*3/4)
+// generateSecureKey generates a base32 (standard) encoded string with n bytes
+// of entropy from a cryptographically secure random source. Ideally, n should
+// be a multiple of 5
+func generateSecureKey(n int) string {
+	b := make([]byte, n)
 	rand.Read(b)
-	return base64.URLEncoding.EncodeToString(b)
+	return base32.StdEncoding.EncodeToString(b)
 }

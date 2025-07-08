@@ -84,9 +84,9 @@ func UpdateUserPassword(db db.TxHandler, email, password string) error {
 
 func insertResetToken(db db.TxHandler, userID int32) (string, error) {
 	const q = `INSERT INTO reset_tokens(user_id, token, expires)
-VALUES (@user_id::INT, @token::TEXT, @expires::TIMESTAMP)
-ON CONFLICT(user_id) DO UPDATE SET token = @token::TEXT, expires = @expires::TIMESTAMP`
-	token := generateRandomString(resetTokenLength)
+VALUES (@user_id::INT, @token::TEXT, @expires::TIMESTAMPTZ)
+ON CONFLICT(user_id) DO UPDATE SET token = @token::TEXT, expires = @expires::TIMESTAMPTZ`
+	token := generateSecureKey(resetTokenLength)
 
 	args := pgx.NamedArgs{
 		"user_id": userID,

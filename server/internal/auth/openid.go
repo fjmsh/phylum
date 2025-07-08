@@ -11,8 +11,6 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const openidLoginSessionIDLength = 32
-
 type OpenIDClientType uint8
 
 const (
@@ -25,7 +23,7 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 	if clientID, endpoint, err := openid.GetProviderDetails(providerName); err != nil {
 		return "", err
 	} else {
-		token := generateRandomString(openidLoginSessionIDLength)
+		token := generateSecureKey(loginTokenLength)
 		_, err := db.Exec("INSERT INTO pending_logins(token, oidc_provider, oidc_client_type) VALUES ($1, $2, $3)", token, providerName, clientType)
 		if err != nil {
 			return "", errors.New("failed to create login token: " + err.Error())

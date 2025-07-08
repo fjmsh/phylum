@@ -29,7 +29,7 @@ func VerifyAPIKey(db db.Handler, apiKey string) (user core.User, err error) {
 func insertAPIKey(db db.TxHandler, userID int32) (string, error) {
 	const q = `INSERT INTO api_keys(id, expires, user_id) VALUES ($1::TEXT, NOW() + $2::INTERVAL, $3::INT)`
 
-	token := generateRandomString(apiKeyLength)
+	token := generateSecureKey(apiKeyLength)
 	if _, err := db.Exec(q, token, apiKeyValidity, userID); err != nil {
 		return "", err
 	} else {
