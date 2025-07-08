@@ -61,10 +61,10 @@ func SetupCommand() {
 
 	k := koanf.New(".")
 	if bytes, err := defaultConfig.ReadFile("config.defaults.yml"); err != nil {
-		log.Fatal().Err(err).Msg("failed to read default config file")
+		logger.Fatal().Err(err).Msg("failed to read default config file")
 	} else {
 		if err := k.Load(rawbytes.Provider(bytes), yaml.Parser()); err != nil {
-			log.Fatal().Err(err).Msg("failed to load default config")
+			logger.Fatal().Err(err).Msg("failed to load default config")
 		}
 	}
 
@@ -78,7 +78,7 @@ func SetupCommand() {
 
 		dir, _ := cmd.Flags().GetString("workdir")
 		if dir != "" && dir != "." {
-			log.Info().Str("dir", dir).Msg("Changing working directory")
+			logger.Info().Str("dir", dir).Msg("Changing working directory")
 			os.Chdir(dir)
 		}
 
@@ -86,12 +86,12 @@ func SetupCommand() {
 		if configFile != "" {
 			if err := k.Load(file.Provider(configFile), yaml.Parser()); err != nil {
 				if errors.Is(err, os.ErrNotExist) {
-					log.Info().Msg("config file does not exist. Skipping")
+					logger.Info().Msg("config file does not exist. Skipping")
 				} else {
-					log.Fatal().Err(err).Msg("failed to load config")
+					logger.Fatal().Err(err).Msg("failed to load config")
 				}
 			} else {
-				log.Info().Msg("loaded config")
+				logger.Info().Msg("loaded config")
 			}
 		}
 
@@ -102,7 +102,7 @@ func SetupCommand() {
 			k, v := strings.ReplaceAll(f.Name, "_", "."), posflag.FlagVal(cmd.Flags(), f)
 			return k, v
 		}), nil); err != nil {
-			log.Fatal().Err(err).Msg("failed to load flags")
+			logger.Fatal().Err(err).Msg("failed to load flags")
 		}
 
 		k.Load(env.Provider("PHYLUM_", ".", func(s string) string {
@@ -115,7 +115,7 @@ func SetupCommand() {
 
 		if cfg.Debug {
 			zerolog.SetGlobalLevel(zerolog.TraceLevel)
-			log.Debug().Msg("Running in debug mode")
+			logger.Debug().Msg("Running in debug mode")
 			cfg.Server.Debug = true
 		}
 
@@ -127,7 +127,7 @@ func SetupCommand() {
 
 		ctx := context.Background()
 		if pool, err := db.Initialize(ctx, cfg.DB, logger); err != nil {
-			log.Fatal().Err(err).Msg("failed to initialize db pool")
+			logger.Fatal().Err(err).Msg("failed to initialize db pool")
 		} else {
 			pubsub.Initialize(ctx, pool, logger)
 
@@ -141,15 +141,17 @@ func SetupCommand() {
 
 		if err := mail.Initialize(cfg.Mail); err != nil {
 			if errors.Is(err, mail.EmailNotConfigured) {
-				log.Info().Msg("mail not configured")
+				logger.Info().Msg("mail not configured")
 			} else {
-				log.Fatal().Err(err).Msg("failed to initialize mail")
+				logger.Fatal().Err(err).Msg("failed to initialize mail")
 			}
 		}
-		auth.Init(cfg.Auth, logger)
+		if err := auth.Initialize(cfg.Auth, logger); err != nil {
+			logger.Fatal().Err(err)
+		}
 
 		if err := storage.Initialize(db.Get(context.Background()), cfg.Storage); err != nil {
-			log.Fatal().Err(err).Msg("failed to initialize storage")
+			logger.Fatal().Err(err).Msg("failed to initialize storage")
 		}
 	}
 

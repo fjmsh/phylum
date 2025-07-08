@@ -44,7 +44,7 @@ func OpenIDProviders() []openid.Provider {
 	return openid.Providers()
 }
 
-func Init(cfg Config, log zerolog.Logger) error {
+func Initialize(cfg Config, log zerolog.Logger) error {
 	passwordRequirements = cfg.Password.Requirements
 
 	if cfg.Password.Backend == "crypt" {
