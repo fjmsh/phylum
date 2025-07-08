@@ -5,7 +5,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/pubsub"
@@ -17,6 +16,7 @@ const DefaultBackendName = "_"
 
 var defaultBackend LocalBackend
 var backends map[string]Backend
+var storageRoot string
 var tempDir string
 
 type BackendConfig struct {
@@ -26,25 +26,27 @@ type BackendConfig struct {
 }
 
 func Initialize(db db.Handler, cfg Config) error {
-	if err := os.MkdirAll(cfg.Root, 0o700); err != nil {
-		return errors.New("failed to create storage root(" + cfg.Root + "): " + err.Error())
+	storageRoot = cfg.Root
+
+	if err := os.MkdirAll(storageRoot, 0o700); err != nil {
+		return errors.New("failed to create storage root(" + storageRoot + "): " + err.Error())
 	} else {
-		if stat, err := os.Stat(cfg.Root); err != nil {
-			return errors.New("failed to stat storage root(" + cfg.Root + "): " + err.Error())
+		if stat, err := os.Stat(storageRoot); err != nil {
+			return errors.New("failed to stat storage root(" + storageRoot + "): " + err.Error())
 		} else if stat.Mode()&0xfff != 0o700 {
 			os.Chmod(cfg.Root, 0o700)
 		}
 	}
 
 	tempDir = cfg.Temp
-	if !strings.HasPrefix(cfg.Temp, string(os.PathSeparator)) {
-		tempDir = filepath.Join(cfg.Root, tempDir)
-	}
-	if err := os.RemoveAll(tempDir); err != nil {
-		return errors.New("failed to clear temp directory: " + err.Error())
-	}
-	if err := os.MkdirAll(tempDir, 0700); err != nil {
-		return errors.New("failed to create temp directory: " + err.Error())
+	if !filepath.IsAbs(tempDir) {
+		tempDir = filepath.Join(storageRoot, tempDir)
+		if err := os.RemoveAll(tempDir); err != nil {
+			return errors.New("failed to clear temp directory: " + err.Error())
+		}
+		if err := os.MkdirAll(tempDir, 0700); err != nil {
+			return errors.New("failed to create temp directory: " + err.Error())
+		}
 	}
 
 	if restoredBackends, err := restoreBackends(db); err != nil {

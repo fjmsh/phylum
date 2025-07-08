@@ -21,8 +21,8 @@ func createLocalBackend(name string, params map[string]string) (LocalBackend, er
 	}
 
 	root := params["root"]
-	if !strings.HasPrefix(params[root], string(os.PathSeparator)) {
-		root = filepath.Join(Cfg.Root, root)
+	if !filepath.IsAbs(params[root]) {
+		root = filepath.Join(storageRoot, root)
 	}
 	l := localStorage{
 		name: name,
