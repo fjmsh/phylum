@@ -8,7 +8,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) {
@@ -54,17 +53,16 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (cor
 	args := pgx.NamedArgs{
 		"user_id": user.ID,
 		"token":   resetToken,
-		"expires": time.Now().Add(resetTokenDuration),
 	}
 	row := db.QueryRow(q, args)
-	var expires pgtype.Timestamp
+	var expires time.Time
 	if err := row.Scan(&expires); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrCredentialsInvalid
 		}
 		return core.User{}, "", err
 	}
-	if time.Now().After(expires.Time) {
+	if time.Now().After(expires) {
 		return core.User{}, "", ErrCredentialsInvalid
 	}
 
@@ -91,7 +89,7 @@ ON CONFLICT(user_id) DO UPDATE SET token = @token::TEXT, expires = @expires::TIM
 	args := pgx.NamedArgs{
 		"user_id": userID,
 		"token":   token,
-		"expires": time.Now().Add(resetTokenDuration),
+		"expires": time.Now().Add(tokenValidity),
 	}
 	if _, err := db.Exec(q, args); err != nil {
 		return "", err

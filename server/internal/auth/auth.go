@@ -13,7 +13,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/auth/ldap"
 	"codeberg.org/shroff/phylum/server/internal/auth/openid"
 	"codeberg.org/shroff/phylum/server/internal/core"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog"
 )
 
@@ -25,12 +24,8 @@ const apiKeyLength = 15
 const resetTokenLength = 15
 const loginTokenLength = 15
 
-const resetTokenDuration = 10 * time.Minute
-
-var apiKeyValidity = pgtype.Interval{
-	Days:  30,
-	Valid: true,
-}
+const apiKeyValidity = 30 * 24 * time.Hour
+const tokenValidity = 10 * time.Minute
 
 var ErrCredentialsInvalid = core.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid credentials")
 

@@ -27,7 +27,7 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 		token := generateSecureKey(loginTokenLength)
 		args := pgx.NamedArgs{
 			"token":            token,
-			"expires":          time.Now().Add(resetTokenDuration),
+			"expires":          time.Now().Add(tokenValidity),
 			"oidc_provider":    providerName,
 			"oidc_client_type": clientType,
 		}

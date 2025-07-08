@@ -11,7 +11,7 @@ import (
 )
 
 func VerifyAPIKey(db db.Handler, apiKey string) (user core.User, err error) {
-	const q = `SELECT k.expires, u.id, u.email, u.name, u.permissions, u.home FROM api_keys k JOIN users u ON k.user_id = u.id WHERE k.id = $1; `
+	const q = `SELECT k.expires, u.id, u.email, u.name, u.permissions, u.home FROM api_keys k JOIN users u ON k.user_id = u.id WHERE k.key = $1; `
 	row := db.QueryRow(q, apiKey)
 
 	var expires pgtype.Timestamp
@@ -27,10 +27,15 @@ func VerifyAPIKey(db db.Handler, apiKey string) (user core.User, err error) {
 }
 
 func insertAPIKey(db db.TxHandler, userID int32) (string, error) {
-	const q = `INSERT INTO api_keys(id, expires, user_id) VALUES ($1::TEXT, NOW() + $2::INTERVAL, $3::INT)`
+	const q = `INSERT INTO api_keys(key, expires, user_id) VALUES (@key::TEXT, @expires::TIMESTAMPTZ, @user_id::INT)`
 
 	token := generateSecureKey(apiKeyLength)
-	if _, err := db.Exec(q, token, apiKeyValidity, userID); err != nil {
+	args := pgx.NamedArgs{
+		"token":   generateSecureKey(apiKeyLength),
+		"expires": time.Now().Add(apiKeyValidity),
+		"user_id": userID,
+	}
+	if _, err := db.Exec(q, args); err != nil {
 		return "", err
 	} else {
 		return token, nil
