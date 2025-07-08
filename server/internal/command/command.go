@@ -29,7 +29,6 @@ import (
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/knadh/koanf/v2"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -43,8 +42,8 @@ func SetupCommand() {
 		Version: "0.4.0",
 	}
 	flags := cmd.PersistentFlags()
-	logger := log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05.999"})
-	log.Logger = logger
+	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
+	logger = logger.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05.999"})
 
 	// Flags only. Not part of config file
 	flags.StringP("workdir", "W", "", "Working Directory")
@@ -71,9 +70,9 @@ func SetupCommand() {
 	uuid.EnableRandPool()
 	cmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if cmd.Name() == "serve" {
-			zerolog.SetGlobalLevel(zerolog.InfoLevel)
+			logger = logger.Level(zerolog.InfoLevel)
 		} else {
-			zerolog.SetGlobalLevel(zerolog.WarnLevel)
+			logger = logger.Level(zerolog.WarnLevel)
 		}
 
 		dir, _ := cmd.Flags().GetString("workdir")
@@ -114,10 +113,11 @@ func SetupCommand() {
 		k.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "koanf"})
 
 		if cfg.Debug {
-			zerolog.SetGlobalLevel(zerolog.TraceLevel)
+			logger = logger.Level(zerolog.TraceLevel)
 			logger.Debug().Msg("Running in debug mode")
 			cfg.Server.Debug = true
 		}
+		cmd.SetContext(logger.WithContext(cmd.Context()))
 
 		serve.Cfg = cfg.Server
 		schema.DBConfig = cfg.DB
@@ -153,7 +153,7 @@ func SetupCommand() {
 			logger.Fatal().Err(err)
 		}
 
-		if err := storage.Initialize(db.Get(ctx), cfg.Storage); err != nil {
+		if err := storage.Initialize(db.Get(ctx), cfg.Storage, logger); err != nil {
 			logger.Fatal().Err(err).Msg("failed to initialize storage")
 		}
 	}

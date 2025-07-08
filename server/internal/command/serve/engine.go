@@ -7,11 +7,11 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 )
 
 // func createEngine(logBody bool, corsEnabled bool, corsOrigins []string) *gin.Engine {
-func createEngine() *gin.Engine {
+func createEngine(logger *zerolog.Logger) *gin.Engine {
 	engine := gin.New()
 	engine.Use(gin.Logger(), gin.CustomRecovery(func(c *gin.Context, err any) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
@@ -21,12 +21,12 @@ func createEngine() *gin.Engine {
 		})
 	}))
 	if Cfg.LogBody {
-		engine.Use(logBodyMiddleware)
+		engine.Use(createLogBodyMiddleware(logger))
 	}
 
 	if Cfg.CORS.Enabled {
 		origins := Cfg.CORS.Origins
-		log.Info().Strs("origins", origins).Msg("Enabling CORS")
+		logger.Info().Strs("origins", origins).Msg("Enabling CORS")
 		engine.Use(cors.New(cors.Config{
 			AllowOrigins:     origins,
 			AllowHeaders:     []string{"Origin", "Authorization", "Accept", "Accept-Language", "Content-Type"},

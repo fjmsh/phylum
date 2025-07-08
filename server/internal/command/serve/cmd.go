@@ -21,7 +21,6 @@ import (
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -53,19 +52,21 @@ func SetupCommand() *cobra.Command {
 		if !Cfg.Debug {
 			gin.SetMode(gin.ReleaseMode)
 		}
-		engine := createEngine()
+		cmd.Context()
+		logger := zerolog.Ctx(cmd.Context())
+		engine := createEngine(logger)
 
 		if Cfg.WebDAV.Enabled {
 			r := engine.Group(Cfg.WebDAV.Path)
 			webdav.SetupHandler(r)
-			log.Info().Str("path", r.BasePath()).Msg("WebDAV Enabled")
+			logger.Info().Str("path", r.BasePath()).Msg("WebDAV Enabled")
 		}
 		apiv1.Setup(engine.Group("/api/v1"))
 		publink.Setup(engine.Group(Cfg.PublinkPath))
 
 		setupWebApp(engine, "web")
 
-		setupTrashCompactor(log.Logger)
+		setupTrashCompactor(logger)
 
 		listen := Cfg.Host + ":" + strconv.Itoa(Cfg.Port)
 		server := http.Server{
@@ -83,7 +84,7 @@ func SetupCommand() *cobra.Command {
 			defer closeWG.Done()
 			if err := server.ListenAndServe(); err != nil {
 				if !errors.Is(err, http.ErrServerClosed) {
-					log.Fatal().Err(err).Msg("failed to start server")
+					logger.Fatal().Err(err).Msg("failed to start server")
 				}
 			}
 		}()
@@ -93,13 +94,13 @@ func SetupCommand() *cobra.Command {
 			defer closeWG.Done()
 			if err := steve.Get().Run(context.Background()); err != nil {
 				if !errors.Is(err, steve.ErrShutdown) {
-					log.Fatal().Err(err).Msg("failed to start jobs")
+					logger.Fatal().Err(err).Msg("failed to start jobs")
 				}
 			}
 		}()
 
 		<-sigChan
-		log.Info().Msg("Shutting Down")
+		logger.Info().Msg("Shutting Down")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		go server.Shutdown(ctx)
@@ -140,7 +141,7 @@ func setupWebApp(r gin.IRoutes, webAppSrcDir string) {
 	r.Use(staticFileHandler)
 }
 
-func setupTrashCompactor(logger zerolog.Logger) {
+func setupTrashCompactor(logger *zerolog.Logger) {
 	ticker := time.NewTimer(24 * time.Hour)
 	go func() {
 		for {

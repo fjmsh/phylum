@@ -51,7 +51,7 @@ func Initialize(ctx context.Context, pool *pgxpool.Pool, log zerolog.Logger) err
 
 	notifier := notifier{
 		mu:                        sync.RWMutex{},
-		log:                       log.With().Str("c", "notifier").Logger(),
+		log:                       log.With().Str("mod", "notifier").Logger(),
 		listener:                  listener,
 		subscriptions:             make(map[string][]*subscription),
 		pendingOps:                []pendingOp{},

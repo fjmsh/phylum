@@ -58,7 +58,7 @@ func Close() {
 	}
 }
 
-func Connect(ctx context.Context, cfg Config, log zerolog.Logger) (*pgxpool.Pool, error) {
+func Connect(ctx context.Context, cfg Config, logger zerolog.Logger) (*pgxpool.Pool, error) {
 	var dsn strings.Builder
 	dsn.WriteString("host=" + cfg.Host)
 	dsn.WriteString(" port=" + strconv.Itoa(cfg.Port))
@@ -75,7 +75,7 @@ func Connect(ctx context.Context, cfg Config, log zerolog.Logger) (*pgxpool.Pool
 
 	if cfg.Trace {
 		config.ConnConfig.Tracer = tracer{
-			log: log.With().Str("c", "db.trace").Logger(),
+			log: logger.With().Str("mod", "db.trace").Logger().Level(zerolog.TraceLevel),
 		}
 	}
 
@@ -84,7 +84,7 @@ func Connect(ctx context.Context, cfg Config, log zerolog.Logger) (*pgxpool.Pool
 		return nil, errors.New("failed to connect to database: " + err.Error())
 	}
 
-	log.Debug().
+	logger.Debug().
 		Str("host", config.ConnConfig.Host+":"+strconv.Itoa(int(config.ConnConfig.Port))).
 		Str("db", config.ConnConfig.Database).
 		Msg("Connected to database")

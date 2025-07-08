@@ -23,7 +23,7 @@ type Provider struct {
 var log zerolog.Logger
 
 func Init(cfg Config, l zerolog.Logger) error {
-	log = l.With().Str("c", "auth.openid").Logger()
+	log = l.With().Str("mod", "auth.openid").Logger()
 	for _, c := range cfg.Clients {
 		clients[c.ID] = c
 	}

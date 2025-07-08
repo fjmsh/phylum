@@ -2,8 +2,6 @@ package pubsub
 
 import (
 	"sync"
-
-	"github.com/rs/zerolog/log"
 )
 
 type Subscription interface {
@@ -34,7 +32,7 @@ func (s *subscription) EstablishedC() <-chan struct{} { return s.establishedChan
 func (s *subscription) Cancel() {
 	s.unlistenOnce.Do(func() {
 		if err := s.notifier.unsubscribe(s); err != nil {
-			log.Warn().Err(err).Str("channel", s.channelName).Msg("failed to cancel subscription")
+			s.notifier.log.Warn().Err(err).Str("channel", s.channelName).Msg("failed to cancel subscription")
 		}
 	})
 }

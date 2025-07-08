@@ -13,7 +13,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/go-ldap/ldap/v3"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 type Config struct {
@@ -34,7 +33,7 @@ type DNLookupConfig struct {
 }
 
 type Auth struct {
-	log            zerolog.Logger
+	logger         zerolog.Logger
 	url            string
 	hostName       string
 	startTLS       bool
@@ -48,13 +47,13 @@ type Auth struct {
 
 var a Auth
 
-func NewAuth(cfg Config, log zerolog.Logger) (*Auth, error) {
-	a.log = log.With().Str("c", "ldap").Logger()
+func NewAuth(cfg Config, logger zerolog.Logger) (*Auth, error) {
+	a.logger = logger.With().Str("mod", "ldap").Logger()
 	if cfg.Debug {
-		a.log = log.Level(zerolog.DebugLevel)
+		a.logger = logger.Level(zerolog.DebugLevel)
 	}
 
-	info := a.log.Debug()
+	info := a.logger.Debug()
 	if cfg.DNTemplate == "" {
 		if cfg.DNLookup.BaseDN == "" {
 			return nil, errors.New("base DN not set")
@@ -109,7 +108,7 @@ func (a *Auth) newConn() (*ldap.Conn, error) {
 
 	conn, err := ldap.DialURL(a.url, ldap.DialWithDialer(dialer), ldap.DialWithTLSConfig(tlsCfg))
 	if err != nil {
-		log.Error().Err(err).Str("url", a.url).Msg("cannot contact directory server")
+		a.logger.Error().Err(err).Str("url", a.url).Msg("cannot contact directory server")
 	}
 
 	if a.readTimeout != 0 {

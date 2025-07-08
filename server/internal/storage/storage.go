@@ -9,7 +9,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/pubsub"
 	"github.com/jackc/pgx/v5"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 )
 
 const DefaultBackendName = "_"
@@ -25,7 +25,7 @@ type BackendConfig struct {
 	Params map[string]string `json:"params"`
 }
 
-func Initialize(db db.Handler, cfg Config) error {
+func Initialize(db db.Handler, cfg Config, logger zerolog.Logger) error {
 	storageRoot = cfg.Root
 
 	if err := os.MkdirAll(storageRoot, 0o700); err != nil {
@@ -58,7 +58,7 @@ func Initialize(db db.Handler, cfg Config) error {
 		defaultBackend = b
 	}
 
-	go processBackendUpdates()
+	go processBackendUpdates(logger)
 	return nil
 }
 
@@ -139,15 +139,15 @@ func restoreBackends(db db.Handler) (map[string]Backend, error) {
 	}
 }
 
-func processBackendUpdates() {
+func processBackendUpdates(logger zerolog.Logger) {
 	sub := pubsub.Get().Listen("backend_updates")
 	for {
 		p := <-sub.NotificationC()
 		var c BackendConfig
 		if err := json.Unmarshal([]byte(p), &c); err != nil {
-			log.Warn().Err(err).Msg("failed to unmarshal backend config")
+			logger.Warn().Err(err).Msg("failed to unmarshal backend config")
 		} else if b, err := c.open(); err != nil {
-			log.Warn().Err(err).Msg("failed to open backend")
+			logger.Warn().Err(err).Msg("failed to open backend")
 		} else {
 			backends[c.Name] = b
 		}

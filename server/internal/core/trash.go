@@ -81,7 +81,7 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 	}
 }
 
-func TrashCompact(ctx context.Context, logger zerolog.Logger, duration time.Duration) {
+func TrashCompact(ctx context.Context, logger *zerolog.Logger, duration time.Duration) {
 	t := time.Now().Add(-duration)
 	logger.Info().Str("older", t.Format(time.RFC1123)).Msg("deleting old files")
 	f := openOmniscient(db.Get(ctx))
