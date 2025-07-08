@@ -169,6 +169,7 @@ func (c *Client) RunJob(ctx context.Context, id int32) error {
 		} else if w, err := f.makeUnit(&job.JobInfo); err != nil {
 			return err
 		} else {
+			ctx = c.logger.With().Int32("id", id).Logger().WithContext(ctx)
 			if err := w.Work(ctx); err != nil {
 				c.recordError(&job.JobInfo, err)
 				return err
@@ -281,28 +282,27 @@ loop:
 					c.logger.Fatal().Err(err).Msg("Failed to claim job")
 				}
 			} else {
-				if err := c.execute(workCtx, info); err != nil {
+				logger := c.logger.With().Int32("id", info.ID).Logger()
+				ctx := logger.WithContext(workCtx)
+				if err := c.execute(ctx, info); err != nil {
 					if errors.Is(err, errWaiting) {
-						c.logger.
+						logger.
 							Trace().
-							Int32("id", info.ID).
 							Str("kind", info.Kind).
 							Str("args", string(info.EncodedArgs)).
 							Msg("Job Waiting")
 					} else {
 						c.recordError(info, err)
-						c.logger.
+						logger.
 							Warn().
 							Err(err).
 							Int("attempt", info.Attempts).
-							Int32("id", info.ID).
 							Msg("Job Error")
 					}
 					<-c.availableWorkers
 				} else {
-					c.logger.
+					logger.
 						Trace().
-						Int32("id", info.ID).
 						Str("kind", info.Kind).
 						Str("args", string(info.EncodedArgs)).
 						Msg("Executing job")
@@ -396,14 +396,14 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) error {
 			ctx, cancel = context.WithTimeout(ctx, t)
 			defer cancel()
 		}
+		logger := zerolog.Ctx(ctx)
 
 		if err := w.Work(ctx); err != nil {
 			c.recordError(info, err)
-			c.logger.
+			logger.
 				Warn().
 				Err(err).
 				Int("attempt", info.Attempts).
-				Int32("id", info.ID).
 				Msg("Job Error")
 		} else {
 			err := c.db.RunInTx(func(db db.TxHandler) error {
@@ -420,17 +420,15 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) error {
 				return nil
 			})
 			if err != nil {
-				c.logger.
+				logger.
 					Warn().
 					Err(err).
 					Int("attempt", info.Attempts).
-					Int32("id", info.ID).
 					Msg("Error marking job as completed")
 			} else {
-				c.logger.
+				logger.
 					Trace().
 					Int("attempt", info.Attempts).
-					Int32("id", info.ID).
 					Msg("Job Completed")
 			}
 

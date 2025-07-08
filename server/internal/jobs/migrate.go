@@ -8,7 +8,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/steve"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 )
 
 type MigrateArgs struct {
@@ -50,7 +50,7 @@ func migrateVersionContents(ctx context.Context, versionID uuid.UUID) error {
 		return errors.New("failed to copy to target storage: " + err.Error())
 	} else if err := updateStorage(db, versionID, target.Name()); err != nil {
 		if err := target.Delete(versionID.String()); err != nil {
-			logrus.Warn("failed to delete new copy: " + err.Error())
+			zerolog.Ctx(ctx).Warn().Err(err).Msg("failed to delete new copy")
 		}
 		return errors.New("failed to update storage in db: " + err.Error())
 	} else if err := current.Delete(versionID.String()); err != nil {
