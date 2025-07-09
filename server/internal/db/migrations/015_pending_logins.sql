@@ -1,6 +1,6 @@
-CREATE TABLE pending_logins(
+CREATE UNLOGGED TABLE pending_logins(
   token             TEXT        PRIMARY KEY,
-  expires           TIMESTAMPTZ NOT NULL,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   user_id           INTEGER     REFERENCES users(id) ON DELETE CASCADE,
   oidc_provider     TEXT,
   oidc_client_type  SMALLINT
