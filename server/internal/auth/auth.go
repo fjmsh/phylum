@@ -26,7 +26,6 @@ const apiKeyLength = 15
 const resetTokenLength = 15
 const loginTokenLength = 15
 
-const apiKeyValidity = 30 * 24 * time.Hour
 const tokenValidity = 10 * time.Minute
 
 var ErrCredentialsInvalid = core.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid credentials")

@@ -20,19 +20,24 @@ func VerifyAPIKey(db db.Handler, apiKey string) (user core.User, err error) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrCredentialsInvalid
 		}
-	} else if time.Now().After(expires.Time) {
+	} else if expires.Valid && time.Now().After(expires.Time) {
 		return core.User{}, ErrCredentialsInvalid
 	}
 	return
 }
 
-func insertAPIKey(db db.TxHandler, userID int32, keyName string) (string, error) {
-	const q = `INSERT INTO api_keys(key, expires, user_id, name) VALUES (@key::TEXT, @expires::TIMESTAMPTZ, @user_id::INT, NULLIF(@key_name, ''))`
+func insertAPIKey(db db.TxHandler, userID int32, validity time.Duration, keyName string) (string, error) {
+	const q = `INSERT INTO api_keys(key, expires, user_id, name) VALUES (@key::TEXT, @expires, @user_id::INT, NULLIF(@key_name, ''))`
 
 	key := generateSecureKey(apiKeyLength)
+	expires := pgtype.Timestamp{}
+	if validity != 0 {
+		expires.Valid = true
+		expires.Time = time.Now().Add(validity)
+	}
 	args := pgx.NamedArgs{
 		"key":      key,
-		"expires":  time.Now().Add(apiKeyValidity),
+		"expires":  expires,
 		"user_id":  userID,
 		"key_name": keyName,
 	}
