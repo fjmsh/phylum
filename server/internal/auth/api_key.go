@@ -29,15 +29,15 @@ func VerifyAPIKey(db db.Handler, apiKey string) (user core.User, err error) {
 func insertAPIKey(db db.TxHandler, userID int32) (string, error) {
 	const q = `INSERT INTO api_keys(key, expires, user_id) VALUES (@key::TEXT, @expires::TIMESTAMPTZ, @user_id::INT)`
 
-	token := generateSecureKey(apiKeyLength)
+	key := generateSecureKey(apiKeyLength)
 	args := pgx.NamedArgs{
-		"token":   generateSecureKey(apiKeyLength),
+		"key":     key,
 		"expires": time.Now().Add(apiKeyValidity),
 		"user_id": userID,
 	}
 	if _, err := db.Exec(q, args); err != nil {
 		return "", err
 	} else {
-		return token, nil
+		return key, nil
 	}
 }
