@@ -39,7 +39,7 @@ VALUES (@token::TEXT, @expires::TIMESTAMPTZ, @oidc_provider::TEXT, @oidc_client_
 		}
 		authURL, err := url.Parse(endpoint)
 		if err != nil {
-			return "", errors.New("failed to parse authoriation endpoint: " + err.Error())
+			return "", errors.New("failed to parse authorization endpoint: " + err.Error())
 		}
 
 		q := url.Values{}
