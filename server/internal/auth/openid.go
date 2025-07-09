@@ -24,15 +24,18 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 	if clientID, endpoint, err := openid.GetProviderDetails(providerName); err != nil {
 		return "", err
 	} else {
+		codeVerifier, codeChallenge := generatePKCEChallenge()
 		token := generateSecureKey(loginTokenLength)
 		args := pgx.NamedArgs{
 			"token":            token,
 			"expires":          time.Now().Add(tokenValidity),
 			"oidc_provider":    providerName,
 			"oidc_client_type": clientType,
+			"code_verifier":    codeVerifier,
 		}
-		const query = `INSERT INTO pending_logins(token, expires, oidc_provider, oidc_client_type)
-VALUES (@token::TEXT, @expires::TIMESTAMPTZ, @oidc_provider::TEXT, @oidc_client_type::SMALLINT)`
+		const query = `INSERT INTO pending_logins(token, expires, oidc_provider, oidc_client_type,
+		code_verifier) VALUES (@token::TEXT, @expires::TIMESTAMPTZ, @oidc_provider::TEXT, @oidc_client_type::SMALLINT,
+		@code_verifier::TEXT)`
 		_, err := db.Exec(query, args)
 		if err != nil {
 			return "", errors.New("failed to create login token: " + err.Error())
@@ -48,21 +51,24 @@ VALUES (@token::TEXT, @expires::TIMESTAMPTZ, @oidc_provider::TEXT, @oidc_client_
 		q.Add("scope", "openid email profile")
 		q.Add("state", token)
 		q.Add("redirect_uri", redirectURI)
+		q.Add("code_challenge", codeChallenge)
+		q.Add("code_challenge_method", "S256")
 		authURL.RawQuery = q.Encode()
 		return authURL.String(), nil
 	}
 }
 
 func OpenIDValidateAuthCode(d db.Handler, token, authCode, redirecURI string) (OpenIDClientType, error) {
-	row := d.QueryRow("SELECT oidc_provider, oidc_client_type FROM pending_logins WHERE token = $1 AND user_id IS NULL AND expires >= NOW()", token)
+	row := d.QueryRow("SELECT oidc_provider, oidc_client_type, code_verifier FROM pending_logins WHERE token = $1 AND user_id IS NULL AND expires >= NOW()", token)
 	var providerName string
 	var clientType OpenIDClientType
-	if err := row.Scan(&providerName, &clientType); err != nil {
+	var codeVerifier string
+	if err := row.Scan(&providerName, &clientType, &codeVerifier); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = errors.New("login token invalid")
 		}
 		return OpenIDClientNone, err
-	} else if idToken, err := openid.GetIDToken(providerName, authCode, redirecURI); err != nil {
+	} else if idToken, err := openid.GetIDToken(providerName, authCode, redirecURI, codeVerifier); err != nil {
 		return OpenIDClientNone, err
 	} else {
 		email := strings.ToLower(idToken.Email)

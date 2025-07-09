@@ -2,7 +2,9 @@ package auth
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base32"
+	"encoding/base64"
 	"errors"
 	"net/http"
 	"regexp"
@@ -81,4 +83,19 @@ func generateSecureKey(n int) string {
 	b := make([]byte, n)
 	rand.Read(b)
 	return base32.StdEncoding.EncodeToString(b)
+}
+
+func generatePKCEChallenge() (string, string) {
+	verifierLen := 64
+	numBytes := verifierLen * 3 / 4
+	b := make([]byte, numBytes)
+	rand.Read(b)
+	codeVerifier := base64.RawURLEncoding.EncodeToString(b)
+	if len(codeVerifier) > 128 {
+		codeVerifier = codeVerifier[:128]
+	}
+
+	hash := sha256.Sum256([]byte(codeVerifier))
+	codeChallenge := base64.RawURLEncoding.EncodeToString(hash[:])
+	return codeVerifier, codeChallenge
 }

@@ -51,7 +51,7 @@ func GetProviderDetails(providerName string) (string, string, error) {
 	}
 }
 
-func GetIDToken(providerName, authCode, redirectURI string) (idToken IDToken, err error) {
+func GetIDToken(providerName, authCode, redirectURI, codeVerifier string) (idToken IDToken, err error) {
 	if c, ok := clients[providerName]; !ok {
 		return idToken, errors.New("OpenID provider not registered: " + providerName)
 	} else if config, err := getProviderConfig(c.IssuerURL); err != nil {
@@ -61,6 +61,7 @@ func GetIDToken(providerName, authCode, redirectURI string) (idToken IDToken, er
 		data.Set("grant_type", "authorization_code")
 		data.Set("code", authCode)
 		data.Set("redirect_uri", redirectURI)
+		data.Set("code_verifier", codeVerifier)
 		if req, err := http.NewRequest("POST", config.TokenEndpoint, strings.NewReader(data.Encode())); err != nil {
 			return idToken, errors.New("failed to create token request: " + err.Error())
 		} else {
