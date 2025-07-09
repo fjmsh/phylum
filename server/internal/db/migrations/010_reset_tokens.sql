@@ -1,7 +1,7 @@
 CREATE TABLE reset_tokens(
     user_id     INT         PRIMARY KEY REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
     token       TEXT        NOT NULL,
-    expires     TIMESTAMPTZ NOT NULL
+    expires     TIMESTAMP   NOT NULL
 );
 
 
