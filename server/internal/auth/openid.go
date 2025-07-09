@@ -58,7 +58,7 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 	}
 }
 
-func OpenIDValidateAuthCode(d db.Handler, token, authCode, redirecURI string) (OpenIDClientType, error) {
+func OpenIDValidateAuthCode(d db.Handler, token, authCode, redirectURI string) (OpenIDClientType, error) {
 	row := d.QueryRow("SELECT oidc_provider, oidc_client_type, code_verifier FROM pending_logins WHERE token = $1 AND user_id IS NULL AND expires >= NOW()", token)
 	var providerName string
 	var clientType OpenIDClientType
@@ -68,7 +68,7 @@ func OpenIDValidateAuthCode(d db.Handler, token, authCode, redirecURI string) (O
 			err = errors.New("login token invalid")
 		}
 		return OpenIDClientNone, err
-	} else if idToken, err := openid.GetIDToken(providerName, authCode, redirecURI, codeVerifier); err != nil {
+	} else if idToken, err := openid.GetIDToken(providerName, authCode, redirectURI, codeVerifier); err != nil {
 		return OpenIDClientNone, err
 	} else {
 		email := strings.ToLower(idToken.Email)
