@@ -34,7 +34,7 @@ func VerifyUserPassword(d db.Handler, email, password string) (core.User, error)
 func PerformPasswordLogin(db db.TxHandler, email, password string) (core.User, string, error) {
 	if user, err := VerifyUserPassword(db, email, password); err != nil {
 		return core.User{}, "", err
-	} else if token, err := insertAPIKey(db, user.ID, 0, ""); err != nil {
+	} else if token, err := insertAPIKey(db, user.ID, 0, "", []string{"*"}); err != nil {
 		return core.User{}, "", err
 	} else {
 		return user, token, nil

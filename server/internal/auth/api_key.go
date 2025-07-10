@@ -26,8 +26,8 @@ func VerifyAPIKey(db db.Handler, apiKey string) (user core.User, err error) {
 	return
 }
 
-func insertAPIKey(db db.TxHandler, userID int32, validity time.Duration, keyName string) (string, error) {
-	const q = `INSERT INTO api_keys(key, expires, user_id, name) VALUES (@key::TEXT, @expires, @user_id::INT, NULLIF(@key_name, ''))`
+func insertAPIKey(db db.TxHandler, userID int32, validity time.Duration, keyName string, scopes []string) (string, error) {
+	const q = `INSERT INTO api_keys(key, expires, user_id, name, scopes) VALUES (@key::TEXT, @expires, @user_id::INT, NULLIF(@key_name, ''), @scopes::TEXT[])`
 
 	key := generateSecureKey(apiKeyLength)
 	expires := pgtype.Timestamp{}
@@ -40,6 +40,7 @@ func insertAPIKey(db db.TxHandler, userID int32, validity time.Duration, keyName
 		"expires":  expires,
 		"user_id":  userID,
 		"key_name": keyName,
+		"scopes":   scopes,
 	}
 	if _, err := db.Exec(q, args); err != nil {
 		return "", err
