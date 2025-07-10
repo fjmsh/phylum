@@ -188,7 +188,7 @@ Currently supported storage drivers are local filesystem and MinIO (S3-compatibl
 
 
 ### Version History
-Phylum retains full version history of all files, allowing preview (if supported for the file type) and download. Currently, it is not possible to delete previous versions, either automtaically or manually. Better version management is a planned feature that will allow you to delete previous versions manually, and configure a retention policy. For now, the only way to get rid of previous versions is to delete the file and upload another one with the same name.
+Phylum retains full version history of all files, allowing preview (if supported for the file type) and download. Currently, it is not possible to delete previous versions, either automatically or manually. Better version management is a planned feature that will allow you to delete previous versions manually, and configure a retention policy. For now, the only way to get rid of previous versions is to delete the file and upload another one with the same name.
 
 
 ### WebDAV
@@ -254,7 +254,7 @@ An OpenAPI document is a work in progress. If you do intend to look around, note
 
 ### Client
 
-The client is written using Flutter, and building requires no special configuration as long as your toolchian is [set up properly](https://docs.flutter.dev/get-started/). Of course, you will need a running server to connect to.
+The client is written using Flutter, and building requires no special configuration as long as your toolchain is [set up properly](https://docs.flutter.dev/get-started/). Of course, you will need a running server to connect to.
 
 It is usually easiest to work on the desktop app, and only test on devices/web if needed for platform-specific integration.
 
@@ -265,6 +265,6 @@ If you want to work on the web client specifically, then the simplest way is to 
 $ ln -st data ../client/build/web/
 ```
 
-Please note that the web client must is built with WASM using `flutter build web --wasm`
+Please note that the web client must be built with WASM using `flutter build web --wasm`
 
 
