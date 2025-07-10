@@ -67,7 +67,7 @@ class _LoginFragmentState extends State<LoginFragment> {
                   ? null
                   : (value) => _performLogin(context, widget.instanceConfig.url, _email, _password),
             ),
-          if (widget.instanceConfig.hasEmailLogin)
+          if (widget.instanceConfig.password)
             ElevatedButton(
               onPressed: _email.isEmpty || _password.isEmpty
                   ? null
