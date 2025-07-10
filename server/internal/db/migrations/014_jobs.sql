@@ -1,5 +1,5 @@
 CREATE TABLE jobs(
-  id            INTEGER     GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  id            SERIAL      PRIMARY KEY,
   status        SMALLINT    NOT NULL DEFAULT 0,
   attempts      SMALLINT    NOT NULL DEFAULT 0,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
