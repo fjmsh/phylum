@@ -54,6 +54,8 @@ func Initialize(cfg Config, log zerolog.Logger) error {
 		} else {
 			passwordBackend = a
 		}
+	} else if cfg.Password.Backend == "none" {
+		passwordBackend = nil
 	} else if cfg.Password.Backend != "" {
 		return errors.New("password backend not recognized: " + cfg.Password.Backend)
 	}

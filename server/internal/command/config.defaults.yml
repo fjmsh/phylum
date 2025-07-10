@@ -22,6 +22,7 @@ auth:
     # - "user@example.com"
     # - "user*@example.com"
   password:
+    # backend is one of crypt, ldap, or none
     backend: crypt
     crypt:
       hash: argon2
