@@ -67,12 +67,13 @@ class _LoginFragmentState extends State<LoginFragment> {
                   ? null
                   : (value) => _performLogin(context, widget.instanceConfig.url, _email, _password),
             ),
-          ElevatedButton(
-            onPressed: _email.isEmpty || _password.isEmpty
-                ? null
-                : () => _performLogin(context, widget.instanceConfig.url, _email, _password),
-            child: Text('Login'),
-          ),
+          if (widget.instanceConfig.hasEmailLogin)
+            ElevatedButton(
+              onPressed: _email.isEmpty || _password.isEmpty
+                  ? null
+                  : () => _performLogin(context, widget.instanceConfig.url, _email, _password),
+              child: Text('Login'),
+            ),
           if (widget.instanceConfig.passwordReset)
             TextButton(
               child: Text('Reset Password', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
