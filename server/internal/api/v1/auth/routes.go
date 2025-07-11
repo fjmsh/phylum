@@ -137,7 +137,7 @@ func handleTokenLogin(c *gin.Context) {
 	}); err != nil {
 		panic(err)
 	} else {
-		c.JSON(200, responses.Login{
+		c.JSON(http.StatusOK, responses.Login{
 			APIKey:    apiKey,
 			Bootstrap: response,
 		})
@@ -166,7 +166,7 @@ func handlePasswordAuth(c *gin.Context) {
 	}); err != nil {
 		panic(err)
 	} else {
-		c.JSON(200, responses.Login{
+		c.JSON(http.StatusOK, responses.Login{
 			APIKey:    token,
 			Bootstrap: response,
 		})
@@ -222,7 +222,7 @@ func handleResetPassword(c *gin.Context) {
 	}); err != nil {
 		panic(err)
 	} else {
-		c.JSON(200, responses.Login{
+		c.JSON(http.StatusOK, responses.Login{
 			APIKey:    token,
 			Bootstrap: response,
 		})
