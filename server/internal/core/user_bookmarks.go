@@ -29,7 +29,7 @@ func scanBookmark(row pgx.CollectableRow) (Bookmark, error) {
 	return p, nil
 }
 
-func AddBookmark(db db.TxHandler, u User, resource Resource, name string) (Bookmark, error) {
+func AddBookmark(db db.TxHandler, userID int32, resource Resource, name string) (Bookmark, error) {
 	if name == "" {
 		name = resource.Name()
 	}
@@ -47,7 +47,7 @@ SET
     name = $3::TEXT
 RETURNING resource_id, name, dir, created`
 
-	if rows, err := db.Query(q, u.ID, resource.ID(), name, resource.Dir()); err != nil {
+	if rows, err := db.Query(q, userID, resource.ID(), name, resource.Dir()); err != nil {
 		return Bookmark{}, err
 	} else if bookmark, err := pgx.CollectExactlyOneRow(rows, scanBookmark); err != nil {
 		return Bookmark{}, err
@@ -56,13 +56,13 @@ RETURNING resource_id, name, dir, created`
 	}
 }
 
-func RemoveBookmark(db db.TxHandler, u User, id uuid.UUID) error {
+func RemoveBookmark(db db.TxHandler, userID int32, id uuid.UUID) error {
 	const q = "DELETE FROM bookmarks WHERE user_id = $1::INT AND resource_id = $2::UUID"
-	_, err := db.Exec(q, u.ID, id)
+	_, err := db.Exec(q, userID, id)
 	return err
 }
 
-func ListBookmarks(db db.Handler, u User, since int64) ([]Bookmark, error) {
+func ListBookmarks(db db.Handler, userID int32, since int64) ([]Bookmark, error) {
 	sb := strings.Builder{}
 	sb.WriteString(`SELECT resource_id, name, dir, created
 FROM bookmarks b
@@ -75,7 +75,7 @@ WHERE user_id = @user_id::INT
 	}
 	sb.WriteString("ORDER BY modified DESC")
 
-	if rows, err := db.Query(sb.String(), pgx.NamedArgs{"user_id": u.ID, "since": time.UnixMilli(since)}); err != nil {
+	if rows, err := db.Query(sb.String(), pgx.NamedArgs{"user_id": userID, "since": time.UnixMilli(since)}); err != nil {
 		return nil, err
 	} else if bookmarks, err := pgx.CollectRows(rows, scanBookmark); err != nil {
 		return nil, err

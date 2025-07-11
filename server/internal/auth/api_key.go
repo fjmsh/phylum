@@ -10,20 +10,52 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func VerifyAPIKey(db db.Handler, apiKey string) (user core.User, err error) {
-	const q = `SELECT k.expires, u.id, u.email, u.name, u.permissions, u.home FROM api_keys k JOIN users u ON k.user_id = u.id WHERE k.key = $1; `
+type Auth interface {
+	UserID() int32
+	UserPermissions() core.UserPermissions
+	HasScope(scope string) bool
+}
+
+type auth struct {
+	userID          int32
+	userPermissions core.UserPermissions
+	scopes          []string
+}
+
+func (a auth) UserID() int32 {
+	return a.userID
+}
+
+func (a auth) UserPermissions() core.UserPermissions {
+	return a.userPermissions
+}
+
+func (a auth) HasScope(scope string) bool {
+	for _, s := range a.scopes {
+		if s == "*" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func VerifyAPIKey(db db.Handler, apiKey string) (Auth, error) {
+	const q = `SELECT k.expires, u.id, u.permissions, k.scopes FROM api_keys k JOIN users u ON k.user_id = u.id WHERE k.key = $1; `
 	row := db.QueryRow(q, apiKey)
 
 	var expires pgtype.Timestamp
-	err = row.Scan(&expires, &user.ID, &user.Email, &user.Name, &user.Permissions, &user.Home)
+	var auth auth
+	err := row.Scan(&expires, &auth.userID, &auth.userPermissions, &auth.scopes)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrCredentialsInvalid
 		}
+		return nil, err
 	} else if expires.Valid && time.Now().After(expires.Time) {
-		return core.User{}, ErrCredentialsInvalid
+		return nil, ErrCredentialsInvalid
 	}
-	return
+	return auth, nil
 }
 
 func insertAPIKey(db db.TxHandler, userID int32, validity time.Duration, keyName string, scopes []string) (string, error) {

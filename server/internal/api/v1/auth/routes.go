@@ -129,12 +129,12 @@ func handleTokenLogin(c *gin.Context) {
 	var apiKey string
 	var response responses.Bootstrap
 	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
-		if user, t, err := auth.PerformTokenLogin(db, params.LoginToken); err != nil {
+		if a, t, err := auth.PerformTokenLogin(db, params.LoginToken); err != nil {
 			if errors.Is(err, auth.ErrTokenInvalid) {
 				return core.NewError(http.StatusBadRequest, "token_invalid", "login token is invalid")
 			}
 			return err
-		} else if r, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
+		} else if r, err := my.Bootstrap(c.Request.Context(), a, 0); err != nil {
 			return err
 		} else {
 			apiKey = t

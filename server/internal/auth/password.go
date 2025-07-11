@@ -14,12 +14,12 @@ type PasswordBackend interface {
 	UpdateUserPassword(db db.Handler, email, password string) error
 }
 
-func VerifyUserPassword(d db.Handler, email, password string) (core.User, error) {
+func VerifyUserPassword(d db.Handler, email, password string) (Auth, error) {
 	email = strings.ToLower(email)
 	if b, err := passwordBackend.VerifyUserPassword(d, email, password); err != nil {
-		return core.User{}, err
+		return nil, err
 	} else if !b {
-		return core.User{}, ErrCredentialsInvalid
+		return nil, ErrCredentialsInvalid
 	}
 	user, err := core.UserByEmail(d, email)
 	if errors.Is(err, core.ErrUserNotFound) && shouldAutoCreate(email) {
@@ -28,15 +28,15 @@ func VerifyUserPassword(d db.Handler, email, password string) (core.User, error)
 			return err
 		})
 	}
-	return user, err
+	return auth{userID: user.ID, userPermissions: user.Permissions, scopes: []string{"*"}}, err
 }
 
-func PerformPasswordLogin(db db.TxHandler, email, password string) (core.User, string, error) {
-	if user, err := VerifyUserPassword(db, email, password); err != nil {
-		return core.User{}, "", err
-	} else if token, err := insertAPIKey(db, user.ID, 0, "", []string{"*"}); err != nil {
-		return core.User{}, "", err
+func PerformPasswordLogin(db db.TxHandler, email, password string) (Auth, string, error) {
+	if auth, err := VerifyUserPassword(db, email, password); err != nil {
+		return nil, "", err
+	} else if token, err := insertAPIKey(db, auth.UserID(), 0, "", []string{"*"}); err != nil {
+		return nil, "", err
 	} else {
-		return user, token, nil
+		return auth, token, nil
 	}
 }

@@ -8,6 +8,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
+	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
@@ -45,8 +46,8 @@ func handleBookmarksGetRoute(c *gin.Context) {
 		}
 	}
 
-	u := authenticator.GetUser(c)
-	if bookmarks, err := ListBookmarks(c.Request.Context(), u, since); err != nil {
+	auth := authenticator.GetAuth(c)
+	if bookmarks, err := ListBookmarks(c.Request.Context(), auth, since); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, bookmarksResponse{
@@ -60,14 +61,18 @@ func handleBookmarksAddRoute(c *gin.Context) {
 	var params bookmarkAddParams
 	c.ShouldBind(&params)
 
-	u := authenticator.GetUser(c)
+	auth := authenticator.GetAuth(c)
+	if !auth.HasScope("bookmarks:add") {
+		panic(errMissingScope)
+	}
+	userID := auth.UserID()
 	r, err := authenticator.GetFileSystem(c).ResourceByPathWithRoot(params.Path)
 	if err != nil {
 		panic(err)
 	}
 	var b core.Bookmark
 	err = db.Get(c.Request.Context()).RunInTx(func(db db.TxHandler) error {
-		b, err = core.AddBookmark(db, u, r, params.Name)
+		b, err = core.AddBookmark(db, userID, r, params.Name)
 		return err
 	})
 	if err != nil {
@@ -87,18 +92,25 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 	var params bookmarkRemoveParams
 	c.ShouldBind(&params)
 
-	u := authenticator.GetUser(c)
+	auth := authenticator.GetAuth(c)
+	if !auth.HasScope("bookmarks:remove") {
+		panic(errMissingScope)
+	}
 	if err := db.Get(c.Request.Context()).RunInTx(func(db db.TxHandler) error {
-		return core.RemoveBookmark(db, u, params.ID)
+		return core.RemoveBookmark(db, auth.UserID(), params.ID)
 	}); err != nil {
 		panic(err)
 	}
 	c.JSON(200, gin.H{})
 }
 
-func ListBookmarks(ctx context.Context, u core.User, since int64) ([]responses.Bookmark, error) {
+func ListBookmarks(ctx context.Context, auth auth.Auth, since int64) ([]responses.Bookmark, error) {
 	var bookmarks []responses.Bookmark
-	if res, err := core.ListBookmarks(db.Get(ctx), u, since); err != nil {
+
+	if !auth.HasScope("bookmarks:list") {
+		return nil, errMissingScope
+	}
+	if res, err := core.ListBookmarks(db.Get(ctx), auth.UserID(), since); err != nil {
 		return bookmarks, err
 	} else {
 		bookmarks = make([]responses.Bookmark, len(res))

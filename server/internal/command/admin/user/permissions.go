@@ -41,7 +41,7 @@ func setupGrantCommand() *cobra.Command {
 			}
 
 			if err := d.RunInTx(func(db db.TxHandler) error {
-				return core.GrantUserPermissions(db, u, p)
+				return core.GrantUserPermissions(db, u.ID, p)
 			}); err != nil {
 				fmt.Println("failed to grant permission: " + err.Error())
 				os.Exit(1)
@@ -80,7 +80,7 @@ func setupRevokeCommand() *cobra.Command {
 
 			if err := d.RunInTx(func(db db.TxHandler) error {
 				// TODO: Accept email directly instead of having to separately fetch the user
-				return core.RevokeUserPermissions(db, u, p)
+				return core.RevokeUserPermissions(db, u.ID, p)
 			}); err != nil {
 				fmt.Println("failed to revoke permission: " + err.Error())
 				os.Exit(1)

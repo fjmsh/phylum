@@ -15,68 +15,68 @@ import (
 var errAuthRequired = core.NewError(http.StatusUnauthorized, "auth_required", "authorization required")
 var errCredentialsInvalid = core.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid credentials")
 
-const keyUser = "user"
+const keyAuth = "auth"
 
-func GetUser(c *gin.Context) core.User {
-	val, ok := c.Get(keyUser)
+func GetAuth(c *gin.Context) auth.Auth {
+	val, ok := c.Get(keyAuth)
 	if !ok {
-		return core.User{}
+		return nil
 	}
-	return val.(core.User)
+	return val.(auth.Auth)
 }
 
 func GetFileSystem(c *gin.Context) *core.FileSystem {
-	user := GetUser(c)
+	user := GetAuth(c)
 	return user.OpenFileSystem(db.Get(c.Request.Context()))
 }
 
 func Require(c *gin.Context) {
-	if u, err := extractUserDetails(c); err != nil {
+	if a, err := getAuth(c); err != nil {
 		panic(err)
 	} else {
-		c.Set(keyUser, u)
+		c.Set(keyAuth, a)
 	}
 }
 
-func extractUserDetails(c *gin.Context) (core.User, error) {
+func getAuth(c *gin.Context) (auth.Auth, error) {
 	db := db.Get(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		if cookie, err := c.Request.Cookie("api_key"); err == nil {
 			apiKey := cookie.Value
-			if u, err := auth.VerifyAPIKey(db, apiKey); err == nil {
-				return u, nil
+			if a, err := auth.VerifyAPIKey(db, apiKey); err == nil {
+				return a, nil
 			} else {
 				if errors.Is(err, auth.ErrCredentialsInvalid) {
 					err = errCredentialsInvalid
 				}
-				return core.User{}, err
+				return nil, err
 			}
 		} else if err != http.ErrNoCookie {
-			return core.User{}, err
+			return nil, err
 		}
-		return core.User{}, errAuthRequired
+		return nil, errAuthRequired
 	} else if authHeader, ok := checkAuthHeader(header, "basic"); ok {
 		if email, password, ok := decodeBasicAuth(authHeader); ok {
-			if u, err := auth.VerifyUserPassword(db, email, password); err == nil {
-				return u, nil
+			if a, err := auth.VerifyUserPassword(db, email, password); err == nil {
+				return a, nil
 			} else {
 				if errors.Is(err, auth.ErrCredentialsInvalid) {
 					err = errCredentialsInvalid
 				}
-				return core.User{}, err
+				return nil, err
 			}
 		}
 	} else if apiKey, ok := checkAuthHeader(header, "api-key"); ok {
-		if u, err := auth.VerifyAPIKey(db, apiKey); err == nil {
-			return u, nil
+		if a, err := auth.VerifyAPIKey(db, apiKey); err == nil {
+			return a, nil
 		} else {
 			if errors.Is(err, auth.ErrCredentialsInvalid) {
 				err = errCredentialsInvalid
 			}
-			return core.User{}, err
+			return nil, err
 		}
 	}
-	return core.User{}, errAuthRequired
+	return nil, errAuthRequired
 }
 
 func checkAuthHeader(header, prefix string) (string, bool) {

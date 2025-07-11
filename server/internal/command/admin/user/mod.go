@@ -43,12 +43,12 @@ func setupModCommand() *cobra.Command {
 
 			err = db.Get(context.Background()).RunInTx(func(db db.TxHandler) error {
 				if name != "" {
-					if err := core.UpdateUserName(db, u, name); err != nil {
+					if _, err := core.UpdateUserName(db, u.ID, name); err != nil {
 						return err
 					}
 				}
 				if homeID.Valid {
-					if err := core.UpdateUserHome(db, u, homeID); err != nil {
+					if _, err := core.UpdateUserHome(db, u.ID, homeID); err != nil {
 						return err
 					}
 				}

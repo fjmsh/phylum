@@ -19,14 +19,14 @@ func handleDetailsUpdateRoute(c *gin.Context) {
 		panic(err)
 	}
 
-	u := authenticator.GetUser(c)
+	auth := authenticator.GetAuth(c)
+	var user core.User
 
 	err = db.Get(c.Request.Context()).RunInTx(func(db db.TxHandler) error {
 		if params.Name != "" {
-			if err := core.UpdateUserName(db, u, params.Name); err != nil {
+			if user, err = core.UpdateUserName(db, auth.UserID(), params.Name); err != nil {
 				return err
 			}
-			u.Name = params.Name
 		}
 		return nil
 	})
@@ -35,8 +35,8 @@ func handleDetailsUpdateRoute(c *gin.Context) {
 		panic(err)
 	}
 	c.JSON(200, responses.User{
-		ID:    u.ID,
-		Email: u.Email,
-		Name:  u.Name,
+		ID:    user.ID,
+		Email: user.Email,
+		Name:  user.Name,
 	})
 }

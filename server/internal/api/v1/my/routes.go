@@ -19,38 +19,15 @@ type sharedResponse struct {
 
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/my")
-	group.GET("/home", handleHomeRoute)
 	group.GET("/shared", handleSharedRoute)
 	group.GET("/bootstrap", handleBootstrapRoute)
 	group.POST("/details", handleDetailsUpdateRoute)
 	setupBookmarksRoutes(group)
 }
 
-func handleHomeRoute(c *gin.Context) {
-	user := authenticator.GetUser(c)
-	f := authenticator.GetFileSystem(c)
-	r, err := f.ResourceByPathWithRoot("")
-	if err != nil {
-		panic(err)
-	}
-
-	c.JSON(200, homeResponse{
-		User: responses.LoggedInUser{
-			User: responses.User{
-				ID:    user.ID,
-				Email: user.Email,
-				Name:  user.Name,
-			},
-			Home:        user.Home,
-			Permissions: user.Permissions,
-		},
-		Home: responses.FullResourceFromFS(f, r),
-	})
-}
-
 func handleSharedRoute(c *gin.Context) {
-	u := authenticator.GetUser(c)
-	shared, err := core.SharedResources(db.Get(c.Request.Context()), u)
+	auth := authenticator.GetAuth(c)
+	shared, err := core.SharedResources(db.Get(c.Request.Context()), auth.UserID())
 	if err != nil {
 		panic(err)
 	}

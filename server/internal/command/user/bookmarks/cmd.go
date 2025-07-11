@@ -37,7 +37,7 @@ func setupListCommand() *cobra.Command {
 				fmt.Println("unable to list bookmarks: user not specified")
 				os.Exit(1)
 			}
-			if bookmarks, err := core.ListBookmarks(db.Get(context.Background()), *u, 0); err != nil {
+			if bookmarks, err := core.ListBookmarks(db.Get(context.Background()), u.ID, 0); err != nil {
 				fmt.Println("unable to list bookmark: " + err.Error())
 				os.Exit(1)
 			} else {
@@ -69,7 +69,7 @@ func setupRemoveCommand() *cobra.Command {
 			}
 
 			if err := db.Get(context.Background()).RunInTx(func(db db.TxHandler) error {
-				return core.RemoveBookmark(db, *u, r.ID())
+				return core.RemoveBookmark(db, u.ID, r.ID())
 			}); err != nil {
 				fmt.Println("unable to remove bookmark: " + err.Error())
 				os.Exit(1)
@@ -101,7 +101,7 @@ func setupAddCommand() *cobra.Command {
 			}
 
 			if err := db.Get(context.Background()).RunInTx(func(db db.TxHandler) error {
-				_, err := core.AddBookmark(db, *u, r, name)
+				_, err := core.AddBookmark(db, u.ID, r, name)
 				return err
 			}); err != nil {
 				fmt.Println("unable to add bookmark: " + err.Error())

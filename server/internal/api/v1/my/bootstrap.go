@@ -9,9 +9,13 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/users"
+	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
 )
+
+var errMissingScope = core.NewError(http.StatusUnauthorized, "missing_scope", "missing scope")
 
 func handleBootstrapRoute(c *gin.Context) {
 	var since int64
@@ -23,17 +27,22 @@ func handleBootstrapRoute(c *gin.Context) {
 		}
 	}
 
-	if response, err := Bootstrap(c.Request.Context(), authenticator.GetUser(c), since); err != nil {
+	if response, err := Bootstrap(c.Request.Context(), authenticator.GetAuth(c), since); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, response)
 	}
 }
 
-func Bootstrap(ctx context.Context, u core.User, since int64) (responses.Bootstrap, error) {
-	if bookmarks, err := ListBookmarks(ctx, u, since); err != nil {
+func Bootstrap(ctx context.Context, auth auth.Auth, since int64) (responses.Bootstrap, error) {
+	if !auth.HasScope("users:read") || !auth.HasScope("profile:read") {
+		return responses.Bootstrap{}, errMissingScope
+	}
+	if bookmarks, err := ListBookmarks(ctx, auth, since); err != nil {
 		return responses.Bootstrap{}, err
 	} else if users, err := users.ListUsers(ctx, since); err != nil {
+		return responses.Bootstrap{}, err
+	} else if u, err := core.UserByID(db.Get(ctx), auth.UserID()); err != nil {
 		return responses.Bootstrap{}, err
 	} else {
 		return responses.Bootstrap{
