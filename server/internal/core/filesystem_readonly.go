@@ -70,9 +70,8 @@ func OpenFileSystemFromPublink(ctx context.Context, id string, password string) 
 		return nil, err
 	}
 
-	// TODO: #redundant
-	// TODO: #do not use omniscient
-	return proxyFileSystemReadOnly{f: openOmniscient(d).withPathRoot(pgtype.UUID{Bytes: link.Root, Valid: true})}, nil
+	f := OpenFileSystem(d, pgtype.UUID{Bytes: link.Root, Valid: true}, -1, -1, []string{link.Root.String() + ":read"})
+	return proxyFileSystemReadOnly{f: f}, nil
 }
 
 func getPublink(d db.Handler, id string) (Publink, error) {

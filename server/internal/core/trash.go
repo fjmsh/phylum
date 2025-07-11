@@ -30,11 +30,11 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 			pg.Select(goqu.L(versionsQuery)).From(v).Where(v.Col("resource_id").Eq(r.Col("id"))),
 			pg.Select(goqu.L(publinksQuery)).From(l).Where(l.Col("root").Eq(r.Col("id"))),
 			// TODO: Always select p.id when fullAccess
-			pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.user.ID)),
+			pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID)),
 			pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 		)
-	if f.user.Permissions&PermissionFilesAll == 0 {
-		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.user.ID))
+	if f.userPermissions&PermissionFilesAll == 0 {
+		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.userID))
 	}
 	if cursor != "" {
 		if d, err := base64.StdEncoding.DecodeString(cursor); err != nil {
@@ -84,7 +84,7 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 func TrashCompact(ctx context.Context, logger *zerolog.Logger, duration time.Duration) {
 	t := time.Now().Add(-duration)
 	logger.Info().Str("older", t.Format(time.RFC1123)).Msg("deleting old files")
-	f := openOmniscient(db.Get(ctx))
+	f := OpenOmniscient(db.Get(ctx))
 	if err := f.hardDeleteOldResources(t); err != nil {
 		logger.Error().Err(err).Msg("error deleting old files")
 	}
@@ -123,8 +123,8 @@ func (f *FileSystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.S
 		From(r).
 		Select(r.Col("id"), r.Col("parent"), r.Col("deleted")).
 		Join(t, goqu.On(t.Col("id").Eq(r.Col("id"))))
-	if f.user.Permissions&PermissionFilesAll == 0 {
-		base = base.Where(goqu.L("r.permissions[?]::INTEGER <> 0", f.user.ID))
+	if f.userPermissions&PermissionFilesAll == 0 {
+		base = base.Where(goqu.L("r.permissions[?]::INTEGER <> 0", f.userID))
 	}
 	if !time.IsZero() {
 		base = base.Where(r.Col("deleted").Lt(goqu.V(time)))

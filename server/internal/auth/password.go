@@ -28,7 +28,7 @@ func VerifyUserPassword(d db.Handler, email, password string) (Auth, error) {
 			return err
 		})
 	}
-	return auth{userID: user.ID, userPermissions: user.Permissions, scopes: []string{"*"}}, err
+	return auth{userID: user.ID, homeID: user.Home, userPermissions: user.Permissions, scopes: []string{"*"}}, err
 }
 
 func PerformPasswordLogin(db db.TxHandler, email, password string) (Auth, string, error) {

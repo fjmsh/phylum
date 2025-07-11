@@ -15,7 +15,7 @@ func (f *FileSystem) CreatePublink(r Resource, id, password string, expires pgty
 }
 
 func (f txFileSystem) CreatePublink(r Resource, id, password string, expires pgtype.Timestamp, accessLimit int) error {
-	if err := r.checkPermission(f.user, PermissionShare|PermissionRead); err != nil {
+	if err := f.checkPermission(r, PermissionShare|PermissionRead); err != nil {
 		return err
 	}
 	if r.deleted.Valid {

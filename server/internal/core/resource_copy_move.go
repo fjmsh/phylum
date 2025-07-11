@@ -36,7 +36,7 @@ func (f txFileSystem) Move(r Resource, target string, conflictResolution Resourc
 	if err != nil {
 		return Resource{}, false, err
 	}
-	if err := parent.checkPermission(f.user, PermissionRead|PermissionWrite); err != nil {
+	if err := f.checkPermission(parent, PermissionRead|PermissionWrite); err != nil {
 		return Resource{}, false, err
 	}
 
@@ -54,7 +54,7 @@ func (f txFileSystem) Move(r Resource, target string, conflictResolution Resourc
 	if !destParent.Dir() {
 		return Resource{}, false, ErrResourceNotCollection
 	}
-	if err := destParent.checkPermission(f.user, PermissionWrite); err != nil {
+	if err := f.checkPermission(destParent, PermissionWrite); err != nil {
 		return Resource{}, false, err
 	}
 	if destParent.id == r.id {
@@ -140,7 +140,7 @@ func (f *FileSystem) Copy(r Resource, target string, id uuid.UUID, recursive boo
 
 func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, recursive bool, conflictResolution ResourceBindConflictResolution) (Resource, bool, error) {
 	// Check source directory permissions
-	if err := src.checkPermission(f.user, PermissionWrite); err != nil {
+	if err := f.checkPermission(src, PermissionRead); err != nil {
 		return Resource{}, false, err
 	}
 	if src.deleted.Valid {
@@ -155,12 +155,11 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 		}
 		return Resource{}, false, err
 	}
-	// fmt.Printf("%+v", destParent)
 	if !destParent.dir {
 		return Resource{}, false, ErrResourceNotCollection
 
 	}
-	if err := destParent.checkPermission(f.user, PermissionWrite); err != nil {
+	if err := f.checkPermission(destParent, PermissionWrite); err != nil {
 		return Resource{}, false, err
 	}
 

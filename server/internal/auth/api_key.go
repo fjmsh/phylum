@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
@@ -14,12 +15,22 @@ type Auth interface {
 	UserID() int32
 	UserPermissions() core.UserPermissions
 	HasScope(scope string) bool
+	GetFileSystem(db db.Handler, rootOverride pgtype.UUID) *core.FileSystem
 }
 
 type auth struct {
 	userID          int32
 	userPermissions core.UserPermissions
+	homeID          pgtype.UUID // TODO: Make sure this is specified everywhere
 	scopes          []string
+}
+
+func SuperUser() Auth {
+	return auth{
+		userID:          -1,
+		userPermissions: -1,
+		scopes:          []string{"*"},
+	}
 }
 
 func (a auth) UserID() int32 {
@@ -36,17 +47,33 @@ func (a auth) HasScope(scope string) bool {
 			return true
 		}
 	}
-
 	return false
 }
 
+func (a auth) GetFileSystem(db db.Handler, rootOverride pgtype.UUID) *core.FileSystem {
+	pathRoot := rootOverride
+	if !pathRoot.Valid {
+		pathRoot = a.homeID
+	}
+	var fsScopes []string
+	for _, s := range a.scopes {
+		if s == "*" || s == "fs" {
+			return core.OpenFileSystem(db, pathRoot, a.userID, a.userPermissions, []string{"*"})
+		}
+		if strings.HasPrefix(s, "fs:") {
+			fsScopes = append(fsScopes, strings.TrimPrefix(s, "fs:"))
+		}
+	}
+	return core.OpenFileSystem(db, pathRoot, a.userID, a.userPermissions, fsScopes)
+}
+
 func VerifyAPIKey(db db.Handler, apiKey string) (Auth, error) {
-	const q = `SELECT k.expires, u.id, u.permissions, k.scopes FROM api_keys k JOIN users u ON k.user_id = u.id WHERE k.key = $1; `
+	const q = `SELECT k.expires, u.id, u.permissions, u.home, k.scopes FROM api_keys k JOIN users u ON k.user_id = u.id WHERE k.key = $1; `
 	row := db.QueryRow(q, apiKey)
 
 	var expires pgtype.Timestamp
 	var auth auth
-	err := row.Scan(&expires, &auth.userID, &auth.userPermissions, &auth.scopes)
+	err := row.Scan(&expires, &auth.userID, &auth.userPermissions, &auth.homeID, &auth.scopes)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrCredentialsInvalid

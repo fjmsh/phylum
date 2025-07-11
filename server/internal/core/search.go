@@ -13,14 +13,14 @@ func (f *FileSystem) Search(query string, includeDeleted bool) ([]Resource, erro
 	if !includeDeleted {
 		qb.WriteString("\nAND r.deleted IS NULL")
 	}
-	if f.user.Permissions&PermissionFilesAll == 0 {
+	if f.userPermissions&PermissionFilesAll == 0 {
 		qb.WriteString("\nAND r.permissions[@user_id::INT]::INTEGER <> 0")
 	}
 	qb.WriteString("\nORDER BY word_similarity(f_prepare_search(r.name), @query::TEXT) DESC")
 
 	args := pgx.NamedArgs{
 		"query":   strings.ToLower(query),
-		"user_id": f.user.ID,
+		"user_id": f.userID,
 	}
 
 	if rows, err := f.db.Query(qb.String(), args); err != nil {

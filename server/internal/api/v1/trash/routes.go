@@ -6,8 +6,10 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const trashListLength = 100
@@ -31,7 +33,11 @@ type trashListResponse struct {
 func handleListRequest(c *gin.Context) {
 	cursor := c.Request.URL.Query().Get("cursor")
 
-	fs := authenticator.GetFileSystem(c)
+	auth := authenticator.GetAuth(c)
+	if !auth.HasScope("trash:list") {
+		panic(core.ErrInsufficientScope)
+	}
+	fs := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})
 	res, cursor, err := fs.TrashList(cursor, trashListLength)
 	if err != nil {
 		panic(err)
@@ -49,7 +55,11 @@ func handleListRequest(c *gin.Context) {
 }
 
 func handleEmptyRequest(c *gin.Context) {
-	fs := authenticator.GetFileSystem(c)
+	auth := authenticator.GetAuth(c)
+	if !auth.HasScope("trash:empty") {
+		panic(core.ErrInsufficientScope)
+	}
+	fs := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})
 	err := fs.TrashEmpty()
 	if err != nil {
 		panic(err)
@@ -66,7 +76,11 @@ func handleRestoreRequest(c *gin.Context) {
 	name := c.Request.URL.Query().Get("name")
 	autoRename := c.Request.URL.Query().Has("auto_rename")
 
-	fs := authenticator.GetFileSystem(c)
+	auth := authenticator.GetAuth(c)
+	if !auth.HasScope("trash:restore") {
+		panic(core.ErrInsufficientScope)
+	}
+	fs := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})
 	r, err := fs.ResourceByID(resourceID)
 	if err != nil {
 		panic(err)

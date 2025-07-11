@@ -32,13 +32,13 @@ func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) 
 
 }
 
-func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (core.User, string, error) {
+func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (Auth, string, error) {
 	if !passwordBackend.SupportsPasswordUpdate() {
-		return core.User{}, "", errors.New("password update not supported")
+		return nil, "", errors.New("password update not supported")
 	}
 	user, err := core.UserByEmail(db, email)
 	if err != nil {
-		return user, "", err
+		return nil, "", err
 	}
 
 	// UpdateUserPassword will ensure the password strength
@@ -46,7 +46,7 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (cor
 	// TODO: Are there perf implications for this in case of malicious actors?
 	err = UpdateUserPassword(db, email, password)
 	if err != nil {
-		return core.User{}, "", err
+		return nil, "", err
 	}
 
 	const q = `DELETE FROM reset_tokens WHERE user_id = @user_id::INT AND token = @token::TEXT RETURNING expires`
@@ -60,17 +60,17 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (cor
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrTokenInvalid
 		}
-		return core.User{}, "", err
+		return nil, "", err
 	}
 	if time.Now().After(expires) {
-		return core.User{}, "", ErrTokenInvalid
+		return nil, "", ErrTokenInvalid
 	}
 
-	apiToken, err := insertAPIKey(db, user.ID, 0, "", []string{"*"})
+	apiKey, err := insertAPIKey(db, user.ID, 0, "", []string{"*"})
 	if err != nil {
-		return core.User{}, "", err
+		return nil, "", err
 	}
-	return user, apiToken, nil
+	return auth{userID: user.ID, userPermissions: user.Permissions, scopes: []string{"*"}}, apiKey, err
 }
 
 func UpdateUserPassword(db db.TxHandler, email, password string) error {

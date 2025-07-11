@@ -12,7 +12,7 @@ import (
 
 var pg *goqu.Database
 var userConfig UserConfig
-var pathRoot pgtype.UUID
+var fsPathRoot pgtype.UUID
 
 func Initialize(db db.Handler, cfg Config) error {
 	pg = goqu.New("postgres", nil)
@@ -21,7 +21,7 @@ func Initialize(db db.Handler, cfg Config) error {
 	if rootID, err := insertOrSelectRootID(db); err != nil {
 		return errors.New("failed to read filesystem root")
 	} else {
-		pathRoot = pgtype.UUID{Bytes: rootID, Valid: true}
+		fsPathRoot = pgtype.UUID{Bytes: rootID, Valid: true}
 	}
 	userConfig = cfg.User
 

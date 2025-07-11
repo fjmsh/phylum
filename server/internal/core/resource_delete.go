@@ -30,7 +30,7 @@ func (f txFileSystem) Delete(r Resource) (Resource, error) {
 	}
 	parent, err := f.ResourceByID(r.parentID.Bytes)
 	if err == nil {
-		err = parent.checkPermission(f.user, PermissionWrite)
+		err = f.checkPermission(parent, PermissionWrite)
 	}
 	if err != nil {
 		return Resource{}, err
@@ -124,7 +124,7 @@ func (f txFileSystem) DeleteForever(r Resource) error {
 	}
 	parent, err := f.ResourceByID(r.parentID.Bytes)
 	if err == nil {
-		err = parent.checkPermission(f.user, PermissionWrite)
+		err = f.checkPermission(parent, PermissionWrite)
 	}
 	if err != nil {
 		return err
@@ -206,7 +206,7 @@ func (f txFileSystem) RestoreDeleted(r Resource, parentPathOrUUID string, name s
 		return
 	}
 
-	if err = parent.checkPermission(f.user, PermissionWrite); err != nil {
+	if err = f.checkPermission(parent, PermissionWrite); err != nil {
 		return
 	}
 

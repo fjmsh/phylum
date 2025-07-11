@@ -54,7 +54,7 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 		return nil, ErrParentNotFound
 	}
 
-	if err := parent.checkPermission(f.user, PermissionWrite); err != nil {
+	if err := f.checkPermission(parent, PermissionWrite); err != nil {
 		return nil, err
 	}
 	if versionID == uuid.Nil {
@@ -93,7 +93,7 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 }
 
 func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
-	if err := r.checkPermission(f.user, PermissionWrite); err != nil {
+	if err := f.checkPermission(r, PermissionWrite); err != nil {
 		return nil, err
 	}
 	if r.deleted.Valid {
@@ -192,7 +192,7 @@ func (f txFileSystem) createMemberResource(r Resource, name string, requestedID 
 	if res, created, _, err = resolveConflictAndInsertResource(f.db, requestedID, r.id, name, dir, r.permissions, conflictResolution); err != nil {
 		return Resource{}, err
 	} else if created {
-		if err := r.checkPermission(f.user, PermissionWrite); err != nil {
+		if err := f.checkPermission(r, PermissionWrite); err != nil {
 			return Resource{}, err
 		}
 		if err := recomputePermissions(f.db, requestedID); err != nil {

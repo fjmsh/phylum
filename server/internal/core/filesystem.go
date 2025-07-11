@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
@@ -10,9 +11,12 @@ import (
 )
 
 type FileSystem struct {
-	db       db.Handler
-	user     User
-	pathRoot pgtype.UUID
+	db               db.Handler
+	pathRoot         pgtype.UUID
+	userID           int32
+	userPermissions  UserPermissions
+	scopes           []string
+	scopePermissions Permission
 }
 
 type txFileSystem struct {
@@ -20,37 +24,55 @@ type txFileSystem struct {
 	db db.TxHandler
 }
 
-func OpenFileSystem(db db.Handler, user User, pathRoot pgtype.UUID) *FileSystem {
+func OpenFileSystem(db db.Handler, pathRoot pgtype.UUID, userID int32, userPermissions UserPermissions, scopes []string) *FileSystem {
 	return &FileSystem{
-		db:       db,
-		user:     user,
-		pathRoot: pathRoot,
+		db:               db,
+		pathRoot:         pathRoot,
+		userID:           userID,
+		userPermissions:  userPermissions,
+		scopes:           scopes,
+		scopePermissions: GetScopePermissions(scopes, pathRoot.Bytes),
 	}
 }
 
-func (u User) OpenFileSystem(db db.Handler) *FileSystem {
-	return OpenFileSystem(db, u, u.Home)
+func GetScopePermissions(scopes []string, id uuid.UUID) (p Permission) {
+	idString := id.String()
+	for _, s := range scopes {
+		if s == "" || s == "*" {
+			return PermissionSU
+		}
+
+		parts := strings.Split(s, ":")
+		if parts[0] == "*" || parts[0] == idString {
+			if len(parts) == 0 || parts[1] == "*" {
+				return PermissionSU
+			} else if parts[1] == "read" {
+				p |= PermissionRead
+			} else if parts[1] == "write" {
+				p |= PermissionWrite
+			} else if parts[1] == "share" {
+				p |= PermissionShare
+			}
+		}
+	}
+	return p
 }
 
 func OpenOmniscient(db db.Handler) *FileSystem {
-	return openOmniscient(db)
-}
-func openOmniscient(db db.Handler) *FileSystem {
 	return &FileSystem{
-		db:       db,
-		user:     User{ID: -1, Permissions: -1},
-		pathRoot: pathRoot,
+		db:               db,
+		pathRoot:         fsPathRoot,
+		userID:           -1,
+		userPermissions:  -1,
+		scopes:           []string{"*"},
+		scopePermissions: -1,
 	}
 }
 
 func openOmniscientTx(db db.TxHandler) txFileSystem {
 	return txFileSystem{
-		FileSystem: &FileSystem{
-			db:       db,
-			user:     User{ID: -1, Permissions: -1},
-			pathRoot: pathRoot,
-		},
-		db: db,
+		FileSystem: OpenOmniscient(db),
+		db:         db,
 	}
 }
 
@@ -65,14 +87,13 @@ func (f *FileSystem) runInTx(fn func(f txFileSystem) error) error {
 
 func (f *FileSystem) withPathRoot(pathRoot pgtype.UUID) *FileSystem {
 	return &FileSystem{
-		db:       f.db,
-		user:     f.user,
-		pathRoot: pathRoot,
+		db:               f.db,
+		pathRoot:         pathRoot,
+		userID:           f.userID,
+		userPermissions:  f.userPermissions,
+		scopes:           f.scopes,
+		scopePermissions: GetScopePermissions(f.scopes, pathRoot.Bytes),
 	}
-}
-
-func (f *FileSystem) PathRoot() pgtype.UUID {
-	return f.pathRoot
 }
 
 func insertOrSelectRootID(d db.Handler) (uuid.UUID, error) {
