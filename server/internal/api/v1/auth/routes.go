@@ -130,6 +130,9 @@ func handleTokenLogin(c *gin.Context) {
 	var response responses.Bootstrap
 	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
 		if user, t, err := auth.PerformTokenLogin(db, params.LoginToken); err != nil {
+			if errors.Is(err, auth.ErrTokenInvalid) {
+				return core.NewError(http.StatusBadRequest, "token_invalid", "login token is invalid")
+			}
 			return err
 		} else if r, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
 			return err
@@ -159,6 +162,9 @@ func handlePasswordAuth(c *gin.Context) {
 	var response responses.Bootstrap
 	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
 		if user, t, err := auth.PerformPasswordLogin(db, params.Email, params.Password); err != nil {
+			if errors.Is(err, auth.ErrCredentialsInvalid) {
+				return core.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid credentials")
+			}
 			return err
 		} else if r, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
 			return err
@@ -215,6 +221,11 @@ func handleResetPassword(c *gin.Context) {
 	var response responses.Bootstrap
 	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
 		if user, t, err := auth.ResetUserPassword(db, params.Email, params.Token, params.Password); err != nil {
+			if errors.Is(err, auth.ErrTokenInvalid) {
+				return core.NewError(http.StatusBadRequest, "token_invalid", "reset token is invalid")
+			} else if e, ok := err.(*auth.PasswordStrengthError); ok {
+				return core.NewError(http.StatusBadRequest, "invalid_password", e.Reason)
+			}
 			return err
 		} else if r, err := my.Bootstrap(c.Request.Context(), user, 0); err != nil {
 			return err

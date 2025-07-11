@@ -6,7 +6,6 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"errors"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -14,7 +13,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"codeberg.org/shroff/phylum/server/internal/auth/ldap"
 	"codeberg.org/shroff/phylum/server/internal/auth/openid"
-	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/rs/zerolog"
 )
 
@@ -28,7 +26,8 @@ const loginTokenLength = 15
 
 const tokenValidity = 10 * time.Minute
 
-var ErrCredentialsInvalid = core.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid credentials")
+var ErrTokenInvalid = errors.New("invalid token")
+var ErrCredentialsInvalid = errors.New("invalid credentials")
 
 func SupportsPasswordAuth() bool {
 	return passwordBackend != nil

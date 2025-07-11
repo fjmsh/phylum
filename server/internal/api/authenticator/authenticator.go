@@ -2,6 +2,7 @@ package authenticator
 
 import (
 	"encoding/base64"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -12,6 +13,7 @@ import (
 )
 
 var errAuthRequired = core.NewError(http.StatusUnauthorized, "auth_required", "authorization required")
+var errCredentialsInvalid = core.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid credentials")
 
 const keyUser = "user"
 
@@ -44,6 +46,9 @@ func extractUserDetails(c *gin.Context) (core.User, error) {
 			if u, err := auth.VerifyAPIKey(db, apiKey); err == nil {
 				return u, nil
 			} else {
+				if errors.Is(err, auth.ErrCredentialsInvalid) {
+					err = errCredentialsInvalid
+				}
 				return core.User{}, err
 			}
 		} else if err != http.ErrNoCookie {
@@ -55,6 +60,9 @@ func extractUserDetails(c *gin.Context) (core.User, error) {
 			if u, err := auth.VerifyUserPassword(db, email, password); err == nil {
 				return u, nil
 			} else {
+				if errors.Is(err, auth.ErrCredentialsInvalid) {
+					err = errCredentialsInvalid
+				}
 				return core.User{}, err
 			}
 		}
@@ -62,6 +70,9 @@ func extractUserDetails(c *gin.Context) (core.User, error) {
 		if u, err := auth.VerifyAPIKey(db, apiKey); err == nil {
 			return u, nil
 		} else {
+			if errors.Is(err, auth.ErrCredentialsInvalid) {
+				err = errCredentialsInvalid
+			}
 			return core.User{}, err
 		}
 	}

@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"net/http"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
@@ -16,11 +15,11 @@ func PerformTokenLogin(db db.TxHandler, token string) (core.User, string, error)
 	var expires time.Time
 	if err := row.Scan(&userID, &expires); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			err = core.NewError(http.StatusBadRequest, "login_token_invalid", "The given login token is invalid")
+			err = ErrTokenInvalid
 		}
 		return core.User{}, "", err
 	} else if expires.Before(time.Now()) {
-		return core.User{}, "", core.NewError(http.StatusBadRequest, "login_token_invalid", "The given login token is invalid")
+		return core.User{}, "", ErrTokenInvalid
 	} else if user, err := core.UserByID(db, userID); err != nil {
 		return core.User{}, "", err
 	} else if token, err := insertAPIKey(db, userID, 0, "", []string{"*"}); err != nil {

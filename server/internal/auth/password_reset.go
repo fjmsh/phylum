@@ -58,12 +58,12 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (cor
 	var expires time.Time
 	if err := row.Scan(&expires); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			err = ErrCredentialsInvalid
+			err = ErrTokenInvalid
 		}
 		return core.User{}, "", err
 	}
 	if time.Now().After(expires) {
-		return core.User{}, "", ErrCredentialsInvalid
+		return core.User{}, "", ErrTokenInvalid
 	}
 
 	apiToken, err := insertAPIKey(db, user.ID, 0, "", []string{"*"})
