@@ -2,6 +2,7 @@ Phylum
 ======
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+![Matrix](https://img.shields.io/matrix/phylum_cloud%3Amatrix.org)
 
 Phylum is a self-hosted file storage platform with offline-first web and native clients, meant as a replacement for Google Drive, Dropbox, etc. It is licensed under GNU Affero GPL 3.0, and is intended to be forever free and non-commercial.
 
@@ -13,6 +14,7 @@ Fair warning: Phylum is under very active development. Don't even think about pu
 - [Quick Start](#quick-start)
   * [Using Compose (Podman, Docker)](#using-compose-podman-docker)
   * [Local build](#local-build)
+  * [Help](#help)
 - [CLI](#cli)
 - [Configuration and Management](#configuration-and-management)
   * [Adding users](#adding-users)
@@ -95,10 +97,13 @@ Here is a list of what is planned, in rough order:
 It is highly recommended to take a look at `config.defaults.yml` to see a full list of configuration options.
 
 
-
 ### Local build
 
 See [Development](#development)
+
+
+### Help
+Reach out on Matrix at [#phylum_cloud:matrix.org](https://matrix.to/#/#phylum_cloud:matrix.org) if you need help.
 
 
 ## CLI
