@@ -2,7 +2,7 @@ Phylum
 ======
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-![Matrix](https://img.shields.io/matrix/phylum_cloud%3Amatrix.org)
+[![Matrix Chat](https://img.shields.io/matrix/phylum_cloud%3Amatrix.org)](https://matrix.to/#/#phylum_cloud:matrix.org)
 
 Phylum is a self-hosted file storage platform with offline-first web and native clients, meant as a replacement for Google Drive, Dropbox, etc. It is licensed under GNU Affero GPL 3.0, and is intended to be forever free and non-commercial.
 
