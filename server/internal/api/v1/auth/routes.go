@@ -44,9 +44,13 @@ type resetPasswordParams struct {
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/auth")
 	group.GET("/config", handleConfig)
-	group.POST("/password", handlePasswordAuth)
-	group.POST("/request-password-reset", handleRequestPasswordReset)
-	group.POST("/reset-password", handleResetPassword)
+	if auth.SupportsPasswordAuth() {
+		group.POST("/password", handlePasswordAuth)
+	}
+	if auth.SupportsPasswordReset() {
+		group.POST("/request-password-reset", handleRequestPasswordReset)
+		group.POST("/reset-password", handleResetPassword)
+	}
 	group.GET("/oauth/start", handleOAuthStart)
 	group.GET("/oauth/redirect", handleOAuthRedirect)
 	group.POST("/token/login", handleTokenLogin)
