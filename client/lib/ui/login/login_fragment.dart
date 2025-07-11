@@ -124,7 +124,7 @@ class _LoginFragmentState extends State<LoginFragment> {
                 _requestPasswordReset(context, widget.instanceConfig.url, _email);
               },
             ),
-          ...widget.instanceConfig.openIDProviers.map((p) => ElevatedButton(
+          ...widget.instanceConfig.openIDProviders.map((p) => ElevatedButton(
               onPressed: () async {
                 final builder = UriBuilder.fromUri(widget.instanceConfig.url);
                 builder.path += '/api/v1/auth/oauth/start';

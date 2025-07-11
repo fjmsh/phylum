@@ -5,7 +5,7 @@ class InstanceConfig {
   final bool password;
   final bool passwordReset;
   final bool magicLink;
-  final List<OpenIDProvider> openIDProviers;
+  final List<OpenIDProvider> openIDProviders;
 
   bool get hasEmailLogin => password || magicLink;
 
@@ -14,7 +14,7 @@ class InstanceConfig {
       required this.password,
       required this.passwordReset,
       required this.magicLink,
-      required this.openIDProviers});
+      required this.openIDProviders});
 
   factory InstanceConfig.fromResponse(Uri url, String responseString) {
     final config = (jsonDecode(responseString) as Map).cast<String, dynamic>();
@@ -24,7 +24,7 @@ class InstanceConfig {
       password: config['password'],
       passwordReset: config['password_reset'],
       magicLink: false,
-      openIDProviers:
+      openIDProviders:
           providers.map((e) => OpenIDProvider.fromResponse(url, e.cast<String, dynamic>())).toList(growable: false),
     );
   }
