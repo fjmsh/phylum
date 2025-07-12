@@ -31,11 +31,11 @@ func OpenFileSystem(db db.Handler, pathRoot pgtype.UUID, userID int32, userPermi
 		userID:           userID,
 		userPermissions:  userPermissions,
 		scopes:           scopes,
-		scopePermissions: GetScopePermissions(scopes, pathRoot.Bytes),
+		scopePermissions: getScopePermissions(scopes, pathRoot.Bytes),
 	}
 }
 
-func GetScopePermissions(scopes []string, id uuid.UUID) (p Permission) {
+func getScopePermissions(scopes []string, id uuid.UUID) (p Permission) {
 	idString := id.String()
 	for _, s := range scopes {
 		if s == "" || s == "*" {
@@ -44,7 +44,7 @@ func GetScopePermissions(scopes []string, id uuid.UUID) (p Permission) {
 
 		parts := strings.Split(s, ":")
 		if parts[0] == "*" || parts[0] == idString {
-			if len(parts) == 0 || parts[1] == "*" {
+			if len(parts) == 1 || parts[1] == "*" {
 				return PermissionSU
 			} else if parts[1] == "read" {
 				p |= PermissionRead
@@ -58,7 +58,7 @@ func GetScopePermissions(scopes []string, id uuid.UUID) (p Permission) {
 	return p
 }
 
-func OpenOmniscient(db db.Handler) *FileSystem {
+func OpenSUFileSystem(db db.Handler) *FileSystem {
 	return &FileSystem{
 		db:               db,
 		pathRoot:         fsPathRoot,
@@ -69,9 +69,9 @@ func OpenOmniscient(db db.Handler) *FileSystem {
 	}
 }
 
-func openOmniscientTx(db db.TxHandler) txFileSystem {
+func openSUFileSystemTx(db db.TxHandler) txFileSystem {
 	return txFileSystem{
-		FileSystem: OpenOmniscient(db),
+		FileSystem: OpenSUFileSystem(db),
 		db:         db,
 	}
 }
@@ -92,7 +92,7 @@ func (f *FileSystem) withPathRoot(pathRoot pgtype.UUID) *FileSystem {
 		userID:           f.userID,
 		userPermissions:  f.userPermissions,
 		scopes:           f.scopes,
-		scopePermissions: GetScopePermissions(f.scopes, pathRoot.Bytes),
+		scopePermissions: getScopePermissions(f.scopes, pathRoot.Bytes),
 	}
 }
 

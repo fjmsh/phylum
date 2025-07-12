@@ -26,7 +26,7 @@ func setupModCommand() *cobra.Command {
 
 			name, _ := cmd.Flags().GetString("name")
 
-			f := core.OpenOmniscient(db.Get(context.Background()))
+			f := core.OpenSUFileSystem(db.Get(context.Background()))
 			var homeID pgtype.UUID
 			path, _ := cmd.Flags().GetString("home")
 			if path != "" {

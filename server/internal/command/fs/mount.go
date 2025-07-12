@@ -26,7 +26,7 @@ func setupMountCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if err := core.OpenOmniscient(db.Get(context.Background())).CreateMount(path, backend); err != nil {
+			if err := core.OpenSUFileSystem(db.Get(context.Background())).CreateMount(path, backend); err != nil {
 				fmt.Printf("failed to mount storage backend: %s\n", err.Error())
 				os.Exit(1)
 			}

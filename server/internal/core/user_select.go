@@ -14,7 +14,7 @@ import (
 var ErrUserNotFound = NewError(http.StatusNotFound, "user_not_found", "no such user")
 
 func CreateUser(db db.TxHandler, email, name string, noCreateHome bool) (User, error) {
-	f := openOmniscientTx(db)
+	f := openSUFileSystemTx(db)
 	var homeID pgtype.UUID
 	var home Resource
 	if !noCreateHome {

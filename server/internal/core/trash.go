@@ -84,7 +84,7 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 func TrashCompact(ctx context.Context, logger *zerolog.Logger, duration time.Duration) {
 	t := time.Now().Add(-duration)
 	logger.Info().Str("older", t.Format(time.RFC1123)).Msg("deleting old files")
-	f := OpenOmniscient(db.Get(ctx))
+	f := OpenSUFileSystem(db.Get(ctx))
 	if err := f.hardDeleteOldResources(t); err != nil {
 		logger.Error().Err(err).Msg("error deleting old files")
 	}
