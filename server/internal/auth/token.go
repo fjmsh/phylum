@@ -25,6 +25,12 @@ func PerformTokenLogin(db db.TxHandler, token string) (Auth, string, error) {
 	} else if token, err := insertAPIKey(db, userID, 0, "", []string{"*"}); err != nil {
 		return nil, "", err
 	} else {
-		return auth{userID: user.ID, userPermissions: user.Permissions, scopes: []string{"*"}}, token, err
+		auth := auth{
+			userID:          user.ID,
+			homeID:          user.Home,
+			userPermissions: user.Permissions,
+			scopes:          []string{"*"},
+		}
+		return auth, token, err
 	}
 }

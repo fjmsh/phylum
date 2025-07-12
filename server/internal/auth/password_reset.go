@@ -70,7 +70,13 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (Aut
 	if err != nil {
 		return nil, "", err
 	}
-	return auth{userID: user.ID, userPermissions: user.Permissions, scopes: []string{"*"}}, apiKey, err
+	auth := auth{
+		userID:          user.ID,
+		homeID:          user.Home,
+		userPermissions: user.Permissions,
+		scopes:          []string{"*"},
+	}
+	return auth, apiKey, err
 }
 
 func UpdateUserPassword(db db.TxHandler, email, password string) error {
