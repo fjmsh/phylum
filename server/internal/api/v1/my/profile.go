@@ -8,20 +8,23 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type detailsParams struct {
+type profileUpdateParams struct {
 	Name string `json:"name" form:"name"`
 }
 
-func handleDetailsUpdateRoute(c *gin.Context) {
-	var params detailsParams
+func handleProfileUpdateRoute(c *gin.Context) {
+	var params profileUpdateParams
 	err := c.Bind(&params)
 	if err != nil {
 		panic(err)
 	}
 
 	auth := authenticator.GetAuth(c)
-	var user core.User
+	if !auth.HasScope("profile:update") {
+		panic(core.ErrInsufficientScope)
+	}
 
+	var user core.User
 	err = db.Get(c.Request.Context()).RunInTx(func(db db.TxHandler) error {
 		if params.Name != "" {
 			if user, err = core.UpdateUserName(db, auth.UserID(), params.Name); err != nil {
