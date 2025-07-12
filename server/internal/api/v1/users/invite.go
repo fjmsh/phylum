@@ -30,7 +30,7 @@ func handleInviteRequest(c *gin.Context) {
 
 	auth := authenticator.GetAuth(c)
 	if auth.HasScope("users:invite") {
-		panic(authenticator.ErrInsufficientScope)
+		panic(core.ErrInsufficientScope)
 	}
 	if auth.UserPermissions()&core.PermissionUsersInvite == 0 {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to invite users"))

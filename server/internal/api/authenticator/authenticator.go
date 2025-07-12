@@ -42,7 +42,7 @@ func getAuth(c *gin.Context) (auth.Auth, error) {
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		if cookie, err := c.Request.Cookie("api_key"); err == nil {
 			apiKey := cookie.Value
-			if a, err := auth.VerifyAPIKey(db, apiKey); err == nil {
+			if a, err := auth.ReadAPIKey(db, apiKey); err == nil {
 				return a, nil
 			} else {
 				if errors.Is(err, auth.ErrCredentialsInvalid) {
@@ -66,7 +66,7 @@ func getAuth(c *gin.Context) (auth.Auth, error) {
 			}
 		}
 	} else if apiKey, ok := checkAuthHeader(header, "api-key"); ok {
-		if a, err := auth.VerifyAPIKey(db, apiKey); err == nil {
+		if a, err := auth.ReadAPIKey(db, apiKey); err == nil {
 			return a, nil
 		} else {
 			if errors.Is(err, auth.ErrCredentialsInvalid) {
