@@ -8,11 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type homeResponse struct {
-	User responses.LoggedInUser `json:"user"`
-	Home responses.ResourceFull `json:"home"`
-}
-
 type sharedResponse struct {
 	Shared []responses.Resource `json:"shared"`
 }

@@ -8,7 +8,6 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
-	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
@@ -48,7 +47,10 @@ func handleBookmarksGetRoute(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if bookmarks, err := ListBookmarks(c.Request.Context(), auth, since); err != nil {
+	if !auth.HasScope("bookmarks:list") {
+		panic(core.ErrInsufficientScope)
+	}
+	if bookmarks, err := ListBookmarks(c.Request.Context(), auth.UserID(), since); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, bookmarksResponse{
@@ -95,7 +97,7 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 
 	auth := authenticator.GetAuth(c)
 	if !auth.HasScope("bookmarks:remove") {
-		panic(errMissingScope)
+		panic(core.ErrInsufficientScope)
 	}
 	if err := db.Get(c.Request.Context()).RunInTx(func(db db.TxHandler) error {
 		return core.RemoveBookmark(db, auth.UserID(), params.ID)
@@ -105,13 +107,10 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 	c.JSON(200, gin.H{})
 }
 
-func ListBookmarks(ctx context.Context, auth auth.Auth, since int64) ([]responses.Bookmark, error) {
+func ListBookmarks(ctx context.Context, userID int32, since int64) ([]responses.Bookmark, error) {
 	var bookmarks []responses.Bookmark
 
-	if !auth.HasScope("bookmarks:list") {
-		return nil, errMissingScope
-	}
-	if res, err := core.ListBookmarks(db.Get(ctx), auth.UserID(), since); err != nil {
+	if res, err := core.ListBookmarks(db.Get(ctx), userID, since); err != nil {
 		return bookmarks, err
 	} else {
 		bookmarks = make([]responses.Bookmark, len(res))

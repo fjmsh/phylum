@@ -15,8 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var errMissingScope = core.NewError(http.StatusUnauthorized, "missing_scope", "missing scope")
-
 func handleBootstrapRoute(c *gin.Context) {
 	var since int64
 	if s := c.Request.URL.Query().Get("since"); s != "" {
@@ -35,10 +33,10 @@ func handleBootstrapRoute(c *gin.Context) {
 }
 
 func Bootstrap(ctx context.Context, auth auth.Auth, since int64) (responses.Bootstrap, error) {
-	if !auth.HasScope("users:read") || !auth.HasScope("profile:read") {
-		return responses.Bootstrap{}, errMissingScope
+	if !auth.HasScope("bookmarks:list") || !auth.HasScope("users:read") || !auth.HasScope("profile:read") {
+		return responses.Bootstrap{}, core.ErrInsufficientScope
 	}
-	if bookmarks, err := ListBookmarks(ctx, auth, since); err != nil {
+	if bookmarks, err := ListBookmarks(ctx, auth.UserID(), since); err != nil {
 		return responses.Bootstrap{}, err
 	} else if users, err := users.ListUsers(ctx, since); err != nil {
 		return responses.Bootstrap{}, err
