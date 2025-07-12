@@ -39,23 +39,6 @@ func (r Resource) VisibleParentID() pgtype.UUID { return r.visibleParent }
 func (r Resource) InheritedPermissions() []byte { return r.inheritedPermissions }
 func (r Resource) LatestVersion() VersionInfo   { return r.latestVersionInfo }
 
-func (f *FileSystem) userPermission(r Resource) (Permission, error) {
-	if f.userPermissions&PermissionFilesAll != 0 {
-		return -1, nil
-	}
-
-	return readPermissionFromJson(r.permissions, f.userID)
-}
-
-func (f *FileSystem) checkPermission(r Resource, p Permission) error {
-	if up, err := f.userPermission(r); err != nil {
-		return err
-	} else if (up&p == 0) || (f.scopePermissions&p == 0) {
-		return ErrInsufficientPermissions
-	}
-	return nil
-}
-
 func collectFullResource(rows pgx.Rows) (Resource, error) {
 	if r, err := pgx.CollectExactlyOneRow(rows, scanFullResource); err == nil {
 		return r, nil

@@ -1,12 +1,10 @@
 package core
 
 import (
-	"errors"
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -96,24 +94,15 @@ func (f *FileSystem) withPathRoot(pathRoot pgtype.UUID) *FileSystem {
 	}
 }
 
-func insertOrSelectRootID(d db.Handler) (uuid.UUID, error) {
-	const q = "SELECT id FROM resources WHERE parent IS NULL"
-	row := d.QueryRow(q)
-	var id uuid.UUID
-	if err := row.Scan(&id); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			const createDir = "INSERT INTO resources(id, name, dir) VALUES ($1::UUID, '', TRUE)"
-			id, _ := uuid.NewV7()
-			if err := d.RunInTx(func(db db.TxHandler) error {
-				_, err = db.Exec(createDir, id)
-				return err
-			}); err != nil {
-				return uuid.Nil, err
-			}
-			return id, nil
-		}
-		return uuid.Nil, err
-	} else {
-		return id, nil
+func (f *FileSystem) checkPermission(r Resource, p Permission) error {
+	if f.userPermissions&PermissionFilesAll != 0 {
+		return nil
 	}
+
+	if up, err := readPermissionFromJson(r.permissions, f.userID); err != nil {
+		return err
+	} else if (up&p == 0) || (f.scopePermissions&p == 0) {
+		return ErrInsufficientPermissions
+	}
+	return nil
 }
