@@ -11,7 +11,7 @@ import (
 )
 
 type Config struct {
-	Memory      uint32 `koanf:"memory"`
+	Memory      uint8  `koanf:"memory"`
 	Iterations  uint32 `koanf:"iterations"`
 	Parallelism uint8  `koanf:"parallelism"`
 	Salt        uint32 `koanf:"salt"`
@@ -33,7 +33,7 @@ func (a argon) GenerateEncodedHash(password string) (string, error) {
 		return "", err
 	}
 
-	key := argon2.IDKey([]byte(password), salt, p.Iterations, p.Memory, p.Parallelism, p.Key)
+	key := argon2.IDKey([]byte(password), salt, p.Iterations, 1<<p.Memory, p.Parallelism, p.Key)
 
 	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
 	b64Hash := base64.RawStdEncoding.EncodeToString(key)
@@ -51,7 +51,7 @@ func VerifyEncodedHash(password string, hashParts []string) (bool, error) {
 	}
 
 	// Derive the key from the provided password using the same parameters.
-	computedHash := argon2.IDKey([]byte(password), salt, p.Iterations, p.Memory, p.Parallelism, p.Key)
+	computedHash := argon2.IDKey([]byte(password), salt, p.Iterations, 1<<p.Memory, p.Parallelism, p.Key)
 
 	if subtle.ConstantTimeCompare(storedHash, computedHash) == 1 {
 		return true, nil

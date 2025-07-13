@@ -27,8 +27,8 @@ auth:
     crypt:
       hash: argon2
       argon2: 
-        memory: 2048
-        iterations: 6
+        memory: 18
+        iterations: 4
         parallelism: 4
         salt: 32
         key: 32
