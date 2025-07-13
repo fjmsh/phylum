@@ -6,7 +6,9 @@ import (
 	"syscall"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt/argon2"
+	"codeberg.org/shroff/phylum/server/internal/auth/crypt/pbkdf2"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -17,13 +19,14 @@ func SetupCommand() *cobra.Command {
 		Short: "Config Options",
 	}
 	cmd.AddCommand([]*cobra.Command{
-		setupArgon2ProfileCommand(),
+		setupArgon2Command(),
+		setupPBKDF2Command(),
 	}...)
 
 	return cmd
 }
 
-func setupArgon2ProfileCommand() *cobra.Command {
+func setupArgon2Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "argon2",
 		Short: "Argon2 Key Generation Timing",
@@ -87,11 +90,79 @@ Please also note that inceasing m will require exponentially more memory.
 		if hashTime.Milliseconds() < 300 {
 			fmt.Println("Use these params at your own risk. Password hashing should take at least 300ms")
 		}
+
+		if ok, err := crypt.VerifyPasswordHash(src, hash); err != nil {
+			fmt.Println("error while verifying password hash: " + err.Error())
+			os.Exit(1)
+		} else if ok {
+			fmt.Println("Verification Successful")
+		} else {
+			fmt.Println("Error: Hash Verification NOT Successful")
+			os.Exit(1)
+		}
 	}
 	cmd.Flags().Uint8P("memory", "m", 18, "Memory Cost (Memory required is 2^m KB)")
 	cmd.Flags().Uint32P("iterations", "t", 4, "Iterations")
 	cmd.Flags().Uint8P("parallelism", "p", 4, "Parallelism")
 	cmd.Flags().Uint32P("salt-len", "s", 32, "Salt Length (in Bytes)")
 	cmd.Flags().Uint32P("key-len", "k", 32, "Key Length (in Bytes)")
+	return cmd
+}
+
+func setupPBKDF2Command() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pbkdf2",
+		Short: "PBKDF2 Key Generation Timing",
+	}
+	cmd.Run = func(cmd *cobra.Command, args []string) {
+		os.Stdout.WriteString("Input: ")
+		bytes, err := term.ReadPassword(syscall.Stdin)
+		os.Stdout.WriteString("\n")
+		if err != nil {
+			fmt.Println("unable to read input: " + err.Error())
+
+		}
+
+		fn, _ := cmd.Flags().GetString("hash-function")
+		n, _ := cmd.Flags().GetInt("iterations")
+		s, _ := cmd.Flags().GetUint32("salt-len")
+		k, _ := cmd.Flags().GetInt("key-len")
+		a, err := pbkdf2.New(pbkdf2.Config{
+			Function:   fn,
+			Iterations: n,
+			Salt:       s,
+			Key:        k,
+		})
+		if err != nil {
+			fmt.Println("failed to generate hash: " + err.Error())
+			os.Exit(1)
+		}
+		src := string(bytes)
+
+		start := time.Now()
+		hash, err := a.GenerateEncodedHash(src)
+		hashTime := time.Since(start)
+		if err != nil {
+			fmt.Println("failed to generate hash: " + err.Error())
+			os.Exit(1)
+		}
+
+		fmt.Println(hash)
+		fmt.Printf("%dus\n", hashTime.Microseconds())
+
+		if ok, err := crypt.VerifyPasswordHash(src, hash); err != nil {
+			fmt.Println("error while verifying password hash: " + err.Error())
+			os.Exit(1)
+		} else if ok {
+			fmt.Println("Verification Successful")
+		} else {
+			fmt.Println("Error: Hash Verification NOT Successful")
+			os.Exit(1)
+		}
+	}
+	cmd.Flags().String("hash-function", "sha-256", "Hash Function")
+	cmd.Flags().IntP("iterations", "n", 100000, "Iterations")
+	cmd.Flags().Uint32P("salt-len", "s", 32, "Salt Length (in Bytes)")
+	cmd.Flags().IntP("key-len", "k", 32, "Key Length (in Bytes)")
 	return cmd
 }
