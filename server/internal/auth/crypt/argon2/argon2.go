@@ -42,7 +42,10 @@ func (a argon) GenerateEncodedHash(password string) (string, error) {
 }
 
 func VerifyEncodedHash(password string, hashParts []string) (bool, error) {
-	p, salt, storedHash, err := decodeHash(hashParts)
+	if hashParts[0] != "argon2id" {
+		return false, errors.New("argon2 variant unsupported: " + hashParts[0])
+	}
+	p, salt, storedHash, err := decodeHash(hashParts[1:])
 	if err != nil {
 		return false, err
 	}

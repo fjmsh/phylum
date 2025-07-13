@@ -72,8 +72,8 @@ func VerifyPasswordHash(password, encodedHash string) (bool, error) {
 	parts := strings.Split(encodedHash, "$")
 	parts = parts[1:]
 
-	if parts[0] == "argon2id" {
-		return argon2.VerifyEncodedHash(password, parts[1:])
+	if strings.HasPrefix(parts[0], "argon2") {
+		return argon2.VerifyEncodedHash(password, parts)
 	}
 	index := strings.Index(encodedHash[1:], "$")
 	if index < 0 {
