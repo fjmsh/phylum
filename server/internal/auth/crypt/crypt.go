@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt/argon2"
+	"codeberg.org/shroff/phylum/server/internal/auth/crypt/pbkdf2"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/jackc/pgx/v5"
 )
@@ -74,6 +75,9 @@ func VerifyPasswordHash(password, encodedHash string) (bool, error) {
 
 	if strings.HasPrefix(parts[0], "argon2") {
 		return argon2.VerifyEncodedHash(password, parts)
+	}
+	if strings.HasPrefix(parts[0], "pbkdf2") {
+		return pbkdf2.VerifyEncodedHash(password, parts)
 	}
 	index := strings.Index(encodedHash[1:], "$")
 	if index < 0 {
