@@ -29,6 +29,12 @@ func New(cfg Config) (Auth, error) {
 	}
 	if cfg.Hash == "argon2" {
 		generator = argon2.New(cfg.Argon2)
+	} else if cfg.Hash == "pbkdf2" {
+		var err error
+		generator, err = pbkdf2.New(cfg.PBKDF2)
+		if err != nil {
+			return nil, errors.New("failed to create PBKDF2 hash generator: " + err.Error())
+		}
 	} else {
 		return nil, errors.New("unrecognized hashing algorithm: " + cfg.Hash)
 	}

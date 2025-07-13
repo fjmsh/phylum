@@ -25,11 +25,17 @@ auth:
     # backend is one of crypt, ldap, or none
     backend: crypt
     crypt:
+      # hash is one of argon2, or pbkdf2
       hash: argon2
       argon2: 
         memory: 18
         iterations: 4
         parallelism: 4
+        salt: 32
+        key: 32
+      pbkdf2: 
+        function: sha-256
+        iterations: 1000000
         salt: 32
         key: 32
     requirements:
