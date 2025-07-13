@@ -1,6 +1,9 @@
 package auth
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"net/url"
 	"strings"
@@ -24,7 +27,7 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 	if clientID, endpoint, err := openid.GetProviderDetails(providerName); err != nil {
 		return "", err
 	} else {
-		codeVerifier, codeChallenge := generatePKCEChallenge()
+		codeVerifier, codeChallenge := generateOpenIDPKCEChallenge()
 		token := generateSecureKey(loginTokenLength)
 		args := pgx.NamedArgs{
 			"token":            token,
@@ -95,4 +98,19 @@ func OpenIDValidateAuthCode(d db.Handler, token, authCode, redirectURI string) (
 		}
 		return clientType, nil
 	}
+}
+
+func generateOpenIDPKCEChallenge() (string, string) {
+	verifierLen := 64
+	numBytes := verifierLen * 3 / 4
+	b := make([]byte, numBytes)
+	rand.Read(b)
+	codeVerifier := base64.RawURLEncoding.EncodeToString(b)
+	if len(codeVerifier) > 128 {
+		codeVerifier = codeVerifier[:128]
+	}
+
+	hash := sha256.Sum256([]byte(codeVerifier))
+	codeChallenge := base64.RawURLEncoding.EncodeToString(hash[:])
+	return codeVerifier, codeChallenge
 }
