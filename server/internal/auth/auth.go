@@ -45,13 +45,16 @@ func Initialize(cfg Config, log zerolog.Logger) error {
 	passwordRequirements = cfg.Password.Requirements
 
 	if cfg.Password.Backend == "crypt" {
-		crypt.Cfg = cfg.Password.Crypt
-		passwordBackend = &crypt.Auth{}
-	} else if cfg.Password.Backend == "ldap" {
-		if a, err := ldap.NewAuth(cfg.Password.LDAP, log); err != nil {
-			return err
+		if crypt, err := crypt.New(cfg.Password.Crypt); err != nil {
+			return errors.New("failed to create crypt password backend: " + err.Error())
 		} else {
-			passwordBackend = a
+			passwordBackend = crypt
+		}
+	} else if cfg.Password.Backend == "ldap" {
+		if ldap, err := ldap.NewAuth(cfg.Password.LDAP, log); err != nil {
+			return errors.New("failed to create ldap password backend: " + err.Error())
+		} else {
+			passwordBackend = ldap
 		}
 	} else if cfg.Password.Backend == "none" {
 	} else if cfg.Password.Backend != "" {

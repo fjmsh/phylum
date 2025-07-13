@@ -1,4 +1,4 @@
-package crypt
+package argon2
 
 import (
 	"crypto/rand"
@@ -10,8 +10,24 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
-func generateArgon2(password string) (string, error) {
-	p := Cfg.Argon2
+type Config struct {
+	Memory      uint32 `koanf:"memory"`
+	Iterations  uint32 `koanf:"iterations"`
+	Parallelism uint8  `koanf:"parallelism"`
+	Salt        uint32 `koanf:"salt"`
+	Key         uint32 `koanf:"key"`
+}
+
+type argon struct {
+	cfg Config
+}
+
+func New(cfg Config) *argon {
+	return &argon{cfg: cfg}
+}
+
+func (a argon) GenerateEncodedHash(password string) (string, error) {
+	p := a.cfg
 	salt, err := generateRandomBytes(p.Salt)
 	if err != nil {
 		return "", err
@@ -25,7 +41,7 @@ func generateArgon2(password string) (string, error) {
 	return fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version, p.Memory, p.Iterations, p.Parallelism, b64Salt, b64Hash), nil
 }
 
-func verifyArgon2(password string, hashParts []string) (bool, error) {
+func VerifyEncodedHash(password string, hashParts []string) (bool, error) {
 	p, salt, storedHash, err := decodeHash(hashParts)
 	if err != nil {
 		return false, err
@@ -40,7 +56,7 @@ func verifyArgon2(password string, hashParts []string) (bool, error) {
 	return false, nil
 }
 
-func decodeHash(hashParts []string) (p Argon2Config, salt, hash []byte, err error) {
+func decodeHash(hashParts []string) (p Config, salt, hash []byte, err error) {
 	if len(hashParts) != 4 {
 		err = errors.New("incorrect hash format for argon2id")
 		return
