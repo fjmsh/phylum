@@ -10,23 +10,12 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type Auth interface {
-	SupportsPasswordUpdate() bool
-	UpdateUserPassword(db db.Handler, email, password string) error
-	VerifyUserPassword(db db.Handler, email, password string) (bool, error)
+type Crypt struct {
+	generator PasswordHasher
 }
 
-type auth struct {
-	cfg       Config
-	generator interface {
-		GenerateEncodedHash(password string) (string, error)
-	}
-}
-
-func New(cfg Config) (Auth, error) {
-	var generator interface {
-		GenerateEncodedHash(password string) (string, error)
-	}
+func New(cfg Config) (*Crypt, error) {
+	var generator PasswordHasher
 	if cfg.Hash == "argon2" {
 		generator = argon2.New(cfg.Argon2)
 	} else if cfg.Hash == "pbkdf2" {
@@ -39,17 +28,16 @@ func New(cfg Config) (Auth, error) {
 		return nil, errors.New("unrecognized hashing algorithm: " + cfg.Hash)
 	}
 
-	return &auth{
-		cfg:       cfg,
+	return &Crypt{
 		generator: generator,
 	}, nil
 }
 
-func (a *auth) SupportsPasswordUpdate() bool {
+func (a *Crypt) SupportsPasswordUpdate() bool {
 	return true
 }
 
-func (a *auth) UpdateUserPassword(db db.Handler, email, password string) error {
+func (a *Crypt) UpdateUserPassword(db db.Handler, email, password string) error {
 	const q = "UPDATE users SET password_hash = $2::TEXT, modified = NOW() WHERE email = $1::TEXT"
 	if hash, err := a.generator.GenerateEncodedHash(password); err != nil {
 		return err
@@ -61,7 +49,7 @@ func (a *auth) UpdateUserPassword(db db.Handler, email, password string) error {
 	return nil
 }
 
-func (a *auth) VerifyUserPassword(db db.Handler, email, password string) (bool, error) {
+func (a *Crypt) VerifyUserPassword(db db.Handler, email, password string) (bool, error) {
 	const q = "SELECT password_hash FROM users WHERE email = $1::TEXT"
 	row := db.QueryRow(q, strings.ToLower(email))
 	var encodedHash string

@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 
+	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
@@ -13,6 +14,7 @@ import (
 
 var pg *goqu.Database
 var userConfig UserConfig
+var publinksPasswordHasher crypt.PasswordHasher
 var fsPathRoot pgtype.UUID
 
 func Initialize(db db.Handler, cfg Config) error {
@@ -25,6 +27,11 @@ func Initialize(db db.Handler, cfg Config) error {
 		fsPathRoot = pgtype.UUID{Bytes: rootID, Valid: true}
 	}
 	userConfig = cfg.User
+	if c, err := crypt.NewPasswordHasher(cfg.Publinks.Password); err != nil {
+		return err
+	} else {
+		publinksPasswordHasher = c
+	}
 
 	return nil
 }

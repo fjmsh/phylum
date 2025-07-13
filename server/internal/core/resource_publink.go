@@ -1,9 +1,9 @@
 package core
 
 import (
+	"errors"
 	"strings"
 
-	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -25,11 +25,11 @@ func (f txFileSystem) CreatePublink(r Resource, id, password string, expires pgt
 	passwordHash := ""
 
 	if password != "" {
-		hash, err := crypt.Generate(password)
+		var err error
+		passwordHash, err = publinksPasswordHasher.GenerateEncodedHash(password)
 		if err != nil {
-			return err
+			return errors.New("failed to hash password: " + err.Error())
 		}
-		passwordHash = hash
 	}
 
 	const q = `INSERT INTO publinks(id, root, password_hash, expires, access_limit) VALUES
