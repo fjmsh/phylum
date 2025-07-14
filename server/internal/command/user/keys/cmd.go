@@ -60,7 +60,7 @@ func setupGenerateCommand() *cobra.Command {
 
 			if err := db.Get(context.Background()).RunInTx(func(db db.TxHandler) error {
 				if token, _ := cmd.Flags().GetBool("token"); token {
-					if token, err := auth.GenerateEncodedAPIKey(db, u.ID, validity, description, scopes); err != nil {
+					if token, err := auth.GenerateAPIToken(db, u.ID, validity, description, scopes); err != nil {
 						return err
 					} else {
 						fmt.Println(token)
@@ -70,8 +70,8 @@ func setupGenerateCommand() *cobra.Command {
 					if id, key, err := auth.GenerateAPIKey(db, u.ID, validity, description, scopes); err != nil {
 						return err
 					} else {
-						fmt.Println("Key ID:", id.String())
-						fmt.Println("   Key:", auth.TokenEncoder.EncodeToString(key))
+						fmt.Println("Key ID:", id)
+						fmt.Println("   Key:", key)
 						return nil
 					}
 				}

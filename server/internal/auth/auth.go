@@ -2,6 +2,8 @@ package auth
 
 import (
 	"crypto/rand"
+	"encoding/base32"
+	"encoding/base64"
 	"errors"
 	"regexp"
 	"strings"
@@ -22,6 +24,9 @@ const resetTokenLength = 15
 const loginTokenLength = 15
 
 const tokenValidity = 10 * time.Minute
+
+var b64Encoder = base64.StdEncoding.WithPadding(base64.NoPadding)
+var b32Encoder = base32.StdEncoding.WithPadding(base32.NoPadding)
 
 var ErrTokenInvalid = errors.New("invalid token")
 var ErrCredentialsInvalid = errors.New("invalid credentials")

@@ -2,7 +2,6 @@ package auth
 
 import (
 	"crypto/sha256"
-	"encoding/base32"
 	"errors"
 	"time"
 
@@ -12,10 +11,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-var TokenEncoder = base32.StdEncoding.WithPadding(base32.NoPadding)
-
 func PerformTokenLogin(db db.TxHandler, encodedToken string) (Auth, string, error) {
-	if b, err := TokenEncoder.DecodeString(encodedToken); err != nil {
+	if b, err := b32Encoder.DecodeString(encodedToken); err != nil {
 		return nil, "", ErrCredentialsInvalid
 	} else if len(b) < 16 {
 		return nil, "", ErrCredentialsInvalid
@@ -47,7 +44,7 @@ func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (a Auth
 		return
 	} else if user, err = core.UserByID(db, userID); err != nil {
 		return
-	} else if key, err = GenerateEncodedAPIKey(db, userID, 0, "", []string{"*"}); err != nil {
+	} else if key, err = GenerateAPIToken(db, userID, 0, "", []string{"*"}); err != nil {
 		return
 	} else {
 		a = auth{

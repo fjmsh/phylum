@@ -81,7 +81,7 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (a A
 		userPermissions: user.Permissions,
 		scopes:          []string{"*"},
 	}
-	key, err = GenerateEncodedAPIKey(db, user.ID, 0, "", []string{"*"})
+	key, err = GenerateAPIToken(db, user.ID, 0, "", []string{"*"})
 	return
 }
 

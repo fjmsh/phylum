@@ -2,7 +2,6 @@ package auth
 
 import (
 	"crypto/sha256"
-	"encoding/base64"
 	"errors"
 	"time"
 
@@ -12,20 +11,44 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-var apiTokenEncoder = base64.StdEncoding.WithPadding(base64.NoPadding)
-
-func ReadEncodedAPIKey(db db.Handler, encodedKey string) (Auth, error) {
-	if b, err := apiTokenEncoder.DecodeString(encodedKey); err != nil {
+func ReadAPIToken(db db.Handler, encodedKey string) (Auth, error) {
+	if b, err := b64Encoder.DecodeString(encodedKey); err != nil {
 		return nil, ErrCredentialsInvalid
 	} else if len(b) < 16 {
 		return nil, ErrCredentialsInvalid
 	} else {
 		keyID, _ := uuid.FromBytes(b[:16])
-		return ReadAPIKey(db, keyID, b[16:])
+		return readAPIKey(db, keyID, b[16:])
 	}
 }
 
-func ReadAPIKey(db db.Handler, keyID uuid.UUID, key []byte) (Auth, error) {
+func GenerateAPIToken(db db.TxHandler, userID int32, validity time.Duration, description string, scopes []string) (string, error) {
+	if id, key, err := generateAPIKey(db, userID, validity, description, scopes); err != nil {
+		return "", err
+	} else {
+		return b64Encoder.EncodeToString(append(id[:], key...)), nil
+	}
+}
+
+func GenerateAPIKey(db db.TxHandler, userID int32, validity time.Duration, description string, scopes []string) (id, key string, err error) {
+	if id, key, err := generateAPIKey(db, userID, validity, description, scopes); err != nil {
+		return "", "", err
+	} else {
+		return id.String(), b32Encoder.EncodeToString(key), nil
+	}
+}
+
+func ReadAPIKey(db db.Handler, keyIDStr, keyStr string) (Auth, error) {
+	if keyID, err := uuid.Parse(keyIDStr); err != nil {
+		return nil, err
+	} else if key, err := b32Encoder.DecodeString(keyStr); err != nil {
+		return nil, err
+	} else {
+		return readAPIKey(db, keyID, key)
+	}
+}
+
+func readAPIKey(db db.Handler, keyID uuid.UUID, key []byte) (Auth, error) {
 	const q = `SELECT k.expires, u.id, u.permissions, u.home, k.scopes FROM api_keys k JOIN users u ON k.user_id = u.id WHERE k.id = $1 AND k.hash = $2`
 	hash := sha256.Sum256(key)
 	row := db.QueryRow(q, keyID, hash[:])
@@ -44,7 +67,7 @@ func ReadAPIKey(db db.Handler, keyID uuid.UUID, key []byte) (Auth, error) {
 	return auth, nil
 }
 
-func GenerateAPIKey(db db.TxHandler, userID int32, validity time.Duration, description string, scopes []string) (id uuid.UUID, key []byte, err error) {
+func generateAPIKey(db db.TxHandler, userID int32, validity time.Duration, description string, scopes []string) (id uuid.UUID, key []byte, err error) {
 	const q = `INSERT INTO api_keys(id, expires, user_id, hash, description, scopes) VALUES (@id, @expires, @user_id, @hash, @description, @scopes)`
 
 	id, _ = uuid.NewV7()
@@ -65,12 +88,4 @@ func GenerateAPIKey(db db.TxHandler, userID int32, validity time.Duration, descr
 	}
 	_, err = db.Exec(q, args)
 	return
-}
-
-func GenerateEncodedAPIKey(db db.TxHandler, userID int32, validity time.Duration, description string, scopes []string) (string, error) {
-	if id, key, err := GenerateAPIKey(db, userID, validity, description, scopes); err != nil {
-		return "", err
-	} else {
-		return apiTokenEncoder.EncodeToString(append(id[:], key...)), nil
-	}
 }

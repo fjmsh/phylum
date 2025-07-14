@@ -65,7 +65,7 @@ func getAuth(c *gin.Context) (auth.Auth, error) {
 }
 
 func readAPIKey(db db.Handler, encodedKey string) (auth.Auth, error) {
-	if a, err := auth.ReadEncodedAPIKey(db, encodedKey); err == nil {
+	if a, err := auth.ReadAPIToken(db, encodedKey); err == nil {
 		return a, nil
 	} else {
 		if errors.Is(err, auth.ErrCredentialsInvalid) {
