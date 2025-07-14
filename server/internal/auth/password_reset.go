@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/sha256"
+	"encoding/base32"
 	"errors"
 	"strings"
 	"time"
@@ -52,7 +53,11 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (a A
 	}
 
 	const q = `DELETE FROM reset_tokens WHERE user_id = @user_id::INT AND token_hash = @token_hash RETURNING expires`
-	hash := sha256.Sum256([]byte(resetToken))
+	b, err := base32.StdEncoding.DecodeString(resetToken)
+	if err != nil {
+		return
+	}
+	hash := sha256.Sum256(b)
 	args := pgx.NamedArgs{
 		"user_id":    user.ID,
 		"token_hash": hash[:],
@@ -90,9 +95,8 @@ func UpdateUserPassword(db db.TxHandler, email, password string) error {
 func insertResetToken(db db.TxHandler, userID int32) (string, error) {
 	const q = `INSERT INTO reset_tokens(user_id, token_hash, expires) VALUES (@user_id, @token_hash, @expires)
 ON CONFLICT(user_id) DO UPDATE SET token_hash = @token_hash, expires = @expires`
-	resetToken := generateSecureKey(resetTokenLength)
-
-	hash := sha256.Sum256([]byte(resetToken))
+	key := generateSecureKey(resetTokenLength)
+	hash := sha256.Sum256(key)
 	args := pgx.NamedArgs{
 		"user_id":    userID,
 		"token_hash": hash[:],
@@ -101,5 +105,5 @@ ON CONFLICT(user_id) DO UPDATE SET token_hash = @token_hash, expires = @expires`
 	if _, err := db.Exec(q, args); err != nil {
 		return "", err
 	}
-	return resetToken, nil
+	return base32.StdEncoding.EncodeToString(key), nil
 }

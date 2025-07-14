@@ -12,6 +12,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/auth/openid"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -28,17 +29,20 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 		return "", err
 	} else {
 		codeVerifier, codeChallenge := generateOpenIDPKCEChallenge()
+		tokenID, _ := uuid.NewV7()
 		token := generateSecureKey(loginTokenLength)
+		hash := sha256.Sum256(token)
+
 		args := pgx.NamedArgs{
-			"token":            token,
-			"expires":          time.Now().Add(tokenValidity),
-			"oidc_provider":    providerName,
-			"oidc_client_type": clientType,
-			"code_verifier":    codeVerifier,
+			"token_id":           tokenID,
+			"expires":            time.Now().Add(tokenValidity),
+			"token_hash":         hash[:],
+			"oidc_provider":      providerName,
+			"oidc_client_type":   clientType,
+			"oidc_code_verifier": codeVerifier,
 		}
-		const query = `INSERT INTO pending_logins(token, expires, oidc_provider, oidc_client_type,
-		code_verifier) VALUES (@token::TEXT, @expires::TIMESTAMPTZ, @oidc_provider::TEXT, @oidc_client_type::SMALLINT,
-		@code_verifier::TEXT)`
+		const query = `INSERT INTO pending_logins(token_id, expires, token_hash, oidc_provider, oidc_client_type, oidc_code_verifier)
+VALUES (@token_id, @expires, @token_hash, @oidc_provider, @oidc_client_type, @oidc_code_verifier)`
 		_, err := db.Exec(query, args)
 		if err != nil {
 			return "", errors.New("failed to create login token: " + err.Error())
@@ -52,7 +56,7 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 		q.Add("client_id", clientID)
 		q.Add("response_type", "code")
 		q.Add("scope", "openid email profile")
-		q.Add("state", token)
+		q.Add("state", tokenEncoder.EncodeToString(append(tokenID[:], token...)))
 		q.Add("redirect_uri", redirectURI)
 		q.Add("code_challenge", codeChallenge)
 		q.Add("code_challenge_method", "S256")
@@ -61,8 +65,26 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 	}
 }
 
-func OpenIDValidateAuthCode(d db.Handler, token, authCode, redirectURI string) (OpenIDClientType, error) {
-	row := d.QueryRow("SELECT oidc_provider, oidc_client_type, code_verifier FROM pending_logins WHERE token = $1 AND user_id IS NULL AND expires >= NOW()", token)
+func OpenIDValidateAuthCode(d db.Handler, state, authCode, redirectURI string) (OpenIDClientType, error) {
+	const q = "SELECT oidc_provider, oidc_client_type, oidc_code_verifier FROM pending_logins WHERE token_id = token_id AND token_hash = @token_hash AND user_id IS NULL AND expires >= NOW()"
+
+	var tokenID uuid.UUID
+	var tokenHash []byte
+	if b, err := tokenEncoder.DecodeString(state); err != nil {
+		return OpenIDClientNone, ErrTokenInvalid
+	} else if len(b) < 16 {
+		return OpenIDClientNone, ErrTokenInvalid
+	} else {
+		tokenID, _ = uuid.FromBytes(b[:16])
+		hash := sha256.Sum256(b[16:])
+		tokenHash = hash[:]
+	}
+	args := pgx.NamedArgs{
+		"token_id":   tokenID,
+		"token_hash": tokenHash,
+	}
+
+	row := d.QueryRow(q, args)
 	var providerName string
 	var clientType OpenIDClientType
 	var codeVerifier string
@@ -87,13 +109,13 @@ func OpenIDValidateAuthCode(d db.Handler, token, authCode, redirectURI string) (
 			if err != nil {
 				return err
 			}
-			_, err = db.Exec("UPDATE pending_logins SET user_id = $2 WHERE token = $1", token, user.ID)
+			_, err = db.Exec("UPDATE pending_logins SET user_id = $2 WHERE token_id = $1", tokenID, user.ID)
 			return err
 		})
 
 		if err != nil {
 			// This session ID is no longer valid, since we've already used the auth code once
-			d.Exec("DELETE FROM pending_logins WHERE token = $1", token)
+			d.Exec("DELETE FROM pending_logins WHERE token_id = $1", tokenID)
 			return OpenIDClientNone, err
 		}
 		return clientType, nil

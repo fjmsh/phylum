@@ -2,7 +2,6 @@ package auth
 
 import (
 	"crypto/rand"
-	"encoding/base32"
 	"errors"
 	"regexp"
 	"strings"
@@ -76,11 +75,8 @@ func shouldAutoCreate(email string) bool {
 	return false
 }
 
-// generateSecureKey generates a base32 (standard) encoded string with n bytes
-// of entropy from a cryptographically secure random source. Ideally, n should
-// be a multiple of 5
-func generateSecureKey(n int) string {
+func generateSecureKey(n int) []byte {
 	b := make([]byte, n)
 	rand.Read(b)
-	return base32.StdEncoding.EncodeToString(b)
+	return b
 }

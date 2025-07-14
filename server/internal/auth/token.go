@@ -1,19 +1,42 @@
 package auth
 
 import (
+	"crypto/sha256"
+	"encoding/base32"
 	"errors"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
-func PerformTokenLogin(db db.TxHandler, token string) (a Auth, key string, err error) {
-	row := db.QueryRow("DELETE FROM pending_logins WHERE token = $1 AND user_id IS NOT NULL RETURNING user_id, expires", token)
+var tokenEncoder = base32.StdEncoding.WithPadding(base32.NoPadding)
+
+func PerformTokenLogin(db db.TxHandler, encodedToken string) (Auth, string, error) {
+	if b, err := tokenEncoder.DecodeString(encodedToken); err != nil {
+		return nil, "", ErrCredentialsInvalid
+	} else if len(b) < 16 {
+		return nil, "", ErrCredentialsInvalid
+	} else {
+		tokenID, _ := uuid.FromBytes(b[:16])
+		return performTokenLogin(db, tokenID, b[16:])
+	}
+}
+
+func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (a Auth, key string, err error) {
+	const q = "DELETE FROM pending_logins WHERE token_id = @token_id AND token_hash = @token_hash AND user_id IS NOT NULL RETURNING user_id, expires"
+	hash := sha256.Sum256([]byte(token))
+	args := pgx.NamedArgs{
+		"token_id":   tokenID,
+		"token_hash": hash[:],
+	}
+
 	var user core.User
 	var userID int32
 	var expires time.Time
+	row := db.QueryRow(q, args)
 	if err = row.Scan(&userID, &expires); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrTokenInvalid

@@ -52,7 +52,7 @@ func GenerateAPIKey(db db.TxHandler, userID int32, validity time.Duration, descr
 		expires.Valid = true
 		expires.Time = time.Now().Add(validity)
 	}
-	hash := sha256.Sum256([]byte(key))
+	hash := sha256.Sum256(key)
 	args := pgx.NamedArgs{
 		"id":          id,
 		"expires":     expires,
@@ -64,6 +64,6 @@ func GenerateAPIKey(db db.TxHandler, userID int32, validity time.Duration, descr
 	if _, err := db.Exec(q, args); err != nil {
 		return "", err
 	} else {
-		return base64.StdEncoding.EncodeToString(append(id[:], []byte(key)...)), nil
+		return base64.StdEncoding.EncodeToString(append(id[:], key...)), nil
 	}
 }

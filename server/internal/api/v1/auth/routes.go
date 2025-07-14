@@ -84,9 +84,9 @@ func handleOAuthRedirect(c *gin.Context) {
 	db := db.Get(c.Request.Context())
 
 	authCode := c.Query("code")
-	token := c.Query("state")
+	state := c.Query("state")
 
-	if clientType, err := auth.OpenIDValidateAuthCode(db, token, authCode, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect")); err != nil {
+	if clientType, err := auth.OpenIDValidateAuthCode(db, state, authCode, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect")); err != nil {
 		panic(err)
 	} else {
 		var clientURI url.URL
@@ -98,7 +98,7 @@ func handleOAuthRedirect(c *gin.Context) {
 		}
 		clientURI.Path = "/login/token"
 		q := url.Values{}
-		q.Add("login_token", token)
+		q.Add("login_token", state)
 		q.Add("instance", getInstanceURL(c.Request, ""))
 		clientURI.RawQuery = q.Encode()
 		c.Redirect(http.StatusFound, clientURI.String())
