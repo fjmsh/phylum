@@ -23,6 +23,7 @@ func SetupCommand() *cobra.Command {
 	cmd.AddCommand(
 		setupGenerateCommand(),
 		setupListCommand(),
+		setupRevokeCommand(),
 	)
 
 	return cmd
@@ -112,12 +113,13 @@ func setupListCommand() *cobra.Command {
 				fmt.Println("unable to list API Keys: user not specified")
 				os.Exit(1)
 			}
-			keys, err := auth.ListAPIKeys(db.Get(context.Background()), u.ID)
+			showExpired, _ := cmd.Flags().GetBool("show-expired")
+			keys, err := auth.ListAPIKeys(db.Get(context.Background()), u.ID, showExpired)
 			if err != nil {
 				fmt.Println("unable to list API keys: " + err.Error())
 			}
 			for _, k := range keys {
-				fmt.Println(k.ID.String() + " [" + k.Description + "]")
+				fmt.Println(k.ID + " [" + k.Description + "]")
 				fmt.Println("Created:", k.Created.Format(time.DateTime))
 				expires := "Never"
 				if k.Expires.Valid {
@@ -132,6 +134,39 @@ func setupListCommand() *cobra.Command {
 			}
 		},
 	}
+
+	cmd.Flags().BoolP("show-expired", "x", false, "Show Expired Keys")
+
+	return cmd
+}
+
+func setupRevokeCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "revoke <id>...",
+		Short: "Revoke API Keys",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			u := common.User(cmd)
+			if u == nil {
+				fmt.Println("unable to revoke API Keys: user not specified")
+				os.Exit(1)
+			}
+			delete, _ := cmd.Flags().GetBool("delete")
+			err := db.RunInTx(context.Background(), func(db db.TxHandler) error {
+				for _, k := range args {
+					if err := auth.RevokeAPIKey(db, k, delete); err != nil {
+						return err
+					}
+				}
+				return nil
+			})
+			if err != nil {
+				fmt.Println("failed to revoke some keys: " + err.Error())
+				os.Exit(1)
+			}
+		},
+	}
+	cmd.Flags().Bool("delete", false, "Delete from DB")
 
 	return cmd
 }

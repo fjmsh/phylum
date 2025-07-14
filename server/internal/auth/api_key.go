@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/sha256"
 	"errors"
+	"fmt"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -12,15 +13,19 @@ import (
 )
 
 type APIKey struct {
-	ID          uuid.UUID
+	ID          string
 	Created     time.Time
 	Expires     pgtype.Timestamptz
 	Description string
 	Scopes      []string
 }
 
-func ListAPIKeys(db db.Handler, userID int32) ([]APIKey, error) {
-	const q = `SELECT id, created, expires, description, scopes FROM api_keys WHERE user_id = $1`
+func ListAPIKeys(db db.Handler, userID int32, includeExpired bool) ([]APIKey, error) {
+	q := "SELECT id, created, expires, description, scopes FROM api_keys WHERE user_id = $1"
+	if !includeExpired {
+		q += " AND (expires IS NULL OR expires > current_timestamp)"
+	}
+	q += " ORDER BY id DESC"
 	if rows, err := db.Query(q, userID); err != nil {
 		return nil, err
 	} else {
@@ -28,15 +33,35 @@ func ListAPIKeys(db db.Handler, userID int32) ([]APIKey, error) {
 	}
 }
 
+func RevokeAPIKey(db db.Handler, keyIDStr string, delete bool) error {
+	const qUpdate = "UPDATE api_keys SET expires = CURRENT_TIMESTAMP WHERE id = $1"
+	const qDelete = "DELETE FROM api_keys WHERE id = $1"
+	q := qUpdate
+	if delete {
+		q = qDelete
+	}
+	if keyID, err := uuid.Parse(keyIDStr); err != nil {
+		return errors.New("failed to parse key ID: " + err.Error())
+	} else if tag, err := db.Exec(q, keyID); err != nil {
+		return err
+	} else if tag.RowsAffected() == 0 {
+		return fmt.Errorf("key with ID %q not found", keyIDStr)
+	}
+	return nil
+}
+
 func scanAPIKey(row pgx.CollectableRow) (APIKey, error) {
 	var apiKey APIKey
-	return apiKey, row.Scan(
-		&apiKey.ID,
+	var id uuid.UUID
+	err := row.Scan(
+		&id,
 		&apiKey.Created,
 		&apiKey.Expires,
 		&apiKey.Description,
 		&apiKey.Scopes,
 	)
+	apiKey.ID = id.String()
+	return apiKey, err
 }
 
 func ReadAPIToken(db db.Handler, encodedKey string) (Auth, error) {
