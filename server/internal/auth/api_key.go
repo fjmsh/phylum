@@ -34,12 +34,14 @@ func GenerateAPIKey(db db.TxHandler, userID int32, validity time.Duration, descr
 	if id, key, err := generateAPIKey(db, userID, validity, description, scopes); err != nil {
 		return "", "", err
 	} else {
-		return id.String(), b32Encoder.EncodeToString(key), nil
+		return b64Encoder.EncodeToString(id[:]), b32Encoder.EncodeToString(key), nil
 	}
 }
 
 func ReadAPIKey(db db.Handler, keyIDStr, keyStr string) (Auth, error) {
-	if keyID, err := uuid.Parse(keyIDStr); err != nil {
+	if b, err := b64Encoder.DecodeString(keyIDStr); err != nil {
+		return nil, err
+	} else if keyID, err := uuid.FromBytes(b); err != nil {
 		return nil, err
 	} else if key, err := b32Encoder.DecodeString(keyStr); err != nil {
 		return nil, err
