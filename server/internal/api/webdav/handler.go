@@ -67,7 +67,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 					}
 				}
 				f = a.GetFileSystem(db, id)
-			} else if id, err := uuid.Parse(root); err != nil {
+			} else if id, err := uuid.Parse(root); err == nil {
 				f = a.GetFileSystem(db, pgtype.UUID{Bytes: id, Valid: true})
 			} else {
 				c.AbortWithStatus(http.StatusNotFound)
