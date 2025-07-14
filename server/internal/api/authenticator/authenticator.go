@@ -40,7 +40,7 @@ func Require(c *gin.Context) {
 func getAuth(c *gin.Context) (auth.Auth, error) {
 	db := db.Get(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
-		if cookie, err := c.Request.Cookie("api_key"); err == nil {
+		if cookie, err := c.Request.Cookie("api_token"); err == nil {
 			encodedKey := cookie.Value
 			if a, err := auth.ReadAPIToken(db, encodedKey); err == nil {
 				return a, nil
@@ -74,7 +74,7 @@ func getAuth(c *gin.Context) (auth.Auth, error) {
 				return nil, err
 			}
 		}
-	} else if encodedKey, ok := checkAuthHeader(header, "api-key"); ok {
+	} else if encodedKey, ok := checkAuthHeader(header, "bearer"); ok {
 		if a, err := auth.ReadAPIToken(db, encodedKey); err == nil {
 			return a, nil
 		} else {

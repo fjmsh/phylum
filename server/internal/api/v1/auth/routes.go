@@ -203,7 +203,7 @@ func loginAndSendResponse(c *gin.Context, loginFn func(db.TxHandler) (auth.Auth,
 		panic(err)
 	} else {
 		c.JSON(http.StatusOK, responses.Login{
-			APIKey:    key,
+			APIToken:  key,
 			Bootstrap: response,
 		})
 	}
@@ -216,5 +216,5 @@ func handleSetCookie(c *gin.Context) {
 	}
 	secure := c.Request.URL.Scheme == "https" || c.Request.TLS != nil
 	c.SetSameSite(http.SameSiteStrictMode)
-	c.SetCookie("api_key", token, 3600, "", c.Request.URL.Hostname(), secure, true)
+	c.SetCookie("api_token", token, 3600, "", c.Request.URL.Hostname(), secure, true)
 }

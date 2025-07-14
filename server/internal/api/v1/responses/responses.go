@@ -57,7 +57,7 @@ type Publink struct {
 }
 
 type Login struct {
-	APIKey string `json:"api_key"`
+	APIToken string `json:"api_token"`
 	Bootstrap
 }
 
