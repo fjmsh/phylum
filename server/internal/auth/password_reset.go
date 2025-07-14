@@ -8,7 +8,6 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -34,7 +33,7 @@ func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) 
 
 }
 
-func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (a Auth, keyID uuid.UUID, key string, err error) {
+func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (a Auth, key string, err error) {
 	if !passwordBackend.SupportsPasswordUpdate() {
 		err = errors.New("password update not supported")
 		return
@@ -77,7 +76,7 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (a A
 		userPermissions: user.Permissions,
 		scopes:          []string{"*"},
 	}
-	keyID, key, err = GenerateAPIKey(db, user.ID, 0, "", []string{"*"})
+	key, err = GenerateAPIKey(db, user.ID, 0, "", []string{"*"})
 	return
 }
 

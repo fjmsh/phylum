@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"encoding/base64"
 	"errors"
 	"net/http"
 	"net/url"
@@ -15,7 +14,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type PasswordConfigResponse struct {
@@ -128,7 +126,7 @@ func handleTokenLogin(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "login token not specified"))
 	}
 
-	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, uuid.UUID, string, error) {
+	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, string, error) {
 		return auth.PerformTokenLogin(db, params.LoginToken)
 	})
 }
@@ -140,7 +138,7 @@ func handlePasswordAuth(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
 	}
 
-	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, uuid.UUID, string, error) {
+	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, string, error) {
 		return auth.PerformPasswordLogin(db, params.Email, params.Password)
 	})
 }
@@ -179,19 +177,18 @@ func handleResetPassword(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
 	}
 
-	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, uuid.UUID, string, error) {
+	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, string, error) {
 		return auth.ResetUserPassword(db, params.Email, params.Token, params.Password)
 	})
 }
 
-func loginAndSendResponse(c *gin.Context, loginFn func(db.TxHandler) (auth.Auth, uuid.UUID, string, error)) {
+func loginAndSendResponse(c *gin.Context, loginFn func(db.TxHandler) (auth.Auth, string, error)) {
 	var err error
-	var keyID uuid.UUID
 	var key string
 	var response responses.Bootstrap
 	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
 		var a auth.Auth
-		if a, keyID, key, err = loginFn(db); err != nil {
+		if a, key, err = loginFn(db); err != nil {
 			if errors.Is(err, auth.ErrCredentialsInvalid) {
 				return core.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid credentials")
 			}
@@ -205,9 +202,8 @@ func loginAndSendResponse(c *gin.Context, loginFn func(db.TxHandler) (auth.Auth,
 	}); err != nil {
 		panic(err)
 	} else {
-		b := append(keyID[:], []byte(key)...)
 		c.JSON(http.StatusOK, responses.Login{
-			APIKey:    base64.StdEncoding.EncodeToString(b),
+			APIKey:    key,
 			Bootstrap: response,
 		})
 	}

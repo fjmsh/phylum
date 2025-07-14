@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"time"
 
@@ -11,9 +12,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func ReadAPIKey(db db.Handler, keyID uuid.UUID, key string) (Auth, error) {
+func ReadAPIKey(db db.Handler, encodedKey string) (Auth, error) {
+	if b, err := base64.StdEncoding.DecodeString(encodedKey); err != nil {
+		return nil, ErrCredentialsInvalid
+	} else if len(b) < 16 {
+		return nil, ErrCredentialsInvalid
+	} else {
+		keyID, _ := uuid.FromBytes(b[:16])
+		return readAPIKey(db, keyID, b[16:])
+	}
+}
+
+func readAPIKey(db db.Handler, keyID uuid.UUID, key []byte) (Auth, error) {
 	const q = `SELECT k.expires, u.id, u.permissions, u.home, k.scopes FROM api_keys k JOIN users u ON k.user_id = u.id WHERE k.id = $1 AND k.hash = $2`
-	hash := sha256.Sum256([]byte(key))
+	hash := sha256.Sum256(key)
 	row := db.QueryRow(q, keyID, hash[:])
 
 	var expires pgtype.Timestamp
@@ -30,7 +42,7 @@ func ReadAPIKey(db db.Handler, keyID uuid.UUID, key string) (Auth, error) {
 	return auth, nil
 }
 
-func GenerateAPIKey(db db.TxHandler, userID int32, validity time.Duration, description string, scopes []string) (uuid.UUID, string, error) {
+func GenerateAPIKey(db db.TxHandler, userID int32, validity time.Duration, description string, scopes []string) (string, error) {
 	const q = `INSERT INTO api_keys(id, expires, user_id, hash, description, scopes) VALUES (@id, @expires, @user_id, @hash, @description, @scopes)`
 
 	id, _ := uuid.NewV7()
@@ -50,8 +62,8 @@ func GenerateAPIKey(db db.TxHandler, userID int32, validity time.Duration, descr
 		"scopes":      scopes,
 	}
 	if _, err := db.Exec(q, args); err != nil {
-		return uuid.Nil, "", err
+		return "", err
 	} else {
-		return id, key, nil
+		return base64.StdEncoding.EncodeToString(append(id[:], []byte(key)...)), nil
 	}
 }

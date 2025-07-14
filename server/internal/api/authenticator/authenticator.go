@@ -10,7 +10,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -66,21 +65,13 @@ func getAuth(c *gin.Context) (auth.Auth, error) {
 }
 
 func readAPIKey(db db.Handler, encodedKey string) (auth.Auth, error) {
-	if b, err := base64.StdEncoding.DecodeString(encodedKey); err != nil {
-		return nil, err
-	} else if len(b) < 16 {
-		return nil, errCredentialsInvalid
+	if a, err := auth.ReadAPIKey(db, encodedKey); err == nil {
+		return a, nil
 	} else {
-		keyID, _ := uuid.FromBytes(b[:16])
-		key := string(b[16:])
-		if a, err := auth.ReadAPIKey(db, keyID, key); err == nil {
-			return a, nil
-		} else {
-			if errors.Is(err, auth.ErrCredentialsInvalid) {
-				err = errCredentialsInvalid
-			}
-			return nil, err
+		if errors.Is(err, auth.ErrCredentialsInvalid) {
+			err = errCredentialsInvalid
 		}
+		return nil, err
 	}
 }
 
