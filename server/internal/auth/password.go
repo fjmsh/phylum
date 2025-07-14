@@ -6,6 +6,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"github.com/google/uuid"
 )
 
 type PasswordBackend interface {
@@ -37,12 +38,11 @@ func VerifyUserPassword(d db.Handler, email, password string) (Auth, error) {
 	return auth, err
 }
 
-func PerformPasswordLogin(db db.TxHandler, email, password string) (Auth, string, error) {
-	if auth, err := VerifyUserPassword(db, email, password); err != nil {
-		return nil, "", err
-	} else if token, err := insertAPIKey(db, auth.UserID(), 0, "", []string{"*"}); err != nil {
-		return nil, "", err
+func PerformPasswordLogin(db db.TxHandler, email, password string) (auth Auth, keyID uuid.UUID, key string, err error) {
+	if auth, err = VerifyUserPassword(db, email, password); err != nil {
+		return
 	} else {
-		return auth, token, nil
+		keyID, key, err = GenerateAPIKey(db, auth.UserID(), 0, "", []string{"*"})
+		return
 	}
 }

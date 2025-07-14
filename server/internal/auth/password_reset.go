@@ -7,6 +7,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -32,13 +33,14 @@ func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) 
 
 }
 
-func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (Auth, string, error) {
+func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (a Auth, keyID uuid.UUID, key string, err error) {
 	if !passwordBackend.SupportsPasswordUpdate() {
-		return nil, "", errors.New("password update not supported")
+		err = errors.New("password update not supported")
+		return
 	}
 	user, err := core.UserByEmail(db, email)
 	if err != nil {
-		return nil, "", err
+		return
 	}
 
 	// UpdateUserPassword will ensure the password strength
@@ -46,7 +48,7 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (Aut
 	// TODO: Are there perf implications for this in case of malicious actors?
 	err = UpdateUserPassword(db, email, password)
 	if err != nil {
-		return nil, "", err
+		return
 	}
 
 	const q = `DELETE FROM reset_tokens WHERE user_id = @user_id::INT AND token = @token::TEXT RETURNING expires`
@@ -56,27 +58,25 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (Aut
 	}
 	row := db.QueryRow(q, args)
 	var expires time.Time
-	if err := row.Scan(&expires); err != nil {
+	if err = row.Scan(&expires); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrTokenInvalid
 		}
-		return nil, "", err
+		return
 	}
 	if time.Now().After(expires) {
-		return nil, "", ErrTokenInvalid
+		err = ErrTokenInvalid
+		return
 	}
 
-	apiKey, err := insertAPIKey(db, user.ID, 0, "", []string{"*"})
-	if err != nil {
-		return nil, "", err
-	}
-	auth := auth{
+	a = auth{
 		userID:          user.ID,
 		homeID:          user.Home,
 		userPermissions: user.Permissions,
 		scopes:          []string{"*"},
 	}
-	return auth, apiKey, err
+	keyID, key, err = GenerateAPIKey(db, user.ID, 0, "", []string{"*"})
+	return
 }
 
 func UpdateUserPassword(db db.TxHandler, email, password string) error {

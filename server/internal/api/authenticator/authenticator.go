@@ -10,6 +10,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -41,19 +42,12 @@ func getAuth(c *gin.Context) (auth.Auth, error) {
 	db := db.Get(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		if cookie, err := c.Request.Cookie("api_key"); err == nil {
-			apiKey := cookie.Value
-			if a, err := auth.ReadAPIKey(db, apiKey); err == nil {
-				return a, nil
-			} else {
-				if errors.Is(err, auth.ErrCredentialsInvalid) {
-					err = errCredentialsInvalid
-				}
-				return nil, err
-			}
+			encodedKey := cookie.Value
+			return readAPIKey(db, encodedKey)
 		} else if err != http.ErrNoCookie {
 			return nil, err
 		}
-		return nil, errAuthRequired
+		return nil, errCredentialsInvalid
 	} else if authHeader, ok := checkAuthHeader(header, "basic"); ok {
 		if email, password, ok := decodeBasicAuth(authHeader); ok {
 			if a, err := auth.VerifyUserPassword(db, email, password); err == nil {
@@ -65,8 +59,21 @@ func getAuth(c *gin.Context) (auth.Auth, error) {
 				return nil, err
 			}
 		}
-	} else if apiKey, ok := checkAuthHeader(header, "api-key"); ok {
-		if a, err := auth.ReadAPIKey(db, apiKey); err == nil {
+	} else if encodedKey, ok := checkAuthHeader(header, "api-key"); ok {
+		return readAPIKey(db, encodedKey)
+	}
+	return nil, errCredentialsInvalid
+}
+
+func readAPIKey(db db.Handler, encodedKey string) (auth.Auth, error) {
+	if b, err := base64.StdEncoding.DecodeString(encodedKey); err != nil {
+		return nil, err
+	} else if len(b) < 16 {
+		return nil, errCredentialsInvalid
+	} else {
+		keyID, _ := uuid.FromBytes(b[:16])
+		key := string(b[16:])
+		if a, err := auth.ReadAPIKey(db, keyID, key); err == nil {
 			return a, nil
 		} else {
 			if errors.Is(err, auth.ErrCredentialsInvalid) {
@@ -75,12 +82,11 @@ func getAuth(c *gin.Context) (auth.Auth, error) {
 			return nil, err
 		}
 	}
-	return nil, errAuthRequired
 }
 
 func checkAuthHeader(header, prefix string) (string, bool) {
-	prefix = prefix + " "
-	if len(header) < len(prefix) || !strings.EqualFold(header[:len(prefix)], prefix) {
+	prefix = strings.ToLower(prefix) + " "
+	if len(header) < len(prefix) || !strings.EqualFold(strings.ToLower(header[:len(prefix)]), prefix) {
 		return "", false
 	}
 	return header[len(prefix):], true
