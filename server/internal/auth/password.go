@@ -41,7 +41,7 @@ func PerformPasswordLogin(db db.TxHandler, email, password string) (auth Auth, k
 	if auth, err = VerifyUserPassword(db, email, password); err != nil {
 		return
 	} else {
-		key, err = GenerateAPIKey(db, auth.UserID(), 0, "", []string{"*"})
+		key, err = GenerateEncodedAPIKey(db, auth.UserID(), 0, "", []string{"*"})
 		return
 	}
 }

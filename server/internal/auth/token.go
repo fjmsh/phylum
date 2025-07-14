@@ -47,7 +47,7 @@ func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (a Auth
 		return
 	} else if user, err = core.UserByID(db, userID); err != nil {
 		return
-	} else if key, err = GenerateAPIKey(db, userID, 0, "", []string{"*"}); err != nil {
+	} else if key, err = GenerateEncodedAPIKey(db, userID, 0, "", []string{"*"}); err != nil {
 		return
 	} else {
 		a = auth{
