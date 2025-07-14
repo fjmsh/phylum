@@ -11,6 +11,34 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type APIKey struct {
+	ID          uuid.UUID
+	Created     time.Time
+	Expires     pgtype.Timestamptz
+	Description string
+	Scopes      []string
+}
+
+func ListAPIKeys(db db.Handler, userID int32) ([]APIKey, error) {
+	const q = `SELECT id, created, expires, description, scopes FROM api_keys WHERE user_id = $1`
+	if rows, err := db.Query(q, userID); err != nil {
+		return nil, err
+	} else {
+		return pgx.CollectRows(rows, scanAPIKey)
+	}
+}
+
+func scanAPIKey(row pgx.CollectableRow) (APIKey, error) {
+	var apiKey APIKey
+	return apiKey, row.Scan(
+		&apiKey.ID,
+		&apiKey.Created,
+		&apiKey.Expires,
+		&apiKey.Description,
+		&apiKey.Scopes,
+	)
+}
+
 func ReadAPIToken(db db.Handler, encodedKey string) (Auth, error) {
 	if b, err := b64Encoder.DecodeString(encodedKey); err != nil {
 		return nil, ErrCredentialsInvalid
