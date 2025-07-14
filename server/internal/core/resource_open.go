@@ -1,8 +1,6 @@
 package core
 
 import (
-	"fmt"
-
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/google/uuid"
@@ -62,7 +60,6 @@ func (f *FileSystem) Walk(r Resource, depth int, fn func(Resource, string) error
 
 	for _, c := range children {
 		path := pathMap[c.parentID.Bytes] + "/" + c.name
-		fmt.Println(c.name, path)
 		if err := fn(c, path); err != nil {
 			return err
 		}

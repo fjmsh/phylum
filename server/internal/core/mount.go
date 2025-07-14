@@ -1,8 +1,7 @@
 package core
 
 import (
-	"fmt"
-	"os"
+	"errors"
 
 	"codeberg.org/shroff/phylum/server/internal/storage"
 )
@@ -10,8 +9,7 @@ import (
 func (f FileSystem) CreateMount(path string, backend storage.Backend) error {
 	r, err := f.ResourceByPathWithRoot(path)
 	if err != nil {
-		fmt.Println("failed to locate resource: " + err.Error())
-		os.Exit(1)
+		return errors.New("unable to locate resource: " + err.Error())
 	}
 
 	const q = `INSERT INTO storage_mounts(id, storage) VALUES ($1, $2) ON CONFLICT(id) DO UPDATE SET storage = $2`
