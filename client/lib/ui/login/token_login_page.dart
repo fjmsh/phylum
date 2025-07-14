@@ -85,7 +85,7 @@ class _TokenLoginPageState extends State<TokenLoginPage> {
           final response = BootstrapLoginResponse.fromResponse(responseMap);
           final account = await PhylumAccount.create(
             serverUrl: instanceUrl,
-            apiKey: response.apiKey!,
+            apiToken: response.apiToken!,
             user: response.user,
           );
           await response.process(account);

@@ -116,7 +116,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       final response = BootstrapLoginResponse.fromResponse((jsonDecode(responseString) as Map).cast<String, dynamic>());
       final account = await PhylumAccount.create(
         serverUrl: instanceUrl,
-        apiKey: response.apiKey!,
+        apiToken: response.apiToken!,
         user: response.user,
       );
       await response.process(account);

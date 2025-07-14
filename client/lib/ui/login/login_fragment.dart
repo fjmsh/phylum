@@ -155,7 +155,7 @@ class _LoginFragmentState extends State<LoginFragment> {
             BootstrapLoginResponse.fromResponse((jsonDecode(responseString) as Map).cast<String, dynamic>());
         final account = await PhylumAccount.create(
           serverUrl: instanceUri,
-          apiKey: response.apiKey!,
+          apiToken: response.apiToken!,
           user: response.user,
         );
         await response.process(account);
