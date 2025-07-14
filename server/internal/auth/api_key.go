@@ -12,8 +12,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+var apiTokenEncoder = base64.StdEncoding.WithPadding(base64.NoPadding)
+
 func ReadEncodedAPIKey(db db.Handler, encodedKey string) (Auth, error) {
-	if b, err := base64.StdEncoding.DecodeString(encodedKey); err != nil {
+	if b, err := apiTokenEncoder.DecodeString(encodedKey); err != nil {
 		return nil, ErrCredentialsInvalid
 	} else if len(b) < 16 {
 		return nil, ErrCredentialsInvalid
@@ -69,6 +71,6 @@ func GenerateEncodedAPIKey(db db.TxHandler, userID int32, validity time.Duration
 	if id, key, err := GenerateAPIKey(db, userID, validity, description, scopes); err != nil {
 		return "", err
 	} else {
-		return base64.StdEncoding.EncodeToString(append(id[:], key...)), nil
+		return apiTokenEncoder.EncodeToString(append(id[:], key...)), nil
 	}
 }

@@ -12,10 +12,10 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-var tokenEncoder = base32.StdEncoding.WithPadding(base32.NoPadding)
+var TokenEncoder = base32.StdEncoding.WithPadding(base32.NoPadding)
 
 func PerformTokenLogin(db db.TxHandler, encodedToken string) (Auth, string, error) {
-	if b, err := tokenEncoder.DecodeString(encodedToken); err != nil {
+	if b, err := TokenEncoder.DecodeString(encodedToken); err != nil {
 		return nil, "", ErrCredentialsInvalid
 	} else if len(b) < 16 {
 		return nil, "", ErrCredentialsInvalid

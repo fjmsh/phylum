@@ -56,7 +56,7 @@ VALUES (@token_id, @expires, @token_hash, @oidc_provider, @oidc_client_type, @oi
 		q.Add("client_id", clientID)
 		q.Add("response_type", "code")
 		q.Add("scope", "openid email profile")
-		q.Add("state", tokenEncoder.EncodeToString(append(tokenID[:], token...)))
+		q.Add("state", TokenEncoder.EncodeToString(append(tokenID[:], token...)))
 		q.Add("redirect_uri", redirectURI)
 		q.Add("code_challenge", codeChallenge)
 		q.Add("code_challenge_method", "S256")
@@ -70,7 +70,7 @@ func OpenIDValidateAuthCode(d db.Handler, state, authCode, redirectURI string) (
 
 	var tokenID uuid.UUID
 	var tokenHash []byte
-	if b, err := tokenEncoder.DecodeString(state); err != nil {
+	if b, err := TokenEncoder.DecodeString(state); err != nil {
 		return OpenIDClientNone, ErrTokenInvalid
 	} else if len(b) < 16 {
 		return OpenIDClientNone, ErrTokenInvalid
