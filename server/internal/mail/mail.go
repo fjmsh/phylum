@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"github.com/rs/zerolog"
 	gomail "gopkg.in/mail.v2"
 )
 
@@ -13,16 +14,19 @@ var dialer *gomail.Dialer
 
 var instance string
 var from FromConfig
+var logger zerolog.Logger
 
-var EmailNotConfigured = errors.New("email not configured")
+var ErrEmailNotConfigured = errors.New("email not configured")
 
-func Initialize(cfg Config) error {
+func Initialize(cfg Config, l zerolog.Logger) error {
 	if initialized {
 		return errors.New("already initialized")
 	}
 	initialized = true
+	logger = l.With().Str("mod", "email").Logger()
 	if cfg.SMTP.Host == "" {
-		return EmailNotConfigured
+		logger.Info().Msg("email not configured")
+		return ErrEmailNotConfigured
 	}
 
 	dialer = gomail.NewDialer(cfg.SMTP.Host, cfg.SMTP.Port, cfg.SMTP.Username, cfg.SMTP.Password)
@@ -44,7 +48,7 @@ func SendPasswordResetEmail(u core.User, token string) error {
 
 func send(e Email, rcpt core.User, params map[string]string) error {
 	if dialer == nil {
-		return EmailNotConfigured
+		return ErrEmailNotConfigured
 	}
 	if params == nil {
 		params = make(map[string]string)
@@ -67,5 +71,8 @@ func send(e Email, rcpt core.User, params map[string]string) error {
 		return e.HTML.ExecuteTemplate(w, "base", params)
 	})
 	err := dialer.DialAndSend(msg)
+	if err != nil {
+		logger.Warn().Err(err).Msg("failed to send email")
+	}
 	return err
 }

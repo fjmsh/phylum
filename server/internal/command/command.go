@@ -142,8 +142,8 @@ func SetupCommand() {
 		if err := core.Initialize(db.Get(ctx), cfg.Core); err != nil {
 			logger.Fatal().Err(err)
 		}
-		if err := mail.Initialize(cfg.Mail); err != nil {
-			if errors.Is(err, mail.EmailNotConfigured) {
+		if err := mail.Initialize(cfg.Mail, logger); err != nil {
+			if errors.Is(err, mail.ErrEmailNotConfigured) {
 				logger.Info().Msg("mail not configured")
 			} else {
 				logger.Fatal().Err(err).Msg("failed to initialize mail")
