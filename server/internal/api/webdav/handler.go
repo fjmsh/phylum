@@ -44,7 +44,16 @@ func (h *handler) HandleRequest(c *gin.Context) {
 	if keyIDStr, keyStr, ok := c.Request.BasicAuth(); ok {
 		ctx := c.Request.Context()
 		db := db.Get(ctx)
-		if a, err := auth.ReadAPIKey(db, keyIDStr, keyStr); err == nil {
+		var a auth.Auth
+		var err error
+
+		if keyIDStr == "" {
+			a, err = auth.ReadAPIToken(db, keyStr)
+		} else {
+			a, err = auth.ReadAPIKey(db, keyIDStr, keyStr)
+		}
+
+		if err == nil {
 			authSuccess = true
 			root := c.Param("root")
 			if root[0] == '~' {

@@ -56,7 +56,16 @@ func getAuth(c *gin.Context) (auth.Auth, error) {
 		return nil, errCredentialsInvalid
 	} else if authHeader, ok := checkAuthHeader(header, "basic"); ok {
 		if keyIDStr, keyStr, ok := decodeBasicAuth(authHeader); ok {
-			if a, err := auth.ReadAPIKey(db, keyIDStr, keyStr); err == nil {
+			var a auth.Auth
+			var err error
+
+			if keyIDStr == "" {
+				a, err = auth.ReadAPIToken(db, keyStr)
+			} else {
+				a, err = auth.ReadAPIKey(db, keyIDStr, keyStr)
+			}
+
+			if err == nil {
 				return a, nil
 			} else {
 				if errors.Is(err, auth.ErrCredentialsInvalid) {
