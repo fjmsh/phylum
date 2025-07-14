@@ -42,14 +42,21 @@ func getAuth(c *gin.Context) (auth.Auth, error) {
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		if cookie, err := c.Request.Cookie("api_key"); err == nil {
 			encodedKey := cookie.Value
-			return readAPIKey(db, encodedKey)
+			if a, err := auth.ReadAPIToken(db, encodedKey); err == nil {
+				return a, nil
+			} else {
+				if errors.Is(err, auth.ErrCredentialsInvalid) {
+					err = errCredentialsInvalid
+				}
+				return nil, err
+			}
 		} else if err != http.ErrNoCookie {
 			return nil, err
 		}
 		return nil, errCredentialsInvalid
 	} else if authHeader, ok := checkAuthHeader(header, "basic"); ok {
-		if email, password, ok := decodeBasicAuth(authHeader); ok {
-			if a, err := auth.VerifyUserPassword(db, email, password); err == nil {
+		if keyIDStr, keyStr, ok := decodeBasicAuth(authHeader); ok {
+			if a, err := auth.ReadAPIKey(db, keyIDStr, keyStr); err == nil {
 				return a, nil
 			} else {
 				if errors.Is(err, auth.ErrCredentialsInvalid) {
@@ -59,20 +66,16 @@ func getAuth(c *gin.Context) (auth.Auth, error) {
 			}
 		}
 	} else if encodedKey, ok := checkAuthHeader(header, "api-key"); ok {
-		return readAPIKey(db, encodedKey)
+		if a, err := auth.ReadAPIToken(db, encodedKey); err == nil {
+			return a, nil
+		} else {
+			if errors.Is(err, auth.ErrCredentialsInvalid) {
+				err = errCredentialsInvalid
+			}
+			return nil, err
+		}
 	}
 	return nil, errCredentialsInvalid
-}
-
-func readAPIKey(db db.Handler, encodedKey string) (auth.Auth, error) {
-	if a, err := auth.ReadAPIToken(db, encodedKey); err == nil {
-		return a, nil
-	} else {
-		if errors.Is(err, auth.ErrCredentialsInvalid) {
-			err = errCredentialsInvalid
-		}
-		return nil, err
-	}
 }
 
 func checkAuthHeader(header, prefix string) (string, bool) {

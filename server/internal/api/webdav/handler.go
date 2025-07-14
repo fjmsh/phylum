@@ -41,10 +41,10 @@ func SetupHandler(r *gin.RouterGroup) {
 func (h *handler) HandleRequest(c *gin.Context) {
 	authSuccess := false
 	var f *core.FileSystem
-	if email, pass, ok := c.Request.BasicAuth(); ok {
+	if keyIDStr, keyStr, ok := c.Request.BasicAuth(); ok {
 		ctx := c.Request.Context()
 		db := db.Get(ctx)
-		if a, err := auth.VerifyUserPassword(db, email, pass); err == nil {
+		if a, err := auth.ReadAPIKey(db, keyIDStr, keyStr); err == nil {
 			authSuccess = true
 			root := c.Param("root")
 			if root[0] == '~' {
