@@ -139,7 +139,7 @@ class _LoginFragmentState extends State<LoginFragment> {
 
   Future<void> _performLogin(BuildContext context, Uri instanceUri, String email, String password) async {
     final builder = UriBuilder.fromUri(instanceUri);
-    builder.path = '${builder.path}/api/v1/auth/password';
+    builder.path = '${builder.path}/api/v1/auth/password/login';
     final request = MultipartRequest('post', builder.build());
     request.fields['email'] = email;
     request.fields['password'] = password;
@@ -178,7 +178,7 @@ class _LoginFragmentState extends State<LoginFragment> {
 
   Future<void> _requestPasswordReset(BuildContext context, Uri instanceUrl, String email) async {
     final builder = UriBuilder.fromUri(instanceUrl);
-    builder.path = '${builder.path}/api/v1/auth/request-password-reset';
+    builder.path = '${builder.path}/api/v1/auth/password/request-reset';
     final request = MultipartRequest('post', builder.build());
     request.fields['email'] = email;
 

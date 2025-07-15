@@ -99,7 +99,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   ) async {
     final instanceUrl = Uri.parse(widget.instanceUrl!);
     final builder = UriBuilder.fromUri(instanceUrl);
-    builder.path = '${builder.path}/api/v1/auth/reset-password';
+    builder.path = '${builder.path}/api/v1/auth/password/reset';
     final request = MultipartRequest('post', builder.build());
     request.fields['email'] = widget.email!;
     request.fields['token'] = widget.token!;
