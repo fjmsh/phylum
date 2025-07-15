@@ -45,10 +45,10 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/auth")
 	group.GET("/config", handleConfig)
 
-	if auth.SupportsPasswordAuth() {
+	if passwordLoginSupported() {
 		group.POST("/password/login", handlePasswordAuth)
 	}
-	if auth.SupportsPasswordReset() {
+	if passwordResetSupported() {
 		group.POST("/password/request-reset", handleRequestPasswordReset)
 		group.POST("/password/reset", handleResetPassword)
 	}
@@ -61,11 +61,19 @@ func SetupRoutes(r *gin.RouterGroup) {
 
 func handleConfig(c *gin.Context) {
 	response := PasswordConfigResponse{
-		Password:        auth.SupportsPasswordAuth(),
-		PasswordReset:   auth.SupportsPasswordReset(),
+		Password:        passwordLoginSupported(),
+		PasswordReset:   passwordResetSupported(),
 		OpenIDProviders: auth.OpenIDProviders(),
 	}
 	c.JSON(http.StatusOK, response)
+}
+
+func passwordLoginSupported() bool {
+	return auth.SupportsPasswordAuth()
+}
+
+func passwordResetSupported() bool {
+	return auth.SupportsPasswordReset() && mail.Configured()
 }
 
 func handleOAuthStart(c *gin.Context) {

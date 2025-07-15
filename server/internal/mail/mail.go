@@ -36,6 +36,10 @@ func Initialize(cfg Config, l zerolog.Logger) error {
 	return nil
 }
 
+func Configured() bool {
+	return dialer != nil
+}
+
 func SendWelcomeEmail(u core.User) error {
 	return send(emails["welcome"], u, nil)
 }
