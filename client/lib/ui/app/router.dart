@@ -121,7 +121,7 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
       if (segments[0] == 'login' && segments[1] == 'token') {
         return SynchronousFuture(TokenLoginRoute(
           instanceUrl: uri.queryParameters['instance'] ?? '',
-          loginToken: uri.queryParameters['login_token'] ?? '',
+          loginToken: uri.queryParameters['token'] ?? '',
         ));
       }
       if (segments[0] == 'folder') {
