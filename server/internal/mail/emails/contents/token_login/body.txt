@@ -1,0 +1,6 @@
+{{define "contents"}}
+You can log in to Phylum at https://app.phylum.cloud/login/token?instance={{.instance}}&email={{.email}}&token={{.token}} 
+
+If the link above doesn't work, then you can paste the following token into the reset prompt:
+{{.token}}
+{{end}}

@@ -46,6 +46,12 @@ func SendPasswordResetEmail(u core.User, token string) error {
 	})
 }
 
+func SendTokenLoginEmail(u core.User, token string) error {
+	return send(emails["token_login"], u, map[string]string{
+		"token": token,
+	})
+}
+
 func send(e Email, rcpt core.User, params map[string]string) error {
 	if dialer == nil {
 		return ErrEmailNotConfigured

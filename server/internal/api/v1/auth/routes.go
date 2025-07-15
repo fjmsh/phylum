@@ -27,12 +27,12 @@ type passwordParams struct {
 	Password string `json:"password" form:"password" binding:"required"`
 }
 
-type requestPasswordResetParams struct {
+type emailParams struct {
 	Email string `json:"email" form:"email" binding:"required"`
 }
 
 type tokenLoginParams struct {
-	LoginToken string `json:"login_token" form:"login_token" binding:"required"`
+	Token string `json:"token" form:"token" binding:"required"`
 }
 
 type resetPasswordParams struct {
@@ -55,6 +55,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group.GET("/oauth/start", handleOAuthStart)
 	group.GET("/oauth/redirect", handleOAuthRedirect)
 	group.POST("/token/login", handleTokenLogin)
+	group.POST("/token/request", handleTokenRequest)
 	group.POST("/set-cookie", authenticator.RequireAPIKey, handleSetCookie)
 }
 
@@ -99,7 +100,7 @@ func handleOAuthRedirect(c *gin.Context) {
 		}
 		clientURI.Path = "/login/token"
 		q := url.Values{}
-		q.Add("login_token", state)
+		q.Add("token", state)
 		q.Add("instance", getInstanceURL(c.Request, ""))
 		clientURI.RawQuery = q.Encode()
 		c.Redirect(http.StatusFound, clientURI.String())
@@ -128,8 +129,35 @@ func handleTokenLogin(c *gin.Context) {
 	}
 
 	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, string, error) {
-		return auth.PerformTokenLogin(db, params.LoginToken)
+		return auth.PerformTokenLogin(db, params.Token)
 	})
+}
+
+func handleTokenRequest(c *gin.Context) {
+	var params emailParams
+	err := c.ShouldBind(&params)
+	if err != nil {
+		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
+	}
+
+	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
+		if user, token, err := auth.CreateLoginToken(db, params.Email); err != nil {
+			// Do not indicate that there was an error if no user was found
+			if !errors.Is(err, core.ErrUserNotFound) {
+				return err
+			}
+		} else {
+			// TODO: #jobs #mail #error
+			go func() {
+				mail.SendTokenLoginEmail(user, token)
+			}()
+		}
+		return nil
+	}); err != nil {
+		panic(err)
+	} else {
+		c.JSON(http.StatusOK, gin.H{})
+	}
 }
 
 func handlePasswordAuth(c *gin.Context) {
@@ -145,7 +173,7 @@ func handlePasswordAuth(c *gin.Context) {
 }
 
 func handleRequestPasswordReset(c *gin.Context) {
-	var params requestPasswordResetParams
+	var params emailParams
 	err := c.ShouldBind(&params)
 	if err != nil {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))

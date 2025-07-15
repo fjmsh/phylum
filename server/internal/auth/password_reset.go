@@ -16,7 +16,7 @@ func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) 
 	if !passwordBackend.SupportsPasswordUpdate() {
 		return core.User{}, "", errors.New("password update not supported")
 	}
-	email = strings.ToLower(email)
+	email = strings.TrimSpace(strings.ToLower(email))
 	user, err := core.UserByEmail(db, email)
 	if errors.Is(err, core.ErrUserNotFound) && shouldAutoCreate(email) {
 		user, err = core.CreateUser(db, email, "", false)
