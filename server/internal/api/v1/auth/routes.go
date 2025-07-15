@@ -20,7 +20,7 @@ import (
 type PasswordConfigResponse struct {
 	Password        bool              `json:"password"`
 	PasswordReset   bool              `json:"password_reset"`
-	MagicLinks      bool              `json:"magic_links"`
+	MagicLink       bool              `json:"magic_link"`
 	OpenIDProviders []openid.Provider `json:"openid_providers"`
 }
 
@@ -66,10 +66,10 @@ func SetupRoutes(r *gin.RouterGroup, logger *zerolog.Logger) {
 	group.POST("/token/login", handleTokenLogin)
 	if auth.MagicLinksEnabled() {
 		if mail.Configured() {
-			passwordConfigResponse.MagicLinks = true
+			passwordConfigResponse.MagicLink = true
 			group.POST("/token/request", handleTokenRequest)
 		} else {
-			logger.Warn().Msg("Magic login links enabled but mail not configured")
+			logger.Warn().Msg("Magic link login enabled but mail not configured")
 		}
 	}
 
