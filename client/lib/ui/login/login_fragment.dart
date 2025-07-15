@@ -55,74 +55,81 @@ class _LoginFragmentState extends State<LoginFragment> {
               onChanged: (value) => setState(() => _email = value.trim()),
             ),
           if (widget.instanceConfig.password)
-            TextField(
-              decoration: const InputDecoration(
-                label: Text('Password'),
-              ),
-              obscureText: true,
-              keyboardType: TextInputType.visiblePassword,
-              autofillHints: const [AutofillHints.password],
-              onChanged: (value) => setState(() => _password = value),
-              onSubmitted: _email.isEmpty
-                  ? null
-                  : (value) => _performLogin(context, widget.instanceConfig.url, _email, _password),
-            ),
-          if (widget.instanceConfig.password)
-            ElevatedButton(
-              onPressed: _email.isEmpty || _password.isEmpty
-                  ? null
-                  : () => _performLogin(context, widget.instanceConfig.url, _email, _password),
-              child: Text('Login'),
-            ),
-          if (widget.instanceConfig.passwordReset)
-            TextButton(
-              child: Text('Reset Password', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
-              onPressed: () async {
-                if (_email.isEmpty) {
-                  showAlertDialog(
-                    context,
-                    message: 'Please enter email address to reset password',
-                    barrierDismissible: true,
-                  );
-                  return;
-                }
-
-                final contents = RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(text: 'This will request a password reset for $_email.\n\nDo you want to continue?\n\n'),
-                      TextSpan(
-                        text: 'Tap here if you already have a reset token',
-                        style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () async {
-                            final token =
-                                await showInputDialog(context, labelText: 'Reset Token', barrierDismissable: true);
-                            if (token == null || !context.mounted) return;
-                            Navigator.of(context).pop(false);
-                            context.read<PhylumRouterDelegate>().go(ResetPasswordRoute(
-                                  instanceUrl: widget.instanceConfig.url.toString(),
-                                  email: _email,
-                                  token: token,
-                                ));
-                          },
-                      ),
-                    ],
-                    style: Theme.of(context).textTheme.bodyMedium,
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      label: Text('Password'),
+                    ),
+                    obscureText: true,
+                    keyboardType: TextInputType.visiblePassword,
+                    autofillHints: const [AutofillHints.password],
+                    onChanged: (value) => setState(() => _password = value),
+                    onSubmitted: _email.isEmpty
+                        ? null
+                        : (value) => _performLogin(context, widget.instanceConfig.url, _email, _password),
                   ),
-                );
-                final confirm = await showAlertDialog(
-                      context,
-                      title: 'Reset Password',
-                      contents: contents,
-                      negativeText: 'No',
-                      positiveText: 'Yes',
-                      barrierDismissible: true,
-                    ) ??
-                    false;
-                if (!confirm || !context.mounted) return;
-                _requestPasswordReset(context, widget.instanceConfig.url, _email);
-              },
+                ),
+                if (widget.instanceConfig.passwordReset)
+                  IconButton(
+                    icon: Icon(Icons.question_mark),
+                    onPressed: () async {
+                      if (_email.isEmpty) {
+                        showAlertDialog(
+                          context,
+                          message: 'Please enter email address to reset password',
+                          barrierDismissible: true,
+                        );
+                        return;
+                      }
+
+                      final contents = RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                                text:
+                                    'This will request a password reset for $_email.\n\nDo you want to continue?\n\n'),
+                            TextSpan(
+                              text: 'Tap here if you already have a reset token',
+                              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () async {
+                                  final token = await showInputDialog(context,
+                                      labelText: 'Reset Token', barrierDismissable: true);
+                                  if (token == null || !context.mounted) return;
+                                  Navigator.of(context).pop(false);
+                                  context.read<PhylumRouterDelegate>().go(ResetPasswordRoute(
+                                        instanceUrl: widget.instanceConfig.url.toString(),
+                                        email: _email,
+                                        token: token,
+                                      ));
+                                },
+                            ),
+                          ],
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      );
+                      final confirm = await showAlertDialog(
+                            context,
+                            title: 'Reset Password',
+                            contents: contents,
+                            negativeText: 'No',
+                            positiveText: 'Yes',
+                            barrierDismissible: true,
+                          ) ??
+                          false;
+                      if (!confirm || !context.mounted) return;
+                      _requestPasswordReset(context, widget.instanceConfig.url, _email);
+                    },
+                  ),
+                IconButton(
+                  onPressed: _email.isEmpty || _password.isEmpty
+                      ? null
+                      : () => _performLogin(context, widget.instanceConfig.url, _email, _password),
+                  icon: Icon(Icons.login),
+                ),
+              ],
             ),
           ...widget.instanceConfig.openIDProviders.map((p) => ElevatedButton(
               onPressed: () async {
