@@ -25,7 +25,6 @@ func Initialize(cfg Config, l zerolog.Logger) error {
 	initialized = true
 	logger = l.With().Str("mod", "email").Logger()
 	if cfg.SMTP.Host == "" {
-		logger.Info().Msg("email not configured")
 		return ErrEmailNotConfigured
 	}
 

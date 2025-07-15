@@ -18,6 +18,8 @@ import (
 var autoCreate []*regexp.Regexp
 var passwordRequirements PasswordRequirements
 var passwordBackend PasswordBackend
+var magicLinksEnabled bool
+var passwordResetEnabled bool
 
 const apiKeyLength = 15
 const resetTokenLength = 15
@@ -31,12 +33,16 @@ var b32Encoder = base32.StdEncoding.WithPadding(base32.NoPadding)
 var ErrTokenInvalid = errors.New("invalid token")
 var ErrCredentialsInvalid = errors.New("invalid credentials")
 
-func SupportsPasswordAuth() bool {
+func PasswordAuthEnabled() bool {
 	return passwordBackend != nil
 }
 
-func SupportsPasswordReset() bool {
-	return passwordBackend != nil && passwordBackend.SupportsPasswordUpdate()
+func PasswordResetEnabled() bool {
+	return passwordResetEnabled
+}
+
+func MagicLinksEnabled() bool {
+	return magicLinksEnabled
 }
 
 func OpenIDProviders() []openid.Provider {
@@ -45,6 +51,7 @@ func OpenIDProviders() []openid.Provider {
 
 func Initialize(cfg Config, log zerolog.Logger) error {
 	passwordRequirements = cfg.Password.Requirements
+	magicLinksEnabled = cfg.MagicLink
 
 	if cfg.Password.Backend == "crypt" {
 		if crypt, err := crypt.New(cfg.Password.Crypt); err != nil {
@@ -66,6 +73,16 @@ func Initialize(cfg Config, log zerolog.Logger) error {
 	autoCreate = make([]*regexp.Regexp, len(cfg.AutoCreate))
 	for i, w := range cfg.AutoCreate {
 		autoCreate[i] = regexp.MustCompile(strings.ReplaceAll(strings.ToLower(w), "*", ".*"))
+	}
+
+	if cfg.Password.ResetEnabled {
+		if passwordBackend == nil {
+			log.Warn().Msg("Password reset enabled but no backend configured")
+		} else if !passwordBackend.SupportsPasswordUpdate() {
+			log.Warn().Msg("Password reset enabled but backend does not support update")
+		} else {
+			passwordResetEnabled = true
+		}
 	}
 
 	return openid.Init(cfg.OpenID, log)

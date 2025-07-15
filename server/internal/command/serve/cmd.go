@@ -52,7 +52,6 @@ func SetupCommand() *cobra.Command {
 		if !Cfg.Debug {
 			gin.SetMode(gin.ReleaseMode)
 		}
-		cmd.Context()
 		logger := zerolog.Ctx(cmd.Context())
 		engine := createEngine(logger)
 
@@ -61,7 +60,7 @@ func SetupCommand() *cobra.Command {
 			webdav.SetupHandler(r)
 			logger.Info().Str("path", r.BasePath()).Msg("WebDAV Enabled")
 		}
-		apiv1.Setup(engine.Group("/api/v1"))
+		apiv1.Setup(engine.Group("/api/v1"), logger)
 		publink.Setup(engine.Group(Cfg.PublinkPath))
 
 		setupWebApp(engine, "web")

@@ -14,11 +14,13 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 )
 
 type PasswordConfigResponse struct {
 	Password        bool              `json:"password"`
 	PasswordReset   bool              `json:"password_reset"`
+	MagicLinks      bool              `json:"magic_links"`
 	OpenIDProviders []openid.Provider `json:"openid_providers"`
 }
 
@@ -41,39 +43,45 @@ type resetPasswordParams struct {
 	Password string `json:"password" form:"password" binding:"required"`
 }
 
-func SetupRoutes(r *gin.RouterGroup) {
+var passwordConfigResponse PasswordConfigResponse
+
+func SetupRoutes(r *gin.RouterGroup, logger *zerolog.Logger) {
 	group := r.Group("/auth")
 	group.GET("/config", handleConfig)
 
-	if passwordLoginSupported() {
+	if auth.PasswordAuthEnabled() {
+		passwordConfigResponse.Password = true
 		group.POST("/password/login", handlePasswordAuth)
 	}
-	if passwordResetSupported() {
-		group.POST("/password/request-reset", handleRequestPasswordReset)
-		group.POST("/password/reset", handleResetPassword)
+	if auth.PasswordResetEnabled() {
+		if mail.Configured() {
+			passwordConfigResponse.PasswordReset = true
+			group.POST("/password/request-reset", handleRequestPasswordReset)
+			group.POST("/password/reset", handleResetPassword)
+		} else {
+			logger.Warn().Msg("Password reset enabled but mail not configured")
+		}
 	}
+
+	group.POST("/token/login", handleTokenLogin)
+	if auth.MagicLinksEnabled() {
+		if mail.Configured() {
+			passwordConfigResponse.MagicLinks = true
+			group.POST("/token/request", handleTokenRequest)
+		} else {
+			logger.Warn().Msg("Magic login links enabled but mail not configured")
+		}
+	}
+
+	passwordConfigResponse.OpenIDProviders = auth.OpenIDProviders()
 	group.GET("/oauth/start", handleOAuthStart)
 	group.GET("/oauth/redirect", handleOAuthRedirect)
-	group.POST("/token/login", handleTokenLogin)
-	group.POST("/token/request", handleTokenRequest)
+
 	group.POST("/set-cookie", authenticator.RequireAPIKey, handleSetCookie)
 }
 
 func handleConfig(c *gin.Context) {
-	response := PasswordConfigResponse{
-		Password:        passwordLoginSupported(),
-		PasswordReset:   passwordResetSupported(),
-		OpenIDProviders: auth.OpenIDProviders(),
-	}
-	c.JSON(http.StatusOK, response)
-}
-
-func passwordLoginSupported() bool {
-	return auth.SupportsPasswordAuth()
-}
-
-func passwordResetSupported() bool {
-	return auth.SupportsPasswordReset() && mail.Configured()
+	c.JSON(http.StatusOK, passwordConfigResponse)
 }
 
 func handleOAuthStart(c *gin.Context) {

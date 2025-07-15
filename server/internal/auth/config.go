@@ -9,11 +9,13 @@ import (
 type Config struct {
 	AutoCreate []string       `koanf:"auto_create"`
 	Password   PasswordConfig `koanf:"password"`
+	MagicLink  bool           `koanf:"magic_link"`
 	OpenID     openid.Config  `koanf:"openid"`
 }
 
 type PasswordConfig struct {
 	Backend      string               `koanf:"backend"`
+	ResetEnabled bool                 `koanf:"reset_enabled"`
 	Crypt        crypt.Config         `koanf:"crypt"`
 	LDAP         ldap.Config          `koanf:"ldap"`
 	Requirements PasswordRequirements `koanf:"requirements"`

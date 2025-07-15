@@ -9,11 +9,12 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/v1/trash"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/users"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 )
 
-func Setup(r *gin.RouterGroup) {
+func Setup(r *gin.RouterGroup, logger *zerolog.Logger) {
 	// Unauthenticated routes
-	auth.SetupRoutes(r)
+	auth.SetupRoutes(r, logger)
 
 	// Authenticated routes
 	r.Use(authenticator.Require)

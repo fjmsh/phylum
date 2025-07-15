@@ -30,9 +30,11 @@ auth:
     # - "*@example.com"
     # - "user@example.com"
     # - "user*@example.com"
+  magic_link: true
   password:
     # backend is one of crypt, ldap, or none
     backend: crypt
+    reset_enabled: true
     crypt:
       # hash is either argon2 or pbkdf2
       hash: argon2
