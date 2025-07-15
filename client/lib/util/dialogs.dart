@@ -77,6 +77,7 @@ Future<bool?> showAlertDialog(
   String? message,
   Widget? contents,
   String? negativeText,
+  bool colorNegative = true,
   String positiveText = 'OK',
 }) {
   assert(message == null || contents == null);
@@ -99,7 +100,7 @@ Future<bool?> showAlertDialog(
       actions: <Widget>[
         if (negativeText != null)
           TextButton(
-            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+            style: colorNegative ? TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error) : null,
             child: Text(negativeText),
             onPressed: () => Navigator.of(context).pop(false),
           ),

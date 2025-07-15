@@ -38,108 +38,68 @@ class _LoginFragmentState extends State<LoginFragment> {
   @override
   Widget build(BuildContext context) {
     return AutofillGroup(
-      child: Column(
-        spacing: 12.0,
-        children: [
-          ListTile(
-            title: Text(widget.instanceConfig.url.toString()),
-            trailing: IconButton(onPressed: widget.onBackPressed, icon: Icon(Icons.edit)),
-          ),
-          if (widget.instanceConfig.hasEmailLogin)
-            TextField(
-              decoration: const InputDecoration(
-                label: Text('Email'),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          children: [
+            ListTile(
+              visualDensity: VisualDensity.compact,
+              dense: true,
+              title: Text(widget.instanceConfig.url.toString()),
+              leading: Icon(Icons.storage),
+              trailing: IconButton(onPressed: widget.onBackPressed, icon: Icon(Icons.close)),
+            ),
+            if (widget.instanceConfig.hasEmailLogin)
+              TextField(
+                decoration: const InputDecoration(
+                  label: Text('Email'),
+                ),
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+                onChanged: (value) => setState(() => _email = value.trim()),
               ),
-              keyboardType: TextInputType.emailAddress,
-              autofillHints: const [AutofillHints.email],
-              onChanged: (value) => setState(() => _email = value.trim()),
-            ),
-          if (widget.instanceConfig.password)
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration: const InputDecoration(
-                      label: Text('Password'),
+            if (widget.instanceConfig.password)
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        label: Text('Password'),
+                      ),
+                      obscureText: true,
+                      keyboardType: TextInputType.visiblePassword,
+                      autofillHints: const [AutofillHints.password],
+                      onChanged: (value) => setState(() => _password = value),
+                      onSubmitted: _email.isEmpty
+                          ? null
+                          : (value) => _performLogin(context, widget.instanceConfig.url, _email, _password),
                     ),
-                    obscureText: true,
-                    keyboardType: TextInputType.visiblePassword,
-                    autofillHints: const [AutofillHints.password],
-                    onChanged: (value) => setState(() => _password = value),
-                    onSubmitted: _email.isEmpty
-                        ? null
-                        : (value) => _performLogin(context, widget.instanceConfig.url, _email, _password),
                   ),
-                ),
-                if (widget.instanceConfig.passwordReset)
+                  if (widget.instanceConfig.passwordReset)
+                    IconButton(
+                      icon: Icon(Icons.question_mark),
+                      onPressed: () async {
+                        _requestPasswordReset(context, widget.instanceConfig.url, _email);
+                      },
+                    ),
                   IconButton(
-                    icon: Icon(Icons.question_mark),
-                    onPressed: () async {
-                      if (_email.isEmpty) {
-                        showAlertDialog(
-                          context,
-                          message: 'Please enter email address to reset password',
-                          barrierDismissible: true,
-                        );
-                        return;
-                      }
-
-                      final contents = RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                                text:
-                                    'This will request a password reset for $_email.\n\nDo you want to continue?\n\n'),
-                            TextSpan(
-                              text: 'Tap here if you already have a reset token',
-                              style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () async {
-                                  final token = await showInputDialog(context,
-                                      labelText: 'Reset Token', barrierDismissable: true);
-                                  if (token == null || !context.mounted) return;
-                                  Navigator.of(context).pop(false);
-                                  context.read<PhylumRouterDelegate>().go(ResetPasswordRoute(
-                                        instanceUrl: widget.instanceConfig.url.toString(),
-                                        email: _email,
-                                        token: token,
-                                      ));
-                                },
-                            ),
-                          ],
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      );
-                      final confirm = await showAlertDialog(
-                            context,
-                            title: 'Reset Password',
-                            contents: contents,
-                            negativeText: 'No',
-                            positiveText: 'Yes',
-                            barrierDismissible: true,
-                          ) ??
-                          false;
-                      if (!confirm || !context.mounted) return;
-                      _requestPasswordReset(context, widget.instanceConfig.url, _email);
-                    },
+                    onPressed: _email.isEmpty || _password.isEmpty
+                        ? null
+                        : () => _performLogin(context, widget.instanceConfig.url, _email, _password),
+                    icon: Icon(Icons.login),
                   ),
-                IconButton(
-                  onPressed: _email.isEmpty || _password.isEmpty
-                      ? null
-                      : () => _performLogin(context, widget.instanceConfig.url, _email, _password),
-                  icon: Icon(Icons.login),
-                ),
-              ],
-            ),
-          ...widget.instanceConfig.openIDProviders.map((p) => ElevatedButton(
-              onPressed: () async {
-                final builder = UriBuilder.fromUri(widget.instanceConfig.url);
-                builder.path += '/api/v1/auth/oauth/start';
-                builder.queryParameters['provider'] = p.id;
-                startOAuthFlow(context, builder, p.name);
-              },
-              child: Text('Log In with ${p.name}'))),
-        ],
+                ],
+              ),
+            ...widget.instanceConfig.openIDProviders.map((p) => TextButton(
+                onPressed: () async {
+                  final builder = UriBuilder.fromUri(widget.instanceConfig.url);
+                  builder.path += '/api/v1/auth/oauth/start';
+                  builder.queryParameters['provider'] = p.id;
+                  startOAuthFlow(context, builder, p.name);
+                },
+                child: Text('Log In with ${p.name}'))),
+          ],
+        ),
       ),
     );
   }
@@ -183,7 +143,20 @@ class _LoginFragmentState extends State<LoginFragment> {
     }
   }
 
-  Future<void> _requestPasswordReset(BuildContext context, Uri instanceUrl, String email) async {
+  Future<void> _requestPasswordReset(BuildContext context, Uri instanceUrl, String? email) async {
+    email = await showInputDialog(
+      context,
+      title: 'Password Reset',
+      labelText: 'Email',
+      hintText: 'user@example.com',
+      preset: email,
+      maxLines: 1,
+      keyboardType: TextInputType.emailAddress,
+    );
+    if (email == null || !context.mounted) {
+      return;
+    }
+
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/password/request-reset';
     final request = MultipartRequest('post', builder.build());
@@ -192,10 +165,24 @@ class _LoginFragmentState extends State<LoginFragment> {
     final responseString = await sendRequest(context, 'Requesting Password Reset', request);
     if (responseString == null) return;
     if (context.mounted) {
-      await showAlertDialog(
+      final response = await showAlertDialog(
         context,
         title: 'Password Reset Requested',
+        message: 'Please check your email for a password reset link',
+        negativeText: 'Enter Manually',
+        colorNegative: false,
       );
+
+      if ((response ?? true) || !context.mounted) return;
+
+      final token = await showInputDialog(context, title: 'Password Reset Token', barrierDismissable: true);
+      if (token == null || !context.mounted) return;
+      Navigator.of(context).pop(false);
+      context.read<PhylumRouterDelegate>().go(ResetPasswordRoute(
+            instanceUrl: widget.instanceConfig.url.toString(),
+            email: email,
+            token: token,
+          ));
     }
   }
 }
