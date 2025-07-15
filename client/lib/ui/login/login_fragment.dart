@@ -49,22 +49,34 @@ class _LoginFragmentState extends State<LoginFragment> {
               trailing: IconButton(onPressed: widget.onBackPressed, icon: Icon(Icons.close)),
             ),
             if (widget.instanceConfig.email)
-              TextField(
-                decoration: const InputDecoration(
-                  label: Text('Email'),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                autofillHints: const [AutofillHints.email],
-                onChanged: (value) => setState(() => _email = value.trim()),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: const InputDecoration(label: Text('Email')),
+                      keyboardType: TextInputType.emailAddress,
+                      autofillHints: const [AutofillHints.email],
+                      onChanged: (value) => setState(() => _email = value.trim()),
+                    ),
+                  ),
+                  if (widget.instanceConfig.magicLink)
+                    IconButton(
+                      icon: Icon(
+                        Icons.link,
+                        semanticLabel: 'Request Login Link',
+                      ),
+                      onPressed: () async {
+                        _requestMagicLink(context, widget.instanceConfig.url, _email);
+                      },
+                    ),
+                ],
               ),
             if (widget.instanceConfig.password)
               Row(
                 children: [
                   Expanded(
                     child: TextField(
-                      decoration: const InputDecoration(
-                        label: Text('Password'),
-                      ),
+                      decoration: const InputDecoration(label: Text('Password')),
                       obscureText: true,
                       keyboardType: TextInputType.visiblePassword,
                       autofillHints: const [AutofillHints.password],
@@ -76,7 +88,10 @@ class _LoginFragmentState extends State<LoginFragment> {
                   ),
                   if (widget.instanceConfig.passwordReset)
                     IconButton(
-                      icon: Icon(Icons.question_mark),
+                      icon: Icon(
+                        Icons.question_mark,
+                        semanticLabel: 'Request password reset',
+                      ),
                       onPressed: () async {
                         _requestPasswordReset(context, widget.instanceConfig.url, _email);
                       },
@@ -85,7 +100,10 @@ class _LoginFragmentState extends State<LoginFragment> {
                     onPressed: _email.isEmpty || _password.isEmpty
                         ? null
                         : () => _performLogin(context, widget.instanceConfig.url, _email, _password),
-                    icon: Icon(Icons.login),
+                    icon: Icon(
+                      Icons.login,
+                      semanticLabel: 'Log in with password',
+                    ),
                   ),
                 ],
               ),
@@ -147,6 +165,48 @@ class _LoginFragmentState extends State<LoginFragment> {
         }
         logger.w('Login Error', error: e, stackTrace: stack);
       }
+    }
+  }
+
+  Future<void> _requestMagicLink(BuildContext context, Uri instanceUrl, String? email) async {
+    email = await showInputDialog(
+      context,
+      title: 'Login Link',
+      labelText: 'Email',
+      hintText: 'user@example.com',
+      preset: email,
+      maxLines: 1,
+      keyboardType: TextInputType.emailAddress,
+    );
+    if (email == null || !context.mounted) {
+      return;
+    }
+
+    final builder = UriBuilder.fromUri(instanceUrl);
+    builder.path = '${builder.path}/api/v1/auth/token/request';
+    final request = MultipartRequest('post', builder.build());
+    request.fields['email'] = email;
+
+    final responseString = await sendRequest(context, 'Requesting Login Link', request);
+    if (responseString == null) return;
+    if (context.mounted) {
+      final response = await showAlertDialog(
+        context,
+        title: 'Login Link Sent',
+        message: 'Please check your email for a login link',
+        negativeText: 'Enter Manually',
+        colorNegative: false,
+      );
+
+      if ((response ?? true) || !context.mounted) return;
+
+      final token = await showInputDialog(context, title: 'Login Token', barrierDismissable: true);
+      if (token == null || !context.mounted) return;
+      Navigator.of(context).pop(false);
+      context.read<PhylumRouterDelegate>().go(TokenLoginRoute(
+            instanceUrl: widget.instanceConfig.url.toString(),
+            loginToken: token,
+          ));
     }
   }
 

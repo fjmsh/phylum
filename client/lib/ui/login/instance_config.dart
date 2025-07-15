@@ -23,7 +23,7 @@ class InstanceConfig {
       url: url,
       password: config['password'],
       passwordReset: config['password_reset'],
-      magicLink: false,
+      magicLink: config['magic_link'],
       openIDProviders:
           providers.map((e) => OpenIDProvider.fromResponse(url, e.cast<String, dynamic>())).toList(growable: false),
     );
