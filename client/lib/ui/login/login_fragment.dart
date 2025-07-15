@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
@@ -39,7 +38,7 @@ class _LoginFragmentState extends State<LoginFragment> {
   Widget build(BuildContext context) {
     return AutofillGroup(
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 24),
+        padding: const EdgeInsets.only(bottom: 12),
         child: Column(
           children: [
             ListTile(
@@ -49,7 +48,7 @@ class _LoginFragmentState extends State<LoginFragment> {
               leading: Icon(Icons.storage),
               trailing: IconButton(onPressed: widget.onBackPressed, icon: Icon(Icons.close)),
             ),
-            if (widget.instanceConfig.hasEmailLogin)
+            if (widget.instanceConfig.email)
               TextField(
                 decoration: const InputDecoration(
                   label: Text('Email'),
@@ -90,14 +89,22 @@ class _LoginFragmentState extends State<LoginFragment> {
                   ),
                 ],
               ),
-            ...widget.instanceConfig.openIDProviders.map((p) => TextButton(
-                onPressed: () async {
-                  final builder = UriBuilder.fromUri(widget.instanceConfig.url);
-                  builder.path += '/api/v1/auth/oauth/start';
-                  builder.queryParameters['provider'] = p.id;
-                  startOAuthFlow(context, builder, p.name);
-                },
-                child: Text('Log In with ${p.name}'))),
+            if (widget.instanceConfig.email && widget.instanceConfig.openIDProviders.isNotEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 12, left: 48, right: 48),
+                child: Divider(),
+              ),
+            ...widget.instanceConfig.openIDProviders.map((p) => Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: TextButton(
+                      onPressed: () async {
+                        final builder = UriBuilder.fromUri(widget.instanceConfig.url);
+                        builder.path += '/api/v1/auth/oauth/start';
+                        builder.queryParameters['provider'] = p.id;
+                        startOAuthFlow(context, builder, p.name);
+                      },
+                      child: Text('Log In with ${p.name}')),
+                )),
           ],
         ),
       ),

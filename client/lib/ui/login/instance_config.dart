@@ -7,7 +7,7 @@ class InstanceConfig {
   final bool magicLink;
   final List<OpenIDProvider> openIDProviders;
 
-  bool get hasEmailLogin => password || magicLink;
+  bool get email => password || magicLink;
 
   InstanceConfig(
       {required this.url,
