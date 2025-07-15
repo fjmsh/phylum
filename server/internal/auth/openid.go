@@ -90,7 +90,7 @@ func OpenIDValidateAuthCode(d db.Handler, state, authCode, redirectURI string) (
 	var codeVerifier string
 	if err := row.Scan(&providerName, &clientType, &codeVerifier); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			err = errors.New("login token invalid")
+			err = ErrTokenInvalid
 		}
 		return OpenIDClientNone, err
 	} else if idToken, err := openid.GetIDToken(providerName, authCode, redirectURI, codeVerifier); err != nil {

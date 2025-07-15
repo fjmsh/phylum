@@ -221,6 +221,9 @@ func loginAndSendResponse(c *gin.Context, loginFn func(db.TxHandler) (auth.Auth,
 			if errors.Is(err, auth.ErrCredentialsInvalid) {
 				return core.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid credentials")
 			}
+			if errors.Is(err, auth.ErrTokenInvalid) {
+				return core.NewError(http.StatusUnauthorized, "token_invalid", "token invalid")
+			}
 			return err
 		} else if r, err := my.Bootstrap(c.Request.Context(), a, 0); err != nil {
 			return err
