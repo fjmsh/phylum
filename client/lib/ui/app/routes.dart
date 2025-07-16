@@ -29,7 +29,7 @@ class TokenLoginRoute extends PhylumRoute {
   final String? instanceUrl;
   final String? loginToken;
 
-  TokenLoginRoute({required this.instanceUrl, required this.loginToken});
+  TokenLoginRoute({this.instanceUrl, this.loginToken});
 
   @override
   Uri get uri => Uri(path: '/login/token');

@@ -1,13 +1,16 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
+import 'package:phylum/ui/login/request.dart';
+import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 import 'package:phylum/ui/app/dialog_scaffold.dart';
@@ -27,87 +30,111 @@ class TokenLoginPage extends StatefulWidget {
 }
 
 class _TokenLoginPageState extends State<TokenLoginPage> {
-  String? error;
+  late final instanceUrlController = TextEditingController(text: widget.instanceUrl);
+  late final loginTokenController = TextEditingController(text: widget.loginToken);
 
   @override
   void initState() {
     super.initState();
-    performLogin(context);
+    if (widget.instanceUrl != null && widget.loginToken != null) {
+      final instanceUrl = Uri.tryParse(widget.instanceUrl!);
+      if (instanceUrl != null) {
+        WidgetsBinding.instance.addPostFrameCallback((d) {
+          _performLogin(context, instanceUrl, widget.loginToken!);
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    instanceUrlController.dispose();
+    loginTokenController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return PhylumDialogScaffold(
-      child: error == null
-          ? const Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
-              spacing: 12.0,
-              children: [
-                CircularProgressIndicator(),
-                Text('Logging In'),
-              ],
-            )
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 6.0,
-              children: [
-                Text('Error: $error'),
-                ElevatedButton(
-                  onPressed: () => context.read<PhylumRouterDelegate>().go(ExplorerRouteHome()),
-                  child: Text('OK'),
-                ),
-              ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 6.0,
+        children: [
+          TextField(
+            decoration: InputDecoration(
+              label: Text('Instance URL'),
+              hintText: 'https://phylum.example.com',
             ),
+            controller: instanceUrlController,
+            enabled: widget.instanceUrl == null,
+            keyboardType: TextInputType.url,
+          ),
+          TextField(
+            decoration: InputDecoration(
+              label: Text('Login Token'),
+              hintText: 'AG...',
+            ),
+            controller: loginTokenController,
+            keyboardType: TextInputType.url,
+            textInputAction: TextInputAction.go,
+            onSubmitted: (value) {
+              final instanceUrl = Uri.tryParse(instanceUrlController.value.text);
+              if (instanceUrl != null) {
+                _performLogin(context, instanceUrl, value);
+              }
+            },
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final instanceUrl = Uri.tryParse(instanceUrlController.value.text);
+              if (instanceUrl != null) {
+                _performLogin(context, instanceUrl, loginTokenController.value.text);
+              }
+            },
+            child: Text('Log In'),
+          ),
+        ],
+      ),
     );
   }
 
-  void performLogin(BuildContext context) async {
-    if (widget.instanceUrl == null || widget.loginToken == null) {
-      Future.microtask(() => setState(() => error = 'Missing Parameters'));
-    }
-    final instanceUrl = Uri.parse(widget.instanceUrl!);
+  Future<void> _performLogin(BuildContext context, Uri instanceUrl, String token) async {
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/token/login';
     final request = MultipartRequest('post', builder.build());
-    request.fields['token'] = widget.loginToken!;
+    request.fields['token'] = token;
 
-    try {
-      final response = await Client().send(request);
-      final responseString = await response.stream.bytesToString();
-      final responseMap = (jsonDecode(responseString) as Map).cast<String, dynamic>();
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
+    final responseString = await sendRequest(context, 'Logging In', request);
+    if (responseString == null) return;
+    if (context.mounted) {
+      final routerDelegate = context.read<PhylumRouterDelegate>();
+      final accountManager = context.read<AccountManager<PhylumAccount>>();
+      final navigator = Navigator.of(context);
+      showProgressDialog(context, barrierDismissible: false, message: 'Logging In');
+      try {
+        final response =
+            BootstrapLoginResponse.fromResponse((jsonDecode(responseString) as Map).cast<String, dynamic>());
+        final account = await PhylumAccount.create(
+          serverUrl: instanceUrl,
+          apiToken: response.apiToken!,
+          user: response.user,
+        );
+        await response.process(account);
+        await accountManager.addAccount(account);
+        navigator.pop();
+        routerDelegate.go(const ExplorerRouteHome());
+      } catch (e, stack) {
+        navigator.pop();
         if (context.mounted) {
-          final routerDelegate = context.read<PhylumRouterDelegate>();
-          final accountManager = context.read<AccountManager<PhylumAccount>>();
-
-          final response = BootstrapLoginResponse.fromResponse(responseMap);
-          final account = await PhylumAccount.create(
-            serverUrl: instanceUrl,
-            apiToken: response.apiToken!,
-            user: response.user,
+          showAlertDialog(
+            context,
+            barrierDismissible: false,
+            title: 'Error',
+            message: e.toString(),
           );
-          await response.process(account);
-          await accountManager.addAccount(account);
-          routerDelegate.go(ExplorerRouteHome());
         }
-      } else {
-        if (context.mounted) {
-          setState(() => error = responseMap['msg']);
-        }
-        return null;
+        logger.w('Login Error', error: e, stackTrace: stack);
       }
-    } on SocketException {
-      if (context.mounted) {
-        setState(() => error = 'unable to reach server');
-      }
-      return null;
-    } catch (e) {
-      if (context.mounted) {
-        setState(() => error = e.toString());
-      }
-      return null;
     }
   }
 }

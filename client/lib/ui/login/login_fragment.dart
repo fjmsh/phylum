@@ -200,12 +200,8 @@ class _LoginFragmentState extends State<LoginFragment> {
 
       if ((response ?? true) || !context.mounted) return;
 
-      final token = await showInputDialog(context, title: 'Login Token', barrierDismissable: true);
-      if (token == null || !context.mounted) return;
-      Navigator.of(context).pop(false);
       context.read<PhylumRouterDelegate>().go(TokenLoginRoute(
             instanceUrl: widget.instanceConfig.url.toString(),
-            loginToken: token,
           ));
     }
   }
