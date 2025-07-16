@@ -73,9 +73,23 @@ class _TokenLoginPageState extends State<TokenLoginPage> {
             decoration: InputDecoration(
               label: Text('Login Token'),
               hintText: 'AG...',
+              suffixIcon: IconButton(
+                icon: Icon(Icons.paste),
+                onPressed: () async {
+                  if (await Clipboard.hasStrings()) {
+                    final data = await Clipboard.getData(Clipboard.kTextPlain);
+                    final text = data?.text;
+                    if (text != null) {
+                      loginTokenController.text = text;
+                    }
+                  }
+                },
+              ),
             ),
             controller: loginTokenController,
-            keyboardType: TextInputType.url,
+            enabled: widget.loginToken == null,
+            keyboardType: TextInputType.text,
+            autocorrect: false,
             textInputAction: TextInputAction.go,
             onSubmitted: (value) {
               final instanceUrl = Uri.tryParse(instanceUrlController.value.text);
