@@ -10,7 +10,7 @@ class BootstrapRequest extends ApiRequest {
 
   @override
   BaseRequest createRequest(ApiClient api, {Uint8List? data}) {
-    final uri = api.createUriBuilder('/api/v1/my/bootstrap');
+    final uri = api.createUriBuilder('/api/v1/user/bootstrap');
     if (since != null) {
       uri.queryParameters['since'] = since.toString();
     }

@@ -10,7 +10,7 @@ class SharedResourcesRequest extends ApiRequest {
 
   @override
   BaseRequest createRequest(ApiClient api, {Uint8List? data}) {
-    final uri = api.createUriBuilder('/api/v1/my/shared');
+    final uri = api.createUriBuilder('/api/v1/user/shared');
     if (since != null) {
       uri.queryParameters['since'] = since.toString();
     }

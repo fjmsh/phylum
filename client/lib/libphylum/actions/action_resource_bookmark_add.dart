@@ -16,7 +16,7 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
   String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/my/bookmarks/add';
+  String get endpoint => '/api/v1/user/bookmarks/add';
 
   @override
   Map<String, dynamic>? get requestBody => {
