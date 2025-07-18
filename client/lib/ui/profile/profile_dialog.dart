@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:offtheline/offtheline.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/requests/update_user_name_request.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/profile/profile_view.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
@@ -42,27 +45,24 @@ class ProfileDialog extends StatelessWidget {
                   children: [
                     Flexible(
                       fit: FlexFit.loose,
-                      child: Text(
-                        account.userRepository.getUserDisplayName(account.user.id),
-                        maxLines: 1,
-                        overflow: TextOverflow.fade,
-                        softWrap: false,
-                      ),
+                      child: StreamBuilder(
+                          stream: account.userNotifier.stream,
+                          initialData: account.user,
+                          builder: (context, snapshot) {
+                            return Text(
+                              account.userRepository.getUserDisplayName(account.user.id),
+                              maxLines: 1,
+                              overflow: TextOverflow.fade,
+                              softWrap: false,
+                            );
+                          }),
                     ),
                     IconButton(
                       icon: Icon(Icons.edit, size: 18),
                       splashRadius: 6,
                       padding: EdgeInsets.symmetric(vertical: 3, horizontal: 6),
                       constraints: BoxConstraints(),
-                      onPressed: () async {
-                        final name = await showInputDialog(
-                          context,
-                          title: 'Change Name',
-                          labelText: 'Name',
-                          preset: account.user.name,
-                        );
-                        if (name == null) return;
-                      },
+                      onPressed: () => editName(context),
                     ),
                   ],
                 ),
@@ -106,5 +106,37 @@ class ProfileDialog extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  void editName(BuildContext context) async {
+    final account = context.read<PhylumAccount>();
+    final name = await showInputDialog(
+      context,
+      title: 'Change Name',
+      labelText: 'Name',
+      preset: account.user.name,
+    );
+    if (name == null || !context.mounted) return;
+
+    final nav = Navigator.of(context);
+    showProgressDialog(context, title: 'Updating Name');
+
+    final response = await account.apiClient.sendRequest(
+      EditUserNameRequest(name),
+      (request, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse),
+    );
+
+    nav.pop();
+    if (response is ApiSuccessResponse) {
+      account.user = account.user.copyWith(name: name);
+    } else if (response is ApiErrorResponse) {
+      if (context.mounted) {
+        showAlertDialog(context, message: response.description);
+      }
+    } else if (response is ApiUnreachableError) {
+      if (context.mounted) {
+        showAlertDialog(context, message: 'Server Unreachable');
+      }
+    }
   }
 }

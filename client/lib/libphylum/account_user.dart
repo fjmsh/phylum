@@ -58,6 +58,16 @@ class AccountUser {
     );
   }
 
+  AccountUser copyWith({String? name}) {
+    return AccountUser(
+      id: id,
+      email: email,
+      name: name ?? this.name,
+      home: home,
+      permissions: permissions,
+    );
+  }
+
   @override
   String toString() {
     return jsonEncode(toJson());
