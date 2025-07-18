@@ -1,4 +1,3 @@
-import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
@@ -10,7 +9,8 @@ import 'package:phylum/ui/layout/search.dart';
 import 'package:phylum/ui/layout/sync_status_button.dart';
 import 'package:phylum/ui/menu/bottom_sheet.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
-import 'package:phylum/util/avatar.dart';
+import 'package:phylum/ui/profile/profile_dialog.dart';
+import 'package:phylum/ui/profile/profile_view.dart';
 import 'package:provider/provider.dart';
 
 class ExplorerPageCollapsed extends StatelessWidget {
@@ -79,30 +79,11 @@ class ExplorerPageCollapsed extends StatelessWidget {
         StreamBuilder(
             stream: account.userNotifier.stream,
             initialData: account.user,
-            builder: (context, snapshot) {
-              final data = snapshot.data!;
-              String initials = data.name.split(' ').map((s) => s.isEmpty ? null : s.substring(0, 1)).join('');
-              if (initials.isEmpty) {
-                initials = data.email.substring(0, 2);
-              }
-              final colorScheme = getColorFromString(data.email);
-
-              return Padding(
-                padding: const EdgeInsets.all(6.0),
-                child: CircularProfileAvatar(
-                  '',
-                  initialsText: Text(
-                    initials,
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  foregroundColor: colorScheme.onPrimaryContainer,
-                  backgroundColor: colorScheme.primaryContainer,
-                  borderWidth: 1,
-                  borderColor: colorScheme.onPrimaryContainer,
-                  radius: 18,
-                ),
-              );
-            }),
+            builder: (context, snapshot) => ProfileView(
+                  name: snapshot.data!.name,
+                  email: snapshot.data!.email,
+                  onTap: () => ProfileDialog.show(context),
+                )),
       ],
     );
   }

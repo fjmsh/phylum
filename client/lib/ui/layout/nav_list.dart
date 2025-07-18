@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:phylum/libphylum/user_permission.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -166,27 +165,6 @@ class NavList extends StatelessWidget {
                             : SizedBox();
                       }),
                   if (!kIsWeb) const DownloadButton(),
-                  ListTile(
-                    leading: const Icon(Icons.help),
-                    title: const Text('About'),
-                    onTap: () async {
-                      Scaffold.maybeOf(context)?.closeDrawer();
-                      final info = await PackageInfo.fromPlatform();
-                      if (!context.mounted) return;
-                      showAboutDialog(
-                        context: context,
-                        applicationVersion: '${info.packageName} - ${info.version} (${info.buildNumber})',
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.logout),
-                    title: const Text('Log Out'),
-                    onTap: () {
-                      Scaffold.maybeOf(context)?.closeDrawer();
-                      context.read<PhylumAccount>().close(clearData: true);
-                    },
-                  ),
                 ],
               ),
             ),
