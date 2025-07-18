@@ -52,6 +52,7 @@ func SetupRoutes(r *gin.RouterGroup, logger *zerolog.Logger) {
 	if auth.PasswordAuthEnabled() {
 		passwordConfigResponse.Password = true
 		group.POST("/password/login", handlePasswordAuth)
+		group.POST("/password/change", handlePasswordChangeRoute)
 	}
 	if auth.PasswordResetEnabled() {
 		if mail.Configured() {

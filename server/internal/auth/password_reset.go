@@ -35,7 +35,7 @@ func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) 
 }
 
 func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (a Auth, key string, err error) {
-	if !passwordBackend.SupportsPasswordUpdate() {
+	if passwordBackend == nil || !passwordBackend.SupportsPasswordUpdate() {
 		err = errors.New("password update not supported")
 		return
 	}
@@ -83,6 +83,22 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (a A
 	}
 	key, err = GenerateAPIToken(db, user.ID, 0, "", []string{"*"})
 	return
+}
+
+func VerifyAndChangeUserPassword(db db.Handler, email, oldPassword, newPassword string) error {
+	if passwordBackend == nil || !passwordBackend.SupportsPasswordUpdate() {
+		return errors.New("password update not supported")
+	}
+	if ok, err := passwordBackend.VerifyUserPassword(db, email, oldPassword); err != nil {
+		return err
+	} else if !ok {
+		return ErrCredentialsInvalid
+	}
+
+	if err := checkPasswordStrength(newPassword); err != nil {
+		return err
+	}
+	return passwordBackend.UpdateUserPassword(db, email, newPassword)
 }
 
 func UpdateUserPassword(db db.TxHandler, email, password string) error {
