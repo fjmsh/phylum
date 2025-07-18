@@ -4,6 +4,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/update_user_name_request.dart';
+import 'package:phylum/libphylum/requests/update_user_password_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/profile/profile_view.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -74,12 +75,14 @@ class ProfileDialog extends StatelessWidget {
                 ),
                 subtitle: Text(context.read<PhylumAccount>().apiClient.serverUrl.host),
               ),
-              Divider(thickness: 2),
-              const ListTile(
+              Divider(thickness: 2, height: 2),
+              ListTile(
                 visualDensity: VisualDensity.compact,
                 leading: Icon(Icons.password),
                 title: Text('Change Password'),
+                onTap: () => changePassword(context),
               ),
+              Divider(thickness: 1, height: 1),
               ListTile(
                 visualDensity: VisualDensity.compact,
                 leading: const Icon(Icons.logout),
@@ -175,5 +178,87 @@ class ProfileDialog extends StatelessWidget {
         showAlertDialog(context, message: 'Server Unreachable');
       }
     }
+  }
+
+  void changePassword(BuildContext context) async {
+    final account = context.read<PhylumAccount>();
+    bool passwordsVisible = false;
+    String oldPassword = '';
+    String newPassword = '';
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Change Password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  label: Text('Current Password'),
+                ),
+                obscureText: !passwordsVisible,
+                enableSuggestions: false,
+                autocorrect: false,
+                autofocus: true,
+                autofillHints: const [AutofillHints.password],
+                keyboardType: TextInputType.visiblePassword,
+                onChanged: (value) => oldPassword = value,
+              ),
+              TextField(
+                decoration: InputDecoration(
+                  label: Text('New Password'),
+                ),
+                obscureText: !passwordsVisible,
+                enableSuggestions: false,
+                autocorrect: false,
+                autofocus: true,
+                autofillHints: const [AutofillHints.password],
+                keyboardType: TextInputType.visiblePassword,
+                onChanged: (value) => newPassword = value,
+              ),
+              Row(
+                children: [
+                  Checkbox(value: passwordsVisible, onChanged: (value) => setState(() => passwordsVisible = value!)),
+                  const Text('Show Passwords')
+                ],
+              )
+            ],
+          ),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+              child: Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            ElevatedButton(
+              autofocus: true,
+              child: Text('OK'),
+              onPressed: () async {
+                showProgressDialog(context, title: 'Changing Password');
+
+                final response = await account.apiClient.sendRequest(
+                  ChangePasswordRequest(email: account.user.email, oldPassword: oldPassword, newPassword: newPassword),
+                  (request, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse),
+                );
+
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  if (response is ApiErrorResponse) {
+                    showAlertDialog(context, message: response.description);
+                  } else if (response is ApiUnreachableError) {
+                    showAlertDialog(context, message: 'Server Unreachable');
+                  } else {
+                    Navigator.of(context).pop();
+                    showAlertDialog(context, message: 'Password Changed');
+                  }
+                }
+              },
+              // onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
