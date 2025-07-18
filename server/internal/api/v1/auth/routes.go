@@ -6,8 +6,8 @@ import (
 	"net/url"
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
-	"codeberg.org/shroff/phylum/server/internal/api/v1/my"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
+	"codeberg.org/shroff/phylum/server/internal/api/v1/user"
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/auth/openid"
 	"codeberg.org/shroff/phylum/server/internal/core"
@@ -241,7 +241,7 @@ func loginAndSendResponse(c *gin.Context, loginFn func(db.TxHandler) (auth.Auth,
 				return core.NewError(http.StatusUnauthorized, "token_invalid", "token invalid")
 			}
 			return err
-		} else if r, err := my.Bootstrap(c.Request.Context(), a, 0); err != nil {
+		} else if r, err := user.Bootstrap(c.Request.Context(), a, 0); err != nil {
 			return err
 		} else {
 			response = r

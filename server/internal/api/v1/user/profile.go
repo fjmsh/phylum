@@ -1,4 +1,4 @@
-package my
+package user
 
 import (
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"

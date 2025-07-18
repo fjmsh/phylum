@@ -1,4 +1,4 @@
-package my
+package user
 
 import (
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
@@ -13,7 +13,7 @@ type sharedResponse struct {
 }
 
 func SetupRoutes(r *gin.RouterGroup) {
-	group := r.Group("/my")
+	group := r.Group("/user")
 	group.GET("/bootstrap", handleBootstrapRoute)
 	group.GET("/shared", handleSharedRoute)
 	group.POST("/profile", handleProfileUpdateRoute)
