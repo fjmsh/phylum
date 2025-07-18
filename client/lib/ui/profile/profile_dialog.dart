@@ -39,7 +39,7 @@ class ProfileDialog extends StatelessWidget {
           child: Column(
             children: [
               ListTile(
-                leading: ProfileView(name: account.user.name, email: account.user.email),
+                leading: ProfileView(),
                 title: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

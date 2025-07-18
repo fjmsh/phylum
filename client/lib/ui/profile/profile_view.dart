@@ -1,27 +1,45 @@
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:provider/provider.dart';
 
 class ProfileView extends StatelessWidget {
-  final String name;
-  final String email;
   final Function()? onTap;
 
-  const ProfileView({super.key, required this.name, required this.email, this.onTap});
+  const ProfileView({super.key, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(6.0),
-      child: onTap == null
-          ? _buildAvatar()
-          : InkWell(
-              onTap: onTap,
-              child: _buildAvatar(),
-            ),
-    );
+    final account = context.read<PhylumAccount>();
+    return StreamBuilder(
+        initialData: account.user,
+        stream: account.userNotifier.stream,
+        builder: (context, sanpshot) {
+          final user = sanpshot.data!;
+          return Padding(
+            padding: const EdgeInsets.all(6.0),
+            child: onTap == null
+                ? AvatarView(name: user.name, email: user.email)
+                : InkWell(
+                    onTap: onTap,
+                    child: AvatarView(
+                      name: user.name,
+                      email: user.email,
+                    ),
+                  ),
+          );
+        });
   }
+}
 
-  Widget _buildAvatar() {
+class AvatarView extends StatelessWidget {
+  final String name;
+  final String email;
+
+  const AvatarView({super.key, required this.name, required this.email});
+
+  @override
+  Widget build(BuildContext context) {
     String initials = name.split(' ').map((s) => s.isEmpty ? null : s.substring(0, 1)).join('');
     if (initials.isEmpty) {
       initials = email.substring(0, 2);

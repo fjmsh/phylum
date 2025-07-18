@@ -5,6 +5,8 @@ import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:phylum/ui/layout/nav_list.dart';
 import 'package:phylum/ui/layout/search.dart';
 import 'package:phylum/ui/layout/sync_status_button.dart';
+import 'package:phylum/ui/profile/profile_dialog.dart';
+import 'package:phylum/ui/profile/profile_view.dart';
 
 class ExplorerPageExpanded extends StatelessWidget {
   final bool large;
@@ -26,37 +28,42 @@ class ExplorerPageExpanded extends StatelessWidget {
                 width: sidebarWidth,
                 child: Padding(
                   padding: const EdgeInsets.only(left: 16),
-                  child: const Row(
-                    spacing: 6.0,
-                    children: [
-                      LogoRow(),
-                      SyncStatusButton(),
-                    ],
-                  ),
+                  child: const LogoRow(),
                 ),
               ),
-              Expanded(
+              const Expanded(
                 child: Card(
                   elevation: 0,
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(right: 16.0),
                           child: Icon(Icons.search),
                         ),
                         Expanded(
-                          child: const SearchField(),
+                          child: SearchField(),
                         ),
                       ],
                     ),
                   ),
                 ),
               ),
-              if (large) SizedBox(width: 360),
+              ConstrainedBox(
+                constraints: BoxConstraints(minWidth: large ? 360 : 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    const SyncStatusButton(),
+                    ProfileView(
+                      onTap: () => ProfileDialog.show(context),
+                    ),
+                  ],
+                ),
+              )
             ],
           ),
           Expanded(

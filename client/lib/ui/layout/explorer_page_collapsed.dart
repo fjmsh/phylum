@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
@@ -64,8 +63,6 @@ class ExplorerPageCollapsed extends StatelessWidget {
       );
     }
 
-    final account = context.read<PhylumAccount>();
-
     return AppBar(
       title: const Text('Phylum'),
       actions: [
@@ -76,14 +73,9 @@ class ExplorerPageCollapsed extends StatelessWidget {
             context.read<PhylumSearchController>().active = true;
           },
         ),
-        StreamBuilder(
-            stream: account.userNotifier.stream,
-            initialData: account.user,
-            builder: (context, snapshot) => ProfileView(
-                  name: snapshot.data!.name,
-                  email: snapshot.data!.email,
-                  onTap: () => ProfileDialog.show(context),
-                )),
+        ProfileView(
+          onTap: () => ProfileDialog.show(context),
+        ),
       ],
     );
   }
