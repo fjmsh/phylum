@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -7,6 +8,7 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/profile/profile_view.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileDialog extends StatelessWidget {
   const ProfileDialog._();
@@ -20,6 +22,8 @@ class ProfileDialog extends StatelessWidget {
           Provider.value(value: account),
         ],
         child: AlertDialog(
+          insetPadding: const EdgeInsets.all(12),
+          contentPadding: const EdgeInsets.all(6),
           scrollable: true,
           content: SizedBox(width: 360, child: ProfileDialog._()),
           actions: [
@@ -96,13 +100,44 @@ class ProfileDialog extends StatelessWidget {
         ListTile(
           visualDensity: VisualDensity.compact,
           leading: const Icon(Icons.help),
-          title: const Text('About'),
+          title: const Text('About Phylum'),
           onTap: () async {
             final info = await PackageInfo.fromPlatform();
             if (!context.mounted) return;
             showAboutDialog(
               context: context,
+              applicationIcon: Image(
+                image: AssetImage('assets/images/logo.png'),
+                height: 48,
+                width: 48,
+                fit: BoxFit.contain,
+              ),
               applicationVersion: '${info.packageName} - ${info.version} (${info.buildNumber})',
+              children: [
+                Text('Phylum is Free Software offered under the GNU AGPL V3.0'),
+                Padding(
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: RichText(
+                    text: TextSpan(
+                      text: 'View source on Codeberg',
+                      style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 16),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => launchUrl(Uri.parse('https://codeberg.org/shroff/phylum')),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: RichText(
+                    text: TextSpan(
+                      text: 'Get help on Matrix',
+                      style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 16),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => launchUrl(Uri.parse('https://matrix.to/#/#phylum_cloud:matrix.org')),
+                    ),
+                  ),
+                ),
+              ],
             );
           },
         ),
