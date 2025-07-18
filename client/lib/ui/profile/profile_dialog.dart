@@ -49,11 +49,13 @@ class ProfileDialog extends StatelessWidget {
                           stream: account.userNotifier.stream,
                           initialData: account.user,
                           builder: (context, snapshot) {
+                            final user = snapshot.data!;
                             return Text(
-                              account.userRepository.getUserDisplayName(account.user.id),
+                              user.name.isEmpty ? user.email : user.name,
                               maxLines: 1,
                               overflow: TextOverflow.fade,
                               softWrap: false,
+                              style: user.name.isEmpty ? TextStyle(fontStyle: FontStyle.italic) : null,
                             );
                           }),
                     ),
@@ -123,11 +125,11 @@ class ProfileDialog extends StatelessWidget {
 
     final response = await account.apiClient.sendRequest(
       EditUserNameRequest(name),
-      (request, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse),
+      (request, response) => parseJsonMapResponse(response, UserResponse.fromResponse),
     );
 
     nav.pop();
-    if (response is ApiSuccessResponse) {
+    if (response is UserResponse) {
       account.user = account.user.copyWith(name: name);
     } else if (response is ApiErrorResponse) {
       if (context.mounted) {
