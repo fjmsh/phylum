@@ -66,16 +66,12 @@ class ExplorerPageCollapsed extends StatelessWidget {
     return AppBar(
       title: const Text('Phylum'),
       actions: [
-        const SyncStatusButton(),
         IconButton(
           icon: const Icon(Icons.search),
-          onPressed: () {
-            context.read<PhylumSearchController>().active = true;
-          },
+          onPressed: () => context.read<PhylumSearchController>().active = true,
         ),
-        ProfileView(
-          onTap: () => ProfileDialog.show(context),
-        ),
+        const SyncStatusButton(),
+        ProfileView(onTap: () => ProfileDialog.show(context)),
       ],
     );
   }
