@@ -74,16 +74,16 @@ func ReadAPIToken(db db.Handler, encodedKey string) (Auth, error) {
 	}
 }
 
-func GenerateAPIToken(db db.TxHandler, userID int32, validity time.Duration, description string, scopes []string) (string, error) {
-	if id, key, err := generateAPIKey(db, userID, validity, description, scopes); err != nil {
+func GenerateAPIToken(db db.Handler, userID int32, expires pgtype.Timestamptz, description string, scopes []string) (string, error) {
+	if id, key, err := generateAPIKey(db, userID, expires, description, scopes); err != nil {
 		return "", err
 	} else {
 		return b64Encoder.EncodeToString(append(id[:], key...)), nil
 	}
 }
 
-func GenerateAPIKey(db db.TxHandler, userID int32, validity time.Duration, description string, scopes []string) (id, key string, err error) {
-	if id, key, err := generateAPIKey(db, userID, validity, description, scopes); err != nil {
+func GenerateAPIKey(db db.Handler, userID int32, expires pgtype.Timestamptz, description string, scopes []string) (id, key string, err error) {
+	if id, key, err := generateAPIKey(db, userID, expires, description, scopes); err != nil {
 		return "", "", err
 	} else {
 		return b64Encoder.EncodeToString(id[:]), b32Encoder.EncodeToString(key), nil
@@ -121,16 +121,11 @@ func readAPIKey(db db.Handler, keyID uuid.UUID, key []byte) (Auth, error) {
 	return auth, nil
 }
 
-func generateAPIKey(db db.TxHandler, userID int32, validity time.Duration, description string, scopes []string) (id uuid.UUID, key []byte, err error) {
+func generateAPIKey(db db.Handler, userID int32, expires pgtype.Timestamptz, description string, scopes []string) (id uuid.UUID, key []byte, err error) {
 	const q = `INSERT INTO api_keys(id, expires, user_id, hash, description, scopes) VALUES (@id, @expires, @user_id, @hash, @description, @scopes)`
 
 	id, _ = uuid.NewV7()
 	key = generateSecureKey(apiKeyLength)
-	expires := pgtype.Timestamp{}
-	if validity != 0 {
-		expires.Valid = true
-		expires.Time = time.Now().Add(validity)
-	}
 	hash := sha256.Sum256(key)
 	args := pgx.NamedArgs{
 		"id":          id,

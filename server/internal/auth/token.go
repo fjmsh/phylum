@@ -10,6 +10,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func PerformTokenLogin(db db.TxHandler, encodedToken string) (Auth, string, error) {
@@ -74,7 +75,7 @@ func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (a Auth
 		return
 	} else if user, err = core.UserByID(db, userID); err != nil {
 		return
-	} else if key, err = GenerateAPIToken(db, userID, 0, "", []string{"*"}); err != nil {
+	} else if key, err = GenerateAPIToken(db, userID, pgtype.Timestamptz{}, "Login - Token", []string{"*"}); err != nil {
 		return
 	} else {
 		a = auth{

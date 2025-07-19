@@ -10,6 +10,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) {
@@ -81,7 +82,7 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (a A
 		userPermissions: user.Permissions,
 		scopes:          []string{"*"},
 	}
-	key, err = GenerateAPIToken(db, user.ID, 0, "", []string{"*"})
+	key, err = GenerateAPIToken(db, user.ID, pgtype.Timestamptz{}, "Login - Password Reset", []string{"*"})
 	return
 }
 

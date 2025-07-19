@@ -6,6 +6,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type PasswordBackend interface {
@@ -41,7 +42,7 @@ func PerformPasswordLogin(db db.TxHandler, email, password string) (auth Auth, k
 	if auth, err = VerifyUserPassword(db, email, password); err != nil {
 		return
 	} else {
-		key, err = GenerateAPIToken(db, auth.UserID(), 0, "", []string{"*"})
+		key, err = GenerateAPIToken(db, auth.UserID(), pgtype.Timestamptz{}, "Login - Password", []string{"*"})
 		return
 	}
 }

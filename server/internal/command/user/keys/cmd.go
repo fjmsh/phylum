@@ -11,6 +11,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/command/common"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/spf13/cobra"
 )
 
@@ -40,6 +41,11 @@ func setupGenerateCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			validity, _ := cmd.Flags().GetDuration("validity")
+			expires := pgtype.Timestamptz{}
+			if validity != 0 {
+				expires.Time = time.Now().Add(validity)
+				expires.Valid = true
+			}
 			description, _ := cmd.Flags().GetString("description")
 			reader := bufio.NewReader(os.Stdin)
 			if description == "" {
@@ -74,14 +80,14 @@ func setupGenerateCommand() *cobra.Command {
 
 			if err := db.Get(context.Background()).RunInTx(func(db db.TxHandler) error {
 				if token, _ := cmd.Flags().GetBool("token"); token {
-					if token, err := auth.GenerateAPIToken(db, u.ID, validity, description, scopes); err != nil {
+					if token, err := auth.GenerateAPIToken(db, u.ID, expires, description, scopes); err != nil {
 						return err
 					} else {
 						fmt.Println(token)
 						return nil
 					}
 				} else {
-					if id, key, err := auth.GenerateAPIKey(db, u.ID, validity, description, scopes); err != nil {
+					if id, key, err := auth.GenerateAPIKey(db, u.ID, expires, description, scopes); err != nil {
 						return err
 					} else {
 						fmt.Println("Key ID:", id)
