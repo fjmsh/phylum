@@ -27,6 +27,9 @@ func handlePasswordChangeRoute(c *gin.Context) {
 		if errors.Is(err, auth.ErrCredentialsInvalid) {
 			panic(core.NewError(http.StatusBadRequest, "password_incorrect", "current password is incorrect"))
 		}
+		if e, ok := err.(*auth.PasswordRequirementsError); ok {
+			panic(core.NewError(http.StatusBadRequest, "new_password_invalid", e.Error()))
+		}
 		panic(err)
 	}
 

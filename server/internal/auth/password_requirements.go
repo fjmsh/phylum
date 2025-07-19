@@ -1,0 +1,86 @@
+package auth
+
+import (
+	"strconv"
+	"strings"
+)
+
+type charType int
+
+const (
+	charTypeOther charType = iota
+	charTypeLower
+	charTypeUpper
+	charTypeNumeric
+	charTypeSymbol
+)
+
+var charTypes = map[rune]charType{}
+
+type PasswordRequirementsError struct {
+	minimumLength       int
+	missingRequirements []string
+}
+
+func (e PasswordRequirementsError) Error() string {
+	sb := strings.Builder{}
+	sb.WriteString("password must")
+	if e.missingRequirements != nil {
+		sb.WriteString(" have at least " + strings.Join(e.missingRequirements, ", "))
+
+		if e.minimumLength != 0 {
+			sb.WriteString(", and")
+		}
+	}
+	if e.minimumLength != 0 {
+		sb.WriteString(" be at least " + strconv.Itoa(e.minimumLength) + " characters long")
+	}
+	return sb.String()
+}
+
+func init() {
+	for _, c := range "abcdefghijklmnopqrstuvwxyz" {
+		charTypes[c] = charTypeLower
+	}
+	for _, c := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
+		charTypes[c] = charTypeUpper
+	}
+	for _, c := range "0123456789" {
+		charTypes[c] = charTypeNumeric
+	}
+	for _, c := range "`~!@#$%^&*()-_=+[]{}\\|;:'\",.<>/?" {
+		charTypes[c] = charTypeSymbol
+	}
+}
+
+func checkPasswordStrength(password string) error {
+	var minimumLength int
+	var errors []string
+	if len(password) < passwordRequirements.Length {
+		minimumLength = passwordRequirements.Length
+	}
+	count := map[charType]int{}
+	for _, c := range password {
+		count[charTypes[c]]++
+	}
+
+	if count[charTypeLower] < passwordRequirements.Lower {
+		errors = append(errors, strconv.Itoa(passwordRequirements.Lower)+" lower case characters")
+	}
+	if count[charTypeUpper] < passwordRequirements.Upper {
+		errors = append(errors, strconv.Itoa(passwordRequirements.Upper)+" upper case characters")
+	}
+	if count[charTypeNumeric] < passwordRequirements.Numeric {
+		errors = append(errors, strconv.Itoa(passwordRequirements.Numeric)+" numbers")
+	}
+	if count[charTypeSymbol] < passwordRequirements.Symbols {
+		errors = append(errors, strconv.Itoa(passwordRequirements.Symbols)+" symbols")
+	}
+	if minimumLength != 0 || errors != nil {
+		return &PasswordRequirementsError{
+			minimumLength:       minimumLength,
+			missingRequirements: errors,
+		}
+	}
+	return nil
+}
