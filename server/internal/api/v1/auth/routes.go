@@ -241,6 +241,9 @@ func loginAndSendResponse(c *gin.Context, loginFn func(db.TxHandler) (auth.Auth,
 			if errors.Is(err, auth.ErrTokenInvalid) {
 				return core.NewError(http.StatusUnauthorized, "token_invalid", "token invalid")
 			}
+			if e, ok := err.(*auth.PasswordRequirementsError); ok {
+				panic(core.NewError(http.StatusBadRequest, "new_password_invalid", e.Error()))
+			}
 			return err
 		} else if r, err := user.Bootstrap(c.Request.Context(), a, 0); err != nil {
 			return err
