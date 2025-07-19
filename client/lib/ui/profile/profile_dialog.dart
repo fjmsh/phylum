@@ -4,7 +4,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/update_user_name_request.dart';
-import 'package:phylum/libphylum/requests/update_user_password_request.dart';
+import 'package:phylum/libphylum/requests/change_password_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/profile/profile_view.dart';
 import 'package:phylum/util/dialogs.dart';
