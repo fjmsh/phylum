@@ -154,7 +154,7 @@ func setupRevokeCommand() *cobra.Command {
 			delete, _ := cmd.Flags().GetBool("delete")
 			err := db.RunInTx(context.Background(), func(db db.TxHandler) error {
 				for _, k := range args {
-					if err := auth.RevokeAPIKey(db, k, delete); err != nil {
+					if err := auth.RevokeAPIKey(db, u.ID, k, delete); err != nil {
 						return err
 					}
 				}

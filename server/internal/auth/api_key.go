@@ -3,7 +3,6 @@ package auth
 import (
 	"crypto/sha256"
 	"errors"
-	"fmt"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -33,19 +32,19 @@ func ListAPIKeys(db db.Handler, userID int32, includeExpired bool) ([]APIKey, er
 	}
 }
 
-func RevokeAPIKey(db db.Handler, keyIDStr string, delete bool) error {
-	const qUpdate = "UPDATE api_keys SET expires = CURRENT_TIMESTAMP WHERE id = $1"
-	const qDelete = "DELETE FROM api_keys WHERE id = $1"
+func RevokeAPIKey(db db.Handler, userID int32, keyIDStr string, delete bool) error {
+	const qUpdate = "UPDATE api_keys SET expires = CURRENT_TIMESTAMP WHERE id = $2 AND user_id = $1"
+	const qDelete = "DELETE FROM api_keys WHERE id = $2 AND user_id = $1"
 	q := qUpdate
 	if delete {
 		q = qDelete
 	}
 	if keyID, err := uuid.Parse(keyIDStr); err != nil {
 		return errors.New("failed to parse key ID: " + err.Error())
-	} else if tag, err := db.Exec(q, keyID); err != nil {
+	} else if tag, err := db.Exec(q, userID, keyID); err != nil {
 		return err
 	} else if tag.RowsAffected() == 0 {
-		return fmt.Errorf("key with ID %q not found", keyIDStr)
+		return errors.New("key not found")
 	}
 	return nil
 }
