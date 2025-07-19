@@ -62,7 +62,9 @@ func handleBookmarksGetRoute(c *gin.Context) {
 
 func handleBookmarksAddRoute(c *gin.Context) {
 	var params bookmarkAddParams
-	c.ShouldBind(&params)
+	if err := c.ShouldBind(&params); err != nil {
+		panic(err)
+	}
 
 	auth := authenticator.GetAuth(c)
 	if !auth.HasScope("bookmarks:add") {
@@ -93,7 +95,9 @@ func handleBookmarksAddRoute(c *gin.Context) {
 
 func handleBookmarksRemoveRoute(c *gin.Context) {
 	var params bookmarkRemoveParams
-	c.ShouldBind(&params)
+	if err := c.ShouldBind(&params); err != nil {
+		panic(err)
+	}
 
 	auth := authenticator.GetAuth(c)
 	if !auth.HasScope("bookmarks:remove") {

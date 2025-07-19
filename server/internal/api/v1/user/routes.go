@@ -18,6 +18,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group.GET("/shared", handleSharedRoute)
 	group.POST("/profile", handleProfileUpdateRoute)
 	setupBookmarksRoutes(group)
+	setupKeysRoutes(group)
 }
 
 func handleSharedRoute(c *gin.Context) {
