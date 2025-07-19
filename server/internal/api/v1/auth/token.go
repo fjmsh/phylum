@@ -12,7 +12,9 @@ import (
 )
 
 func handleTokenLogin(c *gin.Context) {
-	var params tokenLoginParams
+	var params struct {
+		Token string `json:"token" form:"token" binding:"required"`
+	}
 	err := c.ShouldBind(&params)
 	if err != nil {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "login token not specified"))
@@ -24,7 +26,9 @@ func handleTokenLogin(c *gin.Context) {
 }
 
 func handleTokenRequest(c *gin.Context) {
-	var params emailParams
+	var params struct {
+		Email string `json:"email" form:"email" binding:"required"`
+	}
 	err := c.ShouldBind(&params)
 	if err != nil {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))

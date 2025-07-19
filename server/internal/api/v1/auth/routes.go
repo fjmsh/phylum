@@ -17,33 +17,12 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type PasswordConfigResponse struct {
+var passwordConfigResponse struct {
 	Password        bool              `json:"password"`
 	PasswordReset   bool              `json:"password_reset"`
 	MagicLink       bool              `json:"magic_link"`
 	OpenIDProviders []openid.Provider `json:"openid_providers"`
 }
-
-type passwordParams struct {
-	Email    string `json:"email" form:"email" binding:"required"`
-	Password string `json:"password" form:"password" binding:"required"`
-}
-
-type emailParams struct {
-	Email string `json:"email" form:"email" binding:"required"`
-}
-
-type tokenLoginParams struct {
-	Token string `json:"token" form:"token" binding:"required"`
-}
-
-type resetPasswordParams struct {
-	Email    string `json:"email" form:"email" binding:"required"`
-	Token    string `json:"token" form:"token" binding:"required"`
-	Password string `json:"password" form:"password" binding:"required"`
-}
-
-var passwordConfigResponse PasswordConfigResponse
 
 func SetupRoutes(r *gin.RouterGroup, logger *zerolog.Logger) {
 	group := r.Group("/auth")

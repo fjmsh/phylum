@@ -18,7 +18,10 @@ type passwordUpdateParams struct {
 }
 
 func handlePasswordLogin(c *gin.Context) {
-	var params passwordParams
+	var params struct {
+		Email    string `json:"email" form:"email" binding:"required"`
+		Password string `json:"password" form:"password" binding:"required"`
+	}
 	err := c.ShouldBind(&params)
 	if err != nil {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
@@ -50,7 +53,9 @@ func handlePasswordChange(c *gin.Context) {
 }
 
 func handlePasswordRequestReset(c *gin.Context) {
-	var params emailParams
+	var params struct {
+		Email string `json:"email" form:"email" binding:"required"`
+	}
 	err := c.ShouldBind(&params)
 	if err != nil {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
@@ -77,7 +82,11 @@ func handlePasswordRequestReset(c *gin.Context) {
 }
 
 func handlePasswordReset(c *gin.Context) {
-	var params resetPasswordParams
+	var params struct {
+		Email    string `json:"email" form:"email" binding:"required"`
+		Token    string `json:"token" form:"token" binding:"required"`
+		Password string `json:"password" form:"password" binding:"required"`
+	}
 	err := c.ShouldBind(&params)
 	if err != nil {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
