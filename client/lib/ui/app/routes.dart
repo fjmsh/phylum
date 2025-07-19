@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,8 @@ import 'package:phylum/ui/layout/explorer_page.dart';
 import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/login/token_login_page.dart';
 import 'package:phylum/ui/login/reset_password_page.dart';
+import 'package:phylum/ui/menu/menu_option.dart';
+import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:phylum/ui/open/open_resource_page.dart';
 import 'package:phylum/ui/file_preview/file_preview_page.dart';
 import 'package:provider/provider.dart';
@@ -123,6 +126,15 @@ sealed class ExplorerRoute extends LoggedInRoute {
   Widget buildAccountPage(PhylumAccount account) {
     return ExplorerPage.create(account);
   }
+
+  MenuOptionGroups get selectedResourceOptions => [
+        [MenuOption.details],
+        [MenuOption.download, if (!kIsWeb && Platform.isAndroid) MenuOption.share, MenuOption.openWith],
+        [MenuOption.rename, MenuOption.move, MenuOption.copy, MenuOption.delete],
+        [MenuOption.bookmarkAdd, MenuOption.bookmarkRemove, MenuOption.permissions, MenuOption.publinks],
+      ];
+
+  MenuOptionGroups? get folderOptions;
 }
 
 class ExplorerRouteHome extends ExplorerRouteFolder {
@@ -158,6 +170,13 @@ class ExplorerRouteFolder extends ExplorerRoute {
 
   @override
   Stream<List<Resource>> items(PhylumAccount account) => account.db.watchChildren(folderId(account));
+
+  @override
+  MenuOptionGroups get folderOptions => const [
+        [MenuOption.details],
+        [MenuOption.newFolder, MenuOption.uploadFiles, MenuOption.uploadFolders],
+        [MenuOption.bookmarkAdd, MenuOption.bookmarkRemove, MenuOption.permissions, MenuOption.publinks],
+      ];
 }
 
 class ExplorerRouteRecents extends ExplorerRoute {
@@ -178,6 +197,9 @@ class ExplorerRouteRecents extends ExplorerRoute {
   Stream<List<Resource>> items(PhylumAccount account) {
     return account.db.selectRecents().watch();
   }
+
+  @override
+  MenuOptionGroups? get folderOptions => null;
 }
 
 class ExplorerRouteTrash extends ExplorerRoute {
@@ -198,6 +220,15 @@ class ExplorerRouteTrash extends ExplorerRoute {
   Stream<List<Resource>> items(PhylumAccount account) {
     return account.db.selectTrash().watch();
   }
+
+  @override
+  MenuOptionGroups get selectedResourceOptions => const [
+        [MenuOption.details],
+        [MenuOption.restore, MenuOption.deleteForever],
+      ];
+
+  @override
+  MenuOptionGroups? get folderOptions => null;
 }
 
 class ExplorerRouteShared extends ExplorerRoute {
@@ -223,6 +254,9 @@ class ExplorerRouteShared extends ExplorerRoute {
   Stream<List<Resource>> items(PhylumAccount account) {
     return account.db.selectShared().watch();
   }
+
+  @override
+  MenuOptionGroups? get folderOptions => null;
 }
 
 class ExplorerRouteSearch extends ExplorerRoute {
@@ -256,4 +290,7 @@ class ExplorerRouteSearch extends ExplorerRoute {
   Stream<List<Resource>> items(PhylumAccount account) {
     return _streamController.stream;
   }
+
+  @override
+  MenuOptionGroups? get folderOptions => null;
 }

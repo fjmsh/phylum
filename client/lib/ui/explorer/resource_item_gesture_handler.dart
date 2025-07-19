@@ -105,12 +105,7 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
             details.globalPosition.dy,
           );
           final resources = state.selected;
-          final MenuOptionGroups options;
-          if (resources.every((r) => r.deleted != null)) {
-            options = trashedResourceOptions;
-          } else {
-            options = createOptions(context);
-          }
+          final options = state.route.selectedResourceOptions;
           final items = await buildPopupMenuItems(context.read<PhylumAccount>(), options, resources);
           if (!context.mounted) return;
           final selection = await showMenu(

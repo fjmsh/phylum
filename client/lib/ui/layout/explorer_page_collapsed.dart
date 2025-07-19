@@ -7,7 +7,6 @@ import 'package:phylum/ui/layout/nav_list.dart';
 import 'package:phylum/ui/layout/search.dart';
 import 'package:phylum/ui/layout/sync_status_button.dart';
 import 'package:phylum/ui/menu/bottom_sheet.dart';
-import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:phylum/ui/profile/profile_dialog.dart';
 import 'package:phylum/ui/profile/profile_view.dart';
 import 'package:provider/provider.dart';
@@ -51,11 +50,9 @@ class ExplorerPageCollapsed extends StatelessWidget {
         actions: [
           IconButton(
               onPressed: () {
-                final selected = context.read<ExplorerState>().selected;
-                var options = createOptions(context);
-                if (selected.every((r) => r.deleted != null)) {
-                  options = trashedResourceOptions;
-                }
+                final state = context.read<ExplorerState>();
+                final selected = state.selected;
+                var options = state.route.selectedResourceOptions;
                 showMenuOptionsBottomSheet(context, options, selected);
               },
               icon: Icon(Icons.adaptive.more))

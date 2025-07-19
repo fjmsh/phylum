@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -8,56 +5,6 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'menu_option.dart';
 
 typedef MenuOptionGroups = Iterable<Iterable<MenuOption>>;
-
-MenuOptionGroups createOptions(BuildContext context) => [
-      [
-        MenuOption.details,
-      ],
-      [
-        MenuOption.download,
-        if (!kIsWeb && Platform.isAndroid) MenuOption.share,
-        MenuOption.openWith,
-      ],
-      [
-        MenuOption.rename,
-        MenuOption.move,
-        MenuOption.copy,
-        MenuOption.delete,
-      ],
-      [
-        MenuOption.bookmarkAdd,
-        MenuOption.bookmarkRemove,
-        MenuOption.permissions,
-        MenuOption.publinks,
-      ],
-    ];
-
-const trashedResourceOptions = [
-  [
-    MenuOption.details,
-  ],
-  [
-    MenuOption.restore,
-    MenuOption.deleteForever,
-  ],
-];
-
-final parentFolderOptions = [
-  [
-    MenuOption.details,
-  ],
-  [
-    MenuOption.newFolder,
-    MenuOption.uploadFiles,
-    MenuOption.uploadFolders,
-  ],
-  [
-    MenuOption.bookmarkAdd,
-    MenuOption.bookmarkRemove,
-    MenuOption.permissions,
-    MenuOption.publinks,
-  ],
-];
 
 Future<Iterable<PopupMenuEntry<MenuOption>>> buildPopupMenuItems(
   PhylumAccount account,

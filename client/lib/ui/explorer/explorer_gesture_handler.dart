@@ -19,19 +19,17 @@ class ExplorerGestureHandler extends StatelessWidget {
       },
       onSecondaryTapUp: (details) async {
         context.read<ExplorerController>().updateSelection((i) => i, SelectionMode.none, false);
-        final resource = context.read<ExplorerState>().folder;
-        if (resource == null) return;
+        final state = context.read<ExplorerState>();
+        final options = state.route.folderOptions;
+        final resource = state.folder;
+        if (options == null) return;
         final position = RelativeRect.fromLTRB(
           details.globalPosition.dx,
           details.globalPosition.dy,
           details.globalPosition.dx,
           details.globalPosition.dy,
         );
-        var options = parentFolderOptions;
-        if (resource.deleted != null) {
-          options = trashedResourceOptions;
-        }
-        final resources = [resource];
+        final resources = [if (resource != null) resource];
         final items = await buildPopupMenuItems(context.read<PhylumAccount>(), options, resources);
         if (!context.mounted) return;
         final selection = await showMenu(
