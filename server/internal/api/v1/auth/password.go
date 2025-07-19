@@ -7,6 +7,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,7 +17,19 @@ type passwordUpdateParams struct {
 	NewPassword string `json:"new_password" form:"new_password"`
 }
 
-func handlePasswordChangeRoute(c *gin.Context) {
+func handlePasswordLogin(c *gin.Context) {
+	var params passwordParams
+	err := c.ShouldBind(&params)
+	if err != nil {
+		panic(core.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
+	}
+
+	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, string, error) {
+		return auth.PerformPasswordLogin(db, params.Email, params.Password)
+	})
+}
+
+func handlePasswordChange(c *gin.Context) {
 	var params passwordUpdateParams
 	err := c.Bind(&params)
 	if err != nil {
@@ -34,4 +47,43 @@ func handlePasswordChangeRoute(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{})
+}
+
+func handlePasswordRequestReset(c *gin.Context) {
+	var params emailParams
+	err := c.ShouldBind(&params)
+	if err != nil {
+		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
+	}
+
+	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
+		if user, token, err := auth.CreateResetToken(db, params.Email); err != nil {
+			// Do not indicate that there was an error if no user was found
+			if !errors.Is(err, core.ErrUserNotFound) {
+				return err
+			}
+		} else {
+			// TODO: #jobs #mail #error
+			go func() {
+				mail.SendPasswordResetEmail(user, token)
+			}()
+		}
+		return nil
+	}); err != nil {
+		panic(err)
+	} else {
+		c.JSON(http.StatusOK, gin.H{})
+	}
+}
+
+func handlePasswordReset(c *gin.Context) {
+	var params resetPasswordParams
+	err := c.ShouldBind(&params)
+	if err != nil {
+		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
+	}
+
+	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, string, error) {
+		return auth.ResetUserPassword(db, params.Email, params.Token, params.Password)
+	})
 }

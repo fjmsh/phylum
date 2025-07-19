@@ -51,14 +51,14 @@ func SetupRoutes(r *gin.RouterGroup, logger *zerolog.Logger) {
 
 	if auth.PasswordAuthEnabled() {
 		passwordConfigResponse.Password = true
-		group.POST("/password/login", handlePasswordAuth)
-		group.POST("/password/change", handlePasswordChangeRoute)
+		group.POST("/password/login", handlePasswordLogin)
+		group.POST("/password/change", handlePasswordChange)
 	}
 	if auth.PasswordResetEnabled() {
 		if mail.Configured() {
 			passwordConfigResponse.PasswordReset = true
-			group.POST("/password/request-reset", handleRequestPasswordReset)
-			group.POST("/password/reset", handleResetPassword)
+			group.POST("/password/request-reset", handlePasswordRequestReset)
+			group.POST("/password/reset", handlePasswordReset)
 		} else {
 			logger.Warn().Msg("Password reset enabled but mail not configured")
 		}
@@ -85,44 +85,6 @@ func handleConfig(c *gin.Context) {
 	c.JSON(http.StatusOK, passwordConfigResponse)
 }
 
-func handleOAuthStart(c *gin.Context) {
-	provider := c.Query("provider")
-	clientType := auth.OpenIDClientWeb
-	if c.Query("client_type") == "native" {
-		clientType = auth.OpenIDClientNative
-	}
-	db := db.Get(c.Request.Context())
-	if authURL, err := auth.OpenIDStart(db, provider, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect"), clientType); err != nil {
-		panic(err)
-	} else {
-		c.Redirect(http.StatusFound, authURL)
-	}
-}
-
-func handleOAuthRedirect(c *gin.Context) {
-	db := db.Get(c.Request.Context())
-
-	authCode := c.Query("code")
-	state := c.Query("state")
-
-	if clientType, err := auth.OpenIDValidateAuthCode(db, state, authCode, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect")); err != nil {
-		panic(err)
-	} else {
-		var clientURI url.URL
-		if clientType == auth.OpenIDClientWeb {
-			clientURI = *c.Request.URL
-			clientURI.RawQuery = ""
-		} else {
-			clientURI = url.URL{Scheme: "cloud.phylum.drive"}
-		}
-		clientURI.Path = "/login/token"
-		q := url.Values{}
-		q.Add("token", state)
-		q.Add("instance", getInstanceURL(c.Request, ""))
-		clientURI.RawQuery = q.Encode()
-		c.Redirect(http.StatusFound, clientURI.String())
-	}
-}
 func getInstanceURL(req *http.Request, path string) string {
 	uri := url.URL{
 		Scheme: "https",
@@ -136,96 +98,6 @@ func getInstanceURL(req *http.Request, path string) string {
 		uri.Scheme = "http"
 	}
 	return uri.String()
-}
-
-func handleTokenLogin(c *gin.Context) {
-	var params tokenLoginParams
-	err := c.ShouldBind(&params)
-	if err != nil {
-		panic(core.NewError(http.StatusBadRequest, "missing_params", "login token not specified"))
-	}
-
-	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, string, error) {
-		return auth.PerformTokenLogin(db, params.Token)
-	})
-}
-
-func handleTokenRequest(c *gin.Context) {
-	var params emailParams
-	err := c.ShouldBind(&params)
-	if err != nil {
-		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
-	}
-
-	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
-		if user, token, err := auth.CreateLoginToken(db, params.Email); err != nil {
-			// Do not indicate that there was an error if no user was found
-			if !errors.Is(err, core.ErrUserNotFound) {
-				return err
-			}
-		} else {
-			// TODO: #jobs #mail #error
-			go func() {
-				mail.SendTokenLoginEmail(user, token)
-			}()
-		}
-		return nil
-	}); err != nil {
-		panic(err)
-	} else {
-		c.JSON(http.StatusOK, gin.H{})
-	}
-}
-
-func handlePasswordAuth(c *gin.Context) {
-	var params passwordParams
-	err := c.ShouldBind(&params)
-	if err != nil {
-		panic(core.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
-	}
-
-	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, string, error) {
-		return auth.PerformPasswordLogin(db, params.Email, params.Password)
-	})
-}
-
-func handleRequestPasswordReset(c *gin.Context) {
-	var params emailParams
-	err := c.ShouldBind(&params)
-	if err != nil {
-		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
-	}
-
-	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
-		if user, token, err := auth.CreateResetToken(db, params.Email); err != nil {
-			// Do not indicate that there was an error if no user was found
-			if !errors.Is(err, core.ErrUserNotFound) {
-				return err
-			}
-		} else {
-			// TODO: #jobs #mail #error
-			go func() {
-				mail.SendPasswordResetEmail(user, token)
-			}()
-		}
-		return nil
-	}); err != nil {
-		panic(err)
-	} else {
-		c.JSON(http.StatusOK, gin.H{})
-	}
-}
-
-func handleResetPassword(c *gin.Context) {
-	var params resetPasswordParams
-	err := c.ShouldBind(&params)
-	if err != nil {
-		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
-	}
-
-	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, string, error) {
-		return auth.ResetUserPassword(db, params.Email, params.Token, params.Password)
-	})
 }
 
 func loginAndSendResponse(c *gin.Context, loginFn func(db.TxHandler) (auth.Auth, string, error)) {
