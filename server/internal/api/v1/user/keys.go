@@ -1,13 +1,16 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type APIKey struct {
@@ -20,6 +23,7 @@ type APIKey struct {
 
 func setupKeysRoutes(r *gin.RouterGroup) {
 	group := r.Group("/keys")
+	group.POST("/generate", handleKeysGenerate)
 	group.GET("/list", handleKeysList)
 	group.POST("/revoke", handleKeysRevoke)
 }
@@ -48,6 +52,43 @@ func handleKeysList(c *gin.Context) {
 			}
 		}
 		c.JSON(200, res)
+	}
+}
+
+func handleKeysGenerate(c *gin.Context) {
+	var params struct {
+		Scopes      []string  `json:"scopes" form:"scopes" binding:"required"`
+		Description string    `json:"description" form:"description"`
+		Expires     time.Time `json:"expires" form:"expires"`
+	}
+	if err := c.ShouldBind(&params); err != nil {
+		fmt.Println(err)
+		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
+	}
+	if len(params.Scopes) == 0 {
+		panic(core.NewError(http.StatusBadRequest, "invalid_scopes", "invalid scopes"))
+	}
+
+	if params.Description == "" {
+		params.Description = "Generated via API"
+	}
+
+	a := authenticator.GetAuth(c)
+	if !a.HasScope("keys:generate") {
+		panic(core.ErrInsufficientScope)
+	}
+	expires := pgtype.Timestamptz{}
+	if !params.Expires.IsZero() {
+		expires.Time = params.Expires
+		expires.Valid = true
+	}
+	if id, key, err := auth.GenerateAPIKey(db.Get(c.Request.Context()), a.UserID(), expires, params.Description, params.Scopes); err != nil {
+		panic(err)
+	} else {
+		c.JSON(200, gin.H{
+			"id":  id,
+			"key": key,
+		})
 	}
 }
 
