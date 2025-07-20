@@ -59,11 +59,27 @@ func (a *Auth) UserPermissions() core.UserPermissions {
 	return a.userPermissions
 }
 
+// HasScope checks whether or not this authorization includes the given scope,
+// given the following rules:
+//   - Scopes are nested using ":"
+//   - All nested scopes are included for a given scope none are specified
+//   - "*" matches all scopes at that level of nesting (above point applies)
+//
+// Examples:
+//   - "user:profile" is included in "user", which is included in "*"
+//   - "fs:id:read" is included in "fs:id", as well as "fs:*:read"
+//     which are both included in "fs", which itself is included in "*"
 func (a *Auth) HasScope(scope string) bool {
+	parts := strings.Split(scope, ":")
+
+outer:
 	for _, s := range a.scopes {
-		if s == "*" {
-			return true
+		for i, p := range strings.Split(s, ":") {
+			if p != "*" && (i >= len(parts) || p != parts[i]) {
+				continue outer
+			}
 		}
+		return true
 	}
 	return false
 }
