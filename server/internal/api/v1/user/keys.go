@@ -3,6 +3,7 @@ package user
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
@@ -57,7 +58,7 @@ func handleKeysList(c *gin.Context) {
 
 func handleKeysGenerate(c *gin.Context) {
 	var params struct {
-		Scopes      []string  `json:"scopes" form:"scopes" binding:"required"`
+		Scopes      string    `json:"scopes" form:"scopes" binding:"required"`
 		Description string    `json:"description" form:"description"`
 		Expires     time.Time `json:"expires" form:"expires"`
 	}
@@ -82,7 +83,7 @@ func handleKeysGenerate(c *gin.Context) {
 		expires.Time = params.Expires
 		expires.Valid = true
 	}
-	if a, err := auth.NewAuth(a, expires, params.Scopes); err != nil {
+	if a, err := auth.NewAuth(a, expires, strings.Split(params.Scopes, ",")); err != nil {
 		panic(err)
 	} else if id, key, token, err := auth.GenerateAPIKey(db.Get(c.Request.Context()), a, params.Description); err != nil {
 		panic(err)
