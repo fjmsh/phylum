@@ -76,7 +76,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
     case MenuOption.move:
       final parent = resources.firstOrNull?.parent;
       if (parent == null) return;
-      final dest = await DestinationPicker.show(context, parent);
+      final dest = await DestinationPicker.show(context, initialFolderId: parent);
       if (dest == null) {
         return;
       }
@@ -99,7 +99,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
     case MenuOption.copy:
       final parent = resources.firstOrNull?.parent;
       if (parent == null) return;
-      final dest = await DestinationPicker.show(context, parent, allowInitialFolder: true);
+      final dest = await DestinationPicker.show(context, initialFolderId: parent, allowInitialFolder: true);
       if (dest == null) {
         return;
       }

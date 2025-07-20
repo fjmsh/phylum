@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/api_keys_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
+import 'package:phylum/ui/profile/generate_api_key_dialog.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
@@ -36,6 +37,11 @@ class _ApiKeysViewState extends State<ApiKeysView> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        ElevatedButton.icon(
+          onPressed: () => createKey(context),
+          label: Text('Generate New API Key'),
+          icon: Icon(Icons.add),
+        ),
         for (final k in keys)
           Card(
             margin: EdgeInsets.all(2.0),
@@ -71,5 +77,9 @@ class _ApiKeysViewState extends State<ApiKeysView> {
     } else {
       setState(() => error = response.description);
     }
+  }
+
+  void createKey(BuildContext context) async {
+    GenerateApiKeyDialog.show(context);
   }
 }

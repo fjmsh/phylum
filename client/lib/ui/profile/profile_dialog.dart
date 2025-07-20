@@ -67,10 +67,10 @@ class ProfileDialog extends StatelessWidget {
                           }),
                     ),
                     IconButton(
-                      icon: Icon(Icons.edit, size: 18),
+                      icon: const Icon(Icons.edit, size: 18),
                       splashRadius: 6,
-                      padding: EdgeInsets.symmetric(vertical: 3, horizontal: 6),
-                      constraints: BoxConstraints(),
+                      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 6),
+                      constraints: const BoxConstraints(),
                       onPressed: () => editName(context),
                     ),
                   ],

@@ -90,7 +90,7 @@ class _ExplorerViewState extends State<ExplorerView> {
     if (files.isEmpty) return;
     final paths = files.map((f) => f.path).toList(growable: false);
     final account = context.read<PhylumAccount>();
-    final dest = await DestinationPicker.show(context, account.user.home, allowInitialFolder: true);
+    final dest = await DestinationPicker.show(context, allowInitialFolder: true);
     if (dest == null) {
       return;
     }

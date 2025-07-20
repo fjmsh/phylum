@@ -234,3 +234,35 @@ Future<T?> showOptionsDialogBuilder<T>(
     ),
   );
 }
+
+Future<T?> showOptionsDialog<T>(
+  BuildContext context,
+  List<T> options,
+  Widget Function(T) buildItem, {
+  String? titleText,
+}) async {
+  return showDialog(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+          scrollable: true,
+          title: (titleText == null) ? null : Text(titleText),
+          content: SizedBox(
+            width: 360,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final option in options)
+                  InkWell(
+                    child: buildItem(option),
+                    onTap: () {
+                      Navigator.of(context).pop(option);
+                    },
+                  ),
+              ],
+            ),
+          )),
+    ),
+  );
+}

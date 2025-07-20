@@ -22,15 +22,16 @@ class DestinationPicker extends StatefulWidget {
   @override
   State<DestinationPicker> createState() => _DestinationPickerState();
 
-  static Future<String?> show(BuildContext context, String initialFolderId, {bool allowInitialFolder = false}) {
+  static Future<String?> show(BuildContext context, {String? initialFolderId, bool allowInitialFolder = false}) {
     final account = context.read<PhylumAccount>();
+    initialFolderId ??= account.user.home;
     return showDialog(
       context: context,
       builder: (context) => MultiProvider(
         providers: [
           StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
           ChangeNotifierProvider(
-            create: (context) => PhylumRouterDelegate(page: ExplorerRouteFolder(folderId: initialFolderId)),
+            create: (context) => PhylumRouterDelegate(page: ExplorerRouteFolder(folderId: initialFolderId!)),
           ),
         ],
         builder: (context, child) {
@@ -41,7 +42,7 @@ class DestinationPicker extends StatefulWidget {
             child: child,
           );
         },
-        child: DestinationPicker(initialFolderId: initialFolderId, allowInitialFolder: allowInitialFolder),
+        child: DestinationPicker(initialFolderId: initialFolderId!, allowInitialFolder: allowInitialFolder),
       ),
     );
   }
