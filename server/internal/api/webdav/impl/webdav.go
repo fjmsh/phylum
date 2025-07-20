@@ -222,6 +222,9 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 	// TODO: check locks for read-only access??
 	res, err := h.FileSystem.ResourceByPath(reqPath)
 	if err != nil {
+		if e, ok := err.(*core.Error); ok {
+			return e.Status, e
+		}
 		return http.StatusNotFound, err
 	}
 	w.Header().Set("Content-Disposition", "attachment; filename=\""+res.Name()+"\"")
@@ -242,8 +245,8 @@ func (h *Handler) handleDelete(_ http.ResponseWriter, r *http.Request) (status i
 	defer release()
 
 	if r, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-		if errors.Is(err, core.ErrResourceNotFound) {
-			return http.StatusNotFound, err
+		if e, ok := err.(*core.Error); ok {
+			return e.Status, e
 		}
 		return http.StatusMethodNotAllowed, err
 	} else if _, err := h.FileSystem.Delete(r); err != nil {
@@ -267,25 +270,31 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 
 	f, err := h.FileSystem.CreateFileByPath(reqPath, uuid.Nil, uuid.Nil, core.ResourceBindConflictResolutionEnsure)
 	if err != nil {
-		if errors.Is(err, core.ErrParentNotFound) {
-			return http.StatusConflict, err
+		if e, ok := err.(*core.Error); ok {
+			return e.Status, e
 		}
 		return http.StatusInternalServerError, err
 	}
 	_, copyErr := io.Copy(f, r.Body)
 	closeErr := f.Close()
 	if copyErr != nil {
+		if e, ok := copyErr.(*core.Error); ok {
+			return e.Status, e
+		}
 		return http.StatusInternalServerError, copyErr
 	}
 	if closeErr != nil {
-		if errors.Is(closeErr, core.ErrResourceCollection) {
-			return http.StatusConflict, closeErr
+		if e, ok := closeErr.(*core.Error); ok {
+			return e.Status, e
 		}
 		return http.StatusNotFound, closeErr
 	}
 
 	fi, statErr := h.FileSystem.ResourceByPath(reqPath)
 	if statErr != nil {
+		if e, ok := statErr.(*core.Error); ok {
+			return e.Status, e
+		}
 		return http.StatusInternalServerError, statErr
 	}
 	w.Header().Set("ETag", fi.LatestVersion().SHA256)
@@ -307,8 +316,12 @@ func (h *Handler) handleMkcol(_ http.ResponseWriter, r *http.Request) (status in
 		return http.StatusUnsupportedMediaType, nil
 	}
 	if _, err := h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, true, false, core.ResourceBindConflictResolutionError); err != nil {
-		if errors.Is(err, core.ErrParentNotFound) {
-			return http.StatusConflict, err
+		// The regular status for ErrResourceNameConflict is 412, which is not what is expected here.
+		if errors.Is(err, core.ErrResourceNameConflict) {
+			return http.StatusMethodNotAllowed, err
+		}
+		if e, ok := err.(*core.Error); ok {
+			return e.Status, e
 		}
 		return http.StatusMethodNotAllowed, err
 	}
@@ -385,8 +398,8 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 		if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
 			_, err = h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, false, false, core.ResourceBindConflictResolutionEnsure)
 			if err != nil {
-				if errors.Is(err, core.ErrParentNotFound) {
-					return http.StatusConflict, err
+				if e, ok := err.(*core.Error); ok {
+					return e.Status, e
 				}
 				return http.StatusNotFound, err
 			}
@@ -439,8 +452,8 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, request *http.Request) (
 	}
 	fi, err := h.FileSystem.ResourceByPath(reqPath)
 	if err != nil {
-		if errors.Is(err, core.ErrResourceNotFound) {
-			return http.StatusNotFound, err
+		if e, ok := err.(*core.Error); ok {
+			return e.Status, e
 		}
 		return http.StatusMethodNotAllowed, err
 	}
@@ -488,6 +501,9 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, request *http.Request) (
 	walkErr := h.FileSystem.Walk(fi, depth, writePropStat)
 	closeErr := mw.close()
 	if walkErr != nil {
+		if e, ok := walkErr.(*core.Error); ok {
+			return e.Status, e
+		}
 		return http.StatusInternalServerError, walkErr
 	}
 	if closeErr != nil {
@@ -508,8 +524,8 @@ func (h *Handler) handleProppatch(w http.ResponseWriter, r *http.Request) (statu
 	defer release()
 
 	if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-		if errors.Is(err, core.ErrResourceNotFound) {
-			return http.StatusNotFound, err
+		if e, ok := err.(*core.Error); ok {
+			return e.Status, e
 		}
 		return http.StatusMethodNotAllowed, err
 	}
