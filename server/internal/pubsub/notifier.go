@@ -16,7 +16,7 @@ const waitTimeout = 30 * time.Second
 const opTimeout = 10 * time.Second
 
 type Notifier interface {
-	Listen(channel string) Subscription
+	Listen(channel string, bufferSize int, warnOnDrop bool) Subscription
 }
 
 type notifier struct {
@@ -82,7 +82,7 @@ func Get() Notifier {
 	return n
 }
 
-func (n *notifier) Listen(channel string) Subscription {
+func (n *notifier) Listen(channel string, bufferSize int, warnOnDrop bool) Subscription {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
@@ -90,8 +90,9 @@ func (n *notifier) Listen(channel string) Subscription {
 
 	sub := &subscription{
 		channelName: channel,
-		listenChan:  make(chan string, 2),
+		listenChan:  make(chan string, bufferSize),
 		notifier:    n,
+		warnOnDrop:  warnOnDrop,
 	}
 	n.subscriptions[channel] = append(existingSubs, sub)
 
@@ -167,7 +168,9 @@ func (n *notifier) notifyListeners(notification *pgconn.Notification) {
 		select {
 		case sub.listenChan <- notification.Payload:
 		default:
-			n.log.Warn().Str("channel", notification.Channel).Msg("dropped notification")
+			if sub.warnOnDrop {
+				n.log.Warn().Str("channel", notification.Channel).Msg("dropped notification")
+			}
 		}
 	}
 }

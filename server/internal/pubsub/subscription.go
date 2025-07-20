@@ -14,6 +14,7 @@ type subscription struct {
 	channelName string
 	listenChan  chan string
 	notifier    *notifier
+	warnOnDrop  bool
 
 	establishedChan chan struct{}
 	unlistenOnce    sync.Once

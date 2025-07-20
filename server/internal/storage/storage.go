@@ -140,7 +140,7 @@ func restoreBackends(db db.Handler) (map[string]Backend, error) {
 }
 
 func processBackendUpdates(logger zerolog.Logger) {
-	sub := pubsub.Get().Listen("backend_updates")
+	sub := pubsub.Get().Listen("backend_updates", 5, true)
 	for {
 		p := <-sub.NotificationC()
 		var c BackendConfig

@@ -100,6 +100,7 @@ func (c *Client) Run(ctx context.Context) error {
 	runCtx, c.cancelRun = context.WithCancel(ctx)
 	workCtx, c.cancelWork = context.WithCancel(ctx)
 	go c.produceJobs(listenCtx, pubsub.Get())
+	go c.readyJobs(listenCtx)
 	c.consumeJobs(runCtx, workCtx)
 	return ErrShutdown
 }
@@ -216,13 +217,11 @@ func (c *Client) Shutdown(ctx context.Context) error {
 
 func (c *Client) produceJobs(ctx context.Context, notifier pubsub.Notifier) {
 	// Wait until the listener is established
-	subJobInserted := notifier.Listen(channelName)
+	subJobInserted := notifier.Listen(channelName, 1, false)
 	select {
 	case <-subJobInserted.EstablishedC():
 	default:
 	}
-
-	t := time.NewTicker(5 * time.Second)
 
 loop:
 	for {
@@ -234,6 +233,19 @@ loop:
 			case c.jobAvailable <- struct{}{}:
 			default:
 			}
+		}
+	}
+	subJobInserted.Cancel()
+}
+
+func (c *Client) readyJobs(ctx context.Context) {
+	t := time.NewTicker(5 * time.Second)
+
+loop:
+	for {
+		select {
+		case <-ctx.Done():
+			break loop
 		case <-t.C:
 			if n, err := readyScheduledJobs(c.db); err != nil {
 				c.logger.Warn().Err(err).Msg("Error scheduling ready jobs")
@@ -255,7 +267,6 @@ loop:
 			}
 		}
 	}
-	subJobInserted.Cancel()
 }
 
 func (c *Client) consumeJobs(runCtx context.Context, workCtx context.Context) {
