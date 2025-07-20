@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -9,6 +10,7 @@ import 'package:phylum/libphylum/parsers/parsers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/permissions.dart';
 
+part 'api_keys_response.dart';
 part 'bookmark_response.dart';
 part 'bootstrap_login_response.dart';
 part 'empty_response.dart';
