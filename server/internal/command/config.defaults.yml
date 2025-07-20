@@ -50,11 +50,11 @@ auth:
         salt: 32
         key: 32
     requirements:
-      length: 12
-      lower: 1
-      upper: 1
-      numeric: 1
-      symbols: 1
+      length: 8
+      lower: 0
+      upper: 0
+      numeric: 0
+      symbols: 0
     ldap:
       debug: false
       url: ldap://ldap.example.com:1389
