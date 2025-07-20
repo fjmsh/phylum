@@ -3,8 +3,8 @@ import 'dart:typed_data';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 
-class ApiKeysRequest extends ApiRequest {
-  const ApiKeysRequest();
+class ListApiKeysRequest extends ApiRequest {
+  const ListApiKeysRequest();
 
   @override
   BaseRequest createRequest(ApiClient api, {Uint8List? data}) {

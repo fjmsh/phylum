@@ -16,12 +16,12 @@ class ApiKey {
   });
 }
 
-class ApiKeysResponse extends PhylumApiSuccessResponse {
+class ListApiKeysResponse extends PhylumApiSuccessResponse {
   final List<ApiKey> keys;
 
-  ApiKeysResponse._({required this.keys});
+  ListApiKeysResponse._({required this.keys});
 
-  factory ApiKeysResponse.fromResponse(List data) {
+  factory ListApiKeysResponse.fromResponse(List data) {
     final keys = data.cast<Map>().map((map) {
       final k = map.cast<String, dynamic>();
       return ApiKey(
@@ -32,7 +32,7 @@ class ApiKeysResponse extends PhylumApiSuccessResponse {
         scopes: (k['scopes'] as List).cast<String>(),
       );
     }).toList(growable: false);
-    return ApiKeysResponse._(keys: keys);
+    return ListApiKeysResponse._(keys: keys);
   }
 
   @override

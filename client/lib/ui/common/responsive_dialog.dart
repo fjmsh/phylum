@@ -23,7 +23,7 @@ Future showReponsiveDialog(BuildContext context, String title, WidgetBuilder bui
           return AlertDialog(
             title: Text(title),
             scrollable: true,
-            content: SizedBox(width: 360, child: builder(context)),
+            content: SizedBox(width: 480, child: builder(context)),
             actions: [
               ElevatedButton(onPressed: Navigator.of(context).pop, child: Text('OK')),
             ],

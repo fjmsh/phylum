@@ -6,6 +6,7 @@ final _formatYearMonthDate = DateFormat.yMMMd();
 final _formatFullNoYear = DateFormat.MMMd().add_jm();
 final _formatFull = DateFormat.yMMMd().add_jm();
 final _formatNumericDateTime = DateFormat('yyyy-MM-ddTHH:mm:ss');
+// final _formatServer = DateFormat('yyyy-MM-ddTHH:mm:ss\'Z\'00:00');
 
 DateTime get _today {
   final now = DateTime.now();
@@ -33,5 +34,9 @@ extension Formats on DateTime {
 
   String formatNumericDateTime() {
     return _formatNumericDateTime.format(this);
+  }
+
+  String formatServer() {
+    return toUtc().toIso8601String();
   }
 }
