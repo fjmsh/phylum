@@ -36,19 +36,15 @@ func OpenFileSystem(db db.Handler, pathRoot pgtype.UUID, userID int32, userPermi
 func getScopePermissions(scopes []string, id uuid.UUID) (p Permission) {
 	idString := id.String()
 	for _, s := range scopes {
-		if s == "" || s == "*" {
-			return PermissionSU
-		}
-
 		parts := strings.Split(s, ":")
-		if parts[0] == "*" || parts[0] == idString {
-			if len(parts) == 1 || parts[1] == "*" {
+		if len(parts) == 1 || parts[1] == idString || parts[1] == "*" {
+			if parts[0] == "*" || parts[0] == "" {
 				return PermissionSU
-			} else if parts[1] == "read" {
+			} else if parts[0] == "read" {
 				p |= PermissionRead
-			} else if parts[1] == "write" {
+			} else if parts[0] == "write" {
 				p |= PermissionWrite
-			} else if parts[1] == "share" {
+			} else if parts[0] == "share" {
 				p |= PermissionShare
 			}
 		}

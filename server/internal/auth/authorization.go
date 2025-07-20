@@ -67,8 +67,8 @@ func (a *Auth) UserPermissions() core.UserPermissions {
 //
 // Examples:
 //   - "user:profile" is included in "user", which is included in "*"
-//   - "fs:id:read" is included in "fs:id", as well as "fs:*:read"
-//     which are both included in "fs", which itself is included in "*"
+//   - "files:read:id" is included in "files:read", as well as "files:*:id"
+//     which are both included in "files", which itself is included in "*"
 func (a *Auth) HasScope(scope string) bool {
 	parts := strings.Split(scope, ":")
 
@@ -89,14 +89,14 @@ func (a *Auth) GetFileSystem(db db.Handler, rootOverride pgtype.UUID) *core.File
 	if !pathRoot.Valid {
 		pathRoot = a.homeID
 	}
-	var fsScopes []string
+	var scopes []string
 	for _, s := range a.scopes {
-		if s == "*" || s == "fs" {
+		if s == "*" || s == "files" {
 			return core.OpenFileSystem(db, pathRoot, a.userID, a.userPermissions, []string{"*"})
 		}
-		if strings.HasPrefix(s, "fs:") {
-			fsScopes = append(fsScopes, strings.TrimPrefix(s, "fs:"))
+		if strings.HasPrefix(s, "files:") {
+			scopes = append(scopes, strings.TrimPrefix(s, "files:"))
 		}
 	}
-	return core.OpenFileSystem(db, pathRoot, a.userID, a.userPermissions, fsScopes)
+	return core.OpenFileSystem(db, pathRoot, a.userID, a.userPermissions, scopes)
 }
