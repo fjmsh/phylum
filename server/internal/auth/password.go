@@ -38,11 +38,11 @@ func VerifyUserPassword(d db.Handler, email, password string) (Auth, error) {
 	return auth, err
 }
 
-func PerformPasswordLogin(db db.TxHandler, email, password string) (auth Auth, key string, err error) {
+func PerformPasswordLogin(db db.TxHandler, email, password string) (auth Auth, apiToken string, err error) {
 	if auth, err = VerifyUserPassword(db, email, password); err != nil {
 		return
 	} else {
-		key, err = GenerateAPIToken(db, auth.UserID(), pgtype.Timestamptz{}, "Login - Password", []string{"*"})
+		_, _, apiToken, err = GenerateAPIKey(db, auth.UserID(), pgtype.Timestamptz{}, "Login - Password", []string{"*"})
 		return
 	}
 }

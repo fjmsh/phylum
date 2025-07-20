@@ -79,21 +79,13 @@ func setupGenerateCommand() *cobra.Command {
 			}
 
 			if err := db.Get(context.Background()).RunInTx(func(db db.TxHandler) error {
-				if token, _ := cmd.Flags().GetBool("token"); token {
-					if token, err := auth.GenerateAPIToken(db, u.ID, expires, description, scopes); err != nil {
-						return err
-					} else {
-						fmt.Println(token)
-						return nil
-					}
+				if id, key, token, err := auth.GenerateAPIKey(db, u.ID, expires, description, scopes); err != nil {
+					return err
 				} else {
-					if id, key, err := auth.GenerateAPIKey(db, u.ID, expires, description, scopes); err != nil {
-						return err
-					} else {
-						fmt.Println("Key ID:", id)
-						fmt.Println("   Key:", key)
-						return nil
-					}
+					fmt.Println("Key ID:", id)
+					fmt.Println("   Key:", key)
+					fmt.Println(" Token:", token)
+					return nil
 				}
 			}); err != nil {
 				fmt.Println("unable to generate API key: " + err.Error())

@@ -74,19 +74,11 @@ func ReadAPIToken(db db.Handler, encodedKey string) (Auth, error) {
 	}
 }
 
-func GenerateAPIToken(db db.Handler, userID int32, expires pgtype.Timestamptz, description string, scopes []string) (string, error) {
+func GenerateAPIKey(db db.Handler, userID int32, expires pgtype.Timestamptz, description string, scopes []string) (id, key, token string, err error) {
 	if id, key, err := generateAPIKey(db, userID, expires, description, scopes); err != nil {
-		return "", err
+		return "", "", "", err
 	} else {
-		return b64Encoder.EncodeToString(append(id[:], key...)), nil
-	}
-}
-
-func GenerateAPIKey(db db.Handler, userID int32, expires pgtype.Timestamptz, description string, scopes []string) (id, key string, err error) {
-	if id, key, err := generateAPIKey(db, userID, expires, description, scopes); err != nil {
-		return "", "", err
-	} else {
-		return id.String(), b32Encoder.EncodeToString(key), nil
+		return id.String(), b32Encoder.EncodeToString(key), b64Encoder.EncodeToString(append(id[:], key...)), nil
 	}
 }
 

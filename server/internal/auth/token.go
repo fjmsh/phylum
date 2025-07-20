@@ -53,7 +53,7 @@ func CreateLoginToken(db db.TxHandler, email string) (core.User, string, error) 
 	return user, b32Encoder.EncodeToString(append(tokenID[:], token...)), nil
 }
 
-func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (a Auth, key string, err error) {
+func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (a Auth, apiToken string, err error) {
 	const q = "DELETE FROM pending_logins WHERE token_id = @token_id AND token_hash = @token_hash AND user_id IS NOT NULL RETURNING user_id, expires"
 	hash := sha256.Sum256([]byte(token))
 	args := pgx.NamedArgs{
@@ -75,7 +75,7 @@ func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (a Auth
 		return
 	} else if user, err = core.UserByID(db, userID); err != nil {
 		return
-	} else if key, err = GenerateAPIToken(db, userID, pgtype.Timestamptz{}, "Login - Token", []string{"*"}); err != nil {
+	} else if _, _, apiToken, err = GenerateAPIKey(db, userID, pgtype.Timestamptz{}, "Login - Token", []string{"*"}); err != nil {
 		return
 	} else {
 		a = auth{
