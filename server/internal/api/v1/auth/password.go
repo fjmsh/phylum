@@ -27,7 +27,7 @@ func handlePasswordLogin(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Email or password not specified"))
 	}
 
-	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, string, error) {
+	loginAndSendResponse(c, func(db db.TxHandler) (*auth.Auth, string, error) {
 		return auth.PerformPasswordLogin(db, params.Email, params.Password)
 	})
 }
@@ -92,7 +92,7 @@ func handlePasswordReset(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
 	}
 
-	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, string, error) {
+	loginAndSendResponse(c, func(db db.TxHandler) (*auth.Auth, string, error) {
 		return auth.ResetUserPassword(db, params.Email, params.Token, params.Password)
 	})
 }

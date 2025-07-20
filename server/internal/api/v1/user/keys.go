@@ -82,7 +82,9 @@ func handleKeysGenerate(c *gin.Context) {
 		expires.Time = params.Expires
 		expires.Valid = true
 	}
-	if id, key, token, err := auth.GenerateAPIKey(db.Get(c.Request.Context()), a.UserID(), expires, params.Description, params.Scopes); err != nil {
+	if a, err := auth.NewAuth(a, expires, params.Scopes); err != nil {
+		panic(err)
+	} else if id, key, token, err := auth.GenerateAPIKey(db.Get(c.Request.Context()), a, params.Description); err != nil {
 		panic(err)
 	} else {
 		c.JSON(200, gin.H{

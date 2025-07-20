@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
@@ -8,29 +9,57 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Auth interface {
-	UserID() int32
-	UserPermissions() core.UserPermissions
-	HasScope(scope string) bool
-	GetFileSystem(db db.Handler, rootOverride pgtype.UUID) *core.FileSystem
-}
-
-type auth struct {
+type Auth struct {
 	userID          int32
 	userPermissions core.UserPermissions
-	homeID          pgtype.UUID // TODO: Make sure this is specified everywhere
+	homeID          pgtype.UUID
+	expires         pgtype.Timestamptz
 	scopes          []string
 }
 
-func (a auth) UserID() int32 {
+func NewSUAuth(user core.User) *Auth {
+	return &Auth{
+		userID:          user.ID,
+		userPermissions: user.Permissions,
+		homeID:          user.Home,
+		expires:         pgtype.Timestamptz{},
+		scopes:          []string{"*"},
+	}
+}
+
+func NewAuth(auth *Auth, expires pgtype.Timestamptz, scopes []string) (*Auth, error) {
+	if len(scopes) == 0 {
+		return nil, errors.New("must specify at least one scope")
+	}
+
+	// Make sure the generated key doesn't expire after the key that generated it
+	if auth.expires.Valid && (!expires.Valid || expires.Time.After(auth.expires.Time)) {
+		expires = auth.expires
+	}
+	for _, s := range scopes {
+		if !auth.HasScope(s) {
+			return nil, errors.New("cannot grant scopes that are not present")
+		}
+	}
+
+	return &Auth{
+		userID:          auth.userID,
+		userPermissions: auth.userPermissions,
+		homeID:          auth.homeID,
+		expires:         expires,
+		scopes:          scopes,
+	}, nil
+}
+
+func (a *Auth) UserID() int32 {
 	return a.userID
 }
 
-func (a auth) UserPermissions() core.UserPermissions {
+func (a *Auth) UserPermissions() core.UserPermissions {
 	return a.userPermissions
 }
 
-func (a auth) HasScope(scope string) bool {
+func (a *Auth) HasScope(scope string) bool {
 	for _, s := range a.scopes {
 		if s == "*" {
 			return true
@@ -39,7 +68,7 @@ func (a auth) HasScope(scope string) bool {
 	return false
 }
 
-func (a auth) GetFileSystem(db db.Handler, rootOverride pgtype.UUID) *core.FileSystem {
+func (a *Auth) GetFileSystem(db db.Handler, rootOverride pgtype.UUID) *core.FileSystem {
 	pathRoot := rootOverride
 	if !pathRoot.Valid {
 		pathRoot = a.homeID

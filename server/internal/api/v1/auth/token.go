@@ -20,7 +20,7 @@ func handleTokenLogin(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "missing_params", "login token not specified"))
 	}
 
-	loginAndSendResponse(c, func(db db.TxHandler) (auth.Auth, string, error) {
+	loginAndSendResponse(c, func(db db.TxHandler) (*auth.Auth, string, error) {
 		return auth.PerformTokenLogin(db, params.Token)
 	})
 }

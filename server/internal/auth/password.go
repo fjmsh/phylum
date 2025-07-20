@@ -6,7 +6,6 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type PasswordBackend interface {
@@ -15,7 +14,7 @@ type PasswordBackend interface {
 	UpdateUserPassword(db db.Handler, email, password string) error
 }
 
-func VerifyUserPassword(d db.Handler, email, password string) (Auth, error) {
+func VerifyUserPassword(d db.Handler, email, password string) (*Auth, error) {
 	email = strings.ToLower(email)
 	if b, err := passwordBackend.VerifyUserPassword(d, email, password); err != nil {
 		return nil, err
@@ -29,20 +28,14 @@ func VerifyUserPassword(d db.Handler, email, password string) (Auth, error) {
 			return err
 		})
 	}
-	auth := auth{
-		userID:          user.ID,
-		homeID:          user.Home,
-		userPermissions: user.Permissions,
-		scopes:          []string{"*"},
-	}
-	return auth, err
+	return NewSUAuth(user), err
 }
 
-func PerformPasswordLogin(db db.TxHandler, email, password string) (auth Auth, apiToken string, err error) {
+func PerformPasswordLogin(db db.TxHandler, email, password string) (auth *Auth, apiToken string, err error) {
 	if auth, err = VerifyUserPassword(db, email, password); err != nil {
 		return
 	} else {
-		_, _, apiToken, err = GenerateAPIKey(db, auth.UserID(), pgtype.Timestamptz{}, "Login - Password", []string{"*"})
+		_, _, apiToken, err = GenerateAPIKey(db, auth, "Login - Password")
 		return
 	}
 }

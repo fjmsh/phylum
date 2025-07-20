@@ -63,7 +63,7 @@ func scanAPIKey(row pgx.CollectableRow) (APIKey, error) {
 	return apiKey, err
 }
 
-func ReadAPIToken(db db.Handler, encodedKey string) (Auth, error) {
+func ReadAPIToken(db db.Handler, encodedKey string) (*Auth, error) {
 	if b, err := b64Encoder.DecodeString(encodedKey); err != nil {
 		return nil, ErrCredentialsInvalid
 	} else if len(b) < 16 {
@@ -74,15 +74,7 @@ func ReadAPIToken(db db.Handler, encodedKey string) (Auth, error) {
 	}
 }
 
-func GenerateAPIKey(db db.Handler, userID int32, expires pgtype.Timestamptz, description string, scopes []string) (id, key, token string, err error) {
-	if id, key, err := generateAPIKey(db, userID, expires, description, scopes); err != nil {
-		return "", "", "", err
-	} else {
-		return id.String(), b32Encoder.EncodeToString(key), b64Encoder.EncodeToString(append(id[:], key...)), nil
-	}
-}
-
-func ReadAPIKey(db db.Handler, keyIDStr, keyStr string) (Auth, error) {
+func ReadAPIKey(db db.Handler, keyIDStr, keyStr string) (*Auth, error) {
 	if keyID, err := uuid.Parse(keyIDStr); err != nil {
 		return nil, err
 	} else if key, err := b32Encoder.DecodeString(keyStr); err != nil {
@@ -92,39 +84,40 @@ func ReadAPIKey(db db.Handler, keyIDStr, keyStr string) (Auth, error) {
 	}
 }
 
-func readAPIKey(db db.Handler, keyID uuid.UUID, key []byte) (Auth, error) {
+func readAPIKey(db db.Handler, keyID uuid.UUID, key []byte) (auth *Auth, err error) {
 	const q = `SELECT k.expires, u.id, u.permissions, u.home, k.scopes FROM api_keys k JOIN users u ON k.user_id = u.id WHERE k.id = $1 AND k.hash = $2`
 	hash := sha256.Sum256(key)
 	row := db.QueryRow(q, keyID, hash[:])
 
-	var expires pgtype.Timestamp
-	var auth auth
-	err := row.Scan(&expires, &auth.userID, &auth.userPermissions, &auth.homeID, &auth.scopes)
+	auth = new(Auth)
+	err = row.Scan(&auth.expires, &auth.userID, &auth.userPermissions, &auth.homeID, &auth.scopes)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrCredentialsInvalid
 		}
-		return nil, err
-	} else if expires.Valid && time.Now().After(expires.Time) {
-		return nil, ErrCredentialsInvalid
+	} else if auth.expires.Valid && time.Now().After(auth.expires.Time) {
+		err = ErrCredentialsInvalid
 	}
-	return auth, nil
+	return
 }
 
-func generateAPIKey(db db.Handler, userID int32, expires pgtype.Timestamptz, description string, scopes []string) (id uuid.UUID, key []byte, err error) {
+func GenerateAPIKey(db db.Handler, auth *Auth, description string) (string, string, string, error) {
 	const q = `INSERT INTO api_keys(id, expires, user_id, hash, description, scopes) VALUES (@id, @expires, @user_id, @hash, @description, @scopes)`
 
-	id, _ = uuid.NewV7()
-	key = generateSecureKey(apiKeyLength)
+	id, _ := uuid.NewV7()
+	key := generateSecureKey(apiKeyLength)
 	hash := sha256.Sum256(key)
 	args := pgx.NamedArgs{
 		"id":          id,
-		"expires":     expires,
-		"user_id":     userID,
+		"expires":     auth.expires,
+		"user_id":     auth.userID,
 		"hash":        hash[:],
 		"description": description,
-		"scopes":      scopes,
+		"scopes":      auth.scopes,
 	}
-	_, err = db.Exec(q, args)
-	return
+
+	if _, err := db.Exec(q, args); err != nil {
+		return "", "", "", err
+	}
+	return id.String(), b32Encoder.EncodeToString(key), b64Encoder.EncodeToString(append(id[:], key...)), nil
 }

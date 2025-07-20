@@ -18,12 +18,12 @@ var errCredentialsInvalid = core.NewError(http.StatusUnauthorized, "credentials_
 
 const keyAuth = "auth"
 
-func GetAuth(c *gin.Context) auth.Auth {
+func GetAuth(c *gin.Context) *auth.Auth {
 	val, ok := c.Get(keyAuth)
 	if !ok {
 		return nil
 	}
-	return val.(auth.Auth)
+	return val.(*auth.Auth)
 }
 func GetFileSystem(c *gin.Context) *core.FileSystem {
 	return GetAuth(c).GetFileSystem(db.Get(c), pgtype.UUID{})
@@ -37,7 +37,7 @@ func Require(c *gin.Context) {
 	}
 }
 
-func getAuth(c *gin.Context) (auth.Auth, error) {
+func getAuth(c *gin.Context) (*auth.Auth, error) {
 	db := db.Get(c.Request.Context())
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		if cookie, err := c.Request.Cookie("api_token"); err == nil {
@@ -56,7 +56,7 @@ func getAuth(c *gin.Context) (auth.Auth, error) {
 		return nil, errCredentialsInvalid
 	} else if authHeader, ok := checkAuthHeader(header, "basic"); ok {
 		if keyIDStr, keyStr, ok := decodeBasicAuth(authHeader); ok {
-			var a auth.Auth
+			var a *auth.Auth
 			var err error
 
 			if keyIDStr == "" {

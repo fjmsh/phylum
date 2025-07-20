@@ -44,7 +44,7 @@ func (h *handler) HandleRequest(c *gin.Context) {
 	if keyIDStr, keyStr, ok := c.Request.BasicAuth(); ok {
 		ctx := c.Request.Context()
 		db := db.Get(ctx)
-		var a auth.Auth
+		var a *auth.Auth
 		var err error
 
 		if keyIDStr == "" {

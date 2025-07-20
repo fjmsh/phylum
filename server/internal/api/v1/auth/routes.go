@@ -79,12 +79,12 @@ func getInstanceURL(req *http.Request, path string) string {
 	return uri.String()
 }
 
-func loginAndSendResponse(c *gin.Context, loginFn func(db.TxHandler) (auth.Auth, string, error)) {
+func loginAndSendResponse(c *gin.Context, loginFn func(db.TxHandler) (*auth.Auth, string, error)) {
 	var err error
 	var key string
 	var response responses.Bootstrap
 	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
-		var a auth.Auth
+		var a *auth.Auth
 		if a, key, err = loginFn(db); err != nil {
 			if errors.Is(err, auth.ErrCredentialsInvalid) {
 				return core.NewError(http.StatusUnauthorized, "credentials_invalid", "invalid credentials")

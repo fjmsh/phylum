@@ -10,10 +10,9 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func PerformTokenLogin(db db.TxHandler, encodedToken string) (Auth, string, error) {
+func PerformTokenLogin(db db.TxHandler, encodedToken string) (*Auth, string, error) {
 	if b, err := b32Encoder.DecodeString(encodedToken); err != nil {
 		return nil, "", ErrCredentialsInvalid
 	} else if len(b) < 16 {
@@ -53,7 +52,7 @@ func CreateLoginToken(db db.TxHandler, email string) (core.User, string, error) 
 	return user, b32Encoder.EncodeToString(append(tokenID[:], token...)), nil
 }
 
-func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (a Auth, apiToken string, err error) {
+func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (auth *Auth, apiToken string, err error) {
 	const q = "DELETE FROM pending_logins WHERE token_id = @token_id AND token_hash = @token_hash AND user_id IS NOT NULL RETURNING user_id, expires"
 	hash := sha256.Sum256([]byte(token))
 	args := pgx.NamedArgs{
@@ -75,15 +74,9 @@ func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (a Auth
 		return
 	} else if user, err = core.UserByID(db, userID); err != nil {
 		return
-	} else if _, _, apiToken, err = GenerateAPIKey(db, userID, pgtype.Timestamptz{}, "Login - Token", []string{"*"}); err != nil {
-		return
 	} else {
-		a = auth{
-			userID:          user.ID,
-			homeID:          user.Home,
-			userPermissions: user.Permissions,
-			scopes:          []string{"*"},
-		}
+		auth = NewSUAuth(user)
+		_, _, apiToken, err = GenerateAPIKey(db, auth, "Login - Token")
 		return
 	}
 }

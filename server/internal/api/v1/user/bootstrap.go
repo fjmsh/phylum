@@ -32,7 +32,7 @@ func handleBootstrapRoute(c *gin.Context) {
 	}
 }
 
-func Bootstrap(ctx context.Context, auth auth.Auth, since int64) (responses.Bootstrap, error) {
+func Bootstrap(ctx context.Context, auth *auth.Auth, since int64) (responses.Bootstrap, error) {
 	if !auth.HasScope("bookmarks:list") || !auth.HasScope("users:list") || !auth.HasScope("profile:read") {
 		return responses.Bootstrap{}, core.ErrInsufficientScope
 	}

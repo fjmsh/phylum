@@ -10,7 +10,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) {
@@ -35,7 +34,7 @@ func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) 
 
 }
 
-func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (a Auth, apiToken string, err error) {
+func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (auth *Auth, apiToken string, err error) {
 	if passwordBackend == nil || !passwordBackend.SupportsPasswordUpdate() {
 		err = errors.New("password update not supported")
 		return
@@ -76,13 +75,8 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (a A
 		return
 	}
 
-	a = auth{
-		userID:          user.ID,
-		homeID:          user.Home,
-		userPermissions: user.Permissions,
-		scopes:          []string{"*"},
-	}
-	_, _, apiToken, err = GenerateAPIKey(db, user.ID, pgtype.Timestamptz{}, "Login - Password Reset", []string{"*"})
+	auth = NewSUAuth(user)
+	_, _, apiToken, err = GenerateAPIKey(db, auth, "Login - Password Reset")
 	return
 }
 
