@@ -9,6 +9,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/command/common"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/spf13/cobra"
 )
 
@@ -40,6 +41,9 @@ func setupSetfaclCommand() *cobra.Command {
 					fmt.Println("cannot update permissions for '" + path + "': " + err.Error())
 					os.Exit(1)
 				}
+				go func() {
+					mail.SendResourceShareEmail(user, r)
+				}()
 			}
 
 		},

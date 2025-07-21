@@ -3,6 +3,7 @@ package mail
 import (
 	"errors"
 	"io"
+	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/rs/zerolog"
@@ -44,23 +45,31 @@ func SendWelcomeEmail(u core.User) error {
 }
 
 func SendPasswordResetEmail(u core.User, token string) error {
-	return send(emails["password_reset"], u, map[string]string{
+	return send(emails["password_reset"], u, map[string]any{
 		"token": token,
 	})
 }
 
 func SendTokenLoginEmail(u core.User, token string) error {
-	return send(emails["token_login"], u, map[string]string{
+	return send(emails["token_login"], u, map[string]any{
 		"token": token,
 	})
 }
 
-func send(e Email, rcpt core.User, params map[string]string) error {
+func SendResourceShareEmail(u core.User, r core.Resource) error {
+	return send(emails["resource_share"], u, map[string]any{
+		"resource_name": r.Name(),
+		"resource_id":   r.ID().String(),
+		"resource_dir":  r.Dir(),
+	})
+}
+
+func send(e Email, rcpt core.User, params map[string]any) error {
 	if dialer == nil {
 		return ErrEmailNotConfigured
 	}
 	if params == nil {
-		params = make(map[string]string)
+		params = make(map[string]any)
 	}
 	params["name"] = rcpt.Name
 	params["email"] = rcpt.Email
@@ -72,7 +81,11 @@ func send(e Email, rcpt core.User, params map[string]string) error {
 	msg := gomail.NewMessage()
 	msg.SetAddressHeader("From", from.Email, from.Name)
 	msg.SetAddressHeader("To", rcpt.Email, rcpt.Name)
-	msg.SetHeader("Subject", e.Subject)
+
+	sb := strings.Builder{}
+	e.Subject.Execute(&sb, params)
+	msg.SetHeader("Subject", sb.String())
+
 	msg.SetBodyWriter("text/plain", func(w io.Writer) error {
 		return e.Plain.ExecuteTemplate(w, "base", params)
 	})

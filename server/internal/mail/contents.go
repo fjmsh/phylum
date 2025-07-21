@@ -15,7 +15,7 @@ var baseFS embed.FS
 var emails = make(map[string]Email)
 
 type Email struct {
-	Subject string
+	Subject *template.Template
 	Plain   *template.Template
 	HTML    *template.Template
 }
@@ -38,6 +38,10 @@ func init() {
 	for _, e := range dir {
 		name := e.Name()
 		subject, err := contentsFS.ReadFile(path.Join(dirName, name, "subject"))
+		if err != nil {
+			panic(err)
+		}
+		subjectTemplate, err := template.New("").Parse(string(subject))
 		if err != nil {
 			panic(err)
 		}
@@ -67,9 +71,8 @@ func init() {
 		if err != nil {
 			panic(err)
 		}
-
 		emails[name] = Email{
-			Subject: string(subject),
+			Subject: subjectTemplate,
 			Plain:   textTemplate,
 			HTML:    htmlTemplate,
 		}

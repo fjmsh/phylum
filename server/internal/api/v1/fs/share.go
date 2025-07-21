@@ -5,6 +5,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
 )
 
@@ -39,6 +40,9 @@ func handleShareRequest(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
+	go func() {
+		mail.SendResourceShareEmail(user, r)
+	}()
 
 	c.JSON(200, responses.ResourceFromFS(r))
 }

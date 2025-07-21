@@ -1,0 +1,7 @@
+{{define "contents"}}
+Someone shared {{.resource_name}} with you. You can access it at the URL below:
+
+https://app.phylum.cloud/open/{{.resource_id}}?instance={{.instance}}
+https://app.phylum.cloud/{{if .resource_dir}}folder{{else}}file{{end}}/{{.resource_id}}?instance={{.instance}}
+
+{{end}}
