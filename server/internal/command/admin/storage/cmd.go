@@ -79,7 +79,7 @@ func setupCreateCommand() *cobra.Command {
 				fmt.Println("selection out of range")
 				os.Exit(1)
 			} else {
-				driver = drivers[i]
+				driver = drivers[i-1]
 			}
 		}
 
