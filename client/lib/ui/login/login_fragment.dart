@@ -59,7 +59,7 @@ class _LoginFragmentState extends State<LoginFragment> {
                       onChanged: (value) => setState(() => _email = value.trim()),
                     ),
                   ),
-                  if (widget.instanceConfig.magicLink)
+                  if (widget.instanceConfig.magicLinks)
                     IconButton(
                       icon: Icon(
                         Icons.link,

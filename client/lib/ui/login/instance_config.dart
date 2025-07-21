@@ -4,16 +4,16 @@ class InstanceConfig {
   final Uri url;
   final bool password;
   final bool passwordReset;
-  final bool magicLink;
+  final bool magicLinks;
   final List<OpenIDProvider> openIDProviders;
 
-  bool get email => password || magicLink;
+  bool get email => password || magicLinks;
 
   InstanceConfig(
       {required this.url,
       required this.password,
       required this.passwordReset,
-      required this.magicLink,
+      required this.magicLinks,
       required this.openIDProviders});
 
   factory InstanceConfig.fromResponse(Uri url, String responseString) {
@@ -23,7 +23,7 @@ class InstanceConfig {
       url: url,
       password: config['password'],
       passwordReset: config['password_reset'],
-      magicLink: config['magic_link'],
+      magicLinks: config['magic_links'],
       openIDProviders:
           providers.map((e) => OpenIDProvider.fromResponse(url, e.cast<String, dynamic>())).toList(growable: false),
     );
