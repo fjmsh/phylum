@@ -30,7 +30,7 @@ auth:
     # - "*@example.com"
     # - "user@example.com"
     # - "user*@example.com"
-  magic_link: true
+  magic_links: true
   password:
     # backend is one of crypt, ldap, or none
     backend: crypt

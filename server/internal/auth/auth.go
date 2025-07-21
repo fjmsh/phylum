@@ -51,7 +51,7 @@ func OpenIDProviders() []openid.Provider {
 
 func Initialize(cfg Config, log zerolog.Logger) error {
 	passwordRequirements = cfg.Password.Requirements
-	magicLinksEnabled = cfg.MagicLink
+	magicLinksEnabled = cfg.MagicLinks
 
 	if cfg.Password.Backend == "crypt" {
 		if crypt, err := crypt.New(cfg.Password.Crypt); err != nil {

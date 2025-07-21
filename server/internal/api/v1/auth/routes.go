@@ -20,7 +20,7 @@ import (
 var passwordConfigResponse struct {
 	Password        bool              `json:"password"`
 	PasswordReset   bool              `json:"password_reset"`
-	MagicLink       bool              `json:"magic_link"`
+	MagicLink       bool              `json:"magic_links"`
 	OpenIDProviders []openid.Provider `json:"openid_providers"`
 }
 

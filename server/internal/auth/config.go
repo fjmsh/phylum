@@ -9,7 +9,7 @@ import (
 type Config struct {
 	AutoCreate []string       `koanf:"auto_create"`
 	Password   PasswordConfig `koanf:"password"`
-	MagicLink  bool           `koanf:"magic_link"`
+	MagicLinks bool           `koanf:"magic_links"`
 	OpenID     openid.Config  `koanf:"openid"`
 }
 
