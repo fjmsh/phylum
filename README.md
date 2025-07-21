@@ -6,9 +6,15 @@ Phylum
 
 Phylum is a self-hosted file storage platform with offline-first web and native clients, meant as a replacement for Google Drive, Dropbox, etc. It is licensed under GNU Affero GPL 3.0, and is intended to be forever free and non-commercial.
 
-> [!WARNING]  
-> This project is under very active development, and no guarantees can be made about stability and backward-compatibility.
-> Don't even think about putting the only copy of any data that you care about.
+
+Phylum is for you if you want:
+- [x] To own your data (unlike Google Drive/Dropbox)
+- [x] A file browser with selective sync (unlike Syncthing)
+- [x] A feature-rich file manager with native apps (unlike FileBrowser)
+- [x] A fast and sleek file manager - nothing more, nothing less (unlike NextCloud)
+- [x] To support free software without mixed-licensing or paywalls (unlike Seafile) 
+- [x] Something like Immich, but for files
+- [x] For the time being: something that is not fully baked
 
 
 - [Features](#features)
@@ -17,6 +23,9 @@ Phylum is a self-hosted file storage platform with offline-first web and native 
 - [Help and Contributing](#help-and-contributing)
 - [Screenshots](#screenshots)
 
+> [!WARNING]  
+> This project is under very active development, and no guarantees can be made about stability and backward-compatibility.
+> Don't even think about putting the only copy of any data that you care about.
 
 
 ## Features
