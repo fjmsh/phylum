@@ -15,7 +15,7 @@ import (
 
 func setupPasswdCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "passwd email",
+		Use:   "passwd <email>",
 		Short: "Change Password",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
