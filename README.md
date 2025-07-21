@@ -48,8 +48,8 @@ wget https://codeberg.org/shroff/phylum/src/branch/main/compose.yml
 # create a new DB password and put it into .env
 echo "PHYLUM_DB_PASSWORD=$(head -c 32 /dev/urandom | md5sum | cut -d ' ' -f 1)" > .env
 # Create data/config.yml
-touch data/config.yml
-# Spin it up and start to print the logs
+mkdir -p data && touch data/config.yml
+# Spin it up and show logs
 docker compose up -d && docker compose logs -f
 ```
 
