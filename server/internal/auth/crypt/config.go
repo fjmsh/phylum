@@ -6,7 +6,7 @@ import (
 )
 
 type Config struct {
-	Hash   string        `koanf:"hash"`
+	KDF    string        `koanf:"kdf"`
 	Argon2 argon2.Config `koanf:"argon2"`
 	PBKDF2 pbkdf2.Config `koanf:"pbkdf2"`
 }

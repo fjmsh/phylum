@@ -36,8 +36,8 @@ auth:
     backend: crypt
     reset_enabled: true
     crypt:
-      # hash is either argon2 or pbkdf2
-      hash: argon2
+      # kdf is either argon2 or pbkdf2
+      kdf: argon2
       argon2: 
         memory: 18      # 2 ^ 18 = 256M
         iterations: 4

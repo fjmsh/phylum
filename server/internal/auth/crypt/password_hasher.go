@@ -12,15 +12,15 @@ type PasswordHasher interface {
 }
 
 func NewPasswordHasher(cfg Config) (PasswordHasher, error) {
-	if cfg.Hash == "argon2" {
+	if cfg.KDF == "argon2" {
 		return argon2.New(cfg.Argon2), nil
-	} else if cfg.Hash == "pbkdf2" {
+	} else if cfg.KDF == "pbkdf2" {
 		generator, err := pbkdf2.New(cfg.PBKDF2)
 		if err != nil {
 			return nil, errors.New("failed to create PBKDF2 hash generator: " + err.Error())
 		}
 		return generator, nil
 	} else {
-		return nil, errors.New("unrecognized hashing algorithm: " + cfg.Hash)
+		return nil, errors.New("unrecognized hashing algorithm: " + cfg.KDF)
 	}
 }

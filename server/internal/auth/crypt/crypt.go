@@ -16,16 +16,16 @@ type Crypt struct {
 
 func New(cfg Config) (*Crypt, error) {
 	var generator PasswordHasher
-	if cfg.Hash == "argon2" {
+	if cfg.KDF == "argon2" {
 		generator = argon2.New(cfg.Argon2)
-	} else if cfg.Hash == "pbkdf2" {
+	} else if cfg.KDF == "pbkdf2" {
 		var err error
 		generator, err = pbkdf2.New(cfg.PBKDF2)
 		if err != nil {
 			return nil, errors.New("failed to create PBKDF2 hash generator: " + err.Error())
 		}
 	} else {
-		return nil, errors.New("unrecognized hashing algorithm: " + cfg.Hash)
+		return nil, errors.New("unrecognized hashing algorithm: " + cfg.KDF)
 	}
 
 	return &Crypt{
