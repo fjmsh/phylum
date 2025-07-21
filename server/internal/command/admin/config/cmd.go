@@ -3,14 +3,12 @@ package config
 import (
 	"fmt"
 	"os"
-	"syscall"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt/argon2"
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt/pbkdf2"
 	"github.com/spf13/cobra"
-	"golang.org/x/term"
 )
 
 func SetupCommand() *cobra.Command {
@@ -55,14 +53,6 @@ Please also note that inceasing m will require exponentially more memory.
  - m=18 = 256MB`,
 	}
 	cmd.Run = func(cmd *cobra.Command, args []string) {
-		os.Stdout.WriteString("Input: ")
-		bytes, err := term.ReadPassword(syscall.Stdin)
-		os.Stdout.WriteString("\n")
-		if err != nil {
-			fmt.Println("unable to read input: " + err.Error())
-
-		}
-
 		m, _ := cmd.Flags().GetUint8("memory")
 		t, _ := cmd.Flags().GetUint32("iterations")
 		p, _ := cmd.Flags().GetUint8("parallelism")
@@ -75,8 +65,7 @@ Please also note that inceasing m will require exponentially more memory.
 			Salt:        s,
 			Key:         k,
 		})
-		src := string(bytes)
-
+		src := "test"
 		start := time.Now()
 		hash, err := a.GenerateEncodedHash(src)
 		hashTime := time.Since(start)
@@ -85,10 +74,14 @@ Please also note that inceasing m will require exponentially more memory.
 			os.Exit(1)
 		}
 
-		fmt.Println(hash)
-		fmt.Printf("%dms\n", hashTime.Milliseconds())
+		if hashTime.Milliseconds() < 5 {
+			fmt.Printf("Took %dus\n", hashTime.Microseconds())
+		} else {
+			fmt.Printf("Took %dms\n", hashTime.Milliseconds())
+		}
+
 		if hashTime.Milliseconds() < 300 {
-			fmt.Println("Use these params at your own risk. Password hashing should take at least 300ms")
+			fmt.Println("Ideally, password hashing should take at least 300ms")
 		}
 
 		if ok, err := crypt.VerifyPasswordHash(src, hash); err != nil {
@@ -115,14 +108,6 @@ func setupPBKDF2Command() *cobra.Command {
 		Short: "PBKDF2 Key Generation Timing",
 	}
 	cmd.Run = func(cmd *cobra.Command, args []string) {
-		os.Stdout.WriteString("Input: ")
-		bytes, err := term.ReadPassword(syscall.Stdin)
-		os.Stdout.WriteString("\n")
-		if err != nil {
-			fmt.Println("unable to read input: " + err.Error())
-
-		}
-
 		fn, _ := cmd.Flags().GetString("hash-function")
 		n, _ := cmd.Flags().GetInt("iterations")
 		s, _ := cmd.Flags().GetUint32("salt-len")
@@ -137,7 +122,7 @@ func setupPBKDF2Command() *cobra.Command {
 			fmt.Println("failed to generate hash: " + err.Error())
 			os.Exit(1)
 		}
-		src := string(bytes)
+		src := string("test")
 
 		start := time.Now()
 		hash, err := a.GenerateEncodedHash(src)
@@ -147,8 +132,15 @@ func setupPBKDF2Command() *cobra.Command {
 			os.Exit(1)
 		}
 
-		fmt.Println(hash)
-		fmt.Printf("%dus\n", hashTime.Microseconds())
+		if hashTime.Milliseconds() < 5 {
+			fmt.Printf("Took %dus\n", hashTime.Microseconds())
+		} else {
+			fmt.Printf("Took %dms\n", hashTime.Milliseconds())
+		}
+
+		if hashTime.Milliseconds() < 300 {
+			fmt.Println("Ideally, password hashing should take at least 300ms")
+		}
 
 		if ok, err := crypt.VerifyPasswordHash(src, hash); err != nil {
 			fmt.Println("error while verifying password hash: " + err.Error())
