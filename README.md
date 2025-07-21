@@ -9,111 +9,53 @@ Phylum is a self-hosted file storage platform with offline-first web and native 
 Fair warning: Phylum is under very active development. Don't even think about putting the only copy of any data that you care about.
 
 - [Features](#features)
-  * [Screenshots](#screenshots)
-  * [Roadmap](#roadmap)
 - [Quick Start](#quick-start)
-  * [Using Compose (Podman, Docker)](#using-compose-podman-docker)
-  * [Local build](#local-build)
-  * [Help](#help)
 - [CLI](#cli)
-- [Configuration and Management](#configuration-and-management)
-  * [Adding users](#adding-users)
-    + [Permissions](#permissions)
-  * [Auth Backends](#auth-backends)
-    + [LDAP](#ldap)
-    + [OpenID (OAuth)](#openid-oauth)
-  * [Content Storage](#content-storage)
-  * [Version History](#version-history)
-  * [WebDAV](#webdav)
-  * [Keyboard shortcuts](#keyboard-shortcuts)
+- [Help](#help)
+- [Screenshots](#screenshots)
 - [Development](#development)
-  * [Server](#server)
-  * [API](#api)
-  * [Client](#client)
-    + [Web](#web)
 
 
 ## Features
 
-- Offline-first native clients (*)
-  * Keyboard navigation
-  * Drag and Drop
-  * Designed to work well with unreliable/no internet connection. Changes are synced on regaining connectivity
-- Public shares with password protection and expiration
-- Users and permissions
-- WebDAV-compatible
-- File version history
-- Remote storage backends
-- Auth backends (LDAP, OAuth)
+- Native clients which are designed to work well with unreliable/no internet connection (*)
+- Users and [Permissions](wiki/Permissions)
+- [File version history](wiki/Version-History)
+- [Remote storage backends](wiki/Content-Storage)
+- [Auth backends (LDAP, OIDC)](wiki/User-Authentication)
+- [WebDAV access](wiki/WebDAV)
+- Publicly share files/folders
 
 *: Not yet built/tested on MacOS, iOS, and Windows. 
 
-+: Not all shortcuts work on web
-
-
-### Screenshots
-
-![Desktop Screnshot](https://codeberg.org/shroff/phylum/raw/commit/b5c0db5f5981ace52d681039ba1cf352d5e5e90e/screenshots/desktop.png)
-
-![Mobile Screenshot](https://codeberg.org/shroff/phylum/raw/commit/b5c0db5f5981ace52d681039ba1cf352d5e5e90e/screenshots/mobile.png)
-
-Note: Please do not try to use multiple instances of the same client on one device (i.e. multiple instances of the desktop app). Doing so will result in unexpected behavior, and possibly corrupt local data. It should not, however, have any impact on the remote server or the integrity its data. The web use-case is handled gracefully, though, so there is no need to worry about accidentally opening another tab.
-
-
-### Roadmap
-
-Here is a list of what is planned, in rough order:
- - macOS/iOS clients
- - Login via magic link (no password)
- - Grid icon view with thumbnails
- - Links / Shortcuts
- - Version management (auto/manual delete old versions)
- - Bookmark management
- - User management (list, update display name/avatar)
- - Share with all users
- - Background uploads on mobile
- - In-app share notifications
- - Easy db backup
- - Extended metadata (media length, pages, etc.)
- - View more files (audio, video, ebooks)
- - Offline sync
- - Sync full directory tree metadata
- - 2-way folder sync
- - Storage Quota 
- - Groups
-
-
 ## Quick-Start
 
-### Using Compose (Podman, Docker)
+```
+# download compose.yml
+wget https://codeberg.org/shroff/phylum/src/branch/main/compose.yml 
+# create a new DB password and put it into .env
+echo "PHYLUM_DB_PASSWORD=$(head -c 32 /dev/urandom | md5sum | cut -d ' ' -f 1)" > .env
+# Create data/config.yml
+touch data/config.yml
+# Spin it up and start to print the logs
+docker compose up -d && docker compose logs -f
+```
 
-1. Download `compose.yml`
-2. Create a `.env` file with at least `PHYLUM_DB_PASSWORD` (See `example.env`)
-3. Create `data/config.yml` (or `${DATA_ROOT}/config.yml`)
-4. Spin it up using `docker compose up -d`
-5. Create a user using `docker exec -it phylum_server phylum admin user create`
+
+Once the server is up and running (it may take a minute or so the first time), create a user using the CLI
+```
+docker exec -it phylum_server phylum admin user create
+```
+
 6. Go to `http://localhost:2448`
 
 It is highly recommended to take a look at `config.defaults.yml` to see a full list of configuration options.
 
 
-### Local build
-
-See [Development](#development)
-
-
-### Help
-Reach out on Matrix at [#phylum_cloud:matrix.org](https://matrix.to/#/#phylum_cloud:matrix.org) if you need help.
-
-
 ## CLI
-
 The CLI is a powerful way to interact with and manage a locally running phylum instance. It also enables many advanced admin use-cases that are not yet possible using the app or API yet. You can run it on docker using
-
-Depending on whether you are running the program directly or via compose, you can use either 
-
 ```
-$ docker exec -it phylum_server phylum
+$ docker exec -it phylum_server phylum <cmd>
 ```
 
 Use the `help` command (or leave out the command) to get a list of options
@@ -121,157 +63,13 @@ Use the `help` command (or leave out the command) to get a list of options
 Please note that for `fs` operations, `<path>`s can have a `<uuid>:` prefix to make the path relative to that UUID. This also means that if you know the UUID of the resource, you can simply use `<uuid>:` as the path. If no `<uuid>:` prefix is specified then the path is relative to the root directory, or the home directory of the user if one is specified using the `--user-email` flag.
 
 
-
-## Configuration and Management
-
-Configuration is read from `config.yml`, if it exists. See `config.defaults.yml` for a full list of all configuration options.
-
-### Adding users
-There are a few ways to add users:
-1. Use the `admin user create` command in the [CLI](#cli)
-
-2. Add entries to your `config.yaml` under `auth.auto_create`. The '`*`' wildcard is supported, so you can add something like `"*@domain.com"` (be sure to add the quotes in case your entry starts with a `*`). This works best in conjunction with external auth like LDAP or OIDC.
-
-3. Invite directly from the app by sharing a file or folder.
+## Help
+Reach out on Matrix at [#phylum_cloud:matrix.org](https://matrix.to/#/#phylum_cloud:matrix.org) if you need help.
 
 
-#### Permissions
+## Screenshots
 
-Please be aware of a few things about the permission model:
+![Desktop Screnshot](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/desktop.png)
 
-1. There is no concept of owners.
-2. It is possible to revoke your own permissions from a folder. If you do so, and you are the only one with share permissions on that folder, you will need to use the cli to regain access
-3. It is not possible to revoke permissions down a folder tree, i.e. when you grant someone a permission on a folder, you are also doing so for all current and future sub-folders. Of course, you may revoke permissions on the original folder, or grant additional permissions on sub-folder, but you may not revoke permissions only on certain sub-folders.
-
-
-
-### Auth Backends
-Phylum supports multiple login methods. You can support a combination
-
-#### LDAP
-There are two ways to configure LDAP. The simplest way is to set `dn_template`, which will substitute `{email}` with the email of the user trying to log in, and try to authenticate with the password provided.
-```
-dn_template: cn={email},ou=people,dc=example,dc=com
-```
-
-Alternatively, if your CN is not the email of the user trying to log in, then you will have to configure `dn_lookup`, which will make a separate round-trip to the server to the LDAP server to find the DN of the user.
-```
-dn_lookup:
-  bind_dn: cn=phylumbind,ou=people,dc=example,dc=com
-  bind_password: ldap_password_for_phylumbind_user
-  base_dn: dc=example,dc=com
-  filter_template: (mail={email})
-```
-
-`dn_template` will be preferred if it is not empty, as it is more efficient, and fall back to `dn_lookup`.
-
-
-#### OpenID (OAuth)
-
-Start by configuring a new **Web** client with your provider, and use the following redirect url: `https://phylum.example.com/api/v1/auth/oauth/redirect`, of course, replacing `phylum.example.com` with your host name.
-
-Once you have configured your client and have your credentials, add an entry to the auth.openid.clients array:
-```
-id: google        # internal ID, prefer lower-kebab-case or lower_camel_case
-name: Google      # to be displayed to the user as 'Log In with <name>'
-issuer_url: https://accounts.google.com
-client_id:
-client_secret:
-```
-
-You can add multiple entries to allow logins from multiple providers
-
-
-### Content Storage
-By default, uploaded file contents are be saved to `storage/default` relative to the current directory.
-
-To configure other locations for saving file contents, start by creating a new backend using the `admin storage create` command, then mount that backend at the desired path using `fs mount`. Note: A single backend may be mounted to multiple locations
-
-Mounting a storage backend will only save future uploads to that backend, and not migrate any existing content. Support for that will come soon in a future release.
-
-Currently supported storage drivers are local filesystem and MinIO (S3-compatible, including Wasabi, Backblaze B2, etc.).
-
-
-### Version History
-Phylum retains full version history of all files, allowing preview (if supported for the file type) and download. Currently, it is not possible to delete previous versions, either automatically or manually. Better version management is a planned feature that will allow you to delete previous versions manually, and configure a retention policy. For now, the only way to get rid of previous versions is to delete the file and upload another one with the same name.
-
-
-### WebDAV
-By default, WebDAV is access is enabled at the `/webdav` location using HTTP Basic authentication. This is not the most efficient, as the server needs to spend resources to verify password for each request.
-
-In order to access files, you need to specify the path root, which is of the form `~<email>`  or `<uuid>`, so the WebDAV path for `user@exmaple.com` will be `/webdav/~user@example.com`. You can, of course, specify a different username or uuid, but that will only work if you have permissions for the requested resource.
-
-
-### Keyboard shortcuts
-Apart from navigation of resource list, including multi-select using <ctrl> or <shift>, here is the list of keyboard shortcuts
-
-| Key Combo    | Action               |
-| ------------ | -------------------- |
-| Enter/Space  | Open                 |
-| Delete       | Send to Trash        |
-| Shift+Delete | Permanently Delete   |
-| Ctrl+A       | Select All           |
-| Ctrl+N       | New Folder           |
-| Ctrl+U       | Upload File          |
-| Ctrl+Shift+U | Upload Folder        |
-| F2/Ctrl+E    | Rename               |
-| Ctrl+C       | Copy to clipboard    |
-| Ctrl+X       | Cut to clipboard     |
-| Ctrl+V       | Paste from clipboard |
-| Ctrl+R       | Refresh              |
-| Alt+H        | Home                 |
-| Alt+S        | Search               |
-| Alt+Up       | Go to Parent         |
-| Alt+Left     | Go Back              |
-| Alt+Right    | Go Forward           |
-
-These shortcuts were tested on linux, many of these don't quite work as expected on web because of default handlers, and are not yet adapted to macOS.
-
-## Development
-
-### Server
-
-The server is written in Go, and requires a postgres server to be running.
-
-```
-$ docker run -it \
-    -e POSTGRES_USER=phylum \
-    -e POSTGRES_PASSWORD=<password> \
-    -v ./data/postgres:/var/lib/postgresql/data \
-    docker.io/postgres:17
-```
-
-The working directory can be changed by passing in the `-W` flag, which is useful for local development. The `data` folder in the repo root is intended to be the working directory for local development, and is ignored by git.
-
-Add your db password to `data/config.yml`, and run the server:
-```
-$ go run -C server cmd/phylum.go -W ../data serve
-```
-
-To use the CLI, you can use:
-```
-$ go run -C server cmd/phylum.go -W ../data <cmd>
-```
-
-### API
-An OpenAPI document is a work in progress. If you do intend to look around, note that almost all `<path>`s can have a `<uuid>:` prefix to make the path relative to that UUID. This also means that if you know the UUID of the resource, you can simply use `<uuid>:` as the path. This is the recommended way, and is the way the client app uses the API.
-
-
-### Client
-
-The client is written using Flutter, and building requires no special configuration as long as your toolchain is [set up properly](https://docs.flutter.dev/get-started/). Of course, you will need a running server to connect to.
-
-It is usually easiest to work on the desktop app, and only test on devices/web if needed for platform-specific integration.
-
-The macOS client can be run using `flutter run -d macos`
-
-#### Web
-
-If you want to work on the web client specifically, then the simplest way is to create a link to the web client build folder from the server's working directory.
-```
-$ ln -st data ../client/build/web/
-```
-
-Please note that the web client must be built with WASM using `flutter build web --wasm`
-
+![Mobile Screenshot](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/mobile.png)
 
