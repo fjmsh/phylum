@@ -6,15 +6,18 @@ Phylum
 
 Phylum is a self-hosted file storage platform with offline-first web and native clients, meant as a replacement for Google Drive, Dropbox, etc. It is licensed under GNU Affero GPL 3.0, and is intended to be forever free and non-commercial.
 
-
-Phylum is for you if you want:
-- [x] To own your data (unlike Google Drive/Dropbox)
-- [x] A file browser with selective sync (unlike Syncthing)
-- [x] A feature-rich file manager with native apps (unlike FileBrowser)
-- [x] A fast and sleek file manager - nothing more, nothing less (unlike NextCloud)
-- [x] To support free software without mixed-licensing or paywalls (unlike Seafile) 
+Phylum may be for you if you want:
+- [x] To own your data
+- [x] A file browser with selective sync
+- [x] A fast file manager with native apps - nothing more, nothing less
+- [x] To support free software without mixed-licensing or paywalls
 - [x] Something like Immich, but for files
-- [x] For the time being: something that is not fully baked
+- [ ] Something that is fully baked
+
+
+> [!WARNING]  
+> This project is under very active development, and no guarantees can be made about stability and backward-compatibility.
+> Don't even think about putting the only copy of any data that you care about.
 
 
 - [Features](#features)
@@ -23,9 +26,6 @@ Phylum is for you if you want:
 - [Help and Contributing](#help-and-contributing)
 - [Screenshots](#screenshots)
 
-> [!WARNING]  
-> This project is under very active development, and no guarantees can be made about stability and backward-compatibility.
-> Don't even think about putting the only copy of any data that you care about.
 
 
 ## Features
@@ -58,7 +58,7 @@ Once the server is up and running (it may take a minute or so the first time), c
 docker exec -it phylum_server phylum admin user create
 ```
 
-Finally, you can go to `http://localhost:2448`
+Finally, go to `http://localhost:2448`
 
 It is highly recommended to take a look at `config.defaults.yml` to see a full list of configuration options.
 
