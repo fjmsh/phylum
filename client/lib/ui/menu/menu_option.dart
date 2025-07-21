@@ -4,6 +4,7 @@ import 'package:background_downloader/background_downloader.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:open_file/open_file.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
@@ -27,6 +28,7 @@ import 'package:share_plus/share_plus.dart';
 enum MenuOption {
   details(Icons.info_outline, 'Details', isSingle),
   download(Icons.download, 'Download', isFilesOnly),
+  copyURL(Icons.link, 'Copy URL', isSingle),
   bookmarkAdd(Icons.bookmark_add_outlined, 'Add To Bookmarks', notAllBookmarked),
   bookmarkRemove(Icons.bookmark_remove, 'Remove From Bookmarks', allBookmarked),
   rename(Icons.drive_file_rename_outline, 'Rename', isSingle),
@@ -164,6 +166,12 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
         }
       }
       break;
+
+    case MenuOption.copyURL:
+      final resource = resources.firstOrNull;
+      if (resource == null) return;
+      final url = account.apiClient.createUri('/${resource.dir ? 'folder' : 'file'}/${resource.id}');
+      await Clipboard.setData(ClipboardData(text: url.toString()));
     case MenuOption.share:
       if (kIsWeb) return;
       final List<String> downloaded = [];

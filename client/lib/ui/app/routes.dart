@@ -128,7 +128,7 @@ sealed class ExplorerRoute extends LoggedInRoute {
   }
 
   MenuOptionGroups get selectedResourceOptions => [
-        [MenuOption.details],
+        [MenuOption.details, MenuOption.copyURL],
         [MenuOption.download, if (!kIsWeb && Platform.isAndroid) MenuOption.share, MenuOption.openWith],
         [MenuOption.rename, MenuOption.move, MenuOption.copy, MenuOption.delete],
         [MenuOption.bookmarkAdd, MenuOption.bookmarkRemove, MenuOption.permissions, MenuOption.publinks],
@@ -173,7 +173,7 @@ class ExplorerRouteFolder extends ExplorerRoute {
 
   @override
   MenuOptionGroups get folderOptions => const [
-        [MenuOption.details],
+        [MenuOption.details, MenuOption.copyURL],
         [MenuOption.newFolder, MenuOption.uploadFiles, MenuOption.uploadFolders],
         [MenuOption.bookmarkAdd, MenuOption.bookmarkRemove, MenuOption.permissions, MenuOption.publinks],
       ];
