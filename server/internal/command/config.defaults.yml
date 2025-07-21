@@ -39,16 +39,16 @@ auth:
       # hash is either argon2 or pbkdf2
       hash: argon2
       argon2: 
-        memory: 18
+        memory: 18      # 2 ^ 18 = 256M
         iterations: 4
         parallelism: 4
-        salt: 32
-        key: 32
+        salt: 32        # 32 Bytes = 256-bit
+        key: 32         # 32 Bytes = 256-bit
       pbkdf2: 
         function: sha-256
         iterations: 1000000
-        salt: 32
-        key: 32
+        salt: 32        # 32 Bytes = 256-bit
+        key: 32         # 32 Bytes = 256-bit
     requirements:
       length: 8
       lower: 0
