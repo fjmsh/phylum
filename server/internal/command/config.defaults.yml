@@ -39,14 +39,14 @@ auth:
       # kdf is either argon2 or pbkdf2
       kdf: argon2
       argon2: 
-        memory: 18      # 2 ^ 18 = 256M
+        memory: 16      # 2 ^ 16 = 64M
         iterations: 4
-        parallelism: 4
+        parallelism: 2
         salt: 32        # 32 Bytes = 256-bit
         key: 32         # 32 Bytes = 256-bit
       pbkdf2: 
         function: sha-256
-        iterations: 1000000
+        iterations: 5000000
         salt: 32        # 32 Bytes = 256-bit
         key: 32         # 32 Bytes = 256-bit
     requirements:

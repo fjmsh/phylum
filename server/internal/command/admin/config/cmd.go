@@ -94,9 +94,9 @@ Please also note that inceasing m will require exponentially more memory.
 			os.Exit(1)
 		}
 	}
-	cmd.Flags().Uint8P("memory", "m", 18, "Memory Cost (Memory required is 2^m KB)")
+	cmd.Flags().Uint8P("memory", "m", 16, "Memory Cost (Memory required is 2^m KB)")
 	cmd.Flags().Uint32P("iterations", "t", 4, "Iterations")
-	cmd.Flags().Uint8P("parallelism", "p", 4, "Parallelism")
+	cmd.Flags().Uint8P("parallelism", "p", 2, "Parallelism")
 	cmd.Flags().Uint32P("salt-len", "s", 32, "Salt Length (in Bytes)")
 	cmd.Flags().Uint32P("key-len", "k", 32, "Key Length (in Bytes)")
 	return cmd
@@ -153,7 +153,7 @@ func setupPBKDF2Command() *cobra.Command {
 		}
 	}
 	cmd.Flags().String("hash-function", "sha-256", "Hash Function")
-	cmd.Flags().IntP("iterations", "n", 100000, "Iterations")
+	cmd.Flags().IntP("iterations", "n", 500000, "Iterations")
 	cmd.Flags().Uint32P("salt-len", "s", 32, "Salt Length (in Bytes)")
 	cmd.Flags().IntP("key-len", "k", 32, "Key Length (in Bytes)")
 	return cmd
