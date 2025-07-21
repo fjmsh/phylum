@@ -11,18 +11,17 @@ Fair warning: Phylum is under very active development. Don't even think about pu
 - [Features](#features)
 - [Quick Start](#quick-start)
 - [CLI](#cli)
-- [Help](#help)
+- [Help and Contributing](#help-and-contributing)
 - [Screenshots](#screenshots)
-- [Development](#development)
 
 
 ## Features
 
 - Native clients which are designed to work well with unreliable/no internet connection (*)
-- Users and [Permissions](wiki/Permissions)
-- [File version history](wiki/Version-History)
-- [Remote storage backends](wiki/Content-Storage)
-- [Auth backends (LDAP, OIDC)](wiki/User-Authentication)
+- Users and [Permissions](https://codeberg.org/shroff/phylum/wiki/Permissions)
+- [File version history](https://codeberg.org/shroff/phylum/wiki/Version-History)
+- [Remote storage backends](https://codeberg.org/shroff/phylum/wiki/Content-Storage)
+- [Auth backends (LDAP, OIDC)](https://codeberg.org/shroff/phylum/wiki/User-Authentication)
 - [WebDAV access](wiki/WebDAV)
 - Publicly share files/folders
 
@@ -41,13 +40,12 @@ touch data/config.yml
 docker compose up -d && docker compose logs -f
 ```
 
-
 Once the server is up and running (it may take a minute or so the first time), create a user using the CLI
 ```
 docker exec -it phylum_server phylum admin user create
 ```
 
-6. Go to `http://localhost:2448`
+Finally, you can go to `http://localhost:2448`
 
 It is highly recommended to take a look at `config.defaults.yml` to see a full list of configuration options.
 
@@ -63,8 +61,8 @@ Use the `help` command (or leave out the command) to get a list of options
 Please note that for `fs` operations, `<path>`s can have a `<uuid>:` prefix to make the path relative to that UUID. This also means that if you know the UUID of the resource, you can simply use `<uuid>:` as the path. If no `<uuid>:` prefix is specified then the path is relative to the root directory, or the home directory of the user if one is specified using the `--user-email` flag.
 
 
-## Help
-Reach out on Matrix at [#phylum_cloud:matrix.org](https://matrix.to/#/#phylum_cloud:matrix.org) if you need help.
+## Help and Contributing
+Reach out on Matrix at [#phylum_cloud:matrix.org](https://matrix.to/#/#phylum_cloud:matrix.org) if you need help to get set up, or want to contribute.
 
 
 ## Screenshots
