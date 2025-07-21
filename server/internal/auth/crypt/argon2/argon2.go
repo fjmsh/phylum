@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"math"
+	"strings"
 
 	"golang.org/x/crypto/argon2"
 )
@@ -77,7 +79,16 @@ func decodeHash(hashParts []string) (p Config, salt, hash []byte, err error) {
 
 	_, err = fmt.Sscanf(hashParts[1], "m=%d,t=%d,p=%d", &p.Memory, &p.Iterations, &p.Parallelism)
 	if err != nil {
-		return
+		if strings.Contains(err.Error(), "unsigned integer overflow") {
+			var mExp float64
+			_, err = fmt.Sscanf(hashParts[1], "m=%f,t=%d,p=%d", &mExp, &p.Iterations, &p.Parallelism)
+			if err != nil {
+				return
+			}
+			p.Memory = uint8(math.Round(math.Log2(mExp)))
+		} else {
+			return
+		}
 	}
 
 	salt, err = base64.RawStdEncoding.Strict().DecodeString(hashParts[2])
