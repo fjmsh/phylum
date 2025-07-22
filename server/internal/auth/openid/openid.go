@@ -51,11 +51,11 @@ func GetProviderDetails(providerName string) (string, string, error) {
 	}
 }
 
-func GetIDToken(providerName, authCode, redirectURI, codeVerifier string) (idToken IDToken, err error) {
+func GetIDToken(providerName, authCode, redirectURI, codeVerifier string) (IDToken, error) {
 	if c, ok := clients[providerName]; !ok {
-		return idToken, errors.New("OpenID provider not registered: " + providerName)
+		return IDToken{}, errors.New("OpenID provider not registered: " + providerName)
 	} else if config, err := getProviderConfig(c.IssuerURL); err != nil {
-		return idToken, err
+		return IDToken{}, err
 	} else {
 		data := url.Values{}
 		data.Set("grant_type", "authorization_code")
@@ -63,17 +63,21 @@ func GetIDToken(providerName, authCode, redirectURI, codeVerifier string) (idTok
 		data.Set("redirect_uri", redirectURI)
 		data.Set("code_verifier", codeVerifier)
 		if req, err := http.NewRequest("POST", config.TokenEndpoint, strings.NewReader(data.Encode())); err != nil {
-			return idToken, errors.New("failed to create token request: " + err.Error())
+			return IDToken{}, errors.New("failed to create token request: " + err.Error())
 		} else {
 			credentials := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", c.ClientID, c.ClientSecret)))
 			req.Header.Add("Authorization", fmt.Sprintf("Basic %s", credentials))
 			req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 			if res, err := http.DefaultClient.Do(req); err != nil {
-				return idToken, errors.New("failed to get token response: " + err.Error())
+				return IDToken{}, errors.New("failed to get token response: " + err.Error())
 			} else if res.StatusCode != http.StatusOK {
-				return idToken, fmt.Errorf("id token request failed with status %d (%s)", res.StatusCode, res.Status)
+				return IDToken{}, fmt.Errorf("id token request failed with status %d (%s)", res.StatusCode, res.Status)
 			} else {
-				return extractIDToken(res)
+				idToken, err := extractIDToken(res)
+				if err == nil && !idToken.EmailVerified && !c.AllowUnverifiedEmails {
+					err = errors.New("email not verified with IdP")
+				}
+				return idToken, err
 			}
 		}
 	}
@@ -102,8 +106,9 @@ type tokenResponse struct {
 }
 
 type IDToken struct {
-	Email      string `json:"email"`
-	Name       string `json:"name"`
-	GivenName  string `json:"given_name"`
-	FamilyName string `json:"family_name"`
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"email_verified"`
+	Name          string `json:"name"`
+	GivenName     string `json:"given_name"`
+	FamilyName    string `json:"family_name"`
 }

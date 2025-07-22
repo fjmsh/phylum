@@ -74,6 +74,7 @@ auth:
   #       issuer_url: https://auth.example.com
   #       client_id:
   #       client_secret:
+  #       allow_unverified_emails: false
 
       
 jobs: 
