@@ -130,7 +130,16 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
     final user = await showOptionsDialogBuilder(
       context,
       users,
-      (user) => ListTile(title: Text(user.displayName)),
+      (user) => user.displayName.isEmpty
+          ? ListTile(
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+              title: Text(user.email, style: TextStyle(fontStyle: FontStyle.italic)),
+            )
+          : ListTile(
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+              title: Text(user.displayName),
+              subtitle: Text(user.email),
+            ),
       buildLastItem: account.user.hasPermission(permissionUsersInvite)
           ? (_) => ListTile(
               leading: Icon(Icons.person_add),
