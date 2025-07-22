@@ -104,7 +104,10 @@ class ResourceInfoView extends StatelessWidget {
             title: const Text('Others with Access'),
             subtitle: other.isEmpty ? const Text('--') : Text(other),
             onTap: () => showReponsiveDialog(
-                context, 'Permissions', (context) => ResourcePermissionsView(resourceId: resource.id)),
+              context,
+              'Permissions for ${resource.name}',
+              (context) => ResourcePermissionsView(resourceId: resource.id),
+            ),
           ),
           StreamBuilder<int>(
               stream: context.read<PhylumAccount>().db.countPublinks(resource.id).watchSingle(),

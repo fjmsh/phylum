@@ -72,7 +72,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
             Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: ElevatedButton.icon(
-                label: Text('Add User'),
+                label: Text('Add Permission Grant'),
                 icon: Icon(Icons.person_add),
                 onPressed: () => addUser(context),
               ),
@@ -83,10 +83,24 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
               leading: Icon(e.value.icon),
               title: Text(repository.getUserDisplayName(e.key)),
               subtitle: Text(e.value.text),
+              trailing: IconButton(
+                  onPressed: () async {
+                    final permission = permissionSetNone;
+                    final user = await (account.db.users.select()..where((u) => u.id.equals(e.key))).getSingleOrNull();
+                    if (user == null) return;
+
+                    account.addAction(ResourceShareAction(
+                      resourceId: widget.resourceId,
+                      resourceName: resourceName!,
+                      user: user,
+                      permission: permission,
+                    ));
+                  },
+                  icon: Icon(Icons.close)),
               onTap: (userPermission! & permissionShare) == 0
                   ? null
                   : () async {
-                      final permission = await _showPermissionsPicker(context, true);
+                      final permission = await _showPermissionsPicker(context);
                       if (permission == null || permission == e.value) return;
                       final user =
                           await (account.db.users.select()..where((u) => u.id.equals(e.key))).getSingleOrNull();
@@ -101,10 +115,10 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                     },
             ),
           ListTile(
+            key: ValueKey('inherited'),
             visualDensity: VisualDensity.compact,
             dense: true,
-            title: const Text(
-                key: ValueKey('inherited'), 'Inherited Permissions', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: const Text('Inherited Permissions', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
           for (final e in permissionEntries)
             ListTile(
@@ -156,7 +170,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
       },
     );
     if (user == null || !context.mounted) return;
-    final permission = await _showPermissionsPicker(context, false);
+    final permission = await _showPermissionsPicker(context);
     if (permission == null || !context.mounted) return;
     account.addAction(ResourceShareAction(
       resourceId: widget.resourceId,
@@ -171,7 +185,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
     if (result == null || !context.mounted) return;
     final (email, name) = result;
 
-    final permission = await _showPermissionsPicker(context, false);
+    final permission = await _showPermissionsPicker(context);
     if (permission == null || !context.mounted) return;
     final account = context.read<PhylumAccount>();
     final user = await account.userRepository.invite(email, name);
@@ -183,11 +197,10 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
     ));
   }
 
-  Future<Permission?> _showPermissionsPicker(BuildContext context, bool showNonePermission) {
-    return showOptionsDialogBuilder(
+  Future<Permission?> _showPermissionsPicker(BuildContext context) {
+    return showOptionsDialog(
       context,
       [
-        if (showNonePermission) permissionSetNone,
         permissionSetReadOnly,
         permissionSetReadWrite,
         permissionSetReadWriteShare,
