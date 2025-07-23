@@ -29,7 +29,7 @@ func handleInviteRequest(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if auth.HasScope("users:invite") {
+	if !auth.HasScope("users:invite") {
 		panic(core.ErrInsufficientScope)
 	}
 	if auth.UserPermissions()&core.PermissionUsersInvite == 0 {
