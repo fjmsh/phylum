@@ -85,6 +85,16 @@ func Initialize(cfg Config, log zerolog.Logger) error {
 		}
 	}
 
+	methods := len(cfg.OpenID.Clients)
+	if passwordBackend != nil || magicLinksEnabled {
+		methods += 1
+	}
+
+	if methods > 1 && !cfg.SuppressMultiProviderWarning {
+		log.Warn().Msg("Using multiple login providers can lead to cross-provider impersonation " +
+			"if email addresses are not guaranteed to belong to the same user across the different providers")
+	}
+
 	return openid.Init(cfg.OpenID, log)
 }
 

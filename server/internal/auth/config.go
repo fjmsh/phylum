@@ -7,10 +7,11 @@ import (
 )
 
 type Config struct {
-	AutoCreate []string       `koanf:"auto_create"`
-	Password   PasswordConfig `koanf:"password"`
-	MagicLinks bool           `koanf:"magic_links"`
-	OpenID     openid.Config  `koanf:"openid"`
+	AutoCreate                   []string       `koanf:"auto_create"`
+	SuppressMultiProviderWarning bool           `koanf:"suppress_multi_provider_warning"`
+	Password                     PasswordConfig `koanf:"password"`
+	MagicLinks                   bool           `koanf:"magic_links"`
+	OpenID                       openid.Config  `koanf:"openid"`
 }
 
 type PasswordConfig struct {

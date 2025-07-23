@@ -25,11 +25,18 @@ core:
         salt: 32
         key: 32
 
+## Warning: it is recommended to avoid using a combination of email-based
+## (password/magic links) and oidc login providers, or more than one
+## OIDC provider, as it can lead to impersonation if the email addresses
+## across all of these providers are not verified or are not guaranteed
+## to belong to the same user. Take a look at
+## https://pushsecurity.com/blog/cross-idp-impersonation/ for more details.
 auth:
   auto_create:
     # - "*@example.com"
     # - "user@example.com"
     # - "user*@example.com"
+  suppress_multi_provider_warning: false
   magic_links: true
   password:
     # backend is one of crypt, ldap, or none
