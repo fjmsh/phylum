@@ -24,10 +24,12 @@ ALTER TABLE resources ALTER COLUMN deleted TYPE TIMESTAMPTZ;
 RESET timezone;
 
 ALTER TABLE users ALTER id DROP DEFAULT;
+DROP SEQUENCE users_id_seq;
 ALTER TABLE users ALTER id ADD GENERATED ALWAYS AS IDENTITY;
 SELECT setval(pg_get_serial_sequence('users', 'id'), coalesce(MAX(id), 1)) FROM users;
 
 ALTER TABLE jobs ALTER id DROP DEFAULT;
+DROP SEQUENCE jobs_id_seq;
 ALTER TABLE jobs ALTER id ADD GENERATED ALWAYS AS IDENTITY;
 SELECT setval(pg_get_serial_sequence('jobs', 'id'), coalesce(MAX(id), 1)) FROM jobs;
 
