@@ -24,6 +24,10 @@ core:
         iterations: 100000
         salt: 32
         key: 32
+  thumbs:
+    size: 240
+    format: webp        # one of webp and jpeg
+    quality: 80
 
 ## Warning: it is recommended to avoid using a combination of email-based
 ## (password/magic links) and oidc login providers, or more than one
@@ -39,8 +43,7 @@ auth:
   suppress_multi_provider_warning: false
   magic_links: true
   password:
-    # backend is one of crypt, ldap, or none
-    backend: crypt
+    backend: crypt    # one of crypt, ldap, none
     reset_enabled: true
     crypt:
       # kdf is either argon2 or pbkdf2

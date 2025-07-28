@@ -51,7 +51,7 @@ func (l localStorage) Name() string {
 }
 
 func (l localStorage) OpenRead(name string, start, length int) (io.ReadCloser, error) {
-	file, err := os.OpenFile(l.path(name), os.O_RDONLY, 0640)
+	file, err := os.OpenFile(l.Path(name), os.O_RDONLY, 0640)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
 			os.Remove(f.Name())
 			return err
 		}
-		return os.Rename(f.Name(), l.path(name))
+		return os.Rename(f.Name(), l.Path(name))
 	}}, nil
 }
 
@@ -99,7 +99,7 @@ func (l localStorage) Copy(ctx context.Context, src Backend, srcName, destName s
 }
 
 func (l localStorage) Delete(name string) error {
-	return os.Remove(l.path(name))
+	return os.Remove(l.Path(name))
 }
 
 func (l localStorage) DeleteAll(names []string) []error {
@@ -113,7 +113,7 @@ func (l localStorage) DeleteAll(names []string) []error {
 	return errs
 }
 
-func (l localStorage) path(name string) string {
+func (l localStorage) Path(name string) string {
 	return filepath.Join(l.root, name)
 }
 

@@ -16,5 +16,5 @@ type Backend interface {
 type LocalBackend interface {
 	Backend
 	OpenWrite(name string) (io.WriteCloser, error)
-	path(name string) string
+	Path(name string) string
 }

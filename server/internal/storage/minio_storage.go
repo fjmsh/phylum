@@ -61,7 +61,7 @@ func (s minioStorage) Copy(ctx context.Context, src Backend, srcName, destName s
 	}
 	var localPath string
 	if l, ok := src.(LocalBackend); ok {
-		localPath = l.path(srcName)
+		localPath = l.Path(srcName)
 	} else {
 		f, err := os.CreateTemp(tempDir, "phylum-*")
 		if err != nil {

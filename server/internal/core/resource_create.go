@@ -61,12 +61,16 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 		versionID, _ = uuid.NewV7()
 	}
 
-	// return f.createMemberResource(parent, name, id, dir, conflictResolution)
-	if dest, err := storage.DefaultBackend().OpenWrite(versionID.String()); err != nil {
+	backend := storage.DefaultBackend()
+	if dest, err := backend.OpenWrite(versionID.String()); err != nil {
 		return nil, err
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
+			var generated bool
+			if generated, err = thumber.Generate(backend.Path(versionID.String()), mimeType); err != nil {
+				return err
+			}
 			err := f.runInTx(func(f txFileSystem) error {
 				if r, err := f.createMemberResource(parent, name, requestedID, false, conflictResolution); err != nil {
 					return err
@@ -75,7 +79,7 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 					requestedID = r.id
 				}
 
-				if err := insertResourceVersion(f.db, requestedID, versionID, int64(len), mimeType, sum); err != nil {
+				if err := insertResourceVersion(f.db, requestedID, versionID, int64(len), mimeType, sum, generated); err != nil {
 					return err
 				}
 				if err := updateResourceModified(f.db, requestedID); err != nil {
@@ -85,9 +89,11 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 				return jobs.MigrateVersionContents(f.db, versionID)
 			})
 			if err != nil {
-				storage.DefaultBackend().Delete(versionID.String())
+				backend.Delete(versionID.String())
+				return err
 			}
-			return err
+			thumber.Generate(backend.Path(versionID.String()), mimeType)
+			return nil
 		}), nil
 	}
 }
@@ -103,13 +109,18 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 		versionID, _ = uuid.NewV7()
 	}
 
-	if dest, err := storage.DefaultBackend().OpenWrite(versionID.String()); err != nil {
+	backend := storage.DefaultBackend()
+	if dest, err := backend.OpenWrite(versionID.String()); err != nil {
 		return nil, err
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
+			var generated bool
+			if generated, err = thumber.Generate(backend.Path(versionID.String()), mimeType); err != nil {
+				return err
+			}
 			err := f.db.RunInTx(func(db db.TxHandler) error {
-				if err := insertResourceVersion(db, r.id, versionID, int64(len), mimeType, sum); err != nil {
+				if err := insertResourceVersion(db, r.id, versionID, int64(len), mimeType, sum, generated); err != nil {
 					return err
 				}
 				if err := updateResourceModified(db, r.id); err != nil {
@@ -120,9 +131,10 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 				return jobs.MigrateVersionContents(db, versionID)
 			})
 			if err != nil {
-				storage.DefaultBackend().Delete(versionID.String())
+				backend.Delete(versionID.String())
+				return err
 			}
-			return err
+			return nil
 		}), nil
 	}
 }
@@ -363,9 +375,9 @@ func updateResourceModified(db db.TxHandler, id uuid.UUID) error {
 	return err
 }
 
-func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64, mimeType, sha256 string) error {
-	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage)
-	VALUES (@version_id::UUID, @resource_id::UUID, @size::INT, @mime_type::TEXT, @sha256::TEXT, @storage::TEXT)`
+func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64, mimeType, sha256 string, thumb bool) error {
+	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage, thumb)
+	VALUES (@version_id, @resource_id, @size, @mime_type, @sha256, @storage, @thumb)`
 
 	args := pgx.NamedArgs{
 		"resource_id": id,
@@ -374,6 +386,7 @@ func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64,
 		"mime_type":   mimeType,
 		"sha256":      sha256,
 		"storage":     storage.DefaultBackendName,
+		"thumb":       thumb,
 	}
 	_, err := db.Exec(q, args)
 	if err != nil && strings.Contains(err.Error(), "resource_versions_pkey") {
