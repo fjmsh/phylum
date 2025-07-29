@@ -140,7 +140,7 @@ func SetupCommand() {
 		}
 
 		if err := core.Initialize(db.Get(ctx), cfg.Core); err != nil {
-			logger.Fatal().Err(err)
+			logger.Fatal().Err(err).Msg("failed to initialize core")
 		}
 		if err := mail.Initialize(cfg.Mail, logger); err != nil {
 			if errors.Is(err, mail.ErrEmailNotConfigured) {
