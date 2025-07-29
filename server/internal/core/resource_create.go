@@ -92,7 +92,6 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 				backend.Delete(versionID.String())
 				return err
 			}
-			thumber.Generate(backend.Path(versionID.String()), mimeType)
 			return nil
 		}), nil
 	}

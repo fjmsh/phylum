@@ -139,6 +139,10 @@ func SetupCommand() {
 			steve.RegisterWorker(client, &jobs.DeleteContentsWorker{})
 		}
 
+		// storage must be initialiezd before core
+		if err := storage.Initialize(db.Get(ctx), cfg.Storage, logger); err != nil {
+			logger.Fatal().Err(err).Msg("failed to initialize storage")
+		}
 		if err := core.Initialize(db.Get(ctx), cfg.Core); err != nil {
 			logger.Fatal().Err(err).Msg("failed to initialize core")
 		}
@@ -151,10 +155,6 @@ func SetupCommand() {
 		}
 		if err := auth.Initialize(cfg.Auth, logger); err != nil {
 			logger.Fatal().Err(err)
-		}
-
-		if err := storage.Initialize(db.Get(ctx), cfg.Storage, logger); err != nil {
-			logger.Fatal().Err(err).Msg("failed to initialize storage")
 		}
 	}
 

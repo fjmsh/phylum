@@ -16,7 +16,7 @@ const DefaultBackendName = "_"
 
 var defaultBackend LocalBackend
 var backends map[string]Backend
-var storageRoot string
+var Root string
 var tempDir string
 
 type BackendConfig struct {
@@ -26,13 +26,13 @@ type BackendConfig struct {
 }
 
 func Initialize(db db.Handler, cfg Config, logger zerolog.Logger) error {
-	storageRoot = cfg.Root
+	Root = cfg.Root
 
-	if err := os.MkdirAll(storageRoot, 0o700); err != nil {
-		return errors.New("failed to create storage root(" + storageRoot + "): " + err.Error())
+	if err := os.MkdirAll(Root, 0o700); err != nil {
+		return errors.New("failed to create storage root(" + Root + "): " + err.Error())
 	} else {
-		if stat, err := os.Stat(storageRoot); err != nil {
-			return errors.New("failed to stat storage root(" + storageRoot + "): " + err.Error())
+		if stat, err := os.Stat(Root); err != nil {
+			return errors.New("failed to stat storage root(" + Root + "): " + err.Error())
 		} else if stat.Mode()&0xfff != 0o700 {
 			os.Chmod(cfg.Root, 0o700)
 		}
@@ -40,7 +40,7 @@ func Initialize(db db.Handler, cfg Config, logger zerolog.Logger) error {
 
 	tempDir = cfg.Temp
 	if !filepath.IsAbs(tempDir) {
-		tempDir = filepath.Join(storageRoot, tempDir)
+		tempDir = filepath.Join(Root, tempDir)
 		if err := os.RemoveAll(tempDir); err != nil {
 			return errors.New("failed to clear temp directory: " + err.Error())
 		}

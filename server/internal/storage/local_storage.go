@@ -22,7 +22,7 @@ func createLocalBackend(name string, params map[string]string) (LocalBackend, er
 
 	root := params["root"]
 	if !filepath.IsAbs(params[root]) {
-		root = filepath.Join(storageRoot, root)
+		root = filepath.Join(Root, root)
 	}
 	l := localStorage{
 		name: name,
