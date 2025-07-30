@@ -26,8 +26,6 @@ core:
         key: 32
   thumbs:
     dir: thumbs       # relative to storage.root, or absolute
-    size: 240
-    format: webp      # one of webp and jpeg
     quality: 80
 
 ## Warning: it is recommended to avoid using a combination of email-based

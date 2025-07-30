@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/storage"
@@ -29,19 +28,24 @@ var imageTypes = map[string]bool{
 	"x-icon":  true,
 }
 
+var applicationTextTypes = map[string]bool{
+	"json": true,
+	"yaml": true,
+	"toml": true,
+}
+
 func NewThumber(cfg Config) (*Thumber, error) {
 	t := &Thumber{
 		cfg: cfg,
 	}
-	if cfg.Format != "jpeg" && cfg.Format != "webp" {
-		return nil, errors.New("unrecognized output format: " + cfg.Format)
-	}
 
-	if !filepath.IsAbs(cfg.Dir) {
+	if filepath.IsAbs(cfg.Dir) {
+		t.dir = cfg.Dir
+	} else {
 		t.dir = filepath.Join(storage.Root, cfg.Dir)
-		if err := os.MkdirAll(t.dir, 0o700); err != nil {
-			return nil, errors.New("failed to create thumbnail directory: " + err.Error())
-		}
+	}
+	if err := os.MkdirAll(t.dir, 0o700); err != nil {
+		return nil, errors.New("failed to create thumbnail directory: " + err.Error())
 	}
 
 	return t, nil
@@ -54,17 +58,26 @@ func (t *Thumber) Generate(path, mimeType string) (bool, error) {
 			return true, t.createImageThumbnail(path, output)
 		}
 	}
+	if ok := strings.HasPrefix(mimeType, "text/"); ok {
+		return true, t.createTextThumbnail(path, output)
+	}
+	if subType, ok := strings.CutPrefix(mimeType, "application/"); ok {
+		if _, ok := applicationTextTypes[subType]; ok {
+			return true, t.createTextThumbnail(path, output)
+		}
+	}
 	return false, nil
 }
 
 func (t *Thumber) createImageThumbnail(input, output string) error {
-	vipsFormattedOutput := fmt.Sprintf("%s.%s[Q=%d]", output, t.cfg.Format, t.cfg.Quality)
+	outputWithFormat := output + ".webp"
+	outputWithFormatQuality := fmt.Sprintf("%s[Q=%d]", outputWithFormat, t.cfg.Quality)
 	cmd := exec.Command(
 		"vips",
 		"thumbnail",
 		input,
-		vipsFormattedOutput,
-		strconv.Itoa(int(t.cfg.Size)),
+		outputWithFormatQuality,
+		"240",
 		"--size",
 		"down",
 	)
@@ -72,6 +85,32 @@ func (t *Thumber) createImageThumbnail(input, output string) error {
 	if err != nil {
 		return errors.New("failed to create image thumbnail: " + err.Error())
 	}
-	os.Rename(output+"."+t.cfg.Format, output)
-	return nil
+	return os.Rename(outputWithFormat, output)
+}
+
+func (t *Thumber) createTextThumbnail(input, output string) error {
+	cmd := exec.Command(
+		"soffice",
+		"--headless",
+		"--infilter=\"Text (encoded):UTF8,LF,Droid Sans,en-US\"",
+		"--convert-to",
+		"webp:writer_webp_Export",
+		"--outdir",
+		t.dir,
+		input,
+	)
+
+	if err := cmd.Run(); err != nil {
+		return errors.New("failed to generate text thumbnail: " + err.Error())
+	}
+
+	tempOutput := filepath.Join(t.dir, filepath.Base(input+".webp"))
+	src := tempOutput + ".orig"
+	if err := os.Rename(tempOutput, src); err != nil {
+		return errors.New("failed to rename text thumbnail: " + err.Error())
+	}
+	if err := t.createImageThumbnail(src, output); err != nil {
+		return errors.New("failed to resize text thumbnail: " + err.Error())
+	}
+	return os.Remove(src)
 }
