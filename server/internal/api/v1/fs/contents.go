@@ -8,7 +8,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/serve"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 func handleContentsRequest(c *gin.Context) {
@@ -23,15 +22,7 @@ func handleContentsRequest(c *gin.Context) {
 	}
 
 	if !r.Dir() {
-		versionID := r.LatestVersion().ID
-		if versionIDStr != "" {
-			var err error
-			versionID, err = uuid.Parse(versionIDStr)
-			if err != nil {
-				panic(err)
-			}
-		}
-		serve.ServeResourceVersion(c.Writer, c.Request, f, r, versionID)
+		serve.ServeResourceVersion(c.Writer, c.Request, f, r, versionIDStr)
 		return
 	}
 
@@ -56,7 +47,7 @@ func handleContentsRequest(c *gin.Context) {
 			return err
 		}
 
-		v, err := f.GetVersion(r, uuid.Nil)
+		v, err := f.GetVersion(r, "")
 		if err != nil {
 			return err
 		}

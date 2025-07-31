@@ -19,6 +19,7 @@ type VersionInfo struct {
 	Size     int64     `json:"size"`
 	MimeType string    `json:"mime_type"`
 	SHA256   string    `json:"sha256"`
+	Preview  bool      `json:"preview"`
 }
 
 type Version struct {
@@ -38,6 +39,7 @@ func scanVersion(row pgx.CollectableRow) (Version, error) {
 		&v.MimeType,
 		&v.SHA256,
 		&v.Storage,
+		&v.Preview,
 	)
 	v.Created = int(created.Time.Unix())
 	if deleted.Valid {

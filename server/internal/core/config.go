@@ -2,13 +2,13 @@ package core
 
 import (
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
-	"codeberg.org/shroff/phylum/server/internal/thumbs"
+	"codeberg.org/shroff/phylum/server/internal/preview"
 )
 
 type Config struct {
 	User     UserConfig     `koanf:"users"`
 	Publinks PublinksConfig `koanf:"publinks"`
-	Thumbs   thumbs.Config  `koanf:"thumbs"`
+	Preview  preview.Config `koanf:"preview"`
 }
 
 type PublinksConfig struct {

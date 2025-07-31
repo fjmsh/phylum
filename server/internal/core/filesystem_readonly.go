@@ -8,7 +8,6 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"codeberg.org/shroff/phylum/server/internal/db"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -24,8 +23,8 @@ func (f proxyFileSystemReadOnly) ReadDir(r Resource, recursive bool) ([]Resource
 	return f.f.ReadDir(r, recursive)
 }
 
-func (f proxyFileSystemReadOnly) GetVersion(r Resource, versionID uuid.UUID) (Version, error) {
-	return f.f.GetVersion(r, versionID)
+func (f proxyFileSystemReadOnly) GetVersion(r Resource, versionIDStr string) (Version, error) {
+	return f.f.GetVersion(r, versionIDStr)
 }
 
 func (f proxyFileSystemReadOnly) Walk(r Resource, depth int, fn func(Resource, string) error) error {

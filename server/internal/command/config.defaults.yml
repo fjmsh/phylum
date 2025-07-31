@@ -24,8 +24,8 @@ core:
         iterations: 100000
         salt: 32
         key: 32
-  thumbs:
-    dir: thumbs       # relative to storage.root, or absolute
+  preview:
+    dir: previews     # relative to storage.root, or absolute
     quality: 80
 
 ## Warning: it is recommended to avoid using a combination of email-based

@@ -68,7 +68,7 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
 			var generated bool
-			if generated, err = thumber.Generate(backend.Path(versionID.String()), mimeType); err != nil {
+			if generated, err = thumber.GeneratePreview(backend.Path(versionID.String()), mimeType); err != nil {
 				return err
 			}
 			err := f.runInTx(func(f txFileSystem) error {
@@ -115,7 +115,7 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
 			var generated bool
-			if generated, err = thumber.Generate(backend.Path(versionID.String()), mimeType); err != nil {
+			if generated, err = thumber.GeneratePreview(backend.Path(versionID.String()), mimeType); err != nil {
 				return err
 			}
 			err := f.db.RunInTx(func(db db.TxHandler) error {
@@ -375,8 +375,8 @@ func updateResourceModified(db db.TxHandler, id uuid.UUID) error {
 }
 
 func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64, mimeType, sha256 string, thumb bool) error {
-	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage, thumb)
-	VALUES (@version_id, @resource_id, @size, @mime_type, @sha256, @storage, @thumb)`
+	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage, preview)
+	VALUES (@version_id, @resource_id, @size, @mime_type, @sha256, @storage, @preview)`
 
 	args := pgx.NamedArgs{
 		"resource_id": id,
@@ -385,7 +385,7 @@ func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64,
 		"mime_type":   mimeType,
 		"sha256":      sha256,
 		"storage":     storage.DefaultBackendName,
-		"thumb":       thumb,
+		"preview":     thumb,
 	}
 	_, err := db.Exec(q, args)
 	if err != nil && strings.Contains(err.Error(), "resource_versions_pkey") {

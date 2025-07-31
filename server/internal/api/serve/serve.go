@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
-	"github.com/google/uuid"
 )
 
 var htmlReplacer = strings.NewReplacer(
@@ -28,14 +27,14 @@ var htmlReplacer = strings.NewReplacer(
 
 type FileSystem interface {
 	ReadDir(core.Resource, bool) ([]core.Resource, error)
-	GetVersion(core.Resource, uuid.UUID) (core.Version, error)
+	GetVersion(core.Resource, string) (core.Version, error)
 }
 
 func Serve(w http.ResponseWriter, r *http.Request, f FileSystem, res core.Resource) {
 	if res.Dir() {
 		serveCollection(w, r, f, res)
 	} else {
-		ServeResourceVersion(w, r, f, res, res.LatestVersion().ID)
+		ServeResourceVersion(w, r, f, res, "")
 	}
 }
 
@@ -109,8 +108,8 @@ func formatSize(size int) string {
 	return fmt.Sprintf("%d%s", size, suffix[si])
 }
 
-func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, res core.Resource, versionID uuid.UUID) {
-	version, err := f.GetVersion(res, versionID)
+func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, res core.Resource, versionIDStr string) {
+	version, err := f.GetVersion(res, versionIDStr)
 	if err != nil {
 		panic(err)
 	}

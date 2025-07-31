@@ -1,8 +1,9 @@
-package thumbs
+package preview
 
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,7 +13,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/storage"
 )
 
-type Thumber struct {
+type Generator struct {
 	dir string
 	cfg Config
 }
@@ -54,84 +55,88 @@ var applicationDocumentTypes = map[string]bool{
 	"vnd.openxmlformats-officedocument.wordprocessingml.document":   true,
 }
 
-func NewThumber(cfg Config) (*Thumber, error) {
-	t := &Thumber{
+func NewGenerator(cfg Config) (*Generator, error) {
+	g := &Generator{
 		cfg: cfg,
 	}
 
 	if filepath.IsAbs(cfg.Dir) {
-		t.dir = cfg.Dir
+		g.dir = cfg.Dir
 	} else {
-		t.dir = filepath.Join(storage.Root, cfg.Dir)
+		g.dir = filepath.Join(storage.Root, cfg.Dir)
 	}
-	if err := os.MkdirAll(t.dir, 0o700); err != nil {
+	if err := os.MkdirAll(g.dir, 0o700); err != nil {
 		return nil, errors.New("failed to create thumbnail directory: " + err.Error())
 	}
 
-	return t, nil
+	return g, nil
 }
 
-func (t *Thumber) Generate(path, mimeType string) (bool, error) {
-	output := filepath.Join(t.dir, filepath.Base(path))
+func (g *Generator) OpenPreview(id string) (io.ReadCloser, error) {
+	return os.Open(filepath.Join(g.dir, id))
+}
+
+func (g *Generator) GeneratePreview(path, mimeType string) (bool, error) {
+	output := filepath.Join(g.dir, filepath.Base(path))
 	if imageType, ok := strings.CutPrefix(mimeType, "image/"); ok {
 		if _, ok := imageTypes[imageType]; ok {
-			return true, t.createImageThumbnail(path, output)
+			return true, g.createImagePreview(path, output)
 		}
 	}
 	if ok := strings.HasPrefix(mimeType, "text/"); ok {
-		return true, t.createTextThumbnail(path, output)
+		return true, g.generateTextPreview(path, output)
 	}
 	if subType, ok := strings.CutPrefix(mimeType, "application/"); ok {
 		if _, ok := applicationImageTypes[subType]; ok {
-			return true, t.createImageThumbnail(path, output)
+			return true, g.createImagePreview(path, output)
 		}
 		if _, ok := applicationTextTypes[subType]; ok {
-			return true, t.createTextThumbnail(path, output)
+			return true, g.generateTextPreview(path, output)
 		}
 		if strings.HasSuffix("+json", subType) || strings.HasSuffix("+xml", subType) {
-			return true, t.createTextThumbnail(path, output)
+			return true, g.generateTextPreview(path, output)
 		}
 		if _, ok := applicationDocumentTypes[subType]; ok {
-			return true, t.createDocumentThumbnail(path, output)
+			return true, g.generateDocumentPreview(path, output)
 		}
 	}
 	return false, nil
 }
 
-func (t *Thumber) createImageThumbnail(input, output string) error {
+func (g *Generator) createImagePreview(input, output string) error {
 	outputWithFormat := output + ".webp"
-	outputWithFormatQuality := fmt.Sprintf("%s[Q=%d]", outputWithFormat, t.cfg.Quality)
+	outputWithFormatQuality := fmt.Sprintf("%s[Q=%d]", outputWithFormat, g.cfg.Quality)
 	cmd := exec.Command(
 		"vips",
 		"thumbnail",
 		input,
 		outputWithFormatQuality,
-		"240",
+		"480",
 		"--size",
 		"down",
 	)
 	err := cmd.Run()
 	if err != nil {
-		return errors.New("failed to create image thumbnail: " + err.Error())
+		return errors.New("failed to create image preview: " + err.Error())
 	}
 	return os.Rename(outputWithFormat, output)
 }
 
-func (t *Thumber) createTextThumbnail(input, output string) error {
-	return t.createThumbnailLibreOffice(input, output, true)
+func (g *Generator) generateTextPreview(input, output string) error {
+	return g.generateLibreOfficePreview(input, output, true)
 }
 
-func (t *Thumber) createDocumentThumbnail(input, output string) error {
-	return t.createThumbnailLibreOffice(input, output, false)
+func (g *Generator) generateDocumentPreview(input, output string) error {
+	return g.generateLibreOfficePreview(input, output, false)
 }
 
-func (t *Thumber) createThumbnailLibreOffice(input, output string, text bool) error {
+func (g *Generator) generateLibreOfficePreview(input, output string, text bool) error {
 	args := []string{
 		"--headless",
 		"--convert-to",
 		"webp",
 		"--outdir",
-		t.dir,
+		g.dir,
 		input,
 	}
 	if text {
@@ -141,16 +146,16 @@ func (t *Thumber) createThumbnailLibreOffice(input, output string, text bool) er
 	cmd := exec.Command("soffice", args...)
 
 	if err := cmd.Run(); err != nil {
-		return errors.New("failed to generate text thumbnail: " + err.Error())
+		return errors.New("failed to generate LibreOffice preview: " + err.Error())
 	}
 
-	tempOutput := filepath.Join(t.dir, filepath.Base(input+".webp"))
+	tempOutput := filepath.Join(g.dir, filepath.Base(input+".webp"))
 	src := tempOutput + ".orig"
 	if err := os.Rename(tempOutput, src); err != nil {
-		return errors.New("failed to rename text thumbnail: " + err.Error())
+		return errors.New("failed to rename LibreOffice preview: " + err.Error())
 	}
-	if err := t.createImageThumbnail(src, output); err != nil {
-		return errors.New("failed to resize text thumbnail: " + err.Error())
+	if err := g.createImagePreview(src, output); err != nil {
+		return errors.New("failed to resize LibreOffice preview: " + err.Error())
 	}
 	return os.Remove(src)
 }

@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"codeberg.org/shroff/phylum/server/internal/command/common"
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
@@ -29,7 +28,7 @@ func setupCatCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			v, err := f.GetVersion(r, uuid.Nil)
+			v, err := f.GetVersion(r, "")
 			if err != nil {
 				fmt.Println("cannot find latest version of '" + path + "': " + err.Error())
 				os.Exit(1)
