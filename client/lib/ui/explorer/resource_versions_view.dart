@@ -5,7 +5,7 @@ import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/file_preview/file_preview_dialog.dart';
+import 'package:phylum/ui/file_viewer/file_viewer_dialog.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';

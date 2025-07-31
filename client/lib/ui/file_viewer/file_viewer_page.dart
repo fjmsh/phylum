@@ -5,8 +5,8 @@ import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
-import 'package:phylum/ui/file_preview/file_preview.dart';
-import 'package:phylum/ui/file_preview/versioned_resource.dart';
+import 'package:phylum/ui/file_viewer/file_viewer.dart';
+import 'package:phylum/ui/file_viewer/versioned_resource.dart';
 import 'package:provider/provider.dart';
 
 class FilePreviewPage extends StatefulWidget {
@@ -62,7 +62,7 @@ class _ResourcePreviewDialogState extends State<FilePreviewPage> {
   @override
   Widget build(BuildContext context) {
     if (resource != null && version != null) {
-      return FilePreview(
+      return FileViewer(
         transparent: true,
         resource: VersionedResource(r: resource!, v: version!, showTimestamp: false),
       );

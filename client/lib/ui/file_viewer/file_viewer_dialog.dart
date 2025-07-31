@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
-import 'package:phylum/ui/file_preview/file_preview.dart';
-import 'package:phylum/ui/file_preview/versioned_resource.dart';
+import 'package:phylum/ui/file_viewer/file_viewer.dart';
+import 'package:phylum/ui/file_viewer/versioned_resource.dart';
 import 'package:provider/provider.dart';
 
 class FilePreviewDialog extends StatefulWidget {
@@ -89,7 +89,7 @@ class _FilePreviewDialogState extends State<FilePreviewDialog> {
         child: Focus(
           focusNode: _focusNode,
           autofocus: true,
-          child: FilePreview(transparent: true, resource: widget.resources[index]),
+          child: FileViewer(transparent: true, resource: widget.resources[index]),
         ),
       ),
     );

@@ -13,25 +13,26 @@ import 'package:phylum/libphylum/requests/resource_contents_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
-import 'package:phylum/ui/file_preview/versioned_resource.dart';
+import 'package:phylum/ui/file_viewer/versioned_resource.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 const maxPreviewSize = 1 * 1024 * 1024;
 
-class FilePreview extends StatefulWidget {
+class FileViewer extends StatefulWidget {
   final bool transparent;
   final VersionedResource resource;
-  const FilePreview({super.key, required this.transparent, required this.resource});
+  const FileViewer({super.key, required this.transparent, required this.resource});
 
   @override
-  State<FilePreview> createState() => _FilePreviewState();
+  State<FileViewer> createState() => _FileViewerState();
 }
 
-class _FilePreviewState extends State<FilePreview> {
+class _FileViewerState extends State<FileViewer> {
   late VersionedResource _resource;
   String? _error;
-  Widget Function(Uint8List)? _buildPreview;
+  Widget Function(Uint8List)? _buildViewer;
+  bool _loadPreview = false;
 
   @override
   void initState() {
@@ -40,7 +41,7 @@ class _FilePreviewState extends State<FilePreview> {
   }
 
   @override
-  void didUpdateWidget(covariant FilePreview oldWidget) {
+  void didUpdateWidget(covariant FileViewer oldWidget) {
     super.didUpdateWidget(oldWidget);
     setState(() {
       _updateResource(widget.resource);
@@ -50,26 +51,19 @@ class _FilePreviewState extends State<FilePreview> {
   void _updateResource(VersionedResource resource) {
     _resource = resource;
     if (_resource.r.dir) {
-      _buildPreview = null;
-      _error = 'Cannot preview directory';
+      _buildViewer = null;
+      _error = 'Cannot view directory';
     } else {
-      _buildPreview = null;
-      if (_resource.v.mimeType.startsWith('image/')) {
-        _buildPreview = buildImagePreview;
-      }
+      _buildViewer = null;
+      context.read<PhylumAccount>().db.markResourceAccess(_resource.r.id);
       if (_resource.v.mimeType.startsWith('text/')) {
-        _buildPreview = buildTextPreview;
-      }
-      if (_resource.v.mimeType == 'application/pdf') {
-        _buildPreview = buildPdfPreview;
-      }
-      if (_buildPreview == null) {
-        _error = 'Cannot generate preview';
-      } else if (_resource.v.size > maxPreviewSize) {
-        _buildPreview = null;
-        _error = 'File too large to preview';
+        _buildViewer = buildTextPreview;
+        _loadPreview = false;
+      } else if (_resource.v.preview == true) {
+        _buildViewer = buildImagePreview;
+        _loadPreview = true;
       } else {
-        context.read<PhylumAccount>().db.markResourceAccess(_resource.r.id);
+        _error = 'Preview not available';
       }
     }
   }
@@ -100,34 +94,40 @@ class _FilePreviewState extends State<FilePreview> {
         backgroundColor: Colors.transparent,
       ),
       body: Center(
-          child: _buildPreview == null
+          child: _buildViewer == null
               ? Card(
                   child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(_error ?? 'Unknown error', style: TextStyle(fontSize: 18)),
                 ))
-              : ResourcePreviewDownloader(
+              : ResourceLoader(
                   resourceId: _resource.r.id,
                   versionId: _resource.v.id,
-                  buildPreview: _buildPreview!,
+                  buildViewer: _buildViewer!,
+                  loadPreview: _loadPreview,
                 )),
     );
   }
 }
 
-class ResourcePreviewDownloader extends StatefulWidget {
+class ResourceLoader extends StatefulWidget {
   final String resourceId;
   final String versionId;
-  final Widget Function(Uint8List data) buildPreview;
+  final Widget Function(Uint8List data) buildViewer;
+  final bool loadPreview;
 
-  ResourcePreviewDownloader({required this.resourceId, required this.buildPreview, required this.versionId})
-      : super(key: ValueKey(versionId));
+  ResourceLoader({
+    required this.resourceId,
+    required this.buildViewer,
+    required this.versionId,
+    required this.loadPreview,
+  }) : super(key: ValueKey(versionId));
 
   @override
-  State<ResourcePreviewDownloader> createState() => _ResourcePreviewDownloaderState();
+  State<ResourceLoader> createState() => _ResourceLoaderState();
 }
 
-class _ResourcePreviewDownloaderState extends State<ResourcePreviewDownloader> {
+class _ResourceLoaderState extends State<ResourceLoader> {
   bool _downloading = false;
   String? _error;
   double? _progress;
@@ -149,7 +149,7 @@ class _ResourcePreviewDownloaderState extends State<ResourcePreviewDownloader> {
     if (_data != null) {
       return SizedBox(
         width: 800,
-        child: widget.buildPreview(_data!),
+        child: widget.buildViewer(_data!),
       );
     }
     if (!_downloading) {
@@ -176,6 +176,7 @@ class _ResourcePreviewDownloaderState extends State<ResourcePreviewDownloader> {
       final response = await account.apiClient.dispatchRequestRaw(ResourceContentsRequest(
         widget.resourceId,
         versionId: widget.versionId,
+        loadPreview: widget.loadPreview,
       ));
       if (response.statusCode < 200 || response.statusCode > 300) {
         final error = PhylumApiErrorResponse.fromResponseBody(await response.bodyString()).message;

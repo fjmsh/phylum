@@ -1180,10 +1180,11 @@ class ResourceVersions extends Table
   static const VerificationMeta _previewMeta =
       const VerificationMeta('preview');
   late final GeneratedColumn<bool> preview = GeneratedColumn<bool>(
-      'preview', aliasedName, false,
+      'preview', aliasedName, true,
       type: DriftSqlType.bool,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL CHECK (preview IN (0, 1))');
+      requiredDuringInsert: false,
+      $customConstraints: 'DEFAULT 0 CHECK (preview IN (0, 1))',
+      defaultValue: const CustomExpression('0'));
   static const VerificationMeta _sizeMeta = const VerificationMeta('size');
   late final GeneratedColumn<int> size = GeneratedColumn<int>(
       'size', aliasedName, false,
@@ -1244,8 +1245,6 @@ class ResourceVersions extends Table
     if (data.containsKey('preview')) {
       context.handle(_previewMeta,
           preview.isAcceptableOrUnknown(data['preview']!, _previewMeta));
-    } else if (isInserting) {
-      context.missing(_previewMeta);
     }
     if (data.containsKey('size')) {
       context.handle(
@@ -1283,7 +1282,7 @@ class ResourceVersions extends Table
       deleted: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}deleted'])!,
       preview: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}preview'])!,
+          .read(DriftSqlType.bool, data['${effectivePrefix}preview']),
       size: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}size'])!,
       mimeType: attachedDatabase.typeMapping
@@ -1307,7 +1306,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
   final String resourceId;
   final DateTime created;
   final bool deleted;
-  final bool preview;
+  final bool? preview;
   final int size;
   final String mimeType;
   final String sha256;
@@ -1316,7 +1315,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
       required this.resourceId,
       required this.created,
       required this.deleted,
-      required this.preview,
+      this.preview,
       required this.size,
       required this.mimeType,
       required this.sha256});
@@ -1327,7 +1326,9 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
     map['resource_id'] = Variable<String>(resourceId);
     map['created'] = Variable<DateTime>(created);
     map['deleted'] = Variable<bool>(deleted);
-    map['preview'] = Variable<bool>(preview);
+    if (!nullToAbsent || preview != null) {
+      map['preview'] = Variable<bool>(preview);
+    }
     map['size'] = Variable<int>(size);
     map['mime_type'] = Variable<String>(mimeType);
     map['sha256'] = Variable<String>(sha256);
@@ -1340,7 +1341,9 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
       resourceId: Value(resourceId),
       created: Value(created),
       deleted: Value(deleted),
-      preview: Value(preview),
+      preview: preview == null && nullToAbsent
+          ? const Value.absent()
+          : Value(preview),
       size: Value(size),
       mimeType: Value(mimeType),
       sha256: Value(sha256),
@@ -1355,7 +1358,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
       resourceId: serializer.fromJson<String>(json['resource_id']),
       created: serializer.fromJson<DateTime>(json['created']),
       deleted: serializer.fromJson<bool>(json['deleted']),
-      preview: serializer.fromJson<bool>(json['preview']),
+      preview: serializer.fromJson<bool?>(json['preview']),
       size: serializer.fromJson<int>(json['size']),
       mimeType: serializer.fromJson<String>(json['mime_type']),
       sha256: serializer.fromJson<String>(json['sha256']),
@@ -1369,7 +1372,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
       'resource_id': serializer.toJson<String>(resourceId),
       'created': serializer.toJson<DateTime>(created),
       'deleted': serializer.toJson<bool>(deleted),
-      'preview': serializer.toJson<bool>(preview),
+      'preview': serializer.toJson<bool?>(preview),
       'size': serializer.toJson<int>(size),
       'mime_type': serializer.toJson<String>(mimeType),
       'sha256': serializer.toJson<String>(sha256),
@@ -1381,7 +1384,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
           String? resourceId,
           DateTime? created,
           bool? deleted,
-          bool? preview,
+          Value<bool?> preview = const Value.absent(),
           int? size,
           String? mimeType,
           String? sha256}) =>
@@ -1390,7 +1393,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
         resourceId: resourceId ?? this.resourceId,
         created: created ?? this.created,
         deleted: deleted ?? this.deleted,
-        preview: preview ?? this.preview,
+        preview: preview.present ? preview.value : this.preview,
         size: size ?? this.size,
         mimeType: mimeType ?? this.mimeType,
         sha256: sha256 ?? this.sha256,
@@ -1446,7 +1449,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
   final Value<String> resourceId;
   final Value<DateTime> created;
   final Value<bool> deleted;
-  final Value<bool> preview;
+  final Value<bool?> preview;
   final Value<int> size;
   final Value<String> mimeType;
   final Value<String> sha256;
@@ -1467,7 +1470,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
     required String resourceId,
     required DateTime created,
     required bool deleted,
-    required bool preview,
+    this.preview = const Value.absent(),
     required int size,
     required String mimeType,
     required String sha256,
@@ -1476,7 +1479,6 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
         resourceId = Value(resourceId),
         created = Value(created),
         deleted = Value(deleted),
-        preview = Value(preview),
         size = Value(size),
         mimeType = Value(mimeType),
         sha256 = Value(sha256);
@@ -1509,7 +1511,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
       Value<String>? resourceId,
       Value<DateTime>? created,
       Value<bool>? deleted,
-      Value<bool>? preview,
+      Value<bool?>? preview,
       Value<int>? size,
       Value<String>? mimeType,
       Value<String>? sha256,
@@ -3763,7 +3765,7 @@ typedef $ResourceVersionsCreateCompanionBuilder = ResourceVersionsCompanion
   required String resourceId,
   required DateTime created,
   required bool deleted,
-  required bool preview,
+  Value<bool?> preview,
   required int size,
   required String mimeType,
   required String sha256,
@@ -3775,7 +3777,7 @@ typedef $ResourceVersionsUpdateCompanionBuilder = ResourceVersionsCompanion
   Value<String> resourceId,
   Value<DateTime> created,
   Value<bool> deleted,
-  Value<bool> preview,
+  Value<bool?> preview,
   Value<int> size,
   Value<String> mimeType,
   Value<String> sha256,
@@ -3982,7 +3984,7 @@ class $ResourceVersionsTableManager extends RootTableManager<
             Value<String> resourceId = const Value.absent(),
             Value<DateTime> created = const Value.absent(),
             Value<bool> deleted = const Value.absent(),
-            Value<bool> preview = const Value.absent(),
+            Value<bool?> preview = const Value.absent(),
             Value<int> size = const Value.absent(),
             Value<String> mimeType = const Value.absent(),
             Value<String> sha256 = const Value.absent(),
@@ -4004,7 +4006,7 @@ class $ResourceVersionsTableManager extends RootTableManager<
             required String resourceId,
             required DateTime created,
             required bool deleted,
-            required bool preview,
+            Value<bool?> preview = const Value.absent(),
             required int size,
             required String mimeType,
             required String sha256,

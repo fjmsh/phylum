@@ -5,7 +5,7 @@ import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/layout/search.dart';
 import 'package:phylum/ui/app/routes.dart';
-import 'package:phylum/ui/file_preview/file_preview_dialog.dart';
+import 'package:phylum/ui/file_viewer/file_viewer_dialog.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 

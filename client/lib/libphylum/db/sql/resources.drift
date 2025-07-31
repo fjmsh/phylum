@@ -17,10 +17,10 @@ CREATE TABLE IF NOT EXISTS resource_versions(
     resource_id TEXT NOT NULL REFERENCES resources (id),
     created DATETIME NOT NULL,
     deleted BOOLEAN NOT NULL CHECK ("deleted" IN (0, 1)),
-    preview BOOLEAN NOT NULL CHECK ("preview" IN (0, 1)),
+    preview BOOLEAN DEFAULT 0 CHECK ("preview" IN (0, 1)),
     size INTEGER NOT NULL,
     mime_type TEXT NOT NULL,
-    sha256 TEXT NOT NULL,
+    sha256 TEXT NOT NULL
 );
 
 -- Use `UNION` instead of `UNION ALL` to avoid infinite loops in case of

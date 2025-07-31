@@ -17,7 +17,7 @@ import 'package:phylum/ui/login/reset_password_page.dart';
 import 'package:phylum/ui/menu/menu_option.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:phylum/ui/open/open_resource_page.dart';
-import 'package:phylum/ui/file_preview/file_preview_page.dart';
+import 'package:phylum/ui/file_viewer/file_viewer_page.dart';
 import 'package:provider/provider.dart';
 
 sealed class PhylumRoute {
