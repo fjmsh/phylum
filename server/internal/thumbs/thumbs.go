@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/storage"
@@ -29,9 +30,28 @@ var imageTypes = map[string]bool{
 }
 
 var applicationTextTypes = map[string]bool{
-	"json": true,
-	"yaml": true,
-	"toml": true,
+	"json":  true,
+	"yaml":  true,
+	"toml":  true,
+	"x-sh":  true,
+	"x-sql": true,
+	"xml":   true,
+}
+var applicationImageTypes = map[string]bool{
+	"pdf":        true,
+	"postscript": true,
+}
+
+var applicationDocumentTypes = map[string]bool{
+	"msword":                              true,
+	"vnd.ms-excel":                        true,
+	"vnd.ms-powerpoint":                   true,
+	"vnd.oasis.opendocument.presentation": true,
+	"vnd.oasis.opendocument.spreadsheet":  true,
+	"vnd.oasis.opendocument.text":         true,
+	"vnd.openxmlformats-officedocument.presentationml.presentation": true,
+	"vnd.openxmlformats-officedocument.spreadsheetml.sheet":         true,
+	"vnd.openxmlformats-officedocument.wordprocessingml.document":   true,
 }
 
 func NewThumber(cfg Config) (*Thumber, error) {
@@ -62,8 +82,17 @@ func (t *Thumber) Generate(path, mimeType string) (bool, error) {
 		return true, t.createTextThumbnail(path, output)
 	}
 	if subType, ok := strings.CutPrefix(mimeType, "application/"); ok {
+		if _, ok := applicationImageTypes[subType]; ok {
+			return true, t.createImageThumbnail(path, output)
+		}
 		if _, ok := applicationTextTypes[subType]; ok {
 			return true, t.createTextThumbnail(path, output)
+		}
+		if strings.HasSuffix("+json", subType) || strings.HasSuffix("+xml", subType) {
+			return true, t.createTextThumbnail(path, output)
+		}
+		if _, ok := applicationDocumentTypes[subType]; ok {
+			return true, t.createDocumentThumbnail(path, output)
 		}
 	}
 	return false, nil
@@ -89,16 +118,27 @@ func (t *Thumber) createImageThumbnail(input, output string) error {
 }
 
 func (t *Thumber) createTextThumbnail(input, output string) error {
-	cmd := exec.Command(
-		"soffice",
+	return t.createThumbnailLibreOffice(input, output, true)
+}
+
+func (t *Thumber) createDocumentThumbnail(input, output string) error {
+	return t.createThumbnailLibreOffice(input, output, false)
+}
+
+func (t *Thumber) createThumbnailLibreOffice(input, output string, text bool) error {
+	args := []string{
 		"--headless",
-		"--infilter=\"Text (encoded):UTF8,LF,Droid Sans,en-US\"",
 		"--convert-to",
-		"webp:writer_webp_Export",
+		"webp",
 		"--outdir",
 		t.dir,
 		input,
-	)
+	}
+	if text {
+		args = slices.Insert(args, 1, "--infilter=\"Text (encoded):UTF8,LF,Droid Sans,en-US\"")
+	}
+
+	cmd := exec.Command("soffice", args...)
 
 	if err := cmd.Run(); err != nil {
 		return errors.New("failed to generate text thumbnail: " + err.Error())
