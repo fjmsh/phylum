@@ -12,6 +12,7 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   cached_network_image: ^3.4.1
+  cached_network_image_platform_interface:
   circular_profile_avatar:
   collection:
   drift: ^2.19.1+1

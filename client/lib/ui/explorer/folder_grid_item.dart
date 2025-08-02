@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cached_network_image_platform_interface/cached_network_image_platform_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -6,6 +7,7 @@ import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
+import 'package:uri/uri.dart';
 
 import 'explorer_controller.dart';
 
@@ -54,20 +56,36 @@ class FolderGridItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-                child: CachedNetworkImage(
-              imageUrl: account.apiClient.createUriBuilder('/api/v1/fs/preview/${resource.id}:').build().toString(),
-              alignment: Alignment.topLeft,
-              fit: BoxFit.cover,
-              httpHeaders: account.apiClient.requestHeaders,
-              placeholder: (context, url) => Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: resource.getIcon(account),
-              ),
-              errorWidget: (context, url, err) => Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: resource.getIcon(account),
-              ),
-            )),
+                child: StreamBuilder(
+                    stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
+                    builder: (context, snapshot) {
+                      String imageUrl = '';
+                      if (snapshot.data != null && snapshot.data?.preview == true) {
+                        imageUrl = (account.apiClient.createUriBuilder('/api/v1/fs/preview/${resource.id}:')
+                              ..queryParameters['version'] = snapshot.data!.id)
+                            .build()
+                            .toString();
+                      }
+                      return CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        alignment: Alignment.topCenter,
+                        fit: BoxFit.cover,
+                        httpHeaders: account.apiClient.requestHeaders,
+                        placeholder: (context, url) => FittedBox(
+                            fit: BoxFit.contain,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: resource.getIcon(account),
+                            )),
+                        imageRenderMethodForWeb: ImageRenderMethodForWeb.HttpGet,
+                        errorWidget: (context, url, err) => FittedBox(
+                            fit: BoxFit.contain,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: resource.getIcon(account),
+                            )),
+                      );
+                    })),
             Container(
               decoration: BoxDecoration(color: color ?? Theme.of(context).colorScheme.surfaceContainerLow),
               padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
