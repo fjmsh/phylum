@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -53,14 +54,22 @@ class FolderGridItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-                child: FittedBox(
-                    fit: BoxFit.contain,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: resource.getIcon(account),
-                    ))),
+                child: CachedNetworkImage(
+              imageUrl: account.apiClient.createUriBuilder('/api/v1/fs/preview/${resource.id}:').build().toString(),
+              alignment: Alignment.topLeft,
+              fit: BoxFit.cover,
+              httpHeaders: account.apiClient.requestHeaders,
+              placeholder: (context, url) => Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: resource.getIcon(account),
+              ),
+              errorWidget: (context, url, err) => Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: resource.getIcon(account),
+              ),
+            )),
             Container(
-              decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerLow),
+              decoration: BoxDecoration(color: color ?? Theme.of(context).colorScheme.surfaceContainerLow),
               padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
