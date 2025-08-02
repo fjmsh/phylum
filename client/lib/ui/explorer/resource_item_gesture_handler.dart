@@ -16,9 +16,15 @@ class ResourceItemGestureHandler extends StatefulWidget {
   final int index;
   final Resource resource;
   final bool dropTargetActive;
+  final Widget Function(Resource, bool) buildItem;
 
-  const ResourceItemGestureHandler(
-      {super.key, required this.index, required this.resource, required this.dropTargetActive});
+  const ResourceItemGestureHandler({
+    super.key,
+    required this.index,
+    required this.resource,
+    required this.dropTargetActive,
+    required this.buildItem,
+  });
 
   @override
   State<ResourceItemGestureHandler> createState() => _ResourceItemGestureHandlerState();
@@ -122,6 +128,7 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
           resource: widget.resource,
           index: widget.index,
           dropTargetActive: dropTargetActive,
+          buildItem: widget.buildItem,
         ),
       ),
     );

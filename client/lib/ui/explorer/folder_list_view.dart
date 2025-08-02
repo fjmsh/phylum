@@ -86,12 +86,20 @@ class _FolderListViewState extends State<FolderListView> {
                           index: index,
                           resource: resource,
                           dropTargetActive: dropTargetActive,
+                          buildItem: (resource, dropTargetActive) => ResourceDetailsRow(
+                            resource: resource,
+                            dropTargetActive: dropTargetActive,
+                          ),
                         ),
                       )
                     : ResourceItemGestureHandler(
                         index: index,
                         resource: resource,
                         dropTargetActive: false,
+                        buildItem: (resource, dropTargetActive) => ResourceDetailsRow(
+                          resource: resource,
+                          dropTargetActive: dropTargetActive,
+                        ),
                       );
               });
         }),

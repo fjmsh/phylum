@@ -7,7 +7,6 @@ import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/paste_helpers.dart';
-import 'package:phylum/ui/explorer/resource_details_row.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
 import 'package:phylum/util/upload_utils.dart';
@@ -133,8 +132,15 @@ class ResourceDraggable extends StatelessWidget {
   final int index;
   final Resource resource;
   final bool dropTargetActive;
+  final Widget Function(Resource, bool) buildItem;
 
-  const ResourceDraggable({super.key, required this.resource, required this.index, required this.dropTargetActive});
+  const ResourceDraggable({
+    super.key,
+    required this.resource,
+    required this.index,
+    required this.dropTargetActive,
+    required this.buildItem,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -168,10 +174,7 @@ class ResourceDraggable extends StatelessWidget {
             context.read<ExplorerController>().setDragging(false);
           },
           feedback: _feedback(context),
-          child: ResourceDetailsRow(
-            resource: resource,
-            dropTargetActive: dropTargetActive,
-          )),
+          child: buildItem(resource, dropTargetActive)),
     );
   }
 
