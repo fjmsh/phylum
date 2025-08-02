@@ -49,7 +49,11 @@ class _FolderGridViewState extends State<FolderGridView> {
     final resources = context.select<ExplorerState, List<Resource>>((state) => state.resources);
     return LayoutBuilder(builder: (context, constraints) {
       _viewportHeight = constraints.maxHeight;
-      _crossAxisCount = constraints.maxWidth ~/ 240;
+      final idealCount = constraints.maxWidth / 240;
+      _crossAxisCount = idealCount.toInt();
+      if (idealCount - _crossAxisCount > 0.75) {
+        _crossAxisCount++;
+      }
       _rowHeight = constraints.maxWidth / _crossAxisCount;
       return Actions(
         actions: {

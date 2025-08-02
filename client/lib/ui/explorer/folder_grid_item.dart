@@ -52,7 +52,13 @@ class FolderGridItem extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(child: resource.getIcon(account)),
+            Expanded(
+                child: FittedBox(
+                    fit: BoxFit.contain,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: resource.getIcon(account),
+                    ))),
             Container(
               decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerLow),
               padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
