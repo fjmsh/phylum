@@ -85,8 +85,7 @@ class _FolderListViewState extends State<FolderListView> {
                         buildItem: (context, dropTargetActive) => ResourceItemGestureHandler(
                           index: index,
                           resource: resource,
-                          dropTargetActive: dropTargetActive,
-                          buildItem: (resource, dropTargetActive) => ResourceDetailsRow(
+                          buildItem: () => ResourceDetailsRow(
                             resource: resource,
                             dropTargetActive: dropTargetActive,
                           ),
@@ -95,10 +94,9 @@ class _FolderListViewState extends State<FolderListView> {
                     : ResourceItemGestureHandler(
                         index: index,
                         resource: resource,
-                        dropTargetActive: false,
-                        buildItem: (resource, dropTargetActive) => ResourceDetailsRow(
+                        buildItem: () => ResourceDetailsRow(
                           resource: resource,
-                          dropTargetActive: dropTargetActive,
+                          dropTargetActive: false,
                         ),
                       );
               });

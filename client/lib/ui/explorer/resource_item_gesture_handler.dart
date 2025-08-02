@@ -15,14 +15,12 @@ import 'package:provider/provider.dart';
 class ResourceItemGestureHandler extends StatefulWidget {
   final int index;
   final Resource resource;
-  final bool dropTargetActive;
-  final Widget Function(Resource, bool) buildItem;
+  final Widget Function() buildItem;
 
   const ResourceItemGestureHandler({
     super.key,
     required this.index,
     required this.resource,
-    required this.dropTargetActive,
     required this.buildItem,
   });
 
@@ -31,22 +29,7 @@ class ResourceItemGestureHandler extends StatefulWidget {
 }
 
 class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler> {
-  bool dropTargetActive = false;
   bool deferHandling = false;
-
-  @override
-  void initState() {
-    super.initState();
-    dropTargetActive = widget.dropTargetActive;
-  }
-
-  @override
-  void didUpdateWidget(covariant ResourceItemGestureHandler oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (dropTargetActive != widget.dropTargetActive) {
-      setState(() => dropTargetActive = widget.dropTargetActive);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +110,6 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
         child: ResourceDraggable(
           resource: widget.resource,
           index: widget.index,
-          dropTargetActive: dropTargetActive,
           buildItem: widget.buildItem,
         ),
       ),

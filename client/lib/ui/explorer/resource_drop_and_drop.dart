@@ -131,14 +131,12 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
 class ResourceDraggable extends StatelessWidget {
   final int index;
   final Resource resource;
-  final bool dropTargetActive;
-  final Widget Function(Resource, bool) buildItem;
+  final Widget Function() buildItem;
 
   const ResourceDraggable({
     super.key,
     required this.resource,
     required this.index,
-    required this.dropTargetActive,
     required this.buildItem,
   });
 
@@ -174,7 +172,7 @@ class ResourceDraggable extends StatelessWidget {
             context.read<ExplorerController>().setDragging(false);
           },
           feedback: _feedback(context),
-          child: buildItem(resource, dropTargetActive)),
+          child: buildItem()),
     );
   }
 
