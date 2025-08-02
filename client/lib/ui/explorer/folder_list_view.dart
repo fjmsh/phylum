@@ -62,7 +62,7 @@ class _FolderListViewState extends State<FolderListView> {
           return null;
         }),
         FocusLastIntent: CallbackAction<FocusLastIntent>(onInvoke: (i) {
-          final index = context.read<ExplorerController>().updateSelection((i) => 4294967296, i.mode, true);
+          final index = context.read<ExplorerController>().updateSelection((i) => 1 << 31, i.mode, true);
           ensureVisible(index);
           return null;
         }),
@@ -71,7 +71,7 @@ class _FolderListViewState extends State<FolderListView> {
         autofocus: true,
         descendantsAreFocusable: false,
         child: LayoutBuilder(builder: (context, constraints) {
-          _rowHeight ??= calculateRowHeight(context);
+          _rowHeight ??= ResourceDetailsRow.calculateHeight(context);
           _viewportHeight = constraints.maxHeight;
           return ListView.builder(
               itemCount: resources.length,

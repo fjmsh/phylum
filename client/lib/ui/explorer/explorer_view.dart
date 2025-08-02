@@ -22,6 +22,7 @@ import 'package:super_clipboard/super_clipboard.dart';
 
 import 'explorer_controller.dart';
 import 'folder_empty_view.dart';
+import 'folder_grid_view.dart';
 import 'folder_list_view.dart';
 
 class ExplorerView extends StatefulWidget {
@@ -154,7 +155,7 @@ class _ExplorerViewState extends State<ExplorerView> {
     return RefreshIndicator(
       key: _refreshKey,
       onRefresh: context.read<ExplorerController>().refresh,
-      child: const FolderListView(),
+      child: const FolderGridView(),
     );
   }
 }

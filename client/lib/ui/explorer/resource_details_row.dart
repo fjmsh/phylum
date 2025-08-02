@@ -19,34 +19,6 @@ const _iconPaddingH = 16.0;
 const _iconSize = 24.0;
 const _subtitleIconSize = 14.0;
 
-double calculateRowHeight(BuildContext context) {
-  final theme = Theme.of(context);
-  final scaler = MediaQuery.textScalerOf(context);
-  final titleSize = (TextPainter(
-          text: TextSpan(text: 'A', style: theme.textTheme.bodyLarge!),
-          maxLines: 1,
-          textScaler: scaler,
-          textDirection: TextDirection.ltr)
-        ..layout())
-      .size
-      .height;
-  final subtitleTextSize = (TextPainter(
-          text: TextSpan(text: 'A', style: theme.textTheme.bodyMedium!),
-          maxLines: 1,
-          textScaler: scaler,
-          textDirection: TextDirection.ltr)
-        ..layout())
-      .size
-      .height;
-  // final subtitleTextSize = scaler.scale(theme.textTheme.bodyMedium!.fontSize!);
-  final subtitleSize = subtitleTextSize > _subtitleIconSize ? subtitleTextSize : _subtitleIconSize;
-  final contentSize = titleSize + subtitleSize;
-  final iconSize = _iconSize + (_iconPaddingV * 2);
-  final totalSize = (2 * _rowPaddingV) + (iconSize > contentSize ? iconSize : contentSize);
-  // print('$totalSize $titleSize $subtitleSize ($subtitleTextSize $_subtitleIconSize)');
-  return totalSize;
-}
-
 class ResourceDetailsRow extends StatelessWidget {
   final Resource resource;
   final bool dropTargetActive;
@@ -204,5 +176,33 @@ class ResourceDetailsRow extends StatelessWidget {
             ),
           )),
     );
+  }
+
+  static double calculateHeight(BuildContext context) {
+    final theme = Theme.of(context);
+    final scaler = MediaQuery.textScalerOf(context);
+    final titleSize = (TextPainter(
+            text: TextSpan(text: 'A', style: theme.textTheme.bodyLarge!),
+            maxLines: 1,
+            textScaler: scaler,
+            textDirection: TextDirection.ltr)
+          ..layout())
+        .size
+        .height;
+    final subtitleTextSize = (TextPainter(
+            text: TextSpan(text: 'A', style: theme.textTheme.bodyMedium!),
+            maxLines: 1,
+            textScaler: scaler,
+            textDirection: TextDirection.ltr)
+          ..layout())
+        .size
+        .height;
+    // final subtitleTextSize = scaler.scale(theme.textTheme.bodyMedium!.fontSize!);
+    final subtitleSize = subtitleTextSize > _subtitleIconSize ? subtitleTextSize : _subtitleIconSize;
+    final contentSize = titleSize + subtitleSize;
+    final iconSize = _iconSize + (_iconPaddingV * 2);
+    final totalSize = (2 * _rowPaddingV) + (iconSize > contentSize ? iconSize : contentSize);
+    // print('$totalSize $titleSize $subtitleSize ($subtitleTextSize $_subtitleIconSize)');
+    return totalSize;
   }
 }
