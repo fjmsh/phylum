@@ -30,6 +30,8 @@ class PhylumAccount extends Account<PhylumAccount> {
   final publinkRepository = PublinkRepository();
   final resourceVersionRepository = ResourceVersionRepository();
 
+  static String? deviceInfo;
+
   @override
   Map<Type, Repository<PhylumAccount, dynamic>> get repositories => {
         Bookmark: bookmarkRepository,
@@ -90,6 +92,7 @@ class PhylumAccount extends Account<PhylumAccount> {
       persist(_persistKeyApiToken, _apiToken);
     }
     apiClient.setHeader('Authorization', 'Bearer $_apiToken');
+    apiClient.setHeader('X-Device', deviceInfo);
 
     if (_initialUser != null) {
       _userNotifier = AccountUserNotifier.fromUser(this, _initialUser!);

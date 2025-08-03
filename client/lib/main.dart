@@ -11,9 +11,12 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:phylum/libphylum/actions/deserializers.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/logging.dart';
 
 import 'ui/app/app.dart';
+
+import 'util/device_info/device_info_vm.dart' if (dart.library.js_interop) 'util/device_info/device_info_web.dart';
 
 const storageDir = String.fromEnvironment("STORAGE_DIR");
 
@@ -50,6 +53,8 @@ void main() async {
     Hive.init(appDir.path);
   }
   Hive.registerAdapter(OfflineActionAdapter(actionDeserializers));
+
+  PhylumAccount.deviceInfo = await getDeviceInfo();
 
   runApp(const PhylumApp());
 }

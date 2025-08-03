@@ -15,6 +15,7 @@ dependencies:
   cached_network_image_platform_interface:
   circular_profile_avatar:
   collection:
+  device_info_plus: ^11.5.0
   drift: ^2.19.1+1
   drift_flutter: ^0.2.1
   email_validator:
@@ -45,6 +46,7 @@ dependencies:
   state_notifier:
   super_clipboard:
   super_drag_and_drop:
+  ua_parser:
   url_launcher:
   uri:
   web:
