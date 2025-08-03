@@ -85,12 +85,17 @@ func ReadAPIKey(db db.Handler, keyIDStr, keyStr string) (*Auth, error) {
 }
 
 func readAPIKey(db db.Handler, keyID uuid.UUID, key []byte) (auth *Auth, err error) {
-	const q = `SELECT k.expires, u.id, u.permissions, u.home, k.scopes FROM api_keys k JOIN users u ON k.user_id = u.id WHERE k.id = $1 AND k.hash = $2`
+	const q = `WITH cte(id) AS (
+	UPDATE api_keys SET last_used = NOW()
+	WHERE id = $1 AND hash = $2 
+	RETURNING id, user_id, expires, scopes
+) SELECT k.expires, k.user_id, k.scopes, u.permissions, u.home FROM cte k
+JOIN users u ON k.user_id = u.id`
 	hash := sha256.Sum256(key)
 	row := db.QueryRow(q, keyID, hash[:])
 
 	auth = new(Auth)
-	err = row.Scan(&auth.expires, &auth.userID, &auth.userPermissions, &auth.homeID, &auth.scopes)
+	err = row.Scan(&auth.expires, &auth.userID, &auth.scopes, &auth.userPermissions, &auth.homeID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrCredentialsInvalid
