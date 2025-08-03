@@ -11,6 +11,7 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/explorer_actions.dart';
 import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
+import 'package:phylum/ui/explorer/folder_view_type.dart';
 import 'package:phylum/ui/explorer/paste_helpers.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -121,12 +122,21 @@ class _ExplorerViewState extends State<ExplorerView> {
   Widget build(BuildContext context) {
     return ExplorerActions(
       refreshKey: _refreshKey,
-      child: ExplorerGestureHandler(
-        child: Column(
-          children: [
-            PathView(small: widget.small),
-            Expanded(child: buildPage(context)),
-          ],
+      child: ChangeNotifierProvider(
+        create: (context) => FolderViewNotifier(),
+        child: ExplorerGestureHandler(
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  PathView(small: widget.small),
+                  widget.small ? const FolderViewIconButton() : const FolderViewToggleButton(),
+                ],
+              ),
+              Expanded(child: Builder(builder: buildPage)),
+            ],
+          ),
         ),
       ),
     );
@@ -152,10 +162,11 @@ class _ExplorerViewState extends State<ExplorerView> {
         onRefresh: context.read<ExplorerController>().refresh,
       );
     }
+    final viewType = context.watch<FolderViewNotifier>().folderViewType;
     return RefreshIndicator(
       key: _refreshKey,
       onRefresh: context.read<ExplorerController>().refresh,
-      child: const FolderGridView(),
+      child: viewType == FolderViewType.list ? const FolderListView() : const FolderGridView(),
     );
   }
 }
