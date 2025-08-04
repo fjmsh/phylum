@@ -25,7 +25,7 @@ const (
 )
 
 func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType OpenIDClientType) (string, error) {
-	if clientID, endpoint, err := openid.GetProviderDetails(providerName); err != nil {
+	if clientID, endpoint, err := openid.GetClientDetails(providerName); err != nil {
 		return "", err
 	} else {
 		codeVerifier, codeChallenge := generateOpenIDPKCEChallenge()

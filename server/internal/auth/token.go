@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/auth/openid"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
@@ -53,7 +54,7 @@ func CreateLoginToken(db db.TxHandler, email string) (core.User, string, error) 
 }
 
 func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (auth *Auth, apiToken string, err error) {
-	const q = "DELETE FROM pending_logins WHERE token_id = @token_id AND token_hash = @token_hash AND user_id IS NOT NULL RETURNING user_id, expires"
+	const q = "DELETE FROM pending_logins WHERE token_id = @token_id AND token_hash = @token_hash AND user_id IS NOT NULL RETURNING user_id, expires, oidc_provider"
 	hash := sha256.Sum256([]byte(token))
 	args := pgx.NamedArgs{
 		"token_id":   tokenID,
@@ -63,8 +64,9 @@ func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (auth *
 	var user core.User
 	var userID int32
 	var expires time.Time
+	var oidcProvider string
 	row := db.QueryRow(q, args)
-	if err = row.Scan(&userID, &expires); err != nil {
+	if err = row.Scan(&userID, &expires, &oidcProvider); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrTokenInvalid
 		}
@@ -76,7 +78,16 @@ func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (auth *
 		return
 	} else {
 		auth = NewSUAuth(user)
-		_, _, apiToken, err = GenerateAPIKey(db, auth, "Login - Token")
+		description := "Magic Link Login"
+		if oidcProvider != "" {
+			var p string
+			if p, err = openid.GetProviderName(oidcProvider); err != nil {
+				return
+			} else {
+				description = "OAuth Login (via " + p + ")"
+			}
+		}
+		_, _, apiToken, err = GenerateAPIKey(db, auth, description)
 		return
 	}
 }
