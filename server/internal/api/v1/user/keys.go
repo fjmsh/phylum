@@ -15,11 +15,12 @@ import (
 )
 
 type APIKey struct {
-	ID          string   `json:"id"`
-	Created     int64    `json:"created"`
-	Expires     int64    `json:"expires"`
-	Description string   `json:"description"`
-	Scopes      []string `json:"scopes"`
+	ID          string              `json:"id"`
+	Created     int64               `json:"created"`
+	Expires     int64               `json:"expires"`
+	Description string              `json:"description"`
+	Scopes      []string            `json:"scopes"`
+	LastUsed    auth.ConnectionInfo `json:"last_used"`
 }
 
 func setupKeysRoutes(r *gin.RouterGroup) {
@@ -50,6 +51,7 @@ func handleKeysList(c *gin.Context) {
 				Expires:     expires,
 				Description: k.Description,
 				Scopes:      k.Scopes,
+				LastUsed:    k.LastUsed,
 			}
 		}
 		c.JSON(200, res)
