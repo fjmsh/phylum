@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:moment_dart/moment_dart.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/api_key_generate_request.dart';
 import 'package:phylum/libphylum/requests/api_keys_list_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/profile/generate_api_key_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
-import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
 class ApiKeysView extends StatefulWidget {
@@ -35,35 +35,33 @@ class _ApiKeysViewState extends State<ApiKeysView> {
       );
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ElevatedButton.icon(
-          onPressed: () => createKey(context),
-          label: Text('Generate New API Key'),
-          icon: Icon(Icons.add),
-        ),
-        for (final k in keys)
-          Card(
-            margin: EdgeInsets.all(2.0),
-            child: Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    k.description,
-                    style: const TextStyle(fontSize: 18),
-                  ),
-                  Text('Created ${k.created.formatLong()}', style: const TextStyle(fontSize: 15)),
-                  Text('Expires ${k.expires?.formatLong() ?? 'Never'}', style: const TextStyle(fontSize: 15)),
-                  Text('Scopes: ${k.scopes.join(', ')}', style: const TextStyle(fontSize: 15)),
-                ],
-              ),
+    return ListTileTheme(
+      data: ListTileThemeData(
+        tileColor: Theme.of(context).colorScheme.surfaceBright,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: ElevatedButton.icon(
+              onPressed: () => createKey(context),
+              label: Text('Generate New API Key'),
+              icon: Icon(Icons.add),
             ),
           ),
-      ],
+          ...ListTile.divideTiles(context: context, tiles: [
+            for (final k in keys)
+              ListTile(
+                title: Text(k.description),
+                subtitle: k.lastUsed.used
+                    ? Text('${k.lastUsed.device} \u2022 ${k.lastUsed.fromNow()}')
+                    : const Text('Never Used'),
+              ),
+          ]),
+        ],
+      ),
     );
   }
 
@@ -75,6 +73,12 @@ class _ApiKeysViewState extends State<ApiKeysView> {
     );
 
     if (response is ListApiKeysResponse) {
+      response.keys.sort((a, b) {
+        if (a.lastUsed.timestamp == b.lastUsed.timestamp) {
+          b.created.compareTo(a.created);
+        }
+        return b.lastUsed.timestamp - a.lastUsed.timestamp;
+      });
       setState(() => keys = response.keys);
     } else {
       setState(() => error = response.description);
@@ -146,4 +150,15 @@ class _ApiKeysViewState extends State<ApiKeysView> {
       showAlertDialog(context, title: 'Error Generating API Key', message: response.description);
     }
   }
+}
+
+extension on LastUsedInfo {
+  String fromNow() {
+    if (timestamp == 0) {
+      return "Never";
+    }
+    return Moment.fromMillisecondsSinceEpoch(timestamp * 1000).fromNow();
+  }
+
+  bool get used => timestamp != 0;
 }

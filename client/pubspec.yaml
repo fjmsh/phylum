@@ -28,6 +28,7 @@ dependencies:
   http_parser: 
   intl:
   logger:
+  moment_dart:
   mime:
   offtheline:
     git:

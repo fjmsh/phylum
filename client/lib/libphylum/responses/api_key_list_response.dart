@@ -6,6 +6,7 @@ class ApiKey {
   final DateTime? expires;
   final String description;
   final List<String> scopes;
+  final LastUsedInfo lastUsed;
 
   ApiKey({
     required this.id,
@@ -13,7 +14,16 @@ class ApiKey {
     required this.expires,
     required this.description,
     required this.scopes,
+    required this.lastUsed,
   });
+}
+
+class LastUsedInfo {
+  final int timestamp;
+  final String ip;
+  final String device;
+
+  LastUsedInfo(this.timestamp, this.ip, this.device);
 }
 
 class ListApiKeysResponse extends PhylumApiSuccessResponse {
@@ -30,9 +40,14 @@ class ListApiKeysResponse extends PhylumApiSuccessResponse {
         expires: k['expires'] == 0 ? null : DateTime.fromMillisecondsSinceEpoch(k['expires'] * 1000),
         description: k['description'],
         scopes: (k['scopes'] as List).cast<String>(),
+        lastUsed: _parseLastUsed((k['last_used'] as Map).cast<String, dynamic>()),
       );
     }).toList(growable: false);
     return ListApiKeysResponse._(keys: keys);
+  }
+
+  static LastUsedInfo _parseLastUsed(Map<String, dynamic> data) {
+    return LastUsedInfo(data['timestamp'], data['ip'], data['device']);
   }
 
   @override
