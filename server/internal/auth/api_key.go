@@ -19,6 +19,7 @@ type APIKey struct {
 	Expires     pgtype.Timestamptz
 	Description string
 	Scopes      []string
+	LastUsed    LastUsed
 }
 
 type LastUsed struct {
@@ -47,7 +48,7 @@ func ConnectionDetails(ip, device, userAgent string) []byte {
 }
 
 func ListAPIKeys(db db.Handler, userID int32, includeExpired bool) ([]APIKey, error) {
-	q := "SELECT id, created, expires, description, scopes FROM api_keys WHERE user_id = $1"
+	q := "SELECT id, created, expires, description, scopes, last_used FROM api_keys WHERE user_id = $1"
 	if !includeExpired {
 		q += " AND (expires IS NULL OR expires > current_timestamp)"
 	}
@@ -79,14 +80,21 @@ func RevokeAPIKey(db db.Handler, userID int32, keyIDStr string, delete bool) err
 func scanAPIKey(row pgx.CollectableRow) (APIKey, error) {
 	var apiKey APIKey
 	var id uuid.UUID
+	var lastUsed []byte
 	err := row.Scan(
 		&id,
 		&apiKey.Created,
 		&apiKey.Expires,
 		&apiKey.Description,
 		&apiKey.Scopes,
+		&lastUsed,
 	)
-	apiKey.ID = id.String()
+	if err == nil {
+		apiKey.ID = id.String()
+		if lastUsed != nil {
+			err = json.Unmarshal(lastUsed, &apiKey.LastUsed)
+		}
+	}
 	return apiKey, err
 }
 

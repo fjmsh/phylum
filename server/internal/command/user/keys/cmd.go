@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -115,12 +116,18 @@ func setupListCommand() *cobra.Command {
 			}
 			showExpired, _ := cmd.Flags().GetBool("show-expired")
 			keys, err := auth.ListAPIKeys(db.Get(context.Background()), u.ID, showExpired)
+			sort.Slice(keys, func(i, j int) bool {
+				a := keys[i]
+				b := keys[j]
+				if a.LastUsed.Time == b.LastUsed.Time {
+					return a.Created.After(b.Created)
+				}
+				return a.LastUsed.Time > b.LastUsed.Time
+			})
 			if err != nil {
 				fmt.Println("unable to list API keys: " + err.Error())
 			}
 			for _, k := range keys {
-				fmt.Println(k.ID + " [" + k.Description + "]")
-				fmt.Println("Created:", k.Created.Format(time.DateTime))
 				expires := "Never"
 				if k.Expires.Valid {
 					expires = k.Expires.Time.Format(time.DateTime)
@@ -128,8 +135,16 @@ func setupListCommand() *cobra.Command {
 						expires += " [X]"
 					}
 				}
-				fmt.Println("Expires:", expires)
-				fmt.Println(" Scopes:", strings.Join(k.Scopes, ", "))
+				fmt.Println(k.ID + " [" + k.Description + "]")
+				fmt.Println("  Created:", k.Created.Format(time.DateTime))
+				fmt.Println("  Expires:", expires)
+				fmt.Println("   Scopes:", strings.Join(k.Scopes, ", "))
+				lastUsed := "Never"
+				if k.LastUsed.Time != 0 {
+					t := time.Unix(k.LastUsed.Time, 0).Format(time.DateTime)
+					lastUsed = fmt.Sprintf("%s by %s at %s", t, k.LastUsed.Device, k.LastUsed.IP)
+				}
+				fmt.Println("Last Used:", lastUsed)
 				fmt.Println()
 			}
 		},
