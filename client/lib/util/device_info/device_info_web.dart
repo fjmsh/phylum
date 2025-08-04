@@ -5,13 +5,9 @@ import 'package:web/web.dart' as html;
 Future<String> getDeviceInfo() {
   final nav = html.window.navigator;
   final userAgent = UaParser.parse(nav.userAgent);
-  String device = 'Unknown';
-  String os = 'Unknown';
+  String device = 'Unknown Device';
   if (userAgent.os.name != null) {
-    os = userAgent.os.name!;
-    if (userAgent.os.version != null) {
-      os = '${userAgent.os.version} $os';
-    }
+    device = userAgent.os.name!;
   }
 
   if (userAgent.device.model != null) {
@@ -21,5 +17,5 @@ Future<String> getDeviceInfo() {
     }
   }
 
-  return SynchronousFuture('${userAgent.browser.name ?? 'Unknown'}; $os; $device');
+  return SynchronousFuture('${userAgent.browser.name ?? 'Unknown Browser'} on $device');
 }
