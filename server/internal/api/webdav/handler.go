@@ -47,10 +47,15 @@ func (h *handler) HandleRequest(c *gin.Context) {
 		var a *auth.Auth
 		var err error
 
+		connectionDetails := auth.ConnectionDetails(
+			c.RemoteIP(),
+			c.Request.Header.Get("X-Device"),
+			c.Request.Header.Get("User-Agent"),
+		)
 		if keyIDStr == "" {
-			a, err = auth.ReadAPIToken(db, keyStr)
+			a, err = auth.ReadAPIToken(db, keyStr, connectionDetails)
 		} else {
-			a, err = auth.ReadAPIKey(db, keyIDStr, keyStr)
+			a, err = auth.ReadAPIKey(db, keyIDStr, keyStr, connectionDetails)
 		}
 
 		if err == nil {

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/mileusna/useragent"
 )
 
 type APIKey struct {
@@ -17,6 +19,31 @@ type APIKey struct {
 	Expires     pgtype.Timestamptz
 	Description string
 	Scopes      []string
+}
+
+type LastUsed struct {
+	Time   int64  `json:"time"`
+	IP     string `json:"ip"`
+	Device string `json:"device"`
+}
+
+func ConnectionDetails(ip, device, userAgent string) []byte {
+	if device == "" {
+		ua := useragent.Parse(userAgent)
+		device = ua.Name
+		if ua.Device != "" {
+			device += " on " + ua.Device
+		} else if ua.OS != "" {
+			device += " on " + ua.OS
+		}
+	}
+	info := LastUsed{
+		Time:   time.Now().Unix(),
+		IP:     ip,
+		Device: device,
+	}
+	b, _ := json.Marshal(info)
+	return b
 }
 
 func ListAPIKeys(db db.Handler, userID int32, includeExpired bool) ([]APIKey, error) {
@@ -63,36 +90,36 @@ func scanAPIKey(row pgx.CollectableRow) (APIKey, error) {
 	return apiKey, err
 }
 
-func ReadAPIToken(db db.Handler, encodedKey string) (*Auth, error) {
+func ReadAPIToken(db db.Handler, encodedKey string, clientInfo []byte) (*Auth, error) {
 	if b, err := b64Encoder.DecodeString(encodedKey); err != nil {
 		return nil, ErrCredentialsInvalid
 	} else if len(b) < 16 {
 		return nil, ErrCredentialsInvalid
 	} else {
 		keyID, _ := uuid.FromBytes(b[:16])
-		return readAPIKey(db, keyID, b[16:])
+		return readAPIKey(db, keyID, b[16:], clientInfo)
 	}
 }
 
-func ReadAPIKey(db db.Handler, keyIDStr, keyStr string) (*Auth, error) {
+func ReadAPIKey(db db.Handler, keyIDStr, keyStr string, clientInfo []byte) (*Auth, error) {
 	if keyID, err := uuid.Parse(keyIDStr); err != nil {
 		return nil, err
 	} else if key, err := b32Encoder.DecodeString(keyStr); err != nil {
 		return nil, err
 	} else {
-		return readAPIKey(db, keyID, key)
+		return readAPIKey(db, keyID, key, clientInfo)
 	}
 }
 
-func readAPIKey(db db.Handler, keyID uuid.UUID, key []byte) (auth *Auth, err error) {
+func readAPIKey(db db.Handler, keyID uuid.UUID, key []byte, clientInfo []byte) (auth *Auth, err error) {
 	const q = `WITH cte(id) AS (
-	UPDATE api_keys SET last_used = NOW()
+	UPDATE api_keys SET last_used = $3
 	WHERE id = $1 AND hash = $2 
 	RETURNING id, user_id, expires, scopes
 ) SELECT k.expires, k.user_id, k.scopes, u.permissions, u.home FROM cte k
 JOIN users u ON k.user_id = u.id`
 	hash := sha256.Sum256(key)
-	row := db.QueryRow(q, keyID, hash[:])
+	row := db.QueryRow(q, keyID, hash[:], clientInfo)
 
 	auth = new(Auth)
 	err = row.Scan(&auth.expires, &auth.userID, &auth.scopes, &auth.userPermissions, &auth.homeID)

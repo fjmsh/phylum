@@ -39,10 +39,15 @@ func Require(c *gin.Context) {
 
 func getAuth(c *gin.Context) (*auth.Auth, error) {
 	db := db.Get(c.Request.Context())
+	connectionDetails := auth.ConnectionDetails(
+		c.RemoteIP(),
+		c.Request.Header.Get("X-Device"),
+		c.Request.Header.Get("User-Agent"),
+	)
 	if header := c.Request.Header.Get("Authorization"); header == "" {
 		if cookie, err := c.Request.Cookie("api_token"); err == nil {
 			encodedKey := cookie.Value
-			if a, err := auth.ReadAPIToken(db, encodedKey); err == nil {
+			if a, err := auth.ReadAPIToken(db, encodedKey, connectionDetails); err == nil {
 				return a, nil
 			} else {
 				if errors.Is(err, auth.ErrCredentialsInvalid) {
@@ -60,9 +65,9 @@ func getAuth(c *gin.Context) (*auth.Auth, error) {
 			var err error
 
 			if keyIDStr == "" {
-				a, err = auth.ReadAPIToken(db, keyStr)
+				a, err = auth.ReadAPIToken(db, keyStr, connectionDetails)
 			} else {
-				a, err = auth.ReadAPIKey(db, keyIDStr, keyStr)
+				a, err = auth.ReadAPIKey(db, keyIDStr, keyStr, connectionDetails)
 			}
 
 			if err == nil {
@@ -75,7 +80,7 @@ func getAuth(c *gin.Context) (*auth.Auth, error) {
 			}
 		}
 	} else if encodedKey, ok := checkAuthHeader(header, "bearer"); ok {
-		if a, err := auth.ReadAPIToken(db, encodedKey); err == nil {
+		if a, err := auth.ReadAPIToken(db, encodedKey, connectionDetails); err == nil {
 			return a, nil
 		} else {
 			if errors.Is(err, auth.ErrCredentialsInvalid) {
