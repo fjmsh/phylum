@@ -6,6 +6,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/update_user_name_request.dart';
 import 'package:phylum/libphylum/requests/change_password_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
+import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/profile/api_keys_view.dart';
 import 'package:phylum/ui/profile/profile_view.dart';
@@ -28,10 +29,7 @@ class ProfileDialog extends StatelessWidget {
           insetPadding: const EdgeInsets.all(12),
           contentPadding: const EdgeInsets.all(6),
           scrollable: true,
-          content: SizedBox(width: 360, child: ProfileDialog._()),
-          actions: [
-            ElevatedButton(onPressed: Navigator.of(context).pop, child: Text('OK')),
-          ],
+          content: SizedBox(width: 420, child: ProfileDialog._()),
         ),
       ),
     );
@@ -42,6 +40,18 @@ class ProfileDialog extends StatelessWidget {
     final account = context.read<PhylumAccount>();
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const CloseButton(),
+              const LogoRow(),
+              IconButton(onPressed: () => _showAboutDialog(context), icon: Icon(Icons.help_outline))
+            ],
+          ),
+        ),
         Card(
           child: Column(
             children: [
@@ -103,54 +113,65 @@ class ProfileDialog extends StatelessWidget {
             ],
           ),
         ),
-        const ListTile(
-          visualDensity: VisualDensity.compact,
-          leading: Icon(Icons.settings),
-          title: Text('Settings'),
-        ),
-        ListTile(
-          visualDensity: VisualDensity.compact,
-          leading: const Icon(Icons.help),
-          title: const Text('About Phylum'),
-          onTap: () async {
-            final info = await PackageInfo.fromPlatform();
-            if (!context.mounted) return;
-            showAboutDialog(
-              context: context,
-              applicationIcon: Image(
-                image: AssetImage('assets/images/logo.png'),
-                height: 48,
-                width: 48,
-                fit: BoxFit.contain,
-              ),
-              applicationVersion: '${info.packageName} - ${info.version} (${info.buildNumber})',
+      ],
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    if (!context.mounted) return;
+    showAboutDialog(
+      context: context,
+      applicationIcon: Image(
+        image: AssetImage('assets/images/logo.png'),
+        height: 48,
+        width: 48,
+        fit: BoxFit.contain,
+      ),
+      applicationVersion: '${packageInfo.packageName} - ${packageInfo.version} (${packageInfo.buildNumber})',
+      children: [
+        SizedBox(
+          width: 360,
+          // child: Text(
+          //   'Phylum is Free Software offered under the GNU AGPL V3.0',
+          //   style: TextStyle(fontSize: 18),
+          // ),
+          child: RichText(
+            text: TextSpan(
               children: [
-                Text('Phylum is Free Software offered under the GNU AGPL V3.0'),
-                Padding(
-                  padding: const EdgeInsets.only(top: 12.0),
-                  child: RichText(
-                    text: TextSpan(
-                      text: 'View source on Codeberg',
-                      style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 16),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () => launchUrl(Uri.parse('https://codeberg.org/shroff/phylum')),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 12.0),
-                  child: RichText(
-                    text: TextSpan(
-                      text: 'Get help on Matrix',
-                      style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 16),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () => launchUrl(Uri.parse('https://matrix.to/#/#phylum_cloud:matrix.org')),
-                    ),
-                  ),
-                ),
+                TextSpan(text: 'Phylum is Free Software offered under the '),
+                TextSpan(
+                  text: 'GNU AGPL V3.0',
+                  style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () => launchUrl(Uri.parse('https://www.gnu.org/licenses/agpl-3.0.en.html')),
+                )
               ],
-            );
-          },
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 18.0),
+          child: RichText(
+            text: TextSpan(
+              text: 'View Source on Codeberg',
+              style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 16),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => launchUrl(Uri.parse('https://codeberg.org/shroff/phylum')),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 12.0),
+          child: RichText(
+            text: TextSpan(
+              text: 'Get help on Matrix',
+              style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 16),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => launchUrl(Uri.parse('https://matrix.to/#/#phylum_cloud:matrix.org')),
+            ),
+          ),
         ),
       ],
     );
