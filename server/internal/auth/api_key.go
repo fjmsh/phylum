@@ -79,6 +79,18 @@ func RevokeAPIKey(db db.Handler, userID int32, keyIDStr string, delete bool) err
 	return nil
 }
 
+func UpdateAPIKeyDescription(db db.Handler, userID int32, keyIDStr string, description string) error {
+	const q = "UPDATE api_keys SET description = $3 WHERE id = $2 AND user_id = $1"
+	if keyID, err := uuid.Parse(keyIDStr); err != nil {
+		return core.NewError(http.StatusBadRequest, "key_not_found", "key not found")
+	} else if tag, err := db.Exec(q, userID, keyID, description); err != nil {
+		return err
+	} else if tag.RowsAffected() == 0 {
+		return core.NewError(http.StatusBadRequest, "key_not_found", "key not found")
+	}
+	return nil
+}
+
 func scanAPIKey(row pgx.CollectableRow) (APIKey, error) {
 	var apiKey APIKey
 	var id uuid.UUID

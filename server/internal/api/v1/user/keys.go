@@ -28,6 +28,7 @@ func setupKeysRoutes(r *gin.RouterGroup) {
 	group.POST("/generate", handleKeysGenerate)
 	group.GET("/list", handleKeysList)
 	group.POST("/revoke", handleKeysRevoke)
+	group.POST("/edit", handleKeysEdit)
 }
 
 func handleKeysList(c *gin.Context) {
@@ -112,6 +113,25 @@ func handleKeysRevoke(c *gin.Context) {
 		panic(core.ErrInsufficientScope)
 	}
 	if err := auth.RevokeAPIKey(db.Get(c.Request.Context()), a.UserID(), params.ID, params.Delete); err != nil {
+		panic(err)
+	}
+	c.JSON(200, gin.H{})
+}
+
+func handleKeysEdit(c *gin.Context) {
+	var params struct {
+		ID          string `json:"id" form:"id" binding:"required"`
+		Description string `json:"description" form:"description" binding:"required"`
+	}
+	if err := c.ShouldBind(&params); err != nil {
+		panic(core.NewError(http.StatusBadRequest, "missing_params", "Missing Parameters"))
+	}
+
+	a := authenticator.GetAuth(c)
+	if !a.HasScope("keys:edit") {
+		panic(core.ErrInsufficientScope)
+	}
+	if err := auth.UpdateAPIKeyDescription(db.Get(c.Request.Context()), a.UserID(), params.ID, params.Description); err != nil {
 		panic(err)
 	}
 	c.JSON(200, gin.H{})
