@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:moment_dart/moment_dart.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/api_key_generate_request.dart';
@@ -78,7 +79,12 @@ class _ApiKeysViewState extends State<ApiKeysView> {
           data: ListTileThemeData(visualDensity: VisualDensity.adaptivePlatformDensity),
           child: Column(
             children: [
-              ListTile(title: const Text('ID'), subtitle: Text(key.id)),
+              ListTile(
+                title: const Text('ID'),
+                subtitle: Text(key.id),
+                trailing: IconButton(
+                    onPressed: () => Clipboard.setData(ClipboardData(text: key.id)), icon: const Icon(Icons.copy)),
+              ),
               ListTile(
                 title: const Text('Description'),
                 subtitle: Text(key.description),
