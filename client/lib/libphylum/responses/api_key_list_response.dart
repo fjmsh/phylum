@@ -2,8 +2,8 @@ part of 'responses.dart';
 
 class ApiKey {
   final String id;
-  final DateTime created;
-  final DateTime? expires;
+  final Moment created;
+  final Moment? expires;
   final String description;
   final List<String> scopes;
   final LastUsedInfo lastUsed;
@@ -36,8 +36,8 @@ class ListApiKeysResponse extends PhylumApiSuccessResponse {
       final k = map.cast<String, dynamic>();
       return ApiKey(
         id: k['id'],
-        created: DateTime.fromMillisecondsSinceEpoch(k['created'] * 1000),
-        expires: k['expires'] == 0 ? null : DateTime.fromMillisecondsSinceEpoch(k['expires'] * 1000),
+        created: Moment.fromMillisecondsSinceEpoch(k['created'] * 1000),
+        expires: k['expires'] == 0 ? null : Moment.fromMillisecondsSinceEpoch(k['expires'] * 1000),
         description: k['description'],
         scopes: (k['scopes'] as List).cast<String>(),
         lastUsed: _parseLastUsed((k['last_used'] as Map).cast<String, dynamic>()),

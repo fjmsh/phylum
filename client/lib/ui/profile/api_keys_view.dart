@@ -6,6 +6,7 @@ import 'package:phylum/libphylum/requests/api_keys_list_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/profile/generate_api_key_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
 class ApiKeysView extends StatefulWidget {
@@ -54,12 +55,58 @@ class _ApiKeysViewState extends State<ApiKeysView> {
           ...ListTile.divideTiles(context: context, tiles: [
             for (final k in keys)
               ListTile(
-                title: Text(k.description),
+                title: k.description.isEmpty
+                    ? Text('Unnamed', style: TextStyle(fontStyle: FontStyle.italic))
+                    : Text(k.description),
                 subtitle: k.lastUsed.used
                     ? Text('${k.lastUsed.device} \u2022 ${k.lastUsed.fromNow()}')
                     : const Text('Never Used'),
+                onTap: () => _showKeyDetails(context, k),
               ),
           ]),
+        ],
+      ),
+    );
+  }
+
+  void _showKeyDetails(BuildContext context, ApiKey key) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Key Details'),
+        content: ListTileTheme(
+          data: ListTileThemeData(visualDensity: VisualDensity.adaptivePlatformDensity),
+          child: Column(
+            children: [
+              ListTile(title: const Text('ID'), subtitle: Text(key.id)),
+              ListTile(
+                title: const Text('Description'),
+                subtitle: Text(key.description),
+                trailing: IconButton(onPressed: () {}, icon: Icon(Icons.edit)),
+              ),
+              ListTile(title: const Text('Created'), subtitle: Text(key.created.fromNow())),
+              ListTile(
+                  title:
+                      (key.expires?.isBefore(DateTime.now()) ?? false) ? const Text('Expired') : const Text('Expires'),
+                  subtitle: key.expires == null
+                      ? const Text('Never')
+                      : Text('${key.expires!.fromNow()} (${key.expires!.formatShort()})')),
+              ListTile(title: const Text('Scopes'), subtitle: Text(key.scopes.join(', '))),
+              ListTile(
+                title: const Text('Last Used'),
+                subtitle: key.lastUsed.used
+                    ? Text('${key.lastUsed.device} \u2022 ${key.lastUsed.ip} \u2022 ${key.lastUsed.fromNow()}')
+                    : const Text('Never Used'),
+              ),
+            ],
+          ),
+        ),
+        scrollable: true,
+        actions: [
+          ElevatedButton(
+              onPressed: () {},
+              child: Text('Delete Key', style: TextStyle(color: Theme.of(context).colorScheme.error))),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(), child: Text('OK')),
         ],
       ),
     );
