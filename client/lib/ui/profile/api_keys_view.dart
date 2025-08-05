@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:moment_dart/moment_dart.dart';
+import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/api_key_generate_request.dart';
+import 'package:phylum/libphylum/requests/api_key_generate_revoke_request.dart';
 import 'package:phylum/libphylum/requests/api_keys_list_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/profile/generate_api_key_dialog.dart';
@@ -57,7 +59,7 @@ class _ApiKeysViewState extends State<ApiKeysView> {
             for (final k in keys)
               ListTile(
                 title: k.description.isEmpty
-                    ? Text('Unnamed', style: TextStyle(fontStyle: FontStyle.italic))
+                    ? const Text('No Description', style: TextStyle(fontStyle: FontStyle.italic))
                     : Text(k.description),
                 subtitle: k.lastUsed.used
                     ? Text('${k.lastUsed.device} \u2022 ${k.lastUsed.fromNow()}')
@@ -71,6 +73,7 @@ class _ApiKeysViewState extends State<ApiKeysView> {
   }
 
   void _showKeyDetails(BuildContext context, ApiKey key) async {
+    final account = context.read<PhylumAccount>();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -87,7 +90,9 @@ class _ApiKeysViewState extends State<ApiKeysView> {
               ),
               ListTile(
                 title: const Text('Description'),
-                subtitle: Text(key.description),
+                subtitle: key.description.isEmpty
+                    ? const Text('No Description', style: TextStyle(fontStyle: FontStyle.italic))
+                    : Text(key.description),
                 trailing: IconButton(onPressed: () {}, icon: Icon(Icons.edit)),
               ),
               ListTile(title: const Text('Created'), subtitle: Text(key.created.fromNow())),
@@ -95,14 +100,20 @@ class _ApiKeysViewState extends State<ApiKeysView> {
                   title:
                       (key.expires?.isBefore(DateTime.now()) ?? false) ? const Text('Expired') : const Text('Expires'),
                   subtitle: key.expires == null
-                      ? const Text('Never')
+                      ? const Text(
+                          'Never',
+                          style: TextStyle(fontStyle: FontStyle.italic),
+                        )
                       : Text('${key.expires!.fromNow()} (${key.expires!.formatShort()})')),
               ListTile(title: const Text('Scopes'), subtitle: Text(key.scopes.join(', '))),
               ListTile(
                 title: const Text('Last Used'),
                 subtitle: key.lastUsed.used
                     ? Text('${key.lastUsed.device} \u2022 ${key.lastUsed.ip} \u2022 ${key.lastUsed.fromNow()}')
-                    : const Text('Never Used'),
+                    : const Text(
+                        'Never',
+                        style: TextStyle(fontStyle: FontStyle.italic),
+                      ),
               ),
             ],
           ),
@@ -110,7 +121,24 @@ class _ApiKeysViewState extends State<ApiKeysView> {
         scrollable: true,
         actions: [
           ElevatedButton(
-              onPressed: () {},
+              onPressed: () async {
+                final nav = Navigator.of(context);
+                showProgressDialog(context);
+                final result = await account.apiClient.sendRequest(RevokeApiKeyRequest(id: key.id, delete: true),
+                    (request, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse));
+                nav.pop();
+                if (result is ApiSuccessResponse) {
+                  if (context.mounted) {
+                    await showAlertDialog(context, title: 'API Key Deleted');
+                    nav.pop();
+                    setState(() => keys?.removeWhere((k) => k == key));
+                  }
+                } else {
+                  if (context.mounted) {
+                    await showAlertDialog(context, title: 'Unable to delete API Key', message: result.description);
+                  }
+                }
+              },
               child: Text('Delete Key', style: TextStyle(color: Theme.of(context).colorScheme.error))),
           ElevatedButton(onPressed: () => Navigator.of(context).pop(), child: Text('OK')),
         ],

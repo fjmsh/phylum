@@ -42,7 +42,7 @@ class ListApiKeysResponse extends PhylumApiSuccessResponse {
         scopes: (k['scopes'] as List).cast<String>(),
         lastUsed: _parseLastUsed((k['last_used'] as Map).cast<String, dynamic>()),
       );
-    }).toList(growable: false);
+    }).toList();
     return ListApiKeysResponse._(keys: keys);
   }
 
