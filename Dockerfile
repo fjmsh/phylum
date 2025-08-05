@@ -14,6 +14,7 @@ RUN flutter pub get
 RUN flutter build web --wasm
 
 FROM alpine
+RUN apk add vips-tools vips-poppler libreoffice
 WORKDIR /app
 ENV PATH="/app:$PATH"
 COPY --from=server /bin/phylum /app/phylum
