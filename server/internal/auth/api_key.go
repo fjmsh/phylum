@@ -4,8 +4,10 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -68,11 +70,11 @@ func RevokeAPIKey(db db.Handler, userID int32, keyIDStr string, delete bool) err
 		q = qDelete
 	}
 	if keyID, err := uuid.Parse(keyIDStr); err != nil {
-		return errors.New("failed to parse key ID: " + err.Error())
+		return core.NewError(http.StatusBadRequest, "key_not_found", "key not found")
 	} else if tag, err := db.Exec(q, userID, keyID); err != nil {
 		return err
 	} else if tag.RowsAffected() == 0 {
-		return errors.New("key not found")
+		return core.NewError(http.StatusBadRequest, "key_not_found", "key not found")
 	}
 	return nil
 }
