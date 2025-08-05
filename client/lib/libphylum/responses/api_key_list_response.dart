@@ -16,6 +16,17 @@ class ApiKey {
     required this.scopes,
     required this.lastUsed,
   });
+
+  ApiKey copyWith({String? description}) {
+    return ApiKey(
+      id: id,
+      created: created,
+      expires: expires,
+      description: description ?? this.description,
+      scopes: scopes,
+      lastUsed: lastUsed,
+    );
+  }
 }
 
 class LastUsedInfo {

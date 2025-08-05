@@ -13,12 +13,10 @@ class RevokeApiKeyRequest extends ApiRequest {
   BaseRequest createRequest(ApiClient api, {Uint8List? data}) {
     final uri = api.createUriBuilder('/api/v1/user/keys/revoke');
     final request = Request('post', uri.build());
-    final fields = <String, String>{
+    request.bodyFields = <String, String>{
       'id': id,
       'delete': delete.toString(),
     };
-
-    request.bodyFields = fields;
 
     return request;
   }

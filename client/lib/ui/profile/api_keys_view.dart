@@ -3,8 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:moment_dart/moment_dart.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/requests/api_key_edit_request.dart';
 import 'package:phylum/libphylum/requests/api_key_generate_request.dart';
-import 'package:phylum/libphylum/requests/api_key_generate_revoke_request.dart';
+import 'package:phylum/libphylum/requests/api_key_revoke_request.dart';
 import 'package:phylum/libphylum/requests/api_keys_list_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/profile/generate_api_key_dialog.dart';
@@ -74,6 +75,7 @@ class _ApiKeysViewState extends State<ApiKeysView> {
 
   void _showKeyDetails(BuildContext context, ApiKey key) async {
     final account = context.read<PhylumAccount>();
+    String desc = key.description;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -88,13 +90,43 @@ class _ApiKeysViewState extends State<ApiKeysView> {
                 trailing: IconButton(
                     onPressed: () => Clipboard.setData(ClipboardData(text: key.id)), icon: const Icon(Icons.copy)),
               ),
-              ListTile(
-                title: const Text('Description'),
-                subtitle: key.description.isEmpty
-                    ? const Text('No Description', style: TextStyle(fontStyle: FontStyle.italic))
-                    : Text(key.description),
-                trailing: IconButton(onPressed: () {}, icon: Icon(Icons.edit)),
-              ),
+              StatefulBuilder(builder: (context, ss) {
+                return ListTile(
+                  title: const Text('Description'),
+                  subtitle: desc.isEmpty
+                      ? const Text('No Description', style: TextStyle(fontStyle: FontStyle.italic))
+                      : Text(desc),
+                  trailing: IconButton(
+                      onPressed: () async {
+                        final nav = Navigator.of(context);
+                        final description = await showInputDialog(
+                          context,
+                          title: 'Key Description',
+                          preset: desc,
+                          hintText: 'No Description',
+                        );
+                        if (description == null || !context.mounted) return;
+
+                        showProgressDialog(context);
+                        final result = await account.apiClient.sendRequest(
+                            EditApiKeyRequest(id: key.id, description: description),
+                            (request, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse));
+                        nav.pop();
+                        if (result is ApiSuccessResponse) {
+                          if (context.mounted) {
+                            ss(() => desc = description);
+                            setState(() => keys![keys!.indexOf(key)] = key.copyWith(description: description));
+                          }
+                        } else {
+                          if (context.mounted) {
+                            await showAlertDialog(context,
+                                title: 'Unable to delete API Key', message: result.description);
+                          }
+                        }
+                      },
+                      icon: Icon(Icons.edit)),
+                );
+              }),
               ListTile(title: const Text('Created'), subtitle: Text(key.created.fromNow())),
               ListTile(
                   title:
