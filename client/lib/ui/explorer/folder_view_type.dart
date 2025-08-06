@@ -1,22 +1,39 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
 
-enum FolderViewType {
-  list(Icons.list, 'List View'),
-  grid(Icons.grid_on, 'Grid View');
+const _persistKeyFolderViewType = 'folderViewType';
 
+enum FolderViewType {
+  list('list', Icons.list, 'List View'),
+  grid('grid', Icons.grid_on, 'Grid View');
+
+  final String name;
   final IconData icon;
   final String label;
 
-  const FolderViewType(this.icon, this.label);
+  const FolderViewType(this.name, this.icon, this.label);
+
+  static FolderViewType fromName(String? name) {
+    return FolderViewType.values.firstWhereOrNull((v) => v.name == name) ?? list;
+  }
 }
 
 class FolderViewNotifier extends ChangeNotifier {
-  FolderViewType _folderViewType = FolderViewType.list;
+  late FolderViewType _folderViewType;
 
   FolderViewType get folderViewType => _folderViewType;
+
+  final PhylumAccount _account;
+
+  FolderViewNotifier(BuildContext context) : _account = context.read() {
+    _folderViewType = FolderViewType.fromName(_account.getPersisted(_persistKeyFolderViewType) ?? 'list');
+  }
+
   set folderViewType(FolderViewType viewType) {
     _folderViewType = viewType;
+    _account.persist(_persistKeyFolderViewType, _folderViewType.name);
     notifyListeners();
   }
 }

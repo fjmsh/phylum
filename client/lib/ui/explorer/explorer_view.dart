@@ -123,7 +123,7 @@ class _ExplorerViewState extends State<ExplorerView> {
     return ExplorerActions(
       refreshKey: _refreshKey,
       child: ChangeNotifierProvider(
-        create: (context) => FolderViewNotifier(),
+        create: (context) => FolderViewNotifier(context),
         child: ExplorerGestureHandler(
           child: Column(
             children: [
