@@ -3,22 +3,18 @@
 # Contributor: Abhishek Shroff <shroff@kudosoft.net>
 # Maintainer: Abhishek Shroff <shroff@kudosoft.net>
 pkgname=libreoffice-nogui
-# "fresh" version. before, we used to package still, but community/ is only
-# supported for 6 months and fresh works perfectly okay for that, while being
-# more up to date and needing fewer dependency workarounds.
 pkgver=25.2.5.2
 pkgrel=0
 pkgdesc="Minimal LibreOffice for headless document conversion"
 url="https://www.libreoffice.org/"
-# armhf disabled due to requiring armv6k as minimum arm architecture
-# ppc64le: hangs forever in build on builders
-arch="x86_64 !ppc64le !s390x !armhf"
+arch="x86_64"
 license="MPL-2.0"
 makedepends="
 	autoconf
 	automake
 	bash
 	bison
+	cairo-dev
 	coreutils
 	clucene-dev
 	curl-dev
@@ -27,22 +23,25 @@ makedepends="
 	findutils
 	gettext-dev
 	gperf
+	lcms2-dev
 	libxslt-dev
 	nss-dev
 	nspr-dev
 	nasm
 	perl
+  pixman-dev
 	pkgconfig
 	python3
 	tar
 	zip
 	"
 
-#gettext
 depends="
+  cairo
 	clucene
 	clucene-contribs
 	curl
+	lcms2
 	libxslt
 	"
 
@@ -59,7 +58,6 @@ source="https://download.documentfoundation.org/libreoffice/src/$_v/libreoffice-
 	$_addsrcurl/e5be03eda13ef68aabab6e42aa67715e-redland-1.0.17.tar.gz
 	$_addsrcurl/boost_1_86_0.tar.xz
 	$_addsrcurl/box2d-2.4.1.tar.gz
-	$_addsrcurl/cairo-1.17.6.tar.xz
 	$_addsrcurl/cppunit-1.15.1.tar.gz
 	$_addsrcurl/dragonbox-1.1.3.tar.gz
 	$_addsrcurl/dtoa-20180411.tgz
@@ -72,7 +70,6 @@ source="https://download.documentfoundation.org/libreoffice/src/$_v/libreoffice-
 	$_addsrcurl/icu4c-75_1-data.zip
 	$_addsrcurl/icu4c-75_1-src.tgz
 	$_addsrcurl/language-subtag-registry-2025-06-23.tar.bz2
-	$_addsrcurl/lcms2-2.17.tar.gz
 	$_addsrcurl/libabw-0.1.3.tar.xz
 	$_addsrcurl/libcdr-0.1.8.tar.xz
 	$_addsrcurl/libe-book-0.1.3.tar.xz
@@ -101,7 +98,6 @@ source="https://download.documentfoundation.org/libreoffice/src/$_v/libreoffice-
 	$_addsrcurl/mdds-2.1.1.tar.xz
 	$_addsrcurl/mythes-1.2.5.tar.xz
 	$_addsrcurl/phc-winner-argon2-20190702.tar.gz
-	$_addsrcurl/pixman-0.42.2.tar.gz
 	$_addsrcurl/raptor2-2.0.16.tar.gz
 	$_addsrcurl/tiff-4.7.0.tar.xz
 	$_addsrcurl/xmlsec1-1.3.6.tar.gz
@@ -113,39 +109,6 @@ source="https://download.documentfoundation.org/libreoffice/src/$_v/libreoffice-
 	musl-libintl.patch
 "
 options="!check" # todo, huge testsuite, not much value, ..
-
-# secfixes:
-#   7.6.7.2-r0:
-#     - CVE-2024-3044
-#   7.3.6.2-r0:
-#     - CVE-2022-3140
-#   7.2.7.2-r0:
-#     - CVE-2022-26305
-#     - CVE-2022-26306
-#     - CVE-2022-26307
-#   7.2.5.2-r0:
-#     - CVE-2021-25636
-#   7.2.2.2-r0:
-#     - CVE-2021-25631
-#     - CVE-2021-25632
-#     - CVE-2021-25633
-#     - CVE-2021-25634
-#     - CVE-2021-25635
-#   6.4.4.2-r0:
-#     - CVE-2020-12802
-#     - CVE-2020-12803
-#   6.4.3.2-r0:
-#     - CVE-2020-12801
-#   6.3.1.2-r0:
-#     - CVE-2019-9854
-#     - CVE-2019-9855
-#   6.3.0.4-r0:
-#     - CVE-2019-9850
-#     - CVE-2019-9851
-#     - CVE-2019-9852
-#   6.2.5.2-r0:
-#     - CVE-2019-9848
-#     - CVE-2019-9849
 
 # help abuild find shared objects in rpath
 ldpath="/usr/lib/libreoffice/program"
@@ -190,8 +153,6 @@ build() {
 	# gcc with -Os will produce "undefined reference to non-virtual thunk to XXX"
 	# errors. workaround by forcing -O2.
 	# also this thing is huge and O2 makes more sense.
-	#export CC=clang
-	#export CXX=clang++
 	export CFLAGS="${CFLAGS//-Os/-O2}"
 	export CPPFLAGS="${CPPFLAGS//-Os/-O2}"
 	export CXXFLAGS="${CXXFLAGS//-Os/-O2}"
@@ -201,9 +162,6 @@ build() {
 		local lto="--enable-lto"
 		;;
 	esac
-
-	# force c++20 here since otherwise it's not set for abseil conftest
-	export CXXFLAGS="$CXXFLAGS -std=c++20"
 
 	# configure contains bashism
 	bash ./configure \
@@ -221,8 +179,10 @@ build() {
 		--enable-release-build \
 		--with-lang="en-US" \
 		--with-galleries="no" \
+    --with-system-cairo \
 		--with-system-clucene \
 		--with-system-curl \
+    --with-system-lcms2 \
 		--with-theme="no" \
 		--without-export-validation \
 		--without-fonts \
@@ -320,7 +280,6 @@ ee514952be56869840b70fb74f60eba14dc4de246733ff8705492367e8cf00c485f8778a9d5a7ba3
 363323ffc9e75d4f0e3a3b40952f6241fd0d8b9f46bfd4dd86cf0a5162de35257a8b70ce408a6083c03ba7c388982231a3774e5e9024b262ebb02968f778b850  e5be03eda13ef68aabab6e42aa67715e-redland-1.0.17.tar.gz
 e92dd2d4b5a47b1dcb202d0aef3aa7362e91e2b9d9b07e79a1530dc701b2b3ea07edbdbafce5e2d5b0d3d11759b3589a1ee6e25e78cd21c47d1c108f24bc8ec2  boost_1_86_0.tar.xz
 d900f925b77906777719c91488bdc5e2df1ad1f4a8ca39a574229f5e57070e3a843bdd7530e817112605fde6d82145c872d8afdfc65b84531a73199098c81162  box2d-2.4.1.tar.gz
-15d9a82097b9c5a43071ff9fbfe90d7aaee5fddb84f519cdddfe312c5fc7248a50b73a5351922de2aaafa4b2e86f911b3147609538346f8a7635f34d631c9146  cairo-1.17.6.tar.xz
 0feb47faec451357bb4c4e287efa17bb60fd3ad966d5350e9f25b414aaab79e94921024b0c0497672f8d3eeb22a599213d2d71d9e1d28b243b3e37f3a9a43691  cppunit-1.15.1.tar.gz
 41ac356ebced3312c0f9ea0f07ff372337ab78af69071f63f63dc12bd2b0088d5d89aae3792276599dd0393bfdfd2b979946c43d36042e43105080bcdcbe089d  dragonbox-1.1.3.tar.gz
 722aa814c33a34bfffe6c0201b0035cc3b65854a0ba9ae2f51620a89d68019353e2c306651b35bca337186b22b2e9865ef3c5e3df8e9328006f882e4577f8c85  dtoa-20180411.tgz
@@ -333,7 +292,6 @@ d5762f77b0913792d34596e6f3adb98ab693e2ef928396f997ca2e647ca7cad13fdd204fa15b49e2
 fd0d0079d01cb089f2f34c52ab9374fa1ee1ba0c4a4969a3d15afc695d734ff7b9d0db1c99446fcd3733ad01f718003beba00705426692aca6ffe47cef19cc30  icu4c-75_1-data.zip
 70ea842f0d5f1f6c6b65696ac71d96848c4873f4d794bebc40fd87af2ad4ef064c61a786bf7bc430ce4713ec6deabb8cc1a8cc0212eab148cee2d498a3683e45  icu4c-75_1-src.tgz
 62ef846d8d960645fea165db81b9bf44ba136aa62a72b90ab1fc087a03d33e4080cdbf7dde5fcc68c71f2eeab770cf2b467d837a2f2e7ba3466301302dc2dc7d  language-subtag-registry-2025-06-23.tar.bz2
-81885c70fb26a9b7d37a398f43ccb0d1d3ab8f43de7da8f760b26d053a0d7e0543e7d3b0cdcaf9b3b681a1b88f032134c5a3c1a6774a9abc66a8a3f10ba64398  lcms2-2.17.tar.gz
 0d2646e1bad1e11b3da43714ac5931fc67ffdbc4e7a25a44ef5b6e6a41de1e0ae14596b4a87cceb07bf56dbbe9344622b3d60afcb054ee0ab8577ca8e9b5c289  libabw-0.1.3.tar.xz
 5dc25ca80817c5d166c89264fb727a723c3439abb8ec655047c2c15bff0a48b87e7c6e3d6b203296964060bf5c2a71a11bceffbbc2f5eb3f61a209bef071a57a  libcdr-0.1.8.tar.xz
 56dfa93816b8a1b7e223bda517ff81547fd7b311c3fe2bea64b12c4290642d4b9ed3778df06c4ee7a65f2b9db57702c00c32aec819efb7820115165af3d5ebdc  libe-book-0.1.3.tar.xz
@@ -362,7 +320,6 @@ ad4a8e65e85434e43caa239ff2a3f358c6db6411235c4bb73d8d2aa1527a4f411433370706db391f
 5fe345e7d84d2e290a519d65b27332f69001c01da961c05a30abfe2a17cb8545822490bcd63b320d49e1b26291a4a898f77495951919aece83208133027848ea  mdds-2.1.1.tar.xz
 304fd05619e0ae02c9c29d92a6ada8f4a85f41f331b87b8820728c1919f3dd9c5cd951dbef9a27e649466f94dc5daa19350c9fd09c90d49b198b73b1f9eb770e  mythes-1.2.5.tar.xz
 0a4cb89e8e63399f7df069e2862ccd05308b7652bf4ab74372842f66bcc60776399e0eaf979a7b7e31436b5e6913fe5b0a6949549d8c82ebd06e0629b106e85f  phc-winner-argon2-20190702.tar.gz
-0a4e327aef89c25f8cb474fbd01de834fd2a1b13fdf7db11ab72072082e45881cd16060673b59d02054b1711ae69c6e2395f6ae9214225ee7153939efcd2fa5d  pixman-0.42.2.tar.gz
 9bd5cff36390e1e0ef15ac56e5413ecfceb4018cb531a4da8850d3623615f12a93690a78be61f9d9ae7a24e16f6446e356bc2b7f34051ddc077761d85a9b7c44  raptor2-2.0.16.tar.gz
 4234bc3d1a4de38587e21eb7d5785d6e11bc5f73c3d412dd44b9f7bcc42122d940ad017450a949dce5c3b270018829593202bff815a02d23268d9b9723266fe0  tiff-4.7.0.tar.xz
 f38ccc7af0026973a94b1b6f95accd70a2a2c4398985a0002c66d7b43bff6d6bcfb09ae62046cbdac82a0890622aead2df710cb0ab373c3bdf6159797613cdaa  xmlsec1-1.3.6.tar.gz
