@@ -31,9 +31,9 @@ func handleImgRequest(c *gin.Context) {
 	} else if img == nil {
 		c.AbortWithStatus(http.StatusNotFound)
 	} else {
-		// TODO: Caching
 		c.Writer.WriteHeader(http.StatusOK)
 		c.Writer.Header().Set("Content-Type", "image/webp")
+		c.Writer.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 		defer img.Close()
 		io.Copy(c.Writer, img)
 	}
