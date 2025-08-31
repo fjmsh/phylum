@@ -140,7 +140,7 @@ func (g *Generator) generateLibreOfficePreview(input, output string, text bool) 
 		input,
 	}
 	if text {
-		args = slices.Insert(args, 1, "--infilter=\"Text (encoded):UTF8,LF,Droid Sans,en-US\"")
+		args = slices.Insert(args, 1, "--infilter=\"Text (encoded):UTF8,LF,Noto Sans,en-US\"")
 	}
 
 	cmd := exec.Command("soffice", args...)
