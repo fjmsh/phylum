@@ -24,7 +24,7 @@ core:
         iterations: 100000
         salt: 32
         key: 32
-  preview:
+  img:
     dir: previews     # relative to storage.root, or absolute
     quality: 80
 

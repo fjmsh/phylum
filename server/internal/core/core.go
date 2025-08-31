@@ -5,7 +5,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"codeberg.org/shroff/phylum/server/internal/db"
-	"codeberg.org/shroff/phylum/server/internal/preview"
+	"codeberg.org/shroff/phylum/server/internal/img"
 	"github.com/doug-martin/goqu/v9"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/google/uuid"
@@ -15,7 +15,7 @@ import (
 
 var pg *goqu.Database
 var userConfig UserConfig
-var thumber *preview.Generator
+var imgr *img.Imgr
 var publinksPasswordHasher crypt.PasswordHasher
 var fsPathRoot pgtype.UUID
 
@@ -34,10 +34,10 @@ func Initialize(db db.Handler, cfg Config) error {
 	} else {
 		publinksPasswordHasher = c
 	}
-	if t, err := preview.NewGenerator(cfg.Preview); err != nil {
+	if t, err := img.New(cfg.Imgr); err != nil {
 		return errors.New("failed to create thumber: " + err.Error())
 	} else {
-		thumber = t
+		imgr = t
 	}
 
 	return nil

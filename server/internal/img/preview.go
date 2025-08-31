@@ -1,4 +1,4 @@
-package preview
+package img
 
 import (
 	"errors"
@@ -13,50 +13,24 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/storage"
 )
 
-type Generator struct {
-	dir string
+type Res = int8
+
+const (
+	ResThumbnail Res = 1
+	ResLarge     Res = 2
+)
+
+type Imgr struct {
 	cfg Config
+	dir string
 }
 
-var imageTypes = map[string]bool{
-	"bmp":     true,
-	"gif":     true,
-	"heic":    true,
-	"heif":    true,
-	"jpeg":    true,
-	"png":     true,
-	"svg+xml": true,
-	"webp":    true,
-	"x-icon":  true,
-}
-
-var applicationTextTypes = map[string]bool{
-	"json":  true,
-	"yaml":  true,
-	"toml":  true,
-	"x-sh":  true,
-	"x-sql": true,
-	"xml":   true,
-}
-var applicationImageTypes = map[string]bool{
-	"pdf":        true,
-	"postscript": true,
-}
-
-var applicationDocumentTypes = map[string]bool{
-	"msword":                              true,
-	"vnd.ms-excel":                        true,
-	"vnd.ms-powerpoint":                   true,
-	"vnd.oasis.opendocument.presentation": true,
-	"vnd.oasis.opendocument.spreadsheet":  true,
-	"vnd.oasis.opendocument.text":         true,
-	"vnd.openxmlformats-officedocument.presentationml.presentation": true,
-	"vnd.openxmlformats-officedocument.spreadsheetml.sheet":         true,
-	"vnd.openxmlformats-officedocument.wordprocessingml.document":   true,
-}
-
-func NewGenerator(cfg Config) (*Generator, error) {
-	g := &Generator{
+// Text - No preview  +Thumbnail
+// Image - Preview(vips) + Thumbnail
+// Video - Preview(ffmpeg) + Thumbnail
+// Document - Preview (libreoffice) + Thumbnail
+func New(cfg Config) (*Imgr, error) {
+	g := &Imgr{
 		cfg: cfg,
 	}
 
@@ -72,11 +46,11 @@ func NewGenerator(cfg Config) (*Generator, error) {
 	return g, nil
 }
 
-func (g *Generator) OpenPreview(id string) (io.ReadCloser, error) {
+func (g *Imgr) Open(id string, res Res) (io.ReadCloser, error) {
 	return os.Open(filepath.Join(g.dir, id))
 }
 
-func (g *Generator) GeneratePreview(path, mimeType string) (bool, error) {
+func (g *Imgr) Generate(path, mimeType string) (bool, error) {
 	output := filepath.Join(g.dir, filepath.Base(path))
 	if imageType, ok := strings.CutPrefix(mimeType, "image/"); ok {
 		if _, ok := imageTypes[imageType]; ok {
@@ -103,7 +77,7 @@ func (g *Generator) GeneratePreview(path, mimeType string) (bool, error) {
 	return false, nil
 }
 
-func (g *Generator) createImagePreview(input, output string) error {
+func (g *Imgr) createImagePreview(input, output string) error {
 	outputWithFormat := output + ".webp"
 	outputWithFormatQuality := fmt.Sprintf("%s[Q=%d]", outputWithFormat, g.cfg.Quality)
 	cmd := exec.Command(
@@ -122,15 +96,15 @@ func (g *Generator) createImagePreview(input, output string) error {
 	return os.Rename(outputWithFormat, output)
 }
 
-func (g *Generator) generateTextPreview(input, output string) error {
+func (g *Imgr) generateTextPreview(input, output string) error {
 	return g.generateLibreOfficePreview(input, output, true)
 }
 
-func (g *Generator) generateDocumentPreview(input, output string) error {
+func (g *Imgr) generateDocumentPreview(input, output string) error {
 	return g.generateLibreOfficePreview(input, output, false)
 }
 
-func (g *Generator) generateLibreOfficePreview(input, output string, text bool) error {
+func (g *Imgr) generateLibreOfficePreview(input, output string, text bool) error {
 	args := []string{
 		"--headless",
 		"--convert-to",

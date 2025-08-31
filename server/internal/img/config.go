@@ -1,4 +1,4 @@
-package preview
+package img
 
 type Config struct {
 	Dir     string `koanf:"dir"`

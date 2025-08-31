@@ -68,7 +68,7 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
 			var generated bool
-			if generated, err = thumber.GeneratePreview(backend.Path(versionID.String()), mimeType); err != nil {
+			if generated, err = imgr.Generate(backend.Path(versionID.String()), mimeType); err != nil {
 				return err
 			}
 			err := f.runInTx(func(f txFileSystem) error {
@@ -115,7 +115,7 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
 			var generated bool
-			if generated, err = thumber.GeneratePreview(backend.Path(versionID.String()), mimeType); err != nil {
+			if generated, err = imgr.Generate(backend.Path(versionID.String()), mimeType); err != nil {
 				return err
 			}
 			err := f.db.RunInTx(func(db db.TxHandler) error {

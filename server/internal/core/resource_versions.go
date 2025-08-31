@@ -26,7 +26,7 @@ AND DELETED IS NULL`
 	row := f.db.QueryRow(q, r.id, versionID)
 	var v Version
 	var created time.Time
-	err := row.Scan(&v.ID, &created, &v.Size, &v.MimeType, &v.SHA256, &v.Storage, &v.Preview)
+	err := row.Scan(&v.ID, &created, &v.Size, &v.MimeType, &v.SHA256, &v.Storage, &v.ImgRes)
 	if err != nil {
 		if Is(err, pgx.ErrNoRows) {
 			return v, ErrVersionNotFound

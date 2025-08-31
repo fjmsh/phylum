@@ -17,7 +17,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 
 	group.GET("/info/*path", handleInfoRequest)
 	group.GET("/contents/*path", handleContentsRequest)
-	group.GET("/preview/*path", handlePreviewRequest)
+	group.GET("/img/*path", handleImgRequest)
 	group.GET("/disk_usage/*path", handleDiskUsageRequest)
 
 	group.POST("/share", handleShareRequest)
