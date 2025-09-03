@@ -34,8 +34,8 @@ func Initialize(db db.Handler, cfg Config) error {
 	} else {
 		publinksPasswordHasher = c
 	}
-	if t, err := img.New(cfg.Imgr); err != nil {
-		return errors.New("failed to create thumber: " + err.Error())
+	if t, err := img.New(cfg.Img); err != nil {
+		return errors.New("failed to create img manager: " + err.Error())
 	} else {
 		imgr = t
 	}

@@ -8,7 +8,7 @@ import (
 type Config struct {
 	User     UserConfig     `koanf:"users"`
 	Publinks PublinksConfig `koanf:"publinks"`
-	Imgr     img.Config     `koanf:"imgr"`
+	Img      img.Config     `koanf:"img"`
 }
 
 type PublinksConfig struct {

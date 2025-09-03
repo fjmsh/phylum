@@ -67,7 +67,7 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
-			var generated bool
+			var generated int8
 			if generated, err = imgr.Generate(backend.Path(versionID.String()), mimeType); err != nil {
 				return err
 			}
@@ -114,7 +114,7 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
-			var generated bool
+			var generated int8
 			if generated, err = imgr.Generate(backend.Path(versionID.String()), mimeType); err != nil {
 				return err
 			}
@@ -374,9 +374,9 @@ func updateResourceModified(db db.TxHandler, id uuid.UUID) error {
 	return err
 }
 
-func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64, mimeType, sha256 string, thumb bool) error {
-	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage, preview)
-	VALUES (@version_id, @resource_id, @size, @mime_type, @sha256, @storage, @preview)`
+func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64, mimeType, sha256 string, imgres int8) error {
+	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage, imgres)
+	VALUES (@version_id, @resource_id, @size, @mime_type, @sha256, @storage, @imgres)`
 
 	args := pgx.NamedArgs{
 		"resource_id": id,
@@ -385,7 +385,7 @@ func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64,
 		"mime_type":   mimeType,
 		"sha256":      sha256,
 		"storage":     storage.DefaultBackendName,
-		"preview":     thumb,
+		"imgres":      imgres,
 	}
 	_, err := db.Exec(q, args)
 	if err != nil && strings.Contains(err.Error(), "resource_versions_pkey") {

@@ -25,7 +25,7 @@ const versionsQuery = "COALESCE(JSONB_AGG(JSONB_BUILD_OBJECT(" +
 	"'mime_type',v.mime_type," +
 	"'size',v.size," +
 	"'sha256',v.sha256," +
-	"'preview',v.preview" +
+	"'imgres',v.imgres" +
 	") ORDER BY v.created DESC), '[]'::JSONB)"
 
 const fullResourceQuery = `SELECT r.*,

@@ -2,33 +2,22 @@ package img
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/storage"
 )
 
-type Res = int8
-
-const (
-	ResThumbnail Res = 1
-	ResLarge     Res = 2
-)
+const maxImageSizeNoPreview = 1024 * 1024
 
 type Imgr struct {
 	cfg Config
 	dir string
+	tmp string
 }
 
-// Text - No preview  +Thumbnail
-// Image - Preview(vips) + Thumbnail
-// Video - Preview(ffmpeg) + Thumbnail
-// Document - Preview (libreoffice) + Thumbnail
 func New(cfg Config) (*Imgr, error) {
 	g := &Imgr{
 		cfg: cfg,
@@ -39,97 +28,104 @@ func New(cfg Config) (*Imgr, error) {
 	} else {
 		g.dir = filepath.Join(storage.Root, cfg.Dir)
 	}
-	if err := os.MkdirAll(g.dir, 0o700); err != nil {
-		return nil, errors.New("failed to create thumbnail directory: " + err.Error())
+	g.tmp = filepath.Join(g.dir, "tmp")
+
+	if err := os.MkdirAll(g.tmp, 0o700); err != nil {
+		return nil, errors.New("failed to create img directory: " + err.Error())
 	}
 
 	return g, nil
 }
 
 func (g *Imgr) Open(id string, res Res) (io.ReadCloser, error) {
-	return os.Open(filepath.Join(g.dir, id))
+	return os.Open(filepath.Join(g.dir, id) + "-" + resSuffixes[res] + ".webp")
 }
 
-func (g *Imgr) Generate(path, mimeType string) (bool, error) {
-	output := filepath.Join(g.dir, filepath.Base(path))
+func (g *Imgr) Generate(path, mimeType string) (int8, error) {
 	if imageType, ok := strings.CutPrefix(mimeType, "image/"); ok {
 		if _, ok := imageTypes[imageType]; ok {
-			return true, g.createImagePreview(path, output)
+			return g.processImage(path)
 		}
 	}
+
 	if ok := strings.HasPrefix(mimeType, "text/"); ok {
-		return true, g.generateTextPreview(path, output)
+		return g.processText(path)
 	}
 	if subType, ok := strings.CutPrefix(mimeType, "application/"); ok {
 		if _, ok := applicationImageTypes[subType]; ok {
-			return true, g.createImagePreview(path, output)
+			return g.processImage(path)
 		}
 		if _, ok := applicationTextTypes[subType]; ok {
-			return true, g.generateTextPreview(path, output)
+			return g.processText(path)
 		}
 		if strings.HasSuffix("+json", subType) || strings.HasSuffix("+xml", subType) {
-			return true, g.generateTextPreview(path, output)
+			return g.processText(path)
 		}
 		if _, ok := applicationDocumentTypes[subType]; ok {
-			return true, g.generateDocumentPreview(path, output)
+			return g.processDocument(path)
 		}
 	}
-	return false, nil
+	return 0, nil
 }
 
-func (g *Imgr) createImagePreview(input, output string) error {
-	outputWithFormat := output + ".webp"
-	outputWithFormatQuality := fmt.Sprintf("%s[Q=%d]", outputWithFormat, g.cfg.Quality)
-	cmd := exec.Command(
-		"vips",
-		"thumbnail",
-		input,
-		outputWithFormatQuality,
-		"480",
-		"--size",
-		"down",
-	)
-	err := cmd.Run()
+// processImage generates preview + thumbnail for images (and PDF).
+// Preview is only generated if the image size is larger than 1M
+func (g *Imgr) processImage(input string) (int8, error) {
+	var generated Res
+	stat, err := os.Stat(input)
 	if err != nil {
-		return errors.New("failed to create image preview: " + err.Error())
+		return 0, errors.New("failed to find input image: " + err.Error())
 	}
-	return os.Rename(outputWithFormat, output)
+	base := filepath.Base(input)
+	src := input
+	if stat.Size() > maxImageSizeNoPreview {
+		if o, err := resizeVips(src, g.dir, base, g.cfg.Quality, ResLarge); err != nil {
+			return 0, err
+		} else {
+			src = o
+		}
+		generated |= ResLarge
+	}
+
+	if _, err := resizeVips(src, g.dir, base, g.cfg.Quality, ResThumbnail); err != nil {
+		return 0, err
+	}
+	generated |= ResThumbnail
+	return generated, nil
 }
 
-func (g *Imgr) generateTextPreview(input, output string) error {
-	return g.generateLibreOfficePreview(input, output, true)
+// Generate thumbnail only for text using.
+// A temporary document preview must be generated and then resized down
+func (g *Imgr) processText(input string) (int8, error) {
+	if err := generateTextPreview(input, g.tmp); err != nil {
+		return 0, err
+	}
+	// No need to keep the full generated preview since we'll render
+	// the text directly on the client using file contents
+	base := filepath.Base(input)
+	src := filepath.Join(g.tmp, base+".webp")
+	defer os.Remove(src)
+
+	if _, err := resizeVips(src, g.dir, base, g.cfg.Quality, ResThumbnail); err != nil {
+		return 0, err
+	}
+	return ResThumbnail, nil
 }
 
-func (g *Imgr) generateDocumentPreview(input, output string) error {
-	return g.generateLibreOfficePreview(input, output, false)
-}
-
-func (g *Imgr) generateLibreOfficePreview(input, output string, text bool) error {
-	args := []string{
-		"--headless",
-		"--convert-to",
-		"webp",
-		"--outdir",
-		g.dir,
-		input,
+// Generate preview and thumbnail for office documents.
+func (g *Imgr) processDocument(input string) (int8, error) {
+	if err := generateDocumentPreview(input, g.dir); err != nil {
+		return 0, err
 	}
-	if text {
-		args = slices.Insert(args, 1, "--infilter=\"Text (encoded):UTF8,LF,Noto Sans,en-US\"")
+	base := filepath.Base(input)
+	out := filepath.Join(g.dir, base+".webp")
+	src := filepath.Join(g.dir, base+"-"+resSuffixes[ResLarge]+".webp")
+	if err := os.Rename(out, src); err != nil {
+		return 0, errors.New("failed to rename document preview: " + err.Error())
 	}
 
-	cmd := exec.Command("soffice", args...)
-
-	if err := cmd.Run(); err != nil {
-		return errors.New("failed to generate LibreOffice preview: " + err.Error())
+	if _, err := resizeVips(src, g.dir, base, g.cfg.Quality, ResThumbnail); err != nil {
+		return 0, err
 	}
-
-	tempOutput := filepath.Join(g.dir, filepath.Base(input+".webp"))
-	src := tempOutput + ".orig"
-	if err := os.Rename(tempOutput, src); err != nil {
-		return errors.New("failed to rename LibreOffice preview: " + err.Error())
-	}
-	if err := g.createImagePreview(src, output); err != nil {
-		return errors.New("failed to resize LibreOffice preview: " + err.Error())
-	}
-	return os.Remove(src)
+	return ResLarge | ResThumbnail, nil
 }
