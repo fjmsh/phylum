@@ -41,7 +41,18 @@ func (g *Imgr) Open(id string, res Res) (io.ReadCloser, error) {
 	return os.Open(filepath.Join(g.dir, id) + "-" + resSuffixes[res] + ".webp")
 }
 
-func (g *Imgr) Generate(path, mimeType string) (int8, error) {
+func (g *Imgr) Copy(src, dest string, res Res) error {
+	if in, err := os.Open(filepath.Join(g.dir, src) + "-" + resSuffixes[res] + ".webp"); err != nil {
+		return err
+	} else if out, err := os.Create(filepath.Join(g.dir, src) + "-" + resSuffixes[res] + ".webp"); err != nil {
+		return err
+	} else if _, err := io.Copy(out, in); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *Imgr) Generate(path, mimeType string) (Res, error) {
 	if imageType, ok := strings.CutPrefix(mimeType, "image/"); ok {
 		if _, ok := imageTypes[imageType]; ok {
 			return g.processImage(path)
@@ -70,7 +81,7 @@ func (g *Imgr) Generate(path, mimeType string) (int8, error) {
 
 // processImage generates preview + thumbnail for images (and PDF).
 // Preview is only generated if the image size is larger than 1M
-func (g *Imgr) processImage(input string) (int8, error) {
+func (g *Imgr) processImage(input string) (Res, error) {
 	var generated Res
 	stat, err := os.Stat(input)
 	if err != nil {
@@ -96,7 +107,7 @@ func (g *Imgr) processImage(input string) (int8, error) {
 
 // Generate thumbnail only for text using.
 // A temporary document preview must be generated and then resized down
-func (g *Imgr) processText(input string) (int8, error) {
+func (g *Imgr) processText(input string) (Res, error) {
 	if err := generateTextPreview(input, g.tmp); err != nil {
 		return 0, err
 	}
@@ -113,7 +124,7 @@ func (g *Imgr) processText(input string) (int8, error) {
 }
 
 // Generate preview and thumbnail for office documents.
-func (g *Imgr) processDocument(input string) (int8, error) {
+func (g *Imgr) processDocument(input string) (Res, error) {
 	if err := generateDocumentPreview(input, g.dir); err != nil {
 		return 0, err
 	}

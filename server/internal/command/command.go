@@ -135,6 +135,7 @@ func SetupCommand() {
 
 			client := steve.Initialize(db.Get(ctx), cfg.Steve, logger)
 			steve.RegisterWorker(client, &jobs.MigrateWorker{})
+			steve.RegisterWorker(client, &jobs.CopyImgsWorker{})
 			steve.RegisterWorker(client, &jobs.CopyContentsWorker{})
 			steve.RegisterWorker(client, &jobs.DeleteContentsWorker{})
 		}

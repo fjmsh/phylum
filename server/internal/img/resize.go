@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-type Res = int8
+type Res = uint8
 
 const (
 	ResThumbnail Res = 1

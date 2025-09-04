@@ -1,0 +1,39 @@
+package jobs
+
+import (
+	"context"
+
+	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/steve"
+	"github.com/google/uuid"
+)
+
+type CopyImgsArgs struct {
+	Src    uuid.UUID `json:"src"`
+	Dest   uuid.UUID `json:"dest"`
+	ImgRes uint8     `json:"imgres"`
+}
+
+func (a CopyImgsArgs) Kind() string        { return "copy_imgs" }
+func (a CopyImgsArgs) Sequences() []string { return []string{a.Src.String(), a.Dest.String()} }
+
+type CopyImgsWorker struct {
+	steve.WorkerDefaults[CopyImgsArgs]
+}
+
+func (w *CopyImgsWorker) Work(ctx context.Context, job *steve.Job[CopyImgsArgs]) error {
+	return copyImgs(ctx, job.Args.Src, job.Args.Dest, job.Args.ImgRes)
+}
+
+func CopyImgsMany(db db.Handler, args []CopyImgsArgs) error {
+	params := make([]steve.JobArgs, len(args))
+	for i, a := range args {
+		params[i] = a
+	}
+	return steve.Get().InsertJobs(db, params)
+}
+
+func copyImgs(ctx context.Context, src, dest uuid.UUID, imgRes uint8) error {
+	// TODO: implement
+	return nil
+}

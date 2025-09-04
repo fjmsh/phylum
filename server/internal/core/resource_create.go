@@ -67,7 +67,7 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
-			var generated int8
+			var generated uint8
 			if generated, err = imgr.Generate(backend.Path(versionID.String()), mimeType); err != nil {
 				return err
 			}
@@ -114,7 +114,7 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
-			var generated int8
+			var generated uint8
 			if generated, err = imgr.Generate(backend.Path(versionID.String()), mimeType); err != nil {
 				return err
 			}
@@ -374,7 +374,7 @@ func updateResourceModified(db db.TxHandler, id uuid.UUID) error {
 	return err
 }
 
-func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64, mimeType, sha256 string, imgres int8) error {
+func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64, mimeType, sha256 string, imgres uint8) error {
 	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage, imgres)
 	VALUES (@version_id, @resource_id, @size, @mime_type, @sha256, @storage, @imgres)`
 
@@ -438,7 +438,7 @@ func (r iteratorForInsertResourcesFast) Err() error {
 }
 
 func insertResourceVersionsFast(db db.TxHandler, arg []insertResourceVersionsFastParams) (int64, error) {
-	return db.CopyFrom([]string{"resource_versions"}, []string{"id", "resource_id", "size", "mime_type", "sha256", "storage"}, &iteratorForInsertResourceVersionsFast{rows: arg})
+	return db.CopyFrom([]string{"resource_versions"}, []string{"id", "resource_id", "size", "mime_type", "sha256", "imgres", "storage"}, &iteratorForInsertResourceVersionsFast{rows: arg})
 }
 
 // For bulk insert
@@ -448,6 +448,7 @@ type insertResourceVersionsFastParams struct {
 	Size       int32
 	MimeType   string
 	SHA256     string
+	ImgRes     uint8
 }
 
 // iteratorForInsertResourceVersionsFast implements pgx.CopyFromSource.
@@ -475,6 +476,7 @@ func (r iteratorForInsertResourceVersionsFast) Values() ([]interface{}, error) {
 		r.rows[0].Size,
 		r.rows[0].MimeType,
 		r.rows[0].SHA256,
+		r.rows[0].ImgRes,
 		storage.DefaultBackendName,
 	}, nil
 }

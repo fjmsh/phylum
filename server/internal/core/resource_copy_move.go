@@ -174,6 +174,7 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 	createResources := make([]insertResourcesFastParams, 0, len(tree))
 	var createVersions []insertResourceVersionsFastParams
 	var copyContents []jobs.CopyContentsArgs
+	var copyImgs []jobs.CopyImgsArgs
 	var migrateContents []jobs.MigrateArgs
 	newIDs := make(map[uuid.UUID]uuid.UUID)
 
@@ -204,6 +205,7 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 			Size:       int32(src.latestVersionInfo.Size),
 			MimeType:   src.latestVersionInfo.MimeType,
 			SHA256:     src.latestVersionInfo.SHA256,
+			ImgRes:     src.latestVersionInfo.ImgRes,
 		})
 		v := []VersionInfo{{
 			ID:       versionID,
@@ -211,8 +213,14 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 			Size:     src.latestVersionInfo.Size,
 			MimeType: src.latestVersionInfo.MimeType,
 			SHA256:   src.latestVersionInfo.SHA256,
+			ImgRes:   src.latestVersionInfo.ImgRes,
 		}}
 		dest.versions, _ = json.Marshal(v)
+		copyImgs = append(copyImgs, jobs.CopyImgsArgs{
+			Src:    src.latestVersionInfo.ID,
+			Dest:   versionID,
+			ImgRes: src.latestVersionInfo.ImgRes,
+		})
 		copyContents = append(copyContents, jobs.CopyContentsArgs{
 			Src:  src.latestVersionInfo.ID,
 			Dest: versionID,
@@ -243,6 +251,16 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 				Size:       int32(src.latestVersionInfo.Size),
 				MimeType:   src.latestVersionInfo.MimeType,
 				SHA256:     src.latestVersionInfo.SHA256,
+				ImgRes:     src.latestVersionInfo.ImgRes,
+			})
+			copyImgs = append(copyImgs, jobs.CopyImgsArgs{
+				Src:    src.latestVersionInfo.ID,
+				Dest:   versionID,
+				ImgRes: src.latestVersionInfo.ImgRes,
+			})
+			copyContents = append(copyContents, jobs.CopyContentsArgs{
+				Src:  src.latestVersionInfo.ID,
+				Dest: versionID,
 			})
 			migrateContents = append(migrateContents, jobs.MigrateArgs{
 				VersionID: versionID,
@@ -265,6 +283,9 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 		}
 	}
 
+	if err := jobs.CopyImgsMany(f.db, copyImgs); err != nil {
+		return Resource{}, false, err
+	}
 	if err := jobs.CopyContents(f.db, copyContents); err != nil {
 		return Resource{}, false, err
 	}

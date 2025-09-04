@@ -19,7 +19,7 @@ type VersionInfo struct {
 	Size     int64     `json:"size"`
 	MimeType string    `json:"mime_type"`
 	SHA256   string    `json:"sha256"`
-	ImgRes   int8      `json:"imgres"`
+	ImgRes   uint8     `json:"imgres"`
 }
 
 type Version struct {
