@@ -129,7 +129,7 @@ FROM cte
 func insertDependencies(db db.Handler, jobID int32, sequences []string) (int, error) {
 	const q = `-- InsertDependencies
 INSERT INTO job_dependencies(job_id, dependency)
-	(SELECT $1::INTEGER, job_id from job_sequences WHERE sequence = ANY ($2::TEXT[]))`
+	(SELECT DISTINCT $1::INTEGER, job_id from job_sequences WHERE sequence = ANY ($2::TEXT[]))`
 	if tag, err := db.Exec(q, jobID, sequences); err != nil {
 		return 0, err
 	} else {
