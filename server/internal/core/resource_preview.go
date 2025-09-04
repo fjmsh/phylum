@@ -22,7 +22,7 @@ func (f *FileSystem) GetImg(r Resource, versionIDStr string, resolution img.Res)
 	if imgres == 0 {
 		return nil, nil
 	}
-	if r, err := imgr.Open(id, imgres); err != nil {
+	if r, err := img.Open(id, imgres); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, ErrPreviewNotFound
 		}

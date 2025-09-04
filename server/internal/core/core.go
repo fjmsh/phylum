@@ -15,7 +15,6 @@ import (
 
 var pg *goqu.Database
 var userConfig UserConfig
-var imgr *img.Imgr
 var publinksPasswordHasher crypt.PasswordHasher
 var fsPathRoot pgtype.UUID
 
@@ -34,10 +33,8 @@ func Initialize(db db.Handler, cfg Config) error {
 	} else {
 		publinksPasswordHasher = c
 	}
-	if t, err := img.New(cfg.Img); err != nil {
-		return errors.New("failed to create img manager: " + err.Error())
-	} else {
-		imgr = t
+	if err := img.Initialize(cfg.Img); err != nil {
+		return errors.New("failed to initialize img: " + err.Error())
 	}
 
 	return nil

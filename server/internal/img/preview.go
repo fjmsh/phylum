@@ -12,68 +12,68 @@ import (
 
 const maxImageSizeNoPreview = 1024 * 1024
 
-type Imgr struct {
-	cfg Config
-	dir string
-	tmp string
-}
+var quality uint8
+var dir string
+var tmp string
 
-func New(cfg Config) (*Imgr, error) {
-	g := &Imgr{
-		cfg: cfg,
-	}
+func Initialize(cfg Config) error {
+	quality = cfg.Quality
 
 	if filepath.IsAbs(cfg.Dir) {
-		g.dir = cfg.Dir
+		dir = cfg.Dir
 	} else {
-		g.dir = filepath.Join(storage.Root, cfg.Dir)
+		dir = filepath.Join(storage.Root, cfg.Dir)
 	}
-	g.tmp = filepath.Join(g.dir, "tmp")
+	tmp = filepath.Join(dir, "tmp")
 
-	if err := os.MkdirAll(g.tmp, 0o700); err != nil {
-		return nil, errors.New("failed to create img directory: " + err.Error())
+	if err := os.MkdirAll(tmp, 0o700); err != nil {
+		return errors.New("failed to create img directory: " + err.Error())
 	}
 
-	return g, nil
+	return nil
 }
 
-func (g *Imgr) Open(id string, res Res) (io.ReadCloser, error) {
-	return os.Open(filepath.Join(g.dir, id) + "-" + resSuffixes[res] + ".webp")
+func Open(id string, res Res) (io.ReadCloser, error) {
+	return os.Open(filepath.Join(dir, id) + "-" + resSuffixes[res] + ".webp")
 }
 
-func (g *Imgr) Copy(src, dest string, res Res) error {
-	if in, err := os.Open(filepath.Join(g.dir, src) + "-" + resSuffixes[res] + ".webp"); err != nil {
-		return err
-	} else if out, err := os.Create(filepath.Join(g.dir, src) + "-" + resSuffixes[res] + ".webp"); err != nil {
-		return err
-	} else if _, err := io.Copy(out, in); err != nil {
-		return err
+func Copy(src, dest string, imgRes Res) error {
+	for res, s := range resSuffixes {
+		if imgRes&res != 0 {
+			if in, err := os.Open(filepath.Join(dir, src) + "-" + s + ".webp"); err != nil {
+				return err
+			} else if out, err := os.Create(filepath.Join(dir, dest) + "-" + s + ".webp"); err != nil {
+				return err
+			} else if _, err := io.Copy(out, in); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
 
-func (g *Imgr) Generate(path, mimeType string) (Res, error) {
+func Generate(path, mimeType string) (Res, error) {
 	if imageType, ok := strings.CutPrefix(mimeType, "image/"); ok {
 		if _, ok := imageTypes[imageType]; ok {
-			return g.processImage(path)
+			return processImage(path)
 		}
 	}
 
 	if ok := strings.HasPrefix(mimeType, "text/"); ok {
-		return g.processText(path)
+		return processText(path)
 	}
 	if subType, ok := strings.CutPrefix(mimeType, "application/"); ok {
 		if _, ok := applicationImageTypes[subType]; ok {
-			return g.processImage(path)
+			return processImage(path)
 		}
 		if _, ok := applicationTextTypes[subType]; ok {
-			return g.processText(path)
+			return processText(path)
 		}
 		if strings.HasSuffix("+json", subType) || strings.HasSuffix("+xml", subType) {
-			return g.processText(path)
+			return processText(path)
 		}
 		if _, ok := applicationDocumentTypes[subType]; ok {
-			return g.processDocument(path)
+			return processDocument(path)
 		}
 	}
 	return 0, nil
@@ -81,7 +81,7 @@ func (g *Imgr) Generate(path, mimeType string) (Res, error) {
 
 // processImage generates preview + thumbnail for images (and PDF).
 // Preview is only generated if the image size is larger than 1M
-func (g *Imgr) processImage(input string) (Res, error) {
+func processImage(input string) (Res, error) {
 	var generated Res
 	stat, err := os.Stat(input)
 	if err != nil {
@@ -90,7 +90,7 @@ func (g *Imgr) processImage(input string) (Res, error) {
 	base := filepath.Base(input)
 	src := input
 	if stat.Size() > maxImageSizeNoPreview {
-		if o, err := resizeVips(src, g.dir, base, g.cfg.Quality, ResLarge); err != nil {
+		if o, err := resizeVips(src, dir, base, quality, ResLarge); err != nil {
 			return 0, err
 		} else {
 			src = o
@@ -98,7 +98,7 @@ func (g *Imgr) processImage(input string) (Res, error) {
 		generated |= ResLarge
 	}
 
-	if _, err := resizeVips(src, g.dir, base, g.cfg.Quality, ResThumbnail); err != nil {
+	if _, err := resizeVips(src, dir, base, quality, ResThumbnail); err != nil {
 		return 0, err
 	}
 	generated |= ResThumbnail
@@ -107,35 +107,35 @@ func (g *Imgr) processImage(input string) (Res, error) {
 
 // Generate thumbnail only for text using.
 // A temporary document preview must be generated and then resized down
-func (g *Imgr) processText(input string) (Res, error) {
-	if err := generateTextPreview(input, g.tmp); err != nil {
+func processText(input string) (Res, error) {
+	if err := generateTextPreview(input, tmp); err != nil {
 		return 0, err
 	}
 	// No need to keep the full generated preview since we'll render
 	// the text directly on the client using file contents
 	base := filepath.Base(input)
-	src := filepath.Join(g.tmp, base+".webp")
+	src := filepath.Join(tmp, base+".webp")
 	defer os.Remove(src)
 
-	if _, err := resizeVips(src, g.dir, base, g.cfg.Quality, ResThumbnail); err != nil {
+	if _, err := resizeVips(src, dir, base, quality, ResThumbnail); err != nil {
 		return 0, err
 	}
 	return ResThumbnail, nil
 }
 
 // Generate preview and thumbnail for office documents.
-func (g *Imgr) processDocument(input string) (Res, error) {
-	if err := generateDocumentPreview(input, g.dir); err != nil {
+func processDocument(input string) (Res, error) {
+	if err := generateDocumentPreview(input, dir); err != nil {
 		return 0, err
 	}
 	base := filepath.Base(input)
-	out := filepath.Join(g.dir, base+".webp")
-	src := filepath.Join(g.dir, base+"-"+resSuffixes[ResLarge]+".webp")
+	out := filepath.Join(dir, base+".webp")
+	src := filepath.Join(dir, base+"-"+resSuffixes[ResLarge]+".webp")
 	if err := os.Rename(out, src); err != nil {
 		return 0, errors.New("failed to rename document preview: " + err.Error())
 	}
 
-	if _, err := resizeVips(src, g.dir, base, g.cfg.Quality, ResThumbnail); err != nil {
+	if _, err := resizeVips(src, dir, base, quality, ResThumbnail); err != nil {
 		return 0, err
 	}
 	return ResLarge | ResThumbnail, nil

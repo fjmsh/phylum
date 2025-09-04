@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/img"
 	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/doug-martin/goqu/v9"
@@ -68,7 +69,7 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
 			var generated uint8
-			if generated, err = imgr.Generate(backend.Path(versionID.String()), mimeType); err != nil {
+			if generated, err = img.Generate(backend.Path(versionID.String()), mimeType); err != nil {
 				return err
 			}
 			err := f.runInTx(func(f txFileSystem) error {
@@ -115,7 +116,7 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
 			var generated uint8
-			if generated, err = imgr.Generate(backend.Path(versionID.String()), mimeType); err != nil {
+			if generated, err = img.Generate(backend.Path(versionID.String()), mimeType); err != nil {
 				return err
 			}
 			err := f.db.RunInTx(func(db db.TxHandler) error {

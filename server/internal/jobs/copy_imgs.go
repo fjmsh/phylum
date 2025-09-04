@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/img"
 	"codeberg.org/shroff/phylum/server/internal/steve"
 	"github.com/google/uuid"
 )
@@ -22,7 +23,7 @@ type CopyImgsWorker struct {
 }
 
 func (w *CopyImgsWorker) Work(ctx context.Context, job *steve.Job[CopyImgsArgs]) error {
-	return copyImgs(ctx, job.Args.Src, job.Args.Dest, job.Args.ImgRes)
+	return img.Copy(job.Args.Src.String(), job.Args.Dest.String(), job.Args.ImgRes)
 }
 
 func CopyImgsMany(db db.Handler, args []CopyImgsArgs) error {
@@ -31,9 +32,4 @@ func CopyImgsMany(db db.Handler, args []CopyImgsArgs) error {
 		params[i] = a
 	}
 	return steve.Get().InsertJobs(db, params)
-}
-
-func copyImgs(ctx context.Context, src, dest uuid.UUID, imgRes uint8) error {
-	// TODO: implement
-	return nil
 }
