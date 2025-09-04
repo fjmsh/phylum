@@ -35,6 +35,7 @@ class CreateResourceVersionChange extends LocalChange<ResourceVersion> {
       size: size,
       mimeType: mimeType,
       sha256: sha256,
+      imgres: 0,
     );
   }
 }

@@ -40,7 +40,7 @@ ResourceVersion parseResourceVersion(Map data, String resourceId) {
     size: data['size'],
     mimeType: data['mime_type'],
     sha256: data['sha256'],
-    preview: data['preview'] ?? false,
+    imgres: data['imgres'] ?? false,
   );
 }
 

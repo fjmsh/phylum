@@ -1177,13 +1177,12 @@ class ResourceVersions extends Table
       type: DriftSqlType.bool,
       requiredDuringInsert: true,
       $customConstraints: 'NOT NULL CHECK (deleted IN (0, 1))');
-  static const VerificationMeta _previewMeta =
-      const VerificationMeta('preview');
-  late final GeneratedColumn<bool> preview = GeneratedColumn<bool>(
-      'preview', aliasedName, true,
-      type: DriftSqlType.bool,
+  static const VerificationMeta _imgresMeta = const VerificationMeta('imgres');
+  late final GeneratedColumn<int> imgres = GeneratedColumn<int>(
+      'imgres', aliasedName, false,
+      type: DriftSqlType.int,
       requiredDuringInsert: false,
-      $customConstraints: 'DEFAULT 0 CHECK (preview IN (0, 1))',
+      $customConstraints: 'NOT NULL DEFAULT 0',
       defaultValue: const CustomExpression('0'));
   static const VerificationMeta _sizeMeta = const VerificationMeta('size');
   late final GeneratedColumn<int> size = GeneratedColumn<int>(
@@ -1206,7 +1205,7 @@ class ResourceVersions extends Table
       $customConstraints: 'NOT NULL');
   @override
   List<GeneratedColumn> get $columns =>
-      [id, resourceId, created, deleted, preview, size, mimeType, sha256];
+      [id, resourceId, created, deleted, imgres, size, mimeType, sha256];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1242,9 +1241,9 @@ class ResourceVersions extends Table
     } else if (isInserting) {
       context.missing(_deletedMeta);
     }
-    if (data.containsKey('preview')) {
-      context.handle(_previewMeta,
-          preview.isAcceptableOrUnknown(data['preview']!, _previewMeta));
+    if (data.containsKey('imgres')) {
+      context.handle(_imgresMeta,
+          imgres.isAcceptableOrUnknown(data['imgres']!, _imgresMeta));
     }
     if (data.containsKey('size')) {
       context.handle(
@@ -1281,8 +1280,8 @@ class ResourceVersions extends Table
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created'])!,
       deleted: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}deleted'])!,
-      preview: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}preview']),
+      imgres: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}imgres'])!,
       size: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}size'])!,
       mimeType: attachedDatabase.typeMapping
@@ -1306,7 +1305,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
   final String resourceId;
   final DateTime created;
   final bool deleted;
-  final bool? preview;
+  final int imgres;
   final int size;
   final String mimeType;
   final String sha256;
@@ -1315,7 +1314,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
       required this.resourceId,
       required this.created,
       required this.deleted,
-      this.preview,
+      required this.imgres,
       required this.size,
       required this.mimeType,
       required this.sha256});
@@ -1326,9 +1325,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
     map['resource_id'] = Variable<String>(resourceId);
     map['created'] = Variable<DateTime>(created);
     map['deleted'] = Variable<bool>(deleted);
-    if (!nullToAbsent || preview != null) {
-      map['preview'] = Variable<bool>(preview);
-    }
+    map['imgres'] = Variable<int>(imgres);
     map['size'] = Variable<int>(size);
     map['mime_type'] = Variable<String>(mimeType);
     map['sha256'] = Variable<String>(sha256);
@@ -1341,9 +1338,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
       resourceId: Value(resourceId),
       created: Value(created),
       deleted: Value(deleted),
-      preview: preview == null && nullToAbsent
-          ? const Value.absent()
-          : Value(preview),
+      imgres: Value(imgres),
       size: Value(size),
       mimeType: Value(mimeType),
       sha256: Value(sha256),
@@ -1358,7 +1353,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
       resourceId: serializer.fromJson<String>(json['resource_id']),
       created: serializer.fromJson<DateTime>(json['created']),
       deleted: serializer.fromJson<bool>(json['deleted']),
-      preview: serializer.fromJson<bool?>(json['preview']),
+      imgres: serializer.fromJson<int>(json['imgres']),
       size: serializer.fromJson<int>(json['size']),
       mimeType: serializer.fromJson<String>(json['mime_type']),
       sha256: serializer.fromJson<String>(json['sha256']),
@@ -1372,7 +1367,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
       'resource_id': serializer.toJson<String>(resourceId),
       'created': serializer.toJson<DateTime>(created),
       'deleted': serializer.toJson<bool>(deleted),
-      'preview': serializer.toJson<bool?>(preview),
+      'imgres': serializer.toJson<int>(imgres),
       'size': serializer.toJson<int>(size),
       'mime_type': serializer.toJson<String>(mimeType),
       'sha256': serializer.toJson<String>(sha256),
@@ -1384,7 +1379,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
           String? resourceId,
           DateTime? created,
           bool? deleted,
-          Value<bool?> preview = const Value.absent(),
+          int? imgres,
           int? size,
           String? mimeType,
           String? sha256}) =>
@@ -1393,7 +1388,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
         resourceId: resourceId ?? this.resourceId,
         created: created ?? this.created,
         deleted: deleted ?? this.deleted,
-        preview: preview.present ? preview.value : this.preview,
+        imgres: imgres ?? this.imgres,
         size: size ?? this.size,
         mimeType: mimeType ?? this.mimeType,
         sha256: sha256 ?? this.sha256,
@@ -1405,7 +1400,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
           data.resourceId.present ? data.resourceId.value : this.resourceId,
       created: data.created.present ? data.created.value : this.created,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
-      preview: data.preview.present ? data.preview.value : this.preview,
+      imgres: data.imgres.present ? data.imgres.value : this.imgres,
       size: data.size.present ? data.size.value : this.size,
       mimeType: data.mimeType.present ? data.mimeType.value : this.mimeType,
       sha256: data.sha256.present ? data.sha256.value : this.sha256,
@@ -1419,7 +1414,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
           ..write('resourceId: $resourceId, ')
           ..write('created: $created, ')
           ..write('deleted: $deleted, ')
-          ..write('preview: $preview, ')
+          ..write('imgres: $imgres, ')
           ..write('size: $size, ')
           ..write('mimeType: $mimeType, ')
           ..write('sha256: $sha256')
@@ -1429,7 +1424,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
 
   @override
   int get hashCode => Object.hash(
-      id, resourceId, created, deleted, preview, size, mimeType, sha256);
+      id, resourceId, created, deleted, imgres, size, mimeType, sha256);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1438,7 +1433,7 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
           other.resourceId == this.resourceId &&
           other.created == this.created &&
           other.deleted == this.deleted &&
-          other.preview == this.preview &&
+          other.imgres == this.imgres &&
           other.size == this.size &&
           other.mimeType == this.mimeType &&
           other.sha256 == this.sha256);
@@ -1449,7 +1444,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
   final Value<String> resourceId;
   final Value<DateTime> created;
   final Value<bool> deleted;
-  final Value<bool?> preview;
+  final Value<int> imgres;
   final Value<int> size;
   final Value<String> mimeType;
   final Value<String> sha256;
@@ -1459,7 +1454,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
     this.resourceId = const Value.absent(),
     this.created = const Value.absent(),
     this.deleted = const Value.absent(),
-    this.preview = const Value.absent(),
+    this.imgres = const Value.absent(),
     this.size = const Value.absent(),
     this.mimeType = const Value.absent(),
     this.sha256 = const Value.absent(),
@@ -1470,7 +1465,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
     required String resourceId,
     required DateTime created,
     required bool deleted,
-    this.preview = const Value.absent(),
+    this.imgres = const Value.absent(),
     required int size,
     required String mimeType,
     required String sha256,
@@ -1487,7 +1482,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
     Expression<String>? resourceId,
     Expression<DateTime>? created,
     Expression<bool>? deleted,
-    Expression<bool>? preview,
+    Expression<int>? imgres,
     Expression<int>? size,
     Expression<String>? mimeType,
     Expression<String>? sha256,
@@ -1498,7 +1493,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
       if (resourceId != null) 'resource_id': resourceId,
       if (created != null) 'created': created,
       if (deleted != null) 'deleted': deleted,
-      if (preview != null) 'preview': preview,
+      if (imgres != null) 'imgres': imgres,
       if (size != null) 'size': size,
       if (mimeType != null) 'mime_type': mimeType,
       if (sha256 != null) 'sha256': sha256,
@@ -1511,7 +1506,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
       Value<String>? resourceId,
       Value<DateTime>? created,
       Value<bool>? deleted,
-      Value<bool?>? preview,
+      Value<int>? imgres,
       Value<int>? size,
       Value<String>? mimeType,
       Value<String>? sha256,
@@ -1521,7 +1516,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
       resourceId: resourceId ?? this.resourceId,
       created: created ?? this.created,
       deleted: deleted ?? this.deleted,
-      preview: preview ?? this.preview,
+      imgres: imgres ?? this.imgres,
       size: size ?? this.size,
       mimeType: mimeType ?? this.mimeType,
       sha256: sha256 ?? this.sha256,
@@ -1544,8 +1539,8 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
     if (deleted.present) {
       map['deleted'] = Variable<bool>(deleted.value);
     }
-    if (preview.present) {
-      map['preview'] = Variable<bool>(preview.value);
+    if (imgres.present) {
+      map['imgres'] = Variable<int>(imgres.value);
     }
     if (size.present) {
       map['size'] = Variable<int>(size.value);
@@ -1569,7 +1564,7 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
           ..write('resourceId: $resourceId, ')
           ..write('created: $created, ')
           ..write('deleted: $deleted, ')
-          ..write('preview: $preview, ')
+          ..write('imgres: $imgres, ')
           ..write('size: $size, ')
           ..write('mimeType: $mimeType, ')
           ..write('sha256: $sha256, ')
@@ -3765,7 +3760,7 @@ typedef $ResourceVersionsCreateCompanionBuilder = ResourceVersionsCompanion
   required String resourceId,
   required DateTime created,
   required bool deleted,
-  Value<bool?> preview,
+  Value<int> imgres,
   required int size,
   required String mimeType,
   required String sha256,
@@ -3777,7 +3772,7 @@ typedef $ResourceVersionsUpdateCompanionBuilder = ResourceVersionsCompanion
   Value<String> resourceId,
   Value<DateTime> created,
   Value<bool> deleted,
-  Value<bool?> preview,
+  Value<int> imgres,
   Value<int> size,
   Value<String> mimeType,
   Value<String> sha256,
@@ -3822,8 +3817,8 @@ class $ResourceVersionsFilterComposer
   ColumnFilters<bool> get deleted => $composableBuilder(
       column: $table.deleted, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get preview => $composableBuilder(
-      column: $table.preview, builder: (column) => ColumnFilters(column));
+  ColumnFilters<int> get imgres => $composableBuilder(
+      column: $table.imgres, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get size => $composableBuilder(
       column: $table.size, builder: (column) => ColumnFilters(column));
@@ -3873,8 +3868,8 @@ class $ResourceVersionsOrderingComposer
   ColumnOrderings<bool> get deleted => $composableBuilder(
       column: $table.deleted, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get preview => $composableBuilder(
-      column: $table.preview, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<int> get imgres => $composableBuilder(
+      column: $table.imgres, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get size => $composableBuilder(
       column: $table.size, builder: (column) => ColumnOrderings(column));
@@ -3924,8 +3919,8 @@ class $ResourceVersionsAnnotationComposer
   GeneratedColumn<bool> get deleted =>
       $composableBuilder(column: $table.deleted, builder: (column) => column);
 
-  GeneratedColumn<bool> get preview =>
-      $composableBuilder(column: $table.preview, builder: (column) => column);
+  GeneratedColumn<int> get imgres =>
+      $composableBuilder(column: $table.imgres, builder: (column) => column);
 
   GeneratedColumn<int> get size =>
       $composableBuilder(column: $table.size, builder: (column) => column);
@@ -3984,7 +3979,7 @@ class $ResourceVersionsTableManager extends RootTableManager<
             Value<String> resourceId = const Value.absent(),
             Value<DateTime> created = const Value.absent(),
             Value<bool> deleted = const Value.absent(),
-            Value<bool?> preview = const Value.absent(),
+            Value<int> imgres = const Value.absent(),
             Value<int> size = const Value.absent(),
             Value<String> mimeType = const Value.absent(),
             Value<String> sha256 = const Value.absent(),
@@ -3995,7 +3990,7 @@ class $ResourceVersionsTableManager extends RootTableManager<
             resourceId: resourceId,
             created: created,
             deleted: deleted,
-            preview: preview,
+            imgres: imgres,
             size: size,
             mimeType: mimeType,
             sha256: sha256,
@@ -4006,7 +4001,7 @@ class $ResourceVersionsTableManager extends RootTableManager<
             required String resourceId,
             required DateTime created,
             required bool deleted,
-            Value<bool?> preview = const Value.absent(),
+            Value<int> imgres = const Value.absent(),
             required int size,
             required String mimeType,
             required String sha256,
@@ -4017,7 +4012,7 @@ class $ResourceVersionsTableManager extends RootTableManager<
             resourceId: resourceId,
             created: created,
             deleted: deleted,
-            preview: preview,
+            imgres: imgres,
             size: size,
             mimeType: mimeType,
             sha256: sha256,

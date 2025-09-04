@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' show TableOrViewStatements;
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/db/imgres.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
@@ -79,15 +80,16 @@ class FolderGridItem extends StatelessWidget {
                     stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
                     builder: (context, snapshot) {
                       String imageUrl = '';
-                      if (snapshot.data != null && snapshot.data?.preview == true) {
-                        imageUrl = (account.apiClient.createUriBuilder('/api/v1/fs/preview/${resource.id}:')
-                              ..queryParameters['version'] = snapshot.data!.id)
+                      if (snapshot.data != null && (snapshot.data!.imgres & imgResThumbnail) != 0) {
+                        imageUrl = (account.apiClient.createUriBuilder('/api/v1/fs/img/${resource.id}:')
+                              ..queryParameters['version'] = snapshot.data!.id
+                              ..queryParameters['res'] = imgResThumbnail.toString())
                             .build()
                             .toString();
                       }
                       return CachedNetworkImage(
                         imageUrl: imageUrl,
-                        alignment: Alignment.topCenter,
+                        alignment: const Alignment(0.0, -0.75),
                         fit: BoxFit.cover,
                         httpHeaders: account.apiClient.requestHeaders,
                         placeholder: (context, url) => FittedBox(

@@ -7,9 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/integrations/download_manager.dart';
+import 'package:phylum/libphylum/db/imgres.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_contents_request.dart';
+import 'package:phylum/libphylum/requests/resource_img_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
@@ -59,9 +61,12 @@ class _FileViewerState extends State<FileViewer> {
       if (_resource.v.mimeType.startsWith('text/')) {
         _buildViewer = buildTextPreview;
         _loadPreview = false;
-      } else if (_resource.v.preview == true) {
+      } else if ((_resource.v.imgres & imgResLarge) != 0) {
         _buildViewer = buildImagePreview;
         _loadPreview = true;
+      } else if (_resource.v.mimeType.startsWith('image/')) {
+        _buildViewer = buildImagePreview;
+        _loadPreview = false;
       } else {
         _error = 'Preview not available';
       }
@@ -173,11 +178,10 @@ class _ResourceLoaderState extends State<ResourceLoader> {
         _progress = null;
       });
       final account = context.read<PhylumAccount>();
-      final response = await account.apiClient.dispatchRequestRaw(ResourceContentsRequest(
-        widget.resourceId,
-        versionId: widget.versionId,
-        loadPreview: widget.loadPreview,
-      ));
+      final request = widget.loadPreview
+          ? ResourceImgRequest(widget.resourceId, versionId: widget.versionId, imgRes: imgResLarge)
+          : ResourceContentsRequest(widget.resourceId, widget.versionId);
+      final response = await account.apiClient.dispatchRequestRaw(request);
       if (response.statusCode < 200 || response.statusCode > 300) {
         final error = PhylumApiErrorResponse.fromResponseBody(await response.bodyString()).message;
         _error = error;
