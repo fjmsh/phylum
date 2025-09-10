@@ -157,7 +157,7 @@ func hardDeleteAllVersions(db db.TxHandler, q *goqu.SelectDataset, n interface {
 	query, params, _ := q.
 		Join(v, goqu.On(n.Col("id").Eq(v.Col("resource_id")))).
 		Where(v.Col("deleted").IsNull()).
-		Select(v.Col("id"), v.Col("storage")).
+		Select(v.Col("id"), v.Col("storage"), v.Col("imgres")).
 		ToSQL()
 
 	var versions []jobs.DeleteContentsArgs

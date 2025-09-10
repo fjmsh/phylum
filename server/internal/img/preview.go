@@ -52,6 +52,17 @@ func Copy(src, dest string, imgRes Res) error {
 	return nil
 }
 
+func Delete(name string, imgRes Res) error {
+	for res, s := range resSuffixes {
+		if imgRes&res != 0 {
+			if err := os.Remove(filepath.Join(dir, name) + "-" + s + ".webp"); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func Generate(path, mimeType string) (Res, error) {
 	if imageType, ok := strings.CutPrefix(mimeType, "image/"); ok {
 		if _, ok := imageTypes[imageType]; ok {

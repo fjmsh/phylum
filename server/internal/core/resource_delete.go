@@ -146,16 +146,14 @@ func collectDeletedVersions(rows pgx.Rows) ([]jobs.DeleteContentsArgs, error) {
 
 	var result []jobs.DeleteContentsArgs
 	var v jobs.DeleteContentsArgs
-	var storage pgtype.Text
 	var id uuid.UUID
 	for rows.Next() {
-		err := rows.Scan(&id, &storage)
+		err := rows.Scan(&id, &v.Storage, &v.ImgRes)
 		if err != nil {
 			return nil, err
 		}
 		if id != uuid.Nil {
 			v.Name = id.String()
-			v.Storage = storage.String
 			result = append(result, v)
 		}
 	}
