@@ -33,8 +33,8 @@ func Initialize(cfg Config) error {
 	return nil
 }
 
-func Open(id string, res Res) (io.ReadCloser, error) {
-	return os.Open(filepath.Join(dir, id) + "-" + resSuffixes[res] + ".webp")
+func Open(name string, res Res) (io.ReadCloser, error) {
+	return os.Open(filepath.Join(dir, name) + "-" + resSuffixes[res] + ".webp")
 }
 
 func Copy(src, dest string, imgRes Res) error {
