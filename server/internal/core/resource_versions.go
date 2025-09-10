@@ -1,9 +1,13 @@
 package core
 
 import (
+	"encoding/json"
 	"errors"
+	"slices"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/img"
+	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -14,7 +18,7 @@ func (f *FileSystem) GetVersion(r Resource, versionIDStr string) (Version, error
 		var err error
 		versionID, err = uuid.Parse(versionIDStr)
 		if err != nil {
-			panic(err)
+			return Version{}, err
 		}
 	}
 
@@ -47,4 +51,50 @@ ORDER BY created DESC`
 	} else {
 		return pgx.CollectRows(rows, scanVersion)
 	}
+}
+
+func (f *FileSystem) DeleteResourceVersion(res Resource, versionIDStr string) (Resource, error) {
+	if err := f.checkPermission(res, PermissionWrite); err != nil {
+		return res, err
+	}
+
+	versionID, err := uuid.Parse(versionIDStr)
+	if err != nil {
+		return res, err
+	}
+
+	versions := make([]VersionInfo, 0, 1)
+	err = json.Unmarshal(res.versions, &versions)
+	if err != nil {
+		return res, err
+	}
+	i := slices.IndexFunc(versions, func(v VersionInfo) bool {
+		return v.ID == versionID
+	})
+	if i == 0 {
+		return res, ErrResourceVersionLatest
+	}
+	versions[i].Deleted = int(time.Now().Unix())
+	res.versions, _ = json.Marshal(versions)
+
+	const q = "UPDATE resource_versions SET deleted = CURRENT_TIMESTAMP WHERE id = $1::UUID RETURNING storage, imgres"
+	err = f.runInTx(func(f txFileSystem) error {
+		row := f.db.QueryRow(q, versionID)
+		var storage string
+		var imgRes img.Res
+		if err := row.Scan(&storage, &imgRes); err != nil {
+			return err
+		}
+
+		if err := updateResourceModified(f.db, res.id); err != nil {
+			return err
+		}
+		return jobs.DeleteContents(f.db, []jobs.DeleteContentsArgs{{
+			Name:    versionID.String(),
+			Storage: storage,
+			ImgRes:  imgRes,
+		}})
+	})
+
+	return res, err
 }

@@ -53,4 +53,5 @@ var (
 	ErrParentDeleted                  = NewError(http.StatusConflict, "parent_deleted", "Parent deleted")
 	ErrPublinkNameConflict            = NewError(http.StatusPreconditionFailed, "publink_name_conflict", "Another public share with this name already exists")
 	ErrVersionNotFound                = NewError(http.StatusNotFound, "version_not_found", "Version Not Foud")
+	ErrResourceVersionLatest          = NewError(http.StatusPreconditionFailed, "resource_version_latest", "Cannot delete most recent version of a resource")
 )
