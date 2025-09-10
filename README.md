@@ -44,7 +44,7 @@ Phylum may be for you if you want:
 
 ```
 # download compose.yml
-wget https://codeberg.org/shroff/phylum/src/branch/main/compose.yml 
+wget https://codeberg.org/shroff/phylum/raw/branch/main/compose.yml 
 # create a new DB password and put it into .env
 echo "PHYLUM_DB_PASSWORD=$(head -c 32 /dev/urandom | md5sum | cut -d ' ' -f 1)" > .env
 # Create data/config.yml
