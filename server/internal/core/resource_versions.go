@@ -53,18 +53,13 @@ ORDER BY created DESC`
 	}
 }
 
-func (f *FileSystem) DeleteResourceVersion(res Resource, versionIDStr string) (Resource, error) {
+func (f *FileSystem) DeleteResourceVersion(res Resource, versionID uuid.UUID) (Resource, error) {
 	if err := f.checkPermission(res, PermissionWrite); err != nil {
 		return res, err
 	}
 
-	versionID, err := uuid.Parse(versionIDStr)
-	if err != nil {
-		return res, err
-	}
-
 	versions := make([]VersionInfo, 0, 1)
-	err = json.Unmarshal(res.versions, &versions)
+	err := json.Unmarshal(res.versions, &versions)
 	if err != nil {
 		return res, err
 	}

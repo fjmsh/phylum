@@ -24,6 +24,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group.POST("/move", handleMoveRequest)
 	group.POST("/copy", handleCopyRequest)
 	group.POST("/delete", handleDeleteRequest)
+	group.POST("/delete_version", handleDeleteVersionRequest)
 
 	group.POST("/mkdir", handleMkdirRequest)
 	group.PUT("/upload", handleUploadRequest)
