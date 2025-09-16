@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:drift/drift.dart' show TableOrViewStatements, OrderingTerm;
 import 'package:flutter/material.dart';
 import 'package:phylum/integrations/download_manager.dart';
+import 'package:phylum/libphylum/actions/action_resource_version_delete.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -39,25 +40,37 @@ class ResourceVersionsView extends StatelessWidget {
                 ...versions.mapIndexed((i, v) => ListTile(
                       title: Text(v.sha256.isEmpty ? 'Unknown' : v.sha256.substring(0, 12)),
                       subtitle: Text('${v.created.formatShort()} \u2022 ${v.size.formatForDisplay()}'),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                              icon: Icon(Icons.remove_red_eye),
-                              onPressed: () async {
-                                final resource = await account.db.getResource(resourceId);
-                                if (resource == null || !context.mounted) return;
-                                FilePreviewDialog.showVersions(context, resource, versions, i);
-                              }),
-                          IconButton(
-                              icon: Icon(Icons.download),
-                              onPressed: () async {
-                                final r = await account.db.getResource(resourceId);
-                                if (r == null || !context.mounted) return;
-                                downloadResource(context, r, version: v);
-                              }),
-                        ],
-                      ),
+                      trailing: v.deleted
+                          ? Text(
+                              'Deleted',
+                              style: TextStyle(fontStyle: FontStyle.italic),
+                            )
+                          : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                    icon: Icon(Icons.remove_red_eye),
+                                    onPressed: () async {
+                                      final resource = await account.db.getResource(resourceId);
+                                      if (resource == null || !context.mounted) return;
+                                      FilePreviewDialog.showVersions(context, resource, versions, i);
+                                    }),
+                                IconButton(
+                                    icon: Icon(Icons.download),
+                                    onPressed: () async {
+                                      final r = await account.db.getResource(resourceId);
+                                      if (r == null || !context.mounted) return;
+                                      downloadResource(context, r, version: v);
+                                    }),
+                                IconButton(
+                                    icon: Icon(Icons.delete_forever),
+                                    onPressed: () async {
+                                      final r = await account.db.getResource(resourceId);
+                                      if (r == null || !context.mounted) return;
+                                      account.addAction(ResourceVersionDeleteAction(r: r, versionId: v.id));
+                                    }),
+                              ],
+                            ),
                     )),
               ],
             );

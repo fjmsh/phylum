@@ -8,6 +8,7 @@ import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/actions/action_resource_upload.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_add.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_remove.dart';
+import 'package:phylum/libphylum/actions/action_resource_version_delete.dart';
 import 'package:phylum/libphylum/actions/action_user_invite.dart';
 
 const actionDeserializers = {
@@ -21,5 +22,6 @@ const actionDeserializers = {
   ResourcePublinkCreateAction.kActionName: ResourcePublinkCreateAction.fromMap,
   ResourceShareAction.kActionName: ResourceShareAction.fromMap,
   ResourceUploadAction.kActionName: ResourceUploadAction.fromMap,
+  ResourceVersionDeleteAction.kActionName: ResourceVersionDeleteAction.fromMap,
   UserInviteAction.kActionName: UserInviteAction.fromMap,
 };
