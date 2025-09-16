@@ -84,6 +84,7 @@ func (f *FileSystem) DeleteResourceVersion(res Resource, versionID uuid.UUID) (R
 		if err := updateResourceModified(f.db, res.id); err != nil {
 			return err
 		}
+		res.modified = time.Now()
 		return jobs.DeleteContents(f.db, []jobs.DeleteContentsArgs{{
 			Name:    versionID.String(),
 			Storage: storage,
