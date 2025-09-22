@@ -1,3 +1,13 @@
+v0.6
+====
+
+- Delete single resource version
+- Previews for images, office documents and PDFs.
+- Grid view with thumbnails
+- Editing API Key description
+- Revoke API keys
+- Record last use info (timestamp, IP, device) for API keys
+
 v0.5
 ====
 
