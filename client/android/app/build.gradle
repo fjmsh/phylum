@@ -67,6 +67,12 @@ project(':receive_sharing_intent').afterEvaluate {
     }
 }
 
+project(':flutter_keyboard_visibility').afterEvaluate {
+    project(':flutter_keyboard_visibility').android {
+        compileSdkVersion flutter.compileSdkVersion
+    }
+}
+
 flutter {
     source = "../.."
 }
