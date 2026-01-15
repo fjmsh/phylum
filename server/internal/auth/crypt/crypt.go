@@ -59,6 +59,9 @@ func (a *Crypt) VerifyUserPassword(db db.Handler, email, password string) (bool,
 		}
 		return false, err
 	}
+	if encodedHash == "" {
+		return false, nil
+	}
 
 	return VerifyPasswordHash(password, encodedHash)
 }
@@ -72,9 +75,6 @@ func VerifyPasswordHash(password, encodedHash string) (bool, error) {
 	}
 	if strings.HasPrefix(parts[0], "pbkdf2") {
 		return pbkdf2.VerifyEncodedHash(password, parts)
-	}
-	index := strings.Index(encodedHash[1:], "$")
-	if index < 0 {
 	}
 	return false, errors.New("unrecognized encoded hash algorithm: " + parts[0])
 }
