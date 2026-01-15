@@ -240,7 +240,6 @@ class _LoginFragmentState extends State<LoginFragment> {
 
       final token = await showInputDialog(context, title: 'Password Reset Token', barrierDismissable: true);
       if (token == null || !context.mounted) return;
-      Navigator.of(context).pop(false);
       context.read<PhylumRouterDelegate>().go(ResetPasswordRoute(
             instanceUrl: widget.instanceConfig.url.toString(),
             email: email,
