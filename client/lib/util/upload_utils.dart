@@ -109,7 +109,6 @@ Future<void> uploadFiles(BuildContext context, String folderId, Iterable<UploadF
 }
 
 Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> paths) async {
-  final account = context.read<PhylumAccount>();
   showProgressDialog(context, message: 'Counting Files');
   DirTree? tree;
   for (final path in paths) {
@@ -121,6 +120,11 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
   Navigator.of(context).pop();
 
   if (tree == null) return;
+  return uploadDirTree(context, folderId, tree);
+}
+
+Future<void> uploadDirTree(BuildContext context, String folderId, DirTree tree) async {
+  final account = context.read<PhylumAccount>();
   final confirm = await showAlertDialog(
         context,
         title: 'Upload Files?',
