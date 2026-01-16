@@ -307,8 +307,6 @@ Future<DirTree> enumeratePath(String path) {
   final s = FileStat.statSync(path);
   if (s.type == FileSystemEntityType.file) {
     return Future.value(DirTree(
-      numFiles: 1,
-      numDirs: 0,
       totalSize: s.size,
       files: [
         UploadFile(
@@ -324,8 +322,6 @@ Future<DirTree> enumeratePath(String path) {
   final completer = Completer<DirTree>();
   final files = <UploadFile>[];
   final dirs = <String>[p.basename(path)];
-  int numFiles = 0;
-  int numDirs = 0;
   int totalSize = 0;
 
   final prefixLen = p.dirname(path).length + 1;
@@ -333,7 +329,6 @@ Future<DirTree> enumeratePath(String path) {
   dir.list(recursive: true).listen(
     (file) {
       if (file is File) {
-        numFiles++;
         totalSize += file.lengthSync();
         files.add(UploadFile(
           size: file.lengthSync(),
@@ -343,13 +338,10 @@ Future<DirTree> enumeratePath(String path) {
         ));
       }
       if (file is Directory) {
-        numDirs++;
         dirs.add(file.path.substring(prefixLen));
       }
     },
     onDone: () => completer.complete(DirTree(
-      numFiles: numFiles,
-      numDirs: numDirs,
       totalSize: totalSize,
       files: files,
       dirs: dirs,
@@ -359,15 +351,11 @@ Future<DirTree> enumeratePath(String path) {
 }
 
 class DirTree {
-  final int numFiles;
-  final int numDirs;
   final int totalSize;
   final List<UploadFile> files;
   final List<String> dirs;
 
   DirTree({
-    required this.numFiles,
-    required this.numDirs,
     required this.totalSize,
     required this.files,
     required this.dirs,
@@ -375,8 +363,6 @@ class DirTree {
 
   DirTree mergeWith(DirTree other) {
     return DirTree(
-      numFiles: numFiles + other.numFiles,
-      numDirs: numDirs + other.numDirs,
       totalSize: totalSize + other.totalSize,
       files: List.of(files)..addAll(other.files),
       dirs: List.of(dirs)..addAll(other.dirs),
