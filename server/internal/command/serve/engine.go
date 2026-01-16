@@ -29,7 +29,7 @@ func createEngine(logger *zerolog.Logger) *gin.Engine {
 		logger.Info().Strs("origins", origins).Msg("Enabling CORS")
 		engine.Use(cors.New(cors.Config{
 			AllowOrigins:     origins,
-			AllowHeaders:     []string{"Origin", "Authorization", "Accept", "Accept-Language", "Content-Type"},
+			AllowHeaders:     []string{"Origin", "Authorization", "Accept", "Accept-Language", "Content-Type", "X-Device"},
 			AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "PROPFIND", "PROPPATCH", "COPY", "MOVE"},
 			ExposeHeaders:    []string{"Content-Length"},
 			AllowWebSockets:  true,
