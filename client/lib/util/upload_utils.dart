@@ -108,12 +108,6 @@ Future<void> uploadFiles(BuildContext context, String folderId, Iterable<UploadF
   }
 }
 
-Future<void> pickAndUploadDirectory(BuildContext context, String folderId) async {
-  final path = await FilePicker.platform.getDirectoryPath();
-  if (path == null || !context.mounted) return;
-  return uploadPath(context, folderId, [path]);
-}
-
 Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> paths) async {
   final account = context.read<PhylumAccount>();
   showProgressDialog(context, message: 'Counting Files');

@@ -9,6 +9,10 @@ import 'package:phylum/ui/file_viewer/file_viewer_dialog.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 
+import 'package:phylum/util/pick_directory_stub.dart'
+    if (dart.library.js_interop) 'package:phylum/util/pick_directory_web.dart'
+    if (dart.library.ffi) 'package:phylum/util/pick_directory_vm.dart';
+
 class AppActions extends StatelessWidget {
   final Widget child;
 

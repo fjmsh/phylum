@@ -1,8 +1,9 @@
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
+
+import 'package:phylum/util/pick_directory_stub.dart'
+    if (dart.library.js_interop) 'package:phylum/util/pick_directory_web.dart'
+    if (dart.library.ffi) 'package:phylum/util/pick_directory_vm.dart';
 
 enum CreateAction {
   newFolder(descripiton: 'New Folder', icon: Icon(Icons.create_new_folder), intent: NewFolderIntent()),
@@ -18,7 +19,7 @@ enum CreateAction {
 }
 
 List<CreateAction?> getCreateActions(BuildContext context) {
-  if (kIsWeb || Platform.isAndroid) {
+  if (!folderUploadSupported) {
     return const [
       CreateAction.newFolder,
       CreateAction.uploadFiles,
