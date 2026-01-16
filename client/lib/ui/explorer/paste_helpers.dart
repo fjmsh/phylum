@@ -2,13 +2,14 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/ui/app/clipboard.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
@@ -17,7 +18,7 @@ import 'package:super_clipboard/super_clipboard.dart';
 
 class PasteInfo {
   final Iterable<PasteItem> _items;
-  Iterable<XFile> get files => _items.map((info) => info.file).whereType<XFile>();
+  Iterable<UploadFile> get files => _items.map((info) => info.file).whereType<UploadFile>();
   Iterable<String> get paths => _items.map((info) => info.path).whereType<String>();
   Iterable<String> get resourceIds => _items.map((info) => info.resourceId).whereType<String>();
   Iterable<String> get errors => _items.map((info) => info.error).whereType<String>();
@@ -29,7 +30,7 @@ class PasteInfo {
 }
 
 class PasteItem {
-  final XFile? file;
+  final UploadFile? file;
   final String? path;
   final String? resourceId;
   final String? error;
@@ -39,7 +40,7 @@ class PasteItem {
         path = null,
         resourceId = null;
 
-  PasteItem.withXFile({required this.file})
+  PasteItem.withUploadFile({required this.file})
       : path = null,
         resourceId = null,
         error = null;
@@ -67,23 +68,21 @@ Future<PasteItem> extractPasteItem(PhylumAccount account, DataReader reader) asy
 
   // TODO: Maybe this needs to be done for all platforms without fs access
   if (kIsWeb) {
-    final xfileCompleter = Completer<XFile?>();
+    final uploadFileCompleter = Completer<UploadFile?>();
     reader.getFile(null, (file) async {
       try {
-        final data = await file.readAll();
-        xfileCompleter.complete(XFile.fromData(
-          data,
-          // Setting path on web completely breaks this
-          path: kIsWeb ? null : file.fileName,
-          name: file.fileName,
-          length: data.length,
+        uploadFileCompleter.complete(UploadFile(
+          name: file.fileName!,
+          size: file.fileSize!,
+          contentType: getMimeType(file.fileName!),
+          byteStream: ByteStream(file.getStream()),
         ));
       } catch (e) {
-        xfileCompleter.complete(null);
+        uploadFileCompleter.complete(null);
       }
     });
-    final xfile = await xfileCompleter.future;
-    if (xfile != null) return PasteItem.withXFile(file: xfile);
+    final uploadFile = await uploadFileCompleter.future;
+    if (uploadFile != null) return PasteItem.withUploadFile(file: uploadFile);
   } else {
     final path =
         await reader.readValue(Formats.fileUri).then((value) => value?.toFilePath(windows: Platform.isWindows));
@@ -126,7 +125,7 @@ Future<void> processPasteItems(
   }
 
   if (!context.mounted) return;
-  await uploadXFiles(context, folderId, info.files);
+  await uploadFiles(context, folderId, info.files);
   if (!context.mounted) return;
   await uploadPath(context, folderId, info.paths);
 

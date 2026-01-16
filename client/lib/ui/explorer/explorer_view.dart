@@ -3,9 +3,11 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/requests/bootstrap_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/destination_picker/destination_picker.dart';
@@ -87,10 +89,17 @@ class _ExplorerViewState extends State<ExplorerView> {
     );
   }
 
-  Future<void> handleShareIntent(List<SharedMediaFile> files) async {
-    files.removeWhere((f) => f.type == SharedMediaType.text || f.type == SharedMediaType.url);
-    if (files.isEmpty) return;
-    final paths = files.map((f) => f.path).toList(growable: false);
+  Future<void> handleShareIntent(List<SharedMediaFile> shared) async {
+    shared.removeWhere((f) => f.type == SharedMediaType.text || f.type == SharedMediaType.url);
+    if (shared.isEmpty) return;
+    final files = shared
+        .map((s) => UploadFile(
+              size: File(s.path).lengthSync(),
+              contentType: getMimeType(s.path),
+              byteStream: ByteStream(File(s.path).openRead()),
+              name: p.basename(s.path),
+            ))
+        .toList(growable: false);
     final account = context.read<PhylumAccount>();
     final dest = await DestinationPicker.show(context, allowInitialFolder: true);
     if (dest == null) {
@@ -98,9 +107,9 @@ class _ExplorerViewState extends State<ExplorerView> {
     }
     final userPermission = await account.db.getResource(dest).then((r) => r?.userPermission) ?? 0;
     if (!context.mounted) return;
-    for (final path in paths) {
+    for (final f in files) {
       if (!mounted) return;
-      final name = await showInputDialog(context, hintText: 'File name', preset: p.basename(path));
+      final name = await showInputDialog(context, hintText: 'File name', preset: f.name);
       if (!mounted || name == null) return;
       await handleLocalErrors(
         context,
@@ -109,7 +118,7 @@ class _ExplorerViewState extends State<ExplorerView> {
         (name, conflictResolution, ensurePermission) => account.resourceRepository.upload(
           parent: dest,
           name: name,
-          path: path,
+          contents: f,
           conflictResolution: conflictResolution,
           userPermission: userPermission,
           ensurePermission: ensurePermission,

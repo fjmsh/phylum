@@ -1,10 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:file_selector/file_selector.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:mime/mime.dart';
+import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart';
 import 'package:phylum/libphylum/actions/action_resource_copy.dart';
@@ -135,8 +133,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     required String parent,
     required String name,
     required Permission userPermission,
-    XFile? file,
-    String? path,
+    required UploadContents contents,
     required NameConflictResolution conflictResolution,
     bool ensurePermission = true,
   }) async {
@@ -167,10 +164,8 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
         }
       }
     }
-    assert((file == null) != (path == null));
-    final size = (file != null) ? (await file.length()) : (await File(path!).length());
-    final contentType = file?.mimeType ?? lookupMimeType(file?.name ?? path!) ?? 'application/octet-stream';
-    final contents = (file != null) ? await file.readAsBytes() : (await File(path!).readAsBytes());
+
+    final bytes = await contents.byteStream.toBytes();
     await _account.addAction(
         ResourceUploadAction(
           resourceId: id,
@@ -178,14 +173,14 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
           resourceName: name,
           conflictResolution: conflictResolution,
           timestamp: DateTime.now(),
-          size: size,
-          contentType: contentType,
+          size: contents.size,
+          contentType: contents.contentType,
           localName: localName,
           deletedId: deletedId,
           userPermission: userPermission,
           versionId: generateUuid(),
         ),
-        data: contents);
+        data: bytes);
     return id;
   }
 
@@ -331,4 +326,27 @@ class ResourceAdapter implements TypeAdapter<Resource?> {
     writer.writeByte(0); // Version marker, in case we need to change something in the future
     writer.writeString(obj?.toJsonString() ?? '');
   }
+}
+
+class UploadContents {
+  final int size;
+  final String contentType;
+  final ByteStream byteStream;
+
+  UploadContents({
+    required this.size,
+    required this.contentType,
+    required this.byteStream,
+  });
+}
+
+class UploadFile extends UploadContents {
+  final String name;
+
+  UploadFile({
+    required super.size,
+    required super.contentType,
+    required super.byteStream,
+    required this.name,
+  });
 }

@@ -1,13 +1,17 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart';
+import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
-import 'package:file_selector/file_selector.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:provider/provider.dart';
@@ -49,16 +53,23 @@ Future<void> createDirectory(BuildContext context, Resource parent, {String? pre
 }
 
 Future<void> pickAndUploadFiles(BuildContext context, String folderId) async {
-  final files = await openFiles();
-  if (!context.mounted) return;
-  return uploadXFiles(context, folderId, files);
+  final result = await FilePicker.platform.pickFiles(allowMultiple: true);
+  if (!context.mounted || result == null) return;
+
+  final files = result.files.map(
+    (e) => UploadFile(
+        size: e.size,
+        contentType: getMimeType(e.name),
+        byteStream: kIsWeb ? ByteStream.fromBytes(e.bytes!) : ByteStream(File(e.path!).openRead()),
+        name: e.name),
+  );
+  return uploadFiles(context, folderId, files);
 }
 
-Future<void> uploadXFiles(BuildContext context, String folderId, Iterable<XFile> files) async {
+Future<void> uploadFiles(BuildContext context, String folderId, Iterable<UploadFile> files) async {
   if (files.isEmpty) return;
   final account = context.read<PhylumAccount>();
-  final size =
-      await Future.wait(files.map((files) => files.length())).then((sizes) => sizes.fold(0, (acc, s) => acc + s));
+  final size = files.map((f) => f.size).fold(0, (acc, s) => acc + s);
   if (!context.mounted) return;
   final confirm = await showAlertDialog(
         context,
@@ -82,7 +93,7 @@ Future<void> uploadXFiles(BuildContext context, String folderId, Iterable<XFile>
         (name, conflictResolution, ensurePermission) => account.resourceRepository.upload(
           parent: folderId,
           name: name,
-          file: file,
+          contents: file,
           userPermission: userPermission,
           conflictResolution: conflictResolution,
           ensurePermission: ensurePermission,
@@ -98,7 +109,7 @@ Future<void> uploadXFiles(BuildContext context, String folderId, Iterable<XFile>
 }
 
 Future<void> pickAndUploadDirectory(BuildContext context, String folderId) async {
-  final path = await getDirectoryPath();
+  final path = await FilePicker.platform.getDirectoryPath();
   if (path == null || !context.mounted) return;
   return uploadPath(context, folderId, [path]);
 }
@@ -166,14 +177,21 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
         context,
         p.basename(path),
         overwriteFn: (r) => r.dir ? nameConflictDelete : nameConflictOverwrite,
-        (name, conflictResolution, ensurePermission) => account.resourceRepository.upload(
-          parent: parent,
-          name: name,
-          path: path,
-          userPermission: userPermission,
-          conflictResolution: conflictResolution,
-          ensurePermission: ensurePermission,
-        ),
+        (name, conflictResolution, ensurePermission) {
+          final f = File(path);
+          return account.resourceRepository.upload(
+            parent: parent,
+            name: name,
+            contents: UploadContents(
+              size: f.lengthSync(),
+              contentType: getMimeType(path),
+              byteStream: ByteStream(f.openRead()),
+            ),
+            userPermission: userPermission,
+            conflictResolution: conflictResolution,
+            ensurePermission: ensurePermission,
+          );
+        },
       );
       if (id == null && context.mounted) {
         final confirm =
@@ -290,6 +308,10 @@ Future<String?> handleLocalErrors(
   }
 
   return null;
+}
+
+String getMimeType(String path) {
+  return lookupMimeType(path) ?? 'application/octet-stream';
 }
 
 class DirTree {
