@@ -341,12 +341,12 @@ class UploadContents {
 }
 
 class UploadFile extends UploadContents {
-  final String name;
+  final String path;
 
   UploadFile({
     required super.size,
     required super.contentType,
     required super.byteStream,
-    required this.name,
+    required this.path,
   });
 }

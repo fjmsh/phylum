@@ -61,7 +61,7 @@ Future<void> pickAndUploadFiles(BuildContext context, String folderId) async {
         size: e.size,
         contentType: getMimeType(e.name),
         byteStream: kIsWeb ? ByteStream.fromBytes(e.bytes!) : ByteStream(File(e.path!).openRead()),
-        name: e.name),
+        path: e.name),
   );
   return uploadFiles(context, folderId, files);
 }
@@ -88,7 +88,7 @@ Future<void> uploadFiles(BuildContext context, String folderId, Iterable<UploadF
       id = await handleLocalErrors(
         // ignore: use_build_context_synchronously
         context,
-        p.basename(file.name),
+        p.basename(file.path),
         overwriteFn: (r) => r.dir ? nameConflictDelete : nameConflictOverwrite,
         (name, conflictResolution, ensurePermission) => account.resourceRepository.upload(
           parent: folderId,
@@ -113,7 +113,7 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
   showProgressDialog(context, message: 'Counting Files');
   DirTree? tree;
   for (final path in paths) {
-    final stat = await DirTree.stat(path);
+    final stat = await enumeratePath(path);
     tree = tree?.mergeWith(stat) ?? stat;
   }
 
@@ -161,26 +161,21 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
     dirIds[path] = id;
   }
 
-  for (final path in tree.files) {
-    final parent = dirIds[p.dirname(path)] ?? folderId;
+  for (final file in tree.files) {
+    final parent = dirIds[p.dirname(file.path)] ?? folderId;
     String? id;
     ensurefile:
     while (id == null) {
       id = await handleLocalErrors(
         // ignore: use_build_context_synchronously
         context,
-        p.basename(path),
+        p.basename(file.path),
         overwriteFn: (r) => r.dir ? nameConflictDelete : nameConflictOverwrite,
         (name, conflictResolution, ensurePermission) {
-          final f = File(path);
           return account.resourceRepository.upload(
             parent: parent,
             name: name,
-            contents: UploadContents(
-              size: f.lengthSync(),
-              contentType: getMimeType(path),
-              byteStream: ByteStream(f.openRead()),
-            ),
+            contents: file,
             userPermission: userPermission,
             conflictResolution: conflictResolution,
             ensurePermission: ensurePermission,
@@ -308,11 +303,66 @@ String getMimeType(String path) {
   return lookupMimeType(path) ?? 'application/octet-stream';
 }
 
+Future<DirTree> enumeratePath(String path) {
+  final s = FileStat.statSync(path);
+  if (s.type == FileSystemEntityType.file) {
+    return Future.value(DirTree(
+      numFiles: 1,
+      numDirs: 0,
+      totalSize: s.size,
+      files: [
+        UploadFile(
+            size: s.size,
+            contentType: getMimeType(path),
+            byteStream: ByteStream(File(path).openRead()),
+            path: p.basename(path))
+      ],
+      dirs: const [],
+    ));
+  }
+  final dir = Directory(path);
+  final completer = Completer<DirTree>();
+  final files = <UploadFile>[];
+  final dirs = <String>[p.basename(path)];
+  int numFiles = 0;
+  int numDirs = 0;
+  int totalSize = 0;
+
+  final prefixLen = p.dirname(path).length + 1;
+
+  dir.list(recursive: true).listen(
+    (file) {
+      if (file is File) {
+        numFiles++;
+        totalSize += file.lengthSync();
+        files.add(UploadFile(
+          size: file.lengthSync(),
+          contentType: getMimeType(file.path),
+          byteStream: ByteStream(File(file.path).openRead()),
+          path: file.path.substring(prefixLen),
+        ));
+      }
+      if (file is Directory) {
+        numDirs++;
+        dirs.add(file.path.substring(prefixLen));
+      }
+    },
+    onDone: () => completer.complete(DirTree(
+      numFiles: numFiles,
+      numDirs: numDirs,
+      totalSize: totalSize,
+      files: files,
+      dirs: dirs,
+    )),
+  );
+  return completer.future;
+}
+
 class DirTree {
   final int numFiles;
   final int numDirs;
   final int totalSize;
-  final List<String> files;
+  final List<UploadFile> files;
   final List<String> dirs;
 
   DirTree({
@@ -331,47 +381,5 @@ class DirTree {
       files: List.of(files)..addAll(other.files),
       dirs: List.of(dirs)..addAll(other.dirs),
     );
-  }
-
-  static Future<DirTree> stat(String path) {
-    final s = FileStat.statSync(path);
-    if (s.type == FileSystemEntityType.file) {
-      return Future.value(DirTree(
-        numFiles: 1,
-        numDirs: 0,
-        totalSize: s.size,
-        files: [path],
-        dirs: const [],
-      ));
-    }
-    final dir = Directory(path);
-    final completer = Completer<DirTree>();
-    final files = <String>[];
-    final dirs = <String>[path];
-    int numFiles = 0;
-    int numDirs = 0;
-    int totalSize = 0;
-
-    dir.list(recursive: true).listen(
-      (file) {
-        if (file is File) {
-          numFiles++;
-          totalSize += file.lengthSync();
-          files.add(file.path);
-        }
-        if (file is Directory) {
-          numDirs++;
-          dirs.add(file.path);
-        }
-      },
-      onDone: () => completer.complete(DirTree(
-        numFiles: numFiles,
-        numDirs: numDirs,
-        totalSize: totalSize,
-        files: files,
-        dirs: dirs,
-      )),
-    );
-    return completer.future;
   }
 }

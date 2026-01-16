@@ -97,7 +97,7 @@ class _ExplorerViewState extends State<ExplorerView> {
               size: File(s.path).lengthSync(),
               contentType: getMimeType(s.path),
               byteStream: ByteStream(File(s.path).openRead()),
-              name: p.basename(s.path),
+              path: s.path,
             ))
         .toList(growable: false);
     final account = context.read<PhylumAccount>();
@@ -109,7 +109,7 @@ class _ExplorerViewState extends State<ExplorerView> {
     if (!context.mounted) return;
     for (final f in files) {
       if (!mounted) return;
-      final name = await showInputDialog(context, hintText: 'File name', preset: f.name);
+      final name = await showInputDialog(context, hintText: 'File name', preset: p.basename(f.path));
       if (!mounted || name == null) return;
       await handleLocalErrors(
         context,
