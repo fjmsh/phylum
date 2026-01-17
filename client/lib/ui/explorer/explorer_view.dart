@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
@@ -94,9 +93,8 @@ class _ExplorerViewState extends State<ExplorerView> {
     if (shared.isEmpty) return;
     final files = shared
         .map((s) => UploadFile(
-              size: File(s.path).lengthSync(),
-              contentType: getMimeType(s.path),
-              byteStream: ByteStream(File(s.path).openRead()),
+              length: File(s.path).lengthSync(),
+              stream: File(s.path).openRead().cast<Uint8List>(),
               path: s.path,
             ))
         .toList(growable: false);

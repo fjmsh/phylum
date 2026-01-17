@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 
@@ -11,7 +9,7 @@ class ResourceImgRequest extends ApiRequest {
   const ResourceImgRequest(this.resourceId, {this.versionId, required this.imgRes});
 
   @override
-  BaseRequest createRequest(ApiClient api, {Uint8List? data}) {
+  BaseRequest createRequest(ApiClient api, {Blob? data}) {
     final uri = api.createUriBuilder('/api/v1/fs/img/$resourceId:');
     uri.queryParameters['res'] = imgRes.toString();
     if (versionId != null) {

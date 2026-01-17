@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:http/http.dart';
+import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart';
 import 'package:phylum/libphylum/actions/action_resource_copy.dart';
@@ -133,7 +133,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     required String parent,
     required String name,
     required Permission userPermission,
-    required UploadContents contents,
+    required Blob contents,
     required NameConflictResolution conflictResolution,
     bool ensurePermission = true,
   }) async {
@@ -165,7 +165,6 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
       }
     }
 
-    final bytes = await contents.byteStream.toBytes();
     await _account.addAction(
         ResourceUploadAction(
           resourceId: id,
@@ -173,14 +172,15 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
           resourceName: name,
           conflictResolution: conflictResolution,
           timestamp: DateTime.now(),
-          size: contents.size,
-          contentType: contents.contentType,
+          size: contents.length,
+          contentType: lookupMimeType(name) ?? 'application/octet-stream',
           localName: localName,
           deletedId: deletedId,
           userPermission: userPermission,
           versionId: generateUuid(),
         ),
-        data: bytes);
+        data: contents);
+
     return id;
   }
 
@@ -328,25 +328,16 @@ class ResourceAdapter implements TypeAdapter<Resource?> {
   }
 }
 
-class UploadContents {
-  final int size;
-  final String contentType;
-  final ByteStream byteStream;
-
-  UploadContents({
-    required this.size,
-    required this.contentType,
-    required this.byteStream,
-  });
-}
-
-class UploadFile extends UploadContents {
+class UploadFile extends Blob {
   final String path;
 
   UploadFile({
-    required super.size,
-    required super.contentType,
-    required super.byteStream,
     required this.path,
+    required super.length,
+    required super.stream,
   });
+
+  String getMimeType(String path) {
+    return lookupMimeType(path) ?? 'application/octet-stream';
+  }
 }

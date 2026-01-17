@@ -58,9 +58,8 @@ Future<void> pickAndUploadFiles(BuildContext context, String folderId) async {
 
   final files = result.files.map(
     (e) => UploadFile(
-        size: e.size,
-        contentType: getMimeType(e.name),
-        byteStream: kIsWeb ? ByteStream.fromBytes(e.bytes!) : ByteStream(File(e.path!).openRead()),
+        length: e.size,
+        stream: kIsWeb ? ByteStream.fromBytes(e.bytes!).cast<Uint8List>() : File(e.path!).openRead().cast<Uint8List>(),
         path: e.name),
   );
   return uploadFiles(context, folderId, files);
@@ -69,7 +68,7 @@ Future<void> pickAndUploadFiles(BuildContext context, String folderId) async {
 Future<void> uploadFiles(BuildContext context, String folderId, Iterable<UploadFile> files) async {
   if (files.isEmpty) return;
   final account = context.read<PhylumAccount>();
-  final size = files.map((f) => f.size).fold(0, (acc, s) => acc + s);
+  final size = files.map((f) => f.length).fold(0, (acc, s) => acc + s);
   if (!context.mounted) return;
   final confirm = await showAlertDialog(
         context,
@@ -314,10 +313,10 @@ Future<DirTree> enumeratePath(String path) {
       totalSize: s.size,
       files: [
         UploadFile(
-            size: s.size,
-            contentType: getMimeType(path),
-            byteStream: ByteStream(File(path).openRead()),
-            path: p.basename(path))
+          length: s.size,
+          stream: File(path).openRead().cast<Uint8List>(),
+          path: p.basename(path),
+        )
       ],
       dirs: const [],
     ));
@@ -335,9 +334,8 @@ Future<DirTree> enumeratePath(String path) {
       if (file is File) {
         totalSize += file.lengthSync();
         files.add(UploadFile(
-          size: file.lengthSync(),
-          contentType: getMimeType(file.path),
-          byteStream: ByteStream(File(file.path).openRead()),
+          length: file.lengthSync(),
+          stream: File(path).openRead().cast<Uint8List>(),
           path: file.path.substring(prefixLen),
         ));
       }

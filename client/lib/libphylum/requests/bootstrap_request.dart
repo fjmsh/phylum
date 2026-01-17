@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 
@@ -9,7 +7,7 @@ class BootstrapRequest extends ApiRequest {
   BootstrapRequest({this.since});
 
   @override
-  BaseRequest createRequest(ApiClient api, {Uint8List? data}) {
+  BaseRequest createRequest(ApiClient api, {Blob? data}) {
     final uri = api.createUriBuilder('/api/v1/user/bootstrap');
     if (since != null) {
       uri.queryParameters['since'] = since.toString();

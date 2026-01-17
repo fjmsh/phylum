@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 
@@ -9,7 +7,7 @@ class SharedResourcesRequest extends ApiRequest {
   SharedResourcesRequest({this.since});
 
   @override
-  BaseRequest createRequest(ApiClient api, {Uint8List? data}) {
+  BaseRequest createRequest(ApiClient api, {Blob? data}) {
     final uri = api.createUriBuilder('/api/v1/user/shared');
     if (since != null) {
       uri.queryParameters['since'] = since.toString();

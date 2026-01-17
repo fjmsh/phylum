@@ -1,7 +1,4 @@
-import 'dart:typed_data';
-
 import 'package:http/http.dart';
-import 'package:http_parser/http_parser.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/actions/changes/create_resource_change.dart';
@@ -22,11 +19,10 @@ class ResourceUploadAction extends ResourceCreateAction with FileUploadApiAction
   String get endpoint => '/api/v1/fs/upload';
 
   @override
-  MultipartFile createFile(Uint8List data) {
-    var stream = ByteStream.fromBytes(data);
+  MultipartFile createFile(Blob data) {
     return MultipartFile(
       'contents',
-      stream,
+      ByteStream(data.stream),
       data.length,
       filename: resourceName,
       contentType: MediaType.parse(contentType),

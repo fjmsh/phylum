@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/util/time.dart';
@@ -12,7 +10,7 @@ class GenerateApiKeyRequest extends ApiRequest {
   GenerateApiKeyRequest({required this.description, required this.expires, required this.scopes});
 
   @override
-  BaseRequest createRequest(ApiClient api, {Uint8List? data}) {
+  BaseRequest createRequest(ApiClient api, {Blob? data}) {
     final uri = api.createUriBuilder('/api/v1/user/keys/generate');
     final request = Request('post', uri.build());
     final fields = <String, String>{

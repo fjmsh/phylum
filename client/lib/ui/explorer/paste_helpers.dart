@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
@@ -73,9 +72,8 @@ Future<PasteItem> extractPasteItem(PhylumAccount account, DataReader reader) asy
       try {
         uploadFileCompleter.complete(UploadFile(
           path: file.fileName!,
-          size: file.fileSize!,
-          contentType: getMimeType(file.fileName!),
-          byteStream: ByteStream(file.getStream()),
+          length: file.fileSize!,
+          stream: file.getStream(),
         ));
       } catch (e) {
         uploadFileCompleter.complete(null);

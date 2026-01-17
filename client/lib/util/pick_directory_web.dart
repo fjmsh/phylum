@@ -4,7 +4,6 @@ import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:web/web.dart' as web;
@@ -40,14 +39,9 @@ Future<DirTree> enumerateDir(web.FileSystemDirectoryHandle dir, String prefix) a
       final f = handle[1] as web.FileSystemFileHandle;
       final file = await f.getFile().toDart;
       totalSize += file.size;
-      files.add(UploadFile(
-          size: file.size,
-          contentType: getMimeType(file.name),
-          byteStream: ByteStream(byteStream(file)),
-          path: '$prefix${dir.name}/${file.name}'));
+      files.add(UploadFile(length: file.size, stream: byteStream(file), path: '$prefix${dir.name}/${file.name}'));
     }
   }
-  ;
   return DirTree(
     totalSize: totalSize,
     files: files,

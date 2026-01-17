@@ -47,6 +47,7 @@ void main() async {
             path.join((await getApplicationSupportDirectory()).path, storageDir.isNotEmpty ? storageDir : 'data'))
         : await getApplicationDocumentsDirectory();
     AppDatabase.storageDir = appDir;
+    blobStorageRoot = appDir.path;
     AppDatabase.tmpDir = await getTemporaryDirectory();
 
     await appDir.create();
