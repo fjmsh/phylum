@@ -73,6 +73,18 @@ project(':flutter_keyboard_visibility').afterEvaluate {
     }
 }
 
+project(':irondash_engine_context').afterEvaluate {
+    project(':irondash_engine_context').android {
+        compileSdkVersion flutter.compileSdkVersion
+    }
+}
+
+project(':super_native_extensions').afterEvaluate {
+    project(':super_native_extensions').android {
+        compileSdkVersion flutter.compileSdkVersion
+    }
+}
+
 flutter {
     source = "../.."
 }
