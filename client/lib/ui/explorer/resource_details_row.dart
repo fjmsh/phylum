@@ -72,105 +72,107 @@ class ResourceDetailsRow extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: _iconPaddingV, horizontal: _iconPaddingH),
                   child: resource.getIcon(account),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      resource.name,
-                      maxLines: 1,
-                      softWrap: false,
-                      overflow: TextOverflow.fade,
-                      style: theme.textTheme.bodyLarge!.copyWith(
-                        color: highlight
-                            ? dim
-                                ? colorScheme.primary.withAlpha(192)
-                                : colorScheme.primary
-                            : colorScheme.onSurface,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        resource.name,
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.fade,
+                        style: theme.textTheme.bodyLarge!.copyWith(
+                          color: highlight
+                              ? dim
+                                  ? colorScheme.primary.withAlpha(192)
+                                  : colorScheme.primary
+                              : colorScheme.onSurface,
+                        ),
                       ),
-                    ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        if (sync != ResourceSyncState.none)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 6.0),
-                            child: Icon(sync.icon, size: _subtitleIconSize),
-                          ),
-                        if (resource.grants != null)
-                          const Padding(
-                            padding: EdgeInsets.only(right: 6.0),
-                            child: Icon(Icons.people_alt, size: _subtitleIconSize),
-                          ),
-                        StreamBuilder<int>(
-                            stream: context.read<PhylumAccount>().db.availableVersions(resource.id).watchSingle(),
-                            initialData: 1,
-                            builder: (context, snapshot) {
-                              if ((snapshot.data ?? 0) > 1) {
-                                return const Padding(
-                                  padding: EdgeInsets.only(right: 6.0),
-                                  // TODO: text Scaling and semantic label
-                                  child: Icon(Icons.history, size: _subtitleIconSize),
-                                );
-                              }
-                              return const SizedBox();
-                            }),
-                        StreamBuilder<int>(
-                            stream: account.db.countPublinks(resource.id).watchSingle(),
-                            initialData: 0,
-                            builder: (context, snapshot) {
-                              if ((snapshot.data ?? 0) > 0) {
-                                return const Padding(
-                                  padding: EdgeInsets.only(right: 6.0),
-                                  child: Icon(Icons.public, size: _subtitleIconSize),
-                                );
-                              }
-                              return const SizedBox();
-                            }),
-                        StreamBuilder<bool?>(
-                            stream: (account.db.bookmarks.select()..where((b) => b.resourceId.equals(resource.id)))
-                                .map((b) => !b.deleted)
-                                .watchSingleOrNull(),
-                            initialData: false,
-                            builder: (context, snapshot) {
-                              if (snapshot.data == true) {
-                                return const Padding(
-                                  padding: EdgeInsets.only(right: 6.0),
-                                  child: Icon(Icons.bookmark, size: _subtitleIconSize),
-                                );
-                              }
-                              return const SizedBox();
-                            }),
-                        StreamBuilder(
-                            stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
-                            builder: (context, snapshot) {
-                              String subtitle = "";
-                              if (resource.modified != null) {
-                                subtitle = resource.modified!.formatShort();
-                              }
-                              final data = snapshot.data;
-                              if (data != null) {
-                                if (subtitle.isNotEmpty) {
-                                  subtitle += " \u2022 ";
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          if (sync != ResourceSyncState.none)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6.0),
+                              child: Icon(sync.icon, size: _subtitleIconSize),
+                            ),
+                          if (resource.grants != null)
+                            const Padding(
+                              padding: EdgeInsets.only(right: 6.0),
+                              child: Icon(Icons.people_alt, size: _subtitleIconSize),
+                            ),
+                          StreamBuilder<int>(
+                              stream: context.read<PhylumAccount>().db.availableVersions(resource.id).watchSingle(),
+                              initialData: 1,
+                              builder: (context, snapshot) {
+                                if ((snapshot.data ?? 0) > 1) {
+                                  return const Padding(
+                                    padding: EdgeInsets.only(right: 6.0),
+                                    // TODO: text Scaling and semantic label
+                                    child: Icon(Icons.history, size: _subtitleIconSize),
+                                  );
                                 }
-                                subtitle += data.size.formatForDisplay();
-                              }
-                              return Text(
-                                subtitle,
-                                maxLines: 1,
-                                softWrap: false,
-                                overflow: TextOverflow.fade,
-                                style: theme.textTheme.bodyMedium!.copyWith(
-                                  color: highlight
-                                      ? dim
-                                          ? colorScheme.primary.withAlpha(192)
-                                          : colorScheme.primary
-                                      : colorScheme.onSurfaceVariant,
-                                ),
-                              );
-                            }),
-                      ],
-                    ),
-                  ],
+                                return const SizedBox();
+                              }),
+                          StreamBuilder<int>(
+                              stream: account.db.countPublinks(resource.id).watchSingle(),
+                              initialData: 0,
+                              builder: (context, snapshot) {
+                                if ((snapshot.data ?? 0) > 0) {
+                                  return const Padding(
+                                    padding: EdgeInsets.only(right: 6.0),
+                                    child: Icon(Icons.public, size: _subtitleIconSize),
+                                  );
+                                }
+                                return const SizedBox();
+                              }),
+                          StreamBuilder<bool?>(
+                              stream: (account.db.bookmarks.select()..where((b) => b.resourceId.equals(resource.id)))
+                                  .map((b) => !b.deleted)
+                                  .watchSingleOrNull(),
+                              initialData: false,
+                              builder: (context, snapshot) {
+                                if (snapshot.data == true) {
+                                  return const Padding(
+                                    padding: EdgeInsets.only(right: 6.0),
+                                    child: Icon(Icons.bookmark, size: _subtitleIconSize),
+                                  );
+                                }
+                                return const SizedBox();
+                              }),
+                          StreamBuilder(
+                              stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
+                              builder: (context, snapshot) {
+                                String subtitle = "";
+                                if (resource.modified != null) {
+                                  subtitle = resource.modified!.formatShort();
+                                }
+                                final data = snapshot.data;
+                                if (data != null) {
+                                  if (subtitle.isNotEmpty) {
+                                    subtitle += " \u2022 ";
+                                  }
+                                  subtitle += data.size.formatForDisplay();
+                                }
+                                return Text(
+                                  subtitle,
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  overflow: TextOverflow.fade,
+                                  style: theme.textTheme.bodyMedium!.copyWith(
+                                    color: highlight
+                                        ? dim
+                                            ? colorScheme.primary.withAlpha(192)
+                                            : colorScheme.primary
+                                        : colorScheme.onSurfaceVariant,
+                                  ),
+                                );
+                              }),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
