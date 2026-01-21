@@ -27,8 +27,12 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group.POST("/delete_version", handleDeleteVersionRequest)
 
 	group.POST("/mkdir", handleMkdirRequest)
-	group.POST("/create_file", handleCreateFileRequest)
 	group.PUT("/upload", handleUploadRequest)
+
+	partialUploadsGroup := group.Group("/partial_uploads")
+	partialUploadsGroup.POST("/start", handlePartialUploadsCreateRequest)
+	partialUploadsGroup.PUT("/upload", handlePartialUploadsCreateRequest)
+	partialUploadsGroup.POST("/finalize", handlePartialUploadsCreateRequest)
 
 	group.GET("/search", handleSearchRequest)
 }
