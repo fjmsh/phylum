@@ -14,6 +14,10 @@ type partialUploadsCreateParams struct {
 	SHA256 string `json:"sha256" form:"sha256"`
 }
 
+type partialUploadsQueryParams struct {
+	ID string `json:"id" form:"id" binding:"required,uuid"`
+}
+
 type partialUploadsUploadParams struct {
 	ID          string `json:"id" form:"id" binding:"required,uuid"`
 	Offset      int64  `json:"offset" form:"offset" binding:"required"`
@@ -36,6 +40,31 @@ func handlePartialUploadsCreateRequest(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"upload_id": uploadID,
+	})
+}
+
+func handlePartialUploadsQueryRequest(c *gin.Context) {
+	var params partialUploadsQueryParams
+	err := c.ShouldBindQuery(&params)
+	if err != nil {
+		panic(err)
+	}
+
+	id, err := uuid.Parse(params.ID)
+	if err != nil {
+		panic(err)
+	}
+
+	userID := authenticator.GetAuth(c).UserID()
+	f := authenticator.GetFileSystem(c)
+	size, uploaded, err := f.QueryPartialUpload(userID, id)
+	if err != nil {
+		panic(err)
+	}
+
+	c.JSON(200, gin.H{
+		"size":     size,
+		"uploaded": uploaded,
 	})
 }
 
@@ -67,7 +96,7 @@ func handlePartialUploadsUploadRequest(c *gin.Context) {
 		}
 		defer src.Close()
 
-		out, err := f.OpenPartialUpload(id, params.Offset, authenticator.GetAuth(c).UserID())
+		out, err := f.OpenPartialUpload(authenticator.GetAuth(c).UserID(), id, params.Offset)
 		if err != nil {
 			return err
 		}

@@ -4,7 +4,7 @@ CREATE TABLE partial_uploads(
     owner       INT         NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
     size        BIGINT      NOT NULL,
     uploaded    BIGINT      NOT NULL,
-    sha256      TEXT        NOT NULL,
+    checksum    TEXT        NOT NULL,
 );
 
 

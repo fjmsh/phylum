@@ -14,12 +14,12 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (f *FileSystem) CreatePartialUpload(owner int32, size int64, sha256 string) (uuid.UUID, error) {
+func (f *FileSystem) CreatePartialUpload(user int32, size int64, checksum string) (uuid.UUID, error) {
 	id, _ := uuid.NewV7()
 
 	path := "path"
 	return id, f.db.RunInTx(func(db db.TxHandler) error {
-		if err := insertPartialUpload(db, id, owner, size, sha256); err != nil {
+		if err := insertPartialUpload(db, id, user, size, checksum); err != nil {
 			return err
 		}
 		if file, err := os.Create(path); err != nil {
@@ -30,13 +30,13 @@ func (f *FileSystem) CreatePartialUpload(owner int32, size int64, sha256 string)
 	})
 }
 
-func (f *FileSystem) OpenPartialUpload(id uuid.UUID, offset int64, user int32) (io.WriteCloser, error) {
-	owner, size, uploaded, chunkSHA256, err := queryPartialUpload(f.db, id)
+func (f *FileSystem) OpenPartialUpload(user int32, id uuid.UUID, offset int64) (io.WriteCloser, error) {
+	owner, size, uploaded, checksum, err := queryPartialUpload(f.db, id)
 	if err != nil {
 		return nil, err
 	}
 	if user != owner {
-		return nil, ErrInsufficientPermissions
+		return nil, ErrResourceNotFound
 	}
 
 	path := "path"
@@ -63,21 +63,48 @@ func (f *FileSystem) OpenPartialUpload(id uuid.UUID, offset int64, user int32) (
 		db:       f.db,
 		dest:     file,
 		maxBytes: int(size - uploaded),
-		checksum: chunkSHA256,
+		checksum: checksum,
 		hash:     sha256.New(),
 	}
 	return c, nil
 }
 
-func insertPartialUpload(db db.TxHandler, id uuid.UUID, owner int32, size int64, sha256 string) error {
-	const q = `INSERT INTO partial_uploads(id, owner, size, @uploaded, sha256)
-	VALUES (@id, @owner, @size, 0, @sha256)`
+func (f *FileSystem) QueryPartialUpload(user int32, id uuid.UUID) (size, uploaded int64, err error) {
+	var owner int32
+	owner, size, uploaded, _, err = queryPartialUpload(f.db, id)
+	if err != nil {
+		return
+	}
+	if user != owner {
+		err = ErrResourceNotFound
+		return
+	}
+
+	path := "path"
+	var stat os.FileInfo
+	if stat, err = os.Stat(path); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			uploaded = 0
+		} else {
+			return
+		}
+	} else {
+		if stat.Size() < uploaded {
+			uploaded = stat.Size()
+		}
+	}
+	return
+}
+
+func insertPartialUpload(db db.TxHandler, id uuid.UUID, owner int32, size int64, checksum string) error {
+	const q = `INSERT INTO partial_uploads(id, owner, size, @uploaded, checksum)
+	VALUES (@id, @owner, @size, 0, @checksum)`
 
 	args := pgx.NamedArgs{
-		"id":     id,
-		"owner":  owner,
-		"size":   size,
-		"sha256": sha256,
+		"id":       id,
+		"owner":    owner,
+		"size":     size,
+		"checksum": checksum,
 	}
 	_, err := db.Exec(q, args)
 	if err != nil && strings.Contains(err.Error(), "partial_uploads_pkey") {
@@ -86,14 +113,14 @@ func insertPartialUpload(db db.TxHandler, id uuid.UUID, owner int32, size int64,
 	return err
 }
 
-func queryPartialUpload(db db.Handler, id uuid.UUID) (owner int32, size, uploaded int64, sha256 string, err error) {
-	const q = `SELECT (owner, size, uploaded, sha256) FROM partial_uploads WHERE id = @id`
+func queryPartialUpload(db db.Handler, id uuid.UUID) (owner int32, size, uploaded int64, checksum string, err error) {
+	const q = `SELECT (owner, size, uploaded, checksum) FROM partial_uploads WHERE id = @id`
 
 	args := pgx.NamedArgs{
 		"id": id,
 	}
 	row := db.QueryRow(q, args)
-	err = row.Scan(owner, size, uploaded, sha256)
+	err = row.Scan(owner, size, uploaded, checksum)
 	return
 }
 

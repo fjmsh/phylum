@@ -31,8 +31,9 @@ func SetupRoutes(r *gin.RouterGroup) {
 
 	partialUploadsGroup := group.Group("/partial_uploads")
 	partialUploadsGroup.POST("/start", handlePartialUploadsCreateRequest)
-	partialUploadsGroup.PUT("/upload", handlePartialUploadsCreateRequest)
-	partialUploadsGroup.POST("/finalize", handlePartialUploadsCreateRequest)
+	partialUploadsGroup.GET("/query", handlePartialUploadsQueryRequest)
+	partialUploadsGroup.PUT("/upload", handlePartialUploadsUploadRequest)
+	partialUploadsGroup.POST("/finalize", handlePartialUploadsFinalizeRequest)
 
 	group.GET("/search", handleSearchRequest)
 }
