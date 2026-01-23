@@ -10,7 +10,7 @@ import (
 )
 
 type partialUploadsCreateParams struct {
-	Size   int64  `json:"size"`
+	Size   int64  `json:"size" form:"size" binding:"required"`
 	SHA256 string `json:"sha256" form:"sha256"`
 }
 
@@ -19,16 +19,19 @@ type partialUploadsQueryParams struct {
 }
 
 type partialUploadsUploadParams struct {
-	ID          string `json:"id" form:"id" binding:"required,uuid"`
-	Offset      int64  `json:"offset" form:"offset" binding:"required"`
-	ChunkSHA256 int    `json:"chunk_sha256" form:"chunk_sha256"`
+	ID     string `json:"id" form:"id" binding:"required,uuid"`
+	Offset int64  `json:"offset" form:"offset"`
+	SHA256 string `json:"sha256" form:"sha256"`
 }
 
 func handlePartialUploadsCreateRequest(c *gin.Context) {
 	var params partialUploadsCreateParams
-	err := c.ShouldBindQuery(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
-		panic(err)
+		err = c.BindQuery(&params)
+		if err != nil {
+			panic(errInvalidParams)
+		}
 	}
 
 	userID := authenticator.GetAuth(c).UserID()
@@ -45,9 +48,12 @@ func handlePartialUploadsCreateRequest(c *gin.Context) {
 
 func handlePartialUploadsQueryRequest(c *gin.Context) {
 	var params partialUploadsQueryParams
-	err := c.ShouldBindQuery(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
-		panic(err)
+		err = c.BindQuery(&params)
+		if err != nil {
+			panic(errInvalidParams)
+		}
 	}
 
 	id, err := uuid.Parse(params.ID)
@@ -70,9 +76,12 @@ func handlePartialUploadsQueryRequest(c *gin.Context) {
 
 func handlePartialUploadsUploadRequest(c *gin.Context) {
 	var params partialUploadsUploadParams
-	err := c.ShouldBindQuery(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
-		panic(err)
+		err = c.BindQuery(&params)
+		if err != nil {
+			panic(errInvalidParams)
+		}
 	}
 
 	id, err := uuid.Parse(params.ID)
