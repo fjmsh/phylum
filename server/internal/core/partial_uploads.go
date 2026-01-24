@@ -54,7 +54,7 @@ func (f *FileSystem) OpenPartialUpload(user int32, id uuid.UUID, offset int64) (
 		}
 	}
 	if offset > uploaded {
-		return nil, ErrContentOffsetExceeded
+		return nil, ErrUploadOffsetExceeded
 	}
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0o600)
 	if _, err := file.Seek(int64(offset), 0); err != nil {
@@ -97,6 +97,34 @@ func (f *FileSystem) QueryPartialUpload(user int32, id uuid.UUID) (size, uploade
 		}
 	}
 	return
+}
+
+func (f *FileSystem) ReadPartialUpload(user int32, id uuid.UUID) (io.ReadCloser, error) {
+	owner, size, uploaded, _, err := queryPartialUpload(f.db, id)
+	if err != nil {
+		return nil, err
+	}
+	if user != owner {
+		return nil, ErrResourceNotFound
+	}
+
+	path := uploadFilePath(user, id)
+	if stat, err := os.Stat(path); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			uploaded = 0
+		} else {
+			return nil, err
+		}
+	} else {
+		if stat.Size() < uploaded {
+			uploaded = stat.Size()
+		}
+	}
+	if size != uploaded {
+		return nil, ErrUploadIncomplete
+	}
+	file, err := os.Open(path)
+	return file, nil
 }
 
 func insertPartialUpload(db db.TxHandler, id uuid.UUID, owner int32, size int64, checksum string) error {
@@ -154,7 +182,7 @@ type contentUploader struct {
 
 func (c *contentUploader) Write(p []byte) (n int, err error) {
 	if len(p) > c.maxBytes {
-		return 0, ErrContentLengthExceeded
+		return 0, ErrUploadLengthExceeded
 	}
 	if c.checksum != "" {
 		if _, err := c.hash.Write(p); err != nil {
@@ -171,7 +199,7 @@ func (c *contentUploader) Close() error {
 		return err
 	}
 	if c.checksum != "" && c.checksum != hex.EncodeToString(c.hash.Sum(nil)) {
-		return ErrContentChecksumMismatch
+		return ErrUploadChecksumMismatch
 	}
 	return updatePartialUpload(c.db, c.id, c.n)
 }
