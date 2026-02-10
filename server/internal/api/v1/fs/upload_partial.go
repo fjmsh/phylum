@@ -113,7 +113,7 @@ func handlePartialUploadsUploadRequest(c *gin.Context) {
 	}
 
 	f := authenticator.GetFileSystem(c)
-	offset := params.Offset
+	uploaded := params.Offset
 	err = func() error {
 		file, err := c.FormFile("contents")
 		if err != nil {
@@ -129,7 +129,7 @@ func handlePartialUploadsUploadRequest(c *gin.Context) {
 		}
 		defer src.Close()
 
-		out, err := f.PartialUploadOpenWrite(authenticator.GetAuth(c).UserID(), id, offset)
+		out, err := f.PartialUploadOpenWrite(authenticator.GetAuth(c).UserID(), id, uploaded)
 		if err != nil {
 			return err
 		}
@@ -138,7 +138,7 @@ func handlePartialUploadsUploadRequest(c *gin.Context) {
 			out.Close()
 			return err
 		} else {
-			offset += written
+			uploaded += written
 			return out.Close()
 		}
 	}()
@@ -147,7 +147,7 @@ func handlePartialUploadsUploadRequest(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{
-		"offset": offset,
+		"uploaded": uploaded,
 	})
 }
 
