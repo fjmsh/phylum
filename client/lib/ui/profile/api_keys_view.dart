@@ -108,9 +108,8 @@ class _ApiKeysViewState extends State<ApiKeysView> {
                         if (description == null || !context.mounted) return;
 
                         showProgressDialog(context);
-                        final result = await account.apiClient.sendRequest(
-                            EditApiKeyRequest(id: key.id, description: description),
-                            (request, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse));
+                        final result = await account.apiClient
+                            .sendRequest(EditApiKeyRequest(id: key.id, description: description));
                         nav.pop();
                         if (result is ApiSuccessResponse) {
                           if (context.mounted) {
@@ -156,8 +155,7 @@ class _ApiKeysViewState extends State<ApiKeysView> {
               onPressed: () async {
                 final nav = Navigator.of(context);
                 showProgressDialog(context);
-                final result = await account.apiClient.sendRequest(RevokeApiKeyRequest(id: key.id, delete: true),
-                    (request, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse));
+                final result = await account.apiClient.sendRequest(RevokeApiKeyRequest(id: key.id, delete: true));
                 nav.pop();
                 if (result is ApiSuccessResponse) {
                   if (context.mounted) {
@@ -180,10 +178,7 @@ class _ApiKeysViewState extends State<ApiKeysView> {
 
   void fetchKeys(BuildContext context) async {
     final account = context.read<PhylumAccount>();
-    final response = await account.apiClient.sendRequest(
-      const ListApiKeysRequest(),
-      (request, response) => parseJsonListResponse(response, ListApiKeysResponse.fromResponse),
-    );
+    final response = await account.apiClient.sendRequest(const ListApiKeysRequest());
 
     if (response is ListApiKeysResponse) {
       response.keys.sort((a, b) {
@@ -202,13 +197,11 @@ class _ApiKeysViewState extends State<ApiKeysView> {
     final account = context.read<PhylumAccount>();
     final k = await GenerateApiKeyDialog.show(context);
     if (k == null) return;
-    final response = await account.apiClient.sendRequest(
-        GenerateApiKeyRequest(
-          description: k.description,
-          expires: k.expires,
-          scopes: k.scopes,
-        ),
-        (_, response) => parseJsonMapResponse(response, GenerateApiKeyResponse.fromResponse));
+    final response = await account.apiClient.sendRequest(GenerateApiKeyRequest(
+      description: k.description,
+      expires: k.expires,
+      scopes: k.scopes,
+    ));
 
     if (response is GenerateApiKeyResponse) {
       if (!context.mounted) return;

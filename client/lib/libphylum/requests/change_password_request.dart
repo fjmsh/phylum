@@ -1,7 +1,9 @@
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 
-class ChangePasswordRequest extends ApiRequest {
+class ChangePasswordRequest extends ApiRequest<PhylumAccount> {
   final String email;
   final String oldPassword;
   final String newPassword;
@@ -15,5 +17,10 @@ class ChangePasswordRequest extends ApiRequest {
       ..fields['email'] = email
       ..fields['old_password'] = oldPassword
       ..fields['new_password'] = newPassword;
+  }
+
+  @override
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) {
+    return parseJsonMapResponse(response, EmptyResponse.fromResponse);
   }
 }

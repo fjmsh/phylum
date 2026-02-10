@@ -1,7 +1,9 @@
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 
-class RevokeApiKeyRequest extends ApiRequest {
+class RevokeApiKeyRequest extends ApiRequest<PhylumAccount> {
   final String id;
   final bool delete;
 
@@ -17,5 +19,10 @@ class RevokeApiKeyRequest extends ApiRequest {
     };
 
     return request;
+  }
+
+  @override
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) {
+    return parseJsonMapResponse(response, EmptyResponse.fromResponse);
   }
 }

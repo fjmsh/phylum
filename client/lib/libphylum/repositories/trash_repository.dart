@@ -4,7 +4,6 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/trash_list_request.dart';
-import 'package:phylum/libphylum/responses/responses.dart';
 
 const _remoteDataBoxName = 'remote_trashed_resources';
 
@@ -50,7 +49,6 @@ class TrashedResourceRepository extends Repository<PhylumAccount, TrashedResourc
   }
 
   Future<ApiResult> refresh({String? cursor}) async {
-    return _account.apiClient.sendRequest(TrashListRequest(cursor: cursor),
-        (request, response) => parseJsonMapResponse(response, TrashListResponse.fromResponse));
+    return _account.apiClient.sendRequest(TrashListRequest(cursor: cursor));
   }
 }

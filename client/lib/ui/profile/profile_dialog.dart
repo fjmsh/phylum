@@ -190,10 +190,7 @@ class ProfileDialog extends StatelessWidget {
     final nav = Navigator.of(context);
     showProgressDialog(context, title: 'Updating Name');
 
-    final response = await account.apiClient.sendRequest(
-      EditUserNameRequest(name),
-      (request, response) => parseJsonMapResponse(response, UserResponse.fromResponse),
-    );
+    final response = await account.apiClient.sendRequest(EditUserNameRequest(name));
 
     nav.pop();
     if (response is UserResponse) {
@@ -266,10 +263,11 @@ class ProfileDialog extends StatelessWidget {
               onPressed: () async {
                 showProgressDialog(context, title: 'Changing Password');
 
-                final response = await account.apiClient.sendRequest(
-                  ChangePasswordRequest(email: account.user.email, oldPassword: oldPassword, newPassword: newPassword),
-                  (request, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse),
-                );
+                final response = await account.apiClient.sendRequest(ChangePasswordRequest(
+                  email: account.user.email,
+                  oldPassword: oldPassword,
+                  newPassword: newPassword,
+                ));
 
                 if (context.mounted) {
                   Navigator.of(context).pop();

@@ -1,8 +1,10 @@
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/time.dart';
 
-class GenerateApiKeyRequest extends ApiRequest {
+class GenerateApiKeyRequest extends ApiRequest<PhylumAccount> {
   final String description;
   final DateTime? expires;
   final List<String> scopes;
@@ -23,5 +25,10 @@ class GenerateApiKeyRequest extends ApiRequest {
     request.bodyFields = fields;
 
     return request;
+  }
+
+  @override
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) {
+    return parseJsonMapResponse(response, GenerateApiKeyResponse.fromResponse);
   }
 }

@@ -1,7 +1,8 @@
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 
-class ResourceImgRequest extends ApiRequest {
+class ResourceImgRequest extends ApiRequest<PhylumAccount> {
   final String resourceId;
   final String? versionId;
   final int imgRes;
@@ -17,4 +18,7 @@ class ResourceImgRequest extends ApiRequest {
     }
     return Request('get', uri.build());
   }
+
+  @override
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) => throw 'Cannot parse img response';
 }

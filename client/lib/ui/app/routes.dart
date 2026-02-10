@@ -242,12 +242,7 @@ class ExplorerRouteShared extends ExplorerRoute {
 
   @override
   Future<bool> refresh(PhylumAccount account) {
-    return account.apiClient
-        .sendRequest(
-          SharedResourcesRequest(),
-          (request, response) => parseJsonMapResponse(response, SharedResourcesResponse.fromResponse),
-        )
-        .then((result) => result is ApiSuccessResponse);
+    return account.apiClient.sendRequest(SharedResourcesRequest()).then((result) => result is ApiSuccessResponse);
   }
 
   @override
@@ -273,12 +268,7 @@ class ExplorerRouteSearch extends ExplorerRoute {
 
   @override
   Future<bool> refresh(PhylumAccount account) {
-    return account.apiClient
-        .sendRequest(
-      SearchRequest(query: query),
-      (request, response) => parseJsonListResponse(response, SearchResponse.fromResponse),
-    )
-        .then((result) {
+    return account.apiClient.sendRequest(SearchRequest(query: query)).then((result) {
       if (result is SearchResponse) {
         _streamController.add(result.resources.map((r) => r.resource).toList(growable: false));
       }
