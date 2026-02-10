@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
+import 'package:http/src/streamed_response.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
@@ -25,9 +27,6 @@ class ResourceBookmarkRemoveAction extends ResourceAction with JsonApiAction {
       };
 
   @override
-  ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse);
-
-  @override
   List<LocalChange> get localChanges => [RemoveBookmarkChange(resourceId)];
 
   @override
@@ -48,6 +47,11 @@ class ResourceBookmarkRemoveAction extends ResourceAction with JsonApiAction {
       resourceId: map['resourceId'],
       bookmarkName: map['bookmarkName'],
     );
+  }
+
+  @override
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) {
+    return parseJsonMapResponse(response, EmptyResponse.fromResponse);
   }
 
   @override

@@ -1,12 +1,12 @@
-import 'dart:nativewrappers/_internal/vm/lib/math_patch.dart';
-
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/actions/changes/create_resource_change.dart';
 import 'package:phylum/libphylum/actions/changes/create_resource_version_change.dart';
 import 'package:phylum/libphylum/actions/changes/update_resource_deleted_change.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 import 'package:phylum/util/permissions.dart';
 
@@ -187,7 +187,7 @@ class ResourceUploadAction extends ResourceCreateAction {
       // 'sha256': '', // TODO: compute and send
     };
     final request = MultipartRequest('PUT', uriBuilder.build());
-    final length = min(chunkSize, data.length - uploaded);
+    final length = chunkSize < data.length - uploaded ? chunkSize : data.length - uploaded;
     request.files.add(MultipartFile(
       'contents',
       ByteStream(data.getStream(start: uploaded, end: uploaded + length)),

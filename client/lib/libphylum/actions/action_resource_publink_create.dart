@@ -1,6 +1,8 @@
+import 'package:http/src/streamed_response.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/actions/changes/create_publink_change.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
@@ -25,9 +27,6 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
         if (expires != null) 'expires': expires!.toIso8601String(),
         if (accessLimit != 0) 'access_limit': accessLimit,
       };
-
-  @override
-  ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, PublinkResponse.fromResponse);
 
   @override
   List<LocalChange> get localChanges => [
@@ -80,6 +79,11 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
       accessLimit: map['accessLimit'],
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
     );
+  }
+
+  @override
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) {
+    return parseJsonMapResponse(response, PublinkResponse.fromResponse);
   }
 
   @override

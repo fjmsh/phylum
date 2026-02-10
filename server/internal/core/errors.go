@@ -58,4 +58,5 @@ var (
 	ErrUploadChecksumMismatch         = NewError(http.StatusBadRequest, "upload_checksum_mismatch", "Upload Checksum Mismatch")
 	ErrUploadOffsetExceeded           = NewError(http.StatusBadRequest, "upload_offset_exceeded", "Upload Offset Exceeded")
 	ErrUploadIncomplete               = NewError(http.StatusBadRequest, "upload_incomplete", "Upload Incomplete")
+	ErrUploadNotFound                 = NewError(http.StatusBadRequest, "upload_not_found", "Upload Not Found")
 )

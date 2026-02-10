@@ -1,7 +1,9 @@
+import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_bookmark_remove.dart';
 import 'package:phylum/libphylum/actions/action_resource_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
@@ -23,9 +25,6 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
         'path': '$resourceId:',
         'name': bookmarkName,
       };
-
-  @override
-  ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, BookmarkResponse.fromResponse);
 
   @override
   List<LocalChange> get localChanges =>
@@ -60,6 +59,11 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
       dir: map['dir'],
       createdMillis: map['createdMillis'],
     );
+  }
+
+  @override
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) {
+    return parseJsonMapResponse(response, BookmarkResponse.fromResponse);
   }
 
   @override

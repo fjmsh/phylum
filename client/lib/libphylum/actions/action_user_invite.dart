@@ -1,6 +1,8 @@
+import 'package:http/src/streamed_response.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/actions/changes/create_user_change.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
@@ -58,7 +60,9 @@ class UserInviteAction extends PhylumAction with JsonApiAction {
   bool dependsOn(PhylumAction action) => false;
 
   @override
-  ResponseParser get parseResponse => (_, response) => parseJsonMapResponse(response, UserResponse.fromResponse);
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) {
+    return parseJsonMapResponse(response, UserResponse.fromResponse);
+  }
 
   @override
   bool processResponse(ApiResponse response) {

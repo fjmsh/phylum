@@ -12,7 +12,8 @@ import (
 	"github.com/google/uuid"
 )
 
-type partialUploadsCreateParams struct {
+type partialUploadsStartParams struct {
+	ID     string `json:"id" form:"id" binding:"omitempty,uuid"`
 	Size   int64  `json:"size" form:"size" binding:"required"`
 	SHA256 string `json:"sha256" form:"sha256"`
 }
@@ -36,8 +37,8 @@ type partialUploadsFinalizeParams struct {
 	Conflict      core.ResourceBindConflictResolution `json:"conflict" form:"conflict"`
 }
 
-func handlePartialUploadsCreateRequest(c *gin.Context) {
-	var params partialUploadsCreateParams
+func handlePartialUploadsStartRequest(c *gin.Context) {
+	var params partialUploadsStartParams
 	err := c.ShouldBind(&params)
 	if err != nil {
 		err = c.BindQuery(&params)
@@ -48,13 +49,23 @@ func handlePartialUploadsCreateRequest(c *gin.Context) {
 
 	userID := authenticator.GetAuth(c).UserID()
 	f := authenticator.GetFileSystem(c)
-	uploadID, err := f.CreatePartialUpload(userID, params.Size, params.SHA256)
+
+	var id uuid.UUID
+	if params.ID != "" {
+		id, err = uuid.Parse(params.ID)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		id, _ = uuid.NewV7()
+	}
+	err = f.PartialUploadCreate(userID, id, params.Size, params.SHA256)
 	if err != nil {
 		panic(err)
 	}
 
 	c.JSON(200, gin.H{
-		"upload_id": uploadID,
+		"id": id,
 	})
 }
 
@@ -75,7 +86,7 @@ func handlePartialUploadsQueryRequest(c *gin.Context) {
 
 	userID := authenticator.GetAuth(c).UserID()
 	f := authenticator.GetFileSystem(c)
-	size, uploaded, err := f.QueryPartialUpload(userID, id)
+	size, uploaded, err := f.PartialUploadQuery(userID, id)
 	if err != nil {
 		panic(err)
 	}
@@ -102,6 +113,7 @@ func handlePartialUploadsUploadRequest(c *gin.Context) {
 	}
 
 	f := authenticator.GetFileSystem(c)
+	offset := params.Offset
 	err = func() error {
 		file, err := c.FormFile("contents")
 		if err != nil {
@@ -117,15 +129,16 @@ func handlePartialUploadsUploadRequest(c *gin.Context) {
 		}
 		defer src.Close()
 
-		out, err := f.OpenPartialUpload(authenticator.GetAuth(c).UserID(), id, params.Offset)
+		out, err := f.PartialUploadOpenWrite(authenticator.GetAuth(c).UserID(), id, offset)
 		if err != nil {
 			return err
 		}
 
-		if _, err := io.Copy(out, src); err != nil {
+		if written, err := io.Copy(out, src); err != nil {
 			out.Close()
 			return err
 		} else {
+			offset += written
 			return out.Close()
 		}
 	}()
@@ -133,7 +146,9 @@ func handlePartialUploadsUploadRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	c.Status(200)
+	c.JSON(200, gin.H{
+		"offset": offset,
+	})
 }
 
 func handlePartialUploadsFinalizeRequest(c *gin.Context) {
@@ -168,7 +183,7 @@ func handlePartialUploadsFinalizeRequest(c *gin.Context) {
 	f := authenticator.GetFileSystem(c)
 	err = func() error {
 		// TODO: #perf disk I/O in tx
-		src, err := f.ReadPartialUpload(authenticator.GetAuth(c).UserID(), uploadID)
+		src, err := f.PartialUploadOpenRead(authenticator.GetAuth(c).UserID(), uploadID)
 		if err != nil {
 			return err
 		}

@@ -1,9 +1,11 @@
+import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/changes/delete_resource_change.dart';
 import 'package:phylum/libphylum/actions/changes/update_resource_deleted_change.dart';
 import 'package:phylum/libphylum/actions/changes/update_resource_modified_change.dart';
 import 'package:phylum/libphylum/actions/changes/update_resource_trashed_change.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
@@ -89,6 +91,7 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   bool dependsOn(PhylumAction action) => action is ResourceAction && action.resourceId == resourceId;
 
   @override
-  ResponseParser get parseResponse =>
-      permanent ? (_, response) => parseJsonMapResponse(response, EmptyResponse.fromResponse) : super.parseResponse;
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) {
+    return permanent ? parseJsonMapResponse(response, EmptyResponse.fromResponse) : super.parseResponse(response);
+  }
 }

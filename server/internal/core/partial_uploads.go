@@ -16,11 +16,9 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (f *FileSystem) CreatePartialUpload(user int32, size int64, checksum string) (uuid.UUID, error) {
-	id, _ := uuid.NewV7()
-
+func (f *FileSystem) PartialUploadCreate(user int32, id uuid.UUID, size int64, checksum string) error {
 	path := uploadFilePath(user, id)
-	return id, f.db.RunInTx(func(db db.TxHandler) error {
+	return f.db.RunInTx(func(db db.TxHandler) error {
 		if err := insertPartialUpload(db, id, user, size, checksum); err != nil {
 			return err
 		}
@@ -32,13 +30,16 @@ func (f *FileSystem) CreatePartialUpload(user int32, size int64, checksum string
 	})
 }
 
-func (f *FileSystem) OpenPartialUpload(user int32, id uuid.UUID, offset int64) (io.WriteCloser, error) {
+func (f *FileSystem) PartialUploadOpenWrite(user int32, id uuid.UUID, offset int64) (io.WriteCloser, error) {
 	owner, size, uploaded, checksum, err := queryPartialUpload(f.db, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = ErrUploadNotFound
+		}
 		return nil, err
 	}
 	if user != owner {
-		return nil, ErrResourceNotFound
+		return nil, ErrUploadNotFound
 	}
 
 	path := uploadFilePath(user, id)
@@ -71,14 +72,17 @@ func (f *FileSystem) OpenPartialUpload(user int32, id uuid.UUID, offset int64) (
 	return c, nil
 }
 
-func (f *FileSystem) QueryPartialUpload(user int32, id uuid.UUID) (size, uploaded int64, err error) {
+func (f *FileSystem) PartialUploadQuery(user int32, id uuid.UUID) (size, uploaded int64, err error) {
 	var owner int32
 	owner, size, uploaded, _, err = queryPartialUpload(f.db, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = ErrUploadNotFound
+		}
 		return
 	}
 	if user != owner {
-		err = ErrResourceNotFound
+		err = ErrUploadNotFound
 		return
 	}
 
@@ -99,13 +103,16 @@ func (f *FileSystem) QueryPartialUpload(user int32, id uuid.UUID) (size, uploade
 	return
 }
 
-func (f *FileSystem) ReadPartialUpload(user int32, id uuid.UUID) (io.ReadCloser, error) {
+func (f *FileSystem) PartialUploadOpenRead(user int32, id uuid.UUID) (io.ReadCloser, error) {
 	owner, size, uploaded, _, err := queryPartialUpload(f.db, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrUploadNotFound
+		}
 		return nil, err
 	}
 	if user != owner {
-		return nil, ErrResourceNotFound
+		return nil, ErrUploadNotFound
 	}
 
 	path := uploadFilePath(user, id)
