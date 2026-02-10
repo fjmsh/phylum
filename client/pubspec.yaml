@@ -33,7 +33,7 @@ dependencies:
   offtheline:
     git:
       url: https://codeberg.org/shroff/offtheline.git
-      ref: 28067cd8298fcac65ef93ad8f688e26affa83c6c
+      ref: 56a6527fe4f71fef9391db48d7611c00e711c400
   open_file:
   package_info_plus:
   path:
@@ -77,5 +77,3 @@ dependency_overrides:
       url: https://github.com/moshe5745/flutter_keyboard_visibility.git
       ref: b8393c50c483fa6fd16148d43dff454e6e845201
       path: flutter_keyboard_visibility_web
-  offtheline:
-    path: ../../offtheline
