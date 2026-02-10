@@ -66,7 +66,7 @@ func Delete(name string, imgRes Res) error {
 func Generate(path, mimeType string) (Res, error) {
 	if imageType, ok := strings.CutPrefix(mimeType, "image/"); ok {
 		if _, ok := imageTypes[imageType]; ok {
-			return processImage(path)
+			return processImage(path, false)
 		}
 	}
 
@@ -75,7 +75,7 @@ func Generate(path, mimeType string) (Res, error) {
 	}
 	if subType, ok := strings.CutPrefix(mimeType, "application/"); ok {
 		if _, ok := applicationImageTypes[subType]; ok {
-			return processImage(path)
+			return processImage(path, true)
 		}
 		if _, ok := applicationTextTypes[subType]; ok {
 			return processText(path)
@@ -92,7 +92,9 @@ func Generate(path, mimeType string) (Res, error) {
 
 // processImage generates preview + thumbnail for images (and PDF).
 // Preview is only generated if the image size is larger than 1M
-func processImage(input string) (Res, error) {
+// or if forcePreview is set to true (typically for non-image formats)
+// like PDF and PS
+func processImage(input string, forcePreview bool) (Res, error) {
 	var generated Res
 	stat, err := os.Stat(input)
 	if err != nil {
@@ -100,7 +102,7 @@ func processImage(input string) (Res, error) {
 	}
 	base := filepath.Base(input)
 	src := input
-	if stat.Size() > maxImageSizeNoPreview {
+	if forcePreview || stat.Size() > maxImageSizeNoPreview {
 		if o, err := resizeVips(src, dir, base, quality, ResLarge); err != nil {
 			return 0, err
 		} else {
