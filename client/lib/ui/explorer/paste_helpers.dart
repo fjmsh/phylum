@@ -72,7 +72,7 @@ Future<PasteItem> extractPasteItem(PhylumAccount account, DataReader reader) asy
       try {
         uploadFileCompleter.complete(UploadFile(
           path: file.fileName!,
-          length: file.fileSize!,
+          size: file.fileSize!,
           stream: file.getStream(),
         ));
       } catch (e) {

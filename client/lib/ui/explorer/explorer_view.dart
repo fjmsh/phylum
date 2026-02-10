@@ -93,7 +93,7 @@ class _ExplorerViewState extends State<ExplorerView> {
     if (shared.isEmpty) return;
     final files = shared
         .map((s) => UploadFile(
-              length: File(s.path).lengthSync(),
+              size: File(s.path).lengthSync(),
               stream: File(s.path).openRead().cast<Uint8List>(),
               path: s.path,
             ))
@@ -116,7 +116,8 @@ class _ExplorerViewState extends State<ExplorerView> {
         (name, conflictResolution, ensurePermission) => account.resourceRepository.upload(
           parent: dest,
           name: name,
-          contents: f,
+          contents: f.stream,
+          size: f.size,
           conflictResolution: conflictResolution,
           userPermission: userPermission,
           ensurePermission: ensurePermission,

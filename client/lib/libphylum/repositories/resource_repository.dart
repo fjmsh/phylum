@@ -133,7 +133,8 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     required String parent,
     required String name,
     required Permission userPermission,
-    required Blob contents,
+    required Stream<Uint8List> contents,
+    required int size,
     required NameConflictResolution conflictResolution,
     bool ensurePermission = true,
   }) async {
@@ -172,7 +173,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
           resourceName: name,
           conflictResolution: conflictResolution,
           timestamp: DateTime.now(),
-          size: contents.length,
+          size: size,
           contentType: lookupMimeType(name) ?? 'application/octet-stream',
           localName: localName,
           deletedId: deletedId,
@@ -328,13 +329,15 @@ class ResourceAdapter implements TypeAdapter<Resource?> {
   }
 }
 
-class UploadFile extends Blob {
+class UploadFile {
   final String path;
+  final int size;
+  final Stream<Uint8List> stream;
 
   UploadFile({
     required this.path,
-    required super.length,
-    required super.stream,
+    required this.size,
+    required this.stream,
   });
 
   String getMimeType(String path) {

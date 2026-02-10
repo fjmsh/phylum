@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/actions/action_resource_bind.dart';
@@ -15,7 +13,7 @@ abstract class ResourceCreateAction extends ResourceBindAction {
   });
 
   @override
-  FutureOr<void> processResponse(ApiResponse response) async {
+  bool processResponse(ApiResponse response) {
     if (response is ResourceResponse) {
       if (response.resource.id != resourceId) {
         account.actionQueue.updateActions(
@@ -24,5 +22,6 @@ abstract class ResourceCreateAction extends ResourceBindAction {
         );
       }
     }
+    return true;
   }
 }

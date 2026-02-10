@@ -39,7 +39,7 @@ Future<DirTree> enumerateDir(web.FileSystemDirectoryHandle dir, String prefix) a
       final f = handle[1] as web.FileSystemFileHandle;
       final file = await f.getFile().toDart;
       totalSize += file.size;
-      files.add(UploadFile(length: file.size, stream: byteStream(file), path: '$prefix${dir.name}/${file.name}'));
+      files.add(UploadFile(size: file.size, stream: byteStream(file), path: '$prefix${dir.name}/${file.name}'));
     }
   }
   return DirTree(

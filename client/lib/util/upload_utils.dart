@@ -58,7 +58,7 @@ Future<void> pickAndUploadFiles(BuildContext context, String folderId) async {
 
   final files = result.files.map(
     (e) => UploadFile(
-        length: e.size,
+        size: e.size,
         stream: kIsWeb ? ByteStream.fromBytes(e.bytes!).cast<Uint8List>() : File(e.path!).openRead().cast<Uint8List>(),
         path: e.name),
   );
@@ -68,7 +68,7 @@ Future<void> pickAndUploadFiles(BuildContext context, String folderId) async {
 Future<void> uploadFiles(BuildContext context, String folderId, Iterable<UploadFile> files) async {
   if (files.isEmpty) return;
   final account = context.read<PhylumAccount>();
-  final size = files.map((f) => f.length).fold(0, (acc, s) => acc + s);
+  final size = files.map((f) => f.size).fold(0, (acc, s) => acc + s);
   if (!context.mounted) return;
   final confirm = await showAlertDialog(
         context,
@@ -92,7 +92,8 @@ Future<void> uploadFiles(BuildContext context, String folderId, Iterable<UploadF
         (name, conflictResolution, ensurePermission) => account.resourceRepository.upload(
           parent: folderId,
           name: name,
-          contents: file,
+          contents: file.stream,
+          size: file.size,
           userPermission: userPermission,
           conflictResolution: conflictResolution,
           ensurePermission: ensurePermission,
@@ -178,7 +179,8 @@ Future<void> uploadDirTree(BuildContext context, String folderId, DirTree tree) 
           return account.resourceRepository.upload(
             parent: parent,
             name: name,
-            contents: file,
+            contents: file.stream,
+            size: file.size,
             userPermission: userPermission,
             conflictResolution: conflictResolution,
             ensurePermission: ensurePermission,
@@ -313,7 +315,7 @@ Future<DirTree> enumeratePath(String path) {
       totalSize: s.size,
       files: [
         UploadFile(
-          length: s.size,
+          size: s.size,
           stream: File(path).openRead().cast<Uint8List>(),
           path: p.basename(path),
         )
@@ -334,7 +336,7 @@ Future<DirTree> enumeratePath(String path) {
       if (file is File) {
         totalSize += file.lengthSync();
         files.add(UploadFile(
-          length: file.lengthSync(),
+          size: file.lengthSync(),
           stream: File(path).openRead().cast<Uint8List>(),
           path: file.path.substring(prefixLen),
         ));
