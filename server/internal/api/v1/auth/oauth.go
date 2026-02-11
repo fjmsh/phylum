@@ -15,6 +15,9 @@ func handleOAuthStart(c *gin.Context) {
 	if c.Query("client_type") == "native" {
 		clientType = auth.OpenIDClientNative
 	}
+	if c.Query("client_type") == "loopback" {
+		clientType = auth.OpenIDClientLoopback
+	}
 	db := db.Get(c.Request.Context())
 	if authURL, err := auth.OpenIDStart(db, provider, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect"), clientType); err != nil {
 		panic(err)
@@ -33,10 +36,13 @@ func handleOAuthRedirect(c *gin.Context) {
 		panic(err)
 	} else {
 		var clientURI url.URL
-		if clientType == auth.OpenIDClientWeb {
+		switch clientType {
+		case auth.OpenIDClientWeb:
 			clientURI = *c.Request.URL
 			clientURI.RawQuery = ""
-		} else {
+		case auth.OpenIDClientLoopback:
+			clientURI = url.URL{Scheme: "http", Host: "localhost:32448"}
+		case auth.OpenIDClientNative:
 			clientURI = url.URL{Scheme: "cloud.phylum.drive"}
 		}
 		clientURI.Path = "/login/token"

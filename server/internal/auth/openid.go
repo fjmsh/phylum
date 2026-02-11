@@ -22,6 +22,7 @@ const (
 	OpenIDClientNone OpenIDClientType = iota
 	OpenIDClientWeb
 	OpenIDClientNative
+	OpenIDClientLoopback
 )
 
 func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType OpenIDClientType) (string, error) {
