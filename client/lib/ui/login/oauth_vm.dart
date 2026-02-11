@@ -8,27 +8,38 @@ import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+int? loopbackServerPort;
+
 Future<void> startOAuthFlow(BuildContext context, UriBuilder oauthUriBuilder, String name) async {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Logging in with $name')));
   oauthUriBuilder.queryParameters['client_type'] = 'native';
   if (Platform.isLinux) {
     oauthUriBuilder.queryParameters['client_type'] = 'loopback';
-    await startLoopbackServer(context);
+    if (loopbackServerPort == null) {
+      await startLoopbackServer(context, oauthUriBuilder);
+    } else {
+      oauthUriBuilder.queryParameters['loopback_port'] = loopbackServerPort!.toString();
+      launchUrl(oauthUriBuilder.build());
+    }
+  } else {
+    launchUrl(oauthUriBuilder.build());
   }
-  launchUrl(oauthUriBuilder.build());
 }
 
-Future<void> startLoopbackServer(BuildContext context) async {
+Future<void> startLoopbackServer(BuildContext context, UriBuilder oauthUriBuilder) async {
   final port = ReceivePort();
-  port.listen(createLoopbackRedirectHandler(context));
+  port.listen(createLoopbackRedirectHandler(context, oauthUriBuilder));
   await Isolate.spawn(runLoopbackServer, port.sendPort);
 }
 
-Function(dynamic) createLoopbackRedirectHandler(BuildContext context) {
+Function(dynamic) createLoopbackRedirectHandler(BuildContext context, UriBuilder oauthUriBuilder) {
   final routerDelegate = context.read<PhylumRouterDelegate>();
   return (dynamic data) {
+    if (data is int) {
+      oauthUriBuilder.queryParameters['loopback_port'] = data.toString();
+      launchUrl(oauthUriBuilder.build());
+    }
     if (data is Uri) {
-      print('Received callback at $data');
       routerDelegate.go(TokenLoginRoute(
         instanceUrl: data.queryParameters['instance'],
         loginToken: data.queryParameters['token'],
@@ -38,9 +49,9 @@ Function(dynamic) createLoopbackRedirectHandler(BuildContext context) {
 }
 
 void runLoopbackServer(SendPort sendPort) async {
-  const port = 32448;
-  final server = await HttpServer.bind('localhost', port);
-  print('Listening for oauth redirects');
+  final server = await HttpServer.bind('localhost', 0);
+  loopbackServerPort = server.port;
+  sendPort.send(loopbackServerPort);
   server.listen((request) {
     sendPort.send(request.uri);
     request.response.headers.contentType = ContentType.html;
@@ -48,13 +59,13 @@ void runLoopbackServer(SendPort sendPort) async {
 <!DOCTYPE html>
 <html>
 <head>
-<title>Phylum OAuth Redirect</title>
 <script>
 window.close();
 </script>
 </head>
 </html>
 ''');
+    loopbackServerPort = 0;
     request.response.close().then((val) {
       server.close(force: true);
     });
