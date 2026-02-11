@@ -25,7 +25,7 @@ const (
 	OpenIDClientLoopback
 )
 
-func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType OpenIDClientType) (string, error) {
+func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType OpenIDClientType, loopbackPort int) (string, error) {
 	if clientID, endpoint, err := openid.GetClientDetails(providerName); err != nil {
 		return "", err
 	} else {
@@ -40,10 +40,11 @@ func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType Ope
 			"token_hash":         hash[:],
 			"oidc_provider":      providerName,
 			"oidc_client_type":   clientType,
+			"loopback_port":      loopbackPort,
 			"oidc_code_verifier": codeVerifier,
 		}
-		const query = `INSERT INTO pending_logins(token_id, expires, token_hash, oidc_provider, oidc_client_type, oidc_code_verifier)
-VALUES (@token_id, @expires, @token_hash, @oidc_provider, @oidc_client_type, @oidc_code_verifier)`
+		const query = `INSERT INTO pending_logins(token_id, expires, token_hash, oidc_provider, oidc_client_type, loopback_port, oidc_code_verifier)
+VALUES (@token_id, @expires, @token_hash, @oidc_provider, @oidc_client_type, @loopback_port, @oidc_code_verifier)`
 		_, err := db.Exec(query, args)
 		if err != nil {
 			return "", errors.New("failed to create login token: " + err.Error())
@@ -66,15 +67,15 @@ VALUES (@token_id, @expires, @token_hash, @oidc_provider, @oidc_client_type, @oi
 	}
 }
 
-func OpenIDValidateAuthCode(d db.Handler, state, authCode, redirectURI string) (OpenIDClientType, error) {
-	const q = "SELECT oidc_provider, oidc_client_type, oidc_code_verifier FROM pending_logins WHERE token_id = token_id AND token_hash = @token_hash AND user_id IS NULL AND expires >= NOW()"
+func OpenIDValidateAuthCode(d db.Handler, state, authCode, redirectURI string) (OpenIDClientType, int, error) {
+	const q = "SELECT oidc_provider, oidc_client_type, loopback_port, oidc_code_verifier FROM pending_logins WHERE token_id = token_id AND token_hash = @token_hash AND user_id IS NULL AND expires >= NOW()"
 
 	var tokenID uuid.UUID
 	var tokenHash []byte
 	if b, err := b32Encoder.DecodeString(state); err != nil {
-		return OpenIDClientNone, ErrTokenInvalid
+		return OpenIDClientNone, 0, ErrTokenInvalid
 	} else if len(b) < 16 {
-		return OpenIDClientNone, ErrTokenInvalid
+		return OpenIDClientNone, 0, ErrTokenInvalid
 	} else {
 		tokenID, _ = uuid.FromBytes(b[:16])
 		hash := sha256.Sum256(b[16:])
@@ -88,14 +89,15 @@ func OpenIDValidateAuthCode(d db.Handler, state, authCode, redirectURI string) (
 	row := d.QueryRow(q, args)
 	var providerName string
 	var clientType OpenIDClientType
+	var loopbackPort int
 	var codeVerifier string
-	if err := row.Scan(&providerName, &clientType, &codeVerifier); err != nil {
+	if err := row.Scan(&providerName, &clientType, &loopbackPort, &codeVerifier); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrTokenInvalid
 		}
-		return OpenIDClientNone, err
+		return OpenIDClientNone, 0, err
 	} else if idToken, err := openid.GetIDToken(providerName, authCode, redirectURI, codeVerifier); err != nil {
-		return OpenIDClientNone, err
+		return OpenIDClientNone, 0, err
 	} else {
 		email := strings.ToLower(idToken.Email)
 		user, err := core.UserByEmail(d, email)
@@ -117,9 +119,9 @@ func OpenIDValidateAuthCode(d db.Handler, state, authCode, redirectURI string) (
 		if err != nil {
 			// This session ID is no longer valid, since we've already used the auth code once
 			d.Exec("DELETE FROM pending_logins WHERE token_id = $1", tokenID)
-			return OpenIDClientNone, err
+			return OpenIDClientNone, 0, err
 		}
-		return clientType, nil
+		return clientType, loopbackPort, nil
 	}
 }
 
