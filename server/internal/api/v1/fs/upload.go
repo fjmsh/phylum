@@ -41,6 +41,10 @@ func handleUploadRequest(c *gin.Context) {
 			panic(err)
 		}
 	}
+	// Needed to be able to retreive the created resource
+	if id == uuid.Nil {
+		id, _ = uuid.NewV7()
+	}
 
 	// TODO: Calculate and verify sha sum
 
@@ -77,7 +81,13 @@ func handleUploadRequest(c *gin.Context) {
 	}
 
 	// id may have changed if this is an overwrite
-	r, err := f.ResourceByPathWithRoot(params.Path)
+	var r core.Resource
+	if params.Conflict == core.ResourceBindConflictResolutionOverwrite || params.Conflict == core.ResourceBindConflictResolutionDelete {
+		r, err = f.ResourceByPathWithRoot(params.Path)
+	} else {
+		r, err = f.ResourceByID(id)
+
+	}
 	if err != nil {
 		panic(err)
 	}

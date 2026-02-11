@@ -180,6 +180,10 @@ func handlePartialUploadsFinalizeRequest(c *gin.Context) {
 		}
 	}
 
+	if resourceID == uuid.Nil {
+		resourceID, _ = uuid.NewV7()
+	}
+
 	f := authenticator.GetFileSystem(c)
 	err = func() error {
 		// TODO: #perf disk I/O in tx
@@ -206,7 +210,13 @@ func handlePartialUploadsFinalizeRequest(c *gin.Context) {
 	}
 
 	// id may have changed if this is an overwrite
-	r, err := f.ResourceByPathWithRoot(params.Path)
+	var r core.Resource
+	if params.Conflict == core.ResourceBindConflictResolutionOverwrite || params.Conflict == core.ResourceBindConflictResolutionDelete {
+		r, err = f.ResourceByPathWithRoot(params.Path)
+	} else {
+		r, err = f.ResourceByID(resourceID)
+
+	}
 	if err != nil {
 		panic(err)
 	}

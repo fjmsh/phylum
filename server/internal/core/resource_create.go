@@ -20,11 +20,11 @@ import (
 type ResourceBindConflictResolution int32
 
 const (
-	ResourceBindConflictResolutionError     = ResourceBindConflictResolution(0) // Error if exists
-	ResourceBindConflictResolutionEnsure    = ResourceBindConflictResolution(1) // Error if type mismatch
-	ResourceBindConflictResolutionRename    = ResourceBindConflictResolution(2) // Auto rename new resource
-	ResourceBindConflictResolutionOverwrite = ResourceBindConflictResolution(3) // Delete existing resource only if type mismatch (preserves props)
-	ResourceBindConflictResolutionDelete    = ResourceBindConflictResolution(4) // Delete existing resource before creating
+	ResourceBindConflictResolutionError     = ResourceBindConflictResolution(0) // Error if exists. ID and path preserved
+	ResourceBindConflictResolutionEnsure    = ResourceBindConflictResolution(1) // Error if type mismatch. ID and path preserved
+	ResourceBindConflictResolutionRename    = ResourceBindConflictResolution(2) // Auto rename new resource. ID preserved, path may change
+	ResourceBindConflictResolutionOverwrite = ResourceBindConflictResolution(3) // Delete existing resource only if type mismatch (preserves props). Path preserved, ID may change
+	ResourceBindConflictResolutionDelete    = ResourceBindConflictResolution(4) // Delete existing resource before creating. ID and path preserved
 )
 
 func CheckResourceNameInvalid(s string) bool {
