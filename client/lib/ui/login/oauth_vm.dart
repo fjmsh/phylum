@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
@@ -13,7 +14,7 @@ int? loopbackServerPort;
 Future<void> startOAuthFlow(BuildContext context, UriBuilder oauthUriBuilder, String name) async {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Logging in with $name')));
   oauthUriBuilder.queryParameters['client_type'] = 'native';
-  if (Platform.isLinux) {
+  if (defaultTargetPlatform == TargetPlatform.linux) {
     oauthUriBuilder.queryParameters['client_type'] = 'loopback';
     if (loopbackServerPort == null) {
       await startLoopbackServer(context, oauthUriBuilder);
