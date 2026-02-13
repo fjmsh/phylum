@@ -5,7 +5,6 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   irondash_engine_context
   open_file_linux
-  printing
   sqlite3_flutter_libs
   super_native_extensions
   url_launcher_linux

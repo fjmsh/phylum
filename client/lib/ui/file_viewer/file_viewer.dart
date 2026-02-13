@@ -16,7 +16,6 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:phylum/ui/file_viewer/versioned_resource.dart';
-import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 const maxPreviewSize = 1 * 1024 * 1024;
@@ -257,9 +256,4 @@ Widget buildTextPreview(Uint8List data) => Material(
           maxLines: 30,
         ),
       ),
-    );
-
-Widget buildPdfPreview(Uint8List data) => PdfPreview(
-      build: (_) => data,
-      previewPageMargin: EdgeInsets.zero,
     );
