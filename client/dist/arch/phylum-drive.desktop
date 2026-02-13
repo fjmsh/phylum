@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Phylum Drive
+Comment=File Manager for Phylum Drive Self-Hosted Offline-First File Storage Platform
+Exec=/usr/bin/phylum-drive
+Icon=phylum-drive
+Terminal=false
+Type=Application
+Categories=Productivity;
+

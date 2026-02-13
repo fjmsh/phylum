@@ -1,0 +1,46 @@
+pkgname=phylum-drive
+pkgver=0.6
+pkgrel=1
+pkgdesc='Self-Hosted Cloud File Storage'
+arch=('x86_64')
+url="https://codeberg.org/shroff/phylum"
+depends=('gtk3')
+makedepends=('clang' 'cmake' 'ninja' 'pkgconf' 'xz')
+source=(
+  "https://codeberg.org/shroff/phylum/archive/releases/v$pkgver.tar.gz"
+  'phylum-drive.desktop'
+)
+sha256sums=(
+  'd5d07e457009c859d3f5ab4bfbcc4202f372a9a3a524d67a7f24420b77c6cac3'
+  'ba187db3c0141e07bfdd60fd52c913b0e3d866a90c7247c32ebea8c7c6fcb484'
+)
+
+prepare(){
+    cd phylum/client
+    flutter --no-version-check config --no-analytics
+    flutter --no-version-check config --enable-linux-desktop
+    flutter --no-version-check pub get
+}
+
+build() {
+    cd phylum/client
+    flutter --no-version-check build linux --release
+}
+
+package() {
+    cd phylum/client
+
+    # Install to /opt
+    install -dm755 "$pkgdir/opt/$pkgname"
+    cp -rdp --no-preserve=ownership build/linux/x64/release/bundle/* "$pkgdir/opt/$pkgname/"
+
+    # Add desktop entry and icons
+    install -Dm644 "../../phylum-drive.desktop" "$pkgdir/usr/share/applications/phylum-drive.desktop"
+    install -Dm644 "web/icons/icon-192.png" "$pkgdir/usr/share/icons/hicolor/192x192/apps/phylum-drive.png"
+    install -Dm644 "web/icons/icon-512.png" "$pkgdir/usr/share/icons/hicolor/512x512/apps/phylum-drive.png"
+
+    # symlink to /usr/bin
+    install -dm755 "$pkgdir/usr/bin/"
+    ln -s "/opt/$pkgname/phylum" "$pkgdir/usr/bin/$pkgname"
+}
+
