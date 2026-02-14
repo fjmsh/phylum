@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/clipboard.dart';
@@ -49,13 +50,20 @@ class _PhylumAppState extends State<PhylumApp> {
         path: DBusObjectPath('/drive/phylum/cloud/Instance/Object'),
       );
 
-      var value = await object.getProperty('cloud.phylum.drive.Instance', 'Version', signature: DBusSignature('s'));
-      var version = value.asString();
-      print('Version $version');
+      try {
+        var value = await object.getProperty('cloud.phylum.drive.Instance', 'Version', signature: DBusSignature('s'));
+        var version = value.asString();
+        print('Version $version');
+      } catch (e) {
+        print('DBus Exception ($e). Version Unknown');
+      }
 
-      await object.callMethod('cloud.phylum.drive.Instance', 'Show', [], replySignature: DBusSignature(''));
-      await sessionClient.close();
-      exit(0);
+      try {
+        await object.callMethod('cloud.phylum.drive.Instance', 'Show', [], replySignature: DBusSignature(''));
+        await sessionClient.close();
+      } finally {
+        exit(0);
+      }
     } else {
       throw StateError('Unsupported DBus Name Request Reply: $requestReply');
     }
@@ -109,7 +117,8 @@ class InstanceObject extends DBusObject {
   Future<DBusMethodResponse> getProperty(String interface, String name) async {
     if (interface == 'cloud.phylum.drive.Instance') {
       if (name == 'Version') {
-        return DBusGetPropertyResponse(DBusString('0.7'));
+        final version = await PackageInfo.fromPlatform().then((info) => info.version).onError((err, stack) => 'DEV');
+        return DBusGetPropertyResponse(DBusString(version));
       } else {
         return DBusMethodErrorResponse.unknownProperty();
       }
