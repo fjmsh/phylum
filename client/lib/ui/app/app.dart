@@ -12,6 +12,7 @@ import 'package:phylum/ui/app/clipboard.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:provider/provider.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'account_selector_stub.dart'
     if (dart.library.ffi) 'account_selector_vm.dart'
@@ -134,6 +135,8 @@ class InstanceObject extends DBusObject {
         if (methodCall.signature != DBusSignature('')) {
           return DBusMethodErrorResponse.invalidArgs();
         }
+        windowManager.focus();
+
         return DBusMethodSuccessResponse([]);
       } else {
         return DBusMethodErrorResponse.unknownMethod();

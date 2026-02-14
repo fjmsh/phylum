@@ -13,6 +13,7 @@ import 'package:phylum/libphylum/actions/deserializers.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/logging.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'ui/app/app.dart';
 
@@ -23,6 +24,9 @@ const storageDir = String.fromEnvironment("STORAGE_DIR");
 void main() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
+  if (defaultTargetPlatform == TargetPlatform.linux) {
+    windowManager.ensureInitialized();
+  }
 
   logger = Logger(level: Level.info, printer: PrettyPrinter(methodCount: 0, noBoxingByDefault: true));
   otlLogger = (LogLevel level, dynamic message, {dynamic error, StackTrace? stackTrace}) {
