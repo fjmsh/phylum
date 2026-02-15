@@ -1,0 +1,6 @@
+.
+phylum/
+src/
+pkg/
+*.tar.gz
+*.pkg.tar.*
