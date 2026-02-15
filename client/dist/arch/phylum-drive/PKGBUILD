@@ -6,6 +6,8 @@ arch=('x86_64')
 url="https://codeberg.org/shroff/phylum"
 depends=('gtk3')
 makedepends=('clang' 'cmake' 'ninja' 'pkgconf' 'xz')
+conflicts=('phylum-drive')
+provides=('phylum-drive')
 source=(
   "https://codeberg.org/shroff/phylum/archive/releases/v$pkgver.tar.gz"
   'phylum-drive.desktop'
@@ -41,6 +43,6 @@ package() {
 
     # symlink to /usr/bin
     install -dm755 "$pkgdir/usr/bin/"
-    ln -s "/opt/$pkgname/phylum" "$pkgdir/usr/bin/$pkgname"
+    ln -s "/opt/$pkgname/phylum" "$pkgdir/usr/bin/phylum-drive"
 }
 
