@@ -23,7 +23,7 @@ RUN abuild-keygen -anq
 COPY libreoffice-nogui/ .
 RUN abuild deps
 RUN --mount=type=cache,uid=1000,target="/var/cache/distfiles" abuild fetch verify unpack prepare build
-RUN abuild rootpkg && mv ~/packages/home/x86_64/libreoffice-nogui-25.2.5.2-r0.apk ./libreoffice.apk
+RUN abuild rootpkg && mv ~/packages/home/x86_64/libreoffice-nogui-*.apk ./libreoffice.apk
 
 FROM alpine
 RUN apk add vips-tools vips-poppler font-noto
