@@ -7,7 +7,7 @@ pkgver=26.2.1.1
 pkgrel=0
 pkgdesc="Minimal LibreOffice for headless document conversion"
 url="https://www.libreoffice.org/"
-arch="x86_64"
+arch="x86_64 aarch64"
 license="MPL-2.0"
 makedepends="
 	autoconf

@@ -1,7 +1,11 @@
+# syntax=docker/dockerfile:1.4
+ARG TARGETPLATFORM
+ARG TARGETARCH
+
 FROM golang:alpine as server
 WORKDIR /src
 COPY server/ .
-RUN go build -o /bin/phylum cmd/phylum.go
+RUN GOOS=linux GOARCH=${TARGETARCH} go build -o /bin/phylum cmd/phylum.go
 
 FROM ghcr.io/cirruslabs/flutter:stable AS webapp
 WORKDIR /src
