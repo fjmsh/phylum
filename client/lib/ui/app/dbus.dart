@@ -57,7 +57,7 @@ class InstanceObject extends DBusObject {
 
   @override
   Future<DBusMethodResponse> handleMethodCall(DBusMethodCall methodCall) async {
-    if (methodCall.interface == 'cloud.phylum.drive.Instance') {
+    if (methodCall.interface == dbusName) {
       if (methodCall.name == 'Show') {
         if (methodCall.signature != DBusSignature('')) {
           return DBusMethodErrorResponse.invalidArgs();
