@@ -29,7 +29,16 @@ RUN abuild deps
 RUN --mount=type=cache,uid=1000,target="/var/cache/distfiles" abuild fetch verify unpack prepare build
 RUN abuild rootpkg && mv ~/packages/home/x86_64/libreoffice-nogui-*.apk ./libreoffice.apk
 
-FROM alpine
+FROM alpine AS phylum-lofull
+RUN apk add vips-tools vips-poppler font-noto libreoffice
+WORKDIR /app
+ENV PATH="/app:$PATH"
+COPY --from=server /bin/phylum /app/phylum
+COPY --from=webapp /src/build/web /app/web
+ENTRYPOINT ["phylum"]
+CMD ["serve"]
+
+FROM alpine AS phylum
 RUN apk add vips-tools vips-poppler font-noto
 WORKDIR /app
 ENV PATH="/app:$PATH"
