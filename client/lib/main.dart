@@ -24,7 +24,7 @@ const storageDir = String.fromEnvironment("STORAGE_DIR");
 void main() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
-  if (defaultTargetPlatform == TargetPlatform.linux) {
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.linux) {
     windowManager.ensureInitialized();
   }
 

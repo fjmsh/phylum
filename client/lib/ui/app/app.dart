@@ -28,7 +28,7 @@ class _PhylumAppState extends State<PhylumApp> {
   @override
   void initState() {
     super.initState();
-    if (defaultTargetPlatform == TargetPlatform.linux) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.linux) {
       ensureSingleClientDBus();
     }
   }
