@@ -25,11 +25,13 @@ makedepends="
 	gperf
 	lcms2-dev
 	libxslt-dev
+	meson
+	ninja
 	nss-dev
 	nspr-dev
 	nasm
 	perl
-  pixman-dev
+	pixman-dev
 	pkgconfig
 	python3
 	tar
@@ -107,6 +109,7 @@ source="https://download.documentfoundation.org/libreoffice/src/$_v/libreoffice-
 	$_addsrcurl/libzmf-0.0.2.tar.xz
 	https://dev-www.libreoffice.org/extern/f543e6e2d7275557a839a164941c0a86e5f2c3f2a0042bfc434c88c6dde9e140-opens___.ttf
 
+	autogen-aarch64.patch
 	linux-musl.patch
 	musl-stacksize.patch
 	musl-libintl.patch
@@ -328,6 +331,7 @@ bbf9047f35d1b42c2da8deee24116d6a3fb20749a4255d369b62967a99185f52f21dda3e1b385056
 b4de208f179b68d4c6454139ca60d66ed3ef3893a560d6159a056640f83d3ee67cdf6ffb88971cdba35449dba4b597eaa8b4ae908127ef7fd58c89f40bf9a705  zstd-1.5.7.tar.gz
 ad4a8e65e85434e43caa239ff2a3f358c6db6411235c4bb73d8d2aa1527a4f411433370706db391f8f8110a36759249ee19b27be75bae5f361c491006d1b9aa2  libzmf-0.0.2.tar.xz
 6a6d131dad5191614950a49323ae6d9385afe331983c1c85fde82ce6ee816051d95dde9ef90658b8f0a8a0a21754e72ff724bf41f6b96c046b7b4c2660f7095b  f543e6e2d7275557a839a164941c0a86e5f2c3f2a0042bfc434c88c6dde9e140-opens___.ttf
+60ef645b8c976f81981a12a1f8fcf8114da5c09b74eee3e1e123e5f953977ff1ae5d9bb9a1b363c1735ebaeaf7a4d0eac77ba8f128feeeda78a0599859881ff7  autogen-aarch64.patch
 6789d1b4e5d9743b735c0773e35465398907394f4343f97ab3d0e4000debf3296c4865473c513408b9d335984c08fd422b2d8ae45c1cf774ed5481b975f2c248  linux-musl.patch
 ef81793640bc647e076687d317cd8554520cf376e6876b98d0ac6432089805092cb75c9fca99a0e03ccaf929e55f991cf26e698599641f20fd1efc81087a6fa4  musl-stacksize.patch
 d99d074e89e2713a3b6a56fa60d9d989ca6eefc8884ccbf88cb16c7b09da6dde4ba4ebc6a4d8408b61a08088df7cb1bcda60738f91e5569179fc45d7e9b901a3  musl-libintl.patch
