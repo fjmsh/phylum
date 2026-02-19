@@ -27,7 +27,7 @@ func generateTextPreview(input, outdir string) error {
 	args := []string{
 		"--headless",
 		"--convert-to",
-		"webp",
+		"webp:writer_webp_Export",
 		"--infilter=\"Text (encoded):UTF8,LF,Noto Sans,en-US\"", // TOOO: change font? locale?
 		"--outdir",
 		outdir,
