@@ -21,6 +21,7 @@ dependencies:
   drift_flutter: ^0.2.1
   email_validator:
   file_picker: ^10.0.0
+  flutter_launcher_icons:
   flutter_state_notifier:
   flutter_typeahead:
   background_downloader:
@@ -78,3 +79,8 @@ dependency_overrides:
       url: https://github.com/moshe5745/flutter_keyboard_visibility.git
       ref: b8393c50c483fa6fd16148d43dff454e6e845201
       path: flutter_keyboard_visibility_web
+
+flutter_launcher_icons:
+  ios: true
+  image_path: "assets/images/ic_launcher-playstore.png"
+  image_path_ios_dark_transparent: "assets/images/logo.png"
