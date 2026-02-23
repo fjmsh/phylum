@@ -16,6 +16,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/fs")
 
 	group.GET("/info/*path", handleInfoRequest)
+	group.GET("/tree/*path", handleTreeRequest)
 	group.GET("/contents/*path", handleContentsRequest)
 	group.GET("/img/*path", handleImgRequest)
 	group.GET("/disk_usage/*path", handleDiskUsageRequest)

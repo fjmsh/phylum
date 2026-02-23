@@ -16,5 +16,5 @@ func handleInfoRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	c.JSON(200, responses.FullResourceFromFS(fs, r))
+	c.JSON(200, responses.FullResourceFromFS(fs, r, false))
 }

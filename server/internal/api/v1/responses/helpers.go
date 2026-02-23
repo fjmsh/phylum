@@ -2,7 +2,7 @@ package responses
 
 import "codeberg.org/shroff/phylum/server/internal/core"
 
-func FullResourceFromFS(f *core.FileSystem, r core.Resource) ResourceFull {
+func FullResourceFromFS(f *core.FileSystem, r core.Resource, recursive bool) ResourceFull {
 	response := ResourceFull{
 		Resource: ResourceFromFS(r),
 	}
@@ -20,7 +20,7 @@ func FullResourceFromFS(f *core.FileSystem, r core.Resource) ResourceFull {
 		}
 	}
 	if r.Dir() {
-		children, err := f.ReadDir(r, false)
+		children, err := f.ReadDirExtended(r, recursive, false, true)
 		if err != nil {
 			panic(err)
 		}
