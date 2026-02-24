@@ -39,7 +39,7 @@ var defaultConfig embed.FS
 func SetupCommand() {
 	var cmd = &cobra.Command{
 		Use:     path.Base(os.Args[0]),
-		Version: "0.7.0",
+		Version: "0.7.1",
 	}
 	flags := cmd.PersistentFlags()
 	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
