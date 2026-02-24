@@ -232,7 +232,7 @@ func (f txFileSystem) RestoreDeleted(r Resource, parentPathOrUUID string, name s
 	n, s := selectResourceTree(r.id, false)
 	tR := goqu.T("resources")
 	query, params, _ := s.
-		From(r).
+		From(tR).
 		Where(tR.Col("id").Eq(pg.From(n).Select("id"))).
 		Update().Set(
 		goqu.Record{
