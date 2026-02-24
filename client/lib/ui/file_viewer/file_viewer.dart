@@ -20,6 +20,8 @@ import 'package:provider/provider.dart';
 
 const maxPreviewSize = 1 * 1024 * 1024;
 
+const _applicationTextSubtypes = {'json', 'yaml', 'toml', 'xml', 'x-sh', 'x-sql'};
+
 class FileViewer extends StatefulWidget {
   final bool transparent;
   final VersionedResource resource;
@@ -57,13 +59,15 @@ class _FileViewerState extends State<FileViewer> {
     } else {
       _buildViewer = null;
       context.read<PhylumAccount>().db.markResourceAccess(_resource.r.id);
-      if (_resource.v.mimeType.startsWith('text/')) {
+      final mimeType = MediaType.parse(_resource.v.mimeType);
+      if (mimeType.type == 'text' ||
+          (mimeType.type == 'application' && _applicationTextSubtypes.contains(mimeType.subtype))) {
         _buildViewer = buildTextPreview;
         _loadPreview = false;
       } else if ((_resource.v.imgres & imgResLarge) != 0) {
         _buildViewer = buildImagePreview;
         _loadPreview = true;
-      } else if (_resource.v.mimeType.startsWith('image/')) {
+      } else if (mimeType.type == "image") {
         _buildViewer = buildImagePreview;
         _loadPreview = false;
       } else {
