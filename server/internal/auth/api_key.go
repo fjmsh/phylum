@@ -133,6 +133,16 @@ func ReadAPIKey(db db.Handler, keyIDStr, keyStr string, connectionInfo []byte) (
 	}
 }
 
+func APIKeyToToken(keyIDStr, keyStr string) (string, error) {
+	if keyID, err := uuid.Parse(keyIDStr); err != nil {
+		return "", err
+	} else if key, err := b32Encoder.DecodeString(keyStr); err != nil {
+		return "", err
+	} else {
+		return b64Encoder.EncodeToString(append(keyID[:], key...)), nil
+	}
+}
+
 func readAPIKey(db db.Handler, keyID uuid.UUID, key []byte, connectionInfo []byte) (auth *Auth, err error) {
 	const q = `WITH cte(id) AS (
 	UPDATE api_keys SET last_used = $3

@@ -57,7 +57,7 @@ func SetupRoutes(r *gin.RouterGroup, logger *zerolog.Logger) {
 	group.GET("/oauth/start", handleOAuthStart)
 	group.GET("/oauth/redirect", handleOAuthRedirect)
 
-	group.POST("/set-cookie", authenticator.RequireAPIKey, handleSetCookie)
+	group.POST("/set-cookie", authenticator.RequireAPIToken, handleSetCookie)
 }
 
 func handleConfig(c *gin.Context) {
@@ -113,7 +113,7 @@ func loginAndSendResponse(c *gin.Context, loginFn func(db.TxHandler) (*auth.Auth
 }
 
 func handleSetCookie(c *gin.Context) {
-	token := authenticator.GetAPIKey(c)
+	token := authenticator.GetAPIToken(c)
 	if token == "" {
 		panic(core.NewError(http.StatusBadRequest, "missing_token", "API Key Not Specified"))
 	}
