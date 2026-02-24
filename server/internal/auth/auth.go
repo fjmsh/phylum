@@ -27,7 +27,7 @@ const loginTokenLength = 15
 
 const tokenValidity = 10 * time.Minute
 
-var b64Encoder = base64.StdEncoding.WithPadding(base64.NoPadding)
+var b64Encoder = base64.URLEncoding.WithPadding(base64.NoPadding)
 var b32Encoder = base32.StdEncoding.WithPadding(base32.NoPadding)
 
 var ErrTokenInvalid = errors.New("invalid token")
