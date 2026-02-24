@@ -31,10 +31,13 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
 
   @override
   Future process(PhylumAccount account) async {
+    final bookmarkIds = bookmarks.map((b) => b.resourceId);
     await account.db.batch((batch) {
       if (clear) {
         batch.deleteAll(account.db.bookmarks);
         batch.deleteAll(account.db.users);
+      } else {
+        batch.deleteWhere(account.db.bookmarks, (o) => o.resourceId.isNotIn(bookmarkIds));
       }
       batch.insertAll(account.db.bookmarks, bookmarks, mode: InsertMode.insertOrReplace);
       batch.insertAll(account.db.users, users, mode: InsertMode.insertOrReplace);
