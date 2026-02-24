@@ -68,6 +68,9 @@ func ListBookmarks(db db.Handler, userID int32, since int64) ([]Bookmark, error)
 FROM bookmarks b
 WHERE user_id = @user_id::INT
 `)
+	// The delta approach currently isn't able to handle hard deletes, which happens when
+	// a resource is hard deleted. Fall back to sending the full list.
+	since = 0
 	if since == 0 {
 		sb.WriteString("AND deleted IS NULL\n")
 	} else {
