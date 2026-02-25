@@ -1,5 +1,6 @@
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/actions/action_resource_bookmark_remove.dart';
 import 'package:phylum/libphylum/actions/changes/delete_resource_change.dart';
 import 'package:phylum/libphylum/actions/changes/update_resource_deleted_change.dart';
 import 'package:phylum/libphylum/actions/changes/update_resource_modified_change.dart';
@@ -32,6 +33,7 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   List<LocalChange> get localChanges => permanent
       ? [
           DeleteResourceChange(objectId: resourceId),
+          RemoveBookmarkChange(resourceId),
         ]
       : [
           UpdateResourceDeletedChange(
@@ -43,6 +45,7 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
             timestamp: timestamp,
           ),
           UpdateResourceTrashedChange(objectId: resourceId, add: true),
+          RemoveBookmarkChange(resourceId),
         ];
 
   @override
