@@ -41,7 +41,7 @@ class _ActionsSliverState extends State<ActionsSliver> {
             _listeners[action] = action.statusNotifier.addListener((status) {
               // Ignore progress updates
               if (_statusMap[action].runtimeType != status.runtimeType) {
-                if (status is ActionStatusDone) {
+                if (status.terminal) {
                   final l = _listeners.remove(action);
                   _statusMap.remove(action);
                   if (l != null) {

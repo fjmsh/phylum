@@ -23,7 +23,11 @@ class ActionView extends StatelessWidget {
 
   Widget buildTile(BuildContext context, PhylumAction action, ActionStatus status) {
     return switch (status) {
-      ActionStatusWaiting _ || ActionStatusReady _ || ActionStatusDone _ => buildSimpleInfoTile(context, status),
+      ActionStatusWaiting _ ||
+      ActionStatusCancelled _ ||
+      ActionStatusReady _ ||
+      ActionStatusDone _ =>
+        buildSimpleInfoTile(context, status),
       ActionStatusUploading(done: int done, length: int length) => buildProgressTile(context, done, length),
       ActionStatusError(error: final error) => buildErrorInfoTile(context, action, error),
     };
