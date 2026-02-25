@@ -230,17 +230,32 @@ class _ApiKeysViewState extends State<ApiKeysView> {
                             'Please note down the details as it will not be possible to retreive once it is dismissed.'),
                       ),
                       TextFormField(
-                        decoration: InputDecoration(label: Text('Key ID')),
+                        decoration: InputDecoration(
+                          label: Text('Key ID'),
+                          suffixIcon: IconButton(
+                              onPressed: () => Clipboard.setData(ClipboardData(text: response.keyId)),
+                              icon: Icon(Icons.copy)),
+                        ),
                         initialValue: response.keyId,
                         readOnly: true,
                       ),
                       TextFormField(
-                        decoration: InputDecoration(label: Text('Key')),
+                        decoration: InputDecoration(
+                          label: Text('Key'),
+                          suffixIcon: IconButton(
+                              onPressed: () => Clipboard.setData(ClipboardData(text: response.key)),
+                              icon: Icon(Icons.copy)),
+                        ),
                         initialValue: response.key,
                         readOnly: true,
                       ),
                       TextFormField(
-                        decoration: InputDecoration(label: Text('Access Token')),
+                        decoration: InputDecoration(
+                          label: Text('Access Token'),
+                          suffixIcon: IconButton(
+                              onPressed: () => Clipboard.setData(ClipboardData(text: response.accessToken)),
+                              icon: Icon(Icons.copy)),
+                        ),
                         initialValue: response.accessToken,
                         readOnly: true,
                       ),
