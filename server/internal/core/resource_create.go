@@ -69,10 +69,8 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
 			var generated uint8
-			if generated, err = img.Generate(backend.Path(versionID.String()), mimeType); err != nil {
-				return err
-			}
-			err := f.runInTx(func(f txFileSystem) error {
+			generated, err := img.Generate(backend.Path(versionID.String()), mimeType)
+			err = f.runInTx(func(f txFileSystem) error {
 				if r, err := f.createMemberResource(parent, name, requestedID, false, conflictResolution); err != nil {
 					return err
 				} else {
