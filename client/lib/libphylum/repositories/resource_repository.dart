@@ -280,7 +280,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
       versionId: generateUuid(),
       parent: parent,
       resourceName: name,
-      conflictResolution: nameConflictRename,
+      conflictResolution: conflictResolution,
       dir: resource.dir,
       localName: localName,
       contentType: latestVersion?.mimeType ?? '',
