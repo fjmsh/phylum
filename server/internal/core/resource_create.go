@@ -305,7 +305,7 @@ func resolveConflictAndInsertResource(
 		}
 	case ResourceBindConflictResolutionDelete:
 		var rID uuid.UUID
-		if rID, _, err = childResourceIDByName(db, parent, name); err != nil {
+		if rID, _, err = childResourceIDByName(db, parent, name); err == nil {
 			deleted = true
 			err = softDelete(db, rID)
 		} else {
