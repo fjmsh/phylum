@@ -33,8 +33,9 @@ enum MenuOption {
   details(Icons.info_outline, 'Details', isSingle),
   download(Icons.download, 'Download', isFilesOnly),
   copyURL(Icons.link, 'Copy URL', isSingle),
-  bookmarkAdd(Icons.bookmark_add_outlined, 'Add To Bookmarks', notAllBookmarked),
-  bookmarkRemove(Icons.bookmark_remove, 'Remove From Bookmarks', allBookmarked),
+  bookmarkAdd(Icons.bookmark_add_outlined, 'Add Bookmark', notAllBookmarked),
+  bookmarkRemove(Icons.bookmark_remove, 'Remove Bookmark', allBookmarked),
+  bookmarkEdit(Icons.edit, 'Edit Bookmark', all),
   rename(Icons.drive_file_rename_outline, 'Rename', isSingle),
   move(Icons.drive_file_move_outlined, 'Move To', all),
   copy(Icons.copy, 'Copy To', all),
@@ -207,6 +208,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       final version = await context.read<PhylumAccount>().db.latestVersion(r.id).getSingleOrNull();
       OpenFile.open(p, type: version?.mimeType);
       break;
+    case MenuOption.bookmarkEdit:
     case MenuOption.bookmarkAdd:
       if (resources.length == 1) {
         final r = resources.first;
@@ -229,7 +231,7 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       break;
     case MenuOption.bookmarkRemove:
       for (final r in resources) {
-        account.bookmarkRepository.removeBookmark(resource: r);
+        account.bookmarkRepository.removeBookmark(resourceId: r.id);
       }
       break;
     case MenuOption.newFolder:

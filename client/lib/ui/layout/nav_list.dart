@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
@@ -13,6 +15,8 @@ import 'package:phylum/ui/common/dialogs/new_user_details_dialog.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/layout/button_downloads.dart';
 import 'package:phylum/ui/layout/create_action.dart';
+import 'package:phylum/ui/menu/menu_option.dart';
+import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/user_display_name.dart';
 import 'package:provider/provider.dart';
@@ -91,36 +95,53 @@ class NavList extends StatelessWidget {
                           leading: Icon(Icons.bookmark),
                           initiallyExpanded: true,
                           children: (snapshot.data ?? const [])
-                              .map((b) => ListTile(
-                                    title: Text(b.name),
-                                    leading: Icon(null),
-                                    onTap: () async {
-                                      Scaffold.maybeOf(context)?.closeDrawer();
-                                      if (b.dir) {
-                                        Actions.maybeInvoke(
-                                            context, NavIntent(target: ExplorerRouteFolder(folderId: b.resourceId)));
-                                        return;
-                                      }
-                                      final resource = await account.db.getResource(b.resourceId);
-                                      if (!context.mounted) return;
-                                      if (resource == null) {
-                                        final nav = Navigator.of(context);
-                                        showProgressDialog(context, title: 'Getting Details', message: b.name);
-                                        final success = await account.resourceRepository
-                                            .requestResource(b.resourceId)
-                                            .then((result) => result is ApiSuccessResponse);
-                                        nav.pop();
-                                        if (!success) {
-                                          if (context.mounted) {
-                                            showAlertDialog(context, title: 'Unable to get file info');
-                                          }
-                                          return;
-                                        }
-                                      }
-                                      if (resource != null && context.mounted) {
-                                        Actions.maybeInvoke(context, OpenResourceIntent(resource));
-                                      }
+                              .map((b) => GestureDetector(
+                                    supportedDevices: {
+                                      PointerDeviceKind.touch,
+                                      PointerDeviceKind.stylus,
+                                      PointerDeviceKind.invertedStylus,
+                                      PointerDeviceKind.unknown,
                                     },
+                                    onLongPressEnd: (details) => fn(context, details.globalPosition, b),
+                                    child: GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      supportedDevices: {
+                                        PointerDeviceKind.mouse,
+                                        PointerDeviceKind.trackpad,
+                                      },
+                                      onSecondaryTapUp: (details) => fn(context, details.globalPosition, b),
+                                      child: ListTile(
+                                        title: Text(b.name),
+                                        leading: Icon(null),
+                                        onTap: () async {
+                                          Scaffold.maybeOf(context)?.closeDrawer();
+                                          if (b.dir) {
+                                            Actions.maybeInvoke(context,
+                                                NavIntent(target: ExplorerRouteFolder(folderId: b.resourceId)));
+                                            return;
+                                          }
+                                          final resource = await account.db.getResource(b.resourceId);
+                                          if (!context.mounted) return;
+                                          if (resource == null) {
+                                            final nav = Navigator.of(context);
+                                            showProgressDialog(context, title: 'Getting Details', message: b.name);
+                                            final success = await account.resourceRepository
+                                                .requestResource(b.resourceId)
+                                                .then((result) => result is ApiSuccessResponse);
+                                            nav.pop();
+                                            if (!success) {
+                                              if (context.mounted) {
+                                                showAlertDialog(context, title: 'Unable to get file info');
+                                              }
+                                              return;
+                                            }
+                                          }
+                                          if (resource != null && context.mounted) {
+                                            Actions.maybeInvoke(context, OpenResourceIntent(resource));
+                                          }
+                                        },
+                                      ),
+                                    ),
                                   ))
                               .toList(growable: false),
                         ),
@@ -172,5 +193,43 @@ class NavList extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void fn(BuildContext context, Offset offset, SelectBookmarksResult bookmark) async {
+    final position = RelativeRect.fromLTRB(
+      offset.dx,
+      offset.dy,
+      offset.dx,
+      offset.dy,
+    );
+    final account = context.read<PhylumAccount>();
+    final items = await buildPopupMenuItems(account, [
+      [MenuOption.bookmarkEdit, MenuOption.bookmarkRemove]
+    ], []);
+    if (!context.mounted) return;
+    final selection = await showMenu(
+      context: context,
+      position: position,
+      items: items.toList(growable: false),
+    );
+    if (context.mounted && selection != null) {
+      if (selection == MenuOption.bookmarkEdit) {
+        final name = await showInputDialog(
+          context,
+          autocorrect: false,
+          title: 'Edit Bookmark',
+          labelText: 'Name',
+          preset: bookmark.name,
+        );
+        if (name == null || name.trim().isEmpty || name == bookmark.name) return;
+        account.bookmarkRepository.addBookmarkDirect(
+          resourceId: bookmark.resourceId,
+          dir: bookmark.dir,
+          name: name,
+        );
+      } else if (selection == MenuOption.bookmarkRemove) {
+        account.bookmarkRepository.removeBookmark(resourceId: bookmark.resourceId);
+      }
+    }
   }
 }

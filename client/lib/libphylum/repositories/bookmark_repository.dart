@@ -30,20 +30,28 @@ class BookmarkRepository extends Repository<PhylumAccount, Bookmark> {
   }
 
   Future<void> addBookmark({required Resource resource, String? name}) {
-    return _account.addAction(ResourceBookmarkAddAction(
+    return addBookmarkDirect(
       resourceId: resource.id,
-      bookmarkName: name == null || name.trim().isEmpty ? resource.name : name,
       dir: resource.dir,
+      name: name == null || name.trim().isEmpty ? resource.name : name,
+    );
+  }
+
+  Future<void> addBookmarkDirect({required String resourceId, required bool dir, required String name}) {
+    return _account.addAction(ResourceBookmarkAddAction(
+      resourceId: resourceId,
+      bookmarkName: name,
+      dir: dir,
       createdMillis: DateTime.now().millisecondsSinceEpoch,
     ));
   }
 
-  Future<void> removeBookmark({required Resource resource}) async {
+  Future<void> removeBookmark({required String resourceId}) async {
     final bookmark =
-        await (_account.db.bookmarks.select()..where((b) => b.resourceId.equals(resource.id))).getSingleOrNull();
+        await (_account.db.bookmarks.select()..where((b) => b.resourceId.equals(resourceId))).getSingleOrNull();
     if (bookmark == null) return;
     return _account.addAction(ResourceBookmarkRemoveAction(
-      resourceId: resource.id,
+      resourceId: resourceId,
       bookmarkName: bookmark.name,
     ));
   }
