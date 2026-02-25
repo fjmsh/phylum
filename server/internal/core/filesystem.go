@@ -38,14 +38,15 @@ func getScopePermissions(scopes []string, id uuid.UUID) (p Permission) {
 	for _, s := range scopes {
 		parts := strings.Split(s, ":")
 		if len(parts) == 1 || parts[1] == idString || parts[1] == "*" {
-			if parts[0] == "*" || parts[0] == "" {
-				return PermissionSU
-			} else if parts[0] == "read" {
-				p |= PermissionRead
-			} else if parts[0] == "write" {
-				p |= PermissionWrite
-			} else if parts[0] == "share" {
-				p |= PermissionShare
+			switch parts[0] {
+			case "*", "":
+				p = PermissionSU
+			case "read":
+				p = PermissionRead
+			case "write":
+				p = PermissionRead | PermissionWrite
+			case "share":
+				p = PermissionRead | PermissionWrite | PermissionShare
 			}
 		}
 	}
