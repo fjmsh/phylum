@@ -122,6 +122,10 @@ func handlePartialUploadsUploadRequest(c *gin.Context) {
 			}
 			return err
 		}
+
+		if file.Size == 0 {
+			return errInvalidParams
+		}
 		// TODO: #perf disk I/O in tx
 		src, err := file.Open()
 		if err != nil {
