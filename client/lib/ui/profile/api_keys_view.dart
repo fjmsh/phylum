@@ -205,6 +205,16 @@ class _ApiKeysViewState extends State<ApiKeysView> {
 
     if (response is GenerateApiKeyResponse) {
       if (!context.mounted) return;
+
+      final key = ApiKey(
+        created: Moment.now(),
+        expires: k.expires?.toMoment(),
+        id: response.keyId,
+        description: k.description,
+        scopes: k.scopes,
+        lastUsed: LastUsedInfo(0, '', ''),
+      );
+      setState(() => keys = keys == null ? [key] : [...keys!, key]);
       showDialog(
           context: context,
           builder: (context) => AlertDialog(
