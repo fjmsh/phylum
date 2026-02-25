@@ -337,7 +337,7 @@ Future<DirTree> enumeratePath(String path) {
         totalSize += file.lengthSync();
         files.add(UploadFile(
           size: file.lengthSync(),
-          stream: File(path).openRead().cast<Uint8List>(),
+          stream: File(file.path).openRead().cast<Uint8List>(),
           path: file.path.substring(prefixLen),
         ));
       }
