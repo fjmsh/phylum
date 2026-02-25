@@ -25,6 +25,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:share_plus/share_plus.dart';
 
+import 'package:phylum/util/pick_directory_stub.dart'
+    if (dart.library.js_interop) 'package:phylum/util/pick_directory_web.dart'
+    if (dart.library.ffi) 'package:phylum/util/pick_directory_vm.dart';
+
 enum MenuOption {
   details(Icons.info_outline, 'Details', isSingle),
   download(Icons.download, 'Download', isFilesOnly),
@@ -277,6 +281,9 @@ Future<String?> downloadResourceSync(BuildContext context, Resource r) async {
 }
 
 bool isSingle(PhylumAccount account, Iterable<Resource> resources) => resources.length == 1;
+
+bool isSingleAndSupportsFolderUpload(PhylumAccount account, Iterable<Resource> resources) =>
+    resources.length == 1 && folderUploadSupported;
 
 bool none(PhylumAccount account, Iterable<Resource> resources) => false;
 
