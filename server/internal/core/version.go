@@ -20,6 +20,7 @@ type VersionInfo struct {
 	MimeType string    `json:"mime_type"`
 	SHA256   string    `json:"sha256"`
 	ImgRes   uint8     `json:"imgres"`
+	Pending  bool      `json:"pending,omitempty"`
 }
 
 type Version struct {
@@ -40,6 +41,7 @@ func scanVersion(row pgx.CollectableRow) (Version, error) {
 		&v.SHA256,
 		&v.Storage,
 		&v.ImgRes,
+		&v.Pending,
 	)
 	v.Created = int(created.Time.Unix())
 	if deleted.Valid {

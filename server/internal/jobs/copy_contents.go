@@ -28,11 +28,19 @@ func (w *CopyContentsWorker) Work(ctx context.Context, job *steve.Job[CopyConten
 
 func copyContents(ctx context.Context, src, dest uuid.UUID) error {
 	db := db.Get(ctx)
-	storage := storage.DefaultBackend()
-	if current, err := getCurrentStorage(db, src); err != nil {
+	destBackend := storage.DefaultBackend()
+	if srcBackend, err := getCurrentStorage(db, src); err != nil {
 		return errors.New("failed to get src storage: " + err.Error())
 	} else {
-		return storage.Copy(ctx, current, src.String(), dest.String())
+		if err := destBackend.Copy(ctx, srcBackend, src.String(), dest.String()); err != nil {
+			return errors.New("failed to copy contents: " + err.Error())
+		}
+		const q = "UPDATE resource_versions SET pending = FALSE WHERE id = $1::UUID"
+		if _, err := db.Exec(q, dest); err != nil {
+			destBackend.Delete(dest.String())
+			return errors.New("failed to update db: " + err.Error())
+		}
+		return nil
 	}
 }
 

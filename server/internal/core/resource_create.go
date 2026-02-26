@@ -437,7 +437,7 @@ func (r iteratorForInsertResourcesFast) Err() error {
 }
 
 func insertResourceVersionsFast(db db.TxHandler, arg []insertResourceVersionsFastParams) (int64, error) {
-	return db.CopyFrom([]string{"resource_versions"}, []string{"id", "resource_id", "size", "mime_type", "sha256", "imgres", "storage"}, &iteratorForInsertResourceVersionsFast{rows: arg})
+	return db.CopyFrom([]string{"resource_versions"}, []string{"id", "resource_id", "size", "mime_type", "sha256", "imgres", "storage", "pending"}, &iteratorForInsertResourceVersionsFast{rows: arg})
 }
 
 // For bulk insert
@@ -477,6 +477,7 @@ func (r iteratorForInsertResourceVersionsFast) Values() ([]interface{}, error) {
 		r.rows[0].SHA256,
 		r.rows[0].ImgRes,
 		storage.DefaultBackendName,
+		true,
 	}, nil
 }
 

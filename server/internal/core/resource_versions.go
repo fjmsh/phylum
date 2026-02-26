@@ -22,7 +22,7 @@ func (f *FileSystem) GetVersion(r Resource, versionIDStr string) (Version, error
 		}
 	}
 
-	const q = `SELECT id, created, size, mime_type, sha256, storage, imgres FROM resource_versions
+	const q = `SELECT id, created, size, mime_type, sha256, storage, imgres, pending FROM resource_versions
 WHERE resource_id = $1::UUID
 AND id = $2::UUID
 AND DELETED IS NULL`
@@ -30,7 +30,7 @@ AND DELETED IS NULL`
 	row := f.db.QueryRow(q, r.id, versionID)
 	var v Version
 	var created time.Time
-	err := row.Scan(&v.ID, &created, &v.Size, &v.MimeType, &v.SHA256, &v.Storage, &v.ImgRes)
+	err := row.Scan(&v.ID, &created, &v.Size, &v.MimeType, &v.SHA256, &v.Storage, &v.ImgRes, &v.Pending)
 	if err != nil {
 		if Is(err, pgx.ErrNoRows) {
 			return v, ErrVersionNotFound
@@ -43,7 +43,7 @@ AND DELETED IS NULL`
 }
 
 func (f *FileSystem) GetAllVersions(r Resource) ([]Version, error) {
-	const q = `SELECT id, created, deleted, size, mime_type, sha256, storage, imgres FROM resource_versions
+	const q = `SELECT id, created, deleted, size, mime_type, sha256, storage, imgres, pending FROM resource_versions
 WHERE resource_id = $1::UUID
 ORDER BY created DESC`
 	if rows, err := f.db.Query(q, r.id); err != nil {
