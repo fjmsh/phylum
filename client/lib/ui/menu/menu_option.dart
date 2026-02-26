@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:offtheline/offtheline.dart';
 import 'package:open_file/open_file.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
@@ -12,6 +13,7 @@ import 'package:phylum/libphylum/actions/action_resource_restore.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/requests/trash_empty_request.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/destination_picker/destination_picker.dart';
@@ -42,6 +44,7 @@ enum MenuOption {
   delete(Icons.delete_outline, 'Delete', all),
   restore(Icons.restore, 'Restore from Trash', all),
   deleteForever(Icons.delete_forever_outlined, 'Delete Forever', all),
+  emptyTrash(Icons.delete_forever_outlined, 'Empty Trash', all),
   permissions(Icons.people_alt_outlined, 'Permissions', isSingle),
   publinks(Icons.public, 'Public Access', isSingle),
   newFolder(Icons.create_new_folder_outlined, 'New Folder', isSingle),
@@ -152,6 +155,21 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
         }
       }
       break;
+    case MenuOption.emptyTrash:
+      final confirm = await showAlertDialog(context,
+              title: 'Empty Trash?',
+              message: 'This will permanently delete all items in trash',
+              positiveText: 'YES',
+              negativeText: 'NO') ??
+          false;
+      if (confirm) {
+        final response = await account.apiClient.sendRequest(TrashEmptyRequest());
+        if (response is ApiSuccessResponse) {
+          account.db.trashedResources.deleteAll();
+        } else if (context.mounted) {
+          showAlertDialog(context, title: 'Could not empty trash', message: response.description);
+        }
+      }
     case MenuOption.details:
       final resource = resources.firstOrNull;
       if (resource == null) return;

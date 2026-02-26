@@ -228,7 +228,9 @@ class ExplorerRouteTrash extends ExplorerRoute {
       ];
 
   @override
-  MenuOptionGroups? get folderOptions => null;
+  MenuOptionGroups? get folderOptions => [
+        [MenuOption.emptyTrash]
+      ];
 }
 
 class ExplorerRouteShared extends ExplorerRoute {
