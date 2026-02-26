@@ -124,7 +124,7 @@ func (f *FileSystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.S
 		Select(r.Col("id"), r.Col("parent"), r.Col("deleted")).
 		Join(t, goqu.On(t.Col("id").Eq(r.Col("id"))))
 	if f.userPermissions&PermissionFilesAll == 0 {
-		base = base.Where(goqu.L("r.permissions[?]::INTEGER <> 0", f.userID))
+		base = base.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.userID))
 	}
 	if !time.IsZero() {
 		base = base.Where(r.Col("deleted").Lt(goqu.V(time)))
