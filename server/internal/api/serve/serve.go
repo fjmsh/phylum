@@ -113,6 +113,9 @@ func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, 
 	if err != nil {
 		panic(err)
 	}
+	if version.Pending {
+		panic(core.ErrResourceContentsPending)
+	}
 
 	w.Header().Set("Etag", version.SHA256)
 	w.Header().Set("Last-Modified", time.UnixMilli(int64(version.Created)).Format(http.TimeFormat))

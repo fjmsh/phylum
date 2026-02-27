@@ -59,4 +59,5 @@ var (
 	ErrUploadOffsetExceeded           = NewError(http.StatusBadRequest, "upload_offset_exceeded", "Upload Offset Exceeded")
 	ErrUploadIncomplete               = NewError(http.StatusBadRequest, "upload_incomplete", "Upload Incomplete")
 	ErrUploadNotFound                 = NewError(http.StatusBadRequest, "upload_not_found", "Upload Not Found")
+	ErrResourceContentsPending        = NewError(http.StatusConflict, "resource_contents_pending", "Resource Contents Pending")
 )
