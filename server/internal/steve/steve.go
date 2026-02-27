@@ -15,7 +15,6 @@ import (
 )
 
 const channelName = "job_inserted"
-const maxAttempts = 6
 
 var ErrShutdown = errors.New("shutdown")
 var errWaiting = errors.New("waiting for jobs")
@@ -180,7 +179,7 @@ func (c *Client) RunJob(ctx context.Context, id int32) error {
 			var removeStatus JobStatus
 			var workErr error
 			if workErr = w.Work(ctx); workErr != nil {
-				if failed, _ := c.recordError(&job.JobInfo, err); failed {
+				if failed, _ := c.recordError(job.ID, job.Attempts, w.MaxAttempts(), err); failed {
 					removeStatus = JobStatusFailed
 				}
 			} else {
@@ -310,7 +309,8 @@ loop:
 							Err(err).
 							Int("attempt", info.Attempts).
 							Msg("Job Execute Error")
-						if failed, err := c.recordError(info, err); err != nil {
+						if failed, err := c.recordError(info.ID, info.Attempts, 0, err); err != nil {
+							// Not able to
 							logger.
 								Warn().
 								Err(err).
@@ -424,7 +424,7 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) error {
 				Err(err).
 				Int("attempt", info.Attempts).
 				Msg("Job Work Error")
-			if failed, err := c.recordError(info, err); err != nil {
+			if failed, err := c.recordError(info.ID, info.Attempts, w.MaxAttempts(), err); err != nil {
 				logger.
 					Warn().
 					Err(err).
@@ -470,11 +470,11 @@ func (c *Client) removeJob(jobID int32, status JobStatus) error {
 	})
 }
 
-func (c *Client) recordError(info *JobInfo, err error) (failed bool, e error) {
-	scheduleAt := computeBackoff(info.Attempts)
+func (c *Client) recordError(id int32, attempts, maxAttempts int, err error) (failed bool, e error) {
+	scheduleAt := computeNextAttempt(attempts, maxAttempts)
 	e = updateJobStatusError(
 		c.db,
-		info.ID,
+		id,
 		AttemptError{
 			At:    time.Now(),
 			Error: err.Error(),

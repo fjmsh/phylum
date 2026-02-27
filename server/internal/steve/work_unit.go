@@ -15,6 +15,7 @@ type workUnit interface {
 	Timeout() time.Duration
 	Sequences() []string
 	Blocking() bool
+	MaxAttempts() int
 	Work(ctx context.Context) error
 }
 
@@ -48,4 +49,5 @@ type typedWorkUnit[T JobArgs] struct {
 func (w *typedWorkUnit[T]) Timeout() time.Duration         { return w.worker.Timeout(w.job) }
 func (w *typedWorkUnit[T]) Sequences() []string            { return w.job.Args.Sequences() }
 func (w *typedWorkUnit[T]) Blocking() bool                 { return w.job.Args.Blocking() }
+func (w *typedWorkUnit[T]) MaxAttempts() int               { return w.job.Args.MaxAttempts() }
 func (w *typedWorkUnit[T]) Work(ctx context.Context) error { return w.worker.Work(ctx, w.job) }

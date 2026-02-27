@@ -18,6 +18,7 @@ type DeleteContentsArgs struct {
 func (a DeleteContentsArgs) Kind() string        { return "delete_contents" }
 func (a DeleteContentsArgs) Sequences() []string { return []string{a.Name} }
 func (a DeleteContentsArgs) Blocking() bool      { return true }
+func (a DeleteContentsArgs) MaxAttempts() int    { return 0 }
 
 type DeleteContentsWorker struct {
 	steve.WorkerDefaults[DeleteContentsArgs]

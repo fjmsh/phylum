@@ -18,6 +18,7 @@ type CopyImgsArgs struct {
 func (a CopyImgsArgs) Kind() string        { return "copy_imgs" }
 func (a CopyImgsArgs) Sequences() []string { return []string{a.Src.String(), a.Dest.String()} }
 func (a CopyImgsArgs) Blocking() bool      { return false }
+func (a CopyImgsArgs) MaxAttempts() int    { return 3 }
 
 type CopyImgsWorker struct {
 	steve.WorkerDefaults[CopyImgsArgs]

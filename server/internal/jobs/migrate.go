@@ -18,6 +18,7 @@ type MigrateArgs struct {
 func (a MigrateArgs) Kind() string        { return "migrate" }
 func (a MigrateArgs) Sequences() []string { return []string{a.VersionID.String()} }
 func (a MigrateArgs) Blocking() bool      { return false }
+func (a MigrateArgs) MaxAttempts() int    { return 3 }
 
 type MigrateWorker struct {
 	steve.WorkerDefaults[MigrateArgs]

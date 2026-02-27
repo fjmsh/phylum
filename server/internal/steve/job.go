@@ -16,6 +16,7 @@ type JobArgs interface {
 	Kind() string
 	Sequences() []string
 	Blocking() bool
+	MaxAttempts() int
 }
 
 type JobInfo struct {
