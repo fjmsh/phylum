@@ -17,6 +17,7 @@ type DeleteContentsArgs struct {
 
 func (a DeleteContentsArgs) Kind() string        { return "delete_contents" }
 func (a DeleteContentsArgs) Sequences() []string { return []string{a.Name} }
+func (a DeleteContentsArgs) Blocking() bool      { return true }
 
 type DeleteContentsWorker struct {
 	steve.WorkerDefaults[DeleteContentsArgs]

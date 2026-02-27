@@ -170,28 +170,28 @@ func (c *Client) RunJob(ctx context.Context, id int32) error {
 		} else if w, err := f.makeUnit(&job.JobInfo); err != nil {
 			return err
 		} else {
-			ctx = c.logger.With().Int32("id", id).Logger().WithContext(ctx)
-			if err := w.Work(ctx); err != nil {
-				c.recordError(&job.JobInfo, err)
-				return err
+			ctx = c.logger.With().
+				Int32("id", id).
+				Str("kind", job.Kind).
+				Str("args", string(job.EncodedArgs)).
+				Logger().
+				WithContext(ctx)
+
+			var removeStatus JobStatus
+			var workErr error
+			if workErr = w.Work(ctx); workErr != nil {
+				if failed, _ := c.recordError(&job.JobInfo, err); failed {
+					removeStatus = JobStatusFailed
+				}
 			} else {
-				return c.db.RunInTx(func(db db.TxHandler) error {
-					if err := deleteDependencies(c.db, job.ID); err != nil {
-						return err
-					}
-					if err := deleteSequences(c.db, job.ID); err != nil {
-						return err
-					}
-
-					if err := updateJobStatus(c.db, job.ID, JobStatusCompleted); err != nil {
-						return err
-					}
-					return nil
-				})
-
+				removeStatus = JobStatusCompleted
 			}
-		}
 
+			if removeStatus != 0 {
+				c.removeJob(job.ID, removeStatus)
+			}
+			return workErr
+		}
 	}
 }
 
@@ -293,29 +293,37 @@ loop:
 					c.logger.Fatal().Err(err).Msg("Failed to claim job")
 				}
 			} else {
-				logger := c.logger.With().Int32("id", info.ID).Logger()
+				logger := c.logger.With().
+					Int32("id", info.ID).
+					Str("kind", info.Kind).
+					Str("args", string(info.EncodedArgs)).
+					Logger()
 				ctx := logger.WithContext(workCtx)
 				if err := c.execute(ctx, info); err != nil {
 					if errors.Is(err, errWaiting) {
 						logger.
 							Trace().
-							Str("kind", info.Kind).
-							Str("args", string(info.EncodedArgs)).
 							Msg("Job Waiting")
 					} else {
-						c.recordError(info, err)
 						logger.
 							Warn().
 							Err(err).
 							Int("attempt", info.Attempts).
-							Msg("Job Error")
+							Msg("Job Execute Error")
+						if failed, err := c.recordError(info, err); err != nil {
+							logger.
+								Warn().
+								Err(err).
+								Int("attempt", info.Attempts).
+								Msg("Error Recording Error")
+						} else if failed {
+							c.removeJob(info.ID, JobStatusFailed)
+						}
 					}
 					<-c.availableWorkers
 				} else {
 					logger.
 						Trace().
-						Str("kind", info.Kind).
-						Str("args", string(info.EncodedArgs)).
 						Msg("Executing job")
 				}
 			}
@@ -409,48 +417,62 @@ func (c *Client) execute(ctx context.Context, info *JobInfo) error {
 		}
 		logger := zerolog.Ctx(ctx)
 
+		var removeStatus JobStatus
 		if err := w.Work(ctx); err != nil {
-			c.recordError(info, err)
 			logger.
 				Warn().
 				Err(err).
 				Int("attempt", info.Attempts).
-				Msg("Job Error")
-		} else {
-			err := c.db.RunInTx(func(db db.TxHandler) error {
-				if err := deleteDependencies(c.db, info.ID); err != nil {
-					return err
-				}
-				if err := deleteSequences(c.db, info.ID); err != nil {
-					return err
-				}
-
-				if err := updateJobStatus(c.db, info.ID, JobStatusCompleted); err != nil {
-					return err
-				}
-				return nil
-			})
-			if err != nil {
+				Msg("Job Work Error")
+			if failed, err := c.recordError(info, err); err != nil {
 				logger.
 					Warn().
 					Err(err).
 					Int("attempt", info.Attempts).
-					Msg("Error marking job as completed")
+					Msg("Error Recording Error")
+			} else if failed {
+				removeStatus = JobStatusFailed
+			}
+		} else {
+			removeStatus = JobStatusCompleted
+		}
+
+		if removeStatus != 0 {
+			if err := c.removeJob(info.ID, removeStatus); err != nil {
+				logger.
+					Warn().
+					Err(err).
+					Int("attempt", info.Attempts).
+					Str("status", JobStatusCompleted.String()).
+					Msg("Error Removing Job")
 			} else {
 				logger.
 					Trace().
 					Int("attempt", info.Attempts).
-					Msg("Job Completed")
+					Str("status", JobStatusCompleted.String()).
+					Msg("Job Removed")
 			}
-
 		}
 	}()
 	return nil
 }
 
-func (c *Client) recordError(info *JobInfo, err error) error {
+func (c *Client) removeJob(jobID int32, status JobStatus) error {
+	return c.db.RunInTx(func(db db.TxHandler) error {
+		if err := deleteDependencies(c.db, jobID); err != nil {
+			return err
+		}
+		if err := deleteSequences(c.db, jobID); err != nil {
+			return err
+		}
+
+		return updateJobStatus(c.db, jobID, status)
+	})
+}
+
+func (c *Client) recordError(info *JobInfo, err error) (failed bool, e error) {
 	scheduleAt := computeBackoff(info.Attempts)
-	return updateJobStatusError(
+	e = updateJobStatusError(
 		c.db,
 		info.ID,
 		AttemptError{
@@ -459,7 +481,8 @@ func (c *Client) recordError(info *JobInfo, err error) error {
 		},
 		scheduleAt,
 	)
-
+	failed = e == nil && !scheduleAt.Valid
+	return
 }
 
 func (c *Client) InsertJob(db db.Handler, args JobArgs) error {

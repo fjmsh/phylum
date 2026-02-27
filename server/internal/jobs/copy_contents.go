@@ -17,6 +17,7 @@ type CopyContentsArgs struct {
 
 func (a CopyContentsArgs) Kind() string        { return "copy_contents" }
 func (a CopyContentsArgs) Sequences() []string { return []string{a.Src.String(), a.Dest.String()} }
+func (a CopyContentsArgs) Blocking() bool      { return true }
 
 type CopyContentsWorker struct {
 	steve.WorkerDefaults[CopyContentsArgs]

@@ -15,6 +15,7 @@ type Job[T JobArgs] struct {
 type JobArgs interface {
 	Kind() string
 	Sequences() []string
+	Blocking() bool
 }
 
 type JobInfo struct {
