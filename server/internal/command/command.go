@@ -138,6 +138,7 @@ func SetupCommand() {
 			steve.RegisterWorker(client, &jobs.CopyImgsWorker{})
 			steve.RegisterWorker(client, &jobs.CopyContentsWorker{})
 			steve.RegisterWorker(client, &jobs.DeleteContentsWorker{})
+			steve.RegisterWorker(client, &jobs.GenerateImgsWorker{})
 		}
 
 		// storage must be initialiezd before core

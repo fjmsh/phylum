@@ -63,31 +63,31 @@ func Delete(name string, imgRes Res) error {
 	return nil
 }
 
-func Generate(path, mimeType string) (Res, error) {
+func GetGenerator(mimeType string) func(string) (uint8, error) {
 	if imageType, ok := strings.CutPrefix(mimeType, "image/"); ok {
 		if _, ok := imageTypes[imageType]; ok {
-			return processImage(path, false)
+			return func(path string) (uint8, error) { return processImage(path, false) }
 		}
 	}
 
 	if ok := strings.HasPrefix(mimeType, "text/"); ok {
-		return processText(path)
+		return func(path string) (uint8, error) { return processText(path) }
 	}
 	if subType, ok := strings.CutPrefix(mimeType, "application/"); ok {
 		if _, ok := applicationImageTypes[subType]; ok {
-			return processImage(path, true)
+			return func(path string) (uint8, error) { return processImage(path, true) }
 		}
 		if _, ok := applicationTextTypes[subType]; ok {
-			return processText(path)
+			return func(path string) (uint8, error) { return processText(path) }
 		}
 		if strings.HasSuffix("+json", subType) || strings.HasSuffix("+xml", subType) {
-			return processText(path)
+			return func(path string) (uint8, error) { return processText(path) }
 		}
 		if _, ok := applicationDocumentTypes[subType]; ok {
-			return processDocument(path)
+			return func(path string) (uint8, error) { return processDocument(path) }
 		}
 	}
-	return 0, nil
+	return nil
 }
 
 // processImage generates preview + thumbnail for images (and PDF).

@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
-	"codeberg.org/shroff/phylum/server/internal/img"
 	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/doug-martin/goqu/v9"
@@ -68,8 +67,6 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
-			var generated uint8
-			generated, err := img.Generate(backend.Path(versionID.String()), mimeType)
 			err = f.runInTx(func(f txFileSystem) error {
 				if r, err := f.createMemberResource(parent, name, requestedID, false, conflictResolution); err != nil {
 					return err
@@ -78,13 +75,15 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 					requestedID = r.id
 				}
 
-				if err := insertResourceVersion(f.db, requestedID, versionID, int64(len), mimeType, sum, generated); err != nil {
+				if err := insertResourceVersion(f.db, requestedID, versionID, int64(len), mimeType, sum); err != nil {
 					return err
 				}
 				if err := updateResourceModified(f.db, requestedID); err != nil {
 					return err
 				}
-
+				if err := jobs.GenerateImgs(f.db, versionID); err != nil {
+					return err
+				}
 				return jobs.MigrateVersionContents(f.db, versionID)
 			})
 			if err != nil {
@@ -113,19 +112,17 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
-			var generated uint8
-			if generated, err = img.Generate(backend.Path(versionID.String()), mimeType); err != nil {
-				return err
-			}
 			err := f.db.RunInTx(func(db db.TxHandler) error {
-				if err := insertResourceVersion(db, r.id, versionID, int64(len), mimeType, sum, generated); err != nil {
+				if err := insertResourceVersion(db, r.id, versionID, int64(len), mimeType, sum); err != nil {
 					return err
 				}
 				if err := updateResourceModified(db, r.id); err != nil {
 					return err
 				}
 
-				// TODO: #jobs #tx pass in transaction
+				if err := jobs.GenerateImgs(db, versionID); err != nil {
+					return err
+				}
 				return jobs.MigrateVersionContents(db, versionID)
 			})
 			if err != nil {
@@ -373,9 +370,9 @@ func updateResourceModified(db db.TxHandler, id uuid.UUID) error {
 	return err
 }
 
-func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64, mimeType, sha256 string, imgres uint8) error {
-	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage, imgres)
-	VALUES (@version_id, @resource_id, @size, @mime_type, @sha256, @storage, @imgres)`
+func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64, mimeType, sha256 string) error {
+	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage)
+	VALUES (@version_id, @resource_id, @size, @mime_type, @sha256, @storage)`
 
 	args := pgx.NamedArgs{
 		"resource_id": id,
@@ -384,7 +381,6 @@ func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64,
 		"mime_type":   mimeType,
 		"sha256":      sha256,
 		"storage":     storage.DefaultBackendName,
-		"imgres":      imgres,
 	}
 	_, err := db.Exec(q, args)
 	if err != nil && strings.Contains(err.Error(), "resource_versions_pkey") {

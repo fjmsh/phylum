@@ -22,7 +22,7 @@ func computeNextAttempt(failedAttempts, maxAttempts int) (nextAttempt pgtype.Tim
 	if backoffDelay > maxBackoffDelay {
 		backoffDelay = maxBackoffDelay
 	}
-	nextAttempt.Time = time.Now().Add(maxBackoffDelay * time.Second)
+	nextAttempt.Time = time.Now().Add(time.Duration(backoffDelay) * time.Second)
 	nextAttempt.Valid = true
 	return
 }

@@ -179,7 +179,7 @@ func (c *Client) RunJob(ctx context.Context, id int32) error {
 			var removeStatus JobStatus
 			var workErr error
 			if workErr = w.Work(ctx); workErr != nil {
-				if failed, _ := c.recordError(job.ID, job.Attempts, w.MaxAttempts(), err); failed {
+				if failed, _ := c.recordError(job.ID, job.Attempts, w.MaxAttempts(), workErr); failed {
 					removeStatus = JobStatusFailed
 				}
 			} else {
