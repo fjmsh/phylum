@@ -83,6 +83,10 @@ func (f txFileSystem) Move(r Resource, target string, conflictResolution Resourc
 			deleted = true
 		}
 	}
+
+	if destName, err = detectNameConflict(f.db, destParent.id, destName, conflictResolution == ResourceBindConflictResolutionRename); err != nil {
+		return Resource{}, false, err
+	}
 	newParentID := pgtype.UUID{
 		Bytes: destParent.id,
 		Valid: true,
