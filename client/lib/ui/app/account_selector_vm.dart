@@ -41,7 +41,7 @@ class _AccountSelectorState extends State<AccountSelector> {
               padding: const EdgeInsets.only(bottom: 6.0),
               child: Text('Error', style: TextStyle(fontSize: 20)),
             ),
-            Text('Some accounts could not be restored'),
+            Text('Some login sessions not be restored'),
             for (final invalidAccount in state.invalidAccounts.entries)
               ListTile(
                 title: Text(invalidAccount.value.serverUrl.host),
