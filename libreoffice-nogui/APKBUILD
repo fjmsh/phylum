@@ -3,7 +3,7 @@
 # Contributor: Abhishek Shroff <shroff@kudosoft.net>
 # Maintainer: Abhishek Shroff <shroff@kudosoft.net>
 pkgname=libreoffice-nogui
-pkgver=26.2.1.1
+pkgver=26.2.1.2
 pkgrel=0
 pkgdesc="Minimal LibreOffice for headless document conversion"
 url="https://www.libreoffice.org/"
@@ -276,7 +276,7 @@ package() {
 }
 
 sha512sums="
-de1fec10a90ef908b9d072db441327ce0996a6f47251093d965d98771e1f1fd5aaedb54d27421cf3b533dc0dff9048d6f1709f80da644e5c4aecdd0758284beb  libreoffice-26.2.1.1.tar.xz
+022d57a3534dd4c9048ebb196fb27740a3b4ecfc02b8d0b346c45338fa71eec6a76d7a6b8c6bb862cc9d461ffd6e8e364a874fa5c004b295a0dcf15737310d5a  libreoffice-26.2.1.2.tar.xz
 0d2646e1bad1e11b3da43714ac5931fc67ffdbc4e7a25a44ef5b6e6a41de1e0ae14596b4a87cceb07bf56dbbe9344622b3d60afcb054ee0ab8577ca8e9b5c289  libabw-0.1.3.tar.xz
 0a4cb89e8e63399f7df069e2862ccd05308b7652bf4ab74372842f66bcc60776399e0eaf979a7b7e31436b5e6913fe5b0a6949549d8c82ebd06e0629b106e85f  phc-winner-argon2-20190702.tar.gz
 ec6f556c78a0c34466148b2ad9bf3a9e80f0a031df25f26ac34b686d6902e5a3844d63a091f793c8cfd096608c5b4ec02f4a0f97ab4e4f35aea8a04eeee23a06  boost_1_89_0.tar.xz
