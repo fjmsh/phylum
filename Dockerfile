@@ -1,12 +1,25 @@
 # syntax=docker/dockerfile:1.4
-ARG TARGETPLATFORM
-ARG TARGETARCH
+# Main Dockerfile for Phylum
+#
+# Usage:
+#   buildah build --platform linux/amd64 -t phylum:latest-amd64 .
+#   buildah build --platform linux/arm64 --target phylum-lofull -t phylum:latest-arm64 .
+#
+# The LibreOffice APK is pulled from a pre-built image.
+# To build LibreOffice locally, use Dockerfile.libreoffice first.
 
-FROM golang:alpine as server
+# ============================================
+# Stage: Build the Go server
+# ============================================
+FROM docker.io/golang:alpine AS server
+ARG TARGETARCH
 WORKDIR /src
 COPY server/ .
 RUN GOOS=linux GOARCH=${TARGETARCH} go build -o /bin/phylum cmd/phylum.go
 
+# ============================================
+# Stage: Build the Flutter webapp
+# ============================================
 FROM ghcr.io/cirruslabs/flutter:stable AS webapp
 WORKDIR /src
 RUN flutter precache --no-universal --web
@@ -17,19 +30,10 @@ COPY client/assets ./assets
 RUN flutter pub get
 RUN flutter build web --wasm
 
-FROM alpine as libreoffice
-RUN apk add alpine-sdk sudo
-RUN adduser -G abuild -D builder \
-    && echo 'builder ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
-USER builder
-WORKDIR /home/builder
-RUN abuild-keygen -anq
-COPY libreoffice-nogui/ .
-RUN abuild deps
-RUN --mount=type=cache,uid=1000,target="/var/cache/distfiles" abuild fetch verify unpack prepare build
-RUN abuild rootpkg && mv ~/packages/home/x86_64/libreoffice-nogui-*.apk ./libreoffice.apk
-
-FROM alpine AS phylum-lofull
+# ============================================
+# Final Stage A: Phylum with full LibreOffice
+# ============================================
+FROM docker.io/alpine AS phylum-lofull
 RUN apk add vips-tools vips-poppler font-noto libreoffice
 WORKDIR /app
 ENV PATH="/app:$PATH"
@@ -38,12 +42,15 @@ COPY --from=webapp /src/build/web /app/web
 ENTRYPOINT ["phylum"]
 CMD ["serve"]
 
-FROM alpine AS phylum
+# ============================================
+# Final Stage B: Phylum with custom LibreOffice
+# ============================================
+FROM docker.io/alpine AS phylum
+COPY --from=docker.io/shroff12/libreoffice-nogui /libreoffice.apk /tmp/libreoffice.apk
 RUN apk add vips-tools vips-poppler font-noto
+RUN apk add --allow-untrusted /tmp/libreoffice.apk && rm /tmp/libreoffice.apk
 WORKDIR /app
 ENV PATH="/app:$PATH"
-COPY --from=libreoffice /home/builder/libreoffice.apk /tmp
-RUN apk add --allow-untrusted /tmp/libreoffice.apk && rm /tmp/libreoffice.apk
 COPY --from=server /bin/phylum /app/phylum
 COPY --from=webapp /src/build/web /app/web
 ENTRYPOINT ["phylum"]
