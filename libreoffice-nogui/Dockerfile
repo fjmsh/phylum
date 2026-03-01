@@ -16,7 +16,7 @@ WORKDIR /home/builder
 
 RUN abuild-keygen -anq
 
-COPY libreoffice-nogui/ .
+COPY . .
 
 # Fetch and verify sources (can be cached)
 RUN abuild deps
