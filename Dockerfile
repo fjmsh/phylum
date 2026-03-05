@@ -1,51 +1,42 @@
 # syntax=docker/dockerfile:1.4
-# Main Dockerfile for Phylum
 #
-# Usage:
-#   buildah build --platform linux/amd64 -t phylum:latest-amd64 .
-#   buildah build --platform linux/arm64 --target phylum-lofull -t phylum:latest-arm64 .
-#
-# The LibreOffice APK is pulled from a pre-built image.
-# To build LibreOffice locally, use Dockerfile.libreoffice first.
+# Dockerfile for Phylum Development
+# 
+# Allows for containerized development in case language toolchains
+# are not set up locally.
+
 
 # ============================================
-# Stage: Build the Go server
+# Stage: Build the API server
 # ============================================
 FROM docker.io/golang:alpine AS server
-ARG TARGETARCH
 WORKDIR /src
+COPY server/go.mod server/go.sum .
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY server/ .
-RUN GOOS=linux GOARCH=${TARGETARCH} go build -o /bin/phylum cmd/phylum.go
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go build -o /bin/phylum cmd/phylum.go
+
 
 # ============================================
-# Stage: Build the Flutter webapp
+# Stage: Build the Web App
 # ============================================
 FROM ghcr.io/cirruslabs/flutter:stable AS webapp
 WORKDIR /src
 RUN flutter precache --no-universal --web
-COPY client/pubspec.yaml client/pubspec.lock .
-COPY client/lib ./lib
 COPY client/web ./web
 COPY client/assets ./assets
-RUN flutter pub get
-RUN flutter build web --wasm
+COPY client/pubspec.yaml client/pubspec.lock .
+RUN --mount=type=cache,target=/root/.pub-cache flutter pub get
+COPY client/lib ./lib
+RUN --mount=type=cache,target=/root/.pub-cache flutter build web --wasm --debug
+
 
 # ============================================
-# Final Stage A: Phylum with full LibreOffice
+# Final Stage: Server
 # ============================================
-FROM docker.io/alpine AS phylum-lofull
-RUN apk add vips-tools vips-poppler font-noto libreoffice
-WORKDIR /app
-ENV PATH="/app:$PATH"
-COPY --from=server /bin/phylum /app/phylum
-COPY --from=webapp /src/build/web /app/web
-ENTRYPOINT ["phylum"]
-CMD ["serve"]
-
-# ============================================
-# Final Stage B: Phylum with custom LibreOffice
-# ============================================
-FROM docker.io/alpine AS phylum
+FROM docker.io/alpine:latest AS server
 COPY --from=docker.io/shroff12/libreoffice-nogui /libreoffice.apk /tmp/libreoffice.apk
 RUN apk add vips-tools vips-poppler font-noto
 RUN apk add --allow-untrusted /tmp/libreoffice.apk && rm /tmp/libreoffice.apk
