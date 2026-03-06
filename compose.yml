@@ -3,7 +3,7 @@ name: phylum
 services:
   server:
     container_name: phylum_server
-    image: shroff12/phylum:${PHYLUM_IMAGE_TAG:-latest}
+    image: docker.io/shroff12/phylum:${PHYLUM_IMAGE_TAG:-latest}
     volumes:
       - ${DATA_ROOT:-./data}/${STORAGE_LOCATION:-storage}:/app/storage
       - ${DATA_ROOT:-./data}/${CONFIG_LOCATION:-config.yml}:/app/config.yml
