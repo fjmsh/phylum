@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.4
 #
-# Dockerfile for Phylum Development
+# Containerfile for Phylum Development
 # 
 # Allows for containerized development in case language toolchains
 # are not set up locally.
