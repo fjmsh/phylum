@@ -1,0 +1,4 @@
+.git
+data/
+client/dist
+**/build
