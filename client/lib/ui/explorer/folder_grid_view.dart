@@ -11,7 +11,7 @@ import 'explorer_controller.dart';
 const _rowSpacing = 12.0;
 
 class FolderGridView extends StatefulWidget {
-  final iconSize;
+  final int iconSize;
 
   const FolderGridView({super.key, required this.iconSize});
 
