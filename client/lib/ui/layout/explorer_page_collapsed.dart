@@ -29,7 +29,7 @@ class ExplorerPageCollapsed extends StatelessWidget {
               child: Icon(Icons.add),
             )
           : null,
-      body: const ExplorerView(small: true),
+      body: const ExplorerView(),
     );
   }
 

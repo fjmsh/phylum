@@ -46,19 +46,22 @@ class FolderViewToggleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final selected = {context.watch<FolderViewNotifier>().folderViewType};
 
-    return SegmentedButton(
-      segments: [
-        for (final viewType in FolderViewType.values)
-          ButtonSegment(
-            value: viewType,
-            icon: Icon(viewType.icon),
-            tooltip: viewType.label,
-          ),
-      ],
-      onSelectionChanged: (selected) {
-        context.read<FolderViewNotifier>().folderViewType = selected.first;
-      },
-      selected: selected,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      child: SegmentedButton(
+        segments: [
+          for (final viewType in FolderViewType.values)
+            ButtonSegment(
+              value: viewType,
+              icon: Icon(viewType.icon),
+              tooltip: viewType.label,
+            ),
+        ],
+        onSelectionChanged: (selected) {
+          context.read<FolderViewNotifier>().folderViewType = selected.first;
+        },
+        selected: selected,
+      ),
     );
   }
 }

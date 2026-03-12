@@ -3,19 +3,24 @@ import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
 import 'package:phylum/ui/layout/nav_list.dart';
+import 'package:phylum/ui/layout/responsive.dart';
 import 'package:phylum/ui/layout/search.dart';
 import 'package:phylum/ui/layout/sync_status_button.dart';
 import 'package:phylum/ui/profile/profile_dialog.dart';
 import 'package:phylum/ui/profile/profile_view.dart';
 
 class ExplorerPageExpanded extends StatelessWidget {
-  final bool large;
-
-  const ExplorerPageExpanded({super.key, required this.large});
+  const ExplorerPageExpanded({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final sidebarWidth = large ? 288.0 : 240.0;
+    final width = MediaQuery.sizeOf(context).width;
+    final leftBarWidth = width >= minViewportWidthXLarge ? 288.0 : 240.0;
+    final rightBarWidth = width >= minViewportWidthXLarge
+        ? 360.0
+        : width >= minViewportWidthLarge
+            ? 300.0
+            : 0.0;
 
     return Scaffold(
       body: Column(
@@ -25,7 +30,7 @@ class ExplorerPageExpanded extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
-                width: sidebarWidth,
+                width: leftBarWidth,
                 child: Padding(
                   padding: const EdgeInsets.only(left: 16),
                   child: const LogoRow(),
@@ -52,18 +57,19 @@ class ExplorerPageExpanded extends StatelessWidget {
                   ),
                 ),
               ),
-              ConstrainedBox(
-                constraints: BoxConstraints(minWidth: large ? 360 : 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const SyncStatusButton(),
-                    ProfileView(
-                      onTap: () => ProfileDialog.show(context),
-                    ),
-                  ],
-                ),
-              )
+              if (rightBarWidth != 0)
+                SizedBox(
+                  width: rightBarWidth,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      const SyncStatusButton(),
+                      ProfileView(
+                        onTap: () => ProfileDialog.show(context),
+                      ),
+                    ],
+                  ),
+                )
             ],
           ),
           Expanded(
@@ -71,7 +77,7 @@ class ExplorerPageExpanded extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
-                  width: sidebarWidth,
+                  width: leftBarWidth,
                   child: Card(
                     elevation: 0,
                     margin: const EdgeInsets.only(left: 16, bottom: 16),
@@ -82,12 +88,12 @@ class ExplorerPageExpanded extends StatelessWidget {
                   child: Card(
                     elevation: 0,
                     margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                    child: const ExplorerView(small: false),
+                    child: const ExplorerView(),
                   ),
                 ),
-                if (large)
+                if (rightBarWidth != 0)
                   SizedBox(
-                    width: 360,
+                    width: rightBarWidth,
                     child: Card(
                       elevation: 0,
                       margin: const EdgeInsets.only(right: 16, bottom: 16),

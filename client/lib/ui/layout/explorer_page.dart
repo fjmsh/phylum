@@ -3,14 +3,15 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:phylum/ui/layout/account_state_page.dart';
-import 'package:phylum/ui/layout/explorer_page_expanded.dart';
-import 'package:phylum/ui/layout/sync_status_notifier.dart';
-import 'package:phylum/ui/layout/app_actions.dart';
 import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/ui/layout/search.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
+import 'package:phylum/ui/layout/account_state_page.dart';
+import 'package:phylum/ui/layout/app_actions.dart';
+import 'package:phylum/ui/layout/explorer_page_expanded.dart';
+import 'package:phylum/ui/layout/responsive.dart';
+import 'package:phylum/ui/layout/search.dart';
+import 'package:phylum/ui/layout/sync_status_notifier.dart';
 import 'package:provider/provider.dart';
 
 import 'explorer_page_collapsed.dart';
@@ -49,8 +50,8 @@ class ExplorerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
-    final layout = size.width <= 600 ? const ExplorerPageCollapsed() : ExplorerPageExpanded(large: size.width > 1200);
+    final width = MediaQuery.sizeOf(context).width;
+    final layout = width < maxViewportWidthSmall ? const ExplorerPageCollapsed() : const ExplorerPageExpanded();
     return ExternalDropRegion(
       buildItem: (context, dropTargetActive) {
         final child = (dropTargetActive)

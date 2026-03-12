@@ -14,6 +14,7 @@ import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
 import 'package:phylum/ui/explorer/folder_view_type.dart';
 import 'package:phylum/ui/explorer/paste_helpers.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
+import 'package:phylum/ui/layout/responsive.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:path/path.dart' as p;
@@ -27,9 +28,7 @@ import 'folder_grid_view.dart';
 import 'folder_list_view.dart';
 
 class ExplorerView extends StatefulWidget {
-  final bool small;
-
-  const ExplorerView({super.key, required this.small});
+  const ExplorerView({super.key});
 
   @override
   State<ExplorerView> createState() => _ExplorerViewState();
@@ -126,6 +125,7 @@ class _ExplorerViewState extends State<ExplorerView> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
     return ExplorerActions(
       refreshKey: _refreshKey,
       child: ChangeNotifierProvider(
@@ -136,8 +136,8 @@ class _ExplorerViewState extends State<ExplorerView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(child: PathView(small: widget.small)),
-                  widget.small ? const FolderViewIconButton() : const FolderViewToggleButton(),
+                  Expanded(child: PathView(small: width < maxViewportWidthSmall)),
+                  width < maxViewportWidthLarge ? const FolderViewIconButton() : const FolderViewToggleButton(),
                 ],
               ),
               Expanded(child: Builder(builder: buildPage)),
