@@ -180,34 +180,36 @@ class FolderGridItem extends StatelessWidget {
                             }
                             return const SizedBox();
                           }),
-                      StreamBuilder(
-                          stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
-                          builder: (context, snapshot) {
-                            String subtitle = "";
-                            if (resource.modified != null) {
-                              subtitle = resource.modified!.formatShort();
-                            }
-                            final data = snapshot.data;
-                            if (data != null) {
-                              if (subtitle.isNotEmpty) {
-                                subtitle += " \u2022 ";
+                      Expanded(
+                        child: StreamBuilder(
+                            stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
+                            builder: (context, snapshot) {
+                              String subtitle = "";
+                              if (resource.modified != null) {
+                                subtitle = resource.modified!.formatShort();
                               }
-                              subtitle += data.size.formatForDisplay();
-                            }
-                            return Text(
-                              subtitle,
-                              maxLines: 1,
-                              softWrap: false,
-                              overflow: TextOverflow.fade,
-                              style: theme.textTheme.bodyMedium!.copyWith(
-                                color: highlight
-                                    ? dim
-                                        ? colorScheme.primary.withAlpha(192)
-                                        : colorScheme.primary
-                                    : colorScheme.onSurfaceVariant,
-                              ),
-                            );
-                          }),
+                              final data = snapshot.data;
+                              if (data != null) {
+                                if (subtitle.isNotEmpty) {
+                                  subtitle += " \u2022 ";
+                                }
+                                subtitle += data.size.formatForDisplay();
+                              }
+                              return Text(
+                                subtitle,
+                                maxLines: 1,
+                                softWrap: false,
+                                overflow: TextOverflow.fade,
+                                style: theme.textTheme.bodyMedium!.copyWith(
+                                  color: highlight
+                                      ? dim
+                                          ? colorScheme.primary.withAlpha(192)
+                                          : colorScheme.primary
+                                      : colorScheme.onSurfaceVariant,
+                                ),
+                              );
+                            }),
+                      ),
                     ],
                   ),
                 ],
