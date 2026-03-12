@@ -136,7 +136,7 @@ class _ExplorerViewState extends State<ExplorerView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  PathView(small: widget.small),
+                  Expanded(child: PathView(small: widget.small)),
                   widget.small ? const FolderViewIconButton() : const FolderViewToggleButton(),
                 ],
               ),

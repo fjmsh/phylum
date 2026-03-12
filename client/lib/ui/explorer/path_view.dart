@@ -68,8 +68,12 @@ class PathView extends StatelessWidget {
                 padding: small
                     ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
                     : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  children: path.map((info) => PathItem(info, small: small)).toList(growable: false),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  reverse: true,
+                  child: Row(
+                    children: path.map((info) => PathItem(info, small: small)).toList(growable: false),
+                  ),
                 ),
               ),
             );
