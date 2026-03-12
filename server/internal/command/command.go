@@ -2,11 +2,9 @@ package command
 
 import (
 	"context"
-	"embed"
 	"errors"
 	"os"
 	"path"
-	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/command/admin"
@@ -14,6 +12,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/command/fs"
 	"codeberg.org/shroff/phylum/server/internal/command/serve"
 	"codeberg.org/shroff/phylum/server/internal/command/user"
+	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/jobs"
@@ -22,19 +21,10 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/steve"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/google/uuid"
-	"github.com/knadh/koanf/parsers/yaml"
-	"github.com/knadh/koanf/providers/env"
-	"github.com/knadh/koanf/providers/file"
-	"github.com/knadh/koanf/providers/posflag"
-	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/knadh/koanf/v2"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
-
-//go:embed config.defaults.yml
-var defaultConfig embed.FS
 
 func SetupCommand() {
 	var cmd = &cobra.Command{
@@ -58,15 +48,6 @@ func SetupCommand() {
 	flags.Bool("db_nomigrate", false, "Skip Database Migrations")
 	flags.MarkHidden("db_nomigrate")
 
-	k := koanf.New(".")
-	if bytes, err := defaultConfig.ReadFile("config.defaults.yml"); err != nil {
-		logger.Fatal().Err(err).Msg("failed to read default config file")
-	} else {
-		if err := k.Load(rawbytes.Provider(bytes), yaml.Parser()); err != nil {
-			logger.Fatal().Err(err).Msg("failed to load default config")
-		}
-	}
-
 	uuid.EnableRandPool()
 	cmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if cmd.Name() == "serve" {
@@ -81,35 +62,38 @@ func SetupCommand() {
 			os.Chdir(dir)
 		}
 
+		k := koanf.New(".")
+
+		// Default config
+		if kDefault, err := config.LoadDefault(); err != nil {
+			logger.Fatal().Err(err).Msg("Failed to load default config")
+		} else {
+			k.Merge(kDefault)
+		}
+
+		// Instance config
 		configFile, _ := cmd.Flags().GetString("config-file")
-		if configFile != "" {
-			if err := k.Load(file.Provider(configFile), yaml.Parser()); err != nil {
-				if errors.Is(err, os.ErrNotExist) {
-					logger.Info().Msg("config file does not exist. Skipping")
-				} else {
-					logger.Fatal().Err(err).Msg("failed to load config")
-				}
+		if kServer, err := config.LoadFile(configFile); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				logger.Fatal().Msg("Config file not found. Please initialize using `init`")
 			} else {
-				logger.Info().Msg("loaded config")
+				logger.Fatal().Err(err).Msg("Failed to load config")
 			}
+		} else {
+			k.Merge(kServer)
 		}
 
-		if err := k.Load(posflag.ProviderWithFlag(cmd.Flags(), ".", k, func(f *pflag.Flag) (string, interface{}) {
-			if !f.Changed {
-				return "", ""
-			}
-			k, v := strings.ReplaceAll(f.Name, "_", "."), posflag.FlagVal(cmd.Flags(), f)
-			return k, v
-		}), nil); err != nil {
-			logger.Fatal().Err(err).Msg("failed to load flags")
+		// Flags
+		if kFlags, err := config.LoadFlags(cmd); err != nil {
+			logger.Fatal().Err(err).Msg("Failed to load flags")
+		} else {
+			k.Merge(kFlags)
 		}
 
-		k.Load(env.Provider("PHYLUM_", ".", func(s string) string {
-			return strings.Replace(strings.ToLower(
-				strings.TrimPrefix(s, "PHYLUM_")), "_", ".", -1)
-		}), nil)
+		// Environment variables
+		k.Merge(config.LoadEnv())
 
-		var cfg Config
+		var cfg config.Config
 		k.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "koanf"})
 
 		if cfg.Debug {
