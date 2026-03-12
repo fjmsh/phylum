@@ -170,9 +170,12 @@ class _ExplorerViewState extends State<ExplorerView> {
     }
     final viewType = context.watch<FolderViewNotifier>().folderViewType;
     return RefreshIndicator(
-      key: _refreshKey,
-      onRefresh: context.read<ExplorerController>().refresh,
-      child: viewType == FolderViewType.list ? const FolderListView() : const FolderGridView(),
-    );
+        key: _refreshKey,
+        onRefresh: context.read<ExplorerController>().refresh,
+        child: switch (viewType) {
+          FolderViewType.list => const FolderListView(),
+          FolderViewType.gridSmall => const FolderGridView(iconSize: 180),
+          FolderViewType.gridLarge => const FolderGridView(iconSize: 240),
+        });
   }
 }

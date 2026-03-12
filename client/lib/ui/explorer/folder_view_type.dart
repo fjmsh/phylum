@@ -6,8 +6,9 @@ import 'package:provider/provider.dart';
 const _persistKeyFolderViewType = 'folderViewType';
 
 enum FolderViewType {
-  list('list', Icons.list, 'List View'),
-  grid('grid', Icons.grid_on, 'Grid View');
+  list('list', Icons.list, 'List'),
+  gridSmall('icons', Icons.grid_on, 'Icons (Small)'),
+  gridLarge('icons-large', Icons.grid_view, 'Icons (Large)');
 
   final String name;
   final IconData icon;
