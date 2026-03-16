@@ -25,6 +25,7 @@ func Initialize(ctx context.Context, cfg Config, log zerolog.Logger) (*pgxpool.P
 
 	// Migrate schema
 	if s, err := GetSchemaInfo(ctx, pool); err != nil {
+		pool = nil
 		return nil, errors.New("failed to get schema info: " + err.Error())
 	} else if s.CurrentVersion != s.LatestVersion {
 		if cfg.NoMigrate {
@@ -32,6 +33,7 @@ func Initialize(ctx context.Context, cfg Config, log zerolog.Logger) (*pgxpool.P
 		} else {
 			log.Info().Int32("current", s.CurrentVersion).Int32("latest", s.LatestVersion).Msg("Performing schema migration")
 			if err := s.MigrateTo(ctx, int32(s.LatestVersion)); err != nil {
+				pool = nil
 				return nil, errors.New("failed to perform schema migration")
 			}
 		}
@@ -81,7 +83,7 @@ func Connect(ctx context.Context, cfg Config, logger zerolog.Logger) (*pgxpool.P
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		return nil, errors.New("failed to connect to database: " + err.Error())
+		return nil, errors.New("failed to create pool: " + err.Error())
 	}
 
 	logger.Debug().

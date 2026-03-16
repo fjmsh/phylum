@@ -2,6 +2,7 @@ package command
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -12,14 +13,13 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/db"
-	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/v2"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
 
 var reader = bufio.NewReader(os.Stdin)
-var cfg = map[string]any{}
 
 func setupInitCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -28,12 +28,13 @@ func setupInitCommand() *cobra.Command {
 	}
 
 	cmd.Run = func(cmd *cobra.Command, args []string) {
+		logger := zerolog.Ctx(cmd.Context())
 		configFile, _ := cmd.Flags().GetString("config-file")
 		if _, err := os.Stat(configFile); err == nil {
 			// config file already exists. What to do?!
 			fmt.Println("Config file already exists")
 
-			clear := readBool("Server config already exists. Are you sure you want wipe it and start over?", false, "", false)
+			clear := readBool("Server config already exists. Are you sure you want wipe it and start over?", false, nil, "", false)
 			if !clear {
 				fatal("Aborting...")
 			}
@@ -60,53 +61,41 @@ func setupInitCommand() *cobra.Command {
 		k.Merge(config.LoadEnv())
 		var defaultConfig config.Config
 		k.UnmarshalWithConf("", &defaultConfig, koanf.UnmarshalConf{Tag: "koanf"})
+		k.All()
 
-		readDBConfig(defaultConfig.DB)
-		p := yaml.Parser()
-		if y, err := p.Marshal(toNestedMap(cfg)); err != nil {
-			fmt.Println(err.Error())
-		} else {
-			fmt.Println(string(y))
-		}
-		// k.Print()
+		fmt.Println()
+		fmt.Println("DATABASE CONFIG")
+		readDBConfig(defaultConfig.DB, *logger)
+		fmt.Println("Database Connected")
 	}
 
 	return cmd
 }
 
-func toNestedMap(in map[string]any) map[string]any {
-	out := make(map[string]any)
-	for k, v := range in {
-		path := strings.Split(k, ".")
-		m := out
-		for _, p := range path[:len(path)-1] {
-			var mm map[string]any
-			if existing, ok := m[p]; !ok {
-				mm = make(map[string]any)
-				m[p] = mm
-			} else if mm, ok = existing.(map[string]any); !ok {
-				panic(fmt.Sprintf("key `%s` in `%s` is not a map", p, k))
-			}
-			m = mm
-		}
-		m[path[len(path)-1]] = v
-	}
-	return out
-}
+func readDBConfig(defaultConfig db.Config, logger zerolog.Logger) *koanf.Koanf {
+	cfg := koanf.New(".")
+	readString("    Host", defaultConfig.Host, cfg, "host", true)
+	readInt("    Port", defaultConfig.Port, cfg, "port", true)
+	readString(" DB Name", defaultConfig.Name, cfg, "name", true)
+	readString("Username", defaultConfig.User, cfg, "user", true)
+	readSecret("Password", cfg, "password")
 
-func readDBConfig(config db.Config) {
-	host := readString("DB Host", config.Host, "db.host", true)
-	port := readInt("DB Host", config.Port, "db.port", true)
-	dbName := readString("DB Name", config.Name, "db.name", true)
-	user := readString("DB User", config.User, "db.user", true)
-	password := readSecret("DB Password", "db.password")
-	config = db.Config{
-		Host:     host,
-		Port:     port,
-		Name:     dbName,
-		User:     user,
-		Password: password,
+	var config db.Config
+	if err := cfg.Unmarshal("", &config); err != nil {
+		panic(err)
 	}
+	if _, err := db.Initialize(context.Background(), config, logger); err != nil {
+		fmt.Println("Unable to connect to db with the provided info")
+		fmt.Println(err.Error())
+
+		if readBool("Try again?", true, nil, "", false) {
+			return readDBConfig(config, logger)
+		} else {
+			os.Exit(1)
+		}
+	}
+
+	return cfg
 }
 
 func fatal(err any) {
@@ -114,26 +103,27 @@ func fatal(err any) {
 	os.Exit(1)
 }
 
-func handleInput[T any](input string, convert func(string) T, def T, cfgKey string, persistDefault bool) (value T) {
+func handleInput[T any](input string, convert func(string) T, def T, cfg *koanf.Koanf, key string, storeDefault bool) (value T) {
 	value = def
 	if input != "" {
 		value = convert(input)
 	}
-	if cfgKey != "" && (persistDefault || input != "") {
-		cfg[cfgKey] = value
+	if cfg != nil && key != "" && (storeDefault || input != "") {
+		cfg.Set(key, value)
 	}
 	return value
 }
 
-func readString(title string, def string, cfgKey string, persistDefault bool) string {
+func readString(title string, def string, cfg *koanf.Koanf, key string, storeDefault bool) string {
 	prompt := fmt.Sprintf("%s [%s]", title, def)
-	response := readValidString(prompt, nil)
-	return handleInput(response, func(in string) string { return in }, def, cfgKey, persistDefault)
+	in := readValidString(prompt, nil)
+	convert := func(in string) string { return in }
+	return handleInput(in, convert, def, cfg, key, storeDefault)
 }
 
-func readInt(title string, def int, cfgKey string, persistDefault bool) int {
+func readInt(title string, def int, cfg *koanf.Koanf, key string, storeDefault bool) int {
 	prompt := fmt.Sprintf("%s [%d]", title, def)
-	response := readValidString(prompt, func(input string) bool {
+	in := readValidString(prompt, func(input string) bool {
 		if input == "" {
 			return true
 		}
@@ -141,21 +131,23 @@ func readInt(title string, def int, cfgKey string, persistDefault bool) int {
 		return err == nil
 	})
 
-	return handleInput(response, func(in string) int { value, _ := strconv.Atoi(in); return value }, def, cfgKey, persistDefault)
+	convert := func(in string) int { value, _ := strconv.Atoi(in); return value }
+	return handleInput(in, convert, def, cfg, key, storeDefault)
 }
 
-func readBool(title string, def bool, cfgKey string, persistDefault bool) bool {
+func readBool(title string, def bool, cfg *koanf.Koanf, key string, storeDefault bool) bool {
 	defString := "y/N"
 	if def {
 		defString = "Y/n"
 	}
 
 	prompt := fmt.Sprintf("%s [%s]", title, defString)
-	response := readValidString(prompt, func(input string) bool {
+	in := readValidString(prompt, func(input string) bool {
 		input = strings.ToLower(input)
 		return input == "" || input == "y" || input == "yes" || input == "n" || input == "no"
 	})
-	return handleInput(strings.ToLower(response), func(in string) bool { return in == "y" || in == "yes" }, def, cfgKey, persistDefault)
+	convert := func(in string) bool { return in == "y" || in == "yes" }
+	return handleInput(strings.ToLower(in), convert, def, cfg, key, storeDefault)
 }
 
 func readValidString(prompt string, validate func(string) bool) string {
@@ -179,7 +171,7 @@ func readValidString(prompt string, validate func(string) bool) string {
 	}
 }
 
-func readSecret(title string, cfgKey string) string {
+func readSecret(title string, cfg *koanf.Koanf, key string) string {
 	fmt.Print(title, ": ")
 	bytes, err := term.ReadPassword(syscall.Stdin)
 	os.Stdout.WriteString("\n")
@@ -192,6 +184,8 @@ func readSecret(title string, cfgKey string) string {
 		}
 	}
 	secret := string(bytes)
-	cfg[cfgKey] = secret
+	if cfg != nil && key != "" {
+		cfg.Set(key, secret)
+	}
 	return secret
 }
