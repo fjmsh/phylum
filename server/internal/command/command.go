@@ -62,6 +62,10 @@ func SetupCommand() {
 			os.Chdir(dir)
 		}
 
+		if cmd.Name() == "init" {
+			return
+		}
+
 		k := koanf.New(".")
 
 		// Default config
@@ -153,6 +157,7 @@ func SetupCommand() {
 		fs.SetupCommand(),
 		user.SetupCommand(),
 		serve.SetupCommand(),
+		setupInitCommand(),
 	)
 	cmd.AddGroup(&cobra.Group{ID: "misc", Title: "Misc"})
 	cmd.SetHelpCommandGroupID("misc")

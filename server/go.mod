@@ -1,8 +1,6 @@
 module codeberg.org/shroff/phylum/server
 
-go 1.24
-
-toolchain go1.24.2
+go 1.25.8
 
 require (
 	github.com/doug-martin/goqu/v9 v9.19.0
@@ -19,6 +17,7 @@ require (
 	github.com/knadh/koanf/providers/posflag v1.0.0
 	github.com/knadh/koanf/providers/rawbytes v1.0.0
 	github.com/knadh/koanf/v2 v2.2.0
+	github.com/mileusna/useragent v1.3.5
 	github.com/minio/minio-go/v7 v7.0.69
 	github.com/pquerna/cachecontrol v0.2.0
 	github.com/rs/zerolog v1.34.0
@@ -34,7 +33,6 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mileusna/useragent v1.3.5 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 )
@@ -83,8 +81,8 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	golang.org/x/arch v0.16.0 // indirect
 	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/sync v0.14.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
