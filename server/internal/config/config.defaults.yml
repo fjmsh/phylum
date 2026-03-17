@@ -106,9 +106,9 @@ mail:
   smtp:
     host:
     port: 587
-    username:
+    username:                   # phylum-noreply@example.com
     password:
   from:
     name: Phylum Drive
-    email:  phylum@example.com
+    email:                      # phylum-noreply@example.com
   instance: https://phylum.example.com  # No trailing slash

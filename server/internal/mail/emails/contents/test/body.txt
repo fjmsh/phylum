@@ -1,0 +1,5 @@
+{{define "contents"}}
+This is a test email from your Phylum instance accessible at https://app.phylum.cloud/?instance={{.instance}}/
+
+Please ensure that the initial configuration is complete and that the instance is running before trying to open the link.
+{{end}}

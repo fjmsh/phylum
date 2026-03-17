@@ -33,10 +33,9 @@ func setupInitCommand() *cobra.Command {
 		logger := zerolog.Ctx(cmd.Context())
 		configFile, _ := cmd.Flags().GetString("config-file")
 		if _, err := os.Stat(configFile); err == nil {
-			// config file already exists. What to do?!
-			fmt.Println("Config file already exists")
+			fmt.Println("Server config already exists")
 
-			clear := readBool("Server config already exists. Are you sure you want wipe it and start over?", false, nil, "", false)
+			clear := readBool("Do you want to wipe it and start over?", false, nil, "", false)
 			if !clear {
 				fatal("Aborting...")
 			}
@@ -72,8 +71,12 @@ func setupInitCommand() *cobra.Command {
 		cfg.MergeAt(db, "db")
 		fmt.Println("Database Connected")
 
-		if readBool("Do you want to configure email?\nThis is required for email login links, s", true, nil, "", false) {
-			fmt.Println("EMAIL CONFIG")
+		fmt.Println()
+		fmt.Println()
+		fmt.Println("EMAIL CONFIG")
+		fmt.Println("Email is required for self-serve password reset, " +
+			"inviting users, sending share notifications, and sending passwordless login links")
+		if readBool("Configure Email?", true, nil, "", false) {
 			if mail := readMailConfig(defaultConfig.Mail, *logger); mail != nil {
 				cfg.MergeAt(mail, "mail")
 			} else {
@@ -82,6 +85,7 @@ func setupInitCommand() *cobra.Command {
 		} else {
 			fmt.Println("Skipping email config...")
 		}
+
 		if b, err := cfg.Marshal(yaml.Parser()); err != nil {
 			fmt.Println("failed to marshal config: ", err.Error())
 		} else {
@@ -99,7 +103,8 @@ func readDBConfig(defaultConfig db.Config, logger zerolog.Logger) *koanf.Koanf {
 	readInt("    Port", defaultConfig.Port, cfg, "port", true)
 	readString(" DB Name", defaultConfig.Name, cfg, "name", true)
 	readString("Username", defaultConfig.User, cfg, "user", true)
-	readSecret("Password", cfg, "password")
+	readSecret("Password", defaultConfig.Password, cfg, "password")
+	fmt.Println()
 
 	var config db.Config
 	if err := cfg.Unmarshal("", &config); err != nil {
@@ -123,11 +128,16 @@ func readMailConfig(defaultConfig mail.Config, logger zerolog.Logger) *koanf.Koa
 	cfg := koanf.New(".")
 	readString("   SMTP Host", defaultConfig.SMTP.Host, cfg, "smtp.host", true)
 	readInt("   SMTP Port", defaultConfig.SMTP.Port, cfg, "smtp.port", true)
-	readString("    Username", defaultConfig.SMTP.Username, cfg, "smtp.username", true)
-	readSecret("    Password", cfg, "smtp.password")
+	smtpUsername := readString("    Username", defaultConfig.SMTP.Username, cfg, "smtp.username", true)
+	readSecret("    Password", defaultConfig.SMTP.Password, cfg, "smtp.password")
 	readString("  Email Name", defaultConfig.From.Name, cfg, "from.name", true)
-	readString("  Email Addr", defaultConfig.From.Email, cfg, "from.email", true)
+	defaultFromEmail := defaultConfig.From.Email
+	if defaultFromEmail == "" {
+		defaultFromEmail = smtpUsername
+	}
+	readString("  Email Addr", defaultFromEmail, cfg, "from.email", true)
 	readString("Instance URL", defaultConfig.Instance, cfg, "instance", true)
+	fmt.Println()
 
 	var config mail.Config
 	if err := cfg.Unmarshal("", &config); err != nil {
@@ -141,6 +151,25 @@ func readMailConfig(defaultConfig mail.Config, logger zerolog.Logger) *koanf.Koa
 			return readMailConfig(config, logger)
 		} else {
 			return nil
+		}
+	}
+
+	if readBool("Do you want to send a test email to validate the config?", true, nil, "", false) {
+		for {
+			addr := readValidString("Recipient Email Address", nil)
+			if err := mail.SendTestEmail(addr); err != nil {
+				fmt.Println("Unable to send test email: " + err.Error())
+				if readBool("Try again?", true, nil, "", false) {
+					continue
+				} else {
+					break
+				}
+			} else {
+				fmt.Println("Test email sent! (make sure to check spam if you don't see it in your inbox)")
+				if !readBool("Send another one?", false, nil, "", false) {
+					break
+				}
+			}
 		}
 	}
 
@@ -220,8 +249,12 @@ func readValidString(prompt string, validate func(string) bool) string {
 	}
 }
 
-func readSecret(title string, cfg *koanf.Koanf, key string) string {
-	fmt.Print(title, ": ")
+func readSecret(title string, def string, cfg *koanf.Koanf, key string) string {
+	if def == "" {
+		fmt.Print(title, ": ")
+	} else {
+		fmt.Print(title, "[unchanged]: ")
+	}
 	bytes, err := term.ReadPassword(syscall.Stdin)
 	os.Stdout.WriteString("\n")
 	if err != nil {
@@ -233,6 +266,9 @@ func readSecret(title string, cfg *koanf.Koanf, key string) string {
 		}
 	}
 	secret := string(bytes)
+	if secret == "" {
+		secret = def
+	}
 	if cfg != nil && key != "" {
 		cfg.Set(key, secret)
 	}

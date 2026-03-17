@@ -40,6 +40,10 @@ func Configured() bool {
 	return dialer != nil
 }
 
+func SendTestEmail(email string) error {
+	return send(emails["test"], core.User{Email: email}, nil)
+}
+
 func SendWelcomeEmail(u core.User) error {
 	return send(emails["welcome"], u, nil)
 }
