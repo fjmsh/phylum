@@ -78,9 +78,15 @@ auth:
       #   filter_template: (mail={email})
   # openid:
   #   clients:
-  #     - id: authelia      # internal ID, prefer lower-kebab-case or lower_camel_case
+  #     authelia:           # arbitrary
   #       name: Authelia    # to be displayed to the user as 'Log In with <name>'
   #       issuer_url: https://auth.example.com
+  #       client_id:
+  #       client_secret:
+  #       allow_unverified_emails: false
+  #     google:             # arbitrary
+  #       name: Google      # to be displayed to the user as 'Log In with <name>'
+  #       issuer_url: https://accounts.google.com/
   #       client_id:
   #       client_secret:
   #       allow_unverified_emails: false

@@ -24,17 +24,17 @@ var log zerolog.Logger
 
 func Init(cfg Config, l zerolog.Logger) error {
 	log = l.With().Str("mod", "auth.openid").Logger()
-	for _, c := range cfg.Clients {
-		clients[c.ID] = c
+	for k, c := range cfg.Clients {
+		clients[k] = c
 	}
 	return nil
 }
 
 func Providers() []Provider {
 	p := make([]Provider, 0, len(clients))
-	for _, c := range clients {
+	for k, c := range clients {
 		p = append(p, Provider{
-			ID:   c.ID,
+			ID:   k,
 			Name: c.Name,
 		})
 	}
