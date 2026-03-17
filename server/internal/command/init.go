@@ -13,6 +13,8 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/mail"
+	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/v2"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -65,8 +67,27 @@ func setupInitCommand() *cobra.Command {
 
 		fmt.Println()
 		fmt.Println("DATABASE CONFIG")
-		readDBConfig(defaultConfig.DB, *logger)
+		cfg := koanf.New(".")
+		db := readDBConfig(defaultConfig.DB, *logger)
+		cfg.MergeAt(db, "db")
 		fmt.Println("Database Connected")
+
+		if readBool("Do you want to configure email?\nThis is required for email login links, s", true, nil, "", false) {
+			fmt.Println("EMAIL CONFIG")
+			if mail := readMailConfig(defaultConfig.Mail, *logger); mail != nil {
+				cfg.MergeAt(mail, "mail")
+			} else {
+				fmt.Println("Skipping email config...")
+			}
+		} else {
+			fmt.Println("Skipping email config...")
+		}
+		if b, err := cfg.Marshal(yaml.Parser()); err != nil {
+			fmt.Println("failed to marshal config: ", err.Error())
+		} else {
+			fmt.Println(string(b))
+		}
+
 	}
 
 	return cmd
@@ -92,6 +113,34 @@ func readDBConfig(defaultConfig db.Config, logger zerolog.Logger) *koanf.Koanf {
 			return readDBConfig(config, logger)
 		} else {
 			os.Exit(1)
+		}
+	}
+
+	return cfg
+}
+
+func readMailConfig(defaultConfig mail.Config, logger zerolog.Logger) *koanf.Koanf {
+	cfg := koanf.New(".")
+	readString("   SMTP Host", defaultConfig.SMTP.Host, cfg, "smtp.host", true)
+	readInt("   SMTP Port", defaultConfig.SMTP.Port, cfg, "smtp.port", true)
+	readString("    Username", defaultConfig.SMTP.Username, cfg, "smtp.username", true)
+	readSecret("    Password", cfg, "smtp.password")
+	readString("  Email Name", defaultConfig.From.Name, cfg, "from.name", true)
+	readString("  Email Addr", defaultConfig.From.Email, cfg, "from.email", true)
+	readString("Instance URL", defaultConfig.Instance, cfg, "instance", true)
+
+	var config mail.Config
+	if err := cfg.Unmarshal("", &config); err != nil {
+		panic(err)
+	}
+	if err := mail.Initialize(config, logger); err != nil {
+		fmt.Println("Unable to connect to the mail server")
+		fmt.Println(err.Error())
+
+		if readBool("Try again?", true, nil, "", false) {
+			return readMailConfig(config, logger)
+		} else {
+			return nil
 		}
 	}
 
