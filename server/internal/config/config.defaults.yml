@@ -40,10 +40,10 @@ auth:
     # - "user@example.com"
     # - "user*@example.com"
   suppress_multi_provider_warning: false
-  magic_links: true
+  magic_links: true     # requires mail config
   password:
-    backend: crypt    # one of crypt, ldap, none
-    reset_enabled: true
+    backend: crypt      # one of crypt, ldap, none
+    reset_enabled: true # requires crypt backend, and mail config
     crypt:
       # kdf is either argon2 or pbkdf2
       kdf: argon2

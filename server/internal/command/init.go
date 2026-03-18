@@ -7,10 +7,17 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/auth"
+	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
+	"codeberg.org/shroff/phylum/server/internal/auth/crypt/argon2"
+	"codeberg.org/shroff/phylum/server/internal/auth/crypt/pbkdf2"
+	"codeberg.org/shroff/phylum/server/internal/auth/ldap"
 	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
@@ -64,20 +71,23 @@ func setupInitCommand() *cobra.Command {
 		k.UnmarshalWithConf("", &defaultConfig, koanf.UnmarshalConf{Tag: "koanf"})
 		k.All()
 
+		cfg := koanf.New(".")
+
+		fmt.Println()
 		fmt.Println()
 		fmt.Println("DATABASE CONFIG")
-		cfg := koanf.New(".")
 		db := readDBConfig(defaultConfig.DB, *logger)
 		cfg.MergeAt(db, "db")
-		fmt.Println("Database Connected")
 
 		fmt.Println()
 		fmt.Println()
 		fmt.Println("EMAIL CONFIG")
 		fmt.Println("Email is required for self-serve password reset, " +
 			"inviting users, sending share notifications, and sending passwordless login links")
+		hasEmailConfig := false
 		if readBool("Configure Email?", true, nil, "", false) {
 			if mail := readMailConfig(defaultConfig.Mail, *logger); mail != nil {
+				hasEmailConfig = true
 				cfg.MergeAt(mail, "mail")
 			} else {
 				fmt.Println("Skipping email config...")
@@ -85,6 +95,12 @@ func setupInitCommand() *cobra.Command {
 		} else {
 			fmt.Println("Skipping email config...")
 		}
+
+		fmt.Println()
+		fmt.Println()
+		fmt.Println("AUTH CONFIG")
+		auth := readAuthConfig(defaultConfig.Auth, hasEmailConfig, *logger)
+		cfg.MergeAt(auth, "auth")
 
 		if b, err := cfg.Marshal(yaml.Parser()); err != nil {
 			fmt.Println("failed to marshal config: ", err.Error())
@@ -121,6 +137,7 @@ func readDBConfig(defaultConfig db.Config, logger zerolog.Logger) *koanf.Koanf {
 		}
 	}
 
+	fmt.Println("Database Connected")
 	return cfg
 }
 
@@ -176,6 +193,169 @@ func readMailConfig(defaultConfig mail.Config, logger zerolog.Logger) *koanf.Koa
 	return cfg
 }
 
+func readAuthConfig(defaultConfig auth.Config, hasEmailConfig bool, logger zerolog.Logger) *koanf.Koanf {
+	cfg := koanf.New(".")
+
+	oidcLoginEnabled := false
+
+	// Password Login
+	passwordLoginEnabled := readBool("Enable password login?", true, nil, "", false)
+	if passwordLoginEnabled {
+		passwordBackend := readOption("Password Login Backend", []string{"crypt", "ldap"}, "crypt", cfg, "password.backend", true)
+		switch passwordBackend {
+		case "crypt":
+			crypt := readCryptConfig(defaultConfig.Password.Crypt)
+			cfg.MergeAt(crypt, "crypt")
+		case "ldap":
+			ldap := readLDAPConfig(defaultConfig.Password.LDAP)
+			cfg.MergeAt(ldap, "ldap")
+		default:
+			fatal("Unsupported Backend: " + passwordBackend)
+		}
+
+	} else {
+		cfg.Set("password.backend", "none")
+	}
+
+	// Passwordless login
+	passwordlessLoginEnabled := false
+	if hasEmailConfig {
+		passwordlessLoginEnabled = readBool("Allow passwordless login via email?", defaultConfig.MagicLinks, cfg, "magic_links", true)
+	}
+
+	if !passwordlessLoginEnabled && !passwordLoginEnabled && !oidcLoginEnabled {
+		if readBool("No login methods configured. Configure again?", true, nil, "", false) {
+			return readAuthConfig(defaultConfig, hasEmailConfig, logger)
+		} else {
+			os.Exit(1)
+		}
+	}
+
+	return cfg
+}
+
+func readCryptConfig(defaultConfig crypt.Config) *koanf.Koanf {
+	cfg := koanf.New(".")
+	kdf := readOption("Select KDF", []string{"argon2", "pbkdf2"}, defaultConfig.KDF, cfg, "kdf", true)
+
+	fmt.Print(`As a rule of thumb, you should aim to take at least 300 - 500ms, up to 1s for key
+generation in order to have a good balance of security, cost, and convenience
+(or at least, lack of inconvenience).`)
+	switch kdf {
+	case "argon2":
+		fmt.Println()
+		fmt.Println("Argon2 Configuration")
+		if readBool("Would you like more information about how to configuration Argon2 parameters?", true, nil, "", false) {
+
+			fmt.Println(`1. Start by setting memory (m) and parallelism (p) to the highest numbers you can
+   afford on your machine, considering:
+	- Memory requirement is exponentially related to the memory factor (m), so
+	    m=16 means 64MB, m=17 means 128MB, m=18 means 256MB
+    - You need to leave headroom for other processes
+	- There may be multiple simultaneous hashes
+
+2. Increase the number of iterations(t) until you reach the desired time.
+
+3. If you are already at t=1 and it's taking too long then either increase
+   p or decrease m`)
+		}
+		argon2 := readArgon2Config(defaultConfig.Argon2)
+		cfg.MergeAt(argon2, "argon2")
+	case "pbkdf2":
+		pbkdf2 := readPBKDF2Config(defaultConfig.PBKDF2)
+		cfg.MergeAt(pbkdf2, "pbkdf2")
+	default:
+		fatal("Unrecognized KDF: " + kdf)
+	}
+	return cfg
+}
+
+func readArgon2Config(config argon2.Config) *koanf.Koanf {
+	cfg := koanf.New(".")
+
+	readInt("Memory Factor (m)", int(config.Memory), cfg, "memory", true)
+	readInt("Iterations (t)", int(config.Iterations), cfg, "iterations", true)
+	readInt("Parallelism (p)", int(config.Parallelism), cfg, "parallelism", true)
+	readInt("Salt Length (in bytes)", int(config.Salt), cfg, "salt", false)
+	readInt("Key Length (in bytes)", int(config.Key), cfg, "key", false)
+
+	cfg.Unmarshal("", &config)
+	src := "test"
+	start := time.Now()
+	_, err := argon2.New(config).GenerateEncodedHash(src)
+	hashTime := time.Since(start)
+	if err != nil {
+		fatal("failed to generate hash: " + err.Error())
+	}
+
+	if hashTime.Milliseconds() < 5 {
+		fmt.Printf("Took %dus\n", hashTime.Microseconds())
+	} else {
+		fmt.Printf("Took %dms\n", hashTime.Milliseconds())
+	}
+
+	acceptable := true
+	if hashTime.Milliseconds() > 1000 {
+		fmt.Println("Looks like that took a long time.")
+		acceptable = false
+	} else if hashTime.Milliseconds() < 300 {
+		fmt.Println("Ideally, password hashing should take at least 300ms")
+		acceptable = false
+	}
+
+	if !readBool("Keep Argon2 config?", acceptable, nil, "", false) {
+		cfg.Merge(readArgon2Config(config))
+	}
+	return cfg
+}
+
+func readPBKDF2Config(config pbkdf2.Config) *koanf.Koanf {
+	cfg := koanf.New(".")
+
+	readOption("Hash Function", []string{"sha-1", "sha-256", "sha-512"}, config.Function, cfg, "function", true)
+	readInt("Iterations", int(config.Iterations), cfg, "iterations", true)
+	readInt("Salt Length (in bytes)", int(config.Salt), cfg, "salt", false)
+	readInt("Key Length (in bytes)", int(config.Key), cfg, "key", false)
+
+	cfg.Unmarshal("", &config)
+	src := "test"
+	start := time.Now()
+	kdf, err := pbkdf2.New(config)
+	if err != nil {
+		fatal("failed to create PBKDF: " + err.Error())
+	}
+	kdf.GenerateEncodedHash(src)
+	hashTime := time.Since(start)
+	if err != nil {
+		fatal("failed to generate hash: " + err.Error())
+	}
+
+	if hashTime.Milliseconds() < 5 {
+		fmt.Printf("Took %dus\n", hashTime.Microseconds())
+	} else {
+		fmt.Printf("Took %dms\n", hashTime.Milliseconds())
+	}
+
+	acceptable := true
+	if hashTime.Milliseconds() > 1000 {
+		fmt.Println("Looks like that took a long time.")
+		acceptable = false
+	} else if hashTime.Milliseconds() < 300 {
+		fmt.Println("Ideally, password hashing should take at least 300ms")
+		acceptable = false
+	}
+	if !readBool("Keep PBKDF2 config?", acceptable, nil, "", false) {
+		cfg.Merge(readPBKDF2Config(config))
+	}
+	return cfg
+}
+
+func readLDAPConfig(config ldap.Config) *koanf.Koanf {
+	cfg := koanf.New(".")
+
+	return cfg
+}
+
 func fatal(err any) {
 	fmt.Println(err)
 	os.Exit(1)
@@ -225,7 +405,16 @@ func readBool(title string, def bool, cfg *koanf.Koanf, key string, storeDefault
 		return input == "" || input == "y" || input == "yes" || input == "n" || input == "no"
 	})
 	convert := func(in string) bool { return in == "y" || in == "yes" }
-	return handleInput(strings.ToLower(in), convert, def, cfg, key, storeDefault)
+	return handleInput(in, convert, def, cfg, key, storeDefault)
+}
+
+func readOption(title string, options []string, def string, cfg *koanf.Koanf, key string, storeDefault bool) string {
+	prompt := fmt.Sprintf("%s (%s)[%s]", title, strings.Join(options, "/"), def)
+	in := readValidString(prompt, func(input string) bool {
+		return input == "" || slices.Index(options, strings.ToLower(input)) != -1
+	})
+	convert := func(in string) string { return strings.ToLower(in) }
+	return handleInput(in, convert, def, cfg, key, storeDefault)
 }
 
 func readValidString(prompt string, validate func(string) bool) string {

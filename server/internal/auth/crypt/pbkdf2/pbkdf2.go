@@ -35,13 +35,14 @@ func New(cfg Config) (*pbkdf, error) {
 }
 
 func getHashFunction(name string) (func() hash.Hash, error) {
-	if name == "sha-1" {
+	switch name {
+	case "sha-1":
 		return sha1.New, nil
-	} else if name == "sha-256" {
+	case "sha-256":
 		return sha256.New, nil
-	} else if name == "sha-512" {
+	case "sha-512":
 		return sha512.New, nil
-	} else {
+	default:
 		return nil, errors.New("unsupported hash function: " + name)
 	}
 }
