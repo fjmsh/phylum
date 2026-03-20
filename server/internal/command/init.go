@@ -22,6 +22,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -212,7 +213,29 @@ func readAuthConfig(defaultConfig auth.Config, hasEmailConfig bool, logger zerol
 		default:
 			fatal("Unsupported Backend: " + passwordBackend)
 		}
+		fmt.Println()
 
+		if passwordBackend == "crypt" && hasEmailConfig {
+		} else {
+			fmt.Println("Skipping password reset (unspported)...")
+		}
+
+		if passwordBackend == "crypt" {
+			requirements := koanf.New(".")
+			fmt.Println()
+			if readBool("Set minimum password requirements?", true, nil, "", false) {
+				readInt("Minimum Password Length", defaultConfig.Password.Requirements.Length, requirements, "length", true)
+				readInt("Minimum Upper Case Characters", defaultConfig.Password.Requirements.Upper, requirements, "upper", true)
+				readInt("Minimum Lower Case Characters", defaultConfig.Password.Requirements.Lower, requirements, "lower", true)
+				readInt("Minimum Numeric Characters", defaultConfig.Password.Requirements.Numeric, requirements, "numeric", true)
+				readInt("Minimum Symbols", defaultConfig.Password.Requirements.Symbols, requirements, "symbols", true)
+			} else {
+				requirements.Load(structs.Provider(&auth.PasswordRequirements{}, "koanf"), nil)
+			}
+			cfg.MergeAt(requirements, "password.requirements")
+		} else {
+			fmt.Println("Skipping minimum requirements *(unsupported)...")
+		}
 	} else {
 		cfg.Set("password.backend", "none")
 	}
@@ -238,12 +261,14 @@ func readCryptConfig(defaultConfig crypt.Config) *koanf.Koanf {
 	cfg := koanf.New(".")
 	kdf := readOption("Select KDF", []string{"argon2", "pbkdf2"}, defaultConfig.KDF, cfg, "kdf", true)
 
-	fmt.Print(`As a rule of thumb, you should aim to take at least 300 - 500ms, up to 1s for key
+	fmt.Println()
+	fmt.Println(`As a rule of thumb, you should aim to take at least 300 - 500ms, up to 1s for key
 generation in order to have a good balance of security, cost, and convenience
 (or at least, lack of inconvenience).`)
+	fmt.Println()
+
 	switch kdf {
 	case "argon2":
-		fmt.Println()
 		fmt.Println("Argon2 Configuration")
 		if readBool("Would you like more information about how to configuration Argon2 parameters?", true, nil, "", false) {
 
@@ -258,10 +283,12 @@ generation in order to have a good balance of security, cost, and convenience
 
 3. If you are already at t=1 and it's taking too long then either increase
    p or decrease m`)
+			fmt.Println()
 		}
 		argon2 := readArgon2Config(defaultConfig.Argon2)
 		cfg.MergeAt(argon2, "argon2")
 	case "pbkdf2":
+		fmt.Println("PBKDF2 Configuration")
 		pbkdf2 := readPBKDF2Config(defaultConfig.PBKDF2)
 		cfg.MergeAt(pbkdf2, "pbkdf2")
 	default:
@@ -278,6 +305,7 @@ func readArgon2Config(config argon2.Config) *koanf.Koanf {
 	readInt("Parallelism (p)", int(config.Parallelism), cfg, "parallelism", true)
 	readInt("Salt Length (in bytes)", int(config.Salt), cfg, "salt", false)
 	readInt("Key Length (in bytes)", int(config.Key), cfg, "key", false)
+	fmt.Println()
 
 	cfg.Unmarshal("", &config)
 	src := "test"
@@ -302,6 +330,7 @@ func readArgon2Config(config argon2.Config) *koanf.Koanf {
 		fmt.Println("Ideally, password hashing should take at least 300ms")
 		acceptable = false
 	}
+	fmt.Println()
 
 	if !readBool("Keep Argon2 config?", acceptable, nil, "", false) {
 		cfg.Merge(readArgon2Config(config))
@@ -316,6 +345,7 @@ func readPBKDF2Config(config pbkdf2.Config) *koanf.Koanf {
 	readInt("Iterations", int(config.Iterations), cfg, "iterations", true)
 	readInt("Salt Length (in bytes)", int(config.Salt), cfg, "salt", false)
 	readInt("Key Length (in bytes)", int(config.Key), cfg, "key", false)
+	fmt.Println()
 
 	cfg.Unmarshal("", &config)
 	src := "test"
@@ -344,6 +374,8 @@ func readPBKDF2Config(config pbkdf2.Config) *koanf.Koanf {
 		fmt.Println("Ideally, password hashing should take at least 300ms")
 		acceptable = false
 	}
+	fmt.Println()
+
 	if !readBool("Keep PBKDF2 config?", acceptable, nil, "", false) {
 		cfg.Merge(readPBKDF2Config(config))
 	}

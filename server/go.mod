@@ -16,6 +16,7 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.0
 	github.com/knadh/koanf/providers/posflag v1.0.0
 	github.com/knadh/koanf/providers/rawbytes v1.0.0
+	github.com/knadh/koanf/providers/structs v1.0.0
 	github.com/knadh/koanf/v2 v2.2.0
 	github.com/mileusna/useragent v1.3.5
 	github.com/minio/minio-go/v7 v7.0.69
@@ -29,6 +30,7 @@ require (
 
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/lib/pq v1.10.9 // indirect

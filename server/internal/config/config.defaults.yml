@@ -43,7 +43,7 @@ auth:
   magic_links: true     # requires mail config
   password:
     backend: crypt      # one of crypt, ldap, none
-    reset_enabled: true # requires crypt backend, and mail config
+    reset_enabled: true # requires mail config, only supported by crypt backend
     crypt:
       # kdf is either argon2 or pbkdf2
       kdf: argon2
@@ -58,7 +58,7 @@ auth:
         iterations: 5000000
         salt: 32        # 32 Bytes = 256-bit
         key: 32         # 32 Bytes = 256-bit
-    requirements:
+    requirements:       # only supported by crypt backend
       length: 8
       lower: 0
       upper: 0
