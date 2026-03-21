@@ -303,8 +303,6 @@ func readArgon2Config(config argon2.Config) *koanf.Koanf {
 	readInt("Memory Factor (m)", int(config.Memory), cfg, "memory", true)
 	readInt("Iterations (t)", int(config.Iterations), cfg, "iterations", true)
 	readInt("Parallelism (p)", int(config.Parallelism), cfg, "parallelism", true)
-	readInt("Salt Length (in bytes)", int(config.Salt), cfg, "salt", false)
-	readInt("Key Length (in bytes)", int(config.Key), cfg, "key", false)
 	fmt.Println()
 
 	cfg.Unmarshal("", &config)
@@ -343,8 +341,6 @@ func readPBKDF2Config(config pbkdf2.Config) *koanf.Koanf {
 
 	readOption("Hash Function", []string{"sha-1", "sha-256", "sha-512"}, config.Function, cfg, "function", true)
 	readInt("Iterations", int(config.Iterations), cfg, "iterations", true)
-	readInt("Salt Length (in bytes)", int(config.Salt), cfg, "salt", false)
-	readInt("Key Length (in bytes)", int(config.Key), cfg, "key", false)
 	fmt.Println()
 
 	cfg.Unmarshal("", &config)
@@ -382,8 +378,45 @@ func readPBKDF2Config(config pbkdf2.Config) *koanf.Koanf {
 	return cfg
 }
 
-func readLDAPConfig(config ldap.Config) *koanf.Koanf {
+func readLDAPConfig(config ldap.Config, logger zerolog.Logger) *koanf.Koanf {
 	cfg := koanf.New(".")
+
+	fmt.Println("LDAP Config")
+	readString("Server URL", config.URL, cfg, "url", true)
+	readBool("Use STARTTLS?", config.StartTLS, cfg, "starttls", true)
+	fmt.Println()
+	fmt.Println(`In order to authenticate using LDAP, we first need to find out the
+Distinguished Name (DN) of the user using the provided email address.`)
+	fmt.Println()
+	useTemplate := readBool("Would you like to use a template to construct the LDAP DN?", false, nil, "", false)
+	if useTemplate {
+		readString("DN Template", "cn={email},ou=people,dc=example,dc=com", cfg, "dn_template", true)
+	} else {
+		fmt.Println("DN Lookup")
+		readString("Bind DN", "cn=phylumbind,ou=people,dc=example,dc=com", cfg, "search.bind_dn", true)
+		readSecret("Bind DN Password", "", cfg, "search.bind_password")
+		readString("Base DN", "dc=example,dc=com", cfg, "search.base_dn", true)
+		readString("Filter Template", "(mail={email})", cfg, "search.filter_template", true)
+	}
+	fmt.Println()
+
+	fmt.Println("Test the configuration?")
+	cfg.Unmarshal("", &config)
+	if auth, err := ldap.NewAuth(config, logger); err != nil {
+		fmt.Println("Error: " + err.Error())
+		if readBool("Keep config?", false, nil, "", false) {
+			return cfg
+		} else {
+			cfg.Merge(readLDAPConfig(config, logger))
+		}
+	} else if _, err := auth.VerifyUserPassword(nil, "email", "password"); err != nil {
+		fmt.Println("Error: " + err.Error())
+		if readBool("Keep config?", false, nil, "", false) {
+			return cfg
+		} else {
+			cfg.Merge(readLDAPConfig(config, logger))
+		}
+	}
 
 	return cfg
 }
