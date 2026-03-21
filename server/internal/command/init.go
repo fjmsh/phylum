@@ -194,7 +194,7 @@ func readMailConfig(defaultConfig mail.Config, logger zerolog.Logger) *koanf.Koa
 	return cfg
 }
 
-func readAuthConfig(defaultConfig auth.Config, hasEmailConfig bool, logger zerolog.Logger) *koanf.Koanf {
+func readAuthConfig(config auth.Config, hasEmailConfig bool, logger zerolog.Logger) *koanf.Koanf {
 	cfg := koanf.New(".")
 
 	oidcLoginEnabled := false
@@ -205,10 +205,10 @@ func readAuthConfig(defaultConfig auth.Config, hasEmailConfig bool, logger zerol
 		passwordBackend := readOption("Password Login Backend", []string{"crypt", "ldap"}, "crypt", cfg, "password.backend", true)
 		switch passwordBackend {
 		case "crypt":
-			crypt := readCryptConfig(defaultConfig.Password.Crypt)
+			crypt := readCryptConfig(config.Password.Crypt)
 			cfg.MergeAt(crypt, "crypt")
 		case "ldap":
-			ldap := readLDAPConfig(defaultConfig.Password.LDAP)
+			ldap := readLDAPConfig(config.Password.LDAP, logger)
 			cfg.MergeAt(ldap, "ldap")
 		default:
 			fatal("Unsupported Backend: " + passwordBackend)
@@ -224,11 +224,11 @@ func readAuthConfig(defaultConfig auth.Config, hasEmailConfig bool, logger zerol
 			requirements := koanf.New(".")
 			fmt.Println()
 			if readBool("Set minimum password requirements?", true, nil, "", false) {
-				readInt("Minimum Password Length", defaultConfig.Password.Requirements.Length, requirements, "length", true)
-				readInt("Minimum Upper Case Characters", defaultConfig.Password.Requirements.Upper, requirements, "upper", true)
-				readInt("Minimum Lower Case Characters", defaultConfig.Password.Requirements.Lower, requirements, "lower", true)
-				readInt("Minimum Numeric Characters", defaultConfig.Password.Requirements.Numeric, requirements, "numeric", true)
-				readInt("Minimum Symbols", defaultConfig.Password.Requirements.Symbols, requirements, "symbols", true)
+				readInt("Minimum Password Length", config.Password.Requirements.Length, requirements, "length", true)
+				readInt("Minimum Upper Case Characters", config.Password.Requirements.Upper, requirements, "upper", true)
+				readInt("Minimum Lower Case Characters", config.Password.Requirements.Lower, requirements, "lower", true)
+				readInt("Minimum Numeric Characters", config.Password.Requirements.Numeric, requirements, "numeric", true)
+				readInt("Minimum Symbols", config.Password.Requirements.Symbols, requirements, "symbols", true)
 			} else {
 				requirements.Load(structs.Provider(&auth.PasswordRequirements{}, "koanf"), nil)
 			}
@@ -243,12 +243,13 @@ func readAuthConfig(defaultConfig auth.Config, hasEmailConfig bool, logger zerol
 	// Passwordless login
 	passwordlessLoginEnabled := false
 	if hasEmailConfig {
-		passwordlessLoginEnabled = readBool("Allow passwordless login via email?", defaultConfig.MagicLinks, cfg, "magic_links", true)
+		passwordlessLoginEnabled = readBool("Allow passwordless login via email?", config.MagicLinks, cfg, "magic_links", true)
 	}
 
 	if !passwordlessLoginEnabled && !passwordLoginEnabled && !oidcLoginEnabled {
 		if readBool("No login methods configured. Configure again?", true, nil, "", false) {
-			return readAuthConfig(defaultConfig, hasEmailConfig, logger)
+			cfg.Unmarshal("", &config)
+			cfg.Merge(readAuthConfig(config, hasEmailConfig, logger))
 		} else {
 			os.Exit(1)
 		}
