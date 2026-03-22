@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -198,6 +199,21 @@ func readAuthConfig(config auth.Config, hasEmailConfig bool, logger zerolog.Logg
 	cfg := koanf.New(".")
 
 	oidcLoginEnabled := false
+	if readBool("Add OpenID Connect login provider?", false, nil, "", false) {
+		fmt.Println()
+
+		openidCfg := koanf.New(".")
+		name := readString("Provider Name", "", openidCfg, "name", false)
+		readString("Issuer URL", "", openidCfg, "issuer_url", true)
+		readString("Client ID", "", openidCfg, "client_id", true)
+		readSecret("Client Secret", "", openidCfg, "client_secret")
+
+		re := regexp.MustCompile(`[^a-z0-9]+`)
+		id := re.ReplaceAllString(strings.ToLower(name), "-")
+		cfg.MergeAt(openidCfg, "openid.clients."+id)
+
+		oidcLoginEnabled = true
+	}
 
 	// Password Login
 	passwordLoginEnabled := readBool("Enable password login?", true, nil, "", false)
@@ -248,8 +264,7 @@ func readAuthConfig(config auth.Config, hasEmailConfig bool, logger zerolog.Logg
 
 	if !passwordlessLoginEnabled && !passwordLoginEnabled && !oidcLoginEnabled {
 		if readBool("No login methods configured. Configure again?", true, nil, "", false) {
-			cfg.Unmarshal("", &config)
-			cfg.Merge(readAuthConfig(config, hasEmailConfig, logger))
+			return readAuthConfig(config, hasEmailConfig, logger)
 		} else {
 			os.Exit(1)
 		}
