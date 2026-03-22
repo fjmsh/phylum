@@ -50,7 +50,7 @@ func SetupCommand() {
 
 	uuid.EnableRandPool()
 	cmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
-		if cmd.Name() == "serve" {
+		if isCmd(cmd, "serve") {
 			logger = logger.Level(zerolog.InfoLevel)
 		} else {
 			logger = logger.Level(zerolog.WarnLevel)
@@ -79,7 +79,12 @@ func SetupCommand() {
 		configFile, _ := cmd.Flags().GetString("config-file")
 		if kServer, err := config.LoadFile(configFile); err != nil {
 			if errors.Is(err, os.ErrNotExist) {
-				logger.Fatal().Msg("Config file not found. Please initialize using `init`")
+				if isCmd(cmd, "serve") {
+					logger.Info().Msg("Server not yet configured")
+					serve.NeedsConfig = true
+				} else {
+					logger.Fatal().Msg("Server is not yet configured. Please initialize using `init` or via web interface")
+				}
 			} else {
 				logger.Fatal().Err(err).Msg("Failed to load config")
 			}
@@ -110,7 +115,7 @@ func SetupCommand() {
 		serve.Cfg = cfg.Server
 		schema.DBConfig = cfg.DB
 
-		if isCmd(cmd, "schema") {
+		if serve.NeedsConfig || isCmd(cmd, "schema") {
 			// No need to do further setup
 			return
 		}

@@ -17,7 +17,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var passwordConfigResponse struct {
+var ConfigResponse struct {
 	Password        bool              `json:"password"`
 	PasswordReset   bool              `json:"password_reset"`
 	MagicLink       bool              `json:"magic_links"`
@@ -26,16 +26,15 @@ var passwordConfigResponse struct {
 
 func SetupRoutes(r *gin.RouterGroup, logger *zerolog.Logger) {
 	group := r.Group("/auth")
-	group.GET("/config", handleConfig)
 
 	if auth.PasswordAuthEnabled() {
-		passwordConfigResponse.Password = true
+		ConfigResponse.Password = true
 		group.POST("/password/login", handlePasswordLogin)
 		group.POST("/password/change", handlePasswordChange)
 	}
 	if auth.PasswordResetEnabled() {
 		if mail.Configured() {
-			passwordConfigResponse.PasswordReset = true
+			ConfigResponse.PasswordReset = true
 			group.POST("/password/request-reset", handlePasswordRequestReset)
 			group.POST("/password/reset", handlePasswordReset)
 		} else {
@@ -46,22 +45,18 @@ func SetupRoutes(r *gin.RouterGroup, logger *zerolog.Logger) {
 	group.POST("/token/login", handleTokenLogin)
 	if auth.MagicLinksEnabled() {
 		if mail.Configured() {
-			passwordConfigResponse.MagicLink = true
+			ConfigResponse.MagicLink = true
 			group.POST("/token/request", handleTokenRequest)
 		} else {
 			logger.Warn().Msg("Magic link login enabled but mail not configured")
 		}
 	}
 
-	passwordConfigResponse.OpenIDProviders = auth.OpenIDProviders()
+	ConfigResponse.OpenIDProviders = auth.OpenIDProviders()
 	group.GET("/oauth/start", handleOAuthStart)
 	group.GET("/oauth/redirect", handleOAuthRedirect)
 
 	group.POST("/set-cookie", authenticator.RequireAPIToken, handleSetCookie)
-}
-
-func handleConfig(c *gin.Context) {
-	c.JSON(http.StatusOK, passwordConfigResponse)
 }
 
 func getInstanceURL(req *http.Request, path string) string {

@@ -27,6 +27,7 @@ import (
 const trashRetainDuration = 30 * 24 * time.Hour
 
 var Cfg Config
+var NeedsConfig bool
 
 func SetupCommand() *cobra.Command {
 	var cmd = &cobra.Command{
@@ -55,17 +56,21 @@ func SetupCommand() *cobra.Command {
 		logger := zerolog.Ctx(cmd.Context())
 		engine := createEngine(logger)
 
-		if Cfg.WebDAV.Enabled {
-			r := engine.Group(Cfg.WebDAV.Path)
-			webdav.SetupHandler(r)
-			logger.Info().Str("path", r.BasePath()).Msg("WebDAV Enabled")
+		if NeedsConfig {
+			apiv1.SetupConfig(engine.Group("/api/v1"), logger)
+		} else {
+			if Cfg.WebDAV.Enabled {
+				r := engine.Group(Cfg.WebDAV.Path)
+				webdav.SetupHandler(r)
+				logger.Info().Str("path", r.BasePath()).Msg("WebDAV Enabled")
+			}
+			apiv1.Setup(engine.Group("/api/v1"), logger)
+			publink.Setup(engine.Group(Cfg.PublinkPath))
+
+			setupTrashCompactor(logger)
 		}
-		apiv1.Setup(engine.Group("/api/v1"), logger)
-		publink.Setup(engine.Group(Cfg.PublinkPath))
 
 		setupWebApp(engine, "web")
-
-		setupTrashCompactor(logger)
 
 		listen := Cfg.Host + ":" + strconv.Itoa(Cfg.Port)
 		server := http.Server{
@@ -88,22 +93,26 @@ func SetupCommand() *cobra.Command {
 			}
 		}()
 
-		closeWG.Add(1)
-		go func() {
-			defer closeWG.Done()
-			if err := steve.Get().Run(context.Background()); err != nil {
-				if !errors.Is(err, steve.ErrShutdown) {
-					logger.Fatal().Err(err).Msg("failed to start jobs")
+		if !NeedsConfig {
+			closeWG.Add(1)
+			go func() {
+				defer closeWG.Done()
+				if err := steve.Get().Run(context.Background()); err != nil {
+					if !errors.Is(err, steve.ErrShutdown) {
+						logger.Fatal().Err(err).Msg("failed to start jobs")
+					}
 				}
-			}
-		}()
+			}()
+		}
 
 		<-sigChan
 		logger.Info().Msg("Shutting Down")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		go server.Shutdown(ctx)
-		go steve.Get().Shutdown(ctx)
+		if !NeedsConfig {
+			go steve.Get().Shutdown(ctx)
+		}
 
 		closeWG.Wait()
 	}

@@ -1,6 +1,8 @@
 package apiv1
 
 import (
+	"net/http"
+
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/auth"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/fs"
@@ -13,6 +15,12 @@ import (
 )
 
 func Setup(r *gin.RouterGroup, logger *zerolog.Logger) {
+	r.GET("/info", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"needs_config": false,
+			"auth":         auth.ConfigResponse,
+		})
+	})
 	// Unauthenticated routes
 	auth.SetupRoutes(r, logger)
 
@@ -23,4 +31,12 @@ func Setup(r *gin.RouterGroup, logger *zerolog.Logger) {
 	publinks.SetupRoutes(r)
 	trash.SetupRoutes(r)
 	users.SetupUserRoutes(r)
+}
+
+func SetupConfig(r *gin.RouterGroup, logger *zerolog.Logger) {
+	r.GET("/info", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"needs_config": true,
+		})
+	})
 }
