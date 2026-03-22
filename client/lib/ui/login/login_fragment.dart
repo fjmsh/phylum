@@ -17,12 +17,12 @@ import 'package:uri/uri.dart';
 import 'oauth_stub.dart' if (dart.library.js_interop) 'oauth_web.dart' if (dart.library.ffi) 'oauth_vm.dart';
 
 class LoginFragment extends StatefulWidget {
-  final InstanceConfig instanceConfig;
+  final InstanceInfo instanceInfo;
   final Function()? onBackPressed;
 
   const LoginFragment({
     super.key,
-    required this.instanceConfig,
+    required this.instanceInfo,
     required this.onBackPressed,
   });
 
@@ -36,6 +36,7 @@ class _LoginFragmentState extends State<LoginFragment> {
 
   @override
   Widget build(BuildContext context) {
+    final authConfig = widget.instanceInfo.authConfig!;
     return AutofillGroup(
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
@@ -44,11 +45,11 @@ class _LoginFragmentState extends State<LoginFragment> {
             ListTile(
               visualDensity: VisualDensity.compact,
               dense: true,
-              title: Text(widget.instanceConfig.url.toString()),
+              title: Text(widget.instanceInfo.url.toString()),
               leading: Icon(Icons.storage),
               trailing: IconButton(onPressed: widget.onBackPressed, icon: Icon(Icons.close)),
             ),
-            if (widget.instanceConfig.email)
+            if (authConfig.email)
               Row(
                 children: [
                   Expanded(
@@ -59,19 +60,19 @@ class _LoginFragmentState extends State<LoginFragment> {
                       onChanged: (value) => setState(() => _email = value.trim()),
                     ),
                   ),
-                  if (widget.instanceConfig.magicLinks)
+                  if (authConfig.magicLinks)
                     IconButton(
                       icon: Icon(
                         Icons.link,
                         semanticLabel: 'Request Login Link',
                       ),
                       onPressed: () async {
-                        _requestMagicLink(context, widget.instanceConfig.url, _email);
+                        _requestMagicLink(context, widget.instanceInfo.url, _email);
                       },
                     ),
                 ],
               ),
-            if (widget.instanceConfig.password)
+            if (authConfig.password)
               Row(
                 children: [
                   Expanded(
@@ -83,23 +84,23 @@ class _LoginFragmentState extends State<LoginFragment> {
                       onChanged: (value) => setState(() => _password = value),
                       onSubmitted: _email.isEmpty
                           ? null
-                          : (value) => _performLogin(context, widget.instanceConfig.url, _email, _password),
+                          : (value) => _performLogin(context, widget.instanceInfo.url, _email, _password),
                     ),
                   ),
-                  if (widget.instanceConfig.passwordReset)
+                  if (authConfig.passwordReset)
                     IconButton(
                       icon: Icon(
                         Icons.question_mark,
                         semanticLabel: 'Request password reset',
                       ),
                       onPressed: () async {
-                        _requestPasswordReset(context, widget.instanceConfig.url, _email);
+                        _requestPasswordReset(context, widget.instanceInfo.url, _email);
                       },
                     ),
                   IconButton(
                     onPressed: _email.isEmpty || _password.isEmpty
                         ? null
-                        : () => _performLogin(context, widget.instanceConfig.url, _email, _password),
+                        : () => _performLogin(context, widget.instanceInfo.url, _email, _password),
                     icon: Icon(
                       Icons.login,
                       semanticLabel: 'Log in with password',
@@ -107,16 +108,16 @@ class _LoginFragmentState extends State<LoginFragment> {
                   ),
                 ],
               ),
-            if (widget.instanceConfig.email && widget.instanceConfig.openIDProviders.isNotEmpty)
+            if (authConfig.email && authConfig.openIDProviders.isNotEmpty)
               const Padding(
                 padding: EdgeInsets.only(top: 12, left: 48, right: 48),
                 child: Divider(),
               ),
-            ...widget.instanceConfig.openIDProviders.map((p) => Padding(
+            ...authConfig.openIDProviders.map((p) => Padding(
                   padding: const EdgeInsets.all(6.0),
                   child: TextButton(
                       onPressed: () async {
-                        final builder = UriBuilder.fromUri(widget.instanceConfig.url);
+                        final builder = UriBuilder.fromUri(widget.instanceInfo.url);
                         builder.path += '/api/v1/auth/oauth/start';
                         builder.queryParameters['provider'] = p.id;
                         startOAuthFlow(context, builder, p.name);
@@ -201,7 +202,7 @@ class _LoginFragmentState extends State<LoginFragment> {
       if ((response ?? true) || !context.mounted) return;
 
       context.read<PhylumRouterDelegate>().go(TokenLoginRoute(
-            instanceUrl: widget.instanceConfig.url.toString(),
+            instanceUrl: widget.instanceInfo.url.toString(),
           ));
     }
   }
@@ -241,7 +242,7 @@ class _LoginFragmentState extends State<LoginFragment> {
       final token = await showInputDialog(context, title: 'Password Reset Token', barrierDismissable: true);
       if (token == null || !context.mounted) return;
       context.read<PhylumRouterDelegate>().go(ResetPasswordRoute(
-            instanceUrl: widget.instanceConfig.url.toString(),
+            instanceUrl: widget.instanceInfo.url.toString(),
             email: email,
             token: token,
           ));

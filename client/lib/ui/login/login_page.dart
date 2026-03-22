@@ -12,7 +12,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  InstanceConfig? _instanceConfig;
+  InstanceInfo? _instanceInfo;
 
   @override
   void initState() {
@@ -47,15 +47,15 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildBody(BuildContext context) {
-    final instanceConfig = _instanceConfig;
+    final instanceConfig = _instanceInfo;
     if (instanceConfig == null) {
       return InstanceUrlFragment(onInstanceSelected: (instanceConfig) {
-        setState(() => _instanceConfig = instanceConfig);
+        setState(() => _instanceInfo = instanceConfig);
       });
     }
     return LoginFragment(
-      onBackPressed: () => setState(() => _instanceConfig = null),
-      instanceConfig: instanceConfig,
+      onBackPressed: () => setState(() => _instanceInfo = null),
+      instanceInfo: instanceConfig,
     );
   }
 }

@@ -7,7 +7,7 @@ import 'package:uri/uri.dart';
 import 'base_uri_stub.dart' if (dart.library.js_interop) 'base_uri_web.dart';
 
 class InstanceUrlFragment extends StatefulWidget {
-  final Function(InstanceConfig) onInstanceSelected;
+  final Function(InstanceInfo) onInstanceSelected;
 
   const InstanceUrlFragment({super.key, required this.onInstanceSelected});
 
@@ -47,30 +47,30 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
     final nav = Navigator.of(context);
     try {
       showProgressDialog(context, barrierDismissible: false, message: 'Getting login configuration');
-      final config = await findInstanceConfig(url);
+      final info = await findInstanceInfo(url);
       nav.pop();
-      if (config == null) {
+      if (info == null) {
         if (mounted) {
           showAlertDialog(context, message: 'No server found at $url');
         }
       } else {
-        widget.onInstanceSelected(config);
+        widget.onInstanceSelected(info);
       }
     } catch (e) {
       nav.pop();
       if (mounted) {
-        showAlertDialog(context, title: 'Error getting configuration', message: e.toString());
+        showAlertDialog(context, title: 'Error getting server info', message: e.toString());
       }
     }
   }
 
-  Future<InstanceConfig?> findInstanceConfig(Uri url) async {
+  Future<InstanceInfo?> findInstanceInfo(Uri url) async {
     // _url == null ? null : (value) => widget.onSubmitted(_url!),
     List<String> segments = url.pathSegments;
     while (true) {
       final builder = UriBuilder.fromUri(url);
       builder.path = segments.join('/');
-      final config = await getInstanceConfig(builder.build());
+      final config = await getInstanceInfo(builder.build());
       if (config != null) {
         return config;
       }
@@ -81,14 +81,14 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
     }
   }
 
-  Future<InstanceConfig?> getInstanceConfig(Uri url) async {
+  Future<InstanceInfo?> getInstanceInfo(Uri url) async {
     try {
       final builder = UriBuilder.fromUri(url);
-      builder.path = '${builder.path}/api/v1/auth/config';
+      builder.path = '${builder.path}/api/v1/info';
       final response = await Client().send(Request('GET', builder.build()));
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final responseString = await response.stream.bytesToString();
-        return InstanceConfig.fromResponse(url, responseString);
+        return InstanceInfo.fromResponse(url, responseString);
       } else {
         return null;
       }

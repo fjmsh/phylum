@@ -1,7 +1,32 @@
 import 'dart:convert';
 
-class InstanceConfig {
+class InstanceInfo {
   final Uri url;
+  final bool needsConfig;
+  final AuthConfig? authConfig;
+
+  InstanceInfo({
+    required this.url,
+    required this.needsConfig,
+    required this.authConfig,
+  });
+
+  factory InstanceInfo.fromResponse(Uri url, String responseString) {
+    final config = (jsonDecode(responseString) as Map).cast<String, dynamic>();
+    return InstanceInfo(
+      url: url,
+      needsConfig: config['needs_config'],
+      authConfig: config.containsKey('auth') ? AuthConfig.fromResponse(config['auth'].cast<String, dynamic>()) : null,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'Instance at $url${needsConfig ? '(needs config)' : ''}${authConfig ?? ''}';
+  }
+}
+
+class AuthConfig {
   final bool password;
   final bool passwordReset;
   final bool magicLinks;
@@ -9,29 +34,33 @@ class InstanceConfig {
 
   bool get email => password || magicLinks;
 
-  InstanceConfig(
-      {required this.url,
-      required this.password,
-      required this.passwordReset,
-      required this.magicLinks,
-      required this.openIDProviders});
+  AuthConfig({
+    required this.password,
+    required this.passwordReset,
+    required this.magicLinks,
+    required this.openIDProviders,
+  });
 
-  factory InstanceConfig.fromResponse(Uri url, String responseString) {
-    final config = (jsonDecode(responseString) as Map).cast<String, dynamic>();
-    final providers = (config['openid_providers'] as List).cast<Map>();
-    return InstanceConfig(
-      url: url,
-      password: config['password'],
-      passwordReset: config['password_reset'],
-      magicLinks: config['magic_links'],
+  factory AuthConfig.fromResponse(Map<String, dynamic> configMap) {
+    final providers = (configMap['openid_providers'] as List).cast<Map>();
+    return AuthConfig(
+      password: configMap['password'],
+      passwordReset: configMap['password_reset'],
+      magicLinks: configMap['magic_links'],
       openIDProviders:
-          providers.map((e) => OpenIDProvider.fromResponse(url, e.cast<String, dynamic>())).toList(growable: false),
+          providers.map((e) => OpenIDProvider.fromResponse(e.cast<String, dynamic>())).toList(growable: false),
     );
   }
 
   @override
   String toString() {
-    return 'Instance at $url: $password';
+    final methods = [
+      if (password) 'Password',
+      if (passwordReset) 'Password Reset',
+      if (magicLinks) 'Passwordless',
+      ...openIDProviders.map((p) => 'OIDC: ${p.name}')
+    ];
+    return 'Auth Config (${methods.join(',')})';
   }
 }
 
@@ -41,10 +70,10 @@ class OpenIDProvider {
 
   OpenIDProvider({required this.id, required this.name});
 
-  factory OpenIDProvider.fromResponse(Uri url, Map<String, dynamic> response) {
+  factory OpenIDProvider.fromResponse(Map<String, dynamic> providerMap) {
     return OpenIDProvider(
-      id: response['id'],
-      name: response['name'],
+      id: providerMap['id'],
+      name: providerMap['name'],
     );
   }
 }
