@@ -2,12 +2,12 @@ import 'dart:convert';
 
 class InstanceInfo {
   final Uri url;
-  final bool needsConfig;
+  final bool needsSetup;
   final AuthConfig? authConfig;
 
   InstanceInfo({
     required this.url,
-    required this.needsConfig,
+    required this.needsSetup,
     required this.authConfig,
   });
 
@@ -15,14 +15,14 @@ class InstanceInfo {
     final config = (jsonDecode(responseString) as Map).cast<String, dynamic>();
     return InstanceInfo(
       url: url,
-      needsConfig: config['needs_config'],
+      needsSetup: config['needs_config'],
       authConfig: config.containsKey('auth') ? AuthConfig.fromResponse(config['auth'].cast<String, dynamic>()) : null,
     );
   }
 
   @override
   String toString() {
-    return 'Instance at $url${needsConfig ? '(needs config)' : ''}${authConfig ?? ''}';
+    return 'Instance at $url${needsSetup ? '(needs config)' : ''}${authConfig ?? ''}';
   }
 }
 

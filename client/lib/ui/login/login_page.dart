@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/ui/app/router.dart';
+import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/ui/login/instance_url_fragment.dart';
 import 'package:phylum/ui/login/login_fragment.dart';
+import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -49,8 +52,15 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildBody(BuildContext context) {
     final instanceConfig = _instanceInfo;
     if (instanceConfig == null) {
-      return InstanceUrlFragment(onInstanceSelected: (instanceConfig) {
-        setState(() => _instanceInfo = instanceConfig);
+      final delegate = context.read<PhylumRouterDelegate>();
+      return InstanceUrlFragment(onInstanceSelected: (instanceInfo) {
+        if (instanceInfo.needsSetup) {
+          delegate.go(SetupRoute(
+            instanceUrl: instanceInfo.url.toString(),
+          ));
+        } else {
+          setState(() => _instanceInfo = instanceInfo);
+        }
       });
     }
     return LoginFragment(

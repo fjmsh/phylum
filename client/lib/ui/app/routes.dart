@@ -12,6 +12,7 @@ import 'package:phylum/libphylum/requests/shared_resources_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/layout/explorer_page.dart';
 import 'package:phylum/ui/login/login_page.dart';
+import 'package:phylum/ui/setup/setup_page.dart';
 import 'package:phylum/ui/login/token_login_page.dart';
 import 'package:phylum/ui/login/reset_password_page.dart';
 import 'package:phylum/ui/menu/menu_option.dart';
@@ -26,6 +27,22 @@ sealed class PhylumRoute {
   const PhylumRoute();
 
   Widget buildPage(BuildContext context);
+}
+
+class SetupRoute extends PhylumRoute {
+  final String instanceUrl;
+
+  SetupRoute({required this.instanceUrl});
+
+  @override
+  Uri get uri => Uri(path: '/setup');
+
+  @override
+  Widget buildPage(BuildContext context) {
+    return SetupPage(
+      instanceUrl: instanceUrl,
+    );
+  }
 }
 
 class TokenLoginRoute extends PhylumRoute {
