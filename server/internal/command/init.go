@@ -40,38 +40,24 @@ func setupInitCommand() *cobra.Command {
 
 	cmd.Run = func(cmd *cobra.Command, args []string) {
 		logger := zerolog.Ctx(cmd.Context())
-		configFile, _ := cmd.Flags().GetString("config-file")
-		if _, err := os.Stat(configFile); err == nil {
+
+		if exists, err := config.ConfigFileExists(cmd); err != nil {
+			fatal("Failed to open config file: " + err.Error())
+
+		} else if exists {
 			fmt.Println("Server config already exists")
 
 			clear := readBool("Do you want to wipe it and start over?", false, nil, "", false)
 			if !clear {
 				fatal("Aborting...")
 			}
-		} else if !errors.Is(err, os.ErrNotExist) {
-			fatal("Failed to open config file: " + err.Error())
 		}
 
-		// Default config
-		k := koanf.New(".")
-		if kDefault, err := config.LoadDefault(); err != nil {
-			fatal("Failed to load default config: " + err.Error())
-		} else {
-			k.Merge(kDefault)
+		if err := config.Initialize(cmd); err != nil {
+			fatal("failed to load config: " + err.Error())
 		}
-
-		// Flags
-		if kFlags, err := config.LoadFlags(cmd); err != nil {
-			fatal("Failed to load flags: " + err.Error())
-		} else {
-			k.Merge(kFlags)
-		}
-
-		// Environment variables
-		k.Merge(config.LoadEnv())
-		var defaultConfig config.Config
-		k.UnmarshalWithConf("", &defaultConfig, koanf.UnmarshalConf{Tag: "koanf"})
-		k.All()
+		var defaultConfig Config
+		config.Full.UnmarshalWithConf("", &defaultConfig, koanf.UnmarshalConf{Tag: "koanf"})
 
 		cfg := koanf.New(".")
 
@@ -128,7 +114,7 @@ func readDBConfig(defaultConfig db.Config, logger zerolog.Logger) *koanf.Koanf {
 	if err := cfg.Unmarshal("", &config); err != nil {
 		panic(err)
 	}
-	if _, err := db.Initialize(context.Background(), config, logger); err != nil {
+	if _, err := db.Initialize(context.Background(), config, &logger); err != nil {
 		fmt.Println("Unable to connect to db with the provided info")
 		fmt.Println(err.Error())
 

@@ -7,6 +7,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/v1/auth"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/fs"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/publinks"
+	"codeberg.org/shroff/phylum/server/internal/api/v1/setup"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/trash"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/user"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/users"
@@ -39,4 +40,6 @@ func SetupConfig(r *gin.RouterGroup, logger *zerolog.Logger) {
 			"needs_config": true,
 		})
 	})
+
+	setup.SetupRoutes(r)
 }

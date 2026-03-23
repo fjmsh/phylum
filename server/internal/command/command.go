@@ -66,44 +66,22 @@ func SetupCommand() {
 			return
 		}
 
-		k := koanf.New(".")
-
-		// Default config
-		if kDefault, err := config.LoadDefault(); err != nil {
-			logger.Fatal().Err(err).Msg("Failed to load default config")
-		} else {
-			k.Merge(kDefault)
-		}
-
-		// Instance config
-		configFile, _ := cmd.Flags().GetString("config-file")
-		if kServer, err := config.LoadFile(configFile); err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				if isCmd(cmd, "serve") {
-					logger.Info().Msg("Server not yet configured")
-					serve.NeedsConfig = true
-				} else {
-					logger.Fatal().Msg("Server is not yet configured. Please initialize using `init` or via web interface")
-				}
+		if exists, err := config.ConfigFileExists(cmd); err != nil {
+			logger.Fatal().Err(err).Msg("Failed to open config file")
+		} else if !exists {
+			if isCmd(cmd, "serve") {
+				logger.Info().Msg("Server not yet configured")
+				serve.NeedsConfig = true
 			} else {
-				logger.Fatal().Err(err).Msg("Failed to load config")
+				logger.Fatal().Msg("Server is not yet configured. Please initialize using `init` or via web interface")
 			}
-		} else {
-			k.Merge(kServer)
 		}
 
-		// Flags
-		if kFlags, err := config.LoadFlags(cmd); err != nil {
-			logger.Fatal().Err(err).Msg("Failed to load flags")
-		} else {
-			k.Merge(kFlags)
+		if err := config.Initialize(cmd); err != nil {
+			logger.Fatal().Err(err).Msg("Failed to load config")
 		}
-
-		// Environment variables
-		k.Merge(config.LoadEnv())
-
-		var cfg config.Config
-		k.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "koanf"})
+		var cfg Config
+		config.Full.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "koanf"})
 
 		if cfg.Debug {
 			logger = logger.Level(zerolog.TraceLevel)
@@ -121,7 +99,7 @@ func SetupCommand() {
 		}
 
 		ctx := context.Background()
-		if pool, err := db.Initialize(ctx, cfg.DB, logger); err != nil {
+		if pool, err := db.Initialize(ctx, cfg.DB, &logger); err != nil {
 			logger.Fatal().Err(err).Msg("failed to initialize db pool")
 		} else {
 			pubsub.Initialize(ctx, pool, logger)

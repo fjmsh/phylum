@@ -1,0 +1,54 @@
+package setup
+
+import (
+	"net/http"
+
+	"codeberg.org/shroff/phylum/server/internal/config"
+	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
+	"github.com/gin-gonic/gin"
+	"github.com/knadh/koanf/providers/structs"
+	"github.com/knadh/koanf/v2"
+)
+
+type dbConfig struct {
+	Host     string `json:"host" form:"host" koanf:"host,omitempty"`
+	Port     int    `json:"port" form:"port" koanf:"port,omitempty"`
+	DBName   string `json:"db_name" form:"db_name" koanf:"name,omitempty"`
+	User     string `json:"user" form:"user" koanf:"user,omitempty"`
+	Password string `json:"password" form:"password" koanf:"password,omitempty"`
+}
+
+var errInvalidParams = core.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
+
+func handleValidateDBRequest(c *gin.Context) {
+	var params dbConfig
+	err := c.ShouldBind(&params)
+	if err != nil {
+		err = c.BindQuery(&params)
+		if err != nil {
+			panic(errInvalidParams)
+		}
+	}
+
+	paramsCfg := koanf.New(".")
+	paramsCfg.Load(structs.Provider(params, "koanf"), nil)
+
+	var cfg db.Config
+	config.MergeSub("db", paramsCfg).Unmarshal("", &cfg)
+	overrides := config.HasOverrides("db", paramsCfg)
+	response := gin.H{
+		"success":   true,
+		"overrides": overrides,
+	}
+	if pool, err := db.Connect(c.Request.Context(), cfg, nil); err != nil {
+		response["success"] = false
+		response["error"] = "DB Connect Error: " + err.Error()
+	} else if _, err := db.GetSchemaInfo(c.Request.Context(), pool); err != nil {
+		response["success"] = false
+		response["error"] = "DB Query Error: " + err.Error()
+	} else {
+	}
+	c.JSON(http.StatusOK, response)
+
+}

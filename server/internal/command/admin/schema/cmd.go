@@ -7,12 +7,10 @@ import (
 	"strconv"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
-	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
 
 var DBConfig db.Config
-var Logger zerolog.Logger
 
 func SetupCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -32,7 +30,7 @@ func setupResetCommand() *cobra.Command {
 		Short: "Reset Schema",
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			if pool, err := db.Connect(ctx, DBConfig, Logger); err != nil {
+			if pool, err := db.Connect(ctx, DBConfig, nil); err != nil {
 				fmt.Println(err.Error())
 				os.Exit(1)
 			} else {
@@ -53,7 +51,7 @@ func setupMigrateCommand() *cobra.Command {
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			if pool, err := db.Connect(ctx, DBConfig, Logger); err != nil {
+			if pool, err := db.Connect(ctx, DBConfig, nil); err != nil {
 				fmt.Println(err.Error())
 				os.Exit(1)
 			} else if s, err := db.GetSchemaInfo(ctx, pool); err != nil {
