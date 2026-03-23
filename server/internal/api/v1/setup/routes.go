@@ -1,9 +1,17 @@
 package setup
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
+
+	"codeberg.org/shroff/phylum/server/internal/core"
+	"github.com/gin-gonic/gin"
+)
+
+var errInvalidParams = core.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
 
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/setup")
 
-	group.POST("/validate/db", handleValidateDBRequest)
+	group.POST("/validate_db", handleValidateDBRequest)
+	group.POST("/send_test_mail", handleSendTestEmailRequest)
 }

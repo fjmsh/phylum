@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"codeberg.org/shroff/phylum/server/internal/config"
-	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
 	"github.com/knadh/koanf/providers/structs"
@@ -18,8 +17,6 @@ type dbConfig struct {
 	User     string `json:"user" form:"user" koanf:"user,omitempty"`
 	Password string `json:"password" form:"password" koanf:"password,omitempty"`
 }
-
-var errInvalidParams = core.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
 
 func handleValidateDBRequest(c *gin.Context) {
 	var params dbConfig
@@ -47,8 +44,6 @@ func handleValidateDBRequest(c *gin.Context) {
 	} else if _, err := db.GetSchemaInfo(c.Request.Context(), pool); err != nil {
 		response["success"] = false
 		response["error"] = "DB Query Error: " + err.Error()
-	} else {
 	}
 	c.JSON(http.StatusOK, response)
-
 }

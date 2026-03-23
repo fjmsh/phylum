@@ -148,7 +148,9 @@ func readMailConfig(defaultConfig mail.Config, logger zerolog.Logger) *koanf.Koa
 	if err := cfg.Unmarshal("", &config); err != nil {
 		panic(err)
 	}
-	if err := mail.Initialize(config, logger); err != nil {
+	var err error
+	var mailer mail.Mailer
+	if mailer, err = mail.CreateMailer(config, logger); err != nil {
 		fmt.Println("Unable to connect to the mail server")
 		fmt.Println(err.Error())
 
@@ -162,7 +164,7 @@ func readMailConfig(defaultConfig mail.Config, logger zerolog.Logger) *koanf.Koa
 	if readBool("Do you want to send a test email to validate the config?", true, nil, "", false) {
 		for {
 			addr := readValidString("Recipient Email Address", nil)
-			if err := mail.SendTestEmail(addr); err != nil {
+			if err := mailer.SendTestEmail(addr); err != nil {
 				fmt.Println("Unable to send test email: " + err.Error())
 				if readBool("Try again?", true, nil, "", false) {
 					continue
@@ -352,7 +354,7 @@ func readPBKDF2Config(config pbkdf2.Config) *koanf.Koanf {
 	if err != nil {
 		fatal("failed to create PBKDF: " + err.Error())
 	}
-	kdf.GenerateEncodedHash(src)
+	_, err = kdf.GenerateEncodedHash(src)
 	hashTime := time.Since(start)
 	if err != nil {
 		fatal("failed to generate hash: " + err.Error())
