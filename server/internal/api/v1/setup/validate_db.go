@@ -13,19 +13,16 @@ import (
 type dbConfig struct {
 	Host     string `json:"host" form:"host" koanf:"host,omitempty"`
 	Port     int    `json:"port" form:"port" koanf:"port,omitempty"`
-	DBName   string `json:"db_name" form:"db_name" koanf:"name,omitempty"`
+	DBName   string `json:"name" form:"name" koanf:"name,omitempty"`
 	User     string `json:"user" form:"user" koanf:"user,omitempty"`
 	Password string `json:"password" form:"password" koanf:"password,omitempty"`
 }
 
 func handleValidateDBRequest(c *gin.Context) {
 	var params dbConfig
-	err := c.ShouldBind(&params)
+	err := c.ShouldBindJSON(&params)
 	if err != nil {
-		err = c.BindQuery(&params)
-		if err != nil {
-			panic(errInvalidParams)
-		}
+		panic(errInvalidParams)
 	}
 
 	paramsCfg := koanf.New(".")
