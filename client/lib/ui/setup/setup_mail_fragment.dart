@@ -10,16 +10,15 @@ import 'package:uri/uri.dart';
 
 class SetupMailFragment extends SetupFragment<SetupMailFragment> {
   final String instanceUrl;
-  const SetupMailFragment({super.key, required this.instanceUrl});
+  final MailConfig config;
+
+  const SetupMailFragment({super.key, required this.instanceUrl, required this.config});
 
   @override
   SetupFragmentState<SetupMailFragment> createState() => SetupMailFragmentState();
 }
 
 class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
-  final config = MailConfig();
-  bool configureEmail = true;
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -34,53 +33,59 @@ class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           CheckboxListTile(
-            value: configureEmail,
-            onChanged: (value) => setState(() => configureEmail = value ?? false),
+            value: widget.config.enabled,
+            onChanged: (value) => setState(() => widget.config.enabled = value ?? false),
             title: Text('Configure Email?'),
             subtitle:
                 Text('Email is used for share notifications, password reset, passwordless login, and inviting users'),
           ),
-          if (configureEmail)
-            TextField(
+          if (widget.config.enabled)
+            TextFormField(
               decoration: const InputDecoration(label: Text('SMTP Host'), hint: Text('localhost')),
               autofocus: true,
               autocorrect: false,
               keyboardType: TextInputType.url,
-              onChanged: (value) => config.smtpHost = value,
+              initialValue: widget.config.smtpHost,
+              onChanged: (value) => widget.config.smtpHost = value,
             ),
-          if (configureEmail)
-            TextField(
+          if (widget.config.enabled)
+            TextFormField(
               decoration: const InputDecoration(label: Text('SMTP Port'), hint: Text('587')),
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               keyboardType: TextInputType.number,
-              onChanged: (value) => config.smtpPort = int.tryParse(value) ?? 0,
+              initialValue: widget.config.smtpPort == 0 ? '' : widget.config.smtpPort.toString(),
+              onChanged: (value) => widget.config.smtpPort = int.tryParse(value) ?? 0,
             ),
-          if (configureEmail)
-            TextField(
+          if (widget.config.enabled)
+            TextFormField(
               decoration: const InputDecoration(label: Text('SMTP Username'), hint: Text('phylum@example.com')),
               autocorrect: false,
-              onChanged: (value) => config.smtpUsername = value,
+              initialValue: widget.config.smtpUsername,
+              onChanged: (value) => widget.config.smtpUsername = value,
             ),
-          if (configureEmail)
-            TextField(
+          if (widget.config.enabled)
+            TextFormField(
               decoration: const InputDecoration(label: Text('SMTP Password')),
               autocorrect: false,
               obscureText: true,
-              onChanged: (value) => config.smtpPassword = value,
+              initialValue: widget.config.smtpPassword,
+              onChanged: (value) => widget.config.smtpPassword = value,
             ),
-          if (configureEmail)
-            TextField(
+          if (widget.config.enabled)
+            TextFormField(
               decoration: const InputDecoration(label: Text('From Name'), hint: Text('Phylum Drive')),
               autocorrect: false,
-              onChanged: (value) => config.fromName = value,
+              initialValue: widget.config.fromName,
+              onChanged: (value) => widget.config.fromName = value,
             ),
-          if (configureEmail)
-            TextField(
+          if (widget.config.enabled)
+            TextFormField(
               decoration: const InputDecoration(label: Text('From Email'), hint: Text('phylum@example.com')),
               autocorrect: false,
-              onChanged: (value) => config.fromEmail = value,
+              initialValue: widget.config.fromEmail,
+              onChanged: (value) => widget.config.fromEmail = value,
             ),
-          if (configureEmail) ElevatedButton(onPressed: validateMailConfig, child: Text('Send Test Email'))
+          if (widget.config.enabled) ElevatedButton(onPressed: validateMailConfig, child: Text('Send Test Email'))
         ],
       ),
     );
@@ -96,19 +101,9 @@ class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
     if (sendTo == null || !mounted) {
       return;
     }
-    request.body = jsonEncode({
-      'smtp': {
-        'host': config.smtpHost,
-        'port': config.smtpPort,
-        'username': config.smtpUsername,
-        'password': config.smtpPassword,
-      },
-      'from': {
-        'name': config.fromName,
-        'email': config.fromEmail,
-      },
-      'send_to': sendTo,
-    });
+    final config = widget.config.toMap();
+    config['send_to'] = sendTo;
+    request.body = jsonEncode(config);
     final responseString = await sendRequest(context, 'Checking Email Config', request);
     if (responseString == null || !mounted) return;
     final responseMap = (jsonDecode(responseString) as Map).cast<String, dynamic>();
@@ -132,10 +127,26 @@ class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
 }
 
 class MailConfig {
+  bool enabled = true;
   String smtpHost = "";
   int smtpPort = 0;
   String smtpUsername = "";
   String smtpPassword = "";
   String fromName = "";
   String fromEmail = "";
+
+  Map<String, dynamic> toMap() => enabled
+      ? {
+          'smtp': {
+            'host': smtpHost,
+            'port': smtpPort,
+            'username': smtpUsername,
+            'password': smtpPassword,
+          },
+          'from': {
+            'name': fromName,
+            'email': fromEmail,
+          },
+        }
+      : const {};
 }

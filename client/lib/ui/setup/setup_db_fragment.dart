@@ -10,15 +10,14 @@ import 'package:uri/uri.dart';
 
 class SetupDbFragment extends SetupFragment<SetupDbFragment> {
   final String instanceUrl;
-  const SetupDbFragment({super.key, required this.instanceUrl});
+  final DbConfig config;
+  const SetupDbFragment({super.key, required this.instanceUrl, required this.config});
 
   @override
   SetupFragmentState<SetupDbFragment> createState() => SetupDbFragmentState();
 }
 
 class SetupDbFragmentState extends SetupFragmentState<SetupDbFragment> {
-  final config = DbConfig();
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -32,34 +31,39 @@ class SetupDbFragmentState extends SetupFragmentState<SetupDbFragment> {
             'Database',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
-          TextField(
+          TextFormField(
             decoration: const InputDecoration(label: Text('Host'), hint: Text('localhost')),
             autofocus: true,
             autocorrect: false,
             keyboardType: TextInputType.url,
-            onChanged: (value) => config.host = value,
+            initialValue: widget.config.host,
+            onChanged: (value) => widget.config.host = value,
           ),
-          TextField(
+          TextFormField(
             decoration: const InputDecoration(label: Text('Port'), hint: Text('5432')),
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             keyboardType: TextInputType.number,
-            onChanged: (value) => config.port = int.tryParse(value) ?? 0,
+            initialValue: widget.config.port == 0 ? '' : widget.config.port.toString(),
+            onChanged: (value) => widget.config.port = int.tryParse(value) ?? 0,
           ),
-          TextField(
+          TextFormField(
             decoration: const InputDecoration(label: Text('Database Name'), hint: Text('phylum')),
             autocorrect: false,
-            onChanged: (value) => config.name = value,
+            initialValue: widget.config.name,
+            onChanged: (value) => widget.config.name = value,
           ),
-          TextField(
+          TextFormField(
             decoration: const InputDecoration(label: Text('User'), hint: Text('phylum')),
             autocorrect: false,
-            onChanged: (value) => config.user = value,
+            initialValue: widget.config.user,
+            onChanged: (value) => widget.config.user = value,
           ),
-          TextField(
+          TextFormField(
             decoration: const InputDecoration(label: Text('Password')),
             autocorrect: false,
             obscureText: true,
-            onChanged: (value) => config.password = value,
+            initialValue: widget.config.password,
+            onChanged: (value) => widget.config.password = value,
           ),
           ElevatedButton(onPressed: validateDbConfig, child: Text('Check Settings'))
         ],
@@ -71,13 +75,7 @@ class SetupDbFragmentState extends SetupFragmentState<SetupDbFragment> {
     final builder = UriBuilder.fromUri(Uri.parse(widget.instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/validate_db';
     final request = Request('post', builder.build());
-    request.body = jsonEncode({
-      'host': config.host,
-      'port': config.port,
-      'name': config.name,
-      'user': config.user,
-      'password': config.password,
-    });
+    request.body = jsonEncode(widget.config.toMap());
 
     final responseString = await sendRequest(context, 'Checking Database Config', request);
     if (responseString == null || !mounted) return;
@@ -107,4 +105,12 @@ class DbConfig {
   String name = "";
   String user = "";
   String password = "";
+
+  Map<String, dynamic> toMap() => {
+        'host': host,
+        'port': port,
+        'name': name,
+        'user': user,
+        'password': password,
+      };
 }

@@ -26,7 +26,10 @@ class _SetupPageState extends State<SetupPage> {
   SetupState _currentState = SetupState.database;
 
   final dbFragmentKey = GlobalKey<SetupDbFragmentState>();
+  final DbConfig dbConfig = DbConfig();
+
   final mailFragmentKey = GlobalKey<SetupMailFragmentState>();
+  final MailConfig mailConfig = MailConfig();
 
   @override
   void initState() {
@@ -53,8 +56,8 @@ class _SetupPageState extends State<SetupPage> {
 
   Widget _buildBody(BuildContext context) {
     return switch (_currentState) {
-      SetupState.database => SetupDbFragment(key: dbFragmentKey, instanceUrl: widget.instanceUrl),
-      SetupState.mail => SetupMailFragment(key: mailFragmentKey, instanceUrl: widget.instanceUrl),
+      SetupState.database => SetupDbFragment(key: dbFragmentKey, instanceUrl: widget.instanceUrl, config: dbConfig),
+      SetupState.mail => SetupMailFragment(key: mailFragmentKey, instanceUrl: widget.instanceUrl, config: mailConfig),
       SetupState.auth => throw UnimplementedError(),
       SetupState.user => throw UnimplementedError(),
     };
