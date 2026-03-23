@@ -43,7 +43,7 @@ class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
             decoration: const InputDecoration(label: Text('SMTP Port'), hint: Text('587')),
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             keyboardType: TextInputType.number,
-            onChanged: (value) => config.smtpPort = int.tryParse(value),
+            onChanged: (value) => config.smtpPort = int.tryParse(value) ?? 0,
           ),
           TextField(
             decoration: const InputDecoration(label: Text('SMTP Username'), hint: Text('phylum@example.com')),
@@ -85,7 +85,7 @@ class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
     request.body = jsonEncode({
       'smtp': {
         'host': config.smtpHost,
-        'port': config.smtpPort ?? 0,
+        'port': config.smtpPort,
         'username': config.smtpUsername,
         'password': config.smtpPassword,
       },
@@ -119,7 +119,7 @@ class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
 
 class MailConfig {
   String smtpHost = "";
-  int? smtpPort;
+  int smtpPort = 0;
   String smtpUsername = "";
   String smtpPassword = "";
   String fromName = "";
