@@ -3,6 +3,7 @@ import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/setup/setup_db_fragment.dart';
 import 'package:phylum/ui/setup/setup_fragment.dart';
+import 'package:phylum/ui/setup/setup_mail_fragment.dart';
 import 'package:provider/provider.dart';
 
 enum SetupState {
@@ -25,6 +26,7 @@ class _SetupPageState extends State<SetupPage> {
   SetupState _currentState = SetupState.database;
 
   final dbFragmentKey = GlobalKey<SetupDbFragmentState>();
+  final mailFragmentKey = GlobalKey<SetupMailFragmentState>();
 
   @override
   void initState() {
@@ -52,16 +54,16 @@ class _SetupPageState extends State<SetupPage> {
   Widget _buildBody(BuildContext context) {
     return switch (_currentState) {
       SetupState.database => SetupDbFragment(key: dbFragmentKey, instanceUrl: widget.instanceUrl),
-      SetupState.mail => throw UnimplementedError(),
+      SetupState.mail => SetupMailFragment(key: mailFragmentKey, instanceUrl: widget.instanceUrl),
       SetupState.auth => throw UnimplementedError(),
       SetupState.user => throw UnimplementedError(),
     };
   }
 
   void handleNextPress() {
-    final currentKey = switch (_currentState) {
+    final GlobalKey<SetupFragmentState> currentKey = switch (_currentState) {
       SetupState.database => dbFragmentKey,
-      SetupState.mail => throw UnimplementedError(),
+      SetupState.mail => mailFragmentKey,
       SetupState.auth => throw UnimplementedError(),
       SetupState.user => throw UnimplementedError(),
     };

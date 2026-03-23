@@ -18,6 +18,7 @@ class SetupDbFragment extends SetupFragment<SetupDbFragment> {
 
 class SetupDbFragmentState extends SetupFragmentState<SetupDbFragment> {
   final config = DbConfig();
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -68,7 +69,7 @@ class SetupDbFragmentState extends SetupFragmentState<SetupDbFragment> {
 
   Future<void> validateDbConfig() async {
     final builder = UriBuilder.fromUri(Uri.parse(widget.instanceUrl));
-    builder.path = '${builder.path}/api/v1/setup/validate/db';
+    builder.path = '${builder.path}/api/v1/setup/validate_db';
     final request = MultipartRequest('post', builder.build());
     request.fields['host'] = config.host;
     request.fields['port'] = config.port?.toString() ?? '';

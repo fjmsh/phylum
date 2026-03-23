@@ -1,0 +1,127 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart';
+import 'package:phylum/ui/setup/setup_fragment.dart';
+import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/request.dart';
+import 'package:uri/uri.dart';
+
+class SetupMailFragment extends SetupFragment<SetupMailFragment> {
+  final String instanceUrl;
+  const SetupMailFragment({super.key, required this.instanceUrl});
+
+  @override
+  SetupFragmentState<SetupMailFragment> createState() => SetupMailFragmentState();
+}
+
+class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
+  final config = MailConfig();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 12.0,
+        children: [
+          Text(
+            'Email',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          TextField(
+            decoration: const InputDecoration(label: Text('SMTP Host'), hint: Text('localhost')),
+            autofocus: true,
+            autocorrect: false,
+            keyboardType: TextInputType.url,
+            onChanged: (value) => config.smtpHost = value,
+          ),
+          TextField(
+            decoration: const InputDecoration(label: Text('SMTP Port'), hint: Text('587')),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            keyboardType: TextInputType.number,
+            onChanged: (value) => config.smtpPort = int.tryParse(value),
+          ),
+          TextField(
+            decoration: const InputDecoration(label: Text('SMTP Username'), hint: Text('phylum@example.com')),
+            autocorrect: false,
+            onChanged: (value) => config.smtpUsername = value,
+          ),
+          TextField(
+            decoration: const InputDecoration(label: Text('SMTP Password')),
+            autocorrect: false,
+            obscureText: true,
+            onChanged: (value) => config.smtpPassword = value,
+          ),
+          TextField(
+            decoration: const InputDecoration(label: Text('From Name'), hint: Text('Phylum Drive')),
+            autocorrect: false,
+            onChanged: (value) => config.fromName = value,
+          ),
+          TextField(
+            decoration: const InputDecoration(label: Text('From Email'), hint: Text('phylum@example.com')),
+            autocorrect: false,
+            onChanged: (value) => config.fromEmail = value,
+          ),
+          ElevatedButton(onPressed: validateMailConfig, child: Text('Send Test Email'))
+        ],
+      ),
+    );
+  }
+
+  Future<void> validateMailConfig() async {
+    final builder = UriBuilder.fromUri(Uri.parse(widget.instanceUrl));
+    builder.path = '${builder.path}/api/v1/setup/send_test_mail';
+    final request = Request('post', builder.build());
+
+    final sendTo = await showInputDialog(context,
+        title: 'Sending Test Email', keyboardType: TextInputType.emailAddress, labelText: 'Email Address');
+    if (sendTo == null || !mounted) {
+      return;
+    }
+    request.body = jsonEncode({
+      'smtp': {
+        'host': config.smtpHost,
+        'port': config.smtpPort ?? 0,
+        'username': config.smtpUsername,
+        'password': config.smtpPassword,
+      },
+      'from': {
+        'name': config.fromName,
+        'email': config.fromEmail,
+      },
+      'send_to': sendTo,
+    });
+    final responseString = await sendRequest(context, 'Checking Email Config', request);
+    if (responseString == null || !mounted) return;
+    final responseMap = (jsonDecode(responseString) as Map).cast<String, dynamic>();
+    final overrides = (responseMap["overrides"] as List?)?.cast<String>();
+    final overrideNote = (overrides?.isNotEmpty ?? false)
+        ? "Note: The following settings were overridden by environment variables or command line flags: ${overrides!.join(",")}"
+        : "";
+
+    if (responseMap["success"]) {
+      await showAlertDialog(context, title: 'Test Email Sent', message: overrideNote.isEmpty ? null : overrideNote);
+    } else {
+      await showAlertDialog(context,
+          title: 'Could not send test email', message: "$overrideNote\n\n${responseMap["error"]}");
+    }
+  }
+
+  @override
+  bool handleNextPress() {
+    return true;
+  }
+}
+
+class MailConfig {
+  String smtpHost = "";
+  int? smtpPort;
+  String smtpUsername = "";
+  String smtpPassword = "";
+  String fromName = "";
+  String fromEmail = "";
+}
