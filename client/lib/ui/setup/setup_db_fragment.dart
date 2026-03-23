@@ -43,12 +43,12 @@ class SetupDbFragmentState extends SetupFragmentState<SetupDbFragment> {
             decoration: const InputDecoration(label: Text('Port'), hint: Text('5432')),
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             keyboardType: TextInputType.number,
-            onChanged: (value) => config.port = int.tryParse(value),
+            onChanged: (value) => config.port = int.tryParse(value) ?? 0,
           ),
           TextField(
             decoration: const InputDecoration(label: Text('Database Name'), hint: Text('phylum')),
             autocorrect: false,
-            onChanged: (value) => config.dbName = value,
+            onChanged: (value) => config.name = value,
           ),
           TextField(
             decoration: const InputDecoration(label: Text('User'), hint: Text('phylum')),
@@ -70,12 +70,14 @@ class SetupDbFragmentState extends SetupFragmentState<SetupDbFragment> {
   Future<void> validateDbConfig() async {
     final builder = UriBuilder.fromUri(Uri.parse(widget.instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/validate_db';
-    final request = MultipartRequest('post', builder.build());
-    request.fields['host'] = config.host;
-    request.fields['port'] = config.port?.toString() ?? '';
-    request.fields['db_name'] = config.dbName;
-    request.fields['user'] = config.user;
-    request.fields['password'] = config.password;
+    final request = Request('post', builder.build());
+    request.body = jsonEncode({
+      'host': config.host,
+      'port': config.port,
+      'name': config.name,
+      'user': config.user,
+      'password': config.password,
+    });
 
     final responseString = await sendRequest(context, 'Checking Database Config', request);
     if (responseString == null || !mounted) return;
@@ -101,8 +103,8 @@ class SetupDbFragmentState extends SetupFragmentState<SetupDbFragment> {
 
 class DbConfig {
   String host = "";
-  int? port;
-  String dbName = "";
+  int port = 0;
+  String name = "";
   String user = "";
   String password = "";
 }
