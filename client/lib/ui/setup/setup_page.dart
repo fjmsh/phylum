@@ -5,6 +5,13 @@ import 'package:phylum/ui/setup/setup_db_fragment.dart';
 import 'package:phylum/ui/setup/setup_fragment.dart';
 import 'package:provider/provider.dart';
 
+enum SetupState {
+  database,
+  mail,
+  auth,
+  user;
+}
+
 class SetupPage extends StatefulWidget {
   final String instanceUrl;
 
@@ -15,9 +22,9 @@ class SetupPage extends StatefulWidget {
 }
 
 class _SetupPageState extends State<SetupPage> {
+  SetupState _currentState = SetupState.database;
+
   final dbFragmentKey = GlobalKey<SetupDbFragmentState>();
-  GlobalKey<SetupFragmentState>? currentKey;
-  DbConfig? _dbConfig;
 
   @override
   void initState() {
@@ -29,15 +36,13 @@ class _SetupPageState extends State<SetupPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Instance Setup'),
-        leading: CloseButton(
-          onPressed: () => context.read<PhylumRouterDelegate>().go(const ExplorerRouteHome()),
-        ),
+        leading: _currentState.index == 0
+            ? CloseButton(onPressed: () => context.read<PhylumRouterDelegate>().go(const ExplorerRouteHome()))
+            : BackButton(onPressed: () => setState(() => _currentState = SetupState.values[_currentState.index - 1])),
         actions: [
-          TextButton(
-              onPressed: () {
-                currentKey?.currentState?.handleNextPress();
-              },
-              child: Text('NEXT'))
+          _currentState.index == SetupState.values.length - 1
+              ? TextButton(onPressed: () {}, child: Text('FINISH'))
+              : TextButton(onPressed: handleNextPress, child: Text('NEXT'))
         ],
       ),
       body: _buildBody(context),
@@ -45,13 +50,25 @@ class _SetupPageState extends State<SetupPage> {
   }
 
   Widget _buildBody(BuildContext context) {
-    currentKey = dbFragmentKey;
-    return SetupDbFragment(key: dbFragmentKey);
+    return switch (_currentState) {
+      SetupState.database => SetupDbFragment(key: dbFragmentKey, instanceUrl: widget.instanceUrl),
+      SetupState.mail => throw UnimplementedError(),
+      SetupState.auth => throw UnimplementedError(),
+      SetupState.user => throw UnimplementedError(),
+    };
   }
 
-  void handleDbConfig(DbConfig config) {
-    setState(() {
-      _dbConfig = config;
-    });
+  void handleNextPress() {
+    final currentKey = switch (_currentState) {
+      SetupState.database => dbFragmentKey,
+      SetupState.mail => throw UnimplementedError(),
+      SetupState.auth => throw UnimplementedError(),
+      SetupState.user => throw UnimplementedError(),
+    };
+    if (currentKey.currentState?.handleNextPress() ?? false) {
+      setState(() {
+        _currentState = SetupState.values[_currentState.index + 1];
+      });
+    }
   }
 }

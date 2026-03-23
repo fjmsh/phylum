@@ -8,8 +8,8 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/app/dialog_scaffold.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/ui/login/request.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 

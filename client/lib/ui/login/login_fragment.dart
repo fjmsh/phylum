@@ -8,7 +8,7 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/login/instance_config.dart';
-import 'package:phylum/ui/login/request.dart';
+import 'package:phylum/util/request.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/logging.dart';
 import 'package:provider/provider.dart';
