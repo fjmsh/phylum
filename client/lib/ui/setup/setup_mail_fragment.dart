@@ -18,6 +18,7 @@ class SetupMailFragment extends SetupFragment<SetupMailFragment> {
 
 class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
   final config = MailConfig();
+  bool configureEmail = true;
 
   @override
   Widget build(BuildContext context) {
@@ -32,41 +33,54 @@ class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
             'Email',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
-          TextField(
-            decoration: const InputDecoration(label: Text('SMTP Host'), hint: Text('localhost')),
-            autofocus: true,
-            autocorrect: false,
-            keyboardType: TextInputType.url,
-            onChanged: (value) => config.smtpHost = value,
+          CheckboxListTile(
+            value: configureEmail,
+            onChanged: (value) => setState(() => configureEmail = value ?? false),
+            title: Text('Configure Email?'),
+            subtitle:
+                Text('Email is used for share notifications, password reset, passwordless login, and inviting users'),
           ),
-          TextField(
-            decoration: const InputDecoration(label: Text('SMTP Port'), hint: Text('587')),
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            keyboardType: TextInputType.number,
-            onChanged: (value) => config.smtpPort = int.tryParse(value) ?? 0,
-          ),
-          TextField(
-            decoration: const InputDecoration(label: Text('SMTP Username'), hint: Text('phylum@example.com')),
-            autocorrect: false,
-            onChanged: (value) => config.smtpUsername = value,
-          ),
-          TextField(
-            decoration: const InputDecoration(label: Text('SMTP Password')),
-            autocorrect: false,
-            obscureText: true,
-            onChanged: (value) => config.smtpPassword = value,
-          ),
-          TextField(
-            decoration: const InputDecoration(label: Text('From Name'), hint: Text('Phylum Drive')),
-            autocorrect: false,
-            onChanged: (value) => config.fromName = value,
-          ),
-          TextField(
-            decoration: const InputDecoration(label: Text('From Email'), hint: Text('phylum@example.com')),
-            autocorrect: false,
-            onChanged: (value) => config.fromEmail = value,
-          ),
-          ElevatedButton(onPressed: validateMailConfig, child: Text('Send Test Email'))
+          if (configureEmail)
+            TextField(
+              decoration: const InputDecoration(label: Text('SMTP Host'), hint: Text('localhost')),
+              autofocus: true,
+              autocorrect: false,
+              keyboardType: TextInputType.url,
+              onChanged: (value) => config.smtpHost = value,
+            ),
+          if (configureEmail)
+            TextField(
+              decoration: const InputDecoration(label: Text('SMTP Port'), hint: Text('587')),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              keyboardType: TextInputType.number,
+              onChanged: (value) => config.smtpPort = int.tryParse(value) ?? 0,
+            ),
+          if (configureEmail)
+            TextField(
+              decoration: const InputDecoration(label: Text('SMTP Username'), hint: Text('phylum@example.com')),
+              autocorrect: false,
+              onChanged: (value) => config.smtpUsername = value,
+            ),
+          if (configureEmail)
+            TextField(
+              decoration: const InputDecoration(label: Text('SMTP Password')),
+              autocorrect: false,
+              obscureText: true,
+              onChanged: (value) => config.smtpPassword = value,
+            ),
+          if (configureEmail)
+            TextField(
+              decoration: const InputDecoration(label: Text('From Name'), hint: Text('Phylum Drive')),
+              autocorrect: false,
+              onChanged: (value) => config.fromName = value,
+            ),
+          if (configureEmail)
+            TextField(
+              decoration: const InputDecoration(label: Text('From Email'), hint: Text('phylum@example.com')),
+              autocorrect: false,
+              onChanged: (value) => config.fromEmail = value,
+            ),
+          if (configureEmail) ElevatedButton(onPressed: validateMailConfig, child: Text('Send Test Email'))
         ],
       ),
     );
