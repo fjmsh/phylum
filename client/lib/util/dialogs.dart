@@ -176,6 +176,52 @@ Future<String?> showInputDialog(
   );
 }
 
+Future<int?> showIntSliderDialog(
+  BuildContext context, {
+  bool barrierDismissable = true,
+  String? title,
+  required int value,
+  int min = 0,
+  int max = 1,
+  int divisionsFactor = 1,
+}) {
+  int divisions = ((max - min) ~/ divisionsFactor) + 1;
+  return showDialog(
+    context: context,
+    barrierDismissible: barrierDismissable,
+    builder: (context) => StatefulBuilder(builder: (context, setState) {
+      return AlertDialog(
+        title: (title == null) ? null : Text(title),
+        content: SizedBox(
+          width: 360,
+          height: 120,
+          child: Slider(
+            label: value.toString(),
+            value: value.toDouble(),
+            min: min.toDouble(),
+            max: max.toDouble(),
+            divisions: divisions,
+            onChanged: (double v) {
+              setState(() => value = v.toInt());
+            },
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(null),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(value),
+            child: const Text('OK'),
+          )
+        ],
+      );
+    }),
+  );
+}
+
 Future<T?> showOptionsDialogBuilder<T>(
   BuildContext context,
   List<T> options,

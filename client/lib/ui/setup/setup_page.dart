@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
+import 'package:phylum/ui/setup/setup_auth_fragment.dart';
 import 'package:phylum/ui/setup/setup_db_fragment.dart';
 import 'package:phylum/ui/setup/setup_fragment.dart';
 import 'package:phylum/ui/setup/setup_mail_fragment.dart';
@@ -26,10 +27,13 @@ class _SetupPageState extends State<SetupPage> {
   SetupState _currentState = SetupState.database;
 
   final dbFragmentKey = GlobalKey<SetupDbFragmentState>();
-  final DbConfig dbConfig = DbConfig();
+  final dbConfig = DbConfig();
 
   final mailFragmentKey = GlobalKey<SetupMailFragmentState>();
-  final MailConfig mailConfig = MailConfig();
+  final mailConfig = MailConfig();
+
+  final authFragmentKey = GlobalKey<SetupAuthFragmentState>();
+  AuthConfig authConfig = const AuthConfig.defaults();
 
   @override
   void initState() {
@@ -56,18 +60,35 @@ class _SetupPageState extends State<SetupPage> {
 
   Widget _buildBody(BuildContext context) {
     return switch (_currentState) {
-      SetupState.database => SetupDbFragment(key: dbFragmentKey, instanceUrl: widget.instanceUrl, config: dbConfig),
-      SetupState.mail => SetupMailFragment(key: mailFragmentKey, instanceUrl: widget.instanceUrl, config: mailConfig),
-      SetupState.auth => throw UnimplementedError(),
+      SetupState.database => SetupDbFragment(
+          key: dbFragmentKey,
+          instanceUrl: widget.instanceUrl,
+          config: dbConfig,
+        ),
+      SetupState.mail => SetupMailFragment(
+          key: mailFragmentKey,
+          instanceUrl: widget.instanceUrl,
+          config: mailConfig,
+        ),
+      SetupState.auth => SetupAuthFragment(
+          key: authFragmentKey,
+          instanceUrl: widget.instanceUrl,
+          config: authConfig,
+          mailEnabled: mailConfig.enabled,
+        ),
       SetupState.user => throw UnimplementedError(),
     };
+  }
+
+  void updateAuthConfig(AuthConfig config) {
+    authConfig = config;
   }
 
   void handleNextPress() {
     final GlobalKey<SetupFragmentState> currentKey = switch (_currentState) {
       SetupState.database => dbFragmentKey,
       SetupState.mail => mailFragmentKey,
-      SetupState.auth => throw UnimplementedError(),
+      SetupState.auth => authFragmentKey,
       SetupState.user => throw UnimplementedError(),
     };
     if (currentKey.currentState?.handleNextPress() ?? false) {
