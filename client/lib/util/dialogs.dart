@@ -185,7 +185,7 @@ Future<int?> showIntSliderDialog(
   int max = 1,
   int divisionsFactor = 1,
 }) {
-  int divisions = ((max - min) ~/ divisionsFactor) + 1;
+  int divisions = ((max - min) ~/ divisionsFactor);
   return showDialog(
     context: context,
     barrierDismissible: barrierDismissable,

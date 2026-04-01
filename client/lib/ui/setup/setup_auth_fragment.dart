@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/setup/setup_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
@@ -56,7 +55,7 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
               }
             },
             title: Text('Enable Password Login'),
-            subtitle: config.passwordLoginEnabled ? Text('Backend: ${config.passwordConfig.backend.descriptor}') : null,
+            subtitle: config.passwordLoginEnabled ? Text(config.passwordConfig.toString()) : null,
           ),
           CheckboxListTile(
             value: widget.mailEnabled && config.passwordlessLoginEnabled,
@@ -64,35 +63,6 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
             onChanged: (value) => setState(() => config = config.copyWith(passwordlessLoginEnabled: value ?? false)),
             title: Text('Enable Passwordless Login'),
           ),
-          // TextField(
-          //   decoration: const InputDecoration(label: Text('Host'), hint: Text('localhost')),
-          //   autofocus: true,
-          //   autocorrect: false,
-          //   keyboardType: TextInputType.url,
-          //   onChanged: (value) => config.host = value,
-          // ),
-          // TextField(
-          //   decoration: const InputDecoration(label: Text('Port'), hint: Text('5432')),
-          //   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          //   keyboardType: TextInputType.number,
-          //   onChanged: (value) => config.port = int.tryParse(value) ?? 0,
-          // ),
-          // TextField(
-          //   decoration: const InputDecoration(label: Text('Database Name'), hint: Text('phylum')),
-          //   autocorrect: false,
-          //   onChanged: (value) => config.name = value,
-          // ),
-          // TextField(
-          //   decoration: const InputDecoration(label: Text('User'), hint: Text('phylum')),
-          //   autocorrect: false,
-          //   onChanged: (value) => config.user = value,
-          // ),
-          // TextField(
-          //   decoration: const InputDecoration(label: Text('Password')),
-          //   autocorrect: false,
-          //   obscureText: true,
-          //   onChanged: (value) => config.password = value,
-          // ),
         ],
       ),
     );
@@ -116,7 +86,6 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
       if (kdf == null || !mounted) return null;
       if (kdf == CryptKDF.argon2) {
         final argon2Config = await configureArgon2(config.passwordConfig.cryptConfig.argon2Config);
-        print(argon2Config);
         if (argon2Config == null) {
           return null;
         } else {
@@ -125,6 +94,19 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
             cryptConfig: config.passwordConfig.cryptConfig.copyWith(
               kdf: CryptKDF.argon2,
               argon2Config: argon2Config,
+            ),
+          );
+        }
+      } else if (kdf == CryptKDF.pbkdf2) {
+        final pbkdf2Config = await configurePbkdf2(config.passwordConfig.cryptConfig.pbkdf2Config);
+        if (pbkdf2Config == null) {
+          return null;
+        } else {
+          return config.passwordConfig.copyWith(
+            backend: PasswordBackend.crypt,
+            cryptConfig: config.passwordConfig.cryptConfig.copyWith(
+              kdf: CryptKDF.pbkdf2,
+              pbkdf2Config: pbkdf2Config,
             ),
           );
         }
@@ -147,7 +129,7 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
                   children: [
                     ListTile(
                       title: Text('Memory Factor'),
-                      subtitle: Text('$m - ${pow(2, m + 10).toInt().formatForDisplay()}'),
+                      subtitle: Text('$m - ${pow(2, m + 10).toInt().formatForDisplay(noDecimal: true)}'),
                       onTap: () async {
                         final input =
                             await showIntSliderDialog(context, title: 'Memory Factor (m)', value: m, min: 10, max: 24);
@@ -191,7 +173,59 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
             ));
   }
 
-  Future<Pbkdf2Config?> configurePbkdf2(Pbkdf2Config? config) async {}
+  Future<Pbkdf2Config?> configurePbkdf2(Pbkdf2Config config) async {
+    var iterations = config.iterations;
+    var hash = config.hash;
+    return showDialog<Pbkdf2Config>(
+        context: context,
+        builder: (context) => StatefulBuilder(
+              builder: (context, setState) => AlertDialog(
+                title: Text('PBKDF2 Parameters'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      title: Text('Hash Function'),
+                      subtitle: Text(hash.descriptor),
+                      onTap: () async {
+                        final input = await showOptionsDialog(
+                          context,
+                          [HashFunction.sha1, HashFunction.sha256, HashFunction.sha512],
+                          (item) => ListTile(title: Text(item.descriptor)),
+                        );
+                        if (input != null) {
+                          setState(() => hash = input);
+                        }
+                      },
+                    ),
+                    ListTile(
+                      title: Text('Iterations'),
+                      subtitle: Text(iterations.toString()),
+                      onTap: () async {
+                        final input = await showIntSliderDialog(
+                          context,
+                          title: 'Iterations',
+                          value: iterations,
+                          min: 100000,
+                          max: 1000000,
+                          divisionsFactor: 100000,
+                        );
+                        if (input != null) {
+                          setState(() => iterations = input);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(onPressed: () => Navigator.of(context).pop(null), child: Text('Cancel')),
+                  ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(Pbkdf2Config(hash: hash, iterations: iterations)),
+                      child: Text('OK')),
+                ],
+              ),
+            ));
+  }
 
   @override
   bool handleNextPress() {
@@ -239,7 +273,7 @@ class AuthConfig {
               cryptConfig: CryptConfig(
                 kdf: CryptKDF.argon2,
                 argon2Config: Argon2Config(memory: 16, parallelism: 2, iterations: 4),
-                pbkdf2Config: Pbkdf2Config(iterations: 100000, hash: HashFunction.sha256),
+                pbkdf2Config: Pbkdf2Config(iterations: 500000, hash: HashFunction.sha256),
               ),
               ldapConfig: LdapConfig(
                 url: '',
@@ -309,6 +343,13 @@ class PasswordConfig {
       if (backend == PasswordBackend.ldap) 'ldap': ldapConfig.toMap(),
     };
   }
+
+  String toString() {
+    return switch (backend) {
+      PasswordBackend.crypt => 'DB ($cryptConfig)',
+      PasswordBackend.ldap => 'LDAP ($ldapConfig)',
+    };
+  }
 }
 
 class CryptConfig {
@@ -337,6 +378,13 @@ class CryptConfig {
       if (kdf == CryptKDF.pbkdf2) 'pbkdf2': pbkdf2Config.toMap(),
     };
   }
+
+  String toString() {
+    return switch (kdf) {
+      CryptKDF.argon2 => 'Argon2 $argon2Config',
+      CryptKDF.pbkdf2 => 'PBKDF2 $pbkdf2Config',
+    };
+  }
 }
 
 class Argon2Config {
@@ -353,6 +401,11 @@ class Argon2Config {
       'iterations': iterations,
     };
   }
+
+  @override
+  String toString() {
+    return 'm=$memory,t=$iterations,p=$parallelism';
+  }
 }
 
 class Pbkdf2Config {
@@ -368,6 +421,11 @@ class Pbkdf2Config {
       'hash': hash.name,
       'iterations': iterations,
     };
+  }
+
+  @override
+  String toString() {
+    return 'hash=${hash.descriptor},iterations=$iterations';
   }
 }
 
