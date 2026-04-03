@@ -28,6 +28,8 @@ func Setup(r *gin.RouterGroup) {
 		} else if r, err := f.ResourceByPath(path); err != nil {
 			if errors.Is(err, core.ErrResourceNotFound) {
 				c.AbortWithStatus(http.StatusNotFound)
+			} else if errors.Is(err, core.ErrInsufficientScope) {
+				c.AbortWithStatus(http.StatusUnauthorized)
 			} else {
 				c.AbortWithStatus(http.StatusInternalServerError)
 			}
