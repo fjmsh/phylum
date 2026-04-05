@@ -88,7 +88,7 @@ func handleTestPBKDF2Params(c *gin.Context) {
 	} else {
 		response = gin.H{
 			"success": true,
-			"us":      hashTime.Microseconds(),
+			"time":    hashTime.Microseconds(),
 		}
 	}
 	c.JSON(http.StatusOK, response)
