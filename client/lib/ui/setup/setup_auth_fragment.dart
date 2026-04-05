@@ -66,6 +66,7 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
             enabled: widget.mailEnabled,
             onChanged: (value) => setState(() => config = config.copyWith(passwordlessLoginEnabled: value ?? false)),
             title: Text('Enable Passwordless Login'),
+            subtitle: widget.mailEnabled ? null : Text('Requires email setup'),
           ),
         ],
       ),
@@ -241,15 +242,16 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
                           context,
                           title: 'Iterations',
                           value: iterations,
-                          min: 100000,
-                          max: 1000000,
-                          divisionsFactor: 100000,
+                          min: 200000,
+                          max: 4000000,
+                          divisionsFactor: 200000,
                         );
                         if (input != null) {
                           setState(() => iterations = input);
                         }
                       },
                     ),
+                    ElevatedButton(onPressed: () => testPbkdf2Params(hash, iterations), child: Text('Test Parameters'))
                   ],
                 ),
                 actions: [
@@ -260,6 +262,35 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
                 ],
               ),
             ));
+  }
+
+  Future<void> testPbkdf2Params(HashFunction hash, int iterations) async {
+    final builder = UriBuilder.fromUri(Uri.parse(widget.instanceUrl));
+    builder.path = '${builder.path}/api/v1/setup/auth/test_pbkdf2_params';
+    builder.queryParameters = {
+      "function": hash.name,
+      "iterations": iterations.toString(),
+    };
+    final request = Request('get', builder.build());
+
+    final responseString = await sendRequest(context, 'Testing PBKDF2 Params', request);
+    if (responseString == null || !mounted) return;
+    final responseMap = (jsonDecode(responseString) as Map).cast<String, dynamic>();
+
+    if (responseMap["success"]) {
+      final time = Duration(microseconds: responseMap["time"]);
+      await showAlertDialog(
+        context,
+        title: 'Took ${time.inMilliseconds > 5 ? '${time.inMilliseconds}ms' : '${time.inMicroseconds}us'}',
+        message: time.inMilliseconds < 300
+            ? 'You should aim to take at least 300ms.'
+            : time.inMilliseconds > 1000
+                ? 'That\'s a long time. Consider lowering the number of iterations.'
+                : 'Looks good!',
+      );
+    } else {
+      await showAlertDialog(context, title: 'Could not test PBKDF2 params', message: "${responseMap["error"]}");
+    }
   }
 
   @override
@@ -308,7 +339,7 @@ class AuthConfig {
               cryptConfig: CryptConfig(
                 kdf: CryptKDF.argon2,
                 argon2Config: Argon2Config(memory: 16, parallelism: 2, iterations: 4),
-                pbkdf2Config: Pbkdf2Config(iterations: 500000, hash: HashFunction.sha256),
+                pbkdf2Config: Pbkdf2Config(iterations: 600000, hash: HashFunction.sha256),
               ),
               ldapConfig: LdapConfig(
                 url: '',
