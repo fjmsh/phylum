@@ -59,11 +59,11 @@ func GetClientDetails(providerName string) (string, string, error) {
 	}
 }
 
-func GetIDToken(providerName, authCode, redirectURI, codeVerifier string) (IDToken, error) {
+func GetUserInfo(providerName, authCode, redirectURI, codeVerifier string) (UserInfo, error) {
 	if c, ok := clients[providerName]; !ok {
-		return IDToken{}, errors.New("OpenID provider not registered: " + providerName)
+		return UserInfo{}, errors.New("OpenID provider not registered: " + providerName)
 	} else if config, err := getProviderConfig(c.IssuerURL); err != nil {
-		return IDToken{}, err
+		return UserInfo{}, err
 	} else {
 		data := url.Values{}
 		data.Set("grant_type", "authorization_code")
@@ -71,49 +71,86 @@ func GetIDToken(providerName, authCode, redirectURI, codeVerifier string) (IDTok
 		data.Set("redirect_uri", redirectURI)
 		data.Set("code_verifier", codeVerifier)
 		if req, err := http.NewRequest("POST", config.TokenEndpoint, strings.NewReader(data.Encode())); err != nil {
-			return IDToken{}, errors.New("failed to create token request: " + err.Error())
+			return UserInfo{}, errors.New("failed to create token request: " + err.Error())
 		} else {
 			credentials := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", c.ClientID, c.ClientSecret)))
 			req.Header.Add("Authorization", fmt.Sprintf("Basic %s", credentials))
 			req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 			if res, err := http.DefaultClient.Do(req); err != nil {
-				return IDToken{}, errors.New("failed to get token response: " + err.Error())
+				return UserInfo{}, errors.New("failed to get token response: " + err.Error())
 			} else if res.StatusCode != http.StatusOK {
-				return IDToken{}, fmt.Errorf("id token request failed with status %d (%s)", res.StatusCode, res.Status)
+				return UserInfo{}, fmt.Errorf("token request failed with status %d (%s)", res.StatusCode, res.Status)
 			} else {
-				idToken, err := extractIDToken(res)
-				if err == nil && !idToken.EmailVerified && !c.AllowUnverifiedEmails {
-					err = errors.New("email not verified with IdP")
+				if accessToken, userInfo, err := parseTokenResponse(res); err != nil {
+					return UserInfo{}, errors.New("failed to parse token response: " + err.Error())
+				} else {
+					if userInfo.Email == "" {
+						if userInfo, err = fetchUserinfo(config, accessToken); err != nil {
+							return userInfo, errors.New("failed to fetch user info: " + err.Error())
+						}
+					}
+					if !userInfo.EmailVerified && !c.AllowUnverifiedEmails {
+						err = errors.New("email not verified with IdP")
+					}
+					return userInfo, err
 				}
-				return idToken, err
 			}
 		}
 	}
 }
 
-func extractIDToken(res *http.Response) (idToken IDToken, err error) {
+func parseTokenResponse(res *http.Response) (string, UserInfo, error) {
 	var response tokenResponse
+	var userInfo UserInfo
 	defer res.Body.Close()
 	if bodyBytes, err := io.ReadAll(res.Body); err != nil {
-		return idToken, errors.New("failed to read body: " + err.Error())
+		return "", userInfo, errors.New("failed to read body: " + err.Error())
 	} else if err = json.Unmarshal(bodyBytes, &response); err != nil {
-		return idToken, errors.New("failed to read id token from body: " + err.Error())
+		return "", userInfo, errors.New("failed to read id token from body: " + err.Error())
 	} else if parts := strings.Split(response.IDToken, "."); len(parts) != 3 {
-		return idToken, errors.New("id token is not JWT")
+		return response.AccessToken, userInfo, errors.New("id token is not JWT")
 	} else if jsonToken, err := base64.RawURLEncoding.DecodeString(parts[1]); err != nil {
-		return idToken, errors.New("failed to decode id token: " + err.Error())
-	} else if err := json.Unmarshal(jsonToken, &idToken); err != nil {
-		return idToken, errors.New("failed to parse id token: " + err.Error())
+		return response.AccessToken, userInfo, errors.New("failed to decode id token: " + err.Error())
+	} else if err := json.Unmarshal(jsonToken, &userInfo); err != nil {
+		return response.AccessToken, userInfo, errors.New("failed to parse id token: " + err.Error())
 	} else {
-		return idToken, nil
+		return response.AccessToken, userInfo, nil
+	}
+}
+
+func fetchUserinfo(config *ProviderConfig, accessToken string) (UserInfo, error) {
+	if req, err := http.NewRequest("GET", config.UserinfoEndpoint, nil); err != nil {
+		return UserInfo{}, errors.New("failed to create userinfo request: " + err.Error())
+	} else {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+		if res, err := http.DefaultClient.Do(req); err != nil {
+			return UserInfo{}, errors.New("failed to get userinfo response: " + err.Error())
+		} else if res.StatusCode != http.StatusOK {
+			return UserInfo{}, fmt.Errorf("userinfo request failed with status %d (%s)", res.StatusCode, res.Status)
+		} else {
+			return parseUserinfoResponse(res)
+		}
+	}
+}
+
+func parseUserinfoResponse(res *http.Response) (UserInfo, error) {
+	var userInfo UserInfo
+	defer res.Body.Close()
+	if bodyBytes, err := io.ReadAll(res.Body); err != nil {
+		return userInfo, errors.New("failed to read body: " + err.Error())
+	} else if err = json.Unmarshal(bodyBytes, &userInfo); err != nil {
+		return userInfo, errors.New("failed to read id token from body: " + err.Error())
+	} else {
+		return userInfo, nil
 	}
 }
 
 type tokenResponse struct {
-	IDToken string `json:"id_token"`
+	AccessToken string `json:"access_token"`
+	IDToken     string `json:"id_token"`
 }
 
-type IDToken struct {
+type UserInfo struct {
 	Email         string `json:"email"`
 	EmailVerified bool   `json:"email_verified"`
 	Name          string `json:"name"`
