@@ -20,6 +20,7 @@ type cachedProviderConfig struct {
 
 type ProviderConfig struct {
 	AuthorizationEndpoint string `json:"authorization_endpoint"`
+	UserinfoEndpoint      string `json:"userinfo_endpoint"`
 	TokenEndpoint         string `json:"token_endpoint"`
 }
 

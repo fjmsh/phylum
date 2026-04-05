@@ -96,7 +96,7 @@ func OpenIDValidateAuthCode(d db.Handler, state, authCode, redirectURI string) (
 			err = ErrTokenInvalid
 		}
 		return OpenIDClientNone, 0, err
-	} else if idToken, err := openid.GetIDToken(providerName, authCode, redirectURI, codeVerifier); err != nil {
+	} else if idToken, err := openid.GetUserInfo(providerName, authCode, redirectURI, codeVerifier); err != nil {
 		return OpenIDClientNone, 0, err
 	} else {
 		email := strings.ToLower(idToken.Email)
