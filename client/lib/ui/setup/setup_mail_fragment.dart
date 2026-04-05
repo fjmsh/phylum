@@ -93,7 +93,7 @@ class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
 
   Future<void> validateMailConfig() async {
     final builder = UriBuilder.fromUri(Uri.parse(widget.instanceUrl));
-    builder.path = '${builder.path}/api/v1/setup/send_test_mail';
+    builder.path = '${builder.path}/api/v1/setup/mail/test';
     final request = Request('post', builder.build());
 
     final sendTo = await showInputDialog(context,

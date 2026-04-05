@@ -73,7 +73,7 @@ class SetupDbFragmentState extends SetupFragmentState<SetupDbFragment> {
 
   Future<void> validateDbConfig() async {
     final builder = UriBuilder.fromUri(Uri.parse(widget.instanceUrl));
-    builder.path = '${builder.path}/api/v1/setup/validate_db';
+    builder.path = '${builder.path}/api/v1/setup/db/validate';
     final request = Request('post', builder.build());
     request.body = jsonEncode(widget.config.toMap());
 
