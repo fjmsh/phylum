@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:phylum/ui/setup/setup_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
+import 'package:phylum/util/request.dart';
+import 'package:uri/uri.dart';
 
 class SetupAuthFragment extends SetupFragment<SetupAuthFragment> {
   final String instanceUrl;
@@ -160,6 +164,7 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
                         }
                       },
                     ),
+                    ElevatedButton(onPressed: () => testArgon2Params(m, t, p), child: Text('Test Parameters'))
                   ],
                 ),
                 actions: [
@@ -171,6 +176,36 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
                 ],
               ),
             ));
+  }
+
+  Future<void> testArgon2Params(int memory, int iterations, int parallelism) async {
+    final builder = UriBuilder.fromUri(Uri.parse(widget.instanceUrl));
+    builder.path = '${builder.path}/api/v1/setup/auth/test_argon2_params';
+    builder.queryParameters = {
+      "memory": memory.toString(),
+      "iterations": iterations.toString(),
+      "parallelism": parallelism.toString(),
+    };
+    final request = Request('get', builder.build());
+
+    final responseString = await sendRequest(context, 'Testing Argon2 Params', request);
+    if (responseString == null || !mounted) return;
+    final responseMap = (jsonDecode(responseString) as Map).cast<String, dynamic>();
+
+    if (responseMap["success"]) {
+      final time = Duration(microseconds: responseMap["time"]);
+      await showAlertDialog(
+        context,
+        title: 'Took ${time.inMilliseconds > 5 ? '${time.inMilliseconds}ms' : '${time.inMicroseconds}us'}',
+        message: time.inMilliseconds < 300
+            ? 'You should aim to take at least 300ms.'
+            : time.inMilliseconds > 1000
+                ? 'That\'s a long time. Consider lowering the number of iterations.'
+                : 'Looks good!',
+      );
+    } else {
+      await showAlertDialog(context, title: 'Could not test argon2 params', message: "${responseMap["error"]}");
+    }
   }
 
   Future<Pbkdf2Config?> configurePbkdf2(Pbkdf2Config config) async {
