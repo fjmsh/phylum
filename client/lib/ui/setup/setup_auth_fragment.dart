@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/setup/setup_fragment.dart';
@@ -68,9 +69,100 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
             title: Text('Enable Passwordless Login'),
             subtitle: widget.mailEnabled ? null : Text('Requires email setup'),
           ),
+          ListTile(
+            dense: true,
+            title: Text('OpenID', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+          ...config.openIdConfigs.mapIndexed((i, cfg) => ListTile(
+                title: Text(cfg.name),
+                subtitle: Text(cfg.issuerUrl),
+                trailing: IconButton(
+                    onPressed: () {
+                      setState(() => config = config.copyWith(
+                          openIdConfigs:
+                              config.openIdConfigs.whereNotIndexed((idx, _) => idx == i).toList(growable: false)));
+                    },
+                    icon: Icon(Icons.delete)),
+              )),
+          TextButton.icon(
+            onPressed: () async {
+              var openIDConfig = await createOpenIdConfig();
+              if (openIDConfig == null || !mounted) return;
+              final re = RegExp(r'[^a-z0-9]+');
+              final id = openIDConfig.name.toLowerCase().replaceAll(re, '-');
+              openIDConfig = openIDConfig.copyWith(id: id);
+              setState(() => config =
+                  config.copyWith(openIdConfigs: [...config.openIdConfigs, openIDConfig!].toList(growable: false)));
+            },
+            label: Text('Add OpenID Client Config'),
+            icon: Icon(Icons.add),
+          ),
         ],
       ),
     );
+  }
+
+  Future<OpenIDConfig?> createOpenIdConfig() async {
+    String name = '';
+    String issuerUrl = '';
+    String clientId = '';
+    String clientSecret = '';
+    bool allowUnverifiedEmails = false;
+    return showDialog<OpenIDConfig>(
+        context: context,
+        builder: (context) => StatefulBuilder(
+              builder: (context, setState) => AlertDialog(
+                title: Text('OpenID Client Configuration'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      decoration: const InputDecoration(label: Text('Name'), hint: Text('Authelia')),
+                      autofocus: true,
+                      autocorrect: false,
+                      textCapitalization: TextCapitalization.words,
+                      initialValue: name,
+                      onChanged: (value) => setState(() => name = value),
+                    ),
+                    TextFormField(
+                      decoration:
+                          const InputDecoration(label: Text('Issuer URL'), hint: Text('https://auth.example.com')),
+                      keyboardType: TextInputType.url,
+                      initialValue: issuerUrl,
+                      onChanged: (value) => setState(() => issuerUrl = value),
+                    ),
+                    TextFormField(
+                      decoration: const InputDecoration(label: Text('Client ID'), hint: Text('phylum')),
+                      initialValue: clientId,
+                      onChanged: (value) => setState(() => clientId = value),
+                    ),
+                    TextFormField(
+                      decoration: const InputDecoration(label: Text('Client Secret')),
+                      obscureText: true,
+                      initialValue: clientSecret,
+                      onChanged: (value) => setState(() => clientSecret = value),
+                    ),
+                    CheckboxListTile(
+                      value: allowUnverifiedEmails,
+                      title: Text('Allow Unverified Emails'),
+                      subtitle: Text('Use with caution'),
+                      onChanged: (value) => setState(() => allowUnverifiedEmails = value ?? false),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(onPressed: () => Navigator.of(context).pop(null), child: Text('Cancel')),
+                  ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(OpenIDConfig(
+                          name: name,
+                          issuerUrl: issuerUrl,
+                          clientId: clientId,
+                          clientSecret: clientSecret,
+                          allowUnverifiedEmails: allowUnverifiedEmails)),
+                      child: Text('OK')),
+                ],
+              ),
+            ));
   }
 
   Future<PasswordConfig?> configurePasswordAuth() async {
@@ -323,46 +415,52 @@ class AuthConfig {
   final bool passwordLoginEnabled;
   final bool passwordlessLoginEnabled;
   final PasswordConfig passwordConfig;
+  final List<OpenIDConfig> openIdConfigs;
 
   const AuthConfig({
     required this.passwordLoginEnabled,
     required this.passwordlessLoginEnabled,
     required this.passwordConfig,
+    required this.openIdConfigs,
   });
 
   const AuthConfig.defaults()
       : this(
-            passwordLoginEnabled: false,
-            passwordlessLoginEnabled: false,
-            passwordConfig: const PasswordConfig(
-              backend: PasswordBackend.crypt,
-              cryptConfig: CryptConfig(
-                kdf: CryptKDF.argon2,
-                argon2Config: Argon2Config(memory: 16, parallelism: 2, iterations: 4),
-                pbkdf2Config: Pbkdf2Config(iterations: 600000, hash: HashFunction.sha256),
-              ),
-              ldapConfig: LdapConfig(
-                url: '',
-                startTls: false,
-                useDnTemplate: true,
-                dnTemplate: '',
-                bindDn: '',
-                bindDnPassword: '',
-                baseDn: '',
-                filterTemplate: '',
-              ),
-              resetEnabled: true,
-            ));
+          passwordLoginEnabled: false,
+          passwordlessLoginEnabled: false,
+          passwordConfig: const PasswordConfig(
+            backend: PasswordBackend.crypt,
+            cryptConfig: CryptConfig(
+              kdf: CryptKDF.argon2,
+              argon2Config: Argon2Config(memory: 16, parallelism: 2, iterations: 4),
+              pbkdf2Config: Pbkdf2Config(iterations: 600000, hash: HashFunction.sha256),
+            ),
+            ldapConfig: LdapConfig(
+              url: '',
+              startTls: false,
+              useDnTemplate: true,
+              dnTemplate: '',
+              bindDn: '',
+              bindDnPassword: '',
+              baseDn: '',
+              filterTemplate: '',
+            ),
+            resetEnabled: true,
+          ),
+          openIdConfigs: const [],
+        );
 
   AuthConfig copyWith({
     bool? passwordLoginEnabled,
     bool? passwordlessLoginEnabled,
     PasswordConfig? passwordConfig,
+    List<OpenIDConfig>? openIdConfigs,
   }) {
     return AuthConfig(
       passwordLoginEnabled: passwordLoginEnabled ?? this.passwordLoginEnabled,
       passwordlessLoginEnabled: passwordlessLoginEnabled ?? this.passwordlessLoginEnabled,
       passwordConfig: passwordConfig ?? this.passwordConfig,
+      openIdConfigs: openIdConfigs ?? this.openIdConfigs,
     );
   }
 
@@ -373,6 +471,38 @@ class AuthConfig {
       'openid': const {},
     };
   }
+}
+
+class OpenIDConfig {
+  final String name;
+  final String issuerUrl;
+  final String clientId;
+  final String clientSecret;
+  final bool allowUnverifiedEmails;
+
+  OpenIDConfig({
+    required this.name,
+    required this.issuerUrl,
+    required this.clientId,
+    required this.clientSecret,
+    required this.allowUnverifiedEmails,
+  });
+
+  OpenIDConfig copyWith({
+    String? id,
+    String? name,
+    String? issuerUrl,
+    String? clientId,
+    String? clientSecret,
+    bool? allowUnverifiedEmails,
+  }) =>
+      OpenIDConfig(
+        name: name ?? this.name,
+        issuerUrl: issuerUrl ?? this.issuerUrl,
+        clientId: clientId ?? this.clientId,
+        clientSecret: clientSecret ?? this.clientSecret,
+        allowUnverifiedEmails: allowUnverifiedEmails ?? this.allowUnverifiedEmails,
+      );
 }
 
 class PasswordConfig {
@@ -410,6 +540,7 @@ class PasswordConfig {
     };
   }
 
+  @override
   String toString() {
     return switch (backend) {
       PasswordBackend.crypt => 'DB ($cryptConfig)',
