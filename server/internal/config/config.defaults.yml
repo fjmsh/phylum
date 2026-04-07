@@ -66,16 +66,17 @@ auth:
       symbols: 0
     ldap:
       debug: false
-      url: ldap://ldap.example.com:1389
+      url: # ldap://ldap.example.com:1389
       starttls: false
       connect_timeout: 30s
       request_timeout: 30s
-      # dn_template: cn={email},ou=people,dc=example,dc=com
-      # search:
-      #   bind_dn: cn=phylumbind,ou=people,dc=example,dc=com
-      #   bind_password: ldap_password_for_phylumbind_user
-      #   base_dn: dc=example,dc=com
-      #   filter_template: (mail={email})
+      use_filter: false
+      dn_template: # uid={email},ou=people,dc=example,dc=com
+      filter:
+        bind_dn: # uid=phylumbind,ou=people,dc=example,dc=com
+        bind_password: # ldap_password_for_phylumbind
+        base_dn: # dc=example,dc=com
+        template: # (mail={email})
   # openid:
   #   clients:
   #     authelia:           # arbitrary

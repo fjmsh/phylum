@@ -16,20 +16,21 @@ import (
 )
 
 type Config struct {
-	Debug          bool           `koanf:"debug"`
-	URL            string         `koanf:"url"`
-	StartTLS       bool           `koanf:"starttls"`
-	ConnectTimeout string         `koanf:"connect_timeout"`
-	RequestTimeout string         `koanf:"request_timeout"`
-	DNTemplate     string         `koanf:"dn_template"`
-	DNLookup       DNLookupConfig `koanf:"dn_lookup"`
+	Debug          bool         `koanf:"debug"`
+	URL            string       `koanf:"url"`
+	StartTLS       bool         `koanf:"starttls"`
+	ConnectTimeout string       `koanf:"connect_timeout"`
+	RequestTimeout string       `koanf:"request_timeout"`
+	UseFilter      bool         `koanf:"use_filter"`
+	DNTemplate     string       `koanf:"dn_template"`
+	Filter         FilterConfig `koanf:"filter"`
 }
 
-type DNLookupConfig struct {
-	BindDN         string `koanf:"bind_dn"`
-	BindPassword   string `koanf:"bind_password"`
-	BaseDN         string `koanf:"base_dn"`
-	FilterTemplate string `koanf:"filter_template"`
+type FilterConfig struct {
+	BindDN       string `koanf:"bind_dn"`
+	BindPassword string `koanf:"bind_password"`
+	BaseDN       string `koanf:"base_dn"`
+	Template     string `koanf:"template"`
 }
 
 type Auth struct {
@@ -42,7 +43,7 @@ type Auth struct {
 	connectTimeout time.Duration
 	readTimeout    time.Duration
 	dnTemplate     string
-	search         DNLookupConfig
+	search         FilterConfig
 }
 
 var a Auth
@@ -54,16 +55,19 @@ func NewAuth(cfg Config, logger zerolog.Logger) (*Auth, error) {
 	}
 
 	info := a.logger.Debug()
-	if cfg.DNTemplate == "" {
-		if cfg.DNLookup.BaseDN == "" {
-			return nil, errors.New("base DN not set")
+	if cfg.UseFilter {
+		if cfg.Filter.BaseDN == "" {
+			return nil, errors.New("base DN not configured")
 		}
-		if cfg.DNLookup.FilterTemplate == "" {
-			return nil, errors.New("filter template not set")
+		if cfg.Filter.Template == "" {
+			return nil, errors.New("filter template not configured")
 		}
-		info = info.Str("base_dn", cfg.DNLookup.BaseDN)
-		info = info.Str("filter_template", cfg.DNLookup.FilterTemplate)
+		info = info.Str("base_dn", cfg.Filter.BaseDN)
+		info = info.Str("filter_template", cfg.Filter.Template)
 	} else {
+		if cfg.DNTemplate == "" {
+			return nil, errors.New("DN template not configured")
+		}
 		info = info.Str("dn_template", cfg.DNTemplate)
 	}
 	info.Msg("Using ldap auth")
@@ -92,7 +96,7 @@ func NewAuth(cfg Config, logger zerolog.Logger) (*Auth, error) {
 		a.readTimeout = d
 	}
 	a.dnTemplate = cfg.DNTemplate
-	a.search = cfg.DNLookup
+	a.search = cfg.Filter
 
 	var err error
 	a.conn, err = a.newConn()
@@ -151,7 +155,7 @@ func (a *Auth) VerifyUserPassword(_ db.Handler, email, password string) (bool, e
 		req := ldap.NewSearchRequest(
 			a.search.BaseDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases,
 			2, 0, false,
-			strings.ReplaceAll(a.search.FilterTemplate, "{email}", email),
+			strings.ReplaceAll(a.search.Template, "{email}", email),
 			[]string{"dn"}, nil)
 		res, err := a.conn.Search(req)
 
