@@ -108,6 +108,7 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
     String clientId = '';
     String clientSecret = '';
     bool allowUnverifiedEmails = false;
+    bool autoCreateUsers = false;
     return showDialog<OpenIDConfig>(
         context: context,
         builder: (context) => StatefulBuilder(
@@ -148,17 +149,25 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
                       subtitle: Text('Use with caution'),
                       onChanged: (value) => setState(() => allowUnverifiedEmails = value ?? false),
                     ),
+                    CheckboxListTile(
+                      value: autoCreateUsers,
+                      title: Text('Automatically Create Users'),
+                      subtitle: Text('Use with caution with public providers'),
+                      onChanged: (value) => setState(() => autoCreateUsers = value ?? false),
+                    ),
                   ],
                 ),
                 actions: [
                   TextButton(onPressed: () => Navigator.of(context).pop(null), child: Text('Cancel')),
                   ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(OpenIDConfig(
-                          name: name,
-                          issuerUrl: issuerUrl,
-                          clientId: clientId,
-                          clientSecret: clientSecret,
-                          allowUnverifiedEmails: allowUnverifiedEmails)),
+                            name: name,
+                            issuerUrl: issuerUrl,
+                            clientId: clientId,
+                            clientSecret: clientSecret,
+                            allowUnverifiedEmails: allowUnverifiedEmails,
+                            autoCreateUsers: autoCreateUsers,
+                          )),
                       child: Text('OK')),
                 ],
               ),
@@ -222,7 +231,8 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
   Future<LdapConfig?> configureLdap(LdapConfig config) async {
     String url = config.url;
     bool starttls = config.starttls;
-    bool useTemplate = config.useTemplate;
+    bool autoCreateUsers = config.useFilter;
+    bool useFilter = config.useFilter;
     String dnTemplate = config.dnTemplate;
     String bindDn = config.bindDn;
     String bindPassword = config.bindDn;
@@ -249,11 +259,16 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
                       onChanged: (value) => setState(() => starttls = value ?? false),
                     ),
                     CheckboxListTile(
-                      value: useTemplate,
-                      title: Text('Use Template'),
-                      onChanged: (value) => setState(() => useTemplate = value ?? false),
+                      value: autoCreateUsers,
+                      title: Text('Automatically Create Users'),
+                      onChanged: (value) => setState(() => autoCreateUsers = value ?? false),
                     ),
-                    if (useTemplate)
+                    CheckboxListTile(
+                      value: useFilter,
+                      title: Text('Use Filter'),
+                      onChanged: (value) => setState(() => useFilter = value ?? false),
+                    ),
+                    if (useFilter)
                       TextFormField(
                         decoration: const InputDecoration(
                             label: Text('DN Template'), hint: Text('uid={email},ou=people,dc=example,dc=com')),
@@ -302,7 +317,8 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
                       onPressed: () => Navigator.of(context).pop(LdapConfig(
                             url: url,
                             starttls: starttls,
-                            useTemplate: useTemplate,
+                            autoCreateUsers: autoCreateUsers,
+                            useFilter: useFilter,
                             dnTemplate: dnTemplate,
                             bindDn: bindDn,
                             bindPassword: bindPassword,
@@ -541,7 +557,8 @@ class AuthConfig {
             ldapConfig: LdapConfig(
               url: '',
               starttls: true,
-              useTemplate: true,
+              autoCreateUsers: false,
+              useFilter: false,
               dnTemplate: '',
               bindDn: '',
               bindPassword: '',
@@ -582,6 +599,7 @@ class OpenIDConfig {
   final String clientId;
   final String clientSecret;
   final bool allowUnverifiedEmails;
+  final bool autoCreateUsers;
 
   OpenIDConfig({
     required this.name,
@@ -589,6 +607,7 @@ class OpenIDConfig {
     required this.clientId,
     required this.clientSecret,
     required this.allowUnverifiedEmails,
+    required this.autoCreateUsers,
   });
 
   OpenIDConfig copyWith({
@@ -598,6 +617,7 @@ class OpenIDConfig {
     String? clientId,
     String? clientSecret,
     bool? allowUnverifiedEmails,
+    bool? autoCreateUsers,
   }) =>
       OpenIDConfig(
         name: name ?? this.name,
@@ -605,6 +625,7 @@ class OpenIDConfig {
         clientId: clientId ?? this.clientId,
         clientSecret: clientSecret ?? this.clientSecret,
         allowUnverifiedEmails: allowUnverifiedEmails ?? this.allowUnverifiedEmails,
+        autoCreateUsers: autoCreateUsers ?? this.autoCreateUsers,
       );
 }
 
@@ -743,7 +764,8 @@ enum HashFunction {
 class LdapConfig {
   final String url;
   final bool starttls;
-  final bool useTemplate;
+  final bool autoCreateUsers;
+  final bool useFilter;
   final String dnTemplate;
   final String bindDn;
   final String bindPassword;
@@ -753,7 +775,8 @@ class LdapConfig {
   const LdapConfig({
     required this.url,
     required this.starttls,
-    required this.useTemplate,
+    required this.autoCreateUsers,
+    required this.useFilter,
     required this.dnTemplate,
     required this.bindDn,
     required this.bindPassword,
@@ -762,17 +785,12 @@ class LdapConfig {
   });
 
   Map<String, dynamic> toMap() {
-    if (useTemplate) {
-      return {
-        'url': url,
-        'starttls': starttls,
-        'dn_template': dnTemplate,
-      };
-    }
     return {
       'url': url,
       'starttls': starttls,
-      'dn_template': '',
+      'auto_create_users': autoCreateUsers,
+      'use_filter': useFilter,
+      'dn_template': dnTemplate,
       'bind_dn': bindDn,
       'bind_password': bindPassword,
       'base_dn': baseDn,
