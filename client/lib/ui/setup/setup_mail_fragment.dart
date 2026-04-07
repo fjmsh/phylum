@@ -127,7 +127,7 @@ class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
 }
 
 class MailConfig {
-  bool enabled = true;
+  bool enabled = false;
   String smtpHost = "";
   int smtpPort = 0;
   String smtpUsername = "";

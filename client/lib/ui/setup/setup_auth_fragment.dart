@@ -208,8 +208,111 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
           );
         }
       }
-    } else if (backend == PasswordBackend.ldap) {}
+    } else if (backend == PasswordBackend.ldap) {
+      final ldapConfig = await configureLdap(config.passwordConfig.ldapConfig);
+      if (ldapConfig == null) {
+        return null;
+      } else {
+        return config.passwordConfig.copyWith(ldapConfig: ldapConfig);
+      }
+    }
     return null;
+  }
+
+  Future<LdapConfig?> configureLdap(LdapConfig config) async {
+    String url = config.url;
+    bool starttls = config.starttls;
+    bool useTemplate = config.useTemplate;
+    String dnTemplate = config.dnTemplate;
+    String bindDn = config.bindDn;
+    String bindPassword = config.bindDn;
+    String baseDn = config.baseDn;
+    String filterTemplate = config.filterTemplate;
+    return showDialog<LdapConfig>(
+        context: context,
+        builder: (context) => StatefulBuilder(
+              builder: (context, setState) => AlertDialog(
+                title: Text('LDAP Configuration'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      decoration: const InputDecoration(
+                          label: Text('LDAP Server URL'), hint: Text('ldap://ldap.example.com:389')),
+                      keyboardType: TextInputType.url,
+                      initialValue: url,
+                      onChanged: (value) => setState(() => url = value),
+                    ),
+                    CheckboxListTile(
+                      value: starttls,
+                      title: Text('Use STARTTLS'),
+                      onChanged: (value) => setState(() => starttls = value ?? false),
+                    ),
+                    CheckboxListTile(
+                      value: useTemplate,
+                      title: Text('Use Template'),
+                      onChanged: (value) => setState(() => useTemplate = value ?? false),
+                    ),
+                    if (useTemplate)
+                      TextFormField(
+                        decoration: const InputDecoration(
+                            label: Text('DN Template'), hint: Text('uid={email},ou=people,dc=example,dc=com')),
+                        initialValue: dnTemplate,
+                        key: ValueKey('dn_template'),
+                        onChanged: (value) => setState(() => dnTemplate = value),
+                      )
+                    else
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextFormField(
+                            decoration: const InputDecoration(
+                                label: Text('Bind DN'), hint: Text('uid=phylum,ou=people,dc=example,dc=com')),
+                            initialValue: bindDn,
+                            key: ValueKey('bind_dn'),
+                            onChanged: (value) => setState(() => bindDn = value),
+                          ),
+                          TextFormField(
+                            decoration: const InputDecoration(label: Text('Bind Password')),
+                            initialValue: bindPassword,
+                            obscureText: true,
+                            key: ValueKey('bind_password'),
+                            onChanged: (value) => setState(() => bindPassword = value),
+                          ),
+                          TextFormField(
+                            decoration: const InputDecoration(label: Text('Base DN'), hint: Text('dc=example,dc=com')),
+                            initialValue: bindDn,
+                            key: ValueKey('base_dn'),
+                            onChanged: (value) => setState(() => baseDn = value),
+                          ),
+                          TextFormField(
+                            decoration:
+                                const InputDecoration(label: Text('Filter Template'), hint: Text('(mail={email})')),
+                            initialValue: filterTemplate,
+                            key: ValueKey('filter_template'),
+                            onChanged: (value) => setState(() => filterTemplate = value),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+                actions: [
+                  TextButton(onPressed: () => Navigator.of(context).pop(null), child: Text('Cancel')),
+                  ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(LdapConfig(
+                            url: url,
+                            starttls: starttls,
+                            useTemplate: useTemplate,
+                            dnTemplate: dnTemplate,
+                            bindDn: bindDn,
+                            bindPassword: bindPassword,
+                            baseDn: baseDn,
+                            filterTemplate: filterTemplate,
+                          )),
+                      child: Text('OK')),
+                ],
+              ),
+            ));
   }
 
   Future<Argon2Config?> configureArgon2(Argon2Config config) async {
@@ -437,13 +540,13 @@ class AuthConfig {
             ),
             ldapConfig: LdapConfig(
               url: '',
-              startTls: false,
-              useDnTemplate: true,
+              starttls: true,
+              useTemplate: true,
               dnTemplate: '',
               bindDn: '',
-              bindDnPassword: '',
+              bindPassword: '',
               baseDn: '',
-              filterTemplate: '',
+              filterTemplate: '(mail={email})',
             ),
             resetEnabled: true,
           ),
@@ -639,39 +742,39 @@ enum HashFunction {
 
 class LdapConfig {
   final String url;
-  final bool startTls;
-  final bool useDnTemplate;
+  final bool starttls;
+  final bool useTemplate;
   final String dnTemplate;
   final String bindDn;
-  final String bindDnPassword;
+  final String bindPassword;
   final String baseDn;
   final String filterTemplate;
 
   const LdapConfig({
     required this.url,
-    required this.startTls,
-    required this.useDnTemplate,
+    required this.starttls,
+    required this.useTemplate,
     required this.dnTemplate,
     required this.bindDn,
-    required this.bindDnPassword,
+    required this.bindPassword,
     required this.baseDn,
     required this.filterTemplate,
   });
 
   Map<String, dynamic> toMap() {
-    if (useDnTemplate) {
+    if (useTemplate) {
       return {
         'url': url,
-        'starttls': startTls,
+        'starttls': starttls,
         'dn_template': dnTemplate,
       };
     }
     return {
       'url': url,
-      'starttls': startTls,
+      'starttls': starttls,
       'dn_template': '',
       'bind_dn': bindDn,
-      'bind_password': bindDnPassword,
+      'bind_password': bindPassword,
       'base_dn': baseDn,
       'filter_template': filterTemplate,
     };
