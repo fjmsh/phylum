@@ -18,7 +18,7 @@ func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) 
 	}
 	email = strings.TrimSpace(strings.ToLower(email))
 	user, err := core.UserByEmail(db, email)
-	if errors.Is(err, core.ErrUserNotFound) && shouldAutoCreate(email) {
+	if errors.Is(err, core.ErrUserNotFound) && passwordBackend.AutoCreateUsers() {
 		user, err = core.CreateUser(db, email, "", false)
 	}
 

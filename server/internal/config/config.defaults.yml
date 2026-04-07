@@ -35,10 +35,6 @@ core:
 ## to belong to the same user. Take a look at
 ## https://pushsecurity.com/blog/cross-idp-impersonation/ for more details.
 auth:
-  auto_create:
-    # - "*@example.com"
-    # - "user@example.com"
-    # - "user*@example.com"
   suppress_multi_provider_warning: false
   magic_links: true     # requires mail config
   password:
@@ -77,6 +73,7 @@ auth:
         bind_password: # ldap_password_for_phylumbind
         base_dn: # dc=example,dc=com
         template: # (mail={email})
+      auto_create_users: false
   # openid:
   #   clients:
   #     authelia:           # arbitrary
@@ -85,12 +82,14 @@ auth:
   #       client_id:
   #       client_secret:
   #       allow_unverified_emails: false
+  #       auto_create_users: true
   #     google:             # arbitrary
   #       name: Google      # to be displayed to the user as 'Log In with <name>'
   #       issuer_url: https://accounts.google.com/
   #       client_id:
   #       client_secret:
   #       allow_unverified_emails: false
+  #       auto_create_users: false
 
       
 jobs: 

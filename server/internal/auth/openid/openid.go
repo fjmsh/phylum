@@ -41,17 +41,17 @@ func Providers() []Provider {
 	return p
 }
 
-func GetProviderName(providerName string) (string, error) {
+func GetClientConfig(providerName string) (ClientConfig, error) {
 	if c, ok := clients[providerName]; !ok {
-		return "", errors.New("OpenID provider not registered: " + providerName)
+		return ClientConfig{}, errors.New("OpenID provider not registered: " + providerName)
 	} else {
-		return c.Name, nil
+		return c, nil
 	}
 }
 
 func GetClientDetails(providerName string) (string, string, error) {
-	if c, ok := clients[providerName]; !ok {
-		return "", "", errors.New("OpenID provider not registered: " + providerName)
+	if c, err := GetClientConfig(providerName); err != nil {
+		return "", "", err
 	} else if config, err := getProviderConfig(c.IssuerURL); err != nil {
 		return "", "", err
 	} else {

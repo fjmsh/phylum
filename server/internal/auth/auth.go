@@ -5,8 +5,6 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"errors"
-	"regexp"
-	"strings"
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
@@ -15,7 +13,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var autoCreate []*regexp.Regexp
 var passwordRequirements PasswordRequirements
 var passwordBackend PasswordBackend
 var magicLinksEnabled bool
@@ -65,14 +62,8 @@ func Initialize(cfg Config, log zerolog.Logger) error {
 		} else {
 			passwordBackend = ldap
 		}
-	} else if cfg.Password.Backend == "none" {
-	} else if cfg.Password.Backend != "" {
+	} else if cfg.Password.Backend != "none" && cfg.Password.Backend != "" {
 		return errors.New("password backend not recognized: " + cfg.Password.Backend)
-	}
-
-	autoCreate = make([]*regexp.Regexp, len(cfg.AutoCreate))
-	for i, w := range cfg.AutoCreate {
-		autoCreate[i] = regexp.MustCompile(strings.ReplaceAll(strings.ToLower(w), "*", ".*"))
 	}
 
 	if cfg.Password.ResetEnabled {
@@ -96,15 +87,6 @@ func Initialize(cfg Config, log zerolog.Logger) error {
 	}
 
 	return openid.Init(cfg.OpenID, log)
-}
-
-func shouldAutoCreate(email string) bool {
-	for _, p := range autoCreate {
-		if p.MatchString(email) {
-			return true
-		}
-	}
-	return false
 }
 
 func generateSecureKey(n int) []byte {

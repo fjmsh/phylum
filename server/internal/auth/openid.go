@@ -101,8 +101,9 @@ func OpenIDValidateAuthCode(d db.Handler, state, authCode, redirectURI string) (
 	} else {
 		email := strings.ToLower(idToken.Email)
 		user, err := core.UserByEmail(d, email)
+		c, _ := openid.GetClientConfig(providerName)
 		err = d.RunInTx(func(db db.TxHandler) error {
-			if errors.Is(err, core.ErrUserNotFound) && shouldAutoCreate(email) {
+			if errors.Is(err, core.ErrUserNotFound) && c.AutoCreateUsers {
 				name := idToken.Name
 				if name == "" {
 					name = idToken.GivenName + " " + idToken.FamilyName

@@ -27,7 +27,7 @@ func PerformTokenLogin(db db.TxHandler, encodedToken string) (*Auth, string, err
 func CreateLoginToken(db db.TxHandler, email string) (core.User, string, error) {
 	email = strings.TrimSpace(strings.ToLower(email))
 	user, err := core.UserByEmail(db, email)
-	if errors.Is(err, core.ErrUserNotFound) && shouldAutoCreate(email) {
+	if errors.Is(err, core.ErrUserNotFound) {
 		user, err = core.CreateUser(db, email, "", false)
 	}
 
@@ -80,11 +80,10 @@ func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (auth *
 		auth = NewSUAuth(user)
 		description := "Magic Link Login"
 		if oidcProvider != "" {
-			var p string
-			if p, err = openid.GetProviderName(oidcProvider); err != nil {
-				return
+			if c, err := openid.GetClientConfig(oidcProvider); err != nil {
+				return nil, "", err
 			} else {
-				description = "OAuth Login (via " + p + ")"
+				description = "OAuth Login (via " + c.Name + ")"
 			}
 		}
 		_, _, apiToken, err = GenerateAPIKey(db, auth, description)

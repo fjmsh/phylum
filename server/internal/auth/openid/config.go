@@ -10,4 +10,5 @@ type ClientConfig struct {
 	ClientID              string `koanf:"client_id"`
 	ClientSecret          string `koanf:"client_secret"`
 	AllowUnverifiedEmails bool   `koanf:"allow_unverified_emails"`
+	AutoCreateUsers       bool   `koanf:"auto_create_users"`
 }

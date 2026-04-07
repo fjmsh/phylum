@@ -12,6 +12,7 @@ type PasswordBackend interface {
 	SupportsPasswordUpdate() bool
 	VerifyUserPassword(db db.Handler, email, password string) (bool, error)
 	UpdateUserPassword(db db.Handler, email, password string) error
+	AutoCreateUsers() bool
 }
 
 func VerifyUserPassword(d db.Handler, email, password string) (*Auth, error) {
@@ -22,7 +23,7 @@ func VerifyUserPassword(d db.Handler, email, password string) (*Auth, error) {
 		return nil, ErrCredentialsInvalid
 	}
 	user, err := core.UserByEmail(d, email)
-	if errors.Is(err, core.ErrUserNotFound) && shouldAutoCreate(email) {
+	if errors.Is(err, core.ErrUserNotFound) && passwordBackend.AutoCreateUsers() {
 		err = d.RunInTx(func(db db.TxHandler) error {
 			user, err = core.CreateUser(db, email, "", false)
 			return err

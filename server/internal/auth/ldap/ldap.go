@@ -16,14 +16,15 @@ import (
 )
 
 type Config struct {
-	Debug          bool         `koanf:"debug"`
-	URL            string       `koanf:"url"`
-	StartTLS       bool         `koanf:"starttls"`
-	ConnectTimeout string       `koanf:"connect_timeout"`
-	RequestTimeout string       `koanf:"request_timeout"`
-	UseFilter      bool         `koanf:"use_filter"`
-	DNTemplate     string       `koanf:"dn_template"`
-	Filter         FilterConfig `koanf:"filter"`
+	Debug           bool         `koanf:"debug"`
+	URL             string       `koanf:"url"`
+	StartTLS        bool         `koanf:"starttls"`
+	ConnectTimeout  string       `koanf:"connect_timeout"`
+	RequestTimeout  string       `koanf:"request_timeout"`
+	UseFilter       bool         `koanf:"use_filter"`
+	DNTemplate      string       `koanf:"dn_template"`
+	Filter          FilterConfig `koanf:"filter"`
+	AutoCreateUsers bool         `koanf:"auto_create_users"`
 }
 
 type FilterConfig struct {
@@ -34,21 +35,19 @@ type FilterConfig struct {
 }
 
 type Auth struct {
+	cfg            Config
 	logger         zerolog.Logger
-	url            string
 	hostName       string
-	startTLS       bool
 	conn           *ldap.Conn
 	connLock       sync.Mutex
 	connectTimeout time.Duration
 	readTimeout    time.Duration
-	dnTemplate     string
-	search         FilterConfig
 }
 
 var a Auth
 
 func NewAuth(cfg Config, logger zerolog.Logger) (*Auth, error) {
+	a.cfg = cfg
 	a.logger = logger.With().Str("mod", "ldap").Logger()
 	if cfg.Debug {
 		a.logger = logger.Level(zerolog.DebugLevel)
@@ -75,8 +74,6 @@ func NewAuth(cfg Config, logger zerolog.Logger) (*Auth, error) {
 	if parsedURL, err := url.Parse(cfg.URL); err != nil {
 		return nil, errors.New("invalid server URL: " + err.Error())
 	} else {
-		a.url = cfg.URL
-		a.startTLS = cfg.StartTLS
 		a.hostName = strings.Split(parsedURL.Host, ":")[0]
 	}
 
@@ -95,8 +92,6 @@ func NewAuth(cfg Config, logger zerolog.Logger) (*Auth, error) {
 	} else {
 		a.readTimeout = d
 	}
-	a.dnTemplate = cfg.DNTemplate
-	a.search = cfg.Filter
 
 	var err error
 	a.conn, err = a.newConn()
@@ -110,16 +105,16 @@ func (a *Auth) newConn() (*ldap.Conn, error) {
 	tlsCfg := &tls.Config{ServerName: a.hostName}
 	dialer := &net.Dialer{Timeout: a.connectTimeout}
 
-	conn, err := ldap.DialURL(a.url, ldap.DialWithDialer(dialer), ldap.DialWithTLSConfig(tlsCfg))
+	conn, err := ldap.DialURL(a.cfg.URL, ldap.DialWithDialer(dialer), ldap.DialWithTLSConfig(tlsCfg))
 	if err != nil {
-		a.logger.Error().Err(err).Str("url", a.url).Msg("cannot contact directory server")
+		a.logger.Error().Err(err).Str("url", a.cfg.URL).Msg("cannot contact directory server")
 	}
 
 	if a.readTimeout != 0 {
 		conn.SetTimeout(a.readTimeout)
 	}
 
-	if a.startTLS {
+	if a.cfg.StartTLS {
 		if err := conn.StartTLS(tlsCfg); err != nil {
 			return nil, fmt.Errorf("auth.ldap: %w", err)
 		}
@@ -141,21 +136,19 @@ func (a *Auth) VerifyUserPassword(_ db.Handler, email, password string) (bool, e
 	defer a.connLock.Unlock()
 
 	var userDN string
-	if a.dnTemplate != "" {
-		userDN = strings.ReplaceAll(a.dnTemplate, "{email}", email)
-	} else {
+	if a.cfg.UseFilter {
 		if _, err := a.conn.SimpleBind(&ldap.SimpleBindRequest{
-			Username:           a.search.BindDN,
-			Password:           a.search.BindPassword,
+			Username:           a.cfg.Filter.BindDN,
+			Password:           a.cfg.Filter.BindPassword,
 			AllowEmptyPassword: true,
 		}); err != nil {
 			return false, err
 		}
 
 		req := ldap.NewSearchRequest(
-			a.search.BaseDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases,
+			a.cfg.Filter.BaseDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases,
 			2, 0, false,
-			strings.ReplaceAll(a.search.Template, "{email}", email),
+			strings.ReplaceAll(a.cfg.Filter.Template, "{email}", email),
 			[]string{"dn"}, nil)
 		res, err := a.conn.Search(req)
 
@@ -169,6 +162,8 @@ func (a *Auth) VerifyUserPassword(_ db.Handler, email, password string) (bool, e
 			return false, nil
 		}
 		userDN = res.Entries[0].DN
+	} else {
+		userDN = strings.ReplaceAll(a.cfg.DNTemplate, "{email}", email)
 	}
 
 	if err := a.conn.Bind(userDN, password); err != nil {
@@ -179,4 +174,8 @@ func (a *Auth) VerifyUserPassword(_ db.Handler, email, password string) (bool, e
 	}
 
 	return true, nil
+}
+
+func (a *Auth) AutoCreateUsers() bool {
+	return a.cfg.AutoCreateUsers
 }

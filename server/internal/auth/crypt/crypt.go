@@ -66,6 +66,10 @@ func (a *Crypt) VerifyUserPassword(db db.Handler, email, password string) (bool,
 	return VerifyPasswordHash(password, encodedHash)
 }
 
+func (a *Crypt) AutoCreateUsers() bool {
+	return false
+}
+
 func VerifyPasswordHash(password, encodedHash string) (bool, error) {
 	parts := strings.Split(encodedHash, "$")
 	parts = parts[1:]
