@@ -68,29 +68,33 @@ func getCurrentStorage(db db.Handler, versionID uuid.UUID) (storage.Backend, err
 	if err := row.Scan(&s); err != nil {
 		return nil, err
 	}
-	return storage.GetBackend(s)
+	return storage.GetBackendByName(s)
 }
 
 func findTargetStorageForVersion(db db.Handler, versionID uuid.UUID) (storage.Backend, error) {
-	q := `WITH RECURSIVE nodes(id, parent, storage) AS (
-SELECT r.id, r.parent, s.storage
-	FROM resources r
-	LEFT JOIN storage_mounts s
-	ON r.id = s.id
+	q := `WITH RECURSIVE nodes(id, parent) AS (
+SELECT r.id, r.parent FROM resources r
 	WHERE r.id = (SELECT resource_id FROM resource_versions WHERE id = $1::UUID)
 UNION ALL
-	SELECT r.id, r.parent, COALESCE(n.storage, s.storage)
-		FROM resources r
-		LEFT JOIN storage_mounts s ON r.id = s.id
+	SELECT r.id, r.parent FROM resources r
 		JOIN nodes n ON r.id = n.parent
-) SELECT COALESCE(storage, '_') from nodes n WHERE n.parent IS NULL`
+) SELECT id from nodes`
 
-	row := db.QueryRow(q, versionID)
-	var s string
-	if err := row.Scan(&s); err != nil {
-		return nil, err
-	} else if s != "" {
-		return storage.GetBackend(s)
+	if rows, err := db.Query(q, versionID); err != nil {
+		return nil, errors.New("failed to list parents: " + err.Error())
+	} else {
+		defer rows.Close()
+		var id uuid.UUID
+		for rows.Next() {
+			if err := rows.Scan(&id); err != nil {
+				return nil, errors.New("failed to scan id: " + err.Error())
+			}
+			if backend, err := storage.GetBackendByMountPoint(id); err != nil {
+				return nil, errors.New("failed to find backend: " + err.Error())
+			} else if backend != nil {
+				return backend, nil
+			}
+		}
 	}
 	return storage.DefaultBackend(), nil
 }

@@ -3,29 +3,24 @@ package storage
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
-	"codeberg.org/shroff/phylum/server/internal/pubsub"
-	"github.com/jackc/pgx/v5"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )
 
 const DefaultBackendName = "_"
 
 var defaultBackend LocalBackend
-var backends map[string]Backend
+var backends map[string]Backend = make(map[string]Backend)
+var mountPoints map[uuid.UUID]string = make(map[uuid.UUID]string)
 var Root string
 var tempDir string
 
-type BackendConfig struct {
-	Name   string            `json:"name"`
-	Driver string            `json:"driver"`
-	Params map[string]string `json:"params"`
-}
-
-func Initialize(db db.Handler, cfg Config, logger zerolog.Logger) error {
+func Initialize(cfg Config, logger zerolog.Logger) error {
 	Root = cfg.Root
 
 	if err := os.MkdirAll(Root, 0o700); err != nil {
@@ -49,7 +44,7 @@ func Initialize(db db.Handler, cfg Config, logger zerolog.Logger) error {
 		}
 	}
 
-	if restoredBackends, err := restoreBackends(db); err != nil {
+	if restoredBackends, err := restoreBackends(cfg.Mounts); err != nil {
 		return errors.New("failed to restore backends: " + err.Error())
 	} else if b, err := createLocalBackend(DefaultBackendName, map[string]string{"root": "default"}); err != nil {
 		return errors.New("failed to create default backend: " + err.Error())
@@ -58,7 +53,6 @@ func Initialize(db db.Handler, cfg Config, logger zerolog.Logger) error {
 		defaultBackend = b
 	}
 
-	go processBackendUpdates(logger)
 	return nil
 }
 
@@ -66,7 +60,7 @@ func DefaultBackend() LocalBackend {
 	return defaultBackend
 }
 
-func GetBackend(name string) (Backend, error) {
+func GetBackendByName(name string) (Backend, error) {
 	if name == DefaultBackendName {
 		return defaultBackend, nil
 	}
@@ -74,6 +68,14 @@ func GetBackend(name string) (Backend, error) {
 		return nil, errors.New("no storage backend named \"" + name + "\"")
 	} else {
 		return b, nil
+	}
+}
+
+func GetBackendByMountPoint(id uuid.UUID) (Backend, error) {
+	if name, ok := mountPoints[id]; !ok {
+		return nil, nil
+	} else {
+		return GetBackendByName(name)
 	}
 }
 
@@ -108,56 +110,25 @@ func InsertBackend(d db.Handler, name string, driver Driver, params map[string]s
 	return nil
 }
 
-func restoreBackends(db db.Handler) (map[string]Backend, error) {
-	const q = "SELECT name, driver, params from storage_backends"
-	if rows, err := db.Query(q); err != nil {
-		return nil, err
-	} else if backends, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (BackendConfig, error) {
-		var c BackendConfig
-		var paramsJSON []byte
-		if err := row.Scan(&c.Name, &c.Driver, &paramsJSON); err != nil {
-			return BackendConfig{}, errors.New("failed to scan backend config: " + err.Error())
-		}
-
-		c.Params = make(map[string]string)
-		if err := json.Unmarshal(paramsJSON, &c.Params); err != nil {
-			return BackendConfig{}, errors.New("failed to unmarshal backend params: " + err.Error())
-		}
-		return c, nil
-	}); err != nil {
-		return nil, err
-	} else {
-		results := map[string]Backend{}
-		for _, c := range backends {
-			if b, err := c.open(); err != nil {
-				return nil, errors.New("failed to open backend: " + err.Error())
-			} else {
-				results[c.Name] = b
-			}
-		}
-		return results, nil
-	}
-}
-
-func processBackendUpdates(logger zerolog.Logger) {
-	sub := pubsub.Get().Listen("backend_updates", 5, true)
-	for {
-		p := <-sub.NotificationC()
-		var c BackendConfig
-		if err := json.Unmarshal([]byte(p), &c); err != nil {
-			logger.Warn().Err(err).Msg("failed to unmarshal backend config")
-		} else if b, err := c.open(); err != nil {
-			logger.Warn().Err(err).Msg("failed to open backend")
+func restoreBackends(mounts map[string]MountConfig) (map[string]Backend, error) {
+	backends := map[string]Backend{}
+	for name, m := range mounts {
+		if id, err := uuid.Parse(m.MountPoint); err != nil {
+			return nil, fmt.Errorf("failed to parse mount point for `%s`: %s", name, err.Error())
+		} else if backend, err := m.open(name); err != nil {
+			return nil, fmt.Errorf("failed to open `%s`: %s", name, err.Error())
 		} else {
-			backends[c.Name] = b
+			backends[name] = backend
+			mountPoints[id] = name
 		}
 	}
+	return backends, nil
 }
 
-func (c BackendConfig) open() (Backend, error) {
+func (c MountConfig) open(name string) (Backend, error) {
 	if driver, err := FindDriver(c.Driver); err != nil {
 		return nil, err
 	} else {
-		return driver.Create(c.Name, c.Params)
+		return driver.Create(name, c.Params)
 	}
 }

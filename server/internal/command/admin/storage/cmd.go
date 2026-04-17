@@ -47,7 +47,7 @@ func setupCreateCommand() *cobra.Command {
 			}
 		}
 		fmt.Println(name)
-		if _, err := storage.GetBackend(name); err == nil {
+		if _, err := storage.GetBackendByName(name); err == nil {
 			fmt.Printf("storage backend %q already exists\n", name)
 			os.Exit(1)
 		}

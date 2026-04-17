@@ -113,7 +113,7 @@ func SetupCommand() {
 		}
 
 		// storage must be initialiezd before core
-		if err := storage.Initialize(db.Get(ctx), cfg.Storage, logger); err != nil {
+		if err := storage.Initialize(cfg.Storage, logger); err != nil {
 			logger.Fatal().Err(err).Msg("failed to initialize storage")
 		}
 		if err := core.Initialize(db.Get(ctx), cfg.Core); err != nil {

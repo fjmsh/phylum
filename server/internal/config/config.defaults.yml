@@ -10,6 +10,21 @@ db:
 storage:
   root: storage
   temp: tmp           # relative to root, or absolute
+  mounts:
+    # home:
+    #   mount_point: <uuid>
+    #   driver: local
+    #   params:
+    #     root: home  # relative to root, or absolute
+    # data:
+    #   mount_point: <uuid>
+    #   driver: minio
+    #   params:
+    #     endpoint:
+    #     key_id:
+    #     key:
+    #     bucket_name:
+    #     prefix: /phylum-data
 
 core: 
   user:               # Config for new users

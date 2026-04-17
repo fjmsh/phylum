@@ -25,7 +25,7 @@ type DeleteContentsWorker struct {
 }
 
 func (w *DeleteContentsWorker) Work(ctx context.Context, job *steve.Job[DeleteContentsArgs]) error {
-	if b, err := storage.GetBackend(job.Args.Storage); err != nil {
+	if b, err := storage.GetBackendByName(job.Args.Storage); err != nil {
 		return err
 	} else if err := b.Delete(job.Args.Name); err != nil {
 		return err
