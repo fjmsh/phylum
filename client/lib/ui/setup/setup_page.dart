@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/setup/setup_auth_fragment.dart';
 import 'package:phylum/ui/setup/setup_db_fragment.dart';
-import 'package:phylum/ui/setup/setup_fragment.dart';
 import 'package:phylum/ui/setup/setup_mail_fragment.dart';
 import 'package:provider/provider.dart';
 
@@ -26,14 +26,9 @@ class SetupPage extends StatefulWidget {
 class _SetupPageState extends State<SetupPage> {
   SetupState _currentState = SetupState.database;
 
-  final dbFragmentKey = GlobalKey<SetupDbFragmentState>();
   final dbConfig = DbConfig();
-
-  final mailFragmentKey = GlobalKey<SetupMailFragmentState>();
   final mailConfig = MailConfig();
-
-  final authFragmentKey = GlobalKey<SetupAuthFragmentState>();
-  AuthConfig authConfig = const AuthConfig.defaults();
+  final authConfig = const AuthConfig.defaults();
 
   @override
   void initState() {
@@ -54,47 +49,41 @@ class _SetupPageState extends State<SetupPage> {
               : TextButton(onPressed: handleNextPress, child: Text('NEXT'))
         ],
       ),
-      body: _buildBody(context),
+      body: MultiProvider(
+        providers: [
+          StateNotifierProvider<AuthController, AuthConfig>(create: (_) => AuthController(AuthConfig.defaults())),
+        ],
+        child: _buildBody(context),
+      ),
     );
   }
 
   Widget _buildBody(BuildContext context) {
     return switch (_currentState) {
       SetupState.database => SetupDbFragment(
-          key: dbFragmentKey,
           instanceUrl: widget.instanceUrl,
           config: dbConfig,
         ),
       SetupState.mail => SetupMailFragment(
-          key: mailFragmentKey,
           instanceUrl: widget.instanceUrl,
           config: mailConfig,
         ),
-      SetupState.auth => SetupAuthFragment(
-          key: authFragmentKey,
-          instanceUrl: widget.instanceUrl,
-          config: authConfig,
-          mailEnabled: mailConfig.enabled,
-        ),
+      SetupState.auth => SetupAuthFragment(instanceUrl: widget.instanceUrl),
       SetupState.user => throw UnimplementedError(),
     };
-  }
-
-  void updateAuthConfig(AuthConfig config) {
-    authConfig = config;
   }
 
   void handleNextPress() {
-    final GlobalKey<SetupFragmentState> currentKey = switch (_currentState) {
-      SetupState.database => dbFragmentKey,
-      SetupState.mail => mailFragmentKey,
-      SetupState.auth => authFragmentKey,
-      SetupState.user => throw UnimplementedError(),
-    };
-    if (currentKey.currentState?.handleNextPress() ?? false) {
-      setState(() {
-        _currentState = SetupState.values[_currentState.index + 1];
-      });
-    }
+    //   final GlobalKey<SetupFragmentState> currentKey = switch (_currentState) {
+    //     SetupState.database => dbFragmentKey,
+    //     SetupState.mail => mailFragmentKey,
+    //     SetupState.auth => authFragmentKey,
+    //     SetupState.user => throw UnimplementedError(),
+    //   };
+    //   if (currentKey.currentState?.handleNextPress() ?? false) {
+    //     setState(() {
+    //       _currentState = SetupState.values[_currentState.index + 1];
+    //     });
+    //   }
   }
 }

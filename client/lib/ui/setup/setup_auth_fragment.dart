@@ -3,35 +3,24 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:http/http.dart';
-import 'package:phylum/ui/setup/setup_fragment.dart';
+import 'package:phylum/ui/setup/setup_mail_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/request.dart';
+import 'package:provider/provider.dart';
+import 'package:state_notifier/state_notifier.dart';
 import 'package:uri/uri.dart';
 
-class SetupAuthFragment extends SetupFragment<SetupAuthFragment> {
+class SetupAuthFragment extends StatelessWidget {
   final String instanceUrl;
-  final AuthConfig config;
-  final bool mailEnabled;
-
-  const SetupAuthFragment({super.key, required this.instanceUrl, required this.config, required this.mailEnabled});
-
-  @override
-  SetupFragmentState<SetupAuthFragment> createState() => SetupAuthFragmentState();
-}
-
-class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
-  late AuthConfig config;
-
-  @override
-  void initState() {
-    super.initState();
-    config = widget.config;
-  }
+  const SetupAuthFragment({super.key, required this.instanceUrl});
 
   @override
   Widget build(BuildContext context) {
+    final config = context.read<AuthConfig>();
+    final mailEnabled = context.select<MailConfig, bool>((config) => config.enabled);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
@@ -44,30 +33,26 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           CheckboxListTile(
-            value: config.passwordLoginEnabled,
+            value: config.passwordConfig != null,
             onChanged: (value) async {
               if (value == true) {
-                final passwordConfig = await configurePasswordAuth();
-                if (passwordConfig != null) {
-                  setState(() {
-                    config = config.copyWith(passwordLoginEnabled: true, passwordConfig: passwordConfig);
-                  });
+                final passwordConfig = await configurePasswordAuth(context);
+                if (passwordConfig != null && context.mounted) {
+                  context.read<AuthController>().passwordConfig = passwordConfig;
                 }
               } else {
-                setState(() {
-                  config = config.copyWith(passwordLoginEnabled: false);
-                });
+                context.read<AuthController>().passwordConfig = null;
               }
             },
             title: Text('Enable Password Login'),
-            subtitle: config.passwordLoginEnabled ? Text(config.passwordConfig.toString()) : null,
+            subtitle: config.passwordConfig != null ? Text(config.passwordConfig.toString()) : null,
           ),
           CheckboxListTile(
-            value: widget.mailEnabled && config.passwordlessLoginEnabled,
-            enabled: widget.mailEnabled,
-            onChanged: (value) => setState(() => config = config.copyWith(passwordlessLoginEnabled: value ?? false)),
+            value: mailEnabled && config.passwordlessLoginEnabled,
+            enabled: mailEnabled,
+            onChanged: (value) => context.read<AuthController>().passwordlessLoginEnabled = value ?? false,
             title: Text('Enable Passwordless Login'),
-            subtitle: widget.mailEnabled ? null : Text('Requires email setup'),
+            subtitle: mailEnabled ? null : Text('Requires email setup'),
           ),
           ListTile(
             dense: true,
@@ -77,22 +62,15 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
                 title: Text(cfg.name),
                 subtitle: Text(cfg.issuerUrl),
                 trailing: IconButton(
-                    onPressed: () {
-                      setState(() => config = config.copyWith(
-                          openIdConfigs:
-                              config.openIdConfigs.whereNotIndexed((idx, _) => idx == i).toList(growable: false)));
-                    },
-                    icon: Icon(Icons.delete)),
+                    onPressed: () => context.read<AuthController>().removeOpenIDConfig(cfg), icon: Icon(Icons.delete)),
               )),
           TextButton.icon(
             onPressed: () async {
-              var openIDConfig = await createOpenIdConfig();
-              if (openIDConfig == null || !mounted) return;
+              final openIDConfig = await createOpenIdConfig(context);
+              if (openIDConfig == null || !context.mounted) return;
               final re = RegExp(r'[^a-z0-9]+');
               final id = openIDConfig.name.toLowerCase().replaceAll(re, '-');
-              openIDConfig = openIDConfig.copyWith(id: id);
-              setState(() => config =
-                  config.copyWith(openIdConfigs: [...config.openIdConfigs, openIDConfig!].toList(growable: false)));
+              context.read<AuthController>().addOpenIDConfig(openIDConfig.copyWith(id: id));
             },
             label: Text('Add OpenID Client Config'),
             icon: Icon(Icons.add),
@@ -102,7 +80,7 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
     );
   }
 
-  Future<OpenIDConfig?> createOpenIdConfig() async {
+  Future<OpenIDConfig?> createOpenIdConfig(BuildContext context) async {
     String name = '';
     String issuerUrl = '';
     String clientId = '';
@@ -174,14 +152,14 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
             ));
   }
 
-  Future<PasswordConfig?> configurePasswordAuth() async {
+  Future<PasswordConfig?> configurePasswordAuth(BuildContext context) async {
     final backend = await showOptionsDialog(
       context,
       titleText: 'Select Password Authentication Backend',
       [PasswordBackend.crypt, PasswordBackend.ldap],
       (item) => ListTile(title: Text(item.descriptor)),
     );
-    if (backend == null || !mounted) return null;
+    if (backend == null || !context.mounted) return null;
     if (backend == PasswordBackend.crypt) {
       final kdf = await showOptionsDialog(
         context,
@@ -189,46 +167,43 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
         [CryptKDF.argon2, CryptKDF.pbkdf2],
         (item) => ListTile(title: Text(item.descriptor)),
       );
-      if (kdf == null || !mounted) return null;
+      if (kdf == null || !context.mounted) return null;
       if (kdf == CryptKDF.argon2) {
-        final argon2Config = await configureArgon2(config.passwordConfig.cryptConfig.argon2Config);
+        final argon2Config = await configureArgon2(context);
         if (argon2Config == null) {
           return null;
         } else {
-          return config.passwordConfig.copyWith(
-            backend: PasswordBackend.crypt,
-            cryptConfig: config.passwordConfig.cryptConfig.copyWith(
-              kdf: CryptKDF.argon2,
-              argon2Config: argon2Config,
-            ),
-          );
+          if (context.mounted) {
+            context.read<AuthController>().passwordConfig =
+                PasswordConfig(cryptConfig: CryptConfig(argon2Config: argon2Config));
+          }
         }
       } else if (kdf == CryptKDF.pbkdf2) {
-        final pbkdf2Config = await configurePbkdf2(config.passwordConfig.cryptConfig.pbkdf2Config);
+        final pbkdf2Config = await configurePbkdf2(context);
         if (pbkdf2Config == null) {
           return null;
         } else {
-          return config.passwordConfig.copyWith(
-            backend: PasswordBackend.crypt,
-            cryptConfig: config.passwordConfig.cryptConfig.copyWith(
-              kdf: CryptKDF.pbkdf2,
-              pbkdf2Config: pbkdf2Config,
-            ),
-          );
+          if (context.mounted) {
+            context.read<AuthController>().passwordConfig =
+                PasswordConfig(cryptConfig: CryptConfig(pbkdf2Config: pbkdf2Config));
+          }
         }
       }
     } else if (backend == PasswordBackend.ldap) {
-      final ldapConfig = await configureLdap(config.passwordConfig.ldapConfig);
+      final ldapConfig = await configureLdap(context);
       if (ldapConfig == null) {
         return null;
       } else {
-        return config.passwordConfig.copyWith(ldapConfig: ldapConfig);
+        if (context.mounted) {
+          context.read<AuthController>().passwordConfig = PasswordConfig(ldapConfig: ldapConfig);
+        }
       }
     }
     return null;
   }
 
-  Future<LdapConfig?> configureLdap(LdapConfig config) async {
+  Future<LdapConfig?> configureLdap(BuildContext context) async {
+    final config = context.read<AuthConfig>().passwordConfig?.ldapConfig ?? LdapConfig.defaults();
     String url = config.url;
     bool starttls = config.starttls;
     bool autoCreateUsers = config.useFilter;
@@ -331,7 +306,8 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
             ));
   }
 
-  Future<Argon2Config?> configureArgon2(Argon2Config config) async {
+  Future<Argon2Config?> configureArgon2(BuildContext context) async {
+    final config = context.read<AuthConfig>().passwordConfig?.cryptConfig?.argon2Config ?? Argon2Config.defaults();
     int m = config.memory;
     int p = config.parallelism;
     int t = config.iterations;
@@ -376,7 +352,7 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
                         }
                       },
                     ),
-                    ElevatedButton(onPressed: () => testArgon2Params(m, t, p), child: Text('Test Parameters'))
+                    ElevatedButton(onPressed: () => testArgon2Params(context, m, t, p), child: Text('Test Parameters'))
                   ],
                 ),
                 actions: [
@@ -390,8 +366,8 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
             ));
   }
 
-  Future<void> testArgon2Params(int memory, int iterations, int parallelism) async {
-    final builder = UriBuilder.fromUri(Uri.parse(widget.instanceUrl));
+  Future<void> testArgon2Params(BuildContext context, int memory, int iterations, int parallelism) async {
+    final builder = UriBuilder.fromUri(Uri.parse(instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/auth/test_argon2_params';
     builder.queryParameters = {
       "memory": memory.toString(),
@@ -401,7 +377,7 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
     final request = Request('get', builder.build());
 
     final responseString = await sendRequest(context, 'Testing Argon2 Params', request);
-    if (responseString == null || !mounted) return;
+    if (responseString == null || !context.mounted) return;
     final responseMap = (jsonDecode(responseString) as Map).cast<String, dynamic>();
 
     if (responseMap["success"]) {
@@ -420,7 +396,8 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
     }
   }
 
-  Future<Pbkdf2Config?> configurePbkdf2(Pbkdf2Config config) async {
+  Future<Pbkdf2Config?> configurePbkdf2(BuildContext context) async {
+    final config = context.read<AuthConfig>().passwordConfig?.cryptConfig?.pbkdf2Config ?? Pbkdf2Config.defaults();
     var iterations = config.iterations;
     var hash = config.hash;
     return showDialog<Pbkdf2Config>(
@@ -462,7 +439,8 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
                         }
                       },
                     ),
-                    ElevatedButton(onPressed: () => testPbkdf2Params(hash, iterations), child: Text('Test Parameters'))
+                    ElevatedButton(
+                        onPressed: () => testPbkdf2Params(context, hash, iterations), child: Text('Test Parameters'))
                   ],
                 ),
                 actions: [
@@ -475,8 +453,8 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
             ));
   }
 
-  Future<void> testPbkdf2Params(HashFunction hash, int iterations) async {
-    final builder = UriBuilder.fromUri(Uri.parse(widget.instanceUrl));
+  Future<void> testPbkdf2Params(BuildContext context, HashFunction hash, int iterations) async {
+    final builder = UriBuilder.fromUri(Uri.parse(instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/auth/test_pbkdf2_params';
     builder.queryParameters = {
       "function": hash.name,
@@ -485,7 +463,7 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
     final request = Request('get', builder.build());
 
     final responseString = await sendRequest(context, 'Testing PBKDF2 Params', request);
-    if (responseString == null || !mounted) return;
+    if (responseString == null || !context.mounted) return;
     final responseMap = (jsonDecode(responseString) as Map).cast<String, dynamic>();
 
     if (responseMap["success"]) {
@@ -502,11 +480,6 @@ class SetupAuthFragmentState extends SetupFragmentState<SetupAuthFragment> {
     } else {
       await showAlertDialog(context, title: 'Could not test PBKDF2 params', message: "${responseMap["error"]}");
     }
-  }
-
-  @override
-  bool handleNextPress() {
-    return true;
   }
 }
 
@@ -530,63 +503,60 @@ enum CryptKDF {
   const CryptKDF(this.name, this.descriptor);
 }
 
+class AuthController extends StateNotifier<AuthConfig> {
+  AuthController(super.state);
+
+  set passwordConfig(PasswordConfig? config) {
+    state = state.copyWith(passwordConfig: config);
+  }
+
+  set passwordlessLoginEnabled(bool enabled) {
+    state = state.copyWith(passwordlessLoginEnabled: enabled);
+  }
+
+  void addOpenIDConfig(OpenIDConfig config) {
+    state = state.copyWith(openIdConfigs: [...state.openIdConfigs, config].toList(growable: false));
+  }
+
+  void removeOpenIDConfig(OpenIDConfig config) {
+    state = state.copyWith(openIdConfigs: state.openIdConfigs.whereNot((e) => e == config).toList(growable: false));
+  }
+}
+
 class AuthConfig {
-  final bool passwordLoginEnabled;
+  final PasswordConfig? passwordConfig;
   final bool passwordlessLoginEnabled;
-  final PasswordConfig passwordConfig;
   final List<OpenIDConfig> openIdConfigs;
 
   const AuthConfig({
-    required this.passwordLoginEnabled,
-    required this.passwordlessLoginEnabled,
     required this.passwordConfig,
+    required this.passwordlessLoginEnabled,
     required this.openIdConfigs,
   });
 
   const AuthConfig.defaults()
       : this(
-          passwordLoginEnabled: false,
+          passwordConfig: null,
           passwordlessLoginEnabled: false,
-          passwordConfig: const PasswordConfig(
-            backend: PasswordBackend.crypt,
-            cryptConfig: CryptConfig(
-              kdf: CryptKDF.argon2,
-              argon2Config: Argon2Config(memory: 16, parallelism: 2, iterations: 4),
-              pbkdf2Config: Pbkdf2Config(iterations: 600000, hash: HashFunction.sha256),
-            ),
-            ldapConfig: LdapConfig(
-              url: '',
-              starttls: true,
-              autoCreateUsers: false,
-              useFilter: false,
-              dnTemplate: '',
-              bindDn: '',
-              bindPassword: '',
-              baseDn: '',
-              filterTemplate: '(mail={email})',
-            ),
-            resetEnabled: true,
-          ),
           openIdConfigs: const [],
         );
 
   AuthConfig copyWith({
-    bool? passwordLoginEnabled,
-    bool? passwordlessLoginEnabled,
     PasswordConfig? passwordConfig,
+    bool? passwordlessLoginEnabled,
     List<OpenIDConfig>? openIdConfigs,
   }) {
     return AuthConfig(
-      passwordLoginEnabled: passwordLoginEnabled ?? this.passwordLoginEnabled,
-      passwordlessLoginEnabled: passwordlessLoginEnabled ?? this.passwordlessLoginEnabled,
       passwordConfig: passwordConfig ?? this.passwordConfig,
+      passwordlessLoginEnabled: passwordlessLoginEnabled ?? this.passwordlessLoginEnabled,
       openIdConfigs: openIdConfigs ?? this.openIdConfigs,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'backend': (passwordLoginEnabled) ? passwordConfig.toMap() : 'none',
+      'backend': 'none',
+      ...?passwordConfig?.toMap(),
       'magic_links': passwordlessLoginEnabled,
       'openid': const {},
     };
@@ -630,81 +600,66 @@ class OpenIDConfig {
 }
 
 class PasswordConfig {
-  final PasswordBackend backend;
-  final CryptConfig cryptConfig;
-  final LdapConfig ldapConfig;
-  final bool resetEnabled;
+  final CryptConfig? cryptConfig;
+  final LdapConfig? ldapConfig;
 
-  const PasswordConfig({
-    required this.backend,
-    required this.cryptConfig,
-    required this.ldapConfig,
-    required this.resetEnabled,
-  });
-
-  PasswordConfig copyWith({
-    PasswordBackend? backend,
-    CryptConfig? cryptConfig,
-    LdapConfig? ldapConfig,
-    bool? resetEnabled,
-  }) {
-    return PasswordConfig(
-      backend: backend ?? this.backend,
-      cryptConfig: cryptConfig ?? this.cryptConfig,
-      ldapConfig: ldapConfig ?? this.ldapConfig,
-      resetEnabled: resetEnabled ?? this.resetEnabled,
-    );
-  }
+  const PasswordConfig({this.cryptConfig, this.ldapConfig}) : assert((cryptConfig == null) != (ldapConfig == null));
 
   Map<String, dynamic> toMap() {
-    return {
-      'backend': backend.name,
-      if (backend == PasswordBackend.crypt) 'crypt': cryptConfig.toMap(),
-      if (backend == PasswordBackend.ldap) 'ldap': ldapConfig.toMap(),
-    };
+    if (cryptConfig != null) {
+      return {
+        'backend': 'crypt',
+        'crypt': cryptConfig!.toMap(),
+      };
+    } else if (ldapConfig != null) {
+      return {
+        'backend': 'ldap',
+        'ldap': ldapConfig!.toMap(),
+      };
+    }
+    return {};
   }
 
   @override
   String toString() {
-    return switch (backend) {
-      PasswordBackend.crypt => 'DB ($cryptConfig)',
-      PasswordBackend.ldap => 'LDAP ($ldapConfig)',
-    };
+    if (cryptConfig != null) {
+      return 'DB ($cryptConfig)';
+    } else if (ldapConfig != null) {
+      return 'LDAP ($ldapConfig)';
+    }
+    return 'Unknown';
   }
 }
 
 class CryptConfig {
-  final CryptKDF kdf;
-  final Argon2Config argon2Config;
-  final Pbkdf2Config pbkdf2Config;
+  final Argon2Config? argon2Config;
+  final Pbkdf2Config? pbkdf2Config;
 
-  const CryptConfig({required this.kdf, required this.argon2Config, required this.pbkdf2Config});
-
-  CryptConfig copyWith({
-    CryptKDF? kdf,
-    Argon2Config? argon2Config,
-    Pbkdf2Config? pbkdf2Config,
-  }) {
-    return CryptConfig(
-      kdf: kdf ?? this.kdf,
-      argon2Config: argon2Config ?? this.argon2Config,
-      pbkdf2Config: pbkdf2Config ?? this.pbkdf2Config,
-    );
-  }
+  const CryptConfig({this.argon2Config, this.pbkdf2Config}) : assert((argon2Config == null) != (pbkdf2Config == null));
 
   Map<String, dynamic> toMap() {
-    return {
-      'kdf': kdf.name,
-      if (kdf == CryptKDF.argon2) 'argon2': argon2Config.toMap(),
-      if (kdf == CryptKDF.pbkdf2) 'pbkdf2': pbkdf2Config.toMap(),
-    };
+    if (argon2Config != null) {
+      return {
+        'kdf': 'argon2',
+        'argon2': argon2Config!.toMap(),
+      };
+    } else if (pbkdf2Config != null) {
+      return {
+        'kdf': 'pbkdf2',
+        'pbkdf2': pbkdf2Config!.toMap(),
+      };
+    }
+    return {};
   }
 
+  @override
   String toString() {
-    return switch (kdf) {
-      CryptKDF.argon2 => 'Argon2 $argon2Config',
-      CryptKDF.pbkdf2 => 'PBKDF2 $pbkdf2Config',
-    };
+    if (argon2Config != null) {
+      return 'Argon2 $argon2Config';
+    } else if (pbkdf2Config != null) {
+      return 'PBKDF2 $pbkdf2Config';
+    }
+    return 'Unknown';
   }
 }
 
@@ -714,6 +669,8 @@ class Argon2Config {
   final int iterations;
 
   const Argon2Config({required this.memory, required this.parallelism, required this.iterations});
+
+  const Argon2Config.defaults() : this(memory: 16, parallelism: 2, iterations: 4);
 
   Map<String, dynamic> toMap() {
     return {
@@ -735,7 +692,7 @@ class Pbkdf2Config {
 
   const Pbkdf2Config({required this.iterations, required this.hash});
 
-  const Pbkdf2Config.defaults() : this(iterations: 100000, hash: HashFunction.sha256);
+  const Pbkdf2Config.defaults() : this(iterations: 600_000, hash: HashFunction.sha256);
 
   Map<String, dynamic> toMap() {
     return {
@@ -783,6 +740,19 @@ class LdapConfig {
     required this.baseDn,
     required this.filterTemplate,
   });
+
+  const LdapConfig.defaults()
+      : this(
+          url: '',
+          starttls: true,
+          autoCreateUsers: false,
+          useFilter: false,
+          dnTemplate: '',
+          bindDn: '',
+          bindPassword: '',
+          baseDn: '',
+          filterTemplate: '(mail={email})',
+        );
 
   Map<String, dynamic> toMap() {
     return {
