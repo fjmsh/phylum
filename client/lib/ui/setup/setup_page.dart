@@ -26,8 +26,6 @@ class SetupPage extends StatefulWidget {
 class _SetupPageState extends State<SetupPage> {
   SetupState _currentState = SetupState.database;
 
-  final dbConfig = DbConfig();
-
   @override
   void initState() {
     super.initState();
@@ -49,6 +47,7 @@ class _SetupPageState extends State<SetupPage> {
       ),
       body: MultiProvider(
         providers: [
+          StateNotifierProvider<DbController, DbConfig>(create: (_) => DbController()),
           StateNotifierProvider<MailController, MailConfig>(create: (_) => MailController()),
           StateNotifierProvider<AuthController, AuthConfig>(create: (_) => AuthController()),
         ],
@@ -59,10 +58,7 @@ class _SetupPageState extends State<SetupPage> {
 
   Widget _buildBody(BuildContext context) {
     return switch (_currentState) {
-      SetupState.database => SetupDbFragment(
-          instanceUrl: widget.instanceUrl,
-          config: dbConfig,
-        ),
+      SetupState.database => SetupDbFragment(instanceUrl: widget.instanceUrl),
       SetupState.mail => SetupMailFragment(instanceUrl: widget.instanceUrl),
       SetupState.auth => SetupAuthFragment(instanceUrl: widget.instanceUrl),
       SetupState.user => throw UnimplementedError(),
