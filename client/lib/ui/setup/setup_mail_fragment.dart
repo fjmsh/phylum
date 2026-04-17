@@ -3,24 +3,21 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
-import 'package:phylum/ui/setup/setup_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/request.dart';
+import 'package:provider/provider.dart';
+import 'package:state_notifier/state_notifier.dart';
 import 'package:uri/uri.dart';
 
-class SetupMailFragment extends SetupFragment<SetupMailFragment> {
+class SetupMailFragment extends StatelessWidget {
   final String instanceUrl;
-  final MailConfig config;
 
-  const SetupMailFragment({super.key, required this.instanceUrl, required this.config});
+  const SetupMailFragment({super.key, required this.instanceUrl});
 
-  @override
-  SetupFragmentState<SetupMailFragment> createState() => SetupMailFragmentState();
-}
-
-class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
   @override
   Widget build(BuildContext context) {
+    final enabled = context.select<MailConfig, bool>((config) => config.enabled);
+    final config = context.read<MailConfig>();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
@@ -33,79 +30,79 @@ class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           CheckboxListTile(
-            value: widget.config.enabled,
-            onChanged: (value) => setState(() => widget.config.enabled = value ?? false),
+            value: enabled,
+            onChanged: (value) => context.read<MailController>().enabled = value ?? false,
             title: Text('Configure Email?'),
             subtitle:
                 Text('Email is used for share notifications, password reset, passwordless login, and inviting users'),
           ),
-          if (widget.config.enabled)
+          if (enabled)
             TextFormField(
               decoration: const InputDecoration(label: Text('SMTP Host'), hint: Text('localhost')),
               autofocus: true,
               autocorrect: false,
               keyboardType: TextInputType.url,
-              initialValue: widget.config.smtpHost,
-              onChanged: (value) => widget.config.smtpHost = value,
+              initialValue: config.smtpHost,
+              onChanged: (value) => context.read<MailController>().smtpHost = value,
             ),
-          if (widget.config.enabled)
+          if (enabled)
             TextFormField(
               decoration: const InputDecoration(label: Text('SMTP Port'), hint: Text('587')),
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               keyboardType: TextInputType.number,
-              initialValue: widget.config.smtpPort == 0 ? '' : widget.config.smtpPort.toString(),
-              onChanged: (value) => widget.config.smtpPort = int.tryParse(value) ?? 0,
+              initialValue: config.smtpPort == 0 ? '' : config.smtpPort.toString(),
+              onChanged: (value) => context.read<MailController>().smtpPort = int.tryParse(value) ?? 0,
             ),
-          if (widget.config.enabled)
+          if (enabled)
             TextFormField(
               decoration: const InputDecoration(label: Text('SMTP Username'), hint: Text('phylum@example.com')),
               autocorrect: false,
-              initialValue: widget.config.smtpUsername,
-              onChanged: (value) => widget.config.smtpUsername = value,
+              initialValue: config.smtpUsername,
+              onChanged: (value) => context.read<MailController>().smtpUsername = value,
             ),
-          if (widget.config.enabled)
+          if (enabled)
             TextFormField(
               decoration: const InputDecoration(label: Text('SMTP Password')),
               autocorrect: false,
               obscureText: true,
-              initialValue: widget.config.smtpPassword,
-              onChanged: (value) => widget.config.smtpPassword = value,
+              initialValue: config.smtpPassword,
+              onChanged: (value) => context.read<MailController>().smtpPassword = value,
             ),
-          if (widget.config.enabled)
+          if (enabled)
             TextFormField(
               decoration: const InputDecoration(label: Text('From Name'), hint: Text('Phylum Drive')),
               autocorrect: false,
-              initialValue: widget.config.fromName,
-              onChanged: (value) => widget.config.fromName = value,
+              initialValue: config.fromName,
+              onChanged: (value) => context.read<MailController>().fromName = value,
             ),
-          if (widget.config.enabled)
+          if (enabled)
             TextFormField(
               decoration: const InputDecoration(label: Text('From Email'), hint: Text('phylum@example.com')),
               autocorrect: false,
-              initialValue: widget.config.fromEmail,
-              onChanged: (value) => widget.config.fromEmail = value,
+              initialValue: config.fromEmail,
+              onChanged: (value) => context.read<MailController>().fromEmail = value,
             ),
-          if (widget.config.enabled) ElevatedButton(onPressed: validateMailConfig, child: Text('Send Test Email'))
+          if (enabled) ElevatedButton(onPressed: () => validateMailConfig(context), child: Text('Send Test Email'))
         ],
       ),
     );
   }
 
-  Future<void> validateMailConfig() async {
-    final builder = UriBuilder.fromUri(Uri.parse(widget.instanceUrl));
+  Future<void> validateMailConfig(BuildContext context) async {
+    final builder = UriBuilder.fromUri(Uri.parse(instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/mail/test';
     final request = Request('post', builder.build());
 
     final sendTo = await showInputDialog(context,
         title: 'Sending Test Email', keyboardType: TextInputType.emailAddress, labelText: 'Email Address');
-    if (sendTo == null || !mounted) {
+    if (sendTo == null || !context.mounted) {
       return;
     }
-    final config = widget.config.toMap();
+    final config = context.read<MailConfig>().toMap();
     config['send_to'] = sendTo;
     request.body = jsonEncode(config);
     final responseString = await sendRequest(context, 'Checking Email Config', request);
-    if (responseString == null || !mounted) return;
+    if (responseString == null || !context.mounted) return;
     final responseMap = (jsonDecode(responseString) as Map).cast<String, dynamic>();
     final overrides = (responseMap["overrides"] as List?)?.cast<String>();
     final overrideNote = (overrides?.isNotEmpty ?? false)
@@ -119,21 +116,89 @@ class SetupMailFragmentState extends SetupFragmentState<SetupMailFragment> {
           title: 'Could not send test email', message: "$overrideNote\n\n${responseMap["error"]}");
     }
   }
+}
 
-  @override
-  bool handleNextPress() {
-    return true;
+class MailController extends StateNotifier<MailConfig> {
+  MailController() : super(MailConfig.defaults());
+
+  set enabled(bool value) {
+    state = state.copyWith(enabled: value);
+  }
+
+  set smtpHost(String value) {
+    state = state.copyWith(smtpHost: value);
+  }
+
+  set smtpPort(int value) {
+    state = state.copyWith(smtpPort: value);
+  }
+
+  set smtpUsername(String value) {
+    state = state.copyWith(smtpUsername: value);
+  }
+
+  set smtpPassword(String value) {
+    state = state.copyWith(smtpPassword: value);
+  }
+
+  set fromName(String value) {
+    state = state.copyWith(fromName: value);
+  }
+
+  set fromEmail(String value) {
+    state = state.copyWith(fromEmail: value);
   }
 }
 
 class MailConfig {
-  bool enabled = false;
-  String smtpHost = "";
-  int smtpPort = 0;
-  String smtpUsername = "";
-  String smtpPassword = "";
-  String fromName = "";
-  String fromEmail = "";
+  final bool enabled;
+  final String smtpHost;
+  final int smtpPort;
+  final String smtpUsername;
+  final String smtpPassword;
+  final String fromName;
+  final String fromEmail;
+
+  const MailConfig({
+    required this.enabled,
+    required this.smtpHost,
+    required this.smtpPort,
+    required this.smtpUsername,
+    required this.smtpPassword,
+    required this.fromName,
+    required this.fromEmail,
+  });
+
+  const MailConfig.defaults()
+      : this(
+          enabled: false,
+          smtpHost: '',
+          smtpPort: 587,
+          smtpUsername: '',
+          smtpPassword: '',
+          fromEmail: '',
+          fromName: '',
+        );
+
+  MailConfig copyWith({
+    bool? enabled,
+    String? smtpHost,
+    int? smtpPort,
+    String? smtpUsername,
+    String? smtpPassword,
+    String? fromName,
+    String? fromEmail,
+  }) {
+    return MailConfig(
+      enabled: enabled ?? this.enabled,
+      smtpHost: smtpHost ?? this.smtpHost,
+      smtpPort: smtpPort ?? this.smtpPort,
+      smtpUsername: smtpUsername ?? this.smtpUsername,
+      smtpPassword: smtpPassword ?? this.smtpPassword,
+      fromName: fromName ?? this.fromName,
+      fromEmail: fromEmail ?? this.fromEmail,
+    );
+  }
 
   Map<String, dynamic> toMap() => enabled
       ? {

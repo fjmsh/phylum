@@ -504,7 +504,7 @@ enum CryptKDF {
 }
 
 class AuthController extends StateNotifier<AuthConfig> {
-  AuthController(super.state);
+  AuthController() : super(AuthConfig.defaults());
 
   set passwordConfig(PasswordConfig? config) {
     state = state.copyWith(passwordConfig: config);

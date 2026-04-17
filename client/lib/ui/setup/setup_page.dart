@@ -27,8 +27,6 @@ class _SetupPageState extends State<SetupPage> {
   SetupState _currentState = SetupState.database;
 
   final dbConfig = DbConfig();
-  final mailConfig = MailConfig();
-  final authConfig = const AuthConfig.defaults();
 
   @override
   void initState() {
@@ -51,7 +49,8 @@ class _SetupPageState extends State<SetupPage> {
       ),
       body: MultiProvider(
         providers: [
-          StateNotifierProvider<AuthController, AuthConfig>(create: (_) => AuthController(AuthConfig.defaults())),
+          StateNotifierProvider<MailController, MailConfig>(create: (_) => MailController()),
+          StateNotifierProvider<AuthController, AuthConfig>(create: (_) => AuthController()),
         ],
         child: _buildBody(context),
       ),
@@ -64,10 +63,7 @@ class _SetupPageState extends State<SetupPage> {
           instanceUrl: widget.instanceUrl,
           config: dbConfig,
         ),
-      SetupState.mail => SetupMailFragment(
-          instanceUrl: widget.instanceUrl,
-          config: mailConfig,
-        ),
+      SetupState.mail => SetupMailFragment(instanceUrl: widget.instanceUrl),
       SetupState.auth => SetupAuthFragment(instanceUrl: widget.instanceUrl),
       SetupState.user => throw UnimplementedError(),
     };
