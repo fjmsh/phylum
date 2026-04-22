@@ -34,7 +34,9 @@ class ResourcePublinksView extends StatelessWidget {
                       trailing: IconButton(
                         icon: const Icon(Icons.copy),
                         onPressed: () {
-                          Clipboard.setData(ClipboardData(text: account.apiClient.createUri('/pub/$l').toString()));
+                          final publinkPath = context.read<PhylumAccount>().config.publinkPath;
+                          Clipboard.setData(
+                              ClipboardData(text: account.apiClient.createUri('$publinkPath/$l').toString()));
                         },
                       ),
                     )),

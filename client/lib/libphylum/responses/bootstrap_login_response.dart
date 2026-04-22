@@ -3,6 +3,7 @@ part of 'responses.dart';
 class BootstrapLoginResponse extends PhylumApiSuccessResponse {
   final String? apiToken;
   final AccountUser user;
+  final BootstrapConfig config;
   final Iterable<Bookmark> bookmarks;
   final Iterable<User> users;
   final bool clear;
@@ -11,6 +12,7 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
   BootstrapLoginResponse._({
     required this.apiToken,
     required this.user,
+    required this.config,
     required this.bookmarks,
     required this.users,
     required this.until,
@@ -21,12 +23,14 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
     final bookmarks = (data["bookmarks"] as List).cast<Map>().map((u) => parseBookmark(u.cast<String, dynamic>()));
     final users = (data["users"] as List).cast<Map>().map((u) => parseUser(u.cast<String, dynamic>()));
     return BootstrapLoginResponse._(
-        apiToken: data['api_token'],
-        user: parseAccountUser(data['user']),
-        bookmarks: bookmarks,
-        users: users,
-        until: data['until'],
-        clear: data['clear']);
+      apiToken: data['api_token'],
+      user: parseAccountUser(data['user']),
+      config: BootstrapConfig.parse(data['config']),
+      bookmarks: bookmarks,
+      users: users,
+      until: data['until'],
+      clear: data['clear'],
+    );
   }
 
   @override
@@ -45,6 +49,7 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
 
     account.user = user;
     account.bootstrapUntil = until;
+    account.config = config;
 
     for (final b in bookmarks) {
       await account.datastore.get<Bookmark>().replaceRemoteData(b.resourceId, b);
@@ -54,4 +59,30 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
       await account.datastore.get<User>().replaceRemoteData(u.id.toString(), u);
     }
   }
+}
+
+class BootstrapConfig {
+  final String publinkPath;
+
+  BootstrapConfig({required this.publinkPath});
+
+  factory BootstrapConfig.parse(Map data) {
+    return BootstrapConfig(
+      publinkPath: data['publink_path'] ?? '/pub',
+    );
+  }
+
+  String toJson() {
+    return jsonEncode({
+      'publink_path': publinkPath,
+    });
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is BootstrapConfig && publinkPath == other.publinkPath;
+  }
+
+  @override
+  int get hashCode => publinkPath.hashCode;
 }

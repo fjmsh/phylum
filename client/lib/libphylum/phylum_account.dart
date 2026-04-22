@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -15,6 +16,7 @@ import 'package:state_notifier/state_notifier.dart';
 
 const _persistKeyApiToken = 'apiToken';
 const _persistKeyBootstrapUntil = 'bootstrapUntil';
+const _persistKeyConfig = 'config';
 
 AccountManager<PhylumAccount> createAccountManager(bool autoInitialize) => AccountManager(
       (id) => PhylumAccount.restore(id: id),
@@ -66,6 +68,15 @@ class PhylumAccount extends Account<PhylumAccount> {
     persist(_persistKeyBootstrapUntil, value);
   }
 
+  late BootstrapConfig _config;
+  BootstrapConfig get config => _config;
+  set config(BootstrapConfig value) {
+    if (value != _config) {
+      _config = value;
+      persist(_persistKeyConfig, value.toJson());
+    }
+  }
+
   PhylumAccount._create({required super.serverUrl, required String apiToken, required AccountUser user})
       : _apiToken = apiToken,
         _initialUser = user,
@@ -99,6 +110,7 @@ class PhylumAccount extends Account<PhylumAccount> {
     } else {
       _userNotifier = AccountUserNotifier.fromAccount(this);
     }
+    _config = BootstrapConfig.parse(jsonDecode(getPersisted(_persistKeyConfig) ?? '{}'));
 
     final dispatcherOverride = const String.fromEnvironment('dispatcher');
     dispatcher = switch (dispatcherOverride) {
