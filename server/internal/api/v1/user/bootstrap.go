@@ -15,6 +15,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var bootstrapConfig map[string]any
+
+func InitBootstrapConfig(publinkPath string) {
+	bootstrapConfig = map[string]any{
+		"publink_path": publinkPath,
+	}
+}
+
 func handleBootstrapRoute(c *gin.Context) {
 	var since int64
 	if s := c.Request.URL.Query().Get("since"); s != "" {
@@ -56,6 +64,7 @@ func Bootstrap(ctx context.Context, auth *auth.Auth, since int64) (responses.Boo
 			Bookmarks: bookmarks,
 			Users:     users,
 			Until:     int(time.Now().UnixMilli()) - 100,
+			Config:    bootstrapConfig,
 			Clear:     since == 0,
 		}, nil
 	}

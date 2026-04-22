@@ -15,6 +15,7 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/api/publink"
 	apiv1 "codeberg.org/shroff/phylum/server/internal/api/v1"
+	"codeberg.org/shroff/phylum/server/internal/api/v1/user"
 	"codeberg.org/shroff/phylum/server/internal/api/webdav"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/steve"
@@ -66,6 +67,7 @@ func SetupCommand() *cobra.Command {
 			}
 			apiv1.Setup(engine.Group("/api/v1"), logger)
 			publink.Setup(engine.Group(Cfg.PublinkPath))
+			user.InitBootstrapConfig(Cfg.PublinkPath)
 
 			setupTrashCompactor(logger)
 		}

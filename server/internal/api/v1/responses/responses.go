@@ -69,9 +69,10 @@ type Bookmark struct {
 }
 
 type Bootstrap struct {
-	User      LoggedInUser `json:"user"`
-	Bookmarks []Bookmark   `json:"bookmarks"`
-	Users     []User       `json:"users"`
-	Until     int          `json:"until"`
-	Clear     bool         `json:"clear"`
+	User      LoggedInUser   `json:"user"`
+	Bookmarks []Bookmark     `json:"bookmarks"`
+	Users     []User         `json:"users"`
+	Until     int            `json:"until"`
+	Clear     bool           `json:"clear"`
+	Config    map[string]any `json:"config"`
 }
