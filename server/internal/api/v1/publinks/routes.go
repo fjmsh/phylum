@@ -15,4 +15,5 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/publinks")
 
 	group.POST("/create", handleCreateRequest)
+	group.DELETE("/delete", handleDeleteRequest)
 }

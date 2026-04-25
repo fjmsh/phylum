@@ -71,6 +71,24 @@ func OpenFileSystemFromPublink(ctx context.Context, id string, password string) 
 	return proxyFileSystemReadOnly{f: f}, nil
 }
 
+func DeletePublink(ctx context.Context, id string) error {
+	d := db.Get(ctx)
+	link, err := getPublink(d, id)
+	if err != nil {
+		return err
+	}
+
+	f := OpenFileSystem(d, pgtype.UUID{Bytes: link.Root, Valid: true}, -1, -1, []string{"*"})
+	root, err := f.ResourceByPathWithRoot("")
+	if err := f.checkPermission(root, PermissionShare); err != nil {
+		return err
+	}
+
+	const q = "DELETE FROM publinks WHERE id = $1::TEXT"
+	_, err = f.db.Exec(q, link.ID)
+	return err
+}
+
 func getPublink(d db.Handler, id string) (Publink, error) {
 	q := "SELECT * FROM publinks WHERE id = $1::TEXT"
 	if rows, err := d.Query(q, id); err != nil {
