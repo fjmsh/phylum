@@ -7,7 +7,7 @@ import 'package:phylum/ui/setup/setup_db_fragment.dart';
 import 'package:phylum/ui/setup/setup_mail_fragment.dart';
 import 'package:provider/provider.dart';
 
-enum SetupState {
+enum SetupStep {
   database,
   mail,
   auth,
@@ -24,7 +24,7 @@ class SetupPage extends StatefulWidget {
 }
 
 class _SetupPageState extends State<SetupPage> {
-  SetupState _currentState = SetupState.database;
+  SetupStep _currentStep = SetupStep.database;
 
   @override
   void initState() {
@@ -33,49 +33,53 @@ class _SetupPageState extends State<SetupPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Instance Setup'),
-        leading: _currentState.index == 0
-            ? CloseButton(onPressed: () => context.read<PhylumRouterDelegate>().go(const ExplorerRouteHome()))
-            : BackButton(onPressed: () => setState(() => _currentState = SetupState.values[_currentState.index - 1])),
-        actions: [
-          _currentState.index == SetupState.values.length - 1
-              ? TextButton(onPressed: () {}, child: Text('FINISH'))
-              : TextButton(onPressed: handleNextPress, child: Text('NEXT'))
-        ],
-      ),
-      body: MultiProvider(
-        providers: [
-          StateNotifierProvider<DbController, DbConfig>(create: (_) => DbController()),
-          StateNotifierProvider<MailController, MailConfig>(create: (_) => MailController()),
-          StateNotifierProvider<AuthController, AuthConfig>(create: (_) => AuthController()),
-        ],
-        child: _buildBody(context),
+    return MultiProvider(
+      providers: [
+        StateNotifierProvider<DbController, DbConfig>(create: (_) => DbController()),
+        StateNotifierProvider<MailController, MailConfig>(create: (_) => MailController()),
+        StateNotifierProvider<AuthController, AuthConfig>(create: (_) => AuthController()),
+      ],
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Instance Setup'),
+          leading: _currentStep.index == 0
+              ? CloseButton(onPressed: () => context.read<PhylumRouterDelegate>().go(const ExplorerRouteHome()))
+              : BackButton(onPressed: () => setState(() => _currentStep = SetupStep.values[_currentStep.index - 1])),
+          actions: [
+            _currentStep.index == SetupStep.values.length - 1
+                ? TextButton(onPressed: () {}, child: Text('FINISH'))
+                : Builder(builder: (context) {
+                    return TextButton(onPressed: currentStepValid(context) ? nextStep : null, child: Text('NEXT'));
+                  })
+          ],
+        ),
+        body: _buildBody(context),
       ),
     );
   }
 
   Widget _buildBody(BuildContext context) {
-    return switch (_currentState) {
-      SetupState.database => SetupDbFragment(instanceUrl: widget.instanceUrl),
-      SetupState.mail => SetupMailFragment(instanceUrl: widget.instanceUrl),
-      SetupState.auth => SetupAuthFragment(instanceUrl: widget.instanceUrl),
-      SetupState.user => throw UnimplementedError(),
+    return switch (_currentStep) {
+      SetupStep.database => SetupDbFragment(instanceUrl: widget.instanceUrl),
+      SetupStep.mail => SetupMailFragment(instanceUrl: widget.instanceUrl),
+      SetupStep.auth => SetupAuthFragment(instanceUrl: widget.instanceUrl),
+      SetupStep.user => throw UnimplementedError(),
     };
   }
 
-  void handleNextPress() {
-    //   final GlobalKey<SetupFragmentState> currentKey = switch (_currentState) {
-    //     SetupState.database => dbFragmentKey,
-    //     SetupState.mail => mailFragmentKey,
-    //     SetupState.auth => authFragmentKey,
-    //     SetupState.user => throw UnimplementedError(),
-    //   };
-    //   if (currentKey.currentState?.handleNextPress() ?? false) {
-    //     setState(() {
-    //       _currentState = SetupState.values[_currentState.index + 1];
-    //     });
-    //   }
+  bool currentStepValid(BuildContext context) {
+    return switch (_currentStep) {
+      SetupStep.database => true,
+      SetupStep.mail => true,
+      SetupStep.auth => context.select<AuthConfig, bool>((config) =>
+          config.passwordConfig != null || config.passwordlessLoginEnabled || config.openIdConfigs.isNotEmpty),
+      SetupStep.user => false,
+    };
+  }
+
+  void nextStep() {
+    setState(() {
+      _currentStep = SetupStep.values[_currentStep.index + 1];
+    });
   }
 }

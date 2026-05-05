@@ -15,7 +15,7 @@ class SetupDbFragment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final config = context.read<DbConfig>();
+    final config = context.watch<DbConfig>();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),

@@ -16,8 +16,8 @@ class SetupMailFragment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = context.select<MailConfig, bool>((config) => config.enabled);
-    final config = context.read<MailConfig>();
+    final config = context.watch<MailConfig>();
+    final enabled = config.enabled;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(

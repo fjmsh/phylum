@@ -19,7 +19,7 @@ class SetupAuthFragment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final config = context.read<AuthConfig>();
+    final config = context.watch<AuthConfig>();
     final mailEnabled = context.select<MailConfig, bool>((config) => config.enabled);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -507,7 +507,7 @@ class AuthController extends StateNotifier<AuthConfig> {
   AuthController() : super(AuthConfig.defaults());
 
   set passwordConfig(PasswordConfig? config) {
-    state = state.copyWith(passwordConfig: config);
+    state = state.copyWith(passwordConfig: config, updatePasswordConfig: true);
   }
 
   set passwordlessLoginEnabled(bool enabled) {
@@ -543,11 +543,12 @@ class AuthConfig {
 
   AuthConfig copyWith({
     PasswordConfig? passwordConfig,
+    bool updatePasswordConfig = false,
     bool? passwordlessLoginEnabled,
     List<OpenIDConfig>? openIdConfigs,
   }) {
     return AuthConfig(
-      passwordConfig: passwordConfig ?? this.passwordConfig,
+      passwordConfig: updatePasswordConfig ? passwordConfig : this.passwordConfig,
       passwordlessLoginEnabled: passwordlessLoginEnabled ?? this.passwordlessLoginEnabled,
       openIdConfigs: openIdConfigs ?? this.openIdConfigs,
     );
