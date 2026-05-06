@@ -541,6 +541,8 @@ class AuthConfig {
           openIdConfigs: const [],
         );
 
+  bool get valid => passwordConfig != null || passwordlessLoginEnabled || openIdConfigs.isNotEmpty;
+
   AuthConfig copyWith({
     PasswordConfig? passwordConfig,
     bool updatePasswordConfig = false,

@@ -5,6 +5,7 @@ import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/setup/setup_auth_fragment.dart';
 import 'package:phylum/ui/setup/setup_db_fragment.dart';
 import 'package:phylum/ui/setup/setup_mail_fragment.dart';
+import 'package:phylum/ui/setup/setup_user_fragment.dart';
 import 'package:provider/provider.dart';
 
 enum SetupStep {
@@ -38,6 +39,7 @@ class _SetupPageState extends State<SetupPage> {
         StateNotifierProvider<DbController, DbConfig>(create: (_) => DbController()),
         StateNotifierProvider<MailController, MailConfig>(create: (_) => MailController()),
         StateNotifierProvider<AuthController, AuthConfig>(create: (_) => AuthController()),
+        StateNotifierProvider<UserController, UserConfig>(create: (_) => UserController()),
       ],
       child: Scaffold(
         appBar: AppBar(
@@ -63,7 +65,7 @@ class _SetupPageState extends State<SetupPage> {
       SetupStep.database => SetupDbFragment(instanceUrl: widget.instanceUrl),
       SetupStep.mail => SetupMailFragment(instanceUrl: widget.instanceUrl),
       SetupStep.auth => SetupAuthFragment(instanceUrl: widget.instanceUrl),
-      SetupStep.user => throw UnimplementedError(),
+      SetupStep.user => SetupUserFragment(instanceUrl: widget.instanceUrl),
     };
   }
 
@@ -71,9 +73,9 @@ class _SetupPageState extends State<SetupPage> {
     return switch (_currentStep) {
       SetupStep.database => true,
       SetupStep.mail => true,
-      SetupStep.auth => context.select<AuthConfig, bool>((config) =>
-          config.passwordConfig != null || config.passwordlessLoginEnabled || config.openIdConfigs.isNotEmpty),
-      SetupStep.user => false,
+      SetupStep.auth => context.select<AuthConfig, bool>((config) => config.valid),
+      SetupStep.user => context.select<UserConfig, bool>((config) => config.password != '') ||
+          !context.select<AuthConfig, bool>((config) => config.passwordConfig?.cryptConfig != null),
     };
   }
 
