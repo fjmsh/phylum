@@ -130,7 +130,7 @@ class SetupAuthFragment extends StatelessWidget {
                     CheckboxListTile(
                       value: autoCreateUsers,
                       title: Text('Automatically Create Users'),
-                      subtitle: Text('Use with caution with public providers'),
+                      subtitle: Text('Only use with trusted private providers'),
                       onChanged: (value) => setState(() => autoCreateUsers = value ?? false),
                     ),
                   ],
@@ -769,5 +769,10 @@ class LdapConfig {
       'base_dn': baseDn,
       'filter_template': filterTemplate,
     };
+  }
+
+  @override
+  String toString() {
+    return url;
   }
 }
