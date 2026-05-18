@@ -1,12 +1,18 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:http/http.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/setup/setup_auth_fragment.dart';
 import 'package:phylum/ui/setup/setup_db_fragment.dart';
 import 'package:phylum/ui/setup/setup_mail_fragment.dart';
 import 'package:phylum/ui/setup/setup_user_fragment.dart';
+import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
+import 'package:uri/uri.dart';
 
 enum SetupStep {
   database,
@@ -49,7 +55,10 @@ class _SetupPageState extends State<SetupPage> {
               : BackButton(onPressed: () => setState(() => _currentStep = SetupStep.values[_currentStep.index - 1])),
           actions: [
             _currentStep.index == SetupStep.values.length - 1
-                ? TextButton(onPressed: () {}, child: Text('FINISH'))
+                ? Builder(builder: (context) {
+                    return TextButton(
+                        onPressed: currentStepValid(context) ? () => finalize(context) : null, child: Text('FINISH'));
+                  })
                 : Builder(builder: (context) {
                     return TextButton(onPressed: currentStepValid(context) ? nextStep : null, child: Text('NEXT'));
                   })
@@ -75,7 +84,7 @@ class _SetupPageState extends State<SetupPage> {
       SetupStep.mail => true,
       SetupStep.auth => context.select<AuthConfig, bool>((config) => config.valid),
       SetupStep.user => context.select<UserConfig, bool>((config) => config.password != '') ||
-          !context.select<AuthConfig, bool>((config) => config.passwordConfig?.cryptConfig != null),
+          context.select<AuthConfig, bool>((config) => config.passwordConfig?.cryptConfig == null),
     };
   }
 
@@ -83,5 +92,36 @@ class _SetupPageState extends State<SetupPage> {
     setState(() {
       _currentStep = SetupStep.values[_currentStep.index + 1];
     });
+  }
+
+  void finalize(BuildContext context) async {
+    final builder = UriBuilder.fromUri(Uri.parse(widget.instanceUrl));
+    builder.path = '${builder.path}/api/v1/setup/finalize';
+    final request = Request('post', builder.build());
+    final data = {
+      'config': {
+        'db': context.read<DbConfig>().toMap(),
+        'mail': context.read<MailConfig>().toMap(),
+        'auth': context.read<AuthConfig>().toMap(),
+      },
+      'user': context.read<UserConfig>().toMap(),
+    };
+
+    request.body = jsonEncode(data);
+    print(JsonEncoder.withIndent('  ').convert(data));
+
+    final responseString = await sendRequest(context, 'Finalizing instance configuration', request);
+    if (responseString == null || !context.mounted) return;
+    final responseMap = (jsonDecode(responseString) as Map).cast<String, dynamic>();
+
+    if (responseMap["success"]) {
+      await showAlertDialog(
+        context,
+        title: 'Instance configured',
+      );
+    } else {
+      await showAlertDialog(context,
+          title: 'Could not finalize instance configuration', message: "${responseMap["error"]}");
+    }
   }
 }

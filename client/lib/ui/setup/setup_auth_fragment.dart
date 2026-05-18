@@ -558,8 +558,10 @@ class AuthConfig {
 
   Map<String, dynamic> toMap() {
     return {
-      'backend': 'none',
-      ...?passwordConfig?.toMap(),
+      'password': {
+        'backend': 'none',
+        ...?passwordConfig?.toMap(),
+      },
       'magic_links': passwordlessLoginEnabled,
       'openid': const {},
     };
