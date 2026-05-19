@@ -9,6 +9,9 @@ import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 import 'package:uri/uri.dart';
 
+import 'package:phylum/ui/login/base_uri_stub.dart'
+    if (dart.library.js_interop) 'package:phylum/ui/login/base_uri_web.dart';
+
 class SetupMailFragment extends StatelessWidget {
   final String instanceUrl;
 
@@ -82,6 +85,14 @@ class SetupMailFragment extends StatelessWidget {
               initialValue: config.fromEmail,
               onChanged: (value) => context.read<MailController>().fromEmail = value,
             ),
+          if (enabled)
+            TextFormField(
+              decoration: const InputDecoration(label: Text('Instance URL'), hint: Text('https://phylum.example.com')),
+              autocorrect: false,
+              initialValue: config.instanceUrl,
+              keyboardType: TextInputType.url,
+              onChanged: (value) => context.read<MailController>().instanceUrl = value,
+            ),
           if (enabled) ElevatedButton(onPressed: () => validateMailConfig(context), child: Text('Send Test Email'))
         ],
       ),
@@ -148,6 +159,10 @@ class MailController extends StateNotifier<MailConfig> {
   set fromEmail(String value) {
     state = state.copyWith(fromEmail: value);
   }
+
+  set instanceUrl(String value) {
+    state = state.copyWith(instanceUrl: value);
+  }
 }
 
 class MailConfig {
@@ -158,6 +173,7 @@ class MailConfig {
   final String smtpPassword;
   final String fromName;
   final String fromEmail;
+  final String instanceUrl;
 
   const MailConfig({
     required this.enabled,
@@ -167,9 +183,10 @@ class MailConfig {
     required this.smtpPassword,
     required this.fromName,
     required this.fromEmail,
+    required this.instanceUrl,
   });
 
-  const MailConfig.defaults()
+  MailConfig.defaults()
       : this(
           enabled: false,
           smtpHost: '',
@@ -178,6 +195,7 @@ class MailConfig {
           smtpPassword: '',
           fromEmail: '',
           fromName: '',
+          instanceUrl: webAppBaseUri?.toString() ?? '',
         );
 
   MailConfig copyWith({
@@ -188,6 +206,7 @@ class MailConfig {
     String? smtpPassword,
     String? fromName,
     String? fromEmail,
+    String? instanceUrl,
   }) {
     return MailConfig(
       enabled: enabled ?? this.enabled,
@@ -197,6 +216,7 @@ class MailConfig {
       smtpPassword: smtpPassword ?? this.smtpPassword,
       fromName: fromName ?? this.fromName,
       fromEmail: fromEmail ?? this.fromEmail,
+      instanceUrl: instanceUrl ?? this.instanceUrl,
     );
   }
 
@@ -212,6 +232,7 @@ class MailConfig {
             'name': fromName,
             'email': fromEmail,
           },
+          'instance': instanceUrl,
         }
       : const {};
 }
