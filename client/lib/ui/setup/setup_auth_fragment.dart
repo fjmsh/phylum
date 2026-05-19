@@ -168,26 +168,35 @@ class SetupAuthFragment extends StatelessWidget {
         (item) => ListTile(title: Text(item.descriptor)),
       );
       if (kdf == null || !context.mounted) return null;
+      late final CryptConfig? cryptConfig;
       if (kdf == CryptKDF.argon2) {
         final argon2Config = await configureArgon2(context);
-        if (argon2Config == null) {
-          return null;
-        } else {
-          if (context.mounted) {
-            context.read<AuthController>().passwordConfig =
-                PasswordConfig(cryptConfig: CryptConfig(argon2Config: argon2Config));
-          }
+        if (argon2Config != null) {
+          cryptConfig = CryptConfig(argon2Config: argon2Config);
         }
       } else if (kdf == CryptKDF.pbkdf2) {
         final pbkdf2Config = await configurePbkdf2(context);
-        if (pbkdf2Config == null) {
-          return null;
-        } else {
-          if (context.mounted) {
-            context.read<AuthController>().passwordConfig =
-                PasswordConfig(cryptConfig: CryptConfig(pbkdf2Config: pbkdf2Config));
-          }
+        if (pbkdf2Config != null) {
+          cryptConfig = CryptConfig(pbkdf2Config: pbkdf2Config);
         }
+      }
+      if (cryptConfig == null || !context.mounted) return null;
+
+      bool resetEnabled = false;
+      if (context.read<MailConfig>().enabled) {
+        final response = await showOptionsDialog(
+          context,
+          titleText: 'Enable Password Reset?',
+          [true, false],
+          (item) => ListTile(title: Text(item ? 'Yes' : 'No')),
+        );
+        if (response == null || !context.mounted) return null;
+        resetEnabled = response;
+      }
+
+      if (context.mounted) {
+        context.read<AuthController>().passwordConfig =
+            PasswordConfig(cryptConfig: cryptConfig, resetEnabled: resetEnabled);
       }
     } else if (backend == PasswordBackend.ldap) {
       final ldapConfig = await configureLdap(context);
@@ -195,7 +204,7 @@ class SetupAuthFragment extends StatelessWidget {
         return null;
       } else {
         if (context.mounted) {
-          context.read<AuthController>().passwordConfig = PasswordConfig(ldapConfig: ldapConfig);
+          context.read<AuthController>().passwordConfig = PasswordConfig(ldapConfig: ldapConfig, resetEnabled: false);
         }
       }
     }
@@ -607,19 +616,31 @@ class OpenIDConfig {
 class PasswordConfig {
   final CryptConfig? cryptConfig;
   final LdapConfig? ldapConfig;
+  final bool resetEnabled;
 
-  const PasswordConfig({this.cryptConfig, this.ldapConfig}) : assert((cryptConfig == null) != (ldapConfig == null));
+  const PasswordConfig({this.cryptConfig, this.ldapConfig, required this.resetEnabled})
+      : assert((cryptConfig == null) != (ldapConfig == null));
+
+  PasswordConfig copyWith({bool? resetEnabled}) {
+    return PasswordConfig(
+      cryptConfig: cryptConfig,
+      ldapConfig: ldapConfig,
+      resetEnabled: resetEnabled ?? this.resetEnabled,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     if (cryptConfig != null) {
       return {
         'backend': 'crypt',
         'crypt': cryptConfig!.toMap(),
+        'reset_enabled': resetEnabled,
       };
     } else if (ldapConfig != null) {
       return {
         'backend': 'ldap',
         'ldap': ldapConfig!.toMap(),
+        'reset_enabled': resetEnabled,
       };
     }
     return {};
