@@ -36,10 +36,6 @@ func handleSendTestEmailRequest(c *gin.Context) {
 	if err != nil {
 		panic(errInvalidParams)
 	}
-	b := make([]byte, 1024)
-	c.Request.Body.Read(b)
-	fmt.Println(string(b))
-
 	paramsCfg := koanf.New(".")
 	if params.From.Email == "" {
 		params.From.Email = params.SMTP.Username
@@ -50,7 +46,6 @@ func handleSendTestEmailRequest(c *gin.Context) {
 	if err := config.MergeSub("mail", paramsCfg).Unmarshal("", &cfg); err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("%+v\n", cfg)
 	overrides := config.HasOverrides("mail", paramsCfg)
 	response := gin.H{
 		"success":   true,
