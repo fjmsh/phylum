@@ -51,25 +51,25 @@ core:
 ## https://pushsecurity.com/blog/cross-idp-impersonation/ for more details.
 auth:
   suppress_multi_provider_warning: false
-  magic_links: true     # requires mail config
+  magic_links: false      # requires mail config
   password:
-    backend: crypt      # one of crypt, ldap, none
-    reset_enabled: true # requires mail config, only supported by crypt backend
+    backend: crypt        # one of crypt, ldap, none
+    reset_enabled: false  # requires mail config, only supported by crypt backend
     crypt:
       # kdf is either argon2 or pbkdf2
       kdf: argon2
       argon2: 
-        memory: 16      # 2 ^ 16 = 64M
+        memory: 16        # 2 ^ 16 = 64M
         iterations: 4
         parallelism: 2
-        salt: 32        # 32 Bytes = 256-bit
-        key: 32         # 32 Bytes = 256-bit
+        salt: 32          # 32 Bytes = 256-bit
+        key: 32           # 32 Bytes = 256-bit
       pbkdf2: 
         function: sha-256
         iterations: 600000
-        salt: 32        # 32 Bytes = 256-bit
-        key: 32         # 32 Bytes = 256-bit
-    requirements:       # only supported by crypt backend
+        salt: 32          # 32 Bytes = 256-bit
+        key: 32           # 32 Bytes = 256-bit
+    requirements:         # only supported by crypt backend
       length: 8
       lower: 0
       upper: 0
