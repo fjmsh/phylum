@@ -244,13 +244,13 @@ func readAuthConfig(config auth.Config, hasEmailConfig bool, logger zerolog.Logg
 		cfg.Set("password.backend", "none")
 	}
 
-	// Passwordless login
-	passwordlessLoginEnabled := false
+	// Magic Links
+	magicLinksEnabled := false
 	if hasEmailConfig {
-		passwordlessLoginEnabled = readBool("Allow passwordless login via email?", config.MagicLinks, cfg, "magic_links", true)
+		magicLinksEnabled = readBool("Allow passwordless email login links (magic links)?", config.MagicLinks, cfg, "magic_links", true)
 	}
 
-	if !passwordlessLoginEnabled && !passwordLoginEnabled && !oidcLoginEnabled {
+	if !magicLinksEnabled && !passwordLoginEnabled && !oidcLoginEnabled {
 		if readBool("No login methods configured. Configure again?", true, nil, "", false) {
 			return readAuthConfig(config, hasEmailConfig, logger)
 		} else {
