@@ -12,12 +12,14 @@ import (
 	"github.com/knadh/koanf/providers/posflag"
 	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/knadh/koanf/v2"
+	"github.com/rogpeppe/go-internal/renameio"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
 //go:embed config.defaults.yml
 var defaultConfig embed.FS
+var configFile string
 
 var Full *koanf.Koanf
 var defaults = koanf.New(".")
@@ -44,7 +46,7 @@ func Initialize(cmd *cobra.Command) error {
 	}
 
 	// config.yml
-	configFile, _ := cmd.Flags().GetString("config-file")
+	configFile, _ = cmd.Flags().GetString("config-file")
 	ymlConfig, err = LoadFile(configFile)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return errors.New("failed to load config: " + err.Error())
@@ -61,6 +63,14 @@ func Initialize(cmd *cobra.Command) error {
 	Full.Merge(overrides)
 
 	return nil
+}
+
+func WriteConfig(cfg *koanf.Koanf) error {
+	bytes, err := cfg.Marshal(yaml.Parser())
+	if err != nil {
+		return errors.New("failed to marshal config: " + err.Error())
+	}
+	return renameio.WriteFile(configFile, bytes)
 }
 
 func MergeSub(path string, cfg *koanf.Koanf) *koanf.Koanf {
