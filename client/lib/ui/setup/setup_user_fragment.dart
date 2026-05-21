@@ -32,6 +32,13 @@ class SetupUserFragment extends StatelessWidget {
             initialValue: config.email,
             onChanged: (value) => context.read<UserController>().email = value,
           ),
+          TextFormField(
+            decoration: const InputDecoration(label: Text('Name'), hint: Text('Admin')),
+            keyboardType: TextInputType.name,
+            textCapitalization: TextCapitalization.words,
+            initialValue: config.name,
+            onChanged: (value) => context.read<UserController>().name = value,
+          ),
           if (passwordRequired)
             TextFormField(
               decoration: const InputDecoration(label: Text('Password')),
@@ -53,6 +60,10 @@ class UserController extends StateNotifier<UserConfig> {
     state = state.copyWith(email: value);
   }
 
+  set name(String value) {
+    state = state.copyWith(name: value);
+  }
+
   set password(String value) {
     state = state.copyWith(password: value);
   }
@@ -60,31 +71,37 @@ class UserController extends StateNotifier<UserConfig> {
 
 class UserConfig {
   final String email;
+  final String name;
   final String password;
 
   const UserConfig({
     required this.email,
+    required this.name,
     required this.password,
   });
 
   const UserConfig.defaults()
       : this(
           email: '',
+          name: '',
           password: '',
         );
 
   UserConfig copyWith({
     String? email,
+    String? name,
     String? password,
   }) {
     return UserConfig(
       email: email ?? this.email,
+      name: name ?? this.name,
       password: password ?? this.password,
     );
   }
 
   Map<String, dynamic> toMap() => {
         'email': email,
+        'name': name,
         'password': password,
       };
 }
