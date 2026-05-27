@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"os"
 	"syscall"
-	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/config"
@@ -43,7 +42,10 @@ func handleFinalize(c *gin.Context) {
 
 	paramsCfg := koanf.New(".")
 	paramsCfg.Load(structs.Provider(params.Config, "koanf"), nil)
-	paramsCfg.Print()
+
+	defer func() {
+		syscall.Kill(os.Getpid(), syscall.SIGINT)
+	}()
 
 	if _, err := db.Initialize(c.Request.Context(), params.Config.DB, &zerolog.Logger{}); err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -62,33 +64,35 @@ func handleFinalize(c *gin.Context) {
 		})
 		return
 	} else if len(users) != 0 {
-		// c.JSON(http.StatusOK, gin.H{
-		// 	"success": false,
-		// 	"error":   "Database not empty",
-		// })
-		// return
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"error":   "Database not empty",
+		})
+		return
 	}
 
-	// d.RunInTx(func(db db.TxHandler) error {
-	// 	if _, err := core.CreateUser(db, params.User.Email, params.User.Name, false); err != nil {
-	// 		return err
-	// 	}
-	// 	if params.User.Password != "" {
-	// 		return auth.UpdateUserPassword(db, params.User.Email, params.User.Password)
-	// 	}
-	// 	return nil
-	// })
+	err = d.RunInTx(func(db db.TxHandler) error {
+		if _, err := core.CreateUser(db, params.User.Email, params.User.Name, false); err != nil {
+			return err
+		}
+		if params.User.Password != "" {
+			return auth.UpdateUserPassword(db, params.User.Email, params.User.Password)
+		}
+		return nil
+	})
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"error":   "Failed to create user",
+			"details": err.Error(),
+		})
+		return
+	}
 
 	config.WriteConfig(paramsCfg)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 	})
-	t := time.NewTimer(100 * time.Millisecond)
-	go func() {
-		<-t.C
-		binary, _ := os.Executable()
-		syscall.Exec(binary, os.Args, os.Environ())
-	}()
 
 }
