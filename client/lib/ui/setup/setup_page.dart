@@ -108,7 +108,6 @@ class _SetupPageState extends State<SetupPage> {
     };
 
     request.body = jsonEncode(data);
-    print(JsonEncoder.withIndent('  ').convert(data));
 
     final responseString = await sendRequest(context, 'Finalizing instance configuration', request);
     if (responseString == null || !context.mounted) return;
@@ -119,9 +118,14 @@ class _SetupPageState extends State<SetupPage> {
         context,
         title: 'Instance configured',
       );
+      if (!context.mounted) return;
+      context.read<PhylumRouterDelegate>().go(const ExplorerRouteHome());
     } else {
       await showAlertDialog(context,
-          title: 'Could not finalize instance configuration', message: "${responseMap["error"]}");
+          title: 'Could not finalize instance configuration',
+          message: responseMap.containsKey("details")
+              ? "${responseMap["error"]} - ${responseMap['details']}"
+              : responseMap['error']);
     }
   }
 }
