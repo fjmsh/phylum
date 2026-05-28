@@ -13,7 +13,7 @@ const (
 	PermissionRead  = Permission(4)
 	PermissionWrite = Permission(32)
 	PermissionShare = Permission(128)
-	PermissionSU    = Permission(-1)
+	PermissionAll   = Permission(-1)
 )
 
 func (f *FileSystem) UpdatePermissions(r Resource, user User, permission Permission) (res Resource, err error) {
@@ -30,7 +30,7 @@ func (f txFileSystem) UpdatePermissions(r Resource, user User, permission Permis
 		return r, ErrResourceDeleted
 	}
 
-	if f.userPermissions&PermissionFilesAll == 0 {
+	if f.userPermissions.HasPermission(UserPermissionFilesShare) {
 		if up, err := readPermissionFromJson(r.permissions, f.userID); err != nil {
 			return Resource{}, err
 		} else if up&PermissionShare == 0 {

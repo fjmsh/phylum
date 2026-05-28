@@ -33,7 +33,7 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 			pg.Select(goqu.L("CASE WHEN COALESCE(p.permissions[?::INT]::INTEGER, 0) <> 0 THEN p.id ELSE NULL END AS visible_parent", f.userID)),
 			pg.Select(goqu.L("COALESCE(p.permissions, '{}'::JSONB)")),
 		)
-	if f.userPermissions&PermissionFilesAll == 0 {
+	if !f.userPermissions.HasPermission(UserPermissionFilesRead) {
 		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.userID))
 	}
 	if cursor != "" {
@@ -123,9 +123,9 @@ func (f *FileSystem) selectTrash(time time.Time) (exp.AliasedExpression, *goqu.S
 		From(r).
 		Select(r.Col("id"), r.Col("parent"), r.Col("deleted")).
 		Join(t, goqu.On(t.Col("id").Eq(r.Col("id"))))
-	if f.userPermissions&PermissionFilesAll == 0 {
-		base = base.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.userID))
-	}
+		// if f.userPermissions&PermissionFilesAll == 0 {
+	base = base.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", f.userID))
+	// }
 	if !time.IsZero() {
 		base = base.Where(r.Col("deleted").Lt(goqu.V(time)))
 	}

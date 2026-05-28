@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
+	"slices"
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
@@ -24,24 +24,10 @@ func setupGrantCommand() *cobra.Command {
 				fmt.Println("unable to find user :" + err.Error())
 				os.Exit(1)
 			}
-			var p core.UserPermissions
-			permString := strings.TrimSpace(args[1])
-			if strings.HasPrefix(permString, "0x") {
-				var perm int64
-				perm, err = strconv.ParseInt(permString[2:], 16, 32)
-				p = core.UserPermissions(perm)
-			} else {
-				var perm int64
-				perm, err = strconv.ParseInt(permString, 10, 32)
-				p = core.UserPermissions(perm)
-			}
-			if err != nil {
-				fmt.Println("failed to parse permission: " + err.Error())
-				os.Exit(1)
-			}
+			p := append(u.Permissions, core.UserPermission(strings.TrimSpace(args[1])))
 
 			if err := d.RunInTx(func(db db.TxHandler) error {
-				return core.GrantUserPermissions(db, u.ID, p)
+				return core.SetUserPermissions(db, u.ID, p)
 			}); err != nil {
 				fmt.Println("failed to grant permission: " + err.Error())
 				os.Exit(1)
@@ -62,25 +48,16 @@ func setupRevokeCommand() *cobra.Command {
 				fmt.Println("unable to find user :" + err.Error())
 				os.Exit(1)
 			}
-			var p core.UserPermissions
-			permString := strings.TrimSpace(args[1])
-			if strings.HasPrefix(permString, "0x") {
-				var perm int64
-				perm, err = strconv.ParseInt(permString[2:], 16, 32)
-				p = core.UserPermissions(perm)
-			} else {
-				var perm int64
-				perm, err = strconv.ParseInt(permString, 10, 32)
-				p = core.UserPermissions(perm)
-			}
-			if err != nil {
-				fmt.Println("failed to parse permission: " + err.Error())
-				os.Exit(1)
-			}
+
+			input := strings.TrimSpace(args[1])
+			p := slices.DeleteFunc(u.Permissions, func(p core.UserPermission) bool {
+				ps := string(p)
+				return ps == input || strings.HasPrefix(ps, input+":") || input == "*"
+			})
 
 			if err := d.RunInTx(func(db db.TxHandler) error {
 				// TODO: Accept email directly instead of having to separately fetch the user
-				return core.RevokeUserPermissions(db, u.ID, p)
+				return core.SetUserPermissions(db, u.ID, p)
 			}); err != nil {
 				fmt.Println("failed to revoke permission: " + err.Error())
 				os.Exit(1)

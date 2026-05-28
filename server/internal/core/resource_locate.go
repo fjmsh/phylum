@@ -106,7 +106,7 @@ func resourceByPath(db db.Handler, root uuid.UUID, path string, userID int32, us
 		Join(nodes, goqu.On(r.Col("id").Eq(nodes.Col("id")))).
 		Where(goqu.L("cardinality(n.search) = n.depth"))
 
-	if userPermissions&PermissionFilesAll == 0 {
+	if !userPermissions.HasPermission(UserPermissionFilesRead) {
 		q = q.Where(goqu.L("r.permissions[?::INT]::INTEGER <> 0", userID))
 	}
 

@@ -24,16 +24,8 @@ func UpdateUserName(db db.TxHandler, userID int32, name string) (User, error) {
 	}
 }
 
-func GrantUserPermissions(db db.TxHandler, userID int32, permissions UserPermissions) error {
-	const q = "UPDATE users SET permissions = permissions | $2::INTEGER, modified = NOW() WHERE id = $1::INT"
-	if _, err := db.Exec(q, userID, permissions); err != nil {
-		return err
-	}
-	return nil
-}
-
-func RevokeUserPermissions(db db.TxHandler, userID int32, permissions UserPermissions) error {
-	const q = "UPDATE users SET permissions = permissions & ~ $2::INTEGER, modified = NOW() WHERE id = $1::INT"
+func SetUserPermissions(db db.TxHandler, userID int32, permissions UserPermissions) error {
+	const q = "UPDATE users SET permissions = $2::TEXT[], modified = NOW() WHERE id = $1::INT"
 	if _, err := db.Exec(q, userID, permissions); err != nil {
 		return err
 	}

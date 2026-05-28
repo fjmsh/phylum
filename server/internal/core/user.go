@@ -1,16 +1,23 @@
 package core
 
 import (
+	"strings"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type UserPermissions = int32
+type UserPermissions []UserPermission
+type UserPermission = string
 
 const (
-	PermissionUsersInvite = UserPermissions(0x10)
-	PermissionUsersGrant  = UserPermissions(0x20)
-	PermissionFilesAll    = UserPermissions(0x100)
+	UserPermissionUsersInvite = UserPermission("users:invite")
+	UserPermissionUsersGrant  = UserPermission("users:grant")
+	UserPermissionFilesAll    = UserPermission("files")
+	UserPermissionFilesRead   = UserPermission("files:read")
+	UserPermissionFilesWrite  = UserPermission("files:write")
+	UserPermissionFilesShare  = UserPermission("files:share")
+	UserPermissionSU          = UserPermission("*")
 )
 
 type User struct {
@@ -21,8 +28,19 @@ type User struct {
 	Permissions UserPermissions
 }
 
-func (u User) hasPermission(p UserPermissions) bool {
-	return u.Permissions&p != 0
+func (u UserPermissions) HasPermission(p UserPermission) bool {
+	parts := strings.Split(string(p), ":")
+
+outer:
+	for _, s := range u {
+		for i, p := range strings.Split(string(s), ":") {
+			if p != "*" && (i >= len(parts) || p != parts[i]) {
+				continue outer
+			}
+		}
+		return true
+	}
+	return false
 }
 
 func scanUser(row pgx.CollectableRow) (User, error) {

@@ -67,7 +67,7 @@ func OpenFileSystemFromPublink(ctx context.Context, id string, password string) 
 		return nil, err
 	}
 
-	f := OpenFileSystem(d, pgtype.UUID{Bytes: link.Root, Valid: true}, -1, -1, []string{"read:" + link.Root.String()})
+	f := OpenFileSystem(d, pgtype.UUID{Bytes: link.Root, Valid: true}, -1, []UserPermission{UserPermissionFilesAll}, []string{"read:" + link.Root.String()})
 	return proxyFileSystemReadOnly{f: f}, nil
 }
 
@@ -78,7 +78,7 @@ func DeletePublink(ctx context.Context, id string) error {
 		return err
 	}
 
-	f := OpenFileSystem(d, pgtype.UUID{Bytes: link.Root, Valid: true}, -1, -1, []string{"*"})
+	f := OpenFileSystem(d, pgtype.UUID{Bytes: link.Root, Valid: true}, -1, []UserPermission{UserPermissionFilesAll}, []string{"*"})
 	root, err := f.ResourceByPathWithRoot("")
 	if err := f.checkPermission(root, PermissionShare); err != nil {
 		return err

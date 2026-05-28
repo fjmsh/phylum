@@ -160,7 +160,7 @@ func getUserEmail(s string) string {
 }
 
 func formatPermission(p core.Permission) string {
-	if p == core.PermissionSU {
+	if p == core.PermissionAll {
 		return "su"
 	}
 	str := ""

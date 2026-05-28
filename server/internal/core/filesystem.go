@@ -40,7 +40,7 @@ func getScopePermissions(scopes []string, id uuid.UUID) (p Permission) {
 		if len(parts) == 1 || parts[1] == idString || parts[1] == "*" {
 			switch parts[0] {
 			case "*", "":
-				p = PermissionSU
+				p = PermissionAll
 			case "read":
 				p = PermissionRead
 			case "write":
@@ -58,7 +58,7 @@ func OpenSUFileSystem(db db.Handler) *FileSystem {
 		db:               db,
 		pathRoot:         fsPathRoot,
 		userID:           -1,
-		userPermissions:  -1,
+		userPermissions:  []UserPermission{UserPermissionSU},
 		scopes:           []string{"*"},
 		scopePermissions: -1,
 	}
@@ -92,13 +92,19 @@ func (f *FileSystem) withPathRoot(pathRoot pgtype.UUID) *FileSystem {
 }
 
 func (f *FileSystem) checkPermission(r Resource, p Permission) error {
-	if f.userPermissions&PermissionFilesAll != 0 {
-		return nil
+	if p|PermissionRead != 0 && f.userPermissions.HasPermission(UserPermissionFilesRead) {
+		p = p ^ PermissionRead
+	}
+	if p|PermissionWrite != 0 && f.userPermissions.HasPermission(UserPermissionFilesWrite) {
+		p = p ^ PermissionWrite
+	}
+	if p|PermissionShare != 0 && f.userPermissions.HasPermission(UserPermissionFilesShare) {
+		p = p ^ PermissionShare
 	}
 
 	if up, err := readPermissionFromJson(r.permissions, f.userID); err != nil {
 		return err
-	} else if (up&p == 0) || (f.scopePermissions&p == 0) {
+	} else if (up&p != p) || (f.scopePermissions&p != p) {
 		return ErrInsufficientPermissions
 	}
 	return nil

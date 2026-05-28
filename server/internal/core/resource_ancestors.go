@@ -37,7 +37,7 @@ const ancestorsQuery = `WITH RECURSIVE nodes(id, name, parent, userPermission) A
 SELECT id, name, userPermission FROM nodes`
 
 func (f *FileSystem) GetAncestors(r Resource) ([]ResourceAncestor, error) {
-	if rows, err := f.db.Query(ancestorsQuery, r.id, f.userID, f.userPermissions&PermissionFilesAll != 0); err != nil {
+	if rows, err := f.db.Query(ancestorsQuery, r.id, f.userID, f.userPermissions.HasPermission(UserPermissionFilesRead)); err != nil {
 		return nil, err
 	} else if a, err := pgx.CollectRows(rows, f.scanResourceAncestor); err != nil {
 		return nil, err

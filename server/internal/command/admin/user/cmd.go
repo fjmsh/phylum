@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -38,7 +39,7 @@ func setupListCommand() *cobra.Command {
 				os.Exit(1)
 			}
 			for _, user := range users {
-				fmt.Printf("%24s :%.4x: %s\n", user.Email, user.Permissions, user.Name)
+				fmt.Printf("%24s: %s [%s]\n", user.Email, user.Name, strings.Join([]string(user.Permissions), ","))
 			}
 		},
 	}
