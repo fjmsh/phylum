@@ -16,6 +16,6 @@ type PublinksConfig struct {
 }
 
 type UserConfig struct {
-	BaseDir    string          `koanf:"basedir,omitempty"`
-	Permisison UserPermissions `koanf:"permission,omitempty"`
+	BaseDir     string          `koanf:"basedir,omitempty"`
+	Permissions UserPermissions `koanf:"permissions,omitempty"`
 }
