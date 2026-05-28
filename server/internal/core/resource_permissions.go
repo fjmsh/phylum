@@ -30,10 +30,11 @@ func (f txFileSystem) UpdatePermissions(r Resource, user User, permission Permis
 		return r, ErrResourceDeleted
 	}
 
-	if f.userPermissions.HasPermission(UserPermissionFilesShare) {
-		if up, err := readPermissionFromJson(r.permissions, f.userID); err != nil {
-			return Resource{}, err
-		} else if up&PermissionShare == 0 {
+	if up, err := readPermissionFromJson(r.permissions, f.userID); err != nil {
+		return Resource{}, err
+	} else {
+		up |= f.userPermissions.GetFilesPermissions()
+		if up&PermissionShare == 0 {
 			return Resource{}, ErrInsufficientPermissions
 		} else {
 			// Do not grant more than the user has

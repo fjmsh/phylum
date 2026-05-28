@@ -92,15 +92,8 @@ func (f *FileSystem) withPathRoot(pathRoot pgtype.UUID) *FileSystem {
 }
 
 func (f *FileSystem) checkPermission(r Resource, p Permission) error {
-	if p|PermissionRead != 0 && f.userPermissions.HasPermission(UserPermissionFilesRead) {
-		p = p ^ PermissionRead
-	}
-	if p|PermissionWrite != 0 && f.userPermissions.HasPermission(UserPermissionFilesWrite) {
-		p = p ^ PermissionWrite
-	}
-	if p|PermissionShare != 0 && f.userPermissions.HasPermission(UserPermissionFilesShare) {
-		p = p ^ PermissionShare
-	}
+	fp := f.userPermissions.GetFilesPermissions()
+	p = p & (^fp)
 
 	if up, err := readPermissionFromJson(r.permissions, f.userID); err != nil {
 		return err
