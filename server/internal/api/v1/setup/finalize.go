@@ -108,11 +108,15 @@ func handleFinalize(c *gin.Context) {
 	}
 
 	err = d.RunInTx(func(db db.TxHandler) error {
-		if _, err := core.CreateUser(db, params.User.Email, params.User.Name, false); err != nil {
+		if user, err := core.CreateUser(db, params.User.Email, params.User.Name, false); err != nil {
 			return err
-		}
-		if params.User.Password != "" {
-			return auth.UpdateUserPassword(db, params.User.Email, params.User.Password)
+		} else {
+			if params.User.Password != "" {
+				if err := auth.UpdateUserPassword(db, params.User.Email, params.User.Password); err != nil {
+					return err
+				}
+			}
+			core.SetUserPermissions(db, user.ID, []core.UserPermission{"*"})
 		}
 		return nil
 	})
