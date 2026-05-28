@@ -14,7 +14,7 @@ type FileSystem struct {
 	userID           int32
 	userPermissions  UserPermissions
 	scopes           []string
-	scopePermissions Permission
+	scopePermissions ResourcePermission
 }
 
 type txFileSystem struct {
@@ -33,20 +33,20 @@ func OpenFileSystem(db db.Handler, pathRoot pgtype.UUID, userID int32, userPermi
 	}
 }
 
-func getScopePermissions(scopes []string, id uuid.UUID) (p Permission) {
+func getScopePermissions(scopes []string, id uuid.UUID) (p ResourcePermission) {
 	idString := id.String()
 	for _, s := range scopes {
 		parts := strings.Split(s, ":")
 		if len(parts) == 1 || parts[1] == idString || parts[1] == "*" {
 			switch parts[0] {
 			case "*", "":
-				p = PermissionAll
+				p = ResourcePermissionsAll
 			case "read":
-				p = PermissionRead
+				p = ResourcePermissionRead
 			case "write":
-				p = PermissionRead | PermissionWrite
+				p = ResourcePermissionRead | ResourcePermissionWrite
 			case "share":
-				p = PermissionRead | PermissionWrite | PermissionShare
+				p = ResourcePermissionRead | ResourcePermissionWrite | ResourcePermissionShare
 			}
 		}
 	}
@@ -91,7 +91,7 @@ func (f *FileSystem) withPathRoot(pathRoot pgtype.UUID) *FileSystem {
 	}
 }
 
-func (f *FileSystem) checkPermission(r Resource, p Permission) error {
+func (f *FileSystem) checkPermission(r Resource, p ResourcePermission) error {
 	fp := f.userPermissions.GetFilesPermissions()
 	p = p & (^fp)
 

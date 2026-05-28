@@ -33,7 +33,7 @@ func CreateUser(db db.TxHandler, email, name string, noCreateHome bool) (User, e
 	}
 
 	if homeID.Valid {
-		if _, err := f.UpdatePermissions(home, user, PermissionAll); err != nil {
+		if _, err := f.UpdatePermissions(home, user, ResourcePermissionsAll); err != nil {
 			return User{}, err
 		}
 	}

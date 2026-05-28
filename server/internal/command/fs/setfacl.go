@@ -51,16 +51,16 @@ func setupSetfaclCommand() *cobra.Command {
 	return &cmd
 }
 
-func parsePermissionString(s string) (core.Permission, error) {
+func parsePermissionString(s string) (core.ResourcePermission, error) {
 	switch s {
 	case "none":
-		return core.PermissionNone, nil
+		return core.ResourcePermissionNone, nil
 	case "read":
-		return core.PermissionRead, nil
+		return core.ResourcePermissionRead, nil
 	case "write":
-		return core.PermissionRead | core.PermissionWrite, nil
+		return core.ResourcePermissionRead | core.ResourcePermissionWrite, nil
 	case "share":
-		return core.PermissionRead | core.PermissionWrite | core.PermissionShare, nil
+		return core.ResourcePermissionRead | core.ResourcePermissionWrite | core.ResourcePermissionShare, nil
 	}
-	return core.PermissionNone, errors.New("unrecognized permission: " + s)
+	return core.ResourcePermissionNone, errors.New("unrecognized permission: " + s)
 }

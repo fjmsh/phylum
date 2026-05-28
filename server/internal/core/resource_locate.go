@@ -16,7 +16,7 @@ import (
 func (f *FileSystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	if r, err := resourceByID(f.db, id, f.userID); err != nil {
 		return Resource{}, err
-	} else if err := f.checkPermission(r, PermissionRead); err != nil {
+	} else if err := f.checkPermission(r, ResourcePermissionRead); err != nil {
 		return Resource{}, err
 	} else {
 		return r, nil
@@ -67,7 +67,7 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 	if !f.pathRoot.Valid {
 		return Resource{}, ErrResourceNotFound
 	}
-	if f.scopePermissions&PermissionRead == 0 {
+	if f.scopePermissions&ResourcePermissionRead == 0 {
 		return Resource{}, ErrInsufficientScope
 	}
 	return resourceByPath(f.db, f.pathRoot.Bytes, path, f.userID, f.userPermissions)

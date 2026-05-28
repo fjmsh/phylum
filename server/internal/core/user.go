@@ -43,24 +43,24 @@ outer:
 	return false
 }
 
-func (u UserPermissions) GetFilesPermissions() Permission {
-	permissions := PermissionNone
+func (u UserPermissions) GetFilesPermissions() ResourcePermission {
+	permissions := ResourcePermissionNone
 
 	for _, s := range u {
 		parts := strings.Split(string(s), ":")
 		if parts[0] == "*" || parts[0] == "files" {
 			if len(parts) == 1 {
-				return PermissionAll
+				return ResourcePermissionsAll
 			} else if len(parts) == 2 {
 				switch parts[1] {
 				case "read":
-					permissions |= PermissionRead
+					permissions |= ResourcePermissionRead
 				case "write":
-					permissions |= PermissionWrite
+					permissions |= ResourcePermissionWrite
 				case "share":
-					permissions |= PermissionShare
+					permissions |= ResourcePermissionShare
 				case "*":
-					permissions |= PermissionAll
+					permissions |= ResourcePermissionsAll
 				}
 			}
 		}

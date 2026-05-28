@@ -118,7 +118,7 @@ to the resource with a particular ID.`,
 }
 
 func formatPermissionsJson(j []byte) string {
-	p := make(map[string]core.Permission)
+	p := make(map[string]core.ResourcePermission)
 	json.Unmarshal(j, &p)
 	if len(p) == 0 {
 		return "None"
@@ -144,8 +144,8 @@ func formatGrantsJson(j []byte) string {
 }
 
 type grant struct {
-	Permission core.Permission `json:"p"`
-	Timestamp  int             `json:"t"`
+	Permission core.ResourcePermission `json:"p"`
+	Timestamp  int                     `json:"t"`
 }
 
 func getUserEmail(s string) string {
@@ -159,21 +159,21 @@ func getUserEmail(s string) string {
 
 }
 
-func formatPermission(p core.Permission) string {
-	if p == core.PermissionAll {
+func formatPermission(p core.ResourcePermission) string {
+	if p == core.ResourcePermissionsAll {
 		return "su"
 	}
 	str := ""
-	if p&core.PermissionRead != 0 {
-		p -= core.PermissionRead
+	if p&core.ResourcePermissionRead != 0 {
+		p -= core.ResourcePermissionRead
 		str += "r"
 	}
-	if p&core.PermissionWrite != 0 {
-		p -= core.PermissionWrite
+	if p&core.ResourcePermissionWrite != 0 {
+		p -= core.ResourcePermissionWrite
 		str += "w"
 	}
-	if p&core.PermissionShare != 0 {
-		p -= core.PermissionShare
+	if p&core.ResourcePermissionShare != 0 {
+		p -= core.ResourcePermissionShare
 		str += "s"
 	}
 	if p != 0 {

@@ -10,7 +10,7 @@ import (
 type ResourceAncestor struct {
 	ID             uuid.UUID
 	Name           string
-	UserPermission Permission
+	UserPermission ResourcePermission
 }
 
 func (f *FileSystem) scanResourceAncestor(row pgx.CollectableRow) (ResourceAncestor, error) {

@@ -6,17 +6,17 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type Permission = int32
+type ResourcePermission = int32
 
 const (
-	PermissionNone  = Permission(0)
-	PermissionRead  = Permission(4)
-	PermissionWrite = Permission(32)
-	PermissionShare = Permission(128)
-	PermissionAll   = Permission(-1)
+	ResourcePermissionNone  = ResourcePermission(0)
+	ResourcePermissionRead  = ResourcePermission(4)
+	ResourcePermissionWrite = ResourcePermission(32)
+	ResourcePermissionShare = ResourcePermission(128)
+	ResourcePermissionsAll  = ResourcePermission(-1)
 )
 
-func (f *FileSystem) UpdatePermissions(r Resource, user User, permission Permission) (res Resource, err error) {
+func (f *FileSystem) UpdatePermissions(r Resource, user User, permission ResourcePermission) (res Resource, err error) {
 	err = f.runInTx(func(f txFileSystem) error {
 		var err error
 		res, err = f.UpdatePermissions(r, user, permission)
@@ -25,7 +25,7 @@ func (f *FileSystem) UpdatePermissions(r Resource, user User, permission Permiss
 	return res, err
 }
 
-func (f txFileSystem) UpdatePermissions(r Resource, user User, permission Permission) (Resource, error) {
+func (f txFileSystem) UpdatePermissions(r Resource, user User, permission ResourcePermission) (Resource, error) {
 	if r.deleted.Valid {
 		return r, ErrResourceDeleted
 	}
@@ -34,7 +34,7 @@ func (f txFileSystem) UpdatePermissions(r Resource, user User, permission Permis
 		return Resource{}, err
 	} else {
 		up |= f.userPermissions.GetFilesPermissions()
-		if up&PermissionShare == 0 {
+		if up&ResourcePermissionShare == 0 {
 			return Resource{}, ErrInsufficientPermissions
 		} else {
 			// Do not grant more than the user has
@@ -57,7 +57,7 @@ WHERE id = @resource_id::UUID
 RETURNING grants`
 
 	q := qUpdate
-	if permission == PermissionNone {
+	if permission == ResourcePermissionNone {
 		q = qRemove
 	}
 

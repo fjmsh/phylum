@@ -10,9 +10,9 @@ import (
 )
 
 type shareParams struct {
-	Path       string          `json:"path" form:"path" binding:"required"`
-	Email      string          `json:"email" form:"email" binding:"required"`
-	Permission core.Permission `json:"permission" form:"permission"`
+	Path       string                  `json:"path" form:"path" binding:"required"`
+	Email      string                  `json:"email" form:"email" binding:"required"`
+	Permission core.ResourcePermission `json:"permission" form:"permission"`
 }
 
 func handleShareRequest(c *gin.Context) {
