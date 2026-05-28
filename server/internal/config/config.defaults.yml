@@ -70,11 +70,11 @@ auth:
         salt: 32          # 32 Bytes = 256-bit
         key: 32           # 32 Bytes = 256-bit
     requirements:         # only supported by crypt backend
-      length: 8
-      lower: 0
-      upper: 0
-      numeric: 0
-      symbols: 0
+      length: # 8
+      lower: # 0
+      upper: # 0
+      numeric: # 0
+      symbols: # 0
     ldap:
       debug: false
       url: # ldap://ldap.example.com:1389
