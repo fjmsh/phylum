@@ -24,7 +24,7 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
     final users = (data["users"] as List).cast<Map>().map((u) => parseUser(u.cast<String, dynamic>()));
     return BootstrapLoginResponse._(
       apiToken: data['api_token'],
-      user: parseAccountUser(data['user']),
+      user: AccountUser.fromJson(data['user'].cast<String, dynamic>()),
       config: BootstrapConfig.parse(data['config']),
       bookmarks: bookmarks,
       users: users,

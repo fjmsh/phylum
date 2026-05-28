@@ -1,3 +1,3 @@
-typedef UserPermission = int;
+typedef UserPermission = String;
 
-const UserPermission permissionUsersInvite = 0x10;
+const UserPermission permissionUsersInvite = "users:invite";

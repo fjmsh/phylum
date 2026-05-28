@@ -3,8 +3,7 @@ import 'dart:convert';
 import 'package:state_notifier/state_notifier.dart';
 
 import 'phylum_account.dart';
-
-part 'permissions.dart';
+import 'user_permission.dart';
 
 const _persistKeyUser = 'user';
 
@@ -13,7 +12,7 @@ class AccountUser {
   final String email;
   final String name;
   final String home;
-  final int permissions;
+  final List<String> permissions;
 
   AccountUser({
     required this.id,
@@ -23,7 +22,20 @@ class AccountUser {
     required this.permissions,
   });
 
-  bool hasPermission(UserPermission p) => permissions & p != 0;
+  bool hasPermission(UserPermission p) {
+    final parts = p.split(':');
+
+    outer:
+    for (final up in permissions) {
+      final upParts = up.split(':');
+      if (upParts.length > parts.length) continue;
+      for (int i = 0; i < upParts.length; i++) {
+        if (upParts[i] != '*' && upParts[i] != parts[i]) continue outer;
+      }
+      return true;
+    }
+    return false;
+  }
 
   @override
   bool operator ==(Object other) {
@@ -54,7 +66,7 @@ class AccountUser {
       email: map['email'],
       name: map['name'],
       home: map['home'],
-      permissions: map['permissions'],
+      permissions: (map['permissions'] as List).cast<String>(),
     );
   }
 
