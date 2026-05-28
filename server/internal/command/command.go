@@ -66,8 +66,8 @@ func SetupCommand() {
 			return
 		}
 
-		if exists, err := config.ConfigFileExists(cmd); err != nil {
-			logger.Fatal().Err(err).Msg("Failed to open config file")
+		if exists, err := config.Initialize(cmd); err != nil {
+			logger.Fatal().Err(err).Msg("Failed to load config")
 		} else if !exists {
 			if isCmd(cmd, "serve") {
 				logger.Info().Msg("Server not yet configured")
@@ -77,9 +77,6 @@ func SetupCommand() {
 			}
 		}
 
-		if err := config.Initialize(cmd); err != nil {
-			logger.Fatal().Err(err).Msg("Failed to load config")
-		}
 		var cfg Config
 		config.Full.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "koanf"})
 

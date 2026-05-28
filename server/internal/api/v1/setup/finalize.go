@@ -1,6 +1,7 @@
 package setup
 
 import (
+	"errors"
 	"net/http"
 	"os"
 	"syscall"
@@ -25,6 +26,7 @@ type configOverrides struct {
 	DB   db.Config   `koanf:"db" json:"db"`
 	Mail mail.Config `koanf:"mail,omitempty" json:"mail"`
 	Auth auth.Config `koanf:"auth" json:"auth"`
+	Core core.Config `koanf:"core,omitempty"`
 }
 
 type userConfig struct {
@@ -40,14 +42,19 @@ func handleFinalize(c *gin.Context) {
 		panic(errInvalidParams)
 	}
 
-	paramsCfg := koanf.New(".")
-	paramsCfg.Load(structs.Provider(params.Config, "koanf"), nil)
+	inCfg := koanf.New(".")
+	inCfg.Load(structs.Provider(params.Config, "koanf"), nil)
+	fullCfg := config.MergeSub("", inCfg)
+
+	var cfg configOverrides
+	fullCfg.Unmarshal("", &cfg)
 
 	defer func() {
 		syscall.Kill(os.Getpid(), syscall.SIGINT)
 	}()
 
-	if _, err := db.Initialize(c.Request.Context(), params.Config.DB, &zerolog.Logger{}); err != nil {
+	logger := zerolog.Logger{}
+	if _, err := db.Initialize(c.Request.Context(), cfg.DB, &logger); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"error":   "Failed to initialize DB",
@@ -71,6 +78,35 @@ func handleFinalize(c *gin.Context) {
 		return
 	}
 
+	if err := core.Initialize(d, cfg.Core); err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"error":   "Failed to initialize core",
+			"details": err.Error(),
+		})
+		return
+	}
+	if err := auth.Initialize(cfg.Auth, logger); err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"error":   "Failed to initialize auth",
+			"details": err.Error(),
+		})
+		return
+	}
+	if m, err := mail.CreateMailer(cfg.Mail, logger); err != nil {
+		if !errors.Is(err, mail.ErrEmailNotConfigured) {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"error":   "Failed to initialize mail",
+				"details": err.Error(),
+			})
+			return
+		}
+	} else {
+		mail.SetDefaultMailer(m)
+	}
+
 	err = d.RunInTx(func(db db.TxHandler) error {
 		if _, err := core.CreateUser(db, params.User.Email, params.User.Name, false); err != nil {
 			return err
@@ -89,7 +125,7 @@ func handleFinalize(c *gin.Context) {
 		return
 	}
 
-	config.WriteConfig(paramsCfg)
+	config.WriteConfig(inCfg)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

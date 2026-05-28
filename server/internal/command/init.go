@@ -41,9 +41,8 @@ func setupInitCommand() *cobra.Command {
 	cmd.Run = func(cmd *cobra.Command, args []string) {
 		logger := zerolog.Ctx(cmd.Context())
 
-		if exists, err := config.ConfigFileExists(cmd); err != nil {
-			fatal("Failed to open config file: " + err.Error())
-
+		if exists, err := config.Initialize(cmd); err != nil {
+			fatal("failed to load config: " + err.Error())
 		} else if exists {
 			fmt.Println("Server config already exists")
 
@@ -53,9 +52,6 @@ func setupInitCommand() *cobra.Command {
 			}
 		}
 
-		if err := config.Initialize(cmd); err != nil {
-			fatal("failed to load config: " + err.Error())
-		}
 		var defaultConfig Config
 		config.Full.UnmarshalWithConf("", &defaultConfig, koanf.UnmarshalConf{Tag: "koanf"})
 
