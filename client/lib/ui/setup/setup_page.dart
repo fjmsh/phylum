@@ -92,7 +92,11 @@ class _SetupPageState extends State<SetupPage> {
 
   Widget _buildBody(BuildContext context) {
     final page = switch (_currentStep) {
-      SetupStep.database => SetupDbFragment(instanceUrl: widget.instanceUrl),
+      SetupStep.database => SetupDbFragment(
+          instanceUrl: widget.instanceUrl,
+          onPrevPress: null,
+          onNextPress: nextStep,
+        ),
       SetupStep.mail => SetupMailFragment(instanceUrl: widget.instanceUrl),
       SetupStep.auth => SetupAuthFragment(instanceUrl: widget.instanceUrl),
       SetupStep.user => SetupUserFragment(instanceUrl: widget.instanceUrl),

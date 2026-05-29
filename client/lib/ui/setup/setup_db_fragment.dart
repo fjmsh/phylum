@@ -11,7 +11,14 @@ import 'package:uri/uri.dart';
 
 class SetupDbFragment extends StatelessWidget {
   final String instanceUrl;
-  const SetupDbFragment({super.key, required this.instanceUrl});
+  final void Function()? onPrevPress;
+  final void Function() onNextPress;
+
+  const SetupDbFragment(
+      {super.key,
+      required this.instanceUrl,
+      required this.onPrevPress,
+      required this.onNextPress});
 
   @override
   Widget build(BuildContext context) {
@@ -27,12 +34,12 @@ class SetupDbFragment extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               TextButton(
-                onPressed: null,
+                onPressed: onPrevPress,
                 child: Text('PREV'),
               ),
               TextButton(
+                onPressed: onNextPress,
                 child: Text('NEXT'),
-                onPressed: () {},
               ),
             ],
           ),
@@ -99,9 +106,23 @@ class SetupDbFragment extends StatelessWidget {
           initialValue: config.password,
           onChanged: (value) => context.read<DbController>().password = value,
         ),
-        ElevatedButton(
-            onPressed: () => validateDbConfig(context),
-            child: Text('Check Settings'))
+        ListTile(
+          dense: true,
+          title: Text('Connection'),
+          subtitle: Text(config.verified == true
+              ? 'Connected'
+              : config.verified == false
+                  ? 'Not Working'
+                  : 'Unverified'),
+          leading: Icon(config.verified == true
+              ? Icons.check_circle
+              : config.verified == false
+                  ? Icons.cancel
+                  : Icons.question_mark),
+          trailing: config.verified == null ? Icon(Icons.cable) : null,
+          onTap:
+              config.verified == null ? () => validateDbConfig(context) : null,
+        ),
       ],
     );
   }
@@ -123,10 +144,9 @@ class SetupDbFragment extends StatelessWidget {
         : "";
 
     if (responseMap["success"]) {
-      await showAlertDialog(context,
-          title: 'Connected to DB',
-          message: overrideNote.isEmpty ? null : overrideNote);
+      context.read<DbController>().verified = true;
     } else {
+      context.read<DbController>().verified = false;
       await showAlertDialog(context,
           title: 'Could not connect to DB',
           message: "$overrideNote\n\n${responseMap["error"]}");
@@ -156,6 +176,10 @@ class DbController extends StateNotifier<DbConfig> {
   set password(String value) {
     state = state.copyWith(password: value);
   }
+
+  set verified(bool value) {
+    state = state.withVerified(value);
+  }
 }
 
 class DbConfig {
@@ -164,6 +188,7 @@ class DbConfig {
   final String name;
   final String user;
   final String password;
+  final bool? verified;
 
   const DbConfig({
     required this.host,
@@ -171,16 +196,17 @@ class DbConfig {
     required this.name,
     required this.user,
     required this.password,
+    required this.verified,
   });
 
   const DbConfig.defaults()
       : this(
-          host: 'localhost',
-          port: 5432,
-          name: 'phylum',
-          user: 'phylum',
-          password: 'phylum',
-        );
+            host: 'localhost',
+            port: 5432,
+            name: 'phylum',
+            user: 'phylum',
+            password: 'phylum',
+            verified: null);
 
   DbConfig copyWith({
     String? host,
@@ -195,7 +221,18 @@ class DbConfig {
       name: name ?? this.name,
       user: user ?? this.user,
       password: password ?? this.password,
+      verified: null,
     );
+  }
+
+  DbConfig withVerified(bool verified) {
+    return DbConfig(
+        host: host,
+        port: port,
+        name: name,
+        user: user,
+        password: password,
+        verified: verified);
   }
 
   Map<String, dynamic> toMap() => {
