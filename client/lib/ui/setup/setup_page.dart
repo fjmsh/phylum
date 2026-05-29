@@ -5,6 +5,7 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
+import 'package:phylum/ui/layout/responsive.dart';
 import 'package:phylum/ui/setup/setup_auth_fragment.dart';
 import 'package:phylum/ui/setup/setup_db_fragment.dart';
 import 'package:phylum/ui/setup/setup_mail_fragment.dart';
@@ -42,55 +43,97 @@ class _SetupPageState extends State<SetupPage> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        StateNotifierProvider<DbController, DbConfig>(create: (_) => DbController()),
-        StateNotifierProvider<MailController, MailConfig>(create: (_) => MailController()),
-        StateNotifierProvider<AuthController, AuthConfig>(create: (_) => AuthController()),
-        StateNotifierProvider<UserController, UserConfig>(create: (_) => UserController()),
+        StateNotifierProvider<DbController, DbConfig>(
+            create: (_) => DbController()),
+        StateNotifierProvider<MailController, MailConfig>(
+            create: (_) => MailController()),
+        StateNotifierProvider<AuthController, AuthConfig>(
+            create: (_) => AuthController()),
+        StateNotifierProvider<UserController, UserConfig>(
+            create: (_) => UserController()),
       ],
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Instance Setup'),
-          leading: _currentStep.index == 0
-              ? CloseButton(onPressed: () => context.read<PhylumRouterDelegate>().go(const ExplorerRouteHome()))
-              : BackButton(onPressed: () => setState(() => _currentStep = SetupStep.values[_currentStep.index - 1])),
-          actions: [
-            _currentStep.index == SetupStep.values.length - 1
-                ? Builder(builder: (context) {
-                    return TextButton(
-                        onPressed: currentStepValid(context) ? () => finalize(context) : null, child: Text('FINISH'));
-                  })
-                : Builder(builder: (context) {
-                    return TextButton(onPressed: currentStepValid(context) ? nextStep : null, child: Text('NEXT'));
-                  })
-          ],
-        ),
+            title: const Text('Instance Setup'),
+            leading: CloseButton(onPressed: () async {
+              final remain = await showAlertDialog(
+                    context,
+                    title: 'Abort configuration?',
+                    positiveText: 'No',
+                    negativeText: 'Yes',
+                  ) ??
+                  true;
+              if (remain || !context.mounted) return;
+              context
+                  .read<PhylumRouterDelegate>()
+                  .go(const ExplorerRouteHome());
+            })
+            // actions: [
+            //   _currentStep.index == SetupStep.values.length - 1
+            //       ? Builder(builder: (context) {
+            //           return TextButton(
+            //               onPressed: currentStepValid(context)
+            //                   ? () => finalize(context)
+            //                   : null,
+            //               child: Text('FINISH'));
+            //         })
+            //       : Builder(builder: (context) {
+            //           return TextButton(
+            //             onPressed: currentStepValid(context) ? nextStep : null,
+            //             child: Text('NEXT'),
+            //           );
+            //         })
+            // ],
+            ),
         body: _buildBody(context),
       ),
     );
   }
 
   Widget _buildBody(BuildContext context) {
-    return switch (_currentStep) {
+    final page = switch (_currentStep) {
       SetupStep.database => SetupDbFragment(instanceUrl: widget.instanceUrl),
       SetupStep.mail => SetupMailFragment(instanceUrl: widget.instanceUrl),
       SetupStep.auth => SetupAuthFragment(instanceUrl: widget.instanceUrl),
       SetupStep.user => SetupUserFragment(instanceUrl: widget.instanceUrl),
     };
+
+    if (MediaQuery.sizeOf(context).width > maxViewportWidthSmall) {
+      return Center(
+        child: SizedBox(
+          width: 640,
+          child: page,
+        ),
+      );
+    }
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 24),
+      child: page,
+    );
   }
 
   bool currentStepValid(BuildContext context) {
     return switch (_currentStep) {
       SetupStep.database => true,
       SetupStep.mail => true,
-      SetupStep.auth => context.select<AuthConfig, bool>((config) => config.valid),
-      SetupStep.user => context.select<UserConfig, bool>((config) => config.password != '') ||
-          context.select<AuthConfig, bool>((config) => config.passwordConfig?.cryptConfig == null),
+      SetupStep.auth =>
+        context.select<AuthConfig, bool>((config) => config.valid),
+      SetupStep.user =>
+        context.select<UserConfig, bool>((config) => config.password != '') ||
+            context.select<AuthConfig, bool>(
+                (config) => config.passwordConfig?.cryptConfig == null),
     };
   }
 
   void nextStep() {
     setState(() {
       _currentStep = SetupStep.values[_currentStep.index + 1];
+    });
+  }
+
+  void previousStep() {
+    setState(() {
+      _currentStep = SetupStep.values[_currentStep.index - 1];
     });
   }
 
@@ -109,9 +152,11 @@ class _SetupPageState extends State<SetupPage> {
 
     request.body = jsonEncode(data);
 
-    final responseString = await sendRequest(context, 'Finalizing instance configuration', request);
+    final responseString = await sendRequest(
+        context, 'Finalizing instance configuration', request);
     if (responseString == null || !context.mounted) return;
-    final responseMap = (jsonDecode(responseString) as Map).cast<String, dynamic>();
+    final responseMap =
+        (jsonDecode(responseString) as Map).cast<String, dynamic>();
 
     if (responseMap["success"]) {
       await showAlertDialog(
