@@ -45,19 +45,18 @@ class _PhylumAppState extends State<PhylumApp> {
         ],
         builder: (context, child) {
           const seedColor = Color(0xff769e57);
+          final colorScheme = ColorScheme.fromSeed(seedColor: seedColor, dynamicSchemeVariant: DynamicSchemeVariant.neutral);
+          final border = const BorderRadius.all(Radius.circular(8.0));
           final theme = ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: seedColor,
-              dynamicSchemeVariant: DynamicSchemeVariant.neutral,
-            ),
+            colorScheme: colorScheme,
+            inputDecorationTheme: InputDecorationThemeData(
+              border: OutlineInputBorder(borderRadius: border),
+              enabledBorder: OutlineInputBorder(borderRadius: border, borderSide: BorderSide(color: Colors.grey.shade400, width: 1.0)),
+              focusedBorder: OutlineInputBorder(borderRadius: border, borderSide: BorderSide(color: colorScheme.primary, width: 1.0)),
+            )
           );
           final darkTheme = ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: seedColor,
-              dynamicSchemeVariant: DynamicSchemeVariant.neutral,
-              brightness: Brightness.dark,
-            ),
-            brightness: Brightness.dark,
+            colorScheme: colorScheme.copyWith(brightness: Brightness.dark),
           );
 
           // return const PhylumApp();
