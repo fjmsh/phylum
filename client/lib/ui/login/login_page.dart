@@ -30,15 +30,13 @@ class _LoginPageState extends State<LoginPage> {
           child: SizedBox(
             width: 360,
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(24.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 24.0,
                 children: <Widget>[
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 12.0),
-                    child: LogoRow(),
-                  ),
+                  LogoRow(),
                   _buildBody(context),
                 ],
               ),

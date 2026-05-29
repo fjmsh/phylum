@@ -21,10 +21,14 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      spacing: 12.0,
+      spacing: 16.0,
       children: [
         TextFormField(
-          decoration: InputDecoration(label: const Text('Instance URL'), hintText: 'https://phylum.example.com'),
+          decoration: InputDecoration(
+            label: const Text('Instance URL'),
+            hintText: 'https://phylum.example.com',
+            prefixIcon: Icon(Icons.storage),
+          ),
           initialValue: webAppBaseUri?.toString(),
           autofocus: true,
           autofillHints: const [AutofillHints.url],
@@ -38,7 +42,14 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
           },
           onFieldSubmitted: _url == null ? null : (value) => checkConfig(_url!),
         ),
-        ElevatedButton(onPressed: _url == null ? null : () => checkConfig(_url!), child: Text('Next')),
+        ElevatedButton.icon(
+            label: Text('Connect'),
+            icon: Icon(Icons.arrow_forward),
+            iconAlignment: IconAlignment.end,
+            onPressed: _url == null ? null : () => checkConfig(_url!),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+            )),
       ],
     );
   }
@@ -46,7 +57,8 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
   void checkConfig(Uri url) async {
     final nav = Navigator.of(context);
     try {
-      showProgressDialog(context, barrierDismissible: false, message: 'Getting login configuration');
+      showProgressDialog(context,
+          barrierDismissible: false, message: 'Getting login configuration');
       final info = await findInstanceInfo(url);
       nav.pop();
       if (info == null) {
@@ -54,12 +66,24 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
           showAlertDialog(context, message: 'No server found at $url');
         }
       } else {
+        if (info.needsSetup && mounted) {
+          final confirm = await showAlertDialog(
+                context,
+                title: 'Configure Server?',
+                message: 'The server at $url is needs to be set up.',
+                positiveText: 'Yes',
+                negativeText: 'No',
+              ) ??
+              false;
+          if (!confirm) return;
+        }
         widget.onInstanceSelected(info);
       }
     } catch (e) {
       nav.pop();
       if (mounted) {
-        showAlertDialog(context, title: 'Error getting server info', message: e.toString());
+        showAlertDialog(context,
+            title: 'Error getting server info', message: e.toString());
       }
     }
   }
