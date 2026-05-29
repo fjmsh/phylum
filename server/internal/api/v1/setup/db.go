@@ -2,6 +2,7 @@ package setup
 
 import (
 	"net/http"
+	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -37,10 +38,22 @@ func handleValidateDBRequest(c *gin.Context) {
 	}
 	if pool, err := db.Connect(c.Request.Context(), cfg, nil); err != nil {
 		response["success"] = false
-		response["error"] = "DB Connect Error: " + err.Error()
+		response["error"] = "Connection Error"
+		response["details"] = err.Error()
 	} else if _, err := db.GetSchemaInfo(c.Request.Context(), pool); err != nil {
 		response["success"] = false
-		response["error"] = "DB Query Error: " + err.Error()
+		if strings.Contains(err.Error(), "no such host") {
+			response["error"] = "No Such Host"
+		} else if strings.Contains(err.Error(), "connection refused") {
+			response["error"] = "Connection Refused"
+		} else if strings.Contains(err.Error(), "SQLSTATE 28P01") {
+			response["error"] = "Incorrect Password"
+		} else if strings.Contains(err.Error(), "SQLSTATE 3D000") {
+			response["error"] = "Database Does Not Exist"
+		} else {
+			response["error"] = "Unknown Error"
+			response["details"] = err.Error()
+		}
 	}
 	c.JSON(http.StatusOK, response)
 }

@@ -62,12 +62,17 @@ func Close() {
 
 func Connect(ctx context.Context, cfg Config, logger *zerolog.Logger) (*pgxpool.Pool, error) {
 	var dsn strings.Builder
-	dsn.WriteString("host=" + cfg.Host)
-	dsn.WriteString(" port=" + strconv.Itoa(cfg.Port))
-	dsn.WriteString(" dbname=" + cfg.Name)
-	dsn.WriteString(" user=" + cfg.User)
+	dsn.WriteString("host=")
+	dsn.WriteString(cfg.Host)
+	dsn.WriteString(" port=")
+	dsn.WriteString(strconv.Itoa(cfg.Port))
+	dsn.WriteString(" dbname=")
+	dsn.WriteString(cfg.Name)
+	dsn.WriteString(" user=")
+	dsn.WriteString(cfg.User)
 	if cfg.Password != "" {
-		dsn.WriteString(" password=" + cfg.Password)
+		dsn.WriteString(" password=")
+		dsn.WriteString(cfg.Password)
 	}
 
 	config, err := pgxpool.ParseConfig(dsn.String())
