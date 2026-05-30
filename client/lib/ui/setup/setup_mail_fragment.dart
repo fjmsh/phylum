@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
@@ -13,11 +14,12 @@ import 'package:phylum/ui/login/base_uri_stub.dart'
     if (dart.library.js_interop) 'package:phylum/ui/login/base_uri_web.dart';
 
 class SetupMailFragment extends StatelessWidget {
+  final formKey = GlobalKey<FormState>();
   final String instanceUrl;
   final void Function() onPrevPress;
   final void Function() onNextPress;
 
-  const SetupMailFragment({
+  SetupMailFragment({
     super.key,
     required this.instanceUrl,
     required this.onPrevPress,
@@ -82,147 +84,172 @@ class SetupMailFragment extends StatelessWidget {
   }
 
   Widget buildForm(BuildContext context, MailConfig config) {
-    return Column(
-      spacing: 18.0,
-      children: [
-        TextFormField(
-          decoration: InputDecoration(
-            label: RichText(
-              text: TextSpan(
-                style: Theme.of(context).textTheme.bodyLarge,
-                children: [
-                  TextSpan(text: 'SMTP Host '),
-                  TextSpan(text: '*', style: TextStyle(color: Colors.red))
-                ],
+    return Form(
+      key: formKey,
+      child: Column(
+        spacing: 18.0,
+        children: [
+          const SizedBox(height: 12),
+          TextFormField(
+            decoration: InputDecoration(
+              label: RichText(
+                text: TextSpan(
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  children: [
+                    TextSpan(text: 'SMTP Host '),
+                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                  ],
+                ),
               ),
+              hint: Text('localhost'),
+              prefixIcon: Icon(Icons.lan),
             ),
-            hint: Text('localhost'),
-            prefixIcon: Icon(Icons.lan),
+            autofocus: true,
+            autocorrect: false,
+            keyboardType: TextInputType.url,
+            initialValue: config.smtpHost,
+            onChanged: (value) =>
+                context.read<MailController>().smtpHost = value,
+            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
           ),
-          autofocus: true,
-          autocorrect: false,
-          keyboardType: TextInputType.url,
-          initialValue: config.smtpHost,
-          onChanged: (value) => context.read<MailController>().smtpHost = value,
-          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
-        ),
-        TextFormField(
-          decoration: InputDecoration(
-            label: RichText(
-              text: TextSpan(
-                style: Theme.of(context).textTheme.bodyLarge,
-                children: [
-                  TextSpan(text: 'SMTP Port '),
-                  TextSpan(text: '*', style: TextStyle(color: Colors.red))
-                ],
+          TextFormField(
+            decoration: InputDecoration(
+              label: RichText(
+                text: TextSpan(
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  children: [
+                    TextSpan(text: 'SMTP Port '),
+                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                  ],
+                ),
               ),
+              hint: Text('587'),
+              prefixIcon: Icon(Icons.cable),
             ),
-            hint: Text('587'),
-            prefixIcon: Icon(Icons.cable),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            keyboardType: TextInputType.number,
+            initialValue:
+                config.smtpPort == 0 ? '' : config.smtpPort.toString(),
+            onChanged: (value) => context.read<MailController>().smtpPort =
+                int.tryParse(value) ?? 0,
+            validator: (value) => value?.isEmpty ?? true
+                ? 'Required'
+                : (int.tryParse(value!) ?? 0) == 0
+                    ? 'Invalid Port'
+                    : null,
           ),
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          keyboardType: TextInputType.number,
-          initialValue: config.smtpPort == 0 ? '' : config.smtpPort.toString(),
-          onChanged: (value) => context.read<MailController>().smtpPort =
-              int.tryParse(value) ?? 0,
-        ),
-        TextFormField(
-          decoration: InputDecoration(
-            label: RichText(
-              text: TextSpan(
-                style: Theme.of(context).textTheme.bodyLarge,
-                children: [
-                  TextSpan(text: 'SMTP Username '),
-                  TextSpan(text: '*', style: TextStyle(color: Colors.red))
-                ],
+          TextFormField(
+            decoration: InputDecoration(
+              label: RichText(
+                text: TextSpan(
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  children: [
+                    TextSpan(text: 'SMTP Username '),
+                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                  ],
+                ),
               ),
+              hint: Text('phylum@example.com'),
+              prefixIcon: Icon(Icons.person),
             ),
-            hint: Text('phylum@example.com'),
-            prefixIcon: Icon(Icons.person),
+            autocorrect: false,
+            initialValue: config.smtpUsername,
+            onChanged: (value) =>
+                context.read<MailController>().smtpUsername = value,
+            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
           ),
-          autocorrect: false,
-          initialValue: config.smtpUsername,
-          onChanged: (value) =>
-              context.read<MailController>().smtpUsername = value,
-        ),
-        TextFormField(
-          decoration: InputDecoration(
-            label: RichText(
-              text: TextSpan(
-                text: 'SMTP Password',
-                style: Theme.of(context).textTheme.bodyLarge,
+          TextFormField(
+            decoration: InputDecoration(
+              label: RichText(
+                text: TextSpan(
+                  text: 'SMTP Password',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
               ),
+              prefixIcon: Icon(Icons.password),
             ),
-            prefixIcon: Icon(Icons.password),
+            autocorrect: false,
+            obscureText: true,
+            initialValue: config.smtpPassword,
+            onChanged: (value) =>
+                context.read<MailController>().smtpPassword = value,
           ),
-          autocorrect: false,
-          obscureText: true,
-          initialValue: config.smtpPassword,
-          onChanged: (value) =>
-              context.read<MailController>().smtpPassword = value,
-        ),
-        TextFormField(
-          decoration: InputDecoration(
-            label: RichText(
-              text: TextSpan(
-                style: Theme.of(context).textTheme.bodyLarge,
-                children: [
-                  TextSpan(text: 'Mail From Name '),
-                  TextSpan(text: '*', style: TextStyle(color: Colors.red))
-                ],
+          TextFormField(
+            decoration: InputDecoration(
+              label: RichText(
+                text: TextSpan(
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  children: [
+                    TextSpan(text: 'Mail From Name '),
+                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                  ],
+                ),
               ),
+              hint: Text('Phylum Drive'),
+              prefixIcon: Icon(Icons.contact_mail),
             ),
-            hint: Text('Phylum Drive'),
-            prefixIcon: Icon(Icons.contact_mail),
+            autocorrect: false,
+            initialValue: config.fromName,
+            onChanged: (value) =>
+                context.read<MailController>().fromName = value,
+            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
           ),
-          autocorrect: false,
-          initialValue: config.fromName,
-          onChanged: (value) => context.read<MailController>().fromName = value,
-        ),
-        TextFormField(
-          decoration: InputDecoration(
-            label: RichText(
-              text: TextSpan(
-                style: Theme.of(context).textTheme.bodyLarge,
-                children: [
-                  TextSpan(text: 'Mail From Email '),
-                  TextSpan(text: '*', style: TextStyle(color: Colors.red))
-                ],
+          TextFormField(
+            decoration: InputDecoration(
+              label: RichText(
+                text: TextSpan(
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  children: [
+                    TextSpan(text: 'Mail From Email '),
+                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                  ],
+                ),
               ),
+              hint: Text('phylum@example.com'),
+              prefixIcon: Icon(Icons.alternate_email),
             ),
-            hint: Text('phylum@example.com'),
-            prefixIcon: Icon(Icons.alternate_email),
+            autocorrect: false,
+            initialValue: config.fromEmail,
+            onChanged: (value) =>
+                context.read<MailController>().fromEmail = value,
+            validator: (value) => value?.isEmpty ?? true
+                ? 'Required'
+                : EmailValidator.validate(value!)
+                    ? null
+                    : 'Invalid Email Address',
           ),
-          autocorrect: false,
-          initialValue: config.fromEmail,
-          onChanged: (value) =>
-              context.read<MailController>().fromEmail = value,
-        ),
-        TextFormField(
-          decoration: InputDecoration(
-            label: RichText(
-              text: TextSpan(
-                style: Theme.of(context).textTheme.bodyLarge,
-                children: [
-                  TextSpan(text: 'Instance URL '),
-                  TextSpan(text: '*', style: TextStyle(color: Colors.red))
-                ],
+          TextFormField(
+            decoration: InputDecoration(
+              label: RichText(
+                text: TextSpan(
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  children: [
+                    TextSpan(text: 'Instance URL '),
+                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                  ],
+                ),
               ),
+              hint: Text('https://phylum.example.com'),
+              prefixIcon: Icon(Icons.link),
             ),
-            hint: Text('https://phylum.example.com'),
-            prefixIcon: Icon(Icons.link),
+            autocorrect: false,
+            initialValue: config.instanceUrl,
+            keyboardType: TextInputType.url,
+            onChanged: (value) =>
+                context.read<MailController>().instanceUrl = value,
+            validator: (value) => value?.isEmpty ?? true
+                ? 'Required'
+                : Uri.tryParse(value!) == null
+                    ? 'Invalid URL'
+                    : null,
           ),
-          autocorrect: false,
-          initialValue: config.instanceUrl,
-          keyboardType: TextInputType.url,
-          onChanged: (value) =>
-              context.read<MailController>().instanceUrl = value,
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Future<void> validateAndNext(BuildContext context) async {
+    if (formKey.currentState?.validate() != true) return;
     final config = context.read<MailConfig>();
     if (!config.enabled) {
       onNextPress();
