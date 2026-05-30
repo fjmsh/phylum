@@ -11,14 +11,10 @@ import 'package:uri/uri.dart';
 
 class SetupDbFragment extends StatelessWidget {
   final String instanceUrl;
-  final void Function()? onPrevPress;
   final void Function() onNextPress;
 
   const SetupDbFragment(
-      {super.key,
-      required this.instanceUrl,
-      required this.onPrevPress,
-      required this.onNextPress});
+      {super.key, required this.instanceUrl, required this.onNextPress});
 
   @override
   Widget build(BuildContext context) {
@@ -34,11 +30,11 @@ class SetupDbFragment extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               TextButton(
-                onPressed: onPrevPress,
+                onPressed: null,
                 child: Text('PREV'),
               ),
               TextButton(
-                onPressed: () => validateDbConfig(context),
+                onPressed: () => validateAndNext(context),
                 child: Text('NEXT'),
               ),
             ],
@@ -114,13 +110,13 @@ class SetupDbFragment extends StatelessWidget {
           obscureText: true,
           initialValue: config.password,
           onChanged: (value) => context.read<DbController>().password = value,
-          onFieldSubmitted: (_) => validateDbConfig(context),
+          onFieldSubmitted: (_) => validateAndNext(context),
         ),
       ],
     );
   }
 
-  void validateDbConfig(BuildContext context) async {
+  void validateAndNext(BuildContext context) async {
     final builder = UriBuilder.fromUri(Uri.parse(instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/db/validate';
     final request = Request('post', builder.build());

@@ -14,117 +14,178 @@ import 'package:phylum/ui/login/base_uri_stub.dart'
 
 class SetupMailFragment extends StatelessWidget {
   final String instanceUrl;
+  final void Function() onPrevPress;
+  final void Function() onNextPress;
 
-  const SetupMailFragment({super.key, required this.instanceUrl});
+  const SetupMailFragment({
+    super.key,
+    required this.instanceUrl,
+    required this.onPrevPress,
+    required this.onNextPress,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final config = context.watch<MailConfig>();
-    final enabled = config.enabled;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 12.0,
-        children: [
-          Text(
-            'Email',
-            style: Theme.of(context).textTheme.headlineMedium,
+    return Column(
+      children: [
+        Expanded(child: buildContents(context)),
+        TextButtonTheme(
+          data: TextButtonThemeData(
+            style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24)),
           ),
-          CheckboxListTile(
-            value: enabled,
-            onChanged: (value) => context.read<MailController>().enabled = value ?? false,
-            title: Text('Configure Email?'),
-            subtitle:
-                Text('Email is used for share notifications, password reset, passwordless login, and inviting users'),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: onPrevPress,
+                child: Text('PREV'),
+              ),
+              TextButton(
+                onPressed: () => validateAndNext(context),
+                child: Text('NEXT'),
+              ),
+            ],
           ),
-          if (enabled)
-            TextFormField(
-              decoration: const InputDecoration(label: Text('SMTP Host'), hint: Text('localhost')),
-              autofocus: true,
-              autocorrect: false,
-              keyboardType: TextInputType.url,
-              initialValue: config.smtpHost,
-              onChanged: (value) => context.read<MailController>().smtpHost = value,
-            ),
-          if (enabled)
-            TextFormField(
-              decoration: const InputDecoration(label: Text('SMTP Port'), hint: Text('587')),
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              keyboardType: TextInputType.number,
-              initialValue: config.smtpPort == 0 ? '' : config.smtpPort.toString(),
-              onChanged: (value) => context.read<MailController>().smtpPort = int.tryParse(value) ?? 0,
-            ),
-          if (enabled)
-            TextFormField(
-              decoration: const InputDecoration(label: Text('SMTP Username'), hint: Text('phylum@example.com')),
-              autocorrect: false,
-              initialValue: config.smtpUsername,
-              onChanged: (value) => context.read<MailController>().smtpUsername = value,
-            ),
-          if (enabled)
-            TextFormField(
-              decoration: const InputDecoration(label: Text('SMTP Password')),
-              autocorrect: false,
-              obscureText: true,
-              initialValue: config.smtpPassword,
-              onChanged: (value) => context.read<MailController>().smtpPassword = value,
-            ),
-          if (enabled)
-            TextFormField(
-              decoration: const InputDecoration(label: Text('From Name'), hint: Text('Phylum Drive')),
-              autocorrect: false,
-              initialValue: config.fromName,
-              onChanged: (value) => context.read<MailController>().fromName = value,
-            ),
-          if (enabled)
-            TextFormField(
-              decoration: const InputDecoration(label: Text('From Email'), hint: Text('phylum@example.com')),
-              autocorrect: false,
-              initialValue: config.fromEmail,
-              onChanged: (value) => context.read<MailController>().fromEmail = value,
-            ),
-          if (enabled)
-            TextFormField(
-              decoration: const InputDecoration(label: Text('Instance URL'), hint: Text('https://phylum.example.com')),
-              autocorrect: false,
-              initialValue: config.instanceUrl,
-              keyboardType: TextInputType.url,
-              onChanged: (value) => context.read<MailController>().instanceUrl = value,
-            ),
-          if (enabled) ElevatedButton(onPressed: () => validateMailConfig(context), child: Text('Send Test Email'))
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Future<void> validateMailConfig(BuildContext context) async {
+  Widget buildContents(BuildContext context) {
+    final config = context.watch<MailConfig>();
+    final enabled = config.enabled;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 12.0,
+      children: [
+        Text(
+          'Email',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        ListTile(
+          leading: Icon(Icons.help),
+          dense: true,
+          title: Text(
+              'Used for inviting users, passwordless login, passwordless login, and to send share notifications'),
+        ),
+        SwitchListTile(
+          value: enabled,
+          onChanged: (value) => context.read<MailController>().enabled = value,
+          title: Text('Configure Email?'),
+        ),
+        if (enabled)
+          TextFormField(
+            decoration: const InputDecoration(
+                label: Text('SMTP Host'), hint: Text('localhost')),
+            autofocus: true,
+            autocorrect: false,
+            keyboardType: TextInputType.url,
+            initialValue: config.smtpHost,
+            onChanged: (value) =>
+                context.read<MailController>().smtpHost = value,
+          ),
+        if (enabled)
+          TextFormField(
+            decoration: const InputDecoration(
+                label: Text('SMTP Port'), hint: Text('587')),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            keyboardType: TextInputType.number,
+            initialValue:
+                config.smtpPort == 0 ? '' : config.smtpPort.toString(),
+            onChanged: (value) => context.read<MailController>().smtpPort =
+                int.tryParse(value) ?? 0,
+          ),
+        if (enabled)
+          TextFormField(
+            decoration: const InputDecoration(
+                label: Text('SMTP Username'), hint: Text('phylum@example.com')),
+            autocorrect: false,
+            initialValue: config.smtpUsername,
+            onChanged: (value) =>
+                context.read<MailController>().smtpUsername = value,
+          ),
+        if (enabled)
+          TextFormField(
+            decoration: const InputDecoration(label: Text('SMTP Password')),
+            autocorrect: false,
+            obscureText: true,
+            initialValue: config.smtpPassword,
+            onChanged: (value) =>
+                context.read<MailController>().smtpPassword = value,
+          ),
+        if (enabled)
+          TextFormField(
+            decoration: const InputDecoration(
+                label: Text('From Name'), hint: Text('Phylum Drive')),
+            autocorrect: false,
+            initialValue: config.fromName,
+            onChanged: (value) =>
+                context.read<MailController>().fromName = value,
+          ),
+        if (enabled)
+          TextFormField(
+            decoration: const InputDecoration(
+                label: Text('From Email'), hint: Text('phylum@example.com')),
+            autocorrect: false,
+            initialValue: config.fromEmail,
+            onChanged: (value) =>
+                context.read<MailController>().fromEmail = value,
+          ),
+        if (enabled)
+          TextFormField(
+            decoration: const InputDecoration(
+                label: Text('Instance URL'),
+                hint: Text('https://phylum.example.com')),
+            autocorrect: false,
+            initialValue: config.instanceUrl,
+            keyboardType: TextInputType.url,
+            onChanged: (value) =>
+                context.read<MailController>().instanceUrl = value,
+          ),
+        if (enabled)
+          ElevatedButton(
+              onPressed: () => validateAndNext(context),
+              child: Text('Send Test Email'))
+      ],
+    );
+  }
+
+  Future<void> validateAndNext(BuildContext context) async {
     final builder = UriBuilder.fromUri(Uri.parse(instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/mail/test';
     final request = Request('post', builder.build());
 
     final sendTo = await showInputDialog(context,
-        title: 'Sending Test Email', keyboardType: TextInputType.emailAddress, labelText: 'Email Address');
+        title: 'Sending Test Email',
+        keyboardType: TextInputType.emailAddress,
+        labelText: 'Email Address');
     if (sendTo == null || !context.mounted) {
       return;
     }
     final config = context.read<MailConfig>().toMap();
     config['send_to'] = sendTo;
     request.body = jsonEncode(config);
-    final responseString = await sendRequest(context, 'Checking Email Config', request);
+    final responseString =
+        await sendRequest(context, 'Checking Email Config', request);
     if (responseString == null || !context.mounted) return;
-    final responseMap = (jsonDecode(responseString) as Map).cast<String, dynamic>();
+    final responseMap =
+        (jsonDecode(responseString) as Map).cast<String, dynamic>();
     final overrides = (responseMap["overrides"] as List?)?.cast<String>();
     final overrideNote = (overrides?.isNotEmpty ?? false)
         ? "Note: The following settings were overridden by environment variables or command line flags: ${overrides!.join(",")}"
         : "";
 
     if (responseMap["success"]) {
-      await showAlertDialog(context, title: 'Test Email Sent', message: overrideNote.isEmpty ? null : overrideNote);
+      if (overrideNote.isNotEmpty) {
+        await showAlertDialog(context, message: overrideNote);
+      }
+      onNextPress();
     } else {
       await showAlertDialog(context,
-          title: 'Could not send test email', message: "$overrideNote\n\n${responseMap["error"]}");
+          title: 'Could not send test email',
+          message: "$overrideNote\n\n${responseMap["error"]}");
     }
   }
 }
