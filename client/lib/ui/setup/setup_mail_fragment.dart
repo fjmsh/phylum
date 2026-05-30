@@ -54,120 +54,170 @@ class SetupMailFragment extends StatelessWidget {
 
   Widget buildContents(BuildContext context) {
     final config = context.watch<MailConfig>();
-    final enabled = config.enabled;
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Email',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          ListTile(
+            leading: Icon(Icons.help),
+            dense: true,
+            title: Text(
+                'Used for inviting users, passwordless login, passwordless login, and to send share notifications'),
+          ),
+          SwitchListTile(
+            value: config.enabled,
+            onChanged: (value) =>
+                context.read<MailController>().enabled = value,
+            title: Text('Configure Email?'),
+          ),
+          if (config.enabled) buildForm(context, config),
+        ],
+      ),
+    );
+  }
+
+  Widget buildForm(BuildContext context, MailConfig config) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 12.0,
+      spacing: 18.0,
       children: [
-        Text(
-          'Email',
-          style: Theme.of(context).textTheme.headlineSmall,
+        TextFormField(
+          decoration: InputDecoration(
+            label: RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodyLarge,
+                children: [
+                  TextSpan(text: 'SMTP Host '),
+                  TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                ],
+              ),
+            ),
+            hint: Text('localhost'),
+            prefixIcon: Icon(Icons.lan),
+          ),
+          autofocus: true,
+          autocorrect: false,
+          keyboardType: TextInputType.url,
+          initialValue: config.smtpHost,
+          onChanged: (value) => context.read<MailController>().smtpHost = value,
+          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
         ),
-        ListTile(
-          leading: Icon(Icons.help),
-          dense: true,
-          title: Text(
-              'Used for inviting users, passwordless login, passwordless login, and to send share notifications'),
+        TextFormField(
+          decoration: InputDecoration(
+            label: RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodyLarge,
+                children: [
+                  TextSpan(text: 'SMTP Port '),
+                  TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                ],
+              ),
+            ),
+            hint: Text('587'),
+            prefixIcon: Icon(Icons.cable),
+          ),
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          keyboardType: TextInputType.number,
+          initialValue: config.smtpPort == 0 ? '' : config.smtpPort.toString(),
+          onChanged: (value) => context.read<MailController>().smtpPort =
+              int.tryParse(value) ?? 0,
         ),
-        SwitchListTile(
-          value: enabled,
-          onChanged: (value) => context.read<MailController>().enabled = value,
-          title: Text('Configure Email?'),
+        TextFormField(
+          decoration: InputDecoration(
+            label: RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodyLarge,
+                children: [
+                  TextSpan(text: 'SMTP Username '),
+                  TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                ],
+              ),
+            ),
+            hint: Text('phylum@example.com'),
+            prefixIcon: Icon(Icons.person),
+          ),
+          autocorrect: false,
+          initialValue: config.smtpUsername,
+          onChanged: (value) =>
+              context.read<MailController>().smtpUsername = value,
         ),
-        if (enabled)
-          TextFormField(
-            decoration: const InputDecoration(
-              label: Text('SMTP Host'),
-              hint: Text('localhost'),
-              prefixIcon: Icon(Icons.lan),
+        TextFormField(
+          decoration: InputDecoration(
+            label: RichText(
+              text: TextSpan(
+                text: 'SMTP Password',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
             ),
-            autofocus: true,
-            autocorrect: false,
-            keyboardType: TextInputType.url,
-            initialValue: config.smtpHost,
-            onChanged: (value) =>
-                context.read<MailController>().smtpHost = value,
+            prefixIcon: Icon(Icons.password),
           ),
-        if (enabled)
-          TextFormField(
-            decoration: const InputDecoration(
-              label: Text('SMTP Port'),
-              hint: Text('587'),
-              prefixIcon: Icon(Icons.cable),
+          autocorrect: false,
+          obscureText: true,
+          initialValue: config.smtpPassword,
+          onChanged: (value) =>
+              context.read<MailController>().smtpPassword = value,
+        ),
+        TextFormField(
+          decoration: InputDecoration(
+            label: RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodyLarge,
+                children: [
+                  TextSpan(text: 'Mail From Name '),
+                  TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                ],
+              ),
             ),
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            keyboardType: TextInputType.number,
-            initialValue:
-                config.smtpPort == 0 ? '' : config.smtpPort.toString(),
-            onChanged: (value) => context.read<MailController>().smtpPort =
-                int.tryParse(value) ?? 0,
+            hint: Text('Phylum Drive'),
+            prefixIcon: Icon(Icons.contact_mail),
           ),
-        if (enabled)
-          TextFormField(
-            decoration: const InputDecoration(
-              label: Text('SMTP Username'),
-              hint: Text('phylum@example.com'),
-              prefixIcon: Icon(Icons.person),
+          autocorrect: false,
+          initialValue: config.fromName,
+          onChanged: (value) => context.read<MailController>().fromName = value,
+        ),
+        TextFormField(
+          decoration: InputDecoration(
+            label: RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodyLarge,
+                children: [
+                  TextSpan(text: 'Mail From Email '),
+                  TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                ],
+              ),
             ),
-            autocorrect: false,
-            initialValue: config.smtpUsername,
-            onChanged: (value) =>
-                context.read<MailController>().smtpUsername = value,
+            hint: Text('phylum@example.com'),
+            prefixIcon: Icon(Icons.alternate_email),
           ),
-        if (enabled)
-          TextFormField(
-            decoration: const InputDecoration(
-              label: Text('SMTP Password'),
-              prefixIcon: Icon(Icons.password),
+          autocorrect: false,
+          initialValue: config.fromEmail,
+          onChanged: (value) =>
+              context.read<MailController>().fromEmail = value,
+        ),
+        TextFormField(
+          decoration: InputDecoration(
+            label: RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodyLarge,
+                children: [
+                  TextSpan(text: 'Instance URL '),
+                  TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                ],
+              ),
             ),
-            autocorrect: false,
-            obscureText: true,
-            initialValue: config.smtpPassword,
-            onChanged: (value) =>
-                context.read<MailController>().smtpPassword = value,
+            hint: Text('https://phylum.example.com'),
+            prefixIcon: Icon(Icons.link),
           ),
-        if (enabled)
-          TextFormField(
-            decoration: const InputDecoration(
-              label: Text('From Name'),
-              hint: Text('Phylum Drive'),
-              prefixIcon: Icon(Icons.contact_mail),
-            ),
-            autocorrect: false,
-            initialValue: config.fromName,
-            onChanged: (value) =>
-                context.read<MailController>().fromName = value,
-          ),
-        if (enabled)
-          TextFormField(
-            decoration: const InputDecoration(
-              label: Text('From Email'),
-              hint: Text('phylum@example.com'),
-              prefixIcon: Icon(Icons.alternate_email),
-            ),
-            autocorrect: false,
-            initialValue: config.fromEmail,
-            onChanged: (value) =>
-                context.read<MailController>().fromEmail = value,
-          ),
-        if (enabled)
-          TextFormField(
-            decoration: const InputDecoration(
-              label: Text('Instance URL'),
-              hint: Text('https://phylum.example.com'),
-              prefixIcon: Icon(Icons.link),
-            ),
-            autocorrect: false,
-            initialValue: config.instanceUrl,
-            keyboardType: TextInputType.url,
-            onChanged: (value) =>
-                context.read<MailController>().instanceUrl = value,
-          ),
-        if (enabled)
-          ElevatedButton(
-              onPressed: () => validateAndNext(context),
-              child: Text('Send Test Email'))
+          autocorrect: false,
+          initialValue: config.instanceUrl,
+          keyboardType: TextInputType.url,
+          onChanged: (value) =>
+              context.read<MailController>().instanceUrl = value,
+        ),
       ],
     );
   }
