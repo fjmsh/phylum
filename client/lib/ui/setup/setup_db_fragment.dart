@@ -38,7 +38,7 @@ class SetupDbFragment extends StatelessWidget {
                 child: Text('PREV'),
               ),
               TextButton(
-                onPressed: onNextPress,
+                onPressed: () => validateDbConfig(context),
                 child: Text('NEXT'),
               ),
             ],
@@ -114,34 +114,13 @@ class SetupDbFragment extends StatelessWidget {
           obscureText: true,
           initialValue: config.password,
           onChanged: (value) => context.read<DbController>().password = value,
+          onFieldSubmitted: (_) => validateDbConfig(context),
         ),
-        if (config.error == null)
-          ListTile(
-            dense: true,
-            title: Text('Verify Configuration'),
-            leading: Icon(Icons.help),
-            onTap:
-                config.error == null ? () => validateDbConfig(context) : null,
-          )
-        else if (config.error!.isEmpty)
-          ListTile(
-            iconColor: Theme.of(context).colorScheme.primary,
-            dense: true,
-            title: Text('Configuration Valid'),
-            leading: Icon(Icons.check_circle),
-          )
-        else
-          ListTile(
-            dense: true,
-            title: Text('Invalid Configuration'),
-            subtitle: Text(config.error!),
-            leading: Icon(Icons.error),
-          ),
       ],
     );
   }
 
-  Future<void> validateDbConfig(BuildContext context) async {
+  void validateDbConfig(BuildContext context) async {
     final builder = UriBuilder.fromUri(Uri.parse(instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/db/validate';
     final request = Request('post', builder.build());
@@ -149,23 +128,36 @@ class SetupDbFragment extends StatelessWidget {
 
     final responseString =
         await sendRequest(context, 'Checking Database Config', request);
-    if (responseString == null || !context.mounted) return;
+    if (!context.mounted) return;
+    if (responseString == null) {
+      showAlertDialog(context, title: 'Unable to reach server');
+      return;
+    }
     final responseMap =
         (jsonDecode(responseString) as Map).cast<String, dynamic>();
     final overrides = (responseMap["overrides"] as List?)?.cast<String>();
     final overrideNote = (overrides?.isNotEmpty ?? false)
-        ? "Note: The following settings were overridden by environment variables or command line flags: ${overrides!.join(",")}"
+        ? "Note: The following settings were overridden by environment variables or command line flags:\n\n${overrides!.join("\n")}"
         : "";
 
     if (responseMap["success"]) {
-      context.read<DbController>().error = '';
-    } else {
-      context.read<DbController>().error = responseMap["error"];
-      if (responseMap.containsKey('details')) {
-        showAlertDialog(context,
-            title: responseMap['error'],
-            message: "${responseMap['details']}\n\n$overrideNote");
+      if (overrideNote.isNotEmpty) {
+        await showAlertDialog(context, message: overrideNote);
       }
+      onNextPress();
+    } else {
+      String message = responseMap['details'] ?? '';
+      if (overrideNote.isNotEmpty) {
+        if (message.isNotEmpty) {
+          message += '\n\n';
+        }
+        message += overrideNote;
+      }
+      showAlertDialog(
+        context,
+        title: responseMap['error'],
+        message: message.isEmpty ? null : message,
+      );
     }
   }
 }
@@ -192,10 +184,6 @@ class DbController extends StateNotifier<DbConfig> {
   set password(String value) {
     state = state.copyWith(password: value);
   }
-
-  set error(String value) {
-    state = state.withError(value);
-  }
 }
 
 class DbConfig {
@@ -204,7 +192,6 @@ class DbConfig {
   final String name;
   final String user;
   final String password;
-  final String? error;
 
   const DbConfig({
     required this.host,
@@ -212,7 +199,6 @@ class DbConfig {
     required this.name,
     required this.user,
     required this.password,
-    required this.error,
   });
 
   const DbConfig.defaults()
@@ -222,7 +208,6 @@ class DbConfig {
           name: 'phylum',
           user: 'phylum',
           password: 'phylum',
-          error: null,
         );
 
   DbConfig copyWith({
@@ -238,7 +223,6 @@ class DbConfig {
       name: name ?? this.name,
       user: user ?? this.user,
       password: password ?? this.password,
-      error: null,
     );
   }
 
@@ -249,7 +233,6 @@ class DbConfig {
       name: name,
       user: user,
       password: password,
-      error: error,
     );
   }
 
