@@ -78,7 +78,10 @@ class SetupMailFragment extends StatelessWidget {
         if (enabled)
           TextFormField(
             decoration: const InputDecoration(
-                label: Text('SMTP Host'), hint: Text('localhost')),
+              label: Text('SMTP Host'),
+              hint: Text('localhost'),
+              prefixIcon: Icon(Icons.lan),
+            ),
             autofocus: true,
             autocorrect: false,
             keyboardType: TextInputType.url,
@@ -89,7 +92,10 @@ class SetupMailFragment extends StatelessWidget {
         if (enabled)
           TextFormField(
             decoration: const InputDecoration(
-                label: Text('SMTP Port'), hint: Text('587')),
+              label: Text('SMTP Port'),
+              hint: Text('587'),
+              prefixIcon: Icon(Icons.cable),
+            ),
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             keyboardType: TextInputType.number,
             initialValue:
@@ -100,7 +106,10 @@ class SetupMailFragment extends StatelessWidget {
         if (enabled)
           TextFormField(
             decoration: const InputDecoration(
-                label: Text('SMTP Username'), hint: Text('phylum@example.com')),
+              label: Text('SMTP Username'),
+              hint: Text('phylum@example.com'),
+              prefixIcon: Icon(Icons.person),
+            ),
             autocorrect: false,
             initialValue: config.smtpUsername,
             onChanged: (value) =>
@@ -108,7 +117,10 @@ class SetupMailFragment extends StatelessWidget {
           ),
         if (enabled)
           TextFormField(
-            decoration: const InputDecoration(label: Text('SMTP Password')),
+            decoration: const InputDecoration(
+              label: Text('SMTP Password'),
+              prefixIcon: Icon(Icons.password),
+            ),
             autocorrect: false,
             obscureText: true,
             initialValue: config.smtpPassword,
@@ -118,7 +130,10 @@ class SetupMailFragment extends StatelessWidget {
         if (enabled)
           TextFormField(
             decoration: const InputDecoration(
-                label: Text('From Name'), hint: Text('Phylum Drive')),
+              label: Text('From Name'),
+              hint: Text('Phylum Drive'),
+              prefixIcon: Icon(Icons.contact_mail),
+            ),
             autocorrect: false,
             initialValue: config.fromName,
             onChanged: (value) =>
@@ -127,7 +142,10 @@ class SetupMailFragment extends StatelessWidget {
         if (enabled)
           TextFormField(
             decoration: const InputDecoration(
-                label: Text('From Email'), hint: Text('phylum@example.com')),
+              label: Text('From Email'),
+              hint: Text('phylum@example.com'),
+              prefixIcon: Icon(Icons.alternate_email),
+            ),
             autocorrect: false,
             initialValue: config.fromEmail,
             onChanged: (value) =>
@@ -136,8 +154,10 @@ class SetupMailFragment extends StatelessWidget {
         if (enabled)
           TextFormField(
             decoration: const InputDecoration(
-                label: Text('Instance URL'),
-                hint: Text('https://phylum.example.com')),
+              label: Text('Instance URL'),
+              hint: Text('https://phylum.example.com'),
+              prefixIcon: Icon(Icons.link),
+            ),
             autocorrect: false,
             initialValue: config.instanceUrl,
             keyboardType: TextInputType.url,
@@ -153,22 +173,29 @@ class SetupMailFragment extends StatelessWidget {
   }
 
   Future<void> validateAndNext(BuildContext context) async {
+    final config = context.read<MailConfig>();
+    if (!config.enabled) {
+      onNextPress();
+      return;
+    }
+
     final builder = UriBuilder.fromUri(Uri.parse(instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/mail/test';
     final request = Request('post', builder.build());
 
-    final sendTo = await showInputDialog(context,
-        title: 'Sending Test Email',
-        keyboardType: TextInputType.emailAddress,
-        labelText: 'Email Address');
-    if (sendTo == null || !context.mounted) {
-      return;
-    }
-    final config = context.read<MailConfig>().toMap();
-    config['send_to'] = sendTo;
-    request.body = jsonEncode(config);
+    // final sendTo = await showInputDialog(context,
+    //     title: 'Sending Test Email',
+    //     keyboardType: TextInputType.emailAddress,
+    //     labelText: 'Email Address');
+    // if (sendTo == null || !context.mounted) {
+    //   return;
+    // }
+    final configMap = config.toMap();
+    configMap['send_to'] = config.fromEmail;
+    request.body = jsonEncode(configMap);
+
     final responseString =
-        await sendRequest(context, 'Checking Email Config', request);
+        await sendRequest(context, 'Validating Email Config', request);
     if (responseString == null || !context.mounted) return;
     final responseMap =
         (jsonDecode(responseString) as Map).cast<String, dynamic>();
@@ -183,9 +210,18 @@ class SetupMailFragment extends StatelessWidget {
       }
       onNextPress();
     } else {
-      await showAlertDialog(context,
-          title: 'Could not send test email',
-          message: "$overrideNote\n\n${responseMap["error"]}");
+      String message = responseMap['details'] ?? '';
+      if (overrideNote.isNotEmpty) {
+        if (message.isNotEmpty) {
+          message += '\n\n';
+        }
+        message += overrideNote;
+      }
+      showAlertDialog(
+        context,
+        title: responseMap['error'],
+        message: message.isEmpty ? null : message,
+      );
     }
   }
 }

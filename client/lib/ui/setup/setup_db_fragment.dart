@@ -123,12 +123,8 @@ class SetupDbFragment extends StatelessWidget {
     request.body = jsonEncode(context.read<DbConfig>().toMap());
 
     final responseString =
-        await sendRequest(context, 'Checking Database Config', request);
-    if (!context.mounted) return;
-    if (responseString == null) {
-      showAlertDialog(context, title: 'Unable to reach server');
-      return;
-    }
+        await sendRequest(context, 'Validating Database Config', request);
+    if (responseString == null || !context.mounted) return;
     final responseMap =
         (jsonDecode(responseString) as Map).cast<String, dynamic>();
     final overrides = (responseMap["overrides"] as List?)?.cast<String>();
