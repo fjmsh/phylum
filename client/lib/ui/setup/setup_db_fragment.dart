@@ -53,23 +53,20 @@ class SetupDbFragment extends StatelessWidget {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 12.0,
       children: [
-        // Text(
-        //   'Database Setup',
-        //   style: Theme.of(context).textTheme.headlineSmall,
-        // ),
-        // SizedBox(height: 12),
-        ListTile(
-          title: Text(
-            'Database Setup',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          dense: true,
+        Text(
+          'Database Configuration',
+          style: Theme.of(context).textTheme.headlineSmall,
         ),
+        SizedBox(height: 12),
         TextFormField(
           decoration: const InputDecoration(
-              label: Text('Host'), hint: Text('localhost')),
+            label: Text('Host'),
+            hint: Text('localhost'),
+            prefixIcon: Icon(Icons.lan),
+          ),
           autofocus: true,
           autocorrect: false,
           keyboardType: TextInputType.url,
@@ -77,8 +74,11 @@ class SetupDbFragment extends StatelessWidget {
           onChanged: (value) => context.read<DbController>().host = value,
         ),
         TextFormField(
-          decoration:
-              const InputDecoration(label: Text('Port'), hint: Text('5432')),
+          decoration: const InputDecoration(
+            label: Text('Port'),
+            hint: Text('5432'),
+            prefixIcon: Icon(Icons.cable),
+          ),
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           keyboardType: TextInputType.number,
           initialValue: config.port == 0 ? '' : config.port.toString(),
@@ -87,42 +87,56 @@ class SetupDbFragment extends StatelessWidget {
         ),
         TextFormField(
           decoration: const InputDecoration(
-              label: Text('Database Name'), hint: Text('phylum')),
+            label: Text('Database Name'),
+            hint: Text('phylum'),
+            prefixIcon: Icon(Icons.storage),
+          ),
           autocorrect: false,
           initialValue: config.name,
           onChanged: (value) => context.read<DbController>().name = value,
         ),
         TextFormField(
-          decoration:
-              const InputDecoration(label: Text('User'), hint: Text('phylum')),
+          decoration: const InputDecoration(
+            label: Text('User'),
+            hint: Text('phylum'),
+            prefixIcon: Icon(Icons.person),
+          ),
           autocorrect: false,
           initialValue: config.user,
           onChanged: (value) => context.read<DbController>().user = value,
         ),
         TextFormField(
-          decoration: const InputDecoration(label: Text('Password')),
+          decoration: const InputDecoration(
+            label: Text('Password'),
+            prefixIcon: Icon(Icons.password),
+          ),
           autocorrect: false,
           obscureText: true,
           initialValue: config.password,
           onChanged: (value) => context.read<DbController>().password = value,
         ),
-        ListTile(
-          dense: true,
-          title: Text('Connection'),
-          subtitle: Text(config.verified == true
-              ? 'Connected'
-              : config.verified == false
-                  ? 'Not Working'
-                  : 'Unverified'),
-          leading: Icon(config.verified == true
-              ? Icons.check_circle
-              : config.verified == false
-                  ? Icons.cancel
-                  : Icons.question_mark),
-          trailing: config.verified == null ? Icon(Icons.cable) : null,
-          onTap:
-              config.verified == null ? () => validateDbConfig(context) : null,
-        ),
+        if (config.error == null)
+          ListTile(
+            dense: true,
+            title: Text('Verify Configuration'),
+            leading: Icon(Icons.help),
+            onTap:
+                config.error == null ? () => validateDbConfig(context) : null,
+          )
+        else if (config.error!.isEmpty)
+          ListTile(
+            iconColor: Theme.of(context).colorScheme.primary,
+            dense: true,
+            title: Text('Configuration Valid'),
+            leading: Icon(Icons.check_circle),
+          )
+        else
+          ListTile(
+            dense: true,
+            title: Text('Invalid Configuration'),
+            subtitle: Text(config.error!),
+            leading: Icon(Icons.error),
+          ),
       ],
     );
   }
@@ -144,12 +158,14 @@ class SetupDbFragment extends StatelessWidget {
         : "";
 
     if (responseMap["success"]) {
-      context.read<DbController>().verified = true;
+      context.read<DbController>().error = '';
     } else {
-      context.read<DbController>().verified = false;
-      await showAlertDialog(context,
-          title: 'Could not connect to DB',
-          message: "$overrideNote\n\n${responseMap["error"]}");
+      context.read<DbController>().error = responseMap["error"];
+      if (responseMap.containsKey('details')) {
+        showAlertDialog(context,
+            title: responseMap['error'],
+            message: "${responseMap['details']}\n\n$overrideNote");
+      }
     }
   }
 }
@@ -177,8 +193,8 @@ class DbController extends StateNotifier<DbConfig> {
     state = state.copyWith(password: value);
   }
 
-  set verified(bool value) {
-    state = state.withVerified(value);
+  set error(String value) {
+    state = state.withError(value);
   }
 }
 
@@ -188,7 +204,7 @@ class DbConfig {
   final String name;
   final String user;
   final String password;
-  final bool? verified;
+  final String? error;
 
   const DbConfig({
     required this.host,
@@ -196,17 +212,18 @@ class DbConfig {
     required this.name,
     required this.user,
     required this.password,
-    required this.verified,
+    required this.error,
   });
 
   const DbConfig.defaults()
       : this(
-            host: 'localhost',
-            port: 5432,
-            name: 'phylum',
-            user: 'phylum',
-            password: 'phylum',
-            verified: null);
+          host: 'localhost',
+          port: 5432,
+          name: 'phylum',
+          user: 'phylum',
+          password: 'phylum',
+          error: null,
+        );
 
   DbConfig copyWith({
     String? host,
@@ -221,18 +238,19 @@ class DbConfig {
       name: name ?? this.name,
       user: user ?? this.user,
       password: password ?? this.password,
-      verified: null,
+      error: null,
     );
   }
 
-  DbConfig withVerified(bool verified) {
+  DbConfig withError(String error) {
     return DbConfig(
-        host: host,
-        port: port,
-        name: name,
-        user: user,
-        password: password,
-        verified: verified);
+      host: host,
+      port: port,
+      name: name,
+      user: user,
+      password: password,
+      error: error,
+    );
   }
 
   Map<String, dynamic> toMap() => {
