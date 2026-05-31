@@ -233,6 +233,14 @@ class SetupAuthFragment extends StatelessWidget {
 
   Future<void> validateAndNext(BuildContext context) async {
     if (formKey.currentState?.validate() == false) return;
+    final config = context.read<AuthConfig>();
+    if (!config.passwordLoginEnabled &&
+        !config.passwordlessLoginEnabled &&
+        config.openIdConfigs.isEmpty) {
+      showAlertDialog(context,
+          message: 'You must set up at least 1 login method');
+      return;
+    }
     onNextPress();
   }
 
