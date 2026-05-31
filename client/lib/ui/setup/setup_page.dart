@@ -6,7 +6,7 @@ import 'package:http/http.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/layout/responsive.dart';
-import 'package:phylum/ui/setup/setup_auth_fragment.dart';
+import 'package:phylum/ui/setup/auth/setup_auth_fragment.dart';
 import 'package:phylum/ui/setup/setup_db_fragment.dart';
 import 'package:phylum/ui/setup/setup_mail_fragment.dart';
 import 'package:phylum/ui/setup/setup_user_fragment.dart';
@@ -14,6 +14,8 @@ import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
+
+import 'auth/controller.dart';
 
 enum SetupStep {
   database,

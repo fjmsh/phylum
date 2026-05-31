@@ -1,8 +1,9 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/setup/setup_auth_fragment.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
+
+import 'auth/controller.dart';
 
 class SetupUserFragment extends StatelessWidget {
   final formKey = GlobalKey<FormState>();

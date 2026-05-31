@@ -1,0 +1,214 @@
+import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
+import 'package:phylum/ui/setup/setup_mail_fragment.dart';
+import 'package:phylum/util/dialogs.dart';
+import 'package:provider/provider.dart';
+
+import 'controller.dart';
+import 'crypt.dart';
+import 'ldap.dart';
+import 'openid.dart';
+import 'password.dart';
+
+class SetupAuthFragment extends StatelessWidget {
+  final formKey = GlobalKey<FormState>();
+  final String instanceUrl;
+  final void Function() onPrevPress;
+  final void Function() onNextPress;
+
+  SetupAuthFragment({
+    super.key,
+    required this.instanceUrl,
+    required this.onPrevPress,
+    required this.onNextPress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(child: SingleChildScrollView(child: buildContents(context))),
+        TextButtonTheme(
+          data: TextButtonThemeData(
+            style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: onPrevPress,
+                child: Text('PREV'),
+              ),
+              TextButton(
+                onPressed: () => validateAndNext(context),
+                child: Text('NEXT'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildContents(BuildContext context) {
+    final config = context.watch<AuthConfig>();
+    final mailEnabled =
+        context.select<MailConfig, bool>((config) => config.enabled);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Auth', style: Theme.of(context).textTheme.headlineSmall),
+        SwitchListTile(
+          title: Text('Enable Passwordless Email Login'),
+          subtitle: mailEnabled ? null : Text('Requires Email'),
+          secondary: Icon(Icons.email),
+          value: mailEnabled && config.passwordlessLoginEnabled,
+          onChanged: mailEnabled
+              ? (value) => context
+                  .read<AuthController>()
+                  .passwordlessLoginEnabled = value
+              : null,
+        ),
+        const SizedBox(height: 18),
+        ListTile(
+          dense: true,
+          title: Text('Password Auth',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+        SwitchListTile(
+          title: Text('Enable Password Auth'),
+          secondary: Icon(Icons.password),
+          value: config.passwordLoginEnabled,
+          onChanged: (value) =>
+              context.read<AuthController>().passwordLoginEnabled = value,
+          // subtitle:
+          //     config.passwordConfig != null ? Text(config.toString()) : null,
+        ),
+        if (config.passwordLoginEnabled)
+          buildPasswordAuthSection(context, config.passwordConfig),
+        const SizedBox(height: 18),
+        ListTile(
+          dense: true,
+          title: Text('OpenID Login',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          trailing: IconButton(
+            onPressed: () async {
+              final openIDConfig =
+                  await OidcDialog.show(context, OpenIDConfig.empty());
+              if (openIDConfig == null || !context.mounted) return;
+              final re = RegExp(r'[^a-z0-9]+');
+              final id = openIDConfig.name.toLowerCase().replaceAll(re, '-');
+              context
+                  .read<AuthController>()
+                  .addOpenIDConfig(openIDConfig.copyWith(id: id));
+            },
+            icon: Icon(Icons.add),
+            tooltip: 'Add OpenID Login Provider',
+          ),
+        ),
+        ...config.openIdConfigs.mapIndexed((i, cfg) => ListTile(
+              title: Text(cfg.name),
+              subtitle: Text(cfg.issuerUrl),
+              trailing: IconButton(
+                  onPressed: () =>
+                      context.read<AuthController>().removeOpenIDConfig(cfg),
+                  icon: Icon(Icons.delete)),
+            )),
+      ],
+    );
+  }
+
+  Widget buildPasswordAuthSection(
+    BuildContext context,
+    PasswordConfig config,
+  ) {
+    final mailEnabled =
+        context.select<MailConfig, bool>((config) => config.enabled);
+    return Column(
+      children: [
+        ListTile(
+          title: Text('Backend'),
+          leading: Icon(Icons.storage),
+          subtitle: Text(config.backend.descriptor),
+          onTap: () async {
+            final backend = await showOptionsDialog(
+              context,
+              titleText: 'Password Auth Backend',
+              [PasswordBackend.crypt, PasswordBackend.ldap],
+              (item) => ListTile(title: Text(item.descriptor)),
+            );
+            if (backend == null || !context.mounted) return;
+
+            config = config.copyWith(backend: backend);
+            if (backend == PasswordBackend.ldap) {
+              final ldapConfig =
+                  await LdapConfigDialog.show(context, config.ldapConfig);
+              if (ldapConfig == null || !context.mounted) return;
+              config = config.copyWith(ldapConfig: ldapConfig);
+            }
+
+            context.read<AuthController>().passwordConfig = config;
+          },
+        ),
+        if (config.backend == PasswordBackend.crypt)
+          ListTile(
+            title: Text('KDF'),
+            subtitle: Text(config.cryptConfig.toString()),
+            leading: Icon(Icons.key),
+            onTap: () async {
+              final cryptConfig = await configureKDF(
+                context,
+                config.cryptConfig,
+                instanceUrl,
+              );
+              if (cryptConfig == null || !context.mounted) return;
+              context.read<AuthController>().passwordConfig =
+                  config.copyWith(cryptConfig: cryptConfig);
+            },
+          )
+        else if (config.backend == PasswordBackend.ldap)
+          ListTile(
+              title: Text('LDAP Configuration'),
+              subtitle: Text(config.ldapConfig.toString()),
+              leading: Icon(Icons.key),
+              onTap: () async {
+                final ldapConfig =
+                    await LdapConfigDialog.show(context, config.ldapConfig);
+                if (ldapConfig == null || !context.mounted) return;
+                config = config.copyWith(ldapConfig: ldapConfig);
+              }),
+        SwitchListTile(
+          title: Text('Password Reset'),
+          subtitle: !mailEnabled
+              ? const Text('Requires Email')
+              : config.backend != PasswordBackend.crypt
+                  ? const Text('Only supported for DB backend')
+                  : null,
+          secondary: Icon(Icons.refresh),
+          value: mailEnabled && config.backend == PasswordBackend.crypt
+              ? config.resetEnabled
+              : false,
+          onChanged: mailEnabled && config.backend == PasswordBackend.crypt
+              ? (value) => context.read<AuthController>().passwordConfig =
+                  config.copyWith(resetEnabled: value)
+              : null,
+        )
+      ],
+    );
+  }
+
+  Future<void> validateAndNext(BuildContext context) async {
+    if (formKey.currentState?.validate() == false) return;
+    final config = context.read<AuthConfig>();
+    if (!config.passwordLoginEnabled &&
+        !config.passwordlessLoginEnabled &&
+        config.openIdConfigs.isEmpty) {
+      showAlertDialog(context,
+          message: 'You must set up at least 1 login method');
+      return;
+    }
+    onNextPress();
+  }
+}

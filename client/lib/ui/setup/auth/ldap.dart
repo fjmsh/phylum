@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/setup/setup_auth_fragment.dart';
 
 class LdapConfigDialog extends StatefulWidget {
   final LdapConfig config;
@@ -225,5 +224,61 @@ class _LdapConfigDialogState extends State<LdapConfigDialog> {
         ),
       ],
     );
+  }
+}
+
+class LdapConfig {
+  final String url;
+  final bool starttls;
+  final bool autoCreateUsers;
+  final bool useFilter;
+  final String dnTemplate;
+  final String bindDn;
+  final String bindPassword;
+  final String baseDn;
+  final String filterTemplate;
+
+  const LdapConfig({
+    required this.url,
+    required this.starttls,
+    required this.autoCreateUsers,
+    required this.useFilter,
+    required this.dnTemplate,
+    required this.bindDn,
+    required this.bindPassword,
+    required this.baseDn,
+    required this.filterTemplate,
+  });
+
+  const LdapConfig.defaults()
+      : this(
+          url: '',
+          starttls: true,
+          autoCreateUsers: false,
+          useFilter: false,
+          dnTemplate: '',
+          bindDn: '',
+          bindPassword: '',
+          baseDn: '',
+          filterTemplate: '(mail={email})',
+        );
+
+  Map<String, dynamic> toMap() {
+    return {
+      'url': url,
+      'starttls': starttls,
+      'auto_create_users': autoCreateUsers,
+      'use_filter': useFilter,
+      'dn_template': dnTemplate,
+      'bind_dn': bindDn,
+      'bind_password': bindPassword,
+      'base_dn': baseDn,
+      'filter_template': filterTemplate,
+    };
+  }
+
+  @override
+  String toString() {
+    return url;
   }
 }
