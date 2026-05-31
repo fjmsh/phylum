@@ -3,6 +3,7 @@ package setup
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/mail"
@@ -48,15 +49,37 @@ func handleSendTestEmailRequest(c *gin.Context) {
 	}
 	overrides := config.HasOverrides("mail", paramsCfg)
 	response := gin.H{
-		"success":   true,
 		"overrides": overrides,
 	}
 	if mailer, err := mail.CreateMailer(cfg, *zerolog.Ctx(c.Request.Context())); err != nil {
-		response["success"] = false
-		response["error"] = "Mailer Create Error: " + err.Error()
+		response["error"] = gin.H{
+			"code":    "generic",
+			"msg":     "Failed to Create Mailer",
+			"details": err.Error(),
+		}
 	} else if err := mailer.SendTestEmail(params.SendTo); err != nil {
-		response["success"] = false
-		response["error"] = "Mail Send Error: " + err.Error()
+		if strings.Contains(err.Error(), "no such host") {
+			response["error"] = gin.H{
+				"code": "no_such_host",
+				"msg":  "No Such Host",
+			}
+		} else if strings.Contains(err.Error(), "connection refused") {
+			response["error"] = gin.H{
+				"code": "connection_refused",
+				"msg":  "Connection Refused",
+			}
+		} else if strings.Contains(err.Error(), "timeout") {
+			response["error"] = gin.H{
+				"code": "io_timeout",
+				"msg":  "I/O Timeout",
+			}
+		} else {
+			response["error"] = gin.H{
+				"code":    "generic",
+				"msg":     "Failed to Send Mail",
+				"details": err.Error(),
+			}
+		}
 	}
 	c.JSON(http.StatusOK, response)
 
