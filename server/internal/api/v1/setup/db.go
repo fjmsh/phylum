@@ -33,26 +33,40 @@ func handleValidateDBRequest(c *gin.Context) {
 	config.MergeSub("db", paramsCfg).Unmarshal("", &cfg)
 	overrides := config.HasOverrides("db", paramsCfg)
 	response := gin.H{
-		"success":   true,
 		"overrides": overrides,
 	}
+
 	if pool, err := db.Connect(c.Request.Context(), cfg, nil); err != nil {
-		response["success"] = false
-		response["error"] = "Connection Error"
-		response["details"] = err.Error()
+		response["error"] = gin.H{
+			"msg":     "Failed to Initialize Connection",
+			"details": err.Error(),
+		}
 	} else if _, err := db.GetSchemaInfo(c.Request.Context(), pool); err != nil {
-		response["success"] = false
 		if strings.Contains(err.Error(), "no such host") {
-			response["error"] = "No Such Host"
+			response["error"] = gin.H{
+				"code": "no_such_host",
+				"msg":  "No Such Host",
+			}
 		} else if strings.Contains(err.Error(), "connection refused") {
-			response["error"] = "Connection Refused"
+			response["error"] = gin.H{
+				"code": "connection_refused",
+				"msg":  "Connection Refused",
+			}
 		} else if strings.Contains(err.Error(), "SQLSTATE 28P01") {
-			response["error"] = "Incorrect Password"
+			response["error"] = gin.H{
+				"code": "incorrect_password",
+				"msg":  "Incorrect Password",
+			}
 		} else if strings.Contains(err.Error(), "SQLSTATE 3D000") {
-			response["error"] = "Database Does Not Exist"
+			response["error"] = gin.H{
+				"code": "database_does_not_exist",
+				"msg":  "Database Does Not Exist",
+			}
 		} else {
-			response["error"] = "Unknown Error"
-			response["details"] = err.Error()
+			response["error"] = gin.H{
+				"msg":     "Failed to Connect to Database",
+				"details": err.Error(),
+			}
 		}
 	}
 	c.JSON(http.StatusOK, response)
