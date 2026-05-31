@@ -14,70 +14,117 @@ import 'package:state_notifier/state_notifier.dart';
 import 'package:uri/uri.dart';
 
 class SetupAuthFragment extends StatelessWidget {
+  final formKey = GlobalKey<FormState>();
   final String instanceUrl;
-  const SetupAuthFragment({super.key, required this.instanceUrl});
+  final void Function() onPrevPress;
+  final void Function() onNextPress;
+
+  SetupAuthFragment({
+    super.key,
+    required this.instanceUrl,
+    required this.onPrevPress,
+    required this.onNextPress,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final config = context.watch<AuthConfig>();
-    final mailEnabled = context.select<MailConfig, bool>((config) => config.enabled);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 12.0,
-        children: [
-          Text(
-            'Auth',
-            style: Theme.of(context).textTheme.headlineMedium,
+    return Column(
+      children: [
+        Expanded(child: SingleChildScrollView(child: buildContents(context))),
+        TextButtonTheme(
+          data: TextButtonThemeData(
+            style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24)),
           ),
-          CheckboxListTile(
-            value: config.passwordConfig != null,
-            onChanged: (value) async {
-              if (value == true) {
-                final passwordConfig = await configurePasswordAuth(context);
-                if (passwordConfig != null && context.mounted) {
-                  context.read<AuthController>().passwordConfig = passwordConfig;
-                }
-              } else {
-                context.read<AuthController>().passwordConfig = null;
-              }
-            },
-            title: Text('Enable Password Login'),
-            subtitle: config.passwordConfig != null ? Text(config.passwordConfig.toString()) : null,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: onPrevPress,
+                child: Text('PREV'),
+              ),
+              TextButton(
+                onPressed: () => validateAndNext(context),
+                child: Text('NEXT'),
+              ),
+            ],
           ),
-          CheckboxListTile(
-            value: mailEnabled && config.passwordlessLoginEnabled,
-            enabled: mailEnabled,
-            onChanged: (value) => context.read<AuthController>().passwordlessLoginEnabled = value ?? false,
-            title: Text('Enable Passwordless Login'),
-            subtitle: mailEnabled ? null : Text('Requires email setup'),
-          ),
-          ListTile(
-            dense: true,
-            title: Text('OpenID', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-          ...config.openIdConfigs.mapIndexed((i, cfg) => ListTile(
-                title: Text(cfg.name),
-                subtitle: Text(cfg.issuerUrl),
-                trailing: IconButton(
-                    onPressed: () => context.read<AuthController>().removeOpenIDConfig(cfg), icon: Icon(Icons.delete)),
-              )),
-          TextButton.icon(
-            onPressed: () async {
-              final openIDConfig = await createOpenIdConfig(context);
-              if (openIDConfig == null || !context.mounted) return;
-              final re = RegExp(r'[^a-z0-9]+');
-              final id = openIDConfig.name.toLowerCase().replaceAll(re, '-');
-              context.read<AuthController>().addOpenIDConfig(openIDConfig.copyWith(id: id));
-            },
-            label: Text('Add OpenID Client Config'),
-            icon: Icon(Icons.add),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  Widget buildContents(BuildContext context) {
+    final config = context.watch<AuthConfig>();
+    final mailEnabled =
+        context.select<MailConfig, bool>((config) => config.enabled);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 12.0,
+      children: [
+        Text(
+          'Auth',
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+        CheckboxListTile(
+          value: config.passwordConfig != null,
+          onChanged: (value) async {
+            if (value == true) {
+              final passwordConfig = await configurePasswordAuth(context);
+              if (passwordConfig != null && context.mounted) {
+                context.read<AuthController>().passwordConfig = passwordConfig;
+              }
+            } else {
+              context.read<AuthController>().passwordConfig = null;
+            }
+          },
+          title: Text('Enable Password Login'),
+          subtitle: config.passwordConfig != null
+              ? Text(config.passwordConfig.toString())
+              : null,
+        ),
+        CheckboxListTile(
+          value: mailEnabled && config.passwordlessLoginEnabled,
+          enabled: mailEnabled,
+          onChanged: (value) => context
+              .read<AuthController>()
+              .passwordlessLoginEnabled = value ?? false,
+          title: Text('Enable Passwordless Login'),
+          subtitle: mailEnabled ? null : Text('Requires email setup'),
+        ),
+        ListTile(
+          dense: true,
+          title: Text('OpenID', style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+        ...config.openIdConfigs.mapIndexed((i, cfg) => ListTile(
+              title: Text(cfg.name),
+              subtitle: Text(cfg.issuerUrl),
+              trailing: IconButton(
+                  onPressed: () =>
+                      context.read<AuthController>().removeOpenIDConfig(cfg),
+                  icon: Icon(Icons.delete)),
+            )),
+        TextButton.icon(
+          onPressed: () async {
+            final openIDConfig = await createOpenIdConfig(context);
+            if (openIDConfig == null || !context.mounted) return;
+            final re = RegExp(r'[^a-z0-9]+');
+            final id = openIDConfig.name.toLowerCase().replaceAll(re, '-');
+            context
+                .read<AuthController>()
+                .addOpenIDConfig(openIDConfig.copyWith(id: id));
+          },
+          label: Text('Add OpenID Client Config'),
+          icon: Icon(Icons.add),
+        ),
+      ],
+    );
+  }
+
+  Future<void> validateAndNext(BuildContext context) async {
+    if (formKey.currentState?.validate() == false) return;
+    onNextPress();
   }
 
   Future<OpenIDConfig?> createOpenIdConfig(BuildContext context) async {
@@ -96,7 +143,8 @@ class SetupAuthFragment extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextFormField(
-                      decoration: const InputDecoration(label: Text('Name'), hint: Text('Authelia')),
+                      decoration: const InputDecoration(
+                          label: Text('Name'), hint: Text('Authelia')),
                       autofocus: true,
                       autocorrect: false,
                       textCapitalization: TextCapitalization.words,
@@ -104,39 +152,47 @@ class SetupAuthFragment extends StatelessWidget {
                       onChanged: (value) => setState(() => name = value),
                     ),
                     TextFormField(
-                      decoration:
-                          const InputDecoration(label: Text('Issuer URL'), hint: Text('https://auth.example.com')),
+                      decoration: const InputDecoration(
+                          label: Text('Issuer URL'),
+                          hint: Text('https://auth.example.com')),
                       keyboardType: TextInputType.url,
                       initialValue: issuerUrl,
                       onChanged: (value) => setState(() => issuerUrl = value),
                     ),
                     TextFormField(
-                      decoration: const InputDecoration(label: Text('Client ID'), hint: Text('phylum')),
+                      decoration: const InputDecoration(
+                          label: Text('Client ID'), hint: Text('phylum')),
                       initialValue: clientId,
                       onChanged: (value) => setState(() => clientId = value),
                     ),
                     TextFormField(
-                      decoration: const InputDecoration(label: Text('Client Secret')),
+                      decoration:
+                          const InputDecoration(label: Text('Client Secret')),
                       obscureText: true,
                       initialValue: clientSecret,
-                      onChanged: (value) => setState(() => clientSecret = value),
+                      onChanged: (value) =>
+                          setState(() => clientSecret = value),
                     ),
                     CheckboxListTile(
                       value: allowUnverifiedEmails,
                       title: Text('Allow Unverified Emails'),
                       subtitle: Text('Use with caution'),
-                      onChanged: (value) => setState(() => allowUnverifiedEmails = value ?? false),
+                      onChanged: (value) => setState(
+                          () => allowUnverifiedEmails = value ?? false),
                     ),
                     CheckboxListTile(
                       value: autoCreateUsers,
                       title: Text('Automatically Create Users'),
                       subtitle: Text('Only use with trusted private providers'),
-                      onChanged: (value) => setState(() => autoCreateUsers = value ?? false),
+                      onChanged: (value) =>
+                          setState(() => autoCreateUsers = value ?? false),
                     ),
                   ],
                 ),
                 actions: [
-                  TextButton(onPressed: () => Navigator.of(context).pop(null), child: Text('Cancel')),
+                  TextButton(
+                      onPressed: () => Navigator.of(context).pop(null),
+                      child: Text('Cancel')),
                   ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(OpenIDConfig(
                             name: name,
@@ -195,8 +251,8 @@ class SetupAuthFragment extends StatelessWidget {
       }
 
       if (context.mounted) {
-        context.read<AuthController>().passwordConfig =
-            PasswordConfig(cryptConfig: cryptConfig, resetEnabled: resetEnabled);
+        context.read<AuthController>().passwordConfig = PasswordConfig(
+            cryptConfig: cryptConfig, resetEnabled: resetEnabled);
       }
     } else if (backend == PasswordBackend.ldap) {
       final ldapConfig = await configureLdap(context);
@@ -204,7 +260,8 @@ class SetupAuthFragment extends StatelessWidget {
         return null;
       } else {
         if (context.mounted) {
-          context.read<AuthController>().passwordConfig = PasswordConfig(ldapConfig: ldapConfig, resetEnabled: false);
+          context.read<AuthController>().passwordConfig =
+              PasswordConfig(ldapConfig: ldapConfig, resetEnabled: false);
         }
       }
     }
@@ -212,7 +269,8 @@ class SetupAuthFragment extends StatelessWidget {
   }
 
   Future<LdapConfig?> configureLdap(BuildContext context) async {
-    final config = context.read<AuthConfig>().passwordConfig?.ldapConfig ?? LdapConfig.defaults();
+    final config = context.read<AuthConfig>().passwordConfig?.ldapConfig ??
+        LdapConfig.defaults();
     String url = config.url;
     bool starttls = config.starttls;
     bool autoCreateUsers = config.useFilter;
@@ -232,7 +290,8 @@ class SetupAuthFragment extends StatelessWidget {
                   children: [
                     TextFormField(
                       decoration: const InputDecoration(
-                          label: Text('LDAP Server URL'), hint: Text('ldap://ldap.example.com:389')),
+                          label: Text('LDAP Server URL'),
+                          hint: Text('ldap://ldap.example.com:389')),
                       keyboardType: TextInputType.url,
                       initialValue: url,
                       onChanged: (value) => setState(() => url = value),
@@ -240,25 +299,31 @@ class SetupAuthFragment extends StatelessWidget {
                     CheckboxListTile(
                       value: starttls,
                       title: Text('Use STARTTLS'),
-                      onChanged: (value) => setState(() => starttls = value ?? false),
+                      onChanged: (value) =>
+                          setState(() => starttls = value ?? false),
                     ),
                     CheckboxListTile(
                       value: autoCreateUsers,
                       title: Text('Automatically Create Users'),
-                      onChanged: (value) => setState(() => autoCreateUsers = value ?? false),
+                      onChanged: (value) =>
+                          setState(() => autoCreateUsers = value ?? false),
                     ),
                     CheckboxListTile(
                       value: useFilter,
                       title: Text('Use Filter'),
-                      onChanged: (value) => setState(() => useFilter = value ?? false),
+                      onChanged: (value) =>
+                          setState(() => useFilter = value ?? false),
                     ),
                     if (useFilter)
                       TextFormField(
                         decoration: const InputDecoration(
-                            label: Text('DN Template'), hint: Text('uid={email},ou=people,dc=example,dc=com')),
+                            label: Text('DN Template'),
+                            hint: Text(
+                                'uid={email},ou=people,dc=example,dc=com')),
                         initialValue: dnTemplate,
                         key: ValueKey('dn_template'),
-                        onChanged: (value) => setState(() => dnTemplate = value),
+                        onChanged: (value) =>
+                            setState(() => dnTemplate = value),
                       )
                     else
                       Column(
@@ -266,37 +331,49 @@ class SetupAuthFragment extends StatelessWidget {
                         children: [
                           TextFormField(
                             decoration: const InputDecoration(
-                                label: Text('Bind DN'), hint: Text('uid=phylum,ou=people,dc=example,dc=com')),
+                                label: Text('Bind DN'),
+                                hint: Text(
+                                    'uid=phylum,ou=people,dc=example,dc=com')),
                             initialValue: bindDn,
                             key: ValueKey('bind_dn'),
-                            onChanged: (value) => setState(() => bindDn = value),
+                            onChanged: (value) =>
+                                setState(() => bindDn = value),
                           ),
                           TextFormField(
-                            decoration: const InputDecoration(label: Text('Bind Password')),
+                            decoration: const InputDecoration(
+                                label: Text('Bind Password')),
                             initialValue: bindPassword,
                             obscureText: true,
                             key: ValueKey('bind_password'),
-                            onChanged: (value) => setState(() => bindPassword = value),
+                            onChanged: (value) =>
+                                setState(() => bindPassword = value),
                           ),
                           TextFormField(
-                            decoration: const InputDecoration(label: Text('Base DN'), hint: Text('dc=example,dc=com')),
+                            decoration: const InputDecoration(
+                                label: Text('Base DN'),
+                                hint: Text('dc=example,dc=com')),
                             initialValue: bindDn,
                             key: ValueKey('base_dn'),
-                            onChanged: (value) => setState(() => baseDn = value),
+                            onChanged: (value) =>
+                                setState(() => baseDn = value),
                           ),
                           TextFormField(
-                            decoration:
-                                const InputDecoration(label: Text('Filter Template'), hint: Text('(mail={email})')),
+                            decoration: const InputDecoration(
+                                label: Text('Filter Template'),
+                                hint: Text('(mail={email})')),
                             initialValue: filterTemplate,
                             key: ValueKey('filter_template'),
-                            onChanged: (value) => setState(() => filterTemplate = value),
+                            onChanged: (value) =>
+                                setState(() => filterTemplate = value),
                           ),
                         ],
                       ),
                   ],
                 ),
                 actions: [
-                  TextButton(onPressed: () => Navigator.of(context).pop(null), child: Text('Cancel')),
+                  TextButton(
+                      onPressed: () => Navigator.of(context).pop(null),
+                      child: Text('Cancel')),
                   ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(LdapConfig(
                             url: url,
@@ -316,7 +393,9 @@ class SetupAuthFragment extends StatelessWidget {
   }
 
   Future<Argon2Config?> configureArgon2(BuildContext context) async {
-    final config = context.read<AuthConfig>().passwordConfig?.cryptConfig?.argon2Config ?? Argon2Config.defaults();
+    final config =
+        context.read<AuthConfig>().passwordConfig?.cryptConfig?.argon2Config ??
+            Argon2Config.defaults();
     int m = config.memory;
     int p = config.parallelism;
     int t = config.iterations;
@@ -330,10 +409,14 @@ class SetupAuthFragment extends StatelessWidget {
                   children: [
                     ListTile(
                       title: Text('Memory Factor'),
-                      subtitle: Text('$m - ${pow(2, m + 10).toInt().formatForDisplay(noDecimal: true)}'),
+                      subtitle: Text(
+                          '$m - ${pow(2, m + 10).toInt().formatForDisplay(noDecimal: true)}'),
                       onTap: () async {
-                        final input =
-                            await showIntSliderDialog(context, title: 'Memory Factor (m)', value: m, min: 10, max: 24);
+                        final input = await showIntSliderDialog(context,
+                            title: 'Memory Factor (m)',
+                            value: m,
+                            min: 10,
+                            max: 24);
                         if (input != null) {
                           setState(() => m = input);
                         }
@@ -343,8 +426,8 @@ class SetupAuthFragment extends StatelessWidget {
                       title: Text('Parallelism'),
                       subtitle: Text(p.toString()),
                       onTap: () async {
-                        final input =
-                            await showIntSliderDialog(context, title: 'Parallelism (p)', value: p, min: 1, max: 8);
+                        final input = await showIntSliderDialog(context,
+                            title: 'Parallelism (p)', value: p, min: 1, max: 8);
                         if (input != null) {
                           setState(() => p = input);
                         }
@@ -354,28 +437,33 @@ class SetupAuthFragment extends StatelessWidget {
                       title: Text('Iterations'),
                       subtitle: Text(t.toString()),
                       onTap: () async {
-                        final input =
-                            await showIntSliderDialog(context, title: 'Iterations (t)', value: t, min: 1, max: 20);
+                        final input = await showIntSliderDialog(context,
+                            title: 'Iterations (t)', value: t, min: 1, max: 20);
                         if (input != null) {
                           setState(() => t = input);
                         }
                       },
                     ),
-                    ElevatedButton(onPressed: () => testArgon2Params(context, m, t, p), child: Text('Test Parameters'))
+                    ElevatedButton(
+                        onPressed: () => testArgon2Params(context, m, t, p),
+                        child: Text('Test Parameters'))
                   ],
                 ),
                 actions: [
-                  TextButton(onPressed: () => Navigator.of(context).pop(null), child: Text('Cancel')),
+                  TextButton(
+                      onPressed: () => Navigator.of(context).pop(null),
+                      child: Text('Cancel')),
                   ElevatedButton(
-                      onPressed: () =>
-                          Navigator.of(context).pop(Argon2Config(memory: m, parallelism: p, iterations: t)),
+                      onPressed: () => Navigator.of(context).pop(Argon2Config(
+                          memory: m, parallelism: p, iterations: t)),
                       child: Text('OK')),
                 ],
               ),
             ));
   }
 
-  Future<void> testArgon2Params(BuildContext context, int memory, int iterations, int parallelism) async {
+  Future<void> testArgon2Params(
+      BuildContext context, int memory, int iterations, int parallelism) async {
     final builder = UriBuilder.fromUri(Uri.parse(instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/auth/test_argon2_params';
     builder.queryParameters = {
@@ -385,15 +473,18 @@ class SetupAuthFragment extends StatelessWidget {
     };
     final request = Request('get', builder.build());
 
-    final responseString = await sendRequest(context, 'Testing Argon2 Params', request);
+    final responseString =
+        await sendRequest(context, 'Testing Argon2 Params', request);
     if (responseString == null || !context.mounted) return;
-    final responseMap = (jsonDecode(responseString) as Map).cast<String, dynamic>();
+    final responseMap =
+        (jsonDecode(responseString) as Map).cast<String, dynamic>();
 
     if (responseMap["success"]) {
       final time = Duration(microseconds: responseMap["time"]);
       await showAlertDialog(
         context,
-        title: 'Took ${time.inMilliseconds > 5 ? '${time.inMilliseconds}ms' : '${time.inMicroseconds}us'}',
+        title:
+            'Took ${time.inMilliseconds > 5 ? '${time.inMilliseconds}ms' : '${time.inMicroseconds}us'}',
         message: time.inMilliseconds < 300
             ? 'You should aim to take at least 300ms.'
             : time.inMilliseconds > 1000
@@ -401,12 +492,16 @@ class SetupAuthFragment extends StatelessWidget {
                 : 'Looks good!',
       );
     } else {
-      await showAlertDialog(context, title: 'Could not test argon2 params', message: "${responseMap["error"]}");
+      await showAlertDialog(context,
+          title: 'Could not test argon2 params',
+          message: "${responseMap["error"]}");
     }
   }
 
   Future<Pbkdf2Config?> configurePbkdf2(BuildContext context) async {
-    final config = context.read<AuthConfig>().passwordConfig?.cryptConfig?.pbkdf2Config ?? Pbkdf2Config.defaults();
+    final config =
+        context.read<AuthConfig>().passwordConfig?.cryptConfig?.pbkdf2Config ??
+            Pbkdf2Config.defaults();
     var iterations = config.iterations;
     var hash = config.hash;
     return showDialog<Pbkdf2Config>(
@@ -423,7 +518,11 @@ class SetupAuthFragment extends StatelessWidget {
                       onTap: () async {
                         final input = await showOptionsDialog(
                           context,
-                          [HashFunction.sha1, HashFunction.sha256, HashFunction.sha512],
+                          [
+                            HashFunction.sha1,
+                            HashFunction.sha256,
+                            HashFunction.sha512
+                          ],
                           (item) => ListTile(title: Text(item.descriptor)),
                         );
                         if (input != null) {
@@ -449,20 +548,26 @@ class SetupAuthFragment extends StatelessWidget {
                       },
                     ),
                     ElevatedButton(
-                        onPressed: () => testPbkdf2Params(context, hash, iterations), child: Text('Test Parameters'))
+                        onPressed: () =>
+                            testPbkdf2Params(context, hash, iterations),
+                        child: Text('Test Parameters'))
                   ],
                 ),
                 actions: [
-                  TextButton(onPressed: () => Navigator.of(context).pop(null), child: Text('Cancel')),
+                  TextButton(
+                      onPressed: () => Navigator.of(context).pop(null),
+                      child: Text('Cancel')),
                   ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(Pbkdf2Config(hash: hash, iterations: iterations)),
+                      onPressed: () => Navigator.of(context).pop(
+                          Pbkdf2Config(hash: hash, iterations: iterations)),
                       child: Text('OK')),
                 ],
               ),
             ));
   }
 
-  Future<void> testPbkdf2Params(BuildContext context, HashFunction hash, int iterations) async {
+  Future<void> testPbkdf2Params(
+      BuildContext context, HashFunction hash, int iterations) async {
     final builder = UriBuilder.fromUri(Uri.parse(instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/auth/test_pbkdf2_params';
     builder.queryParameters = {
@@ -471,15 +576,18 @@ class SetupAuthFragment extends StatelessWidget {
     };
     final request = Request('get', builder.build());
 
-    final responseString = await sendRequest(context, 'Testing PBKDF2 Params', request);
+    final responseString =
+        await sendRequest(context, 'Testing PBKDF2 Params', request);
     if (responseString == null || !context.mounted) return;
-    final responseMap = (jsonDecode(responseString) as Map).cast<String, dynamic>();
+    final responseMap =
+        (jsonDecode(responseString) as Map).cast<String, dynamic>();
 
     if (responseMap["success"]) {
       final time = Duration(microseconds: responseMap["time"]);
       await showAlertDialog(
         context,
-        title: 'Took ${time.inMilliseconds > 5 ? '${time.inMilliseconds}ms' : '${time.inMicroseconds}us'}',
+        title:
+            'Took ${time.inMilliseconds > 5 ? '${time.inMilliseconds}ms' : '${time.inMicroseconds}us'}',
         message: time.inMilliseconds < 300
             ? 'You should aim to take at least 300ms.'
             : time.inMilliseconds > 1000
@@ -487,7 +595,9 @@ class SetupAuthFragment extends StatelessWidget {
                 : 'Looks good!',
       );
     } else {
-      await showAlertDialog(context, title: 'Could not test PBKDF2 params', message: "${responseMap["error"]}");
+      await showAlertDialog(context,
+          title: 'Could not test PBKDF2 params',
+          message: "${responseMap["error"]}");
     }
   }
 }
@@ -524,11 +634,16 @@ class AuthController extends StateNotifier<AuthConfig> {
   }
 
   void addOpenIDConfig(OpenIDConfig config) {
-    state = state.copyWith(openIdConfigs: [...state.openIdConfigs, config].toList(growable: false));
+    state = state.copyWith(
+        openIdConfigs:
+            [...state.openIdConfigs, config].toList(growable: false));
   }
 
   void removeOpenIDConfig(OpenIDConfig config) {
-    state = state.copyWith(openIdConfigs: state.openIdConfigs.whereNot((e) => e == config).toList(growable: false));
+    state = state.copyWith(
+        openIdConfigs: state.openIdConfigs
+            .whereNot((e) => e == config)
+            .toList(growable: false));
   }
 }
 
@@ -550,7 +665,10 @@ class AuthConfig {
           openIdConfigs: const [],
         );
 
-  bool get valid => passwordConfig != null || passwordlessLoginEnabled || openIdConfigs.isNotEmpty;
+  bool get valid =>
+      passwordConfig != null ||
+      passwordlessLoginEnabled ||
+      openIdConfigs.isNotEmpty;
 
   AuthConfig copyWith({
     PasswordConfig? passwordConfig,
@@ -559,8 +677,10 @@ class AuthConfig {
     List<OpenIDConfig>? openIdConfigs,
   }) {
     return AuthConfig(
-      passwordConfig: updatePasswordConfig ? passwordConfig : this.passwordConfig,
-      passwordlessLoginEnabled: passwordlessLoginEnabled ?? this.passwordlessLoginEnabled,
+      passwordConfig:
+          updatePasswordConfig ? passwordConfig : this.passwordConfig,
+      passwordlessLoginEnabled:
+          passwordlessLoginEnabled ?? this.passwordlessLoginEnabled,
       openIdConfigs: openIdConfigs ?? this.openIdConfigs,
     );
   }
@@ -608,7 +728,8 @@ class OpenIDConfig {
         issuerUrl: issuerUrl ?? this.issuerUrl,
         clientId: clientId ?? this.clientId,
         clientSecret: clientSecret ?? this.clientSecret,
-        allowUnverifiedEmails: allowUnverifiedEmails ?? this.allowUnverifiedEmails,
+        allowUnverifiedEmails:
+            allowUnverifiedEmails ?? this.allowUnverifiedEmails,
         autoCreateUsers: autoCreateUsers ?? this.autoCreateUsers,
       );
 }
@@ -618,7 +739,8 @@ class PasswordConfig {
   final LdapConfig? ldapConfig;
   final bool resetEnabled;
 
-  const PasswordConfig({this.cryptConfig, this.ldapConfig, required this.resetEnabled})
+  const PasswordConfig(
+      {this.cryptConfig, this.ldapConfig, required this.resetEnabled})
       : assert((cryptConfig == null) != (ldapConfig == null));
 
   PasswordConfig copyWith({bool? resetEnabled}) {
@@ -661,7 +783,8 @@ class CryptConfig {
   final Argon2Config? argon2Config;
   final Pbkdf2Config? pbkdf2Config;
 
-  const CryptConfig({this.argon2Config, this.pbkdf2Config}) : assert((argon2Config == null) != (pbkdf2Config == null));
+  const CryptConfig({this.argon2Config, this.pbkdf2Config})
+      : assert((argon2Config == null) != (pbkdf2Config == null));
 
   Map<String, dynamic> toMap() {
     if (argon2Config != null) {
@@ -694,9 +817,13 @@ class Argon2Config {
   final int parallelism;
   final int iterations;
 
-  const Argon2Config({required this.memory, required this.parallelism, required this.iterations});
+  const Argon2Config(
+      {required this.memory,
+      required this.parallelism,
+      required this.iterations});
 
-  const Argon2Config.defaults() : this(memory: 16, parallelism: 2, iterations: 4);
+  const Argon2Config.defaults()
+      : this(memory: 16, parallelism: 2, iterations: 4);
 
   Map<String, dynamic> toMap() {
     return {
@@ -718,7 +845,8 @@ class Pbkdf2Config {
 
   const Pbkdf2Config({required this.iterations, required this.hash});
 
-  const Pbkdf2Config.defaults() : this(iterations: 600_000, hash: HashFunction.sha256);
+  const Pbkdf2Config.defaults()
+      : this(iterations: 600_000, hash: HashFunction.sha256);
 
   Map<String, dynamic> toMap() {
     return {

@@ -101,7 +101,11 @@ class _SetupPageState extends State<SetupPage> {
           onPrevPress: previousStep,
           onNextPress: nextStep,
         ),
-      SetupStep.auth => SetupAuthFragment(instanceUrl: widget.instanceUrl),
+      SetupStep.auth => SetupAuthFragment(
+          instanceUrl: widget.instanceUrl,
+          onPrevPress: previousStep,
+          onNextPress: nextStep,
+        ),
       SetupStep.user => SetupUserFragment(instanceUrl: widget.instanceUrl),
     };
 
