@@ -104,11 +104,13 @@ class _SearchFieldState extends State<SearchField> {
     final account = context.read<PhylumAccount>();
     return Actions(
       actions: {
-        DismissIntent:
-            CallbackAction<DismissIntent>(onInvoke: (i) => context.read<PhylumSearchController>().active = false),
+        DismissIntent: CallbackAction<DismissIntent>(
+            onInvoke: (i) =>
+                context.read<PhylumSearchController>().active = false),
       },
       child: Focus(
-          onFocusChange: (focus) => context.read<PhylumSearchController>().active = focus,
+          onFocusChange: (focus) =>
+              context.read<PhylumSearchController>().active = focus,
           child: TypeAheadField<Resource>(
             controller: _controller,
             focusNode: _focusNode,
@@ -117,7 +119,8 @@ class _SearchFieldState extends State<SearchField> {
               if (query.length < 2) {
                 return const [];
               }
-              final select = account.db.resources.select()..where((r) => r.name.like('%$query%'));
+              final select = account.db.resources.select()
+                ..where((r) => r.name.like('%$query%'));
               return select.get();
             },
             builder: (context, controller, focusNode) {
@@ -160,7 +163,9 @@ class _SearchFieldState extends State<SearchField> {
   void _query() {
     final query = _controller.text.trim();
     if (query.isNotEmpty) {
-      context.read<PhylumRouterDelegate>().go(ExplorerRouteSearch(query: query));
+      context
+          .read<PhylumRouterDelegate>()
+          .go(ExplorerRouteSearch(query: query));
     }
   }
 }

@@ -74,11 +74,6 @@ dependency_overrides:
     git:
       url: https://github.com/shroff/flutter_typeahead.git
       ref: master
-  flutter_keyboard_visibility_web:
-    git:
-      url: https://github.com/moshe5745/flutter_keyboard_visibility.git
-      ref: b8393c50c483fa6fd16148d43dff454e6e845201
-      path: flutter_keyboard_visibility_web
 
 flutter_launcher_icons:
   ios: true
