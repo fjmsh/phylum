@@ -80,6 +80,9 @@ func Initialize(cfg Config, log zerolog.Logger) error {
 	if passwordBackend != nil || magicLinksEnabled {
 		methods += 1
 	}
+	if methods < 1 {
+		return errors.New("no login method configured")
+	}
 
 	if methods > 1 && !cfg.SuppressMultiProviderWarning {
 		log.Warn().Msg("Using multiple login providers can lead to cross-provider impersonation " +
