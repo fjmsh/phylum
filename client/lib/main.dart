@@ -17,7 +17,8 @@ import 'package:window_manager/window_manager.dart';
 
 import 'ui/app/app.dart';
 
-import 'util/device_info/device_info_vm.dart' if (dart.library.js_interop) 'util/device_info/device_info_web.dart';
+import 'util/device_info/device_info_vm.dart'
+    if (dart.library.js_interop) 'util/device_info/device_info_web.dart';
 
 const storageDir = String.fromEnvironment("STORAGE_DIR");
 
@@ -28,8 +29,19 @@ void main() async {
     windowManager.ensureInitialized();
   }
 
-  logger = Logger(level: Level.info, printer: PrettyPrinter(methodCount: 0, noBoxingByDefault: true));
-  otlLogger = (LogLevel level, dynamic message, {dynamic error, StackTrace? stackTrace}) {
+  logger = Logger(
+    level: Level.info,
+    filter: PermissiveFilter(),
+    printer: PrettyPrinter(methodCount: 2, noBoxingByDefault: true),
+  );
+  final skip2Logger = Logger(
+    level: Level.info,
+    filter: PermissiveFilter(),
+    printer: PrettyPrinter(
+        methodCount: 2, stackTraceBeginIndex: 2, noBoxingByDefault: true),
+  );
+  otlLogger = (LogLevel level, dynamic message,
+      {dynamic error, StackTrace? stackTrace}) {
     final lvl = switch (level) {
       LogLevel.trace => Level.trace,
       LogLevel.debug => Level.debug,
@@ -38,7 +50,7 @@ void main() async {
       LogLevel.error => Level.error,
       LogLevel.fatal => Level.fatal,
     };
-    logger.log(lvl, message, error: error, stackTrace: stackTrace);
+    skip2Logger.log(lvl, message, error: error, stackTrace: stackTrace);
   };
   // We use multiple distinct databases for different accounts, so this is expected behavior
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -47,8 +59,8 @@ void main() async {
     Hive.init(null, backendPreference: HiveStorageBackendPreference.webWorker);
   } else {
     final appDir = (Platform.isLinux)
-        ? Directory(
-            path.join((await getApplicationSupportDirectory()).path, storageDir.isNotEmpty ? storageDir : 'data'))
+        ? Directory(path.join((await getApplicationSupportDirectory()).path,
+            storageDir.isNotEmpty ? storageDir : 'data'))
         : await getApplicationDocumentsDirectory();
     AppDatabase.storageDir = appDir;
     blobStorageRoot = appDir.path;
@@ -62,4 +74,9 @@ void main() async {
   PhylumAccount.deviceInfo = await getDeviceInfo();
 
   runApp(const PhylumApp());
+}
+
+class PermissiveFilter extends LogFilter {
+  @override
+  bool shouldLog(LogEvent event) => event.level >= level!;
 }
