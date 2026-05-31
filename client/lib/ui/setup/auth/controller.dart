@@ -29,6 +29,13 @@ class AuthController extends StateNotifier<AuthConfig> {
             [...state.openIdConfigs, config].toList(growable: false));
   }
 
+  void replaceOpenIDConfig(OpenIDConfig old, OpenIDConfig config) {
+    state = state.copyWith(
+        openIdConfigs: state.openIdConfigs
+            .map((e) => e == old ? config : e)
+            .toList(growable: false));
+  }
+
   void removeOpenIDConfig(OpenIDConfig config) {
     state = state.copyWith(
         openIdConfigs: state.openIdConfigs
@@ -88,6 +95,18 @@ class AuthConfig {
   }
 
   Map<String, dynamic> toMap() {
+    final re = RegExp(r'[^a-z0-9]+');
+    final clients = <String, dynamic>{};
+    for (final config in openIdConfigs) {
+      final originalId = config.name.toLowerCase().replaceAll(re, '-');
+      String id = originalId;
+      int i = 2;
+      while (clients.containsKey(id)) {
+        id = '$originalId-$i';
+        i++;
+      }
+      clients[id] = config.toMap();
+    }
     return {
       'password': {
         if (passwordLoginEnabled)
@@ -96,7 +115,11 @@ class AuthConfig {
           'backend': 'none',
       },
       'magic_links': passwordlessLoginEnabled,
-      'openid': const {},
+      'openid': {
+        'clients': {
+          ...clients,
+        },
+      },
     };
   }
 }

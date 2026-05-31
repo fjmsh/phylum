@@ -28,12 +28,12 @@ class _OidcDialogState extends State<OidcDialog> {
   @override
   void initState() {
     super.initState();
-    name = '';
-    issuerUrl = '';
-    clientId = '';
-    clientSecret = '';
-    allowUnverifiedEmails = false;
-    autoCreateUsers = false;
+    name = widget.config.name;
+    issuerUrl = widget.config.issuerUrl;
+    clientId = widget.config.clientId;
+    clientSecret = widget.config.clientSecret;
+    allowUnverifiedEmails = widget.config.allowUnverifiedEmails;
+    autoCreateUsers = widget.config.autoCreateUsers;
   }
 
   @override
@@ -42,52 +42,104 @@ class _OidcDialogState extends State<OidcDialog> {
       title: Text('OpenID Client Config'),
       content: SizedBox(
         width: 360,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              decoration: const InputDecoration(
-                  label: Text('Name'), hint: Text('Authelia')),
-              autofocus: true,
-              autocorrect: false,
-              textCapitalization: TextCapitalization.words,
-              initialValue: name,
-              onChanged: (value) => setState(() => name = value),
-            ),
-            TextFormField(
-              decoration: const InputDecoration(
-                  label: Text('Issuer URL'),
-                  hint: Text('https://auth.example.com')),
-              keyboardType: TextInputType.url,
-              initialValue: issuerUrl,
-              onChanged: (value) => setState(() => issuerUrl = value),
-            ),
-            TextFormField(
-              decoration: const InputDecoration(
-                  label: Text('Client ID'), hint: Text('phylum')),
-              initialValue: clientId,
-              onChanged: (value) => setState(() => clientId = value),
-            ),
-            TextFormField(
-              decoration: const InputDecoration(label: Text('Client Secret')),
-              obscureText: true,
-              initialValue: clientSecret,
-              onChanged: (value) => setState(() => clientSecret = value),
-            ),
-            SwitchListTile(
-              value: allowUnverifiedEmails,
-              title: Text('Allow Unverified Emails'),
-              subtitle: Text('Use with caution'),
-              onChanged: (value) =>
-                  setState(() => allowUnverifiedEmails = value),
-            ),
-            SwitchListTile(
-              value: autoCreateUsers,
-              title: Text('Auto-create Accounts'),
-              subtitle: Text('Only use with trusted private providers'),
-              onChanged: (value) => setState(() => autoCreateUsers = value),
-            ),
-          ],
+        child: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 12.0,
+            children: [
+              TextFormField(
+                decoration: const InputDecoration(
+                  label: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: 'Name '),
+                        TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                      ],
+                    ),
+                  ),
+                  hint: Text('Authelia'),
+                ),
+                autofocus: true,
+                autocorrect: false,
+                textCapitalization: TextCapitalization.words,
+                initialValue: name,
+                onChanged: (value) => setState(() => name = value),
+                validator: (value) =>
+                    value?.isEmpty ?? true ? 'Required' : null,
+              ),
+              TextFormField(
+                decoration: const InputDecoration(
+                  label: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: 'Issuer URL '),
+                        TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                      ],
+                    ),
+                  ),
+                  hint: Text('https://auth.example.com'),
+                ),
+                keyboardType: TextInputType.url,
+                initialValue: issuerUrl,
+                onChanged: (value) => setState(() => issuerUrl = value),
+                validator: (value) => value?.isEmpty ?? true
+                    ? 'Required'
+                    : Uri.tryParse(value!) == null
+                        ? 'Invalid URL'
+                        : null,
+              ),
+              TextFormField(
+                decoration: const InputDecoration(
+                  label: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: 'Client ID '),
+                        TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                      ],
+                    ),
+                  ),
+                  hint: Text('phylum'),
+                ),
+                initialValue: clientId,
+                onChanged: (value) => setState(() => clientId = value),
+                validator: (value) =>
+                    value?.isEmpty ?? true ? 'Required' : null,
+              ),
+              TextFormField(
+                decoration: const InputDecoration(
+                  label: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: 'Client Secret '),
+                        TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                      ],
+                    ),
+                  ),
+                ),
+                obscureText: true,
+                initialValue: clientSecret,
+                onChanged: (value) => setState(() => clientSecret = value),
+                validator: (value) =>
+                    value?.isEmpty ?? true ? 'Required' : null,
+              ),
+              SwitchListTile(
+                value: allowUnverifiedEmails,
+                title: Text('Allow Unverified Emails'),
+                subtitle: Text('Use with caution'),
+                visualDensity: VisualDensity.compact,
+                onChanged: (value) =>
+                    setState(() => allowUnverifiedEmails = value),
+              ),
+              SwitchListTile(
+                value: autoCreateUsers,
+                title: Text('Auto-create Accounts'),
+                subtitle: Text('Only use with trusted private providers'),
+                visualDensity: VisualDensity.compact,
+                onChanged: (value) => setState(() => autoCreateUsers = value),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -95,14 +147,17 @@ class _OidcDialogState extends State<OidcDialog> {
             onPressed: () => Navigator.of(context).pop(null),
             child: Text('Cancel')),
         ElevatedButton(
-          onPressed: () => Navigator.of(context).pop(OpenIDConfig(
-            name: name,
-            issuerUrl: issuerUrl,
-            clientId: clientId,
-            clientSecret: clientSecret,
-            allowUnverifiedEmails: allowUnverifiedEmails,
-            autoCreateUsers: autoCreateUsers,
-          )),
+          onPressed: () {
+            if (!formKey.currentState!.validate()) return;
+            Navigator.of(context).pop(OpenIDConfig(
+              name: name,
+              issuerUrl: issuerUrl,
+              clientId: clientId,
+              clientSecret: clientSecret,
+              allowUnverifiedEmails: allowUnverifiedEmails,
+              autoCreateUsers: autoCreateUsers,
+            ));
+          },
           child: Text('OK'),
         ),
       ],
@@ -138,7 +193,6 @@ class OpenIDConfig {
         );
 
   OpenIDConfig copyWith({
-    String? id,
     String? name,
     String? issuerUrl,
     String? clientId,
@@ -155,4 +209,13 @@ class OpenIDConfig {
             allowUnverifiedEmails ?? this.allowUnverifiedEmails,
         autoCreateUsers: autoCreateUsers ?? this.autoCreateUsers,
       );
+
+  Map<String, dynamic> toMap() => {
+        'name': name,
+        'issuer_url': issuerUrl,
+        'client_id': clientId,
+        'client_secret': clientSecret,
+        'allow_unverified_emails': allowUnverifiedEmails,
+        'auto_create_users': autoCreateUsers,
+      };
 }

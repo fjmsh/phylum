@@ -98,11 +98,7 @@ class SetupAuthFragment extends StatelessWidget {
               final openIDConfig =
                   await OidcDialog.show(context, OpenIDConfig.empty());
               if (openIDConfig == null || !context.mounted) return;
-              final re = RegExp(r'[^a-z0-9]+');
-              final id = openIDConfig.name.toLowerCase().replaceAll(re, '-');
-              context
-                  .read<AuthController>()
-                  .addOpenIDConfig(openIDConfig.copyWith(id: id));
+              context.read<AuthController>().addOpenIDConfig(openIDConfig);
             },
             icon: Icon(Icons.add),
             tooltip: 'Add OpenID Login Provider',
@@ -111,6 +107,13 @@ class SetupAuthFragment extends StatelessWidget {
         ...config.openIdConfigs.mapIndexed((i, cfg) => ListTile(
               title: Text(cfg.name),
               subtitle: Text(cfg.issuerUrl),
+              onTap: () async {
+                final openIDConfig = await OidcDialog.show(context, cfg);
+                if (openIDConfig == null || !context.mounted) return;
+                context
+                    .read<AuthController>()
+                    .replaceOpenIDConfig(cfg, openIDConfig);
+              },
               trailing: IconButton(
                   onPressed: () =>
                       context.read<AuthController>().removeOpenIDConfig(cfg),
