@@ -174,23 +174,25 @@ class SetupDbFragment extends StatelessWidget {
         ? "Note: The following settings were overridden by environment variables or command line flags:\n\n${overrides!.join("\n")}"
         : "";
 
-    if (responseMap["success"]) {
+    final error = (responseMap['error'] as Map?)?.cast<String, dynamic>();
+
+    if (error == null) {
       if (overrideNote.isNotEmpty) {
         await showAlertDialog(context, message: overrideNote);
       }
       onNextPress();
     } else {
-      String message = responseMap['details'] ?? '';
+      String details = error['details'] ?? '';
       if (overrideNote.isNotEmpty) {
-        if (message.isNotEmpty) {
-          message += '\n\n';
+        if (details.isNotEmpty) {
+          details += '\n\n';
         }
-        message += overrideNote;
+        details += overrideNote;
       }
       showAlertDialog(
         context,
-        title: responseMap['error'],
-        message: message.isEmpty ? null : message,
+        title: error['msg'],
+        message: details.isEmpty ? null : details,
       );
     }
   }
