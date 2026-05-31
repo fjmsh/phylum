@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:http/http.dart';
+import 'package:phylum/ui/setup/ldap_dialog.dart';
 import 'package:phylum/ui/setup/setup_mail_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
@@ -145,7 +146,7 @@ class SetupAuthFragment extends StatelessWidget {
             config = config.copyWith(backend: backend);
             if (backend == PasswordBackend.ldap) {
               final ldapConfig =
-                  await configureLdap(context, config.ldapConfig);
+                  await LdapConfigDialog.show(context, config.ldapConfig);
               if (ldapConfig == null || !context.mounted) return;
               config = config.copyWith(ldapConfig: ldapConfig);
             }
@@ -154,7 +155,23 @@ class SetupAuthFragment extends StatelessWidget {
           },
         ),
         if (config.backend == PasswordBackend.crypt)
-          buildCryptSection(context, config),
+          ListTile(
+            title: Text('KDF'),
+            subtitle: Text(config.cryptConfig.toString()),
+            leading: Icon(Icons.key),
+            onTap: () => selectKdf(context, config),
+          )
+        else if (config.backend == PasswordBackend.ldap)
+          ListTile(
+              title: Text('LDAP Configuration'),
+              subtitle: Text(config.ldapConfig.toString()),
+              leading: Icon(Icons.key),
+              onTap: () async {
+                final ldapConfig =
+                    await LdapConfigDialog.show(context, config.ldapConfig);
+                if (ldapConfig == null || !context.mounted) return;
+                config = config.copyWith(ldapConfig: ldapConfig);
+              }),
         SwitchListTile(
           title: Text('Password Reset'),
           subtitle: !mailEnabled
@@ -175,54 +192,43 @@ class SetupAuthFragment extends StatelessWidget {
     );
   }
 
-  Widget buildCryptSection(BuildContext context, PasswordConfig config) {
-    return Column(
-      children: [
-        ListTile(
-          title: Text('KDF'),
-          subtitle: Text(config.cryptConfig.toString()),
-          leading: Icon(Icons.key),
-          onTap: () async {
-            final kdf = await showOptionsDialog(
-              context,
-              titleText: 'Select Password KDF',
-              [CryptKDF.argon2, CryptKDF.pbkdf2],
-              (item) => ListTile(title: Text(item.descriptor)),
-            );
-            if (kdf == null || !context.mounted) return;
-
-            late final CryptConfig? cryptConfig;
-            if (kdf == CryptKDF.argon2) {
-              final argon2Config = await configureArgon2(
-                context,
-                config.cryptConfig.argon2Config,
-              );
-              if (argon2Config != null) {
-                cryptConfig = config.cryptConfig.copyWith(
-                  kdf: CryptKDF.argon2,
-                  argon2Config: argon2Config,
-                );
-              }
-            } else if (kdf == CryptKDF.pbkdf2) {
-              final pbkdf2Config = await configurePbkdf2(
-                context,
-                config.cryptConfig.pbkdf2Config,
-              );
-              if (pbkdf2Config != null) {
-                cryptConfig = config.cryptConfig.copyWith(
-                  kdf: CryptKDF.pbkdf2,
-                  pbkdf2Config: pbkdf2Config,
-                );
-              }
-            }
-            if (cryptConfig == null || !context.mounted) return;
-
-            context.read<AuthController>().passwordConfig =
-                config.copyWith(cryptConfig: cryptConfig);
-          },
-        ),
-      ],
+  void selectKdf(BuildContext context, PasswordConfig config) async {
+    final kdf = await showOptionsDialog(
+      context,
+      titleText: 'Select Password KDF',
+      [CryptKDF.argon2, CryptKDF.pbkdf2],
+      (item) => ListTile(title: Text(item.descriptor)),
     );
+    if (kdf == null || !context.mounted) return;
+
+    CryptConfig? cryptConfig;
+    if (kdf == CryptKDF.argon2) {
+      final argon2Config = await configureArgon2(
+        context,
+        config.cryptConfig.argon2Config,
+      );
+      if (argon2Config != null) {
+        cryptConfig = config.cryptConfig.copyWith(
+          kdf: CryptKDF.argon2,
+          argon2Config: argon2Config,
+        );
+      }
+    } else if (kdf == CryptKDF.pbkdf2) {
+      final pbkdf2Config = await configurePbkdf2(
+        context,
+        config.cryptConfig.pbkdf2Config,
+      );
+      if (pbkdf2Config != null) {
+        cryptConfig = config.cryptConfig.copyWith(
+          kdf: CryptKDF.pbkdf2,
+          pbkdf2Config: pbkdf2Config,
+        );
+      }
+    }
+    if (cryptConfig == null || !context.mounted) return;
+
+    context.read<AuthController>().passwordConfig =
+        config.copyWith(cryptConfig: cryptConfig);
   }
 
   Future<void> validateAndNext(BuildContext context) async {
@@ -304,131 +310,6 @@ class SetupAuthFragment extends StatelessWidget {
                             clientSecret: clientSecret,
                             allowUnverifiedEmails: allowUnverifiedEmails,
                             autoCreateUsers: autoCreateUsers,
-                          )),
-                      child: Text('OK')),
-                ],
-              ),
-            ));
-  }
-
-  Future<LdapConfig?> configureLdap(
-    BuildContext context,
-    LdapConfig config,
-  ) async {
-    String url = config.url;
-    bool starttls = config.starttls;
-    bool autoCreateUsers = config.useFilter;
-    bool useFilter = config.useFilter;
-    String dnTemplate = config.dnTemplate;
-    String bindDn = config.bindDn;
-    String bindPassword = config.bindDn;
-    String baseDn = config.baseDn;
-    String filterTemplate = config.filterTemplate;
-    return showDialog<LdapConfig>(
-        context: context,
-        builder: (context) => StatefulBuilder(
-              builder: (context, setState) => AlertDialog(
-                title: Text('LDAP Configuration'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      decoration: const InputDecoration(
-                          label: Text('LDAP Server URL'),
-                          hint: Text('ldap://ldap.example.com:389')),
-                      keyboardType: TextInputType.url,
-                      initialValue: url,
-                      onChanged: (value) => setState(() => url = value),
-                    ),
-                    CheckboxListTile(
-                      value: starttls,
-                      title: Text('Use STARTTLS'),
-                      onChanged: (value) =>
-                          setState(() => starttls = value ?? false),
-                    ),
-                    CheckboxListTile(
-                      value: autoCreateUsers,
-                      title: Text('Automatically Create Users'),
-                      onChanged: (value) =>
-                          setState(() => autoCreateUsers = value ?? false),
-                    ),
-                    CheckboxListTile(
-                      value: useFilter,
-                      title: Text('Use Filter'),
-                      onChanged: (value) =>
-                          setState(() => useFilter = value ?? false),
-                    ),
-                    if (useFilter)
-                      TextFormField(
-                        decoration: const InputDecoration(
-                            label: Text('DN Template'),
-                            hint: Text(
-                                'uid={email},ou=people,dc=example,dc=com')),
-                        initialValue: dnTemplate,
-                        key: ValueKey('dn_template'),
-                        onChanged: (value) =>
-                            setState(() => dnTemplate = value),
-                      )
-                    else
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextFormField(
-                            decoration: const InputDecoration(
-                                label: Text('Bind DN'),
-                                hint: Text(
-                                    'uid=phylum,ou=people,dc=example,dc=com')),
-                            initialValue: bindDn,
-                            key: ValueKey('bind_dn'),
-                            onChanged: (value) =>
-                                setState(() => bindDn = value),
-                          ),
-                          TextFormField(
-                            decoration: const InputDecoration(
-                                label: Text('Bind Password')),
-                            initialValue: bindPassword,
-                            obscureText: true,
-                            key: ValueKey('bind_password'),
-                            onChanged: (value) =>
-                                setState(() => bindPassword = value),
-                          ),
-                          TextFormField(
-                            decoration: const InputDecoration(
-                                label: Text('Base DN'),
-                                hint: Text('dc=example,dc=com')),
-                            initialValue: bindDn,
-                            key: ValueKey('base_dn'),
-                            onChanged: (value) =>
-                                setState(() => baseDn = value),
-                          ),
-                          TextFormField(
-                            decoration: const InputDecoration(
-                                label: Text('Filter Template'),
-                                hint: Text('(mail={email})')),
-                            initialValue: filterTemplate,
-                            key: ValueKey('filter_template'),
-                            onChanged: (value) =>
-                                setState(() => filterTemplate = value),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.of(context).pop(null),
-                      child: Text('Cancel')),
-                  ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(LdapConfig(
-                            url: url,
-                            starttls: starttls,
-                            autoCreateUsers: autoCreateUsers,
-                            useFilter: useFilter,
-                            dnTemplate: dnTemplate,
-                            bindDn: bindDn,
-                            bindPassword: bindPassword,
-                            baseDn: baseDn,
-                            filterTemplate: filterTemplate,
                           )),
                       child: Text('OK')),
                 ],
