@@ -91,10 +91,9 @@ class SetupMailFragment extends StatelessWidget {
         children: [
           const SizedBox(height: 12),
           TextFormField(
-            decoration: InputDecoration(
-              label: RichText(
-                text: TextSpan(
-                  style: Theme.of(context).textTheme.bodyLarge,
+            decoration: const InputDecoration(
+              label: Text.rich(
+                TextSpan(
                   children: [
                     TextSpan(text: 'SMTP Host '),
                     TextSpan(text: '*', style: TextStyle(color: Colors.red))
@@ -113,10 +112,9 @@ class SetupMailFragment extends StatelessWidget {
             validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
           ),
           TextFormField(
-            decoration: InputDecoration(
-              label: RichText(
-                text: TextSpan(
-                  style: Theme.of(context).textTheme.bodyLarge,
+            decoration: const InputDecoration(
+              label: Text.rich(
+                TextSpan(
                   children: [
                     TextSpan(text: 'SMTP Port '),
                     TextSpan(text: '*', style: TextStyle(color: Colors.red))
@@ -139,10 +137,9 @@ class SetupMailFragment extends StatelessWidget {
                     : null,
           ),
           TextFormField(
-            decoration: InputDecoration(
-              label: RichText(
-                text: TextSpan(
-                  style: Theme.of(context).textTheme.bodyLarge,
+            decoration: const InputDecoration(
+              label: Text.rich(
+                TextSpan(
                   children: [
                     TextSpan(text: 'SMTP Username '),
                     TextSpan(text: '*', style: TextStyle(color: Colors.red))
@@ -160,12 +157,7 @@ class SetupMailFragment extends StatelessWidget {
           ),
           TextFormField(
             decoration: InputDecoration(
-              label: RichText(
-                text: TextSpan(
-                  text: 'SMTP Password',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ),
+              label: Text('SMTP Password'),
               prefixIcon: Icon(Icons.password),
             ),
             autocorrect: false,
@@ -176,9 +168,8 @@ class SetupMailFragment extends StatelessWidget {
           ),
           TextFormField(
             decoration: InputDecoration(
-              label: RichText(
-                text: TextSpan(
-                  style: Theme.of(context).textTheme.bodyLarge,
+              label: Text.rich(
+                TextSpan(
                   children: [
                     TextSpan(text: 'Mail From Name '),
                     TextSpan(text: '*', style: TextStyle(color: Colors.red))
@@ -196,9 +187,8 @@ class SetupMailFragment extends StatelessWidget {
           ),
           TextFormField(
             decoration: InputDecoration(
-              label: RichText(
-                text: TextSpan(
-                  style: Theme.of(context).textTheme.bodyLarge,
+              label: Text.rich(
+                TextSpan(
                   children: [
                     TextSpan(text: 'Mail From Email '),
                     TextSpan(text: '*', style: TextStyle(color: Colors.red))
@@ -220,9 +210,8 @@ class SetupMailFragment extends StatelessWidget {
           ),
           TextFormField(
             decoration: InputDecoration(
-              label: RichText(
-                text: TextSpan(
-                  style: Theme.of(context).textTheme.bodyLarge,
+              label: Text.rich(
+                TextSpan(
                   children: [
                     TextSpan(text: 'Instance URL '),
                     TextSpan(text: '*', style: TextStyle(color: Colors.red))
