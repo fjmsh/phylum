@@ -12,15 +12,16 @@ import 'package:uri/uri.dart';
 class SetupDbFragment extends StatelessWidget {
   final String instanceUrl;
   final void Function() onNextPress;
+  final formKey = GlobalKey<FormState>();
 
-  const SetupDbFragment(
+  SetupDbFragment(
       {super.key, required this.instanceUrl, required this.onNextPress});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Expanded(child: buildContents(context)),
+        Expanded(child: SingleChildScrollView(child: buildContents(context))),
         TextButtonTheme(
           data: TextButtonThemeData(
             style: TextButton.styleFrom(
@@ -47,76 +48,117 @@ class SetupDbFragment extends StatelessWidget {
   Widget buildContents(BuildContext context) {
     final config = context.watch<DbConfig>();
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 12.0,
-      children: [
-        Text(
-          'Database Configuration',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        SizedBox(height: 12),
-        TextFormField(
-          decoration: const InputDecoration(
-            label: Text('Host'),
-            hint: Text('localhost'),
-            prefixIcon: Icon(Icons.lan),
+    return Form(
+      key: formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 18.0,
+        children: [
+          Text(
+            'Database Configuration',
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-          autofocus: true,
-          autocorrect: false,
-          keyboardType: TextInputType.url,
-          initialValue: config.host,
-          onChanged: (value) => context.read<DbController>().host = value,
-        ),
-        TextFormField(
-          decoration: const InputDecoration(
-            label: Text('Port'),
-            hint: Text('5432'),
-            prefixIcon: Icon(Icons.cable),
+          SizedBox(height: 12),
+          TextFormField(
+            decoration: const InputDecoration(
+              label: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: 'Host '),
+                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                  ],
+                ),
+              ),
+              hint: Text('localhost'),
+              prefixIcon: Icon(Icons.lan),
+            ),
+            autofocus: true,
+            autocorrect: false,
+            keyboardType: TextInputType.url,
+            initialValue: config.host,
+            onChanged: (value) => context.read<DbController>().host = value,
+            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
           ),
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          keyboardType: TextInputType.number,
-          initialValue: config.port == 0 ? '' : config.port.toString(),
-          onChanged: (value) =>
-              context.read<DbController>().port = int.tryParse(value) ?? 0,
-        ),
-        TextFormField(
-          decoration: const InputDecoration(
-            label: Text('Database Name'),
-            hint: Text('phylum'),
-            prefixIcon: Icon(Icons.storage),
+          TextFormField(
+            decoration: const InputDecoration(
+              label: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: 'Port '),
+                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                  ],
+                ),
+              ),
+              hint: Text('5432'),
+              prefixIcon: Icon(Icons.cable),
+            ),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            keyboardType: TextInputType.number,
+            initialValue: config.port == 0 ? '' : config.port.toString(),
+            onChanged: (value) =>
+                context.read<DbController>().port = int.tryParse(value) ?? 0,
+            validator: (value) => value?.isEmpty ?? true
+                ? 'Required'
+                : (int.tryParse(value!) ?? 0) == 0
+                    ? 'Invalid Port'
+                    : null,
           ),
-          autocorrect: false,
-          initialValue: config.name,
-          onChanged: (value) => context.read<DbController>().name = value,
-        ),
-        TextFormField(
-          decoration: const InputDecoration(
-            label: Text('User'),
-            hint: Text('phylum'),
-            prefixIcon: Icon(Icons.person),
+          TextFormField(
+            decoration: const InputDecoration(
+              label: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: 'Datbase Name '),
+                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                  ],
+                ),
+              ),
+              hint: Text('phylum'),
+              prefixIcon: Icon(Icons.storage),
+            ),
+            autocorrect: false,
+            initialValue: config.name,
+            onChanged: (value) => context.read<DbController>().name = value,
+            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
           ),
-          autocorrect: false,
-          initialValue: config.user,
-          onChanged: (value) => context.read<DbController>().user = value,
-        ),
-        TextFormField(
-          decoration: const InputDecoration(
-            label: Text('Password'),
-            prefixIcon: Icon(Icons.password),
+          TextFormField(
+            decoration: const InputDecoration(
+              label: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: 'User '),
+                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                  ],
+                ),
+              ),
+              hint: Text('phylum'),
+              prefixIcon: Icon(Icons.person),
+            ),
+            autocorrect: false,
+            initialValue: config.user,
+            onChanged: (value) => context.read<DbController>().user = value,
+            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
           ),
-          autocorrect: false,
-          obscureText: true,
-          initialValue: config.password,
-          onChanged: (value) => context.read<DbController>().password = value,
-          onFieldSubmitted: (_) => validateAndNext(context),
-        ),
-      ],
+          TextFormField(
+            decoration: const InputDecoration(
+              label: Text('Password'),
+              prefixIcon: Icon(Icons.password),
+            ),
+            autocorrect: false,
+            obscureText: true,
+            initialValue: config.password,
+            onChanged: (value) => context.read<DbController>().password = value,
+            onFieldSubmitted: (_) => validateAndNext(context),
+          ),
+        ],
+      ),
     );
   }
 
   void validateAndNext(BuildContext context) async {
+    if (formKey.currentState?.validate() == false) return;
+
     final builder = UriBuilder.fromUri(Uri.parse(instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/db/validate';
     final request = Request('post', builder.build());
