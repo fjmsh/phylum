@@ -1,55 +1,135 @@
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/setup/setup_auth_fragment.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 class SetupUserFragment extends StatelessWidget {
+  final formKey = GlobalKey<FormState>();
   final String instanceUrl;
+  final void Function() onPrevPress;
+  final void Function(BuildContext) onFinish;
 
-  const SetupUserFragment({super.key, required this.instanceUrl});
+  SetupUserFragment({
+    super.key,
+    required this.instanceUrl,
+    required this.onPrevPress,
+    required this.onFinish,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final config = context.watch<UserConfig>();
-    final passwordRequired = context.select<AuthConfig, bool>((config) => config.passwordConfig?.cryptConfig != null);
+    return Column(
+      children: [
+        Expanded(child: SingleChildScrollView(child: buildContents(context))),
+        TextButtonTheme(
+          data: TextButtonThemeData(
+            style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: onPrevPress,
+                child: Text('PREV'),
+              ),
+              TextButton(
+                onPressed: () => validateAndNext(context),
+                child: Text('FINISH'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+  Widget buildContents(BuildContext context) {
+    final config = context.watch<UserConfig>();
+    final passwordRequired = context
+        .select<AuthConfig, bool>((config) => config.passwordLoginEnabled);
+
+    return Form(
+      key: formKey,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 12.0,
+        spacing: 18.0,
         children: [
-          Text(
-            'Admin User',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
+          Text('Admin User', style: Theme.of(context).textTheme.headlineSmall),
+          SizedBox(height: 6),
           TextFormField(
-            decoration: const InputDecoration(label: Text('Email'), hint: Text('admin@example.com')),
+            decoration: const InputDecoration(
+              label: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: 'Email '),
+                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                  ],
+                ),
+              ),
+              prefixIcon: Icon(Icons.email),
+              hint: Text('admin@example.com'),
+            ),
             autofocus: true,
             autocorrect: false,
             keyboardType: TextInputType.url,
             initialValue: config.email,
             onChanged: (value) => context.read<UserController>().email = value,
+            validator: (value) => value?.isEmpty ?? true
+                ? 'Required'
+                : EmailValidator.validate(value!)
+                    ? null
+                    : 'Invalid Email Address',
           ),
           TextFormField(
-            decoration: const InputDecoration(label: Text('Name'), hint: Text('Admin')),
+            decoration: const InputDecoration(
+              label: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: 'Full Name '),
+                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                  ],
+                ),
+              ),
+              prefixIcon: Icon(Icons.person),
+              hint: Text('Admin'),
+            ),
             keyboardType: TextInputType.name,
             textCapitalization: TextCapitalization.words,
             initialValue: config.name,
             onChanged: (value) => context.read<UserController>().name = value,
+            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
           ),
           if (passwordRequired)
             TextFormField(
-              decoration: const InputDecoration(label: Text('Password')),
+              decoration: const InputDecoration(
+                label: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: 'Password '),
+                      TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                    ],
+                  ),
+                ),
+                prefixIcon: Icon(Icons.password),
+              ),
               autocorrect: false,
               obscureText: true,
               initialValue: config.password,
-              onChanged: (value) => context.read<UserController>().password = value,
+              onChanged: (value) =>
+                  context.read<UserController>().password = value,
+              validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
             ),
         ],
       ),
     );
+  }
+
+  Future<void> validateAndNext(BuildContext context) async {
+    if (formKey.currentState?.validate() == false) return;
+    onFinish(context);
   }
 }
 

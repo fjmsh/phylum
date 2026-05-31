@@ -67,24 +67,7 @@ class _SetupPageState extends State<SetupPage> {
               context
                   .read<PhylumRouterDelegate>()
                   .go(const ExplorerRouteHome());
-            })
-            // actions: [
-            //   _currentStep.index == SetupStep.values.length - 1
-            //       ? Builder(builder: (context) {
-            //           return TextButton(
-            //               onPressed: currentStepValid(context)
-            //                   ? () => finalize(context)
-            //                   : null,
-            //               child: Text('FINISH'));
-            //         })
-            //       : Builder(builder: (context) {
-            //           return TextButton(
-            //             onPressed: currentStepValid(context) ? nextStep : null,
-            //             child: Text('NEXT'),
-            //           );
-            //         })
-            // ],
-            ),
+            })),
         body: _buildBody(context),
       ),
     );
@@ -106,7 +89,11 @@ class _SetupPageState extends State<SetupPage> {
           onPrevPress: previousStep,
           onNextPress: nextStep,
         ),
-      SetupStep.user => SetupUserFragment(instanceUrl: widget.instanceUrl),
+      SetupStep.user => SetupUserFragment(
+          instanceUrl: widget.instanceUrl,
+          onPrevPress: previousStep,
+          onFinish: finalize,
+        ),
     };
 
     if (MediaQuery.sizeOf(context).width > maxViewportWidthSmall) {
@@ -121,19 +108,6 @@ class _SetupPageState extends State<SetupPage> {
       padding: EdgeInsets.symmetric(horizontal: 24),
       child: page,
     );
-  }
-
-  bool currentStepValid(BuildContext context) {
-    return switch (_currentStep) {
-      SetupStep.database => true,
-      SetupStep.mail => true,
-      SetupStep.auth =>
-        context.select<AuthConfig, bool>((config) => config.valid),
-      SetupStep.user =>
-        context.select<UserConfig, bool>((config) => config.password != '') ||
-            context.select<AuthConfig, bool>(
-                (config) => config.passwordConfig?.cryptConfig == null),
-    };
   }
 
   void nextStep() {

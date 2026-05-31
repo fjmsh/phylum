@@ -63,7 +63,7 @@ class SetupAuthFragment extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Auth', style: Theme.of(context).textTheme.headlineMedium),
+        Text('Auth', style: Theme.of(context).textTheme.headlineSmall),
         SwitchListTile(
           title: Text('Enable Passwordless Email Login'),
           subtitle: mailEnabled ? null : Text('Requires Email'),

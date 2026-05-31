@@ -61,10 +61,7 @@ class SetupMailFragment extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Email',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
+          Text('Email', style: Theme.of(context).textTheme.headlineSmall),
           ListTile(
             leading: Icon(Icons.help),
             dense: true,

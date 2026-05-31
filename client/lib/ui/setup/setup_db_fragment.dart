@@ -55,11 +55,8 @@ class SetupDbFragment extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 18.0,
         children: [
-          Text(
-            'Database Configuration',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          SizedBox(height: 12),
+          Text('Database', style: Theme.of(context).textTheme.headlineSmall),
+          SizedBox(height: 6),
           TextFormField(
             decoration: const InputDecoration(
               label: Text.rich(
