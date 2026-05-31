@@ -28,7 +28,8 @@ bool validateName(String name) =>
     name.trim().isNotEmpty &&
     !name.runes.any((c) => c < 31 || illegalChars.contains(c));
 
-Future<void> createDirectory(BuildContext context, Resource parent, {String? preset}) async {
+Future<void> createDirectory(BuildContext context, Resource parent,
+    {String? preset}) async {
   final account = context.read<PhylumAccount>();
   final name = await showInputDialog(
     context,
@@ -42,7 +43,8 @@ Future<void> createDirectory(BuildContext context, Resource parent, {String? pre
     context,
     name,
     overwriteFn: (r) => nameConflictDelete,
-    (name, conflictResolution, ensurePermission) => account.resourceRepository.mkdir(
+    (name, conflictResolution, ensurePermission) =>
+        account.resourceRepository.mkdir(
       parent: parent.id,
       name: name,
       userPermission: parent.userPermission,
@@ -53,19 +55,22 @@ Future<void> createDirectory(BuildContext context, Resource parent, {String? pre
 }
 
 Future<void> pickAndUploadFiles(BuildContext context, String folderId) async {
-  final result = await FilePicker.platform.pickFiles(allowMultiple: true);
+  final result = await FilePicker.pickFiles(allowMultiple: true);
   if (!context.mounted || result == null) return;
 
   final files = result.files.map(
     (e) => UploadFile(
         size: e.size,
-        stream: kIsWeb ? ByteStream.fromBytes(e.bytes!).cast<Uint8List>() : File(e.path!).openRead().cast<Uint8List>(),
+        stream: kIsWeb
+            ? ByteStream.fromBytes(e.bytes!).cast<Uint8List>()
+            : File(e.path!).openRead().cast<Uint8List>(),
         path: e.name),
   );
   return uploadFiles(context, folderId, files);
 }
 
-Future<void> uploadFiles(BuildContext context, String folderId, Iterable<UploadFile> files) async {
+Future<void> uploadFiles(
+    BuildContext context, String folderId, Iterable<UploadFile> files) async {
   if (files.isEmpty) return;
   final account = context.read<PhylumAccount>();
   final size = files.map((f) => f.size).fold(0, (acc, s) => acc + s);
@@ -78,7 +83,9 @@ Future<void> uploadFiles(BuildContext context, String folderId, Iterable<UploadF
         negativeText: 'NO',
       ) ??
       false;
-  final userPermission = await account.db.getResource(folderId).then((r) => r?.userPermission) ?? 0;
+  final userPermission =
+      await account.db.getResource(folderId).then((r) => r?.userPermission) ??
+          0;
   if (!confirm || !context.mounted) return;
   for (final file in files) {
     String? id;
@@ -89,7 +96,8 @@ Future<void> uploadFiles(BuildContext context, String folderId, Iterable<UploadF
         context,
         p.basename(file.path),
         overwriteFn: (r) => r.dir ? nameConflictDelete : nameConflictOverwrite,
-        (name, conflictResolution, ensurePermission) => account.resourceRepository.upload(
+        (name, conflictResolution, ensurePermission) =>
+            account.resourceRepository.upload(
           parent: folderId,
           name: name,
           contents: file.stream,
@@ -100,15 +108,17 @@ Future<void> uploadFiles(BuildContext context, String folderId, Iterable<UploadF
         ),
       );
       if (id == null && context.mounted) {
-        final confirm =
-            await showAlertDialog(context, title: 'Skip file?', positiveText: 'No', negativeText: 'Yes') ?? false;
+        final confirm = await showAlertDialog(context,
+                title: 'Skip file?', positiveText: 'No', negativeText: 'Yes') ??
+            false;
         if (!confirm) break ensurefile;
       }
     }
   }
 }
 
-Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> paths) async {
+Future<void> uploadPath(
+    BuildContext context, String folderId, Iterable<String> paths) async {
   showProgressDialog(context, message: 'Counting Files');
   DirTree? tree;
   for (final path in paths) {
@@ -123,7 +133,8 @@ Future<void> uploadPath(BuildContext context, String folderId, Iterable<String> 
   return uploadDirTree(context, folderId, tree);
 }
 
-Future<void> uploadDirTree(BuildContext context, String folderId, DirTree tree) async {
+Future<void> uploadDirTree(
+    BuildContext context, String folderId, DirTree tree) async {
   final account = context.read<PhylumAccount>();
   final confirm = await showAlertDialog(
         context,
@@ -134,7 +145,9 @@ Future<void> uploadDirTree(BuildContext context, String folderId, DirTree tree) 
         negativeText: 'NO',
       ) ??
       false;
-  final userPermission = await account.db.getResource(folderId).then((r) => r?.userPermission) ?? 0;
+  final userPermission =
+      await account.db.getResource(folderId).then((r) => r?.userPermission) ??
+          0;
   if (!confirm || !context.mounted) return;
   final dirIds = <String, String>{};
   for (final path in tree.dirs) {
@@ -146,7 +159,8 @@ Future<void> uploadDirTree(BuildContext context, String folderId, DirTree tree) 
         context,
         p.basename(path),
         overwriteFn: (r) => nameConflictDelete,
-        (name, conflictResolution, ensurePermission) => account.resourceRepository.mkdir(
+        (name, conflictResolution, ensurePermission) =>
+            account.resourceRepository.mkdir(
           parent: parent,
           name: name,
           userPermission: userPermission,
@@ -156,9 +170,11 @@ Future<void> uploadDirTree(BuildContext context, String folderId, DirTree tree) 
       );
       if (id == null) {
         if (!context.mounted) return;
-        final confirm =
-            await showAlertDialog(context, title: 'Cancel operation?', positiveText: 'No', negativeText: 'Yes') ??
-                false;
+        final confirm = await showAlertDialog(context,
+                title: 'Cancel operation?',
+                positiveText: 'No',
+                negativeText: 'Yes') ??
+            false;
         if (!confirm) return;
       }
     }
@@ -188,8 +204,9 @@ Future<void> uploadDirTree(BuildContext context, String folderId, DirTree tree) 
         },
       );
       if (id == null && context.mounted) {
-        final confirm =
-            await showAlertDialog(context, title: 'Skip file?', positiveText: 'No', negativeText: 'Yes') ?? false;
+        final confirm = await showAlertDialog(context,
+                title: 'Skip file?', positiveText: 'No', negativeText: 'Yes') ??
+            false;
         if (!confirm) break ensurefile;
       }
     }
@@ -243,7 +260,8 @@ Future<String?> handleLocalErrors(
         actions: <Widget>[
           if (overwrite != null)
             TextButton(
-              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+              style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error),
               child: const Text('Overwrite'),
               onPressed: () {
                 Navigator.of(context).pop(overwrite);
@@ -293,11 +311,13 @@ Future<String?> handleLocalErrors(
     );
   } on DestinationCycleException catch (e) {
     if (context.mounted) {
-      await showAlertDialog(context, message: 'Cannot move ${e.resource.name} into itself');
+      await showAlertDialog(context,
+          message: 'Cannot move ${e.resource.name} into itself');
     }
   } catch (e) {
     if (context.mounted) {
-      await showAlertDialog(context, title: 'Unable to create $name', message: e.toString());
+      await showAlertDialog(context,
+          title: 'Unable to create $name', message: e.toString());
     }
   }
 
