@@ -58,6 +58,18 @@ class _MagicLinkLoginState extends State<MagicLinkLogin> {
                       : () => _requestMagicLink(context),
                 );
               }),
+          if (context.read<LoginState>().selectedMethod != null)
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
+              label: Text('Back'),
+              icon: Icon(Icons.arrow_back),
+              onPressed: () {
+                context.read<LoginController>().selectedMethod = null;
+              },
+            ),
         ],
       ),
     );
