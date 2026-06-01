@@ -128,7 +128,12 @@ class _SearchFieldState extends State<SearchField> {
                 controller: controller,
                 focusNode: focusNode,
                 autofocus: true,
-                decoration: InputDecoration.collapsed(
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  isCollapsed: true,
+                  contentPadding: EdgeInsets.zero,
                   hintText: 'Search Files...',
                   hintStyle: TextStyle(fontSize: 18),
                 ),

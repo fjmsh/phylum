@@ -22,8 +22,10 @@ class PhylumApp extends StatefulWidget {
 }
 
 class _PhylumAppState extends State<PhylumApp> {
-  final PhylumRouterDelegate routerDelegate = PhylumRouterDelegate(builder: (context) => const AccountSelector());
-  final AccountManager<PhylumAccount> accountManager = createAccountManager(isPrimary());
+  final PhylumRouterDelegate routerDelegate =
+      PhylumRouterDelegate(builder: (context) => const AccountSelector());
+  final AccountManager<PhylumAccount> accountManager =
+      createAccountManager(isPrimary());
 
   @override
   void initState() {
@@ -37,24 +39,33 @@ class _PhylumAppState extends State<PhylumApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
         providers: [
-          StateNotifierProvider<AccountManager<PhylumAccount>, AccountManagerState<PhylumAccount>>.value(
-              value: accountManager),
+          StateNotifierProvider<AccountManager<PhylumAccount>,
+              AccountManagerState<PhylumAccount>>.value(value: accountManager),
           ChangeNotifierProvider.value(value: routerDelegate),
-          if (!kIsWeb) ChangeNotifierProvider<DownloadManager>(create: (context) => DownloadManager()),
+          if (!kIsWeb)
+            ChangeNotifierProvider<DownloadManager>(
+                create: (context) => DownloadManager()),
           Provider(create: (context) => CutToClipboard()),
         ],
         builder: (context, child) {
           const seedColor = Color(0xff769e57);
-          final colorScheme = ColorScheme.fromSeed(seedColor: seedColor, dynamicSchemeVariant: DynamicSchemeVariant.neutral);
+          final colorScheme = ColorScheme.fromSeed(
+              seedColor: seedColor,
+              dynamicSchemeVariant: DynamicSchemeVariant.neutral);
           final border = const BorderRadius.all(Radius.circular(8.0));
           final theme = ThemeData(
-            colorScheme: colorScheme,
-            inputDecorationTheme: InputDecorationThemeData(
-              border: OutlineInputBorder(borderRadius: border),
-              enabledBorder: OutlineInputBorder(borderRadius: border, borderSide: BorderSide(color: Colors.grey.shade400, width: 1.0)),
-              focusedBorder: OutlineInputBorder(borderRadius: border, borderSide: BorderSide(color: colorScheme.primary, width: 1.0)),
-            )
-          );
+              colorScheme: colorScheme,
+              inputDecorationTheme: InputDecorationThemeData(
+                border: OutlineInputBorder(borderRadius: border),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: border,
+                    borderSide:
+                        BorderSide(color: Colors.grey.shade400, width: 1.0)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: border,
+                    borderSide:
+                        BorderSide(color: colorScheme.primary, width: 1.0)),
+              ));
           final darkTheme = ThemeData(
             colorScheme: colorScheme.copyWith(brightness: Brightness.dark),
           );
