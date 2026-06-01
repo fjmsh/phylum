@@ -8,19 +8,31 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
-import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/logging.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
-class PasswordLogin extends StatelessWidget {
-  final Uri instanceUrl;
+import 'login_controller.dart';
+
+class PasswordLogin extends StatefulWidget {
+  const PasswordLogin({super.key});
+
+  @override
+  State<PasswordLogin> createState() => _PasswordLoginState();
+}
+
+class _PasswordLoginState extends State<PasswordLogin> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  PasswordLogin({super.key, required this.instanceUrl});
+  @override
+  void dispose() {
+    super.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +42,7 @@ class PasswordLogin extends StatelessWidget {
         spacing: 18,
         children: [
           TextField(
+            key: ValueKey('email'),
             decoration: const InputDecoration(
               label: Text('Email'),
               prefixIcon: Icon(Icons.email),
@@ -40,6 +53,7 @@ class PasswordLogin extends StatelessWidget {
             autofillHints: const [AutofillHints.email],
           ),
           TextField(
+            key: ValueKey('password'),
             decoration: const InputDecoration(
               label: Text('Password'),
               prefixIcon: Icon(Icons.password),
@@ -52,19 +66,29 @@ class PasswordLogin extends StatelessWidget {
                 ? null
                 : (value) => _performLogin(context),
           ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-            ),
-            label: Text('Login'),
-            icon: Icon(Icons.login),
-            onPressed: _emailController.text.isEmpty ||
-                    _passwordController.text.isEmpty
-                ? null
-                : () => _performLogin(context),
-          ),
-          if (context.read<AuthConfig>().passwordReset)
+          ValueListenableBuilder(
+              valueListenable: _emailController,
+              builder: (_, email, __) => ValueListenableBuilder(
+                    valueListenable: _passwordController,
+                    builder: (_, password, __) => ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onPrimary,
+                      ),
+                      label: Text('Login'),
+                      icon: Icon(Icons.login),
+                      onPressed: email.text.isEmpty || password.text.isEmpty
+                          ? null
+                          : () => _performLogin(context),
+                    ),
+                  )),
+          if (context
+                  .read<LoginState>()
+                  .instanceInfo
+                  ?.authConfig
+                  ?.passwordReset ==
+              true)
             Center(
               child: Text.rich(TextSpan(
                 text: 'Forgot Password',
@@ -79,6 +103,7 @@ class PasswordLogin extends StatelessWidget {
   }
 
   Future<void> _performLogin(BuildContext context) async {
+    final instanceUrl = context.read<LoginState>().instanceInfo!.url;
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/password/login';
     final request = MultipartRequest('post', builder.build());
@@ -119,6 +144,7 @@ class PasswordLogin extends StatelessWidget {
   }
 
   Future<void> _requestReset(BuildContext context) async {
+    final instanceUrl = context.read<LoginState>().instanceInfo!.url;
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/password/request-reset';
     final request = MultipartRequest('post', builder.build());

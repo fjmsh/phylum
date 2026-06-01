@@ -68,7 +68,8 @@ class ResetPasswordRoute extends PhylumRoute {
   final String? email;
   final String? token;
 
-  ResetPasswordRoute({required this.instanceUrl, required this.email, required this.token});
+  ResetPasswordRoute(
+      {required this.instanceUrl, required this.email, required this.token});
 
   @override
   Uri get uri => Uri(path: '/reset_password');
@@ -88,10 +89,11 @@ sealed class LoggedInRoute extends PhylumRoute {
   @override
   Widget buildPage(BuildContext context) {
     final account =
-        context.select<AccountManagerState<PhylumAccount>, PhylumAccount?>((state) => state.selectedAccount);
+        context.select<AccountManagerState<PhylumAccount>, PhylumAccount?>(
+            (state) => state.selectedAccount);
 
     if (account == null) {
-      return const LoginPage();
+      return LoginPage.create();
     }
     return buildAccountPage(account);
   }
@@ -146,9 +148,23 @@ sealed class ExplorerRoute extends LoggedInRoute {
 
   MenuOptionGroups get selectedResourceOptions => [
         [MenuOption.details, MenuOption.copyURL],
-        [MenuOption.download, if (!kIsWeb && Platform.isAndroid) MenuOption.share, MenuOption.openWith],
-        [MenuOption.rename, MenuOption.move, MenuOption.copy, MenuOption.delete],
-        [MenuOption.bookmarkAdd, MenuOption.bookmarkRemove, MenuOption.permissions, MenuOption.publinks],
+        [
+          MenuOption.download,
+          if (!kIsWeb && Platform.isAndroid) MenuOption.share,
+          MenuOption.openWith
+        ],
+        [
+          MenuOption.rename,
+          MenuOption.move,
+          MenuOption.copy,
+          MenuOption.delete
+        ],
+        [
+          MenuOption.bookmarkAdd,
+          MenuOption.bookmarkRemove,
+          MenuOption.permissions,
+          MenuOption.publinks
+        ],
       ];
 
   MenuOptionGroups? get folderOptions;
@@ -182,17 +198,28 @@ class ExplorerRouteFolder extends ExplorerRoute {
   String folderId(PhylumAccount account) => _folderId;
 
   @override
-  Future<bool> refresh(PhylumAccount account) =>
-      account.resourceRepository.requestResource(folderId(account)).then((result) => result is ApiSuccessResponse);
+  Future<bool> refresh(PhylumAccount account) => account.resourceRepository
+      .requestResource(folderId(account))
+      .then((result) => result is ApiSuccessResponse);
 
   @override
-  Stream<List<Resource>> items(PhylumAccount account) => account.db.watchChildren(folderId(account));
+  Stream<List<Resource>> items(PhylumAccount account) =>
+      account.db.watchChildren(folderId(account));
 
   @override
   MenuOptionGroups get folderOptions => const [
         [MenuOption.details, MenuOption.copyURL],
-        [MenuOption.newFolder, MenuOption.uploadFiles, MenuOption.uploadFolders],
-        [MenuOption.bookmarkAdd, MenuOption.bookmarkRemove, MenuOption.permissions, MenuOption.publinks],
+        [
+          MenuOption.newFolder,
+          MenuOption.uploadFiles,
+          MenuOption.uploadFolders
+        ],
+        [
+          MenuOption.bookmarkAdd,
+          MenuOption.bookmarkRemove,
+          MenuOption.permissions,
+          MenuOption.publinks
+        ],
       ];
 }
 
@@ -230,7 +257,9 @@ class ExplorerRouteTrash extends ExplorerRoute {
 
   @override
   Future<bool> refresh(PhylumAccount account) {
-    return account.trashedResourcRepository.refresh().then((result) => result is ApiSuccessResponse);
+    return account.trashedResourcRepository
+        .refresh()
+        .then((result) => result is ApiSuccessResponse);
   }
 
   @override
@@ -261,7 +290,9 @@ class ExplorerRouteShared extends ExplorerRoute {
 
   @override
   Future<bool> refresh(PhylumAccount account) {
-    return account.apiClient.sendRequest(SharedResourcesRequest()).then((result) => result is ApiSuccessResponse);
+    return account.apiClient
+        .sendRequest(SharedResourcesRequest())
+        .then((result) => result is ApiSuccessResponse);
   }
 
   @override
@@ -287,9 +318,12 @@ class ExplorerRouteSearch extends ExplorerRoute {
 
   @override
   Future<bool> refresh(PhylumAccount account) {
-    return account.apiClient.sendRequest(SearchRequest(query: query)).then((result) {
+    return account.apiClient
+        .sendRequest(SearchRequest(query: query))
+        .then((result) {
       if (result is SearchResponse) {
-        _streamController.add(result.resources.map((r) => r.resource).toList(growable: false));
+        _streamController.add(
+            result.resources.map((r) => r.resource).toList(growable: false));
       }
       return result is ApiSuccessResponse;
     });

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/ui/app/routes.dart';
+import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/ui/login/instance_url_fragment.dart';
-import 'package:phylum/ui/login/login_fragment.dart';
+import 'package:phylum/ui/login/login_controller.dart';
+import 'package:phylum/ui/login/login_selector.dart';
+import 'package:phylum/ui/login/login_magic_link.dart';
+import 'package:phylum/ui/login/login_password.dart';
 import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
@@ -12,16 +14,16 @@ class LoginPage extends StatefulWidget {
 
   @override
   State<LoginPage> createState() => _LoginPageState();
+
+  static Widget create() {
+    return StateNotifierProvider<LoginController, LoginState>(
+      create: (_) => LoginController(),
+      child: LoginPage(),
+    );
+  }
 }
 
 class _LoginPageState extends State<LoginPage> {
-  InstanceInfo? _instanceInfo;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,14 +33,21 @@ class _LoginPageState extends State<LoginPage> {
             width: 360,
             child: Padding(
               padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 24.0,
-                children: <Widget>[
-                  LogoRow(),
-                  _buildBody(context),
-                ],
+              child: ElevatedButtonTheme(
+                data: ElevatedButtonThemeData(
+                  style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 18, horizontal: 24)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 24.0,
+                  children: <Widget>[
+                    LogoRow(),
+                    _buildBody(context),
+                  ],
+                ),
               ),
             ),
           ),
@@ -48,22 +57,57 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildBody(BuildContext context) {
-    final instanceConfig = _instanceInfo;
-    if (instanceConfig == null) {
-      final delegate = context.read<PhylumRouterDelegate>();
-      return InstanceUrlFragment(onInstanceSelected: (instanceInfo) {
-        if (instanceInfo.needsSetup) {
-          delegate.go(SetupRoute(
-            instanceUrl: instanceInfo.url.toString(),
-          ));
-        } else {
-          setState(() => _instanceInfo = instanceInfo);
-        }
-      });
+    final state = context.watch<LoginState>();
+    final instanceInfo = state.instanceInfo;
+    if (instanceInfo == null) {
+      return const InstanceUrlFragment();
     }
-    return LoginFragment(
-      onBackPressed: () => setState(() => _instanceInfo = null),
-      instanceInfo: instanceConfig,
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 6,
+      children: [
+        TextFormField(
+          key: ValueKey('instanceUrl'),
+          decoration: InputDecoration(
+            label: const Text('Instance URL'),
+            prefixIcon: Icon(Icons.storage),
+            suffixIcon: IconButton(
+              onPressed: () => context.read<LoginController>().reset(),
+              padding: EdgeInsets.zero,
+              icon: Icon(Icons.edit),
+              iconSize: 18,
+            ),
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0,
+            ),
+          ),
+          initialValue: state.instanceUrl?.toString(),
+          keyboardType: TextInputType.url,
+        ),
+        const Padding(
+          padding: EdgeInsets.only(left: 48, right: 48),
+          child: Divider(),
+        ),
+        buildPage(context, state),
+      ],
     );
+  }
+
+  Widget buildPage(BuildContext context, LoginState state) {
+    final authConfig = state.instanceInfo!.authConfig!;
+    if (state.selectedMethod == LoginMethod.password ||
+        (authConfig.password &&
+            !authConfig.magicLinks &&
+            authConfig.openIDProviders.isEmpty)) {
+      return PasswordLogin();
+    } else if (state.selectedMethod == LoginMethod.magicLink ||
+        (authConfig.magicLinks &&
+            !authConfig.password &&
+            authConfig.openIDProviders.isEmpty)) {
+      return MagicLinkLogin();
+    }
+    return const LoginSelector();
   }
 }

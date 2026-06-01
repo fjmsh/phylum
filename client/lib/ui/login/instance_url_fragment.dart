@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:phylum/ui/app/router.dart';
+import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
 import 'base_uri_stub.dart' if (dart.library.js_interop) 'base_uri_web.dart';
+import 'login_controller.dart';
 
 class InstanceUrlFragment extends StatefulWidget {
-  final Function(InstanceInfo) onInstanceSelected;
-
-  const InstanceUrlFragment({super.key, required this.onInstanceSelected});
+  const InstanceUrlFragment({super.key});
 
   @override
   State<InstanceUrlFragment> createState() => _InstanceUrlFragmentState();
@@ -24,12 +26,14 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
       spacing: 16.0,
       children: [
         TextFormField(
+          key: ValueKey('instanceUrl'),
           decoration: InputDecoration(
             label: const Text('Instance URL'),
             hintText: 'https://phylum.example.com',
             prefixIcon: Icon(Icons.storage),
           ),
-          initialValue: webAppBaseUri?.toString(),
+          initialValue: context.read<LoginState>().instanceUrl?.toString() ??
+              webAppBaseUri?.toString(),
           autofocus: true,
           autofillHints: const [AutofillHints.url],
           keyboardType: TextInputType.url,
@@ -66,7 +70,9 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
           showAlertDialog(context, message: 'No server found at $url');
         }
       } else {
-        if (info.needsSetup && mounted) {
+        if (!mounted) return;
+        if (info.needsSetup) {
+          final delegate = context.read<PhylumRouterDelegate>();
           final confirm = await showAlertDialog(
                 context,
                 title: 'Configure Server?',
@@ -76,8 +82,10 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
               ) ??
               false;
           if (!confirm) return;
+          delegate.go(SetupRoute(instanceUrl: info.url.toString()));
+        } else {
+          context.read<LoginController>().instanceInfo = info;
         }
-        widget.onInstanceSelected(info);
       }
     } catch (e) {
       nav.pop();

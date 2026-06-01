@@ -7,11 +7,23 @@ import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
-class MagicLinkLogin extends StatelessWidget {
-  final Uri instanceUrl;
+import 'login_controller.dart';
+
+class MagicLinkLogin extends StatefulWidget {
+  const MagicLinkLogin({super.key});
+
+  @override
+  State<MagicLinkLogin> createState() => _MagicLinkLoginState();
+}
+
+class _MagicLinkLoginState extends State<MagicLinkLogin> {
   final _emailController = TextEditingController();
 
-  MagicLinkLogin({super.key, required this.instanceUrl});
+  @override
+  void dispose() {
+    super.dispose();
+    _emailController.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +33,7 @@ class MagicLinkLogin extends StatelessWidget {
         spacing: 18,
         children: [
           TextField(
+            key: ValueKey('email'),
             decoration: const InputDecoration(
               label: Text('Email'),
               prefixIcon: Icon(Icons.email),
@@ -30,23 +43,28 @@ class MagicLinkLogin extends StatelessWidget {
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.email],
           ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-            ),
-            label: Text('Request Email Login Link'),
-            icon: Icon(Icons.email),
-            onPressed: _emailController.text.isEmpty
-                ? null
-                : () => _requestMagicLink(context),
-          ),
+          ValueListenableBuilder(
+              valueListenable: _emailController,
+              builder: (_, email, __) {
+                return ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  label: Text('Request Email Login Link'),
+                  icon: Icon(Icons.email),
+                  onPressed: email.text.isEmpty
+                      ? null
+                      : () => _requestMagicLink(context),
+                );
+              }),
         ],
       ),
     );
   }
 
   Future<void> _requestMagicLink(BuildContext context) async {
+    final instanceUrl = context.read<LoginState>().instanceInfo!.url;
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/token/request';
     final request = MultipartRequest('post', builder.build());
@@ -66,9 +84,9 @@ class MagicLinkLogin extends StatelessWidget {
 
       if ((response ?? true) || !context.mounted) return;
 
-      context.read<PhylumRouterDelegate>().go(TokenLoginRoute(
-            instanceUrl: instanceUrl.toString(),
-          ));
+      context
+          .read<PhylumRouterDelegate>()
+          .go(TokenLoginRoute(instanceUrl: instanceUrl.toString()));
     }
   }
 }
