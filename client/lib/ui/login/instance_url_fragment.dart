@@ -7,7 +7,8 @@ import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
-import 'base_uri_stub.dart' if (dart.library.js_interop) 'base_uri_web.dart';
+import '../../util/base_uri/base_uri_stub.dart'
+    if (dart.library.js_interop) 'base_uri_web.dart';
 import 'login_controller.dart';
 
 class InstanceUrlFragment extends StatefulWidget {
