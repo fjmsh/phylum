@@ -64,7 +64,7 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
                   )
                 : null,
           ),
-          readOnly: widget.readonly && !connecting,
+          readOnly: widget.readonly || connecting,
           autofocus: !widget.readonly,
           autofillHints: const [AutofillHints.url],
           keyboardType: TextInputType.url,
@@ -116,11 +116,6 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
 
     setState(() => connecting = true);
     try {
-      final c = Completer();
-      Future.delayed(Duration(seconds: 2), () {
-        c.complete(null);
-      });
-      await c.future;
       final info = await findInfo(uri);
       if (!context.mounted) return;
       if (info == null) {
