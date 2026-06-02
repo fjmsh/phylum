@@ -25,6 +25,7 @@ class PasswordLogin extends StatefulWidget {
 class _PasswordLoginState extends State<PasswordLogin> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _requestInFlight = false;
 
   @override
   void dispose() {
@@ -76,9 +77,20 @@ class _PasswordLoginState extends State<PasswordLogin> {
                         foregroundColor:
                             Theme.of(context).colorScheme.onPrimary,
                       ),
-                      label: Text('Login'),
-                      icon: Icon(Icons.login),
-                      onPressed: email.text.isEmpty || password.text.isEmpty
+                      label: Text(_requestInFlight ? 'Logging In' : 'Log In'),
+                      icon: _requestInFlight
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: Center(
+                                  child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              )),
+                            )
+                          : Icon(Icons.login),
+                      onPressed: _requestInFlight ||
+                              email.text.isEmpty ||
+                              password.text.isEmpty
                           ? null
                           : () => _performLogin(context),
                     ),
@@ -120,6 +132,7 @@ class _PasswordLoginState extends State<PasswordLogin> {
   }
 
   Future<void> _performLogin(BuildContext context) async {
+    if (_requestInFlight) return;
     final instanceUrl = context.read<LoginState>().instanceUrl!;
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/password/login';
@@ -127,7 +140,9 @@ class _PasswordLoginState extends State<PasswordLogin> {
     request.fields['email'] = _emailController.text;
     request.fields['password'] = _passwordController.text;
 
+    setState(() => _requestInFlight = true);
     final responseString = await sendRequest(context, 'Logging In', request);
+    setState(() => _requestInFlight = false);
     if (responseString == null) return;
     if (context.mounted) {
       final accountManager = context.read<AccountManager<PhylumAccount>>();
