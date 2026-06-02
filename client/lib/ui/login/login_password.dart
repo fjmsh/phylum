@@ -6,8 +6,7 @@ import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/ui/app/routes.dart';
+import 'package:phylum/ui/login/instance_url.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/logging.dart';
 import 'package:phylum/util/request.dart';
@@ -41,6 +40,7 @@ class _PasswordLoginState extends State<PasswordLogin> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 18,
         children: [
+          LoginInstanceUrl(display: true),
           TextField(
             key: ValueKey('email'),
             decoration: const InputDecoration(
@@ -94,7 +94,12 @@ class _PasswordLoginState extends State<PasswordLogin> {
                 text: 'Forgot Password',
                 style: TextStyle(color: Theme.of(context).colorScheme.primary),
                 recognizer: TapGestureRecognizer()
-                  ..onTap = () => _requestReset(context),
+                  ..onTap = () => context
+                          .read<LoginController>()
+                          .selectedMethod = ResetPasswordMethod(
+                        email: _emailController.text,
+                        token: null,
+                      ),
               )),
             ),
           if (context.read<LoginState>().selectedMethod != null)
@@ -152,41 +157,6 @@ class _PasswordLoginState extends State<PasswordLogin> {
         }
         logger.w('Login Error', error: e, stackTrace: stack);
       }
-    }
-  }
-
-  Future<void> _requestReset(BuildContext context) async {
-    final instanceUrl = context.read<LoginState>().instanceInfo!.url;
-    final builder = UriBuilder.fromUri(instanceUrl);
-    builder.path = '${builder.path}/api/v1/auth/password/request-reset';
-    final request = MultipartRequest('post', builder.build());
-    request.fields['email'] = _emailController.text;
-
-    final responseString =
-        await sendRequest(context, 'Requesting Password Reset', request);
-    if (responseString == null) return;
-    if (context.mounted) {
-      final response = await showAlertDialog(
-        context,
-        title: 'Password Reset Requested',
-        message: 'Please check your email for a password reset link',
-        negativeText: 'Enter Manually',
-        colorNegative: false,
-      );
-
-      if ((response ?? true) || !context.mounted) return;
-
-      final token = await showInputDialog(
-        context,
-        title: 'Password Reset Token',
-        barrierDismissable: true,
-      );
-      if (token == null || !context.mounted) return;
-      context.read<PhylumRouterDelegate>().go(ResetPasswordRoute(
-            instance: instanceUrl.toString(),
-            email: _emailController.text,
-            token: token,
-          ));
     }
   }
 }

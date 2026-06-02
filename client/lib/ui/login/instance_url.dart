@@ -32,7 +32,7 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
     final instanceUrl = context.read<LoginState>().instanceUrl;
     _instanceUrlController.text = instanceUrl?.toString() ?? '';
 
-    if (instanceUrl != null && !widget.display) {
+    if (instanceUrlFixed && instanceUrl != null && !widget.display) {
       WidgetsBinding.instance.addPostFrameCallback((d) {
         connect(context);
       });
@@ -51,14 +51,14 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
             label: const Text('Instance URL'),
             hintText: 'https://phylum.example.com',
             prefixIcon: Icon(Icons.storage),
-            suffixIcon: readonly
-                ? null
-                : IconButton(
+            suffixIcon: widget.display && !instanceUrlFixed
+                ? IconButton(
                     onPressed: () => context.read<LoginController>().reset(),
                     padding: EdgeInsets.zero,
                     icon: Icon(Icons.edit),
                     iconSize: 18,
-                  ),
+                  )
+                : null,
           ),
           readOnly: readonly || connecting,
           autofocus: !readonly,
