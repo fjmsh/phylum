@@ -14,9 +14,12 @@ class LoginPage extends StatefulWidget {
   @override
   State<LoginPage> createState() => _LoginPageState();
 
-  static Widget create() {
+  static Widget create({Uri? instanceUrl, LoginMethod? method}) {
     return StateNotifierProvider<LoginController, LoginState>(
-      create: (_) => LoginController(),
+      create: (_) => LoginController(LoginState(
+        instanceUrl: instanceUrl,
+        selectedMethod: method,
+      )),
       child: LoginPage(),
     );
   }
@@ -57,22 +60,26 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buildBody(BuildContext context) {
     final state = context.watch<LoginState>();
+    if (state.instanceUrl != null && state.selectedMethod != null) {
+      return switch (state.selectedMethod!) {
+        LoginMethod.password => const PasswordLogin(),
+        LoginMethod.magicLink => const MagicLinkLogin(),
+      };
+    }
     final instanceInfo = state.instanceInfo;
     if (instanceInfo == null) {
       return const InstanceUrlFragment(readonly: false);
     }
 
     final authConfig = state.instanceInfo!.authConfig!;
-    if (state.selectedMethod == LoginMethod.password ||
-        (authConfig.password &&
-            !authConfig.magicLinks &&
-            authConfig.openIDProviders.isEmpty)) {
-      return PasswordLogin();
-    } else if (state.selectedMethod == LoginMethod.magicLink ||
-        (authConfig.magicLinks &&
-            !authConfig.password &&
-            authConfig.openIDProviders.isEmpty)) {
-      return MagicLinkLogin();
+    if (authConfig.password &&
+        !authConfig.magicLinks &&
+        authConfig.openIDProviders.isEmpty) {
+      return const PasswordLogin();
+    } else if (authConfig.magicLinks &&
+        !authConfig.password &&
+        authConfig.openIDProviders.isEmpty) {
+      return const MagicLinkLogin();
     }
     return const LoginSelector();
   }

@@ -2,7 +2,7 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/login/instance_config.dart';
 
 class LoginController extends StateNotifier<LoginState> {
-  LoginController() : super(const LoginState());
+  LoginController(super.state);
 
   void reset() {
     state = LoginState(instanceUrl: state.instanceUrl);
