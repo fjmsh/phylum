@@ -8,13 +8,13 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
-import 'package:phylum/ui/login/instance_url_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/logging.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
+import 'instance_url.dart';
 import 'login_controller.dart';
 
 class TokenLogin extends StatefulWidget {
@@ -55,7 +55,7 @@ class _TokenLoginState extends State<TokenLogin> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 18,
       children: [
-        InstanceUrlFragment(readonly: true),
+        LoginInstanceUrl(display: true),
         TextField(
           decoration: InputDecoration(
             label: Text('Login Token'),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/common/logo_row.dart';
-import 'package:phylum/ui/login/instance_url_fragment.dart';
+import 'package:phylum/ui/login/instance_url.dart';
 import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/login_selector.dart';
 import 'package:phylum/ui/login/login_magic_link.dart';
@@ -17,11 +17,9 @@ class LoginPage extends StatefulWidget {
   static Widget create(
       {Uri? instanceUrl, LoginMethod? method, String? email, String? token}) {
     return StateNotifierProvider<LoginController, LoginState>(
-      create: (_) => LoginController(LoginState(
+      create: (_) => LoginController(LoginState.create(
         instanceUrl: instanceUrl,
         selectedMethod: method,
-        email: email,
-        token: token,
       )),
       child: LoginPage(),
     );
@@ -74,7 +72,9 @@ class _LoginPageState extends State<LoginPage> {
     }
     final instanceInfo = state.instanceInfo;
     if (instanceInfo == null) {
-      return const InstanceUrlFragment(readonly: false);
+      return const LoginInstanceUrl(
+        display: false,
+      );
     }
 
     final authConfig = state.instanceInfo!.authConfig!;

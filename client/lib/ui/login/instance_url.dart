@@ -9,37 +9,33 @@ import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
-import 'package:phylum/util/base_uri/base_uri_stub.dart'
-    if (dart.library.js_interop) 'package:phylum/util/base_uri/base_uri_web.dart';
 import 'login_controller.dart';
 
-class InstanceUrlFragment extends StatefulWidget {
-  final bool readonly;
+class LoginInstanceUrl extends StatefulWidget {
+  final bool display;
 
-  const InstanceUrlFragment({super.key, required this.readonly});
+  const LoginInstanceUrl({super.key, required this.display});
 
   @override
-  State<InstanceUrlFragment> createState() => _InstanceUrlFragmentState();
+  State<LoginInstanceUrl> createState() => _LoginInstanceUrlState();
 }
 
-class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
-  final _instanceUrlController =
-      TextEditingController(text: webAppBaseUri?.toString() ?? '');
+class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
+  final _instanceUrlController = TextEditingController();
   bool connecting = false;
+
+  bool get readonly => widget.display || instanceUrlFixed;
 
   @override
   void initState() {
     super.initState();
-    if (webAppBaseUri != null) {
-      _instanceUrlController.text = webAppBaseUri!.toString();
+    final instanceUrl = context.read<LoginState>().instanceUrl;
+    _instanceUrlController.text = instanceUrl?.toString() ?? '';
+
+    if (instanceUrl != null && !widget.display) {
       WidgetsBinding.instance.addPostFrameCallback((d) {
         connect(context);
       });
-    } else {
-      _instanceUrlController.text =
-          context.read<LoginState>().instanceUrl?.toString() ??
-              webAppBaseUri?.toString() ??
-              '';
     }
   }
 
@@ -47,7 +43,7 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: widget.readonly ? 6 : 18,
+      spacing: widget.display ? 6 : 18,
       children: [
         TextFormField(
           key: ValueKey('instanceUrl'),
@@ -55,23 +51,23 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
             label: const Text('Instance URL'),
             hintText: 'https://phylum.example.com',
             prefixIcon: Icon(Icons.storage),
-            suffixIcon: (widget.readonly)
-                ? IconButton(
+            suffixIcon: readonly
+                ? null
+                : IconButton(
                     onPressed: () => context.read<LoginController>().reset(),
                     padding: EdgeInsets.zero,
                     icon: Icon(Icons.edit),
                     iconSize: 18,
-                  )
-                : null,
+                  ),
           ),
-          readOnly: widget.readonly || connecting,
-          autofocus: !widget.readonly,
+          readOnly: readonly || connecting,
+          autofocus: !readonly,
           autofillHints: const [AutofillHints.url],
           keyboardType: TextInputType.url,
           controller: _instanceUrlController,
           onFieldSubmitted: (value) => connect(context),
         ),
-        if (widget.readonly)
+        if (widget.display)
           const Padding(
             padding: EdgeInsets.only(left: 48, right: 48),
             child: Divider(),

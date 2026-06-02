@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-import 'package:phylum/ui/login/instance_url_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
+import 'instance_url.dart';
 import 'login_controller.dart';
 
 class MagicLinkLogin extends StatefulWidget {
@@ -31,7 +31,7 @@ class _MagicLinkLoginState extends State<MagicLinkLogin> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 18,
         children: [
-          const InstanceUrlFragment(readonly: true),
+          LoginInstanceUrl(display: true),
           TextField(
             key: ValueKey('email'),
             decoration: const InputDecoration(

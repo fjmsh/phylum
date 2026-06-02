@@ -20,9 +20,6 @@ import 'package:phylum/ui/open/open_resource_page.dart';
 import 'package:phylum/ui/file_viewer/file_viewer_page.dart';
 import 'package:provider/provider.dart';
 
-import 'package:phylum/util/base_uri/base_uri_stub.dart'
-    if (dart.library.js_interop) 'package:phylum/util/base_uri/base_uri_web.dart';
-
 sealed class PhylumRoute {
   Uri get uri;
 
@@ -59,7 +56,7 @@ class TokenLoginRoute extends PhylumRoute {
   @override
   Widget buildPage(BuildContext context) {
     return LoginPage.create(
-      instanceUrl: instance == null ? webAppBaseUri : Uri.tryParse(instance!),
+      instanceUrl: Uri.tryParse(instance ?? ''),
       method: TokenLoginMethod(token),
     );
   }
@@ -79,7 +76,7 @@ class ResetPasswordRoute extends PhylumRoute {
   @override
   Widget buildPage(BuildContext context) {
     return LoginPage.create(
-      instanceUrl: instance == null ? webAppBaseUri : Uri.tryParse(instance!),
+      instanceUrl: Uri.tryParse(instance ?? ''),
       method: ResetPasswordMethod(email: email, token: token),
     );
   }
