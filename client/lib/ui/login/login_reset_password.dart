@@ -35,6 +35,7 @@ class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
   late final _tokenController = TextEditingController(text: widget.token);
   late final _passwordController = TextEditingController();
   late bool _tokenRequested = widget.token?.isNotEmpty == true;
+  bool _requestInFlight = false;
   bool passwordVisible = false;
 
   @override
@@ -132,9 +133,21 @@ class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
                           foregroundColor:
                               Theme.of(context).colorScheme.onPrimary,
                         ),
-                        label: Text('Reset Password and Login'),
-                        icon: Icon(Icons.login),
-                        onPressed: email.text.isEmpty ||
+                        label: Text(_requestInFlight
+                            ? 'Logging In'
+                            : 'Change Password and Log In'),
+                        icon: _requestInFlight
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: Center(
+                                    child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                )),
+                              )
+                            : Icon(Icons.login),
+                        onPressed: _requestInFlight ||
+                                email.text.isEmpty ||
                                 password.text.isEmpty ||
                                 token.text.isEmpty
                             ? null
@@ -150,10 +163,22 @@ class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,
               ),
-              label: Text('Request Reset Token'),
-              icon: Icon(Icons.email),
-              onPressed:
-                  email.text.isEmpty ? null : () => _requestReset(context),
+              label: Text(_requestInFlight
+                  ? 'Requesting Reset Token'
+                  : 'Request Reset Token'),
+              icon: _requestInFlight
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: Center(
+                          child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      )),
+                    )
+                  : Icon(Icons.email),
+              onPressed: _requestInFlight || email.text.isEmpty
+                  ? null
+                  : () => _requestReset(context),
             ),
           ),
         ElevatedButton.icon(
@@ -172,22 +197,27 @@ class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
   }
 
   Future<void> _requestReset(BuildContext context) async {
+    if (_requestInFlight) return;
     final instanceUrl = context.read<LoginState>().instanceInfo!.url;
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/password/request-reset';
     final request = MultipartRequest('post', builder.build());
     request.fields['email'] = _emailController.text;
 
+    setState(() => _requestInFlight = true);
     final responseString =
         await sendRequest(context, 'Requesting Password Reset Token', request);
-    if (responseString == null) return;
-    setState(() => _tokenRequested = true);
-    if (!context.mounted) return;
+    setState(() {
+      _requestInFlight = false;
+      _tokenRequested = responseString != null;
+    });
+    if (responseString == null || !context.mounted) return;
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text('Reset Token sent via Email')));
   }
 
   void changePassword(BuildContext context) async {
+    if (_requestInFlight) return;
     final instanceUrl = context.read<LoginState>().instanceUrl!;
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/password/reset';
@@ -196,8 +226,10 @@ class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
     request.fields['token'] = _tokenController.text;
     request.fields['password'] = _passwordController.text;
 
+    setState(() => _requestInFlight = true);
     final responseString =
         await sendRequest(context, 'Changing Password', request);
+    setState(() => _requestInFlight = false);
     if (responseString == null) return;
     if (context.mounted) {
       final navigator = Navigator.of(context);
