@@ -12,7 +12,9 @@ import '../../util/base_uri/base_uri_stub.dart'
 import 'login_controller.dart';
 
 class InstanceUrlFragment extends StatefulWidget {
-  const InstanceUrlFragment({super.key});
+  final bool readonly;
+
+  const InstanceUrlFragment({super.key, required this.readonly});
 
   @override
   State<InstanceUrlFragment> createState() => _InstanceUrlFragmentState();
@@ -22,9 +24,16 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
   Uri? _url = webAppBaseUri;
 
   @override
+  void initState() {
+    super.initState();
+    _url = context.read<LoginState>().instanceUrl ?? webAppBaseUri;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
-      spacing: 16.0,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: widget.readonly ? 6 : 18,
       children: [
         TextFormField(
           key: ValueKey('instanceUrl'),
@@ -32,9 +41,17 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
             label: const Text('Instance URL'),
             hintText: 'https://phylum.example.com',
             prefixIcon: Icon(Icons.storage),
+            suffixIcon: (widget.readonly)
+                ? IconButton(
+                    onPressed: () => context.read<LoginController>().reset(),
+                    padding: EdgeInsets.zero,
+                    icon: Icon(Icons.edit),
+                    iconSize: 18,
+                  )
+                : null,
           ),
-          initialValue: context.read<LoginState>().instanceUrl?.toString() ??
-              webAppBaseUri?.toString(),
+          initialValue: _url?.toString() ?? '',
+          readOnly: widget.readonly,
           autofocus: true,
           autofillHints: const [AutofillHints.url],
           keyboardType: TextInputType.url,
@@ -47,14 +64,18 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
           },
           onFieldSubmitted: _url == null ? null : (value) => checkConfig(_url!),
         ),
-        ElevatedButton.icon(
+        if (widget.readonly)
+          const Padding(
+            padding: EdgeInsets.only(left: 48, right: 48),
+            child: Divider(),
+          )
+        else
+          ElevatedButton.icon(
             label: Text('Connect'),
             icon: Icon(Icons.arrow_forward),
             iconAlignment: IconAlignment.end,
             onPressed: _url == null ? null : () => checkConfig(_url!),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-            )),
+          ),
       ],
     );
   }

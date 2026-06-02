@@ -8,6 +8,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
+import 'package:phylum/ui/login/instance_url_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/logging.dart';
 import 'package:phylum/util/request.dart';
@@ -41,6 +42,7 @@ class _PasswordLoginState extends State<PasswordLogin> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 18,
         children: [
+          const InstanceUrlFragment(readonly: true),
           TextField(
             key: ValueKey('email'),
             decoration: const InputDecoration(

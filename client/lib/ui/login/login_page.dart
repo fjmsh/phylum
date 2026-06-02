@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/common/logo_row.dart';
-import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/ui/login/instance_url_fragment.dart';
 import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/login_selector.dart';
@@ -60,42 +59,9 @@ class _LoginPageState extends State<LoginPage> {
     final state = context.watch<LoginState>();
     final instanceInfo = state.instanceInfo;
     if (instanceInfo == null) {
-      return const InstanceUrlFragment();
+      return const InstanceUrlFragment(readonly: false);
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 6,
-      children: [
-        TextFormField(
-          key: ValueKey('instanceUrl'),
-          decoration: InputDecoration(
-            label: const Text('Instance URL'),
-            prefixIcon: Icon(Icons.storage),
-            suffixIcon: IconButton(
-              onPressed: () => context.read<LoginController>().reset(),
-              padding: EdgeInsets.zero,
-              icon: Icon(Icons.edit),
-              iconSize: 18,
-            ),
-            suffixIconConstraints: const BoxConstraints(
-              minWidth: 0,
-              minHeight: 0,
-            ),
-          ),
-          initialValue: state.instanceUrl?.toString(),
-          keyboardType: TextInputType.url,
-        ),
-        const Padding(
-          padding: EdgeInsets.only(left: 48, right: 48),
-          child: Divider(),
-        ),
-        buildPage(context, state),
-      ],
-    );
-  }
-
-  Widget buildPage(BuildContext context, LoginState state) {
     final authConfig = state.instanceInfo!.authConfig!;
     if (state.selectedMethod == LoginMethod.password ||
         (authConfig.password &&

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
+import 'package:phylum/ui/login/instance_url_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
@@ -32,6 +33,7 @@ class _MagicLinkLoginState extends State<MagicLinkLogin> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 18,
         children: [
+          const InstanceUrlFragment(readonly: true),
           TextField(
             key: ValueKey('email'),
             decoration: const InputDecoration(

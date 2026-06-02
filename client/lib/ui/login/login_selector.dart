@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/ui/login/instance_url_fragment.dart';
 import 'package:phylum/ui/login/login_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
@@ -16,8 +17,9 @@ class LoginSelector extends StatelessWidget {
     final authConfig = instanceInfo!.authConfig!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 12,
+      spacing: 18,
       children: [
+        const InstanceUrlFragment(readonly: true),
         if (authConfig.password)
           ElevatedButton.icon(
             onPressed: () => context.read<LoginController>().selectedMethod =
