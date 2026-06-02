@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/app/router.dart';
@@ -21,12 +24,17 @@ class InstanceUrlFragment extends StatefulWidget {
 }
 
 class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
-  Uri? _url = webAppBaseUri;
+  final _instanceUrlController =
+      TextEditingController(text: webAppBaseUri?.toString() ?? '');
+  bool connecting = false;
 
   @override
   void initState() {
     super.initState();
-    _url = context.read<LoginState>().instanceUrl ?? webAppBaseUri;
+    _instanceUrlController.text =
+        context.read<LoginState>().instanceUrl?.toString() ??
+            webAppBaseUri?.toString() ??
+            '';
   }
 
   @override
@@ -50,19 +58,12 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
                   )
                 : null,
           ),
-          initialValue: _url?.toString() ?? '',
           readOnly: widget.readonly,
           autofocus: !widget.readonly,
           autofillHints: const [AutofillHints.url],
           keyboardType: TextInputType.url,
-          onChanged: (value) {
-            var url = value == '' ? webAppBaseUri : Uri.tryParse(value);
-            if (url != null && (!url.hasAuthority || !url.hasScheme)) {
-              url = null;
-            }
-            setState(() => _url = url);
-          },
-          onFieldSubmitted: _url == null ? null : (value) => checkConfig(_url!),
+          controller: _instanceUrlController,
+          onFieldSubmitted: (value) => checkConfig(context),
         ),
         if (widget.readonly)
           const Padding(
@@ -70,35 +71,63 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
             child: Divider(),
           )
         else
-          ElevatedButton.icon(
-            label: Text('Connect'),
-            icon: Icon(Icons.arrow_forward),
-            iconAlignment: IconAlignment.end,
-            onPressed: _url == null ? null : () => checkConfig(_url!),
-          ),
+          ValueListenableBuilder(
+              valueListenable: _instanceUrlController,
+              builder: (_, instanceUrl, __) {
+                final uri = Uri.tryParse(instanceUrl.text);
+                final uriValid =
+                    uri != null && uri.hasScheme && uri.hasAuthority;
+                return ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  label: Text(connecting ? 'Getting Configuration' : 'Login'),
+                  icon: connecting
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: Center(
+                              child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          )),
+                        )
+                      : Icon(Icons.arrow_forward),
+                  iconAlignment: IconAlignment.end,
+                  onPressed: connecting || !uriValid
+                      ? null
+                      : () => checkConfig(context),
+                );
+              }),
       ],
     );
   }
 
-  void checkConfig(Uri url) async {
-    final nav = Navigator.of(context);
+  void checkConfig(BuildContext context) async {
+    if (connecting) return;
+    final uri = Uri.tryParse(_instanceUrlController.text);
+    final uriValid = uri != null && uri.hasScheme && uri.hasAuthority;
+    if (!uriValid) return;
+
+    setState(() => connecting = true);
     try {
-      showProgressDialog(context,
-          barrierDismissible: false, message: 'Getting login configuration');
-      final info = await findInstanceInfo(url);
-      nav.pop();
+      final c = Completer();
+      Future.delayed(Duration(seconds: 2), () {
+        c.complete(null);
+      });
+      await c.future;
+      final info = await findInstanceInfo(uri);
+      if (!context.mounted) return;
       if (info == null) {
-        if (mounted) {
-          showAlertDialog(context, message: 'No server found at $url');
-        }
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No server found at $uri')));
       } else {
-        if (!mounted) return;
         if (info.needsSetup) {
           final delegate = context.read<PhylumRouterDelegate>();
           final confirm = await showAlertDialog(
                 context,
                 title: 'Configure Server?',
-                message: 'The server at $url is needs to be set up.',
+                message: 'The server at $uri is needs to be set up.',
                 positiveText: 'Yes',
                 negativeText: 'No',
               ) ??
@@ -110,11 +139,14 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
         }
       }
     } catch (e) {
-      nav.pop();
-      if (mounted) {
+      if (context.mounted) {
         showAlertDialog(context,
             title: 'Error getting server info', message: e.toString());
       }
+    } finally {
+      setState(() {
+        connecting = false;
+      });
     }
   }
 
