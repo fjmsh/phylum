@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'routes.dart';
 
-class PhylumRouterDelegate extends RouterDelegate<PhylumRoute> with ChangeNotifier, PopNavigatorRouterDelegateMixin {
+class PhylumRouterDelegate extends RouterDelegate<PhylumRoute>
+    with ChangeNotifier, PopNavigatorRouterDelegateMixin {
   @override
   final navigatorKey = GlobalKey<NavigatorState>();
   @override
@@ -57,7 +58,9 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRoute> with ChangeNotifi
   Widget build(BuildContext context) {
     return Navigator(
       key: navigatorKey,
-      onGenerateRoute: builder == null ? null : (settings) => MaterialPageRoute(builder: builder!),
+      onGenerateRoute: builder == null
+          ? null
+          : (settings) => MaterialPageRoute(builder: builder!),
     );
   }
 
@@ -91,8 +94,9 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
       }
       if (segments[0] == 'open') {
         final resourceId = uri.queryParameters['id'];
-        return SynchronousFuture(
-            resourceId == null ? const ExplorerRouteHome() : OpenResourceRoute(resourceId: resourceId));
+        return SynchronousFuture(resourceId == null
+            ? const ExplorerRouteHome()
+            : OpenResourceRoute(resourceId: resourceId));
       }
       if (segments[0] == 'recents') {
         return SynchronousFuture(const ExplorerRouteRecents());
@@ -103,13 +107,6 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
       if (segments[0] == 'trash') {
         return SynchronousFuture(const ExplorerRouteTrash());
       }
-      if (segments[0] == 'reset_password') {
-        return SynchronousFuture(ResetPasswordRoute(
-          instanceUrl: uri.queryParameters['instance'],
-          email: uri.queryParameters['email'],
-          token: uri.queryParameters['token'],
-        ));
-      }
       if (segments[0] == 'search') {
         final query = uri.queryParameters['q'];
         if (query == null || query.trim().isEmpty) {
@@ -118,11 +115,20 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
         return SynchronousFuture(ExplorerRouteSearch(query: query));
       }
     } else if (segments.length == 2) {
-      if (segments[0] == 'login' && segments[1] == 'token') {
-        return SynchronousFuture(TokenLoginRoute(
-          instanceUrl: uri.queryParameters['instance'],
-          loginToken: uri.queryParameters['token'],
-        ));
+      if (segments[0] == 'login') {
+        if (segments[1] == 'token') {
+          return SynchronousFuture(TokenLoginRoute(
+            instance: uri.queryParameters['instance'],
+            token: uri.queryParameters['token'],
+          ));
+        }
+        if (segments[1] == 'reset_password') {
+          return SynchronousFuture(ResetPasswordRoute(
+            instance: uri.queryParameters['instance'],
+            email: uri.queryParameters['email'],
+            token: uri.queryParameters['token'],
+          ));
+        }
       }
       if (segments[0] == 'folder') {
         return SynchronousFuture(ExplorerRouteFolder(folderId: segments[1]));

@@ -60,18 +60,21 @@ class _TokenLoginState extends State<TokenLogin> {
           decoration: InputDecoration(
             label: Text('Login Token'),
             hintText: 'AG...',
-            suffixIcon: IconButton(
-              icon: Icon(Icons.paste),
-              onPressed: () async {
-                if (await Clipboard.hasStrings()) {
-                  final data = await Clipboard.getData(Clipboard.kTextPlain);
-                  final text = data?.text;
-                  if (text != null) {
-                    tokenController.text = text;
-                  }
-                }
-              },
-            ),
+            suffixIcon: widget.token != null
+                ? null
+                : IconButton(
+                    icon: Icon(Icons.paste),
+                    onPressed: () async {
+                      if (await Clipboard.hasStrings()) {
+                        final data =
+                            await Clipboard.getData(Clipboard.kTextPlain);
+                        final text = data?.text;
+                        if (text != null) {
+                          tokenController.text = text;
+                        }
+                      }
+                    },
+                  ),
           ),
           controller: tokenController,
           readOnly: widget.token != null,

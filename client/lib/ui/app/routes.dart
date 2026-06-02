@@ -14,7 +14,6 @@ import 'package:phylum/ui/layout/explorer_page.dart';
 import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/setup/setup_page.dart';
-import 'package:phylum/ui/login/reset_password_page.dart';
 import 'package:phylum/ui/menu/menu_option.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:phylum/ui/open/open_resource_page.dart';
@@ -46,10 +45,10 @@ class SetupRoute extends PhylumRoute {
 }
 
 class TokenLoginRoute extends PhylumRoute {
-  final String? instanceUrl;
-  final String? loginToken;
+  final String? instance;
+  final String? token;
 
-  TokenLoginRoute({this.instanceUrl, this.loginToken});
+  TokenLoginRoute({this.instance, this.token});
 
   @override
   Uri get uri => Uri(path: '/');
@@ -57,29 +56,30 @@ class TokenLoginRoute extends PhylumRoute {
   @override
   Widget buildPage(BuildContext context) {
     return LoginPage.create(
-      instanceUrl: Uri.tryParse(instanceUrl ?? ''),
-      method: TokenLoginMethod(loginToken),
+      instanceUrl: Uri.tryParse(instance ?? ''),
+      method: TokenLoginMethod(token),
     );
   }
 }
 
 class ResetPasswordRoute extends PhylumRoute {
-  final String? instanceUrl;
+  final String? instance;
   final String? email;
   final String? token;
 
   ResetPasswordRoute(
-      {required this.instanceUrl, required this.email, required this.token});
+      {required this.instance, required this.email, required this.token});
 
   @override
-  Uri get uri => Uri(path: '/reset_password');
+  Uri get uri => Uri(path: '/');
 
   @override
-  Widget buildPage(BuildContext context) => ResetPasswordPage(
-        instanceUrl: instanceUrl,
-        email: email,
-        token: token,
-      );
+  Widget buildPage(BuildContext context) {
+    return LoginPage.create(
+      instanceUrl: Uri.tryParse(instance ?? ''),
+      method: ResetPasswordMethod(email: email, token: token),
+    );
+  }
 }
 
 sealed class LoggedInRoute extends PhylumRoute {

@@ -185,7 +185,7 @@ class _PasswordLoginState extends State<PasswordLogin> {
       );
       if (token == null || !context.mounted) return;
       context.read<PhylumRouterDelegate>().go(ResetPasswordRoute(
-            instanceUrl: instanceUrl.toString(),
+            instance: instanceUrl.toString(),
             email: _emailController.text,
             token: token,
           ));
