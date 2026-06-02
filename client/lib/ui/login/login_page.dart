@@ -44,14 +44,16 @@ class _LoginPageState extends State<LoginPage> {
                       padding: const EdgeInsets.symmetric(
                           vertical: 18, horizontal: 24)),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  spacing: 24.0,
-                  children: <Widget>[
-                    LogoRow(),
-                    _buildBody(context),
-                  ],
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    spacing: 24.0,
+                    children: <Widget>[
+                      LogoRow(),
+                      _buildBody(context),
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -16,21 +16,21 @@ import 'package:uri/uri.dart';
 
 import 'login_controller.dart';
 
-class ResetPasswordPage extends StatefulWidget {
+class ResetPasswordLogin extends StatefulWidget {
   final String? email;
   final String? token;
 
-  const ResetPasswordPage({
+  const ResetPasswordLogin({
     super.key,
     required this.email,
     required this.token,
   });
 
   @override
-  State<ResetPasswordPage> createState() => _ResetPasswordPageState();
+  State<ResetPasswordLogin> createState() => _ResetPasswordLoginState();
 }
 
-class _ResetPasswordPageState extends State<ResetPasswordPage> {
+class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
   late final _emailController = TextEditingController(text: widget.email);
   late final _tokenController = TextEditingController(text: widget.token);
   late final _passwordController = TextEditingController();
@@ -123,7 +123,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         foregroundColor:
                             Theme.of(context).colorScheme.onPrimary,
                       ),
-                      label: Text('Login'),
+                      label: Text('Reset Password and Login'),
                       icon: Icon(Icons.login),
                       onPressed: email.text.isEmpty ||
                               password.text.isEmpty ||

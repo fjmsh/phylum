@@ -4,7 +4,7 @@ import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/ui/login/login_magic_link.dart';
 import 'package:phylum/ui/login/login_password.dart';
 import 'package:phylum/ui/login/login_token.dart';
-import 'package:phylum/ui/login/reset_password_page.dart';
+import 'package:phylum/ui/login/login_reset_password.dart';
 
 class LoginController extends StateNotifier<LoginState> {
   LoginController(super.state);
@@ -100,5 +100,5 @@ class ResetPasswordMethod extends LoginMethod {
   const ResetPasswordMethod({required this.email, required this.token});
 
   @override
-  Widget build() => ResetPasswordPage(email: email, token: token);
+  Widget build() => ResetPasswordLogin(email: email, token: token);
 }
