@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
@@ -31,10 +30,17 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
   @override
   void initState() {
     super.initState();
-    _instanceUrlController.text =
-        context.read<LoginState>().instanceUrl?.toString() ??
-            webAppBaseUri?.toString() ??
-            '';
+    if (webAppBaseUri != null) {
+      _instanceUrlController.text = webAppBaseUri!.toString();
+      WidgetsBinding.instance.addPostFrameCallback((d) {
+        connect(context);
+      });
+    } else {
+      _instanceUrlController.text =
+          context.read<LoginState>().instanceUrl?.toString() ??
+              webAppBaseUri?.toString() ??
+              '';
+    }
   }
 
   @override
@@ -58,12 +64,12 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
                   )
                 : null,
           ),
-          readOnly: widget.readonly,
+          readOnly: widget.readonly && !connecting,
           autofocus: !widget.readonly,
           autofillHints: const [AutofillHints.url],
           keyboardType: TextInputType.url,
           controller: _instanceUrlController,
-          onFieldSubmitted: (value) => checkConfig(context),
+          onFieldSubmitted: (value) => connect(context),
         ),
         if (widget.readonly)
           const Padding(
@@ -94,16 +100,15 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
                         )
                       : Icon(Icons.arrow_forward),
                   iconAlignment: IconAlignment.end,
-                  onPressed: connecting || !uriValid
-                      ? null
-                      : () => checkConfig(context),
+                  onPressed:
+                      connecting || !uriValid ? null : () => connect(context),
                 );
               }),
       ],
     );
   }
 
-  void checkConfig(BuildContext context) async {
+  void connect(BuildContext context) async {
     if (connecting) return;
     final uri = Uri.tryParse(_instanceUrlController.text);
     final uriValid = uri != null && uri.hasScheme && uri.hasAuthority;
@@ -116,7 +121,7 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
         c.complete(null);
       });
       await c.future;
-      final info = await findInstanceInfo(uri);
+      final info = await findInfo(uri);
       if (!context.mounted) return;
       if (info == null) {
         ScaffoldMessenger.of(context)
@@ -150,13 +155,13 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
     }
   }
 
-  Future<InstanceInfo?> findInstanceInfo(Uri url) async {
+  Future<InstanceInfo?> findInfo(Uri url) async {
     // _url == null ? null : (value) => widget.onSubmitted(_url!),
     List<String> segments = url.pathSegments;
     while (true) {
       final builder = UriBuilder.fromUri(url);
       builder.path = segments.join('/');
-      final config = await getInstanceInfo(builder.build());
+      final config = await fetchInfo(builder.build());
       if (config != null) {
         return config;
       }
@@ -167,7 +172,7 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
     }
   }
 
-  Future<InstanceInfo?> getInstanceInfo(Uri url) async {
+  Future<InstanceInfo?> fetchInfo(Uri url) async {
     try {
       final builder = UriBuilder.fromUri(url);
       builder.path = '${builder.path}/api/v1/info';
