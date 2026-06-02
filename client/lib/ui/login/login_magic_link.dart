@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/login/instance_url_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/request.dart';
@@ -78,7 +76,7 @@ class _MagicLinkLoginState extends State<MagicLinkLogin> {
   }
 
   Future<void> _requestMagicLink(BuildContext context) async {
-    final instanceUrl = context.read<LoginState>().instanceInfo!.url;
+    final instanceUrl = context.read<LoginState>().instanceUrl!;
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/token/request';
     final request = MultipartRequest('post', builder.build());
@@ -88,19 +86,16 @@ class _MagicLinkLoginState extends State<MagicLinkLogin> {
         await sendRequest(context, 'Requesting Login Link', request);
     if (responseString == null) return;
     if (context.mounted) {
-      final response = await showAlertDialog(
+      await showAlertDialog(
         context,
         title: 'Login Link Sent',
         message: 'Please check your email for a login link',
-        negativeText: 'Enter Manually',
         colorNegative: false,
       );
 
-      if ((response ?? true) || !context.mounted) return;
+      if (!context.mounted) return;
 
-      context
-          .read<PhylumRouterDelegate>()
-          .go(TokenLoginRoute(instanceUrl: instanceUrl.toString()));
+      context.read<LoginController>().selectedMethod = TokenLoginMethod('');
     }
   }
 }

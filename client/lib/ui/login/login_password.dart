@@ -117,7 +117,7 @@ class _PasswordLoginState extends State<PasswordLogin> {
   }
 
   Future<void> _performLogin(BuildContext context) async {
-    final instanceUrl = context.read<LoginState>().instanceInfo!.url;
+    final instanceUrl = context.read<LoginState>().instanceUrl!;
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/password/login';
     final request = MultipartRequest('post', builder.build());

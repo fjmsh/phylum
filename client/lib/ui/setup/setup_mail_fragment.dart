@@ -11,7 +11,7 @@ import 'package:state_notifier/state_notifier.dart';
 import 'package:uri/uri.dart';
 
 import 'package:phylum/util/base_uri/base_uri_stub.dart'
-    if (dart.library.js_interop) 'package:phylum/ui/login/base_uri_web.dart';
+    if (dart.library.js_interop) 'package:phylum/util/base_uri/base_uri_web.dart';
 
 class SetupMailFragment extends StatelessWidget {
   final formKey = GlobalKey<FormState>();

@@ -14,11 +14,14 @@ class LoginPage extends StatefulWidget {
   @override
   State<LoginPage> createState() => _LoginPageState();
 
-  static Widget create({Uri? instanceUrl, LoginMethod? method}) {
+  static Widget create(
+      {Uri? instanceUrl, LoginMethod? method, String? email, String? token}) {
     return StateNotifierProvider<LoginController, LoginState>(
       create: (_) => LoginController(LoginState(
         instanceUrl: instanceUrl,
         selectedMethod: method,
+        email: email,
+        token: token,
       )),
       child: LoginPage(),
     );
@@ -60,11 +63,12 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buildBody(BuildContext context) {
     final state = context.watch<LoginState>();
-    if (state.instanceUrl != null && state.selectedMethod != null) {
-      return switch (state.selectedMethod!) {
-        LoginMethod.password => const PasswordLogin(),
-        LoginMethod.magicLink => const MagicLinkLogin(),
-      };
+    final instanceUrl = state.instanceUrl;
+    if (instanceUrl != null &&
+        instanceUrl.hasScheme &&
+        instanceUrl.hasAuthority &&
+        state.selectedMethod != null) {
+      return state.selectedMethod!.build();
     }
     final instanceInfo = state.instanceInfo;
     if (instanceInfo == null) {

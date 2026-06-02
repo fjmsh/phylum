@@ -7,8 +7,8 @@ import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
-import '../../util/base_uri/base_uri_stub.dart'
-    if (dart.library.js_interop) 'base_uri_web.dart';
+import 'package:phylum/util/base_uri/base_uri_stub.dart'
+    if (dart.library.js_interop) 'package:phylum/util/base_uri/base_uri_web.dart';
 import 'login_controller.dart';
 
 class InstanceUrlFragment extends StatefulWidget {
@@ -52,7 +52,7 @@ class _InstanceUrlFragmentState extends State<InstanceUrlFragment> {
           ),
           initialValue: _url?.toString() ?? '',
           readOnly: widget.readonly,
-          autofocus: true,
+          autofocus: !widget.readonly,
           autofillHints: const [AutofillHints.url],
           keyboardType: TextInputType.url,
           onChanged: (value) {

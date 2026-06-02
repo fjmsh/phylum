@@ -23,16 +23,16 @@ class LoginSelector extends StatelessWidget {
         if (authConfig.password)
           ElevatedButton.icon(
             onPressed: () => context.read<LoginController>().selectedMethod =
-                LoginMethod.password,
+                PasswordLoginMethod(),
             icon: Icon(Icons.password),
             label: Text('Password'),
           ),
         if (authConfig.magicLinks)
           ElevatedButton.icon(
             onPressed: () => context.read<LoginController>().selectedMethod =
-                LoginMethod.magicLink,
+                MagicLinkLoginMethod(),
             icon: Icon(Icons.email),
-            label: Text('Email'),
+            label: Text('Email Login Link'),
           ),
         ...authConfig.openIDProviders.map((p) => ElevatedButton(
             onPressed: () async {

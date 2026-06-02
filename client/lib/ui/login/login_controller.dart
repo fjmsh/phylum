@@ -1,5 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/login/instance_config.dart';
+import 'package:phylum/ui/login/login_magic_link.dart';
+import 'package:phylum/ui/login/login_password.dart';
+import 'package:phylum/ui/login/login_token.dart';
 
 class LoginController extends StateNotifier<LoginState> {
   LoginController(super.state);
@@ -29,8 +33,16 @@ class LoginState {
   final Uri? instanceUrl;
   final InstanceInfo? instanceInfo;
   final LoginMethod? selectedMethod;
+  final String? email;
+  final String? token;
 
-  const LoginState({this.instanceUrl, this.instanceInfo, this.selectedMethod});
+  const LoginState({
+    this.instanceUrl,
+    this.instanceInfo,
+    this.selectedMethod,
+    this.email,
+    this.token,
+  });
 
   LoginState copyWith({
     Uri? instanceUrl,
@@ -39,16 +51,43 @@ class LoginState {
     bool updateInstanceInfo = false,
     LoginMethod? selectedMethod,
     bool updateSelectedMethod = false,
+    String? email,
+    bool updateEmail = false,
+    String? token,
+    bool updateToken = false,
   }) =>
       LoginState(
         instanceUrl: updateInstanceUrl ? instanceUrl : this.instanceUrl,
         instanceInfo: updateInstanceInfo ? instanceInfo : this.instanceInfo,
         selectedMethod:
             updateSelectedMethod ? selectedMethod : this.selectedMethod,
+        email: updateEmail ? email : this.email,
+        token: updateToken ? token : this.token,
       );
 }
 
-enum LoginMethod {
-  password,
-  magicLink,
+sealed class LoginMethod {
+  const LoginMethod();
+  Widget build();
+}
+
+class PasswordLoginMethod extends LoginMethod {
+  const PasswordLoginMethod();
+  @override
+  Widget build() => const PasswordLogin();
+}
+
+class MagicLinkLoginMethod extends LoginMethod {
+  const MagicLinkLoginMethod();
+  @override
+  Widget build() => const MagicLinkLogin();
+}
+
+class TokenLoginMethod extends LoginMethod {
+  final String? token;
+
+  const TokenLoginMethod(this.token);
+
+  @override
+  Widget build() => TokenLogin(token: token);
 }

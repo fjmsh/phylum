@@ -11,9 +11,9 @@ import 'package:phylum/libphylum/requests/search_request.dart';
 import 'package:phylum/libphylum/requests/shared_resources_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/layout/explorer_page.dart';
+import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/setup/setup_page.dart';
-import 'package:phylum/ui/login/token_login_page.dart';
 import 'package:phylum/ui/login/reset_password_page.dart';
 import 'package:phylum/ui/menu/menu_option.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
@@ -52,13 +52,13 @@ class TokenLoginRoute extends PhylumRoute {
   TokenLoginRoute({this.instanceUrl, this.loginToken});
 
   @override
-  Uri get uri => Uri(path: '/login/token');
+  Uri get uri => Uri(path: '/');
 
   @override
   Widget buildPage(BuildContext context) {
-    return TokenLoginPage(
-      instanceUrl: instanceUrl,
-      loginToken: loginToken,
+    return LoginPage.create(
+      instanceUrl: Uri.tryParse(instanceUrl ?? ''),
+      method: TokenLoginMethod(loginToken),
     );
   }
 }
