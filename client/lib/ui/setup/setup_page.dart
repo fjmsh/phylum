@@ -139,8 +139,11 @@ class _SetupPageState extends State<SetupPage> {
 
     request.body = jsonEncode(data);
 
-    final responseString = await sendRequest(
-        context, 'Finalizing instance configuration', request);
+    final responseString = await sendRequestDialog(
+      context,
+      request,
+      message: 'Finalizing instance configuration',
+    );
     if (responseString == null || !context.mounted) return;
     final responseMap =
         (jsonDecode(responseString) as Map).cast<String, dynamic>();

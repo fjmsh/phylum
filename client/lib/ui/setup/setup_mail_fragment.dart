@@ -257,8 +257,11 @@ class SetupMailFragment extends StatelessWidget {
     configMap['send_to'] = config.fromEmail;
     request.body = jsonEncode(configMap);
 
-    final responseString =
-        await sendRequest(context, 'Validating Email Config', request);
+    final responseString = await sendRequestDialog(
+      context,
+      request,
+      message: 'Validating Email Config',
+    );
     if (responseString == null || !context.mounted) return;
     final responseMap =
         (jsonDecode(responseString) as Map).cast<String, dynamic>();

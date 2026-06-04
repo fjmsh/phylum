@@ -1,16 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
-import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/ui/app/routes.dart';
-import 'package:phylum/util/dialogs.dart';
-import 'package:phylum/util/logging.dart';
-import 'package:phylum/util/request.dart';
+import 'package:phylum/ui/login/login_request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
@@ -31,6 +22,7 @@ class TokenLogin extends StatefulWidget {
 
 class _TokenLoginState extends State<TokenLogin> {
   late final tokenController = TextEditingController(text: widget.token);
+  bool _requestInFlight = false;
 
   @override
   void initState() {
@@ -82,7 +74,8 @@ class _TokenLoginState extends State<TokenLogin> {
           autocorrect: false,
           autofocus: true,
           textInputAction: TextInputAction.go,
-          onSubmitted: (value) => _performLogin(context),
+          onSubmitted:
+              _requestInFlight ? null : (value) => _performLogin(context),
         ),
         ValueListenableBuilder(
             valueListenable: tokenController,
@@ -91,10 +84,20 @@ class _TokenLoginState extends State<TokenLogin> {
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   ),
-                  label: Text('Login'),
-                  icon: Icon(Icons.login),
-                  onPressed:
-                      token.text.isEmpty ? null : () => _performLogin(context),
+                  label: Text(_requestInFlight ? 'Logging In' : 'Log In'),
+                  icon: _requestInFlight
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: Center(
+                              child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          )),
+                        )
+                      : Icon(Icons.login),
+                  onPressed: _requestInFlight || token.text.isEmpty
+                      ? null
+                      : () => _performLogin(context),
                 )),
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
@@ -112,44 +115,15 @@ class _TokenLoginState extends State<TokenLogin> {
   }
 
   Future<void> _performLogin(BuildContext context) async {
+    if (_requestInFlight) return;
     final instanceUrl = context.read<LoginState>().instanceUrl!;
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/token/login';
     final request = MultipartRequest('post', builder.build());
     request.fields['token'] = tokenController.text;
 
-    final responseString = await sendRequest(context, 'Logging In', request);
-    if (responseString == null) return;
-    if (context.mounted) {
-      final routerDelegate = context.read<PhylumRouterDelegate>();
-      final accountManager = context.read<AccountManager<PhylumAccount>>();
-      final navigator = Navigator.of(context);
-      showProgressDialog(context,
-          barrierDismissible: false, message: 'Logging In');
-      try {
-        final response = BootstrapLoginResponse.fromResponse(
-            (jsonDecode(responseString) as Map).cast<String, dynamic>());
-        final account = await PhylumAccount.create(
-          serverUrl: instanceUrl,
-          apiToken: response.apiToken!,
-          user: response.user,
-        );
-        await response.process(account);
-        await accountManager.addAccount(account);
-        navigator.pop();
-        routerDelegate.go(const ExplorerRouteHome());
-      } catch (e, stack) {
-        navigator.pop();
-        if (context.mounted) {
-          showAlertDialog(
-            context,
-            barrierDismissible: false,
-            title: 'Error',
-            message: e.toString(),
-          );
-        }
-        logger.w('Login Error', error: e, stackTrace: stack);
-      }
-    }
+    setState(() => _requestInFlight = true);
+    await login(context, request);
+    setState(() => _requestInFlight = false);
   }
 }

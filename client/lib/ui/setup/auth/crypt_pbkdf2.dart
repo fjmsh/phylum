@@ -89,8 +89,11 @@ Future<void> testPbkdf2Params(
   };
   final request = Request('get', builder.build());
 
-  final responseString =
-      await sendRequest(context, 'Testing PBKDF2 Params', request);
+  final responseString = await sendRequestDialog(
+    context,
+    request,
+    message: 'Testing PBKDF2 Params',
+  );
   if (responseString == null || !context.mounted) return;
   final responseMap =
       (jsonDecode(responseString) as Map).cast<String, dynamic>();

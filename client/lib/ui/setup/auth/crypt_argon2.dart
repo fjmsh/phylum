@@ -96,8 +96,11 @@ Future<void> testArgon2Params(
   };
   final request = Request('get', builder.build());
 
-  final responseString =
-      await sendRequest(context, 'Testing Argon2 Params', request);
+  final responseString = await sendRequestDialog(
+    context,
+    request,
+    message: 'Testing Argon2 Params',
+  );
   if (responseString == null || !context.mounted) return;
   final responseMap =
       (jsonDecode(responseString) as Map).cast<String, dynamic>();

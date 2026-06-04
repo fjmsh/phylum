@@ -161,8 +161,11 @@ class SetupDbFragment extends StatelessWidget {
     final request = Request('post', builder.build());
     request.body = jsonEncode(context.read<DbConfig>().toMap());
 
-    final responseString =
-        await sendRequest(context, 'Validating Database Config', request);
+    final responseString = await sendRequestDialog(
+      context,
+      request,
+      message: 'Validating Database Config',
+    );
     if (responseString == null || !context.mounted) return;
     final responseMap =
         (jsonDecode(responseString) as Map).cast<String, dynamic>();

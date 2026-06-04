@@ -1,19 +1,12 @@
-import 'dart:convert';
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/ui/login/instance_url.dart';
-import 'package:phylum/util/dialogs.dart';
-import 'package:phylum/util/logging.dart';
-import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
+import 'instance_url.dart';
 import 'login_controller.dart';
+import 'login_request.dart';
 
 class PasswordLogin extends StatefulWidget {
   const PasswordLogin({super.key});
@@ -141,37 +134,7 @@ class _PasswordLoginState extends State<PasswordLogin> {
     request.fields['password'] = _passwordController.text;
 
     setState(() => _requestInFlight = true);
-    final responseString = await sendRequest(context, 'Logging In', request);
+    await login(context, request);
     setState(() => _requestInFlight = false);
-    if (responseString == null) return;
-    if (context.mounted) {
-      final accountManager = context.read<AccountManager<PhylumAccount>>();
-      final navigator = Navigator.of(context);
-      showProgressDialog(context,
-          barrierDismissible: false, message: 'Logging In');
-      try {
-        final response = BootstrapLoginResponse.fromResponse(
-            (jsonDecode(responseString) as Map).cast<String, dynamic>());
-        final account = await PhylumAccount.create(
-          serverUrl: instanceUrl,
-          apiToken: response.apiToken!,
-          user: response.user,
-        );
-        await response.process(account);
-        await accountManager.addAccount(account);
-        navigator.pop();
-      } catch (e, stack) {
-        navigator.pop();
-        if (context.mounted) {
-          showAlertDialog(
-            context,
-            barrierDismissible: false,
-            title: 'Error',
-            message: e.toString(),
-          );
-        }
-        logger.w('Login Error', error: e, stackTrace: stack);
-      }
-    }
   }
 }

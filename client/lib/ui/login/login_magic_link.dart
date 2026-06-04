@@ -82,8 +82,11 @@ class _MagicLinkLoginState extends State<MagicLinkLogin> {
     final request = MultipartRequest('post', builder.build());
     request.fields['email'] = _emailController.text;
 
-    final responseString =
-        await sendRequest(context, 'Requesting Login Link', request);
+    final responseString = await sendRequestDialog(
+      context,
+      request,
+      message: 'Requesting Login Link',
+    );
     if (responseString == null) return;
     if (context.mounted) {
       await showAlertDialog(
