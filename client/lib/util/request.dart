@@ -35,10 +35,7 @@ class ErrorResponse extends RequestResult {
   ErrorResponse({required this.error});
 
   @override
-  String get title => 'Server Error';
-
-  @override
-  String get details => error;
+  String get title => error;
 }
 
 class SuccessResponse extends RequestResult {
@@ -77,10 +74,10 @@ Future<RequestResult> sendRequest(
 Future<RequestResult> _getError(String responseString) async {
   try {
     final response = jsonDecode(responseString) as Map;
-    return ErrorResponse(error: response['error']);
+    return ErrorResponse(error: response['msg']);
   } catch (e) {
     logger.w(
-      'Error parsing error response - ${responseString.substring(0, 100)}',
+      'Error parsing error response - ${responseString.substring(0, 24)}',
       error: e,
     );
     return ClientError(error: 'Error parsing error response');

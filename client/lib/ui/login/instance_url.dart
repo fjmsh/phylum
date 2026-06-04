@@ -6,6 +6,7 @@ import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
@@ -164,18 +165,12 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
   }
 
   Future<InstanceInfo?> fetchInfo(Uri url) async {
-    try {
-      final builder = UriBuilder.fromUri(url);
-      builder.path = '${builder.path}/api/v1/info';
-      final response = await Client().send(Request('GET', builder.build()));
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final responseString = await response.stream.bytesToString();
-        return InstanceInfo.fromResponse(url, responseString);
-      } else {
-        return null;
-      }
-    } catch (e) {
-      return null;
+    final builder = UriBuilder.fromUri(url);
+    builder.path = '${builder.path}/api/v1/info';
+    final result = await sendRequest(Request('GET', builder.build()));
+    if (result is SuccessResponse) {
+      return InstanceInfo.fromResponse(url, result.responseString);
     }
+    return null;
   }
 }
