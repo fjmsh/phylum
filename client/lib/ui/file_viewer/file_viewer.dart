@@ -20,12 +20,20 @@ import 'package:provider/provider.dart';
 
 const maxPreviewSize = 1 * 1024 * 1024;
 
-const _applicationTextSubtypes = {'json', 'yaml', 'toml', 'xml', 'x-sh', 'x-sql'};
+const _applicationTextSubtypes = {
+  'json',
+  'yaml',
+  'toml',
+  'xml',
+  'x-sh',
+  'x-sql'
+};
 
 class FileViewer extends StatefulWidget {
   final bool transparent;
   final VersionedResource resource;
-  const FileViewer({super.key, required this.transparent, required this.resource});
+  const FileViewer(
+      {super.key, required this.transparent, required this.resource});
 
   @override
   State<FileViewer> createState() => _FileViewerState();
@@ -61,7 +69,8 @@ class _FileViewerState extends State<FileViewer> {
       context.read<PhylumAccount>().db.markResourceAccess(_resource.r.id);
       final mimeType = MediaType.parse(_resource.v.mimeType);
       if (mimeType.type == 'text' ||
-          (mimeType.type == 'application' && _applicationTextSubtypes.contains(mimeType.subtype))) {
+          (mimeType.type == 'application' &&
+              _applicationTextSubtypes.contains(mimeType.subtype))) {
         _buildViewer = buildTextPreview;
         _loadPreview = false;
       } else if ((_resource.v.imgres & imgResLarge) != 0) {
@@ -80,7 +89,8 @@ class _FileViewerState extends State<FileViewer> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: widget.transparent ? Colors.black45 : Colors.blueGrey[900],
+      backgroundColor:
+          widget.transparent ? Colors.black45 : Colors.blueGrey[900],
       appBar: AppBar(
         foregroundColor: theme.colorScheme.onInverseSurface,
         leading: const CloseButton(),
@@ -94,7 +104,10 @@ class _FileViewerState extends State<FileViewer> {
             ),
           ),
           IconButton(
-            onPressed: (_resource.r.dir) ? null : () => downloadResource(context, _resource.r, version: _resource.v),
+            onPressed: (_resource.r.dir)
+                ? null
+                : () => downloadResource(context, _resource.r,
+                    version: _resource.v),
             icon: const Icon(Icons.download),
           )
         ],
@@ -106,7 +119,8 @@ class _FileViewerState extends State<FileViewer> {
               ? Card(
                   child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Text(_error ?? 'Unknown error', style: TextStyle(fontSize: 18)),
+                  child: Text(_error ?? 'Unknown error',
+                      style: TextStyle(fontSize: 18)),
                 ))
               : ResourceLoader(
                   resourceId: _resource.r.id,
@@ -164,7 +178,8 @@ class _ResourceLoaderState extends State<ResourceLoader> {
       return Column(
         children: [
           if (_error != null) Text(_error!),
-          ElevatedButton(onPressed: _runDownloadTask, child: const Text('Retry'))
+          ElevatedButton(
+              onPressed: _runDownloadTask, child: const Text('Retry'))
         ],
       );
     }
@@ -182,11 +197,14 @@ class _ResourceLoaderState extends State<ResourceLoader> {
       });
       final account = context.read<PhylumAccount>();
       final request = widget.loadPreview
-          ? ResourceImgRequest(widget.resourceId, versionId: widget.versionId, imgRes: imgResLarge)
+          ? ResourceImgRequest(widget.resourceId,
+              versionId: widget.versionId, imgRes: imgResLarge)
           : ResourceContentsRequest(widget.resourceId, widget.versionId);
       final response = await account.apiClient.dispatchRequestRaw(request);
       if (response.statusCode < 200 || response.statusCode > 300) {
-        final error = PhylumApiErrorResponse.fromResponseBody(await response.bodyString()).message;
+        final error =
+            PhylumApiErrorResponse.fromResponseBody(await response.bodyString())
+                .message;
         _error = error;
         _downloading = false;
         if (mounted) {
@@ -243,7 +261,10 @@ class _ResourceLoaderState extends State<ResourceLoader> {
     var sink = ByteConversionSink.withCallback(
       (bytes) => completer.complete(Uint8List.fromList(bytes)),
     );
-    stream.listen(sink.add, onError: completer.completeError, onDone: sink.close, cancelOnError: true);
+    stream.listen(sink.add,
+        onError: completer.completeError,
+        onDone: sink.close,
+        cancelOnError: true);
     return completer.future;
   }
 }
@@ -251,13 +272,14 @@ class _ResourceLoaderState extends State<ResourceLoader> {
 Widget buildImagePreview(Uint8List data) => Image.memory(data);
 
 Widget buildTextPreview(Uint8List data) => Material(
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: TextFormField(
-          decoration: const InputDecoration(border: InputBorder.none),
-          initialValue: String.fromCharCodes(data),
-          readOnly: true,
-          maxLines: 30,
+      child: TextFormField(
+        decoration: const InputDecoration(
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: EdgeInsets.all(12),
         ),
+        initialValue: String.fromCharCodes(data),
+        readOnly: true,
+        maxLines: 30,
       ),
     );
