@@ -10,14 +10,14 @@ import 'instance_url.dart';
 import 'login_controller.dart';
 import 'login_request.dart';
 
-class PasswordLogin extends StatefulWidget {
-  const PasswordLogin({super.key});
+class EmailLogin extends StatefulWidget {
+  const EmailLogin({super.key});
 
   @override
-  State<PasswordLogin> createState() => _PasswordLoginState();
+  State<EmailLogin> createState() => _EmailLoginState();
 }
 
-class _PasswordLoginState extends State<PasswordLogin> {
+class _EmailLoginState extends State<EmailLogin> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _forcePassword = false;

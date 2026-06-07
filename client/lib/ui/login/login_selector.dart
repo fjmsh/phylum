@@ -20,19 +20,12 @@ class LoginSelector extends StatelessWidget {
       spacing: 18,
       children: [
         LoginInstanceUrl(display: true),
-        if (authConfig.password)
+        if (authConfig.email)
           ElevatedButton.icon(
             onPressed: () => context.read<LoginController>().selectedMethod =
-                PasswordLoginMethod(),
-            icon: Icon(Icons.password),
-            label: Text('Password'),
-          ),
-        if (authConfig.magicLinks)
-          ElevatedButton.icon(
-            onPressed: () => context.read<LoginController>().selectedMethod =
-                MagicLinkLoginMethod(),
+                EmailLoginMethod(),
             icon: Icon(Icons.email),
-            label: Text('Email Login Link'),
+            label: Text('Email'),
           ),
         ...authConfig.openIDProviders.map((p) => ElevatedButton(
             onPressed: () async {

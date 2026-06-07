@@ -4,7 +4,6 @@ import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/login/instance_url.dart';
 import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/login_selector.dart';
-import 'package:phylum/ui/login/login_magic_link.dart';
 import 'package:phylum/ui/login/login_email.dart';
 import 'package:provider/provider.dart';
 
@@ -78,14 +77,8 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     final authConfig = state.instanceInfo!.authConfig!;
-    if (authConfig.password &&
-        !authConfig.magicLinks &&
-        authConfig.openIDProviders.isEmpty) {
-      return const PasswordLogin();
-    } else if (authConfig.magicLinks &&
-        !authConfig.password &&
-        authConfig.openIDProviders.isEmpty) {
-      return const MagicLinkLogin();
+    if (authConfig.openIDProviders.isEmpty) {
+      return const EmailLogin();
     }
     return const LoginSelector();
   }
