@@ -203,14 +203,16 @@ class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
     request.fields['email'] = _emailController.text;
 
     setState(() => _requestInFlight = true);
-    final responseString = await sendRequestDialog(context, request);
+    final result = await sendRequest(request);
+    final success = result is SuccessResponse;
     setState(() {
       _requestInFlight = false;
-      _tokenRequested = responseString != null;
+      _tokenRequested = success;
     });
-    if (responseString == null || !context.mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('Reset Token sent via Email')));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content:
+            Text(success ? 'Reset Token sent via Email' : result.toString())));
   }
 
   void _changePassword(BuildContext context) async {

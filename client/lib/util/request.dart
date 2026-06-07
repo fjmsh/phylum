@@ -10,6 +10,9 @@ import 'package:phylum/util/logging.dart';
 sealed class RequestResult {
   String get title;
   String? get details => null;
+
+  @override
+  String toString() => details == null ? title : '$title - $details';
 }
 
 class ServerOffline extends RequestResult {

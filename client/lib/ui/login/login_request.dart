@@ -15,11 +15,8 @@ Future<void> login(BuildContext context, BaseRequest request) async {
   final result = await sendRequest(request);
   if (!context.mounted) return;
   if (result is! SuccessResponse) {
-    final message = result.details == null
-        ? result.title
-        : '${result.title} - ${result.details}';
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+        .showSnackBar(SnackBar(content: Text(result.toString())));
     return;
   }
   final accountManager = context.read<AccountManager<PhylumAccount>>();
