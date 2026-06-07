@@ -7,12 +7,17 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type proxyFileSystemReadOnly struct {
 	f *FileSystem
+}
+
+func (f proxyFileSystemReadOnly) IsRoot(root uuid.UUID) bool {
+	return f.f.IsRoot(root)
 }
 
 func (f proxyFileSystemReadOnly) ResourceByPath(path string) (Resource, error) {
@@ -28,6 +33,9 @@ func (f proxyFileSystemReadOnly) GetVersion(r Resource, versionIDStr string) (Ve
 
 func (f proxyFileSystemReadOnly) Walk(r Resource, depth int, fn func(Resource, string) error) error {
 	return f.f.Walk(r, depth, fn)
+}
+func (f proxyFileSystemReadOnly) GetAncestors(r Resource) ([]ResourceAncestor, error) {
+	return f.f.GetAncestors(r)
 }
 
 func OpenFileSystemFromPublink(ctx context.Context, id string, password string) (ReadFileSystem, error) {

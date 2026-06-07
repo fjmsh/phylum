@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"github.com/google/uuid"
 )
 
 var htmlReplacer = strings.NewReplacer(
@@ -24,8 +25,10 @@ var htmlReplacer = strings.NewReplacer(
 )
 
 type FileSystem interface {
+	IsRoot(uuid.UUID) bool
 	ReadDir(core.Resource, bool) ([]core.Resource, error)
 	GetVersion(core.Resource, string) (core.Version, error)
+	GetAncestors(core.Resource) ([]core.ResourceAncestor, error)
 }
 
 func Serve(w http.ResponseWriter, r *http.Request, f FileSystem, res core.Resource) {

@@ -22,6 +22,10 @@ type txFileSystem struct {
 	db db.TxHandler
 }
 
+func (f FileSystem) IsRoot(root uuid.UUID) bool {
+	return f.pathRoot.Valid && f.pathRoot.Bytes == root
+}
+
 func OpenFileSystem(db db.Handler, pathRoot pgtype.UUID, userID int32, userPermissions UserPermissions, scopes []string) *FileSystem {
 	return &FileSystem{
 		db:               db,

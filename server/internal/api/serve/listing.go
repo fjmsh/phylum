@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"sort"
 	"strings"
 	"text/template"
@@ -69,9 +70,22 @@ func serveCollection(w http.ResponseWriter, r *http.Request, f FileSystem, file 
 	})
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	ancestors, err := f.GetAncestors(file)
+	if err != nil {
+		panic(err)
+	}
+	var path []string
+	var found bool
+	for _, e := range slices.Backward(ancestors) {
+		found = found || f.IsRoot(e.ID)
+		if found {
+			path = append(path, e.Name)
+		}
+	}
+	path = append(path, file.Name())
 	data := ListingData{
 		Title:   file.Name(),
-		Path:    []string{file.Name()},
+		Path:    path,
 		Entries: make([]ListingEntry, len(files)),
 	}
 	for i, f := range files {

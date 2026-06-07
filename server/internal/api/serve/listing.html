@@ -10,7 +10,7 @@
         <h2>
             {{- $len := len .Path}}
             {{- range $i, $value := .Path}}
-            {{- $value}}{{if isNotLast $i $len}} / {{end -}}
+            {{- $value }}{{if isNotLast $i $len}} / {{end -}}
             {{end -}}
         </h2>
         <table>

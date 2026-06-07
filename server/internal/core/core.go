@@ -42,10 +42,12 @@ func Initialize(db db.Handler, cfg Config) error {
 
 // filesystem_readonly.go
 type ReadFileSystem interface {
+	IsRoot(uuid.UUID) bool
 	ResourceByPath(string) (Resource, error)
 	ReadDir(Resource, bool) ([]Resource, error)
 	GetVersion(Resource, string) (Version, error)
 	Walk(Resource, int, func(Resource, string) error) error
+	GetAncestors(Resource) ([]ResourceAncestor, error)
 }
 
 func insertOrSelectRootID(d db.Handler) (uuid.UUID, error) {
