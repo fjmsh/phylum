@@ -127,12 +127,22 @@ func setupWebApp(r gin.IRoutes, webAppSrcDir string) {
 	fileserver := http.FileServer(fs)
 	indexFilePath := path.Join(webAppSrcDir, "index.html")
 
+	webdavPath := Cfg.WebDAV.Path
+	if !strings.HasSuffix(webdavPath, "/'") {
+		webdavPath += "/"
+	}
+
+	publinkPath := Cfg.PublinkPath
+	if !strings.HasSuffix(webdavPath, "/'") {
+		publinkPath += "/"
+	}
+
 	staticFileHandler := func(c *gin.Context) {
 		path := c.Request.URL.Path
 		if c.Request.Method == "GET" &&
 			!strings.HasPrefix(path, "/api") &&
-			!strings.HasPrefix(path, Cfg.WebDAV.Path) &&
-			!strings.HasPrefix(path, Cfg.PublinkPath) {
+			!strings.HasPrefix(path, webdavPath) &&
+			!strings.HasPrefix(path, publinkPath) {
 			c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
 			c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
 			if fs.Exists("/", c.Request.URL.Path) {
