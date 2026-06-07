@@ -1,0 +1,46 @@
+<html>
+
+<head>
+    <title>{{.Title}} | Phylum</title>
+    <link rel="stylesheet" href="/pub.css" />
+</head>
+
+<body>
+    <pre>
+        <h2>
+            {{- $len := len .Path}}
+            {{- range $i, $value := .Path}}
+            {{- $value}}{{if isNotLast $i $len}} / {{end -}}
+            {{end -}}
+        </h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Size</th>
+                    <th>Content-Type</th>
+                    <th>SHA-256</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{- range .Entries}}
+                {{- $link := printf "<a href='%s'>%s</a>" .Link .Name }}
+                {{- if .Folder}}
+                <tr>
+                    <td>{{ $link }}</td>
+                </tr>
+                {{- else}}
+                <tr>
+                    <td>{{ $link }}</td>
+                    <td align=\"right\">{{.Size}}</td>
+                    <td>{{.ContentType}}</td>
+                    <td>{{.SHA256}}</td>
+                </tr>
+                {{- end}}
+                {{- end}}
+            </tbody>
+        </table>
+    </pre>
+</body>
+
+</html>

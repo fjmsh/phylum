@@ -6,8 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/textproto"
-	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -36,76 +34,6 @@ func Serve(w http.ResponseWriter, r *http.Request, f FileSystem, res core.Resour
 	} else {
 		ServeResourceVersion(w, r, f, res, "")
 	}
-}
-
-func serveCollection(w http.ResponseWriter, r *http.Request, f FileSystem, file core.Resource) {
-	if !strings.HasSuffix(r.URL.Path, "/") {
-		http.Redirect(w, r, r.URL.String()+"/", http.StatusMovedPermanently)
-		return
-	}
-	// if checkIfModifiedSince(r, file) == condFalse {
-	// 	writeNotModified(w)
-	// 	return
-	// }
-	w.Header().Set("Last-Modified", file.Modified().Format(http.TimeFormat))
-
-	files, err := f.ReadDir(file, false)
-	if err != nil {
-		http.Error(w, "Error reading directory", http.StatusInternalServerError)
-		return
-	}
-	// sort.Slice(files, func(i, j int) bool { return files[i].Name < files[j].Name })
-	sort.Slice(files, func(i, j int) bool {
-		a := files[i]
-		b := files[j]
-		if a.Dir() != b.Dir() {
-			if a.Dir() {
-				return true
-			}
-		}
-		return strings.Compare(strings.ToLower(a.Name()), strings.ToLower((b.Name()))) <= 0
-	})
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintln(w, "<html>")
-	fmt.Fprintln(w, "<head>")
-	fmt.Fprintf(w, "<title>%s | Phylum</title>\n", file.Name())
-	fmt.Fprintln(w, "<style>td, th {padding: 4px 12px;}</style>")
-	fmt.Fprintln(w, "</head>")
-	fmt.Fprintln(w, "<body>")
-	fmt.Fprintln(w, "<pre>")
-	fmt.Fprintf(w, "<h2>Index of %s</h2>", file.Name())
-	fmt.Fprintln(w, "<table>")
-	fmt.Fprintln(w, "<thead><tr><th>Name</th><th>Size</th><th>Content-Type</th><th>SHA-256</th></tr></thead>")
-	fmt.Fprintln(w, "<tbody>")
-	for _, f := range files {
-		name := f.Name()
-		if f.Dir() {
-			name += "/"
-		}
-		// name may contain '?' or '#', which must be escaped to remain
-		// part of the URL path, and not indicate the start of a query
-		// string or fragment.
-		url := url.URL{Path: name}
-		link := fmt.Sprintf("<a href=\"%s\">%s</a>", url.String(), htmlReplacer.Replace(name))
-
-		if f.Dir() {
-			fmt.Fprintf(w, "<tr><td>%s</td></tr>\n", link)
-		} else {
-			v := f.LatestVersion()
-			fmt.Fprintf(w, "<tr><td>%s</td><td align=\"right\">%s</td><td>%s</td><td>%s</td></tr>\n", link, formatSize(int(v.Size)), v.MimeType, v.SHA256[0:12])
-		}
-	}
-	fmt.Fprintln(w, "</tbody></table></pre>")
-	fmt.Fprintln(w, "</body></html>")
-}
-
-func formatSize(size int) string {
-	suffix := []string{"", "K", "M", "G", "T"}
-	si := 0
-	for ; size >= 1000 && si < len(suffix); si, size = si+1, size/1000 {
-	}
-	return fmt.Sprintf("%d%s", size, suffix[si])
 }
 
 func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, res core.Resource, versionIDStr string) {
