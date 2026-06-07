@@ -37,12 +37,7 @@ class _EmailLoginState extends State<EmailLogin> {
 
   @override
   Widget build(BuildContext context) {
-    // final authConfig = context.read<LoginState>().instanceInfo?.authConfig;
-    final authConfig = AuthConfig(
-        password: true,
-        passwordReset: true,
-        magicLinks: true,
-        openIDProviders: const []);
+    final authConfig = context.read<LoginState>().instanceInfo?.authConfig;
     bool magicLinkLogin = authConfig?.magicLinks != false && !_forcePassword;
     return AutofillGroup(
       child: Column(
