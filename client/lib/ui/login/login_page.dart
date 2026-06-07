@@ -5,7 +5,7 @@ import 'package:phylum/ui/login/instance_url.dart';
 import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/login_selector.dart';
 import 'package:phylum/ui/login/login_magic_link.dart';
-import 'package:phylum/ui/login/login_password.dart';
+import 'package:phylum/ui/login/login_email.dart';
 import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {

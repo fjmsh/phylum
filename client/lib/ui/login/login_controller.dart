@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/ui/login/login_magic_link.dart';
-import 'package:phylum/ui/login/login_password.dart';
+import 'package:phylum/ui/login/login_email.dart';
 import 'package:phylum/ui/login/login_token.dart';
 import 'package:phylum/ui/login/login_reset_password.dart';
 
