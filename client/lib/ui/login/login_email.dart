@@ -45,17 +45,6 @@ class _EmailLoginState extends State<EmailLogin> {
         spacing: 18,
         children: [
           LoginInstanceUrl(display: true),
-          TextField(
-            key: ValueKey('email'),
-            decoration: const InputDecoration(
-              label: Text('Email'),
-              prefixIcon: Icon(Icons.email),
-            ),
-            controller: _emailController,
-            autofocus: true,
-            keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email],
-          ),
           if (magicLinkLogin)
             buildMagicLinkLogin(context, authConfig)
           else
@@ -82,6 +71,20 @@ class _EmailLoginState extends State<EmailLogin> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 18,
       children: [
+        TextField(
+          key: ValueKey('email'),
+          decoration: const InputDecoration(
+            label: Text('Email'),
+            prefixIcon: Icon(Icons.email),
+          ),
+          controller: _emailController,
+          autofocus: true,
+          keyboardType: TextInputType.emailAddress,
+          autofillHints: const [AutofillHints.email],
+          onSubmitted: _requestInFlight
+              ? null
+              : (value) => value.isEmpty ? null : _requestMagicLink(context),
+        ),
         ValueListenableBuilder(
             valueListenable: _emailController,
             builder: (_, email, __) => ElevatedButton.icon(
@@ -120,65 +123,80 @@ class _EmailLoginState extends State<EmailLogin> {
   }
 
   Widget buildPasswordLogin(BuildContext context, AuthConfig? authConfig) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 18,
-      children: [
-        TextField(
-          key: ValueKey('password'),
-          decoration: const InputDecoration(
-            label: Text('Password'),
-            prefixIcon: Icon(Icons.password),
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 18,
+        children: [
+          TextField(
+            key: ValueKey('email'),
+            decoration: const InputDecoration(
+              label: Text('Email'),
+              prefixIcon: Icon(Icons.email),
+            ),
+            controller: _emailController,
+            autofocus: true,
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
           ),
-          obscureText: true,
-          controller: _passwordController,
-          keyboardType: TextInputType.visiblePassword,
-          autofillHints: const [AutofillHints.password],
-          onSubmitted: _emailController.text.isEmpty
-              ? null
-              : (value) => _performLogin(context),
-        ),
-        ValueListenableBuilder(
-            valueListenable: _emailController,
-            builder: (_, email, __) => ValueListenableBuilder(
-                  valueListenable: _passwordController,
-                  builder: (_, password, __) => ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    ),
-                    label: Text(_requestInFlight ? 'Logging In' : 'Log In'),
-                    icon: _requestInFlight
-                        ? SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: Center(
-                                child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            )),
-                          )
-                        : Icon(Icons.login),
-                    onPressed: _requestInFlight ||
-                            email.text.isEmpty ||
-                            password.text.isEmpty
-                        ? null
-                        : () => _performLogin(context),
-                  ),
-                )),
-        if (authConfig?.passwordReset != false)
-          Center(
-            child: Text.rich(TextSpan(
-              text: 'Forgot Password',
-              style: TextStyle(color: Theme.of(context).colorScheme.primary),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () => context.read<LoginController>().selectedMethod =
-                        ResetPasswordMethod(
-                      email: _emailController.text,
-                      token: null,
-                    ),
-            )),
+          TextField(
+            key: ValueKey('password'),
+            decoration: const InputDecoration(
+              label: Text('Password'),
+              prefixIcon: Icon(Icons.password),
+            ),
+            obscureText: true,
+            controller: _passwordController,
+            keyboardType: TextInputType.visiblePassword,
+            autofillHints: const [AutofillHints.password],
+            onSubmitted: _requestInFlight
+                ? null
+                : (value) => value.isEmpty ? null : _performLogin(context),
           ),
-      ],
+          ValueListenableBuilder(
+              valueListenable: _emailController,
+              builder: (_, email, __) => ValueListenableBuilder(
+                    valueListenable: _passwordController,
+                    builder: (_, password, __) => ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onPrimary,
+                      ),
+                      label: Text(_requestInFlight ? 'Logging In' : 'Log In'),
+                      icon: _requestInFlight
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: Center(
+                                  child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              )),
+                            )
+                          : Icon(Icons.login),
+                      onPressed: _requestInFlight ||
+                              email.text.isEmpty ||
+                              password.text.isEmpty
+                          ? null
+                          : () => _performLogin(context),
+                    ),
+                  )),
+          if (authConfig?.passwordReset != false)
+            Center(
+              child: Text.rich(TextSpan(
+                text: 'Forgot Password',
+                style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () => context
+                          .read<LoginController>()
+                          .selectedMethod = ResetPasswordMethod(
+                        email: _emailController.text,
+                        token: null,
+                      ),
+              )),
+            ),
+        ],
+      ),
     );
   }
 
