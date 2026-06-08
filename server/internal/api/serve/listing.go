@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 	"slices"
-	"sort"
 	"strings"
 	"text/template"
+	"time"
 
 	"codeberg.org/shroff/phylum/server/internal/core"
 )
@@ -20,6 +21,16 @@ var listing *template.Template
 func init() {
 	funcMap := template.FuncMap{
 		"isNotLast": func(index, length int) bool { return index != length-1 },
+		"parentPath": func(u string, length, index int) string {
+			fmt.Println("parentPath " + u)
+			arr := make([]string, length-index)
+			for i := range arr {
+				arr[i] = ".."
+			}
+			arr[0] = u
+			return path.Join(arr...)
+			// return path.Join(a, b)
+		},
 	}
 	var err error
 	str, _ := baseFS.ReadFile("listing.html")
@@ -30,6 +41,7 @@ func init() {
 }
 
 type ListingData struct {
+	URL     string
 	Title   string
 	Path    []string
 	Entries []ListingEntry
@@ -41,7 +53,7 @@ type ListingEntry struct {
 	Link         string
 	Size         string
 	ContentType  string
-	LastModified string
+	LastModified time.Time
 	SHA256       string
 }
 
@@ -58,15 +70,14 @@ func serveCollection(w http.ResponseWriter, r *http.Request, f FileSystem, file 
 		return
 	}
 
-	sort.Slice(files, func(i, j int) bool {
-		a := files[i]
-		b := files[j]
+	slices.SortFunc(files, func(a, b core.Resource) int {
 		if a.Dir() != b.Dir() {
 			if a.Dir() {
-				return true
+				return -1
 			}
+			return 1
 		}
-		return strings.Compare(strings.ToLower(a.Name()), strings.ToLower((b.Name()))) <= 0
+		return strings.Compare(strings.ToLower(a.Name()), strings.ToLower((b.Name())))
 	})
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -84,6 +95,7 @@ func serveCollection(w http.ResponseWriter, r *http.Request, f FileSystem, file 
 	}
 	path = append(path, file.Name())
 	data := ListingData{
+		URL:     r.URL.Path,
 		Title:   file.Name(),
 		Path:    path,
 		Entries: make([]ListingEntry, len(files)),
@@ -95,9 +107,10 @@ func serveCollection(w http.ResponseWriter, r *http.Request, f FileSystem, file 
 		}
 		url := url.URL{Path: name}
 		data.Entries[i] = ListingEntry{
-			Folder: f.Dir(),
-			Name:   htmlReplacer.Replace(name),
-			Link:   url.String(),
+			Folder:       f.Dir(),
+			Name:         htmlReplacer.Replace(name),
+			Link:         url.String(),
+			LastModified: f.Modified(),
 		}
 		if !f.Dir() {
 			v := f.LatestVersion()

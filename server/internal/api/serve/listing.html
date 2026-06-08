@@ -1,46 +1,64 @@
+<!DOCTYPE html>
 <html>
 
 <head>
+    <meta charset="UTF-8">
     <title>{{.Title}} | Phylum</title>
     <link rel="stylesheet" href="/pub.css" />
+    <link rel="icon" <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
+    <link rel="icon" type="image/png" href="/favicon.png" />
 </head>
 
 <body>
-    <pre>
-        <h2>
+    <header>
+        <nav class="container">
             {{- $len := len .Path}}
+            {{- $url := .URL}}
             {{- range $i, $value := .Path}}
-            {{- $value }}{{if isNotLast $i $len}} / {{end -}}
+            <a href="{{ parentPath $url $len $i}}">{{- $value }}</a>{{if isNotLast $i $len}} / {{end -}}
             {{end -}}
-        </h2>
+        </nav>
+    </header>
+    <div class="container main mono">
         <table>
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Size</th>
-                    <th>Content-Type</th>
-                    <th>SHA-256</th>
+                    <th align="left">Name</th>
+                    <th align="right">Size</th>
+                    <th align="right">Last Modified</th>
                 </tr>
             </thead>
             <tbody>
+                {{- if gt (len .Path) 1 }}
+                <tr data-href="../" tabindex="0" style="cursor: pointer;">
+                    <td>..</td>
+                    <td align="right"> — </td>
+                    <td align="right"> — </td>
+                </tr>
+                {{- end }}
                 {{- range .Entries}}
-                {{- $link := printf "<a href='%s'>%s</a>" .Link .Name }}
-                {{- if .Folder}}
-                <tr>
-                    <td>{{ $link }}</td>
+                <tr data-href="{{.Link}}" tabindex="0" style="cursor: pointer;">
+                    <td>{{.Name}}</td>
+                    <td align="right">{{ if .Folder }} — {{ else }} {{.Size}} {{ end }}</td>
+                    <td align="right">{{.LastModified.Format "2006-01-02 15:04:05"}}</td>
                 </tr>
-                {{- else}}
-                <tr>
-                    <td>{{ $link }}</td>
-                    <td align=\"right\">{{.Size}}</td>
-                    <td>{{.ContentType}}</td>
-                    <td>{{.SHA256}}</td>
-                </tr>
-                {{- end}}
                 {{- end}}
             </tbody>
         </table>
-    </pre>
+    </div>
+    <footer class="container">
+        Powered by <a href="https://codeberg.org/shroff/phylum">Phylum</a>
+    </footer>
+    <script>
+        document.querySelectorAll('tr[data-href]').forEach(row => {
+            row.addEventListener('click', () => window.location.href = row.dataset.href);
+            row.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') window.location.href = row.dataset.href;
+            });
+        });
+    </script>
 </body>
 
 </html>
