@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/settings/user_list/user_list_controller.dart';
 import 'package:phylum/ui/settings/user_list/user_list_view.dart';
 import 'package:provider/provider.dart';
@@ -10,13 +9,6 @@ class UserListPage extends StatefulWidget {
 
   @override
   State<UserListPage> createState() => _UserListPageState();
-
-  static Widget create() {
-    return StateNotifierProvider<UserListController, UserList>(
-      create: (context) => UserListController(context),
-      child: const UserListPage(),
-    );
-  }
 }
 
 class _UserListPageState extends State<UserListPage> {

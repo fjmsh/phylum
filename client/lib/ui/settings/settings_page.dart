@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/layout/responsive.dart';
 import 'package:phylum/ui/settings/settings.dart';
 import 'package:phylum/ui/settings/settings_controller.dart';
 import 'package:provider/provider.dart';
@@ -31,6 +32,10 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width > minViewportWidthMedium) {
+      return buildMasterDetail(context, width);
+    }
     final selected =
         context.select<SettingsState, Settings?>((state) => state.selected);
     if (selected != null) {
@@ -51,7 +56,39 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       body: ListView.builder(
         itemCount: settingsList.length,
-        itemBuilder: (context, i) => settingsList[i].buildTitle(context),
+        itemBuilder: (context, i) => settingsList[i].buildTitle(context, false),
+      ),
+    );
+  }
+
+  Widget buildMasterDetail(BuildContext context, double width) {
+    final selected =
+        context.select<SettingsState, Settings?>((state) => state.selected) ??
+            settingsList[0];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Settings'),
+        leading: CloseButton(),
+      ),
+      body: Center(
+        child: SizedBox(
+          width: 1200,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                width: 300,
+                child: ListView.builder(
+                  itemCount: settingsList.length,
+                  itemBuilder: (context, i) => settingsList[i]
+                      .buildTitle(context, settingsList[i] == selected),
+                ),
+              ),
+              Expanded(child: selected.buildWithoutScaffold(context)),
+            ],
+          ),
+        ),
       ),
     );
   }

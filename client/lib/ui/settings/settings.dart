@@ -3,6 +3,7 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/settings/settings_controller.dart';
 import 'package:phylum/ui/settings/user_list/user_list_page.dart';
 import 'package:phylum/ui/settings/user_list/user_list_controller.dart';
+import 'package:phylum/ui/settings/user_list/user_list_panel.dart';
 import 'package:provider/provider.dart';
 
 const settingsList = <Settings>[
@@ -14,7 +15,7 @@ sealed class Settings {
 
   List<StateNotifierProvider> get providers;
 
-  Widget buildTitle(BuildContext context);
+  Widget buildTitle(BuildContext context, bool selected);
 
   Widget buildWithScaffold(BuildContext context);
 
@@ -29,9 +30,10 @@ sealed class SimpleSettings extends Settings {
   String get title;
 
   @override
-  Widget buildTitle(BuildContext context) => ListTile(
+  Widget buildTitle(BuildContext context, bool selected) => ListTile(
         leading: Icon(icon),
         title: Text(title),
+        selected: selected,
         onTap: () => context.read<SettingsController>().updateSelected(this),
       );
 }
@@ -52,10 +54,8 @@ class UserSettings extends SimpleSettings {
   const UserSettings();
 
   @override
-  Widget buildWithScaffold(BuildContext context) => UserListPage();
+  Widget buildWithScaffold(BuildContext context) => const UserListPage();
 
   @override
-  Widget buildWithoutScaffold(BuildContext context) {
-    throw UnimplementedError();
-  }
+  Widget buildWithoutScaffold(BuildContext context) => const UserListPanel();
 }
