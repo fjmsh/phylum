@@ -17,6 +17,7 @@ import 'package:phylum/ui/layout/button_downloads.dart';
 import 'package:phylum/ui/layout/create_action.dart';
 import 'package:phylum/ui/menu/menu_option.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
+import 'package:phylum/ui/settings/settings_page.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/user_display_name.dart';
 import 'package:provider/provider.dart';
@@ -46,11 +47,13 @@ class NavList extends StatelessWidget {
                         itemBuilder: (context) => [
                           for (final action in getCreateActions(context))
                             if (action == null)
-                              const PopupMenuItem(enabled: false, height: 16, child: Divider())
+                              const PopupMenuItem(
+                                  enabled: false, height: 16, child: Divider())
                             else
                               PopupMenuItem(
                                   child: Text(action.descripiton),
-                                  onTap: () => Actions.maybeInvoke(context, action.intent)),
+                                  onTap: () => Actions.maybeInvoke(
+                                      context, action.intent)),
                         ],
                         child: FloatingActionButton.extended(
                             icon: const Icon(Icons.add),
@@ -65,7 +68,8 @@ class NavList extends StatelessWidget {
                     title: const Text('Home'),
                     onTap: () {
                       Scaffold.maybeOf(context)?.closeDrawer();
-                      Actions.maybeInvoke(context, NavIntent(target: ExplorerRouteHome()));
+                      Actions.maybeInvoke(
+                          context, NavIntent(target: ExplorerRouteHome()));
                     },
                   ),
                   ListTile(
@@ -73,7 +77,9 @@ class NavList extends StatelessWidget {
                     title: const Text('Recents'),
                     onTap: () {
                       Scaffold.maybeOf(context)?.closeDrawer();
-                      context.read<PhylumRouterDelegate>().go(ExplorerRouteRecents());
+                      context
+                          .read<PhylumRouterDelegate>()
+                          .go(ExplorerRouteRecents());
                     },
                   ),
                   ListTile(
@@ -81,7 +87,9 @@ class NavList extends StatelessWidget {
                     title: const Text('Shared With Me'),
                     onTap: () {
                       Scaffold.maybeOf(context)?.closeDrawer();
-                      context.read<PhylumRouterDelegate>().go(ExplorerRouteShared());
+                      context
+                          .read<PhylumRouterDelegate>()
+                          .go(ExplorerRouteShared());
                     },
                   ),
                   StreamBuilder<List<SelectBookmarksResult>>(
@@ -89,7 +97,8 @@ class NavList extends StatelessWidget {
                     initialData: const [],
                     builder: (context, snapshot) {
                       return Theme(
-                        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                        data: Theme.of(context)
+                            .copyWith(dividerColor: Colors.transparent),
                         child: ExpansionTile(
                           title: Text('Bookmarks'),
                           leading: Icon(Icons.bookmark),
@@ -102,42 +111,58 @@ class NavList extends StatelessWidget {
                                       PointerDeviceKind.invertedStylus,
                                       PointerDeviceKind.unknown,
                                     },
-                                    onLongPressEnd: (details) => fn(context, details.globalPosition, b),
+                                    onLongPressEnd: (details) =>
+                                        fn(context, details.globalPosition, b),
                                     child: GestureDetector(
                                       behavior: HitTestBehavior.opaque,
                                       supportedDevices: {
                                         PointerDeviceKind.mouse,
                                         PointerDeviceKind.trackpad,
                                       },
-                                      onSecondaryTapUp: (details) => fn(context, details.globalPosition, b),
+                                      onSecondaryTapUp: (details) => fn(
+                                          context, details.globalPosition, b),
                                       child: ListTile(
                                         title: Text(b.name),
                                         leading: Icon(null),
                                         onTap: () async {
-                                          Scaffold.maybeOf(context)?.closeDrawer();
+                                          Scaffold.maybeOf(context)
+                                              ?.closeDrawer();
                                           if (b.dir) {
-                                            Actions.maybeInvoke(context,
-                                                NavIntent(target: ExplorerRouteFolder(folderId: b.resourceId)));
+                                            Actions.maybeInvoke(
+                                                context,
+                                                NavIntent(
+                                                    target: ExplorerRouteFolder(
+                                                        folderId:
+                                                            b.resourceId)));
                                             return;
                                           }
-                                          final resource = await account.db.getResource(b.resourceId);
+                                          final resource = await account.db
+                                              .getResource(b.resourceId);
                                           if (!context.mounted) return;
                                           if (resource == null) {
                                             final nav = Navigator.of(context);
-                                            showProgressDialog(context, title: 'Getting Details', message: b.name);
-                                            final success = await account.resourceRepository
+                                            showProgressDialog(context,
+                                                title: 'Getting Details',
+                                                message: b.name);
+                                            final success = await account
+                                                .resourceRepository
                                                 .requestResource(b.resourceId)
-                                                .then((result) => result is ApiSuccessResponse);
+                                                .then((result) => result
+                                                    is ApiSuccessResponse);
                                             nav.pop();
                                             if (!success) {
                                               if (context.mounted) {
-                                                showAlertDialog(context, title: 'Unable to get file info');
+                                                showAlertDialog(context,
+                                                    title:
+                                                        'Unable to get file info');
                                               }
                                               return;
                                             }
                                           }
-                                          if (resource != null && context.mounted) {
-                                            Actions.maybeInvoke(context, OpenResourceIntent(resource));
+                                          if (resource != null &&
+                                              context.mounted) {
+                                            Actions.maybeInvoke(context,
+                                                OpenResourceIntent(resource));
                                           }
                                         },
                                       ),
@@ -153,7 +178,9 @@ class NavList extends StatelessWidget {
                     title: const Text('Trash'),
                     onTap: () {
                       Scaffold.maybeOf(context)?.closeDrawer();
-                      context.read<PhylumRouterDelegate>().go(ExplorerRouteTrash());
+                      context
+                          .read<PhylumRouterDelegate>()
+                          .go(ExplorerRouteTrash());
                     },
                   ),
                   const Divider(),
@@ -167,16 +194,33 @@ class NavList extends StatelessWidget {
                                     leading: const Icon(Icons.person_add),
                                     title: const Text('Invite'),
                                     onTap: () async {
-                                      final messenger = ScaffoldMessenger.maybeOf(context);
-                                      final account = context.read<PhylumAccount>();
+                                      final messenger =
+                                          ScaffoldMessenger.maybeOf(context);
+                                      final account =
+                                          context.read<PhylumAccount>();
                                       Scaffold.maybeOf(context)?.closeDrawer();
-                                      final result = await NewUserDetailsDialog.show(context);
+                                      final result =
+                                          await NewUserDetailsDialog.show(
+                                              context);
                                       if (result == null) return;
                                       final (email, name) = result;
-                                      final user = await account.userRepository.invite(email, name);
+                                      final user = await account.userRepository
+                                          .invite(email, name);
                                       messenger?.showSnackBar(SnackBar(
-                                        content: Text('Invited ${user.displayName}'),
+                                        content:
+                                            Text('Invited ${user.displayName}'),
                                         duration: Duration(seconds: 2),
+                                      ));
+                                    },
+                                  ),
+                                  ListTile(
+                                    leading: const Icon(Icons.settings),
+                                    title: const Text('Settings'),
+                                    onTap: () async {
+                                      Navigator.of(context)
+                                          .push(MaterialPageRoute(
+                                        builder: (context) =>
+                                            SettingsPage.create(account),
                                       ));
                                     },
                                   ),
@@ -195,7 +239,8 @@ class NavList extends StatelessWidget {
     );
   }
 
-  void fn(BuildContext context, Offset offset, SelectBookmarksResult bookmark) async {
+  void fn(BuildContext context, Offset offset,
+      SelectBookmarksResult bookmark) async {
     final position = RelativeRect.fromLTRB(
       offset.dx,
       offset.dy,
@@ -221,14 +266,17 @@ class NavList extends StatelessWidget {
           labelText: 'Name',
           preset: bookmark.name,
         );
-        if (name == null || name.trim().isEmpty || name == bookmark.name) return;
+        if (name == null || name.trim().isEmpty || name == bookmark.name) {
+          return;
+        }
         account.bookmarkRepository.addBookmarkDirect(
           resourceId: bookmark.resourceId,
           dir: bookmark.dir,
           name: name,
         );
       } else if (selection == MenuOption.bookmarkRemove) {
-        account.bookmarkRepository.removeBookmark(resourceId: bookmark.resourceId);
+        account.bookmarkRepository
+            .removeBookmark(resourceId: bookmark.resourceId);
       }
     }
   }
