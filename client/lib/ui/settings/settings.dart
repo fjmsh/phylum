@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/settings/settings_controller.dart';
-import 'package:phylum/ui/settings/user_list/user_list.dart';
+import 'package:phylum/ui/settings/user_list/user_list_page.dart';
 import 'package:phylum/ui/settings/user_list/user_list_controller.dart';
 import 'package:provider/provider.dart';
 

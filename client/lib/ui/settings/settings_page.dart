@@ -34,12 +34,20 @@ class _SettingsPageState extends State<SettingsPage> {
     final selected =
         context.select<SettingsState, Settings?>((state) => state.selected);
     if (selected != null) {
-      return selected.buildWithScaffold(context);
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          context.read<SettingsController>().updateSelected(null);
+        },
+        child: selected.buildWithScaffold(context),
+      );
     }
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Settings'),
+        leading: CloseButton(),
       ),
       body: ListView.builder(
         itemCount: settingsList.length,
