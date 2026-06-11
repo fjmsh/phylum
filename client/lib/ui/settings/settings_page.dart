@@ -20,6 +20,7 @@ class SettingsPage extends StatefulWidget {
           create: (context) => SettingsController(),
           child: MultiProvider(
             providers: settingsList
+                .whereType<Settings>()
                 .map((s) => s.providers)
                 .flattened
                 .toList(growable: false),
@@ -56,7 +57,8 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       body: ListView.builder(
         itemCount: settingsList.length,
-        itemBuilder: (context, i) => settingsList[i].buildTitle(context, false),
+        itemBuilder: (context, i) =>
+            settingsList[i].buildMenuItem(context, false),
       ),
     );
   }
@@ -64,28 +66,32 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget buildMasterDetail(BuildContext context, double width) {
     final selected =
         context.select<SettingsState, Settings?>((state) => state.selected) ??
-            settingsList[0];
+            settingsList[0] as Settings;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings'),
+        title: Text('Settings - ${selected.title}'),
         leading: CloseButton(),
       ),
       body: Center(
         child: SizedBox(
-          width: 1200,
+          width: 1000,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SizedBox(
-                width: 300,
+                width: 240,
                 child: ListView.builder(
                   itemCount: settingsList.length,
                   itemBuilder: (context, i) => settingsList[i]
-                      .buildTitle(context, settingsList[i] == selected),
+                      .buildMenuItem(context, settingsList[i] == selected),
                 ),
               ),
-              Expanded(child: selected.buildWithoutScaffold(context)),
+              Expanded(
+                  child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: selected.buildWithoutScaffold(context),
+              )),
             ],
           ),
         ),

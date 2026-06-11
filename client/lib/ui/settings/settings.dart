@@ -6,39 +6,51 @@ import 'package:phylum/ui/settings/user_list/user_list_controller.dart';
 import 'package:phylum/ui/settings/user_list/user_list_panel.dart';
 import 'package:provider/provider.dart';
 
-const settingsList = <Settings>[
+const settingsList = <SettingsItem>[
   UserSettings(),
+  TitleSettingsItem(title: 'About'),
 ];
 
-sealed class Settings {
+sealed class SettingsItem {
+  const SettingsItem();
+
+  Widget buildMenuItem(BuildContext context, bool selected);
+}
+
+class TitleSettingsItem extends SettingsItem {
+  final String title;
+
+  const TitleSettingsItem({required this.title});
+  @override
+  Widget buildMenuItem(BuildContext context, bool selected) => ListTile(
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+        dense: true,
+      );
+}
+
+sealed class Settings extends SettingsItem {
   const Settings();
+
+  IconData get icon;
+
+  String get title;
 
   List<StateNotifierProvider> get providers;
 
-  Widget buildTitle(BuildContext context, bool selected);
+  @override
+  Widget buildMenuItem(BuildContext context, bool selected) => ListTile(
+        leading: Icon(icon),
+        title: Text(title),
+        selected: selected,
+        onTap: () => context.read<SettingsController>().updateSelected(this),
+      );
 
   Widget buildWithScaffold(BuildContext context);
 
   Widget buildWithoutScaffold(BuildContext context);
 }
 
-sealed class SimpleSettings extends Settings {
-  const SimpleSettings();
-
-  IconData get icon;
-
-  String get title;
-
-  @override
-  Widget buildTitle(BuildContext context, bool selected) => ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        selected: selected,
-        onTap: () => context.read<SettingsController>().updateSelected(this),
-      );
-}
-
-class UserSettings extends SimpleSettings {
+class UserSettings extends Settings {
   @override
   IconData get icon => Icons.people;
 
