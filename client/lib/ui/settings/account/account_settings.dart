@@ -30,9 +30,12 @@ class AccountSettingsPane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final account = context.watch<PhylumAccount>();
-    return StateNotifierBuilder(
-        builder: (context, user, child) {
-          return ListView(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 18,
+      children: [
+        Card(
+          child: Column(
             children: [
               ListTile(
                 leading: Icon(Icons.storage),
@@ -42,19 +45,43 @@ class AccountSettingsPane extends StatelessWidget {
               ListTile(
                 leading: Icon(Icons.email),
                 title: Text('Email'),
-                subtitle: Text(user.email),
+                subtitle: Text(account.user.email),
               ),
-              ListTile(
-                leading: Icon(Icons.perm_identity),
-                title: Text('Name'),
-                subtitle: Text(user.name),
-                trailing: Icon(Icons.edit),
-                onTap: () => editName(context),
+              StateNotifierBuilder(
+                builder: (context, state, child) {
+                  return ListTile(
+                    leading: Icon(Icons.perm_identity),
+                    title: Text('Name'),
+                    subtitle: Text(context.read<PhylumAccount>().user.name),
+                    trailing: Icon(Icons.edit),
+                    onTap: () => editName(context),
+                  );
+                },
+                stateNotifier: account.userNotifier,
               ),
             ],
-          );
-        },
-        stateNotifier: account.userNotifier);
+          ),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.error,
+            foregroundColor: Theme.of(context).colorScheme.onError,
+          ),
+          child: Text('Log Out'),
+          onPressed: () async {
+            final abort = await showAlertDialog(context,
+                    title: 'Log Out?',
+                    message: 'Are you sure you want to log out?',
+                    positiveText: 'No',
+                    negativeText: 'Yes') ??
+                true;
+            if (abort || !context.mounted) return;
+            Navigator.of(context).pop();
+            context.read<PhylumAccount>().close(clearData: true);
+          },
+        ),
+      ],
+    );
   }
 
   void editName(BuildContext context) async {
