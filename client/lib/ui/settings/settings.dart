@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/settings/settings_controller.dart';
-import 'package:phylum/ui/settings/user_list/user_list_page.dart';
-import 'package:phylum/ui/settings/user_list/user_list_controller.dart';
-import 'package:phylum/ui/settings/user_list/user_list_panel.dart';
+import 'package:phylum/ui/settings/user_list/users_settings.dart';
 import 'package:provider/provider.dart';
 
 const settingsList = <SettingsItem>[
-  UserSettings(),
+  UsersSettings(),
   TitleSettingsItem(title: 'About'),
 ];
 
@@ -28,7 +26,7 @@ class TitleSettingsItem extends SettingsItem {
       );
 }
 
-sealed class Settings extends SettingsItem {
+abstract class Settings extends SettingsItem {
   const Settings();
 
   IconData get icon;
@@ -48,26 +46,4 @@ sealed class Settings extends SettingsItem {
   Widget buildWithScaffold(BuildContext context);
 
   Widget buildWithoutScaffold(BuildContext context);
-}
-
-class UserSettings extends Settings {
-  @override
-  IconData get icon => Icons.people;
-
-  @override
-  String get title => 'Users';
-
-  @override
-  List<StateNotifierProvider> get providers => [
-        StateNotifierProvider<UserListController, UserList>(
-            create: (context) => UserListController(context))
-      ];
-
-  const UserSettings();
-
-  @override
-  Widget buildWithScaffold(BuildContext context) => const UserListPage();
-
-  @override
-  Widget buildWithoutScaffold(BuildContext context) => const UserListPanel();
 }
