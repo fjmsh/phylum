@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:phylum/ui/settings/account/account_settings.dart';
 import 'package:phylum/ui/settings/settings_controller.dart';
 import 'package:phylum/ui/settings/user_list/users_settings.dart';
 import 'package:provider/provider.dart';
 
 const settingsList = <SettingsItem>[
+  AccountSettings(),
+  TitleSettingsItem(title: 'Admin'),
   UsersSettings(),
-  TitleSettingsItem(title: 'About'),
 ];
 
 sealed class SettingsItem {
@@ -43,7 +45,12 @@ abstract class Settings extends SettingsItem {
         onTap: () => context.read<SettingsController>().updateSelected(this),
       );
 
-  Widget buildWithScaffold(BuildContext context);
+  Widget buildWithScaffold(BuildContext context) => Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+        ),
+        body: buildWithScaffold(context),
+      );
 
   Widget buildWithoutScaffold(BuildContext context);
 }
