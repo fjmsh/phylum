@@ -8,19 +8,20 @@ import 'package:phylum/libphylum/requests/api_key_generate_request.dart';
 import 'package:phylum/libphylum/requests/api_key_revoke_request.dart';
 import 'package:phylum/libphylum/requests/api_keys_list_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/ui/profile/generate_api_key_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
-class ApiKeysView extends StatefulWidget {
-  const ApiKeysView({super.key});
+import 'generate_api_key_dialog.dart';
+
+class SessionsKeysView extends StatefulWidget {
+  const SessionsKeysView({super.key});
 
   @override
-  State<ApiKeysView> createState() => _ApiKeysViewState();
+  State<SessionsKeysView> createState() => _SessionsKeysViewState();
 }
 
-class _ApiKeysViewState extends State<ApiKeysView> {
+class _SessionsKeysViewState extends State<SessionsKeysView> {
   String? error;
   List<ApiKey>? keys;
 
@@ -45,29 +46,40 @@ class _ApiKeysViewState extends State<ApiKeysView> {
         tileColor: Theme.of(context).colorScheme.surfaceBright,
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: ElevatedButton.icon(
-              onPressed: () => createKey(context),
-              label: Text('Generate New API Key'),
-              icon: Icon(Icons.add),
+          Flexible(
+            fit: FlexFit.loose,
+            child: Material(
+              child: ListView.separated(
+                shrinkWrap: true,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, i) {
+                  final k = keys[i];
+                  return ListTile(
+                    title: k.description.isEmpty
+                        ? const Text('No Description',
+                            style: TextStyle(fontStyle: FontStyle.italic))
+                        : Text(k.description),
+                    subtitle: k.lastUsed.used
+                        ? Text(
+                            '${k.lastUsed.device} \u2022 ${k.lastUsed.fromNow()}')
+                        : const Text('Never Used'),
+                    onTap: () => _showKeyDetails(context, k),
+                  );
+                },
+                itemCount: keys.length,
+              ),
             ),
           ),
-          ...ListTile.divideTiles(context: context, tiles: [
-            for (final k in keys)
-              ListTile(
-                title: k.description.isEmpty
-                    ? const Text('No Description', style: TextStyle(fontStyle: FontStyle.italic))
-                    : Text(k.description),
-                subtitle: k.lastUsed.used
-                    ? Text('${k.lastUsed.device} \u2022 ${k.lastUsed.fromNow()}')
-                    : const Text('Never Used'),
-                onTap: () => _showKeyDetails(context, k),
-              ),
-          ]),
+          Padding(
+            padding: EdgeInsetsGeometry.all(24),
+            child: ElevatedButton.icon(
+              onPressed: () => createKey(context),
+              icon: Icon(Icons.add),
+              label: Text('New API Key'),
+            ),
+          ),
         ],
       ),
     );
@@ -81,20 +93,24 @@ class _ApiKeysViewState extends State<ApiKeysView> {
       builder: (context) => AlertDialog(
         title: Text('Key Details'),
         content: ListTileTheme(
-          data: ListTileThemeData(visualDensity: VisualDensity.adaptivePlatformDensity),
+          data: ListTileThemeData(
+              visualDensity: VisualDensity.adaptivePlatformDensity),
           child: Column(
             children: [
               ListTile(
                 title: const Text('ID'),
                 subtitle: Text(key.id),
                 trailing: IconButton(
-                    onPressed: () => Clipboard.setData(ClipboardData(text: key.id)), icon: const Icon(Icons.copy)),
+                    onPressed: () =>
+                        Clipboard.setData(ClipboardData(text: key.id)),
+                    icon: const Icon(Icons.copy)),
               ),
               StatefulBuilder(builder: (context, ss) {
                 return ListTile(
                   title: const Text('Description'),
                   subtitle: desc.isEmpty
-                      ? const Text('No Description', style: TextStyle(fontStyle: FontStyle.italic))
+                      ? const Text('No Description',
+                          style: TextStyle(fontStyle: FontStyle.italic))
                       : Text(desc),
                   trailing: IconButton(
                       onPressed: () async {
@@ -108,39 +124,49 @@ class _ApiKeysViewState extends State<ApiKeysView> {
                         if (description == null || !context.mounted) return;
 
                         showProgressDialog(context);
-                        final result = await account.apiClient
-                            .sendRequest(EditApiKeyRequest(id: key.id, description: description));
+                        final result = await account.apiClient.sendRequest(
+                            EditApiKeyRequest(
+                                id: key.id, description: description));
                         nav.pop();
                         if (result is ApiSuccessResponse) {
                           if (context.mounted) {
                             ss(() => desc = description);
-                            setState(() => keys![keys!.indexOf(key)] = key.copyWith(description: description));
+                            setState(() => keys![keys!.indexOf(key)] =
+                                key.copyWith(description: description));
                           }
                         } else {
                           if (context.mounted) {
                             await showAlertDialog(context,
-                                title: 'Unable to delete API Key', message: result.description);
+                                title: 'Unable to delete API Key',
+                                message: result.description);
                           }
                         }
                       },
                       icon: Icon(Icons.edit)),
                 );
               }),
-              ListTile(title: const Text('Created'), subtitle: Text(key.created.fromNow())),
               ListTile(
-                  title:
-                      (key.expires?.isBefore(DateTime.now()) ?? false) ? const Text('Expired') : const Text('Expires'),
+                  title: const Text('Created'),
+                  subtitle: Text(key.created.fromNow())),
+              ListTile(
+                  title: (key.expires?.isBefore(DateTime.now()) ?? false)
+                      ? const Text('Expired')
+                      : const Text('Expires'),
                   subtitle: key.expires == null
                       ? const Text(
                           'Never',
                           style: TextStyle(fontStyle: FontStyle.italic),
                         )
-                      : Text('${key.expires!.fromNow()} (${key.expires!.formatShort()})')),
-              ListTile(title: const Text('Scopes'), subtitle: Text(key.scopes.join(', '))),
+                      : Text(
+                          '${key.expires!.fromNow()} (${key.expires!.formatShort()})')),
+              ListTile(
+                  title: const Text('Scopes'),
+                  subtitle: Text(key.scopes.join(', '))),
               ListTile(
                 title: const Text('Last Used'),
                 subtitle: key.lastUsed.used
-                    ? Text('${key.lastUsed.device} \u2022 ${key.lastUsed.ip} \u2022 ${key.lastUsed.fromNow()}')
+                    ? Text(
+                        '${key.lastUsed.device} \u2022 ${key.lastUsed.ip} \u2022 ${key.lastUsed.fromNow()}')
                     : const Text(
                         'Never',
                         style: TextStyle(fontStyle: FontStyle.italic),
@@ -155,7 +181,8 @@ class _ApiKeysViewState extends State<ApiKeysView> {
               onPressed: () async {
                 final nav = Navigator.of(context);
                 showProgressDialog(context);
-                final result = await account.apiClient.sendRequest(RevokeApiKeyRequest(id: key.id, delete: true));
+                final result = await account.apiClient
+                    .sendRequest(RevokeApiKeyRequest(id: key.id, delete: true));
                 nav.pop();
                 if (result is ApiSuccessResponse) {
                   if (context.mounted) {
@@ -165,12 +192,17 @@ class _ApiKeysViewState extends State<ApiKeysView> {
                   }
                 } else {
                   if (context.mounted) {
-                    await showAlertDialog(context, title: 'Unable to delete API Key', message: result.description);
+                    await showAlertDialog(context,
+                        title: 'Unable to delete API Key',
+                        message: result.description);
                   }
                 }
               },
-              child: Text('Delete Key', style: TextStyle(color: Theme.of(context).colorScheme.error))),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(), child: Text('OK')),
+              child: Text('Delete Key',
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.error))),
+          ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(), child: Text('OK')),
         ],
       ),
     );
@@ -178,7 +210,8 @@ class _ApiKeysViewState extends State<ApiKeysView> {
 
   void fetchKeys(BuildContext context) async {
     final account = context.read<PhylumAccount>();
-    final response = await account.apiClient.sendRequest(const ListApiKeysRequest());
+    final response =
+        await account.apiClient.sendRequest(const ListApiKeysRequest());
 
     if (response is ListApiKeysResponse) {
       response.keys.sort((a, b) {
@@ -226,13 +259,14 @@ class _ApiKeysViewState extends State<ApiKeysView> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(bottom: 6.0),
-                        child: Text('Key ID and Key can be used as the username and password in HTTP Basic auth'),
+                        child: Text(
+                            'Key ID and Key can be used as the username and password in HTTP Basic auth'),
                       ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 6.0),
-                        child:
-                            Text('Access Token can be used as a Bearer token, or with HTTP Basic auth by leaving the '
-                                'username empty'),
+                        child: Text(
+                            'Access Token can be used as a Bearer token, or with HTTP Basic auth by leaving the '
+                            'username empty'),
                       ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 6.0),
@@ -243,7 +277,8 @@ class _ApiKeysViewState extends State<ApiKeysView> {
                         decoration: InputDecoration(
                           label: Text('Key ID'),
                           suffixIcon: IconButton(
-                              onPressed: () => Clipboard.setData(ClipboardData(text: response.keyId)),
+                              onPressed: () => Clipboard.setData(
+                                  ClipboardData(text: response.keyId)),
                               icon: Icon(Icons.copy)),
                         ),
                         initialValue: response.keyId,
@@ -253,7 +288,8 @@ class _ApiKeysViewState extends State<ApiKeysView> {
                         decoration: InputDecoration(
                           label: Text('Key'),
                           suffixIcon: IconButton(
-                              onPressed: () => Clipboard.setData(ClipboardData(text: response.key)),
+                              onPressed: () => Clipboard.setData(
+                                  ClipboardData(text: response.key)),
                               icon: Icon(Icons.copy)),
                         ),
                         initialValue: response.key,
@@ -263,7 +299,8 @@ class _ApiKeysViewState extends State<ApiKeysView> {
                         decoration: InputDecoration(
                           label: Text('Access Token'),
                           suffixIcon: IconButton(
-                              onPressed: () => Clipboard.setData(ClipboardData(text: response.accessToken)),
+                              onPressed: () => Clipboard.setData(
+                                  ClipboardData(text: response.accessToken)),
                               icon: Icon(Icons.copy)),
                         ),
                         initialValue: response.accessToken,
@@ -273,12 +310,15 @@ class _ApiKeysViewState extends State<ApiKeysView> {
                   ),
                 ),
                 actions: [
-                  ElevatedButton(onPressed: () => Navigator.of(context).pop(), child: Text('OK')),
+                  ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text('OK')),
                 ],
               ));
     } else {
       if (!context.mounted) return;
-      showAlertDialog(context, title: 'Error Generating API Key', message: response.description);
+      showAlertDialog(context,
+          title: 'Error Generating API Key', message: response.description);
     }
   }
 }

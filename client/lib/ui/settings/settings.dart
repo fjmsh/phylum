@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/settings/account/account_settings.dart';
+import 'package:phylum/ui/settings/security/sessions_keys_settings.dart';
 import 'package:phylum/ui/settings/settings_controller.dart';
 import 'package:phylum/ui/settings/user_list/users_settings.dart';
 import 'package:provider/provider.dart';
 
 const settingsList = <SettingsItem>[
   AccountSettings(),
+  SesssionsKeysSettings(),
   TitleSettingsItem(title: 'Admin'),
   UsersSettings(),
 ];

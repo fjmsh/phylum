@@ -8,7 +8,7 @@ import 'package:phylum/libphylum/requests/change_password_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
-import 'package:phylum/ui/profile/api_keys_view.dart';
+import 'package:phylum/ui/settings/security/sessions_keys_pane.dart';
 import 'package:phylum/ui/profile/profile_view.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
@@ -48,7 +48,9 @@ class ProfileDialog extends StatelessWidget {
             children: [
               const CloseButton(),
               const LogoRow(),
-              IconButton(onPressed: () => _showAboutDialog(context), icon: Icon(Icons.help_outline))
+              IconButton(
+                  onPressed: () => _showAboutDialog(context),
+                  icon: Icon(Icons.help_outline))
             ],
           ),
         ),
@@ -72,20 +74,24 @@ class ProfileDialog extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.fade,
                               softWrap: false,
-                              style: user.name.isEmpty ? TextStyle(fontStyle: FontStyle.italic) : null,
+                              style: user.name.isEmpty
+                                  ? TextStyle(fontStyle: FontStyle.italic)
+                                  : null,
                             );
                           }),
                     ),
                     IconButton(
                       icon: const Icon(Icons.edit, size: 18),
                       splashRadius: 6,
-                      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 6),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 3, horizontal: 6),
                       constraints: const BoxConstraints(),
                       onPressed: () => editName(context),
                     ),
                   ],
                 ),
-                subtitle: Text(context.read<PhylumAccount>().apiClient.serverUrl.host),
+                subtitle: Text(
+                    context.read<PhylumAccount>().apiClient.serverUrl.host),
               ),
               Divider(thickness: 2, height: 2),
               ListTile(
@@ -99,7 +105,8 @@ class ProfileDialog extends StatelessWidget {
                   visualDensity: VisualDensity.compact,
                   leading: Icon(Icons.key),
                   title: Text('API Keys'),
-                  onTap: () => showReponsiveDialog(context, 'API Keys', (context) => const ApiKeysView())),
+                  onTap: () => showReponsiveDialog(context, 'API Keys',
+                      (context) => const SessionsKeysView())),
               Divider(thickness: 1, height: 1),
               ListTile(
                 visualDensity: VisualDensity.compact,
@@ -128,7 +135,8 @@ class ProfileDialog extends StatelessWidget {
         width: 48,
         fit: BoxFit.contain,
       ),
-      applicationVersion: '${packageInfo.packageName} - ${packageInfo.version} (${packageInfo.buildNumber})',
+      applicationVersion:
+          '${packageInfo.packageName} - ${packageInfo.version} (${packageInfo.buildNumber})',
       children: [
         SizedBox(
           width: 360,
@@ -142,12 +150,15 @@ class ProfileDialog extends StatelessWidget {
                 TextSpan(text: 'Phylum is Free Software offered under the '),
                 TextSpan(
                   text: 'GNU AGPL V3.0',
-                  style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.primary),
                   recognizer: TapGestureRecognizer()
-                    ..onTap = () => launchUrl(Uri.parse('https://www.gnu.org/licenses/agpl-3.0.en.html')),
+                    ..onTap = () => launchUrl(Uri.parse(
+                        'https://www.gnu.org/licenses/agpl-3.0.en.html')),
                 )
               ],
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
             ),
           ),
         ),
@@ -156,9 +167,11 @@ class ProfileDialog extends StatelessWidget {
           child: RichText(
             text: TextSpan(
               text: 'View Source on Codeberg',
-              style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 16),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary, fontSize: 16),
               recognizer: TapGestureRecognizer()
-                ..onTap = () => launchUrl(Uri.parse('https://codeberg.org/shroff/phylum')),
+                ..onTap = () =>
+                    launchUrl(Uri.parse('https://codeberg.org/shroff/phylum')),
             ),
           ),
         ),
@@ -167,9 +180,11 @@ class ProfileDialog extends StatelessWidget {
           child: RichText(
             text: TextSpan(
               text: 'Get help on Matrix',
-              style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 16),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary, fontSize: 16),
               recognizer: TapGestureRecognizer()
-                ..onTap = () => launchUrl(Uri.parse('https://matrix.to/#/#phylum_cloud:matrix.org')),
+                ..onTap = () => launchUrl(
+                    Uri.parse('https://matrix.to/#/#phylum_cloud:matrix.org')),
             ),
           ),
         ),
@@ -190,7 +205,8 @@ class ProfileDialog extends StatelessWidget {
     final nav = Navigator.of(context);
     showProgressDialog(context, title: 'Updating Name');
 
-    final response = await account.apiClient.sendRequest(EditUserNameRequest(name));
+    final response =
+        await account.apiClient.sendRequest(EditUserNameRequest(name));
 
     nav.pop();
     if (response is UserResponse) {
@@ -245,7 +261,10 @@ class ProfileDialog extends StatelessWidget {
               ),
               Row(
                 children: [
-                  Checkbox(value: passwordsVisible, onChanged: (value) => setState(() => passwordsVisible = value!)),
+                  Checkbox(
+                      value: passwordsVisible,
+                      onChanged: (value) =>
+                          setState(() => passwordsVisible = value!)),
                   const Text('Show Passwords')
                 ],
               )
@@ -253,7 +272,8 @@ class ProfileDialog extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+              style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error),
               child: Text('Cancel'),
               onPressed: () => Navigator.of(context).pop(false),
             ),
@@ -263,7 +283,8 @@ class ProfileDialog extends StatelessWidget {
               onPressed: () async {
                 showProgressDialog(context, title: 'Changing Password');
 
-                final response = await account.apiClient.sendRequest(ChangePasswordRequest(
+                final response =
+                    await account.apiClient.sendRequest(ChangePasswordRequest(
                   email: account.user.email,
                   oldPassword: oldPassword,
                   newPassword: newPassword,

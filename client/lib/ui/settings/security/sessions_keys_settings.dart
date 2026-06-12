@@ -2,21 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/settings/settings.dart';
 
-class SecuritySettings extends Settings {
+import 'sessions_keys_pane.dart';
+
+class SesssionsKeysSettings extends Settings {
   @override
   IconData get icon => Icons.security;
 
   @override
-  String get title => 'Security';
+  String get title => 'Sessions and Keys';
 
-  const SecuritySettings();
+  const SesssionsKeysSettings();
 
   @override
   List<StateNotifierProvider> get providers => const [];
 
   @override
-  Widget buildWithScaffold(BuildContext context) => Placeholder();
-
-  @override
-  Widget buildWithoutScaffold(BuildContext context) => Placeholder();
+  Widget buildWithoutScaffold(BuildContext context) => const SessionsKeysView();
 }
