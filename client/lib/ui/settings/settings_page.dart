@@ -3,17 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/layout/responsive.dart';
+import 'package:phylum/ui/settings/account/account_settings.dart';
+import 'package:phylum/ui/settings/logs/logs_settings.dart';
+import 'package:phylum/ui/settings/security/sessions_keys_settings.dart';
 import 'package:phylum/ui/settings/settings.dart';
 import 'package:phylum/ui/settings/settings_controller.dart';
+import 'package:phylum/ui/settings/user_list/users_settings.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  final List<SettingsItem> settingsList;
+  const SettingsPage({super.key, required this.settingsList});
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 
   static Widget create(PhylumAccount account) {
+    final settingsList = _getSettingsList(account);
     return Provider<PhylumAccount>.value(
         value: account,
         child: StateNotifierProvider<SettingsController, SettingsState>(
@@ -24,7 +30,7 @@ class SettingsPage extends StatefulWidget {
                 .map((s) => s.providers)
                 .flattened
                 .toList(growable: false),
-            child: const SettingsPage(),
+            child: SettingsPage(settingsList: settingsList),
           ),
         ));
   }
@@ -56,9 +62,9 @@ class _SettingsPageState extends State<SettingsPage> {
         leading: CloseButton(),
       ),
       body: ListView.builder(
-        itemCount: settingsList.length,
+        itemCount: widget.settingsList.length,
         itemBuilder: (context, i) =>
-            settingsList[i].buildMenuItem(context, false),
+            widget.settingsList[i].buildMenuItem(context, false),
       ),
     );
   }
@@ -66,7 +72,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget buildMasterDetail(BuildContext context, double width) {
     final selected =
         context.select<SettingsState, Settings?>((state) => state.selected) ??
-            settingsList[0] as Settings;
+            widget.settingsList.firstWhere((s) => s is Settings) as Settings;
 
     return Scaffold(
       appBar: AppBar(
@@ -82,9 +88,10 @@ class _SettingsPageState extends State<SettingsPage> {
               SizedBox(
                 width: 240,
                 child: ListView.builder(
-                  itemCount: settingsList.length,
-                  itemBuilder: (context, i) => settingsList[i]
-                      .buildMenuItem(context, settingsList[i] == selected),
+                  itemCount: widget.settingsList.length,
+                  itemBuilder: (context, i) => widget.settingsList[i]
+                      .buildMenuItem(
+                          context, widget.settingsList[i] == selected),
                 ),
               ),
               Expanded(
@@ -98,4 +105,22 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
+}
+
+List<SettingsItem> _getSettingsList(PhylumAccount account) {
+  final list = <SettingsItem>[
+    AccountSettings(),
+    SesssionsKeysSettings(),
+    LogsSettings(),
+  ];
+
+  final adminSettings = <SettingsItem>[
+    if (account.user.hasPermission('users:view')) UsersSettings(),
+  ];
+
+  if (adminSettings.isNotEmpty) {
+    list.add(TitleSettingsItem(title: 'Admin'));
+    list.addAll(adminSettings);
+  }
+  return list;
 }
