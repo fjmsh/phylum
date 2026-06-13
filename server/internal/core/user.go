@@ -11,13 +11,15 @@ type UserPermissions []UserPermission
 type UserPermission = string
 
 const (
-	UserPermissionUsersInvite = UserPermission("users:invite")
-	UserPermissionUsersGrant  = UserPermission("users:grant")
-	UserPermissionFilesAll    = UserPermission("files")
-	UserPermissionFilesRead   = UserPermission("files:read")
-	UserPermissionFilesWrite  = UserPermission("files:write")
-	UserPermissionFilesShare  = UserPermission("files:share")
-	UserPermissionSU          = UserPermission("*")
+	UserPermissionInvite     = UserPermission("invite")
+	UserPermissionUsersList  = UserPermission("users:list")
+	UserPermissionUsersAdd   = UserPermission("users:add")
+	UserPermissionUsersGrant = UserPermission("users:grant")
+	UserPermissionFilesAll   = UserPermission("files")
+	UserPermissionFilesRead  = UserPermission("files:read")
+	UserPermissionFilesWrite = UserPermission("files:write")
+	UserPermissionFilesShare = UserPermission("files:share")
+	UserPermissionSU         = UserPermission("*")
 )
 
 type User struct {

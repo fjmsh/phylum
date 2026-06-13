@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
+	"codeberg.org/shroff/phylum/server/internal/api/v1/admin"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/auth"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/fs"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/publinks"
@@ -31,7 +32,8 @@ func Setup(r *gin.RouterGroup, logger *zerolog.Logger) {
 	user.SetupRoutes(r)
 	publinks.SetupRoutes(r)
 	trash.SetupRoutes(r)
-	users.SetupUserRoutes(r)
+	users.SetupRoutes(r)
+	admin.SetupRoutes(r)
 }
 
 func SetupConfig(r *gin.RouterGroup, logger *zerolog.Logger) {

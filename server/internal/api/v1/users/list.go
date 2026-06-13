@@ -14,12 +14,6 @@ import (
 
 var errInvalidParams = core.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
 
-func SetupUserRoutes(r *gin.RouterGroup) {
-	group := r.Group("/users")
-	group.GET("/list", handleUsersListRoute)
-	group.POST("/invite", handleInviteRequest)
-}
-
 func handleUsersListRoute(c *gin.Context) {
 	var since int64
 	auth := authenticator.GetAuth(c)
