@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -22,6 +23,11 @@ import 'util/device_info/device_info_vm.dart'
 const storageDir = String.fromEnvironment("STORAGE_DIR");
 
 void main() async {
+  runZonedGuarded(
+      run, (err, stack) => Log.warn('Uncaught Zone Error', err, stack));
+}
+
+void run() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
   await Log.init();
@@ -54,5 +60,12 @@ void main() async {
 
   Log.fine('Initialized App');
 
+  FlutterError.onError = (details) {
+    Log.warn(
+      'Framework Error',
+      details.exceptionAsString(),
+      details.stack,
+    );
+  };
   runApp(const PhylumApp());
 }
