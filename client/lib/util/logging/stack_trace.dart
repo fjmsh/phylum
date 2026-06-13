@@ -1,4 +1,4 @@
-part of 'logging.dart';
+import 'dart:math';
 
 /// Matches a stacktrace line as generated on Android/iOS devices.
 ///
@@ -19,14 +19,12 @@ final _webStackTraceRegex = RegExp(r'^((?:packages|dart-sdk)/\S+/)');
 /// * package:logger/src/logger.dart
 final _browserStackTraceRegex = RegExp(r'^((?:package:)?dart:\S+|\S+)');
 
-void _appendStackTrace(
-  List<String> output,
-  StackTrace? stackTrace, {
+String cleanupStackTrace(
+  StackTrace stackTrace, {
   int? methodCount,
   int stackTraceBeginIndex = 0,
   String? separator = '======',
 }) {
-  if (stackTrace == null) return;
   List<String> lines = stackTrace
       .toString()
       .split('\n')
@@ -39,20 +37,21 @@ void _appendStackTrace(
       )
       .toList();
 
-  bool printed = false;
   int stackTraceLength =
       (methodCount != null ? min(lines.length, methodCount) : lines.length);
+  final output = <String>[];
   for (int count = 0; count < stackTraceLength; count++) {
     var line = lines[count];
     if (count < stackTraceBeginIndex) {
       continue;
     }
-    printed = true;
     output.add('#$count   ${line.replaceFirst(RegExp(r'#\d+\s+'), '')}');
   }
-  if (printed && separator != null) {
+
+  if (separator != null) {
     output.add(separator);
   }
+  return output.join('\n');
 }
 
 bool _discardDeviceStacktraceLine(String line) {

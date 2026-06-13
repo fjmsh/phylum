@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
@@ -7,17 +7,23 @@ import 'package:logging/logging.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/util/prefs/prefs.dart';
 
-part 'stack_trace.dart';
+import 'stack_trace.dart';
 
 const _keyLogLevel = 'logLevel';
 final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
 
 late final Logger _logger;
 
+final _records = <String>[];
+final _recordsStream = StreamController<String>();
+
 abstract class Log {
   static Future<void> init() {
     return _init();
   }
+
+  static List<String> get records => List.unmodifiable(_records);
+  static Stream<String> get recordStream => _recordsStream.stream;
 
   static void finest(dynamic message,
           [dynamic error, StackTrace? stackTrace]) =>
@@ -46,11 +52,16 @@ abstract class Log {
 Future<void> _init() async {
   hierarchicalLoggingEnabled = true;
   Logger.root.level = await getLevel();
-  Logger.root.onRecord.listen((record) {});
+  Logger.root.onRecord.listen((record) {
+    final r = _stringify(record).join('\n');
+    _records.add(r);
+    _recordsStream.add(r);
+  });
 
   _logger = Logger('Phylum');
   _logger.level = kDebugMode ? Level.FINE : Level.WARNING;
   _logger.onRecord.listen((record) {
+    // ignore: avoid_print
     print('[Phylum] ${_stringify(record).join('\n')}');
   });
 
@@ -78,7 +89,9 @@ List<String> _stringify(LogRecord record) {
     output.add(record.error.toString());
   }
 
-  _appendStackTrace(output, record.stackTrace);
+  if (record.stackTrace != null) {
+    output.add(cleanupStackTrace(record.stackTrace!));
+  }
 
   return output;
 }
