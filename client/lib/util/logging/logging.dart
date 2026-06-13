@@ -14,16 +14,14 @@ final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
 
 late final Logger _logger;
 
-final _records = <String>[];
-final _recordsStream = StreamController<String>();
+final _records = <LogRecord>[];
 
 abstract class Log {
   static Future<void> init() {
     return _init();
   }
 
-  static List<String> get records => List.unmodifiable(_records);
-  static Stream<String> get recordStream => _recordsStream.stream;
+  static List<LogRecord> get records => List.unmodifiable(_records);
 
   static void finest(dynamic message,
           [dynamic error, StackTrace? stackTrace]) =>
@@ -51,18 +49,16 @@ abstract class Log {
 
 Future<void> _init() async {
   hierarchicalLoggingEnabled = true;
-  Logger.root.level = await getLevel();
+  Logger.root.level = await _getLevel();
   Logger.root.onRecord.listen((record) {
-    final r = _stringify(record).join('\n');
-    _records.add(r);
-    _recordsStream.add(r);
+    _records.add(record);
   });
 
   _logger = Logger('Phylum');
   _logger.level = kDebugMode ? Level.FINE : Level.WARNING;
   _logger.onRecord.listen((record) {
     // ignore: avoid_print
-    print('[Phylum] ${_stringify(record).join('\n')}');
+    print('[Phylum] ${stringifyRecord(record, true)}');
   });
 
   otlLogger = (LogLevel level, dynamic message,
@@ -79,18 +75,19 @@ Future<void> _init() async {
   };
 }
 
-List<String> _stringify(LogRecord record) {
-  final output = <String>[];
-  final time = dateFormat.format(record.time);
-  final msg = _stringifyMessage(record.message);
-  output.add('$time: [${_stringifyLevel(record.level)}] $msg');
+String stringifyRecord(LogRecord record, [bool truncate = false]) {
+  String message =
+      record.object != null ? stringifyMessage(record.object) : record.message;
+  String output =
+      '${dateFormat.format(record.time)}: [${_stringifyLevel(record.level)}] $message}';
 
   if (record.error != null) {
-    output.add(record.error.toString());
+    output += '\n${record.error.toString()}';
   }
 
   if (record.stackTrace != null) {
-    output.add(cleanupStackTrace(record.stackTrace!));
+    output +=
+        '\n${cleanupStackTrace(record.stackTrace!, methodCount: truncate ? 6 : null)}';
   }
 
   return output;
@@ -110,7 +107,7 @@ String _stringifyLevel(Level level) {
   };
 }
 
-String _stringifyMessage(dynamic message) {
+String stringifyMessage(dynamic message) {
   final finalMessage = message is Function ? message() : message;
   if (finalMessage is Map || finalMessage is Iterable) {
     var encoder = JsonEncoder.withIndent('  ', (obj) => obj.toString());
@@ -120,7 +117,7 @@ String _stringifyMessage(dynamic message) {
   }
 }
 
-Future<Level> getLevel() async {
+Future<Level> _getLevel() async {
   final prefs = await Prefs.get();
   final level = prefs.getInt(_keyLogLevel);
   if (level != null) {

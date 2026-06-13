@@ -23,7 +23,6 @@ String cleanupStackTrace(
   StackTrace stackTrace, {
   int? methodCount,
   int stackTraceBeginIndex = 0,
-  String? separator = '======',
 }) {
   List<String> lines = stackTrace
       .toString()
@@ -48,9 +47,6 @@ String cleanupStackTrace(
     output.add('#$count   ${line.replaceFirst(RegExp(r'#\d+\s+'), '')}');
   }
 
-  if (separator != null) {
-    output.add(separator);
-  }
   return output.join('\n');
 }
 
