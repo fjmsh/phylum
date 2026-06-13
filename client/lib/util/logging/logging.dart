@@ -79,7 +79,7 @@ String stringifyRecord(LogRecord record, [bool truncate = false]) {
   String message =
       record.object != null ? stringifyMessage(record.object) : record.message;
   String output =
-      '${dateFormat.format(record.time)}: [${_stringifyLevel(record.level)}] $message}';
+      '${dateFormat.format(record.time)}: [${_stringifyLevel(record.level)}] $message';
 
   if (record.error != null) {
     output += '\n${record.error.toString()}';

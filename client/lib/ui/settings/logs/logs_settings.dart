@@ -69,65 +69,93 @@ class _LogsPaneState extends State<LogsPane> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemBuilder: (context, i) {
-        final record = records[i];
-        return InkWell(
-          child: LogRecordSummary(record: record),
-          onTap: () {
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text('Log Entry'),
-                content: SizedBox(
-                  width: 360,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    spacing: 6,
-                    children: [
-                      LogRecordSummary(record: record, standalone: false),
-                      if (record.error != null) Text(record.error.toString()),
-                      if (record.stackTrace != null)
-                        ConstrainedBox(
-                          constraints: BoxConstraints(maxHeight: 360),
-                          child: TextFormField(
-                            initialValue: cleanupStackTrace(record.stackTrace!),
-                            readOnly: true,
-                            expands: true,
-                            maxLines: null,
-                            minLines: null,
-                          ),
-                        )
-                    ],
+    return Theme(
+      data: ThemeData(fontFamily: 'RobotoMono'),
+      child: ListView.builder(
+        itemBuilder: (context, i) {
+          final record = records[i];
+          return InkWell(
+            child: LogRecordSummary(record: record),
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text('Log Entry'),
+                  content: SizedBox(
+                    width: 360,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          record.object == null
+                              ? record.message
+                              : stringifyMessage(record.object),
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        if (record.error != null) Text(record.error.toString()),
+                        SizedBox(height: 6),
+                        Text(
+                          record.level.name,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          softWrap: false,
+                          maxLines: 1,
+                          overflow: TextOverflow.fade,
+                        ),
+                        Text(
+                          dateFormat.format(record.time),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          softWrap: false,
+                          maxLines: 1,
+                          overflow: TextOverflow.fade,
+                        ),
+                        if (record.stackTrace != null)
+                          ConstrainedBox(
+                            constraints: BoxConstraints(maxHeight: 360),
+                            child: TextFormField(
+                              decoration: InputDecoration(
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                              ),
+                              initialValue:
+                                  cleanupStackTrace(record.stackTrace!),
+                              readOnly: true,
+                              expands: true,
+                              maxLines: null,
+                              minLines: null,
+                            ),
+                          )
+                      ],
+                    ),
                   ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Clipboard.setData(
+                            ClipboardData(text: stringifyRecord(record)));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('Copied to Clipboard'),
+                          duration: Duration(milliseconds: 1000),
+                        ));
+                      },
+                      child: Text('Copy'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text('Okay'),
+                    ),
+                  ],
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Clipboard.setData(
-                          ClipboardData(text: stringifyRecord(record)));
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('Copied to Clipboard'),
-                        duration: Duration(milliseconds: 1000),
-                      ));
-                    },
-                    child: Text('Copy'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text('Okay'),
-                  ),
-                ],
-              ),
-            );
-            // showAlertDialog(context, message: stringifyRecord(record));
-          },
-        );
-      },
-      prototypeItem: LogRecordSummary(record: prototypeRecord),
-      itemCount: records.length,
-      controller: _scrollController,
+              );
+              // showAlertDialog(context, message: stringifyRecord(record));
+            },
+          );
+        },
+        prototypeItem: LogRecordSummary(record: prototypeRecord),
+        itemCount: records.length,
+        controller: _scrollController,
+      ),
     );
   }
 }
@@ -145,13 +173,14 @@ class LogRecordSummary extends StatelessWidget {
         ? stringifyMessage(record.object)
         : record.message;
     if (standalone && record.error != null) {
-      message += ' | ${record.error}';
+      message += ' \u2022 ${record.error}';
     }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
       child: Row(
         spacing: 12,
         children: [
+          Icon(_getIcon(record.level)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,7 +194,7 @@ class LogRecordSummary extends StatelessWidget {
                   overflow: TextOverflow.fade,
                 ),
                 Text(
-                  '${dateFormat.format(record.time)} \u2022 ${record.level.name}',
+                  '${dateFormat.format(record.time)} | ${record.level.name}',
                   style: Theme.of(context).textTheme.bodyMedium,
                   softWrap: false,
                   maxLines: 1,
@@ -175,7 +204,7 @@ class LogRecordSummary extends StatelessWidget {
             ),
           ),
           if (standalone && (record.error != null || record.stackTrace != null))
-            Icon(Icons.bug_report),
+            Icon(Icons.warning_amber_rounded),
           if (standalone)
             IconButton(
               onPressed: () {
@@ -190,5 +219,17 @@ class LogRecordSummary extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  IconData _getIcon(Level level) {
+    return switch (level) {
+      Level.FINEST || Level.FINER || Level.FINE => Icons.bug_report_outlined,
+      Level.CONFIG || Level.INFO => Icons.info_outline,
+      Level.WARNING ||
+      Level.SEVERE ||
+      Level.SHOUT =>
+        Icons.warning_amber_rounded,
+      _ => Icons.question_mark
+    };
   }
 }

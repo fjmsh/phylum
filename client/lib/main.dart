@@ -64,7 +64,7 @@ void run() async {
     Log.warn(
       'Framework Error',
       details.exceptionAsString(),
-      details.stack,
+      details.stack ?? StackTrace.current,
     );
   };
   runApp(const PhylumApp());

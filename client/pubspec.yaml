@@ -70,6 +70,12 @@ flutter:
   assets:
     - assets/images/logo.png
 
+  fonts:
+    - family: RobotoMono
+      fonts:
+        - asset: assets/fonts/RobotoMono-Regular.ttf
+
+
 dependency_overrides:
   flutter_typeahead:
     git:
