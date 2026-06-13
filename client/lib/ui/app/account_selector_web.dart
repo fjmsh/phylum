@@ -8,7 +8,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/dialog_scaffold.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/util/dialogs.dart';
-import 'package:phylum/util/logging.dart';
+import 'package:phylum/util/logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:web/web.dart' as web;
 
@@ -93,11 +93,14 @@ class _AccountSelectorState extends State<AccountSelector> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      onPressed: () => showAlertDialog(context, message: invalidAccount.value.err.toString()),
+                      onPressed: () => showAlertDialog(context,
+                          message: invalidAccount.value.err.toString()),
                       icon: Icon(Icons.info_outline),
                     ),
                     IconButton(
-                      onPressed: () => context.read<AccountManager<PhylumAccount>>().removeAccount(invalidAccount.key),
+                      onPressed: () => context
+                          .read<AccountManager<PhylumAccount>>()
+                          .removeAccount(invalidAccount.key),
                       icon: Icon(Icons.delete_forever_outlined),
                     ),
                   ],
@@ -112,7 +115,9 @@ class _AccountSelectorState extends State<AccountSelector> {
                         errorsDismissed = true;
                       });
                     },
-                    child: Text('Skip', style: TextStyle(color: Theme.of(context).colorScheme.error)))
+                    child: Text('Skip',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error)))
               ],
             )
           ],
@@ -120,16 +125,22 @@ class _AccountSelectorState extends State<AccountSelector> {
       );
     }
 
-    return context.watch<PhylumRouterDelegate>().currentConfiguration?.buildPage(context) ?? Container();
+    return context
+            .watch<PhylumRouterDelegate>()
+            .currentConfiguration
+            ?.buildPage(context) ??
+        Container();
   }
 
   void requestHandoff() {
     if (requestId != null) return;
     final r = Random();
-    const chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
+    const chars =
+        'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
 
     setState(() {
-      requestId = String.fromCharCodes(Iterable.generate(12, (_) => chars.codeUnitAt(r.nextInt(chars.length))));
+      requestId = String.fromCharCodes(Iterable.generate(
+          12, (_) => chars.codeUnitAt(r.nextInt(chars.length))));
     });
 
     channel.postMessage('request|$requestId'.toJS);
@@ -155,7 +166,7 @@ class _AccountSelectorState extends State<AccountSelector> {
     final data = event.data.toString();
     final msg = data.split('|');
     if (msg.length < 2) {
-      logger.w('Unrecognized message: $data');
+      Log.warn('Unrecognized message: $data');
     }
 
     if (msg[0] == 'request') {

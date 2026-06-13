@@ -11,14 +11,15 @@ import 'package:phylum/libphylum/repositories/resource_version_repository.dart';
 import 'package:phylum/libphylum/repositories/trash_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/util/logging.dart';
+import 'package:phylum/util/logging/logging.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 const _persistKeyApiToken = 'apiToken';
 const _persistKeyBootstrapUntil = 'bootstrapUntil';
 const _persistKeyConfig = 'config';
 
-AccountManager<PhylumAccount> createAccountManager(bool autoInitialize) => AccountManager(
+AccountManager<PhylumAccount> createAccountManager(bool autoInitialize) =>
+    AccountManager(
       (id) => PhylumAccount.restore(id: id),
       autoInitialize: autoInitialize,
     );
@@ -63,7 +64,8 @@ class PhylumAccount extends Account<PhylumAccount> {
     _userNotifier.user = value;
   }
 
-  int get bootstrapUntil => getPersisted<num>(_persistKeyBootstrapUntil)?.toInt() ?? 0;
+  int get bootstrapUntil =>
+      getPersisted<num>(_persistKeyBootstrapUntil)?.toInt() ?? 0;
   set bootstrapUntil(int value) {
     persist(_persistKeyBootstrapUntil, value);
   }
@@ -77,7 +79,10 @@ class PhylumAccount extends Account<PhylumAccount> {
     }
   }
 
-  PhylumAccount._create({required super.serverUrl, required String apiToken, required AccountUser user})
+  PhylumAccount._create(
+      {required super.serverUrl,
+      required String apiToken,
+      required AccountUser user})
       : _apiToken = apiToken,
         _initialUser = user,
         super.create();
@@ -85,8 +90,11 @@ class PhylumAccount extends Account<PhylumAccount> {
   PhylumAccount.restore({required super.id}) : super.restore();
 
   static Future<PhylumAccount> create(
-      {required Uri serverUrl, required String apiToken, required AccountUser user}) async {
-    final account = PhylumAccount._create(serverUrl: serverUrl, apiToken: apiToken, user: user);
+      {required Uri serverUrl,
+      required String apiToken,
+      required AccountUser user}) async {
+    final account = PhylumAccount._create(
+        serverUrl: serverUrl, apiToken: apiToken, user: user);
     await account.setup();
     return account;
   }
@@ -110,7 +118,8 @@ class PhylumAccount extends Account<PhylumAccount> {
     } else {
       _userNotifier = AccountUserNotifier.fromAccount(this);
     }
-    _config = BootstrapConfig.parse(jsonDecode(getPersisted(_persistKeyConfig) ?? '{}'));
+    _config = BootstrapConfig.parse(
+        jsonDecode(getPersisted(_persistKeyConfig) ?? '{}'));
 
     final dispatcherOverride = const String.fromEnvironment('dispatcher');
     dispatcher = switch (dispatcherOverride) {
@@ -124,7 +133,7 @@ class PhylumAccount extends Account<PhylumAccount> {
     l = apiClient.addListener((request, errorResponse) {
       if (errorResponse is PhylumApiErrorResponse) {
         if (errorResponse.code == "credentials_invalid") {
-          logger.i('Invalid Credentials - Logging out');
+          Log.info('Invalid Credentials - Logging out');
           close(clearData: true);
           l.call();
         }

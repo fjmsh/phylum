@@ -5,7 +5,7 @@ import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/util/logging.dart';
+import 'package:phylum/util/logging/logging.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 
@@ -36,6 +36,6 @@ Future<void> login(BuildContext context, BaseRequest request) async {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error Parsing Response - $e')));
     }
-    logger.w('Error Parsing Response', error: e, stackTrace: stack);
+    Log.warn('Error Parsing Response', e, stack);
   }
 }

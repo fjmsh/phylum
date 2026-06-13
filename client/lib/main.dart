@@ -5,14 +5,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:logger/logger.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:phylum/libphylum/actions/deserializers.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/util/logging.dart';
+import 'package:phylum/util/logging/logging.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'ui/app/app.dart';
@@ -25,33 +24,13 @@ const storageDir = String.fromEnvironment("STORAGE_DIR");
 void main() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
+  await Log.init();
+  Log.info('App Start');
+
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.linux) {
     windowManager.ensureInitialized();
   }
 
-  logger = Logger(
-    level: Level.info,
-    filter: PermissiveFilter(),
-    printer: PrettyPrinter(methodCount: 2, noBoxingByDefault: true),
-  );
-  final skip2Logger = Logger(
-    level: Level.info,
-    filter: PermissiveFilter(),
-    printer: PrettyPrinter(
-        methodCount: 2, stackTraceBeginIndex: 2, noBoxingByDefault: true),
-  );
-  otlLogger = (LogLevel level, dynamic message,
-      {dynamic error, StackTrace? stackTrace}) {
-    final lvl = switch (level) {
-      LogLevel.trace => Level.trace,
-      LogLevel.debug => Level.debug,
-      LogLevel.info => Level.info,
-      LogLevel.warning => Level.warning,
-      LogLevel.error => Level.error,
-      LogLevel.fatal => Level.fatal,
-    };
-    skip2Logger.log(lvl, message, error: error, stackTrace: stackTrace);
-  };
   // We use multiple distinct databases for different accounts, so this is expected behavior
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
@@ -73,10 +52,7 @@ void main() async {
 
   PhylumAccount.deviceInfo = await getDeviceInfo();
 
-  runApp(const PhylumApp());
-}
+  Log.fine('Initialized App');
 
-class PermissiveFilter extends LogFilter {
-  @override
-  bool shouldLog(LogEvent event) => event.level >= level!;
+  runApp(const PhylumApp());
 }

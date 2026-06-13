@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:phylum/util/dialogs.dart';
-import 'package:phylum/util/logging.dart';
+import 'package:phylum/util/logging/logging.dart';
 
 sealed class RequestResult {
   String get title;
@@ -65,10 +65,10 @@ Future<RequestResult> sendRequest(
   } on SocketException {
     return ServerOffline();
   } catch (e, stackTrace) {
-    logger.w(
+    Log.warn(
       'Unknown error to ${request.url.path}',
-      error: e,
-      stackTrace: stackTrace,
+      e,
+      stackTrace,
     );
     return ClientError(error: e.toString());
   }
@@ -79,9 +79,9 @@ Future<RequestResult> _getError(String responseString) async {
     final response = jsonDecode(responseString) as Map;
     return ErrorResponse(error: response['msg']);
   } catch (e) {
-    logger.w(
+    Log.warn(
       'Error parsing error response - ${responseString.substring(0, 24)}',
-      error: e,
+      e,
     );
     return ClientError(error: 'Error parsing error response');
   }
