@@ -3,6 +3,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/admin_user_list_request.dart';
 import 'package:phylum/libphylum/responses/admin_user_list_response.dart';
+import 'package:phylum/libphylum/user_permission.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
@@ -60,5 +61,11 @@ class UserListController extends StateNotifier<UserListState> {
                 u.id.toString().startsWith(query))
             .toList(growable: false);
     state = UserListState(users: results);
+  }
+
+  Future<String?> updatePermissions(
+      UserDetails user, List<UserPermission> permissions) async {
+    // TODO: Send request and update local model;
+    return null;
   }
 }
