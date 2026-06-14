@@ -1,35 +1,47 @@
-import 'dart:async';
-
-import 'package:drift/drift.dart' show TableOrViewStatements;
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/db/db.dart';
+import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/requests/admin_user_list_request.dart';
+import 'package:phylum/libphylum/responses/admin_user_list_response.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-class UserList {
-  final List<User>? users;
+class UserListState {
+  final bool loading;
+  final String? error;
+  final List<UserDetails>? users;
 
-  UserList({required this.users});
+  const UserListState({
+    this.loading = false,
+    this.error,
+    this.users,
+  });
 }
 
-class UserListController extends StateNotifier<UserList> {
+class UserListController extends StateNotifier<UserListState> {
+  late final ApiClient<PhylumAccount> _apiClient;
   String _filter = '';
-  List<User>? _users;
-  StreamSubscription? _subscription;
+  List<UserDetails>? _users;
 
-  UserListController(BuildContext context) : super(UserList(users: null)) {
-    final account = context.read<PhylumAccount>();
-    _subscription = account.db.users.select().watch().listen((users) {
-      _users = users;
-      refilter();
-    });
+  UserListController(BuildContext context) : super(const UserListState()) {
+    _apiClient = context.read<PhylumAccount>().apiClient;
   }
 
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
+  void fetch() async {
+    if (state.loading) return;
+    final result = await _apiClient.sendRequest(AdminUserListRequest());
+    if (result is AdminUserListResponse) {
+      _users = result.users.toList(growable: false);
+      refilter();
+    } else {
+      state = UserListState(error: result.description);
+    }
+  }
+
+  void maybeFetch() {
+    if (state.users == null) {
+      fetch();
+    }
   }
 
   set filter(String filter) {
@@ -44,6 +56,6 @@ class UserListController extends StateNotifier<UserList> {
         : _users
             ?.where((u) => u.email.contains(query) || u.name.contains(query))
             .toList(growable: false);
-    state = UserList(users: results);
+    state = UserListState(users: results);
   }
 }

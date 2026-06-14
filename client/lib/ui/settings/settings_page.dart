@@ -115,7 +115,7 @@ List<SettingsItem> _getSettingsList(PhylumAccount account) {
   ];
 
   final adminSettings = <SettingsItem>[
-    if (account.user.hasPermission('users:view')) UsersSettings(),
+    if (account.user.hasPermission('users:list')) UsersSettings(),
   ];
 
   if (adminSettings.isNotEmpty) {

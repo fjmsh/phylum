@@ -12,27 +12,34 @@ class UserListPanel extends StatefulWidget {
 
 class _UserListPanelState extends State<UserListPanel> {
   @override
+  void initState() {
+    super.initState();
+    context.read<UserListController>().maybeFetch();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextField(
-          decoration: InputDecoration(
-            suffixIcon: IconButton(
-              onPressed: () {
-                context.read<UserListController>().filter = '';
-              },
-              padding: EdgeInsets.zero,
-              icon: Icon(Icons.close),
-              iconSize: 18,
+        if (context.select<UserListState, bool>((state) => state.users != null))
+          TextField(
+            decoration: InputDecoration(
+              suffixIcon: IconButton(
+                onPressed: () {
+                  context.read<UserListController>().filter = '';
+                },
+                padding: EdgeInsets.zero,
+                icon: Icon(Icons.close),
+                iconSize: 18,
+              ),
+              hintText: 'Start typing to filter...',
             ),
-            hintText: 'Start typing to filter...',
+            autofocus: true,
+            autocorrect: false,
+            onChanged: (value) =>
+                context.read<UserListController>().filter = value,
           ),
-          autofocus: true,
-          autocorrect: false,
-          onChanged: (value) =>
-              context.read<UserListController>().filter = value,
-        ),
         Expanded(child: const UserListView()),
       ],
     );

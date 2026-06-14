@@ -24,10 +24,12 @@ part 'shared_resources_response.dart';
 part 'trash_list_response.dart';
 part 'user_response.dart';
 
-typedef JsonMapResponseParser = PhylumApiSuccessResponse Function(Map<String, dynamic> data);
+typedef JsonMapResponseParser = PhylumApiSuccessResponse Function(
+    Map<String, dynamic> data);
 typedef JsonListResponseParser = PhylumApiSuccessResponse Function(List data);
 
-Future<ApiResponse<PhylumAccount>> parseEmptyResponse(StreamedResponse response) async {
+Future<ApiResponse<PhylumAccount>> parseEmptyResponse(
+    StreamedResponse response) async {
   if (response.statusCode >= 200 && response.statusCode < 300) {
     return const EmptyResponse();
   }
@@ -70,7 +72,8 @@ class PhylumApiErrorResponse extends ApiErrorResponse<PhylumAccount> {
   @override
   String get description => 'Server Error: $message';
 
-  PhylumApiErrorResponse({required this.serverError, required this.code, required this.message});
+  PhylumApiErrorResponse(
+      {required this.serverError, required this.code, required this.message});
 
   factory PhylumApiErrorResponse.fromResponseBody(String body) {
     final map = (jsonDecode(body) as Map<String, dynamic>?) ?? const {};
