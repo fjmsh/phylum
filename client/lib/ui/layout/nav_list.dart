@@ -187,7 +187,7 @@ class NavList extends StatelessWidget {
                   StateNotifierBuilder(
                       stateNotifier: account.userNotifier,
                       builder: (context, state, child) {
-                        return state.hasPermission(permissionUsersInvite)
+                        return state.hasPermission(userPermissionInvite)
                             ? Column(
                                 children: [
                                   ListTile(

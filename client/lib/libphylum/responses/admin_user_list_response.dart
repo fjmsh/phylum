@@ -1,4 +1,5 @@
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/user_permission.dart';
 
 import 'responses.dart';
 
@@ -23,7 +24,7 @@ class UserDetails {
   final int id;
   final String email;
   final String name;
-  final List<String> permissions;
+  final List<UserPermission> permissions;
   final String? home;
 
   UserDetails({
@@ -39,10 +40,8 @@ class UserDetails {
       id: data['id'],
       email: data['email'],
       name: data['name'],
-      permissions: (data['permissions'] as List).cast<String>(),
+      permissions: (data['permissions'] as List).cast<UserPermission>(),
       home: data['home'],
     );
   }
-
-  String get displayName => name.isEmpty ? email : name;
 }

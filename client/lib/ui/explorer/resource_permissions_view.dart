@@ -15,10 +15,12 @@ import 'package:provider/provider.dart';
 class ResourcePermissionsView extends StatefulWidget {
   final String resourceId;
 
-  ResourcePermissionsView({required this.resourceId}) : super(key: ValueKey(resourceId));
+  ResourcePermissionsView({required this.resourceId})
+      : super(key: ValueKey(resourceId));
 
   @override
-  State<ResourcePermissionsView> createState() => _ResourcePermissionsViewState();
+  State<ResourcePermissionsView> createState() =>
+      _ResourcePermissionsViewState();
 }
 
 class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
@@ -53,17 +55,22 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
   Widget build(BuildContext context) {
     final grants = this.grants;
     final permissions = this.permissions;
-    if (grants == null || permissions == null) return const CircularProgressIndicator();
+    if (grants == null || permissions == null)
+      return const CircularProgressIndicator();
 
     final account = context.read<PhylumAccount>();
     final repository = account.userRepository;
     final grantEntries = grants.entries.toList(growable: false)
       ..sort(((a, b) {
-        return a.value == b.value ? a.key.compareTo(b.key) : a.value.compareTo(b.value);
+        return a.value == b.value
+            ? a.key.compareTo(b.key)
+            : a.value.compareTo(b.value);
       }));
     final permissionEntries = permissions.entries.toList(growable: false)
       ..sort(((a, b) {
-        return a.value == b.value ? a.key.compareTo(b.key) : a.value.compareTo(b.value);
+        return a.value == b.value
+            ? a.key.compareTo(b.key)
+            : a.value.compareTo(b.value);
       }));
     return DropdownButtonHideUnderline(
       child: Column(
@@ -86,7 +93,9 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
               trailing: IconButton(
                   onPressed: () async {
                     final permission = permissionSetNone;
-                    final user = await (account.db.users.select()..where((u) => u.id.equals(e.key))).getSingleOrNull();
+                    final user = await (account.db.users.select()
+                          ..where((u) => u.id.equals(e.key)))
+                        .getSingleOrNull();
                     if (user == null) return;
 
                     account.addAction(ResourceShareAction(
@@ -102,8 +111,9 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                   : () async {
                       final permission = await _showPermissionsPicker(context);
                       if (permission == null || permission == e.value) return;
-                      final user =
-                          await (account.db.users.select()..where((u) => u.id.equals(e.key))).getSingleOrNull();
+                      final user = await (account.db.users.select()
+                            ..where((u) => u.id.equals(e.key)))
+                          .getSingleOrNull();
                       if (user == null) return;
 
                       account.addAction(ResourceShareAction(
@@ -118,7 +128,8 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
             key: ValueKey('inherited'),
             visualDensity: VisualDensity.compact,
             dense: true,
-            title: const Text('Inherited Permissions', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: const Text('Inherited Permissions',
+                style: TextStyle(fontWeight: FontWeight.bold)),
           ),
           for (final e in permissionEntries)
             ListTile(
@@ -134,11 +145,15 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
 
   Future<void> addUser(BuildContext context) async {
     final account = context.read<PhylumAccount>();
-    final allUsers = await (account.db.users.select()..where((u) => u.id.isNotIn(grants!.keys))).get();
+    final allUsers = await (account.db.users.select()
+          ..where((u) => u.id.isNotIn(grants!.keys)))
+        .get();
     final users = allUsers.toList(growable: false)
       ..sort((a, b) {
         // TODO: not the most efficient
-        return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
+        return a.displayName
+            .toLowerCase()
+            .compareTo(b.displayName.toLowerCase());
       });
     if (!context.mounted) return;
     final user = await showOptionsDialogBuilder(
@@ -147,14 +162,15 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
       (user) => user.displayName.isEmpty
           ? ListTile(
               visualDensity: VisualDensity.adaptivePlatformDensity,
-              title: Text(user.email, style: TextStyle(fontStyle: FontStyle.italic)),
+              title: Text(user.email,
+                  style: TextStyle(fontStyle: FontStyle.italic)),
             )
           : ListTile(
               visualDensity: VisualDensity.adaptivePlatformDensity,
               title: Text(user.displayName),
               subtitle: Text(user.email),
             ),
-      buildLastItem: account.user.hasPermission(permissionUsersInvite)
+      buildLastItem: account.user.hasPermission(userPermissionInvite)
           ? (_) => ListTile(
               leading: Icon(Icons.person_add),
               title: Text('Invite'),
@@ -166,7 +182,9 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
           : null,
       filterList: (u, q) {
         final query = q.toLowerCase();
-        return u.where((u) => u.email.contains(query) || u.name.contains(query)).toList(growable: false);
+        return u
+            .where((u) => u.email.contains(query) || u.name.contains(query))
+            .toList(growable: false);
       },
     );
     if (user == null || !context.mounted) return;

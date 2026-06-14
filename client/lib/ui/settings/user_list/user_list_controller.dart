@@ -54,7 +54,10 @@ class UserListController extends StateNotifier<UserListState> {
     final results = _filter.isEmpty
         ? _users
         : _users
-            ?.where((u) => u.email.contains(query) || u.name.contains(query))
+            ?.where((u) =>
+                u.email.contains(query) ||
+                u.name.contains(query) ||
+                u.id.toString().startsWith(query))
             .toList(growable: false);
     state = UserListState(users: results);
   }
