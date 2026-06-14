@@ -44,4 +44,14 @@ class UserDetails {
       home: data['home'],
     );
   }
+
+  UserDetails copyWith({List<UserPermission>? permissions}) {
+    return UserDetails(
+      id: id,
+      email: email,
+      name: name,
+      permissions: permissions ?? this.permissions,
+      home: home,
+    );
+  }
 }

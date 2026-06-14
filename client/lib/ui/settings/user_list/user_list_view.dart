@@ -85,6 +85,7 @@ class UserListView extends StatelessWidget {
     final loggedInUser = context.read<PhylumAccount>().user;
     final controller = context.read<UserListController>();
     final messenger = ScaffoldMessenger.of(context);
+    List<UserPermission> permissions = user.permissions;
     showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -110,33 +111,45 @@ class UserListView extends StatelessWidget {
                         title: const Text('User ID'),
                         subtitle: Text(user.id.toString()),
                       ),
-                      ListTile(
-                        title: Text('Permissions'),
-                        subtitle: Wrap(
-                          alignment: WrapAlignment.start,
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: user.permissions
-                              .map((p) => Chip(label: Text(p.readableName)))
-                              .toList(growable: false),
-                        ),
-                        onTap: loggedInUser
-                                .hasPermission(userPermissionUsersGrant)
-                            ? () async {
-                                final permissions = await showPermissionsDialog(
-                                    context, user, loggedInUser);
-                                if (permissions == null || !context.mounted) {
-                                  return;
-                                }
-                                final result = await controller
-                                    .updatePermissions(user, permissions);
-                                messenger.showSnackBar(SnackBar(
+                      StatefulBuilder(builder: (context, setState) {
+                        return ListTile(
+                          title: Text('Permissions'),
+                          subtitle: Wrap(
+                            alignment: WrapAlignment.start,
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: permissions
+                                .map((p) => Chip(label: Text(p.readableName)))
+                                .toList(growable: false),
+                          ),
+                          onTap: loggedInUser
+                                  .hasPermission(userPermissionUsersGrant)
+                              ? () async {
+                                  final updatedPermissions =
+                                      await showPermissionsDialog(context,
+                                          user.id, permissions, loggedInUser);
+                                  if (updatedPermissions == null ||
+                                      !context.mounted) {
+                                    return;
+                                  }
+                                  final result =
+                                      await controller.updatePermissions(
+                                          user, updatedPermissions);
+                                  if (result == null) {
+                                    setState(() {
+                                      permissions = updatedPermissions;
+                                    });
+                                  }
+                                  messenger.showSnackBar(SnackBar(
                                     content: result == null
                                         ? const Text('Permissions Updated')
-                                        : Text(result)));
-                              }
-                            : null,
-                      ),
+                                        : Text(result),
+                                    duration: Duration(seconds: 2),
+                                  ));
+                                }
+                              : null,
+                        );
+                      }),
                     ],
                   ),
                 ),
@@ -151,10 +164,11 @@ class UserListView extends StatelessWidget {
 
   Future<List<UserPermission>?> showPermissionsDialog(
     BuildContext context,
-    UserDetails user,
+    int userId,
+    List<UserPermission> permissions,
     AccountUser loggedInUser,
   ) async {
-    final readOnly = user.id == loggedInUser.id;
+    final readOnly = userId == loggedInUser.id;
 
     final options = [
       userPermissionSU,
@@ -168,7 +182,7 @@ class UserListView extends StatelessWidget {
       userPermissionUsersAdd,
       userPermissionUsersGrant,
     ];
-    final selected = Set.of(user.permissions);
+    final selected = Set.of(permissions);
     bool disabled(UserPermission perm) {
       if (selected.contains(userPermissionSU)) {
         return perm != userPermissionSU;

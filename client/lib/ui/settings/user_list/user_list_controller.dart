@@ -65,7 +65,12 @@ class UserListController extends StateNotifier<UserListState> {
 
   Future<String?> updatePermissions(
       UserDetails user, List<UserPermission> permissions) async {
-    // TODO: Send request and update local model;
+    //TODO: Send request to server
+
+    _users = _users
+        ?.map((u) => u.id == user.id ? u.copyWith(permissions: permissions) : u)
+        .toList(growable: false);
+    refilter();
     return null;
   }
 }
