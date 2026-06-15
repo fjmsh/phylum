@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/wasm.dart';
+import 'package:phylum/util/logging/logging.dart';
 
 QueryExecutor openDatabase({
   required Directory? storageDir,
@@ -19,7 +20,7 @@ QueryExecutor openDatabase({
       // Depending how central local persistence is to your app, you may want
       // to show a warning to the user if only unrealiable implemetentations
       // are available.
-      print('Using ${result.chosenImplementation} due to missing browser '
+      Log.info('Using ${result.chosenImplementation} due to missing browser '
           'features: ${result.missingFeatures}');
     }
 

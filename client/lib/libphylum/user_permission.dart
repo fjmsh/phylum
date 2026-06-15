@@ -3,7 +3,7 @@ typedef UserPermission = String;
 const UserPermission userPermissionInvite = 'invite';
 const UserPermission userPermissionUsersAll = 'users';
 const UserPermission userPermissionUsersList = 'users:list';
-const UserPermission userPermissionUsersAdd = 'users:add';
+const UserPermission userPermissionUsersCreate = 'users:create';
 const UserPermission userPermissionUsersGrant = 'users:grant';
 const UserPermission userPermissionFilesAll = 'files';
 const UserPermission userPermissionFilesRead = 'files:read';
@@ -20,7 +20,7 @@ extension PermissionName on UserPermission {
         userPermissionFilesWrite => 'Write All Files',
         userPermissionFilesShare => 'Share All Files',
         userPermissionUsersAll => 'Users',
-        userPermissionUsersAdd => 'Create Users',
+        userPermissionUsersCreate => 'Create Users',
         userPermissionUsersList => 'List Users',
         userPermissionUsersGrant => 'Grant Permissions',
         _ => this,

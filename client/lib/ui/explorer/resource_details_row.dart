@@ -23,15 +23,20 @@ class ResourceDetailsRow extends StatelessWidget {
   final Resource resource;
   final bool dropTargetActive;
 
-  ResourceDetailsRow({required this.resource, required this.dropTargetActive}) : super(key: ValueKey(resource.id));
+  ResourceDetailsRow({required this.resource, required this.dropTargetActive})
+      : super(key: ValueKey(resource.id));
 
   @override
   Widget build(BuildContext context) {
     final account = context.read<PhylumAccount>();
-    final showBorder = context.select<ExplorerState, bool>((state) => state.focusId == resource.id && state.showFocus);
-    final highlight = context.select<ExplorerState, bool>((state) => state.isSelected(resource.id));
-    final dim = context.select<ExplorerState, bool>((state) => state.isSelected(resource.id) && state.dragging);
-    final sync = context.select<PhylumActionQueueState, ResourceSyncState>((state) {
+    final showBorder = context.select<ExplorerState, bool>(
+        (state) => state.focusId == resource.id && state.showFocus);
+    final highlight = context
+        .select<ExplorerState, bool>((state) => state.isSelected(resource.id));
+    final dim = context.select<ExplorerState, bool>(
+        (state) => state.isSelected(resource.id) && state.dragging);
+    final sync =
+        context.select<PhylumActionQueueState, ResourceSyncState>((state) {
       return state.actions.fold(ResourceSyncState.none, (acc, action) {
         if (action is ResourceAction && action.resourceId == resource.id) {
           final actionState = ResourceSyncState.fromStatus(action.status);
@@ -62,14 +67,17 @@ class ResourceDetailsRow extends StatelessWidget {
       child: Material(
           color: color,
           shape: showBorder
-              ? RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(4.0))
+              ? RoundedRectangleBorder(
+                  side: border, borderRadius: BorderRadius.circular(4.0))
               : const Border(),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: _rowPaddingV, horizontal: _rowPaddingH),
+            padding: const EdgeInsets.symmetric(
+                vertical: _rowPaddingV, horizontal: _rowPaddingH),
             child: Row(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: _iconPaddingV, horizontal: _iconPaddingH),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: _iconPaddingV, horizontal: _iconPaddingH),
                   child: resource.getIcon(account),
                 ),
                 Expanded(
@@ -100,35 +108,46 @@ class ResourceDetailsRow extends StatelessWidget {
                           if (resource.grants != null)
                             const Padding(
                               padding: EdgeInsets.only(right: 6.0),
-                              child: Icon(Icons.people_alt, size: _subtitleIconSize),
+                              child: Icon(Icons.people_alt,
+                                  size: _subtitleIconSize),
                             ),
                           StreamBuilder<int>(
-                              stream: context.read<PhylumAccount>().db.availableVersions(resource.id).watchSingle(),
+                              stream: context
+                                  .read<PhylumAccount>()
+                                  .db
+                                  .availableVersions(resource.id)
+                                  .watchSingle(),
                               initialData: 1,
                               builder: (context, snapshot) {
                                 if ((snapshot.data ?? 0) > 1) {
                                   return const Padding(
                                     padding: EdgeInsets.only(right: 6.0),
                                     // TODO: text Scaling and semantic label
-                                    child: Icon(Icons.history, size: _subtitleIconSize),
+                                    child: Icon(Icons.history,
+                                        size: _subtitleIconSize),
                                   );
                                 }
                                 return const SizedBox();
                               }),
                           StreamBuilder<int>(
-                              stream: account.db.countPublinks(resource.id).watchSingle(),
+                              stream: account.db
+                                  .countPublinks(resource.id)
+                                  .watchSingle(),
                               initialData: 0,
                               builder: (context, snapshot) {
                                 if ((snapshot.data ?? 0) > 0) {
                                   return const Padding(
                                     padding: EdgeInsets.only(right: 6.0),
-                                    child: Icon(Icons.public, size: _subtitleIconSize),
+                                    child: Icon(Icons.public,
+                                        size: _subtitleIconSize),
                                   );
                                 }
                                 return const SizedBox();
                               }),
                           StreamBuilder<bool?>(
-                              stream: (account.db.bookmarks.select()..where((b) => b.resourceId.equals(resource.id)))
+                              stream: (account.db.bookmarks.select()
+                                    ..where((b) =>
+                                        b.resourceId.equals(resource.id)))
                                   .map((b) => !b.deleted)
                                   .watchSingleOrNull(),
                               initialData: false,
@@ -136,13 +155,16 @@ class ResourceDetailsRow extends StatelessWidget {
                                 if (snapshot.data == true) {
                                   return const Padding(
                                     padding: EdgeInsets.only(right: 6.0),
-                                    child: Icon(Icons.bookmark, size: _subtitleIconSize),
+                                    child: Icon(Icons.bookmark,
+                                        size: _subtitleIconSize),
                                   );
                                 }
                                 return const SizedBox();
                               }),
                           StreamBuilder(
-                              stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
+                              stream: account.db
+                                  .latestVersion(resource.id)
+                                  .watchSingleOrNull(),
                               builder: (context, snapshot) {
                                 String subtitle = "";
                                 if (resource.modified != null) {
@@ -200,11 +222,13 @@ class ResourceDetailsRow extends StatelessWidget {
         .size
         .height;
     // final subtitleTextSize = scaler.scale(theme.textTheme.bodyMedium!.fontSize!);
-    final subtitleSize = subtitleTextSize > _subtitleIconSize ? subtitleTextSize : _subtitleIconSize;
+    final subtitleSize = subtitleTextSize > _subtitleIconSize
+        ? subtitleTextSize
+        : _subtitleIconSize;
     final contentSize = titleSize + subtitleSize;
     final iconSize = _iconSize + (_iconPaddingV * 2);
-    final totalSize = (2 * _rowPaddingV) + (iconSize > contentSize ? iconSize : contentSize);
-    // print('$totalSize $titleSize $subtitleSize ($subtitleTextSize $_subtitleIconSize)');
+    final totalSize =
+        (2 * _rowPaddingV) + (iconSize > contentSize ? iconSize : contentSize);
     return totalSize;
   }
 }

@@ -179,7 +179,7 @@ class UserListView extends StatelessWidget {
       userPermissionFilesShare,
       userPermissionUsersAll,
       userPermissionUsersList,
-      userPermissionUsersAdd,
+      userPermissionUsersCreate,
       userPermissionUsersGrant,
     ];
     final selected = Set.of(permissions);
@@ -193,7 +193,7 @@ class UserListView extends StatelessWidget {
         userPermissionFilesShare =>
           selected.contains(userPermissionFilesAll),
         userPermissionUsersList ||
-        userPermissionUsersAdd ||
+        userPermissionUsersCreate ||
         userPermissionUsersGrant =>
           selected.contains(userPermissionUsersAll),
         // Do not allow selecting permissions we don't have ourselvese

@@ -2,17 +2,20 @@ import 'dart:io';
 
 import 'package:dbus/dbus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:phylum/util/logging/logging.dart';
 import 'package:window_manager/window_manager.dart';
 
-const dbusName = String.fromEnvironment("DBUS_NAME", defaultValue: "cloud.phylum.drive");
+const dbusName =
+    String.fromEnvironment("DBUS_NAME", defaultValue: "cloud.phylum.drive");
 
 void ensureSingleClientDBus() async {
   final sessionClient = DBusClient.session();
-  final requestReply = await sessionClient.requestName(dbusName, flags: {DBusRequestNameFlag.doNotQueue});
+  final requestReply = await sessionClient
+      .requestName(dbusName, flags: {DBusRequestNameFlag.doNotQueue});
   if (requestReply == DBusRequestNameReply.primaryOwner) {
     await sessionClient.registerObject(InstanceObject());
   } else if (requestReply == DBusRequestNameReply.exists) {
-    print('Instance Already Running');
+    Log.info('Instance Already Running');
     final object = DBusRemoteObject(
       sessionClient,
       name: dbusName,
@@ -20,16 +23,20 @@ void ensureSingleClientDBus() async {
     );
 
     try {
-      var value = await object.getProperty(dbusName, 'Version', signature: DBusSignature('s'));
+      var value = await object.getProperty(dbusName, 'Version',
+          signature: DBusSignature('s'));
       var version = value.asString();
-      print('Version $version');
+      Log.info('Version $version');
     } catch (e) {
-      print('DBus Exception ($e). Version Unknown');
+      Log.warn('DBus Exception. Version Unknown', e);
     }
 
     try {
-      await object.callMethod(dbusName, 'Show', [], replySignature: DBusSignature(''));
+      await object.callMethod(dbusName, 'Show', [],
+          replySignature: DBusSignature(''));
       await sessionClient.close();
+    } catch (e) {
+      Log.warn('DBus Exception. Could not call "show"', e);
     } finally {
       exit(0);
     }
@@ -45,7 +52,9 @@ class InstanceObject extends DBusObject {
   Future<DBusMethodResponse> getProperty(String interface, String name) async {
     if (interface == dbusName) {
       if (name == 'Version') {
-        final version = await PackageInfo.fromPlatform().then((info) => info.version).onError((err, stack) => 'DEV');
+        final version = await PackageInfo.fromPlatform()
+            .then((info) => info.version)
+            .onError((err, stack) => 'DEV');
         return DBusGetPropertyResponse(DBusString(version));
       } else {
         return DBusMethodErrorResponse.unknownProperty();
