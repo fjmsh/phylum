@@ -18,7 +18,7 @@ type user struct {
 	Home        string   `json:"home,omitempty"`
 }
 
-func handleUsersListRoute(c *gin.Context) {
+func handleListRequest(c *gin.Context) {
 	auth := authenticator.GetAuth(c)
 	if !auth.HasScope("admin:users:list") {
 		panic(core.ErrInsufficientScope)
