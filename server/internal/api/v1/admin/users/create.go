@@ -8,6 +8,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,6 +17,7 @@ type createUserParams struct {
 	Name         string `json:"name" form:"name"`
 	Password     string `json:"password" form:"password"`
 	NoCreateHome bool   `json:"no_create_home" form:"no_create_home"`
+	NoSendEmail  bool   `json:"no_send_email" form:"no_send_email"`
 }
 
 func handleCreateRequest(c *gin.Context) {
@@ -36,9 +38,9 @@ func handleCreateRequest(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to create users"))
 	}
 
-	var user core.User
+	var u core.User
 	err = db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
-		if user, err = core.CreateUser(db, params.Email, params.Name, false); err != nil {
+		if u, err = core.CreateUser(db, params.Email, params.Name, params.NoCreateHome); err != nil {
 			return err
 		}
 		if auth.PasswordAuthEnabled() {
@@ -50,10 +52,30 @@ func handleCreateRequest(c *gin.Context) {
 		} else if params.Password != "" {
 			panic(core.NewError(http.StatusBadRequest, "password_auth_disabled", "Attempting to set password when password auth is disabled"))
 		}
+		if mail.Configured() && !params.NoSendEmail {
+			// TODO: #jobs #mail
+			go func() {
+				mail.SendWelcomeEmail(u)
+			}()
+		}
+
 		return nil
 	})
 	if err != nil {
 		panic(err)
 	}
-	c.JSON(200, responses.User{ID: user.ID, Email: user.Email, Name: user.Name})
+	home := ""
+	if a.UserPermissions().HasPermission(core.UserPermissionFilesRead) {
+		home = u.Home.String()
+	}
+	response := user{
+		User: responses.User{
+			ID:    u.ID,
+			Email: u.Email,
+			Name:  u.Name,
+		},
+		Permissions: u.Permissions,
+		Home:        home,
+	}
+	c.JSON(200, response)
 }

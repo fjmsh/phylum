@@ -28,6 +28,9 @@ func Initialize(db db.Handler, cfg Config) error {
 		fsPathRoot = pgtype.UUID{Bytes: rootID, Valid: true}
 	}
 	userConfig = cfg.User
+	if userConfig.Permissions == nil {
+		userConfig.Permissions = UserPermissions{}
+	}
 	if c, err := crypt.NewPasswordHasher(cfg.Publinks.Password); err != nil {
 		return err
 	} else {

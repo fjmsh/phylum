@@ -5,15 +5,14 @@ import (
 	"net/http"
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
+	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
 )
 
 type user struct {
-	ID          int32    `json:"id"`
-	Email       string   `json:"email"`
-	Name        string   `json:"name"`
+	responses.User
 	Permissions []string `json:"permissions"`
 	Home        string   `json:"home,omitempty"`
 }
@@ -45,9 +44,11 @@ func ListUsers(ctx context.Context, includeHome bool) ([]user, error) {
 		users = make([]user, len(res))
 		for i, u := range res {
 			users[i] = user{
-				ID:          u.ID,
-				Email:       u.Email,
-				Name:        u.Name,
+				User: responses.User{
+					ID:    u.ID,
+					Email: u.Email,
+					Name:  u.Name,
+				},
 				Permissions: u.Permissions,
 			}
 			if includeHome && u.Home.Valid {
