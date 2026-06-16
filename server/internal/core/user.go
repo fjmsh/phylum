@@ -15,7 +15,7 @@ const (
 	UserPermissionUsersList         = UserPermission("users:list")
 	UserPermissionUsersCreate       = UserPermission("users:create")
 	UserPermissionUsersCreateInvite = UserPermission("users:create:invite")
-	UserPermissionUsersGrant        = UserPermission("users:grant")
+	UserPermissionUsersPermissions  = UserPermission("users:permissions")
 	UserPermissionFilesAll          = UserPermission("files")
 	UserPermissionFilesRead         = UserPermission("files:read")
 	UserPermissionFilesWrite        = UserPermission("files:write")

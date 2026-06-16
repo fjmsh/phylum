@@ -1,7 +1,6 @@
 package users
 
 import (
-	"context"
 	"net/http"
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
@@ -26,22 +25,12 @@ func handleListRequest(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to list users"))
 	}
 
-	users, err := ListUsers(c.Request.Context(), auth.UserPermissions().HasPermission(core.UserPermissionFilesRead))
-	if err != nil {
+	includeHome := auth.UserPermissions().HasPermission(core.UserPermissionFilesRead)
+
+	if res, err := core.ListUsers(db.Get(c.Request.Context()), 0); err != nil {
 		panic(err)
-	}
-
-	c.JSON(200, gin.H{
-		"users": users,
-	})
-}
-
-func ListUsers(ctx context.Context, includeHome bool) ([]user, error) {
-	var users []user
-	if res, err := core.ListUsers(db.Get(ctx), 0); err != nil {
-		return users, err
 	} else {
-		users = make([]user, len(res))
+		users := make([]user, len(res))
 		for i, u := range res {
 			users[i] = user{
 				User: responses.User{
@@ -55,6 +44,8 @@ func ListUsers(ctx context.Context, includeHome bool) ([]user, error) {
 				users[i].Home = u.Home.String()
 			}
 		}
-		return users, nil
+		c.JSON(200, gin.H{
+			"users": users,
+		})
 	}
 }
