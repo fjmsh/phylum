@@ -25,7 +25,8 @@ class UserDetails extends PhylumApiSuccessResponse {
       id: data['id'],
       email: data['email'],
       name: data['name'],
-      permissions: (data['permissions'] as List).cast<UserPermission>(),
+      permissions:
+          (data['permissions'] as List?)?.cast<UserPermission>() ?? const [],
       home: data['home'],
     );
   }
