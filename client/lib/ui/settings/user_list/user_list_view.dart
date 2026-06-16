@@ -199,7 +199,7 @@ class UserListView extends StatelessWidget {
   ) async {
     final readOnly = userId == loggedInUser.id;
 
-    final options = [
+    List<String> options = [
       userPermissionSU,
       userPermissionFilesAll,
       userPermissionFilesRead,
@@ -211,6 +211,8 @@ class UserListView extends StatelessWidget {
       userPermissionUsersCreate,
       userPermissionUsersGrant,
     ];
+    final extra = Set.of(permissions)..removeAll(options);
+    options.addAll(extra);
     final selected = Set.of(permissions);
     bool disabled(UserPermission perm) {
       if (selected.contains(userPermissionSU)) {
