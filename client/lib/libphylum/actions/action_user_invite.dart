@@ -1,4 +1,4 @@
-import 'package:http/src/streamed_response.dart';
+import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/actions/changes/create_user_change.dart';
@@ -68,7 +68,8 @@ class UserInviteAction extends PhylumAction with JsonApiAction {
   bool processResponse(ApiResponse response) {
     if (response is UserResponse) {
       account.actionQueue.updateActions(
-        (PhylumAction action) => action is ResourceShareAction && action.userId == localId,
+        (PhylumAction action) =>
+            action is ResourceShareAction && action.userId == localId,
         (action) => (action as ResourceShareAction).setUserId(response.user.id),
       );
     }

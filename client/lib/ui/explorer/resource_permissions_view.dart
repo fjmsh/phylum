@@ -6,7 +6,8 @@ import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/user_permission.dart';
-import 'package:phylum/ui/common/dialogs/new_user_details_dialog.dart';
+import 'package:phylum/ui/common/create_user_dialog.dart';
+import 'package:phylum/ui/common/new_user_details_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:phylum/util/user_display_name.dart';
@@ -55,8 +56,9 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
   Widget build(BuildContext context) {
     final grants = this.grants;
     final permissions = this.permissions;
-    if (grants == null || permissions == null)
+    if (grants == null || permissions == null) {
       return const CircularProgressIndicator();
+    }
 
     final account = context.read<PhylumAccount>();
     final repository = account.userRepository;
@@ -170,7 +172,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
               title: Text(user.displayName),
               subtitle: Text(user.email),
             ),
-      buildLastItem: account.user.hasPermission(userPermissionInvite)
+      buildLastItem: account.user.hasPermission(userPermissionUsersCreateInvite)
           ? (_) => ListTile(
               leading: Icon(Icons.person_add),
               title: Text('Invite'),
@@ -199,14 +201,15 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
   }
 
   Future<void> inviteUser(BuildContext context) async {
-    final result = await NewUserDetailsDialog.show(context);
-    if (result == null || !context.mounted) return;
-    final (email, name) = result;
-
+    final userDetails = await NewUserDetailsDialog.show(context);
+    if (userDetails == null || !context.mounted) return;
     final permission = await _showPermissionsPicker(context);
     if (permission == null || !context.mounted) return;
+
     final account = context.read<PhylumAccount>();
-    final user = await account.userRepository.invite(email, name);
+    final user = await account.userRepository
+        .invite(email: userDetails.email, name: userDetails.name);
+
     await account.addAction(ResourceShareAction(
       resourceId: widget.resourceId,
       resourceName: resourceName!,

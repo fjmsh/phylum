@@ -11,8 +11,9 @@ import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/common/dialogs/new_user_details_dialog.dart';
+import 'package:phylum/ui/common/create_user_dialog.dart';
 import 'package:phylum/ui/common/logo_row.dart';
+import 'package:phylum/ui/common/new_user_details_dialog.dart';
 import 'package:phylum/ui/layout/button_downloads.dart';
 import 'package:phylum/ui/layout/create_action.dart';
 import 'package:phylum/ui/menu/menu_option.dart';
@@ -187,31 +188,14 @@ class NavList extends StatelessWidget {
                   StateNotifierBuilder(
                       stateNotifier: account.userNotifier,
                       builder: (context, state, child) {
-                        return state.hasPermission(userPermissionInvite)
+                        return state
+                                .hasPermission(userPermissionUsersCreateInvite)
                             ? Column(
                                 children: [
                                   ListTile(
                                     leading: const Icon(Icons.person_add),
                                     title: const Text('Invite'),
-                                    onTap: () async {
-                                      final messenger =
-                                          ScaffoldMessenger.maybeOf(context);
-                                      final account =
-                                          context.read<PhylumAccount>();
-                                      Scaffold.maybeOf(context)?.closeDrawer();
-                                      final result =
-                                          await NewUserDetailsDialog.show(
-                                              context);
-                                      if (result == null) return;
-                                      final (email, name) = result;
-                                      final user = await account.userRepository
-                                          .invite(email, name);
-                                      messenger?.showSnackBar(SnackBar(
-                                        content:
-                                            Text('Invited ${user.displayName}'),
-                                        duration: Duration(seconds: 2),
-                                      ));
-                                    },
+                                    onTap: () => inviteUser(context),
                                   ),
                                   ListTile(
                                     leading: const Icon(Icons.settings),
@@ -237,6 +221,20 @@ class NavList extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void inviteUser(BuildContext context) async {
+    Scaffold.maybeOf(context)?.closeDrawer();
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final account = context.read<PhylumAccount>();
+    final userDetails = await NewUserDetailsDialog.show(context);
+    if (userDetails == null || !context.mounted) return;
+    final user = await account.userRepository
+        .invite(email: userDetails.email, name: userDetails.name);
+    messenger?.showSnackBar(SnackBar(
+      content: Text('Invited ${user.displayName}'),
+      duration: Duration(seconds: 2),
+    ));
   }
 
   void fn(BuildContext context, Offset offset,

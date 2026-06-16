@@ -1,9 +1,9 @@
 typedef UserPermission = String;
 
-const UserPermission userPermissionInvite = 'invite';
 const UserPermission userPermissionUsersAll = 'users';
 const UserPermission userPermissionUsersList = 'users:list';
 const UserPermission userPermissionUsersCreate = 'users:create';
+const UserPermission userPermissionUsersCreateInvite = 'users:create:invite';
 const UserPermission userPermissionUsersGrant = 'users:grant';
 const UserPermission userPermissionFilesAll = 'files';
 const UserPermission userPermissionFilesRead = 'files:read';
@@ -14,7 +14,7 @@ const UserPermission userPermissionSU = '*';
 extension PermissionName on UserPermission {
   String get readableName => switch (this) {
         userPermissionSU => 'SysAdmin',
-        userPermissionInvite => 'Invite Users',
+        userPermissionUsersCreateInvite => 'Invite Users',
         userPermissionFilesAll => 'All Files',
         userPermissionFilesRead => 'Read All Files',
         userPermissionFilesWrite => 'Write All Files',

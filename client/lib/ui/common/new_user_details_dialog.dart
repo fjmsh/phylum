@@ -1,5 +1,13 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/db/db.dart';
+
+class NewUserDetails {
+  final String email;
+  final String name;
+
+  NewUserDetails({required this.email, required this.name});
+}
 
 class NewUserDetailsDialog extends StatefulWidget {
   const NewUserDetailsDialog._();
@@ -7,14 +15,19 @@ class NewUserDetailsDialog extends StatefulWidget {
   @override
   State<NewUserDetailsDialog> createState() => _NewUserDetailsDialogState();
 
-  static Future<(String, String)?> show(BuildContext context) async {
-    return showDialog(context: context, barrierDismissible: true, builder: (context) => const NewUserDetailsDialog._());
+  static Future<User?> show(BuildContext context) async {
+    return showDialog<User>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => const NewUserDetailsDialog._(),
+    );
   }
 }
 
 class _NewUserDetailsDialogState extends State<NewUserDetailsDialog> {
-  String name = '';
-  String email = '';
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -30,28 +43,22 @@ class _NewUserDetailsDialogState extends State<NewUserDetailsDialog> {
                 labelText: 'Email',
                 hintText: 'djarin@example.com',
               ),
+              controller: _emailController,
               autofocus: true,
               textCapitalization: TextCapitalization.none,
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
-              onChanged: (value) {
-                setState(() {
-                  email = value;
-                });
-              },
             ),
             TextField(
               decoration: InputDecoration(
                 labelText: 'Name (optional)',
                 hintText: 'Din Djarin',
               ),
+              controller: _nameController,
               textCapitalization: TextCapitalization.words,
               keyboardType: TextInputType.name,
               textInputAction: TextInputAction.go,
-              onChanged: (value) {
-                name = value;
-              },
-              onSubmitted: EmailValidator.validate(email) ? (value) => Navigator.of(context).pop((email, name)) : null,
+              onSubmitted: (value) => done(),
             ),
           ],
         ),
@@ -66,11 +73,21 @@ class _NewUserDetailsDialogState extends State<NewUserDetailsDialog> {
             Navigator.of(context).pop(null);
           },
         ),
-        ElevatedButton(
-          onPressed: EmailValidator.validate(email) ? () => Navigator.of(context).pop((email, name)) : null,
-          child: const Text('Invite'),
-        )
+        ValueListenableBuilder(
+            valueListenable: _emailController,
+            builder: (context, email, child) {
+              return ElevatedButton(
+                onPressed: EmailValidator.validate(email.text) ? done : null,
+                child: const Text('Done'),
+              );
+            })
       ],
     );
+  }
+
+  void done() async {
+    if (!EmailValidator.validate(_emailController.text)) return;
+    Navigator.of(context).pop(NewUserDetails(
+        email: _emailController.text, name: _nameController.text));
   }
 }

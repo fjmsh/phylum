@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/account_user.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/responses/admin_user_list_response.dart';
+import 'package:phylum/libphylum/responses/user_details.dart';
 import 'package:phylum/libphylum/user_permission.dart';
+import 'package:phylum/ui/common/create_user_dialog.dart';
 import 'package:provider/provider.dart';
 
 import 'user_list_controller.dart';
@@ -55,28 +56,48 @@ class UserListView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         labelPadding: EdgeInsets.zero,
       ),
-      child: ListView.builder(
-        itemBuilder: (context, i) {
-          final user = users[i];
-          return ListTile(
-            title: Text.rich(TextSpan(children: [
-              if (user.name.isNotEmpty) TextSpan(text: '${user.name} \u2022 '),
-              TextSpan(
-                  text: user.email,
-                  style: TextStyle(fontStyle: FontStyle.italic))
-            ])),
-            subtitle: Wrap(
-              alignment: WrapAlignment.start,
-              spacing: 6,
-              runSpacing: 6,
-              children: user.permissions
-                  .map((p) => Chip(label: Text(p.readableName)))
-                  .toList(growable: false),
+      child: Stack(
+        children: [
+          ListView.builder(
+            itemBuilder: (context, i) {
+              final user = users[i];
+              return ListTile(
+                title: Text.rich(TextSpan(children: [
+                  if (user.name.isNotEmpty)
+                    TextSpan(text: '${user.name} \u2022 '),
+                  TextSpan(
+                      text: user.email,
+                      style: TextStyle(fontStyle: FontStyle.italic))
+                ])),
+                subtitle: Wrap(
+                  alignment: WrapAlignment.start,
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: user.permissions
+                      .map((p) => Chip(label: Text(p.readableName)))
+                      .toList(growable: false),
+                ),
+                onTap: () => showUserDetails(context, user),
+              );
+            },
+            itemCount: users.length,
+          ),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: FloatingActionButton(
+                onPressed: () async {
+                  final controller = context.read<UserListController>();
+                  final user = await CreateUserDialog.show(context);
+                  if (user == null) return;
+                  controller.addUser(user);
+                },
+                child: Icon(Icons.add),
+              ),
             ),
-            onTap: () => showUserDetails(context, user),
-          );
-        },
-        itemCount: users.length,
+          ),
+        ],
       ),
     );
   }
@@ -172,13 +193,13 @@ class UserListView extends StatelessWidget {
 
     final options = [
       userPermissionSU,
-      userPermissionInvite,
       userPermissionFilesAll,
       userPermissionFilesRead,
       userPermissionFilesWrite,
       userPermissionFilesShare,
       userPermissionUsersAll,
       userPermissionUsersList,
+      userPermissionUsersCreateInvite,
       userPermissionUsersCreate,
       userPermissionUsersGrant,
     ];
