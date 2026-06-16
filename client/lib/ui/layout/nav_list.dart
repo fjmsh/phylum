@@ -1,26 +1,14 @@
-import 'dart:ui';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/user_permission.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
-import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/common/create_user_dialog.dart';
 import 'package:phylum/ui/common/logo_row.dart';
-import 'package:phylum/ui/common/new_user_details_dialog.dart';
+import 'package:phylum/ui/layout/bookmark_list.dart';
 import 'package:phylum/ui/layout/button_downloads.dart';
 import 'package:phylum/ui/layout/create_action.dart';
-import 'package:phylum/ui/menu/menu_option.dart';
-import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:phylum/ui/settings/settings_page.dart';
-import 'package:phylum/util/dialogs.dart';
-import 'package:phylum/util/user_display_name.dart';
 import 'package:provider/provider.dart';
 
 class NavList extends StatelessWidget {
@@ -93,87 +81,7 @@ class NavList extends StatelessWidget {
                           .go(ExplorerRouteShared());
                     },
                   ),
-                  StreamBuilder<List<SelectBookmarksResult>>(
-                    stream: account.db.selectBookmarks().watch(),
-                    initialData: const [],
-                    builder: (context, snapshot) {
-                      return Theme(
-                        data: Theme.of(context)
-                            .copyWith(dividerColor: Colors.transparent),
-                        child: ExpansionTile(
-                          title: Text('Bookmarks'),
-                          leading: Icon(Icons.bookmark),
-                          initiallyExpanded: true,
-                          children: (snapshot.data ?? const [])
-                              .map((b) => GestureDetector(
-                                    supportedDevices: {
-                                      PointerDeviceKind.touch,
-                                      PointerDeviceKind.stylus,
-                                      PointerDeviceKind.invertedStylus,
-                                      PointerDeviceKind.unknown,
-                                    },
-                                    onLongPressEnd: (details) =>
-                                        fn(context, details.globalPosition, b),
-                                    child: GestureDetector(
-                                      behavior: HitTestBehavior.opaque,
-                                      supportedDevices: {
-                                        PointerDeviceKind.mouse,
-                                        PointerDeviceKind.trackpad,
-                                      },
-                                      onSecondaryTapUp: (details) => fn(
-                                          context, details.globalPosition, b),
-                                      child: ListTile(
-                                        title: Text(b.name),
-                                        leading: Icon(null),
-                                        onTap: () async {
-                                          Scaffold.maybeOf(context)
-                                              ?.closeDrawer();
-                                          if (b.dir) {
-                                            Actions.maybeInvoke(
-                                                context,
-                                                NavIntent(
-                                                    target: ExplorerRouteFolder(
-                                                        folderId:
-                                                            b.resourceId)));
-                                            return;
-                                          }
-                                          final resource = await account.db
-                                              .getResource(b.resourceId);
-                                          if (!context.mounted) return;
-                                          if (resource == null) {
-                                            final nav = Navigator.of(context);
-                                            showProgressDialog(context,
-                                                title: 'Getting Details',
-                                                message: b.name);
-                                            final success = await account
-                                                .resourceRepository
-                                                .requestResource(b.resourceId)
-                                                .then((result) => result
-                                                    is ApiSuccessResponse);
-                                            nav.pop();
-                                            if (!success) {
-                                              if (context.mounted) {
-                                                showAlertDialog(context,
-                                                    title:
-                                                        'Unable to get file info');
-                                              }
-                                              return;
-                                            }
-                                          }
-                                          if (resource != null &&
-                                              context.mounted) {
-                                            Actions.maybeInvoke(context,
-                                                OpenResourceIntent(resource));
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                  ))
-                              .toList(growable: false),
-                        ),
-                      );
-                    },
-                  ),
+                  const BookmarkList(),
                   ListTile(
                     leading: const Icon(Icons.delete),
                     title: const Text('Trash'),
@@ -185,34 +93,15 @@ class NavList extends StatelessWidget {
                     },
                   ),
                   const Divider(),
-                  StateNotifierBuilder(
-                      stateNotifier: account.userNotifier,
-                      builder: (context, state, child) {
-                        return state
-                                .hasPermission(userPermissionUsersCreateInvite)
-                            ? Column(
-                                children: [
-                                  ListTile(
-                                    leading: const Icon(Icons.person_add),
-                                    title: const Text('Invite'),
-                                    onTap: () => inviteUser(context),
-                                  ),
-                                  ListTile(
-                                    leading: const Icon(Icons.settings),
-                                    title: const Text('Settings'),
-                                    onTap: () async {
-                                      Navigator.of(context)
-                                          .push(MaterialPageRoute(
-                                        builder: (context) =>
-                                            SettingsPage.create(account),
-                                      ));
-                                    },
-                                  ),
-                                  Divider()
-                                ],
-                              )
-                            : SizedBox();
-                      }),
+                  ListTile(
+                    leading: const Icon(Icons.settings),
+                    title: const Text('Settings'),
+                    onTap: () async {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => SettingsPage.create(account),
+                      ));
+                    },
+                  ),
                   if (!kIsWeb) const DownloadButton(),
                 ],
               ),
@@ -221,61 +110,5 @@ class NavList extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void inviteUser(BuildContext context) async {
-    Scaffold.maybeOf(context)?.closeDrawer();
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    final account = context.read<PhylumAccount>();
-    final userDetails = await NewUserDetailsDialog.show(context);
-    if (userDetails == null || !context.mounted) return;
-    final user = await account.userRepository
-        .invite(email: userDetails.email, name: userDetails.name);
-    messenger?.showSnackBar(SnackBar(
-      content: Text('Invited ${user.displayName}'),
-      duration: Duration(seconds: 2),
-    ));
-  }
-
-  void fn(BuildContext context, Offset offset,
-      SelectBookmarksResult bookmark) async {
-    final position = RelativeRect.fromLTRB(
-      offset.dx,
-      offset.dy,
-      offset.dx,
-      offset.dy,
-    );
-    final account = context.read<PhylumAccount>();
-    final items = await buildPopupMenuItems(account, [
-      [MenuOption.bookmarkEdit, MenuOption.bookmarkRemove]
-    ], []);
-    if (!context.mounted) return;
-    final selection = await showMenu(
-      context: context,
-      position: position,
-      items: items.toList(growable: false),
-    );
-    if (context.mounted && selection != null) {
-      if (selection == MenuOption.bookmarkEdit) {
-        final name = await showInputDialog(
-          context,
-          autocorrect: false,
-          title: 'Edit Bookmark',
-          labelText: 'Name',
-          preset: bookmark.name,
-        );
-        if (name == null || name.trim().isEmpty || name == bookmark.name) {
-          return;
-        }
-        account.bookmarkRepository.addBookmarkDirect(
-          resourceId: bookmark.resourceId,
-          dir: bookmark.dir,
-          name: name,
-        );
-      } else if (selection == MenuOption.bookmarkRemove) {
-        account.bookmarkRepository
-            .removeBookmark(resourceId: bookmark.resourceId);
-      }
-    }
   }
 }
