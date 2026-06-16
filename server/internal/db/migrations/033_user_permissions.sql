@@ -1,6 +1,6 @@
 ALTER TABLE users DROP COLUMN permissions;
 
-ALTER TABLE users ADD COLUMN permissions TEXT[] DEFAULT '{}';
+ALTER TABLE users ADD COLUMN permissions TEXT[];
 
 
 ---- create above / drop below ----
