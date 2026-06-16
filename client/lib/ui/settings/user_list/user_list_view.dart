@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/account_user.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/user_details.dart';
 import 'package:phylum/libphylum/user_permission.dart';
 import 'package:phylum/ui/common/create_user_dialog.dart';
+import 'package:phylum/ui/common/new_user_details_dialog.dart';
+import 'package:phylum/ui/settings/user_list/user_permissions_dialog.dart';
 import 'package:provider/provider.dart';
 
 import 'user_list_controller.dart';
@@ -13,6 +14,7 @@ class UserListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final account = context.read<PhylumAccount>();
     final state = context.watch<UserListState>();
     final users = state.users;
     if (users == null) {
@@ -87,31 +89,42 @@ class UserListView extends StatelessWidget {
             },
             itemCount: users.length,
           ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: FloatingActionButton(
-                onPressed: () async {
-                  final controller = context.read<UserListController>();
-                  final user = await CreateUserDialog.show(context);
-                  if (user == null) return;
-                  controller.addUser(user);
-                },
-                child: Icon(Icons.add),
+          if (account.user.hasPermission(userPermissionUsersCreateInvite))
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: FloatingActionButton(
+                  onPressed: () async {
+                    if (account.user.hasPermission(userPermissionUsersCreate)) {
+                      final controller = context.read<UserListController>();
+                      final user = await CreateUserDialog.show(context);
+                      if (user == null) return;
+                      controller.addUser(user);
+                    } else {
+                      final account = context.read<PhylumAccount>();
+                      final userDetails =
+                          await NewUserDetailsDialog.show(context);
+                      if (userDetails == null || !context.mounted) return;
+                      await account.userRepository.invite(
+                        email: userDetails.email,
+                        name: userDetails.name,
+                      );
+                    }
+                  },
+                  child: Icon(Icons.add),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
   }
 
   void showUserDetails(BuildContext context, UserDetails user) {
-    final loggedInUser = context.read<PhylumAccount>().user;
+    final account = context.read<PhylumAccount>();
     final controller = context.read<UserListController>();
     final messenger = ScaffoldMessenger.of(context);
-    List<UserPermission> permissions = user.permissions;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -140,7 +153,7 @@ class UserListView extends StatelessWidget {
                 StatefulBuilder(builder: (context, setState) {
                   return ListTile(
                     title: Text('Permissions'),
-                    subtitle: permissions.isEmpty
+                    subtitle: user.permissions.isEmpty
                         ? const Text(
                             'None',
                             style: TextStyle(fontStyle: FontStyle.italic),
@@ -149,30 +162,27 @@ class UserListView extends StatelessWidget {
                             alignment: WrapAlignment.start,
                             spacing: 6,
                             runSpacing: 6,
-                            children: permissions
+                            children: user.permissions
                                 .map((p) => Chip(label: Text(p.readableName)))
                                 .toList(growable: false),
                           ),
-                    onTap: loggedInUser.hasPermission(userPermissionUsersGrant)
+                    onTap: account.user
+                            .hasPermission(userPermissionUsersPermissions)
                         ? () async {
                             final updatedPermissions =
-                                await showPermissionsDialog(context, user.id,
-                                    permissions, loggedInUser);
+                                await UserPermissionsDialog.show(
+                                    context, account, user);
                             if (updatedPermissions == null ||
                                 !context.mounted) {
                               return;
                             }
-                            final result = await controller.updatePermissions(
-                                user, updatedPermissions);
-                            if (result == null) {
-                              setState(() {
-                                permissions = updatedPermissions;
-                              });
-                            }
+                            setState(() {
+                              user = user.copyWith(
+                                  permissions: updatedPermissions);
+                            });
+                            controller.updateUser(user);
                             messenger.showSnackBar(SnackBar(
-                              content: result == null
-                                  ? const Text('Permissions Updated')
-                                  : Text(result),
+                              content: const Text('Permissions Updated'),
                               duration: Duration(seconds: 2),
                             ));
                           }
@@ -187,121 +197,6 @@ class UserListView extends StatelessWidget {
           ElevatedButton(
               onPressed: () => Navigator.of(context).pop(), child: Text('Okay'))
         ],
-      ),
-    );
-  }
-
-  Future<List<UserPermission>?> showPermissionsDialog(
-    BuildContext context,
-    int userId,
-    List<UserPermission> permissions,
-    AccountUser loggedInUser,
-  ) async {
-    final readOnly = userId == loggedInUser.id;
-
-    List<String> options = [
-      userPermissionSU,
-      userPermissionFilesAll,
-      userPermissionFilesRead,
-      userPermissionFilesWrite,
-      userPermissionFilesShare,
-      userPermissionUsersAll,
-      userPermissionUsersList,
-      userPermissionUsersCreateInvite,
-      userPermissionUsersCreate,
-      userPermissionUsersGrant,
-    ];
-    final extra = Set.of(permissions)..removeAll(options);
-    options.addAll(extra);
-    final selected = Set.of(permissions);
-    bool disabled(UserPermission perm) {
-      if (selected.contains(userPermissionSU)) {
-        return perm != userPermissionSU;
-      }
-      return switch (perm) {
-        userPermissionFilesRead ||
-        userPermissionFilesWrite ||
-        userPermissionFilesShare =>
-          selected.contains(userPermissionFilesAll),
-        userPermissionUsersList ||
-        userPermissionUsersCreate ||
-        userPermissionUsersGrant =>
-          selected.contains(userPermissionUsersAll),
-        // Do not allow selecting permissions we don't have ourselvese
-        _ => !loggedInUser.hasPermission(perm),
-      };
-    }
-
-    List<String> filtered = options;
-
-    return showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          scrollable: true,
-          title: const Text('Permissions'),
-          content: SizedBox(
-            width: 360,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  decoration: InputDecoration(hintText: 'Filter'),
-                  onChanged: (value) {
-                    setState(() {
-                      final query = value.toLowerCase();
-                      filtered = options
-                          .where((p) =>
-                              p.contains(query) ||
-                              p.readableName.toLowerCase().contains(query))
-                          .toList(growable: false);
-                    });
-                  },
-                ),
-                for (final option in filtered)
-                  SwitchListTile(
-                      title: Text(option.readableName),
-                      value: selected.contains(option),
-                      onChanged: readOnly || disabled(option)
-                          ? null
-                          : (value) {
-                              setState(() {
-                                if (value) {
-                                  if (option == userPermissionSU) {
-                                    selected.clear();
-                                  } else {
-                                    for (final sel in List.of(selected)) {
-                                      if (sel.startsWith('$option:')) {
-                                        selected.remove(sel);
-                                      }
-                                    }
-                                  }
-                                  selected.add(option);
-                                } else {
-                                  selected.remove(option);
-                                }
-                              });
-                            }),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error),
-              onPressed: () => Navigator.of(context).pop(null),
-              child: Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: readOnly
-                  ? null
-                  : () => Navigator.of(context)
-                      .pop(List.of(selected).toList(growable: false)),
-              child: Text('Update'),
-            ),
-          ],
-        ),
       ),
     );
   }

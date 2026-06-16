@@ -6,7 +6,6 @@ import 'package:phylum/libphylum/actions/action_resource_share.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/user_permission.dart';
-import 'package:phylum/ui/common/create_user_dialog.dart';
 import 'package:phylum/ui/common/new_user_details_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/permissions.dart';
