@@ -101,7 +101,6 @@ class PhylumAccount extends Account<PhylumAccount> {
 
   @override
   Future<void> initialize() async {
-    await super.initialize();
     if (_apiToken == null) {
       _apiToken = getPersisted(_persistKeyApiToken);
       if (_apiToken == null) {

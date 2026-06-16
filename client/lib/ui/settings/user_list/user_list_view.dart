@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/user_details.dart';
 import 'package:phylum/libphylum/user_permission.dart';
+import 'package:phylum/ui/app/router.dart';
+import 'package:phylum/ui/app/routes.dart';
 import 'package:phylum/ui/common/create_user_dialog.dart';
 import 'package:phylum/ui/common/new_user_details_dialog.dart';
 import 'package:phylum/ui/settings/user_list/user_permissions_dialog.dart';
@@ -64,28 +66,39 @@ class UserListView extends StatelessWidget {
             itemBuilder: (context, i) {
               final user = users[i];
               return ListTile(
-                title: Text.rich(TextSpan(children: [
-                  if (user.name.isNotEmpty)
-                    TextSpan(text: '${user.name} \u2022 '),
-                  TextSpan(
-                      text: user.email,
-                      style: TextStyle(fontStyle: FontStyle.italic))
-                ])),
-                subtitle: user.permissions.isEmpty
-                    ? const Text(
-                        'No Permissions',
-                        style: TextStyle(fontStyle: FontStyle.italic),
-                      )
-                    : Wrap(
-                        alignment: WrapAlignment.start,
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: user.permissions
-                            .map((p) => Chip(label: Text(p.readableName)))
-                            .toList(growable: false),
-                      ),
-                onTap: () => showUserDetails(context, user),
-              );
+                  title: Text.rich(TextSpan(children: [
+                    if (user.name.isNotEmpty)
+                      TextSpan(text: '${user.name} \u2022 '),
+                    TextSpan(
+                        text: user.email,
+                        style: TextStyle(fontStyle: FontStyle.italic))
+                  ])),
+                  subtitle: user.permissions.isEmpty
+                      ? const Text(
+                          'No Permissions',
+                          style: TextStyle(fontStyle: FontStyle.italic),
+                        )
+                      : Wrap(
+                          alignment: WrapAlignment.start,
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: user.permissions
+                              .map((p) => Chip(label: Text(p.readableName)))
+                              .toList(growable: false),
+                        ),
+                  onTap: () => showUserDetails(context, user),
+                  trailing: account.user
+                              .hasPermission(userPermissionFilesRead) &&
+                          user.home != null
+                      ? IconButton(
+                          icon: Icon(Icons.folder_open_rounded),
+                          onPressed: () {
+                            context
+                                .read<PhylumRouterDelegate>()
+                                .go(ExplorerRouteFolder(folderId: user.home!));
+                          },
+                        )
+                      : null);
             },
             itemCount: users.length,
           ),

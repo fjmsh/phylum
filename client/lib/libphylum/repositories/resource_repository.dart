@@ -5,6 +5,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:mime/mime.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:path/path.dart';
+import 'package:phylum/libphylum/account_user.dart';
 import 'package:phylum/libphylum/actions/action_resource_copy.dart';
 import 'package:phylum/libphylum/actions/action_resource_mkdir.dart';
 import 'package:phylum/libphylum/actions/action_resource_move.dart';
@@ -14,6 +15,7 @@ import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_info_request.dart';
+import 'package:phylum/libphylum/user_permission.dart';
 import 'package:phylum/libphylum/util/uuid.dart';
 import 'package:phylum/util/permissions.dart';
 
@@ -30,19 +32,26 @@ typedef CopyMoveFn = Future<String> Function({
 class ResourceRepository extends Repository<PhylumAccount, Resource> {
   late final PhylumAccount _account;
   late final LazyBox<Resource?> _remoteDataBox;
+  late AccountUser _user;
 
   ResourceRepository();
 
   @override
-  Future<Map<String, Resource?>> initializeAndRestoreRemoteData(PhylumAccount account) async {
+  Future<Map<String, Resource?>> initializeAndRestoreRemoteData(
+      PhylumAccount account) async {
     if (!Hive.isAdapterRegistered(const ResourceAdapter().typeId)) {
       Hive.registerAdapter(const ResourceAdapter());
     }
     final box = await account.openBox<Resource>(_remoteResourcesBoxName);
-    final remoteData = Map<String, Resource?>.fromIterable(box.keys, value: (key) => box.get(key));
+    final remoteData = Map<String, Resource?>.fromIterable(box.keys,
+        value: (key) => box.get(key));
     await box.close();
     _account = account;
     _remoteDataBox = await account.openLazyBox(_remoteResourcesBoxName);
+    // TODO: remove listener?
+    _account.userNotifier.addListener((user) => _user = user);
+    _user = _account.user;
+
     return remoteData;
   }
 
@@ -68,7 +77,8 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
 
   @override
   Future<void> save(String objectId, Resource data) {
-    return _account.db.resources.insertOne(data, mode: InsertMode.insertOrReplace);
+    return _account.db.resources
+        .insertOne(data, mode: InsertMode.insertOrReplace);
   }
 
   @override
@@ -88,11 +98,14 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     String localName = name;
     String? deletedId;
     if (performLocalChecks) {
-      if (ensurePermission && userPermission & permissionWrite == 0) {
+      if (ensurePermission &&
+          userPermission & permissionWrite == 0 &&
+          !_user.hasPermission(userPermissionFilesWrite)) {
         throw PermissionException();
       }
 
-      var existing = await _account.db.getResourcesByName(parent: parent, name: name);
+      var existing =
+          await _account.db.getResourcesByName(parent: parent, name: name);
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
           case nameConflictError:
@@ -138,11 +151,14 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     String localName = name;
     String? deletedId;
     if (performLocalChecks) {
-      if (ensurePermission && userPermission & permissionWrite == 0) {
+      if (ensurePermission &&
+          userPermission & permissionWrite == 0 &&
+          !_user.hasPermission(userPermissionFilesWrite)) {
         throw PermissionException();
       }
 
-      var existing = await _account.db.getResourcesByName(parent: parent, name: name);
+      var existing =
+          await _account.db.getResourcesByName(parent: parent, name: name);
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
           case nameConflictError:
@@ -191,8 +207,12 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     String localName = name;
     String? deletedId;
     if (performLocalChecks) {
-      final parentPermission = await _account.db.getResource(parent).then((p) => p?.userPermission ?? 0);
-      if (ensurePermission && parentPermission & permissionWrite == 0) {
+      final parentPermission = await _account.db
+          .getResource(parent)
+          .then((p) => p?.userPermission ?? 0);
+      if (ensurePermission &&
+          parentPermission & permissionWrite == 0 &&
+          !_user.hasPermission(userPermissionFilesWrite)) {
         throw PermissionException();
       }
 
@@ -203,7 +223,8 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
         }
       }
 
-      var existing = await _account.db.getResourcesByName(parent: parent, name: name);
+      var existing =
+          await _account.db.getResourcesByName(parent: parent, name: name);
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
           case nameConflictError:
@@ -226,7 +247,9 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
       parent: parent,
       resourceName: name,
       conflictResolution: conflictResolution,
-      description: parent == resource.parent ? 'Renaming ${resource.name} to $localName' : 'Moving ${resource.name}',
+      description: parent == resource.parent
+          ? 'Renaming ${resource.name} to $localName'
+          : 'Moving ${resource.name}',
       timestamp: DateTime.now(),
       localName: localName,
       oldParent: parent == resource.parent ? null : resource.parent,
@@ -250,12 +273,17 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     String? deletedId;
     String localName = name;
     if (performLocalChecks) {
-      final parentPermission = await _account.db.getResource(parent).then((p) => p?.userPermission ?? 0);
-      if (ensurePermission && parentPermission & permissionWrite == 0) {
+      final parentPermission = await _account.db
+          .getResource(parent)
+          .then((p) => p?.userPermission ?? 0);
+      if (ensurePermission &&
+          parentPermission & permissionWrite == 0 &&
+          !_user.hasPermission(userPermissionFilesWrite)) {
         throw PermissionException();
       }
 
-      var existing = await _account.db.getResourcesByName(parent: parent, name: name);
+      var existing =
+          await _account.db.getResourcesByName(parent: parent, name: name);
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
           case nameConflictError:
@@ -273,7 +301,8 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
         }
       }
     }
-    final latestVersion = await _account.db.latestVersion(resource.id).getSingleOrNull();
+    final latestVersion =
+        await _account.db.latestVersion(resource.id).getSingleOrNull();
     await _account.addAction(ResourceCopyAction(
       srcId: resource.id,
       resourceId: id,
@@ -294,12 +323,15 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     return id;
   }
 
-  Future<String> _createUniqueName(List<Resource> existing, String parent, String name) async {
+  Future<String> _createUniqueName(
+      List<Resource> existing, String parent, String name) async {
     String localName = name;
     int counter = 1;
     while (existing.isNotEmpty) {
-      localName = '${basenameWithoutExtension(name)} (${counter++})${extension(name)}';
-      existing = await _account.db.getResourcesByName(parent: parent, name: localName);
+      localName =
+          '${basenameWithoutExtension(name)} (${counter++})${extension(name)}';
+      existing =
+          await _account.db.getResourcesByName(parent: parent, name: localName);
     }
     return localName;
   }
@@ -320,7 +352,8 @@ class ResourceAdapter implements TypeAdapter<Resource?> {
 
   @override
   void write(BinaryWriter writer, Resource? obj) {
-    writer.writeByte(0); // Version marker, in case we need to change something in the future
+    writer.writeByte(
+        0); // Version marker, in case we need to change something in the future
     writer.writeString(obj?.toJsonString() ?? '');
   }
 }
