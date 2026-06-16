@@ -232,6 +232,8 @@ class UserListView extends StatelessWidget {
       };
     }
 
+    List<String> filtered = options;
+
     return showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -244,7 +246,20 @@ class UserListView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                for (final option in options)
+                TextField(
+                  decoration: InputDecoration(hintText: 'Filter'),
+                  onChanged: (value) {
+                    setState(() {
+                      final query = value.toLowerCase();
+                      filtered = options
+                          .where((p) =>
+                              p.contains(query) ||
+                              p.readableName.toLowerCase().contains(query))
+                          .toList(growable: false);
+                    });
+                  },
+                ),
+                for (final option in filtered)
                   SwitchListTile(
                       title: Text(option.readableName),
                       value: selected.contains(option),
