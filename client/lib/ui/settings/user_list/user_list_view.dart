@@ -69,14 +69,19 @@ class UserListView extends StatelessWidget {
                       text: user.email,
                       style: TextStyle(fontStyle: FontStyle.italic))
                 ])),
-                subtitle: Wrap(
-                  alignment: WrapAlignment.start,
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: user.permissions
-                      .map((p) => Chip(label: Text(p.readableName)))
-                      .toList(growable: false),
-                ),
+                subtitle: user.permissions.isEmpty
+                    ? const Text(
+                        'No Permissions',
+                        style: TextStyle(fontStyle: FontStyle.italic),
+                      )
+                    : Wrap(
+                        alignment: WrapAlignment.start,
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: user.permissions
+                            .map((p) => Chip(label: Text(p.readableName)))
+                            .toList(growable: false),
+                      ),
                 onTap: () => showUserDetails(context, user),
               );
             },
@@ -108,34 +113,39 @@ class UserListView extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     List<UserPermission> permissions = user.permissions;
     showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-              title: Text('User Details'),
-              content: SizedBox(
-                width: 360,
-                child: ListTileTheme(
-                  data: ListTileThemeData(
-                      visualDensity:
-                          const VisualDensity(horizontal: -4, vertical: -4)),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                        title: const Text('Name'),
-                        subtitle: Text(user.name),
-                      ),
-                      ListTile(
-                        title: const Text('Email'),
-                        subtitle: Text(user.email),
-                      ),
-                      ListTile(
-                        title: const Text('User ID'),
-                        subtitle: Text(user.id.toString()),
-                      ),
-                      StatefulBuilder(builder: (context, setState) {
-                        return ListTile(
-                          title: Text('Permissions'),
-                          subtitle: Wrap(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('User Details'),
+        content: SizedBox(
+          width: 360,
+          child: ListTileTheme(
+            data: ListTileThemeData(
+                visualDensity:
+                    const VisualDensity(horizontal: -4, vertical: -4)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: const Text('Name'),
+                  subtitle: Text(user.name),
+                ),
+                ListTile(
+                  title: const Text('Email'),
+                  subtitle: Text(user.email),
+                ),
+                ListTile(
+                  title: const Text('User ID'),
+                  subtitle: Text(user.id.toString()),
+                ),
+                StatefulBuilder(builder: (context, setState) {
+                  return ListTile(
+                    title: Text('Permissions'),
+                    subtitle: permissions.isEmpty
+                        ? const Text(
+                            'None',
+                            style: TextStyle(fontStyle: FontStyle.italic),
+                          )
+                        : Wrap(
                             alignment: WrapAlignment.start,
                             spacing: 6,
                             runSpacing: 6,
@@ -143,44 +153,42 @@ class UserListView extends StatelessWidget {
                                 .map((p) => Chip(label: Text(p.readableName)))
                                 .toList(growable: false),
                           ),
-                          onTap: loggedInUser
-                                  .hasPermission(userPermissionUsersGrant)
-                              ? () async {
-                                  final updatedPermissions =
-                                      await showPermissionsDialog(context,
-                                          user.id, permissions, loggedInUser);
-                                  if (updatedPermissions == null ||
-                                      !context.mounted) {
-                                    return;
-                                  }
-                                  final result =
-                                      await controller.updatePermissions(
-                                          user, updatedPermissions);
-                                  if (result == null) {
-                                    setState(() {
-                                      permissions = updatedPermissions;
-                                    });
-                                  }
-                                  messenger.showSnackBar(SnackBar(
-                                    content: result == null
-                                        ? const Text('Permissions Updated')
-                                        : Text(result),
-                                    duration: Duration(seconds: 2),
-                                  ));
-                                }
-                              : null,
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text('Okay'))
+                    onTap: loggedInUser.hasPermission(userPermissionUsersGrant)
+                        ? () async {
+                            final updatedPermissions =
+                                await showPermissionsDialog(context, user.id,
+                                    permissions, loggedInUser);
+                            if (updatedPermissions == null ||
+                                !context.mounted) {
+                              return;
+                            }
+                            final result = await controller.updatePermissions(
+                                user, updatedPermissions);
+                            if (result == null) {
+                              setState(() {
+                                permissions = updatedPermissions;
+                              });
+                            }
+                            messenger.showSnackBar(SnackBar(
+                              content: result == null
+                                  ? const Text('Permissions Updated')
+                                  : Text(result),
+                              duration: Duration(seconds: 2),
+                            ));
+                          }
+                        : null,
+                  );
+                }),
               ],
-            ));
+            ),
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(), child: Text('Okay'))
+        ],
+      ),
+    );
   }
 
   Future<List<UserPermission>?> showPermissionsDialog(
