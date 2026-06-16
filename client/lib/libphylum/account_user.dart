@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:phylum/util/permissions.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 import 'phylum_account.dart';
@@ -13,6 +14,7 @@ class AccountUser {
   final String name;
   final String home;
   final List<String> permissions;
+  late final Permission filesPermissions;
 
   AccountUser({
     required this.id,
@@ -20,7 +22,9 @@ class AccountUser {
     required this.name,
     required this.home,
     required this.permissions,
-  });
+  }) {
+    filesPermissions = _getFilesPermissions();
+  }
 
   bool hasPermission(UserPermission p) {
     final parts = p.split(':');
@@ -37,6 +41,32 @@ class AccountUser {
     return false;
   }
 
+  Permission _getFilesPermissions() {
+    Permission filePermissions = 0;
+    for (final up in permissions) {
+      if (up == '*') return permissionSetAll;
+
+      final upParts = up.split(':');
+      if (upParts[0] == 'files') {
+        if (upParts.length == 1 || upParts[2] == '*') {
+          return permissionSetAll;
+        }
+        switch (upParts[1]) {
+          case "read":
+            filePermissions |= permissionRead;
+            break;
+          case "write":
+            filePermissions |= permissionWrite;
+            break;
+          case "share":
+            filePermissions |= permissionShare;
+            break;
+        }
+      }
+    }
+    return filePermissions;
+  }
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -50,7 +80,12 @@ class AccountUser {
   }
 
   @override
-  int get hashCode => id.hashCode ^ email.hashCode ^ name.hashCode ^ home.hashCode ^ permissions.hashCode;
+  int get hashCode =>
+      id.hashCode ^
+      email.hashCode ^
+      name.hashCode ^
+      home.hashCode ^
+      permissions.hashCode;
 
   Map<String, dynamic> toJson() => {
         "id": id,
@@ -98,13 +133,15 @@ class AccountUserNotifier extends StateNotifier<AccountUser> {
     });
   }
 
-  factory AccountUserNotifier.fromUser(PhylumAccount account, AccountUser user) {
+  factory AccountUserNotifier.fromUser(
+      PhylumAccount account, AccountUser user) {
     account.persist(_persistKeyUser, jsonEncode(user.toJson()));
     return AccountUserNotifier._(account, user);
   }
 
   factory AccountUserNotifier.fromAccount(PhylumAccount account) {
-    final user = AccountUser.fromJson(jsonDecode(account.getPersisted(_persistKeyUser)));
+    final user =
+        AccountUser.fromJson(jsonDecode(account.getPersisted(_persistKeyUser)));
     return AccountUserNotifier._(account, user);
   }
 
