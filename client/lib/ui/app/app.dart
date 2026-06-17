@@ -73,16 +73,13 @@ class _PhylumAppState extends State<PhylumApp> {
             ),
           ),
         );
-        final darkTheme = ThemeData(
-          colorScheme: colorScheme.copyWith(brightness: Brightness.dark),
-        );
 
         // return const PhylumApp();
         return MaterialApp.router(
           title: 'Phylum',
           debugShowCheckedModeBanner: false,
           theme: theme,
-          darkTheme: darkTheme,
+          darkTheme: theme.copyWith(brightness: Brightness.dark),
           routeInformationParser: const PhylumRouteInformationParser(),
           routerDelegate: routerDelegate,
           shortcuts: appShortcuts,
