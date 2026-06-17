@@ -24,10 +24,11 @@ class LoginController extends StateNotifier<LoginState> {
 
   set instanceInfo(InstanceInfo value) {
     state = state.copyWith(
-        instanceUrl: value.url,
-        updateInstanceUrl: true,
-        instanceInfo: value,
-        updateInstanceInfo: true);
+      instanceUrl: value.url,
+      updateInstanceUrl: true,
+      instanceInfo: value,
+      updateInstanceInfo: true,
+    );
   }
 
   set selectedMethod(LoginMethod? value) {
@@ -48,8 +49,9 @@ class LoginState {
 
   factory LoginState.create({Uri? instanceUrl, LoginMethod? selectedMethod}) {
     return LoginState._(
-      instanceUrl:
-          instanceUrlFixed ? webAppBaseUri : instanceUrl ?? webAppBaseUri,
+      instanceUrl: instanceUrlFixed
+          ? webAppBaseUri
+          : instanceUrl ?? webAppBaseUri,
       selectedMethod: selectedMethod,
     );
   }
@@ -61,13 +63,11 @@ class LoginState {
     bool updateInstanceInfo = false,
     LoginMethod? selectedMethod,
     bool updateSelectedMethod = false,
-  }) =>
-      LoginState._(
-        instanceUrl: updateInstanceUrl ? instanceUrl : this.instanceUrl,
-        instanceInfo: updateInstanceInfo ? instanceInfo : this.instanceInfo,
-        selectedMethod:
-            updateSelectedMethod ? selectedMethod : this.selectedMethod,
-      );
+  }) => LoginState._(
+    instanceUrl: updateInstanceUrl ? instanceUrl : this.instanceUrl,
+    instanceInfo: updateInstanceInfo ? instanceInfo : this.instanceInfo,
+    selectedMethod: updateSelectedMethod ? selectedMethod : this.selectedMethod,
+  );
 }
 
 sealed class LoginMethod {

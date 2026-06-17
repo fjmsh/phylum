@@ -17,8 +17,10 @@ abstract class ResourceCreateAction extends ResourceBindAction {
     if (response is ResourceResponse) {
       if (response.resource.id != resourceId) {
         account.actionQueue.updateActions(
-          (PhylumAction action) => action is ResourceAction && action.resourceId == resourceId,
-          (action) => (action as ResourceAction).setResourceId(response.resource.id),
+          (PhylumAction action) =>
+              action is ResourceAction && action.resourceId == resourceId,
+          (action) =>
+              (action as ResourceAction).setResourceId(response.resource.id),
         );
       }
     }

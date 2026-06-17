@@ -17,6 +17,8 @@ extension FileSizeString on FileSize {
   }
 
   String _formatSize(double size, bool noDecimal) {
-    return (size >= 10 || noDecimal) ? '${size.toInt()}' : decimalPattern.format(size);
+    return (size >= 10 || noDecimal)
+        ? '${size.toInt()}'
+        : decimalPattern.format(size);
   }
 }

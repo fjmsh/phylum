@@ -40,7 +40,7 @@ class BookmarkList extends StatelessWidget {
 class BookmarkItem extends StatelessWidget {
   final SelectBookmarksResult bookmark;
   BookmarkItem({required this.bookmark})
-      : super(key: ValueKey(bookmark.resourceId));
+    : super(key: ValueKey(bookmark.resourceId));
 
   @override
   Widget build(BuildContext context) {
@@ -55,10 +55,7 @@ class BookmarkItem extends StatelessWidget {
           showBookmarkDialog(context, details.globalPosition, bookmark),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        supportedDevices: {
-          PointerDeviceKind.mouse,
-          PointerDeviceKind.trackpad,
-        },
+        supportedDevices: {PointerDeviceKind.mouse, PointerDeviceKind.trackpad},
         onSecondaryTapUp: (details) =>
             showBookmarkDialog(context, details.globalPosition, bookmark),
         child: ListTile(
@@ -68,11 +65,11 @@ class BookmarkItem extends StatelessWidget {
             Scaffold.maybeOf(context)?.closeDrawer();
             if (bookmark.dir) {
               Actions.maybeInvoke(
-                  context,
-                  NavIntent(
-                      target: ExplorerRouteFolder(
-                    folderId: bookmark.resourceId,
-                  )));
+                context,
+                NavIntent(
+                  target: ExplorerRouteFolder(folderId: bookmark.resourceId),
+                ),
+              );
               return;
             }
             final account = context.read<PhylumAccount>();
@@ -118,7 +115,7 @@ class BookmarkItem extends StatelessWidget {
     );
     final account = context.read<PhylumAccount>();
     final items = await buildPopupMenuItems(account, [
-      [MenuOption.bookmarkEdit, MenuOption.bookmarkRemove]
+      [MenuOption.bookmarkEdit, MenuOption.bookmarkRemove],
     ], []);
     if (!context.mounted) return;
     final selection = await showMenu(
@@ -144,8 +141,9 @@ class BookmarkItem extends StatelessWidget {
           name: name,
         );
       } else if (selection == MenuOption.bookmarkRemove) {
-        account.bookmarkRepository
-            .removeBookmark(resourceId: bookmark.resourceId);
+        account.bookmarkRepository.removeBookmark(
+          resourceId: bookmark.resourceId,
+        );
       }
     }
   }

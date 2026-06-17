@@ -25,9 +25,9 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-        'path': '$resourceId:',
-        'permanent': permanent,
-      };
+    'path': '$resourceId:',
+    'permanent': permanent,
+  };
 
   @override
   List<LocalChange> get localChanges => permanent
@@ -53,11 +53,11 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
 
   @override
   Map<String, dynamic> get props => {
-        'resourceId': resourceId,
-        'resourceName': resourceName,
-        'timestamp': timestamp.millisecondsSinceEpoch,
-        'permanent': permanent,
-      };
+    'resourceId': resourceId,
+    'resourceName': resourceName,
+    'timestamp': timestamp.millisecondsSinceEpoch,
+    'permanent': permanent,
+  };
 
   final String resourceName;
   final DateTime timestamp;
@@ -75,11 +75,11 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
     required DateTime timestamp,
     bool permanent = false,
   }) : this._(
-          resourceId: r.id,
-          resourceName: r.name,
-          timestamp: timestamp,
-          permanent: permanent,
-        );
+         resourceId: r.id,
+         resourceName: r.name,
+         timestamp: timestamp,
+         permanent: permanent,
+       );
 
   factory ResourceDeleteAction.fromMap(Map<String, dynamic> map) {
     return ResourceDeleteAction._(
@@ -91,10 +91,13 @@ class ResourceDeleteAction extends ResourceAction with JsonApiAction {
   }
 
   @override
-  bool dependsOn(PhylumAction action) => action is ResourceAction && action.resourceId == resourceId;
+  bool dependsOn(PhylumAction action) =>
+      action is ResourceAction && action.resourceId == resourceId;
 
   @override
   Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) {
-    return permanent ? parseJsonMapResponse(response, EmptyResponse.fromResponse) : super.parseResponse(response);
+    return permanent
+        ? parseJsonMapResponse(response, EmptyResponse.fromResponse)
+        : super.parseResponse(response);
   }
 }

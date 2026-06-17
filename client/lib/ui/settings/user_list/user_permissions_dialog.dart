@@ -25,10 +25,7 @@ class UserPermissionsDialog extends StatefulWidget {
   ) {
     return showDialog(
       context: context,
-      builder: (context) => UserPermissionsDialog(
-        account: account,
-        user: user,
-      ),
+      builder: (context) => UserPermissionsDialog(account: account, user: user),
     );
   }
 }
@@ -79,51 +76,56 @@ class _UserPermissionsDialogState extends State<UserPermissionsDialog> {
                 setState(() {
                   final query = value.toLowerCase();
                   filtered = options
-                      .where((p) =>
-                          p.contains(query) ||
-                          p.readableName.toLowerCase().contains(query))
+                      .where(
+                        (p) =>
+                            p.contains(query) ||
+                            p.readableName.toLowerCase().contains(query),
+                      )
                       .toList(growable: false);
                 });
               },
             ),
             for (final option in filtered)
               SwitchListTile(
-                  title: Text(option.readableName),
-                  value: selected.contains(option),
-                  onChanged: readOnly || disabled(option)
-                      ? null
-                      : (value) {
-                          setState(() {
-                            if (value) {
-                              if (option == userPermissionSU) {
-                                selected.clear();
-                              } else {
-                                for (final sel in List.of(selected)) {
-                                  if (sel.startsWith('$option:')) {
-                                    selected.remove(sel);
-                                  }
+                title: Text(option.readableName),
+                value: selected.contains(option),
+                onChanged: readOnly || disabled(option)
+                    ? null
+                    : (value) {
+                        setState(() {
+                          if (value) {
+                            if (option == userPermissionSU) {
+                              selected.clear();
+                            } else {
+                              for (final sel in List.of(selected)) {
+                                if (sel.startsWith('$option:')) {
+                                  selected.remove(sel);
                                 }
                               }
-                              selected.add(option);
-                            } else {
-                              selected.remove(option);
                             }
-                          });
-                        }),
+                            selected.add(option);
+                          } else {
+                            selected.remove(option);
+                          }
+                        });
+                      },
+              ),
           ],
         ),
       ),
       actions: [
         TextButton(
           style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error),
+            foregroundColor: Theme.of(context).colorScheme.error,
+          ),
           onPressed: () => Navigator.of(context).pop(null),
           child: Text('Cancel'),
         ),
         ElevatedButton(
           onPressed: readOnly || requestInFlight ? null : () => done(context),
-          child:
-              requestInFlight ? const Text('Updating') : const Text('Update'),
+          child: requestInFlight
+              ? const Text('Updating')
+              : const Text('Update'),
         ),
       ],
     );
@@ -136,12 +138,12 @@ class _UserPermissionsDialogState extends State<UserPermissionsDialog> {
     return switch (perm) {
       userPermissionFilesRead ||
       userPermissionFilesWrite ||
-      userPermissionFilesShare =>
-        selected.contains(userPermissionFilesAll),
+      userPermissionFilesShare => selected.contains(userPermissionFilesAll),
       userPermissionUsersList ||
       userPermissionUsersCreate ||
-      userPermissionUsersPermissions =>
-        selected.contains(userPermissionUsersAll),
+      userPermissionUsersPermissions => selected.contains(
+        userPermissionUsersAll,
+      ),
       // Do not allow selecting permissions we don't have ourselvese
       _ => !widget.account.user.hasPermission(perm),
     };
@@ -151,11 +153,12 @@ class _UserPermissionsDialogState extends State<UserPermissionsDialog> {
     if (requestInFlight) return;
 
     setState(() => requestInFlight = true);
-    final result =
-        await widget.account.apiClient.sendRequest(AdminUserPermissionsRequest(
-      userId: widget.user.id,
-      permissions: selected.toList(growable: false),
-    ));
+    final result = await widget.account.apiClient.sendRequest(
+      AdminUserPermissionsRequest(
+        userId: widget.user.id,
+        permissions: selected.toList(growable: false),
+      ),
+    );
     if (!context.mounted) return;
     setState(() => requestInFlight = false);
     if (result is UserDetails) {

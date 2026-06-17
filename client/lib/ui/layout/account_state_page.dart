@@ -14,27 +14,26 @@ class AccountStatePage extends StatelessWidget {
     if (state == AccountState.ready) return child;
     if (state == AccountState.closed) {
       return PhylumDialogScaffold(
-          child: Column(
-        spacing: 16.0,
-        children: [
-          Text('You have been logged out'),
-          ElevatedButton(
-            onPressed: () =>
-                context.read<AccountManager<PhylumAccount>>().removeAccount(context.read<PhylumAccount>().id),
-            child: const Text('OK'),
-          ),
-        ],
-      ));
+        child: Column(
+          spacing: 16.0,
+          children: [
+            Text('You have been logged out'),
+            ElevatedButton(
+              onPressed: () => context
+                  .read<AccountManager<PhylumAccount>>()
+                  .removeAccount(context.read<PhylumAccount>().id),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
     }
 
     return const PhylumDialogScaffold(
       child: Row(
         mainAxisSize: MainAxisSize.min,
         spacing: 16.0,
-        children: [
-          CircularProgressIndicator(),
-          Text('Logging Out'),
-        ],
+        children: [CircularProgressIndicator(), Text('Logging Out')],
       ),
     );
   }

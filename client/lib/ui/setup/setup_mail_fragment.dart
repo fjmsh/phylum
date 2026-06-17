@@ -34,15 +34,13 @@ class SetupMailFragment extends StatelessWidget {
         TextButtonTheme(
           data: TextButtonThemeData(
             style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24)),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TextButton(
-                onPressed: onPrevPress,
-                child: Text('PREV'),
-              ),
+              TextButton(onPressed: onPrevPress, child: Text('PREV')),
               TextButton(
                 onPressed: () => validateAndNext(context),
                 child: Text('NEXT'),
@@ -66,7 +64,8 @@ class SetupMailFragment extends StatelessWidget {
             leading: Icon(Icons.help),
             dense: true,
             title: Text(
-                'Used for inviting users, passwordless login, passwordless login, and to send share notifications'),
+              'Used for inviting users, passwordless login, passwordless login, and to send share notifications',
+            ),
           ),
           SwitchListTile(
             value: config.enabled,
@@ -93,7 +92,10 @@ class SetupMailFragment extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(text: 'SMTP Host '),
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -114,7 +116,10 @@ class SetupMailFragment extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(text: 'SMTP Port '),
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -123,15 +128,16 @@ class SetupMailFragment extends StatelessWidget {
             ),
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             keyboardType: TextInputType.number,
-            initialValue:
-                config.smtpPort == 0 ? '' : config.smtpPort.toString(),
+            initialValue: config.smtpPort == 0
+                ? ''
+                : config.smtpPort.toString(),
             onChanged: (value) => context.read<MailController>().smtpPort =
                 int.tryParse(value) ?? 0,
             validator: (value) => value?.isEmpty ?? true
                 ? 'Required'
                 : (int.tryParse(value!) ?? 0) == 0
-                    ? 'Invalid Port'
-                    : null,
+                ? 'Invalid Port'
+                : null,
           ),
           TextFormField(
             decoration: const InputDecoration(
@@ -139,7 +145,10 @@ class SetupMailFragment extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(text: 'SMTP Username '),
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -169,7 +178,10 @@ class SetupMailFragment extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(text: 'Mail From Name '),
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -188,7 +200,10 @@ class SetupMailFragment extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(text: 'Mail From Email '),
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -202,8 +217,8 @@ class SetupMailFragment extends StatelessWidget {
             validator: (value) => value?.isEmpty ?? true
                 ? 'Required'
                 : EmailValidator.validate(value!)
-                    ? null
-                    : 'Invalid Email Address',
+                ? null
+                : 'Invalid Email Address',
           ),
           TextFormField(
             decoration: InputDecoration(
@@ -211,7 +226,10 @@ class SetupMailFragment extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(text: 'Instance URL '),
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -226,8 +244,8 @@ class SetupMailFragment extends StatelessWidget {
             validator: (value) => value?.isEmpty ?? true
                 ? 'Required'
                 : Uri.tryParse(value!) == null
-                    ? 'Invalid URL'
-                    : null,
+                ? 'Invalid URL'
+                : null,
           ),
         ],
       ),
@@ -263,8 +281,8 @@ class SetupMailFragment extends StatelessWidget {
       message: 'Validating Email Config',
     );
     if (responseString == null || !context.mounted) return;
-    final responseMap =
-        (jsonDecode(responseString) as Map).cast<String, dynamic>();
+    final responseMap = (jsonDecode(responseString) as Map)
+        .cast<String, dynamic>();
     final overrides = (responseMap["overrides"] as List?)?.cast<String>();
     final overrideNote = (overrides?.isNotEmpty ?? false)
         ? "Note: The following settings were overridden by environment variables or command line flags: ${overrides!.join(",")}"
@@ -352,16 +370,16 @@ class MailConfig {
   });
 
   MailConfig.defaults()
-      : this(
-          enabled: false,
-          smtpHost: '',
-          smtpPort: 587,
-          smtpUsername: '',
-          smtpPassword: '',
-          fromEmail: '',
-          fromName: '',
-          instanceUrl: webAppBaseUri?.toString() ?? '',
-        );
+    : this(
+        enabled: false,
+        smtpHost: '',
+        smtpPort: 587,
+        smtpUsername: '',
+        smtpPassword: '',
+        fromEmail: '',
+        fromName: '',
+        instanceUrl: webAppBaseUri?.toString() ?? '',
+      );
 
   MailConfig copyWith({
     bool? enabled,
@@ -393,10 +411,7 @@ class MailConfig {
             'username': smtpUsername,
             'password': smtpPassword,
           },
-          'from': {
-            'name': fromName,
-            'email': fromEmail,
-          },
+          'from': {'name': fromName, 'email': fromEmail},
           'instance': instanceUrl,
         }
       : const {};

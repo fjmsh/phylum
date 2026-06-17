@@ -18,8 +18,10 @@ class SyncDialog extends StatelessWidget {
       builder: (context) => MultiProvider(
         providers: [
           Provider.value(value: account),
-          StateNotifierProvider<ApiActionQueue<PhylumAccount>, PhylumActionQueueState>.value(
-              value: account.actionQueue),
+          StateNotifierProvider<
+            ApiActionQueue<PhylumAccount>,
+            PhylumActionQueueState
+          >.value(value: account.actionQueue),
         ],
         builder: (context, _) {
           return const SyncDialog();
@@ -33,9 +35,7 @@ class SyncDialog extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     if (size.width < 600) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Server Sync'),
-        ),
+        appBar: AppBar(title: const Text('Server Sync')),
         body: buildContents(context),
       );
     } else {
@@ -47,9 +47,10 @@ class SyncDialog extends StatelessWidget {
             child: Column(
               children: [
                 AppBar(
-                    title: const Text('Server Sync'),
-                    leading: const CloseButton(),
-                    backgroundColor: Colors.transparent),
+                  title: const Text('Server Sync'),
+                  leading: const CloseButton(),
+                  backgroundColor: Colors.transparent,
+                ),
                 Expanded(child: buildContents(context)),
               ],
             ),
@@ -59,10 +60,6 @@ class SyncDialog extends StatelessWidget {
     }
   }
 
-  Widget buildContents(BuildContext context) => const CustomScrollView(
-        slivers: [
-          PausedOfflineSliver(),
-          ActionsSliver(),
-        ],
-      );
+  Widget buildContents(BuildContext context) =>
+      const CustomScrollView(slivers: [PausedOfflineSliver(), ActionsSliver()]);
 }

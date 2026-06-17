@@ -7,7 +7,11 @@ class ResourceImgRequest extends ApiRequest<PhylumAccount> {
   final String? versionId;
   final int imgRes;
 
-  const ResourceImgRequest(this.resourceId, {this.versionId, required this.imgRes});
+  const ResourceImgRequest(
+    this.resourceId, {
+    this.versionId,
+    required this.imgRes,
+  });
 
   @override
   BaseRequest createRequest(ApiClient api, {Blob? data}) {
@@ -20,5 +24,6 @@ class ResourceImgRequest extends ApiRequest<PhylumAccount> {
   }
 
   @override
-  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) => throw 'Cannot parse img response';
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) =>
+      throw 'Cannot parse img response';
 }

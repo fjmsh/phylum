@@ -55,7 +55,8 @@ class _ActionsSliverState extends State<ActionsSliver> {
                     if (_statusMap[a] == _statusMap[b]) {
                       return a.id.compareTo(b.id);
                     }
-                    return _order[_statusMap[a].runtimeType]! - _order[_statusMap[b].runtimeType]!;
+                    return _order[_statusMap[a].runtimeType]! -
+                        _order[_statusMap[b].runtimeType]!;
                   });
                 if (mounted) {
                   setState(() {});
@@ -81,33 +82,34 @@ class _ActionsSliverState extends State<ActionsSliver> {
   @override
   Widget build(BuildContext context) {
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, i) {
-          if (i == 0) {
-            return Builder(
-                key: const ValueKey('heading'),
-                builder: (context) {
-                  final paused = context.select<PhylumActionQueueState, bool>((state) => state.paused);
-                  return ListTile(
-                      dense: true,
-                      title: Text(
-                        'Pending Updates (${actions.length})',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      leading: (kDebugMode && !paused)
-                          ? IconButton(
-                              icon: Icon(Icons.pause),
-                              onPressed: () {
-                                context.read<PhylumActionQueue>().pause();
-                              },
-                            )
-                          : null);
-                });
-          }
-          return ActionView(action: actions[i - 1]);
-        },
-        childCount: actions.length + 1,
-      ),
+      delegate: SliverChildBuilderDelegate((context, i) {
+        if (i == 0) {
+          return Builder(
+            key: const ValueKey('heading'),
+            builder: (context) {
+              final paused = context.select<PhylumActionQueueState, bool>(
+                (state) => state.paused,
+              );
+              return ListTile(
+                dense: true,
+                title: Text(
+                  'Pending Updates (${actions.length})',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                leading: (kDebugMode && !paused)
+                    ? IconButton(
+                        icon: Icon(Icons.pause),
+                        onPressed: () {
+                          context.read<PhylumActionQueue>().pause();
+                        },
+                      )
+                    : null,
+              );
+            },
+          );
+        }
+        return ActionView(action: actions[i - 1]);
+      }, childCount: actions.length + 1),
     );
   }
 }

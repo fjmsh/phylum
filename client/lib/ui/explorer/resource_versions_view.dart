@@ -14,7 +14,8 @@ import 'package:provider/provider.dart';
 class ResourceVersionsView extends StatelessWidget {
   final String resourceId;
 
-  ResourceVersionsView({required this.resourceId}) : super(key: ValueKey(resourceId));
+  ResourceVersionsView({required this.resourceId})
+    : super(key: ValueKey(resourceId));
 
   @override
   Widget build(BuildContext context) {
@@ -27,54 +28,82 @@ class ResourceVersionsView extends StatelessWidget {
         subtitleTextStyle: Theme.of(context).textTheme.bodyLarge,
       ),
       child: StreamBuilder<List<ResourceVersion>>(
-          stream: (account.db.resourceVersions.select()
-                ..where((v) => v.resourceId.equals(resourceId))
-                ..orderBy([(o) => OrderingTerm.desc(o.created)]))
-              .watch(),
-          initialData: const [],
-          builder: (context, snapshot) {
-            final versions = snapshot.data ?? const [];
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ...versions.mapIndexed((i, v) => ListTile(
-                      title: Text(v.sha256.isEmpty ? 'Unknown' : v.sha256.substring(0, 12)),
-                      subtitle: Text('${v.created.formatShort()} \u2022 ${v.size.formatForDisplay()}'),
-                      trailing: v.deleted
-                          ? Text(
-                              'Deleted',
-                              style: TextStyle(fontStyle: FontStyle.italic),
-                            )
-                          : Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                    icon: Icon(Icons.remove_red_eye),
-                                    onPressed: () async {
-                                      final resource = await account.db.getResource(resourceId);
-                                      if (resource == null || !context.mounted) return;
-                                      FilePreviewDialog.showVersions(context, resource, versions, i);
-                                    }),
-                                IconButton(
-                                    icon: Icon(Icons.download),
-                                    onPressed: () async {
-                                      final r = await account.db.getResource(resourceId);
-                                      if (r == null || !context.mounted) return;
-                                      downloadResource(context, r, version: v);
-                                    }),
-                                IconButton(
-                                    icon: Icon(Icons.delete_forever),
-                                    onPressed: () async {
-                                      final r = await account.db.getResource(resourceId);
-                                      if (r == null || !context.mounted) return;
-                                      account.addAction(ResourceVersionDeleteAction(r: r, versionId: v.id));
-                                    }),
-                              ],
+        stream:
+            (account.db.resourceVersions.select()
+                  ..where((v) => v.resourceId.equals(resourceId))
+                  ..orderBy([(o) => OrderingTerm.desc(o.created)]))
+                .watch(),
+        initialData: const [],
+        builder: (context, snapshot) {
+          final versions = snapshot.data ?? const [];
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...versions.mapIndexed(
+                (i, v) => ListTile(
+                  title: Text(
+                    v.sha256.isEmpty ? 'Unknown' : v.sha256.substring(0, 12),
+                  ),
+                  subtitle: Text(
+                    '${v.created.formatShort()} \u2022 ${v.size.formatForDisplay()}',
+                  ),
+                  trailing: v.deleted
+                      ? Text(
+                          'Deleted',
+                          style: TextStyle(fontStyle: FontStyle.italic),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.remove_red_eye),
+                              onPressed: () async {
+                                final resource = await account.db.getResource(
+                                  resourceId,
+                                );
+                                if (resource == null || !context.mounted)
+                                  return;
+                                FilePreviewDialog.showVersions(
+                                  context,
+                                  resource,
+                                  versions,
+                                  i,
+                                );
+                              },
                             ),
-                    )),
-              ],
-            );
-          }),
+                            IconButton(
+                              icon: Icon(Icons.download),
+                              onPressed: () async {
+                                final r = await account.db.getResource(
+                                  resourceId,
+                                );
+                                if (r == null || !context.mounted) return;
+                                downloadResource(context, r, version: v);
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete_forever),
+                              onPressed: () async {
+                                final r = await account.db.getResource(
+                                  resourceId,
+                                );
+                                if (r == null || !context.mounted) return;
+                                account.addAction(
+                                  ResourceVersionDeleteAction(
+                                    r: r,
+                                    versionId: v.id,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

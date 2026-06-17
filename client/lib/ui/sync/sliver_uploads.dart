@@ -10,19 +10,20 @@ class UploadsSliver extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final actions = context.select<PhylumActionQueueState, List<PhylumAction>>((state) => state.actions);
-    final uploads = actions.whereType<ResourceUploadAction>().toList(growable: false);
+    final actions = context.select<PhylumActionQueueState, List<PhylumAction>>(
+      (state) => state.actions,
+    );
+    final uploads = actions.whereType<ResourceUploadAction>().toList(
+      growable: false,
+    );
 
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, i) {
-          if (i == 0) {
-            return const ListTile(dense: true, title: Text('Uploads'));
-          }
-          return ActionView(action: uploads[i - 1]);
-        },
-        childCount: uploads.isEmpty ? 0 : uploads.length + 1,
-      ),
+      delegate: SliverChildBuilderDelegate((context, i) {
+        if (i == 0) {
+          return const ListTile(dense: true, title: Text('Uploads'));
+        }
+        return ActionView(action: uploads[i - 1]);
+      }, childCount: uploads.isEmpty ? 0 : uploads.length + 1),
     );
   }
 }

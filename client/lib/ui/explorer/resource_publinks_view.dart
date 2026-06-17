@@ -9,7 +9,8 @@ import 'package:provider/provider.dart';
 class ResourcePublinksView extends StatelessWidget {
   final Resource resource;
 
-  ResourcePublinksView({required this.resource}) : super(key: ValueKey(resource.id));
+  ResourcePublinksView({required this.resource})
+    : super(key: ValueKey(resource.id));
 
   @override
   Widget build(BuildContext context) {
@@ -22,42 +23,64 @@ class ResourcePublinksView extends StatelessWidget {
         subtitleTextStyle: Theme.of(context).textTheme.bodyLarge,
       ),
       child: StreamBuilder<List<String>>(
-          stream: context.read<PhylumAccount>().db.selectPublinks(resource.id).map((l) => l.id).watch(),
-          initialData: const [],
-          builder: (context, snapshot) {
-            final publinks = snapshot.data ?? const [];
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ...publinks.map((l) => ListTile(
-                      title: Text(l),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.copy),
-                        onPressed: () {
-                          final publinkPath = context.read<PhylumAccount>().config.publinkPath;
-                          Clipboard.setData(
-                              ClipboardData(text: account.apiClient.createUri('$publinkPath/$l').toString()));
-                        },
-                      ),
-                    )),
-                ElevatedButton.icon(
-                    icon: Icon(Icons.add),
-                    label: Text('Add'),
-                    onPressed: () async {
-                      final account = context.read<PhylumAccount>();
-                      final info = await CreatePublinkView.show(context, resource.id);
-                      if (info == null) return;
-                      account.addAction(ResourcePublinkCreateAction(
-                        resourceId: resource.id,
-                        publinkId: info.id,
-                        password: info.password,
-                        expires: info.expiration,
-                        accessLimit: info.accessLimit,
-                      ));
-                    }),
-              ],
-            );
-          }),
+        stream: context
+            .read<PhylumAccount>()
+            .db
+            .selectPublinks(resource.id)
+            .map((l) => l.id)
+            .watch(),
+        initialData: const [],
+        builder: (context, snapshot) {
+          final publinks = snapshot.data ?? const [];
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...publinks.map(
+                (l) => ListTile(
+                  title: Text(l),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.copy),
+                    onPressed: () {
+                      final publinkPath = context
+                          .read<PhylumAccount>()
+                          .config
+                          .publinkPath;
+                      Clipboard.setData(
+                        ClipboardData(
+                          text: account.apiClient
+                              .createUri('$publinkPath/$l')
+                              .toString(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              ElevatedButton.icon(
+                icon: Icon(Icons.add),
+                label: Text('Add'),
+                onPressed: () async {
+                  final account = context.read<PhylumAccount>();
+                  final info = await CreatePublinkView.show(
+                    context,
+                    resource.id,
+                  );
+                  if (info == null) return;
+                  account.addAction(
+                    ResourcePublinkCreateAction(
+                      resourceId: resource.id,
+                      publinkId: info.id,
+                      password: info.password,
+                      expires: info.expiration,
+                      accessLimit: info.accessLimit,
+                    ),
+                  );
+                },
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

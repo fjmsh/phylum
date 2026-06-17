@@ -24,7 +24,9 @@ const storageDir = String.fromEnvironment("STORAGE_DIR");
 
 void main() async {
   runZonedGuarded(
-      run, (err, stack) => Log.warn('Uncaught Zone Error', err, stack));
+    run,
+    (err, stack) => Log.warn('Uncaught Zone Error', err, stack),
+  );
 }
 
 void run() async {
@@ -44,8 +46,12 @@ void run() async {
     Hive.init(null, backendPreference: HiveStorageBackendPreference.webWorker);
   } else {
     final appDir = (Platform.isLinux)
-        ? Directory(path.join((await getApplicationSupportDirectory()).path,
-            storageDir.isNotEmpty ? storageDir : 'data'))
+        ? Directory(
+            path.join(
+              (await getApplicationSupportDirectory()).path,
+              storageDir.isNotEmpty ? storageDir : 'data',
+            ),
+          )
         : await getApplicationDocumentsDirectory();
     AppDatabase.storageDir = appDir;
     blobStorageRoot = appDir.path;

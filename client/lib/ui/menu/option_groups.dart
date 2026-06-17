@@ -33,17 +33,14 @@ Future<Iterable<PopupMenuEntry<MenuOption>>> buildPopupMenuItems(
     ),
   );
 
-  final m = availableOptions.fold(
-    <PopupMenuEntry<MenuOption>>[],
-    (acc, e) {
-      if (e.isEmpty) {
-        return acc;
-      }
-      if (acc.isEmpty) {
-        return e.toList(growable: false);
-      }
-      return [...acc, PopupMenuDivider(), ...e];
-    },
-  );
+  final m = availableOptions.fold(<PopupMenuEntry<MenuOption>>[], (acc, e) {
+    if (e.isEmpty) {
+      return acc;
+    }
+    if (acc.isEmpty) {
+      return e.toList(growable: false);
+    }
+    return [...acc, PopupMenuDivider(), ...e];
+  });
   return m;
 }

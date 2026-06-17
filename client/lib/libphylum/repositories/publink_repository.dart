@@ -15,13 +15,18 @@ class PublinkRepository extends Repository<PhylumAccount, Publink> {
   PublinkRepository();
 
   @override
-  Future<Map<String, Publink?>> initializeAndRestoreRemoteData(PhylumAccount account) async {
+  Future<Map<String, Publink?>> initializeAndRestoreRemoteData(
+    PhylumAccount account,
+  ) async {
     if (!Hive.isAdapterRegistered(const PublinkAdapter().typeId)) {
       Hive.registerAdapter(const PublinkAdapter());
     }
 
     final box = await account.openBox<Publink>(_remoteBoxName);
-    final remoteData = Map<String, Publink?>.fromIterable(box.keys, value: (key) => box.get(key));
+    final remoteData = Map<String, Publink?>.fromIterable(
+      box.keys,
+      value: (key) => box.get(key),
+    );
     await box.close();
     _account = account;
 
@@ -41,12 +46,16 @@ class PublinkRepository extends Repository<PhylumAccount, Publink> {
 
   @override
   Future<Publink?> load(String objectId) {
-    return (_account.db.publinks.select()..where((o) => o.id.equals(objectId))).getSingleOrNull();
+    return (_account.db.publinks.select()..where((o) => o.id.equals(objectId)))
+        .getSingleOrNull();
   }
 
   @override
   Future<void> save(String objectId, Publink data) {
-    return _account.db.publinks.insertOne(data, mode: InsertMode.insertOrReplace);
+    return _account.db.publinks.insertOne(
+      data,
+      mode: InsertMode.insertOrReplace,
+    );
   }
 
   @override
@@ -70,7 +79,9 @@ class PublinkAdapter implements TypeAdapter<Publink?> {
 
   @override
   void write(BinaryWriter writer, Publink? obj) {
-    writer.writeByte(0); // Version marker, in case we need to change something in the future
+    writer.writeByte(
+      0,
+    ); // Version marker, in case we need to change something in the future
     writer.writeString(obj?.toJsonString() ?? '');
   }
 }

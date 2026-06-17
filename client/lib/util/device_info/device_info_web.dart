@@ -17,5 +17,7 @@ Future<String> getDeviceInfo() {
     }
   }
 
-  return SynchronousFuture('${userAgent.browser.name ?? 'Unknown Browser'} on $device');
+  return SynchronousFuture(
+    '${userAgent.browser.name ?? 'Unknown Browser'} on $device',
+  );
 }

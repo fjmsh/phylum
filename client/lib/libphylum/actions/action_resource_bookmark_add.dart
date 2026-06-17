@@ -22,24 +22,30 @@ class ResourceBookmarkAddAction extends ResourceAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-        'path': '$resourceId:',
-        'name': bookmarkName,
-      };
+    'path': '$resourceId:',
+    'name': bookmarkName,
+  };
 
   @override
-  List<LocalChange> get localChanges =>
-      [AddBookmarkChange(resourceId, bookmarkName: bookmarkName, dir: dir, createdMillis: createdMillis)];
+  List<LocalChange> get localChanges => [
+    AddBookmarkChange(
+      resourceId,
+      bookmarkName: bookmarkName,
+      dir: dir,
+      createdMillis: createdMillis,
+    ),
+  ];
 
   @override
   String get description => 'Adding Bookmark: $bookmarkName';
 
   @override
   Map<String, dynamic> get props => {
-        'resourceId': resourceId,
-        'bookmarkName': bookmarkName,
-        'dir': dir,
-        'createdMillis': createdMillis,
-      };
+    'resourceId': resourceId,
+    'bookmarkName': bookmarkName,
+    'dir': dir,
+    'createdMillis': createdMillis,
+  };
 
   final String bookmarkName;
   final bool dir;

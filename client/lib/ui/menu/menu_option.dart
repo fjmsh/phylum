@@ -49,44 +49,63 @@ enum MenuOption {
   publinks(Icons.public, 'Public Access', isSingle),
   newFolder(Icons.create_new_folder_outlined, 'New Folder', isSingle),
   uploadFiles(Icons.upload_file_outlined, 'Upload File(s)', isSingle),
-  uploadFolders(Icons.drive_folder_upload_outlined, 'Upload Folder(s)', isSingle),
+  uploadFolders(
+    Icons.drive_folder_upload_outlined,
+    'Upload Folder(s)',
+    isSingle,
+  ),
   share(Icons.share, 'Share', isFilesOnly),
-  openWith(Icons.open_with, 'Open With', isSingle),
-  ;
+  openWith(Icons.open_with, 'Open With', isSingle);
 
   const MenuOption(this.icon, this.text, this.filter);
 
   final IconData icon;
   final String text;
-  final FutureOr<bool> Function(PhylumAccount account, Iterable<Resource> resources) filter;
+  final FutureOr<bool> Function(
+    PhylumAccount account,
+    Iterable<Resource> resources,
+  )
+  filter;
 }
 
-void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption option) async {
+void handleOption(
+  BuildContext context,
+  Iterable<Resource> resources,
+  MenuOption option,
+) async {
   final account = context.read<PhylumAccount>();
   switch (option) {
     case MenuOption.rename:
       assert(resources.length == 1);
-      final name = await showInputDialog(context, title: 'Rename', preset: resources.first.name);
+      final name = await showInputDialog(
+        context,
+        title: 'Rename',
+        preset: resources.first.name,
+      );
       if (name != null && context.mounted) {
         final r = resources.first;
         await handleLocalErrors(
           context,
           name,
           overwriteFn: (r) => nameConflictDelete,
-          (name, conflictResolution, ensurePermission) => account.resourceRepository.move(
-            resource: r,
-            name: name,
-            parent: r.parent!,
-            conflictResolution: conflictResolution,
-            ensurePermission: ensurePermission,
-          ),
+          (name, conflictResolution, ensurePermission) =>
+              account.resourceRepository.move(
+                resource: r,
+                name: name,
+                parent: r.parent!,
+                conflictResolution: conflictResolution,
+                ensurePermission: ensurePermission,
+              ),
         );
       }
       break;
     case MenuOption.move:
       final parent = resources.firstOrNull?.parent;
       if (parent == null) return;
-      final dest = await DestinationPicker.show(context, initialFolderId: parent);
+      final dest = await DestinationPicker.show(
+        context,
+        initialFolderId: parent,
+      );
       if (dest == null) {
         return;
       }
@@ -96,20 +115,25 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
           context,
           r.name,
           overwriteFn: (r) => nameConflictDelete,
-          (name, conflictResolution, ensurePermission) => account.resourceRepository.move(
-            resource: r,
-            name: name,
-            parent: dest,
-            conflictResolution: conflictResolution,
-            ensurePermission: ensurePermission,
-          ),
+          (name, conflictResolution, ensurePermission) =>
+              account.resourceRepository.move(
+                resource: r,
+                name: name,
+                parent: dest,
+                conflictResolution: conflictResolution,
+                ensurePermission: ensurePermission,
+              ),
         );
       }
       break;
     case MenuOption.copy:
       final parent = resources.firstOrNull?.parent;
       if (parent == null) return;
-      final dest = await DestinationPicker.show(context, initialFolderId: parent, allowInitialFolder: true);
+      final dest = await DestinationPicker.show(
+        context,
+        initialFolderId: parent,
+        allowInitialFolder: true,
+      );
       if (dest == null) {
         return;
       }
@@ -119,61 +143,100 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
           context,
           r.name,
           overwriteFn: (r) => nameConflictDelete,
-          (name, conflictResolution, ensurePermission) => account.resourceRepository.copy(
-              resource: r,
-              name: name,
-              parent: dest,
-              conflictResolution: conflictResolution,
-              ensurePermission: ensurePermission),
+          (name, conflictResolution, ensurePermission) =>
+              account.resourceRepository.copy(
+                resource: r,
+                name: name,
+                parent: dest,
+                conflictResolution: conflictResolution,
+                ensurePermission: ensurePermission,
+              ),
         );
       }
       break;
     case MenuOption.delete:
-      final name = resources.length == 1 ? resources.first.name : '${resources.length} items';
+      final name = resources.length == 1
+          ? resources.first.name
+          : '${resources.length} items';
       final confirm =
-          await showAlertDialog(context, title: 'Send $name to trash?', positiveText: 'YES', negativeText: 'NO') ??
-              false;
+          await showAlertDialog(
+            context,
+            title: 'Send $name to trash?',
+            positiveText: 'YES',
+            negativeText: 'NO',
+          ) ??
+          false;
       if (confirm) {
         for (final r in resources) {
-          account.addAction(ResourceDeleteAction(r: r, timestamp: DateTime.now()));
+          account.addAction(
+            ResourceDeleteAction(r: r, timestamp: DateTime.now()),
+          );
         }
       }
       break;
     case MenuOption.restore:
       for (final r in resources) {
-        account.addAction(ResourceRestoreAction(r: r, timestamp: DateTime.now()));
+        account.addAction(
+          ResourceRestoreAction(r: r, timestamp: DateTime.now()),
+        );
       }
       break;
     case MenuOption.deleteForever:
-      final name = resources.length == 1 ? resources.first.name : '${resources.length} items';
+      final name = resources.length == 1
+          ? resources.first.name
+          : '${resources.length} items';
       final confirm =
-          await showAlertDialog(context, title: 'Delete $name permanently?', positiveText: 'YES', negativeText: 'NO') ??
-              false;
+          await showAlertDialog(
+            context,
+            title: 'Delete $name permanently?',
+            positiveText: 'YES',
+            negativeText: 'NO',
+          ) ??
+          false;
       if (confirm) {
         for (final r in resources) {
-          account.addAction(ResourceDeleteAction(r: r, timestamp: DateTime.now(), permanent: true));
+          account.addAction(
+            ResourceDeleteAction(
+              r: r,
+              timestamp: DateTime.now(),
+              permanent: true,
+            ),
+          );
         }
       }
       break;
     case MenuOption.emptyTrash:
-      final confirm = await showAlertDialog(context,
-              title: 'Empty Trash?',
-              message: 'This will permanently delete all items in trash',
-              positiveText: 'YES',
-              negativeText: 'NO') ??
+      final confirm =
+          await showAlertDialog(
+            context,
+            title: 'Empty Trash?',
+            message: 'This will permanently delete all items in trash',
+            positiveText: 'YES',
+            negativeText: 'NO',
+          ) ??
           false;
       if (confirm) {
-        final response = await account.apiClient.sendRequest(TrashEmptyRequest());
+        final response = await account.apiClient.sendRequest(
+          TrashEmptyRequest(),
+        );
         if (response is ApiSuccessResponse) {
           account.db.trashedResources.deleteAll();
         } else if (context.mounted) {
-          showAlertDialog(context, title: 'Could not empty trash', message: response.description);
+          showAlertDialog(
+            context,
+            title: 'Could not empty trash',
+            message: response.description,
+          );
         }
       }
     case MenuOption.details:
       final resource = resources.firstOrNull;
       if (resource == null) return;
-      showReponsiveDialog(context, resource.name, (context) => ResourceInfoView(resource: resource));
+      showReponsiveDialog(
+        context,
+        resource.name,
+        (context) => ResourceInfoView(resource: resource),
+      );
       break;
     case MenuOption.permissions:
       showReponsiveDialog(
@@ -184,7 +247,11 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
     case MenuOption.publinks:
       final resource = resources.firstOrNull;
       if (resource == null) return;
-      showReponsiveDialog(context, 'Public Shares', (context) => ResourcePublinksView(resource: resource));
+      showReponsiveDialog(
+        context,
+        'Public Shares',
+        (context) => ResourcePublinksView(resource: resource),
+      );
       break;
     case MenuOption.download:
       for (final r in resources) {
@@ -197,7 +264,9 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
     case MenuOption.copyURL:
       final resource = resources.firstOrNull;
       if (resource == null) return;
-      final url = account.apiClient.createUri('/${resource.dir ? 'folder' : 'file'}/${resource.id}');
+      final url = account.apiClient.createUri(
+        '/${resource.dir ? 'folder' : 'file'}/${resource.id}',
+      );
       await Clipboard.setData(ClipboardData(text: url.toString()));
     case MenuOption.share:
       if (kIsWeb) return;
@@ -214,7 +283,9 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
 
       final params = ShareParams(
         files: downloaded.map((p) => XFile(p)).toList(growable: false),
-        fileNameOverrides: downloaded.map((p) => path.basename(p)).toList(growable: false),
+        fileNameOverrides: downloaded
+            .map((p) => path.basename(p))
+            .toList(growable: false),
       );
       SharePlus.instance.share(params);
       break;
@@ -223,7 +294,11 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
       final r = resources.first;
       final p = await downloadResourceSync(context, r);
       if (p == null || !context.mounted) return;
-      final version = await context.read<PhylumAccount>().db.latestVersion(r.id).getSingleOrNull();
+      final version = await context
+          .read<PhylumAccount>()
+          .db
+          .latestVersion(r.id)
+          .getSingleOrNull();
       OpenFile.open(p, type: version?.mimeType);
       break;
     case MenuOption.bookmarkEdit:
@@ -263,7 +338,9 @@ void handleOption(BuildContext context, Iterable<Resource> resources, MenuOption
 
 Future<String?> downloadResourceSync(BuildContext context, Resource r) async {
   final account = context.read<PhylumAccount>();
-  final uri = account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}:');
+  final uri = account.apiClient.createUriBuilder(
+    '/api/v1/fs/contents/${r.id}:',
+  );
   final task = DownloadTask(
     url: uri.toString(),
     headers: account.apiClient.requestHeaders,
@@ -288,9 +365,12 @@ Future<String?> downloadResourceSync(BuildContext context, Resource r) async {
       FileDownloader().cancelTaskWithId(task.taskId);
     }
   });
-  final status = await FileDownloader().download(task, onProgress: (progress) {
-    downloadStreamController.add(progress);
-  });
+  final status = await FileDownloader().download(
+    task,
+    onProgress: (progress) {
+      downloadStreamController.add(progress);
+    },
+  );
   downloadStreamController.close();
   if (context.mounted && dialogVisivle) Navigator.of(context).pop(true);
   if (status.status == TaskStatus.complete) {
@@ -300,21 +380,34 @@ Future<String?> downloadResourceSync(BuildContext context, Resource r) async {
   return null;
 }
 
-bool isSingle(PhylumAccount account, Iterable<Resource> resources) => resources.length == 1;
+bool isSingle(PhylumAccount account, Iterable<Resource> resources) =>
+    resources.length == 1;
 
-bool isSingleAndSupportsFolderUpload(PhylumAccount account, Iterable<Resource> resources) =>
-    resources.length == 1 && folderUploadSupported;
+bool isSingleAndSupportsFolderUpload(
+  PhylumAccount account,
+  Iterable<Resource> resources,
+) => resources.length == 1 && folderUploadSupported;
 
 bool none(PhylumAccount account, Iterable<Resource> resources) => false;
 
 bool all(PhylumAccount accout, Iterable<Resource> resources) => true;
 
-bool isFilesOnly(PhylumAccount account, Iterable<Resource> resources) => resources.every((r) => !r.dir);
+bool isFilesOnly(PhylumAccount account, Iterable<Resource> resources) =>
+    resources.every((r) => !r.dir);
 
-Future<bool> notAllBookmarked(PhylumAccount account, Iterable<Resource> resources) =>
-    allBookmarked(account, resources).then((b) => !b);
+Future<bool> notAllBookmarked(
+  PhylumAccount account,
+  Iterable<Resource> resources,
+) => allBookmarked(account, resources).then((b) => !b);
 
-Future<bool> allBookmarked(PhylumAccount account, Iterable<Resource> resources) => account.db.bookmarks
-    .count(where: (b) => b.resourceId.isIn(resources.map((r) => r.id)) & b.deleted.equals(false))
+Future<bool> allBookmarked(
+  PhylumAccount account,
+  Iterable<Resource> resources,
+) => account.db.bookmarks
+    .count(
+      where: (b) =>
+          b.resourceId.isIn(resources.map((r) => r.id)) &
+          b.deleted.equals(false),
+    )
     .getSingle()
     .then((c) => c == resources.length);

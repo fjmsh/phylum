@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
-final TextInputFormatter validIdFormatter = FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9_\-]'));
+final TextInputFormatter validIdFormatter = FilteringTextInputFormatter.allow(
+  RegExp(r'[a-zA-Z0-9_\-]'),
+);
 
 class PublinkInfo with ChangeNotifier {
   String _id = '';
@@ -40,7 +42,8 @@ class PublinkInfo with ChangeNotifier {
 class CreatePublinkView extends StatefulWidget {
   final String resourceId;
 
-  CreatePublinkView._({required this.resourceId}) : super(key: ValueKey(resourceId));
+  CreatePublinkView._({required this.resourceId})
+    : super(key: ValueKey(resourceId));
 
   @override
   State<CreatePublinkView> createState() => _CreatePublinkViewState();
@@ -51,31 +54,38 @@ class CreatePublinkView extends StatefulWidget {
       barrierDismissible: true,
       builder: (context) {
         return ChangeNotifierProvider(
-            create: (context) => PublinkInfo(),
-            builder: (context, child) {
-              return AlertDialog(
-                title: const Text('Create Public Share'),
-                scrollable: true,
-                content: SizedBox(
-                    width: 300,
-                    child: CreatePublinkView._(
-                      resourceId: resourceId,
-                    )),
-                actions: [
-                  TextButton(
-                    style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
-                    onPressed: Navigator.of(context).pop,
-                    child: Text('Cancel'),
+          create: (context) => PublinkInfo(),
+          builder: (context, child) {
+            return AlertDialog(
+              title: const Text('Create Public Share'),
+              scrollable: true,
+              content: SizedBox(
+                width: 300,
+                child: CreatePublinkView._(resourceId: resourceId),
+              ),
+              actions: [
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
                   ),
-                  ElevatedButton(
-                    onPressed: context.select<PublinkInfo, bool>((info) => info.id.isNotEmpty)
-                        ? () => Navigator.of(context).pop(context.read<PublinkInfo>())
-                        : null,
-                    child: Text('OK'),
-                  ),
-                ],
-              );
-            });
+                  onPressed: Navigator.of(context).pop,
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed:
+                      context.select<PublinkInfo, bool>(
+                        (info) => info.id.isNotEmpty,
+                      )
+                      ? () => Navigator.of(
+                          context,
+                        ).pop(context.read<PublinkInfo>())
+                      : null,
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
   }
@@ -129,33 +139,53 @@ class _CreatePublinkViewState extends State<CreatePublinkView> {
         ),
         ListTile(
           leading: Icon(Icons.access_time),
-          title: Builder(builder: (context) {
-            final expiration = context.select<PublinkInfo, DateTime?>((info) => info.expiration);
-            expiresController.text = expiration == null ? 'Never' : expiration.formatLong();
-            return TextField(
-              decoration: InputDecoration(
-                label: Text('Expires'),
-                suffixIcon: expiration == null
-                    ? null
-                    : IconButton(
-                        icon: Icon(Icons.clear),
-                        onPressed: () => context.read<PublinkInfo>().expiration = null,
-                      ),
-              ),
-              readOnly: true,
-              controller: expiresController,
-              onTap: () async {
-                final info = context.read<PublinkInfo>();
-                final now = DateTime.now();
-                final date = await showDatePicker(
-                    context: context, initialDate: now, firstDate: now, lastDate: now.add(const Duration(days: 3650)));
-                if (date == null || !context.mounted) return;
-                final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(now));
-                if (time == null) return;
-                info.expiration = DateTime(date.year, date.month, date.day, time.hour, time.minute);
-              },
-            );
-          }),
+          title: Builder(
+            builder: (context) {
+              final expiration = context.select<PublinkInfo, DateTime?>(
+                (info) => info.expiration,
+              );
+              expiresController.text = expiration == null
+                  ? 'Never'
+                  : expiration.formatLong();
+              return TextField(
+                decoration: InputDecoration(
+                  label: Text('Expires'),
+                  suffixIcon: expiration == null
+                      ? null
+                      : IconButton(
+                          icon: Icon(Icons.clear),
+                          onPressed: () =>
+                              context.read<PublinkInfo>().expiration = null,
+                        ),
+                ),
+                readOnly: true,
+                controller: expiresController,
+                onTap: () async {
+                  final info = context.read<PublinkInfo>();
+                  final now = DateTime.now();
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: now,
+                    firstDate: now,
+                    lastDate: now.add(const Duration(days: 3650)),
+                  );
+                  if (date == null || !context.mounted) return;
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.fromDateTime(now),
+                  );
+                  if (time == null) return;
+                  info.expiration = DateTime(
+                    date.year,
+                    date.month,
+                    date.day,
+                    time.hour,
+                    time.minute,
+                  );
+                },
+              );
+            },
+          ),
         ),
         ListTile(
           leading: Icon(Icons.numbers),
@@ -164,7 +194,8 @@ class _CreatePublinkViewState extends State<CreatePublinkView> {
             enableSuggestions: false,
             autocorrect: false,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (value) => context.read<PublinkInfo>().accessLimit = int.tryParse(value),
+            onChanged: (value) =>
+                context.read<PublinkInfo>().accessLimit = int.tryParse(value),
           ),
         ),
       ],

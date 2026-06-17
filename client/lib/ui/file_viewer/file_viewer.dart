@@ -26,14 +26,17 @@ const _applicationTextSubtypes = {
   'toml',
   'xml',
   'x-sh',
-  'x-sql'
+  'x-sql',
 };
 
 class FileViewer extends StatefulWidget {
   final bool transparent;
   final VersionedResource resource;
-  const FileViewer(
-      {super.key, required this.transparent, required this.resource});
+  const FileViewer({
+    super.key,
+    required this.transparent,
+    required this.resource,
+  });
 
   @override
   State<FileViewer> createState() => _FileViewerState();
@@ -89,8 +92,9 @@ class _FileViewerState extends State<FileViewer> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor:
-          widget.transparent ? Colors.black45 : Colors.blueGrey[900],
+      backgroundColor: widget.transparent
+          ? Colors.black45
+          : Colors.blueGrey[900],
       appBar: AppBar(
         foregroundColor: theme.colorScheme.onInverseSurface,
         leading: const CloseButton(),
@@ -106,28 +110,35 @@ class _FileViewerState extends State<FileViewer> {
           IconButton(
             onPressed: (_resource.r.dir)
                 ? null
-                : () => downloadResource(context, _resource.r,
-                    version: _resource.v),
+                : () => downloadResource(
+                    context,
+                    _resource.r,
+                    version: _resource.v,
+                  ),
             icon: const Icon(Icons.download),
-          )
+          ),
         ],
         title: Text(_resource.name),
         backgroundColor: Colors.transparent,
       ),
       body: Center(
-          child: _buildViewer == null
-              ? Card(
-                  child: Padding(
+        child: _buildViewer == null
+            ? Card(
+                child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Text(_error ?? 'Unknown error',
-                      style: TextStyle(fontSize: 18)),
-                ))
-              : ResourceLoader(
-                  resourceId: _resource.r.id,
-                  versionId: _resource.v.id,
-                  buildViewer: _buildViewer!,
-                  loadPreview: _loadPreview,
-                )),
+                  child: Text(
+                    _error ?? 'Unknown error',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              )
+            : ResourceLoader(
+                resourceId: _resource.r.id,
+                versionId: _resource.v.id,
+                buildViewer: _buildViewer!,
+                loadPreview: _loadPreview,
+              ),
+      ),
     );
   }
 }
@@ -169,23 +180,20 @@ class _ResourceLoaderState extends State<ResourceLoader> {
   @override
   Widget build(BuildContext context) {
     if (_data != null) {
-      return SizedBox(
-        width: 800,
-        child: widget.buildViewer(_data!),
-      );
+      return SizedBox(width: 800, child: widget.buildViewer(_data!));
     }
     if (!_downloading) {
       return Column(
         children: [
           if (_error != null) Text(_error!),
           ElevatedButton(
-              onPressed: _runDownloadTask, child: const Text('Retry'))
+            onPressed: _runDownloadTask,
+            child: const Text('Retry'),
+          ),
         ],
       );
     }
-    return CircularProgressIndicator.adaptive(
-      value: _progress,
-    );
+    return CircularProgressIndicator.adaptive(value: _progress);
   }
 
   Future<void> _runDownloadTask() async {
@@ -197,14 +205,17 @@ class _ResourceLoaderState extends State<ResourceLoader> {
       });
       final account = context.read<PhylumAccount>();
       final request = widget.loadPreview
-          ? ResourceImgRequest(widget.resourceId,
-              versionId: widget.versionId, imgRes: imgResLarge)
+          ? ResourceImgRequest(
+              widget.resourceId,
+              versionId: widget.versionId,
+              imgRes: imgResLarge,
+            )
           : ResourceContentsRequest(widget.resourceId, widget.versionId);
       final response = await account.apiClient.dispatchRequestRaw(request);
       if (response.statusCode < 200 || response.statusCode > 300) {
-        final error =
-            PhylumApiErrorResponse.fromResponseBody(await response.bodyString())
-                .message;
+        final error = PhylumApiErrorResponse.fromResponseBody(
+          await response.bodyString(),
+        ).message;
         _error = error;
         _downloading = false;
         if (mounted) {
@@ -221,14 +232,16 @@ class _ResourceLoaderState extends State<ResourceLoader> {
         if (mounted) {
           setState(() {});
         }
-        stream = _toByteStream(response.stream.map((s) {
-          received += s.length;
-          _progress = received / expected;
-          if (mounted) {
-            setState(() {});
-          }
-          return s;
-        }));
+        stream = _toByteStream(
+          response.stream.map((s) {
+            received += s.length;
+            _progress = received / expected;
+            if (mounted) {
+              setState(() {});
+            }
+            return s;
+          }),
+        );
       }
       final data = await _toBytes(stream);
       _data = data;
@@ -261,10 +274,12 @@ class _ResourceLoaderState extends State<ResourceLoader> {
     var sink = ByteConversionSink.withCallback(
       (bytes) => completer.complete(Uint8List.fromList(bytes)),
     );
-    stream.listen(sink.add,
-        onError: completer.completeError,
-        onDone: sink.close,
-        cancelOnError: true);
+    stream.listen(
+      sink.add,
+      onError: completer.completeError,
+      onDone: sink.close,
+      cancelOnError: true,
+    );
     return completer.future;
   }
 }
@@ -272,14 +287,14 @@ class _ResourceLoaderState extends State<ResourceLoader> {
 Widget buildImagePreview(Uint8List data) => Image.memory(data);
 
 Widget buildTextPreview(Uint8List data) => Material(
-      child: TextFormField(
-        decoration: const InputDecoration(
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding: EdgeInsets.all(12),
-        ),
-        initialValue: String.fromCharCodes(data),
-        readOnly: true,
-        maxLines: 30,
-      ),
-    );
+  child: TextFormField(
+    decoration: const InputDecoration(
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      contentPadding: EdgeInsets.all(12),
+    ),
+    initialValue: String.fromCharCodes(data),
+    readOnly: true,
+    maxLines: 30,
+  ),
+);

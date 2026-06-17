@@ -9,23 +9,27 @@ class PhylumDialogScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Center(
-      child: Card(
-        margin: EdgeInsets.all(16.0),
-        child: SizedBox(
-          width: 360,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 48),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(padding: EdgeInsets.only(bottom: 12), child: LogoRow()),
-                child,
-              ],
+      body: Center(
+        child: Card(
+          margin: EdgeInsets.all(16.0),
+          child: SizedBox(
+            width: 360,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 48),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: LogoRow(),
+                  ),
+                  child,
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ));
+    );
   }
 }

@@ -7,9 +7,15 @@ import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 import 'package:web/web.dart' as web;
 
-Future<bool> downloadResource(BuildContext context, Resource r, {ResourceVersion? version}) async {
+Future<bool> downloadResource(
+  BuildContext context,
+  Resource r, {
+  ResourceVersion? version,
+}) async {
   final apiClient = context.read<PhylumAccount>().apiClient;
-  final success = await apiClient.sendRequest(const SetCookieRequest()).then((result) => result is ApiSuccessResponse);
+  final success = await apiClient
+      .sendRequest(const SetCookieRequest())
+      .then((result) => result is ApiSuccessResponse);
   if (!success) {
     return false;
   }
@@ -21,11 +27,17 @@ Future<bool> downloadResource(BuildContext context, Resource r, {ResourceVersion
   web.HTMLAnchorElement()
     ..target = '_blank'
     ..href = uri.toString()
-    ..download = version == null ? r.name : '${r.name}-${version.created.formatNumericDateTime()}'
+    ..download = version == null
+        ? r.name
+        : '${r.name}-${version.created.formatNumericDateTime()}'
     ..click();
   return true;
 }
 
 class DownloadManager with ChangeNotifier {
-  Future<void> downloadResource(PhylumAccount account, Resource r, {String? versionId}) async {}
+  Future<void> downloadResource(
+    PhylumAccount account,
+    Resource r, {
+    String? versionId,
+  }) async {}
 }

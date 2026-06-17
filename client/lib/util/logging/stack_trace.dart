@@ -36,8 +36,9 @@ String cleanupStackTrace(
       )
       .toList();
 
-  int stackTraceLength =
-      (methodCount != null ? min(lines.length, methodCount) : lines.length);
+  int stackTraceLength = (methodCount != null
+      ? min(lines.length, methodCount)
+      : lines.length);
   final output = <String>[];
   for (int count = 0; count < stackTraceLength; count++) {
     var line = lines[count];

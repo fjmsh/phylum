@@ -7,16 +7,22 @@ import 'package:phylum/libphylum/requests/trash_list_request.dart';
 
 const _remoteDataBoxName = 'remote_trashed_resources';
 
-class TrashedResourceRepository extends Repository<PhylumAccount, TrashedResource> {
+class TrashedResourceRepository
+    extends Repository<PhylumAccount, TrashedResource> {
   late final PhylumAccount _account;
   late final LazyBox<String?> _remoteDataBox;
 
   TrashedResourceRepository();
 
   @override
-  Future<Map<String, TrashedResource?>> initializeAndRestoreRemoteData(PhylumAccount account) async {
+  Future<Map<String, TrashedResource?>> initializeAndRestoreRemoteData(
+    PhylumAccount account,
+  ) async {
     final box = await account.openBox<Resource>(_remoteDataBoxName);
-    final remoteData = Map<String, TrashedResource?>.fromIterable(box.keys, value: (key) => TrashedResource(id: key));
+    final remoteData = Map<String, TrashedResource?>.fromIterable(
+      box.keys,
+      value: (key) => TrashedResource(id: key),
+    );
     await box.close();
     _account = account;
     _remoteDataBox = await account.openLazyBox(_remoteDataBoxName);
@@ -35,17 +41,24 @@ class TrashedResourceRepository extends Repository<PhylumAccount, TrashedResourc
 
   @override
   Future<TrashedResource?> load(String objectId) async {
-    return (_account.db.trashedResources.select()..where((t) => t.id.equals(objectId))).getSingleOrNull();
+    return (_account.db.trashedResources.select()
+          ..where((t) => t.id.equals(objectId)))
+        .getSingleOrNull();
   }
 
   @override
   Future<void> save(String objectId, TrashedResource data) {
-    return _account.db.trashedResources.insertOne(data, mode: InsertMode.insertOrReplace);
+    return _account.db.trashedResources.insertOne(
+      data,
+      mode: InsertMode.insertOrReplace,
+    );
   }
 
   @override
   Future<void> delete(String objectId) async {
-    await _account.db.trashedResources.deleteWhere((t) => t.id.equals(objectId));
+    await _account.db.trashedResources.deleteWhere(
+      (t) => t.id.equals(objectId),
+    );
   }
 
   Future<ApiResult> refresh({String? cursor}) async {

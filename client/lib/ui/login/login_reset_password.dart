@@ -59,8 +59,9 @@ class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
           keyboardType: TextInputType.emailAddress,
           autocorrect: false,
           autofocus: widget.token == null,
-          textInputAction:
-              _tokenRequested ? TextInputAction.next : TextInputAction.go,
+          textInputAction: _tokenRequested
+              ? TextInputAction.next
+              : TextInputAction.go,
           onFieldSubmitted: _requestInFlight || _tokenRequested
               ? null
               : (value) => _requestReset(context),
@@ -76,8 +77,9 @@ class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
                       icon: Icon(Icons.paste),
                       onPressed: () async {
                         if (await Clipboard.hasStrings()) {
-                          final data =
-                              await Clipboard.getData(Clipboard.kTextPlain);
+                          final data = await Clipboard.getData(
+                            Clipboard.kTextPlain,
+                          );
                           final text = data?.text;
                           if (text != null) {
                             _tokenController.text = text;
@@ -113,46 +115,49 @@ class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
             autofocus: true,
             autofillHints: const [AutofillHints.newPassword],
             keyboardType: TextInputType.visiblePassword,
-            onSubmitted:
-                _requestInFlight ? null : (value) => _changePassword(context),
+            onSubmitted: _requestInFlight
+                ? null
+                : (value) => _changePassword(context),
           ),
         if (_tokenRequested)
           ValueListenableBuilder(
-              valueListenable: _emailController,
-              builder: (_, email, __) => ValueListenableBuilder(
-                  valueListenable: _tokenController,
-                  builder: (_, token, __) {
-                    return ValueListenableBuilder(
-                      valueListenable: _passwordController,
-                      builder: (_, password, __) => ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          foregroundColor:
-                              Theme.of(context).colorScheme.onPrimary,
-                        ),
-                        label: Text(_requestInFlight
-                            ? 'Logging In'
-                            : 'Change Password and Log In'),
-                        icon: _requestInFlight
-                            ? SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: Center(
-                                    child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                )),
-                              )
-                            : Icon(Icons.login),
-                        onPressed: _requestInFlight ||
-                                email.text.isEmpty ||
-                                password.text.isEmpty ||
-                                token.text.isEmpty
-                            ? null
-                            : () => _changePassword(context),
-                      ),
-                    );
-                  }))
+            valueListenable: _emailController,
+            builder: (_, email, __) => ValueListenableBuilder(
+              valueListenable: _tokenController,
+              builder: (_, token, __) {
+                return ValueListenableBuilder(
+                  valueListenable: _passwordController,
+                  builder: (_, password, __) => ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                    label: Text(
+                      _requestInFlight
+                          ? 'Logging In'
+                          : 'Change Password and Log In',
+                    ),
+                    icon: _requestInFlight
+                        ? SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : Icon(Icons.login),
+                    onPressed:
+                        _requestInFlight ||
+                            email.text.isEmpty ||
+                            password.text.isEmpty ||
+                            token.text.isEmpty
+                        ? null
+                        : () => _changePassword(context),
+                  ),
+                );
+              },
+            ),
+          )
         else
           ValueListenableBuilder(
             valueListenable: _emailController,
@@ -161,17 +166,18 @@ class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,
               ),
-              label: Text(_requestInFlight
-                  ? 'Requesting Reset Token'
-                  : 'Request Reset Token'),
+              label: Text(
+                _requestInFlight
+                    ? 'Requesting Reset Token'
+                    : 'Request Reset Token',
+              ),
               icon: _requestInFlight
                   ? SizedBox(
                       width: 16,
                       height: 16,
                       child: Center(
-                          child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      )),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                     )
                   : Icon(Icons.email),
               onPressed: _requestInFlight || email.text.isEmpty
@@ -210,9 +216,13 @@ class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
       _tokenRequested = success;
     });
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content:
-            Text(success ? 'Reset Token sent via Email' : result.toString())));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success ? 'Reset Token sent via Email' : result.toString(),
+        ),
+      ),
+    );
   }
 
   void _changePassword(BuildContext context) async {

@@ -14,65 +14,66 @@ Future<Pbkdf2Config?> configurePbkdf2(
   var iterations = config.iterations;
   var hash = config.hash;
   return showDialog<Pbkdf2Config>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-            builder: (context, setState) => AlertDialog(
-              title: Text('PBKDF2 Parameters'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    title: Text('Hash Function'),
-                    subtitle: Text(hash.descriptor),
-                    onTap: () async {
-                      final input = await showOptionsDialog(
-                        context,
-                        [
-                          HashFunction.sha1,
-                          HashFunction.sha256,
-                          HashFunction.sha512
-                        ],
-                        (item) => ListTile(title: Text(item.descriptor)),
-                      );
-                      if (input != null) {
-                        setState(() => hash = input);
-                      }
-                    },
-                  ),
-                  ListTile(
-                    title: Text('Iterations'),
-                    subtitle: Text(iterations.toString()),
-                    onTap: () async {
-                      final input = await showIntSliderDialog(
-                        context,
-                        title: 'Iterations',
-                        value: iterations,
-                        min: 200000,
-                        max: 4000000,
-                        divisionsFactor: 200000,
-                      );
-                      if (input != null) {
-                        setState(() => iterations = input);
-                      }
-                    },
-                  ),
-                  ElevatedButton(
-                      onPressed: () => testPbkdf2Params(
-                          context, hash, iterations, instanceUrl),
-                      child: Text('Test Parameters'))
-                ],
-              ),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.of(context).pop(null),
-                    child: Text('Cancel')),
-                ElevatedButton(
-                    onPressed: () => Navigator.of(context)
-                        .pop(Pbkdf2Config(hash: hash, iterations: iterations)),
-                    child: Text('OK')),
-              ],
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: Text('PBKDF2 Parameters'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text('Hash Function'),
+              subtitle: Text(hash.descriptor),
+              onTap: () async {
+                final input = await showOptionsDialog(context, [
+                  HashFunction.sha1,
+                  HashFunction.sha256,
+                  HashFunction.sha512,
+                ], (item) => ListTile(title: Text(item.descriptor)));
+                if (input != null) {
+                  setState(() => hash = input);
+                }
+              },
             ),
-          ));
+            ListTile(
+              title: Text('Iterations'),
+              subtitle: Text(iterations.toString()),
+              onTap: () async {
+                final input = await showIntSliderDialog(
+                  context,
+                  title: 'Iterations',
+                  value: iterations,
+                  min: 200000,
+                  max: 4000000,
+                  divisionsFactor: 200000,
+                );
+                if (input != null) {
+                  setState(() => iterations = input);
+                }
+              },
+            ),
+            ElevatedButton(
+              onPressed: () =>
+                  testPbkdf2Params(context, hash, iterations, instanceUrl),
+              child: Text('Test Parameters'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(
+              context,
+            ).pop(Pbkdf2Config(hash: hash, iterations: iterations)),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 Future<void> testPbkdf2Params(
@@ -95,8 +96,8 @@ Future<void> testPbkdf2Params(
     message: 'Testing PBKDF2 Params',
   );
   if (responseString == null || !context.mounted) return;
-  final responseMap =
-      (jsonDecode(responseString) as Map).cast<String, dynamic>();
+  final responseMap = (jsonDecode(responseString) as Map)
+      .cast<String, dynamic>();
 
   if (responseMap["success"]) {
     final time = Duration(microseconds: responseMap["time"]);
@@ -107,13 +108,15 @@ Future<void> testPbkdf2Params(
       message: time.inMilliseconds < 300
           ? 'You should aim to take at least 300ms.'
           : time.inMilliseconds > 1000
-              ? 'That\'s a long time. Consider lowering the number of iterations.'
-              : 'Looks good!',
+          ? 'That\'s a long time. Consider lowering the number of iterations.'
+          : 'Looks good!',
     );
   } else {
-    await showAlertDialog(context,
-        title: 'Could not test PBKDF2 params',
-        message: "${responseMap["error"]}");
+    await showAlertDialog(
+      context,
+      title: 'Could not test PBKDF2 params',
+      message: "${responseMap["error"]}",
+    );
   }
 }
 
@@ -124,13 +127,10 @@ class Pbkdf2Config {
   const Pbkdf2Config({required this.iterations, required this.hash});
 
   const Pbkdf2Config.defaults()
-      : this(iterations: 600_000, hash: HashFunction.sha256);
+    : this(iterations: 600_000, hash: HashFunction.sha256);
 
   Map<String, dynamic> toMap() {
-    return {
-      'hash': hash.name,
-      'iterations': iterations,
-    };
+    return {'hash': hash.name, 'iterations': iterations};
   }
 
   @override

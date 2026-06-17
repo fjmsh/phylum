@@ -11,7 +11,11 @@ class OpenResourcePage extends StatefulWidget {
   final PhylumAccount account;
   final String resourceId;
 
-  const OpenResourcePage({super.key, required this.account, required this.resourceId});
+  const OpenResourcePage({
+    super.key,
+    required this.account,
+    required this.resourceId,
+  });
 
   @override
   State<OpenResourcePage> createState() => _OpenResourcePageState();
@@ -35,7 +39,9 @@ class _OpenResourcePageState extends State<OpenResourcePage> {
     });
 
     final router = context.read<PhylumRouterDelegate>();
-    final response = await widget.account.resourceRepository.requestResource(widget.resourceId);
+    final response = await widget.account.resourceRepository.requestResource(
+      widget.resourceId,
+    );
     if (response is ResourceInfoResponse) {
       if (!mounted) return;
       final r = response.root.resource;
@@ -56,17 +62,16 @@ class _OpenResourcePageState extends State<OpenResourcePage> {
 
   @override
   Widget build(BuildContext context) {
-    return PhylumDialogScaffold(child: _loading ? _buildLoading(context) : _buildError(context));
+    return PhylumDialogScaffold(
+      child: _loading ? _buildLoading(context) : _buildError(context),
+    );
   }
 
   Widget _buildLoading(BuildContext context) {
     return const Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 6.0,
-      children: [
-        CircularProgressIndicator(),
-        Text('Loading Details'),
-      ],
+      children: [CircularProgressIndicator(), Text('Loading Details')],
     );
   }
 
@@ -77,13 +82,14 @@ class _OpenResourcePageState extends State<OpenResourcePage> {
       children: [
         Text('Error Loading Details: $_error'),
         TextButton(
-            onPressed: () {
-              context.read<PhylumRouterDelegate>().go(const ExplorerRouteHome());
-            },
-            child: Text(
-              'Go Home',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            )),
+          onPressed: () {
+            context.read<PhylumRouterDelegate>().go(const ExplorerRouteHome());
+          },
+          child: Text(
+            'Go Home',
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        ),
         ElevatedButton(onPressed: _loadResourceDetails, child: Text('Retry')),
       ],
     );

@@ -7,39 +7,40 @@ import 'package:provider/provider.dart';
 
 import 'option_groups.dart';
 
-void showMenuOptionsBottomSheet(BuildContext context, MenuOptionGroups options, Iterable<Resource> resources) async {
+void showMenuOptionsBottomSheet(
+  BuildContext context,
+  MenuOptionGroups options,
+  Iterable<Resource> resources,
+) async {
   final account = context.read<PhylumAccount>();
   final items = await buildPopupMenuItems(account, options, resources);
   if (!context.mounted) return;
   final selected = await showModalBottomSheet(
-      context: context,
-      builder: (context) => ListView(
-            shrinkWrap: true,
-            children: [
-              DecoratedBox(
-                position: DecorationPosition.foreground,
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: Divider.createBorderSide(context),
+    context: context,
+    builder: (context) => ListView(
+      shrinkWrap: true,
+      children: [
+        DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: BoxDecoration(
+            border: Border(bottom: Divider.createBorderSide(context)),
+          ),
+          child: resources.length == 1
+              ? ListTile(
+                  leading: resources.first.getIcon(account),
+                  title: Text(
+                    resources.first.name,
+                    softWrap: false,
+                    overflow: TextOverflow.fade,
+                    maxLines: 1,
                   ),
-                ),
-                child: resources.length == 1
-                    ? ListTile(
-                        leading: resources.first.getIcon(account),
-                        title: Text(
-                          resources.first.name,
-                          softWrap: false,
-                          overflow: TextOverflow.fade,
-                          maxLines: 1,
-                        ),
-                      )
-                    : ListTile(
-                        title: Text('${resources.length} items'),
-                      ),
-              ),
-              ...items,
-            ],
-          ));
+                )
+              : ListTile(title: Text('${resources.length} items')),
+        ),
+        ...items,
+      ],
+    ),
+  );
 
   if (!context.mounted || selected == null) {
     return;

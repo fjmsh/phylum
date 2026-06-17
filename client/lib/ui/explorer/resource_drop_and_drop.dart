@@ -15,16 +15,19 @@ import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 @pragma('vm:platform-const')
 final bool _useSuperNative =
-    defaultTargetPlatform != TargetPlatform.android && defaultTargetPlatform != TargetPlatform.iOS;
+    defaultTargetPlatform != TargetPlatform.android &&
+    defaultTargetPlatform != TargetPlatform.iOS;
 
-typedef DropWidgetBuilder = Widget Function(BuildContext context, bool dropTargetActive);
+typedef DropWidgetBuilder =
+    Widget Function(BuildContext context, bool dropTargetActive);
 
 class ResourceDragTarget extends StatefulWidget {
   final String resourceId;
 
   final DropWidgetBuilder buildItem;
 
-  ResourceDragTarget({required this.resourceId, required this.buildItem}) : super(key: ValueKey(resourceId));
+  ResourceDragTarget({required this.resourceId, required this.buildItem})
+    : super(key: ValueKey(resourceId));
 
   @override
   State<ResourceDragTarget> createState() => _ResourceDragTargetState();
@@ -36,7 +39,8 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
   @override
   Widget build(BuildContext context) {
     return DragTarget(
-      builder: (context, candidate, rejected) => widget.buildItem(context, dropTargetActive),
+      builder: (context, candidate, rejected) =>
+          widget.buildItem(context, dropTargetActive),
       onWillAcceptWithDetails: (details) {
         final state = context.read<ExplorerState>();
         // The drag gesture recognizer gets fired before the long press (otherwise it doesn't get fired at all)
@@ -63,13 +67,14 @@ class _ResourceDragTargetState extends State<ResourceDragTarget> {
             context,
             r.name,
             overwriteFn: (r) => nameConflictDelete,
-            (name, conflictResolution, ensurePermission) => account.resourceRepository.move(
-              resource: r,
-              name: name,
-              parent: widget.resourceId,
-              conflictResolution: conflictResolution,
-              ensurePermission: ensurePermission,
-            ),
+            (name, conflictResolution, ensurePermission) =>
+                account.resourceRepository.move(
+                  resource: r,
+                  name: name,
+                  parent: widget.resourceId,
+                  conflictResolution: conflictResolution,
+                  ensurePermission: ensurePermission,
+                ),
           );
         }
         context.read<ExplorerController>().clearSelection();
@@ -93,7 +98,9 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
 
   @override
   Widget build(BuildContext context) {
-    return _useSuperNative ? buildDropRegion(context) : widget.buildItem(context, false);
+    return _useSuperNative
+        ? buildDropRegion(context)
+        : widget.buildItem(context, false);
   }
 
   Widget buildDropRegion(BuildContext context) {
@@ -102,7 +109,8 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
       child: widget.buildItem(context, dropTargetActive),
       onDropOver: (event) {
         if (event.session.items.isEmpty) return DropOperation.none;
-        if (context.read<ExplorerState>().folderId == null) return DropOperation.none;
+        if (context.read<ExplorerState>().folderId == null)
+          return DropOperation.none;
         for (final item in event.session.items) {
           if (kIsWeb || item.canProvide(Formats.fileUri)) {
             return DropOperation.copy;
@@ -143,10 +151,7 @@ class ResourceDraggable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _CustomDraggable(
-      supportedDevices: {
-        PointerDeviceKind.trackpad,
-        PointerDeviceKind.mouse,
-      },
+      supportedDevices: {PointerDeviceKind.trackpad, PointerDeviceKind.mouse},
       data: resource.id,
       dragAnchorStrategy: pointerDragAnchorStrategy,
       onDragStarted: () => _onDragStarted(context),
@@ -155,24 +160,25 @@ class ResourceDraggable extends StatelessWidget {
       },
       feedback: _feedback(context),
       child: _CustomDraggable(
-          // delay cannot be longer than 500, otherwise the long press select gesture recognizer will win
-          // and this drag will be cancelled
-          delay: const Duration(milliseconds: 600),
-          supportedDevices: {
-            PointerDeviceKind.touch,
-            PointerDeviceKind.stylus,
-            PointerDeviceKind.invertedStylus,
-            PointerDeviceKind.unknown,
-          },
-          hapticFeedbackOnStart: true,
-          data: resource.id,
-          dragAnchorStrategy: pointerDragAnchorStrategy,
-          onDragStarted: () => _onDragStarted(context),
-          onDragEnd: (details) {
-            context.read<ExplorerController>().setDragging(false);
-          },
-          feedback: _feedback(context),
-          child: buildItem()),
+        // delay cannot be longer than 500, otherwise the long press select gesture recognizer will win
+        // and this drag will be cancelled
+        delay: const Duration(milliseconds: 600),
+        supportedDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.stylus,
+          PointerDeviceKind.invertedStylus,
+          PointerDeviceKind.unknown,
+        },
+        hapticFeedbackOnStart: true,
+        data: resource.id,
+        dragAnchorStrategy: pointerDragAnchorStrategy,
+        onDragStarted: () => _onDragStarted(context),
+        onDragEnd: (details) {
+          context.read<ExplorerController>().setDragging(false);
+        },
+        feedback: _feedback(context),
+        child: buildItem(),
+      ),
     );
   }
 
@@ -191,7 +197,9 @@ class ResourceDraggable extends StatelessWidget {
         final count = context.read<ExplorerState>().selectedIds.length;
         return Card(
           shape: RoundedRectangleBorder(
-              side: BorderSide(color: theme.colorScheme.primary), borderRadius: BorderRadius.circular(4.0)),
+            side: BorderSide(color: theme.colorScheme.primary),
+            borderRadius: BorderRadius.circular(4.0),
+          ),
           elevation: 16.0,
           margin: const EdgeInsets.only(left: 16.0),
           child: SizedBox(
@@ -205,7 +213,14 @@ class ResourceDraggable extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.fade,
               ),
-              trailing: count == 1 ? null : Badge(label: Text(count.toString(), style: const TextStyle(fontSize: 14))),
+              trailing: count == 1
+                  ? null
+                  : Badge(
+                      label: Text(
+                        count.toString(),
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
             ),
           ),
         );
@@ -245,7 +260,9 @@ class _CustomDraggable<T extends Object> extends Draggable<T> {
   });
 
   @override
-  MultiDragGestureRecognizer createRecognizer(GestureMultiDragStartCallback onStart) {
+  MultiDragGestureRecognizer createRecognizer(
+    GestureMultiDragStartCallback onStart,
+  ) {
     final recognizer = delay == null
         ? ImmediateMultiDragGestureRecognizer(
             supportedDevices: supportedDevices,

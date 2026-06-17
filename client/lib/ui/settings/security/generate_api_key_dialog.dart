@@ -10,8 +10,11 @@ class ApiKeyParams {
   final DateTime? expires;
   final List<String> scopes;
 
-  ApiKeyParams(
-      {required this.description, required this.expires, required this.scopes});
+  ApiKeyParams({
+    required this.description,
+    required this.expires,
+    required this.scopes,
+  });
 }
 
 class GenerateApiKeyDialog extends StatefulWidget {
@@ -23,17 +26,17 @@ class GenerateApiKeyDialog extends StatefulWidget {
   static Future<ApiKeyParams?> show(BuildContext context) async {
     final account = context.read<PhylumAccount>();
     return showDialog<ApiKeyParams>(
-        context: context,
-        builder: (context) => Provider.value(
-              value: account,
-              child: GenerateApiKeyDialog(),
-            ));
+      context: context,
+      builder: (context) =>
+          Provider.value(value: account, child: GenerateApiKeyDialog()),
+    );
   }
 }
 
 class _GenerateApiKeyDialogState extends State<GenerateApiKeyDialog> {
-  final TextEditingController expiresController =
-      TextEditingController(text: 'Never');
+  final TextEditingController expiresController = TextEditingController(
+    text: 'Never',
+  );
   String description = "";
   DateTime? expires;
   final List<String> scopes = [];
@@ -58,26 +61,29 @@ class _GenerateApiKeyDialogState extends State<GenerateApiKeyDialog> {
           children: [
             TextField(
               decoration: InputDecoration(
-                  label: Text('Description'), hintText: 'Generated via API'),
+                label: Text('Description'),
+                hintText: 'Generated via API',
+              ),
               onChanged: (value) => description = value,
               autocorrect: true,
               autofocus: true,
             ),
             TextField(
               decoration: InputDecoration(
-                  label: Text('Expires'),
-                  suffixIcon: expires == null
-                      ? IconButton(
-                          icon: Icon(Icons.calendar_month),
-                          onPressed: () => pickDate(context),
-                        )
-                      : IconButton(
-                          icon: Icon(Icons.close),
-                          onPressed: () {
-                            expires = null;
-                            expiresController.text = 'Never';
-                          },
-                        )),
+                label: Text('Expires'),
+                suffixIcon: expires == null
+                    ? IconButton(
+                        icon: Icon(Icons.calendar_month),
+                        onPressed: () => pickDate(context),
+                      )
+                    : IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () {
+                          expires = null;
+                          expiresController.text = 'Never';
+                        },
+                      ),
+              ),
               controller: expiresController,
               readOnly: true,
               onSubmitted: (value) => pickDate(context),
@@ -87,13 +93,16 @@ class _GenerateApiKeyDialogState extends State<GenerateApiKeyDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ListTile(
-                  title: Text('Scopes',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text(
+                    'Scopes',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   dense: true,
                   visualDensity: VisualDensity.compact,
                   trailing: IconButton(
-                      onPressed: () => addScope(context),
-                      icon: Icon(Icons.add)),
+                    onPressed: () => addScope(context),
+                    icon: Icon(Icons.add),
+                  ),
                 ),
                 if (scopes.isEmpty)
                   const Text(
@@ -119,7 +128,8 @@ class _GenerateApiKeyDialogState extends State<GenerateApiKeyDialog> {
                         icon: Icon(Icons.close, size: 24),
                         padding: EdgeInsets.all(3),
                         onPressed: () => setState(
-                            () => scopes.removeWhere((e) => e == scope)),
+                          () => scopes.removeWhere((e) => e == scope),
+                        ),
                         constraints: const BoxConstraints(),
                       ),
                     ],
@@ -131,15 +141,22 @@ class _GenerateApiKeyDialogState extends State<GenerateApiKeyDialog> {
       ),
       actions: [
         TextButton(
-          child: Text('Cancel',
-              style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          child: Text(
+            'Cancel',
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
           onPressed: () => Navigator.of(context).pop(null),
         ),
         ElevatedButton(
           onPressed: scopes.isEmpty
               ? null
-              : () => Navigator.of(context).pop(ApiKeyParams(
-                  description: description, expires: expires, scopes: scopes)),
+              : () => Navigator.of(context).pop(
+                  ApiKeyParams(
+                    description: description,
+                    expires: expires,
+                    scopes: scopes,
+                  ),
+                ),
           child: Text('Generate'),
         ),
       ],
@@ -239,8 +256,7 @@ enum Scope {
   publink('Public Shares', 'publink', ['list', 'create']),
   bookmarks('Bookmarks', 'bookmarks', ['list', 'add', 'remove']),
   keys('API Keys', 'keys', ['list', 'generate', 'revoke']),
-  trash('Trash', 'trash', ['list', 'empty', 'restore']),
-  ;
+  trash('Trash', 'trash', ['list', 'empty', 'restore']);
 
   final String name;
   final String key;

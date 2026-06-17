@@ -23,7 +23,8 @@ class _UserListPanelState extends State<UserListPanel> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (context.select<UserListState, bool>(
-            (state) => (state.users?.length ?? 0) > 10))
+          (state) => (state.users?.length ?? 0) > 10,
+        ))
           TextField(
             decoration: InputDecoration(
               suffixIcon: IconButton(

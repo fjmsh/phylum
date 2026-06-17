@@ -6,11 +6,9 @@ QueryExecutor openDatabase({
   required Directory? storageDir,
   required Directory? tmpDir,
   required String id,
-}) =>
-    throw UnimplementedError();
+}) => throw UnimplementedError();
 
 Future<void> deleteDatabase({
   required Directory? storageDir,
   required String id,
-}) =>
-    throw UnimplementedError();
+}) => throw UnimplementedError();

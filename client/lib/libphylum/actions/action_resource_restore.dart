@@ -20,40 +20,32 @@ class ResourceRestoreAction extends ResourceAction with JsonApiAction {
 
   @override
   List<LocalChange> get localChanges => [
-        UpdateResourceDeletedChange(
-          objectId: resourceId,
-          timestamp: null,
-        ),
-        UpdateResourceModifiedChange(
-          objectId: resourceId,
-          timestamp: timestamp,
-        ),
-        UpdateResourceTrashedChange(objectId: resourceId, add: false),
-      ];
+    UpdateResourceDeletedChange(objectId: resourceId, timestamp: null),
+    UpdateResourceModifiedChange(objectId: resourceId, timestamp: timestamp),
+    UpdateResourceTrashedChange(objectId: resourceId, add: false),
+  ];
 
   @override
   String get description => "Restoring $resourceName";
 
   @override
   Map<String, dynamic> get props => {
-        'resourceId': resourceId,
-        'resourceName': resourceName,
-        'timestamp': timestamp.millisecondsSinceEpoch,
-      };
+    'resourceId': resourceId,
+    'resourceName': resourceName,
+    'timestamp': timestamp.millisecondsSinceEpoch,
+  };
 
   final String resourceName;
   final DateTime timestamp;
 
-  ResourceRestoreAction._({required super.resourceId, required this.resourceName, required this.timestamp});
+  ResourceRestoreAction._({
+    required super.resourceId,
+    required this.resourceName,
+    required this.timestamp,
+  });
 
-  ResourceRestoreAction({
-    required Resource r,
-    required DateTime timestamp,
-  }) : this._(
-          resourceId: r.id,
-          resourceName: r.name,
-          timestamp: timestamp,
-        );
+  ResourceRestoreAction({required Resource r, required DateTime timestamp})
+    : this._(resourceId: r.id, resourceName: r.name, timestamp: timestamp);
 
   factory ResourceRestoreAction.fromMap(Map<String, dynamic> map) {
     return ResourceRestoreAction._(
@@ -64,5 +56,6 @@ class ResourceRestoreAction extends ResourceAction with JsonApiAction {
   }
 
   @override
-  bool dependsOn(PhylumAction action) => action is ResourceAction && action.resourceId == resourceId;
+  bool dependsOn(PhylumAction action) =>
+      action is ResourceAction && action.resourceId == resourceId;
 }

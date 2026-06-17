@@ -15,9 +15,10 @@ class UsersSettings extends Settings {
 
   @override
   List<StateNotifierProvider> get providers => [
-        StateNotifierProvider<UserListController, UserListState>(
-            create: (context) => UserListController(context))
-      ];
+    StateNotifierProvider<UserListController, UserListState>(
+      create: (context) => UserListController(context),
+    ),
+  ];
 
   const UsersSettings();
 

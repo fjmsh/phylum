@@ -9,9 +9,9 @@ class AdminUserListResponse extends PhylumApiSuccessResponse {
   AdminUserListResponse({required this.users});
 
   factory AdminUserListResponse.fromResponse(Map<String, dynamic> data) {
-    final users = (data['users'] as List)
-        .cast<Map>()
-        .map((a) => UserDetails.fromResponse(a.cast<String, dynamic>()));
+    final users = (data['users'] as List).cast<Map>().map(
+      (a) => UserDetails.fromResponse(a.cast<String, dynamic>()),
+    );
 
     return AdminUserListResponse(users: users);
   }

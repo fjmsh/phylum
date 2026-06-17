@@ -23,9 +23,11 @@ abstract class Log {
 
   static List<LogRecord> get records => List.unmodifiable(_records);
 
-  static void finest(dynamic message,
-          [dynamic error, StackTrace? stackTrace]) =>
-      _logger.log(Level.FINEST, message, error, stackTrace);
+  static void finest(
+    dynamic message, [
+    dynamic error,
+    StackTrace? stackTrace,
+  ]) => _logger.log(Level.FINEST, message, error, stackTrace);
 
   static void finer(dynamic message, [dynamic error, StackTrace? stackTrace]) =>
       _logger.log(Level.FINER, message, error, stackTrace);
@@ -39,9 +41,11 @@ abstract class Log {
   static void warn(dynamic message, [dynamic error, StackTrace? stackTrace]) =>
       _logger.log(Level.WARNING, message, error, stackTrace);
 
-  static void severe(dynamic message,
-          [dynamic error, StackTrace? stackTrace]) =>
-      _logger.log(Level.SEVERE, message, error, stackTrace);
+  static void severe(
+    dynamic message, [
+    dynamic error,
+    StackTrace? stackTrace,
+  ]) => _logger.log(Level.SEVERE, message, error, stackTrace);
 
   static void shout(dynamic message, [dynamic error, StackTrace? stackTrace]) =>
       _logger.log(Level.SHOUT, message, error, stackTrace);
@@ -61,23 +65,29 @@ Future<void> _init() async {
     print('[Phylum] ${stringifyRecord(record, true)}');
   });
 
-  otlLogger = (LogLevel level, dynamic message,
-      {dynamic error, StackTrace? stackTrace}) {
-    final lvl = switch (level) {
-      LogLevel.trace => Level.FINEST,
-      LogLevel.debug => Level.FINE,
-      LogLevel.info => Level.INFO,
-      LogLevel.warning => Level.WARNING,
-      LogLevel.error => Level.SEVERE,
-      LogLevel.fatal => Level.SHOUT,
-    };
-    _logger.log(lvl, message, error, stackTrace);
-  };
+  otlLogger =
+      (
+        LogLevel level,
+        dynamic message, {
+        dynamic error,
+        StackTrace? stackTrace,
+      }) {
+        final lvl = switch (level) {
+          LogLevel.trace => Level.FINEST,
+          LogLevel.debug => Level.FINE,
+          LogLevel.info => Level.INFO,
+          LogLevel.warning => Level.WARNING,
+          LogLevel.error => Level.SEVERE,
+          LogLevel.fatal => Level.SHOUT,
+        };
+        _logger.log(lvl, message, error, stackTrace);
+      };
 }
 
 String stringifyRecord(LogRecord record, [bool truncate = false]) {
-  String message =
-      record.object != null ? stringifyMessage(record.object) : record.message;
+  String message = record.object != null
+      ? stringifyMessage(record.object)
+      : record.message;
   String output =
       '${dateFormat.format(record.time)}: [${_stringifyLevel(record.level)}] $message';
 

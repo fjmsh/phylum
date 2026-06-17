@@ -13,11 +13,7 @@ class UserListState {
   final String? error;
   final List<UserDetails>? users;
 
-  const UserListState({
-    this.loading = false,
-    this.error,
-    this.users,
-  });
+  const UserListState({this.loading = false, this.error, this.users});
 }
 
 class UserListController extends StateNotifier<UserListState> {
@@ -56,11 +52,13 @@ class UserListController extends StateNotifier<UserListState> {
     final results = _filter.isEmpty
         ? _users
         : _users
-            ?.where((u) =>
-                u.email.contains(query) ||
-                u.name.contains(query) ||
-                u.id.toString().startsWith(query))
-            .toList(growable: false);
+              ?.where(
+                (u) =>
+                    u.email.contains(query) ||
+                    u.name.contains(query) ||
+                    u.id.toString().startsWith(query),
+              )
+              .toList(growable: false);
     state = UserListState(users: results);
   }
 
@@ -70,8 +68,9 @@ class UserListController extends StateNotifier<UserListState> {
   }
 
   void updateUser(UserDetails user) async {
-    _users =
-        _users?.map((u) => u.id == user.id ? user : u).toList(growable: false);
+    _users = _users
+        ?.map((u) => u.id == user.id ? user : u)
+        .toList(growable: false);
     refilter();
   }
 }

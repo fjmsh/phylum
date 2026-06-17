@@ -7,19 +7,23 @@ class ResourceResponse extends PhylumApiSuccessResponse {
   final Iterable<Publink> publinks;
   final Map<String, Permission> permissions;
 
-  ResourceResponse(
-      {required Resource resource, required this.versions, required this.publinks, required this.permissions})
-      : _resource = resource;
+  ResourceResponse({
+    required Resource resource,
+    required this.versions,
+    required this.publinks,
+    required this.permissions,
+  }) : _resource = resource;
 
   factory ResourceResponse.fromResponse(
     Map<String, dynamic> data, {
     String? parent,
     Map<String, Permission>? inheritedPermissions,
   }) {
-    inheritedPermissions ??= (data['inherited_permissions'] as Map).cast<String, Permission>();
-    final grants = (data['grants'] as Map)
-        .cast<String, Map>()
-        .map((k, v) => MapEntry(k, v.cast<String, dynamic>()['p'] as Permission));
+    inheritedPermissions ??= (data['inherited_permissions'] as Map)
+        .cast<String, Permission>();
+    final grants = (data['grants'] as Map).cast<String, Map>().map(
+      (k, v) => MapEntry(k, v.cast<String, dynamic>()['p'] as Permission),
+    );
     final permissions = Map.of(inheritedPermissions)..addAll(grants);
 
     final r = Resource(
@@ -29,18 +33,27 @@ class ResourceResponse extends PhylumApiSuccessResponse {
       dir: data['dir'],
       created: DateTime.fromMillisecondsSinceEpoch(data['created']),
       modified: DateTime.fromMillisecondsSinceEpoch(data['modified']),
-      deleted: data['deleted'] == 0 ? null : DateTime.fromMillisecondsSinceEpoch(data['deleted']),
+      deleted: data['deleted'] == 0
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(data['deleted']),
       inheritedPermissions: jsonEncode(inheritedPermissions),
       grants: grants.isEmpty ? null : jsonEncode(grants),
       userPermission: 0,
     );
     final versions = parseResourceVersions(data['versions'], r.id);
     final publinks = parsePublinks(data['publinks'], r.id);
-    return ResourceResponse(resource: r, versions: versions, publinks: publinks, permissions: permissions);
+    return ResourceResponse(
+      resource: r,
+      versions: versions,
+      publinks: publinks,
+      permissions: permissions,
+    );
   }
 
   void _updateUserPermissions(PhylumAccount account) {
-    _resource = _resource.copyWith(userPermission: permissions[account.user.id.toString()] ?? 0);
+    _resource = _resource.copyWith(
+      userPermission: permissions[account.user.id.toString()] ?? 0,
+    );
   }
 
   @override
@@ -48,22 +61,38 @@ class ResourceResponse extends PhylumApiSuccessResponse {
     _updateUserPermissions(account);
     final db = account.db;
 
-    final orphanedPublinks = Set.of(await (db.select(db.publinks)
-          ..where((l) => l.root.equals(resource.id) & l.id.isNotIn(publinks.map((l) => l.id))))
-        .map((r) => r.id)
-        .get());
+    final orphanedPublinks = Set.of(
+      await (db.select(db.publinks)..where(
+            (l) =>
+                l.root.equals(resource.id) &
+                l.id.isNotIn(publinks.map((l) => l.id)),
+          ))
+          .map((r) => r.id)
+          .get(),
+    );
 
     await db.batch((batch) async {
       batch.insert(db.resources, resource, mode: InsertMode.insertOrReplace);
-      batch.insertAll(db.resourceVersions, versions, mode: InsertMode.insertOrReplace);
+      batch.insertAll(
+        db.resourceVersions,
+        versions,
+        mode: InsertMode.insertOrReplace,
+      );
 
       for (final id in orphanedPublinks) {
-        batch.update(db.publinks, PublinksCompanion(root: Value('')), where: (o) => o.id.equals(id));
+        batch.update(
+          db.publinks,
+          PublinksCompanion(root: Value('')),
+          where: (o) => o.id.equals(id),
+        );
       }
       batch.insertAll(db.publinks, publinks, mode: InsertMode.insertOrReplace);
     });
 
-    await account.datastore.get<Resource>().replaceRemoteData(resource.id, resource);
+    await account.datastore.get<Resource>().replaceRemoteData(
+      resource.id,
+      resource,
+    );
 
     final versionRepo = account.datastore.get<ResourceVersion>();
     for (final v in versions) {

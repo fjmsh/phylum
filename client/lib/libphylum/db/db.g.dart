@@ -10,22 +10,31 @@ class Users extends Table with TableInfo<Users, User> {
   Users(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      $customConstraints: 'NOT NULL PRIMARY KEY');
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
   static const VerificationMeta _emailMeta = const VerificationMeta('email');
   late final GeneratedColumn<String> email = GeneratedColumn<String>(
-      'email', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL');
+    'email',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
-      'name', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL');
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
   @override
   List<GeneratedColumn> get $columns => [id, email, name];
   @override
@@ -34,8 +43,10 @@ class Users extends Table with TableInfo<Users, User> {
   String get actualTableName => $name;
   static const String $name = 'users';
   @override
-  VerificationContext validateIntegrity(Insertable<User> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<User> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
@@ -43,13 +54,17 @@ class Users extends Table with TableInfo<Users, User> {
     }
     if (data.containsKey('email')) {
       context.handle(
-          _emailMeta, email.isAcceptableOrUnknown(data['email']!, _emailMeta));
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
     } else if (isInserting) {
       context.missing(_emailMeta);
     }
     if (data.containsKey('name')) {
       context.handle(
-          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
@@ -62,12 +77,18 @@ class Users extends Table with TableInfo<Users, User> {
   User map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return User(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      email: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}email'])!,
-      name: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
     );
   }
 
@@ -102,8 +123,10 @@ class User extends DataClass implements Insertable<User> {
     );
   }
 
-  factory User.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory User.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return User(
       id: serializer.fromJson<int>(json['id']),
@@ -122,10 +145,10 @@ class User extends DataClass implements Insertable<User> {
   }
 
   User copyWith({int? id, String? email, String? name}) => User(
-        id: id ?? this.id,
-        email: email ?? this.email,
-        name: name ?? this.name,
-      );
+    id: id ?? this.id,
+    email: email ?? this.email,
+    name: name ?? this.name,
+  );
   User copyWithCompanion(UsersCompanion data) {
     return User(
       id: data.id.present ? data.id.value : this.id,
@@ -168,8 +191,8 @@ class UsersCompanion extends UpdateCompanion<User> {
     this.id = const Value.absent(),
     required String email,
     required String name,
-  })  : email = Value(email),
-        name = Value(name);
+  }) : email = Value(email),
+       name = Value(name);
   static Insertable<User> custom({
     Expression<int>? id,
     Expression<String>? email,
@@ -182,8 +205,11 @@ class UsersCompanion extends UpdateCompanion<User> {
     });
   }
 
-  UsersCompanion copyWith(
-      {Value<int>? id, Value<String>? email, Value<String>? name}) {
+  UsersCompanion copyWith({
+    Value<int>? id,
+    Value<String>? email,
+    Value<String>? name,
+  }) {
     return UsersCompanion(
       id: id ?? this.id,
       email: email ?? this.email,
@@ -224,99 +250,140 @@ class Resources extends Table with TableInfo<Resources, Resource> {
   Resources(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
-      'id', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL PRIMARY KEY');
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
   static const VerificationMeta _parentMeta = const VerificationMeta('parent');
   late final GeneratedColumn<String> parent = GeneratedColumn<String>(
-      'parent', aliasedName, true,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      $customConstraints: 'REFERENCES resources(id)');
+    'parent',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'REFERENCES resources(id)',
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
-      'name', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL');
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
   static const VerificationMeta _dirMeta = const VerificationMeta('dir');
   late final GeneratedColumn<bool> dir = GeneratedColumn<bool>(
-      'dir', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL CHECK (dir IN (0, 1))');
-  static const VerificationMeta _createdMeta =
-      const VerificationMeta('created');
+    'dir',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (dir IN (0, 1))',
+  );
+  static const VerificationMeta _createdMeta = const VerificationMeta(
+    'created',
+  );
   late final GeneratedColumn<DateTime> created = GeneratedColumn<DateTime>(
-      'created', aliasedName, true,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      $customConstraints: '');
-  static const VerificationMeta _modifiedMeta =
-      const VerificationMeta('modified');
+    'created',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _modifiedMeta = const VerificationMeta(
+    'modified',
+  );
   late final GeneratedColumn<DateTime> modified = GeneratedColumn<DateTime>(
-      'modified', aliasedName, true,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      $customConstraints: '');
-  static const VerificationMeta _deletedMeta =
-      const VerificationMeta('deleted');
+    'modified',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _deletedMeta = const VerificationMeta(
+    'deleted',
+  );
   late final GeneratedColumn<DateTime> deleted = GeneratedColumn<DateTime>(
-      'deleted', aliasedName, true,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      $customConstraints: '');
+    'deleted',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   static const VerificationMeta _inheritedPermissionsMeta =
       const VerificationMeta('inheritedPermissions');
   late final GeneratedColumn<String> inheritedPermissions =
-      GeneratedColumn<String>('inherited_permissions', aliasedName, true,
-          type: DriftSqlType.string,
-          requiredDuringInsert: false,
-          $customConstraints: '');
+      GeneratedColumn<String>(
+        'inherited_permissions',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        $customConstraints: '',
+      );
   static const VerificationMeta _grantsMeta = const VerificationMeta('grants');
   late final GeneratedColumn<String> grants = GeneratedColumn<String>(
-      'grants', aliasedName, true,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      $customConstraints: '');
-  static const VerificationMeta _userPermissionMeta =
-      const VerificationMeta('userPermission');
+    'grants',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _userPermissionMeta = const VerificationMeta(
+    'userPermission',
+  );
   late final GeneratedColumn<int> userPermission = GeneratedColumn<int>(
-      'user_permission', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      $customConstraints: 'NOT NULL DEFAULT 0',
-      defaultValue: const CustomExpression('0'));
-  static const VerificationMeta _lastRefreshMeta =
-      const VerificationMeta('lastRefresh');
+    'user_permission',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  static const VerificationMeta _lastRefreshMeta = const VerificationMeta(
+    'lastRefresh',
+  );
   late final GeneratedColumn<DateTime> lastRefresh = GeneratedColumn<DateTime>(
-      'last_refresh', aliasedName, true,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      $customConstraints: '');
+    'last_refresh',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   @override
   List<GeneratedColumn> get $columns => [
-        id,
-        parent,
-        name,
-        dir,
-        created,
-        modified,
-        deleted,
-        inheritedPermissions,
-        grants,
-        userPermission,
-        lastRefresh
-      ];
+    id,
+    parent,
+    name,
+    dir,
+    created,
+    modified,
+    deleted,
+    inheritedPermissions,
+    grants,
+    userPermission,
+    lastRefresh,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'resources';
   @override
-  VerificationContext validateIntegrity(Insertable<Resource> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<Resource> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
@@ -325,54 +392,77 @@ class Resources extends Table with TableInfo<Resources, Resource> {
       context.missing(_idMeta);
     }
     if (data.containsKey('parent')) {
-      context.handle(_parentMeta,
-          parent.isAcceptableOrUnknown(data['parent']!, _parentMeta));
+      context.handle(
+        _parentMeta,
+        parent.isAcceptableOrUnknown(data['parent']!, _parentMeta),
+      );
     }
     if (data.containsKey('name')) {
       context.handle(
-          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
     if (data.containsKey('dir')) {
       context.handle(
-          _dirMeta, dir.isAcceptableOrUnknown(data['dir']!, _dirMeta));
+        _dirMeta,
+        dir.isAcceptableOrUnknown(data['dir']!, _dirMeta),
+      );
     } else if (isInserting) {
       context.missing(_dirMeta);
     }
     if (data.containsKey('created')) {
-      context.handle(_createdMeta,
-          created.isAcceptableOrUnknown(data['created']!, _createdMeta));
+      context.handle(
+        _createdMeta,
+        created.isAcceptableOrUnknown(data['created']!, _createdMeta),
+      );
     }
     if (data.containsKey('modified')) {
-      context.handle(_modifiedMeta,
-          modified.isAcceptableOrUnknown(data['modified']!, _modifiedMeta));
+      context.handle(
+        _modifiedMeta,
+        modified.isAcceptableOrUnknown(data['modified']!, _modifiedMeta),
+      );
     }
     if (data.containsKey('deleted')) {
-      context.handle(_deletedMeta,
-          deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta));
+      context.handle(
+        _deletedMeta,
+        deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
+      );
     }
     if (data.containsKey('inherited_permissions')) {
       context.handle(
+        _inheritedPermissionsMeta,
+        inheritedPermissions.isAcceptableOrUnknown(
+          data['inherited_permissions']!,
           _inheritedPermissionsMeta,
-          inheritedPermissions.isAcceptableOrUnknown(
-              data['inherited_permissions']!, _inheritedPermissionsMeta));
+        ),
+      );
     }
     if (data.containsKey('grants')) {
-      context.handle(_grantsMeta,
-          grants.isAcceptableOrUnknown(data['grants']!, _grantsMeta));
+      context.handle(
+        _grantsMeta,
+        grants.isAcceptableOrUnknown(data['grants']!, _grantsMeta),
+      );
     }
     if (data.containsKey('user_permission')) {
       context.handle(
+        _userPermissionMeta,
+        userPermission.isAcceptableOrUnknown(
+          data['user_permission']!,
           _userPermissionMeta,
-          userPermission.isAcceptableOrUnknown(
-              data['user_permission']!, _userPermissionMeta));
+        ),
+      );
     }
     if (data.containsKey('last_refresh')) {
       context.handle(
+        _lastRefreshMeta,
+        lastRefresh.isAcceptableOrUnknown(
+          data['last_refresh']!,
           _lastRefreshMeta,
-          lastRefresh.isAcceptableOrUnknown(
-              data['last_refresh']!, _lastRefreshMeta));
+        ),
+      );
     }
     return context;
   }
@@ -383,28 +473,50 @@ class Resources extends Table with TableInfo<Resources, Resource> {
   Resource map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Resource(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
-      parent: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}parent']),
-      name: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
-      dir: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}dir'])!,
-      created: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created']),
-      modified: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}modified']),
-      deleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted']),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      parent: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}parent'],
+      ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      dir: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}dir'],
+      )!,
+      created: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created'],
+      ),
+      modified: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}modified'],
+      ),
+      deleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted'],
+      ),
       inheritedPermissions: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}inherited_permissions']),
-      grants: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}grants']),
-      userPermission: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}user_permission'])!,
-      lastRefresh: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_refresh']),
+        DriftSqlType.string,
+        data['${effectivePrefix}inherited_permissions'],
+      ),
+      grants: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}grants'],
+      ),
+      userPermission: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}user_permission'],
+      )!,
+      lastRefresh: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_refresh'],
+      ),
     );
   }
 
@@ -429,18 +541,19 @@ class Resource extends DataClass implements Insertable<Resource> {
   final String? grants;
   final int userPermission;
   final DateTime? lastRefresh;
-  const Resource(
-      {required this.id,
-      this.parent,
-      required this.name,
-      required this.dir,
-      this.created,
-      this.modified,
-      this.deleted,
-      this.inheritedPermissions,
-      this.grants,
-      required this.userPermission,
-      this.lastRefresh});
+  const Resource({
+    required this.id,
+    this.parent,
+    required this.name,
+    required this.dir,
+    this.created,
+    this.modified,
+    this.deleted,
+    this.inheritedPermissions,
+    this.grants,
+    required this.userPermission,
+    this.lastRefresh,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -475,8 +588,9 @@ class Resource extends DataClass implements Insertable<Resource> {
   ResourcesCompanion toCompanion(bool nullToAbsent) {
     return ResourcesCompanion(
       id: Value(id),
-      parent:
-          parent == null && nullToAbsent ? const Value.absent() : Value(parent),
+      parent: parent == null && nullToAbsent
+          ? const Value.absent()
+          : Value(parent),
       name: Value(name),
       dir: Value(dir),
       created: created == null && nullToAbsent
@@ -491,8 +605,9 @@ class Resource extends DataClass implements Insertable<Resource> {
       inheritedPermissions: inheritedPermissions == null && nullToAbsent
           ? const Value.absent()
           : Value(inheritedPermissions),
-      grants:
-          grants == null && nullToAbsent ? const Value.absent() : Value(grants),
+      grants: grants == null && nullToAbsent
+          ? const Value.absent()
+          : Value(grants),
       userPermission: Value(userPermission),
       lastRefresh: lastRefresh == null && nullToAbsent
           ? const Value.absent()
@@ -500,8 +615,10 @@ class Resource extends DataClass implements Insertable<Resource> {
     );
   }
 
-  factory Resource.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory Resource.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Resource(
       id: serializer.fromJson<String>(json['id']),
@@ -511,8 +628,9 @@ class Resource extends DataClass implements Insertable<Resource> {
       created: serializer.fromJson<DateTime?>(json['created']),
       modified: serializer.fromJson<DateTime?>(json['modified']),
       deleted: serializer.fromJson<DateTime?>(json['deleted']),
-      inheritedPermissions:
-          serializer.fromJson<String?>(json['inherited_permissions']),
+      inheritedPermissions: serializer.fromJson<String?>(
+        json['inherited_permissions'],
+      ),
       grants: serializer.fromJson<String?>(json['grants']),
       userPermission: serializer.fromJson<int>(json['user_permission']),
       lastRefresh: serializer.fromJson<DateTime?>(json['last_refresh']),
@@ -536,33 +654,33 @@ class Resource extends DataClass implements Insertable<Resource> {
     };
   }
 
-  Resource copyWith(
-          {String? id,
-          Value<String?> parent = const Value.absent(),
-          String? name,
-          bool? dir,
-          Value<DateTime?> created = const Value.absent(),
-          Value<DateTime?> modified = const Value.absent(),
-          Value<DateTime?> deleted = const Value.absent(),
-          Value<String?> inheritedPermissions = const Value.absent(),
-          Value<String?> grants = const Value.absent(),
-          int? userPermission,
-          Value<DateTime?> lastRefresh = const Value.absent()}) =>
-      Resource(
-        id: id ?? this.id,
-        parent: parent.present ? parent.value : this.parent,
-        name: name ?? this.name,
-        dir: dir ?? this.dir,
-        created: created.present ? created.value : this.created,
-        modified: modified.present ? modified.value : this.modified,
-        deleted: deleted.present ? deleted.value : this.deleted,
-        inheritedPermissions: inheritedPermissions.present
-            ? inheritedPermissions.value
-            : this.inheritedPermissions,
-        grants: grants.present ? grants.value : this.grants,
-        userPermission: userPermission ?? this.userPermission,
-        lastRefresh: lastRefresh.present ? lastRefresh.value : this.lastRefresh,
-      );
+  Resource copyWith({
+    String? id,
+    Value<String?> parent = const Value.absent(),
+    String? name,
+    bool? dir,
+    Value<DateTime?> created = const Value.absent(),
+    Value<DateTime?> modified = const Value.absent(),
+    Value<DateTime?> deleted = const Value.absent(),
+    Value<String?> inheritedPermissions = const Value.absent(),
+    Value<String?> grants = const Value.absent(),
+    int? userPermission,
+    Value<DateTime?> lastRefresh = const Value.absent(),
+  }) => Resource(
+    id: id ?? this.id,
+    parent: parent.present ? parent.value : this.parent,
+    name: name ?? this.name,
+    dir: dir ?? this.dir,
+    created: created.present ? created.value : this.created,
+    modified: modified.present ? modified.value : this.modified,
+    deleted: deleted.present ? deleted.value : this.deleted,
+    inheritedPermissions: inheritedPermissions.present
+        ? inheritedPermissions.value
+        : this.inheritedPermissions,
+    grants: grants.present ? grants.value : this.grants,
+    userPermission: userPermission ?? this.userPermission,
+    lastRefresh: lastRefresh.present ? lastRefresh.value : this.lastRefresh,
+  );
   Resource copyWithCompanion(ResourcesCompanion data) {
     return Resource(
       id: data.id.present ? data.id.value : this.id,
@@ -579,8 +697,9 @@ class Resource extends DataClass implements Insertable<Resource> {
       userPermission: data.userPermission.present
           ? data.userPermission.value
           : this.userPermission,
-      lastRefresh:
-          data.lastRefresh.present ? data.lastRefresh.value : this.lastRefresh,
+      lastRefresh: data.lastRefresh.present
+          ? data.lastRefresh.value
+          : this.lastRefresh,
     );
   }
 
@@ -603,8 +722,19 @@ class Resource extends DataClass implements Insertable<Resource> {
   }
 
   @override
-  int get hashCode => Object.hash(id, parent, name, dir, created, modified,
-      deleted, inheritedPermissions, grants, userPermission, lastRefresh);
+  int get hashCode => Object.hash(
+    id,
+    parent,
+    name,
+    dir,
+    created,
+    modified,
+    deleted,
+    inheritedPermissions,
+    grants,
+    userPermission,
+    lastRefresh,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -662,9 +792,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     this.userPermission = const Value.absent(),
     this.lastRefresh = const Value.absent(),
     this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        name = Value(name),
-        dir = Value(dir);
+  }) : id = Value(id),
+       name = Value(name),
+       dir = Value(dir);
   static Insertable<Resource> custom({
     Expression<String>? id,
     Expression<String>? parent,
@@ -696,19 +826,20 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
     });
   }
 
-  ResourcesCompanion copyWith(
-      {Value<String>? id,
-      Value<String?>? parent,
-      Value<String>? name,
-      Value<bool>? dir,
-      Value<DateTime?>? created,
-      Value<DateTime?>? modified,
-      Value<DateTime?>? deleted,
-      Value<String?>? inheritedPermissions,
-      Value<String?>? grants,
-      Value<int>? userPermission,
-      Value<DateTime?>? lastRefresh,
-      Value<int>? rowid}) {
+  ResourcesCompanion copyWith({
+    Value<String>? id,
+    Value<String?>? parent,
+    Value<String>? name,
+    Value<bool>? dir,
+    Value<DateTime?>? created,
+    Value<DateTime?>? modified,
+    Value<DateTime?>? deleted,
+    Value<String?>? inheritedPermissions,
+    Value<String?>? grants,
+    Value<int>? userPermission,
+    Value<DateTime?>? lastRefresh,
+    Value<int>? rowid,
+  }) {
     return ResourcesCompanion(
       id: id ?? this.id,
       parent: parent ?? this.parent,
@@ -750,8 +881,9 @@ class ResourcesCompanion extends UpdateCompanion<Resource> {
       map['deleted'] = Variable<DateTime>(deleted.value);
     }
     if (inheritedPermissions.present) {
-      map['inherited_permissions'] =
-          Variable<String>(inheritedPermissions.value);
+      map['inherited_permissions'] = Variable<String>(
+        inheritedPermissions.value,
+      );
     }
     if (grants.present) {
       map['grants'] = Variable<String>(grants.value);
@@ -796,10 +928,13 @@ class TrashedResources extends Table
   TrashedResources(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
-      'id', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL PRIMARY KEY REFERENCES resources');
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY REFERENCES resources',
+  );
   @override
   List<GeneratedColumn> get $columns => [id];
   @override
@@ -808,8 +943,10 @@ class TrashedResources extends Table
   String get actualTableName => $name;
   static const String $name = 'trashed_resources';
   @override
-  VerificationContext validateIntegrity(Insertable<TrashedResource> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<TrashedResource> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
@@ -826,8 +963,10 @@ class TrashedResources extends Table
   TrashedResource map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return TrashedResource(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
     );
   }
 
@@ -851,33 +990,25 @@ class TrashedResource extends DataClass implements Insertable<TrashedResource> {
   }
 
   TrashedResourcesCompanion toCompanion(bool nullToAbsent) {
-    return TrashedResourcesCompanion(
-      id: Value(id),
-    );
+    return TrashedResourcesCompanion(id: Value(id));
   }
 
-  factory TrashedResource.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory TrashedResource.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return TrashedResource(
-      id: serializer.fromJson<String>(json['id']),
-    );
+    return TrashedResource(id: serializer.fromJson<String>(json['id']));
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-    };
+    return <String, dynamic>{'id': serializer.toJson<String>(id)};
   }
 
-  TrashedResource copyWith({String? id}) => TrashedResource(
-        id: id ?? this.id,
-      );
+  TrashedResource copyWith({String? id}) => TrashedResource(id: id ?? this.id);
   TrashedResource copyWithCompanion(TrashedResourcesCompanion data) {
-    return TrashedResource(
-      id: data.id.present ? data.id.value : this.id,
-    );
+    return TrashedResource(id: data.id.present ? data.id.value : this.id);
   }
 
   @override
@@ -951,19 +1082,26 @@ class Shared extends Table with TableInfo<Shared, SharedData> {
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   Shared(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _resourceIdMeta =
-      const VerificationMeta('resourceId');
+  static const VerificationMeta _resourceIdMeta = const VerificationMeta(
+    'resourceId',
+  );
   late final GeneratedColumn<String> resourceId = GeneratedColumn<String>(
-      'resource_id', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL PRIMARY KEY REFERENCES resources(id)');
+    'resource_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY REFERENCES resources(id)',
+  );
   static const VerificationMeta _seqMeta = const VerificationMeta('seq');
   late final GeneratedColumn<int> seq = GeneratedColumn<int>(
-      'seq', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL');
+    'seq',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
   @override
   List<GeneratedColumn> get $columns => [resourceId, seq];
   @override
@@ -972,21 +1110,25 @@ class Shared extends Table with TableInfo<Shared, SharedData> {
   String get actualTableName => $name;
   static const String $name = 'shared';
   @override
-  VerificationContext validateIntegrity(Insertable<SharedData> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<SharedData> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('resource_id')) {
       context.handle(
-          _resourceIdMeta,
-          resourceId.isAcceptableOrUnknown(
-              data['resource_id']!, _resourceIdMeta));
+        _resourceIdMeta,
+        resourceId.isAcceptableOrUnknown(data['resource_id']!, _resourceIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_resourceIdMeta);
     }
     if (data.containsKey('seq')) {
       context.handle(
-          _seqMeta, seq.isAcceptableOrUnknown(data['seq']!, _seqMeta));
+        _seqMeta,
+        seq.isAcceptableOrUnknown(data['seq']!, _seqMeta),
+      );
     } else if (isInserting) {
       context.missing(_seqMeta);
     }
@@ -999,10 +1141,14 @@ class Shared extends Table with TableInfo<Shared, SharedData> {
   SharedData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return SharedData(
-      resourceId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}resource_id'])!,
-      seq: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}seq'])!,
+      resourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}resource_id'],
+      )!,
+      seq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}seq'],
+      )!,
     );
   }
 
@@ -1028,14 +1174,13 @@ class SharedData extends DataClass implements Insertable<SharedData> {
   }
 
   SharedCompanion toCompanion(bool nullToAbsent) {
-    return SharedCompanion(
-      resourceId: Value(resourceId),
-      seq: Value(seq),
-    );
+    return SharedCompanion(resourceId: Value(resourceId), seq: Value(seq));
   }
 
-  factory SharedData.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory SharedData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return SharedData(
       resourceId: serializer.fromJson<String>(json['resource_id']),
@@ -1052,13 +1197,14 @@ class SharedData extends DataClass implements Insertable<SharedData> {
   }
 
   SharedData copyWith({String? resourceId, int? seq}) => SharedData(
-        resourceId: resourceId ?? this.resourceId,
-        seq: seq ?? this.seq,
-      );
+    resourceId: resourceId ?? this.resourceId,
+    seq: seq ?? this.seq,
+  );
   SharedData copyWithCompanion(SharedCompanion data) {
     return SharedData(
-      resourceId:
-          data.resourceId.present ? data.resourceId.value : this.resourceId,
+      resourceId: data.resourceId.present
+          ? data.resourceId.value
+          : this.resourceId,
       seq: data.seq.present ? data.seq.value : this.seq,
     );
   }
@@ -1095,8 +1241,8 @@ class SharedCompanion extends UpdateCompanion<SharedData> {
     required String resourceId,
     required int seq,
     this.rowid = const Value.absent(),
-  })  : resourceId = Value(resourceId),
-        seq = Value(seq);
+  }) : resourceId = Value(resourceId),
+       seq = Value(seq);
   static Insertable<SharedData> custom({
     Expression<String>? resourceId,
     Expression<int>? seq,
@@ -1109,8 +1255,11 @@ class SharedCompanion extends UpdateCompanion<SharedData> {
     });
   }
 
-  SharedCompanion copyWith(
-      {Value<String>? resourceId, Value<int>? seq, Value<int>? rowid}) {
+  SharedCompanion copyWith({
+    Value<String>? resourceId,
+    Value<int>? seq,
+    Value<int>? rowid,
+  }) {
     return SharedCompanion(
       resourceId: resourceId ?? this.resourceId,
       seq: seq ?? this.seq,
@@ -1152,68 +1301,106 @@ class ResourceVersions extends Table
   ResourceVersions(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
-      'id', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL PRIMARY KEY');
-  static const VerificationMeta _resourceIdMeta =
-      const VerificationMeta('resourceId');
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _resourceIdMeta = const VerificationMeta(
+    'resourceId',
+  );
   late final GeneratedColumn<String> resourceId = GeneratedColumn<String>(
-      'resource_id', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL REFERENCES resources(id)');
-  static const VerificationMeta _createdMeta =
-      const VerificationMeta('created');
+    'resource_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES resources(id)',
+  );
+  static const VerificationMeta _createdMeta = const VerificationMeta(
+    'created',
+  );
   late final GeneratedColumn<DateTime> created = GeneratedColumn<DateTime>(
-      'created', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL');
-  static const VerificationMeta _deletedMeta =
-      const VerificationMeta('deleted');
+    'created',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _deletedMeta = const VerificationMeta(
+    'deleted',
+  );
   late final GeneratedColumn<bool> deleted = GeneratedColumn<bool>(
-      'deleted', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL CHECK (deleted IN (0, 1))');
+    'deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (deleted IN (0, 1))',
+  );
   static const VerificationMeta _imgresMeta = const VerificationMeta('imgres');
   late final GeneratedColumn<int> imgres = GeneratedColumn<int>(
-      'imgres', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      $customConstraints: 'NOT NULL DEFAULT 0',
-      defaultValue: const CustomExpression('0'));
+    'imgres',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
   static const VerificationMeta _sizeMeta = const VerificationMeta('size');
   late final GeneratedColumn<int> size = GeneratedColumn<int>(
-      'size', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL');
-  static const VerificationMeta _mimeTypeMeta =
-      const VerificationMeta('mimeType');
+    'size',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _mimeTypeMeta = const VerificationMeta(
+    'mimeType',
+  );
   late final GeneratedColumn<String> mimeType = GeneratedColumn<String>(
-      'mime_type', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL');
+    'mime_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
   static const VerificationMeta _sha256Meta = const VerificationMeta('sha256');
   late final GeneratedColumn<String> sha256 = GeneratedColumn<String>(
-      'sha256', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL');
+    'sha256',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, resourceId, created, deleted, imgres, size, mimeType, sha256];
+  List<GeneratedColumn> get $columns => [
+    id,
+    resourceId,
+    created,
+    deleted,
+    imgres,
+    size,
+    mimeType,
+    sha256,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'resource_versions';
   @override
-  VerificationContext validateIntegrity(Insertable<ResourceVersion> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<ResourceVersion> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
@@ -1223,43 +1410,55 @@ class ResourceVersions extends Table
     }
     if (data.containsKey('resource_id')) {
       context.handle(
-          _resourceIdMeta,
-          resourceId.isAcceptableOrUnknown(
-              data['resource_id']!, _resourceIdMeta));
+        _resourceIdMeta,
+        resourceId.isAcceptableOrUnknown(data['resource_id']!, _resourceIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_resourceIdMeta);
     }
     if (data.containsKey('created')) {
-      context.handle(_createdMeta,
-          created.isAcceptableOrUnknown(data['created']!, _createdMeta));
+      context.handle(
+        _createdMeta,
+        created.isAcceptableOrUnknown(data['created']!, _createdMeta),
+      );
     } else if (isInserting) {
       context.missing(_createdMeta);
     }
     if (data.containsKey('deleted')) {
-      context.handle(_deletedMeta,
-          deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta));
+      context.handle(
+        _deletedMeta,
+        deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
+      );
     } else if (isInserting) {
       context.missing(_deletedMeta);
     }
     if (data.containsKey('imgres')) {
-      context.handle(_imgresMeta,
-          imgres.isAcceptableOrUnknown(data['imgres']!, _imgresMeta));
+      context.handle(
+        _imgresMeta,
+        imgres.isAcceptableOrUnknown(data['imgres']!, _imgresMeta),
+      );
     }
     if (data.containsKey('size')) {
       context.handle(
-          _sizeMeta, size.isAcceptableOrUnknown(data['size']!, _sizeMeta));
+        _sizeMeta,
+        size.isAcceptableOrUnknown(data['size']!, _sizeMeta),
+      );
     } else if (isInserting) {
       context.missing(_sizeMeta);
     }
     if (data.containsKey('mime_type')) {
-      context.handle(_mimeTypeMeta,
-          mimeType.isAcceptableOrUnknown(data['mime_type']!, _mimeTypeMeta));
+      context.handle(
+        _mimeTypeMeta,
+        mimeType.isAcceptableOrUnknown(data['mime_type']!, _mimeTypeMeta),
+      );
     } else if (isInserting) {
       context.missing(_mimeTypeMeta);
     }
     if (data.containsKey('sha256')) {
-      context.handle(_sha256Meta,
-          sha256.isAcceptableOrUnknown(data['sha256']!, _sha256Meta));
+      context.handle(
+        _sha256Meta,
+        sha256.isAcceptableOrUnknown(data['sha256']!, _sha256Meta),
+      );
     } else if (isInserting) {
       context.missing(_sha256Meta);
     }
@@ -1272,22 +1471,38 @@ class ResourceVersions extends Table
   ResourceVersion map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ResourceVersion(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
-      resourceId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}resource_id'])!,
-      created: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created'])!,
-      deleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}deleted'])!,
-      imgres: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}imgres'])!,
-      size: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}size'])!,
-      mimeType: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}mime_type'])!,
-      sha256: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}sha256'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      resourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}resource_id'],
+      )!,
+      created: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created'],
+      )!,
+      deleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}deleted'],
+      )!,
+      imgres: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}imgres'],
+      )!,
+      size: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size'],
+      )!,
+      mimeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mime_type'],
+      )!,
+      sha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sha256'],
+      )!,
     );
   }
 
@@ -1309,15 +1524,16 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
   final int size;
   final String mimeType;
   final String sha256;
-  const ResourceVersion(
-      {required this.id,
-      required this.resourceId,
-      required this.created,
-      required this.deleted,
-      required this.imgres,
-      required this.size,
-      required this.mimeType,
-      required this.sha256});
+  const ResourceVersion({
+    required this.id,
+    required this.resourceId,
+    required this.created,
+    required this.deleted,
+    required this.imgres,
+    required this.size,
+    required this.mimeType,
+    required this.sha256,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1345,8 +1561,10 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
     );
   }
 
-  factory ResourceVersion.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory ResourceVersion.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ResourceVersion(
       id: serializer.fromJson<String>(json['id']),
@@ -1374,30 +1592,31 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
     };
   }
 
-  ResourceVersion copyWith(
-          {String? id,
-          String? resourceId,
-          DateTime? created,
-          bool? deleted,
-          int? imgres,
-          int? size,
-          String? mimeType,
-          String? sha256}) =>
-      ResourceVersion(
-        id: id ?? this.id,
-        resourceId: resourceId ?? this.resourceId,
-        created: created ?? this.created,
-        deleted: deleted ?? this.deleted,
-        imgres: imgres ?? this.imgres,
-        size: size ?? this.size,
-        mimeType: mimeType ?? this.mimeType,
-        sha256: sha256 ?? this.sha256,
-      );
+  ResourceVersion copyWith({
+    String? id,
+    String? resourceId,
+    DateTime? created,
+    bool? deleted,
+    int? imgres,
+    int? size,
+    String? mimeType,
+    String? sha256,
+  }) => ResourceVersion(
+    id: id ?? this.id,
+    resourceId: resourceId ?? this.resourceId,
+    created: created ?? this.created,
+    deleted: deleted ?? this.deleted,
+    imgres: imgres ?? this.imgres,
+    size: size ?? this.size,
+    mimeType: mimeType ?? this.mimeType,
+    sha256: sha256 ?? this.sha256,
+  );
   ResourceVersion copyWithCompanion(ResourceVersionsCompanion data) {
     return ResourceVersion(
       id: data.id.present ? data.id.value : this.id,
-      resourceId:
-          data.resourceId.present ? data.resourceId.value : this.resourceId,
+      resourceId: data.resourceId.present
+          ? data.resourceId.value
+          : this.resourceId,
       created: data.created.present ? data.created.value : this.created,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
       imgres: data.imgres.present ? data.imgres.value : this.imgres,
@@ -1424,7 +1643,15 @@ class ResourceVersion extends DataClass implements Insertable<ResourceVersion> {
 
   @override
   int get hashCode => Object.hash(
-      id, resourceId, created, deleted, imgres, size, mimeType, sha256);
+    id,
+    resourceId,
+    created,
+    deleted,
+    imgres,
+    size,
+    mimeType,
+    sha256,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1470,13 +1697,13 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
     required String mimeType,
     required String sha256,
     this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        resourceId = Value(resourceId),
-        created = Value(created),
-        deleted = Value(deleted),
-        size = Value(size),
-        mimeType = Value(mimeType),
-        sha256 = Value(sha256);
+  }) : id = Value(id),
+       resourceId = Value(resourceId),
+       created = Value(created),
+       deleted = Value(deleted),
+       size = Value(size),
+       mimeType = Value(mimeType),
+       sha256 = Value(sha256);
   static Insertable<ResourceVersion> custom({
     Expression<String>? id,
     Expression<String>? resourceId,
@@ -1501,16 +1728,17 @@ class ResourceVersionsCompanion extends UpdateCompanion<ResourceVersion> {
     });
   }
 
-  ResourceVersionsCompanion copyWith(
-      {Value<String>? id,
-      Value<String>? resourceId,
-      Value<DateTime>? created,
-      Value<bool>? deleted,
-      Value<int>? imgres,
-      Value<int>? size,
-      Value<String>? mimeType,
-      Value<String>? sha256,
-      Value<int>? rowid}) {
+  ResourceVersionsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? resourceId,
+    Value<DateTime>? created,
+    Value<bool>? deleted,
+    Value<int>? imgres,
+    Value<int>? size,
+    Value<String>? mimeType,
+    Value<String>? sha256,
+    Value<int>? rowid,
+  }) {
     return ResourceVersionsCompanion(
       id: id ?? this.id,
       resourceId: resourceId ?? this.resourceId,
@@ -1579,20 +1807,28 @@ class Recents extends Table with TableInfo<Recents, Recent> {
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   Recents(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _resourceIdMeta =
-      const VerificationMeta('resourceId');
+  static const VerificationMeta _resourceIdMeta = const VerificationMeta(
+    'resourceId',
+  );
   late final GeneratedColumn<String> resourceId = GeneratedColumn<String>(
-      'resource_id', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL PRIMARY KEY REFERENCES resources(id)');
-  static const VerificationMeta _accessedMeta =
-      const VerificationMeta('accessed');
+    'resource_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY REFERENCES resources(id)',
+  );
+  static const VerificationMeta _accessedMeta = const VerificationMeta(
+    'accessed',
+  );
   late final GeneratedColumn<DateTime> accessed = GeneratedColumn<DateTime>(
-      'accessed', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL');
+    'accessed',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
   @override
   List<GeneratedColumn> get $columns => [resourceId, accessed];
   @override
@@ -1601,21 +1837,25 @@ class Recents extends Table with TableInfo<Recents, Recent> {
   String get actualTableName => $name;
   static const String $name = 'recents';
   @override
-  VerificationContext validateIntegrity(Insertable<Recent> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<Recent> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('resource_id')) {
       context.handle(
-          _resourceIdMeta,
-          resourceId.isAcceptableOrUnknown(
-              data['resource_id']!, _resourceIdMeta));
+        _resourceIdMeta,
+        resourceId.isAcceptableOrUnknown(data['resource_id']!, _resourceIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_resourceIdMeta);
     }
     if (data.containsKey('accessed')) {
-      context.handle(_accessedMeta,
-          accessed.isAcceptableOrUnknown(data['accessed']!, _accessedMeta));
+      context.handle(
+        _accessedMeta,
+        accessed.isAcceptableOrUnknown(data['accessed']!, _accessedMeta),
+      );
     } else if (isInserting) {
       context.missing(_accessedMeta);
     }
@@ -1628,10 +1868,14 @@ class Recents extends Table with TableInfo<Recents, Recent> {
   Recent map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Recent(
-      resourceId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}resource_id'])!,
-      accessed: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}accessed'])!,
+      resourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}resource_id'],
+      )!,
+      accessed: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}accessed'],
+      )!,
     );
   }
 
@@ -1663,8 +1907,10 @@ class Recent extends DataClass implements Insertable<Recent> {
     );
   }
 
-  factory Recent.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory Recent.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Recent(
       resourceId: serializer.fromJson<String>(json['resource_id']),
@@ -1681,13 +1927,14 @@ class Recent extends DataClass implements Insertable<Recent> {
   }
 
   Recent copyWith({String? resourceId, DateTime? accessed}) => Recent(
-        resourceId: resourceId ?? this.resourceId,
-        accessed: accessed ?? this.accessed,
-      );
+    resourceId: resourceId ?? this.resourceId,
+    accessed: accessed ?? this.accessed,
+  );
   Recent copyWithCompanion(RecentsCompanion data) {
     return Recent(
-      resourceId:
-          data.resourceId.present ? data.resourceId.value : this.resourceId,
+      resourceId: data.resourceId.present
+          ? data.resourceId.value
+          : this.resourceId,
       accessed: data.accessed.present ? data.accessed.value : this.accessed,
     );
   }
@@ -1724,8 +1971,8 @@ class RecentsCompanion extends UpdateCompanion<Recent> {
     required String resourceId,
     required DateTime accessed,
     this.rowid = const Value.absent(),
-  })  : resourceId = Value(resourceId),
-        accessed = Value(accessed);
+  }) : resourceId = Value(resourceId),
+       accessed = Value(accessed);
   static Insertable<Recent> custom({
     Expression<String>? resourceId,
     Expression<DateTime>? accessed,
@@ -1738,10 +1985,11 @@ class RecentsCompanion extends UpdateCompanion<Recent> {
     });
   }
 
-  RecentsCompanion copyWith(
-      {Value<String>? resourceId,
-      Value<DateTime>? accessed,
-      Value<int>? rowid}) {
+  RecentsCompanion copyWith({
+    Value<String>? resourceId,
+    Value<DateTime>? accessed,
+    Value<int>? rowid,
+  }) {
     return RecentsCompanion(
       resourceId: resourceId ?? this.resourceId,
       accessed: accessed ?? this.accessed,
@@ -1782,66 +2030,101 @@ class Publinks extends Table with TableInfo<Publinks, Publink> {
   Publinks(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
-      'id', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL PRIMARY KEY');
-  static const VerificationMeta _createdMeta =
-      const VerificationMeta('created');
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _createdMeta = const VerificationMeta(
+    'created',
+  );
   late final GeneratedColumn<DateTime> created = GeneratedColumn<DateTime>(
-      'created', aliasedName, true,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      $customConstraints: '');
+    'created',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   static const VerificationMeta _rootMeta = const VerificationMeta('root');
   late final GeneratedColumn<String> root = GeneratedColumn<String>(
-      'root', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints:
-          'NOT NULL REFERENCES resources(id)ON UPDATE CASCADE ON DELETE CASCADE');
-  static const VerificationMeta _accessedMeta =
-      const VerificationMeta('accessed');
+    'root',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints:
+        'NOT NULL REFERENCES resources(id)ON UPDATE CASCADE ON DELETE CASCADE',
+  );
+  static const VerificationMeta _accessedMeta = const VerificationMeta(
+    'accessed',
+  );
   late final GeneratedColumn<int> accessed = GeneratedColumn<int>(
-      'accessed', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      $customConstraints: 'NOT NULL DEFAULT 0',
-      defaultValue: const CustomExpression('0'));
-  static const VerificationMeta _accessLimitMeta =
-      const VerificationMeta('accessLimit');
+    'accessed',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  static const VerificationMeta _accessLimitMeta = const VerificationMeta(
+    'accessLimit',
+  );
   late final GeneratedColumn<int> accessLimit = GeneratedColumn<int>(
-      'access_limit', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      $customConstraints: 'NOT NULL DEFAULT 0',
-      defaultValue: const CustomExpression('0'));
-  static const VerificationMeta _protectedMeta =
-      const VerificationMeta('protected');
+    'access_limit',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0',
+    defaultValue: const CustomExpression('0'),
+  );
+  static const VerificationMeta _protectedMeta = const VerificationMeta(
+    'protected',
+  );
   late final GeneratedColumn<bool> protected = GeneratedColumn<bool>(
-      'protected', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      $customConstraints: 'NOT NULL DEFAULT 0 CHECK (protected IN (0, 1))',
-      defaultValue: const CustomExpression('0'));
-  static const VerificationMeta _expiresMeta =
-      const VerificationMeta('expires');
+    'protected',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0 CHECK (protected IN (0, 1))',
+    defaultValue: const CustomExpression('0'),
+  );
+  static const VerificationMeta _expiresMeta = const VerificationMeta(
+    'expires',
+  );
   late final GeneratedColumn<DateTime> expires = GeneratedColumn<DateTime>(
-      'expires', aliasedName, true,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      $customConstraints: '');
+    'expires',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, created, root, accessed, accessLimit, protected, expires];
+  List<GeneratedColumn> get $columns => [
+    id,
+    created,
+    root,
+    accessed,
+    accessLimit,
+    protected,
+    expires,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'publinks';
   @override
-  VerificationContext validateIntegrity(Insertable<Publink> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<Publink> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
@@ -1850,32 +2133,45 @@ class Publinks extends Table with TableInfo<Publinks, Publink> {
       context.missing(_idMeta);
     }
     if (data.containsKey('created')) {
-      context.handle(_createdMeta,
-          created.isAcceptableOrUnknown(data['created']!, _createdMeta));
+      context.handle(
+        _createdMeta,
+        created.isAcceptableOrUnknown(data['created']!, _createdMeta),
+      );
     }
     if (data.containsKey('root')) {
       context.handle(
-          _rootMeta, root.isAcceptableOrUnknown(data['root']!, _rootMeta));
+        _rootMeta,
+        root.isAcceptableOrUnknown(data['root']!, _rootMeta),
+      );
     } else if (isInserting) {
       context.missing(_rootMeta);
     }
     if (data.containsKey('accessed')) {
-      context.handle(_accessedMeta,
-          accessed.isAcceptableOrUnknown(data['accessed']!, _accessedMeta));
+      context.handle(
+        _accessedMeta,
+        accessed.isAcceptableOrUnknown(data['accessed']!, _accessedMeta),
+      );
     }
     if (data.containsKey('access_limit')) {
       context.handle(
+        _accessLimitMeta,
+        accessLimit.isAcceptableOrUnknown(
+          data['access_limit']!,
           _accessLimitMeta,
-          accessLimit.isAcceptableOrUnknown(
-              data['access_limit']!, _accessLimitMeta));
+        ),
+      );
     }
     if (data.containsKey('protected')) {
-      context.handle(_protectedMeta,
-          protected.isAcceptableOrUnknown(data['protected']!, _protectedMeta));
+      context.handle(
+        _protectedMeta,
+        protected.isAcceptableOrUnknown(data['protected']!, _protectedMeta),
+      );
     }
     if (data.containsKey('expires')) {
-      context.handle(_expiresMeta,
-          expires.isAcceptableOrUnknown(data['expires']!, _expiresMeta));
+      context.handle(
+        _expiresMeta,
+        expires.isAcceptableOrUnknown(data['expires']!, _expiresMeta),
+      );
     }
     return context;
   }
@@ -1886,20 +2182,34 @@ class Publinks extends Table with TableInfo<Publinks, Publink> {
   Publink map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Publink(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
-      created: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created']),
-      root: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}root'])!,
-      accessed: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}accessed'])!,
-      accessLimit: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}access_limit'])!,
-      protected: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}protected'])!,
-      expires: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}expires']),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      created: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created'],
+      ),
+      root: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}root'],
+      )!,
+      accessed: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}accessed'],
+      )!,
+      accessLimit: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}access_limit'],
+      )!,
+      protected: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}protected'],
+      )!,
+      expires: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}expires'],
+      ),
     );
   }
 
@@ -1920,14 +2230,15 @@ class Publink extends DataClass implements Insertable<Publink> {
   final int accessLimit;
   final bool protected;
   final DateTime? expires;
-  const Publink(
-      {required this.id,
-      this.created,
-      required this.root,
-      required this.accessed,
-      required this.accessLimit,
-      required this.protected,
-      this.expires});
+  const Publink({
+    required this.id,
+    this.created,
+    required this.root,
+    required this.accessed,
+    required this.accessLimit,
+    required this.protected,
+    this.expires,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1961,8 +2272,10 @@ class Publink extends DataClass implements Insertable<Publink> {
     );
   }
 
-  factory Publink.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory Publink.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Publink(
       id: serializer.fromJson<String>(json['id']),
@@ -1988,31 +2301,32 @@ class Publink extends DataClass implements Insertable<Publink> {
     };
   }
 
-  Publink copyWith(
-          {String? id,
-          Value<DateTime?> created = const Value.absent(),
-          String? root,
-          int? accessed,
-          int? accessLimit,
-          bool? protected,
-          Value<DateTime?> expires = const Value.absent()}) =>
-      Publink(
-        id: id ?? this.id,
-        created: created.present ? created.value : this.created,
-        root: root ?? this.root,
-        accessed: accessed ?? this.accessed,
-        accessLimit: accessLimit ?? this.accessLimit,
-        protected: protected ?? this.protected,
-        expires: expires.present ? expires.value : this.expires,
-      );
+  Publink copyWith({
+    String? id,
+    Value<DateTime?> created = const Value.absent(),
+    String? root,
+    int? accessed,
+    int? accessLimit,
+    bool? protected,
+    Value<DateTime?> expires = const Value.absent(),
+  }) => Publink(
+    id: id ?? this.id,
+    created: created.present ? created.value : this.created,
+    root: root ?? this.root,
+    accessed: accessed ?? this.accessed,
+    accessLimit: accessLimit ?? this.accessLimit,
+    protected: protected ?? this.protected,
+    expires: expires.present ? expires.value : this.expires,
+  );
   Publink copyWithCompanion(PublinksCompanion data) {
     return Publink(
       id: data.id.present ? data.id.value : this.id,
       created: data.created.present ? data.created.value : this.created,
       root: data.root.present ? data.root.value : this.root,
       accessed: data.accessed.present ? data.accessed.value : this.accessed,
-      accessLimit:
-          data.accessLimit.present ? data.accessLimit.value : this.accessLimit,
+      accessLimit: data.accessLimit.present
+          ? data.accessLimit.value
+          : this.accessLimit,
       protected: data.protected.present ? data.protected.value : this.protected,
       expires: data.expires.present ? data.expires.value : this.expires,
     );
@@ -2076,8 +2390,8 @@ class PublinksCompanion extends UpdateCompanion<Publink> {
     this.protected = const Value.absent(),
     this.expires = const Value.absent(),
     this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        root = Value(root);
+  }) : id = Value(id),
+       root = Value(root);
   static Insertable<Publink> custom({
     Expression<String>? id,
     Expression<DateTime>? created,
@@ -2100,15 +2414,16 @@ class PublinksCompanion extends UpdateCompanion<Publink> {
     });
   }
 
-  PublinksCompanion copyWith(
-      {Value<String>? id,
-      Value<DateTime?>? created,
-      Value<String>? root,
-      Value<int>? accessed,
-      Value<int>? accessLimit,
-      Value<bool>? protected,
-      Value<DateTime?>? expires,
-      Value<int>? rowid}) {
+  PublinksCompanion copyWith({
+    Value<String>? id,
+    Value<DateTime?>? created,
+    Value<String>? root,
+    Value<int>? accessed,
+    Value<int>? accessLimit,
+    Value<bool>? protected,
+    Value<DateTime?>? expires,
+    Value<int>? rowid,
+  }) {
     return PublinksCompanion(
       id: id ?? this.id,
       created: created ?? this.created,
@@ -2172,81 +2487,114 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   Bookmarks(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _resourceIdMeta =
-      const VerificationMeta('resourceId');
+  static const VerificationMeta _resourceIdMeta = const VerificationMeta(
+    'resourceId',
+  );
   late final GeneratedColumn<String> resourceId = GeneratedColumn<String>(
-      'resource_id', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL PRIMARY KEY REFERENCES resources(id)');
+    'resource_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY REFERENCES resources(id)',
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
-      'name', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL');
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
   static const VerificationMeta _dirMeta = const VerificationMeta('dir');
   late final GeneratedColumn<bool> dir = GeneratedColumn<bool>(
-      'dir', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL CHECK (deleted IN (0, 1))');
-  static const VerificationMeta _createdMeta =
-      const VerificationMeta('created');
+    'dir',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (deleted IN (0, 1))',
+  );
+  static const VerificationMeta _createdMeta = const VerificationMeta(
+    'created',
+  );
   late final GeneratedColumn<int> created = GeneratedColumn<int>(
-      'created', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL');
-  static const VerificationMeta _deletedMeta =
-      const VerificationMeta('deleted');
+    'created',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _deletedMeta = const VerificationMeta(
+    'deleted',
+  );
   late final GeneratedColumn<bool> deleted = GeneratedColumn<bool>(
-      'deleted', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL CHECK (deleted IN (0, 1))');
+    'deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (deleted IN (0, 1))',
+  );
   @override
-  List<GeneratedColumn> get $columns =>
-      [resourceId, name, dir, created, deleted];
+  List<GeneratedColumn> get $columns => [
+    resourceId,
+    name,
+    dir,
+    created,
+    deleted,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'bookmarks';
   @override
-  VerificationContext validateIntegrity(Insertable<Bookmark> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<Bookmark> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('resource_id')) {
       context.handle(
-          _resourceIdMeta,
-          resourceId.isAcceptableOrUnknown(
-              data['resource_id']!, _resourceIdMeta));
+        _resourceIdMeta,
+        resourceId.isAcceptableOrUnknown(data['resource_id']!, _resourceIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_resourceIdMeta);
     }
     if (data.containsKey('name')) {
       context.handle(
-          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
     if (data.containsKey('dir')) {
       context.handle(
-          _dirMeta, dir.isAcceptableOrUnknown(data['dir']!, _dirMeta));
+        _dirMeta,
+        dir.isAcceptableOrUnknown(data['dir']!, _dirMeta),
+      );
     } else if (isInserting) {
       context.missing(_dirMeta);
     }
     if (data.containsKey('created')) {
-      context.handle(_createdMeta,
-          created.isAcceptableOrUnknown(data['created']!, _createdMeta));
+      context.handle(
+        _createdMeta,
+        created.isAcceptableOrUnknown(data['created']!, _createdMeta),
+      );
     } else if (isInserting) {
       context.missing(_createdMeta);
     }
     if (data.containsKey('deleted')) {
-      context.handle(_deletedMeta,
-          deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta));
+      context.handle(
+        _deletedMeta,
+        deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
+      );
     } else if (isInserting) {
       context.missing(_deletedMeta);
     }
@@ -2259,16 +2607,26 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
   Bookmark map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Bookmark(
-      resourceId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}resource_id'])!,
-      name: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
-      dir: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}dir'])!,
-      created: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}created'])!,
-      deleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}deleted'])!,
+      resourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}resource_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      dir: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}dir'],
+      )!,
+      created: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created'],
+      )!,
+      deleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}deleted'],
+      )!,
     );
   }
 
@@ -2287,12 +2645,13 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
   final bool dir;
   final int created;
   final bool deleted;
-  const Bookmark(
-      {required this.resourceId,
-      required this.name,
-      required this.dir,
-      required this.created,
-      required this.deleted});
+  const Bookmark({
+    required this.resourceId,
+    required this.name,
+    required this.dir,
+    required this.created,
+    required this.deleted,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2314,8 +2673,10 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
     );
   }
 
-  factory Bookmark.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory Bookmark.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Bookmark(
       resourceId: serializer.fromJson<String>(json['resource_id']),
@@ -2337,23 +2698,24 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
     };
   }
 
-  Bookmark copyWith(
-          {String? resourceId,
-          String? name,
-          bool? dir,
-          int? created,
-          bool? deleted}) =>
-      Bookmark(
-        resourceId: resourceId ?? this.resourceId,
-        name: name ?? this.name,
-        dir: dir ?? this.dir,
-        created: created ?? this.created,
-        deleted: deleted ?? this.deleted,
-      );
+  Bookmark copyWith({
+    String? resourceId,
+    String? name,
+    bool? dir,
+    int? created,
+    bool? deleted,
+  }) => Bookmark(
+    resourceId: resourceId ?? this.resourceId,
+    name: name ?? this.name,
+    dir: dir ?? this.dir,
+    created: created ?? this.created,
+    deleted: deleted ?? this.deleted,
+  );
   Bookmark copyWithCompanion(BookmarksCompanion data) {
     return Bookmark(
-      resourceId:
-          data.resourceId.present ? data.resourceId.value : this.resourceId,
+      resourceId: data.resourceId.present
+          ? data.resourceId.value
+          : this.resourceId,
       name: data.name.present ? data.name.value : this.name,
       dir: data.dir.present ? data.dir.value : this.dir,
       created: data.created.present ? data.created.value : this.created,
@@ -2408,11 +2770,11 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
     required int created,
     required bool deleted,
     this.rowid = const Value.absent(),
-  })  : resourceId = Value(resourceId),
-        name = Value(name),
-        dir = Value(dir),
-        created = Value(created),
-        deleted = Value(deleted);
+  }) : resourceId = Value(resourceId),
+       name = Value(name),
+       dir = Value(dir),
+       created = Value(created),
+       deleted = Value(deleted);
   static Insertable<Bookmark> custom({
     Expression<String>? resourceId,
     Expression<String>? name,
@@ -2431,13 +2793,14 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
     });
   }
 
-  BookmarksCompanion copyWith(
-      {Value<String>? resourceId,
-      Value<String>? name,
-      Value<bool>? dir,
-      Value<int>? created,
-      Value<bool>? deleted,
-      Value<int>? rowid}) {
+  BookmarksCompanion copyWith({
+    Value<String>? resourceId,
+    Value<String>? name,
+    Value<bool>? dir,
+    Value<int>? created,
+    Value<bool>? deleted,
+    Value<int>? rowid,
+  }) {
     return BookmarksCompanion(
       resourceId: resourceId ?? this.resourceId,
       name: name ?? this.name,
@@ -2493,133 +2856,125 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Resources resources = Resources(this);
   late final TrashedResources trashedResources = TrashedResources(this);
   late final Shared shared = Shared(this);
-  late final Index sharedResources = Index('shared_resources',
-      'CREATE INDEX IF NOT EXISTS shared_resources ON shared (seq)');
+  late final Index sharedResources = Index(
+    'shared_resources',
+    'CREATE INDEX IF NOT EXISTS shared_resources ON shared (seq)',
+  );
   late final ResourceVersions resourceVersions = ResourceVersions(this);
   late final Recents recents = Recents(this);
-  late final Index recentAccesses = Index('recent_accesses',
-      'CREATE INDEX IF NOT EXISTS recent_accesses ON recents (accessed DESC)');
+  late final Index recentAccesses = Index(
+    'recent_accesses',
+    'CREATE INDEX IF NOT EXISTS recent_accesses ON recents (accessed DESC)',
+  );
   late final Publinks publinks = Publinks(this);
-  late final Index publinksByRoot = Index('publinks_by_root',
-      'CREATE INDEX IF NOT EXISTS publinks_by_root ON publinks (root)');
+  late final Index publinksByRoot = Index(
+    'publinks_by_root',
+    'CREATE INDEX IF NOT EXISTS publinks_by_root ON publinks (root)',
+  );
   late final Bookmarks bookmarks = Bookmarks(this);
-  late final Index orderedBookmarks = Index('ordered_bookmarks',
-      'CREATE INDEX IF NOT EXISTS ordered_bookmarks ON bookmarks (created)');
+  late final Index orderedBookmarks = Index(
+    'ordered_bookmarks',
+    'CREATE INDEX IF NOT EXISTS ordered_bookmarks ON bookmarks (created)',
+  );
   Selectable<Resource> selectTrash() {
     return customSelect(
-        'SELECT r.* FROM trashed_resources AS t JOIN resources AS r ON t.id = r.id ORDER BY r.deleted DESC',
-        variables: [],
-        readsFrom: {
-          trashedResources,
-          resources,
-        }).asyncMap(resources.mapFromRow);
+      'SELECT r.* FROM trashed_resources AS t JOIN resources AS r ON t.id = r.id ORDER BY r.deleted DESC',
+      variables: [],
+      readsFrom: {trashedResources, resources},
+    ).asyncMap(resources.mapFromRow);
   }
 
   Selectable<Resource> selectShared() {
     return customSelect(
-        'SELECT r.* FROM shared AS s LEFT JOIN resources AS r ON s.resource_id = r.id ORDER BY s.seq',
-        variables: [],
-        readsFrom: {
-          shared,
-          resources,
-        }).asyncMap(resources.mapFromRow);
+      'SELECT r.* FROM shared AS s LEFT JOIN resources AS r ON s.resource_id = r.id ORDER BY s.seq',
+      variables: [],
+      readsFrom: {shared, resources},
+    ).asyncMap(resources.mapFromRow);
   }
 
   Selectable<ParentsResult> parents(String id) {
     return customSelect(
-        'WITH RECURSIVE parents (id, parent, name, deleted, user_permission) AS (SELECT id, parent, name, deleted, user_permission FROM resources WHERE id = ?1 UNION SELECT r.id, r.parent, r.name, r.deleted, r.user_permission FROM resources AS r JOIN parents AS p ON r.id = p.parent) SELECT id, name, deleted, user_permission FROM parents',
-        variables: [
-          Variable<String>(id)
-        ],
-        readsFrom: {
-          resources,
-        }).map((QueryRow row) => ParentsResult(
-          id: row.read<String>('id'),
-          name: row.read<String>('name'),
-          deleted: row.readNullable<DateTime>('deleted'),
-          userPermission: row.read<int>('user_permission'),
-        ));
+      'WITH RECURSIVE parents (id, parent, name, deleted, user_permission) AS (SELECT id, parent, name, deleted, user_permission FROM resources WHERE id = ?1 UNION SELECT r.id, r.parent, r.name, r.deleted, r.user_permission FROM resources AS r JOIN parents AS p ON r.id = p.parent) SELECT id, name, deleted, user_permission FROM parents',
+      variables: [Variable<String>(id)],
+      readsFrom: {resources},
+    ).map(
+      (QueryRow row) => ParentsResult(
+        id: row.read<String>('id'),
+        name: row.read<String>('name'),
+        deleted: row.readNullable<DateTime>('deleted'),
+        userPermission: row.read<int>('user_permission'),
+      ),
+    );
   }
 
   Selectable<PermissionsResult> permissions(String id) {
     return customSelect(
-        'SELECT name, inherited_permissions, grants, user_permission FROM resources WHERE id = ?1',
-        variables: [
-          Variable<String>(id)
-        ],
-        readsFrom: {
-          resources,
-        }).map((QueryRow row) => PermissionsResult(
-          name: row.read<String>('name'),
-          inheritedPermissions:
-              row.readNullable<String>('inherited_permissions'),
-          grants: row.readNullable<String>('grants'),
-          userPermission: row.read<int>('user_permission'),
-        ));
+      'SELECT name, inherited_permissions, grants, user_permission FROM resources WHERE id = ?1',
+      variables: [Variable<String>(id)],
+      readsFrom: {resources},
+    ).map(
+      (QueryRow row) => PermissionsResult(
+        name: row.read<String>('name'),
+        inheritedPermissions: row.readNullable<String>('inherited_permissions'),
+        grants: row.readNullable<String>('grants'),
+        userPermission: row.read<int>('user_permission'),
+      ),
+    );
   }
 
   Selectable<ResourceVersion> latestVersion(String id) {
     return customSelect(
-        'SELECT * FROM resource_versions WHERE resource_id = ?1 ORDER BY created DESC LIMIT 1',
-        variables: [
-          Variable<String>(id)
-        ],
-        readsFrom: {
-          resourceVersions,
-        }).asyncMap(resourceVersions.mapFromRow);
+      'SELECT * FROM resource_versions WHERE resource_id = ?1 ORDER BY created DESC LIMIT 1',
+      variables: [Variable<String>(id)],
+      readsFrom: {resourceVersions},
+    ).asyncMap(resourceVersions.mapFromRow);
   }
 
   Selectable<int> availableVersions(String id) {
     return customSelect(
-        'SELECT COUNT(*) AS _c0 FROM resource_versions WHERE resource_id = ?1 AND deleted = 0',
-        variables: [
-          Variable<String>(id)
-        ],
-        readsFrom: {
-          resourceVersions,
-        }).map((QueryRow row) => row.read<int>('_c0'));
+      'SELECT COUNT(*) AS _c0 FROM resource_versions WHERE resource_id = ?1 AND deleted = 0',
+      variables: [Variable<String>(id)],
+      readsFrom: {resourceVersions},
+    ).map((QueryRow row) => row.read<int>('_c0'));
   }
 
   Selectable<Resource> selectRecents() {
     return customSelect(
-        'SELECT r.* FROM recents AS h INNER JOIN resources AS r ON h.resource_id = r.id WHERE r.deleted IS NULL AND r.parent IS NOT NULL ORDER BY h.accessed DESC',
-        variables: [],
-        readsFrom: {
-          recents,
-          resources,
-        }).asyncMap(resources.mapFromRow);
+      'SELECT r.* FROM recents AS h INNER JOIN resources AS r ON h.resource_id = r.id WHERE r.deleted IS NULL AND r.parent IS NOT NULL ORDER BY h.accessed DESC',
+      variables: [],
+      readsFrom: {recents, resources},
+    ).asyncMap(resources.mapFromRow);
   }
 
   Selectable<int> countPublinks(String root) {
-    return customSelect('SELECT COUNT(*) AS _c0 FROM publinks WHERE root = ?1',
-        variables: [
-          Variable<String>(root)
-        ],
-        readsFrom: {
-          publinks,
-        }).map((QueryRow row) => row.read<int>('_c0'));
+    return customSelect(
+      'SELECT COUNT(*) AS _c0 FROM publinks WHERE root = ?1',
+      variables: [Variable<String>(root)],
+      readsFrom: {publinks},
+    ).map((QueryRow row) => row.read<int>('_c0'));
   }
 
   Selectable<Publink> selectPublinks(String root) {
-    return customSelect('SELECT * FROM publinks WHERE root = ?1', variables: [
-      Variable<String>(root)
-    ], readsFrom: {
-      publinks,
-    }).asyncMap(publinks.mapFromRow);
+    return customSelect(
+      'SELECT * FROM publinks WHERE root = ?1',
+      variables: [Variable<String>(root)],
+      readsFrom: {publinks},
+    ).asyncMap(publinks.mapFromRow);
   }
 
   Selectable<SelectBookmarksResult> selectBookmarks() {
     return customSelect(
-        'SELECT resource_id, name, dir, created FROM bookmarks WHERE deleted = 0 ORDER BY created ASC',
-        variables: [],
-        readsFrom: {
-          bookmarks,
-        }).map((QueryRow row) => SelectBookmarksResult(
-          resourceId: row.read<String>('resource_id'),
-          name: row.read<String>('name'),
-          dir: row.read<bool>('dir'),
-          created: row.read<int>('created'),
-        ));
+      'SELECT resource_id, name, dir, created FROM bookmarks WHERE deleted = 0 ORDER BY created ASC',
+      variables: [],
+      readsFrom: {bookmarks},
+    ).map(
+      (QueryRow row) => SelectBookmarksResult(
+        resourceId: row.read<String>('resource_id'),
+        name: row.read<String>('name'),
+        dir: row.read<bool>('dir'),
+        created: row.read<int>('created'),
+      ),
+    );
   }
 
   @override
@@ -2627,50 +2982,50 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
-        users,
-        resources,
-        trashedResources,
-        shared,
-        sharedResources,
-        resourceVersions,
-        recents,
-        recentAccesses,
-        publinks,
-        publinksByRoot,
-        bookmarks,
-        orderedBookmarks
-      ];
+    users,
+    resources,
+    trashedResources,
+    shared,
+    sharedResources,
+    resourceVersions,
+    recents,
+    recentAccesses,
+    publinks,
+    publinksByRoot,
+    bookmarks,
+    orderedBookmarks,
+  ];
   @override
-  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
-        [
-          WritePropagation(
-            on: TableUpdateQuery.onTableName('resources',
-                limitUpdateKind: UpdateKind.delete),
-            result: [
-              TableUpdate('publinks', kind: UpdateKind.delete),
-            ],
-          ),
-          WritePropagation(
-            on: TableUpdateQuery.onTableName('resources',
-                limitUpdateKind: UpdateKind.update),
-            result: [
-              TableUpdate('publinks', kind: UpdateKind.update),
-            ],
-          ),
-        ],
-      );
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'resources',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('publinks', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'resources',
+        limitUpdateKind: UpdateKind.update,
+      ),
+      result: [TableUpdate('publinks', kind: UpdateKind.update)],
+    ),
+  ]);
 }
 
-typedef $UsersCreateCompanionBuilder = UsersCompanion Function({
-  Value<int> id,
-  required String email,
-  required String name,
-});
-typedef $UsersUpdateCompanionBuilder = UsersCompanion Function({
-  Value<int> id,
-  Value<String> email,
-  Value<String> name,
-});
+typedef $UsersCreateCompanionBuilder =
+    UsersCompanion Function({
+      Value<int> id,
+      required String email,
+      required String name,
+    });
+typedef $UsersUpdateCompanionBuilder =
+    UsersCompanion Function({
+      Value<int> id,
+      Value<String> email,
+      Value<String> name,
+    });
 
 class $UsersFilterComposer extends Composer<_$AppDatabase, Users> {
   $UsersFilterComposer({
@@ -2681,13 +3036,19 @@ class $UsersFilterComposer extends Composer<_$AppDatabase, Users> {
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get email => $composableBuilder(
-      column: $table.email, builder: (column) => ColumnFilters(column));
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnFilters(column));
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $UsersOrderingComposer extends Composer<_$AppDatabase, Users> {
@@ -2699,13 +3060,19 @@ class $UsersOrderingComposer extends Composer<_$AppDatabase, Users> {
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get email => $composableBuilder(
-      column: $table.email, builder: (column) => ColumnOrderings(column));
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnOrderings(column));
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $UsersAnnotationComposer extends Composer<_$AppDatabase, Users> {
@@ -2726,20 +3093,24 @@ class $UsersAnnotationComposer extends Composer<_$AppDatabase, Users> {
       $composableBuilder(column: $table.name, builder: (column) => column);
 }
 
-class $UsersTableManager extends RootTableManager<
-    _$AppDatabase,
-    Users,
-    User,
-    $UsersFilterComposer,
-    $UsersOrderingComposer,
-    $UsersAnnotationComposer,
-    $UsersCreateCompanionBuilder,
-    $UsersUpdateCompanionBuilder,
-    (User, BaseReferences<_$AppDatabase, Users, User>),
-    User,
-    PrefetchHooks Function()> {
+class $UsersTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          Users,
+          User,
+          $UsersFilterComposer,
+          $UsersOrderingComposer,
+          $UsersAnnotationComposer,
+          $UsersCreateCompanionBuilder,
+          $UsersUpdateCompanionBuilder,
+          (User, BaseReferences<_$AppDatabase, Users, User>),
+          User,
+          PrefetchHooks Function()
+        > {
   $UsersTableManager(_$AppDatabase db, Users table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -2748,151 +3119,172 @@ class $UsersTableManager extends RootTableManager<
               $UsersOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $UsersAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<String> email = const Value.absent(),
-            Value<String> name = const Value.absent(),
-          }) =>
-              UsersCompanion(
-            id: id,
-            email: email,
-            name: name,
-          ),
-          createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            required String email,
-            required String name,
-          }) =>
-              UsersCompanion.insert(
-            id: id,
-            email: email,
-            name: name,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> email = const Value.absent(),
+                Value<String> name = const Value.absent(),
+              }) => UsersCompanion(id: id, email: email, name: name),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String email,
+                required String name,
+              }) => UsersCompanion.insert(id: id, email: email, name: name),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $UsersProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    Users,
-    User,
-    $UsersFilterComposer,
-    $UsersOrderingComposer,
-    $UsersAnnotationComposer,
-    $UsersCreateCompanionBuilder,
-    $UsersUpdateCompanionBuilder,
-    (User, BaseReferences<_$AppDatabase, Users, User>),
-    User,
-    PrefetchHooks Function()>;
-typedef $ResourcesCreateCompanionBuilder = ResourcesCompanion Function({
-  required String id,
-  Value<String?> parent,
-  required String name,
-  required bool dir,
-  Value<DateTime?> created,
-  Value<DateTime?> modified,
-  Value<DateTime?> deleted,
-  Value<String?> inheritedPermissions,
-  Value<String?> grants,
-  Value<int> userPermission,
-  Value<DateTime?> lastRefresh,
-  Value<int> rowid,
-});
-typedef $ResourcesUpdateCompanionBuilder = ResourcesCompanion Function({
-  Value<String> id,
-  Value<String?> parent,
-  Value<String> name,
-  Value<bool> dir,
-  Value<DateTime?> created,
-  Value<DateTime?> modified,
-  Value<DateTime?> deleted,
-  Value<String?> inheritedPermissions,
-  Value<String?> grants,
-  Value<int> userPermission,
-  Value<DateTime?> lastRefresh,
-  Value<int> rowid,
-});
+typedef $UsersProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      Users,
+      User,
+      $UsersFilterComposer,
+      $UsersOrderingComposer,
+      $UsersAnnotationComposer,
+      $UsersCreateCompanionBuilder,
+      $UsersUpdateCompanionBuilder,
+      (User, BaseReferences<_$AppDatabase, Users, User>),
+      User,
+      PrefetchHooks Function()
+    >;
+typedef $ResourcesCreateCompanionBuilder =
+    ResourcesCompanion Function({
+      required String id,
+      Value<String?> parent,
+      required String name,
+      required bool dir,
+      Value<DateTime?> created,
+      Value<DateTime?> modified,
+      Value<DateTime?> deleted,
+      Value<String?> inheritedPermissions,
+      Value<String?> grants,
+      Value<int> userPermission,
+      Value<DateTime?> lastRefresh,
+      Value<int> rowid,
+    });
+typedef $ResourcesUpdateCompanionBuilder =
+    ResourcesCompanion Function({
+      Value<String> id,
+      Value<String?> parent,
+      Value<String> name,
+      Value<bool> dir,
+      Value<DateTime?> created,
+      Value<DateTime?> modified,
+      Value<DateTime?> deleted,
+      Value<String?> inheritedPermissions,
+      Value<String?> grants,
+      Value<int> userPermission,
+      Value<DateTime?> lastRefresh,
+      Value<int> rowid,
+    });
 
 final class $ResourcesReferences
     extends BaseReferences<_$AppDatabase, Resources, Resource> {
   $ResourcesReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static MultiTypedResultKey<Shared, List<SharedData>> _sharedRefsTable(
-          _$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(db.shared,
-          aliasName:
-              $_aliasNameGenerator(db.resources.id, db.shared.resourceId));
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.shared,
+    aliasName: $_aliasNameGenerator(db.resources.id, db.shared.resourceId),
+  );
 
   $SharedProcessedTableManager get sharedRefs {
-    final manager = $SharedTableManager($_db, $_db.shared)
-        .filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
+    final manager = $SharedTableManager(
+      $_db,
+      $_db.shared,
+    ).filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_sharedRefsTable($_db));
     return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: cache));
+      manager.$state.copyWith(prefetchedData: cache),
+    );
   }
 
   static MultiTypedResultKey<ResourceVersions, List<ResourceVersion>>
-      _resourceVersionsRefsTable(_$AppDatabase db) =>
-          MultiTypedResultKey.fromTable(db.resourceVersions,
-              aliasName: $_aliasNameGenerator(
-                  db.resources.id, db.resourceVersions.resourceId));
+  _resourceVersionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.resourceVersions,
+    aliasName: $_aliasNameGenerator(
+      db.resources.id,
+      db.resourceVersions.resourceId,
+    ),
+  );
 
   $ResourceVersionsProcessedTableManager get resourceVersionsRefs {
-    final manager = $ResourceVersionsTableManager($_db, $_db.resourceVersions)
-        .filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
+    final manager = $ResourceVersionsTableManager(
+      $_db,
+      $_db.resourceVersions,
+    ).filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
 
-    final cache =
-        $_typedResult.readTableOrNull(_resourceVersionsRefsTable($_db));
+    final cache = $_typedResult.readTableOrNull(
+      _resourceVersionsRefsTable($_db),
+    );
     return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: cache));
+      manager.$state.copyWith(prefetchedData: cache),
+    );
   }
 
   static MultiTypedResultKey<Recents, List<Recent>> _recentsRefsTable(
-          _$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(db.recents,
-          aliasName:
-              $_aliasNameGenerator(db.resources.id, db.recents.resourceId));
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.recents,
+    aliasName: $_aliasNameGenerator(db.resources.id, db.recents.resourceId),
+  );
 
   $RecentsProcessedTableManager get recentsRefs {
-    final manager = $RecentsTableManager($_db, $_db.recents)
-        .filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
+    final manager = $RecentsTableManager(
+      $_db,
+      $_db.recents,
+    ).filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_recentsRefsTable($_db));
     return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: cache));
+      manager.$state.copyWith(prefetchedData: cache),
+    );
   }
 
   static MultiTypedResultKey<Publinks, List<Publink>> _publinksRefsTable(
-          _$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(db.publinks,
-          aliasName: $_aliasNameGenerator(db.resources.id, db.publinks.root));
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.publinks,
+    aliasName: $_aliasNameGenerator(db.resources.id, db.publinks.root),
+  );
 
   $PublinksProcessedTableManager get publinksRefs {
-    final manager = $PublinksTableManager($_db, $_db.publinks)
-        .filter((f) => f.root.id.sqlEquals($_itemColumn<String>('id')!));
+    final manager = $PublinksTableManager(
+      $_db,
+      $_db.publinks,
+    ).filter((f) => f.root.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_publinksRefsTable($_db));
     return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: cache));
+      manager.$state.copyWith(prefetchedData: cache),
+    );
   }
 
   static MultiTypedResultKey<Bookmarks, List<Bookmark>> _bookmarksRefsTable(
-          _$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(db.bookmarks,
-          aliasName:
-              $_aliasNameGenerator(db.resources.id, db.bookmarks.resourceId));
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.bookmarks,
+    aliasName: $_aliasNameGenerator(db.resources.id, db.bookmarks.resourceId),
+  );
 
   $BookmarksProcessedTableManager get bookmarksRefs {
-    final manager = $BookmarksTableManager($_db, $_db.bookmarks)
-        .filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
+    final manager = $BookmarksTableManager(
+      $_db,
+      $_db.bookmarks,
+    ).filter((f) => f.resourceId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_bookmarksRefsTable($_db));
     return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: cache));
+      manager.$state.copyWith(prefetchedData: cache),
+    );
   }
 }
 
@@ -2905,142 +3297,182 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get parent => $composableBuilder(
-      column: $table.parent, builder: (column) => ColumnFilters(column));
+    column: $table.parent,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnFilters(column));
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get dir => $composableBuilder(
-      column: $table.dir, builder: (column) => ColumnFilters(column));
+    column: $table.dir,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get created => $composableBuilder(
-      column: $table.created, builder: (column) => ColumnFilters(column));
+    column: $table.created,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get modified => $composableBuilder(
-      column: $table.modified, builder: (column) => ColumnFilters(column));
+    column: $table.modified,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get deleted => $composableBuilder(
-      column: $table.deleted, builder: (column) => ColumnFilters(column));
+    column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get inheritedPermissions => $composableBuilder(
-      column: $table.inheritedPermissions,
-      builder: (column) => ColumnFilters(column));
+    column: $table.inheritedPermissions,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get grants => $composableBuilder(
-      column: $table.grants, builder: (column) => ColumnFilters(column));
+    column: $table.grants,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get userPermission => $composableBuilder(
-      column: $table.userPermission,
-      builder: (column) => ColumnFilters(column));
+    column: $table.userPermission,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get lastRefresh => $composableBuilder(
-      column: $table.lastRefresh, builder: (column) => ColumnFilters(column));
+    column: $table.lastRefresh,
+    builder: (column) => ColumnFilters(column),
+  );
 
   Expression<bool> sharedRefs(
-      Expression<bool> Function($SharedFilterComposer f) f) {
+    Expression<bool> Function($SharedFilterComposer f) f,
+  ) {
     final $SharedFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.shared,
-        getReferencedColumn: (t) => t.resourceId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $SharedFilterComposer(
-              $db: $db,
-              $table: $db.shared,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.shared,
+      getReferencedColumn: (t) => t.resourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $SharedFilterComposer(
+            $db: $db,
+            $table: $db.shared,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 
   Expression<bool> resourceVersionsRefs(
-      Expression<bool> Function($ResourceVersionsFilterComposer f) f) {
+    Expression<bool> Function($ResourceVersionsFilterComposer f) f,
+  ) {
     final $ResourceVersionsFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.resourceVersions,
-        getReferencedColumn: (t) => t.resourceId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourceVersionsFilterComposer(
-              $db: $db,
-              $table: $db.resourceVersions,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.resourceVersions,
+      getReferencedColumn: (t) => t.resourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourceVersionsFilterComposer(
+            $db: $db,
+            $table: $db.resourceVersions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 
   Expression<bool> recentsRefs(
-      Expression<bool> Function($RecentsFilterComposer f) f) {
+    Expression<bool> Function($RecentsFilterComposer f) f,
+  ) {
     final $RecentsFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.recents,
-        getReferencedColumn: (t) => t.resourceId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $RecentsFilterComposer(
-              $db: $db,
-              $table: $db.recents,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.recents,
+      getReferencedColumn: (t) => t.resourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $RecentsFilterComposer(
+            $db: $db,
+            $table: $db.recents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 
   Expression<bool> publinksRefs(
-      Expression<bool> Function($PublinksFilterComposer f) f) {
+    Expression<bool> Function($PublinksFilterComposer f) f,
+  ) {
     final $PublinksFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.publinks,
-        getReferencedColumn: (t) => t.root,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $PublinksFilterComposer(
-              $db: $db,
-              $table: $db.publinks,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.publinks,
+      getReferencedColumn: (t) => t.root,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $PublinksFilterComposer(
+            $db: $db,
+            $table: $db.publinks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 
   Expression<bool> bookmarksRefs(
-      Expression<bool> Function($BookmarksFilterComposer f) f) {
+    Expression<bool> Function($BookmarksFilterComposer f) f,
+  ) {
     final $BookmarksFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.bookmarks,
-        getReferencedColumn: (t) => t.resourceId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $BookmarksFilterComposer(
-              $db: $db,
-              $table: $db.bookmarks,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.bookmarks,
+      getReferencedColumn: (t) => t.resourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $BookmarksFilterComposer(
+            $db: $db,
+            $table: $db.bookmarks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 }
@@ -3054,39 +3486,59 @@ class $ResourcesOrderingComposer extends Composer<_$AppDatabase, Resources> {
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get parent => $composableBuilder(
-      column: $table.parent, builder: (column) => ColumnOrderings(column));
+    column: $table.parent,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnOrderings(column));
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get dir => $composableBuilder(
-      column: $table.dir, builder: (column) => ColumnOrderings(column));
+    column: $table.dir,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get created => $composableBuilder(
-      column: $table.created, builder: (column) => ColumnOrderings(column));
+    column: $table.created,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get modified => $composableBuilder(
-      column: $table.modified, builder: (column) => ColumnOrderings(column));
+    column: $table.modified,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get deleted => $composableBuilder(
-      column: $table.deleted, builder: (column) => ColumnOrderings(column));
+    column: $table.deleted,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get inheritedPermissions => $composableBuilder(
-      column: $table.inheritedPermissions,
-      builder: (column) => ColumnOrderings(column));
+    column: $table.inheritedPermissions,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get grants => $composableBuilder(
-      column: $table.grants, builder: (column) => ColumnOrderings(column));
+    column: $table.grants,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get userPermission => $composableBuilder(
-      column: $table.userPermission,
-      builder: (column) => ColumnOrderings(column));
+    column: $table.userPermission,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get lastRefresh => $composableBuilder(
-      column: $table.lastRefresh, builder: (column) => ColumnOrderings(column));
+    column: $table.lastRefresh,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
@@ -3119,142 +3571,173 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
       $composableBuilder(column: $table.deleted, builder: (column) => column);
 
   GeneratedColumn<String> get inheritedPermissions => $composableBuilder(
-      column: $table.inheritedPermissions, builder: (column) => column);
+    column: $table.inheritedPermissions,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get grants =>
       $composableBuilder(column: $table.grants, builder: (column) => column);
 
   GeneratedColumn<int> get userPermission => $composableBuilder(
-      column: $table.userPermission, builder: (column) => column);
+    column: $table.userPermission,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get lastRefresh => $composableBuilder(
-      column: $table.lastRefresh, builder: (column) => column);
+    column: $table.lastRefresh,
+    builder: (column) => column,
+  );
 
   Expression<T> sharedRefs<T extends Object>(
-      Expression<T> Function($SharedAnnotationComposer a) f) {
+    Expression<T> Function($SharedAnnotationComposer a) f,
+  ) {
     final $SharedAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.shared,
-        getReferencedColumn: (t) => t.resourceId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $SharedAnnotationComposer(
-              $db: $db,
-              $table: $db.shared,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.shared,
+      getReferencedColumn: (t) => t.resourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $SharedAnnotationComposer(
+            $db: $db,
+            $table: $db.shared,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 
   Expression<T> resourceVersionsRefs<T extends Object>(
-      Expression<T> Function($ResourceVersionsAnnotationComposer a) f) {
+    Expression<T> Function($ResourceVersionsAnnotationComposer a) f,
+  ) {
     final $ResourceVersionsAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.resourceVersions,
-        getReferencedColumn: (t) => t.resourceId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourceVersionsAnnotationComposer(
-              $db: $db,
-              $table: $db.resourceVersions,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.resourceVersions,
+      getReferencedColumn: (t) => t.resourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourceVersionsAnnotationComposer(
+            $db: $db,
+            $table: $db.resourceVersions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 
   Expression<T> recentsRefs<T extends Object>(
-      Expression<T> Function($RecentsAnnotationComposer a) f) {
+    Expression<T> Function($RecentsAnnotationComposer a) f,
+  ) {
     final $RecentsAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.recents,
-        getReferencedColumn: (t) => t.resourceId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $RecentsAnnotationComposer(
-              $db: $db,
-              $table: $db.recents,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.recents,
+      getReferencedColumn: (t) => t.resourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $RecentsAnnotationComposer(
+            $db: $db,
+            $table: $db.recents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 
   Expression<T> publinksRefs<T extends Object>(
-      Expression<T> Function($PublinksAnnotationComposer a) f) {
+    Expression<T> Function($PublinksAnnotationComposer a) f,
+  ) {
     final $PublinksAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.publinks,
-        getReferencedColumn: (t) => t.root,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $PublinksAnnotationComposer(
-              $db: $db,
-              $table: $db.publinks,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.publinks,
+      getReferencedColumn: (t) => t.root,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $PublinksAnnotationComposer(
+            $db: $db,
+            $table: $db.publinks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 
   Expression<T> bookmarksRefs<T extends Object>(
-      Expression<T> Function($BookmarksAnnotationComposer a) f) {
+    Expression<T> Function($BookmarksAnnotationComposer a) f,
+  ) {
     final $BookmarksAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.bookmarks,
-        getReferencedColumn: (t) => t.resourceId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $BookmarksAnnotationComposer(
-              $db: $db,
-              $table: $db.bookmarks,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.bookmarks,
+      getReferencedColumn: (t) => t.resourceId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $BookmarksAnnotationComposer(
+            $db: $db,
+            $table: $db.bookmarks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 }
 
-class $ResourcesTableManager extends RootTableManager<
-    _$AppDatabase,
-    Resources,
-    Resource,
-    $ResourcesFilterComposer,
-    $ResourcesOrderingComposer,
-    $ResourcesAnnotationComposer,
-    $ResourcesCreateCompanionBuilder,
-    $ResourcesUpdateCompanionBuilder,
-    (Resource, $ResourcesReferences),
-    Resource,
-    PrefetchHooks Function(
-        {bool sharedRefs,
-        bool resourceVersionsRefs,
-        bool recentsRefs,
-        bool publinksRefs,
-        bool bookmarksRefs})> {
+class $ResourcesTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          Resources,
+          Resource,
+          $ResourcesFilterComposer,
+          $ResourcesOrderingComposer,
+          $ResourcesAnnotationComposer,
+          $ResourcesCreateCompanionBuilder,
+          $ResourcesUpdateCompanionBuilder,
+          (Resource, $ResourcesReferences),
+          Resource,
+          PrefetchHooks Function({
+            bool sharedRefs,
+            bool resourceVersionsRefs,
+            bool recentsRefs,
+            bool publinksRefs,
+            bool bookmarksRefs,
+          })
+        > {
   $ResourcesTableManager(_$AppDatabase db, Resources table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -3263,175 +3746,199 @@ class $ResourcesTableManager extends RootTableManager<
               $ResourcesOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $ResourcesAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
-            Value<String?> parent = const Value.absent(),
-            Value<String> name = const Value.absent(),
-            Value<bool> dir = const Value.absent(),
-            Value<DateTime?> created = const Value.absent(),
-            Value<DateTime?> modified = const Value.absent(),
-            Value<DateTime?> deleted = const Value.absent(),
-            Value<String?> inheritedPermissions = const Value.absent(),
-            Value<String?> grants = const Value.absent(),
-            Value<int> userPermission = const Value.absent(),
-            Value<DateTime?> lastRefresh = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              ResourcesCompanion(
-            id: id,
-            parent: parent,
-            name: name,
-            dir: dir,
-            created: created,
-            modified: modified,
-            deleted: deleted,
-            inheritedPermissions: inheritedPermissions,
-            grants: grants,
-            userPermission: userPermission,
-            lastRefresh: lastRefresh,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String id,
-            Value<String?> parent = const Value.absent(),
-            required String name,
-            required bool dir,
-            Value<DateTime?> created = const Value.absent(),
-            Value<DateTime?> modified = const Value.absent(),
-            Value<DateTime?> deleted = const Value.absent(),
-            Value<String?> inheritedPermissions = const Value.absent(),
-            Value<String?> grants = const Value.absent(),
-            Value<int> userPermission = const Value.absent(),
-            Value<DateTime?> lastRefresh = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              ResourcesCompanion.insert(
-            id: id,
-            parent: parent,
-            name: name,
-            dir: dir,
-            created: created,
-            modified: modified,
-            deleted: deleted,
-            inheritedPermissions: inheritedPermissions,
-            grants: grants,
-            userPermission: userPermission,
-            lastRefresh: lastRefresh,
-            rowid: rowid,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String?> parent = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<bool> dir = const Value.absent(),
+                Value<DateTime?> created = const Value.absent(),
+                Value<DateTime?> modified = const Value.absent(),
+                Value<DateTime?> deleted = const Value.absent(),
+                Value<String?> inheritedPermissions = const Value.absent(),
+                Value<String?> grants = const Value.absent(),
+                Value<int> userPermission = const Value.absent(),
+                Value<DateTime?> lastRefresh = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ResourcesCompanion(
+                id: id,
+                parent: parent,
+                name: name,
+                dir: dir,
+                created: created,
+                modified: modified,
+                deleted: deleted,
+                inheritedPermissions: inheritedPermissions,
+                grants: grants,
+                userPermission: userPermission,
+                lastRefresh: lastRefresh,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                Value<String?> parent = const Value.absent(),
+                required String name,
+                required bool dir,
+                Value<DateTime?> created = const Value.absent(),
+                Value<DateTime?> modified = const Value.absent(),
+                Value<DateTime?> deleted = const Value.absent(),
+                Value<String?> inheritedPermissions = const Value.absent(),
+                Value<String?> grants = const Value.absent(),
+                Value<int> userPermission = const Value.absent(),
+                Value<DateTime?> lastRefresh = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ResourcesCompanion.insert(
+                id: id,
+                parent: parent,
+                name: name,
+                dir: dir,
+                created: created,
+                modified: modified,
+                deleted: deleted,
+                inheritedPermissions: inheritedPermissions,
+                grants: grants,
+                userPermission: userPermission,
+                lastRefresh: lastRefresh,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) => p0
-              .map((e) =>
-                  (e.readTable(table), $ResourcesReferences(db, table, e)))
+              .map(
+                (e) => (e.readTable(table), $ResourcesReferences(db, table, e)),
+              )
               .toList(),
-          prefetchHooksCallback: (
-              {sharedRefs = false,
-              resourceVersionsRefs = false,
-              recentsRefs = false,
-              publinksRefs = false,
-              bookmarksRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (sharedRefs) db.shared,
-                if (resourceVersionsRefs) db.resourceVersions,
-                if (recentsRefs) db.recents,
-                if (publinksRefs) db.publinks,
-                if (bookmarksRefs) db.bookmarks
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (sharedRefs)
-                    await $_getPrefetchedData<Resource, Resources, SharedData>(
-                        currentTable: table,
-                        referencedTable:
-                            $ResourcesReferences._sharedRefsTable(db),
-                        managerFromTypedResult: (p0) =>
-                            $ResourcesReferences(db, table, p0).sharedRefs,
-                        referencedItemsForCurrentItem:
-                            (item, referencedItems) => referencedItems
-                                .where((e) => e.resourceId == item.id),
-                        typedResults: items),
-                  if (resourceVersionsRefs)
-                    await $_getPrefetchedData<Resource, Resources,
-                            ResourceVersion>(
-                        currentTable: table,
-                        referencedTable:
-                            $ResourcesReferences._resourceVersionsRefsTable(db),
-                        managerFromTypedResult: (p0) =>
-                            $ResourcesReferences(db, table, p0)
-                                .resourceVersionsRefs,
-                        referencedItemsForCurrentItem:
-                            (item, referencedItems) => referencedItems
-                                .where((e) => e.resourceId == item.id),
-                        typedResults: items),
-                  if (recentsRefs)
-                    await $_getPrefetchedData<Resource, Resources, Recent>(
-                        currentTable: table,
-                        referencedTable:
-                            $ResourcesReferences._recentsRefsTable(db),
-                        managerFromTypedResult: (p0) =>
-                            $ResourcesReferences(db, table, p0).recentsRefs,
-                        referencedItemsForCurrentItem:
-                            (item, referencedItems) => referencedItems
-                                .where((e) => e.resourceId == item.id),
-                        typedResults: items),
-                  if (publinksRefs)
-                    await $_getPrefetchedData<Resource, Resources, Publink>(
-                        currentTable: table,
-                        referencedTable:
-                            $ResourcesReferences._publinksRefsTable(db),
-                        managerFromTypedResult: (p0) =>
-                            $ResourcesReferences(db, table, p0).publinksRefs,
-                        referencedItemsForCurrentItem:
-                            (item, referencedItems) =>
-                                referencedItems.where((e) => e.root == item.id),
-                        typedResults: items),
-                  if (bookmarksRefs)
-                    await $_getPrefetchedData<Resource, Resources, Bookmark>(
-                        currentTable: table,
-                        referencedTable:
-                            $ResourcesReferences._bookmarksRefsTable(db),
-                        managerFromTypedResult: (p0) =>
-                            $ResourcesReferences(db, table, p0).bookmarksRefs,
-                        referencedItemsForCurrentItem:
-                            (item, referencedItems) => referencedItems
-                                .where((e) => e.resourceId == item.id),
-                        typedResults: items)
-                ];
+          prefetchHooksCallback:
+              ({
+                sharedRefs = false,
+                resourceVersionsRefs = false,
+                recentsRefs = false,
+                publinksRefs = false,
+                bookmarksRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (sharedRefs) db.shared,
+                    if (resourceVersionsRefs) db.resourceVersions,
+                    if (recentsRefs) db.recents,
+                    if (publinksRefs) db.publinks,
+                    if (bookmarksRefs) db.bookmarks,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (sharedRefs)
+                        await $_getPrefetchedData<
+                          Resource,
+                          Resources,
+                          SharedData
+                        >(
+                          currentTable: table,
+                          referencedTable: $ResourcesReferences
+                              ._sharedRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $ResourcesReferences(db, table, p0).sharedRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.resourceId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (resourceVersionsRefs)
+                        await $_getPrefetchedData<
+                          Resource,
+                          Resources,
+                          ResourceVersion
+                        >(
+                          currentTable: table,
+                          referencedTable: $ResourcesReferences
+                              ._resourceVersionsRefsTable(db),
+                          managerFromTypedResult: (p0) => $ResourcesReferences(
+                            db,
+                            table,
+                            p0,
+                          ).resourceVersionsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.resourceId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (recentsRefs)
+                        await $_getPrefetchedData<Resource, Resources, Recent>(
+                          currentTable: table,
+                          referencedTable: $ResourcesReferences
+                              ._recentsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $ResourcesReferences(db, table, p0).recentsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.resourceId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (publinksRefs)
+                        await $_getPrefetchedData<Resource, Resources, Publink>(
+                          currentTable: table,
+                          referencedTable: $ResourcesReferences
+                              ._publinksRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $ResourcesReferences(db, table, p0).publinksRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.root == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (bookmarksRefs)
+                        await $_getPrefetchedData<
+                          Resource,
+                          Resources,
+                          Bookmark
+                        >(
+                          currentTable: table,
+                          referencedTable: $ResourcesReferences
+                              ._bookmarksRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $ResourcesReferences(db, table, p0).bookmarksRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.resourceId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
-        ));
+        ),
+      );
 }
 
-typedef $ResourcesProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    Resources,
-    Resource,
-    $ResourcesFilterComposer,
-    $ResourcesOrderingComposer,
-    $ResourcesAnnotationComposer,
-    $ResourcesCreateCompanionBuilder,
-    $ResourcesUpdateCompanionBuilder,
-    (Resource, $ResourcesReferences),
-    Resource,
-    PrefetchHooks Function(
-        {bool sharedRefs,
+typedef $ResourcesProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      Resources,
+      Resource,
+      $ResourcesFilterComposer,
+      $ResourcesOrderingComposer,
+      $ResourcesAnnotationComposer,
+      $ResourcesCreateCompanionBuilder,
+      $ResourcesUpdateCompanionBuilder,
+      (Resource, $ResourcesReferences),
+      Resource,
+      PrefetchHooks Function({
+        bool sharedRefs,
         bool resourceVersionsRefs,
         bool recentsRefs,
         bool publinksRefs,
-        bool bookmarksRefs})>;
-typedef $TrashedResourcesCreateCompanionBuilder = TrashedResourcesCompanion
-    Function({
-  required String id,
-  Value<int> rowid,
-});
-typedef $TrashedResourcesUpdateCompanionBuilder = TrashedResourcesCompanion
-    Function({
-  Value<String> id,
-  Value<int> rowid,
-});
+        bool bookmarksRefs,
+      })
+    >;
+typedef $TrashedResourcesCreateCompanionBuilder =
+    TrashedResourcesCompanion Function({required String id, Value<int> rowid});
+typedef $TrashedResourcesUpdateCompanionBuilder =
+    TrashedResourcesCompanion Function({Value<String> id, Value<int> rowid});
 
 class $TrashedResourcesFilterComposer
     extends Composer<_$AppDatabase, TrashedResources> {
@@ -3443,7 +3950,9 @@ class $TrashedResourcesFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $TrashedResourcesOrderingComposer
@@ -3456,7 +3965,9 @@ class $TrashedResourcesOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $TrashedResourcesAnnotationComposer
@@ -3472,23 +3983,27 @@ class $TrashedResourcesAnnotationComposer
       $composableBuilder(column: $table.id, builder: (column) => column);
 }
 
-class $TrashedResourcesTableManager extends RootTableManager<
-    _$AppDatabase,
-    TrashedResources,
-    TrashedResource,
-    $TrashedResourcesFilterComposer,
-    $TrashedResourcesOrderingComposer,
-    $TrashedResourcesAnnotationComposer,
-    $TrashedResourcesCreateCompanionBuilder,
-    $TrashedResourcesUpdateCompanionBuilder,
-    (
-      TrashedResource,
-      BaseReferences<_$AppDatabase, TrashedResources, TrashedResource>
-    ),
-    TrashedResource,
-    PrefetchHooks Function()> {
+class $TrashedResourcesTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          TrashedResources,
+          TrashedResource,
+          $TrashedResourcesFilterComposer,
+          $TrashedResourcesOrderingComposer,
+          $TrashedResourcesAnnotationComposer,
+          $TrashedResourcesCreateCompanionBuilder,
+          $TrashedResourcesUpdateCompanionBuilder,
+          (
+            TrashedResource,
+            BaseReferences<_$AppDatabase, TrashedResources, TrashedResource>,
+          ),
+          TrashedResource,
+          PrefetchHooks Function()
+        > {
   $TrashedResourcesTableManager(_$AppDatabase db, TrashedResources table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -3497,54 +4012,51 @@ class $TrashedResourcesTableManager extends RootTableManager<
               $TrashedResourcesOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $TrashedResourcesAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              TrashedResourcesCompanion(
-            id: id,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String id,
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              TrashedResourcesCompanion.insert(
-            id: id,
-            rowid: rowid,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TrashedResourcesCompanion(id: id, rowid: rowid),
+          createCompanionCallback:
+              ({required String id, Value<int> rowid = const Value.absent()}) =>
+                  TrashedResourcesCompanion.insert(id: id, rowid: rowid),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $TrashedResourcesProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    TrashedResources,
-    TrashedResource,
-    $TrashedResourcesFilterComposer,
-    $TrashedResourcesOrderingComposer,
-    $TrashedResourcesAnnotationComposer,
-    $TrashedResourcesCreateCompanionBuilder,
-    $TrashedResourcesUpdateCompanionBuilder,
-    (
+typedef $TrashedResourcesProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      TrashedResources,
       TrashedResource,
-      BaseReferences<_$AppDatabase, TrashedResources, TrashedResource>
-    ),
-    TrashedResource,
-    PrefetchHooks Function()>;
-typedef $SharedCreateCompanionBuilder = SharedCompanion Function({
-  required String resourceId,
-  required int seq,
-  Value<int> rowid,
-});
-typedef $SharedUpdateCompanionBuilder = SharedCompanion Function({
-  Value<String> resourceId,
-  Value<int> seq,
-  Value<int> rowid,
-});
+      $TrashedResourcesFilterComposer,
+      $TrashedResourcesOrderingComposer,
+      $TrashedResourcesAnnotationComposer,
+      $TrashedResourcesCreateCompanionBuilder,
+      $TrashedResourcesUpdateCompanionBuilder,
+      (
+        TrashedResource,
+        BaseReferences<_$AppDatabase, TrashedResources, TrashedResource>,
+      ),
+      TrashedResource,
+      PrefetchHooks Function()
+    >;
+typedef $SharedCreateCompanionBuilder =
+    SharedCompanion Function({
+      required String resourceId,
+      required int seq,
+      Value<int> rowid,
+    });
+typedef $SharedUpdateCompanionBuilder =
+    SharedCompanion Function({
+      Value<String> resourceId,
+      Value<int> seq,
+      Value<int> rowid,
+    });
 
 final class $SharedReferences
     extends BaseReferences<_$AppDatabase, Shared, SharedData> {
@@ -3556,12 +4068,15 @@ final class $SharedReferences
   $ResourcesProcessedTableManager get resourceId {
     final $_column = $_itemColumn<String>('resource_id')!;
 
-    final manager = $ResourcesTableManager($_db, $_db.resources)
-        .filter((f) => f.id.sqlEquals($_column));
+    final manager = $ResourcesTableManager(
+      $_db,
+      $_db.resources,
+    ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: [item]));
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
   }
 }
 
@@ -3574,25 +4089,30 @@ class $SharedFilterComposer extends Composer<_$AppDatabase, Shared> {
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get seq => $composableBuilder(
-      column: $table.seq, builder: (column) => ColumnFilters(column));
+    column: $table.seq,
+    builder: (column) => ColumnFilters(column),
+  );
 
   $ResourcesFilterComposer get resourceId {
     final $ResourcesFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.resourceId,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesFilterComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.resourceId,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesFilterComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
@@ -3606,25 +4126,30 @@ class $SharedOrderingComposer extends Composer<_$AppDatabase, Shared> {
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get seq => $composableBuilder(
-      column: $table.seq, builder: (column) => ColumnOrderings(column));
+    column: $table.seq,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   $ResourcesOrderingComposer get resourceId {
     final $ResourcesOrderingComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.resourceId,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesOrderingComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.resourceId,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesOrderingComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
@@ -3642,39 +4167,46 @@ class $SharedAnnotationComposer extends Composer<_$AppDatabase, Shared> {
 
   $ResourcesAnnotationComposer get resourceId {
     final $ResourcesAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.resourceId,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesAnnotationComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.resourceId,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesAnnotationComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
 
-class $SharedTableManager extends RootTableManager<
-    _$AppDatabase,
-    Shared,
-    SharedData,
-    $SharedFilterComposer,
-    $SharedOrderingComposer,
-    $SharedAnnotationComposer,
-    $SharedCreateCompanionBuilder,
-    $SharedUpdateCompanionBuilder,
-    (SharedData, $SharedReferences),
-    SharedData,
-    PrefetchHooks Function({bool resourceId})> {
+class $SharedTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          Shared,
+          SharedData,
+          $SharedFilterComposer,
+          $SharedOrderingComposer,
+          $SharedAnnotationComposer,
+          $SharedCreateCompanionBuilder,
+          $SharedUpdateCompanionBuilder,
+          (SharedData, $SharedReferences),
+          SharedData,
+          PrefetchHooks Function({bool resourceId})
+        > {
   $SharedTableManager(_$AppDatabase db, Shared table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -3683,26 +4215,26 @@ class $SharedTableManager extends RootTableManager<
               $SharedOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $SharedAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> resourceId = const Value.absent(),
-            Value<int> seq = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              SharedCompanion(
-            resourceId: resourceId,
-            seq: seq,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String resourceId,
-            required int seq,
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              SharedCompanion.insert(
-            resourceId: resourceId,
-            seq: seq,
-            rowid: rowid,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<String> resourceId = const Value.absent(),
+                Value<int> seq = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SharedCompanion(
+                resourceId: resourceId,
+                seq: seq,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String resourceId,
+                required int seq,
+                Value<int> rowid = const Value.absent(),
+              }) => SharedCompanion.insert(
+                resourceId: resourceId,
+                seq: seq,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), $SharedReferences(db, table, e)))
               .toList(),
@@ -3710,8 +4242,9 @@ class $SharedTableManager extends RootTableManager<
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
-              addJoins: <
-                  T extends TableManagerState<
+              addJoins:
+                  <
+                    T extends TableManagerState<
                       dynamic,
                       dynamic,
                       dynamic,
@@ -3722,80 +4255,94 @@ class $SharedTableManager extends RootTableManager<
                       dynamic,
                       dynamic,
                       dynamic,
-                      dynamic>>(state) {
-                if (resourceId) {
-                  state = state.withJoin(
-                    currentTable: table,
-                    currentColumn: table.resourceId,
-                    referencedTable: $SharedReferences._resourceIdTable(db),
-                    referencedColumn: $SharedReferences._resourceIdTable(db).id,
-                  ) as T;
-                }
+                      dynamic
+                    >
+                  >(state) {
+                    if (resourceId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.resourceId,
+                                referencedTable: $SharedReferences
+                                    ._resourceIdTable(db),
+                                referencedColumn: $SharedReferences
+                                    ._resourceIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
 
-                return state;
-              },
+                    return state;
+                  },
               getPrefetchedDataCallback: (items) async {
                 return [];
               },
             );
           },
-        ));
+        ),
+      );
 }
 
-typedef $SharedProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    Shared,
-    SharedData,
-    $SharedFilterComposer,
-    $SharedOrderingComposer,
-    $SharedAnnotationComposer,
-    $SharedCreateCompanionBuilder,
-    $SharedUpdateCompanionBuilder,
-    (SharedData, $SharedReferences),
-    SharedData,
-    PrefetchHooks Function({bool resourceId})>;
-typedef $ResourceVersionsCreateCompanionBuilder = ResourceVersionsCompanion
-    Function({
-  required String id,
-  required String resourceId,
-  required DateTime created,
-  required bool deleted,
-  Value<int> imgres,
-  required int size,
-  required String mimeType,
-  required String sha256,
-  Value<int> rowid,
-});
-typedef $ResourceVersionsUpdateCompanionBuilder = ResourceVersionsCompanion
-    Function({
-  Value<String> id,
-  Value<String> resourceId,
-  Value<DateTime> created,
-  Value<bool> deleted,
-  Value<int> imgres,
-  Value<int> size,
-  Value<String> mimeType,
-  Value<String> sha256,
-  Value<int> rowid,
-});
+typedef $SharedProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      Shared,
+      SharedData,
+      $SharedFilterComposer,
+      $SharedOrderingComposer,
+      $SharedAnnotationComposer,
+      $SharedCreateCompanionBuilder,
+      $SharedUpdateCompanionBuilder,
+      (SharedData, $SharedReferences),
+      SharedData,
+      PrefetchHooks Function({bool resourceId})
+    >;
+typedef $ResourceVersionsCreateCompanionBuilder =
+    ResourceVersionsCompanion Function({
+      required String id,
+      required String resourceId,
+      required DateTime created,
+      required bool deleted,
+      Value<int> imgres,
+      required int size,
+      required String mimeType,
+      required String sha256,
+      Value<int> rowid,
+    });
+typedef $ResourceVersionsUpdateCompanionBuilder =
+    ResourceVersionsCompanion Function({
+      Value<String> id,
+      Value<String> resourceId,
+      Value<DateTime> created,
+      Value<bool> deleted,
+      Value<int> imgres,
+      Value<int> size,
+      Value<String> mimeType,
+      Value<String> sha256,
+      Value<int> rowid,
+    });
 
 final class $ResourceVersionsReferences
     extends BaseReferences<_$AppDatabase, ResourceVersions, ResourceVersion> {
   $ResourceVersionsReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static Resources _resourceIdTable(_$AppDatabase db) =>
-      db.resources.createAlias($_aliasNameGenerator(
-          db.resourceVersions.resourceId, db.resources.id));
+      db.resources.createAlias(
+        $_aliasNameGenerator(db.resourceVersions.resourceId, db.resources.id),
+      );
 
   $ResourcesProcessedTableManager get resourceId {
     final $_column = $_itemColumn<String>('resource_id')!;
 
-    final manager = $ResourcesTableManager($_db, $_db.resources)
-        .filter((f) => f.id.sqlEquals($_column));
+    final manager = $ResourcesTableManager(
+      $_db,
+      $_db.resources,
+    ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: [item]));
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
   }
 }
 
@@ -3809,43 +4356,60 @@ class $ResourceVersionsFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get created => $composableBuilder(
-      column: $table.created, builder: (column) => ColumnFilters(column));
+    column: $table.created,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get deleted => $composableBuilder(
-      column: $table.deleted, builder: (column) => ColumnFilters(column));
+    column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get imgres => $composableBuilder(
-      column: $table.imgres, builder: (column) => ColumnFilters(column));
+    column: $table.imgres,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get size => $composableBuilder(
-      column: $table.size, builder: (column) => ColumnFilters(column));
+    column: $table.size,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get mimeType => $composableBuilder(
-      column: $table.mimeType, builder: (column) => ColumnFilters(column));
+    column: $table.mimeType,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get sha256 => $composableBuilder(
-      column: $table.sha256, builder: (column) => ColumnFilters(column));
+    column: $table.sha256,
+    builder: (column) => ColumnFilters(column),
+  );
 
   $ResourcesFilterComposer get resourceId {
     final $ResourcesFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.resourceId,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesFilterComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.resourceId,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesFilterComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
@@ -3860,43 +4424,60 @@ class $ResourceVersionsOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get created => $composableBuilder(
-      column: $table.created, builder: (column) => ColumnOrderings(column));
+    column: $table.created,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get deleted => $composableBuilder(
-      column: $table.deleted, builder: (column) => ColumnOrderings(column));
+    column: $table.deleted,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get imgres => $composableBuilder(
-      column: $table.imgres, builder: (column) => ColumnOrderings(column));
+    column: $table.imgres,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get size => $composableBuilder(
-      column: $table.size, builder: (column) => ColumnOrderings(column));
+    column: $table.size,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get mimeType => $composableBuilder(
-      column: $table.mimeType, builder: (column) => ColumnOrderings(column));
+    column: $table.mimeType,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get sha256 => $composableBuilder(
-      column: $table.sha256, builder: (column) => ColumnOrderings(column));
+    column: $table.sha256,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   $ResourcesOrderingComposer get resourceId {
     final $ResourcesOrderingComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.resourceId,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesOrderingComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.resourceId,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesOrderingComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
@@ -3933,39 +4514,46 @@ class $ResourceVersionsAnnotationComposer
 
   $ResourcesAnnotationComposer get resourceId {
     final $ResourcesAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.resourceId,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesAnnotationComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.resourceId,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesAnnotationComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
 
-class $ResourceVersionsTableManager extends RootTableManager<
-    _$AppDatabase,
-    ResourceVersions,
-    ResourceVersion,
-    $ResourceVersionsFilterComposer,
-    $ResourceVersionsOrderingComposer,
-    $ResourceVersionsAnnotationComposer,
-    $ResourceVersionsCreateCompanionBuilder,
-    $ResourceVersionsUpdateCompanionBuilder,
-    (ResourceVersion, $ResourceVersionsReferences),
-    ResourceVersion,
-    PrefetchHooks Function({bool resourceId})> {
+class $ResourceVersionsTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          ResourceVersions,
+          ResourceVersion,
+          $ResourceVersionsFilterComposer,
+          $ResourceVersionsOrderingComposer,
+          $ResourceVersionsAnnotationComposer,
+          $ResourceVersionsCreateCompanionBuilder,
+          $ResourceVersionsUpdateCompanionBuilder,
+          (ResourceVersion, $ResourceVersionsReferences),
+          ResourceVersion,
+          PrefetchHooks Function({bool resourceId})
+        > {
   $ResourceVersionsTableManager(_$AppDatabase db, ResourceVersions table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -3974,62 +4562,65 @@ class $ResourceVersionsTableManager extends RootTableManager<
               $ResourceVersionsOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $ResourceVersionsAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
-            Value<String> resourceId = const Value.absent(),
-            Value<DateTime> created = const Value.absent(),
-            Value<bool> deleted = const Value.absent(),
-            Value<int> imgres = const Value.absent(),
-            Value<int> size = const Value.absent(),
-            Value<String> mimeType = const Value.absent(),
-            Value<String> sha256 = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              ResourceVersionsCompanion(
-            id: id,
-            resourceId: resourceId,
-            created: created,
-            deleted: deleted,
-            imgres: imgres,
-            size: size,
-            mimeType: mimeType,
-            sha256: sha256,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String id,
-            required String resourceId,
-            required DateTime created,
-            required bool deleted,
-            Value<int> imgres = const Value.absent(),
-            required int size,
-            required String mimeType,
-            required String sha256,
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              ResourceVersionsCompanion.insert(
-            id: id,
-            resourceId: resourceId,
-            created: created,
-            deleted: deleted,
-            imgres: imgres,
-            size: size,
-            mimeType: mimeType,
-            sha256: sha256,
-            rowid: rowid,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> resourceId = const Value.absent(),
+                Value<DateTime> created = const Value.absent(),
+                Value<bool> deleted = const Value.absent(),
+                Value<int> imgres = const Value.absent(),
+                Value<int> size = const Value.absent(),
+                Value<String> mimeType = const Value.absent(),
+                Value<String> sha256 = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ResourceVersionsCompanion(
+                id: id,
+                resourceId: resourceId,
+                created: created,
+                deleted: deleted,
+                imgres: imgres,
+                size: size,
+                mimeType: mimeType,
+                sha256: sha256,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String resourceId,
+                required DateTime created,
+                required bool deleted,
+                Value<int> imgres = const Value.absent(),
+                required int size,
+                required String mimeType,
+                required String sha256,
+                Value<int> rowid = const Value.absent(),
+              }) => ResourceVersionsCompanion.insert(
+                id: id,
+                resourceId: resourceId,
+                created: created,
+                deleted: deleted,
+                imgres: imgres,
+                size: size,
+                mimeType: mimeType,
+                sha256: sha256,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (
-                    e.readTable(table),
-                    $ResourceVersionsReferences(db, table, e)
-                  ))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $ResourceVersionsReferences(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: ({resourceId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
-              addJoins: <
-                  T extends TableManagerState<
+              addJoins:
+                  <
+                    T extends TableManagerState<
                       dynamic,
                       dynamic,
                       dynamic,
@@ -4040,50 +4631,60 @@ class $ResourceVersionsTableManager extends RootTableManager<
                       dynamic,
                       dynamic,
                       dynamic,
-                      dynamic>>(state) {
-                if (resourceId) {
-                  state = state.withJoin(
-                    currentTable: table,
-                    currentColumn: table.resourceId,
-                    referencedTable:
-                        $ResourceVersionsReferences._resourceIdTable(db),
-                    referencedColumn:
-                        $ResourceVersionsReferences._resourceIdTable(db).id,
-                  ) as T;
-                }
+                      dynamic
+                    >
+                  >(state) {
+                    if (resourceId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.resourceId,
+                                referencedTable: $ResourceVersionsReferences
+                                    ._resourceIdTable(db),
+                                referencedColumn: $ResourceVersionsReferences
+                                    ._resourceIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
 
-                return state;
-              },
+                    return state;
+                  },
               getPrefetchedDataCallback: (items) async {
                 return [];
               },
             );
           },
-        ));
+        ),
+      );
 }
 
-typedef $ResourceVersionsProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    ResourceVersions,
-    ResourceVersion,
-    $ResourceVersionsFilterComposer,
-    $ResourceVersionsOrderingComposer,
-    $ResourceVersionsAnnotationComposer,
-    $ResourceVersionsCreateCompanionBuilder,
-    $ResourceVersionsUpdateCompanionBuilder,
-    (ResourceVersion, $ResourceVersionsReferences),
-    ResourceVersion,
-    PrefetchHooks Function({bool resourceId})>;
-typedef $RecentsCreateCompanionBuilder = RecentsCompanion Function({
-  required String resourceId,
-  required DateTime accessed,
-  Value<int> rowid,
-});
-typedef $RecentsUpdateCompanionBuilder = RecentsCompanion Function({
-  Value<String> resourceId,
-  Value<DateTime> accessed,
-  Value<int> rowid,
-});
+typedef $ResourceVersionsProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      ResourceVersions,
+      ResourceVersion,
+      $ResourceVersionsFilterComposer,
+      $ResourceVersionsOrderingComposer,
+      $ResourceVersionsAnnotationComposer,
+      $ResourceVersionsCreateCompanionBuilder,
+      $ResourceVersionsUpdateCompanionBuilder,
+      (ResourceVersion, $ResourceVersionsReferences),
+      ResourceVersion,
+      PrefetchHooks Function({bool resourceId})
+    >;
+typedef $RecentsCreateCompanionBuilder =
+    RecentsCompanion Function({
+      required String resourceId,
+      required DateTime accessed,
+      Value<int> rowid,
+    });
+typedef $RecentsUpdateCompanionBuilder =
+    RecentsCompanion Function({
+      Value<String> resourceId,
+      Value<DateTime> accessed,
+      Value<int> rowid,
+    });
 
 final class $RecentsReferences
     extends BaseReferences<_$AppDatabase, Recents, Recent> {
@@ -4091,17 +4692,21 @@ final class $RecentsReferences
 
   static Resources _resourceIdTable(_$AppDatabase db) =>
       db.resources.createAlias(
-          $_aliasNameGenerator(db.recents.resourceId, db.resources.id));
+        $_aliasNameGenerator(db.recents.resourceId, db.resources.id),
+      );
 
   $ResourcesProcessedTableManager get resourceId {
     final $_column = $_itemColumn<String>('resource_id')!;
 
-    final manager = $ResourcesTableManager($_db, $_db.resources)
-        .filter((f) => f.id.sqlEquals($_column));
+    final manager = $ResourcesTableManager(
+      $_db,
+      $_db.resources,
+    ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: [item]));
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
   }
 }
 
@@ -4114,25 +4719,30 @@ class $RecentsFilterComposer extends Composer<_$AppDatabase, Recents> {
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<DateTime> get accessed => $composableBuilder(
-      column: $table.accessed, builder: (column) => ColumnFilters(column));
+    column: $table.accessed,
+    builder: (column) => ColumnFilters(column),
+  );
 
   $ResourcesFilterComposer get resourceId {
     final $ResourcesFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.resourceId,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesFilterComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.resourceId,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesFilterComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
@@ -4146,25 +4756,30 @@ class $RecentsOrderingComposer extends Composer<_$AppDatabase, Recents> {
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<DateTime> get accessed => $composableBuilder(
-      column: $table.accessed, builder: (column) => ColumnOrderings(column));
+    column: $table.accessed,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   $ResourcesOrderingComposer get resourceId {
     final $ResourcesOrderingComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.resourceId,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesOrderingComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.resourceId,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesOrderingComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
@@ -4182,39 +4797,46 @@ class $RecentsAnnotationComposer extends Composer<_$AppDatabase, Recents> {
 
   $ResourcesAnnotationComposer get resourceId {
     final $ResourcesAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.resourceId,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesAnnotationComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.resourceId,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesAnnotationComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
 
-class $RecentsTableManager extends RootTableManager<
-    _$AppDatabase,
-    Recents,
-    Recent,
-    $RecentsFilterComposer,
-    $RecentsOrderingComposer,
-    $RecentsAnnotationComposer,
-    $RecentsCreateCompanionBuilder,
-    $RecentsUpdateCompanionBuilder,
-    (Recent, $RecentsReferences),
-    Recent,
-    PrefetchHooks Function({bool resourceId})> {
+class $RecentsTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          Recents,
+          Recent,
+          $RecentsFilterComposer,
+          $RecentsOrderingComposer,
+          $RecentsAnnotationComposer,
+          $RecentsCreateCompanionBuilder,
+          $RecentsUpdateCompanionBuilder,
+          (Recent, $RecentsReferences),
+          Recent,
+          PrefetchHooks Function({bool resourceId})
+        > {
   $RecentsTableManager(_$AppDatabase db, Recents table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -4223,36 +4845,38 @@ class $RecentsTableManager extends RootTableManager<
               $RecentsOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $RecentsAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> resourceId = const Value.absent(),
-            Value<DateTime> accessed = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              RecentsCompanion(
-            resourceId: resourceId,
-            accessed: accessed,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String resourceId,
-            required DateTime accessed,
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              RecentsCompanion.insert(
-            resourceId: resourceId,
-            accessed: accessed,
-            rowid: rowid,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<String> resourceId = const Value.absent(),
+                Value<DateTime> accessed = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecentsCompanion(
+                resourceId: resourceId,
+                accessed: accessed,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String resourceId,
+                required DateTime accessed,
+                Value<int> rowid = const Value.absent(),
+              }) => RecentsCompanion.insert(
+                resourceId: resourceId,
+                accessed: accessed,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) => p0
               .map(
-                  (e) => (e.readTable(table), $RecentsReferences(db, table, e)))
+                (e) => (e.readTable(table), $RecentsReferences(db, table, e)),
+              )
               .toList(),
           prefetchHooksCallback: ({resourceId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
-              addJoins: <
-                  T extends TableManagerState<
+              addJoins:
+                  <
+                    T extends TableManagerState<
                       dynamic,
                       dynamic,
                       dynamic,
@@ -4263,76 +4887,91 @@ class $RecentsTableManager extends RootTableManager<
                       dynamic,
                       dynamic,
                       dynamic,
-                      dynamic>>(state) {
-                if (resourceId) {
-                  state = state.withJoin(
-                    currentTable: table,
-                    currentColumn: table.resourceId,
-                    referencedTable: $RecentsReferences._resourceIdTable(db),
-                    referencedColumn:
-                        $RecentsReferences._resourceIdTable(db).id,
-                  ) as T;
-                }
+                      dynamic
+                    >
+                  >(state) {
+                    if (resourceId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.resourceId,
+                                referencedTable: $RecentsReferences
+                                    ._resourceIdTable(db),
+                                referencedColumn: $RecentsReferences
+                                    ._resourceIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
 
-                return state;
-              },
+                    return state;
+                  },
               getPrefetchedDataCallback: (items) async {
                 return [];
               },
             );
           },
-        ));
+        ),
+      );
 }
 
-typedef $RecentsProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    Recents,
-    Recent,
-    $RecentsFilterComposer,
-    $RecentsOrderingComposer,
-    $RecentsAnnotationComposer,
-    $RecentsCreateCompanionBuilder,
-    $RecentsUpdateCompanionBuilder,
-    (Recent, $RecentsReferences),
-    Recent,
-    PrefetchHooks Function({bool resourceId})>;
-typedef $PublinksCreateCompanionBuilder = PublinksCompanion Function({
-  required String id,
-  Value<DateTime?> created,
-  required String root,
-  Value<int> accessed,
-  Value<int> accessLimit,
-  Value<bool> protected,
-  Value<DateTime?> expires,
-  Value<int> rowid,
-});
-typedef $PublinksUpdateCompanionBuilder = PublinksCompanion Function({
-  Value<String> id,
-  Value<DateTime?> created,
-  Value<String> root,
-  Value<int> accessed,
-  Value<int> accessLimit,
-  Value<bool> protected,
-  Value<DateTime?> expires,
-  Value<int> rowid,
-});
+typedef $RecentsProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      Recents,
+      Recent,
+      $RecentsFilterComposer,
+      $RecentsOrderingComposer,
+      $RecentsAnnotationComposer,
+      $RecentsCreateCompanionBuilder,
+      $RecentsUpdateCompanionBuilder,
+      (Recent, $RecentsReferences),
+      Recent,
+      PrefetchHooks Function({bool resourceId})
+    >;
+typedef $PublinksCreateCompanionBuilder =
+    PublinksCompanion Function({
+      required String id,
+      Value<DateTime?> created,
+      required String root,
+      Value<int> accessed,
+      Value<int> accessLimit,
+      Value<bool> protected,
+      Value<DateTime?> expires,
+      Value<int> rowid,
+    });
+typedef $PublinksUpdateCompanionBuilder =
+    PublinksCompanion Function({
+      Value<String> id,
+      Value<DateTime?> created,
+      Value<String> root,
+      Value<int> accessed,
+      Value<int> accessLimit,
+      Value<bool> protected,
+      Value<DateTime?> expires,
+      Value<int> rowid,
+    });
 
 final class $PublinksReferences
     extends BaseReferences<_$AppDatabase, Publinks, Publink> {
   $PublinksReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static Resources _rootTable(_$AppDatabase db) => db.resources
-      .createAlias($_aliasNameGenerator(db.publinks.root, db.resources.id));
+  static Resources _rootTable(_$AppDatabase db) => db.resources.createAlias(
+    $_aliasNameGenerator(db.publinks.root, db.resources.id),
+  );
 
   $ResourcesProcessedTableManager get root {
     final $_column = $_itemColumn<String>('root')!;
 
-    final manager = $ResourcesTableManager($_db, $_db.resources)
-        .filter((f) => f.id.sqlEquals($_column));
+    final manager = $ResourcesTableManager(
+      $_db,
+      $_db.resources,
+    ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_rootTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: [item]));
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
   }
 }
 
@@ -4345,40 +4984,55 @@ class $PublinksFilterComposer extends Composer<_$AppDatabase, Publinks> {
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get created => $composableBuilder(
-      column: $table.created, builder: (column) => ColumnFilters(column));
+    column: $table.created,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get accessed => $composableBuilder(
-      column: $table.accessed, builder: (column) => ColumnFilters(column));
+    column: $table.accessed,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get accessLimit => $composableBuilder(
-      column: $table.accessLimit, builder: (column) => ColumnFilters(column));
+    column: $table.accessLimit,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get protected => $composableBuilder(
-      column: $table.protected, builder: (column) => ColumnFilters(column));
+    column: $table.protected,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get expires => $composableBuilder(
-      column: $table.expires, builder: (column) => ColumnFilters(column));
+    column: $table.expires,
+    builder: (column) => ColumnFilters(column),
+  );
 
   $ResourcesFilterComposer get root {
     final $ResourcesFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.root,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesFilterComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.root,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesFilterComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
@@ -4392,40 +5046,55 @@ class $PublinksOrderingComposer extends Composer<_$AppDatabase, Publinks> {
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get created => $composableBuilder(
-      column: $table.created, builder: (column) => ColumnOrderings(column));
+    column: $table.created,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get accessed => $composableBuilder(
-      column: $table.accessed, builder: (column) => ColumnOrderings(column));
+    column: $table.accessed,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get accessLimit => $composableBuilder(
-      column: $table.accessLimit, builder: (column) => ColumnOrderings(column));
+    column: $table.accessLimit,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get protected => $composableBuilder(
-      column: $table.protected, builder: (column) => ColumnOrderings(column));
+    column: $table.protected,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get expires => $composableBuilder(
-      column: $table.expires, builder: (column) => ColumnOrderings(column));
+    column: $table.expires,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   $ResourcesOrderingComposer get root {
     final $ResourcesOrderingComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.root,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesOrderingComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.root,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesOrderingComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
@@ -4448,7 +5117,9 @@ class $PublinksAnnotationComposer extends Composer<_$AppDatabase, Publinks> {
       $composableBuilder(column: $table.accessed, builder: (column) => column);
 
   GeneratedColumn<int> get accessLimit => $composableBuilder(
-      column: $table.accessLimit, builder: (column) => column);
+    column: $table.accessLimit,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get protected =>
       $composableBuilder(column: $table.protected, builder: (column) => column);
@@ -4458,39 +5129,46 @@ class $PublinksAnnotationComposer extends Composer<_$AppDatabase, Publinks> {
 
   $ResourcesAnnotationComposer get root {
     final $ResourcesAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.root,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesAnnotationComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.root,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesAnnotationComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
 
-class $PublinksTableManager extends RootTableManager<
-    _$AppDatabase,
-    Publinks,
-    Publink,
-    $PublinksFilterComposer,
-    $PublinksOrderingComposer,
-    $PublinksAnnotationComposer,
-    $PublinksCreateCompanionBuilder,
-    $PublinksUpdateCompanionBuilder,
-    (Publink, $PublinksReferences),
-    Publink,
-    PrefetchHooks Function({bool root})> {
+class $PublinksTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          Publinks,
+          Publink,
+          $PublinksFilterComposer,
+          $PublinksOrderingComposer,
+          $PublinksAnnotationComposer,
+          $PublinksCreateCompanionBuilder,
+          $PublinksUpdateCompanionBuilder,
+          (Publink, $PublinksReferences),
+          Publink,
+          PrefetchHooks Function({bool root})
+        > {
   $PublinksTableManager(_$AppDatabase db, Publinks table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -4499,56 +5177,58 @@ class $PublinksTableManager extends RootTableManager<
               $PublinksOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $PublinksAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
-            Value<DateTime?> created = const Value.absent(),
-            Value<String> root = const Value.absent(),
-            Value<int> accessed = const Value.absent(),
-            Value<int> accessLimit = const Value.absent(),
-            Value<bool> protected = const Value.absent(),
-            Value<DateTime?> expires = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              PublinksCompanion(
-            id: id,
-            created: created,
-            root: root,
-            accessed: accessed,
-            accessLimit: accessLimit,
-            protected: protected,
-            expires: expires,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String id,
-            Value<DateTime?> created = const Value.absent(),
-            required String root,
-            Value<int> accessed = const Value.absent(),
-            Value<int> accessLimit = const Value.absent(),
-            Value<bool> protected = const Value.absent(),
-            Value<DateTime?> expires = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              PublinksCompanion.insert(
-            id: id,
-            created: created,
-            root: root,
-            accessed: accessed,
-            accessLimit: accessLimit,
-            protected: protected,
-            expires: expires,
-            rowid: rowid,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<DateTime?> created = const Value.absent(),
+                Value<String> root = const Value.absent(),
+                Value<int> accessed = const Value.absent(),
+                Value<int> accessLimit = const Value.absent(),
+                Value<bool> protected = const Value.absent(),
+                Value<DateTime?> expires = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PublinksCompanion(
+                id: id,
+                created: created,
+                root: root,
+                accessed: accessed,
+                accessLimit: accessLimit,
+                protected: protected,
+                expires: expires,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                Value<DateTime?> created = const Value.absent(),
+                required String root,
+                Value<int> accessed = const Value.absent(),
+                Value<int> accessLimit = const Value.absent(),
+                Value<bool> protected = const Value.absent(),
+                Value<DateTime?> expires = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PublinksCompanion.insert(
+                id: id,
+                created: created,
+                root: root,
+                accessed: accessed,
+                accessLimit: accessLimit,
+                protected: protected,
+                expires: expires,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) => p0
-              .map((e) =>
-                  (e.readTable(table), $PublinksReferences(db, table, e)))
+              .map(
+                (e) => (e.readTable(table), $PublinksReferences(db, table, e)),
+              )
               .toList(),
           prefetchHooksCallback: ({root = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
-              addJoins: <
-                  T extends TableManagerState<
+              addJoins:
+                  <
+                    T extends TableManagerState<
                       dynamic,
                       dynamic,
                       dynamic,
@@ -4559,54 +5239,67 @@ class $PublinksTableManager extends RootTableManager<
                       dynamic,
                       dynamic,
                       dynamic,
-                      dynamic>>(state) {
-                if (root) {
-                  state = state.withJoin(
-                    currentTable: table,
-                    currentColumn: table.root,
-                    referencedTable: $PublinksReferences._rootTable(db),
-                    referencedColumn: $PublinksReferences._rootTable(db).id,
-                  ) as T;
-                }
+                      dynamic
+                    >
+                  >(state) {
+                    if (root) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.root,
+                                referencedTable: $PublinksReferences._rootTable(
+                                  db,
+                                ),
+                                referencedColumn: $PublinksReferences
+                                    ._rootTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
 
-                return state;
-              },
+                    return state;
+                  },
               getPrefetchedDataCallback: (items) async {
                 return [];
               },
             );
           },
-        ));
+        ),
+      );
 }
 
-typedef $PublinksProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    Publinks,
-    Publink,
-    $PublinksFilterComposer,
-    $PublinksOrderingComposer,
-    $PublinksAnnotationComposer,
-    $PublinksCreateCompanionBuilder,
-    $PublinksUpdateCompanionBuilder,
-    (Publink, $PublinksReferences),
-    Publink,
-    PrefetchHooks Function({bool root})>;
-typedef $BookmarksCreateCompanionBuilder = BookmarksCompanion Function({
-  required String resourceId,
-  required String name,
-  required bool dir,
-  required int created,
-  required bool deleted,
-  Value<int> rowid,
-});
-typedef $BookmarksUpdateCompanionBuilder = BookmarksCompanion Function({
-  Value<String> resourceId,
-  Value<String> name,
-  Value<bool> dir,
-  Value<int> created,
-  Value<bool> deleted,
-  Value<int> rowid,
-});
+typedef $PublinksProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      Publinks,
+      Publink,
+      $PublinksFilterComposer,
+      $PublinksOrderingComposer,
+      $PublinksAnnotationComposer,
+      $PublinksCreateCompanionBuilder,
+      $PublinksUpdateCompanionBuilder,
+      (Publink, $PublinksReferences),
+      Publink,
+      PrefetchHooks Function({bool root})
+    >;
+typedef $BookmarksCreateCompanionBuilder =
+    BookmarksCompanion Function({
+      required String resourceId,
+      required String name,
+      required bool dir,
+      required int created,
+      required bool deleted,
+      Value<int> rowid,
+    });
+typedef $BookmarksUpdateCompanionBuilder =
+    BookmarksCompanion Function({
+      Value<String> resourceId,
+      Value<String> name,
+      Value<bool> dir,
+      Value<int> created,
+      Value<bool> deleted,
+      Value<int> rowid,
+    });
 
 final class $BookmarksReferences
     extends BaseReferences<_$AppDatabase, Bookmarks, Bookmark> {
@@ -4614,17 +5307,21 @@ final class $BookmarksReferences
 
   static Resources _resourceIdTable(_$AppDatabase db) =>
       db.resources.createAlias(
-          $_aliasNameGenerator(db.bookmarks.resourceId, db.resources.id));
+        $_aliasNameGenerator(db.bookmarks.resourceId, db.resources.id),
+      );
 
   $ResourcesProcessedTableManager get resourceId {
     final $_column = $_itemColumn<String>('resource_id')!;
 
-    final manager = $ResourcesTableManager($_db, $_db.resources)
-        .filter((f) => f.id.sqlEquals($_column));
+    final manager = $ResourcesTableManager(
+      $_db,
+      $_db.resources,
+    ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_resourceIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: [item]));
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
   }
 }
 
@@ -4637,34 +5334,45 @@ class $BookmarksFilterComposer extends Composer<_$AppDatabase, Bookmarks> {
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnFilters(column));
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get dir => $composableBuilder(
-      column: $table.dir, builder: (column) => ColumnFilters(column));
+    column: $table.dir,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get created => $composableBuilder(
-      column: $table.created, builder: (column) => ColumnFilters(column));
+    column: $table.created,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get deleted => $composableBuilder(
-      column: $table.deleted, builder: (column) => ColumnFilters(column));
+    column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
 
   $ResourcesFilterComposer get resourceId {
     final $ResourcesFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.resourceId,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesFilterComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.resourceId,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesFilterComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
@@ -4678,34 +5386,45 @@ class $BookmarksOrderingComposer extends Composer<_$AppDatabase, Bookmarks> {
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnOrderings(column));
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get dir => $composableBuilder(
-      column: $table.dir, builder: (column) => ColumnOrderings(column));
+    column: $table.dir,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get created => $composableBuilder(
-      column: $table.created, builder: (column) => ColumnOrderings(column));
+    column: $table.created,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get deleted => $composableBuilder(
-      column: $table.deleted, builder: (column) => ColumnOrderings(column));
+    column: $table.deleted,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   $ResourcesOrderingComposer get resourceId {
     final $ResourcesOrderingComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.resourceId,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesOrderingComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.resourceId,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesOrderingComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
@@ -4732,39 +5451,46 @@ class $BookmarksAnnotationComposer extends Composer<_$AppDatabase, Bookmarks> {
 
   $ResourcesAnnotationComposer get resourceId {
     final $ResourcesAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.resourceId,
-        referencedTable: $db.resources,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $ResourcesAnnotationComposer(
-              $db: $db,
-              $table: $db.resources,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
+      composer: this,
+      getCurrentColumn: (t) => t.resourceId,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesAnnotationComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return composer;
   }
 }
 
-class $BookmarksTableManager extends RootTableManager<
-    _$AppDatabase,
-    Bookmarks,
-    Bookmark,
-    $BookmarksFilterComposer,
-    $BookmarksOrderingComposer,
-    $BookmarksAnnotationComposer,
-    $BookmarksCreateCompanionBuilder,
-    $BookmarksUpdateCompanionBuilder,
-    (Bookmark, $BookmarksReferences),
-    Bookmark,
-    PrefetchHooks Function({bool resourceId})> {
+class $BookmarksTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          Bookmarks,
+          Bookmark,
+          $BookmarksFilterComposer,
+          $BookmarksOrderingComposer,
+          $BookmarksAnnotationComposer,
+          $BookmarksCreateCompanionBuilder,
+          $BookmarksUpdateCompanionBuilder,
+          (Bookmark, $BookmarksReferences),
+          Bookmark,
+          PrefetchHooks Function({bool resourceId})
+        > {
   $BookmarksTableManager(_$AppDatabase db, Bookmarks table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -4773,48 +5499,50 @@ class $BookmarksTableManager extends RootTableManager<
               $BookmarksOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $BookmarksAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> resourceId = const Value.absent(),
-            Value<String> name = const Value.absent(),
-            Value<bool> dir = const Value.absent(),
-            Value<int> created = const Value.absent(),
-            Value<bool> deleted = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              BookmarksCompanion(
-            resourceId: resourceId,
-            name: name,
-            dir: dir,
-            created: created,
-            deleted: deleted,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String resourceId,
-            required String name,
-            required bool dir,
-            required int created,
-            required bool deleted,
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              BookmarksCompanion.insert(
-            resourceId: resourceId,
-            name: name,
-            dir: dir,
-            created: created,
-            deleted: deleted,
-            rowid: rowid,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<String> resourceId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<bool> dir = const Value.absent(),
+                Value<int> created = const Value.absent(),
+                Value<bool> deleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BookmarksCompanion(
+                resourceId: resourceId,
+                name: name,
+                dir: dir,
+                created: created,
+                deleted: deleted,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String resourceId,
+                required String name,
+                required bool dir,
+                required int created,
+                required bool deleted,
+                Value<int> rowid = const Value.absent(),
+              }) => BookmarksCompanion.insert(
+                resourceId: resourceId,
+                name: name,
+                dir: dir,
+                created: created,
+                deleted: deleted,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) => p0
-              .map((e) =>
-                  (e.readTable(table), $BookmarksReferences(db, table, e)))
+              .map(
+                (e) => (e.readTable(table), $BookmarksReferences(db, table, e)),
+              )
               .toList(),
           prefetchHooksCallback: ({resourceId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
-              addJoins: <
-                  T extends TableManagerState<
+              addJoins:
+                  <
+                    T extends TableManagerState<
                       dynamic,
                       dynamic,
                       dynamic,
@@ -4825,39 +5553,48 @@ class $BookmarksTableManager extends RootTableManager<
                       dynamic,
                       dynamic,
                       dynamic,
-                      dynamic>>(state) {
-                if (resourceId) {
-                  state = state.withJoin(
-                    currentTable: table,
-                    currentColumn: table.resourceId,
-                    referencedTable: $BookmarksReferences._resourceIdTable(db),
-                    referencedColumn:
-                        $BookmarksReferences._resourceIdTable(db).id,
-                  ) as T;
-                }
+                      dynamic
+                    >
+                  >(state) {
+                    if (resourceId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.resourceId,
+                                referencedTable: $BookmarksReferences
+                                    ._resourceIdTable(db),
+                                referencedColumn: $BookmarksReferences
+                                    ._resourceIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
 
-                return state;
-              },
+                    return state;
+                  },
               getPrefetchedDataCallback: (items) async {
                 return [];
               },
             );
           },
-        ));
+        ),
+      );
 }
 
-typedef $BookmarksProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    Bookmarks,
-    Bookmark,
-    $BookmarksFilterComposer,
-    $BookmarksOrderingComposer,
-    $BookmarksAnnotationComposer,
-    $BookmarksCreateCompanionBuilder,
-    $BookmarksUpdateCompanionBuilder,
-    (Bookmark, $BookmarksReferences),
-    Bookmark,
-    PrefetchHooks Function({bool resourceId})>;
+typedef $BookmarksProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      Bookmarks,
+      Bookmark,
+      $BookmarksFilterComposer,
+      $BookmarksOrderingComposer,
+      $BookmarksAnnotationComposer,
+      $BookmarksCreateCompanionBuilder,
+      $BookmarksUpdateCompanionBuilder,
+      (Bookmark, $BookmarksReferences),
+      Bookmark,
+      PrefetchHooks Function({bool resourceId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;

@@ -10,7 +10,10 @@ class UpdateResourceDeletedChange extends LocalChange<Resource> {
   @override
   String get description => 'Updating Deleted';
 
-  const UpdateResourceDeletedChange({required this.objectId, required this.timestamp});
+  const UpdateResourceDeletedChange({
+    required this.objectId,
+    required this.timestamp,
+  });
 
   @override
   Resource? apply(Resource? data) {

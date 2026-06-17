@@ -17,32 +17,52 @@ class DestinationPicker extends StatefulWidget {
   final String initialFolderId;
   final bool allowInitialFolder;
 
-  const DestinationPicker({super.key, required this.initialFolderId, this.allowInitialFolder = false});
+  const DestinationPicker({
+    super.key,
+    required this.initialFolderId,
+    this.allowInitialFolder = false,
+  });
 
   @override
   State<DestinationPicker> createState() => _DestinationPickerState();
 
-  static Future<String?> show(BuildContext context, {String? initialFolderId, bool allowInitialFolder = false}) {
+  static Future<String?> show(
+    BuildContext context, {
+    String? initialFolderId,
+    bool allowInitialFolder = false,
+  }) {
     final account = context.read<PhylumAccount>();
     initialFolderId ??= account.user.home;
     return showDialog(
       context: context,
       builder: (context) => MultiProvider(
         providers: [
-          StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
+          StateNotifierProvider<PhylumAccount, AccountState>.value(
+            value: account,
+          ),
           ChangeNotifierProvider(
-            create: (context) => PhylumRouterDelegate(page: ExplorerRouteFolder(folderId: initialFolderId!)),
+            create: (context) => PhylumRouterDelegate(
+              page: ExplorerRouteFolder(folderId: initialFolderId!),
+            ),
           ),
         ],
         builder: (context, child) {
-          final route = context.watch<PhylumRouterDelegate>().currentConfiguration as ExplorerRoute;
+          final route =
+              context.watch<PhylumRouterDelegate>().currentConfiguration
+                  as ExplorerRoute;
           return StateNotifierProvider<ExplorerController, ExplorerState>(
             key: ValueKey(route),
-            create: (context) => ExplorerController(account: context.read(), routerDelegate: context.read()),
+            create: (context) => ExplorerController(
+              account: context.read(),
+              routerDelegate: context.read(),
+            ),
             child: child,
           );
         },
-        child: DestinationPicker(initialFolderId: initialFolderId!, allowInitialFolder: allowInitialFolder),
+        child: DestinationPicker(
+          initialFolderId: initialFolderId!,
+          allowInitialFolder: allowInitialFolder,
+        ),
       ),
     );
   }
@@ -63,26 +83,35 @@ class _DestinationPickerState extends State<DestinationPicker> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      MediaQuery.sizeOf(context).width <= 600 ? buildScaffold(context) : buildDialog(context);
+  Widget build(BuildContext context) => MediaQuery.sizeOf(context).width <= 600
+      ? buildScaffold(context)
+      : buildDialog(context);
 
   Widget buildScaffold(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Builder(builder: (context) {
-          return BackButton(onPressed: () {
-            final parentId = context.read<ExplorerState>().folder?.parent;
-            if (parentId != null) {
-              context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: parentId));
-              node.requestFocus();
-            } else {
-              Navigator.of(context).pop();
-            }
-          });
-        }),
+        leading: Builder(
+          builder: (context) {
+            return BackButton(
+              onPressed: () {
+                final parentId = context.read<ExplorerState>().folder?.parent;
+                if (parentId != null) {
+                  context.read<PhylumRouterDelegate>().go(
+                    ExplorerRouteFolder(folderId: parentId),
+                  );
+                  node.requestFocus();
+                } else {
+                  Navigator.of(context).pop();
+                }
+              },
+            );
+          },
+        ),
         title: Builder(
           builder: (context) {
-            final name = context.select<ExplorerState, String?>((state) => state.folder?.name);
+            final name = context.select<ExplorerState, String?>(
+              (state) => state.folder?.name,
+            );
             return ListTile(
               title: Text(name ?? ''),
               subtitle: const Text('Pick Destination'),
@@ -90,20 +119,27 @@ class _DestinationPickerState extends State<DestinationPicker> {
           },
         ),
         actions: [
-          Builder(builder: (context) {
-            final folderId = context.select<ExplorerState, String?>((state) => state.folderId);
-            return IconButton(
-              onPressed: folderId == null
-                  ? null
-                  : () async {
-                      final folder = await context.read<PhylumAccount>().db.getResource(folderId);
-                      if (folder != null && context.mounted) {
-                        createDirectory(context, folder);
-                      }
-                    },
-              icon: Icon(Icons.create_new_folder_outlined),
-            );
-          })
+          Builder(
+            builder: (context) {
+              final folderId = context.select<ExplorerState, String?>(
+                (state) => state.folderId,
+              );
+              return IconButton(
+                onPressed: folderId == null
+                    ? null
+                    : () async {
+                        final folder = await context
+                            .read<PhylumAccount>()
+                            .db
+                            .getResource(folderId);
+                        if (folder != null && context.mounted) {
+                          createDirectory(context, folder);
+                        }
+                      },
+                icon: Icon(Icons.create_new_folder_outlined),
+              );
+            },
+          ),
         ],
       ),
       body: _buildContents(context),
@@ -120,37 +156,57 @@ class _DestinationPickerState extends State<DestinationPicker> {
           contentPadding: EdgeInsets.zero,
           title: Builder(
             builder: (context) {
-              final name = context.select<ExplorerState, String?>((state) => state.folder?.name);
+              final name = context.select<ExplorerState, String?>(
+                (state) => state.folder?.name,
+              );
               return ListTile(
-                leading: BackButton(onPressed: () {
-                  final parentId = context.read<ExplorerState>().folder?.parent;
-                  if (parentId != null) {
-                    context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: parentId));
-                    node.requestFocus();
-                  } else {
-                    Navigator.of(context).pop();
-                  }
-                }),
+                leading: BackButton(
+                  onPressed: () {
+                    final parentId = context
+                        .read<ExplorerState>()
+                        .folder
+                        ?.parent;
+                    if (parentId != null) {
+                      context.read<PhylumRouterDelegate>().go(
+                        ExplorerRouteFolder(folderId: parentId),
+                      );
+                      node.requestFocus();
+                    } else {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
                 title: Text(name ?? ''),
                 subtitle: const Text('Pick Destination'),
-                trailing: Builder(builder: (context) {
-                  final folderId = context.select<ExplorerState, String?>((state) => state.folderId);
-                  return IconButton(
-                    onPressed: folderId == null
-                        ? null
-                        : () async {
-                            final folder = await context.read<PhylumAccount>().db.getResource(folderId);
-                            if (folder != null && context.mounted) {
-                              createDirectory(context, folder);
-                            }
-                          },
-                    icon: Icon(Icons.create_new_folder_outlined),
-                  );
-                }),
+                trailing: Builder(
+                  builder: (context) {
+                    final folderId = context.select<ExplorerState, String?>(
+                      (state) => state.folderId,
+                    );
+                    return IconButton(
+                      onPressed: folderId == null
+                          ? null
+                          : () async {
+                              final folder = await context
+                                  .read<PhylumAccount>()
+                                  .db
+                                  .getResource(folderId);
+                              if (folder != null && context.mounted) {
+                                createDirectory(context, folder);
+                              }
+                            },
+                      icon: Icon(Icons.create_new_folder_outlined),
+                    );
+                  },
+                ),
               );
             },
           ),
-          content: SizedBox(width: 360, height: 600, child: _buildContents(context)),
+          content: SizedBox(
+            width: 360,
+            height: 600,
+            child: _buildContents(context),
+          ),
         ),
       ),
     );
@@ -171,17 +227,26 @@ class _DestinationPickerState extends State<DestinationPicker> {
                 alignment: MainAxisAlignment.end,
                 spacing: 8,
                 children: [
-                  TextButton(onPressed: Navigator.of(context).pop, child: Text('Cancel')),
+                  TextButton(
+                    onPressed: Navigator.of(context).pop,
+                    child: Text('Cancel'),
+                  ),
                   ElevatedButton(
-                    onPressed: widget.allowInitialFolder ||
-                            context.select<ExplorerState, bool>((state) => state.folderId != widget.initialFolderId)
-                        ? () => Navigator.of(context).pop(context.read<ExplorerState>().folderId)
+                    onPressed:
+                        widget.allowInitialFolder ||
+                            context.select<ExplorerState, bool>(
+                              (state) =>
+                                  state.folderId != widget.initialFolderId,
+                            )
+                        ? () => Navigator.of(
+                            context,
+                          ).pop(context.read<ExplorerState>().folderId)
                         : null,
                     child: Text('OK'),
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -195,7 +260,9 @@ class _FolderListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = context.select<ExplorerState, List<Resource>>((state) => state.resources);
+    final items = context.select<ExplorerState, List<Resource>>(
+      (state) => state.resources,
+    );
     return Focus(
       autofocus: true,
       focusNode: focusNode,
@@ -203,18 +270,24 @@ class _FolderListView extends StatelessWidget {
         child: ListView.builder(
           itemBuilder: (BuildContext context, int index) {
             final r = items[index];
-            return Builder(builder: (context) {
-              final selected = context.select<ExplorerState, bool>((state) => state.selectedIds.contains(r.id));
-              return ListTile(
-                key: ValueKey(r.id),
-                visualDensity: VisualDensity.compact,
-                selected: selected,
-                leading: r.getIcon(context.read()),
-                title: Text(r.name),
-                enabled: r.dir,
-                onTap: () => context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: r.id)),
-              );
-            });
+            return Builder(
+              builder: (context) {
+                final selected = context.select<ExplorerState, bool>(
+                  (state) => state.selectedIds.contains(r.id),
+                );
+                return ListTile(
+                  key: ValueKey(r.id),
+                  visualDensity: VisualDensity.compact,
+                  selected: selected,
+                  leading: r.getIcon(context.read()),
+                  title: Text(r.name),
+                  enabled: r.dir,
+                  onTap: () => context.read<PhylumRouterDelegate>().go(
+                    ExplorerRouteFolder(folderId: r.id),
+                  ),
+                );
+              },
+            );
           },
           itemCount: items.length,
         ),
@@ -232,36 +305,54 @@ class _ActionHandler extends StatelessWidget {
   Widget build(BuildContext context) {
     return Actions(
       actions: {
-        NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) async {
-          final parentId = context.read<ExplorerState>().folder?.parent;
-          if (parentId != null) {
-            context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: parentId));
-          }
-          focusNode.requestFocus();
-          return null;
-        }),
+        NavUpIntent: CallbackAction<NavUpIntent>(
+          onInvoke: (i) async {
+            final parentId = context.read<ExplorerState>().folder?.parent;
+            if (parentId != null) {
+              context.read<PhylumRouterDelegate>().go(
+                ExplorerRouteFolder(folderId: parentId),
+              );
+            }
+            focusNode.requestFocus();
+            return null;
+          },
+        ),
         FocusDownIntent: CallbackAction<FocusDownIntent>(
           onInvoke: (i) async {
-            context.read<ExplorerController>().updateSelection((i) => i + 1, SelectionMode.single, false);
+            context.read<ExplorerController>().updateSelection(
+              (i) => i + 1,
+              SelectionMode.single,
+              false,
+            );
             focusNode.requestFocus();
             return null;
           },
         ),
         FocusUpIntent: CallbackAction<FocusUpIntent>(
           onInvoke: (i) async {
-            context.read<ExplorerController>().updateSelection((i) => i - 1, SelectionMode.single, false);
+            context.read<ExplorerController>().updateSelection(
+              (i) => i - 1,
+              SelectionMode.single,
+              false,
+            );
             focusNode.requestFocus();
             return null;
           },
         ),
-        ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (i) async {
-          final selected = context.read<ExplorerState>().selectedSingle;
-          if (selected != null && selected.dir) {
-            context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: selected.id));
-          }
-          return null;
-        }),
-        DismissIntent: CallbackAction<DismissIntent>(onInvoke: (i) => Navigator.of(context).pop()),
+        ActivateIntent: CallbackAction<ActivateIntent>(
+          onInvoke: (i) async {
+            final selected = context.read<ExplorerState>().selectedSingle;
+            if (selected != null && selected.dir) {
+              context.read<PhylumRouterDelegate>().go(
+                ExplorerRouteFolder(folderId: selected.id),
+              );
+            }
+            return null;
+          },
+        ),
+        DismissIntent: CallbackAction<DismissIntent>(
+          onInvoke: (i) => Navigator.of(context).pop(),
+        ),
       },
       child: child,
     );

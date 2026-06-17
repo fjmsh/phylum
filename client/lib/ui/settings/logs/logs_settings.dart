@@ -49,14 +49,17 @@ class _LogsPaneState extends State<LogsPane> {
           _scrollController.position.maxScrollExtent - 12) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients) {
-            _scrollController
-                .jumpTo(_scrollController.position.maxScrollExtent);
+            _scrollController.jumpTo(
+              _scrollController.position.maxScrollExtent,
+            );
           }
         });
       }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) =>
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent));
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) =>
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent),
+    );
   }
 
   @override
@@ -118,14 +121,15 @@ class _LogsPaneState extends State<LogsPane> {
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
                               ),
-                              initialValue:
-                                  cleanupStackTrace(record.stackTrace!),
+                              initialValue: cleanupStackTrace(
+                                record.stackTrace!,
+                              ),
                               readOnly: true,
                               expands: true,
                               maxLines: null,
                               minLines: null,
                             ),
-                          )
+                          ),
                       ],
                     ),
                   ),
@@ -133,11 +137,14 @@ class _LogsPaneState extends State<LogsPane> {
                     TextButton(
                       onPressed: () {
                         Clipboard.setData(
-                            ClipboardData(text: stringifyRecord(record)));
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text('Copied to Clipboard'),
-                          duration: Duration(milliseconds: 1000),
-                        ));
+                          ClipboardData(text: stringifyRecord(record)),
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Copied to Clipboard'),
+                            duration: Duration(milliseconds: 1000),
+                          ),
+                        );
                       },
                       child: Text('Copy'),
                     ),
@@ -165,7 +172,7 @@ class LogRecordSummary extends StatelessWidget {
   final bool standalone;
 
   LogRecordSummary({required this.record, this.standalone = true})
-      : super(key: ValueKey(record));
+    : super(key: ValueKey(record));
 
   @override
   Widget build(BuildContext context) {
@@ -209,10 +216,12 @@ class LogRecordSummary extends StatelessWidget {
             IconButton(
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: stringifyRecord(record)));
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Copied to Clipboard'),
-                  duration: Duration(milliseconds: 1000),
-                ));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Copied to Clipboard'),
+                    duration: Duration(milliseconds: 1000),
+                  ),
+                );
               },
               icon: Icon(Icons.copy),
             ),
@@ -227,9 +236,8 @@ class LogRecordSummary extends StatelessWidget {
       Level.CONFIG || Level.INFO => Icons.info_outline,
       Level.WARNING ||
       Level.SEVERE ||
-      Level.SHOUT =>
-        Icons.warning_amber_rounded,
-      _ => Icons.question_mark
+      Level.SHOUT => Icons.warning_amber_rounded,
+      _ => Icons.question_mark,
     };
   }
 }

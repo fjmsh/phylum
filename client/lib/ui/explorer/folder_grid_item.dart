@@ -22,16 +22,25 @@ class FolderGridItem extends StatelessWidget {
   final Resource resource;
   final bool dropTargetActive;
 
-  FolderGridItem({required this.resource, required this.dropTargetActive}) : super(key: ValueKey(resource.id));
+  FolderGridItem({required this.resource, required this.dropTargetActive})
+    : super(key: ValueKey(resource.id));
 
   @override
   Widget build(BuildContext context) {
     final account = context.read<PhylumAccount>();
-    final showBorder = context.select<ExplorerState, bool>((state) => state.focusId == resource.id && state.showFocus);
-    final highlight = context.select<ExplorerState, bool>((state) => state.isSelected(resource.id));
-    final dim = context.select<ExplorerState, bool>((state) => state.isSelected(resource.id) && state.dragging);
+    final showBorder = context.select<ExplorerState, bool>(
+      (state) => state.focusId == resource.id && state.showFocus,
+    );
+    final highlight = context.select<ExplorerState, bool>(
+      (state) => state.isSelected(resource.id),
+    );
+    final dim = context.select<ExplorerState, bool>(
+      (state) => state.isSelected(resource.id) && state.dragging,
+    );
 
-    final sync = context.select<PhylumActionQueueState, ResourceSyncState>((state) {
+    final sync = context.select<PhylumActionQueueState, ResourceSyncState>((
+      state,
+    ) {
       return state.actions.fold(ResourceSyncState.none, (acc, action) {
         if (action is ResourceAction && action.resourceId == resource.id) {
           final actionState = ResourceSyncState.fromStatus(action.status);
@@ -47,45 +56,54 @@ class FolderGridItem extends StatelessWidget {
     final border = dropTargetActive
         ? BorderSide(color: colorScheme.secondary, width: 2.0)
         : showBorder
-            ? BorderSide(color: colorScheme.primary, width: 2.0)
-            : const BorderSide(color: Colors.transparent, width: 2.0);
+        ? BorderSide(color: colorScheme.primary, width: 2.0)
+        : const BorderSide(color: Colors.transparent, width: 2.0);
 
     final color = highlight
         ? dim
-            ? colorScheme.primaryContainer.withAlpha(192)
-            : colorScheme.primaryContainer
+              ? colorScheme.primaryContainer.withAlpha(192)
+              : colorScheme.primaryContainer
         : dropTargetActive
-            ? colorScheme.secondaryContainer
-            : null;
+        ? colorScheme.secondaryContainer
+        : null;
 
     return IconTheme(
-      data: IconThemeData(
-        color: colorScheme.onSurfaceVariant,
-      ),
+      data: IconThemeData(color: colorScheme.onSurfaceVariant),
       child: Card(
         color: color,
         borderOnForeground: true,
         clipBehavior: Clip.antiAlias,
         shape: dropTargetActive || showBorder
-            ? RoundedRectangleBorder(side: border, borderRadius: BorderRadius.circular(12.0))
+            ? RoundedRectangleBorder(
+                side: border,
+                borderRadius: BorderRadius.circular(12.0),
+              )
             : null,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-                child: Stack(
-              fit: StackFit.expand,
-              children: [
-                StreamBuilder(
-                    stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  StreamBuilder(
+                    stream: account.db
+                        .latestVersion(resource.id)
+                        .watchSingleOrNull(),
                     builder: (context, snapshot) {
                       String imageUrl = '';
-                      if (snapshot.data != null && (snapshot.data!.imgres & imgResThumbnail) != 0) {
-                        imageUrl = (account.apiClient.createUriBuilder('/api/v1/fs/img/${resource.id}:')
-                              ..queryParameters['version'] = snapshot.data!.id
-                              ..queryParameters['res'] = imgResThumbnail.toString())
-                            .build()
-                            .toString();
+                      if (snapshot.data != null &&
+                          (snapshot.data!.imgres & imgResThumbnail) != 0) {
+                        imageUrl =
+                            (account.apiClient.createUriBuilder(
+                                    '/api/v1/fs/img/${resource.id}:',
+                                  )
+                                  ..queryParameters['version'] =
+                                      snapshot.data!.id
+                                  ..queryParameters['res'] = imgResThumbnail
+                                      .toString())
+                                .build()
+                                .toString();
                       }
                       return CachedNetworkImage(
                         imageUrl: imageUrl,
@@ -93,25 +111,36 @@ class FolderGridItem extends StatelessWidget {
                         fit: BoxFit.cover,
                         httpHeaders: account.apiClient.requestHeaders,
                         placeholder: (context, url) => FittedBox(
-                            fit: BoxFit.contain,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: resource.getIcon(account),
-                            )),
-                        imageRenderMethodForWeb: ImageRenderMethodForWeb.HttpGet,
+                          fit: BoxFit.contain,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: resource.getIcon(account),
+                          ),
+                        ),
+                        imageRenderMethodForWeb:
+                            ImageRenderMethodForWeb.HttpGet,
                         errorWidget: (context, url, err) => FittedBox(
-                            fit: BoxFit.contain,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: resource.getIcon(account),
-                            )),
+                          fit: BoxFit.contain,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: resource.getIcon(account),
+                          ),
+                        ),
                       );
-                    }),
-              ],
-            )),
+                    },
+                  ),
+                ],
+              ),
+            ),
             Container(
-              decoration: BoxDecoration(color: color ?? Theme.of(context).colorScheme.surfaceContainerLow),
-              padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+              decoration: BoxDecoration(
+                color:
+                    color ?? Theme.of(context).colorScheme.surfaceContainerLow,
+              ),
+              padding: const EdgeInsets.symmetric(
+                vertical: 6.0,
+                horizontal: 12.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -123,8 +152,8 @@ class FolderGridItem extends StatelessWidget {
                     style: theme.textTheme.bodyLarge!.copyWith(
                       color: highlight
                           ? dim
-                              ? colorScheme.primary.withAlpha(192)
-                              : colorScheme.primary
+                                ? colorScheme.primary.withAlpha(192)
+                                : colorScheme.primary
                           : colorScheme.onSurface,
                     ),
                   ),
@@ -134,81 +163,118 @@ class FolderGridItem extends StatelessWidget {
                     children: [
                       if (sync != ResourceSyncState.none)
                         Padding(
-                          padding: const EdgeInsets.only(right: _subtitleIconPadding),
+                          padding: const EdgeInsets.only(
+                            right: _subtitleIconPadding,
+                          ),
                           child: Icon(sync.icon, size: _subtitleIconSize),
                         ),
                       if (resource.grants != null)
                         Padding(
-                          padding: const EdgeInsets.only(right: _subtitleIconPadding),
-                          child: Icon(Icons.people_alt, size: _subtitleIconSize),
+                          padding: const EdgeInsets.only(
+                            right: _subtitleIconPadding,
+                          ),
+                          child: Icon(
+                            Icons.people_alt,
+                            size: _subtitleIconSize,
+                          ),
                         ),
                       StreamBuilder<int>(
-                          stream: context.read<PhylumAccount>().db.availableVersions(resource.id).watchSingle(),
-                          initialData: 1,
-                          builder: (context, snapshot) {
-                            if ((snapshot.data ?? 0) > 1) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: _subtitleIconPadding),
-                                child: Icon(Icons.history, size: _subtitleIconSize),
-                              );
-                            }
-                            return const SizedBox();
-                          }),
+                        stream: context
+                            .read<PhylumAccount>()
+                            .db
+                            .availableVersions(resource.id)
+                            .watchSingle(),
+                        initialData: 1,
+                        builder: (context, snapshot) {
+                          if ((snapshot.data ?? 0) > 1) {
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                right: _subtitleIconPadding,
+                              ),
+                              child: Icon(
+                                Icons.history,
+                                size: _subtitleIconSize,
+                              ),
+                            );
+                          }
+                          return const SizedBox();
+                        },
+                      ),
                       StreamBuilder<int>(
-                          stream: account.db.countPublinks(resource.id).watchSingle(),
-                          initialData: 0,
-                          builder: (context, snapshot) {
-                            if ((snapshot.data ?? 0) > 0) {
-                              return const Padding(
-                                padding: EdgeInsets.only(right: _subtitleIconPadding),
-                                child: Icon(Icons.public, size: _subtitleIconSize),
-                              );
-                            }
-                            return const SizedBox();
-                          }),
+                        stream: account.db
+                            .countPublinks(resource.id)
+                            .watchSingle(),
+                        initialData: 0,
+                        builder: (context, snapshot) {
+                          if ((snapshot.data ?? 0) > 0) {
+                            return const Padding(
+                              padding: EdgeInsets.only(
+                                right: _subtitleIconPadding,
+                              ),
+                              child: Icon(
+                                Icons.public,
+                                size: _subtitleIconSize,
+                              ),
+                            );
+                          }
+                          return const SizedBox();
+                        },
+                      ),
                       StreamBuilder<bool?>(
-                          stream: (account.db.bookmarks.select()..where((b) => b.resourceId.equals(resource.id)))
-                              .map((b) => !b.deleted)
-                              .watchSingleOrNull(),
-                          initialData: false,
-                          builder: (context, snapshot) {
-                            if (snapshot.data == true) {
-                              return const Padding(
-                                padding: EdgeInsets.only(right: _subtitleIconPadding),
-                                child: Icon(Icons.bookmark, size: _subtitleIconSize),
-                              );
-                            }
-                            return const SizedBox();
-                          }),
+                        stream:
+                            (account.db.bookmarks.select()..where(
+                                  (b) => b.resourceId.equals(resource.id),
+                                ))
+                                .map((b) => !b.deleted)
+                                .watchSingleOrNull(),
+                        initialData: false,
+                        builder: (context, snapshot) {
+                          if (snapshot.data == true) {
+                            return const Padding(
+                              padding: EdgeInsets.only(
+                                right: _subtitleIconPadding,
+                              ),
+                              child: Icon(
+                                Icons.bookmark,
+                                size: _subtitleIconSize,
+                              ),
+                            );
+                          }
+                          return const SizedBox();
+                        },
+                      ),
                       Expanded(
                         child: StreamBuilder(
-                            stream: account.db.latestVersion(resource.id).watchSingleOrNull(),
-                            builder: (context, snapshot) {
-                              String subtitle = "";
-                              if (resource.modified != null) {
-                                subtitle = resource.modified!.formatShort();
+                          stream: account.db
+                              .latestVersion(resource.id)
+                              .watchSingleOrNull(),
+                          builder: (context, snapshot) {
+                            String subtitle = "";
+                            if (resource.modified != null) {
+                              subtitle = resource.modified!.formatShort();
+                            }
+                            final data = snapshot.data;
+                            if (data != null) {
+                              if (subtitle.isNotEmpty) {
+                                subtitle += " \u2022 ";
                               }
-                              final data = snapshot.data;
-                              if (data != null) {
-                                if (subtitle.isNotEmpty) {
-                                  subtitle += " \u2022 ";
-                                }
-                                subtitle += data.size.formatForDisplay();
-                              }
-                              return Text(
-                                subtitle,
-                                maxLines: 1,
-                                softWrap: false,
-                                overflow: TextOverflow.fade,
-                                style: theme.textTheme.bodyMedium!.copyWith(
-                                  color: highlight
-                                      ? dim
+                              subtitle += data.size.formatForDisplay();
+                            }
+                            return Text(
+                              subtitle,
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.fade,
+                              style: theme.textTheme.bodyMedium!.copyWith(
+                                color: highlight
+                                    ? dim
                                           ? colorScheme.primary.withAlpha(192)
                                           : colorScheme.primary
-                                      : colorScheme.onSurfaceVariant,
-                                ),
-                              );
-                            }),
+                                    : colorScheme.onSurfaceVariant,
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ],
                   ),

@@ -12,7 +12,13 @@ class BookmarkResponse extends PhylumApiSuccessResponse {
 
   @override
   Future<void> process(PhylumAccount account) async {
-    await account.db.bookmarks.insertOne(bookmark, mode: InsertMode.insertOrReplace);
-    await account.datastore.get<Bookmark>().replaceRemoteData(bookmark.resourceId, bookmark);
+    await account.db.bookmarks.insertOne(
+      bookmark,
+      mode: InsertMode.insertOrReplace,
+    );
+    await account.datastore.get<Bookmark>().replaceRemoteData(
+      bookmark.resourceId,
+      bookmark,
+    );
   }
 }

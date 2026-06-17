@@ -26,15 +26,13 @@ class SetupUserFragment extends StatelessWidget {
         TextButtonTheme(
           data: TextButtonThemeData(
             style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24)),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TextButton(
-                onPressed: onPrevPress,
-                child: Text('PREV'),
-              ),
+              TextButton(onPressed: onPrevPress, child: Text('PREV')),
               TextButton(
                 onPressed: () => validateAndNext(context),
                 child: Text('FINISH'),
@@ -48,8 +46,9 @@ class SetupUserFragment extends StatelessWidget {
 
   Widget buildContents(BuildContext context) {
     final config = context.watch<UserConfig>();
-    final passwordRequired = context
-        .select<AuthConfig, bool>((config) => config.passwordLoginEnabled);
+    final passwordRequired = context.select<AuthConfig, bool>(
+      (config) => config.passwordLoginEnabled,
+    );
 
     return Form(
       key: formKey,
@@ -66,7 +65,10 @@ class SetupUserFragment extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(text: 'Email '),
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -81,8 +83,8 @@ class SetupUserFragment extends StatelessWidget {
             validator: (value) => value?.isEmpty ?? true
                 ? 'Required'
                 : EmailValidator.validate(value!)
-                    ? null
-                    : 'Invalid Email Address',
+                ? null
+                : 'Invalid Email Address',
           ),
           TextFormField(
             decoration: const InputDecoration(
@@ -90,7 +92,10 @@ class SetupUserFragment extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(text: 'Full Name '),
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -110,7 +115,10 @@ class SetupUserFragment extends StatelessWidget {
                   TextSpan(
                     children: [
                       TextSpan(text: 'Password '),
-                      TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                      TextSpan(
+                        text: '*',
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ],
                   ),
                 ),
@@ -161,18 +169,9 @@ class UserConfig {
     required this.password,
   });
 
-  const UserConfig.defaults()
-      : this(
-          email: '',
-          name: '',
-          password: '',
-        );
+  const UserConfig.defaults() : this(email: '', name: '', password: '');
 
-  UserConfig copyWith({
-    String? email,
-    String? name,
-    String? password,
-  }) {
+  UserConfig copyWith({String? email, String? name, String? password}) {
     return UserConfig(
       email: email ?? this.email,
       name: name ?? this.name,
@@ -181,8 +180,8 @@ class UserConfig {
   }
 
   Map<String, dynamic> toMap() => {
-        'email': email,
-        'name': name,
-        'password': password,
-      };
+    'email': email,
+    'name': name,
+    'password': password,
+  };
 }

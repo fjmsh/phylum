@@ -48,10 +48,14 @@ class ListApiKeysResponse extends PhylumApiSuccessResponse {
       return ApiKey(
         id: k['id'],
         created: Moment.fromMillisecondsSinceEpoch(k['created'] * 1000),
-        expires: k['expires'] == 0 ? null : Moment.fromMillisecondsSinceEpoch(k['expires'] * 1000),
+        expires: k['expires'] == 0
+            ? null
+            : Moment.fromMillisecondsSinceEpoch(k['expires'] * 1000),
         description: k['description'],
         scopes: (k['scopes'] as List).cast<String>(),
-        lastUsed: _parseLastUsed((k['last_used'] as Map).cast<String, dynamic>()),
+        lastUsed: _parseLastUsed(
+          (k['last_used'] as Map).cast<String, dynamic>(),
+        ),
       );
     }).toList();
     return ListApiKeysResponse._(keys: keys);

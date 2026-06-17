@@ -31,15 +31,13 @@ class SetupAuthFragment extends StatelessWidget {
         TextButtonTheme(
           data: TextButtonThemeData(
             style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24)),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TextButton(
-                onPressed: onPrevPress,
-                child: Text('PREV'),
-              ),
+              TextButton(onPressed: onPrevPress, child: Text('PREV')),
               TextButton(
                 onPressed: () => validateAndNext(context),
                 child: Text('NEXT'),
@@ -53,8 +51,9 @@ class SetupAuthFragment extends StatelessWidget {
 
   Widget buildContents(BuildContext context) {
     final config = context.watch<AuthConfig>();
-    final mailEnabled =
-        context.select<MailConfig, bool>((config) => config.enabled);
+    final mailEnabled = context.select<MailConfig, bool>(
+      (config) => config.enabled,
+    );
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -66,16 +65,18 @@ class SetupAuthFragment extends StatelessWidget {
           secondary: Icon(Icons.email),
           value: mailEnabled && config.passwordlessLoginEnabled,
           onChanged: mailEnabled
-              ? (value) => context
-                  .read<AuthController>()
-                  .passwordlessLoginEnabled = value
+              ? (value) =>
+                    context.read<AuthController>().passwordlessLoginEnabled =
+                        value
               : null,
         ),
         const SizedBox(height: 18),
         ListTile(
           dense: true,
-          title: Text('Password Auth',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            'Password Auth',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         SwitchListTile(
           title: Text('Enable Password Auth'),
@@ -91,12 +92,16 @@ class SetupAuthFragment extends StatelessWidget {
         const SizedBox(height: 18),
         ListTile(
           dense: true,
-          title: Text('OpenID Login',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            'OpenID Login',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           trailing: IconButton(
             onPressed: () async {
-              final openIDConfig =
-                  await OidcDialog.show(context, OpenIDConfig.empty());
+              final openIDConfig = await OidcDialog.show(
+                context,
+                OpenIDConfig.empty(),
+              );
               if (openIDConfig == null || !context.mounted) return;
               context.read<AuthController>().addOpenIDConfig(openIDConfig);
             },
@@ -104,31 +109,33 @@ class SetupAuthFragment extends StatelessWidget {
             tooltip: 'Add OpenID Login Provider',
           ),
         ),
-        ...config.openIdConfigs.mapIndexed((i, cfg) => ListTile(
-              title: Text(cfg.name),
-              subtitle: Text(cfg.issuerUrl),
-              onTap: () async {
-                final openIDConfig = await OidcDialog.show(context, cfg);
-                if (openIDConfig == null || !context.mounted) return;
-                context
-                    .read<AuthController>()
-                    .replaceOpenIDConfig(cfg, openIDConfig);
-              },
-              trailing: IconButton(
-                  onPressed: () =>
-                      context.read<AuthController>().removeOpenIDConfig(cfg),
-                  icon: Icon(Icons.delete)),
-            )),
+        ...config.openIdConfigs.mapIndexed(
+          (i, cfg) => ListTile(
+            title: Text(cfg.name),
+            subtitle: Text(cfg.issuerUrl),
+            onTap: () async {
+              final openIDConfig = await OidcDialog.show(context, cfg);
+              if (openIDConfig == null || !context.mounted) return;
+              context.read<AuthController>().replaceOpenIDConfig(
+                cfg,
+                openIDConfig,
+              );
+            },
+            trailing: IconButton(
+              onPressed: () =>
+                  context.read<AuthController>().removeOpenIDConfig(cfg),
+              icon: Icon(Icons.delete),
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget buildPasswordAuthSection(
-    BuildContext context,
-    PasswordConfig config,
-  ) {
-    final mailEnabled =
-        context.select<MailConfig, bool>((config) => config.enabled);
+  Widget buildPasswordAuthSection(BuildContext context, PasswordConfig config) {
+    final mailEnabled = context.select<MailConfig, bool>(
+      (config) => config.enabled,
+    );
     return Column(
       children: [
         ListTile(
@@ -146,8 +153,10 @@ class SetupAuthFragment extends StatelessWidget {
 
             config = config.copyWith(backend: backend);
             if (backend == PasswordBackend.ldap) {
-              final ldapConfig =
-                  await LdapConfigDialog.show(context, config.ldapConfig);
+              final ldapConfig = await LdapConfigDialog.show(
+                context,
+                config.ldapConfig,
+              );
               if (ldapConfig == null || !context.mounted) return;
               config = config.copyWith(ldapConfig: ldapConfig);
             }
@@ -167,37 +176,41 @@ class SetupAuthFragment extends StatelessWidget {
                 instanceUrl,
               );
               if (cryptConfig == null || !context.mounted) return;
-              context.read<AuthController>().passwordConfig =
-                  config.copyWith(cryptConfig: cryptConfig);
+              context.read<AuthController>().passwordConfig = config.copyWith(
+                cryptConfig: cryptConfig,
+              );
             },
           )
         else if (config.backend == PasswordBackend.ldap)
           ListTile(
-              title: Text('LDAP Configuration'),
-              subtitle: Text(config.ldapConfig.toString()),
-              leading: Icon(Icons.key),
-              onTap: () async {
-                final ldapConfig =
-                    await LdapConfigDialog.show(context, config.ldapConfig);
-                if (ldapConfig == null || !context.mounted) return;
-                config = config.copyWith(ldapConfig: ldapConfig);
-              }),
+            title: Text('LDAP Configuration'),
+            subtitle: Text(config.ldapConfig.toString()),
+            leading: Icon(Icons.key),
+            onTap: () async {
+              final ldapConfig = await LdapConfigDialog.show(
+                context,
+                config.ldapConfig,
+              );
+              if (ldapConfig == null || !context.mounted) return;
+              config = config.copyWith(ldapConfig: ldapConfig);
+            },
+          ),
         SwitchListTile(
           title: Text('Password Reset'),
           subtitle: !mailEnabled
               ? const Text('Requires Email')
               : config.backend != PasswordBackend.crypt
-                  ? const Text('Only supported for DB backend')
-                  : null,
+              ? const Text('Only supported for DB backend')
+              : null,
           secondary: Icon(Icons.refresh),
           value: mailEnabled && config.backend == PasswordBackend.crypt
               ? config.resetEnabled
               : false,
           onChanged: mailEnabled && config.backend == PasswordBackend.crypt
               ? (value) => context.read<AuthController>().passwordConfig =
-                  config.copyWith(resetEnabled: value)
+                    config.copyWith(resetEnabled: value)
               : null,
-        )
+        ),
       ],
     );
   }
@@ -208,8 +221,10 @@ class SetupAuthFragment extends StatelessWidget {
     if (!config.passwordLoginEnabled &&
         !config.passwordlessLoginEnabled &&
         config.openIdConfigs.isEmpty) {
-      showAlertDialog(context,
-          message: 'You must set up at least 1 login method');
+      showAlertDialog(
+        context,
+        message: 'You must set up at least 1 login method',
+      );
       return;
     }
     onNextPress();

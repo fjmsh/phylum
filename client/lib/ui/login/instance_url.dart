@@ -75,32 +75,32 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
           )
         else
           ValueListenableBuilder(
-              valueListenable: _instanceUrlController,
-              builder: (_, instanceUrl, __) {
-                final uri = Uri.tryParse(instanceUrl.text);
-                final uriValid =
-                    uri != null && uri.hasScheme && uri.hasAuthority;
-                return ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                  label: Text(connecting ? 'Getting Configuration' : 'Login'),
-                  icon: connecting
-                      ? SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: Center(
-                              child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          )),
-                        )
-                      : Icon(Icons.arrow_forward),
-                  iconAlignment: IconAlignment.end,
-                  onPressed:
-                      connecting || !uriValid ? null : () => connect(context),
-                );
-              }),
+            valueListenable: _instanceUrlController,
+            builder: (_, instanceUrl, __) {
+              final uri = Uri.tryParse(instanceUrl.text);
+              final uriValid = uri != null && uri.hasScheme && uri.hasAuthority;
+              return ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                ),
+                label: Text(connecting ? 'Getting Configuration' : 'Login'),
+                icon: connecting
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : Icon(Icons.arrow_forward),
+                iconAlignment: IconAlignment.end,
+                onPressed: connecting || !uriValid
+                    ? null
+                    : () => connect(context),
+              );
+            },
+          ),
       ],
     );
   }
@@ -116,12 +116,14 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
       final info = await findInfo(uri);
       if (!context.mounted) return;
       if (info == null) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('No server found at $uri')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('No server found at $uri')));
       } else {
         if (info.needsSetup) {
           final delegate = context.read<PhylumRouterDelegate>();
-          final confirm = await showAlertDialog(
+          final confirm =
+              await showAlertDialog(
                 context,
                 title: 'Configure Server?',
                 message: 'The server at $uri is needs to be set up.',
@@ -137,8 +139,11 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
       }
     } catch (e) {
       if (context.mounted) {
-        showAlertDialog(context,
-            title: 'Error getting server info', message: e.toString());
+        showAlertDialog(
+          context,
+          title: 'Error getting server info',
+          message: e.toString(),
+        );
       }
     } finally {
       setState(() {

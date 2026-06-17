@@ -18,98 +18,116 @@ class PathView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final route =
-        context.select<ExplorerState, ExplorerRoute>((state) => state.route);
+    final route = context.select<ExplorerState, ExplorerRoute>(
+      (state) => state.route,
+    );
     final account = context.read<PhylumAccount>();
     final folderId = route.folderId(account);
     if (folderId != null) {
       return StreamBuilder(
-          stream: account.db.watchParents(folderId),
-          initialData: <ParentsResult>[
-            ParentsResult(id: folderId, name: 'Folder', userPermission: 0)
-          ],
-          builder: (context, snapshot) {
-            final path = <PathInfo>[];
-            DateTime? deleted;
-            for (int i = snapshot.data!.length - 1; i >= 0; i--) {
-              final entry = snapshot.data![i];
-              final permission =
-                  entry.userPermission | account.user.filesPermissions;
-              if (permission != 0) {
-                if (entry.id == account.user.home) {
-                  path.add(PathInfo(
-                      title: 'My Files',
-                      dropTargetId: entry.id,
-                      target: ExplorerRouteHome()));
-                } else {
-                  if (path.isEmpty) {
-                    path.add(PathInfo(
-                        title: 'Shared',
-                        dropTargetId: null,
-                        target: const ExplorerRouteShared()));
-                  }
-                  if (deleted != entry.deleted) {
-                    deleted = entry.deleted;
-                    path.clear();
-                    path.add(PathInfo(
-                        title: 'Trash',
-                        dropTargetId: null,
-                        target: const ExplorerRouteTrash()));
-                  }
-                  path.add(PathInfo(
+        stream: account.db.watchParents(folderId),
+        initialData: <ParentsResult>[
+          ParentsResult(id: folderId, name: 'Folder', userPermission: 0),
+        ],
+        builder: (context, snapshot) {
+          final path = <PathInfo>[];
+          DateTime? deleted;
+          for (int i = snapshot.data!.length - 1; i >= 0; i--) {
+            final entry = snapshot.data![i];
+            final permission =
+                entry.userPermission | account.user.filesPermissions;
+            if (permission != 0) {
+              if (entry.id == account.user.home) {
+                path.add(
+                  PathInfo(
+                    title: 'My Files',
+                    dropTargetId: entry.id,
+                    target: ExplorerRouteHome(),
+                  ),
+                );
+              } else {
+                if (path.isEmpty) {
+                  path.add(
+                    PathInfo(
+                      title: 'Shared',
+                      dropTargetId: null,
+                      target: const ExplorerRouteShared(),
+                    ),
+                  );
+                }
+                if (deleted != entry.deleted) {
+                  deleted = entry.deleted;
+                  path.clear();
+                  path.add(
+                    PathInfo(
+                      title: 'Trash',
+                      dropTargetId: null,
+                      target: const ExplorerRouteTrash(),
+                    ),
+                  );
+                }
+                path.add(
+                  PathInfo(
                     title: entry.name,
                     dropTargetId: permission & permissionSetReadWrite == 0
                         ? null
                         : entry.id,
                     target: ExplorerRouteFolder(folderId: entry.id),
-                  ));
-                }
+                  ),
+                );
               }
             }
-            if (path.isEmpty) {
-              path.add(const PathInfo(
-                  title: 'Folder',
-                  dropTargetId: null,
-                  target: null,
-                  last: true));
-            } else {
-              path[path.length - 1] = PathInfo(
-                title: path.last.title,
+          }
+          if (path.isEmpty) {
+            path.add(
+              const PathInfo(
+                title: 'Folder',
                 dropTargetId: null,
                 target: null,
                 last: true,
-              );
-            }
-            return Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: small
-                    ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
-                    : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  reverse: true,
-                  child: Row(
-                    children: path
-                        .map((info) => PathItem(info, small: small))
-                        .toList(growable: false),
-                  ),
-                ),
               ),
             );
-          });
+          } else {
+            path[path.length - 1] = PathInfo(
+              title: path.last.title,
+              dropTargetId: null,
+              target: null,
+              last: true,
+            );
+          }
+          return Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: small
+                  ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+                  : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                reverse: true,
+                child: Row(
+                  children: path
+                      .map((info) => PathItem(info, small: small))
+                      .toList(growable: false),
+                ),
+              ),
+            ),
+          );
+        },
+      );
     }
     final info = PathInfo(
-        title: route.title, dropTargetId: null, target: null, last: true);
+      title: route.title,
+      dropTargetId: null,
+      target: null,
+      last: true,
+    );
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
         padding: small
             ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
             : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: [PathItem(info, small: small)],
-        ),
+        child: Row(children: [PathItem(info, small: small)]),
       ),
     );
   }
@@ -160,8 +178,9 @@ class PathItem extends StatelessWidget {
 
   Widget buildCard(BuildContext context, bool dropTargetActive) {
     final theme = Theme.of(context);
-    final textStyle =
-        small ? theme.textTheme.bodyMedium! : theme.textTheme.bodyLarge!;
+    final textStyle = small
+        ? theme.textTheme.bodyMedium!
+        : theme.textTheme.bodyLarge!;
     final color = info.target == null
         ? theme.colorScheme.primary
         : theme.colorScheme.onSurfaceVariant;
@@ -182,7 +201,7 @@ class PathItem extends StatelessWidget {
         onTap: info.target == null
             ? null
             : () =>
-                Actions.maybeInvoke(context, NavIntent(target: info.target!)),
+                  Actions.maybeInvoke(context, NavIntent(target: info.target!)),
         child: Padding(
           padding: small
               ? const EdgeInsets.symmetric(horizontal: 6, vertical: 4)

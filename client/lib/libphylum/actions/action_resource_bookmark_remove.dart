@@ -22,9 +22,7 @@ class ResourceBookmarkRemoveAction extends ResourceAction with JsonApiAction {
   String get endpoint => '/api/v1/user/bookmarks/remove';
 
   @override
-  Map<String, dynamic>? get requestBody => {
-        'id': resourceId,
-      };
+  Map<String, dynamic>? get requestBody => {'id': resourceId};
 
   @override
   List<LocalChange> get localChanges => [RemoveBookmarkChange(resourceId)];
@@ -34,13 +32,16 @@ class ResourceBookmarkRemoveAction extends ResourceAction with JsonApiAction {
 
   @override
   Map<String, dynamic> get props => {
-        'resourceId': resourceId,
-        'bookmarkName': bookmarkName,
-      };
+    'resourceId': resourceId,
+    'bookmarkName': bookmarkName,
+  };
 
   final String bookmarkName;
 
-  ResourceBookmarkRemoveAction({required super.resourceId, required this.bookmarkName});
+  ResourceBookmarkRemoveAction({
+    required super.resourceId,
+    required this.bookmarkName,
+  });
 
   factory ResourceBookmarkRemoveAction.fromMap(Map<String, dynamic> map) {
     return ResourceBookmarkRemoveAction(

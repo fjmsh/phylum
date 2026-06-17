@@ -43,37 +43,64 @@ class _FolderListViewState extends State<FolderListView> {
 
   @override
   Widget build(BuildContext context) {
-    final resources = context.select<ExplorerState, List<Resource>>((state) => state.resources);
+    final resources = context.select<ExplorerState, List<Resource>>(
+      (state) => state.resources,
+    );
     return Actions(
       actions: {
-        FocusUpIntent: CallbackAction<FocusUpIntent>(onInvoke: (i) {
-          final index = context.read<ExplorerController>().updateSelection((i) => i - 1, i.mode, true);
-          ensureVisible(index);
-          return null;
-        }),
-        FocusDownIntent: CallbackAction<FocusDownIntent>(onInvoke: (i) {
-          final index = context.read<ExplorerController>().updateSelection((i) => i + 1, i.mode, true);
-          ensureVisible(index);
-          return null;
-        }),
-        FocusFirstIntent: CallbackAction<FocusFirstIntent>(onInvoke: (i) {
-          final index = context.read<ExplorerController>().updateSelection((i) => 0, i.mode, true);
-          ensureVisible(index);
-          return null;
-        }),
-        FocusLastIntent: CallbackAction<FocusLastIntent>(onInvoke: (i) {
-          final index = context.read<ExplorerController>().updateSelection((i) => 1 << 31, i.mode, true);
-          ensureVisible(index);
-          return null;
-        }),
+        FocusUpIntent: CallbackAction<FocusUpIntent>(
+          onInvoke: (i) {
+            final index = context.read<ExplorerController>().updateSelection(
+              (i) => i - 1,
+              i.mode,
+              true,
+            );
+            ensureVisible(index);
+            return null;
+          },
+        ),
+        FocusDownIntent: CallbackAction<FocusDownIntent>(
+          onInvoke: (i) {
+            final index = context.read<ExplorerController>().updateSelection(
+              (i) => i + 1,
+              i.mode,
+              true,
+            );
+            ensureVisible(index);
+            return null;
+          },
+        ),
+        FocusFirstIntent: CallbackAction<FocusFirstIntent>(
+          onInvoke: (i) {
+            final index = context.read<ExplorerController>().updateSelection(
+              (i) => 0,
+              i.mode,
+              true,
+            );
+            ensureVisible(index);
+            return null;
+          },
+        ),
+        FocusLastIntent: CallbackAction<FocusLastIntent>(
+          onInvoke: (i) {
+            final index = context.read<ExplorerController>().updateSelection(
+              (i) => 1 << 31,
+              i.mode,
+              true,
+            );
+            ensureVisible(index);
+            return null;
+          },
+        ),
       },
       child: Focus(
         autofocus: true,
         descendantsAreFocusable: false,
-        child: LayoutBuilder(builder: (context, constraints) {
-          _rowHeight ??= ResourceDetailsRow.calculateHeight(context);
-          _viewportHeight = constraints.maxHeight;
-          return ListView.builder(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            _rowHeight ??= ResourceDetailsRow.calculateHeight(context);
+            _viewportHeight = constraints.maxHeight;
+            return ListView.builder(
               itemCount: resources.length,
               itemExtent: _rowHeight,
               controller: _scrollController,
@@ -82,14 +109,15 @@ class _FolderListViewState extends State<FolderListView> {
                 return (resource.dir)
                     ? ResourceDragTarget(
                         resourceId: resource.id,
-                        buildItem: (context, dropTargetActive) => ResourceItemGestureHandler(
-                          index: index,
-                          resource: resource,
-                          buildItem: () => ResourceDetailsRow(
-                            resource: resource,
-                            dropTargetActive: dropTargetActive,
-                          ),
-                        ),
+                        buildItem: (context, dropTargetActive) =>
+                            ResourceItemGestureHandler(
+                              index: index,
+                              resource: resource,
+                              buildItem: () => ResourceDetailsRow(
+                                resource: resource,
+                                dropTargetActive: dropTargetActive,
+                              ),
+                            ),
                       )
                     : ResourceItemGestureHandler(
                         index: index,
@@ -99,8 +127,10 @@ class _FolderListViewState extends State<FolderListView> {
                           dropTargetActive: false,
                         ),
                       );
-              });
-        }),
+              },
+            );
+          },
+        ),
       ),
     );
   }

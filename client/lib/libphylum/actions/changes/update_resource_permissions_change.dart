@@ -40,9 +40,6 @@ class UpdateResourcePermissionsChange extends LocalChange<Resource> {
       p[userId] = permission;
     }
     final serialized = p.isEmpty ? null : json.encode(p);
-    return data.copyWith(
-      grants: Value(serialized),
-      modified: Value(timestamp),
-    );
+    return data.copyWith(grants: Value(serialized), modified: Value(timestamp));
   }
 }

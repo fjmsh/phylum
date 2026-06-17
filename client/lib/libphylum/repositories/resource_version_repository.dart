@@ -8,20 +8,26 @@ import 'package:phylum/libphylum/phylum_account.dart';
 
 const _remoteBoxName = 'remote_resource_versions';
 
-class ResourceVersionRepository extends Repository<PhylumAccount, ResourceVersion> {
+class ResourceVersionRepository
+    extends Repository<PhylumAccount, ResourceVersion> {
   late final PhylumAccount _account;
   late final LazyBox<ResourceVersion?> _remoteDataBox;
 
   ResourceVersionRepository();
 
   @override
-  Future<Map<String, ResourceVersion?>> initializeAndRestoreRemoteData(PhylumAccount account) async {
+  Future<Map<String, ResourceVersion?>> initializeAndRestoreRemoteData(
+    PhylumAccount account,
+  ) async {
     if (!Hive.isAdapterRegistered(const ResourceVersionAdapter().typeId)) {
       Hive.registerAdapter(const ResourceVersionAdapter());
     }
 
     final box = await account.openBox<ResourceVersion>(_remoteBoxName);
-    final remoteData = Map<String, ResourceVersion?>.fromIterable(box.keys, value: (key) => box.get(key));
+    final remoteData = Map<String, ResourceVersion?>.fromIterable(
+      box.keys,
+      value: (key) => box.get(key),
+    );
     await box.close();
     _account = account;
 
@@ -41,17 +47,24 @@ class ResourceVersionRepository extends Repository<PhylumAccount, ResourceVersio
 
   @override
   Future<ResourceVersion?> load(String objectId) {
-    return (_account.db.resourceVersions.select()..where((o) => o.id.equals(objectId))).getSingleOrNull();
+    return (_account.db.resourceVersions.select()
+          ..where((o) => o.id.equals(objectId)))
+        .getSingleOrNull();
   }
 
   @override
   Future<void> save(String objectId, ResourceVersion data) {
-    return _account.db.resourceVersions.insertOne(data, mode: InsertMode.insertOrReplace);
+    return _account.db.resourceVersions.insertOne(
+      data,
+      mode: InsertMode.insertOrReplace,
+    );
   }
 
   @override
   Future<void> delete(String objectId) {
-    return _account.db.resourceVersions.deleteWhere((o) => o.id.equals(objectId));
+    return _account.db.resourceVersions.deleteWhere(
+      (o) => o.id.equals(objectId),
+    );
   }
 }
 
@@ -70,7 +83,9 @@ class ResourceVersionAdapter implements TypeAdapter<ResourceVersion?> {
 
   @override
   void write(BinaryWriter writer, ResourceVersion? obj) {
-    writer.writeByte(0); // Version marker, in case we need to change something in the future
+    writer.writeByte(
+      0,
+    ); // Version marker, in case we need to change something in the future
     writer.writeString(obj?.toJsonString() ?? '');
   }
 }

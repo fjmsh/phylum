@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-abstract class SetupFragment<E extends SetupFragment<E>> extends StatefulWidget {
+abstract class SetupFragment<E extends SetupFragment<E>>
+    extends StatefulWidget {
   const SetupFragment({super.key});
 
   @override

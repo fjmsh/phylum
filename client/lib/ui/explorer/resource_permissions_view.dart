@@ -16,7 +16,7 @@ class ResourcePermissionsView extends StatefulWidget {
   final String resourceId;
 
   ResourcePermissionsView({required this.resourceId})
-      : super(key: ValueKey(resourceId));
+    : super(key: ValueKey(resourceId));
 
   @override
   State<ResourcePermissionsView> createState() =>
@@ -92,45 +92,54 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
               title: Text(repository.getUserDisplayName(e.key)),
               subtitle: Text(e.value.text),
               trailing: IconButton(
-                  onPressed: () async {
-                    final permission = permissionSetNone;
-                    final user = await (account.db.users.select()
-                          ..where((u) => u.id.equals(e.key)))
-                        .getSingleOrNull();
-                    if (user == null) return;
+                onPressed: () async {
+                  final permission = permissionSetNone;
+                  final user =
+                      await (account.db.users.select()
+                            ..where((u) => u.id.equals(e.key)))
+                          .getSingleOrNull();
+                  if (user == null) return;
 
-                    account.addAction(ResourceShareAction(
+                  account.addAction(
+                    ResourceShareAction(
                       resourceId: widget.resourceId,
                       resourceName: resourceName!,
                       user: user,
                       permission: permission,
-                    ));
-                  },
-                  icon: Icon(Icons.close)),
+                    ),
+                  );
+                },
+                icon: Icon(Icons.close),
+              ),
               onTap: (userPermission! & permissionShare) == 0
                   ? null
                   : () async {
                       final permission = await _showPermissionsPicker(context);
                       if (permission == null || permission == e.value) return;
-                      final user = await (account.db.users.select()
-                            ..where((u) => u.id.equals(e.key)))
-                          .getSingleOrNull();
+                      final user =
+                          await (account.db.users.select()
+                                ..where((u) => u.id.equals(e.key)))
+                              .getSingleOrNull();
                       if (user == null) return;
 
-                      account.addAction(ResourceShareAction(
-                        resourceId: widget.resourceId,
-                        resourceName: resourceName!,
-                        user: user,
-                        permission: permission,
-                      ));
+                      account.addAction(
+                        ResourceShareAction(
+                          resourceId: widget.resourceId,
+                          resourceName: resourceName!,
+                          user: user,
+                          permission: permission,
+                        ),
+                      );
                     },
             ),
           ListTile(
             key: ValueKey('inherited'),
             visualDensity: VisualDensity.compact,
             dense: true,
-            title: const Text('Inherited Permissions',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            title: const Text(
+              'Inherited Permissions',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           for (final e in permissionEntries)
             ListTile(
@@ -146,15 +155,16 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
 
   Future<void> addUser(BuildContext context) async {
     final account = context.read<PhylumAccount>();
-    final allUsers = await (account.db.users.select()
-          ..where((u) => u.id.isNotIn(grants!.keys)))
-        .get();
+    final allUsers =
+        await (account.db.users.select()
+              ..where((u) => u.id.isNotIn(grants!.keys)))
+            .get();
     final users = allUsers.toList(growable: false)
       ..sort((a, b) {
         // TODO: not the most efficient
-        return a.displayName
-            .toLowerCase()
-            .compareTo(b.displayName.toLowerCase());
+        return a.displayName.toLowerCase().compareTo(
+          b.displayName.toLowerCase(),
+        );
       });
     if (!context.mounted) return;
     final user = await showOptionsDialogBuilder(
@@ -163,8 +173,10 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
       (user) => user.displayName.isEmpty
           ? ListTile(
               visualDensity: VisualDensity.adaptivePlatformDensity,
-              title: Text(user.email,
-                  style: TextStyle(fontStyle: FontStyle.italic)),
+              title: Text(
+                user.email,
+                style: TextStyle(fontStyle: FontStyle.italic),
+              ),
             )
           : ListTile(
               visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -179,7 +191,8 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                 final navigator = Navigator.of(context);
                 await inviteUser(context);
                 navigator.pop();
-              })
+              },
+            )
           : null,
       filterList: (u, q) {
         final query = q.toLowerCase();
@@ -191,12 +204,14 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
     if (user == null || !context.mounted) return;
     final permission = await _showPermissionsPicker(context);
     if (permission == null || !context.mounted) return;
-    account.addAction(ResourceShareAction(
-      resourceId: widget.resourceId,
-      resourceName: resourceName!,
-      user: user,
-      permission: permission,
-    ));
+    account.addAction(
+      ResourceShareAction(
+        resourceId: widget.resourceId,
+        resourceName: resourceName!,
+        user: user,
+        permission: permission,
+      ),
+    );
   }
 
   Future<void> inviteUser(BuildContext context) async {
@@ -206,27 +221,27 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
     if (permission == null || !context.mounted) return;
 
     final account = context.read<PhylumAccount>();
-    final user = await account.userRepository
-        .invite(email: userDetails.email, name: userDetails.name);
+    final user = await account.userRepository.invite(
+      email: userDetails.email,
+      name: userDetails.name,
+    );
 
-    await account.addAction(ResourceShareAction(
-      resourceId: widget.resourceId,
-      resourceName: resourceName!,
-      user: user,
-      permission: permission,
-    ));
+    await account.addAction(
+      ResourceShareAction(
+        resourceId: widget.resourceId,
+        resourceName: resourceName!,
+        user: user,
+        permission: permission,
+      ),
+    );
   }
 
   Future<Permission?> _showPermissionsPicker(BuildContext context) {
-    return showOptionsDialog(
-      context,
-      [
-        permissionSetReadOnly,
-        permissionSetReadWrite,
-        permissionSetReadWriteShare,
-      ],
-      (p) => ListTile(leading: Icon(p.icon), title: Text(p.text)),
-    );
+    return showOptionsDialog(context, [
+      permissionSetReadOnly,
+      permissionSetReadWrite,
+      permissionSetReadWriteShare,
+    ], (p) => ListTile(leading: Icon(p.icon), title: Text(p.text)));
   }
 }
 

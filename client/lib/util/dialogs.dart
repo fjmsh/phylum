@@ -21,11 +21,7 @@ Future showProgressDialog(
               child: CircularProgressIndicator(),
             ),
             if (message != null)
-              Text(
-                message,
-                softWrap: true,
-                overflow: TextOverflow.fade,
-              ),
+              Text(message, softWrap: true, overflow: TextOverflow.fade),
           ],
         ),
       ),
@@ -51,17 +47,15 @@ Future showProgresIndicatorDialog(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             if (message != null)
-              Text(
-                message,
-                softWrap: true,
-                overflow: TextOverflow.fade,
-              ),
+              Text(message, softWrap: true, overflow: TextOverflow.fade),
             Padding(
               padding: const EdgeInsets.only(right: 16),
               child: StreamBuilder(
-                  stream: progress,
-                  initialData: null,
-                  builder: (context, snapshot) => LinearProgressIndicator(value: snapshot.data)),
+                stream: progress,
+                initialData: null,
+                builder: (context, snapshot) =>
+                    LinearProgressIndicator(value: snapshot.data),
+              ),
             ),
           ],
         ),
@@ -91,16 +85,16 @@ Future<bool?> showAlertDialog(
           ? null
           : ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 360),
-              child: contents ??
-                  Text(
-                    message!,
-                    softWrap: true,
-                  ),
+              child: contents ?? Text(message!, softWrap: true),
             ),
       actions: <Widget>[
         if (negativeText != null)
           TextButton(
-            style: colorNegative ? TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error) : null,
+            style: colorNegative
+                ? TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  )
+                : null,
             child: Text(negativeText),
             onPressed: () => Navigator.of(context).pop(false),
           ),
@@ -129,50 +123,57 @@ Future<String?> showInputDialog(
   bool Function(String)? validate,
   List<TextInputFormatter>? formatters,
 }) {
-  TextEditingController controller = TextEditingController()..text = (preset ?? '');
+  TextEditingController controller = TextEditingController()
+    ..text = (preset ?? '');
   return showDialog(
     context: context,
     barrierDismissible: barrierDismissable,
-    builder: (context) => StatefulBuilder(builder: (context, setState) {
-      return AlertDialog(
-        title: (title == null) ? null : Text(title),
-        content: SizedBox(
-          width: 360,
-          child: TextField(
-            decoration: InputDecoration(
-              labelText: labelText,
-              hintText: hintText,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) {
+        return AlertDialog(
+          title: (title == null) ? null : Text(title),
+          content: SizedBox(
+            width: 360,
+            child: TextField(
+              decoration: InputDecoration(
+                labelText: labelText,
+                hintText: hintText,
+              ),
+              autofocus: true,
+              controller: controller,
+              textCapitalization: capitalization,
+              autocorrect: autocorrect,
+              minLines: minLines,
+              maxLines: maxLines,
+              keyboardType: keyboardType,
+              inputFormatters: formatters,
+              textInputAction: TextInputAction.go,
+              onSubmitted: (value) => (validate == null || validate(value))
+                  ? Navigator.of(context).pop(value)
+                  : null,
+              onChanged: (value) {
+                setState(() {});
+              },
             ),
-            autofocus: true,
-            controller: controller,
-            textCapitalization: capitalization,
-            autocorrect: autocorrect,
-            minLines: minLines,
-            maxLines: maxLines,
-            keyboardType: keyboardType,
-            inputFormatters: formatters,
-            textInputAction: TextInputAction.go,
-            onSubmitted: (value) => (validate == null || validate(value)) ? Navigator.of(context).pop(value) : null,
-            onChanged: (value) {
-              setState(() {});
-            },
           ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
-            child: const Text('Cancel'),
-            onPressed: () => Navigator.of(context).pop(null),
-          ),
-          ElevatedButton(
-            onPressed: (validate == null || validate(controller.text))
-                ? () => Navigator.of(context).pop(controller.text)
-                : null,
-            child: const Text('OK'),
-          )
-        ],
-      );
-    }),
+          actions: <Widget>[
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(null),
+            ),
+            ElevatedButton(
+              onPressed: (validate == null || validate(controller.text))
+                  ? () => Navigator.of(context).pop(controller.text)
+                  : null,
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    ),
   );
 }
 
@@ -189,36 +190,40 @@ Future<int?> showIntSliderDialog(
   return showDialog(
     context: context,
     barrierDismissible: barrierDismissable,
-    builder: (context) => StatefulBuilder(builder: (context, setState) {
-      return AlertDialog(
-        title: (title == null) ? null : Text(title),
-        content: SizedBox(
-          width: 360,
-          height: 120,
-          child: Slider(
-            label: value.toString(),
-            value: value.toDouble(),
-            min: min.toDouble(),
-            max: max.toDouble(),
-            divisions: divisions,
-            onChanged: (double v) {
-              setState(() => value = v.toInt());
-            },
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) {
+        return AlertDialog(
+          title: (title == null) ? null : Text(title),
+          content: SizedBox(
+            width: 360,
+            height: 120,
+            child: Slider(
+              label: value.toString(),
+              value: value.toDouble(),
+              min: min.toDouble(),
+              max: max.toDouble(),
+              divisions: divisions,
+              onChanged: (double v) {
+                setState(() => value = v.toInt());
+              },
+            ),
           ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
-            child: const Text('Cancel'),
-            onPressed: () => Navigator.of(context).pop(null),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(value),
-            child: const Text('OK'),
-          )
-        ],
-      );
-    }),
+          actions: <Widget>[
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(null),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(value),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    ),
   );
 }
 
@@ -242,41 +247,48 @@ Future<T?> showOptionsDialogBuilder<T>(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-          scrollable: true,
-          title: (titleText == null) ? null : Text(titleText),
-          content: SizedBox(
-            width: 360,
-            height: 600,
-            child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: (results.isEmpty ? 1 : results.length) +
-                    (filterList == null ? 0 : 1) +
-                    (buildLastItem == null ? 0 : 1),
-                itemBuilder: (context, index) {
-                  if (filterList != null) {
-                    index--;
-                  }
-                  if (index < 0) {
-                    return TextField(
-                        decoration: const InputDecoration(hintText: 'Type to filter...'),
-                        autofocus: true,
-                        onChanged: (value) {
-                          setState(() {
-                            results = filterList!(options, value);
-                          });
-                        });
-                  }
-                  if (index >= results.length) {
-                    return buildLastItem?.call(context) ?? const ListTile(title: Text('No Matches'));
-                  }
-                  return InkWell(
-                    child: buildItem(results[index]),
-                    onTap: () {
-                      Navigator.of(context).pop(results[index]);
-                    },
-                  );
-                }),
-          )),
+        scrollable: true,
+        title: (titleText == null) ? null : Text(titleText),
+        content: SizedBox(
+          width: 360,
+          height: 600,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount:
+                (results.isEmpty ? 1 : results.length) +
+                (filterList == null ? 0 : 1) +
+                (buildLastItem == null ? 0 : 1),
+            itemBuilder: (context, index) {
+              if (filterList != null) {
+                index--;
+              }
+              if (index < 0) {
+                return TextField(
+                  decoration: const InputDecoration(
+                    hintText: 'Type to filter...',
+                  ),
+                  autofocus: true,
+                  onChanged: (value) {
+                    setState(() {
+                      results = filterList!(options, value);
+                    });
+                  },
+                );
+              }
+              if (index >= results.length) {
+                return buildLastItem?.call(context) ??
+                    const ListTile(title: Text('No Matches'));
+              }
+              return InkWell(
+                child: buildItem(results[index]),
+                onTap: () {
+                  Navigator.of(context).pop(results[index]);
+                },
+              );
+            },
+          ),
+        ),
+      ),
     ),
   );
 }
@@ -291,24 +303,25 @@ Future<T?> showOptionsDialog<T>(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-          scrollable: true,
-          title: (titleText == null) ? null : Text(titleText),
-          content: SizedBox(
-            width: 360,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final option in options)
-                  InkWell(
-                    child: buildItem(option),
-                    onTap: () {
-                      Navigator.of(context).pop(option);
-                    },
-                  ),
-              ],
-            ),
-          )),
+        scrollable: true,
+        title: (titleText == null) ? null : Text(titleText),
+        content: SizedBox(
+          width: 360,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final option in options)
+                InkWell(
+                  child: buildItem(option),
+                  onTap: () {
+                    Navigator.of(context).pop(option);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
     ),
   );
 }

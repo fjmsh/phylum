@@ -19,31 +19,27 @@ class ResourceVersionDeleteAction extends ResourceAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-        'path': '$resourceId:',
-        'version_id': versionId,
-      };
+    'path': '$resourceId:',
+    'version_id': versionId,
+  };
 
   @override
   List<LocalChange> get localChanges => [
-        UpdateResourceVersionDeletedChange(
-          objectId: resourceId,
-        ),
-        UpdateResourceModifiedChange(
-          objectId: resourceId,
-          timestamp: timestamp,
-        ),
-      ];
+    UpdateResourceVersionDeletedChange(objectId: resourceId),
+    UpdateResourceModifiedChange(objectId: resourceId, timestamp: timestamp),
+  ];
 
   @override
-  String get description => "Deleting version ${versionId.substring(0, 12)} of $resourceName";
+  String get description =>
+      "Deleting version ${versionId.substring(0, 12)} of $resourceName";
 
   @override
   Map<String, dynamic> get props => {
-        'resourceId': resourceId,
-        'versionId': versionId,
-        'resourceName': resourceName,
-        'timestamp': timestamp.millisecondsSinceEpoch,
-      };
+    'resourceId': resourceId,
+    'versionId': versionId,
+    'resourceName': resourceName,
+    'timestamp': timestamp.millisecondsSinceEpoch,
+  };
 
   final String versionId;
   final String resourceName;
@@ -56,15 +52,13 @@ class ResourceVersionDeleteAction extends ResourceAction with JsonApiAction {
     required this.versionId,
   });
 
-  ResourceVersionDeleteAction({
-    required Resource r,
-    required String versionId,
-  }) : this._(
-          resourceId: r.id,
-          versionId: versionId,
-          resourceName: r.name,
-          timestamp: DateTime.now(),
-        );
+  ResourceVersionDeleteAction({required Resource r, required String versionId})
+    : this._(
+        resourceId: r.id,
+        versionId: versionId,
+        resourceName: r.name,
+        timestamp: DateTime.now(),
+      );
 
   factory ResourceVersionDeleteAction.fromMap(Map<String, dynamic> map) {
     return ResourceVersionDeleteAction._(
@@ -76,5 +70,6 @@ class ResourceVersionDeleteAction extends ResourceAction with JsonApiAction {
   }
 
   @override
-  bool dependsOn(PhylumAction action) => action is ResourceAction && action.resourceId == resourceId;
+  bool dependsOn(PhylumAction action) =>
+      action is ResourceAction && action.resourceId == resourceId;
 }

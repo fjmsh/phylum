@@ -13,16 +13,16 @@ const UserPermission userPermissionSU = '*';
 
 extension PermissionName on UserPermission {
   String get readableName => switch (this) {
-        userPermissionSU => 'SysAdmin',
-        userPermissionUsersCreateInvite => 'Invite Users',
-        userPermissionFilesAll => 'All Files',
-        userPermissionFilesRead => 'Read All Files',
-        userPermissionFilesWrite => 'Write All Files',
-        userPermissionFilesShare => 'Share All Files',
-        userPermissionUsersAll => 'Users',
-        userPermissionUsersCreate => 'Create Users',
-        userPermissionUsersList => 'List Users',
-        userPermissionUsersPermissions => 'Update Permissions',
-        _ => this,
-      };
+    userPermissionSU => 'SysAdmin',
+    userPermissionUsersCreateInvite => 'Invite Users',
+    userPermissionFilesAll => 'All Files',
+    userPermissionFilesRead => 'Read All Files',
+    userPermissionFilesWrite => 'Write All Files',
+    userPermissionFilesShare => 'Share All Files',
+    userPermissionUsersAll => 'Users',
+    userPermissionUsersCreate => 'Create Users',
+    userPermissionUsersList => 'List Users',
+    userPermissionUsersPermissions => 'Update Permissions',
+    _ => this,
+  };
 }

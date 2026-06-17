@@ -37,19 +37,24 @@ class NavList extends StatelessWidget {
                           for (final action in getCreateActions(context))
                             if (action == null)
                               const PopupMenuItem(
-                                  enabled: false, height: 16, child: Divider())
+                                enabled: false,
+                                height: 16,
+                                child: Divider(),
+                              )
                             else
                               PopupMenuItem(
-                                  child: Text(action.descripiton),
-                                  onTap: () => Actions.maybeInvoke(
-                                      context, action.intent)),
+                                child: Text(action.descripiton),
+                                onTap: () =>
+                                    Actions.maybeInvoke(context, action.intent),
+                              ),
                         ],
                         child: FloatingActionButton.extended(
-                            icon: const Icon(Icons.add),
-                            label: const Text('New'),
-                            elevation: 0,
-                            enableFeedback: false,
-                            onPressed: null),
+                          icon: const Icon(Icons.add),
+                          label: const Text('New'),
+                          elevation: 0,
+                          enableFeedback: false,
+                          onPressed: null,
+                        ),
                       ),
                     ),
                   ListTile(
@@ -58,7 +63,9 @@ class NavList extends StatelessWidget {
                     onTap: () {
                       Scaffold.maybeOf(context)?.closeDrawer();
                       Actions.maybeInvoke(
-                          context, NavIntent(target: ExplorerRouteHome()));
+                        context,
+                        NavIntent(target: ExplorerRouteHome()),
+                      );
                     },
                   ),
                   ListTile(
@@ -66,9 +73,9 @@ class NavList extends StatelessWidget {
                     title: const Text('Recents'),
                     onTap: () {
                       Scaffold.maybeOf(context)?.closeDrawer();
-                      context
-                          .read<PhylumRouterDelegate>()
-                          .go(ExplorerRouteRecents());
+                      context.read<PhylumRouterDelegate>().go(
+                        ExplorerRouteRecents(),
+                      );
                     },
                   ),
                   ListTile(
@@ -76,9 +83,9 @@ class NavList extends StatelessWidget {
                     title: const Text('Shared With Me'),
                     onTap: () {
                       Scaffold.maybeOf(context)?.closeDrawer();
-                      context
-                          .read<PhylumRouterDelegate>()
-                          .go(ExplorerRouteShared());
+                      context.read<PhylumRouterDelegate>().go(
+                        ExplorerRouteShared(),
+                      );
                     },
                   ),
                   const BookmarkList(),
@@ -87,9 +94,9 @@ class NavList extends StatelessWidget {
                     title: const Text('Trash'),
                     onTap: () {
                       Scaffold.maybeOf(context)?.closeDrawer();
-                      context
-                          .read<PhylumRouterDelegate>()
-                          .go(ExplorerRouteTrash());
+                      context.read<PhylumRouterDelegate>().go(
+                        ExplorerRouteTrash(),
+                      );
                     },
                   ),
                   const Divider(),
@@ -97,9 +104,11 @@ class NavList extends StatelessWidget {
                     leading: const Icon(Icons.settings),
                     title: const Text('Settings'),
                     onTap: () async {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) => SettingsPage.create(account),
-                      ));
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => SettingsPage.create(account),
+                        ),
+                      );
                     },
                   ),
                   if (!kIsWeb) const DownloadButton(),

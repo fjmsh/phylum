@@ -86,37 +86,39 @@ class _EmailLoginState extends State<EmailLogin> {
               : (value) => value.isEmpty ? null : _requestMagicLink(context),
         ),
         ValueListenableBuilder(
-            valueListenable: _emailController,
-            builder: (_, email, __) => ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                  label: Text(_requestInFlight
-                      ? 'Requesting Login Link'
-                      : 'Request Login Link'),
-                  icon: _requestInFlight
-                      ? SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: Center(
-                              child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          )),
-                        )
-                      : Icon(Icons.email),
-                  onPressed: _requestInFlight || email.text.isEmpty
-                      ? null
-                      : () => _requestMagicLink(context),
-                )),
+          valueListenable: _emailController,
+          builder: (_, email, __) => ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            ),
+            label: Text(
+              _requestInFlight ? 'Requesting Login Link' : 'Request Login Link',
+            ),
+            icon: _requestInFlight
+                ? SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : Icon(Icons.email),
+            onPressed: _requestInFlight || email.text.isEmpty
+                ? null
+                : () => _requestMagicLink(context),
+          ),
+        ),
         if (authConfig?.password != false)
           Center(
-            child: Text.rich(TextSpan(
-              text: 'Enter Password',
-              style: TextStyle(color: Theme.of(context).colorScheme.primary),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () => setState(() => _forcePassword = true),
-            )),
+            child: Text.rich(
+              TextSpan(
+                text: 'Enter Password',
+                style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () => setState(() => _forcePassword = true),
+              ),
+            ),
           ),
       ],
     );
@@ -154,46 +156,51 @@ class _EmailLoginState extends State<EmailLogin> {
                 : (value) => value.isEmpty ? null : _performLogin(context),
           ),
           ValueListenableBuilder(
-              valueListenable: _emailController,
-              builder: (_, email, __) => ValueListenableBuilder(
-                    valueListenable: _passwordController,
-                    builder: (_, password, __) => ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor:
-                            Theme.of(context).colorScheme.onPrimary,
-                      ),
-                      label: Text(_requestInFlight ? 'Logging In' : 'Log In'),
-                      icon: _requestInFlight
-                          ? SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: Center(
-                                  child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              )),
-                            )
-                          : Icon(Icons.login),
-                      onPressed: _requestInFlight ||
-                              email.text.isEmpty ||
-                              password.text.isEmpty
-                          ? null
-                          : () => _performLogin(context),
-                    ),
-                  )),
+            valueListenable: _emailController,
+            builder: (_, email, __) => ValueListenableBuilder(
+              valueListenable: _passwordController,
+              builder: (_, password, __) => ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                ),
+                label: Text(_requestInFlight ? 'Logging In' : 'Log In'),
+                icon: _requestInFlight
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : Icon(Icons.login),
+                onPressed:
+                    _requestInFlight ||
+                        email.text.isEmpty ||
+                        password.text.isEmpty
+                    ? null
+                    : () => _performLogin(context),
+              ),
+            ),
+          ),
           if (authConfig?.passwordReset != false)
             Center(
-              child: Text.rich(TextSpan(
-                text: 'Forgot Password',
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
-                recognizer: TapGestureRecognizer()
-                  ..onTap = () => context
-                          .read<LoginController>()
-                          .selectedMethod = ResetPasswordMethod(
-                        email: _emailController.text,
-                        token: null,
-                      ),
-              )),
+              child: Text.rich(
+                TextSpan(
+                  text: 'Forgot Password',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () =>
+                        context
+                            .read<LoginController>()
+                            .selectedMethod = ResetPasswordMethod(
+                          email: _emailController.text,
+                          token: null,
+                        ),
+                ),
+              ),
             ),
         ],
       ),
@@ -215,8 +222,9 @@ class _EmailLoginState extends State<EmailLogin> {
       final message = result.details == null
           ? result.title
           : '${result.title} - ${result.details}';
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
       return;
     }
     context.read<LoginController>().selectedMethod = TokenLoginMethod('');

@@ -14,7 +14,10 @@ class FilePreviewPage extends StatefulWidget {
 
   const FilePreviewPage._({required this.resourceId});
 
-  static Widget create({required PhylumAccount account, required String resourceId}) {
+  static Widget create({
+    required PhylumAccount account,
+    required String resourceId,
+  }) {
     return MultiProvider(
       providers: [
         Provider.value(value: account),
@@ -37,14 +40,21 @@ class _ResourcePreviewDialogState extends State<FilePreviewPage> {
   void initState() {
     super.initState();
     final account = context.read<PhylumAccount>();
-    account.db.watchResource(widget.resourceId).listen((r) => setState(() => resource = r));
-    account.db.latestVersion(widget.resourceId).watchSingleOrNull().listen((v) => setState(() => version = v));
+    account.db
+        .watchResource(widget.resourceId)
+        .listen((r) => setState(() => resource = r));
+    account.db
+        .latestVersion(widget.resourceId)
+        .watchSingleOrNull()
+        .listen((v) => setState(() => version = v));
     _loadResourceDetails();
   }
 
   void _loadResourceDetails() async {
     final account = context.read<PhylumAccount>();
-    final response = await account.resourceRepository.requestResource(widget.resourceId);
+    final response = await account.resourceRepository.requestResource(
+      widget.resourceId,
+    );
     if (response is ApiErrorResponse) {
       if (mounted) {
         setState(() {
@@ -64,7 +74,11 @@ class _ResourcePreviewDialogState extends State<FilePreviewPage> {
     if (resource != null && version != null) {
       return FileViewer(
         transparent: true,
-        resource: VersionedResource(r: resource!, v: version!, showTimestamp: false),
+        resource: VersionedResource(
+          r: resource!,
+          v: version!,
+          showTimestamp: false,
+        ),
       );
     }
 
@@ -79,10 +93,7 @@ class _ResourcePreviewDialogState extends State<FilePreviewPage> {
     return const Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 6.0,
-      children: [
-        CircularProgressIndicator(),
-        Text('Loading Details'),
-      ],
+      children: [CircularProgressIndicator(), Text('Loading Details')],
     );
   }
 
@@ -93,13 +104,14 @@ class _ResourcePreviewDialogState extends State<FilePreviewPage> {
       children: [
         Text('Error Loading Details: $error'),
         TextButton(
-            onPressed: () {
-              context.read<PhylumRouterDelegate>().go(const ExplorerRouteHome());
-            },
-            child: Text(
-              'Go Home',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            )),
+          onPressed: () {
+            context.read<PhylumRouterDelegate>().go(const ExplorerRouteHome());
+          },
+          child: Text(
+            'Go Home',
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        ),
         ElevatedButton(onPressed: _loadResourceDetails, child: Text('Retry')),
       ],
     );

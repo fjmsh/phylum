@@ -8,7 +8,9 @@ class SyncStatusButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.select<SyncStatusNotifier, SyncStatus>((notifier) => notifier.status);
+    final state = context.select<SyncStatusNotifier, SyncStatus>(
+      (notifier) => notifier.status,
+    );
     return IconButton(
       icon: Icon(state.icon),
       onPressed: () {

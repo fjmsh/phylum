@@ -12,23 +12,21 @@ class ProfileView extends StatelessWidget {
   Widget build(BuildContext context) {
     final account = context.read<PhylumAccount>();
     return StreamBuilder(
-        initialData: account.user,
-        stream: account.userNotifier.stream,
-        builder: (context, sanpshot) {
-          final user = sanpshot.data!;
-          return Padding(
-            padding: const EdgeInsets.all(6.0),
-            child: onTap == null
-                ? AvatarView(name: user.name, email: user.email)
-                : InkWell(
-                    onTap: onTap,
-                    child: AvatarView(
-                      name: user.name,
-                      email: user.email,
-                    ),
-                  ),
-          );
-        });
+      initialData: account.user,
+      stream: account.userNotifier.stream,
+      builder: (context, sanpshot) {
+        final user = sanpshot.data!;
+        return Padding(
+          padding: const EdgeInsets.all(6.0),
+          child: onTap == null
+              ? AvatarView(name: user.name, email: user.email)
+              : InkWell(
+                  onTap: onTap,
+                  child: AvatarView(name: user.name, email: user.email),
+                ),
+        );
+      },
+    );
   }
 }
 
@@ -40,7 +38,10 @@ class AvatarView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String initials = name.split(' ').map((s) => s.isEmpty ? null : s.substring(0, 1)).join('');
+    String initials = name
+        .split(' ')
+        .map((s) => s.isEmpty ? null : s.substring(0, 1))
+        .join('');
     if (initials.isEmpty) {
       initials = email.substring(0, 2);
     }

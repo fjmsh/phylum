@@ -13,7 +13,10 @@ class UpdateResourceTrashedChange extends LocalChange<TrashedResource> {
 
   final bool add;
 
-  const UpdateResourceTrashedChange({required this.objectId, required this.add});
+  const UpdateResourceTrashedChange({
+    required this.objectId,
+    required this.add,
+  });
 
   @override
   TrashedResource? apply(TrashedResource? data) {

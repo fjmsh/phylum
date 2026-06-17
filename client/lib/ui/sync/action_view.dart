@@ -17,19 +17,28 @@ class ActionView extends StatelessWidget {
     return StreamBuilder(
       stream: action.statusNotifier.stream,
       initialData: action.status,
-      builder: (context, snapshot) => buildTile(context, action, snapshot.data!),
+      builder: (context, snapshot) =>
+          buildTile(context, action, snapshot.data!),
     );
   }
 
-  Widget buildTile(BuildContext context, PhylumAction action, ActionStatus status) {
+  Widget buildTile(
+    BuildContext context,
+    PhylumAction action,
+    ActionStatus status,
+  ) {
     return switch (status) {
       ActionStatusWaiting _ ||
       ActionStatusCancelled _ ||
       ActionStatusReady _ ||
-      ActionStatusDone _ =>
-        buildSimpleInfoTile(context, status),
-      ActionStatusUploading(done: int done, length: int length) => buildProgressTile(context, done, length),
-      ActionStatusError(error: final error) => buildErrorInfoTile(context, action, error),
+      ActionStatusDone _ => buildSimpleInfoTile(context, status),
+      ActionStatusUploading(done: int done, length: int length) =>
+        buildProgressTile(context, done, length),
+      ActionStatusError(error: final error) => buildErrorInfoTile(
+        context,
+        action,
+        error,
+      ),
     };
   }
 
@@ -44,10 +53,12 @@ class ActionView extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.play_arrow),
               tooltip: 'Sync Now',
-              onPressed: () => context.read<PhylumActionQueue>().retryAction(action),
+              onPressed: () =>
+                  context.read<PhylumActionQueue>().retryAction(action),
             ),
           IconButton(
-            onPressed: () => context.read<PhylumActionQueue>().deleteAction(action),
+            onPressed: () =>
+                context.read<PhylumActionQueue>().deleteAction(action),
             icon: const Icon(Icons.delete),
           ),
         ],
@@ -57,18 +68,31 @@ class ActionView extends StatelessWidget {
 
   Widget buildProgressTile(BuildContext context, int done, int total) {
     return ListTile(
-        title: Text(action.description),
-        subtitle: LinearProgressIndicator(
-          value: total == 0 ? null : (done * 1.0 / total),
-        ));
+      title: Text(action.description),
+      subtitle: LinearProgressIndicator(
+        value: total == 0 ? null : (done * 1.0 / total),
+      ),
+    );
   }
 
-  Widget buildErrorInfoTile(BuildContext context, PhylumAction action, ApiResult error) {
-    final showResourceRenameAction = error is PhylumApiErrorResponse &&
-        (error.code == "resource_name_conflict" || error.code == "resource_name_invalid");
-    final showResourceOverwriteAction = error is PhylumApiErrorResponse && (error.code == "resource_name_conflict");
-    final showResourceAutoRenameAction = error is PhylumApiErrorResponse && (error.code == "resource_name_conflict");
-    final showPublinkRenameAction = error is PhylumApiErrorResponse && (error.code == "publink_name_conflict");
+  Widget buildErrorInfoTile(
+    BuildContext context,
+    PhylumAction action,
+    ApiResult error,
+  ) {
+    final showResourceRenameAction =
+        error is PhylumApiErrorResponse &&
+        (error.code == "resource_name_conflict" ||
+            error.code == "resource_name_invalid");
+    final showResourceOverwriteAction =
+        error is PhylumApiErrorResponse &&
+        (error.code == "resource_name_conflict");
+    final showResourceAutoRenameAction =
+        error is PhylumApiErrorResponse &&
+        (error.code == "resource_name_conflict");
+    final showPublinkRenameAction =
+        error is PhylumApiErrorResponse &&
+        (error.code == "publink_name_conflict");
     return ListTile(
       title: Text(action.description, overflow: TextOverflow.fade),
       subtitle: Text(error.description),
@@ -100,11 +124,13 @@ class ActionView extends StatelessWidget {
               onPressed: () async {
                 if (action is! ResourceBindAction) return;
                 final preset = action.resourceName;
-                final name = await showInputDialog(context,
-                    title: 'Edit Name',
-                    preset: preset,
-                    capitalization: TextCapitalization.words,
-                    validate: (name) => name.trim().isNotEmpty);
+                final name = await showInputDialog(
+                  context,
+                  title: 'Edit Name',
+                  preset: preset,
+                  capitalization: TextCapitalization.words,
+                  validate: (name) => name.trim().isNotEmpty,
+                );
                 if (name == null || !context.mounted) return;
                 action.updateResourceName(name);
               },
@@ -115,11 +141,13 @@ class ActionView extends StatelessWidget {
               tooltip: 'Rename',
               onPressed: () async {
                 if (action is! ResourcePublinkCreateAction) return;
-                final name = await showInputDialog(context,
-                    title: 'Edit ID',
-                    preset: action.publinkId,
-                    capitalization: TextCapitalization.words,
-                    validate: (name) => name.trim().isNotEmpty);
+                final name = await showInputDialog(
+                  context,
+                  title: 'Edit ID',
+                  preset: action.publinkId,
+                  capitalization: TextCapitalization.words,
+                  validate: (name) => name.trim().isNotEmpty,
+                );
                 if (name == null || !context.mounted) return;
                 action.updatePublinkId(name);
               },
@@ -127,12 +155,14 @@ class ActionView extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Retry',
-            onPressed: () => context.read<PhylumActionQueue>().retryAction(action),
+            onPressed: () =>
+                context.read<PhylumActionQueue>().retryAction(action),
           ),
           IconButton(
             icon: const Icon(Icons.block),
             tooltip: 'Delete',
-            onPressed: () => context.read<PhylumActionQueue>().deleteAction(action),
+            onPressed: () =>
+                context.read<PhylumActionQueue>().deleteAction(action),
           ),
         ],
       ),

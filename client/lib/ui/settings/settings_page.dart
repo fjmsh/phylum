@@ -21,18 +21,19 @@ class SettingsPage extends StatefulWidget {
   static Widget create(PhylumAccount account) {
     final settingsList = _getSettingsList(account);
     return Provider<PhylumAccount>.value(
-        value: account,
-        child: StateNotifierProvider<SettingsController, SettingsState>(
-          create: (context) => SettingsController(),
-          child: MultiProvider(
-            providers: settingsList
-                .whereType<Settings>()
-                .map((s) => s.providers)
-                .flattened
-                .toList(growable: false),
-            child: SettingsPage(settingsList: settingsList),
-          ),
-        ));
+      value: account,
+      child: StateNotifierProvider<SettingsController, SettingsState>(
+        create: (context) => SettingsController(),
+        child: MultiProvider(
+          providers: settingsList
+              .whereType<Settings>()
+              .map((s) => s.providers)
+              .flattened
+              .toList(growable: false),
+          child: SettingsPage(settingsList: settingsList),
+        ),
+      ),
+    );
   }
 }
 
@@ -43,8 +44,9 @@ class _SettingsPageState extends State<SettingsPage> {
     if (width > minViewportWidthMedium) {
       return buildMasterDetail(context, width);
     }
-    final selected =
-        context.select<SettingsState, Settings?>((state) => state.selected);
+    final selected = context.select<SettingsState, Settings?>(
+      (state) => state.selected,
+    );
     if (selected != null) {
       return PopScope(
         canPop: false,
@@ -57,10 +59,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Settings'),
-        leading: CloseButton(),
-      ),
+      appBar: AppBar(title: Text('Settings'), leading: CloseButton()),
       body: ListView.builder(
         itemCount: widget.settingsList.length,
         itemBuilder: (context, i) =>
@@ -72,7 +71,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget buildMasterDetail(BuildContext context, double width) {
     final selected =
         context.select<SettingsState, Settings?>((state) => state.selected) ??
-            widget.settingsList.firstWhere((s) => s is Settings) as Settings;
+        widget.settingsList.firstWhere((s) => s is Settings) as Settings;
 
     return Scaffold(
       appBar: AppBar(
@@ -89,16 +88,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 width: 240,
                 child: ListView.builder(
                   itemCount: widget.settingsList.length,
-                  itemBuilder: (context, i) => widget.settingsList[i]
-                      .buildMenuItem(
-                          context, widget.settingsList[i] == selected),
+                  itemBuilder: (context, i) =>
+                      widget.settingsList[i].buildMenuItem(
+                        context,
+                        widget.settingsList[i] == selected,
+                      ),
                 ),
               ),
               Expanded(
-                  child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: selected.buildWithoutScaffold(context),
-              )),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: selected.buildWithoutScaffold(context),
+                ),
+              ),
             ],
           ),
         ),

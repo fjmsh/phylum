@@ -23,27 +23,40 @@ class ExplorerPage extends StatelessWidget {
     return MultiProvider(
       key: ValueKey(account.id),
       providers: [
-        StateNotifierProvider<PhylumAccount, AccountState>.value(value: account),
-        StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(value: account.actionQueue),
-        ChangeNotifierProvider(create: (context) => SyncStatusNotifier(account.actionQueue)),
+        StateNotifierProvider<PhylumAccount, AccountState>.value(
+          value: account,
+        ),
+        StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(
+          value: account.actionQueue,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => SyncStatusNotifier(account.actionQueue),
+        ),
         StateNotifierProvider<ExplorerController, ExplorerState>(
-          create: (context) => ExplorerController(account: context.read(), routerDelegate: context.read()),
+          create: (context) => ExplorerController(
+            account: context.read(),
+            routerDelegate: context.read(),
+          ),
           lazy: false,
         ),
-        ChangeNotifierProvider(create: (context) => PhylumSearchController(context)),
+        ChangeNotifierProvider(
+          create: (context) => PhylumSearchController(context),
+        ),
       ],
       builder: (context, child) {
         final canHandlePop =
-            context.watch<PhylumRouterDelegate>().canGoBack || context.watch<ExplorerState>().selectedIds.isNotEmpty;
+            context.watch<PhylumRouterDelegate>().canGoBack ||
+            context.watch<ExplorerState>().selectedIds.isNotEmpty;
         return PopScope(
-            canPop: !canHandlePop,
-            onPopInvokedWithResult: (didPop, result) {
-              if (didPop) return;
-              if (!context.read<ExplorerController>().clearSelection()) {
-                context.read<PhylumRouterDelegate>().goBack();
-              }
-            },
-            child: AccountStatePage(child: const ExplorerPage._()));
+          canPop: !canHandlePop,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            if (!context.read<ExplorerController>().clearSelection()) {
+              context.read<PhylumRouterDelegate>().goBack();
+            }
+          },
+          child: AccountStatePage(child: const ExplorerPage._()),
+        );
       },
     );
   }
@@ -51,7 +64,9 @@ class ExplorerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final layout = width < maxViewportWidthSmall ? const ExplorerPageCollapsed() : const ExplorerPageExpanded();
+    final layout = width < maxViewportWidthSmall
+        ? const ExplorerPageCollapsed()
+        : const ExplorerPageExpanded();
     return ExternalDropRegion(
       buildItem: (context, dropTargetActive) {
         final child = (dropTargetActive)
@@ -62,15 +77,18 @@ class ExplorerPage extends StatelessWidget {
                     constraints: BoxConstraints.expand(),
                     child: Material(
                       color: Colors.white70,
-                      child: const Center(child: Text('Drop Files to Upload', style: TextStyle(fontSize: 24))),
+                      child: const Center(
+                        child: Text(
+                          'Drop Files to Upload',
+                          style: TextStyle(fontSize: 24),
+                        ),
+                      ),
                     ),
-                  )
+                  ),
                 ],
               )
             : layout;
-        return AppActions(
-          child: child,
-        );
+        return AppActions(child: child);
       },
     );
   }

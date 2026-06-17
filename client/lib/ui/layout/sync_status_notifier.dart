@@ -34,7 +34,8 @@ class SyncStatusNotifier extends ChangeNotifier {
 
   int get submittingCount => _count<ActionStatusUploading>();
   int get errorCount => _count<ActionStatusError>();
-  int _count<T extends ActionStatus>() => _statusMap.values.fold(0, (acc, status) => status is T ? acc + 1 : acc);
+  int _count<T extends ActionStatus>() =>
+      _statusMap.values.fold(0, (acc, status) => status is T ? acc + 1 : acc);
 
   SyncStatusNotifier(PhylumActionQueue queue) {
     removeListenerCallback = queue.addListener((state) {

@@ -1,9 +1,1 @@
-enum SelectionMode {
-  single,
-  range,
-  toggle,
-  add,
-  noChange,
-  none,
-  all,
-}
+enum SelectionMode { single, range, toggle, add, noChange, none, all }

@@ -17,14 +17,17 @@ abstract class ResourceBindAction extends ResourceAction {
     required String parent,
     required String resourceName,
     NameConflictResolution conflictResolution = nameConflictError,
-  })  : _parent = parent,
-        _resourceName = resourceName,
-        _conflictResolution = conflictResolution;
+  }) : _parent = parent,
+       _resourceName = resourceName,
+       _conflictResolution = conflictResolution;
 
-  Future<void> updateConflictResolution(NameConflictResolution conflictResolution) {
+  Future<void> updateConflictResolution(
+    NameConflictResolution conflictResolution,
+  ) {
     return account.actionQueue.updateActions(
       (action) => action == this,
-      (action) => (action as ResourceBindAction)._conflictResolution = conflictResolution,
+      (action) => (action as ResourceBindAction)._conflictResolution =
+          conflictResolution,
     );
   }
 

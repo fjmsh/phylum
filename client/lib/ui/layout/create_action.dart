@@ -6,24 +6,36 @@ import 'package:phylum/util/pick_directory_stub.dart'
     if (dart.library.ffi) 'package:phylum/util/pick_directory_vm.dart';
 
 enum CreateAction {
-  newFolder(descripiton: 'New Folder', icon: Icon(Icons.create_new_folder), intent: NewFolderIntent()),
-  uploadFiles(descripiton: 'Upload File(s)', icon: Icon(Icons.upload_file_rounded), intent: UploadFilesIntent()),
+  newFolder(
+    descripiton: 'New Folder',
+    icon: Icon(Icons.create_new_folder),
+    intent: NewFolderIntent(),
+  ),
+  uploadFiles(
+    descripiton: 'Upload File(s)',
+    icon: Icon(Icons.upload_file_rounded),
+    intent: UploadFilesIntent(),
+  ),
   uploadFolders(
-      descripiton: 'Upload Folder(s)', icon: Icon(Icons.drive_folder_upload_rounded), intent: UploadFolderIntent());
+    descripiton: 'Upload Folder(s)',
+    icon: Icon(Icons.drive_folder_upload_rounded),
+    intent: UploadFolderIntent(),
+  );
 
   final String descripiton;
   final Icon icon;
   final Intent intent;
 
-  const CreateAction({required this.descripiton, required this.icon, required this.intent});
+  const CreateAction({
+    required this.descripiton,
+    required this.icon,
+    required this.intent,
+  });
 }
 
 List<CreateAction?> getCreateActions(BuildContext context) {
   if (!folderUploadSupported) {
-    return const [
-      CreateAction.newFolder,
-      CreateAction.uploadFiles,
-    ];
+    return const [CreateAction.newFolder, CreateAction.uploadFiles];
   }
   return const [
     CreateAction.newFolder,

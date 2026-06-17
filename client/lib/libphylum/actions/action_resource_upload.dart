@@ -25,47 +25,44 @@ class ResourceUploadAction extends ResourceCreateAction {
 
   @override
   List<LocalChange> get localChanges => [
-        CreateResourceChange(
-          objectId: resourceId,
-          parent: parent,
-          localName: localName,
-          dir: false,
-          timestamp: timestamp,
-          userPermission: userPermission,
-        ),
-        CreateResourceVersionChange(
-          objectId: versionId,
-          resourceId: resourceId,
-          created: timestamp,
-          size: size,
-          mimeType: contentType,
-          sha256: '',
-        ),
-        if (deletedId != null)
-          UpdateResourceDeletedChange(
-            objectId: deletedId!,
-            timestamp: timestamp,
-          ),
-      ];
+    CreateResourceChange(
+      objectId: resourceId,
+      parent: parent,
+      localName: localName,
+      dir: false,
+      timestamp: timestamp,
+      userPermission: userPermission,
+    ),
+    CreateResourceVersionChange(
+      objectId: versionId,
+      resourceId: resourceId,
+      created: timestamp,
+      size: size,
+      mimeType: contentType,
+      sha256: '',
+    ),
+    if (deletedId != null)
+      UpdateResourceDeletedChange(objectId: deletedId!, timestamp: timestamp),
+  ];
 
   @override
   String get description => "Uploading $resourceName";
 
   @override
   Map<String, dynamic> get props => {
-        'resourceId': resourceId,
-        'parent': parent,
-        'resourceName': resourceName,
-        'conflictResolution': conflictResolution,
-        'size': size,
-        'contentType': contentType,
-        'timestamp': timestamp.millisecondsSinceEpoch,
-        'localName': localName,
-        'deletedId': deletedId,
-        'userPermission': userPermission,
-        'versionId': versionId,
-        'uploadId': uploadId,
-      };
+    'resourceId': resourceId,
+    'parent': parent,
+    'resourceName': resourceName,
+    'conflictResolution': conflictResolution,
+    'size': size,
+    'contentType': contentType,
+    'timestamp': timestamp.millisecondsSinceEpoch,
+    'localName': localName,
+    'deletedId': deletedId,
+    'userPermission': userPermission,
+    'versionId': versionId,
+    'uploadId': uploadId,
+  };
 
   final int size;
   final String contentType;
@@ -106,9 +103,9 @@ class ResourceUploadAction extends ResourceCreateAction {
     required this.deletedId,
     required this.userPermission,
     required this.versionId,
-  })  : uploadId = generateUuid(),
-        uploaded = 0,
-        createRequired = true;
+  }) : uploadId = generateUuid(),
+       uploaded = 0,
+       createRequired = true;
 
   factory ResourceUploadAction.fromMap(Map<String, dynamic> map) {
     return ResourceUploadAction._(
@@ -128,7 +125,8 @@ class ResourceUploadAction extends ResourceCreateAction {
   }
 
   @override
-  bool dependsOn(PhylumAction action) => (action is ResourceCreateAction && action.resourceId == parent);
+  bool dependsOn(PhylumAction action) =>
+      (action is ResourceCreateAction && action.resourceId == parent);
 
   @override
   ApiRequest<PhylumAccount> createApiRequest() {
@@ -162,10 +160,12 @@ class ResourceUploadAction extends ResourceCreateAction {
   }
 
   @override
-  Future<BaseRequest> createRequest(ApiClient api, {Blob? data}) => throw 'Cannot create upload request';
+  Future<BaseRequest> createRequest(ApiClient api, {Blob? data}) =>
+      throw 'Cannot create upload request';
 
   @override
-  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) => throw 'Cannot parse upload response';
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) =>
+      throw 'Cannot parse upload response';
 
   @override
   ActionStatusUploading transformUploadingStatus(ActionStatusUploading status) {
@@ -177,8 +177,10 @@ class ResourceUploadAction extends ResourceCreateAction {
     if (response is ResourceResponse) {
       if (response.resource.id != resourceId) {
         account.actionQueue.updateActions(
-          (PhylumAction action) => action is ResourceAction && action.resourceId == resourceId,
-          (action) => (action as ResourceAction).setResourceId(response.resource.id),
+          (PhylumAction action) =>
+              action is ResourceAction && action.resourceId == resourceId,
+          (action) =>
+              (action as ResourceAction).setResourceId(response.resource.id),
         );
       }
       return true;
@@ -224,7 +226,10 @@ class _OneShotUploadRequest extends ApiRequest<PhylumAccount> {
   });
 
   @override
-  FutureOr<BaseRequest> createRequest(ApiClient<PhylumAccount> api, {Blob? data}) {
+  FutureOr<BaseRequest> createRequest(
+    ApiClient<PhylumAccount> api, {
+    Blob? data,
+  }) {
     final uriBuilder = api.createUriBuilder('/api/v1/fs/upload');
     uriBuilder.queryParameters = {
       'path': '$parent:$resourceName',
@@ -234,13 +239,15 @@ class _OneShotUploadRequest extends ApiRequest<PhylumAccount> {
       // 'sha256': '', // TODO: compute and send
     };
     final request = MultipartRequest('PUT', uriBuilder.build());
-    request.files.add(MultipartFile(
-      'contents',
-      ByteStream(data!.getStream()),
-      data.length,
-      filename: resourceName,
-      contentType: MediaType.parse(contentType),
-    ));
+    request.files.add(
+      MultipartFile(
+        'contents',
+        ByteStream(data!.getStream()),
+        data.length,
+        filename: resourceName,
+        contentType: MediaType.parse(contentType),
+      ),
+    );
     return request;
   }
 
@@ -257,7 +264,10 @@ class _PartialStartRequest extends ApiRequest<PhylumAccount> {
   _PartialStartRequest({required this.uploadId, required this.size});
 
   @override
-  FutureOr<BaseRequest> createRequest(ApiClient<PhylumAccount> api, {Blob? data}) {
+  FutureOr<BaseRequest> createRequest(
+    ApiClient<PhylumAccount> api, {
+    Blob? data,
+  }) {
     final uriBuilder = api.createUriBuilder('/api/v1/fs/partial_uploads/start');
     return Request('POST', uriBuilder.build())
       ..bodyFields = {
@@ -293,17 +303,23 @@ class _PartialQueryRequest extends ApiRequest<PhylumAccount> {
   _PartialQueryRequest({required this.uploadId});
 
   @override
-  FutureOr<BaseRequest> createRequest(ApiClient<PhylumAccount> api, {Blob? data}) {
+  FutureOr<BaseRequest> createRequest(
+    ApiClient<PhylumAccount> api, {
+    Blob? data,
+  }) {
     final uriBuilder = api.createUriBuilder('/api/v1/fs/partial_uploads/query');
     uriBuilder.queryParameters = {'id': uploadId};
     return Request('GET', uriBuilder.build());
   }
 
   @override
-  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) async {
+  Future<ApiResponse<PhylumAccount>> parseResponse(
+    StreamedResponse response,
+  ) async {
     final body = await response.bodyString();
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      final responseMap = (jsonDecode(body) as Map<String, dynamic>?) ?? const {};
+      final responseMap =
+          (jsonDecode(body) as Map<String, dynamic>?) ?? const {};
       return _PartialQueryResponse.fromResponse(responseMap);
     }
     final errorResponse = PhylumApiErrorResponse.fromResponseBody(body);
@@ -338,22 +354,31 @@ class _PartialUploadRequest extends ApiRequest<PhylumAccount> {
   _PartialUploadRequest({required this.uploadId, required this.uploaded});
 
   @override
-  FutureOr<BaseRequest> createRequest(ApiClient<PhylumAccount> api, {Blob? data}) {
-    final uriBuilder = api.createUriBuilder('/api/v1/fs/partial_uploads/upload');
+  FutureOr<BaseRequest> createRequest(
+    ApiClient<PhylumAccount> api, {
+    Blob? data,
+  }) {
+    final uriBuilder = api.createUriBuilder(
+      '/api/v1/fs/partial_uploads/upload',
+    );
     uriBuilder.queryParameters = {
       'id': uploadId,
-      'offset': uploaded.toString()
+      'offset': uploaded.toString(),
       // 'sha256': '', // TODO: compute and send
     };
     final request = MultipartRequest('PUT', uriBuilder.build());
-    final length = chunkSize < data!.length - uploaded ? chunkSize : data.length - uploaded;
-    request.files.add(MultipartFile(
-      'contents',
-      ByteStream(data.getStream(start: uploaded, end: uploaded + length)),
-      length,
-      filename: 'chunk',
-      contentType: MediaType('application', 'octet-stream'),
-    ));
+    final length = chunkSize < data!.length - uploaded
+        ? chunkSize
+        : data.length - uploaded;
+    request.files.add(
+      MultipartFile(
+        'contents',
+        ByteStream(data.getStream(start: uploaded, end: uploaded + length)),
+        length,
+        filename: 'chunk',
+        contentType: MediaType('application', 'octet-stream'),
+      ),
+    );
     return request;
   }
 
@@ -395,8 +420,13 @@ class _PartialFinalizeRequest extends ApiRequest<PhylumAccount> {
   });
 
   @override
-  FutureOr<BaseRequest> createRequest(ApiClient<PhylumAccount> api, {Blob? data}) {
-    final uriBuilder = api.createUriBuilder('/api/v1/fs/partial_uploads/finalize');
+  FutureOr<BaseRequest> createRequest(
+    ApiClient<PhylumAccount> api, {
+    Blob? data,
+  }) {
+    final uriBuilder = api.createUriBuilder(
+      '/api/v1/fs/partial_uploads/finalize',
+    );
     return Request('POST', uriBuilder.build())
       ..bodyFields = {
         'upload_id': uploadId,

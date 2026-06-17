@@ -22,19 +22,25 @@ class UserRepository extends Repository<PhylumAccount, User> {
 
   @override
   Future<Map<String, User?>> initializeAndRestoreRemoteData(
-      PhylumAccount account) async {
+    PhylumAccount account,
+  ) async {
     if (!Hive.isAdapterRegistered(const UserAdapter().typeId)) {
       Hive.registerAdapter(const UserAdapter());
     }
 
     final box = await account.openBox<User>(_remoteUsersBoxName);
-    final remoteData =
-        Map<String, User?>.fromIterable(box.keys, value: (key) => box.get(key));
+    final remoteData = Map<String, User?>.fromIterable(
+      box.keys,
+      value: (key) => box.get(key),
+    );
     await box.close();
     _account = account;
 
-    account.db.users.select().watch().listen((users) => _users =
-        Map.unmodifiable(Map<int, User>.fromIterable(users, key: (u) => u.id)));
+    account.db.users.select().watch().listen(
+      (users) => _users = Map.unmodifiable(
+        Map<int, User>.fromIterable(users, key: (u) => u.id),
+      ),
+    );
 
     _remoteDataBox = await _account.openLazyBox(_remoteUsersBoxName);
     return remoteData;
@@ -49,7 +55,8 @@ class UserRepository extends Repository<PhylumAccount, User> {
     await _account.persist(_keyLocalUserId, localId - 1);
     final user = User(id: localId, email: email, name: name);
     await _account.addAction(
-        UserInviteAction(localId: localId, email: email, userName: name));
+      UserInviteAction(localId: localId, email: email, userName: name),
+    );
     return user;
   }
 
@@ -77,8 +84,9 @@ class UserRepository extends Repository<PhylumAccount, User> {
 
   @override
   Future<void> delete(String objectId) {
-    return _account.db.users
-        .deleteWhere((o) => o.id.equals(int.parse(objectId)));
+    return _account.db.users.deleteWhere(
+      (o) => o.id.equals(int.parse(objectId)),
+    );
   }
 }
 
@@ -98,7 +106,8 @@ class UserAdapter implements TypeAdapter<User?> {
   @override
   void write(BinaryWriter writer, User? obj) {
     writer.writeByte(
-        0); // Version marker, in case we need to change something in the future
+      0,
+    ); // Version marker, in case we need to change something in the future
     writer.writeString(obj?.toJsonString() ?? '');
   }
 }

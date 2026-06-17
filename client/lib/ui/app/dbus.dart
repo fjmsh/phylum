@@ -5,13 +5,17 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:phylum/util/logging/logging.dart';
 import 'package:window_manager/window_manager.dart';
 
-const dbusName =
-    String.fromEnvironment("DBUS_NAME", defaultValue: "cloud.phylum.drive");
+const dbusName = String.fromEnvironment(
+  "DBUS_NAME",
+  defaultValue: "cloud.phylum.drive",
+);
 
 void ensureSingleClientDBus() async {
   final sessionClient = DBusClient.session();
-  final requestReply = await sessionClient
-      .requestName(dbusName, flags: {DBusRequestNameFlag.doNotQueue});
+  final requestReply = await sessionClient.requestName(
+    dbusName,
+    flags: {DBusRequestNameFlag.doNotQueue},
+  );
   if (requestReply == DBusRequestNameReply.primaryOwner) {
     await sessionClient.registerObject(InstanceObject());
   } else if (requestReply == DBusRequestNameReply.exists) {
@@ -23,8 +27,11 @@ void ensureSingleClientDBus() async {
     );
 
     try {
-      var value = await object.getProperty(dbusName, 'Version',
-          signature: DBusSignature('s'));
+      var value = await object.getProperty(
+        dbusName,
+        'Version',
+        signature: DBusSignature('s'),
+      );
       var version = value.asString();
       Log.info('Version $version');
     } catch (e) {
@@ -32,8 +39,12 @@ void ensureSingleClientDBus() async {
     }
 
     try {
-      await object.callMethod(dbusName, 'Show', [],
-          replySignature: DBusSignature(''));
+      await object.callMethod(
+        dbusName,
+        'Show',
+        [],
+        replySignature: DBusSignature(''),
+      );
       await sessionClient.close();
     } catch (e) {
       Log.warn('DBus Exception. Could not call "show"', e);

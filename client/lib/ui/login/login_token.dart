@@ -13,10 +13,7 @@ import 'login_controller.dart';
 class TokenLogin extends StatefulWidget {
   final String? token;
 
-  const TokenLogin({
-    super.key,
-    required this.token,
-  });
+  const TokenLogin({super.key, required this.token});
 
   @override
   State<TokenLogin> createState() => _TokenLoginState();
@@ -60,8 +57,9 @@ class _TokenLoginState extends State<TokenLogin> {
                     icon: Icon(Icons.paste),
                     onPressed: () async {
                       if (await Clipboard.hasStrings()) {
-                        final data =
-                            await Clipboard.getData(Clipboard.kTextPlain);
+                        final data = await Clipboard.getData(
+                          Clipboard.kTextPlain,
+                        );
                         final text = data?.text;
                         if (text != null) {
                           tokenController.text = text;
@@ -76,31 +74,32 @@ class _TokenLoginState extends State<TokenLogin> {
           autocorrect: false,
           autofocus: true,
           textInputAction: TextInputAction.go,
-          onSubmitted:
-              _requestInFlight ? null : (value) => _performLogin(context),
+          onSubmitted: _requestInFlight
+              ? null
+              : (value) => _performLogin(context),
         ),
         ValueListenableBuilder(
-            valueListenable: tokenController,
-            builder: (_, token, __) => ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                  label: Text(_requestInFlight ? 'Logging In' : 'Log In'),
-                  icon: _requestInFlight
-                      ? SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: Center(
-                              child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          )),
-                        )
-                      : Icon(Icons.login),
-                  onPressed: _requestInFlight || token.text.isEmpty
-                      ? null
-                      : () => _performLogin(context),
-                )),
+          valueListenable: tokenController,
+          builder: (_, token, __) => ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            ),
+            label: Text(_requestInFlight ? 'Logging In' : 'Log In'),
+            icon: _requestInFlight
+                ? SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : Icon(Icons.login),
+            onPressed: _requestInFlight || token.text.isEmpty
+                ? null
+                : () => _performLogin(context),
+          ),
+        ),
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
             backgroundColor: Theme.of(context).colorScheme.error,

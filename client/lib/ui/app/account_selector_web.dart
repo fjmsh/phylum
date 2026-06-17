@@ -53,27 +53,29 @@ class _AccountSelectorState extends State<AccountSelector> {
     if (state.status != AccountManagerStatus.ready) {
       if (state.status == AccountManagerStatus.closed) {
         return PhylumDialogScaffold(
-            child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Phylum is already open in another tab or window'),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: requestId == null ? requestHandoff : null,
-              child: const Text('Use Here'),
-            ),
-          ],
-        ));
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Phylum is already open in another tab or window'),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: requestId == null ? requestHandoff : null,
+                child: const Text('Use Here'),
+              ),
+            ],
+          ),
+        );
       }
       return const PhylumDialogScaffold(
-          child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircularProgressIndicator(),
-          SizedBox(width: 12),
-          Text('Initializing'),
-        ],
-      ));
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 12),
+            Text('Initializing'),
+          ],
+        ),
+      );
     }
 
     if (!errorsDismissed && state.invalidAccounts.isNotEmpty) {
@@ -93,8 +95,10 @@ class _AccountSelectorState extends State<AccountSelector> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      onPressed: () => showAlertDialog(context,
-                          message: invalidAccount.value.err.toString()),
+                      onPressed: () => showAlertDialog(
+                        context,
+                        message: invalidAccount.value.err.toString(),
+                      ),
                       icon: Icon(Icons.info_outline),
                     ),
                     IconButton(
@@ -110,16 +114,20 @@ class _AccountSelectorState extends State<AccountSelector> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                    onPressed: () {
-                      setState(() {
-                        errorsDismissed = true;
-                      });
-                    },
-                    child: Text('Skip',
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.error)))
+                  onPressed: () {
+                    setState(() {
+                      errorsDismissed = true;
+                    });
+                  },
+                  child: Text(
+                    'Skip',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
               ],
-            )
+            ),
           ],
         ),
       );
@@ -139,8 +147,9 @@ class _AccountSelectorState extends State<AccountSelector> {
         'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
 
     setState(() {
-      requestId = String.fromCharCodes(Iterable.generate(
-          12, (_) => chars.codeUnitAt(r.nextInt(chars.length))));
+      requestId = String.fromCharCodes(
+        Iterable.generate(12, (_) => chars.codeUnitAt(r.nextInt(chars.length))),
+      );
     });
 
     channel.postMessage('request|$requestId'.toJS);

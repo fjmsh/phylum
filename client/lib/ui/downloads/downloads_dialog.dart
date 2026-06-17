@@ -13,10 +13,9 @@ class DownloadsDialog extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     if (size.width < 600) {
       return Scaffold(
-          appBar: AppBar(
-            title: const Text('Downloads'),
-          ),
-          body: const DownloadsList());
+        appBar: AppBar(title: const Text('Downloads')),
+        body: const DownloadsList(),
+      );
     } else {
       return Center(
         child: SizedBox(

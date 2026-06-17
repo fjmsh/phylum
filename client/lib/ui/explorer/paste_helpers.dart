@@ -17,15 +17,24 @@ import 'package:super_clipboard/super_clipboard.dart';
 
 class PasteInfo {
   final Iterable<PasteItem> _items;
-  Iterable<UploadFile> get files => _items.map((info) => info.file).whereType<UploadFile>();
-  Iterable<String> get paths => _items.map((info) => info.path).whereType<String>();
-  Iterable<String> get resourceIds => _items.map((info) => info.resourceId).whereType<String>();
-  Iterable<String> get errors => _items.map((info) => info.error).whereType<String>();
+  Iterable<UploadFile> get files =>
+      _items.map((info) => info.file).whereType<UploadFile>();
+  Iterable<String> get paths =>
+      _items.map((info) => info.path).whereType<String>();
+  Iterable<String> get resourceIds =>
+      _items.map((info) => info.resourceId).whereType<String>();
+  Iterable<String> get errors =>
+      _items.map((info) => info.error).whereType<String>();
 
   PasteInfo(this._items);
 
   Future<Iterable<Resource>> getResources(PhylumAccount account) async =>
-      account.db.getResources(resourceIds).then((resources) => resources.whereType<Resource>().toList(growable: false));
+      account.db
+          .getResources(resourceIds)
+          .then(
+            (resources) =>
+                resources.whereType<Resource>().toList(growable: false),
+          );
 }
 
 class PasteItem {
@@ -35,32 +44,37 @@ class PasteItem {
   final String? error;
 
   PasteItem.withError({required this.error})
-      : file = null,
-        path = null,
-        resourceId = null;
+    : file = null,
+      path = null,
+      resourceId = null;
 
   PasteItem.withUploadFile({required this.file})
-      : path = null,
-        resourceId = null,
-        error = null;
+    : path = null,
+      resourceId = null,
+      error = null;
 
   PasteItem.withPath({required this.path})
-      : file = null,
-        resourceId = null,
-        error = null;
+    : file = null,
+      resourceId = null,
+      error = null;
 
   PasteItem.withResourceId({required this.resourceId})
-      : file = null,
-        path = null,
-        error = null;
+    : file = null,
+      path = null,
+      error = null;
 }
 
-Future<PasteItem> extractPasteItem(PhylumAccount account, DataReader reader) async {
+Future<PasteItem> extractPasteItem(
+  PhylumAccount account,
+  DataReader reader,
+) async {
   final uri = await reader.readValue(Formats.uri).then((value) => value?.uri);
   if (uri != null &&
-      (uri.isScheme(account.apiClient.serverUrl.scheme) && uri.authority == account.apiClient.serverUrl.authority)) {
+      (uri.isScheme(account.apiClient.serverUrl.scheme) &&
+          uri.authority == account.apiClient.serverUrl.authority)) {
     final segments = uri.pathSegments;
-    if (segments.length == 2 && (segments[0] == 'file' || segments[0] == 'folder')) {
+    if (segments.length == 2 &&
+        (segments[0] == 'file' || segments[0] == 'folder')) {
       return PasteItem.withResourceId(resourceId: segments[1]);
     }
   }
@@ -70,11 +84,13 @@ Future<PasteItem> extractPasteItem(PhylumAccount account, DataReader reader) asy
     final uploadFileCompleter = Completer<UploadFile?>();
     reader.getFile(null, (file) async {
       try {
-        uploadFileCompleter.complete(UploadFile(
-          path: file.fileName!,
-          size: file.fileSize!,
-          stream: file.getStream(),
-        ));
+        uploadFileCompleter.complete(
+          UploadFile(
+            path: file.fileName!,
+            size: file.fileSize!,
+            stream: file.getStream(),
+          ),
+        );
       } catch (e) {
         uploadFileCompleter.complete(null);
       }
@@ -82,18 +98,26 @@ Future<PasteItem> extractPasteItem(PhylumAccount account, DataReader reader) asy
     final uploadFile = await uploadFileCompleter.future;
     if (uploadFile != null) return PasteItem.withUploadFile(file: uploadFile);
   } else {
-    final path =
-        await reader.readValue(Formats.fileUri).then((value) => value?.toFilePath(windows: Platform.isWindows));
+    final path = await reader
+        .readValue(Formats.fileUri)
+        .then((value) => value?.toFilePath(windows: Platform.isWindows));
     if (path != null) {
       return PasteItem.withPath(path: path);
     }
   }
 
-  return PasteItem.withError(error: await reader.getSuggestedName() ?? 'Unkonwn');
+  return PasteItem.withError(
+    error: await reader.getSuggestedName() ?? 'Unkonwn',
+  );
 }
 
-Future<PasteInfo> extractPasteInfo(PhylumAccount account, Iterable<DataReader> data) async {
-  final items = await Future.wait(data.map((item) => extractPasteItem(account, item)));
+Future<PasteInfo> extractPasteInfo(
+  PhylumAccount account,
+  Iterable<DataReader> data,
+) async {
+  final items = await Future.wait(
+    data.map((item) => extractPasteItem(account, item)),
+  );
   return PasteInfo(items);
 }
 
@@ -111,7 +135,8 @@ Future<void> processPasteItems(
 
   if (info.errors.isNotEmpty) {
     final partial = info.errors.length != info._items.length;
-    final confirm = await showAlertDialog(
+    final confirm =
+        await showAlertDialog(
           context,
           title: 'Unable to import ${partial ? 'some ' : ''}items',
           message: info.errors.join('\n'),
@@ -127,7 +152,8 @@ Future<void> processPasteItems(
   if (!context.mounted) return;
   await uploadPath(context, folderId, info.paths);
 
-  final copyMoveFn = ListEquality().equals(cutIds, info.resourceIds.toList(growable: false))
+  final copyMoveFn =
+      ListEquality().equals(cutIds, info.resourceIds.toList(growable: false))
       ? account.resourceRepository.move
       : account.resourceRepository.copy;
   for (final r in resources) {

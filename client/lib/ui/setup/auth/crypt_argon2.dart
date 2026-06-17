@@ -17,67 +17,84 @@ Future<Argon2Config?> configureArgon2(
   int p = config.parallelism;
   int t = config.iterations;
   return showDialog<Argon2Config>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-            builder: (context, setState) => AlertDialog(
-              title: Text('Argon2 Parameters'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    title: Text('Memory Factor'),
-                    subtitle: Text(
-                        '$m - ${pow(2, m + 10).toInt().formatForDisplay(noDecimal: true)}'),
-                    onTap: () async {
-                      final input = await showIntSliderDialog(context,
-                          title: 'Memory Factor (m)',
-                          value: m,
-                          min: 10,
-                          max: 24);
-                      if (input != null) {
-                        setState(() => m = input);
-                      }
-                    },
-                  ),
-                  ListTile(
-                    title: Text('Parallelism'),
-                    subtitle: Text(p.toString()),
-                    onTap: () async {
-                      final input = await showIntSliderDialog(context,
-                          title: 'Parallelism (p)', value: p, min: 1, max: 8);
-                      if (input != null) {
-                        setState(() => p = input);
-                      }
-                    },
-                  ),
-                  ListTile(
-                    title: Text('Iterations'),
-                    subtitle: Text(t.toString()),
-                    onTap: () async {
-                      final input = await showIntSliderDialog(context,
-                          title: 'Iterations (t)', value: t, min: 1, max: 20);
-                      if (input != null) {
-                        setState(() => t = input);
-                      }
-                    },
-                  ),
-                  ElevatedButton(
-                      onPressed: () =>
-                          testArgon2Params(context, m, t, p, instanceUrl),
-                      child: Text('Test Parameters'))
-                ],
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: Text('Argon2 Parameters'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text('Memory Factor'),
+              subtitle: Text(
+                '$m - ${pow(2, m + 10).toInt().formatForDisplay(noDecimal: true)}',
               ),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.of(context).pop(null),
-                    child: Text('Cancel')),
-                ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(
-                        Argon2Config(memory: m, parallelism: p, iterations: t)),
-                    child: Text('OK')),
-              ],
+              onTap: () async {
+                final input = await showIntSliderDialog(
+                  context,
+                  title: 'Memory Factor (m)',
+                  value: m,
+                  min: 10,
+                  max: 24,
+                );
+                if (input != null) {
+                  setState(() => m = input);
+                }
+              },
             ),
-          ));
+            ListTile(
+              title: Text('Parallelism'),
+              subtitle: Text(p.toString()),
+              onTap: () async {
+                final input = await showIntSliderDialog(
+                  context,
+                  title: 'Parallelism (p)',
+                  value: p,
+                  min: 1,
+                  max: 8,
+                );
+                if (input != null) {
+                  setState(() => p = input);
+                }
+              },
+            ),
+            ListTile(
+              title: Text('Iterations'),
+              subtitle: Text(t.toString()),
+              onTap: () async {
+                final input = await showIntSliderDialog(
+                  context,
+                  title: 'Iterations (t)',
+                  value: t,
+                  min: 1,
+                  max: 20,
+                );
+                if (input != null) {
+                  setState(() => t = input);
+                }
+              },
+            ),
+            ElevatedButton(
+              onPressed: () => testArgon2Params(context, m, t, p, instanceUrl),
+              child: Text('Test Parameters'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(
+              context,
+            ).pop(Argon2Config(memory: m, parallelism: p, iterations: t)),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 Future<void> testArgon2Params(
@@ -102,8 +119,8 @@ Future<void> testArgon2Params(
     message: 'Testing Argon2 Params',
   );
   if (responseString == null || !context.mounted) return;
-  final responseMap =
-      (jsonDecode(responseString) as Map).cast<String, dynamic>();
+  final responseMap = (jsonDecode(responseString) as Map)
+      .cast<String, dynamic>();
 
   if (responseMap["success"]) {
     final time = Duration(microseconds: responseMap["time"]);
@@ -114,13 +131,15 @@ Future<void> testArgon2Params(
       message: time.inMilliseconds < 300
           ? 'You should aim to take at least 300ms.'
           : time.inMilliseconds > 1000
-              ? 'That\'s a long time. Consider lowering the number of iterations.'
-              : 'Looks good!',
+          ? 'That\'s a long time. Consider lowering the number of iterations.'
+          : 'Looks good!',
     );
   } else {
-    await showAlertDialog(context,
-        title: 'Could not test argon2 params',
-        message: "${responseMap["error"]}");
+    await showAlertDialog(
+      context,
+      title: 'Could not test argon2 params',
+      message: "${responseMap["error"]}",
+    );
   }
 }
 
@@ -129,13 +148,14 @@ class Argon2Config {
   final int parallelism;
   final int iterations;
 
-  const Argon2Config(
-      {required this.memory,
-      required this.parallelism,
-      required this.iterations});
+  const Argon2Config({
+    required this.memory,
+    required this.parallelism,
+    required this.iterations,
+  });
 
   const Argon2Config.defaults()
-      : this(memory: 16, parallelism: 2, iterations: 4);
+    : this(memory: 16, parallelism: 2, iterations: 4);
 
   Map<String, dynamic> toMap() {
     return {

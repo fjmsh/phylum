@@ -19,60 +19,57 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-        'src': '$srcId:',
-        'dest': '$parent:$resourceName',
-        'id': resourceId,
-        'version_id': versionId,
-        'conflict': conflictResolution,
-      };
+    'src': '$srcId:',
+    'dest': '$parent:$resourceName',
+    'id': resourceId,
+    'version_id': versionId,
+    'conflict': conflictResolution,
+  };
 
   @override
   List<LocalChange> get localChanges => [
-        CreateResourceChange(
-          objectId: resourceId,
-          parent: parent,
-          localName: localName,
-          dir: dir,
-          timestamp: timestamp,
-          userPermission: userPermission,
-        ),
-        if (!dir)
-          CreateResourceVersionChange(
-            objectId: versionId,
-            resourceId: resourceId,
-            created: timestamp,
-            size: contentLength,
-            mimeType: contentType,
-            sha256: contentSha256,
-          ),
-        if (deletedId != null)
-          UpdateResourceDeletedChange(
-            objectId: deletedId!,
-            timestamp: timestamp,
-          ),
-      ];
+    CreateResourceChange(
+      objectId: resourceId,
+      parent: parent,
+      localName: localName,
+      dir: dir,
+      timestamp: timestamp,
+      userPermission: userPermission,
+    ),
+    if (!dir)
+      CreateResourceVersionChange(
+        objectId: versionId,
+        resourceId: resourceId,
+        created: timestamp,
+        size: contentLength,
+        mimeType: contentType,
+        sha256: contentSha256,
+      ),
+    if (deletedId != null)
+      UpdateResourceDeletedChange(objectId: deletedId!, timestamp: timestamp),
+  ];
 
   @override
   final String description;
 
   @override
   Map<String, dynamic> get props => {
-        'srcId': srcId,
-        'resourceId': resourceId,
-        'versionId': versionId,
-        'parent': parent,
-        'resourceName': resourceName,
-        'conflictResolution': conflictResolution,
-        'dir': dir,
-        'localName': localName,
-        'contentType': contentType,
-        'contentLength': contentLength,
-        'contentSha256': contentSha256,
-        'description': description,
-        'timestamp': timestamp.millisecondsSinceEpoch,
-        'deletedId': deletedId,
-        'userPermission': userPermission,
-      };
+    'srcId': srcId,
+    'resourceId': resourceId,
+    'versionId': versionId,
+    'parent': parent,
+    'resourceName': resourceName,
+    'conflictResolution': conflictResolution,
+    'dir': dir,
+    'localName': localName,
+    'contentType': contentType,
+    'contentLength': contentLength,
+    'contentSha256': contentSha256,
+    'description': description,
+    'timestamp': timestamp.millisecondsSinceEpoch,
+    'deletedId': deletedId,
+    'userPermission': userPermission,
+  };
 
   final String srcId;
   final String versionId;
@@ -124,5 +121,6 @@ class ResourceCopyAction extends ResourceCreateAction with JsonApiAction {
   }
 
   @override
-  bool dependsOn(PhylumAction action) => action is ResourceCreateAction && action.resourceId == parent;
+  bool dependsOn(PhylumAction action) =>
+      action is ResourceCreateAction && action.resourceId == parent;
 }

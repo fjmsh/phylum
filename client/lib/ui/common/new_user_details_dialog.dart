@@ -74,20 +74,22 @@ class _NewUserDetailsDialogState extends State<NewUserDetailsDialog> {
           },
         ),
         ValueListenableBuilder(
-            valueListenable: _emailController,
-            builder: (context, email, child) {
-              return ElevatedButton(
-                onPressed: EmailValidator.validate(email.text) ? done : null,
-                child: const Text('Done'),
-              );
-            })
+          valueListenable: _emailController,
+          builder: (context, email, child) {
+            return ElevatedButton(
+              onPressed: EmailValidator.validate(email.text) ? done : null,
+              child: const Text('Done'),
+            );
+          },
+        ),
       ],
     );
   }
 
   void done() async {
     if (!EmailValidator.validate(_emailController.text)) return;
-    Navigator.of(context).pop(NewUserDetails(
-        email: _emailController.text, name: _nameController.text));
+    Navigator.of(context).pop(
+      NewUserDetails(email: _emailController.text, name: _nameController.text),
+    );
   }
 }

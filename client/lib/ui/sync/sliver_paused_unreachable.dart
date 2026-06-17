@@ -7,33 +7,34 @@ class PausedOfflineSliver extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final paused = context.select<PhylumActionQueueState, bool>((state) => state.paused);
-    final unreachable = context.select<PhylumActionQueueState, bool>((state) => state.unreachable);
+    final paused = context.select<PhylumActionQueueState, bool>(
+      (state) => state.paused,
+    );
+    final unreachable = context.select<PhylumActionQueueState, bool>(
+      (state) => state.unreachable,
+    );
 
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, i) {
-          if (paused) {
-            return ListTile(
-              leading: const Icon(Icons.play_arrow),
-              title: const Text('Sync Paused'),
-              subtitle: const Text('Tap to resume'),
-              onTap: () {
-                context.read<PhylumActionQueue>().resume();
-              },
-            );
-          }
+      delegate: SliverChildBuilderDelegate((context, i) {
+        if (paused) {
           return ListTile(
-            leading: const Icon(Icons.refresh),
-            title: const Text('Server Unreachable'),
-            subtitle: const Text('Tap to retry'),
+            leading: const Icon(Icons.play_arrow),
+            title: const Text('Sync Paused'),
+            subtitle: const Text('Tap to resume'),
             onTap: () {
-              context.read<PhylumActionQueue>().retry();
+              context.read<PhylumActionQueue>().resume();
             },
           );
-        },
-        childCount: paused || unreachable ? 1 : 0,
-      ),
+        }
+        return ListTile(
+          leading: const Icon(Icons.refresh),
+          title: const Text('Server Unreachable'),
+          subtitle: const Text('Tap to retry'),
+          onTap: () {
+            context.read<PhylumActionQueue>().retry();
+          },
+        );
+      }, childCount: paused || unreachable ? 1 : 0),
     );
   }
 }

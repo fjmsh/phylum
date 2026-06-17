@@ -8,7 +8,11 @@ class ChangePasswordRequest extends ApiRequest<PhylumAccount> {
   final String oldPassword;
   final String newPassword;
 
-  const ChangePasswordRequest({required this.email, required this.oldPassword, required this.newPassword});
+  const ChangePasswordRequest({
+    required this.email,
+    required this.oldPassword,
+    required this.newPassword,
+  });
 
   @override
   BaseRequest createRequest(ApiClient api, {Blob? data}) {

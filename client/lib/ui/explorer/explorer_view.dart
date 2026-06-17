@@ -44,19 +44,29 @@ class _ExplorerViewState extends State<ExplorerView> {
     super.initState();
 
     final account = context.read<PhylumAccount>();
-    _listener = AppLifecycleListener(onResume: () {
-      account.apiClient.sendRequest(BootstrapRequest(since: account.bootstrapUntil));
-    });
+    _listener = AppLifecycleListener(
+      onResume: () {
+        account.apiClient.sendRequest(
+          BootstrapRequest(since: account.bootstrapUntil),
+        );
+      },
+    );
 
     if (!kIsWeb && Platform.isAndroid) {
       // Process share intents received while the app is alive
-      _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
-        handleShareIntent(value).then((value) => ReceiveSharingIntent.instance.reset());
+      _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((
+        value,
+      ) {
+        handleShareIntent(
+          value,
+        ).then((value) => ReceiveSharingIntent.instance.reset());
       });
 
       // Process share intents received while the app is closed
       ReceiveSharingIntent.instance.getInitialMedia().then((value) {
-        handleShareIntent(value).then((value) => ReceiveSharingIntent.instance.reset());
+        handleShareIntent(
+          value,
+        ).then((value) => ReceiveSharingIntent.instance.reset());
       });
     }
     ClipboardEvents.instance?.registerPasteEventListener(_handlePaste);
@@ -78,47 +88,56 @@ class _ExplorerViewState extends State<ExplorerView> {
     }
     final reader = await event.getClipboardReader();
     if (!mounted) return;
-    processPasteItems(
-      context,
-      folderId,
-      reader.items,
-    );
+    processPasteItems(context, folderId, reader.items);
   }
 
   Future<void> handleShareIntent(List<SharedMediaFile> shared) async {
-    shared.removeWhere((f) => f.type == SharedMediaType.text || f.type == SharedMediaType.url);
+    shared.removeWhere(
+      (f) => f.type == SharedMediaType.text || f.type == SharedMediaType.url,
+    );
     if (shared.isEmpty) return;
     final files = shared
-        .map((s) => UploadFile(
-              size: File(s.path).lengthSync(),
-              stream: File(s.path).openRead().cast<Uint8List>(),
-              path: s.path,
-            ))
+        .map(
+          (s) => UploadFile(
+            size: File(s.path).lengthSync(),
+            stream: File(s.path).openRead().cast<Uint8List>(),
+            path: s.path,
+          ),
+        )
         .toList(growable: false);
     final account = context.read<PhylumAccount>();
-    final dest = await DestinationPicker.show(context, allowInitialFolder: true);
+    final dest = await DestinationPicker.show(
+      context,
+      allowInitialFolder: true,
+    );
     if (dest == null) {
       return;
     }
-    final userPermission = await account.db.getResource(dest).then((r) => r?.userPermission) ?? 0;
+    final userPermission =
+        await account.db.getResource(dest).then((r) => r?.userPermission) ?? 0;
     if (!context.mounted) return;
     for (final f in files) {
       if (!mounted) return;
-      final name = await showInputDialog(context, hintText: 'File name', preset: p.basename(f.path));
+      final name = await showInputDialog(
+        context,
+        hintText: 'File name',
+        preset: p.basename(f.path),
+      );
       if (!mounted || name == null) return;
       await handleLocalErrors(
         context,
         name,
         overwriteFn: (r) => r.dir ? nameConflictDelete : nameConflictOverwrite,
-        (name, conflictResolution, ensurePermission) => account.resourceRepository.upload(
-          parent: dest,
-          name: name,
-          contents: f.stream,
-          size: f.size,
-          conflictResolution: conflictResolution,
-          userPermission: userPermission,
-          ensurePermission: ensurePermission,
-        ),
+        (name, conflictResolution, ensurePermission) =>
+            account.resourceRepository.upload(
+              parent: dest,
+              name: name,
+              contents: f.stream,
+              size: f.size,
+              conflictResolution: conflictResolution,
+              userPermission: userPermission,
+              ensurePermission: ensurePermission,
+            ),
       );
     }
   }
@@ -136,8 +155,12 @@ class _ExplorerViewState extends State<ExplorerView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(child: PathView(small: width < maxViewportWidthSmall)),
-                  width < maxViewportWidthLarge ? const FolderViewIconButton() : const FolderViewToggleButton(),
+                  Expanded(
+                    child: PathView(small: width < maxViewportWidthSmall),
+                  ),
+                  width < maxViewportWidthLarge
+                      ? const FolderViewIconButton()
+                      : const FolderViewToggleButton(),
                 ],
               ),
               Expanded(child: Builder(builder: buildPage)),
@@ -170,12 +193,13 @@ class _ExplorerViewState extends State<ExplorerView> {
     }
     final viewType = context.watch<FolderViewNotifier>().folderViewType;
     return RefreshIndicator(
-        key: _refreshKey,
-        onRefresh: context.read<ExplorerController>().refresh,
-        child: switch (viewType) {
-          FolderViewType.list => const FolderListView(),
-          FolderViewType.gridSmall => const FolderGridView(iconSize: 180),
-          FolderViewType.gridLarge => const FolderGridView(iconSize: 240),
-        });
+      key: _refreshKey,
+      onRefresh: context.read<ExplorerController>().refresh,
+      child: switch (viewType) {
+        FolderViewType.list => const FolderListView(),
+        FolderViewType.gridSmall => const FolderGridView(iconSize: 180),
+        FolderViewType.gridLarge => const FolderGridView(iconSize: 240),
+      },
+    );
   }
 }

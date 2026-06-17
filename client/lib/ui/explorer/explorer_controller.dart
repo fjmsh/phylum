@@ -23,11 +23,15 @@ class ExplorerState {
   final Future? refresh;
   final bool refreshError;
 
-  Resource? get focussed => focusIndex < 0 || focusIndex >= resources.length ? null : resources[focusIndex];
+  Resource? get focussed => focusIndex < 0 || focusIndex >= resources.length
+      ? null
+      : resources[focusIndex];
   String? get focusId => focussed?.id;
-  Iterable<Resource> get selected => resources.where((r) => selectedIds.contains(r.id));
-  Resource? get selectedSingle =>
-      selectedIds.length != 1 ? null : resources.where((r) => selectedIds.contains(r.id)).first;
+  Iterable<Resource> get selected =>
+      resources.where((r) => selectedIds.contains(r.id));
+  Resource? get selectedSingle => selectedIds.length != 1
+      ? null
+      : resources.where((r) => selectedIds.contains(r.id)).first;
   Resource? get focussedIfSelected => selectedIds.isEmpty ? null : focussed;
 
   const ExplorerState({
@@ -55,20 +59,19 @@ class ExplorerState {
     Future? refresh,
     bool updateRefresh = false,
     bool? refreshError,
-  }) =>
-      ExplorerState(
-        route: route,
-        folderId: folderId,
-        folder: folder ?? this.folder,
-        resources: resources ?? this.resources,
-        selectedIds: selectedIds ?? this.selectedIds,
-        focusIndex: focusIndex ?? this.focusIndex,
-        showFocus: showFocus ?? this.showFocus,
-        selectionStartIndex: selectionStartIndex ?? this.selectionStartIndex,
-        dragging: dragging ?? this.dragging,
-        refresh: updateRefresh ? refresh : this.refresh,
-        refreshError: refreshError ?? this.refreshError,
-      );
+  }) => ExplorerState(
+    route: route,
+    folderId: folderId,
+    folder: folder ?? this.folder,
+    resources: resources ?? this.resources,
+    selectedIds: selectedIds ?? this.selectedIds,
+    focusIndex: focusIndex ?? this.focusIndex,
+    showFocus: showFocus ?? this.showFocus,
+    selectionStartIndex: selectionStartIndex ?? this.selectionStartIndex,
+    dragging: dragging ?? this.dragging,
+    refresh: updateRefresh ? refresh : this.refresh,
+    refreshError: refreshError ?? this.refreshError,
+  );
 
   bool isSelected(String id) {
     return selectedIds.contains(id);
@@ -84,12 +87,15 @@ class ExplorerController extends StateNotifier<ExplorerState> {
   ExplorerController({
     required PhylumAccount account,
     required PhylumRouterDelegate routerDelegate,
-  })  : _account = account,
-        _routerDelegate = routerDelegate,
-        super(ExplorerState(
-          route: routerDelegate.currentConfiguration as ExplorerRoute,
-          folderId: (routerDelegate.currentConfiguration as ExplorerRoute).folderId(account),
-        )) {
+  }) : _account = account,
+       _routerDelegate = routerDelegate,
+       super(
+         ExplorerState(
+           route: routerDelegate.currentConfiguration as ExplorerRoute,
+           folderId: (routerDelegate.currentConfiguration as ExplorerRoute)
+               .folderId(account),
+         ),
+       ) {
     _routerDelegate.addListener(updatePage);
     updatePage();
   }
@@ -99,7 +105,9 @@ class ExplorerController extends StateNotifier<ExplorerState> {
     _folderSubscription?.cancel();
     final folderId = route.folderId(_account);
     if (folderId != null) {
-      _folderSubscription = _account.db.watchResource(folderId).listen((e) => state = state.copyWith(folder: e));
+      _folderSubscription = _account.db
+          .watchResource(folderId)
+          .listen((e) => state = state.copyWith(folder: e));
       if (folderId != _account.user.home) {
         _account.db.markResourceAccess(folderId);
       }
@@ -107,7 +115,9 @@ class ExplorerController extends StateNotifier<ExplorerState> {
       _folderSubscription = null;
     }
     _childrenSubscription?.cancel();
-    _childrenSubscription = route.items(_account).listen((e) => _updateResourceList(e));
+    _childrenSubscription = route
+        .items(_account)
+        .listen((e) => _updateResourceList(e));
     state = ExplorerState(route: route, folderId: folderId);
     refresh();
   }
@@ -151,7 +161,11 @@ class ExplorerController extends StateNotifier<ExplorerState> {
     return true;
   }
 
-  int updateSelection(int Function(int)? indexFn, SelectionMode mode, bool highlight) {
+  int updateSelection(
+    int Function(int)? indexFn,
+    SelectionMode mode,
+    bool highlight,
+  ) {
     Set<String>? selectedIds;
     int index = indexFn?.call(state.focusIndex) ?? state.focusIndex;
     index = min(state.resources.length - 1, max(0, index));
@@ -161,9 +175,14 @@ class ExplorerController extends StateNotifier<ExplorerState> {
         if (selectionStartIndex == -1) {
           selectionStartIndex = index;
         }
-        selectedIds = Set.of(state.resources
-            .getRange(min(selectionStartIndex, index), max(selectionStartIndex, index) + 1)
-            .map((r) => r.id));
+        selectedIds = Set.of(
+          state.resources
+              .getRange(
+                min(selectionStartIndex, index),
+                max(selectionStartIndex, index) + 1,
+              )
+              .map((r) => r.id),
+        );
         break;
       case SelectionMode.single:
         selectedIds = {state.resources[index].id};
@@ -203,18 +222,21 @@ class ExplorerController extends StateNotifier<ExplorerState> {
     if (state.refresh != null) return state.refresh!;
     final c = Completer();
     state = state.copyWith(refresh: c.future, updateRefresh: true);
-    state.route.refresh(_account).then((success) {
-      c.complete();
-      if (mounted) {
-        state = state.copyWith(
-          refresh: null,
-          updateRefresh: true,
-          refreshError: !success,
-        );
-      }
-    }).onError((err, stack) {
-      c.completeError(err!, stack);
-    });
+    state.route
+        .refresh(_account)
+        .then((success) {
+          c.complete();
+          if (mounted) {
+            state = state.copyWith(
+              refresh: null,
+              updateRefresh: true,
+              refreshError: !success,
+            );
+          }
+        })
+        .onError((err, stack) {
+          c.completeError(err!, stack);
+        });
     return c.future;
   }
 }

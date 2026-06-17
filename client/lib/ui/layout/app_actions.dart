@@ -24,7 +24,9 @@ class AppActions extends StatelessWidget {
       actions: {
         NewFolderIntent: CallbackAction<NewFolderIntent>(
           onInvoke: (intent) async {
-            final route = context.read<PhylumRouterDelegate>().currentConfiguration as ExplorerRoute;
+            final route =
+                context.read<PhylumRouterDelegate>().currentConfiguration
+                    as ExplorerRoute;
             final account = context.read<PhylumAccount>();
             final folderId = route.folderId(account);
             if (folderId == null) return;
@@ -36,7 +38,9 @@ class AppActions extends StatelessWidget {
         ),
         UploadFilesIntent: CallbackAction<UploadFilesIntent>(
           onInvoke: (intent) {
-            final route = context.read<PhylumRouterDelegate>().currentConfiguration as ExplorerRoute;
+            final route =
+                context.read<PhylumRouterDelegate>().currentConfiguration
+                    as ExplorerRoute;
             final account = context.read<PhylumAccount>();
             final folderId = route.folderId(account);
             if (folderId != null) {
@@ -47,7 +51,9 @@ class AppActions extends StatelessWidget {
         ),
         UploadFolderIntent: CallbackAction<UploadFolderIntent>(
           onInvoke: (intent) {
-            final route = context.read<PhylumRouterDelegate>().currentConfiguration as ExplorerRoute;
+            final route =
+                context.read<PhylumRouterDelegate>().currentConfiguration
+                    as ExplorerRoute;
             final account = context.read<PhylumAccount>();
             final folderId = route.folderId(account);
             if (folderId != null) {
@@ -56,22 +62,27 @@ class AppActions extends StatelessWidget {
             return null;
           },
         ),
-        NavUpIntent: CallbackAction<NavUpIntent>(onInvoke: (i) async {
-          final routerDelegate = context.read<PhylumRouterDelegate>();
-          final route = routerDelegate.currentConfiguration as ExplorerRoute;
-          final account = context.read<PhylumAccount>();
-          final folderId = route.folderId(account);
-          final parent = folderId == null ? null : (await account.db.getResource(folderId))?.parent;
-          if (parent != null) {
-            routerDelegate.go(ExplorerRouteFolder(folderId: parent));
-          }
-          return null;
-        }),
+        NavUpIntent: CallbackAction<NavUpIntent>(
+          onInvoke: (i) async {
+            final routerDelegate = context.read<PhylumRouterDelegate>();
+            final route = routerDelegate.currentConfiguration as ExplorerRoute;
+            final account = context.read<PhylumAccount>();
+            final folderId = route.folderId(account);
+            final parent = folderId == null
+                ? null
+                : (await account.db.getResource(folderId))?.parent;
+            if (parent != null) {
+              routerDelegate.go(ExplorerRouteFolder(folderId: parent));
+            }
+            return null;
+          },
+        ),
         NavIntent: CallbackAction<NavIntent>(
           onInvoke: (i) => context.read<PhylumRouterDelegate>().go(i.target),
         ),
         NavHomeIntent: CallbackAction<NavHomeIntent>(
-          onInvoke: (i) => context.read<PhylumRouterDelegate>().go(ExplorerRouteHome()),
+          onInvoke: (i) =>
+              context.read<PhylumRouterDelegate>().go(ExplorerRouteHome()),
         ),
         NavBackIntent: CallbackAction<NavBackIntent>(
           onInvoke: (i) => context.read<PhylumRouterDelegate>().goBack(),
@@ -82,15 +93,19 @@ class AppActions extends StatelessWidget {
         FocusSearchIntent: CallbackAction<FocusSearchIntent>(
           onInvoke: (i) => context.read<PhylumSearchController>().active = true,
         ),
-        OpenResourceIntent: CallbackAction<OpenResourceIntent>(onInvoke: (i) async {
-          final resource = i.resource;
-          if (resource.dir) {
-            context.read<PhylumRouterDelegate>().go(ExplorerRouteFolder(folderId: resource.id));
+        OpenResourceIntent: CallbackAction<OpenResourceIntent>(
+          onInvoke: (i) async {
+            final resource = i.resource;
+            if (resource.dir) {
+              context.read<PhylumRouterDelegate>().go(
+                ExplorerRouteFolder(folderId: resource.id),
+              );
+              return null;
+            }
+            FilePreviewDialog.showResources(context, [resource], 0);
             return null;
-          }
-          FilePreviewDialog.showResources(context, [resource], 0);
-          return null;
-        })
+          },
+        ),
       },
       child: child,
     );

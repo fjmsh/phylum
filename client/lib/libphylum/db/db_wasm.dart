@@ -9,23 +9,27 @@ QueryExecutor openDatabase({
   required Directory? tmpDir,
   required String id,
 }) {
-  return DatabaseConnection.delayed(Future(() async {
-    final result = await WasmDatabase.open(
-      databaseName: _dbName(id),
-      sqlite3Uri: Uri.parse('sqlite3.wasm'),
-      driftWorkerUri: Uri.parse('drift_worker.js'),
-    );
+  return DatabaseConnection.delayed(
+    Future(() async {
+      final result = await WasmDatabase.open(
+        databaseName: _dbName(id),
+        sqlite3Uri: Uri.parse('sqlite3.wasm'),
+        driftWorkerUri: Uri.parse('drift_worker.js'),
+      );
 
-    if (result.missingFeatures.isNotEmpty) {
-      // Depending how central local persistence is to your app, you may want
-      // to show a warning to the user if only unrealiable implemetentations
-      // are available.
-      Log.info('Using ${result.chosenImplementation} due to missing browser '
-          'features: ${result.missingFeatures}');
-    }
+      if (result.missingFeatures.isNotEmpty) {
+        // Depending how central local persistence is to your app, you may want
+        // to show a warning to the user if only unrealiable implemetentations
+        // are available.
+        Log.info(
+          'Using ${result.chosenImplementation} due to missing browser '
+          'features: ${result.missingFeatures}',
+        );
+      }
 
-    return result.resolvedExecutor;
-  }));
+      return result.resolvedExecutor;
+    }),
+  );
 }
 
 Future<void> deleteDatabase({

@@ -23,14 +23,15 @@ class _AccountSelectorState extends State<AccountSelector> {
     final state = context.watch<AccountManagerState<PhylumAccount>>();
     if (state.status != AccountManagerStatus.ready) {
       return const PhylumDialogScaffold(
-          child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircularProgressIndicator(),
-          SizedBox(width: 12),
-          Text('Initializing'),
-        ],
-      ));
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 12),
+            Text('Initializing'),
+          ],
+        ),
+      );
     }
     if (!errorsDismissed && state.invalidAccounts.isNotEmpty) {
       return PhylumDialogScaffold(
@@ -49,11 +50,16 @@ class _AccountSelectorState extends State<AccountSelector> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      onPressed: () => showAlertDialog(context, message: invalidAccount.value.err.toString()),
+                      onPressed: () => showAlertDialog(
+                        context,
+                        message: invalidAccount.value.err.toString(),
+                      ),
                       icon: Icon(Icons.info_outline),
                     ),
                     IconButton(
-                      onPressed: () => context.read<AccountManager<PhylumAccount>>().removeAccount(invalidAccount.key),
+                      onPressed: () => context
+                          .read<AccountManager<PhylumAccount>>()
+                          .removeAccount(invalidAccount.key),
                       icon: Icon(Icons.delete_forever_outlined),
                     ),
                   ],
@@ -63,19 +69,29 @@ class _AccountSelectorState extends State<AccountSelector> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                    onPressed: () {
-                      setState(() {
-                        errorsDismissed = true;
-                      });
-                    },
-                    child: Text('Skip', style: TextStyle(color: Theme.of(context).colorScheme.error)))
+                  onPressed: () {
+                    setState(() {
+                      errorsDismissed = true;
+                    });
+                  },
+                  child: Text(
+                    'Skip',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
               ],
-            )
+            ),
           ],
         ),
       );
     }
 
-    return context.watch<PhylumRouterDelegate>().currentConfiguration?.buildPage(context) ?? Container();
+    return context
+            .watch<PhylumRouterDelegate>()
+            .currentConfiguration
+            ?.buildPage(context) ??
+        Container();
   }
 }

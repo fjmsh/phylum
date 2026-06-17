@@ -31,15 +31,15 @@ class PasswordConfig {
   Map<String, dynamic> toMap() {
     return switch (backend) {
       PasswordBackend.crypt => {
-          'backend': 'crypt',
-          'crypt': cryptConfig.toMap(),
-          'reset_enabled': resetEnabled,
-        },
+        'backend': 'crypt',
+        'crypt': cryptConfig.toMap(),
+        'reset_enabled': resetEnabled,
+      },
       PasswordBackend.ldap => {
-          'backend': 'ldap',
-          'ldap': ldapConfig.toMap(),
-          'reset_enabled': false,
-        },
+        'backend': 'ldap',
+        'ldap': ldapConfig.toMap(),
+        'reset_enabled': false,
+      },
     };
   }
 }

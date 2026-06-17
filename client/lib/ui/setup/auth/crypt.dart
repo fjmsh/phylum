@@ -60,29 +60,22 @@ class CryptConfig {
     CryptKDF? kdf,
     Argon2Config? argon2Config,
     Pbkdf2Config? pbkdf2Config,
-  }) =>
-      CryptConfig(
-        kdf: kdf ?? this.kdf,
-        argon2Config: argon2Config ?? this.argon2Config,
-        pbkdf2Config: pbkdf2Config ?? this.pbkdf2Config,
-      );
+  }) => CryptConfig(
+    kdf: kdf ?? this.kdf,
+    argon2Config: argon2Config ?? this.argon2Config,
+    pbkdf2Config: pbkdf2Config ?? this.pbkdf2Config,
+  );
 
   Map<String, dynamic> toMap() => switch (kdf) {
-        CryptKDF.argon2 => {
-            'kdf': 'argon2',
-            'argon2': argon2Config.toMap(),
-          },
-        CryptKDF.pbkdf2 => {
-            'kdf': 'pbkdf2',
-            'pbkdf2': pbkdf2Config.toMap(),
-          },
-      };
+    CryptKDF.argon2 => {'kdf': 'argon2', 'argon2': argon2Config.toMap()},
+    CryptKDF.pbkdf2 => {'kdf': 'pbkdf2', 'pbkdf2': pbkdf2Config.toMap()},
+  };
 
   @override
   String toString() => switch (kdf) {
-        CryptKDF.argon2 => 'Argon2 ($argon2Config)',
-        CryptKDF.pbkdf2 => 'PBKDF2 ($pbkdf2Config)',
-      };
+    CryptKDF.argon2 => 'Argon2 ($argon2Config)',
+    CryptKDF.pbkdf2 => 'PBKDF2 ($pbkdf2Config)',
+  };
 }
 
 enum CryptKDF {

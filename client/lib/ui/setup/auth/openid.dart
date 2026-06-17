@@ -54,7 +54,10 @@ class _OidcDialogState extends State<OidcDialog> {
                     TextSpan(
                       children: [
                         TextSpan(text: 'Name '),
-                        TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                        TextSpan(
+                          text: '*',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ],
                     ),
                   ),
@@ -74,7 +77,10 @@ class _OidcDialogState extends State<OidcDialog> {
                     TextSpan(
                       children: [
                         TextSpan(text: 'Issuer URL '),
-                        TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                        TextSpan(
+                          text: '*',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ],
                     ),
                   ),
@@ -86,8 +92,8 @@ class _OidcDialogState extends State<OidcDialog> {
                 validator: (value) => value?.isEmpty ?? true
                     ? 'Required'
                     : Uri.tryParse(value!) == null
-                        ? 'Invalid URL'
-                        : null,
+                    ? 'Invalid URL'
+                    : null,
               ),
               TextFormField(
                 decoration: const InputDecoration(
@@ -95,7 +101,10 @@ class _OidcDialogState extends State<OidcDialog> {
                     TextSpan(
                       children: [
                         TextSpan(text: 'Client ID '),
-                        TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                        TextSpan(
+                          text: '*',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ],
                     ),
                   ),
@@ -112,7 +121,10 @@ class _OidcDialogState extends State<OidcDialog> {
                     TextSpan(
                       children: [
                         TextSpan(text: 'Client Secret '),
-                        TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                        TextSpan(
+                          text: '*',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ],
                     ),
                   ),
@@ -144,19 +156,22 @@ class _OidcDialogState extends State<OidcDialog> {
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(null),
-            child: Text('Cancel')),
+          onPressed: () => Navigator.of(context).pop(null),
+          child: Text('Cancel'),
+        ),
         ElevatedButton(
           onPressed: () {
             if (!formKey.currentState!.validate()) return;
-            Navigator.of(context).pop(OpenIDConfig(
-              name: name,
-              issuerUrl: issuerUrl,
-              clientId: clientId,
-              clientSecret: clientSecret,
-              allowUnverifiedEmails: allowUnverifiedEmails,
-              autoCreateUsers: autoCreateUsers,
-            ));
+            Navigator.of(context).pop(
+              OpenIDConfig(
+                name: name,
+                issuerUrl: issuerUrl,
+                clientId: clientId,
+                clientSecret: clientSecret,
+                allowUnverifiedEmails: allowUnverifiedEmails,
+                autoCreateUsers: autoCreateUsers,
+              ),
+            );
           },
           child: Text('OK'),
         ),
@@ -183,14 +198,14 @@ class OpenIDConfig {
   });
 
   const OpenIDConfig.empty()
-      : this(
-          name: '',
-          issuerUrl: '',
-          clientId: '',
-          clientSecret: '',
-          allowUnverifiedEmails: false,
-          autoCreateUsers: false,
-        );
+    : this(
+        name: '',
+        issuerUrl: '',
+        clientId: '',
+        clientSecret: '',
+        allowUnverifiedEmails: false,
+        autoCreateUsers: false,
+      );
 
   OpenIDConfig copyWith({
     String? name,
@@ -199,23 +214,21 @@ class OpenIDConfig {
     String? clientSecret,
     bool? allowUnverifiedEmails,
     bool? autoCreateUsers,
-  }) =>
-      OpenIDConfig(
-        name: name ?? this.name,
-        issuerUrl: issuerUrl ?? this.issuerUrl,
-        clientId: clientId ?? this.clientId,
-        clientSecret: clientSecret ?? this.clientSecret,
-        allowUnverifiedEmails:
-            allowUnverifiedEmails ?? this.allowUnverifiedEmails,
-        autoCreateUsers: autoCreateUsers ?? this.autoCreateUsers,
-      );
+  }) => OpenIDConfig(
+    name: name ?? this.name,
+    issuerUrl: issuerUrl ?? this.issuerUrl,
+    clientId: clientId ?? this.clientId,
+    clientSecret: clientSecret ?? this.clientSecret,
+    allowUnverifiedEmails: allowUnverifiedEmails ?? this.allowUnverifiedEmails,
+    autoCreateUsers: autoCreateUsers ?? this.autoCreateUsers,
+  );
 
   Map<String, dynamic> toMap() => {
-        'name': name,
-        'issuer_url': issuerUrl,
-        'client_id': clientId,
-        'client_secret': clientSecret,
-        'allow_unverified_emails': allowUnverifiedEmails,
-        'auto_create_users': autoCreateUsers,
-      };
+    'name': name,
+    'issuer_url': issuerUrl,
+    'client_id': clientId,
+    'client_secret': clientSecret,
+    'allow_unverified_emails': allowUnverifiedEmails,
+    'auto_create_users': autoCreateUsers,
+  };
 }

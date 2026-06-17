@@ -65,11 +65,7 @@ Future<RequestResult> sendRequest(
   } on SocketException {
     return ServerOffline();
   } catch (e, stackTrace) {
-    Log.warn(
-      'Unknown error to ${request.url.path}',
-      e,
-      stackTrace,
-    );
+    Log.warn('Unknown error to ${request.url.path}', e, stackTrace);
     return ClientError(error: e.toString());
   }
 }

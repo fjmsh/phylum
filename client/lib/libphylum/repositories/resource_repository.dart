@@ -22,12 +22,13 @@ import 'package:phylum/util/permissions.dart';
 const performLocalChecks = true;
 const _remoteResourcesBoxName = 'remote_resources';
 
-typedef CopyMoveFn = Future<String> Function({
-  required Resource resource,
-  required String name,
-  required String parent,
-  required NameConflictResolution conflictResolution,
-});
+typedef CopyMoveFn =
+    Future<String> Function({
+      required Resource resource,
+      required String name,
+      required String parent,
+      required NameConflictResolution conflictResolution,
+    });
 
 class ResourceRepository extends Repository<PhylumAccount, Resource> {
   late final PhylumAccount _account;
@@ -38,13 +39,16 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
 
   @override
   Future<Map<String, Resource?>> initializeAndRestoreRemoteData(
-      PhylumAccount account) async {
+    PhylumAccount account,
+  ) async {
     if (!Hive.isAdapterRegistered(const ResourceAdapter().typeId)) {
       Hive.registerAdapter(const ResourceAdapter());
     }
     final box = await account.openBox<Resource>(_remoteResourcesBoxName);
-    final remoteData = Map<String, Resource?>.fromIterable(box.keys,
-        value: (key) => box.get(key));
+    final remoteData = Map<String, Resource?>.fromIterable(
+      box.keys,
+      value: (key) => box.get(key),
+    );
     await box.close();
     _account = account;
     _remoteDataBox = await account.openLazyBox(_remoteResourcesBoxName);
@@ -77,8 +81,10 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
 
   @override
   Future<void> save(String objectId, Resource data) {
-    return _account.db.resources
-        .insertOne(data, mode: InsertMode.insertOrReplace);
+    return _account.db.resources.insertOne(
+      data,
+      mode: InsertMode.insertOrReplace,
+    );
   }
 
   @override
@@ -104,8 +110,10 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
         throw PermissionException();
       }
 
-      var existing =
-          await _account.db.getResourcesByName(parent: parent, name: name);
+      var existing = await _account.db.getResourcesByName(
+        parent: parent,
+        name: name,
+      );
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
           case nameConflictError:
@@ -124,16 +132,18 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
       }
     }
 
-    await _account.addAction(ResourceMkdirAction(
-      parent: parent,
-      resourceName: name,
-      resourceId: id,
-      conflictResolution: conflictResolution,
-      timestamp: DateTime.now(),
-      localName: localName,
-      deletedId: deletedId,
-      userPermission: userPermission,
-    ));
+    await _account.addAction(
+      ResourceMkdirAction(
+        parent: parent,
+        resourceName: name,
+        resourceId: id,
+        conflictResolution: conflictResolution,
+        timestamp: DateTime.now(),
+        localName: localName,
+        deletedId: deletedId,
+        userPermission: userPermission,
+      ),
+    );
 
     return id;
   }
@@ -157,8 +167,10 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
         throw PermissionException();
       }
 
-      var existing =
-          await _account.db.getResourcesByName(parent: parent, name: name);
+      var existing = await _account.db.getResourcesByName(
+        parent: parent,
+        name: name,
+      );
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
           case nameConflictError:
@@ -179,20 +191,21 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     }
 
     await _account.addAction(
-        ResourceUploadAction(
-          resourceId: id,
-          parent: parent,
-          resourceName: name,
-          conflictResolution: conflictResolution,
-          timestamp: DateTime.now(),
-          size: size,
-          contentType: lookupMimeType(name) ?? 'application/octet-stream',
-          localName: localName,
-          deletedId: deletedId,
-          userPermission: userPermission,
-          versionId: generateUuid(),
-        ),
-        data: contents);
+      ResourceUploadAction(
+        resourceId: id,
+        parent: parent,
+        resourceName: name,
+        conflictResolution: conflictResolution,
+        timestamp: DateTime.now(),
+        size: size,
+        contentType: lookupMimeType(name) ?? 'application/octet-stream',
+        localName: localName,
+        deletedId: deletedId,
+        userPermission: userPermission,
+        versionId: generateUuid(),
+      ),
+      data: contents,
+    );
 
     return id;
   }
@@ -223,8 +236,10 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
         }
       }
 
-      var existing =
-          await _account.db.getResourcesByName(parent: parent, name: name);
+      var existing = await _account.db.getResourcesByName(
+        parent: parent,
+        name: name,
+      );
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
           case nameConflictError:
@@ -242,19 +257,21 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
         }
       }
     }
-    await _account.addAction(ResourceMoveAction(
-      resourceId: resource.id,
-      parent: parent,
-      resourceName: name,
-      conflictResolution: conflictResolution,
-      description: parent == resource.parent
-          ? 'Renaming ${resource.name} to $localName'
-          : 'Moving ${resource.name}',
-      timestamp: DateTime.now(),
-      localName: localName,
-      oldParent: parent == resource.parent ? null : resource.parent,
-      deletedId: deletedId,
-    ));
+    await _account.addAction(
+      ResourceMoveAction(
+        resourceId: resource.id,
+        parent: parent,
+        resourceName: name,
+        conflictResolution: conflictResolution,
+        description: parent == resource.parent
+            ? 'Renaming ${resource.name} to $localName'
+            : 'Moving ${resource.name}',
+        timestamp: DateTime.now(),
+        localName: localName,
+        oldParent: parent == resource.parent ? null : resource.parent,
+        deletedId: deletedId,
+      ),
+    );
     return resource.id;
   }
 
@@ -282,8 +299,10 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
         throw PermissionException();
       }
 
-      var existing =
-          await _account.db.getResourcesByName(parent: parent, name: name);
+      var existing = await _account.db.getResourcesByName(
+        parent: parent,
+        name: name,
+      );
       if (existing.isNotEmpty) {
         switch (conflictResolution) {
           case nameConflictError:
@@ -301,37 +320,45 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
         }
       }
     }
-    final latestVersion =
-        await _account.db.latestVersion(resource.id).getSingleOrNull();
-    await _account.addAction(ResourceCopyAction(
-      srcId: resource.id,
-      resourceId: id,
-      versionId: generateUuid(),
-      parent: parent,
-      resourceName: name,
-      conflictResolution: conflictResolution,
-      dir: resource.dir,
-      localName: localName,
-      contentType: latestVersion?.mimeType ?? '',
-      contentLength: latestVersion?.size ?? 0,
-      contentSha256: latestVersion?.sha256 ?? '',
-      description: 'Copying ${resource.name}',
-      timestamp: DateTime.now(),
-      deletedId: deletedId,
-      userPermission: resource.userPermission,
-    ));
+    final latestVersion = await _account.db
+        .latestVersion(resource.id)
+        .getSingleOrNull();
+    await _account.addAction(
+      ResourceCopyAction(
+        srcId: resource.id,
+        resourceId: id,
+        versionId: generateUuid(),
+        parent: parent,
+        resourceName: name,
+        conflictResolution: conflictResolution,
+        dir: resource.dir,
+        localName: localName,
+        contentType: latestVersion?.mimeType ?? '',
+        contentLength: latestVersion?.size ?? 0,
+        contentSha256: latestVersion?.sha256 ?? '',
+        description: 'Copying ${resource.name}',
+        timestamp: DateTime.now(),
+        deletedId: deletedId,
+        userPermission: resource.userPermission,
+      ),
+    );
     return id;
   }
 
   Future<String> _createUniqueName(
-      List<Resource> existing, String parent, String name) async {
+    List<Resource> existing,
+    String parent,
+    String name,
+  ) async {
     String localName = name;
     int counter = 1;
     while (existing.isNotEmpty) {
       localName =
           '${basenameWithoutExtension(name)} (${counter++})${extension(name)}';
-      existing =
-          await _account.db.getResourcesByName(parent: parent, name: localName);
+      existing = await _account.db.getResourcesByName(
+        parent: parent,
+        name: localName,
+      );
     }
     return localName;
   }
@@ -353,7 +380,8 @@ class ResourceAdapter implements TypeAdapter<Resource?> {
   @override
   void write(BinaryWriter writer, Resource? obj) {
     writer.writeByte(
-        0); // Version marker, in case we need to change something in the future
+      0,
+    ); // Version marker, in case we need to change something in the future
     writer.writeString(obj?.toJsonString() ?? '');
   }
 }
@@ -363,11 +391,7 @@ class UploadFile {
   final int size;
   final Stream<Uint8List> stream;
 
-  UploadFile({
-    required this.path,
-    required this.size,
-    required this.stream,
-  });
+  UploadFile({required this.path, required this.size, required this.stream});
 
   String getMimeType(String path) {
     return lookupMimeType(path) ?? 'application/octet-stream';

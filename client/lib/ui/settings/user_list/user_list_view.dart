@@ -31,8 +31,9 @@ class UserListView extends StatelessWidget {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                foregroundColor:
-                    Theme.of(context).colorScheme.onPrimaryContainer,
+                foregroundColor: Theme.of(
+                  context,
+                ).colorScheme.onPrimaryContainer,
               ),
               onPressed: () {
                 context.read<UserListController>().fetch();
@@ -66,39 +67,45 @@ class UserListView extends StatelessWidget {
             itemBuilder: (context, i) {
               final user = users[i];
               return ListTile(
-                  title: Text.rich(TextSpan(children: [
-                    if (user.name.isNotEmpty)
-                      TextSpan(text: '${user.name} \u2022 '),
-                    TextSpan(
+                title: Text.rich(
+                  TextSpan(
+                    children: [
+                      if (user.name.isNotEmpty)
+                        TextSpan(text: '${user.name} \u2022 '),
+                      TextSpan(
                         text: user.email,
-                        style: TextStyle(fontStyle: FontStyle.italic))
-                  ])),
-                  subtitle: user.permissions.isEmpty
-                      ? const Text(
-                          'No Permissions',
-                          style: TextStyle(fontStyle: FontStyle.italic),
-                        )
-                      : Wrap(
-                          alignment: WrapAlignment.start,
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: user.permissions
-                              .map((p) => Chip(label: Text(p.readableName)))
-                              .toList(growable: false),
-                        ),
-                  onTap: () => showUserDetails(context, user),
-                  trailing: account.user
-                              .hasPermission(userPermissionFilesRead) &&
-                          user.home != null
-                      ? IconButton(
-                          icon: Icon(Icons.folder_open_rounded),
-                          onPressed: () {
-                            context
-                                .read<PhylumRouterDelegate>()
-                                .go(ExplorerRouteFolder(folderId: user.home!));
-                          },
-                        )
-                      : null);
+                        style: TextStyle(fontStyle: FontStyle.italic),
+                      ),
+                    ],
+                  ),
+                ),
+                subtitle: user.permissions.isEmpty
+                    ? const Text(
+                        'No Permissions',
+                        style: TextStyle(fontStyle: FontStyle.italic),
+                      )
+                    : Wrap(
+                        alignment: WrapAlignment.start,
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: user.permissions
+                            .map((p) => Chip(label: Text(p.readableName)))
+                            .toList(growable: false),
+                      ),
+                onTap: () => showUserDetails(context, user),
+                trailing:
+                    account.user.hasPermission(userPermissionFilesRead) &&
+                        user.home != null
+                    ? IconButton(
+                        icon: Icon(Icons.folder_open_rounded),
+                        onPressed: () {
+                          context.read<PhylumRouterDelegate>().go(
+                            ExplorerRouteFolder(folderId: user.home!),
+                          );
+                        },
+                      )
+                    : null,
+              );
             },
             itemCount: users.length,
           ),
@@ -116,8 +123,9 @@ class UserListView extends StatelessWidget {
                       controller.addUser(user);
                     } else {
                       final account = context.read<PhylumAccount>();
-                      final userDetails =
-                          await NewUserDetailsDialog.show(context);
+                      final userDetails = await NewUserDetailsDialog.show(
+                        context,
+                      );
                       if (userDetails == null || !context.mounted) return;
                       await account.userRepository.invite(
                         email: userDetails.email,
@@ -146,15 +154,12 @@ class UserListView extends StatelessWidget {
           width: 360,
           child: ListTileTheme(
             data: ListTileThemeData(
-                visualDensity:
-                    const VisualDensity(horizontal: -4, vertical: -4)),
+              visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ListTile(
-                  title: const Text('Name'),
-                  subtitle: Text(user.name),
-                ),
+                ListTile(title: const Text('Name'), subtitle: Text(user.name)),
                 ListTile(
                   title: const Text('Email'),
                   subtitle: Text(user.email),
@@ -163,52 +168,64 @@ class UserListView extends StatelessWidget {
                   title: const Text('User ID'),
                   subtitle: Text(user.id.toString()),
                 ),
-                StatefulBuilder(builder: (context, setState) {
-                  return ListTile(
-                    title: Text('Permissions'),
-                    subtitle: user.permissions.isEmpty
-                        ? const Text(
-                            'None',
-                            style: TextStyle(fontStyle: FontStyle.italic),
+                StatefulBuilder(
+                  builder: (context, setState) {
+                    return ListTile(
+                      title: Text('Permissions'),
+                      subtitle: user.permissions.isEmpty
+                          ? const Text(
+                              'None',
+                              style: TextStyle(fontStyle: FontStyle.italic),
+                            )
+                          : Wrap(
+                              alignment: WrapAlignment.start,
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: user.permissions
+                                  .map((p) => Chip(label: Text(p.readableName)))
+                                  .toList(growable: false),
+                            ),
+                      onTap:
+                          account.user.hasPermission(
+                            userPermissionUsersPermissions,
                           )
-                        : Wrap(
-                            alignment: WrapAlignment.start,
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: user.permissions
-                                .map((p) => Chip(label: Text(p.readableName)))
-                                .toList(growable: false),
-                          ),
-                    onTap: account.user
-                            .hasPermission(userPermissionUsersPermissions)
-                        ? () async {
-                            final updatedPermissions =
-                                await UserPermissionsDialog.show(
-                                    context, account, user);
-                            if (updatedPermissions == null ||
-                                !context.mounted) {
-                              return;
+                          ? () async {
+                              final updatedPermissions =
+                                  await UserPermissionsDialog.show(
+                                    context,
+                                    account,
+                                    user,
+                                  );
+                              if (updatedPermissions == null ||
+                                  !context.mounted) {
+                                return;
+                              }
+                              setState(() {
+                                user = user.copyWith(
+                                  permissions: updatedPermissions,
+                                );
+                              });
+                              controller.updateUser(user);
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: const Text('Permissions Updated'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
                             }
-                            setState(() {
-                              user = user.copyWith(
-                                  permissions: updatedPermissions);
-                            });
-                            controller.updateUser(user);
-                            messenger.showSnackBar(SnackBar(
-                              content: const Text('Permissions Updated'),
-                              duration: Duration(seconds: 2),
-                            ));
-                          }
-                        : null,
-                  );
-                }),
+                          : null,
+                    );
+                  },
+                ),
               ],
             ),
           ),
         ),
         actions: [
           ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(), child: Text('Okay'))
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Okay'),
+          ),
         ],
       ),
     );

@@ -9,8 +9,16 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
-Future<bool> downloadResource(BuildContext context, Resource r, {ResourceVersion? version}) async {
-  await context.read<DownloadManager>().downloadResource(context.read(), r, version: version);
+Future<bool> downloadResource(
+  BuildContext context,
+  Resource r, {
+  ResourceVersion? version,
+}) async {
+  await context.read<DownloadManager>().downloadResource(
+    context.read(),
+    r,
+    version: version,
+  );
   return true;
 }
 
@@ -20,7 +28,9 @@ class DownloadManager with ChangeNotifier {
   Iterable<DownloadTaskStatusNotifier> get tasks => _tasks.values;
 
   DownloadManager() : super() {
-    _downloader.configure(globalConfig: (Config.runInForeground, Config.always));
+    _downloader.configure(
+      globalConfig: (Config.runInForeground, Config.always),
+    );
     _downloader.configureNotification(
       running: TaskNotification("Downloading", "File: {filename}"),
       paused: TaskNotification("Download Paused", "File: {filename}"),
@@ -32,7 +42,10 @@ class DownloadManager with ChangeNotifier {
       taskNotificationTapCallback: (task, notificationType) async {
         if (task.group == 'immediate') return;
         if (notificationType == NotificationType.complete) {
-          final path = await _downloader.pathInSharedStorage(await task.filePath(), SharedStorage.downloads);
+          final path = await _downloader.pathInSharedStorage(
+            await task.filePath(),
+            SharedStorage.downloads,
+          );
 
           if (path != null) {
             _downloader.openFile(filePath: path);
@@ -60,10 +73,17 @@ class DownloadManager with ChangeNotifier {
         if (task.group == 'immediate') return;
         if (task is DownloadTask) {
           if (update.status == TaskStatus.complete) {
-            _downloader.moveToSharedStorage(task, SharedStorage.downloads, mimeType: task.metaData);
+            _downloader.moveToSharedStorage(
+              task,
+              SharedStorage.downloads,
+              mimeType: task.metaData,
+            );
           }
           if (!_tasks.containsKey(task.taskId)) {
-            _tasks[task.taskId] = DownloadTaskStatusNotifier(task: task, status: update.status);
+            _tasks[task.taskId] = DownloadTaskStatusNotifier(
+              task: task,
+              status: update.status,
+            );
             notifyListeners();
           } else {
             _tasks[task.taskId]!.status = update.status;
@@ -74,20 +94,31 @@ class DownloadManager with ChangeNotifier {
     _downloader.start();
   }
 
-  Future<void> downloadResource(PhylumAccount account, Resource r, {ResourceVersion? version}) async {
+  Future<void> downloadResource(
+    PhylumAccount account,
+    Resource r, {
+    ResourceVersion? version,
+  }) async {
     await _downloader.ready;
     if (Platform.isAndroid || Platform.isAndroid) {
       await Permission.notification.request();
     }
-    final uri = account.apiClient.createUriBuilder('/api/v1/fs/contents/${r.id}:');
+    final uri = account.apiClient.createUriBuilder(
+      '/api/v1/fs/contents/${r.id}:',
+    );
     if (version != null) {
       uri.queryParameters['version'] = version.id;
     }
     final v = version ?? await account.db.latestVersion(r.id).getSingleOrNull();
-    final mimeType = v?.mimeType ?? MimeTypeResolver().lookup(r.name) ?? 'application/octet-stream';
+    final mimeType =
+        v?.mimeType ??
+        MimeTypeResolver().lookup(r.name) ??
+        'application/octet-stream';
     final task = DownloadTask(
       url: uri.toString(),
-      filename: version == null ? r.name : '${r.name}-${version.created.formatNumericDateTime()}',
+      filename: version == null
+          ? r.name
+          : '${r.name}-${version.created.formatNumericDateTime()}',
       displayName: r.name,
       headers: account.apiClient.requestHeaders,
       updates: Updates.statusAndProgress,
@@ -125,6 +156,6 @@ class DownloadTaskStatusNotifier with ChangeNotifier {
     required this.task,
     TaskStatus? status,
     TaskProgressUpdate? progress,
-  })  : _status = status ?? TaskStatus.enqueued,
-        _progress = progress ?? TaskProgressUpdate(task, 0);
+  }) : _status = status ?? TaskStatus.enqueued,
+       _progress = progress ?? TaskProgressUpdate(task, 0);
 }

@@ -37,13 +37,13 @@ class PhylumAccount extends Account<PhylumAccount> {
 
   @override
   Map<Type, Repository<PhylumAccount, dynamic>> get repositories => {
-        Bookmark: bookmarkRepository,
-        Publink: publinkRepository,
-        Resource: resourceRepository,
-        ResourceVersion: resourceVersionRepository,
-        TrashedResource: trashedResourcRepository,
-        User: userRepository,
-      };
+    Bookmark: bookmarkRepository,
+    Publink: publinkRepository,
+    Resource: resourceRepository,
+    ResourceVersion: resourceVersionRepository,
+    TrashedResource: trashedResourcRepository,
+    User: userRepository,
+  };
 
   @override
   Dispatcher dispatcher = HttpClientDispatcher();
@@ -79,22 +79,26 @@ class PhylumAccount extends Account<PhylumAccount> {
     }
   }
 
-  PhylumAccount._create(
-      {required super.serverUrl,
-      required String apiToken,
-      required AccountUser user})
-      : _apiToken = apiToken,
-        _initialUser = user,
-        super.create();
+  PhylumAccount._create({
+    required super.serverUrl,
+    required String apiToken,
+    required AccountUser user,
+  }) : _apiToken = apiToken,
+       _initialUser = user,
+       super.create();
 
   PhylumAccount.restore({required super.id}) : super.restore();
 
-  static Future<PhylumAccount> create(
-      {required Uri serverUrl,
-      required String apiToken,
-      required AccountUser user}) async {
+  static Future<PhylumAccount> create({
+    required Uri serverUrl,
+    required String apiToken,
+    required AccountUser user,
+  }) async {
     final account = PhylumAccount._create(
-        serverUrl: serverUrl, apiToken: apiToken, user: user);
+      serverUrl: serverUrl,
+      apiToken: apiToken,
+      user: user,
+    );
     await account.setup();
     return account;
   }
@@ -118,7 +122,8 @@ class PhylumAccount extends Account<PhylumAccount> {
       _userNotifier = AccountUserNotifier.fromAccount(this);
     }
     _config = BootstrapConfig.parse(
-        jsonDecode(getPersisted(_persistKeyConfig) ?? '{}'));
+      jsonDecode(getPersisted(_persistKeyConfig) ?? '{}'),
+    );
 
     final dispatcherOverride = const String.fromEnvironment('dispatcher');
     dispatcher = switch (dispatcherOverride) {

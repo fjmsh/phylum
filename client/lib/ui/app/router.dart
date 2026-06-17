@@ -94,9 +94,11 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
       }
       if (segments[0] == 'open') {
         final resourceId = uri.queryParameters['id'];
-        return SynchronousFuture(resourceId == null
-            ? const ExplorerRouteHome()
-            : OpenResourceRoute(resourceId: resourceId));
+        return SynchronousFuture(
+          resourceId == null
+              ? const ExplorerRouteHome()
+              : OpenResourceRoute(resourceId: resourceId),
+        );
       }
       if (segments[0] == 'recents') {
         return SynchronousFuture(const ExplorerRouteRecents());
@@ -117,17 +119,21 @@ class PhylumRouteInformationParser extends RouteInformationParser<PhylumRoute> {
     } else if (segments.length == 2) {
       if (segments[0] == 'login') {
         if (segments[1] == 'token') {
-          return SynchronousFuture(TokenLoginRoute(
-            instance: uri.queryParameters['instance'],
-            token: uri.queryParameters['token'],
-          ));
+          return SynchronousFuture(
+            TokenLoginRoute(
+              instance: uri.queryParameters['instance'],
+              token: uri.queryParameters['token'],
+            ),
+          );
         }
         if (segments[1] == 'reset_password') {
-          return SynchronousFuture(ResetPasswordRoute(
-            instance: uri.queryParameters['instance'],
-            email: uri.queryParameters['email'],
-            token: uri.queryParameters['token'],
-          ));
+          return SynchronousFuture(
+            ResetPasswordRoute(
+              instance: uri.queryParameters['instance'],
+              email: uri.queryParameters['email'],
+              token: uri.queryParameters['token'],
+            ),
+          );
         }
       }
       if (segments[0] == 'folder') {

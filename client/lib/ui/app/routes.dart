@@ -38,9 +38,7 @@ class SetupRoute extends PhylumRoute {
 
   @override
   Widget buildPage(BuildContext context) {
-    return SetupPage(
-      instanceUrl: instanceUrl,
-    );
+    return SetupPage(instanceUrl: instanceUrl);
   }
 }
 
@@ -67,8 +65,11 @@ class ResetPasswordRoute extends PhylumRoute {
   final String? email;
   final String? token;
 
-  ResetPasswordRoute(
-      {required this.instance, required this.email, required this.token});
+  ResetPasswordRoute({
+    required this.instance,
+    required this.email,
+    required this.token,
+  });
 
   @override
   Uri get uri => Uri(path: '/');
@@ -88,9 +89,10 @@ sealed class LoggedInRoute extends PhylumRoute {
   @nonVirtual
   @override
   Widget buildPage(BuildContext context) {
-    final account =
-        context.select<AccountManagerState<PhylumAccount>, PhylumAccount?>(
-            (state) => state.selectedAccount);
+    final account = context
+        .select<AccountManagerState<PhylumAccount>, PhylumAccount?>(
+          (state) => state.selectedAccount,
+        );
 
     if (account == null) {
       return LoginPage.create();
@@ -147,25 +149,20 @@ sealed class ExplorerRoute extends LoggedInRoute {
   }
 
   MenuOptionGroups get selectedResourceOptions => [
-        [MenuOption.details, MenuOption.copyURL],
-        [
-          MenuOption.download,
-          if (!kIsWeb && Platform.isAndroid) MenuOption.share,
-          MenuOption.openWith
-        ],
-        [
-          MenuOption.rename,
-          MenuOption.move,
-          MenuOption.copy,
-          MenuOption.delete
-        ],
-        [
-          MenuOption.bookmarkAdd,
-          MenuOption.bookmarkRemove,
-          MenuOption.permissions,
-          MenuOption.publinks
-        ],
-      ];
+    [MenuOption.details, MenuOption.copyURL],
+    [
+      MenuOption.download,
+      if (!kIsWeb && Platform.isAndroid) MenuOption.share,
+      MenuOption.openWith,
+    ],
+    [MenuOption.rename, MenuOption.move, MenuOption.copy, MenuOption.delete],
+    [
+      MenuOption.bookmarkAdd,
+      MenuOption.bookmarkRemove,
+      MenuOption.permissions,
+      MenuOption.publinks,
+    ],
+  ];
 
   MenuOptionGroups? get folderOptions;
 }
@@ -208,19 +205,15 @@ class ExplorerRouteFolder extends ExplorerRoute {
 
   @override
   MenuOptionGroups get folderOptions => const [
-        [MenuOption.details, MenuOption.copyURL],
-        [
-          MenuOption.newFolder,
-          MenuOption.uploadFiles,
-          MenuOption.uploadFolders
-        ],
-        [
-          MenuOption.bookmarkAdd,
-          MenuOption.bookmarkRemove,
-          MenuOption.permissions,
-          MenuOption.publinks
-        ],
-      ];
+    [MenuOption.details, MenuOption.copyURL],
+    [MenuOption.newFolder, MenuOption.uploadFiles, MenuOption.uploadFolders],
+    [
+      MenuOption.bookmarkAdd,
+      MenuOption.bookmarkRemove,
+      MenuOption.permissions,
+      MenuOption.publinks,
+    ],
+  ];
 }
 
 class ExplorerRouteRecents extends ExplorerRoute {
@@ -257,9 +250,9 @@ class ExplorerRouteTrash extends ExplorerRoute {
 
   @override
   Future<bool> refresh(PhylumAccount account) {
-    return account.trashedResourcRepository
-        .refresh()
-        .then((result) => result is ApiSuccessResponse);
+    return account.trashedResourcRepository.refresh().then(
+      (result) => result is ApiSuccessResponse,
+    );
   }
 
   @override
@@ -269,14 +262,14 @@ class ExplorerRouteTrash extends ExplorerRoute {
 
   @override
   MenuOptionGroups get selectedResourceOptions => const [
-        [MenuOption.details],
-        [MenuOption.restore, MenuOption.deleteForever],
-      ];
+    [MenuOption.details],
+    [MenuOption.restore, MenuOption.deleteForever],
+  ];
 
   @override
   MenuOptionGroups? get folderOptions => [
-        [MenuOption.emptyTrash]
-      ];
+    [MenuOption.emptyTrash],
+  ];
 }
 
 class ExplorerRouteShared extends ExplorerRoute {
@@ -318,12 +311,13 @@ class ExplorerRouteSearch extends ExplorerRoute {
 
   @override
   Future<bool> refresh(PhylumAccount account) {
-    return account.apiClient
-        .sendRequest(SearchRequest(query: query))
-        .then((result) {
+    return account.apiClient.sendRequest(SearchRequest(query: query)).then((
+      result,
+    ) {
       if (result is SearchResponse) {
         _streamController.add(
-            result.resources.map((r) => r.resource).toList(growable: false));
+          result.resources.map((r) => r.resource).toList(growable: false),
+        );
       }
       return result is ApiSuccessResponse;
     });

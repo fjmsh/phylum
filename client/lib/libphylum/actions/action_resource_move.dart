@@ -19,51 +19,42 @@ class ResourceMoveAction extends ResourceBindAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-        // TODO: Do not send parent when only renaming
-        'src': '$resourceId:',
-        'dest': '$parent:$resourceName',
-        'conflict': conflictResolution,
-      };
+    // TODO: Do not send parent when only renaming
+    'src': '$resourceId:',
+    'dest': '$parent:$resourceName',
+    'conflict': conflictResolution,
+  };
 
   @override
   List<LocalChange> get localChanges => [
-        UpdateResourceNameParentChange(
-          objectId: resourceId,
-          parent: parent,
-          name: localName,
-          timestamp: timestamp,
-        ),
-        UpdateResourceModifiedChange(
-          objectId: parent,
-          timestamp: timestamp,
-        ),
-        if (oldParent != null)
-          UpdateResourceModifiedChange(
-            objectId: oldParent!,
-            timestamp: timestamp,
-          ),
-        if (deletedId != null)
-          UpdateResourceDeletedChange(
-            objectId: resourceId,
-            timestamp: timestamp,
-          ),
-      ];
+    UpdateResourceNameParentChange(
+      objectId: resourceId,
+      parent: parent,
+      name: localName,
+      timestamp: timestamp,
+    ),
+    UpdateResourceModifiedChange(objectId: parent, timestamp: timestamp),
+    if (oldParent != null)
+      UpdateResourceModifiedChange(objectId: oldParent!, timestamp: timestamp),
+    if (deletedId != null)
+      UpdateResourceDeletedChange(objectId: resourceId, timestamp: timestamp),
+  ];
 
   @override
   final String description;
 
   @override
   Map<String, dynamic> get props => {
-        'resourceId': resourceId,
-        'parent': parent,
-        'resourceName': resourceName,
-        'conflictResolution': conflictResolution,
-        'description': description,
-        'modified': timestamp.millisecondsSinceEpoch,
-        'localName': localName,
-        'oldParent': oldParent,
-        'deletedId': deletedId,
-      };
+    'resourceId': resourceId,
+    'parent': parent,
+    'resourceName': resourceName,
+    'conflictResolution': conflictResolution,
+    'description': description,
+    'modified': timestamp.millisecondsSinceEpoch,
+    'localName': localName,
+    'oldParent': oldParent,
+    'deletedId': deletedId,
+  };
 
   final DateTime timestamp;
   final String localName;

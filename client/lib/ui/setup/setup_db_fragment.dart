@@ -14,8 +14,11 @@ class SetupDbFragment extends StatelessWidget {
   final void Function() onNextPress;
   final formKey = GlobalKey<FormState>();
 
-  SetupDbFragment(
-      {super.key, required this.instanceUrl, required this.onNextPress});
+  SetupDbFragment({
+    super.key,
+    required this.instanceUrl,
+    required this.onNextPress,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,15 +28,13 @@ class SetupDbFragment extends StatelessWidget {
         TextButtonTheme(
           data: TextButtonThemeData(
             style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24)),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TextButton(
-                onPressed: null,
-                child: Text('PREV'),
-              ),
+              TextButton(onPressed: null, child: Text('PREV')),
               TextButton(
                 onPressed: () => validateAndNext(context),
                 child: Text('NEXT'),
@@ -63,7 +64,10 @@ class SetupDbFragment extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(text: 'Host '),
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -83,7 +87,10 @@ class SetupDbFragment extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(text: 'Port '),
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -98,8 +105,8 @@ class SetupDbFragment extends StatelessWidget {
             validator: (value) => value?.isEmpty ?? true
                 ? 'Required'
                 : (int.tryParse(value!) ?? 0) == 0
-                    ? 'Invalid Port'
-                    : null,
+                ? 'Invalid Port'
+                : null,
           ),
           TextFormField(
             decoration: const InputDecoration(
@@ -107,7 +114,10 @@ class SetupDbFragment extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(text: 'Datbase Name '),
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -125,7 +135,10 @@ class SetupDbFragment extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(text: 'User '),
-                    TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               ),
@@ -167,8 +180,8 @@ class SetupDbFragment extends StatelessWidget {
       message: 'Validating Database Config',
     );
     if (responseString == null || !context.mounted) return;
-    final responseMap =
-        (jsonDecode(responseString) as Map).cast<String, dynamic>();
+    final responseMap = (jsonDecode(responseString) as Map)
+        .cast<String, dynamic>();
     final overrides = (responseMap["overrides"] as List?)?.cast<String>();
     final overrideNote = (overrides?.isNotEmpty ?? false)
         ? "Note: The following settings were overridden by environment variables or command line flags:\n\n${overrides!.join("\n")}"
@@ -238,13 +251,13 @@ class DbConfig {
   });
 
   const DbConfig.defaults()
-      : this(
-          host: 'localhost',
-          port: 5432,
-          name: 'phylum',
-          user: 'phylum',
-          password: 'phylum',
-        );
+    : this(
+        host: 'localhost',
+        port: 5432,
+        name: 'phylum',
+        user: 'phylum',
+        password: 'phylum',
+      );
 
   DbConfig copyWith({
     String? host,
@@ -273,10 +286,10 @@ class DbConfig {
   }
 
   Map<String, dynamic> toMap() => {
-        'host': host,
-        'port': port,
-        'name': name,
-        'user': user,
-        'password': password,
-      };
+    'host': host,
+    'port': port,
+    'name': name,
+    'user': user,
+    'password': password,
+  };
 }

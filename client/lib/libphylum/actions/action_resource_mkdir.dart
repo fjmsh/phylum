@@ -18,42 +18,39 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-        'path': '$parent:$resourceName',
-        'id': resourceId,
-        'conflict': conflictResolution,
-      };
+    'path': '$parent:$resourceName',
+    'id': resourceId,
+    'conflict': conflictResolution,
+  };
 
   @override
   List<LocalChange> get localChanges => [
-        CreateResourceChange(
-          objectId: resourceId,
-          parent: parent,
-          localName: localName,
-          dir: true,
-          timestamp: timestamp,
-          userPermission: userPermission,
-        ),
-        if (deletedId != null)
-          UpdateResourceDeletedChange(
-            objectId: resourceId,
-            timestamp: timestamp,
-          ),
-      ];
+    CreateResourceChange(
+      objectId: resourceId,
+      parent: parent,
+      localName: localName,
+      dir: true,
+      timestamp: timestamp,
+      userPermission: userPermission,
+    ),
+    if (deletedId != null)
+      UpdateResourceDeletedChange(objectId: resourceId, timestamp: timestamp),
+  ];
 
   @override
   String get description => "Creating Directory $resourceName";
 
   @override
   Map<String, dynamic> get props => {
-        'resourceId': resourceId,
-        'resourceName': resourceName,
-        'parent': parent,
-        'conflictResolution': conflictResolution,
-        'timestamp': timestamp.millisecondsSinceEpoch,
-        'localName': localName,
-        'deletedId': deletedId,
-        'userPermission': userPermission,
-      };
+    'resourceId': resourceId,
+    'resourceName': resourceName,
+    'parent': parent,
+    'conflictResolution': conflictResolution,
+    'timestamp': timestamp.millisecondsSinceEpoch,
+    'localName': localName,
+    'deletedId': deletedId,
+    'userPermission': userPermission,
+  };
 
   final DateTime timestamp;
   final String localName;
@@ -85,5 +82,6 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
   }
 
   @override
-  bool dependsOn(PhylumAction action) => action is ResourceMkdirAction && action.resourceId == parent;
+  bool dependsOn(PhylumAction action) =>
+      action is ResourceMkdirAction && action.resourceId == parent;
 }

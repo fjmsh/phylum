@@ -20,33 +20,33 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
 
   @override
   Map<String, dynamic>? get requestBody => {
-        'path': '$resourceId:',
-        'email': userEmail,
-        'permission': permission,
-      };
+    'path': '$resourceId:',
+    'email': userEmail,
+    'permission': permission,
+  };
 
   @override
   List<LocalChange> get localChanges => [
-        UpdateResourcePermissionsChange(
-          objectId: resourceId,
-          userId: userId.toString(),
-          permission: permission,
-          timestamp: modified,
-        ),
-      ];
+    UpdateResourcePermissionsChange(
+      objectId: resourceId,
+      userId: userId.toString(),
+      permission: permission,
+      timestamp: modified,
+    ),
+  ];
 
   @override
   final String description;
 
   @override
   Map<String, dynamic> get props => {
-        'resourceId': resourceId,
-        'userId': userId,
-        'userEmail': userEmail,
-        'permission': permission,
-        'modified': modified.millisecondsSinceEpoch,
-        'description': description,
-      };
+    'resourceId': resourceId,
+    'userId': userId,
+    'userEmail': userEmail,
+    'permission': permission,
+    'modified': modified.millisecondsSinceEpoch,
+    'description': description,
+  };
 
   int _userId;
   int get userId => _userId;
@@ -69,13 +69,13 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
     required User user,
     required int permission,
   }) : this._(
-          resourceId: resourceId,
-          userId: user.id,
-          userEmail: user.email,
-          permission: permission,
-          modified: DateTime.now(),
-          description: 'Sharing $resourceName with ${user.name}',
-        );
+         resourceId: resourceId,
+         userId: user.id,
+         userEmail: user.email,
+         permission: permission,
+         modified: DateTime.now(),
+         description: 'Sharing $resourceName with ${user.name}',
+       );
 
   static ResourceShareAction fromMap(Map<String, dynamic> map) {
     return ResourceShareAction._(
@@ -91,7 +91,9 @@ class ResourceShareAction extends ResourceAction with JsonApiAction {
   @override
   bool dependsOn(PhylumAction action) =>
       (action is ResourceCreateAction && action.resourceId == resourceId) ||
-      (action is ResourceShareAction && action.resourceId == resourceId && action.userEmail == userEmail) ||
+      (action is ResourceShareAction &&
+          action.resourceId == resourceId &&
+          action.userEmail == userEmail) ||
       (action is UserInviteAction && action.localId == userId);
 
   void setUserId(int userId) {

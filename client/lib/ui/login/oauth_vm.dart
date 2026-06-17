@@ -12,17 +12,21 @@ import 'package:url_launcher/url_launcher.dart';
 int? loopbackServerPort;
 
 Future<void> startOAuthFlow(
-    BuildContext context, UriBuilder oauthUriBuilder, String name) async {
-  ScaffoldMessenger.of(context)
-      .showSnackBar(SnackBar(content: Text('Logging in with $name')));
+  BuildContext context,
+  UriBuilder oauthUriBuilder,
+  String name,
+) async {
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text('Logging in with $name')));
   oauthUriBuilder.queryParameters['client_type'] = 'native';
   if (defaultTargetPlatform == TargetPlatform.linux) {
     oauthUriBuilder.queryParameters['client_type'] = 'loopback';
     if (loopbackServerPort == null) {
       await startLoopbackServer(context, oauthUriBuilder);
     } else {
-      oauthUriBuilder.queryParameters['loopback_port'] =
-          loopbackServerPort!.toString();
+      oauthUriBuilder.queryParameters['loopback_port'] = loopbackServerPort!
+          .toString();
       launchUrl(oauthUriBuilder.build());
     }
   } else {
@@ -31,14 +35,18 @@ Future<void> startOAuthFlow(
 }
 
 Future<void> startLoopbackServer(
-    BuildContext context, UriBuilder oauthUriBuilder) async {
+  BuildContext context,
+  UriBuilder oauthUriBuilder,
+) async {
   final port = ReceivePort();
   port.listen(createLoopbackRedirectHandler(context, oauthUriBuilder));
   await Isolate.spawn(runLoopbackServer, port.sendPort);
 }
 
 Function(dynamic) createLoopbackRedirectHandler(
-    BuildContext context, UriBuilder oauthUriBuilder) {
+  BuildContext context,
+  UriBuilder oauthUriBuilder,
+) {
   final routerDelegate = context.read<PhylumRouterDelegate>();
   return (dynamic data) {
     if (data is int) {
@@ -46,10 +54,12 @@ Function(dynamic) createLoopbackRedirectHandler(
       launchUrl(oauthUriBuilder.build());
     }
     if (data is Uri) {
-      routerDelegate.go(TokenLoginRoute(
-        instance: data.queryParameters['instance'],
-        token: data.queryParameters['token'],
-      ));
+      routerDelegate.go(
+        TokenLoginRoute(
+          instance: data.queryParameters['instance'],
+          token: data.queryParameters['token'],
+        ),
+      );
     }
   };
 }

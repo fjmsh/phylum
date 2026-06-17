@@ -12,7 +12,13 @@ class PublinkResponse extends PhylumApiSuccessResponse {
 
   @override
   Future<void> process(PhylumAccount account) async {
-    await account.db.publinks.insertOne(publink, mode: InsertMode.insertOrReplace);
-    await account.datastore.get<Publink>().replaceRemoteData(publink.id, publink);
+    await account.db.publinks.insertOne(
+      publink,
+      mode: InsertMode.insertOrReplace,
+    );
+    await account.datastore.get<Publink>().replaceRemoteData(
+      publink.id,
+      publink,
+    );
   }
 }

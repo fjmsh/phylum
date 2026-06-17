@@ -27,14 +27,17 @@ class LoginSelector extends StatelessWidget {
             icon: Icon(Icons.email),
             label: Text('Email'),
           ),
-        ...authConfig.openIDProviders.map((p) => ElevatedButton(
+        ...authConfig.openIDProviders.map(
+          (p) => ElevatedButton(
             onPressed: () async {
               final builder = UriBuilder.fromUri(instanceInfo.url);
               builder.path += '/api/v1/auth/oauth/start';
               builder.queryParameters['provider'] = p.id;
               startOAuthFlow(context, builder, p.name);
             },
-            child: Text(p.name))),
+            child: Text(p.name),
+          ),
+        ),
       ],
     );
   }

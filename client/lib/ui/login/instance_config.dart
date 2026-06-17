@@ -16,7 +16,9 @@ class InstanceInfo {
     return InstanceInfo(
       url: url,
       needsSetup: config['needs_config'],
-      authConfig: config.containsKey('auth') ? AuthConfig.fromResponse(config['auth'].cast<String, dynamic>()) : null,
+      authConfig: config.containsKey('auth')
+          ? AuthConfig.fromResponse(config['auth'].cast<String, dynamic>())
+          : null,
     );
   }
 
@@ -47,8 +49,9 @@ class AuthConfig {
       password: configMap['password'],
       passwordReset: configMap['password_reset'],
       magicLinks: configMap['magic_links'],
-      openIDProviders:
-          providers.map((e) => OpenIDProvider.fromResponse(e.cast<String, dynamic>())).toList(growable: false),
+      openIDProviders: providers
+          .map((e) => OpenIDProvider.fromResponse(e.cast<String, dynamic>()))
+          .toList(growable: false),
     );
   }
 
@@ -58,7 +61,7 @@ class AuthConfig {
       if (password) 'Password',
       if (passwordReset) 'Password Reset',
       if (magicLinks) 'Passwordless',
-      ...openIDProviders.map((p) => 'OIDC: ${p.name}')
+      ...openIDProviders.map((p) => 'OIDC: ${p.name}'),
     ];
     return 'Auth Config (${methods.join(',')})';
   }
@@ -71,9 +74,6 @@ class OpenIDProvider {
   OpenIDProvider({required this.id, required this.name});
 
   factory OpenIDProvider.fromResponse(Map<String, dynamic> providerMap) {
-    return OpenIDProvider(
-      id: providerMap['id'],
-      name: providerMap['name'],
-    );
+    return OpenIDProvider(id: providerMap['id'], name: providerMap['name']);
   }
 }

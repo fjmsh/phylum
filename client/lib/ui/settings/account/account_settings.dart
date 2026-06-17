@@ -78,11 +78,14 @@ class AccountSettingsPane extends StatelessWidget {
                     icon: Icon(Icons.logout),
                     label: Text('Log Out'),
                     onPressed: () async {
-                      final abort = await showAlertDialog(context,
-                              title: 'Log Out?',
-                              message: 'Are you sure you want to log out?',
-                              positiveText: 'No',
-                              negativeText: 'Yes') ??
+                      final abort =
+                          await showAlertDialog(
+                            context,
+                            title: 'Log Out?',
+                            message: 'Are you sure you want to log out?',
+                            positiveText: 'No',
+                            negativeText: 'Yes',
+                          ) ??
                           true;
                       if (abort || !context.mounted) return;
                       Navigator.of(context).pop();
@@ -111,8 +114,9 @@ class AccountSettingsPane extends StatelessWidget {
     final nav = Navigator.of(context);
     showProgressDialog(context, title: 'Updating Name');
 
-    final response =
-        await account.apiClient.sendRequest(EditUserNameRequest(name));
+    final response = await account.apiClient.sendRequest(
+      EditUserNameRequest(name),
+    );
 
     nav.pop();
     if (response is UserResponse) {
@@ -143,9 +147,7 @@ class AccountSettingsPane extends StatelessWidget {
               spacing: 18,
               children: [
                 TextField(
-                  decoration: InputDecoration(
-                    label: Text('Current Password'),
-                  ),
+                  decoration: InputDecoration(label: Text('Current Password')),
                   obscureText: true,
                   enableSuggestions: false,
                   autocorrect: false,
@@ -155,9 +157,7 @@ class AccountSettingsPane extends StatelessWidget {
                   onChanged: (value) => oldPassword = value,
                 ),
                 TextField(
-                  decoration: InputDecoration(
-                    label: Text('New Password'),
-                  ),
+                  decoration: InputDecoration(label: Text('New Password')),
                   obscureText: true,
                   enableSuggestions: false,
                   autocorrect: false,
@@ -170,7 +170,8 @@ class AccountSettingsPane extends StatelessWidget {
             actions: [
               TextButton(
                 style: TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error),
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
                 child: Text('Cancel'),
                 onPressed: () => Navigator.of(context).pop(false),
               ),
@@ -180,12 +181,13 @@ class AccountSettingsPane extends StatelessWidget {
                 onPressed: () async {
                   showProgressDialog(context, title: 'Changing Password');
 
-                  final response =
-                      await account.apiClient.sendRequest(ChangePasswordRequest(
-                    email: account.user.email,
-                    oldPassword: oldPassword,
-                    newPassword: newPassword,
-                  ));
+                  final response = await account.apiClient.sendRequest(
+                    ChangePasswordRequest(
+                      email: account.user.email,
+                      oldPassword: oldPassword,
+                      newPassword: newPassword,
+                    ),
+                  );
 
                   if (context.mounted) {
                     Navigator.of(context).pop();

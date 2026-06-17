@@ -25,10 +25,12 @@ class ResourceItemGestureHandler extends StatefulWidget {
   });
 
   @override
-  State<ResourceItemGestureHandler> createState() => _ResourceItemGestureHandlerState();
+  State<ResourceItemGestureHandler> createState() =>
+      _ResourceItemGestureHandlerState();
 }
 
-class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler> {
+class _ResourceItemGestureHandlerState
+    extends State<ResourceItemGestureHandler> {
   bool deferHandling = false;
 
   @override
@@ -44,13 +46,24 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
         if (context.read<ExplorerState>().selected.isEmpty) {
           openResource(context, widget.index);
         } else {
-          context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.toggle, false);
+          context.read<ExplorerController>().updateSelection(
+            (_) => widget.index,
+            SelectionMode.toggle,
+            false,
+          );
         }
       },
-      onLongPress: context.select<ExplorerState, bool>((state) => state.selected.isNotEmpty)
+      onLongPress:
+          context.select<ExplorerState, bool>(
+            (state) => state.selected.isNotEmpty,
+          )
           ? null
           : () {
-              context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.single, false);
+              context.read<ExplorerController>().updateSelection(
+                (_) => widget.index,
+                SelectionMode.single,
+                false,
+              );
             },
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -60,32 +73,55 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
           final mode = HardwareKeyboard.instance.isControlPressed
               ? SelectionMode.toggle
               : HardwareKeyboard.instance.isShiftPressed
-                  ? SelectionMode.range
-                  : SelectionMode.single;
-          if (context.read<ExplorerState>().isSelected(widget.resource.id) && mode == SelectionMode.single) {
+              ? SelectionMode.range
+              : SelectionMode.single;
+          if (context.read<ExplorerState>().isSelected(widget.resource.id) &&
+              mode == SelectionMode.single) {
             deferHandling = true;
-            context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.noChange, false);
+            context.read<ExplorerController>().updateSelection(
+              (_) => widget.index,
+              SelectionMode.noChange,
+              false,
+            );
           } else {
             deferHandling = false;
-            context.read<ExplorerController>().updateSelection((_) => widget.index, mode, false);
+            context.read<ExplorerController>().updateSelection(
+              (_) => widget.index,
+              mode,
+              false,
+            );
           }
         },
         onTap: () {
           if (deferHandling) {
             deferHandling = false;
-            context.read<ExplorerController>().updateSelection((_) => widget.index, SelectionMode.single, false);
+            context.read<ExplorerController>().updateSelection(
+              (_) => widget.index,
+              SelectionMode.single,
+              false,
+            );
           }
         },
         onSecondaryTapUp: (details) async {
           ExplorerState state = context.read<ExplorerState>();
           if (!state.isSelected(widget.resource.id)) {
-            final mode = HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed
+            final mode =
+                HardwareKeyboard.instance.isShiftPressed ||
+                    HardwareKeyboard.instance.isControlPressed
                 ? SelectionMode.add
                 : SelectionMode.single;
-            context.read<ExplorerController>().updateSelection((i) => widget.index, mode, false);
+            context.read<ExplorerController>().updateSelection(
+              (i) => widget.index,
+              mode,
+              false,
+            );
             state = context.read<ExplorerState>();
           } else {
-            context.read<ExplorerController>().updateSelection(null, SelectionMode.noChange, false);
+            context.read<ExplorerController>().updateSelection(
+              null,
+              SelectionMode.noChange,
+              false,
+            );
           }
           final position = RelativeRect.fromLTRB(
             details.globalPosition.dx,
@@ -95,7 +131,11 @@ class _ResourceItemGestureHandlerState extends State<ResourceItemGestureHandler>
           );
           final resources = state.selected;
           final options = state.route.selectedResourceOptions;
-          final items = await buildPopupMenuItems(context.read<PhylumAccount>(), options, resources);
+          final items = await buildPopupMenuItems(
+            context.read<PhylumAccount>(),
+            options,
+            resources,
+          );
           if (!context.mounted) return;
           final selection = await showMenu(
             context: context,

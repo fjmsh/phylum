@@ -5,7 +5,11 @@ class GenerateApiKeyResponse extends PhylumApiSuccessResponse {
   final String key;
   final String accessToken;
 
-  GenerateApiKeyResponse._({required this.keyId, required this.key, required this.accessToken});
+  GenerateApiKeyResponse._({
+    required this.keyId,
+    required this.key,
+    required this.accessToken,
+  });
 
   factory GenerateApiKeyResponse.fromResponse(Map<String, dynamic> data) {
     return GenerateApiKeyResponse._(

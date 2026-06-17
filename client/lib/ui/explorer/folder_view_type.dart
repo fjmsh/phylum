@@ -17,7 +17,8 @@ enum FolderViewType {
   const FolderViewType(this.name, this.icon, this.label);
 
   static FolderViewType fromName(String? name) {
-    return FolderViewType.values.firstWhereOrNull((v) => v.name == name) ?? list;
+    return FolderViewType.values.firstWhereOrNull((v) => v.name == name) ??
+        list;
   }
 }
 
@@ -29,7 +30,9 @@ class FolderViewNotifier extends ChangeNotifier {
   final PhylumAccount _account;
 
   FolderViewNotifier(BuildContext context) : _account = context.read() {
-    _folderViewType = FolderViewType.fromName(_account.getPersisted(_persistKeyFolderViewType) ?? 'list');
+    _folderViewType = FolderViewType.fromName(
+      _account.getPersisted(_persistKeyFolderViewType) ?? 'list',
+    );
   }
 
   set folderViewType(FolderViewType viewType) {

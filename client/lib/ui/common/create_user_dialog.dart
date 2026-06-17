@@ -64,9 +64,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
               textInputAction: TextInputAction.next,
             ),
             TextField(
-              decoration: InputDecoration(
-                labelText: 'Password',
-              ),
+              decoration: InputDecoration(labelText: 'Password'),
               controller: _passwordController,
               obscureText: true,
               keyboardType: TextInputType.visiblePassword,
@@ -74,21 +72,23 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
               onSubmitted: (value) => done(context),
             ),
             SwitchListTile(
-                title: Text('Send Welcome Email'),
-                value: sendEmail,
-                onChanged: (value) {
-                  setState(() {
-                    sendEmail = value;
-                  });
-                }),
+              title: Text('Send Welcome Email'),
+              value: sendEmail,
+              onChanged: (value) {
+                setState(() {
+                  sendEmail = value;
+                });
+              },
+            ),
             SwitchListTile(
-                title: Text('Create Home Directory'),
-                value: createHome,
-                onChanged: (value) {
-                  setState(() {
-                    createHome = value;
-                  });
-                }),
+              title: Text('Create Home Directory'),
+              value: createHome,
+              onChanged: (value) {
+                setState(() {
+                  createHome = value;
+                });
+              },
+            ),
           ],
         ),
       ),
@@ -103,18 +103,18 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
           },
         ),
         ValueListenableBuilder(
-            valueListenable: _emailController,
-            builder: (context, email, child) {
-              return ElevatedButton(
-                onPressed:
-                    !requestInFlight && EmailValidator.validate(email.text)
-                        ? () => done(context)
-                        : null,
-                child: requestInFlight
-                    ? const Text('Creating')
-                    : const Text('Create'),
-              );
-            })
+          valueListenable: _emailController,
+          builder: (context, email, child) {
+            return ElevatedButton(
+              onPressed: !requestInFlight && EmailValidator.validate(email.text)
+                  ? () => done(context)
+                  : null,
+              child: requestInFlight
+                  ? const Text('Creating')
+                  : const Text('Create'),
+            );
+          },
+        ),
       ],
     );
   }
@@ -124,14 +124,15 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
     if (!EmailValidator.validate(_emailController.text)) return;
 
     setState(() => requestInFlight = true);
-    final result =
-        await widget.account.apiClient.sendRequest(AdminUserCreateRequest(
-      email: _emailController.text,
-      name: _nameController.text,
-      password: _passwordController.text,
-      noSendEmail: !sendEmail,
-      noCreateHome: !createHome,
-    ));
+    final result = await widget.account.apiClient.sendRequest(
+      AdminUserCreateRequest(
+        email: _emailController.text,
+        name: _nameController.text,
+        password: _passwordController.text,
+        noSendEmail: !sendEmail,
+        noCreateHome: !createHome,
+      ),
+    );
     if (!context.mounted) return;
     setState(() => requestInFlight = false);
     if (result is UserDetails) {

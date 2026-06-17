@@ -18,5 +18,6 @@ class ResourceContentsRequest extends ApiRequest<PhylumAccount> {
   }
 
   @override
-  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) => throw 'Cannot parse contents response';
+  Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) =>
+      throw 'Cannot parse contents response';
 }

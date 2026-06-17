@@ -15,9 +15,9 @@ class TitleSettingsItem extends SettingsItem {
   const TitleSettingsItem({required this.title});
   @override
   Widget buildMenuItem(BuildContext context, bool selected) => ListTile(
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
-        dense: true,
-      );
+    title: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+    dense: true,
+  );
 }
 
 abstract class Settings extends SettingsItem {
@@ -31,18 +31,16 @@ abstract class Settings extends SettingsItem {
 
   @override
   Widget buildMenuItem(BuildContext context, bool selected) => ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        selected: selected,
-        onTap: () => context.read<SettingsController>().updateSelected(this),
-      );
+    leading: Icon(icon),
+    title: Text(title),
+    selected: selected,
+    onTap: () => context.read<SettingsController>().updateSelected(this),
+  );
 
   Widget buildWithScaffold(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          title: Text(title),
-        ),
-        body: buildWithScaffold(context),
-      );
+    appBar: AppBar(title: Text(title)),
+    body: buildWithScaffold(context),
+  );
 
   Widget buildWithoutScaffold(BuildContext context);
 }

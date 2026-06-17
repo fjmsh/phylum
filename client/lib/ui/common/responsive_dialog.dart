@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:provider/provider.dart';
 
-Future showReponsiveDialog(BuildContext context, String title, WidgetBuilder builder) {
+Future showReponsiveDialog(
+  BuildContext context,
+  String title,
+  WidgetBuilder builder,
+) {
   final account = context.read<PhylumAccount>();
   return showDialog(
     context: context,
@@ -25,7 +29,10 @@ Future showReponsiveDialog(BuildContext context, String title, WidgetBuilder bui
             scrollable: true,
             content: SizedBox(width: 480, child: builder(context)),
             actions: [
-              ElevatedButton(onPressed: Navigator.of(context).pop, child: Text('OK')),
+              ElevatedButton(
+                onPressed: Navigator.of(context).pop,
+                child: Text('OK'),
+              ),
             ],
           );
         },

@@ -40,15 +40,20 @@ class ReactiveResourceInfoView extends StatelessWidget {
         DecoratedBox(
           position: DecorationPosition.foreground,
           decoration: BoxDecoration(
-            border: Border(
-              bottom: Divider.createBorderSide(context),
-            ),
+            border: Border(bottom: Divider.createBorderSide(context)),
           ),
           child: ListTile(
-            title: Text(resource.name, style: Theme.of(context).textTheme.bodyLarge),
+            title: Text(
+              resource.name,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
           ),
         ),
-        Expanded(child: SingleChildScrollView(child: ResourceInfoView(resource: resource))),
+        Expanded(
+          child: SingleChildScrollView(
+            child: ResourceInfoView(resource: resource),
+          ),
+        ),
       ],
     );
   }
@@ -57,16 +62,21 @@ class ReactiveResourceInfoView extends StatelessWidget {
 class ResourceInfoView extends StatelessWidget {
   final Resource resource;
 
-  ResourceInfoView({required this.resource}) : super(key: ValueKey(resource.id));
+  ResourceInfoView({required this.resource})
+    : super(key: ValueKey(resource.id));
 
   @override
   Widget build(BuildContext context) {
     final account = context.read<PhylumAccount>();
-    final p = resource.inheritedPermissions.parsePermissionMap()..addAll(resource.grants.parsePermissionMap());
+    final p = resource.inheritedPermissions.parsePermissionMap()
+      ..addAll(resource.grants.parsePermissionMap());
     final myPermission = p.remove(account.user.id) ?? 0;
     final repository = context.read<PhylumAccount>().userRepository;
-    final entries = p.entries.toList(growable: false)..sort(((a, b) => a.key.compareTo(b.key)));
-    final other = entries.map((e) => repository.getUserDisplayName(e.key)).join(', ');
+    final entries = p.entries.toList(growable: false)
+      ..sort(((a, b) => a.key.compareTo(b.key)));
+    final other = entries
+        .map((e) => repository.getUserDisplayName(e.key))
+        .join(', ');
 
     return ListTileTheme(
       data: ListTileThemeData(
@@ -110,72 +120,110 @@ class ResourceInfoView extends StatelessWidget {
             ),
           ),
           StreamBuilder<int>(
-              stream: context.read<PhylumAccount>().db.countPublinks(resource.id).watchSingle(),
-              initialData: 0,
-              builder: (context, snapshot) {
-                final count = snapshot.data ?? const [];
-                return ListTile(
-                  leading: const Icon(Icons.public),
-                  title: const Text('Public Shares'),
-                  subtitle: count == 0 ? const Text('--') : Text(count.toString()),
-                  onTap: () => showReponsiveDialog(
-                      context, 'Public Shares', (context) => ResourcePublinksView(resource: resource)),
-                );
-              }),
+            stream: context
+                .read<PhylumAccount>()
+                .db
+                .countPublinks(resource.id)
+                .watchSingle(),
+            initialData: 0,
+            builder: (context, snapshot) {
+              final count = snapshot.data ?? const [];
+              return ListTile(
+                leading: const Icon(Icons.public),
+                title: const Text('Public Shares'),
+                subtitle: count == 0
+                    ? const Text('--')
+                    : Text(count.toString()),
+                onTap: () => showReponsiveDialog(
+                  context,
+                  'Public Shares',
+                  (context) => ResourcePublinksView(resource: resource),
+                ),
+              );
+            },
+          ),
           StreamBuilder<List<ResourceVersion>>(
-              stream: (account.db.resourceVersions.select()..where((v) => v.resourceId.equals(resource.id))).watch(),
-              initialData: <ResourceVersion>[],
-              builder: (context, snapshot) {
-                final versions = snapshot.data;
+            stream:
+                (account.db.resourceVersions.select()
+                      ..where((v) => v.resourceId.equals(resource.id)))
+                    .watch(),
+            initialData: <ResourceVersion>[],
+            builder: (context, snapshot) {
+              final versions = snapshot.data;
 
-                if (versions == null || versions.isEmpty) {
-                  return SizedBox();
-                }
+              if (versions == null || versions.isEmpty) {
+                return SizedBox();
+              }
 
-                final latestVersion = versions.reduce((a, b) => a.created.isAfter(b.created) ? a : b);
-                final availableVersions = versions.fold(-1, (acc, e) => acc + (e.deleted ? 0 : 1));
-                bool showHumanSize = true;
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    StatefulBuilder(
-                        builder: (context, setState) => ListTile(
-                              leading: const Icon(Icons.storage),
-                              title: const Text('Size'),
-                              onTap: () => setState(() => showHumanSize = !showHumanSize),
-                              subtitle: Text(
-                                  showHumanSize ? latestVersion.size.formatForDisplay() : '${latestVersion.size} B'),
-                            )),
-                    ListTile(
-                      leading: const Icon(Icons.shield),
-                      title: const Text('SHA-256'),
-                      onTap: latestVersion.sha256.isEmpty
-                          ? null
-                          : () {
-                              Clipboard.setData(ClipboardData(text: latestVersion.sha256));
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text('SHA-256 checksum copied to clipboard'),
-                                duration: const Duration(seconds: 2),
-                              ));
-                            },
+              final latestVersion = versions.reduce(
+                (a, b) => a.created.isAfter(b.created) ? a : b,
+              );
+              final availableVersions = versions.fold(
+                -1,
+                (acc, e) => acc + (e.deleted ? 0 : 1),
+              );
+              bool showHumanSize = true;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  StatefulBuilder(
+                    builder: (context, setState) => ListTile(
+                      leading: const Icon(Icons.storage),
+                      title: const Text('Size'),
+                      onTap: () =>
+                          setState(() => showHumanSize = !showHumanSize),
                       subtitle: Text(
-                        latestVersion.sha256.isEmpty ? 'Unknown' : latestVersion.sha256.substring(0, 12),
-                        maxLines: 1,
-                        softWrap: false,
-                        overflow: TextOverflow.fade,
+                        showHumanSize
+                            ? latestVersion.size.formatForDisplay()
+                            : '${latestVersion.size} B',
                       ),
                     ),
-                    if (versions.length > 1)
-                      ListTile(
-                        leading: const Icon(Icons.history),
-                        title: const Text('Previous Versions'),
-                        subtitle: Text('$availableVersions / ${versions.length - 1} available'),
-                        onTap: () => showReponsiveDialog(
-                            context, 'Version History', (context) => ResourceVersionsView(resourceId: resource.id)),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.shield),
+                    title: const Text('SHA-256'),
+                    onTap: latestVersion.sha256.isEmpty
+                        ? null
+                        : () {
+                            Clipboard.setData(
+                              ClipboardData(text: latestVersion.sha256),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'SHA-256 checksum copied to clipboard',
+                                ),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                    subtitle: Text(
+                      latestVersion.sha256.isEmpty
+                          ? 'Unknown'
+                          : latestVersion.sha256.substring(0, 12),
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.fade,
+                    ),
+                  ),
+                  if (versions.length > 1)
+                    ListTile(
+                      leading: const Icon(Icons.history),
+                      title: const Text('Previous Versions'),
+                      subtitle: Text(
+                        '$availableVersions / ${versions.length - 1} available',
                       ),
-                  ],
-                );
-              }),
+                      onTap: () => showReponsiveDialog(
+                        context,
+                        'Version History',
+                        (context) =>
+                            ResourceVersionsView(resourceId: resource.id),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
@@ -190,24 +238,31 @@ class LatestVersionInfoView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-        stream: context.read<PhylumAccount>().db.latestVersion(resourceId).watchSingleOrNull(),
-        builder: (context, snapshot) {
-          final data = snapshot.data;
+      stream: context
+          .read<PhylumAccount>()
+          .db
+          .latestVersion(resourceId)
+          .watchSingleOrNull(),
+      builder: (context, snapshot) {
+        final data = snapshot.data;
 
-          if (data == null) {
-            return const ListTile(
-              leading: Icon(defaultFileIcon),
-              title: Text('Type'),
-              subtitle: Text(''),
-            );
-          }
-
-          return ListTile(
-            leading: data.getIcon(),
+        if (data == null) {
+          return const ListTile(
+            leading: Icon(defaultFileIcon),
             title: Text('Type'),
-            subtitle: Text('${mimeTypeName(data.mimeType)} \u2022 ${data.size.formatForDisplay()}'),
+            subtitle: Text(''),
           );
-        });
+        }
+
+        return ListTile(
+          leading: data.getIcon(),
+          title: Text('Type'),
+          subtitle: Text(
+            '${mimeTypeName(data.mimeType)} \u2022 ${data.size.formatForDisplay()}',
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -229,8 +284,10 @@ class _PendingActionsTileState extends State<PendingActionsTile> {
   void initState() {
     super.initState();
     _removeListener = context.read<PhylumActionQueue>().addListener((state) {
-      final actions =
-          state.actions.where((action) => action is ResourceAction && action.resourceId == widget.resourceId);
+      final actions = state.actions.where(
+        (action) =>
+            action is ResourceAction && action.resourceId == widget.resourceId,
+      );
       for (final action in actions) {
         if (!_listeners.containsKey(action)) {
           _listeners[action] = action.statusNotifier.addListener((status) {

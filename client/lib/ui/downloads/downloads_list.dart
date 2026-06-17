@@ -8,9 +8,12 @@ class DownloadsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tasks = context.watch<DownloadManager>().tasks.toList(growable: false);
+    final tasks = context.watch<DownloadManager>().tasks.toList(
+      growable: false,
+    );
     return ListView.builder(
-      itemBuilder: (context, i) => _DownloadTaskView(notifier: tasks[tasks.length - i - 1]),
+      itemBuilder: (context, i) =>
+          _DownloadTaskView(notifier: tasks[tasks.length - i - 1]),
       itemCount: tasks.length,
     );
   }
@@ -19,7 +22,8 @@ class DownloadsList extends StatelessWidget {
 class _DownloadTaskView extends StatefulWidget {
   final DownloadTaskStatusNotifier notifier;
 
-  _DownloadTaskView({required this.notifier}) : super(key: ValueKey(notifier.task.taskId));
+  _DownloadTaskView({required this.notifier})
+    : super(key: ValueKey(notifier.task.taskId));
 
   @override
   State<_DownloadTaskView> createState() => _DownloadTaskViewState();
@@ -48,7 +52,10 @@ class _DownloadTaskViewState extends State<_DownloadTaskView> {
     return switch (widget.notifier.status) {
       TaskStatus.enqueued => const LinearProgressIndicator(value: null),
       TaskStatus.running => LinearProgressIndicator(
-          value: widget.notifier.progress.progress < 1 ? widget.notifier.progress.progress : null),
+        value: widget.notifier.progress.progress < 1
+            ? widget.notifier.progress.progress
+            : null,
+      ),
       TaskStatus.canceled => const Text('Canceled'),
       TaskStatus.complete => const Text('Complete'),
       TaskStatus.notFound => const Text('Not Found'),

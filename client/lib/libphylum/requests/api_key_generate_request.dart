@@ -9,7 +9,11 @@ class GenerateApiKeyRequest extends ApiRequest<PhylumAccount> {
   final DateTime? expires;
   final List<String> scopes;
 
-  GenerateApiKeyRequest({required this.description, required this.expires, required this.scopes});
+  GenerateApiKeyRequest({
+    required this.description,
+    required this.expires,
+    required this.scopes,
+  });
 
   @override
   BaseRequest createRequest(ApiClient api, {Blob? data}) {

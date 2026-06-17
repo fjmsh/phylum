@@ -13,13 +13,16 @@ class LoginPage extends StatefulWidget {
   @override
   State<LoginPage> createState() => _LoginPageState();
 
-  static Widget create(
-      {Uri? instanceUrl, LoginMethod? method, String? email, String? token}) {
+  static Widget create({
+    Uri? instanceUrl,
+    LoginMethod? method,
+    String? email,
+    String? token,
+  }) {
     return StateNotifierProvider<LoginController, LoginState>(
-      create: (_) => LoginController(LoginState.create(
-        instanceUrl: instanceUrl,
-        selectedMethod: method,
-      )),
+      create: (_) => LoginController(
+        LoginState.create(instanceUrl: instanceUrl, selectedMethod: method),
+      ),
       child: LoginPage(),
     );
   }
@@ -38,18 +41,18 @@ class _LoginPageState extends State<LoginPage> {
               child: ElevatedButtonTheme(
                 data: ElevatedButtonThemeData(
                   style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 18, horizontal: 24)),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 18,
+                      horizontal: 24,
+                    ),
+                  ),
                 ),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     spacing: 24.0,
-                    children: <Widget>[
-                      LogoRow(),
-                      _buildBody(context),
-                    ],
+                    children: <Widget>[LogoRow(), _buildBody(context)],
                   ),
                 ),
               ),
@@ -71,9 +74,7 @@ class _LoginPageState extends State<LoginPage> {
     }
     final instanceInfo = state.instanceInfo;
     if (instanceInfo == null) {
-      return const LoginInstanceUrl(
-        display: false,
-      );
+      return const LoginInstanceUrl(display: false);
     }
 
     final authConfig = state.instanceInfo!.authConfig!;

@@ -15,14 +15,16 @@ Future<void> login(BuildContext context, BaseRequest request) async {
   final result = await sendRequest(request);
   if (!context.mounted) return;
   if (result is! SuccessResponse) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(result.toString())));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(result.toString())));
     return;
   }
   final accountManager = context.read<AccountManager<PhylumAccount>>();
   try {
     final response = BootstrapLoginResponse.fromResponse(
-        (jsonDecode(result.responseString) as Map).cast<String, dynamic>());
+      (jsonDecode(result.responseString) as Map).cast<String, dynamic>(),
+    );
     final instanceUrl = context.read<LoginState>().instanceUrl!;
     final account = await PhylumAccount.create(
       serverUrl: instanceUrl,
@@ -33,8 +35,9 @@ Future<void> login(BuildContext context, BaseRequest request) async {
     await accountManager.addAccount(account);
   } catch (e, stack) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error Parsing Response - $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error Parsing Response - $e')));
     }
     Log.warn('Error Parsing Response', e, stack);
   }

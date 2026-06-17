@@ -6,27 +6,44 @@ class SearchResponse extends PhylumApiSuccessResponse {
   SearchResponse({required this.resources});
 
   factory SearchResponse.fromResponse(List data) {
-    final results =
-        data.cast<Map>().map((u) => ResourceResponse.fromResponse(u.cast<String, dynamic>())).toList(growable: false);
+    final results = data
+        .cast<Map>()
+        .map((u) => ResourceResponse.fromResponse(u.cast<String, dynamic>()))
+        .toList(growable: false);
     return SearchResponse(resources: results);
   }
 
   @override
   Future process(PhylumAccount account) async {
     final db = account.db;
-    final publinks = resources.map((r) => r.publinks).fold<List<Publink>>([], (acc, e) => acc..addAll(e));
-    final orphanedPublinks = Set.of(await (db.select(db.publinks)
-          ..where((l) => l.root.isIn(resources.map((r) => r.resource.id)) & l.id.isNotIn(publinks.map((l) => l.id))))
-        .map((r) => r.id)
-        .get());
+    final publinks = resources
+        .map((r) => r.publinks)
+        .fold<List<Publink>>([], (acc, e) => acc..addAll(e));
+    final orphanedPublinks = Set.of(
+      await (db.select(db.publinks)..where(
+            (l) =>
+                l.root.isIn(resources.map((r) => r.resource.id)) &
+                l.id.isNotIn(publinks.map((l) => l.id)),
+          ))
+          .map((r) => r.id)
+          .get(),
+    );
     for (final r in resources) {
       r._updateUserPermissions(account);
     }
 
     await db.batch((batch) {
-      batch.insertAll(db.resources, resources.map((r) => r.resource), mode: InsertMode.insertOrReplace);
+      batch.insertAll(
+        db.resources,
+        resources.map((r) => r.resource),
+        mode: InsertMode.insertOrReplace,
+      );
       for (final id in orphanedPublinks) {
-        batch.update(db.publinks, PublinksCompanion(root: Value('')), where: (o) => o.id.equals(id));
+        batch.update(
+          db.publinks,
+          PublinksCompanion(root: Value('')),
+          where: (o) => o.id.equals(id),
+        );
       }
       batch.insertAll(db.publinks, publinks, mode: InsertMode.insertOrReplace);
     });

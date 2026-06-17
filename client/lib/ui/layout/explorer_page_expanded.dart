@@ -19,8 +19,8 @@ class ExplorerPageExpanded extends StatelessWidget {
     final rightBarWidth = width >= minViewportWidthXLarge
         ? 360.0
         : width >= minViewportWidthLarge
-            ? 300.0
-            : 0.0;
+        ? 300.0
+        : 0.0;
 
     return Scaffold(
       body: Column(
@@ -41,7 +41,10 @@ class ExplorerPageExpanded extends StatelessWidget {
                   elevation: 0,
                   margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12,
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -49,9 +52,7 @@ class ExplorerPageExpanded extends StatelessWidget {
                           padding: EdgeInsets.only(right: 16.0),
                           child: Icon(Icons.search),
                         ),
-                        Expanded(
-                          child: SearchField(),
-                        ),
+                        Expanded(child: SearchField()),
                       ],
                     ),
                   ),
@@ -64,12 +65,10 @@ class ExplorerPageExpanded extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       const SyncStatusButton(),
-                      ProfileView(
-                        onTap: () => ProfileDialog.show(context),
-                      ),
+                      ProfileView(onTap: () => ProfileDialog.show(context)),
                     ],
                   ),
-                )
+                ),
             ],
           ),
           Expanded(
@@ -87,7 +86,11 @@ class ExplorerPageExpanded extends StatelessWidget {
                 Expanded(
                   child: Card(
                     elevation: 0,
-                    margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                    margin: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                    ),
                     child: const ExplorerView(),
                   ),
                 ),

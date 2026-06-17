@@ -25,22 +25,24 @@ class AuthController extends StateNotifier<AuthConfig> {
 
   void addOpenIDConfig(OpenIDConfig config) {
     state = state.copyWith(
-        openIdConfigs:
-            [...state.openIdConfigs, config].toList(growable: false));
+      openIdConfigs: [...state.openIdConfigs, config].toList(growable: false),
+    );
   }
 
   void replaceOpenIDConfig(OpenIDConfig old, OpenIDConfig config) {
     state = state.copyWith(
-        openIdConfigs: state.openIdConfigs
-            .map((e) => e == old ? config : e)
-            .toList(growable: false));
+      openIdConfigs: state.openIdConfigs
+          .map((e) => e == old ? config : e)
+          .toList(growable: false),
+    );
   }
 
   void removeOpenIDConfig(OpenIDConfig config) {
     state = state.copyWith(
-        openIdConfigs: state.openIdConfigs
-            .whereNot((e) => e == config)
-            .toList(growable: false));
+      openIdConfigs: state.openIdConfigs
+          .whereNot((e) => e == config)
+          .toList(growable: false),
+    );
   }
 }
 
@@ -58,21 +60,21 @@ class AuthConfig {
   });
 
   const AuthConfig.defaults()
-      : this(
-          passwordlessLoginEnabled: false,
-          passwordLoginEnabled: false,
-          passwordConfig: const PasswordConfig(
-            backend: PasswordBackend.crypt,
-            cryptConfig: CryptConfig(
-              kdf: CryptKDF.argon2,
-              argon2Config: Argon2Config.defaults(),
-              pbkdf2Config: Pbkdf2Config.defaults(),
-            ),
-            ldapConfig: LdapConfig.defaults(),
-            resetEnabled: true,
+    : this(
+        passwordlessLoginEnabled: false,
+        passwordLoginEnabled: false,
+        passwordConfig: const PasswordConfig(
+          backend: PasswordBackend.crypt,
+          cryptConfig: CryptConfig(
+            kdf: CryptKDF.argon2,
+            argon2Config: Argon2Config.defaults(),
+            pbkdf2Config: Pbkdf2Config.defaults(),
           ),
-          openIdConfigs: const [],
-        );
+          ldapConfig: LdapConfig.defaults(),
+          resetEnabled: true,
+        ),
+        openIdConfigs: const [],
+      );
 
   bool get valid =>
       passwordLoginEnabled ||
@@ -116,9 +118,7 @@ class AuthConfig {
       },
       'magic_links': passwordlessLoginEnabled,
       'openid': {
-        'clients': {
-          ...clients,
-        },
+        'clients': {...clients},
       },
     };
   }

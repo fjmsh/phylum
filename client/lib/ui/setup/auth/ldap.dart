@@ -60,7 +60,10 @@ class _LdapConfigDialogState extends State<LdapConfigDialog> {
                     TextSpan(
                       children: [
                         TextSpan(text: 'Server URL '),
-                        TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                        TextSpan(
+                          text: '*',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ],
                     ),
                   ),
@@ -73,8 +76,8 @@ class _LdapConfigDialogState extends State<LdapConfigDialog> {
                 validator: (value) => value?.isEmpty ?? true
                     ? 'Required'
                     : Uri.tryParse(value!) == null
-                        ? 'Invalid URL'
-                        : null,
+                    ? 'Invalid URL'
+                    : null,
               ),
               SwitchListTile(
                 value: starttls,
@@ -98,7 +101,9 @@ class _LdapConfigDialogState extends State<LdapConfigDialog> {
                           children: [
                             TextSpan(text: 'DN Template '),
                             TextSpan(
-                                text: '*', style: TextStyle(color: Colors.red))
+                              text: '*',
+                              style: TextStyle(color: Colors.red),
+                            ),
                           ],
                         ),
                       ),
@@ -120,18 +125,19 @@ class _LdapConfigDialogState extends State<LdapConfigDialog> {
                     children: [
                       TextFormField(
                         decoration: const InputDecoration(
-                            label: Text.rich(
-                              TextSpan(
-                                children: [
-                                  TextSpan(text: 'Bind DN'),
-                                  TextSpan(
-                                      text: '*',
-                                      style: TextStyle(color: Colors.red))
-                                ],
-                              ),
+                          label: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(text: 'Bind DN'),
+                                TextSpan(
+                                  text: '*',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ],
                             ),
-                            hint:
-                                Text('uid=phylum,ou=people,dc=example,dc=com')),
+                          ),
+                          hint: Text('uid=phylum,ou=people,dc=example,dc=com'),
+                        ),
                         initialValue: bindDn,
                         key: ValueKey('bind_dn'),
                         onChanged: (value) => setState(() => bindDn = value),
@@ -139,8 +145,9 @@ class _LdapConfigDialogState extends State<LdapConfigDialog> {
                             value?.isEmpty ?? true ? 'Required' : null,
                       ),
                       TextFormField(
-                        decoration:
-                            const InputDecoration(label: Text('Bind Password')),
+                        decoration: const InputDecoration(
+                          label: Text('Bind Password'),
+                        ),
                         initialValue: bindPassword,
                         obscureText: true,
                         key: ValueKey('bind_password'),
@@ -154,8 +161,9 @@ class _LdapConfigDialogState extends State<LdapConfigDialog> {
                               children: [
                                 TextSpan(text: 'Base DN'),
                                 TextSpan(
-                                    text: '*',
-                                    style: TextStyle(color: Colors.red))
+                                  text: '*',
+                                  style: TextStyle(color: Colors.red),
+                                ),
                               ],
                             ),
                           ),
@@ -174,8 +182,9 @@ class _LdapConfigDialogState extends State<LdapConfigDialog> {
                               children: [
                                 TextSpan(text: 'Filter Template'),
                                 TextSpan(
-                                    text: '*',
-                                    style: TextStyle(color: Colors.red))
+                                  text: '*',
+                                  style: TextStyle(color: Colors.red),
+                                ),
                               ],
                             ),
                           ),
@@ -202,23 +211,26 @@ class _LdapConfigDialogState extends State<LdapConfigDialog> {
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.of(context).pop(null),
-            child: Text('Cancel')),
+          onPressed: () => Navigator.of(context).pop(null),
+          child: Text('Cancel'),
+        ),
         ElevatedButton(
           onPressed: () {
             if (!formKey.currentState!.validate()) return;
             final nav = Navigator.of(context);
-            nav.pop(LdapConfig(
-              url: url,
-              starttls: starttls,
-              autoCreateUsers: autoCreateUsers,
-              useFilter: useFilter,
-              dnTemplate: dnTemplate,
-              bindDn: bindDn,
-              bindPassword: bindPassword,
-              baseDn: baseDn,
-              filterTemplate: filterTemplate,
-            ));
+            nav.pop(
+              LdapConfig(
+                url: url,
+                starttls: starttls,
+                autoCreateUsers: autoCreateUsers,
+                useFilter: useFilter,
+                dnTemplate: dnTemplate,
+                bindDn: bindDn,
+                bindPassword: bindPassword,
+                baseDn: baseDn,
+                filterTemplate: filterTemplate,
+              ),
+            );
           },
           child: Text('OK'),
         ),
@@ -251,17 +263,17 @@ class LdapConfig {
   });
 
   const LdapConfig.defaults()
-      : this(
-          url: '',
-          starttls: true,
-          autoCreateUsers: false,
-          useFilter: false,
-          dnTemplate: '',
-          bindDn: '',
-          bindPassword: '',
-          baseDn: '',
-          filterTemplate: '(mail={email})',
-        );
+    : this(
+        url: '',
+        starttls: true,
+        autoCreateUsers: false,
+        useFilter: false,
+        dnTemplate: '',
+        bindDn: '',
+        bindPassword: '',
+        baseDn: '',
+        filterTemplate: '(mail={email})',
+      );
 
   Map<String, dynamic> toMap() {
     return {

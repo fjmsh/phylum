@@ -15,10 +15,7 @@ class EditApiKeyRequest extends ApiRequest<PhylumAccount> {
   BaseRequest createRequest(ApiClient api, {Blob? data}) {
     final uri = api.createUriBuilder('/api/v1/user/keys/edit');
     final request = Request('post', uri.build());
-    request.bodyFields = <String, String>{
-      'id': id,
-      'description': description,
-    };
+    request.bodyFields = <String, String>{'id': id, 'description': description};
 
     return request;
   }

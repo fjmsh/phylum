@@ -33,9 +33,12 @@ const _fullTypeNames = <String, String>{
   'application/vnd.oasis.opendocument.presentation': 'OpenOffice Presentation',
   'application/vnd.oasis.opendocument.spreadsheet': 'OpenOffice Spreadsheet',
   'application/vnd.oasis.opendocument.text': 'OpenOffice Text Document',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PowerPoint Presentation',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'Excel Spreadsheet',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word Document',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+      'PowerPoint Presentation',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+      'Excel Spreadsheet',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+      'Word Document',
   'application/x-bzip': 'BZip Archive',
   'application/x-bzip2': 'BZip Archive',
   'application/x-latex': 'LaTeX Document',

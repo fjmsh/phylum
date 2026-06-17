@@ -10,10 +10,11 @@ extension ResourceIconExtension on Resource {
     if (dir) return const Icon(folderIcon);
 
     return StreamBuilder(
-        stream: account.db.latestVersion(id).watchSingleOrNull(),
-        builder: (context, snapshot) {
-          return snapshot.data?.getIcon() ?? const Icon(Icons.insert_drive_file);
-        });
+      stream: account.db.latestVersion(id).watchSingleOrNull(),
+      builder: (context, snapshot) {
+        return snapshot.data?.getIcon() ?? const Icon(Icons.insert_drive_file);
+      },
+    );
   }
 }
 

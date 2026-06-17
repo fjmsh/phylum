@@ -13,7 +13,8 @@ import 'package:phylum/libphylum/actions/action_user_invite.dart';
 
 const actionDeserializers = {
   ResourceBookmarkAddAction.kActionName: ResourceBookmarkAddAction.fromMap,
-  ResourceBookmarkRemoveAction.kActionName: ResourceBookmarkRemoveAction.fromMap,
+  ResourceBookmarkRemoveAction.kActionName:
+      ResourceBookmarkRemoveAction.fromMap,
   ResourceCopyAction.kActionName: ResourceCopyAction.fromMap,
   ResourceDeleteAction.kActionName: ResourceDeleteAction.fromMap,
   ResourceMkdirAction.kActionName: ResourceMkdirAction.fromMap,

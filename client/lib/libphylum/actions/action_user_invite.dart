@@ -18,25 +18,22 @@ class UserInviteAction extends PhylumAction with JsonApiAction {
   String get endpoint => '/api/v1/users/invite';
 
   @override
-  Map<String, dynamic>? get requestBody => {
-        'email': email,
-        'name': userName,
-      };
+  Map<String, dynamic>? get requestBody => {'email': email, 'name': userName};
 
   @override
   List<LocalChange> get localChanges => [
-        CreateUserChange(localId: localId, email: email, name: userName),
-      ];
+    CreateUserChange(localId: localId, email: email, name: userName),
+  ];
 
   @override
   String get description => "Inviting User $email";
 
   @override
   Map<String, dynamic> get props => {
-        'localId': localId,
-        'email': email,
-        'userName': userName,
-      };
+    'localId': localId,
+    'email': email,
+    'userName': userName,
+  };
 
   final int localId;
   final String email;

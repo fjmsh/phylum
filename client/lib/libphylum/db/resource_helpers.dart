@@ -6,7 +6,10 @@ extension ResourceHelpers on AppDatabase {
     return _selectResource(id).getSingleOrNull();
   }
 
-  Future<List<Resource>> getResourcesByName({required String parent, required String name}) {
+  Future<List<Resource>> getResourcesByName({
+    required String parent,
+    required String name,
+  }) {
     return _selectResourceByName(parent: parent, name: name).get();
   }
 
@@ -19,8 +22,10 @@ extension ResourceHelpers on AppDatabase {
   }
 
   Stream<List<Resource>> watchChildren(String id) {
-    return (_selectChildren(id)
-          ..orderBy([(u) => OrderingTerm.desc(u.dir), (u) => OrderingTerm.asc(u.name.collate(Collate.noCase))]))
+    return (_selectChildren(id)..orderBy([
+          (u) => OrderingTerm.desc(u.dir),
+          (u) => OrderingTerm.asc(u.name.collate(Collate.noCase)),
+        ]))
         .watch();
   }
 
@@ -33,25 +38,38 @@ extension ResourceHelpers on AppDatabase {
   }
 
   Future<void> markResourceAccess(String id) {
-    return recents.insertOnConflictUpdate(Recent(resourceId: id, accessed: DateTime.now()));
+    return recents.insertOnConflictUpdate(
+      Recent(resourceId: id, accessed: DateTime.now()),
+    );
   }
 
   SimpleSelectStatement<Resources, Resource> _selectResource(String id) {
     return resources.select()..where((f) => f.id.equals(id));
   }
 
-  SimpleSelectStatement<Resources, Resource> _selectResourceByName({required String parent, required String name}) {
-    return resources.select()..where((f) => f.parent.equals(parent) & f.name.equals(name) & f.deleted.isNull());
+  SimpleSelectStatement<Resources, Resource> _selectResourceByName({
+    required String parent,
+    required String name,
+  }) {
+    return resources.select()..where(
+      (f) => f.parent.equals(parent) & f.name.equals(name) & f.deleted.isNull(),
+    );
   }
 
   SimpleSelectStatement<Resources, Resource> _selectChildren(String id) {
     final deletedQuery = resources.selectOnly()
       ..addColumns([resources.deleted])
       ..where(resources.parent.equals(id));
-    return resources.select()..where((f) => f.parent.equals(id) & f.deleted.isExp(subqueryExpression(deletedQuery)));
+    return resources.select()..where(
+      (f) =>
+          f.parent.equals(id) &
+          f.deleted.isExp(subqueryExpression(deletedQuery)),
+    );
   }
 
-  SimpleSelectStatement<Resources, Resource> _selectResources(Iterable<String> ids) {
+  SimpleSelectStatement<Resources, Resource> _selectResources(
+    Iterable<String> ids,
+  ) {
     return resources.select()..where((f) => f.id.isIn(ids));
   }
 }

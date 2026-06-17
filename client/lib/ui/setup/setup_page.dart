@@ -17,12 +17,7 @@ import 'package:uri/uri.dart';
 
 import 'auth/controller.dart';
 
-enum SetupStep {
-  database,
-  mail,
-  auth,
-  user;
-}
+enum SetupStep { database, mail, auth, user }
 
 class SetupPage extends StatefulWidget {
   final String instanceUrl;
@@ -46,19 +41,25 @@ class _SetupPageState extends State<SetupPage> {
     return MultiProvider(
       providers: [
         StateNotifierProvider<DbController, DbConfig>(
-            create: (_) => DbController()),
+          create: (_) => DbController(),
+        ),
         StateNotifierProvider<MailController, MailConfig>(
-            create: (_) => MailController()),
+          create: (_) => MailController(),
+        ),
         StateNotifierProvider<AuthController, AuthConfig>(
-            create: (_) => AuthController()),
+          create: (_) => AuthController(),
+        ),
         StateNotifierProvider<UserController, UserConfig>(
-            create: (_) => UserController()),
+          create: (_) => UserController(),
+        ),
       ],
       child: Scaffold(
         appBar: AppBar(
-            title: const Text('Instance Setup'),
-            leading: CloseButton(onPressed: () async {
-              final remain = await showAlertDialog(
+          title: const Text('Instance Setup'),
+          leading: CloseButton(
+            onPressed: () async {
+              final remain =
+                  await showAlertDialog(
                     context,
                     title: 'Abort configuration?',
                     positiveText: 'No',
@@ -66,10 +67,12 @@ class _SetupPageState extends State<SetupPage> {
                   ) ??
                   true;
               if (remain || !context.mounted) return;
-              context
-                  .read<PhylumRouterDelegate>()
-                  .go(const ExplorerRouteHome());
-            })),
+              context.read<PhylumRouterDelegate>().go(
+                const ExplorerRouteHome(),
+              );
+            },
+          ),
+        ),
         body: _buildBody(context),
       ),
     );
@@ -78,38 +81,30 @@ class _SetupPageState extends State<SetupPage> {
   Widget _buildBody(BuildContext context) {
     final page = switch (_currentStep) {
       SetupStep.database => SetupDbFragment(
-          instanceUrl: widget.instanceUrl,
-          onNextPress: nextStep,
-        ),
+        instanceUrl: widget.instanceUrl,
+        onNextPress: nextStep,
+      ),
       SetupStep.mail => SetupMailFragment(
-          instanceUrl: widget.instanceUrl,
-          onPrevPress: previousStep,
-          onNextPress: nextStep,
-        ),
+        instanceUrl: widget.instanceUrl,
+        onPrevPress: previousStep,
+        onNextPress: nextStep,
+      ),
       SetupStep.auth => SetupAuthFragment(
-          instanceUrl: widget.instanceUrl,
-          onPrevPress: previousStep,
-          onNextPress: nextStep,
-        ),
+        instanceUrl: widget.instanceUrl,
+        onPrevPress: previousStep,
+        onNextPress: nextStep,
+      ),
       SetupStep.user => SetupUserFragment(
-          instanceUrl: widget.instanceUrl,
-          onPrevPress: previousStep,
-          onFinish: finalize,
-        ),
+        instanceUrl: widget.instanceUrl,
+        onPrevPress: previousStep,
+        onFinish: finalize,
+      ),
     };
 
     if (MediaQuery.sizeOf(context).width > maxViewportWidthSmall) {
-      return Center(
-        child: SizedBox(
-          width: 640,
-          child: page,
-        ),
-      );
+      return Center(child: SizedBox(width: 640, child: page));
     }
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 24),
-      child: page,
-    );
+    return Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: page);
   }
 
   void nextStep() {
@@ -145,22 +140,21 @@ class _SetupPageState extends State<SetupPage> {
       message: 'Finalizing instance configuration',
     );
     if (responseString == null || !context.mounted) return;
-    final responseMap =
-        (jsonDecode(responseString) as Map).cast<String, dynamic>();
+    final responseMap = (jsonDecode(responseString) as Map)
+        .cast<String, dynamic>();
 
     if (responseMap["success"]) {
-      await showAlertDialog(
-        context,
-        title: 'Instance configured',
-      );
+      await showAlertDialog(context, title: 'Instance configured');
       if (!context.mounted) return;
       context.read<PhylumRouterDelegate>().go(const ExplorerRouteHome());
     } else {
-      await showAlertDialog(context,
-          title: 'Could not finalize instance configuration',
-          message: responseMap.containsKey("details")
-              ? "${responseMap["error"]} - ${responseMap['details']}"
-              : responseMap['error']);
+      await showAlertDialog(
+        context,
+        title: 'Could not finalize instance configuration',
+        message: responseMap.containsKey("details")
+            ? "${responseMap["error"]} - ${responseMap['details']}"
+            : responseMap['error'],
+      );
     }
   }
 }

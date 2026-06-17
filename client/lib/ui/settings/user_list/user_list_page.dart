@@ -17,15 +17,17 @@ class _UserListPageState extends State<UserListPage> {
   @override
   Widget build(BuildContext context) {
     final showSearch = context.select<UserListState, bool>(
-        (state) => (state.users?.length ?? 0) > 10);
+      (state) => (state.users?.length ?? 0) > 10,
+    );
     return Scaffold(
       appBar: AppBar(
         title: _filtering ? buildFilterTextField(context) : Text('Users'),
         actions: [
           if (showSearch && !_filtering)
             IconButton(
-                onPressed: () => setState(() => _filtering = true),
-                icon: Icon(Icons.search)),
+              onPressed: () => setState(() => _filtering = true),
+              icon: Icon(Icons.search),
+            ),
         ],
       ),
       body: const UserListView(),

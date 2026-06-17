@@ -54,13 +54,18 @@ class _DownloadButtonState extends State<DownloadButton> {
       if (status.status == TaskStatus.running) {
         if (status.progress.hasExpectedFileSize) {
           total += status.progress.expectedFileSize;
-          received += status.progress.expectedFileSize * status.progress.progress;
+          received +=
+              status.progress.expectedFileSize * status.progress.progress;
         }
       }
     }
     return ListTile(
-      leading: ongoing.isEmpty ? const Icon(Icons.download) : const Icon(Icons.downloading),
-      title: ongoing.isEmpty ? const Text('Downloads') : Text('Downloading ${ongoing.length} files'),
+      leading: ongoing.isEmpty
+          ? const Icon(Icons.download)
+          : const Icon(Icons.downloading),
+      title: ongoing.isEmpty
+          ? const Text('Downloads')
+          : Text('Downloading ${ongoing.length} files'),
       subtitle: ongoing.isEmpty
           ? null
           : LinearProgressIndicator(
