@@ -3,8 +3,8 @@ import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/app/router.dart';
-import 'package:phylum/ui/app/routes.dart';
+import 'package:phylum/ui/app/routing/router.dart';
+import 'package:phylum/ui/app/routing/routes.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 import 'package:url_launcher/url_launcher.dart';

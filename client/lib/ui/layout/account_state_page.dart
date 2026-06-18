@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/app/dialog_scaffold.dart';
+import 'package:phylum/ui/common/dialog_scaffold.dart';
 import 'package:provider/provider.dart';
 
 class AccountStatePage extends StatelessWidget {

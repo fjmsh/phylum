@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
 
-import 'routes.dart';
+import 'routing/routes.dart';
 
 class FocusUpIntent extends Intent {
   final SelectionMode mode;

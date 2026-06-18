@@ -4,10 +4,10 @@ import 'dart:math';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/app/router.dart';
+import 'package:phylum/ui/app/routing/router.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-import '../app/routes.dart';
+import '../app/routing/routes.dart';
 import 'selection_mode.dart';
 
 class ExplorerState {
