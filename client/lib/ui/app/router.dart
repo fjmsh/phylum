@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/ui/app/account_selector.dart';
 
 import 'routes.dart';
 
@@ -10,12 +11,11 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRoute>
   @override
   PhylumRoute? get currentConfiguration => _current;
 
-  final Widget Function(BuildContext)? builder;
   PhylumRoute? _current;
   List<ExplorerRoute> _back = const [];
   List<ExplorerRoute> _forward = const [];
 
-  PhylumRouterDelegate({this.builder, ExplorerRoute? page}) : _current = page;
+  PhylumRouterDelegate({ExplorerRoute? page}) : _current = page;
 
   bool get canGoBack => _back.isNotEmpty;
 
@@ -58,9 +58,8 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRoute>
   Widget build(BuildContext context) {
     return Navigator(
       key: navigatorKey,
-      onGenerateRoute: builder == null
-          ? null
-          : (settings) => MaterialPageRoute(builder: builder!),
+      onGenerateRoute: (settings) =>
+          MaterialPageRoute(builder: (context) => const AccountSelector()),
     );
   }
 

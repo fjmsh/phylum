@@ -18,12 +18,6 @@ const _persistKeyApiToken = 'apiToken';
 const _persistKeyBootstrapUntil = 'bootstrapUntil';
 const _persistKeyConfig = 'config';
 
-AccountManager<PhylumAccount> createAccountManager(bool autoInitialize) =>
-    AccountManager(
-      (id) => PhylumAccount.restore(id: id),
-      autoInitialize: autoInitialize,
-    );
-
 class PhylumAccount extends Account<PhylumAccount> {
   late final db = AppDatabase(accountId: id);
   final bookmarkRepository = BookmarkRepository();

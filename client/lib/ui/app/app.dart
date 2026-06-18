@@ -9,25 +9,34 @@ import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:provider/provider.dart';
 
-import 'account_selector_stub.dart'
-    if (dart.library.ffi) 'account_selector_vm.dart'
-    if (dart.library.js_interop) 'account_selector_web.dart';
 import 'dbus.dart';
+import 'single_instance.dart'
+    if (dart.library.js_interop) 'single_instance_web.dart';
 
 class PhylumApp extends StatefulWidget {
   const PhylumApp({super.key});
 
   @override
   State<PhylumApp> createState() => _PhylumAppState();
+
+  static Widget create() {
+    final accountManager = AccountManager(
+      (id) => PhylumAccount.restore(id: id),
+      autoInitialize: isPrimary(),
+    );
+
+    return StateNotifierProvider<
+      AccountManager<PhylumAccount>,
+      AccountManagerState<PhylumAccount>
+    >.value(
+      value: accountManager,
+      child: buildSingleInstance(const PhylumApp()),
+    );
+  }
 }
 
 class _PhylumAppState extends State<PhylumApp> {
-  final PhylumRouterDelegate routerDelegate = PhylumRouterDelegate(
-    builder: (context) => const AccountSelector(),
-  );
-  final AccountManager<PhylumAccount> accountManager = createAccountManager(
-    isPrimary(),
-  );
+  final PhylumRouterDelegate routerDelegate = PhylumRouterDelegate();
 
   @override
   void initState() {
@@ -41,10 +50,6 @@ class _PhylumAppState extends State<PhylumApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        StateNotifierProvider<
-          AccountManager<PhylumAccount>,
-          AccountManagerState<PhylumAccount>
-        >.value(value: accountManager),
         ChangeNotifierProvider.value(value: routerDelegate),
         if (!kIsWeb)
           ChangeNotifierProvider<DownloadManager>(

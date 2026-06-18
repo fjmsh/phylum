@@ -6,8 +6,6 @@ import 'package:phylum/ui/app/router.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
-bool isPrimary() => true;
-
 class AccountSelector extends StatefulWidget {
   const AccountSelector({super.key});
 
