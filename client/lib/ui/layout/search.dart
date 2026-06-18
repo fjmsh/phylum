@@ -3,15 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
+import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
-import 'package:phylum/ui/app/routing/router.dart';
-import 'package:phylum/ui/app/routing/routes.dart';
 import 'package:provider/provider.dart';
 
 class PhylumSearchController with ChangeNotifier {
-  late final PhylumRouterDelegate _routerDelegate;
+  late final void Function() _removeListener;
   bool _active = false;
   bool get active => _active;
+
   set active(bool value) {
     _active = value;
     notifyListeners();
@@ -21,14 +22,15 @@ class PhylumSearchController with ChangeNotifier {
   String get pageQuery => _pageQuery;
 
   PhylumSearchController(BuildContext context) {
-    _routerDelegate = context.read<PhylumRouterDelegate>();
-    _routerDelegate.addListener(_onUpdatePage);
+    _removeListener = context.read<ExplorerHistoryController>().addListener(
+      _onUpdatePage,
+    );
   }
 
-  void _onUpdatePage() {
-    final route = _routerDelegate.currentConfiguration;
-    if (route is ExplorerRouteSearch) {
-      _pageQuery = route.query;
+  void _onUpdatePage(ExplorerHistory history) {
+    final location = history.location;
+    if (location is ExplorerLocationSearch) {
+      _pageQuery = location.query;
     } else {
       _pageQuery = '';
     }
@@ -37,7 +39,7 @@ class PhylumSearchController with ChangeNotifier {
 
   @override
   void dispose() {
-    _routerDelegate.removeListener(_onUpdatePage);
+    _removeListener();
     super.dispose();
   }
 }
@@ -52,26 +54,26 @@ class SearchField extends StatefulWidget {
 class _SearchFieldState extends State<SearchField> {
   final FocusNode _focusNode = FocusNode();
   final _controller = TextEditingController();
-  late final PhylumRouterDelegate _routerDelegate;
+  late final void Function() _removeListener;
   late final PhylumSearchController _searchNotifier;
 
   @override
   void initState() {
     super.initState();
 
-    _routerDelegate = context.read();
-    _routerDelegate.addListener(_onUpdatePage);
-    _onUpdatePage();
+    _removeListener = context.read<ExplorerHistoryController>().addListener(
+      _onUpdatePage,
+    );
 
     _searchNotifier = context.read();
     _searchNotifier.addListener(_onSearchUpdated);
     _onSearchUpdated();
   }
 
-  void _onUpdatePage() {
-    final route = _routerDelegate.currentConfiguration;
-    if (route is ExplorerRouteSearch) {
-      _controller.text = route.query;
+  void _onUpdatePage(ExplorerHistory history) {
+    final location = history.location;
+    if (location is ExplorerLocationSearch) {
+      _controller.text = location.query;
     } else {
       _controller.text = '';
     }
@@ -92,8 +94,8 @@ class _SearchFieldState extends State<SearchField> {
 
   @override
   void dispose() {
+    _removeListener();
     _searchNotifier.removeListener(_onSearchUpdated);
-    _routerDelegate.removeListener(_onUpdatePage);
     _focusNode.dispose();
     _controller.dispose();
     super.dispose();
@@ -168,8 +170,8 @@ class _SearchFieldState extends State<SearchField> {
   void _query() {
     final query = _controller.text.trim();
     if (query.isNotEmpty) {
-      context.read<PhylumRouterDelegate>().go(
-        ExplorerRouteSearch(query: query),
+      context.read<ExplorerHistoryController>().go(
+        ExplorerLocationSearch(query: query),
       );
     }
   }

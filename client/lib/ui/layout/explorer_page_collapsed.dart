@@ -64,7 +64,7 @@ class ExplorerPageCollapsed extends StatelessWidget {
             onPressed: () {
               final state = context.read<ExplorerState>();
               final selected = state.selected;
-              var options = state.route.selectedResourceOptions;
+              var options = state.location.selectedResourceOptions;
               showMenuOptionsBottomSheet(context, options, selected);
             },
             icon: Icon(Icons.adaptive.more),

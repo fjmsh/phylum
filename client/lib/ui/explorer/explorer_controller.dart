@@ -4,14 +4,14 @@ import 'dart:math';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/app/routing/router.dart';
+import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
+import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-import '../app/routing/routes.dart';
 import 'selection_mode.dart';
 
 class ExplorerState {
-  final ExplorerRoute route;
+  final ExplorerLocation location;
   final String? folderId;
   final Resource? folder;
   final List<Resource> resources;
@@ -35,7 +35,7 @@ class ExplorerState {
   Resource? get focussedIfSelected => selectedIds.isEmpty ? null : focussed;
 
   const ExplorerState({
-    required this.route,
+    required this.location,
     required this.folderId,
     this.folder,
     this.resources = const [],
@@ -60,7 +60,7 @@ class ExplorerState {
     bool updateRefresh = false,
     bool? refreshError,
   }) => ExplorerState(
-    route: route,
+    location: location,
     folderId: folderId,
     folder: folder ?? this.folder,
     resources: resources ?? this.resources,
@@ -80,30 +80,28 @@ class ExplorerState {
 
 class ExplorerController extends StateNotifier<ExplorerState> {
   final PhylumAccount _account;
-  final PhylumRouterDelegate _routerDelegate;
+  final ExplorerHistoryController _historyController;
+  late final void Function() _removeListener;
   StreamSubscription<Resource?>? _folderSubscription;
   StreamSubscription<List<Resource>>? _childrenSubscription;
 
   ExplorerController({
     required PhylumAccount account,
-    required PhylumRouterDelegate routerDelegate,
+    required this._historyController,
   }) : _account = account,
-       _routerDelegate = routerDelegate,
        super(
          ExplorerState(
-           route: routerDelegate.currentConfiguration as ExplorerRoute,
-           folderId: (routerDelegate.currentConfiguration as ExplorerRoute)
-               .folderId(account),
+           location: _historyController.currentLocation,
+           folderId: _historyController.currentLocation.folderId(account),
          ),
        ) {
-    _routerDelegate.addListener(updatePage);
-    updatePage();
+    _removeListener = _historyController.addListener(updatePage);
   }
 
-  void updatePage() {
-    final route = _routerDelegate.currentConfiguration as ExplorerRoute;
+  void updatePage(ExplorerHistory history) {
+    final location = history.location;
     _folderSubscription?.cancel();
-    final folderId = route.folderId(_account);
+    final folderId = location.folderId(_account);
     if (folderId != null) {
       _folderSubscription = _account.db
           .watchResource(folderId)
@@ -115,16 +113,16 @@ class ExplorerController extends StateNotifier<ExplorerState> {
       _folderSubscription = null;
     }
     _childrenSubscription?.cancel();
-    _childrenSubscription = route
+    _childrenSubscription = location
         .items(_account)
         .listen((e) => _updateResourceList(e));
-    state = ExplorerState(route: route, folderId: folderId);
+    state = ExplorerState(location: location, folderId: folderId);
     refresh();
   }
 
   @override
   void dispose() {
-    _routerDelegate.removeListener(updatePage);
+    _removeListener();
     _folderSubscription?.cancel();
     _childrenSubscription?.cancel();
     super.dispose();
@@ -222,7 +220,7 @@ class ExplorerController extends StateNotifier<ExplorerState> {
     if (state.refresh != null) return state.refresh!;
     final c = Completer();
     state = state.copyWith(refresh: c.future, updateRefresh: true);
-    state.route
+    state.location
         .refresh(_account)
         .then((success) {
           c.complete();

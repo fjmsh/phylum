@@ -3,12 +3,12 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
+import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/ui/app/routing/routes.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_icon_extension.dart';
-import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
@@ -40,25 +40,20 @@ class DestinationPicker extends StatefulWidget {
           StateNotifierProvider<PhylumAccount, AccountState>.value(
             value: account,
           ),
-          ChangeNotifierProvider(
-            create: (context) => PhylumRouterDelegate(
-              page: ExplorerRouteFolder(folderId: initialFolderId!),
+          StateNotifierProvider<ExplorerHistoryController, ExplorerHistory>(
+            create: (context) => ExplorerHistoryController(
+              initialLocation: ExplorerLocationFolder(
+                folderId: initialFolderId!,
+              ),
+            ),
+          ),
+          StateNotifierProvider<ExplorerController, ExplorerState>(
+            create: (context) => ExplorerController(
+              account: context.read(),
+              historyController: context.read(),
             ),
           ),
         ],
-        builder: (context, child) {
-          final route =
-              context.watch<PhylumRouterDelegate>().currentConfiguration
-                  as ExplorerRoute;
-          return StateNotifierProvider<ExplorerController, ExplorerState>(
-            key: ValueKey(route),
-            create: (context) => ExplorerController(
-              account: context.read(),
-              routerDelegate: context.read(),
-            ),
-            child: child,
-          );
-        },
         child: DestinationPicker(
           initialFolderId: initialFolderId!,
           allowInitialFolder: allowInitialFolder,
@@ -96,8 +91,8 @@ class _DestinationPickerState extends State<DestinationPicker> {
               onPressed: () {
                 final parentId = context.read<ExplorerState>().folder?.parent;
                 if (parentId != null) {
-                  context.read<PhylumRouterDelegate>().go(
-                    ExplorerRouteFolder(folderId: parentId),
+                  context.read<ExplorerHistoryController>().go(
+                    ExplorerLocationFolder(folderId: parentId),
                   );
                   node.requestFocus();
                 } else {
@@ -167,8 +162,8 @@ class _DestinationPickerState extends State<DestinationPicker> {
                         .folder
                         ?.parent;
                     if (parentId != null) {
-                      context.read<PhylumRouterDelegate>().go(
-                        ExplorerRouteFolder(folderId: parentId),
+                      context.read<ExplorerHistoryController>().go(
+                        ExplorerLocationFolder(folderId: parentId),
                       );
                       node.requestFocus();
                     } else {
@@ -282,8 +277,8 @@ class _FolderListView extends StatelessWidget {
                   leading: r.getIcon(context.read()),
                   title: Text(r.name),
                   enabled: r.dir,
-                  onTap: () => context.read<PhylumRouterDelegate>().go(
-                    ExplorerRouteFolder(folderId: r.id),
+                  onTap: () => context.read<ExplorerHistoryController>().go(
+                    ExplorerLocationFolder(folderId: r.id),
                   ),
                 );
               },
@@ -309,8 +304,8 @@ class _ActionHandler extends StatelessWidget {
           onInvoke: (i) async {
             final parentId = context.read<ExplorerState>().folder?.parent;
             if (parentId != null) {
-              context.read<PhylumRouterDelegate>().go(
-                ExplorerRouteFolder(folderId: parentId),
+              context.read<ExplorerHistoryController>().go(
+                ExplorerLocationFolder(folderId: parentId),
               );
             }
             focusNode.requestFocus();
@@ -343,8 +338,8 @@ class _ActionHandler extends StatelessWidget {
           onInvoke: (i) async {
             final selected = context.read<ExplorerState>().selectedSingle;
             if (selected != null && selected.dir) {
-              context.read<PhylumRouterDelegate>().go(
-                ExplorerRouteFolder(folderId: selected.id),
+              context.read<ExplorerHistoryController>().go(
+                ExplorerLocationFolder(folderId: selected.id),
               );
             }
             return null;

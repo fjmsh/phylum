@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
+import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
-import 'package:phylum/ui/app/routing/router.dart';
-import 'package:phylum/ui/app/routing/routes.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/layout/bookmark_list.dart';
@@ -64,7 +64,7 @@ class NavList extends StatelessWidget {
                       Scaffold.maybeOf(context)?.closeDrawer();
                       Actions.maybeInvoke(
                         context,
-                        NavIntent(target: ExplorerRouteHome()),
+                        NavIntent(target: const ExplorerLocationHome()),
                       );
                     },
                   ),
@@ -73,8 +73,8 @@ class NavList extends StatelessWidget {
                     title: const Text('Recents'),
                     onTap: () {
                       Scaffold.maybeOf(context)?.closeDrawer();
-                      context.read<PhylumRouterDelegate>().go(
-                        ExplorerRouteRecents(),
+                      context.read<ExplorerHistoryController>().go(
+                        const ExplorerLocationRecents(),
                       );
                     },
                   ),
@@ -83,8 +83,8 @@ class NavList extends StatelessWidget {
                     title: const Text('Shared With Me'),
                     onTap: () {
                       Scaffold.maybeOf(context)?.closeDrawer();
-                      context.read<PhylumRouterDelegate>().go(
-                        ExplorerRouteShared(),
+                      context.read<ExplorerHistoryController>().go(
+                        const ExplorerLocationShared(),
                       );
                     },
                   ),
@@ -94,8 +94,8 @@ class NavList extends StatelessWidget {
                     title: const Text('Trash'),
                     onTap: () {
                       Scaffold.maybeOf(context)?.closeDrawer();
-                      context.read<PhylumRouterDelegate>().go(
-                        ExplorerRouteTrash(),
+                      context.read<ExplorerHistoryController>().go(
+                        const ExplorerLocationTrash(),
                       );
                     },
                   ),

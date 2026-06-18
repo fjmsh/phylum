@@ -5,6 +5,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/routing/routes.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/ui/menu/menu_option.dart';
@@ -67,7 +68,7 @@ class BookmarkItem extends StatelessWidget {
               Actions.maybeInvoke(
                 context,
                 NavIntent(
-                  target: ExplorerRouteFolder(folderId: bookmark.resourceId),
+                  target: ExplorerLocationFolder(folderId: bookmark.resourceId),
                 ),
               );
               return;

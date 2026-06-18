@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:http/http.dart';
+import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/app/routing/routes.dart';
 import 'package:phylum/ui/layout/responsive.dart';
@@ -68,7 +69,7 @@ class _SetupPageState extends State<SetupPage> {
                   true;
               if (remain || !context.mounted) return;
               context.read<PhylumRouterDelegate>().go(
-                const ExplorerRouteHome(),
+                const ExplorerRoute(location: ExplorerLocationHome()),
               );
             },
           ),
@@ -146,7 +147,9 @@ class _SetupPageState extends State<SetupPage> {
     if (responseMap["success"]) {
       await showAlertDialog(context, title: 'Instance configured');
       if (!context.mounted) return;
-      context.read<PhylumRouterDelegate>().go(const ExplorerRouteHome());
+      context.read<PhylumRouterDelegate>().go(
+        const ExplorerRoute(location: ExplorerLocationHome()),
+      );
     } else {
       await showAlertDialog(
         context,

@@ -3,7 +3,8 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:phylum/ui/app/routing/router.dart';
+import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
+import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/layout/account_state_page.dart';
@@ -19,7 +20,7 @@ import 'explorer_page_collapsed.dart';
 class ExplorerPage extends StatelessWidget {
   const ExplorerPage._();
 
-  static Widget create(PhylumAccount account) {
+  static Widget create(PhylumAccount account, ExplorerLocation location) {
     return MultiProvider(
       key: ValueKey(account.id),
       providers: [
@@ -32,10 +33,15 @@ class ExplorerPage extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => SyncStatusNotifier(account.actionQueue),
         ),
+        StateNotifierProvider<ExplorerHistoryController, ExplorerHistory>(
+          create: (context) =>
+              ExplorerHistoryController(initialLocation: location),
+          lazy: false,
+        ),
         StateNotifierProvider<ExplorerController, ExplorerState>(
           create: (context) => ExplorerController(
             account: context.read(),
-            routerDelegate: context.read(),
+            historyController: context.read(),
           ),
           lazy: false,
         ),
@@ -45,14 +51,14 @@ class ExplorerPage extends StatelessWidget {
       ],
       builder: (context, child) {
         final canHandlePop =
-            context.watch<PhylumRouterDelegate>().canGoBack ||
+            context.watch<ExplorerHistoryController>().canGoBack ||
             context.watch<ExplorerState>().selectedIds.isNotEmpty;
         return PopScope(
           canPop: !canHandlePop,
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
             if (!context.read<ExplorerController>().clearSelection()) {
-              context.read<PhylumRouterDelegate>().goBack();
+              context.read<ExplorerHistoryController>().goBack();
             }
           },
           child: AccountStatePage(child: const ExplorerPage._()),

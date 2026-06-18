@@ -28,7 +28,7 @@ class ExplorerGestureHandler extends StatelessWidget {
           false,
         );
         final state = context.read<ExplorerState>();
-        final options = state.route.folderOptions;
+        final options = state.location.folderOptions;
         final resource = state.folder;
         if (options == null) return;
         final position = RelativeRect.fromLTRB(

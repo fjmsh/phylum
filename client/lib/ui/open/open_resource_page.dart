@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
+import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/common/dialog_scaffold.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/app/routing/routes.dart';
@@ -46,7 +47,9 @@ class _OpenResourcePageState extends State<OpenResourcePage> {
       if (!mounted) return;
       final r = response.root.resource;
       if (r.dir) {
-        router.go(ExplorerRouteFolder(folderId: r.id));
+        router.go(
+          ExplorerRoute(location: ExplorerLocationFolder(folderId: r.id)),
+        );
       } else {
         router.go(FilePreviewRoute(fileId: r.id));
       }
@@ -83,7 +86,9 @@ class _OpenResourcePageState extends State<OpenResourcePage> {
         Text('Error Loading Details: $_error'),
         TextButton(
           onPressed: () {
-            context.read<PhylumRouterDelegate>().go(const ExplorerRouteHome());
+            context.read<PhylumRouterDelegate>().go(
+              const ExplorerRoute(location: ExplorerLocationHome()),
+            );
           },
           child: Text(
             'Go Home',

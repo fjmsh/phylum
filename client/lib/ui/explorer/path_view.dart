@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
+import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/ui/explorer/explorer_controller.dart';
-import 'package:phylum/ui/app/routing/routes.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:provider/provider.dart';
@@ -18,11 +18,9 @@ class PathView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final route = context.select<ExplorerState, ExplorerRoute>(
-      (state) => state.route,
-    );
+    final location = context.watch<ExplorerHistory>().location;
     final account = context.read<PhylumAccount>();
-    final folderId = route.folderId(account);
+    final folderId = location.folderId(account);
     if (folderId != null) {
       return StreamBuilder(
         stream: account.db.watchParents(folderId),
@@ -42,7 +40,7 @@ class PathView extends StatelessWidget {
                   PathInfo(
                     title: 'My Files',
                     dropTargetId: entry.id,
-                    target: ExplorerRouteHome(),
+                    target: ExplorerLocationHome(),
                   ),
                 );
               } else {
@@ -51,7 +49,7 @@ class PathView extends StatelessWidget {
                     PathInfo(
                       title: 'Shared',
                       dropTargetId: null,
-                      target: const ExplorerRouteShared(),
+                      target: const ExplorerLocationShared(),
                     ),
                   );
                 }
@@ -62,7 +60,7 @@ class PathView extends StatelessWidget {
                     PathInfo(
                       title: 'Trash',
                       dropTargetId: null,
-                      target: const ExplorerRouteTrash(),
+                      target: const ExplorerLocationTrash(),
                     ),
                   );
                 }
@@ -72,7 +70,7 @@ class PathView extends StatelessWidget {
                     dropTargetId: permission & permissionSetReadWrite == 0
                         ? null
                         : entry.id,
-                    target: ExplorerRouteFolder(folderId: entry.id),
+                    target: ExplorerLocationFolder(folderId: entry.id),
                   ),
                 );
               }
@@ -116,7 +114,7 @@ class PathView extends StatelessWidget {
       );
     }
     final info = PathInfo(
-      title: route.title,
+      title: location.title,
       dropTargetId: null,
       target: null,
       last: true,
@@ -136,7 +134,7 @@ class PathView extends StatelessWidget {
 class PathInfo {
   final String title;
   final String? dropTargetId;
-  final ExplorerRoute? target;
+  final ExplorerLocation? target;
   final bool last;
 
   const PathInfo({

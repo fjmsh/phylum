@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/clipboard.dart';
+import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/app/routing/routes.dart';
 import 'package:phylum/ui/explorer/paste_helpers.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
 import 'package:phylum/ui/file_viewer/file_viewer_dialog.dart';
@@ -82,7 +82,7 @@ class ExplorerActions extends StatelessWidget {
             if (r.dir) {
               Actions.maybeInvoke(
                 context,
-                NavIntent(target: ExplorerRouteFolder(folderId: r.id)),
+                NavIntent(target: ExplorerLocationFolder(folderId: r.id)),
               );
             } else {
               final resources = state.resources

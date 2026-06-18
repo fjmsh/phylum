@@ -2,9 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phylum/libphylum/db/db.dart';
+import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
-
-import 'routing/routes.dart';
 
 class FocusUpIntent extends Intent {
   final SelectionMode mode;
@@ -98,7 +97,7 @@ class NavHomeIntent extends Intent {
 }
 
 class NavIntent extends Intent {
-  final ExplorerRoute target;
+  final ExplorerLocation target;
 
   const NavIntent({required this.target});
 }

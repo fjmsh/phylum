@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
+import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/layout/search.dart';
-import 'package:phylum/ui/app/routing/routes.dart';
 import 'package:phylum/ui/file_viewer/file_viewer_dialog.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
@@ -24,11 +25,11 @@ class AppActions extends StatelessWidget {
       actions: {
         NewFolderIntent: CallbackAction<NewFolderIntent>(
           onInvoke: (intent) async {
-            final route =
-                context.read<PhylumRouterDelegate>().currentConfiguration
-                    as ExplorerRoute;
             final account = context.read<PhylumAccount>();
-            final folderId = route.folderId(account);
+            final folderId = context
+                .read<ExplorerHistoryController>()
+                .currentLocation
+                .folderId(context.read());
             if (folderId == null) return;
             final folder = await account.db.getResource(folderId);
             if (folder == null || !context.mounted) return;
@@ -38,11 +39,10 @@ class AppActions extends StatelessWidget {
         ),
         UploadFilesIntent: CallbackAction<UploadFilesIntent>(
           onInvoke: (intent) {
-            final route =
-                context.read<PhylumRouterDelegate>().currentConfiguration
-                    as ExplorerRoute;
-            final account = context.read<PhylumAccount>();
-            final folderId = route.folderId(account);
+            final folderId = context
+                .read<ExplorerHistoryController>()
+                .currentLocation
+                .folderId(context.read());
             if (folderId != null) {
               pickAndUploadFiles(context, folderId);
             }
@@ -51,11 +51,10 @@ class AppActions extends StatelessWidget {
         ),
         UploadFolderIntent: CallbackAction<UploadFolderIntent>(
           onInvoke: (intent) {
-            final route =
-                context.read<PhylumRouterDelegate>().currentConfiguration
-                    as ExplorerRoute;
-            final account = context.read<PhylumAccount>();
-            final folderId = route.folderId(account);
+            final folderId = context
+                .read<ExplorerHistoryController>()
+                .currentLocation
+                .folderId(context.read());
             if (folderId != null) {
               pickAndUploadDirectory(context, folderId);
             }
@@ -64,31 +63,35 @@ class AppActions extends StatelessWidget {
         ),
         NavUpIntent: CallbackAction<NavUpIntent>(
           onInvoke: (i) async {
-            final routerDelegate = context.read<PhylumRouterDelegate>();
-            final route = routerDelegate.currentConfiguration as ExplorerRoute;
+            final historyController = context.read<ExplorerHistoryController>();
             final account = context.read<PhylumAccount>();
-            final folderId = route.folderId(account);
+            final folderId = historyController.currentLocation.folderId(
+              account,
+            );
             final parent = folderId == null
                 ? null
                 : (await account.db.getResource(folderId))?.parent;
             if (parent != null) {
-              routerDelegate.go(ExplorerRouteFolder(folderId: parent));
+              historyController.go(ExplorerLocationFolder(folderId: parent));
             }
             return null;
           },
         ),
         NavIntent: CallbackAction<NavIntent>(
-          onInvoke: (i) => context.read<PhylumRouterDelegate>().go(i.target),
+          onInvoke: (i) =>
+              context.read<ExplorerHistoryController>().go(i.target),
         ),
         NavHomeIntent: CallbackAction<NavHomeIntent>(
-          onInvoke: (i) =>
-              context.read<PhylumRouterDelegate>().go(ExplorerRouteHome()),
+          onInvoke: (i) => context.read<ExplorerHistoryController>().go(
+            ExplorerLocationHome(),
+          ),
         ),
         NavBackIntent: CallbackAction<NavBackIntent>(
-          onInvoke: (i) => context.read<PhylumRouterDelegate>().goBack(),
+          onInvoke: (i) => context.read<ExplorerHistoryController>().goBack(),
         ),
         NavForwardIntent: CallbackAction<NavForwardIntent>(
-          onInvoke: (i) => context.read<PhylumRouterDelegate>().goForward(),
+          onInvoke: (i) =>
+              context.read<ExplorerHistoryController>().goForward(),
         ),
         FocusSearchIntent: CallbackAction<FocusSearchIntent>(
           onInvoke: (i) => context.read<PhylumSearchController>().active = true,
@@ -97,8 +100,8 @@ class AppActions extends StatelessWidget {
           onInvoke: (i) async {
             final resource = i.resource;
             if (resource.dir) {
-              context.read<PhylumRouterDelegate>().go(
-                ExplorerRouteFolder(folderId: resource.id),
+              context.read<ExplorerHistoryController>().go(
+                ExplorerLocationFolder(folderId: resource.id),
               );
               return null;
             }

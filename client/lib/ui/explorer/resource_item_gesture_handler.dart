@@ -130,7 +130,7 @@ class _ResourceItemGestureHandlerState
             details.globalPosition.dy,
           );
           final resources = state.selected;
-          final options = state.route.selectedResourceOptions;
+          final options = state.location.selectedResourceOptions;
           final items = await buildPopupMenuItems(
             context.read<PhylumAccount>(),
             options,
