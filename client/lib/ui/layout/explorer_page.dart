@@ -17,26 +17,49 @@ import 'package:provider/provider.dart';
 
 import 'explorer_page_collapsed.dart';
 
-class ExplorerPage extends StatelessWidget {
-  const ExplorerPage._();
+class ExplorerPage extends StatefulWidget {
+  final PhylumAccount account;
+  final ExplorerLocation location;
 
-  static Widget create(PhylumAccount account, ExplorerLocation location) {
+  ExplorerPage({required this.account, required this.location})
+    : super(key: ValueKey(account.id));
+
+  @override
+  State<ExplorerPage> createState() => _ExplorerPageState();
+}
+
+class _ExplorerPageState extends State<ExplorerPage> {
+  late final ExplorerHistoryController _historyController;
+  @override
+  void initState() {
+    super.initState();
+    _historyController = ExplorerHistoryController(
+      initialLocation: widget.location,
+      routerDelegate: context.read(),
+    );
+  }
+
+  @override
+  void didUpdateWidget(ExplorerPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _historyController.update(widget.location);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MultiProvider(
-      key: ValueKey(account.id),
       providers: [
         StateNotifierProvider<PhylumAccount, AccountState>.value(
-          value: account,
+          value: widget.account,
         ),
         StateNotifierProvider<PhylumActionQueue, PhylumActionQueueState>.value(
-          value: account.actionQueue,
+          value: widget.account.actionQueue,
         ),
         ChangeNotifierProvider(
-          create: (context) => SyncStatusNotifier(account.actionQueue),
+          create: (context) => SyncStatusNotifier(widget.account.actionQueue),
         ),
-        StateNotifierProvider<ExplorerHistoryController, ExplorerHistory>(
-          create: (context) =>
-              ExplorerHistoryController(initialLocation: location),
-          lazy: false,
+        StateNotifierProvider<ExplorerHistoryController, ExplorerHistory>.value(
+          value: _historyController,
         ),
         StateNotifierProvider<ExplorerController, ExplorerState>(
           create: (context) => ExplorerController(
@@ -61,14 +84,13 @@ class ExplorerPage extends StatelessWidget {
               context.read<ExplorerHistoryController>().goBack();
             }
           },
-          child: AccountStatePage(child: const ExplorerPage._()),
+          child: AccountStatePage(child: buildPage(context)),
         );
       },
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget buildPage(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final layout = width < maxViewportWidthSmall
         ? const ExplorerPageCollapsed()

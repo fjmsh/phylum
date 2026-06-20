@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
+import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/logo_row.dart';
@@ -62,10 +63,13 @@ class NavList extends StatelessWidget {
                     title: const Text('Home'),
                     onTap: () {
                       Scaffold.maybeOf(context)?.closeDrawer();
-                      Actions.maybeInvoke(
-                        context,
-                        NavIntent(target: const ExplorerLocationHome()),
+                      context.read<PhylumRouterDelegate>().go(
+                        const HomeRouteConfig(),
                       );
+                      // Actions.maybeInvoke(
+                      //   context,
+                      //   NavIntent(target: const ExplorerLocationHome()),
+                      // );
                     },
                   ),
                   ListTile(

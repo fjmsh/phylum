@@ -137,6 +137,10 @@ class ExplorerRoute extends LoggedInRouteConfig {
 
   @override
   List<Page<dynamic>> buildPages(PhylumAccount account) {
-    return [MaterialPage(child: ExplorerPage.create(account, location))];
+    return [
+      MaterialPage(
+        child: ExplorerPage(account: account, location: location),
+      ),
+    ];
   }
 }

@@ -1,3 +1,4 @@
+import 'package:phylum/ui/app/routing/router.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 import 'explorer_location.dart';
@@ -15,19 +16,30 @@ class ExplorerHistory {
 }
 
 class ExplorerHistoryController extends StateNotifier<ExplorerHistory> {
-  bool get canGoBack => state.back.isNotEmpty;
+  final PhylumRouterDelegate? _routerDelegate;
   ExplorerLocation get currentLocation => state.location;
+  bool get canGoBack => state.back.isNotEmpty;
 
-  ExplorerHistoryController({required ExplorerLocation initialLocation})
-    : super(
-        ExplorerHistory(
-          location: initialLocation,
-          back: const [],
-          forward: const [],
-        ),
-      );
+  ExplorerHistoryController({
+    this._routerDelegate,
+    required ExplorerLocation initialLocation,
+  }) : super(
+         ExplorerHistory(
+           location: initialLocation,
+           back: const [],
+           forward: const [],
+         ),
+       );
 
   void go(ExplorerLocation location) {
+    if (_routerDelegate == null) {
+      update(location);
+    } else {
+      _routerDelegate.go(ExplorerRoute(location: location));
+    }
+  }
+
+  void update(ExplorerLocation location) {
     if (state.location != location) {
       state = ExplorerHistory(
         location: location,

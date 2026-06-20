@@ -32,13 +32,14 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
 
   void onAccountManagerUpdated(AccountManagerState<PhylumAccount> state) {
     _accountManagerState = state;
-    print('Updated');
     notifyListeners();
   }
 
   void go(PhylumRouteConfig configuration) {
     if (_current != configuration) {
-      next = (_current as LoggedOutRouteConfig?)?.next;
+      next = _current is LoggedOutRouteConfig
+          ? (_current as LoggedOutRouteConfig).next
+          : null;
       _current = configuration;
       notifyListeners();
     }
