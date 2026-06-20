@@ -79,19 +79,19 @@ class LoginRouteConfig extends LoggedOutRouteConfig {
   }
 }
 
-// class SetupRoute extends PhylumRouteConfig {
-//   final String instanceUrl;
+class SetupRoute extends LoggedOutRouteConfig {
+  final String instanceUrl;
 
-//   SetupRoute({required this.instanceUrl});
+  SetupRoute({required this.instanceUrl});
 
-//   @override
-//   Uri get uri => Uri(path: '/setup');
+  @override
+  Uri get base => Uri(path: '/setup');
 
-//   @override
-//   Widget buildPage(BuildContext context) {
-//     return SetupPage(instanceUrl: instanceUrl);
-//   }
-// }
+  @override
+  List<Page> buildPages() {
+    return [MaterialPage(child: SetupPage(instanceUrl: instanceUrl))];
+  }
+}
 
 // class OpenResourceRoute extends LoggedInRoute {
 //   final String resourceId;

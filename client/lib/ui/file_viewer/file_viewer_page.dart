@@ -3,8 +3,6 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
-import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/file_viewer/file_viewer.dart';
 import 'package:phylum/ui/file_viewer/versioned_resource.dart';
@@ -106,9 +104,7 @@ class _ResourcePreviewDialogState extends State<FilePreviewPage> {
         Text('Error Loading Details: $error'),
         TextButton(
           onPressed: () {
-            context.read<ExplorerHistoryController>().go(
-              const ExplorerLocationHome(),
-            );
+            context.read<PhylumRouterDelegate>().go(const HomeRouteConfig());
           },
           child: Text(
             'Go Home',

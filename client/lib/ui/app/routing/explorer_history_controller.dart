@@ -58,5 +58,3 @@ class ExplorerHistoryController extends StateNotifier<ExplorerHistory> {
     return true;
   }
 }
-
-abstract class ExplorerLocationParser {}

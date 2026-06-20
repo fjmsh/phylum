@@ -8,6 +8,7 @@ import 'package:phylum/ui/common/dialog_scaffold.dart';
 import 'package:phylum/ui/layout/explorer_page.dart';
 import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/login_page.dart';
+import 'package:phylum/ui/setup/setup_page.dart';
 import 'package:uri/uri.dart';
 
 part 'routes.dart';
@@ -70,7 +71,6 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
     }
     final account = _accountManagerState.selectedAccount;
     if (account == null) {
-      print('Account is null');
       return switch (target) {
         // TODO: Unknkown page or error message?
         HomeRouteConfig() || UnknownRouteConfig() => LoginRouteConfig(),
