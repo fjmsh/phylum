@@ -132,7 +132,8 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
               ) ??
               false;
           if (!confirm) return;
-          delegate.go(SetupRoute(instanceUrl: info.url.toString()));
+          // TODO: #nav
+          // delegate.go(SetupRoute(instanceUrl: info.url.toString()));
         } else {
           context.read<LoginController>().instanceInfo = info;
         }

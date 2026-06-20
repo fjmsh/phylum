@@ -50,8 +50,8 @@ class _OpenResourcePageState extends State<OpenResourcePage> {
         router.go(
           ExplorerRoute(location: ExplorerLocationFolder(folderId: r.id)),
         );
-      } else {
-        router.go(FilePreviewRoute(fileId: r.id));
+        // } else {
+        //   router.go(FilePreviewRoute(fileId: r.id));
       }
     } else if (response is ApiErrorResponse) {
       if (mounted) {

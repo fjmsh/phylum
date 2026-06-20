@@ -20,23 +20,18 @@ class PhylumApp extends StatefulWidget {
   State<PhylumApp> createState() => _PhylumAppState();
 
   static Widget create() {
-    final accountManager = AccountManager(
-      (id) => PhylumAccount.restore(id: id),
-      autoInitialize: isPrimary(),
-    );
-
-    return StateNotifierProvider<
-      AccountManager<PhylumAccount>,
-      AccountManagerState<PhylumAccount>
-    >.value(
-      value: accountManager,
-      child: buildSingleInstance(const PhylumApp()),
-    );
+    return buildSingleInstance(const PhylumApp());
   }
 }
 
 class _PhylumAppState extends State<PhylumApp> {
-  final PhylumRouterDelegate routerDelegate = PhylumRouterDelegate();
+  final accountManager = AccountManager(
+    (id) => PhylumAccount.restore(id: id),
+    autoInitialize: isPrimary(),
+  );
+  late final PhylumRouterDelegate routerDelegate = PhylumRouterDelegate(
+    accountManager: accountManager,
+  );
 
   @override
   void initState() {
@@ -50,6 +45,10 @@ class _PhylumAppState extends State<PhylumApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        StateNotifierProvider<
+          AccountManager<PhylumAccount>,
+          AccountManagerState<PhylumAccount>
+        >.value(value: accountManager),
         ChangeNotifierProvider.value(value: routerDelegate),
         if (!kIsWeb)
           ChangeNotifierProvider<DownloadManager>(

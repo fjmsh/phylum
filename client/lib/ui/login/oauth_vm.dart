@@ -54,12 +54,13 @@ Function(dynamic) createLoopbackRedirectHandler(
       launchUrl(oauthUriBuilder.build());
     }
     if (data is Uri) {
-      routerDelegate.go(
-        TokenLoginRoute(
-          instance: data.queryParameters['instance'],
-          token: data.queryParameters['token'],
-        ),
-      );
+      // TODO: #nav
+      // routerDelegate.go(
+      //   TokenLoginRoute(
+      //     instance: data.queryParameters['instance'],
+      //     token: data.queryParameters['token'],
+      //   ),
+      // );
     }
   };
 }

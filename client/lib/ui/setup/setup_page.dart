@@ -69,7 +69,7 @@ class _SetupPageState extends State<SetupPage> {
                   true;
               if (remain || !context.mounted) return;
               context.read<PhylumRouterDelegate>().go(
-                const ExplorerRoute(location: ExplorerLocationHome()),
+                ExplorerRoute(location: ExplorerLocationHome()),
               );
             },
           ),
@@ -148,7 +148,7 @@ class _SetupPageState extends State<SetupPage> {
       await showAlertDialog(context, title: 'Instance configured');
       if (!context.mounted) return;
       context.read<PhylumRouterDelegate>().go(
-        const ExplorerRoute(location: ExplorerLocationHome()),
+        ExplorerRoute(location: ExplorerLocationHome()),
       );
     } else {
       await showAlertDialog(
