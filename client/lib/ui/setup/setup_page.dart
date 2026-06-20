@@ -5,7 +5,6 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/routing/router.dart';
-import 'package:phylum/ui/app/routing/routes.dart';
 import 'package:phylum/ui/layout/responsive.dart';
 import 'package:phylum/ui/setup/auth/setup_auth_fragment.dart';
 import 'package:phylum/ui/setup/setup_db_fragment.dart';
@@ -68,9 +67,7 @@ class _SetupPageState extends State<SetupPage> {
                   ) ??
                   true;
               if (remain || !context.mounted) return;
-              context.read<PhylumRouterDelegate>().go(
-                ExplorerRoute(location: ExplorerLocationHome()),
-              );
+              context.read<PhylumRouterDelegate>().go(HomeRouteConfig());
             },
           ),
         ),

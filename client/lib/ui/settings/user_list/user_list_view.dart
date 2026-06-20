@@ -4,7 +4,6 @@ import 'package:phylum/libphylum/responses/user_details.dart';
 import 'package:phylum/libphylum/user_permission.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/routing/router.dart';
-import 'package:phylum/ui/app/routing/routes.dart';
 import 'package:phylum/ui/common/create_user_dialog.dart';
 import 'package:phylum/ui/common/new_user_details_dialog.dart';
 import 'package:phylum/ui/settings/user_list/user_permissions_dialog.dart';

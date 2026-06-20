@@ -5,7 +5,6 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/common/dialog_scaffold.dart';
 import 'package:phylum/ui/app/routing/router.dart';
-import 'package:phylum/ui/app/routing/routes.dart';
 import 'package:provider/provider.dart';
 
 class OpenResourcePage extends StatefulWidget {

@@ -4,7 +4,7 @@ import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/routing/router.dart';
-import 'package:phylum/ui/app/routing/routes.dart';
+import 'package:phylum/ui/login/login_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -54,13 +54,12 @@ Function(dynamic) createLoopbackRedirectHandler(
       launchUrl(oauthUriBuilder.build());
     }
     if (data is Uri) {
-      // TODO: #nav
-      // routerDelegate.go(
-      //   TokenLoginRoute(
-      //     instance: data.queryParameters['instance'],
-      //     token: data.queryParameters['token'],
-      //   ),
-      // );
+      routerDelegate.go(
+        LoginRouteConfig(
+          instanceUrl: data.queryParameters['instance'],
+          loginMethod: TokenLoginMethod(data.queryParameters['token']),
+        ),
+      );
     }
   };
 }

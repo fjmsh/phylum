@@ -1,12 +1,4 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/app/account_selector.dart';
-import 'package:phylum/ui/app/routing/explorer_location.dart';
-import 'package:phylum/ui/common/dialog_scaffold.dart';
-import 'package:phylum/ui/layout/explorer_page.dart';
-import 'package:phylum/ui/login/login_page.dart';
-import 'package:uri/uri.dart';
+part of 'router.dart';
 
 sealed class PhylumRouteConfig {
   Uri get uri;
@@ -21,6 +13,13 @@ class HomeRouteConfig extends PhylumRouteConfig {
   const HomeRouteConfig();
 }
 
+class UnknownRouteConfig extends PhylumRouteConfig {
+  @override
+  final Uri uri;
+
+  UnknownRouteConfig({required this.uri});
+}
+
 abstract class LoggedOutRouteConfig extends PhylumRouteConfig {
   @override
   @nonVirtual
@@ -30,15 +29,16 @@ abstract class LoggedOutRouteConfig extends PhylumRouteConfig {
     }
 
     final builder = UriBuilder.fromUri(base)
-      ..queryParameters['next'] = next.uri.toString();
+      ..queryParameters['next'] = next.uri.path.toString();
     return builder.build();
   }
 
   Uri get base;
 
-  final PhylumRouteConfig next;
+  @protected
+  PhylumRouteConfig next = const HomeRouteConfig();
 
-  const LoggedOutRouteConfig({required this.next});
+  LoggedOutRouteConfig();
 
   List<Page> buildPages();
 }
@@ -47,7 +47,7 @@ class AccountManagerRouteConfig extends LoggedOutRouteConfig {
   @override
   Uri get base => Uri.parse('/accounts');
 
-  const AccountManagerRouteConfig({required super.next});
+  AccountManagerRouteConfig();
 
   @override
   List<Page<dynamic>> buildPages() {
@@ -61,11 +61,21 @@ class LoginRouteConfig extends LoggedOutRouteConfig {
   @override
   Uri get base => Uri.parse('/login');
 
-  LoginRouteConfig({required super.next});
+  final String? instanceUrl;
+  final LoginMethod? loginMethod;
+
+  LoginRouteConfig({this.instanceUrl, this.loginMethod});
 
   @override
   List<Page<dynamic>> buildPages() {
-    return [MaterialPage(child: LoginPage.create())];
+    return [
+      MaterialPage(
+        child: LoginPage.create(
+          instanceUrl: Uri.tryParse(instanceUrl ?? ''),
+          method: loginMethod,
+        ),
+      ),
+    ];
   }
 }
 
@@ -81,68 +91,6 @@ class LoginRouteConfig extends LoggedOutRouteConfig {
 //   Widget buildPage(BuildContext context) {
 //     return SetupPage(instanceUrl: instanceUrl);
 //   }
-// }
-
-// class TokenLoginRoute extends PhylumRouteConfig {
-//   final String? instance;
-//   final String? token;
-
-//   TokenLoginRoute({this.instance, this.token});
-
-//   @override
-//   Uri get uri => Uri(path: '/');
-
-//   @override
-//   Widget buildPage(BuildContext context) {
-//     return LoginPage.create(
-//       instanceUrl: Uri.tryParse(instance ?? ''),
-//       method: TokenLoginMethod(token),
-//     );
-//   }
-// }
-
-// class ResetPasswordRoute extends PhylumRouteConfig {
-//   final String? instance;
-//   final String? email;
-//   final String? token;
-
-//   ResetPasswordRoute({
-//     required this.instance,
-//     required this.email,
-//     required this.token,
-//   });
-
-//   @override
-//   Uri get uri => Uri(path: '/');
-
-//   @override
-//   Widget buildPage(BuildContext context) {
-//     return LoginPage.create(
-//       instanceUrl: Uri.tryParse(instance ?? ''),
-//       method: ResetPasswordMethod(email: email, token: token),
-//     );
-//   }
-// }
-
-// sealed class LoggedInRoute extends PhylumRouteConfig {
-//   const LoggedInRoute();
-
-//   @nonVirtual
-//   @override
-//   Widget buildPage(BuildContext context) {
-//     final account = context
-//         .select<AccountManagerState<PhylumAccount>, PhylumAccount?>(
-//           (state) => state.selectedAccount,
-//         );
-
-//     if (account == null) {
-//       return LoginPage.create();
-//     }
-//     return buildAccountPage(account);
-//   }
-
-//   @protected
-//   Widget buildAccountPage(PhylumAccount account);
 // }
 
 // class OpenResourceRoute extends LoggedInRoute {

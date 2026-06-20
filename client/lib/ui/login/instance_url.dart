@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/app/routing/router.dart';
-import 'package:phylum/ui/app/routing/routes.dart';
 import 'package:phylum/ui/login/instance_config.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/request.dart';
