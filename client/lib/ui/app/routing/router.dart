@@ -5,7 +5,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/account_selector.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/common/dialog_scaffold.dart';
-import 'package:phylum/ui/layout/explorer_page.dart';
+import 'package:phylum/ui/explorer/scaffold/explorer_page.dart';
 import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/setup/setup_page.dart';

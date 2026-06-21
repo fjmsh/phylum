@@ -122,6 +122,7 @@ class ExplorerRoute extends LoggedInRouteConfig {
   List<Page<dynamic>> buildPages(PhylumAccount account) {
     return [
       MaterialPage(
+        key: ValueKey(account.id),
         child: ExplorerPage(account: account, location: location),
       ),
     ];

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/layout/sync_status_notifier.dart';
+import 'package:phylum/ui/explorer/scaffold/sync/sync_status_notifier.dart';
 import 'package:phylum/ui/sync/sync_dialog.dart';
 import 'package:provider/provider.dart';
 

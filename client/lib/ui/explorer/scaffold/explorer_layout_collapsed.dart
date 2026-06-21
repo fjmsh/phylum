@@ -2,24 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
-import 'package:phylum/ui/layout/create_action.dart';
-import 'package:phylum/ui/layout/nav_list.dart';
-import 'package:phylum/ui/layout/search.dart';
-import 'package:phylum/ui/layout/sync_status_button.dart';
+import 'package:phylum/ui/explorer/scaffold/create_action.dart';
+import 'package:phylum/ui/explorer/scaffold/nav_list.dart';
+import 'package:phylum/ui/explorer/scaffold/search/search.dart';
+import 'package:phylum/ui/explorer/scaffold/sync/sync_status_button.dart';
 import 'package:phylum/ui/menu/bottom_sheet.dart';
 import 'package:phylum/ui/profile/profile_dialog.dart';
 import 'package:phylum/ui/profile/profile_view.dart';
 import 'package:provider/provider.dart';
 
-class ExplorerPageCollapsed extends StatelessWidget {
-  const ExplorerPageCollapsed({super.key});
+class ExplorerLayoutCollapsed extends StatelessWidget {
+  const ExplorerLayoutCollapsed({super.key});
 
   @override
   Widget build(BuildContext context) {
     final selected = context.select<ExplorerState, int>(
       (state) => state.selectedIds.length,
     );
-    final searching = context.select<PhylumSearchController, bool>(
+    final searching = context.select<SearchFieldController, bool>(
       (search) => search.active,
     );
     return Scaffold(
@@ -78,7 +78,7 @@ class ExplorerPageCollapsed extends StatelessWidget {
       actions: [
         IconButton(
           icon: const Icon(Icons.search),
-          onPressed: () => context.read<PhylumSearchController>().active = true,
+          onPressed: () => context.read<SearchFieldController>().active = true,
         ),
         const SyncStatusButton(),
         ProfileView(onTap: () => ProfileDialog.show(context)),

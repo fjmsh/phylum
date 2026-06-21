@@ -14,7 +14,7 @@ import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
 import 'package:phylum/ui/explorer/folder_view_type.dart';
 import 'package:phylum/ui/explorer/paste_helpers.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
-import 'package:phylum/ui/layout/responsive.dart';
+import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:path/path.dart' as p;

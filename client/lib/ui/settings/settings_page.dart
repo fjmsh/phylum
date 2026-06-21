@@ -2,7 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/layout/responsive.dart';
+import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/ui/settings/account/account_settings.dart';
 import 'package:phylum/ui/settings/logs/logs_settings.dart';
 import 'package:phylum/ui/settings/security/sessions_keys_settings.dart';

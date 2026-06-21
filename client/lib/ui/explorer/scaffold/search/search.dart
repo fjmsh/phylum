@@ -8,7 +8,7 @@ import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:provider/provider.dart';
 
-class PhylumSearchController with ChangeNotifier {
+class SearchFieldController with ChangeNotifier {
   late final void Function() _removeListener;
   bool _active = false;
   bool get active => _active;
@@ -21,7 +21,7 @@ class PhylumSearchController with ChangeNotifier {
   String _pageQuery = '';
   String get pageQuery => _pageQuery;
 
-  PhylumSearchController(BuildContext context) {
+  SearchFieldController(BuildContext context) {
     _removeListener = context.read<ExplorerHistoryController>().addListener(
       _onUpdatePage,
     );
@@ -55,7 +55,7 @@ class _SearchFieldState extends State<SearchField> {
   final FocusNode _focusNode = FocusNode();
   final _controller = TextEditingController();
   late final void Function() _removeListener;
-  late final PhylumSearchController _searchNotifier;
+  late final SearchFieldController _searchNotifier;
 
   @override
   void initState() {
@@ -107,13 +107,12 @@ class _SearchFieldState extends State<SearchField> {
     return Actions(
       actions: {
         DismissIntent: CallbackAction<DismissIntent>(
-          onInvoke: (i) =>
-              context.read<PhylumSearchController>().active = false,
+          onInvoke: (i) => context.read<SearchFieldController>().active = false,
         ),
       },
       child: Focus(
         onFocusChange: (focus) =>
-            context.read<PhylumSearchController>().active = focus,
+            context.read<SearchFieldController>().active = focus,
         child: TypeAheadField<Resource>(
           controller: _controller,
           focusNode: _focusNode,

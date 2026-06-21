@@ -7,15 +7,15 @@ import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
-import 'package:phylum/ui/layout/account_state_page.dart';
-import 'package:phylum/ui/layout/app_actions.dart';
-import 'package:phylum/ui/layout/explorer_page_expanded.dart';
-import 'package:phylum/ui/layout/responsive.dart';
-import 'package:phylum/ui/layout/search.dart';
-import 'package:phylum/ui/layout/sync_status_notifier.dart';
+import 'package:phylum/ui/explorer/scaffold/account_state_page.dart';
+import 'package:phylum/ui/explorer/scaffold/explorer_actions.dart';
+import 'package:phylum/ui/explorer/scaffold/explorer_layout_expanded.dart';
+import 'package:phylum/ui/common/breakpoints.dart';
+import 'package:phylum/ui/explorer/scaffold/search/search.dart';
+import 'package:phylum/ui/explorer/scaffold/sync/sync_status_notifier.dart';
 import 'package:provider/provider.dart';
 
-import 'explorer_page_collapsed.dart';
+import 'explorer_layout_collapsed.dart';
 
 class ExplorerPage extends StatefulWidget {
   final PhylumAccount account;
@@ -69,7 +69,7 @@ class _ExplorerPageState extends State<ExplorerPage> {
           lazy: false,
         ),
         ChangeNotifierProvider(
-          create: (context) => PhylumSearchController(context),
+          create: (context) => SearchFieldController(context),
         ),
       ],
       builder: (context, child) {
@@ -93,8 +93,8 @@ class _ExplorerPageState extends State<ExplorerPage> {
   Widget buildPage(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final layout = width < maxViewportWidthSmall
-        ? const ExplorerPageCollapsed()
-        : const ExplorerPageExpanded();
+        ? const ExplorerLayoutCollapsed()
+        : const ExplorerLayoutExpanded();
     return ExternalDropRegion(
       buildItem: (context, dropTargetActive) {
         final child = (dropTargetActive)
@@ -116,7 +116,7 @@ class _ExplorerPageState extends State<ExplorerPage> {
                 ],
               )
             : layout;
-        return AppActions(child: child);
+        return ExplorerActions(child: child);
       },
     );
   }

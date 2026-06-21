@@ -5,7 +5,7 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/routing/router.dart';
-import 'package:phylum/ui/layout/responsive.dart';
+import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/ui/setup/auth/setup_auth_fragment.dart';
 import 'package:phylum/ui/setup/setup_db_fragment.dart';
 import 'package:phylum/ui/setup/setup_mail_fragment.dart';

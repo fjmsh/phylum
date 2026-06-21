@@ -4,7 +4,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
-import 'package:phylum/ui/layout/search.dart';
+import 'package:phylum/ui/explorer/scaffold/search/search.dart';
 import 'package:phylum/ui/file_viewer/file_viewer_dialog.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
@@ -13,10 +13,10 @@ import 'package:phylum/util/pick_directory_stub.dart'
     if (dart.library.js_interop) 'package:phylum/util/pick_directory_web.dart'
     if (dart.library.ffi) 'package:phylum/util/pick_directory_vm.dart';
 
-class AppActions extends StatelessWidget {
+class ExplorerActions extends StatelessWidget {
   final Widget child;
 
-  const AppActions({super.key, required this.child});
+  const ExplorerActions({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +93,7 @@ class AppActions extends StatelessWidget {
               context.read<ExplorerHistoryController>().goForward(),
         ),
         FocusSearchIntent: CallbackAction<FocusSearchIntent>(
-          onInvoke: (i) => context.read<PhylumSearchController>().active = true,
+          onInvoke: (i) => context.read<SearchFieldController>().active = true,
         ),
         OpenResourceIntent: CallbackAction<OpenResourceIntent>(
           onInvoke: (i) async {

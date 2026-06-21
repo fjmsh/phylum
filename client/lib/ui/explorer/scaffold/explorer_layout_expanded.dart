@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/resource_info_view.dart';
-import 'package:phylum/ui/layout/nav_list.dart';
-import 'package:phylum/ui/layout/responsive.dart';
-import 'package:phylum/ui/layout/search.dart';
-import 'package:phylum/ui/layout/sync_status_button.dart';
+import 'package:phylum/ui/explorer/scaffold/nav_list.dart';
+import 'package:phylum/ui/common/breakpoints.dart';
+import 'package:phylum/ui/explorer/scaffold/search/search.dart';
+import 'package:phylum/ui/explorer/scaffold/sync/sync_status_button.dart';
 import 'package:phylum/ui/profile/profile_dialog.dart';
 import 'package:phylum/ui/profile/profile_view.dart';
 
-class ExplorerPageExpanded extends StatelessWidget {
-  const ExplorerPageExpanded({super.key});
+class ExplorerLayoutExpanded extends StatelessWidget {
+  const ExplorerLayoutExpanded({super.key});
 
   @override
   Widget build(BuildContext context) {
