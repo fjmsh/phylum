@@ -9,7 +9,6 @@ import 'package:phylum/ui/layout/explorer_page.dart';
 import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/setup/setup_page.dart';
-import 'package:uri/uri.dart';
 
 part 'routes.dart';
 

@@ -23,15 +23,12 @@ class UnknownRouteConfig extends PhylumRouteConfig {
 abstract class LoggedOutRouteConfig extends PhylumRouteConfig {
   @override
   @nonVirtual
-  Uri get uri {
-    if (next == const HomeRouteConfig()) {
-      return base;
-    }
-
-    final builder = UriBuilder.fromUri(base)
-      ..queryParameters['next'] = next.uri.path.toString();
-    return builder.build();
-  }
+  Uri get uri => Uri(
+    path: base.path,
+    queryParameters: {
+      if (next != const HomeRouteConfig()) 'next': next.uri.path.toString(),
+    },
+  );
 
   Uri get base;
 
