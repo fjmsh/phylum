@@ -13,6 +13,7 @@ import 'package:phylum/ui/explorer/scaffold/explorer_layout_expanded.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/ui/explorer/scaffold/search/search.dart';
 import 'package:phylum/ui/explorer/scaffold/sync/sync_status_notifier.dart';
+import 'package:phylum/ui/explorer/util/clipboard.dart';
 import 'package:provider/provider.dart';
 
 import 'explorer_layout_collapsed.dart';
@@ -68,6 +69,7 @@ class _ExplorerPageState extends State<ExplorerPage> {
           ),
           lazy: false,
         ),
+        Provider(create: (context) => CutToClipboard()),
         ChangeNotifierProvider(
           create: (context) => SearchFieldController(context),
         ),

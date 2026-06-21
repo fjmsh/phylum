@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/app/clipboard.dart';
+import 'package:phylum/ui/explorer/util/clipboard.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
