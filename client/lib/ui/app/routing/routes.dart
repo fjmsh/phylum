@@ -93,20 +93,6 @@ class SetupRoute extends LoggedOutRouteConfig {
   }
 }
 
-// class OpenResourceRoute extends LoggedInRoute {
-//   final String resourceId;
-
-//   @override
-//   Uri get uri => Uri(path: '/open', queryParameters: {'id': resourceId});
-
-//   OpenResourceRoute({required this.resourceId}) : super();
-
-//   @override
-//   Widget buildAccountPage(PhylumAccount account) {
-//     return OpenResourcePage(account: account, resourceId: resourceId);
-//   }
-// }
-
 // class FilePreviewRoute extends LoggedInRoute {
 //   final String fileId;
 

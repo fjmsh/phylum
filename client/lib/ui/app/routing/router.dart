@@ -139,22 +139,9 @@ class PhylumRouteInformationParser
 
     return SynchronousFuture(config);
 
-    // if (segments.length == 1) {
-    //   // if (segments[0] == 'open') {
-    //   //   final resourceId = uri.queryParameters['id'];
-    //   //   return SynchronousFuture(
-    //   //     resourceId == null
-    //   //         // TODO: Open the openresourceroute and redirect from there or show an error
-    //   //         ? const ExplorerRoute(location: ExplorerLocationHome())
-    //   //         : OpenResourceRoute(resourceId: resourceId),
-    //   //   );
-    //   // }
-    // } else if (segments.length == 2) {
-    //   // }
     //   // if (segments[0] == 'file') {
     //   //   return SynchronousFuture(FilePreviewRoute(fileId: segments[1]));
     //   // }
-    // }
   }
 
   @override

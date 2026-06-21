@@ -4,7 +4,6 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/admin_user_list_request.dart';
 import 'package:phylum/libphylum/responses/admin_user_list_response.dart';
 import 'package:phylum/libphylum/responses/user_details.dart';
-import 'package:phylum/libphylum/user_permission.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
