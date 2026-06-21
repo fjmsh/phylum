@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/ui/explorer/resource_details_row.dart';
+import 'package:phylum/ui/explorer/item_views/list/folder_list_item.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/resource_item_gesture_handler.dart';
 import 'package:provider/provider.dart';
 
-import 'explorer_controller.dart';
+import '../../explorer_controller.dart';
 
 class FolderListView extends StatefulWidget {
   const FolderListView({super.key});
@@ -98,7 +98,7 @@ class _FolderListViewState extends State<FolderListView> {
         descendantsAreFocusable: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            _rowHeight ??= ResourceDetailsRow.calculateHeight(context);
+            _rowHeight ??= FolderListItem.calculateHeight(context);
             _viewportHeight = constraints.maxHeight;
             return ListView.builder(
               itemCount: resources.length,
@@ -113,7 +113,7 @@ class _FolderListViewState extends State<FolderListView> {
                             ResourceItemGestureHandler(
                               index: index,
                               resource: resource,
-                              buildItem: () => ResourceDetailsRow(
+                              buildItem: () => FolderListItem(
                                 resource: resource,
                                 dropTargetActive: dropTargetActive,
                               ),
@@ -122,7 +122,7 @@ class _FolderListViewState extends State<FolderListView> {
                     : ResourceItemGestureHandler(
                         index: index,
                         resource: resource,
-                        buildItem: () => ResourceDetailsRow(
+                        buildItem: () => FolderListItem(
                           resource: resource,
                           dropTargetActive: false,
                         ),

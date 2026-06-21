@@ -10,9 +10,9 @@ import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/requests/bootstrap_request.dart';
 import 'package:phylum/ui/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/explorer_actions.dart';
-import 'package:phylum/ui/explorer/explorer_gesture_handler.dart';
-import 'package:phylum/ui/explorer/folder_view_type.dart';
-import 'package:phylum/ui/explorer/paste_helpers.dart';
+import 'package:phylum/ui/explorer/folder_gesture_handler.dart';
+import 'package:phylum/ui/explorer/item_views/folder_view_type.dart';
+import 'package:phylum/ui/explorer/util/paste_helpers.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -24,8 +24,8 @@ import 'package:super_clipboard/super_clipboard.dart';
 
 import 'explorer_controller.dart';
 import 'folder_empty_view.dart';
-import 'folder_grid_view.dart';
-import 'folder_list_view.dart';
+import 'item_views/grid/folder_grid_view.dart';
+import 'item_views/list/folder_list_view.dart';
 
 class ExplorerView extends StatefulWidget {
   const ExplorerView({super.key});
@@ -149,7 +149,7 @@ class _ExplorerViewState extends State<ExplorerView> {
       refreshKey: _refreshKey,
       child: ChangeNotifierProvider(
         create: (context) => FolderViewNotifier(context),
-        child: ExplorerGestureHandler(
+        child: FolderGestureHandler(
           child: Column(
             children: [
               Row(

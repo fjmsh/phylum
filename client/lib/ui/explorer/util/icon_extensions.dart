@@ -5,7 +5,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 const IconData folderIcon = Icons.folder;
 const IconData defaultFileIcon = Icons.insert_drive_file;
 
-extension ResourceIconExtension on Resource {
+extension ResourceIcon on Resource {
   Widget getIcon(PhylumAccount account) {
     if (dir) return const Icon(folderIcon);
 
@@ -18,7 +18,7 @@ extension ResourceIconExtension on Resource {
   }
 }
 
-extension ResourceVersionIconExtension on ResourceVersion {
+extension ResourceVersionIcon on ResourceVersion {
   Icon getIcon() {
     if (mimeType.startsWith("image")) {
       return const Icon(Icons.image);

@@ -6,10 +6,10 @@ import 'package:phylum/ui/menu/option_groups.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
 import 'package:provider/provider.dart';
 
-class ExplorerGestureHandler extends StatelessWidget {
+class FolderGestureHandler extends StatelessWidget {
   final Widget child;
 
-  const ExplorerGestureHandler({super.key, required this.child});
+  const FolderGestureHandler({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {

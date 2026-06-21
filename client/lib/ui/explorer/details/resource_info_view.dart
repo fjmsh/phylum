@@ -7,57 +7,20 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/common/responsive_dialog.dart';
-import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:phylum/ui/explorer/mime_type_names.dart';
-import 'package:phylum/ui/explorer/resource_permissions_view.dart';
-import 'package:phylum/ui/explorer/resource_publinks_view.dart';
+import 'package:phylum/ui/common/responsive_dialog.dart';
+import 'package:phylum/ui/explorer/util/mime_type_names.dart';
+import 'package:phylum/ui/explorer/details/resource_permissions_view.dart';
+import 'package:phylum/ui/explorer/details/resource_publinks_view.dart';
 import 'package:phylum/ui/explorer/resource_sync_state.dart';
-import 'package:phylum/ui/explorer/resource_versions_view.dart';
+import 'package:phylum/ui/explorer/details/resource_versions_view.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-import 'resource_icon_extension.dart';
-
-class ReactiveResourceInfoView extends StatelessWidget {
-  const ReactiveResourceInfoView({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final resource = context.select<ExplorerState, Resource?>((state) {
-      return state.focussedIfSelected ?? state.folder;
-    });
-
-    if (resource == null) {
-      return const Center(child: Text(''));
-    }
-    return Column(
-      children: [
-        DecoratedBox(
-          position: DecorationPosition.foreground,
-          decoration: BoxDecoration(
-            border: Border(bottom: Divider.createBorderSide(context)),
-          ),
-          child: ListTile(
-            title: Text(
-              resource.name,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-          ),
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-            child: ResourceInfoView(resource: resource),
-          ),
-        ),
-      ],
-    );
-  }
-}
+import '../util/icon_extensions.dart';
 
 class ResourceInfoView extends StatelessWidget {
   final Resource resource;

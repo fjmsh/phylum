@@ -8,7 +8,7 @@ import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
-import 'package:phylum/ui/explorer/resource_icon_extension.dart';
+import 'package:phylum/ui/explorer/util/icon_extensions.dart';
 import 'package:phylum/ui/explorer/selection_mode.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';

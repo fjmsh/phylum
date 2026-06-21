@@ -14,7 +14,7 @@ import 'package:phylum/libphylum/requests/resource_contents_request.dart';
 import 'package:phylum/libphylum/requests/resource_img_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
-import 'package:phylum/ui/explorer/resource_info_view.dart';
+import 'package:phylum/ui/explorer/details/resource_info_view.dart';
 import 'package:phylum/ui/file_viewer/versioned_resource.dart';
 import 'package:provider/provider.dart';
 

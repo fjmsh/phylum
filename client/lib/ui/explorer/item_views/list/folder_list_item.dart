@@ -4,13 +4,13 @@ import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:phylum/ui/explorer/resource_icon_extension.dart';
+import 'package:phylum/ui/explorer/util/icon_extensions.dart';
 import 'package:phylum/ui/explorer/resource_sync_state.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 
-import 'explorer_controller.dart';
+import '../../explorer_controller.dart';
 
 const _rowPaddingV = 2.0;
 const _rowPaddingH = 0.0;
@@ -19,11 +19,11 @@ const _iconPaddingH = 16.0;
 const _iconSize = 24.0;
 const _subtitleIconSize = 14.0;
 
-class ResourceDetailsRow extends StatelessWidget {
+class FolderListItem extends StatelessWidget {
   final Resource resource;
   final bool dropTargetActive;
 
-  ResourceDetailsRow({required this.resource, required this.dropTargetActive})
+  FolderListItem({required this.resource, required this.dropTargetActive})
     : super(key: ValueKey(resource.id));
 
   @override
