@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/routing/router.dart';
-import 'package:phylum/ui/app/shortcuts.dart';
+import 'package:phylum/ui/explorer/shortcuts/shortcuts.dart';
 import 'package:provider/provider.dart';
 
 import 'dbus.dart';
@@ -84,7 +85,12 @@ class _PhylumAppState extends State<PhylumApp> {
           darkTheme: theme.copyWith(brightness: Brightness.dark),
           routeInformationParser: const PhylumRouteInformationParser(),
           routerDelegate: routerDelegate,
-          shortcuts: appShortcuts,
+          shortcuts: const {
+            SingleActivator(LogicalKeyboardKey.tab): NextFocusIntent(),
+            SingleActivator(LogicalKeyboardKey.tab, shift: true):
+                PreviousFocusIntent(),
+            SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
+          },
         );
       },
     );

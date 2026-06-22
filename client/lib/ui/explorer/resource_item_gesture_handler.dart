@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/app/shortcuts.dart';
+import 'package:phylum/ui/explorer/shortcuts/intents.dart';
+import 'package:phylum/ui/explorer/shortcuts/shortcuts.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/menu/menu_option.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
-import 'package:phylum/ui/explorer/selection_mode.dart';
+import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
 import 'package:provider/provider.dart';
 
 class ResourceItemGestureHandler extends StatefulWidget {

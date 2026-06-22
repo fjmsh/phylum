@@ -5,7 +5,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
-import 'package:phylum/ui/app/shortcuts.dart';
+import 'package:phylum/ui/explorer/shortcuts/intents.dart';
 import 'package:provider/provider.dart';
 
 class SearchFieldController with ChangeNotifier {

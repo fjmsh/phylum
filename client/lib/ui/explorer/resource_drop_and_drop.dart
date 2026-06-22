@@ -8,7 +8,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/util/paste_helpers.dart';
 import 'package:phylum/ui/explorer/util/icon_extensions.dart';
-import 'package:phylum/ui/explorer/selection_mode.dart';
+import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';

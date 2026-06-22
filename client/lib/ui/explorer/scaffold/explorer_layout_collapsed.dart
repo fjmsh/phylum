@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
-import 'package:phylum/ui/explorer/selection_mode.dart';
+import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
 import 'package:phylum/ui/explorer/scaffold/create_action.dart';
 import 'package:phylum/ui/explorer/scaffold/nav_list.dart';
 import 'package:phylum/ui/explorer/scaffold/search/search.dart';

@@ -9,9 +9,10 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/requests/bootstrap_request.dart';
 import 'package:phylum/ui/destination_picker/destination_picker.dart';
-import 'package:phylum/ui/explorer/explorer_actions.dart';
+import 'package:phylum/ui/explorer/shortcuts/actions.dart';
 import 'package:phylum/ui/explorer/folder_gesture_handler.dart';
 import 'package:phylum/ui/explorer/item_views/folder_view_type.dart';
+import 'package:phylum/ui/explorer/shortcuts/shortcuts.dart';
 import 'package:phylum/ui/explorer/util/paste_helpers.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
@@ -145,26 +146,29 @@ class _ExplorerViewState extends State<ExplorerView> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    return ExplorerActions(
-      refreshKey: _refreshKey,
-      child: ChangeNotifierProvider(
-        create: (context) => FolderViewNotifier(context),
-        child: FolderGestureHandler(
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: PathView(small: width < maxViewportWidthSmall),
-                  ),
-                  width < maxViewportWidthLarge
-                      ? const FolderViewIconButton()
-                      : const FolderViewToggleButton(),
-                ],
-              ),
-              Expanded(child: Builder(builder: buildPage)),
-            ],
+    return Shortcuts(
+      shortcuts: shortcutsMap,
+      child: ExplorerActions(
+        refreshKey: _refreshKey,
+        child: ChangeNotifierProvider(
+          create: (context) => FolderViewNotifier(context),
+          child: FolderGestureHandler(
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: PathView(small: width < maxViewportWidthSmall),
+                    ),
+                    width < maxViewportWidthLarge
+                        ? const FolderViewIconButton()
+                        : const FolderViewToggleButton(),
+                  ],
+                ),
+                Expanded(child: Builder(builder: buildPage)),
+              ],
+            ),
           ),
         ),
       ),

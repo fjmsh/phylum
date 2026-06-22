@@ -3,140 +3,23 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phylum/libphylum/db/db.dart';
-import 'package:phylum/ui/app/routing/explorer_location.dart';
-import 'package:phylum/ui/explorer/selection_mode.dart';
+import 'package:phylum/ui/explorer/shortcuts/intents.dart';
+import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
 
-class FocusUpIntent extends Intent {
-  final SelectionMode mode;
+Map<ShortcutActivator, Intent>? _shortcutsMap;
 
-  const FocusUpIntent(this.mode);
+Map<ShortcutActivator, Intent> get shortcutsMap {
+  _shortcutsMap ??= _createShortcuts();
+  return _shortcutsMap!;
 }
 
-class FocusDownIntent extends Intent {
-  final SelectionMode mode;
-
-  const FocusDownIntent(this.mode);
-}
-
-class FocusRightIntent extends Intent {
-  final SelectionMode mode;
-
-  const FocusRightIntent(this.mode);
-}
-
-class FocusLeftIntent extends Intent {
-  final SelectionMode mode;
-
-  const FocusLeftIntent(this.mode);
-}
-
-class FocusFirstIntent extends Intent {
-  final SelectionMode mode;
-
-  const FocusFirstIntent(this.mode);
-}
-
-class FocusLastIntent extends Intent {
-  final SelectionMode mode;
-
-  const FocusLastIntent(this.mode);
-}
-
-class ToggleSelectionIntent extends Intent {
-  const ToggleSelectionIntent();
-}
-
-class SelectAllIntent extends Intent {
-  const SelectAllIntent();
-}
-
-class CopyToClipboardIntent extends Intent {
-  final bool cut;
-
-  const CopyToClipboardIntent(this.cut);
-}
-
-class PasteFromClipboardIntent extends Intent {
-  const PasteFromClipboardIntent();
-}
-
-class DeleteIntent extends Intent {
-  final bool permanent;
-  const DeleteIntent(this.permanent);
-}
-
-class RenameIntent extends Intent {
-  const RenameIntent();
-}
-
-class NewFolderIntent extends Intent {
-  const NewFolderIntent();
-}
-
-class UploadFilesIntent extends Intent {
-  const UploadFilesIntent();
-}
-
-class UploadFolderIntent extends Intent {
-  const UploadFolderIntent();
-}
-
-class NavBackIntent extends Intent {
-  const NavBackIntent();
-}
-
-class NavForwardIntent extends Intent {
-  const NavForwardIntent();
-}
-
-class NavUpIntent extends Intent {
-  const NavUpIntent();
-}
-
-class NavHomeIntent extends Intent {
-  const NavHomeIntent();
-}
-
-class NavIntent extends Intent {
-  final ExplorerLocation target;
-
-  const NavIntent({required this.target});
-}
-
-class RefreshIntent extends Intent {
-  const RefreshIntent();
-}
-
-class FocusSearchIntent extends Intent {
-  const FocusSearchIntent();
-}
-
-class OpenResourceIntent extends Intent {
-  final Resource resource;
-
-  const OpenResourceIntent(this.resource);
-}
-
-Map<ShortcutActivator, Intent>? _appShortcuts;
-
-Map<ShortcutActivator, Intent> get appShortcuts {
-  _appShortcuts ??= createShortcuts();
-  return _appShortcuts!;
-}
-
-Map<ShortcutActivator, Intent> createShortcuts() {
+Map<ShortcutActivator, Intent> _createShortcuts() {
   final isApple =
       (kIsWeb &&
           (defaultTargetPlatform == TargetPlatform.macOS ||
               defaultTargetPlatform == TargetPlatform.iOS)) ||
       (!kIsWeb && (Platform.isMacOS || Platform.isIOS));
   final shortcuts = {
-    // Add basic intents
-    SingleActivator(LogicalKeyboardKey.tab): NextFocusIntent(),
-    SingleActivator(LogicalKeyboardKey.tab, shift: true): PreviousFocusIntent(),
-    SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
-
     // Focus / Selection
     // Up
     SingleActivator(LogicalKeyboardKey.arrowUp): FocusUpIntent(

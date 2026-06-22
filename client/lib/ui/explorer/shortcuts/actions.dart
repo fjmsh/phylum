@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/explorer/util/clipboard.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
-import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/util/paste_helpers.dart';
-import 'package:phylum/ui/explorer/selection_mode.dart';
+import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
 import 'package:phylum/ui/file_viewer/file_viewer_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 
-import 'explorer_controller.dart';
+import '../explorer_controller.dart';
+import 'intents.dart';
 
 class ExplorerActions extends StatelessWidget {
   final GlobalKey<RefreshIndicatorState> refreshKey;

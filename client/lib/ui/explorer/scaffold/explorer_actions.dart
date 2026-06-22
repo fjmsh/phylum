@@ -3,7 +3,7 @@ import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
-import 'package:phylum/ui/app/shortcuts.dart';
+import 'package:phylum/ui/explorer/shortcuts/intents.dart';
 import 'package:phylum/ui/explorer/scaffold/search/search.dart';
 import 'package:phylum/ui/file_viewer/file_viewer_dialog.dart';
 import 'package:phylum/util/upload_utils.dart';

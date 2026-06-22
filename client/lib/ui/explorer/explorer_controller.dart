@@ -8,7 +8,7 @@ import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-import 'selection_mode.dart';
+import 'shortcuts/selection_mode.dart';
 
 class ExplorerState {
   final ExplorerLocation location;

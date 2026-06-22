@@ -3,9 +3,9 @@ import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
-import 'package:phylum/ui/app/shortcuts.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
+import 'package:phylum/ui/explorer/shortcuts/intents.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:provider/provider.dart';
 

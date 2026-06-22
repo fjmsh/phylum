@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/app/shortcuts.dart';
+import 'package:phylum/ui/explorer/shortcuts/intents.dart';
 
 import 'package:phylum/util/pick_directory_stub.dart'
     if (dart.library.js_interop) 'package:phylum/util/pick_directory_web.dart'

@@ -3,7 +3,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/menu/menu_option.dart';
 import 'package:phylum/ui/menu/option_groups.dart';
-import 'package:phylum/ui/explorer/selection_mode.dart';
+import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
 import 'package:provider/provider.dart';
 
 class FolderGestureHandler extends StatelessWidget {
