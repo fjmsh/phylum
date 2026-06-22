@@ -115,32 +115,44 @@ class PhylumRouteInformationParser
   ) {
     final uri = routeInformation.uri;
 
-    final explorerLocation = parseExplorerLocation(uri);
-
-    if (explorerLocation != null) {
-      return SynchronousFuture(ExplorerRoute(location: explorerLocation));
-    }
-
-    final config = switch (uri.path) {
-      '/login/token' => LoginRouteConfig(
+    final staticPaths = <String, PhylumRouteConfig Function(Uri)>{
+      '/': (uri) => const HomeRouteConfig(),
+      '/login': (uri) => LoginRouteConfig(),
+      '/login/token': (uri) => LoginRouteConfig(
         instanceUrl: uri.queryParameters['instance'],
         loginMethod: TokenLoginMethod(uri.queryParameters['token']),
       ),
-      '/login/reset_password' => LoginRouteConfig(
+      '/login/reset_password': (uri) => LoginRouteConfig(
         instanceUrl: uri.queryParameters['instance'],
         loginMethod: ResetPasswordMethod(
           email: uri.queryParameters['email'],
           token: uri.queryParameters['token'],
         ),
       ),
-      _ => UnknownRouteConfig(uri: uri),
+      '/home': (uri) => ExplorerRoute(location: const ExplorerLocationHome()),
+      '/recents': (uri) =>
+          ExplorerRoute(location: const ExplorerLocationRecents()),
+      '/shared': (uri) =>
+          ExplorerRoute(location: const ExplorerLocationShared()),
+      '/trash': (uri) => ExplorerRoute(location: const ExplorerLocationTrash()),
+      '/search': (uri) => ExplorerRoute(
+        location: ExplorerLocationSearch(query: uri.queryParameters['q'] ?? ''),
+      ),
     };
+    if (staticPaths.containsKey(uri.path)) {
+      return SynchronousFuture(staticPaths[uri.path]!.call(uri));
+    }
 
-    return SynchronousFuture(config);
+    final segments = uri.pathSegments;
+    if (segments[0] == 'file') {
+      // return SynchronousFuture(FileP(fileId: segments[1]));
+    } else if (segments[0] == 'folder' && segments.length == 2) {
+      return SynchronousFuture(
+        ExplorerRoute(location: ExplorerLocationFolder(folderId: segments[1])),
+      );
+    }
 
-    //   // if (segments[0] == 'file') {
-    //   //   return SynchronousFuture(FilePreviewRoute(fileId: segments[1]));
-    //   // }
+    return SynchronousFuture(UnknownRouteConfig(uri: uri));
   }
 
   @override
@@ -151,30 +163,7 @@ class PhylumRouteInformationParser
   ExplorerLocation? parseExplorerLocation(Uri uri) {
     final segments = uri.pathSegments;
 
-    if (segments.isEmpty) {
-      return ExplorerLocationHome();
-    }
-    if (segments.length == 1) {
-      if (segments[0] == 'home') {
-        return ExplorerLocationHome();
-      }
-      if (segments[0] == 'recents') {
-        return const ExplorerLocationRecents();
-      }
-      if (segments[0] == 'shared') {
-        return const ExplorerLocationShared();
-      }
-      if (segments[0] == 'trash') {
-        return const ExplorerLocationTrash();
-      }
-      if (segments[0] == 'search') {
-        final query = uri.queryParameters['q'];
-        if (query == null || query.trim().isEmpty) {
-          return ExplorerLocationHome();
-        }
-        return ExplorerLocationSearch(query: query);
-      }
-    } else if (segments.length == 2) {
+    if (segments.length == 2) {
       if (segments[0] == 'folder') {
         return ExplorerLocationFolder(folderId: segments[1]);
       }
