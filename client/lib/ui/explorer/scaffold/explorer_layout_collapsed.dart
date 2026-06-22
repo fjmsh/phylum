@@ -6,7 +6,7 @@ import 'package:phylum/ui/explorer/scaffold/create_action.dart';
 import 'package:phylum/ui/explorer/scaffold/nav_list.dart';
 import 'package:phylum/ui/explorer/scaffold/search/search.dart';
 import 'package:phylum/ui/explorer/scaffold/sync/sync_status_button.dart';
-import 'package:phylum/ui/menu/bottom_sheet.dart';
+import 'package:phylum/ui/explorer/menu/bottom_sheet.dart';
 import 'package:phylum/ui/profile/profile_dialog.dart';
 import 'package:phylum/ui/profile/profile_view.dart';
 import 'package:provider/provider.dart';

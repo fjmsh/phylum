@@ -9,8 +9,8 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/search_request.dart';
 import 'package:phylum/libphylum/requests/shared_resources_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/ui/menu/menu_option.dart';
-import 'package:phylum/ui/menu/option_groups.dart';
+import 'package:phylum/ui/explorer/menu/menu_option.dart';
+import 'package:phylum/ui/explorer/menu/option_groups.dart';
 
 sealed class ExplorerLocation {
   Uri get uri;

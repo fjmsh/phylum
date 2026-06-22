@@ -6,7 +6,6 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/routing/router.dart';
-import 'package:phylum/ui/explorer/shortcuts/shortcuts.dart';
 import 'package:provider/provider.dart';
 
 import 'dbus.dart';
