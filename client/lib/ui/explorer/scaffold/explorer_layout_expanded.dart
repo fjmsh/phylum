@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
+import 'package:phylum/ui/explorer/scaffold/downloads_icon_button.dart';
 import 'package:phylum/ui/explorer/scaffold/nav_list.dart';
 import 'package:phylum/ui/explorer/scaffold/reactive_resource_info_view.dart';
 import 'package:phylum/ui/explorer/scaffold/search/search.dart';
@@ -64,6 +65,7 @@ class ExplorerLayoutExpanded extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      const DownloadsIconButton(),
                       const SyncStatusButton(),
                       ProfileView(onTap: () => ProfileDialog.show(context)),
                     ],
