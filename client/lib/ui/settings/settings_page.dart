@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/ui/settings/account/account_settings.dart';
@@ -10,6 +11,7 @@ import 'package:phylum/ui/settings/logs/logs_settings.dart';
 import 'package:phylum/ui/settings/security/sessions_keys_settings.dart';
 import 'package:phylum/ui/settings/settings.dart';
 import 'package:phylum/ui/settings/settings_controller.dart';
+import 'package:phylum/ui/settings/sync/sync_settings.dart';
 import 'package:phylum/ui/settings/user_list/users_settings.dart';
 import 'package:provider/provider.dart';
 
@@ -22,19 +24,19 @@ class SettingsPage extends StatefulWidget {
 
   static Widget create(PhylumAccount account, {Settings? selected}) {
     final settingsList = _getSettingsList(account);
-    return Provider<PhylumAccount>.value(
-      value: account,
-      child: StateNotifierProvider<SettingsController, SettingsState>(
-        create: (context) => SettingsController(selected),
-        child: MultiProvider(
-          providers: settingsList
-              .whereType<Settings>()
-              .map((s) => s.providers)
-              .flattened
-              .toList(growable: false),
-          child: SettingsPage(settingsList: settingsList),
+    return MultiProvider(
+      providers: [
+        Provider<PhylumAccount>.value(value: account),
+        StateNotifierProvider<
+          ApiActionQueue<PhylumAccount>,
+          ApiActionQueueState<PhylumAccount>
+        >.value(value: account.actionQueue),
+        StateNotifierProvider<SettingsController, SettingsState>(
+          create: (context) => SettingsController(selected),
         ),
-      ),
+        ...settingsList.whereType<Settings>().map((s) => s.providers).flattened,
+      ],
+      child: SettingsPage(settingsList: settingsList),
     );
   }
 }
@@ -76,10 +78,7 @@ class _SettingsPageState extends State<SettingsPage> {
         widget.settingsList.firstWhere((s) => s is Settings) as Settings;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Settings - ${selected.title}'),
-        leading: CloseButton(),
-      ),
+      appBar: AppBar(title: Text(selected.title), leading: CloseButton()),
       body: Center(
         child: SizedBox(
           width: 1000,
@@ -115,8 +114,9 @@ List<SettingsItem> _getSettingsList(PhylumAccount account) {
   final list = <SettingsItem>[
     AccountSettings(),
     SesssionsKeysSettings(),
-    LogsSettings(),
+    SyncSettings(),
     if (!kIsWeb) DownloadsSettings(),
+    LogsSettings(),
   ];
 
   final adminSettings = <SettingsItem>[
