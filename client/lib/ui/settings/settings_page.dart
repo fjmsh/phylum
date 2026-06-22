@@ -1,9 +1,11 @@
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/ui/settings/account/account_settings.dart';
+import 'package:phylum/ui/settings/downloads/downloads_settings.dart';
 import 'package:phylum/ui/settings/logs/logs_settings.dart';
 import 'package:phylum/ui/settings/security/sessions_keys_settings.dart';
 import 'package:phylum/ui/settings/settings.dart';
@@ -18,12 +20,12 @@ class SettingsPage extends StatefulWidget {
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 
-  static Widget create(PhylumAccount account) {
+  static Widget create(PhylumAccount account, {Settings? selected}) {
     final settingsList = _getSettingsList(account);
     return Provider<PhylumAccount>.value(
       value: account,
       child: StateNotifierProvider<SettingsController, SettingsState>(
-        create: (context) => SettingsController(),
+        create: (context) => SettingsController(selected),
         child: MultiProvider(
           providers: settingsList
               .whereType<Settings>()
@@ -114,6 +116,7 @@ List<SettingsItem> _getSettingsList(PhylumAccount account) {
     AccountSettings(),
     SesssionsKeysSettings(),
     LogsSettings(),
+    if (!kIsWeb) DownloadsSettings(),
   ];
 
   final adminSettings = <SettingsItem>[

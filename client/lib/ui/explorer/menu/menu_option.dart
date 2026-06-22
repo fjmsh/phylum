@@ -16,7 +16,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/trash_empty_request.dart';
 import 'package:phylum/ui/explorer/shortcuts/intents.dart';
 import 'package:phylum/ui/common/responsive_dialog.dart';
-import 'package:phylum/ui/destination_picker/destination_picker.dart';
+import 'package:phylum/ui/explorer/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/details/resource_info_view.dart';
 import 'package:phylum/ui/explorer/details/resource_permissions_view.dart';
 import 'package:phylum/ui/explorer/details/resource_publinks_view.dart';

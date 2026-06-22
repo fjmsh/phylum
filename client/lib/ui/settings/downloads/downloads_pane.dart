@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:phylum/integrations/download_manager_vm.dart';
 import 'package:provider/provider.dart';
 
-class DownloadsList extends StatelessWidget {
-  const DownloadsList({super.key});
+class DownloadsPane extends StatelessWidget {
+  const DownloadsPane({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -9,7 +9,8 @@ class SettingsState {
 }
 
 class SettingsController extends StateNotifier<SettingsState> {
-  SettingsController() : super(const SettingsState(selected: null));
+  SettingsController([Settings? selected])
+    : super(SettingsState(selected: selected));
 
   void updateSelected(Settings? selected) {
     state = SettingsState(selected: selected);

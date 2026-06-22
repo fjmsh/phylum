@@ -8,7 +8,7 @@ import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/requests/bootstrap_request.dart';
-import 'package:phylum/ui/destination_picker/destination_picker.dart';
+import 'package:phylum/ui/explorer/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/shortcuts/actions.dart';
 import 'package:phylum/ui/explorer/folder_gesture_handler.dart';
 import 'package:phylum/ui/explorer/item_views/folder_view_type.dart';

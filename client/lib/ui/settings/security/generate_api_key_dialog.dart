@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/destination_picker/destination_picker.dart';
+import 'package:phylum/ui/explorer/destination_picker/destination_picker.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';

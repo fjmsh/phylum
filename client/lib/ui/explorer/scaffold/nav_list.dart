@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
@@ -6,7 +5,6 @@ import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/explorer/scaffold/bookmark_list.dart';
-import 'package:phylum/ui/explorer/scaffold/button_downloads.dart';
 import 'package:phylum/ui/explorer/scaffold/create_action.dart';
 import 'package:phylum/ui/settings/settings_page.dart';
 import 'package:provider/provider.dart';
@@ -114,7 +112,6 @@ class NavList extends StatelessWidget {
                       );
                     },
                   ),
-                  if (!kIsWeb) const DownloadButton(),
                 ],
               ),
             ),
