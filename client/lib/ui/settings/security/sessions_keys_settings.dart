@@ -11,6 +11,9 @@ class SesssionsKeysSettings extends Settings {
   @override
   String get title => 'Sessions and Keys';
 
+  @override
+  String get slug => 'sessions-keys';
+
   const SesssionsKeysSettings();
 
   @override

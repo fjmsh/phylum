@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/routing/router.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/explorer/scaffold/bookmark_list.dart';
 import 'package:phylum/ui/explorer/scaffold/create_action.dart';
-import 'package:phylum/ui/settings/settings_page.dart';
 import 'package:provider/provider.dart';
 
 class NavList extends StatelessWidget {
@@ -15,7 +13,6 @@ class NavList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final account = context.read<PhylumAccount>();
     return SafeArea(
       child: Column(
         children: [
@@ -61,7 +58,7 @@ class NavList extends StatelessWidget {
                     onTap: () {
                       Scaffold.maybeOf(context)?.closeDrawer();
                       context.read<PhylumRouterDelegate>().go(
-                        const HomeRouteConfig(),
+                        const HomeRoute(),
                       );
                       // Actions.maybeInvoke(
                       //   context,
@@ -105,10 +102,8 @@ class NavList extends StatelessWidget {
                     leading: const Icon(Icons.settings),
                     title: const Text('Settings'),
                     onTap: () async {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => SettingsPage.create(account),
-                        ),
+                      context.read<PhylumRouterDelegate>().go(
+                        SettingsRoute(selected: null),
                       );
                     },
                   ),

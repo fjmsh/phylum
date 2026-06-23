@@ -55,7 +55,7 @@ Function(dynamic) createLoopbackRedirectHandler(
     }
     if (data is Uri) {
       routerDelegate.go(
-        LoginRouteConfig(
+        LoginRoute(
           instanceUrl: data.queryParameters['instance'],
           loginMethod: TokenLoginMethod(data.queryParameters['token']),
         ),

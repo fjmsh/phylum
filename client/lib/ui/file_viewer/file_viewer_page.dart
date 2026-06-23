@@ -104,7 +104,7 @@ class _ResourcePreviewDialogState extends State<FilePreviewPage> {
         Text('Error Loading Details: $error'),
         TextButton(
           onPressed: () {
-            context.read<PhylumRouterDelegate>().go(const HomeRouteConfig());
+            context.read<PhylumRouterDelegate>().go(const HomeRoute());
           },
           child: Text(
             'Go Home',

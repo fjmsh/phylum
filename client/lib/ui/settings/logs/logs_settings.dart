@@ -15,6 +15,9 @@ class LogsSettings extends Settings {
   @override
   String get title => 'Logs';
 
+  @override
+  String get slug => 'logs';
+
   const LogsSettings();
 
   @override

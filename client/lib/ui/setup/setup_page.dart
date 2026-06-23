@@ -67,7 +67,7 @@ class _SetupPageState extends State<SetupPage> {
                   ) ??
                   true;
               if (remain || !context.mounted) return;
-              context.read<PhylumRouterDelegate>().go(HomeRouteConfig());
+              context.read<PhylumRouterDelegate>().go(HomeRoute());
             },
           ),
         ),

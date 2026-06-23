@@ -12,6 +12,9 @@ class DownloadsSettings extends Settings {
   String get title => 'Downloads';
 
   @override
+  String get slug => 'downloads';
+
+  @override
   List<StateNotifierProvider> get providers => const [];
 
   const DownloadsSettings();

@@ -27,6 +27,8 @@ abstract class Settings extends SettingsItem {
 
   String get title;
 
+  String get slug;
+
   List<StateNotifierProvider> get providers;
 
   @override

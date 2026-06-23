@@ -16,6 +16,9 @@ class AccountSettings extends Settings {
   @override
   String get title => 'Account';
 
+  @override
+  String get slug => 'account';
+
   const AccountSettings();
 
   @override

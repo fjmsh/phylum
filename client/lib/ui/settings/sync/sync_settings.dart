@@ -11,6 +11,9 @@ class SyncSettings extends Settings {
   @override
   String get title => 'Sync';
 
+  @override
+  String get slug => 'sync';
+
   const SyncSettings();
 
   @override

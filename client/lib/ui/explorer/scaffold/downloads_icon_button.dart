@@ -1,9 +1,8 @@
 import 'package:background_downloader/background_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/integrations/download_manager_vm.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/settings/downloads/downloads_settings.dart';
-import 'package:phylum/ui/settings/settings_page.dart';
 import 'package:provider/provider.dart';
 
 class DownloadsIconButton extends StatefulWidget {
@@ -80,12 +79,8 @@ class _DownloadsIconButtonState extends State<DownloadsIconButton> {
           : 'Downloading ${ongoing.length} files',
       onPressed: () {
         Scaffold.maybeOf(context)?.closeDrawer();
-        final account = context.read<PhylumAccount>();
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) =>
-                SettingsPage.create(account, selected: DownloadsSettings()),
-          ),
+        context.read<PhylumRouterDelegate>().go(
+          SettingsRoute(selected: DownloadsSettings()),
         );
       },
     );

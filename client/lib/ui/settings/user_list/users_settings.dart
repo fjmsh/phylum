@@ -14,6 +14,9 @@ class UsersSettings extends Settings {
   String get title => 'Users';
 
   @override
+  String get slug => 'users';
+
+  @override
   List<StateNotifierProvider> get providers => [
     StateNotifierProvider<UserListController, UserListState>(
       create: (context) => UserListController(context),

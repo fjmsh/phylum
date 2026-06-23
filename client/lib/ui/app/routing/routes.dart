@@ -1,92 +1,88 @@
 part of 'router.dart';
 
-sealed class PhylumRouteConfig {
+sealed class PhylumRoute {
   Uri get uri;
 
-  const PhylumRouteConfig();
+  bool get stackable => false;
+
+  const PhylumRoute();
+
+  Widget buildPage(PhylumAccount? account);
 }
 
-class HomeRouteConfig extends PhylumRouteConfig {
+class HomeRoute extends PhylumRoute {
   @override
   Uri get uri => Uri.parse('/');
 
-  const HomeRouteConfig();
+  const HomeRoute();
+
+  @override
+  Widget buildPage(PhylumAccount? account) => account == null
+      ? LoginPage.create()
+      : ExplorerPage(account: account, location: ExplorerLocationHome());
 }
 
-class UnknownRouteConfig extends PhylumRouteConfig {
+class UnknownRoute extends PhylumRoute {
   @override
   final Uri uri;
 
-  UnknownRouteConfig({required this.uri});
+  UnknownRoute({required this.uri});
+
+  @override
+  Widget buildPage(PhylumAccount? account) => account == null
+      // TODO: #implement UnknownRoutePage
+      ? LoginPage.create()
+      : ExplorerPage(account: account, location: ExplorerLocationHome());
 }
 
-abstract class LoggedOutRouteConfig extends PhylumRouteConfig {
-  @override
-  @nonVirtual
-  Uri get uri => Uri(
-    path: base.path,
-    queryParameters: {
-      if (next != const HomeRouteConfig()) 'next': next.uri.path.toString(),
-    },
-  );
-
-  Uri get base;
-
-  @protected
-  PhylumRouteConfig next = const HomeRouteConfig();
-
-  LoggedOutRouteConfig();
-
-  List<Page> buildPages();
+abstract class LoggedOutRoute extends PhylumRoute {
+  const LoggedOutRoute();
 }
 
-class AccountManagerRouteConfig extends LoggedOutRouteConfig {
+class _AccountManagerRoute extends PhylumRoute {
   @override
-  Uri get base => Uri.parse('/accounts');
+  Uri get uri => Uri.parse('/accounts');
 
-  AccountManagerRouteConfig();
+  const _AccountManagerRoute();
 
   @override
-  List<Page<dynamic>> buildPages() {
-    return [
-      MaterialPage(child: PhylumDialogScaffold(child: const AccountSelector())),
-    ];
+  Widget buildPage(PhylumAccount? account) {
+    return PhylumDialogScaffold(child: const AccountSelector());
   }
 }
 
-class LoginRouteConfig extends LoggedOutRouteConfig {
+class LoginRoute extends LoggedOutRoute {
   @override
-  Uri get base => Uri.parse('/login');
+  Uri get uri => Uri.parse('/login');
 
   final String? instanceUrl;
   final LoginMethod? loginMethod;
 
-  LoginRouteConfig({this.instanceUrl, this.loginMethod});
+  const LoginRoute({this.instanceUrl, this.loginMethod});
 
   @override
-  List<Page<dynamic>> buildPages() {
-    return [
-      MaterialPage(
-        child: LoginPage.create(
-          instanceUrl: Uri.tryParse(instanceUrl ?? ''),
-          method: loginMethod,
-        ),
-      ),
-    ];
+  Widget buildPage(PhylumAccount? account) {
+    return LoginPage.create(
+      instanceUrl: Uri.tryParse(instanceUrl ?? ''),
+      method: loginMethod,
+    );
   }
 }
 
-class SetupRoute extends LoggedOutRouteConfig {
+class SetupRoute extends LoggedOutRoute {
+  @override
+  Uri get uri => Uri(path: '/setup');
+
+  @override
+  bool get stackable => true;
+
   final String instanceUrl;
 
   SetupRoute({required this.instanceUrl});
 
   @override
-  Uri get base => Uri(path: '/setup');
-
-  @override
-  List<Page> buildPages() {
-    return [MaterialPage(child: SetupPage(instanceUrl: instanceUrl))];
+  Widget buildPage(PhylumAccount? account) {
+    return SetupPage(instanceUrl: instanceUrl);
   }
 }
 
@@ -104,13 +100,11 @@ class SetupRoute extends LoggedOutRouteConfig {
 //   }
 // }
 
-abstract class LoggedInRouteConfig extends PhylumRouteConfig {
-  const LoggedInRouteConfig();
-
-  List<Page<dynamic>> buildPages(PhylumAccount account);
+abstract class LoggedInRoute extends PhylumRoute {
+  const LoggedInRoute();
 }
 
-class ExplorerRoute extends LoggedInRouteConfig {
+class ExplorerRoute extends LoggedInRoute {
   final ExplorerLocation location;
 
   const ExplorerRoute({required this.location});
@@ -119,12 +113,26 @@ class ExplorerRoute extends LoggedInRouteConfig {
   Uri get uri => location.uri;
 
   @override
-  List<Page<dynamic>> buildPages(PhylumAccount account) {
-    return [
-      MaterialPage(
-        key: ValueKey(account.id),
-        child: ExplorerPage(account: account, location: location),
-      ),
-    ];
+  Widget buildPage(PhylumAccount? account) {
+    return ExplorerPage(account: account!, location: location);
+  }
+}
+
+class SettingsRoute extends LoggedInRoute {
+  final Settings? selected;
+
+  @override
+  Uri get uri => selected == null
+      ? Uri(path: '/settings')
+      : Uri(path: '/settings/${selected!.slug}');
+
+  @override
+  bool get stackable => true;
+
+  SettingsRoute({this.selected});
+
+  @override
+  Widget buildPage(PhylumAccount? account) {
+    return SettingsPage(account: account!, selected: selected);
   }
 }
