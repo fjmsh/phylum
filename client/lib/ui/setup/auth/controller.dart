@@ -71,7 +71,7 @@ class AuthConfig {
             pbkdf2Config: Pbkdf2Config.defaults(),
           ),
           ldapConfig: LdapConfig.defaults(),
-          resetEnabled: true,
+          resetEnabled: false,
         ),
         openIdConfigs: const [],
       );

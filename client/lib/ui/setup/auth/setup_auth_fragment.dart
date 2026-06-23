@@ -196,7 +196,7 @@ class SetupAuthFragment extends StatelessWidget {
             },
           ),
         SwitchListTile(
-          title: Text('Password Reset'),
+          title: Text('Self-Serve Password Reset'),
           subtitle: !mailEnabled
               ? const Text('Requires Email')
               : config.backend != PasswordBackend.crypt
