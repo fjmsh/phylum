@@ -14,9 +14,6 @@ class UserListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final account = context.read<PhylumAccount>();
-    final bool showAllFilesButton = account.user.hasPermission(
-      userPermissionFilesRead,
-    );
     final state = context.watch<UserListState>();
     final users = state.users;
     if (users == null) {
@@ -64,8 +61,7 @@ class UserListView extends StatelessWidget {
       child: Stack(
         children: [
           ListView.builder(
-            itemBuilder: (context, i) =>
-                UserDetailsItem(users[i], showAllFilesButton),
+            itemBuilder: (context, i) => UserDetailsItem(users[i]),
             itemCount: users.length,
           ),
           if (account.user.hasPermission(userPermissionUsersCreateInvite))

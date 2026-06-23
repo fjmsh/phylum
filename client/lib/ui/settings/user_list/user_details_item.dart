@@ -10,10 +10,8 @@ import 'package:provider/provider.dart';
 
 class UserDetailsItem extends StatelessWidget {
   final UserDetails user;
-  final bool showAllFilesButton;
 
-  UserDetailsItem(this.user, this.showAllFilesButton)
-    : super(key: ValueKey(user.id));
+  UserDetailsItem(this.user) : super(key: ValueKey(user.id));
 
   @override
   Widget build(BuildContext context) {
@@ -43,18 +41,6 @@ class UserDetailsItem extends StatelessWidget {
                   .toList(growable: false),
             ),
       onTap: () => showUserDetails(context, user),
-      trailing: showAllFilesButton && user.home != null
-          ? IconButton(
-              icon: Icon(Icons.folder_open_rounded),
-              onPressed: () {
-                context.read<PhylumRouterDelegate>().go(
-                  ExplorerRoute(
-                    location: ExplorerLocationFolder(folderId: user.home!),
-                  ),
-                );
-              },
-            )
-          : null,
     );
   }
 
@@ -74,6 +60,7 @@ class UserDetailsItem extends StatelessWidget {
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ListTile(title: const Text('Name'), subtitle: Text(user.name)),
                 ListTile(
@@ -133,6 +120,24 @@ class UserDetailsItem extends StatelessWidget {
                     );
                   },
                 ),
+                if (account.user.hasPermission(userPermissionFilesRead) &&
+                    user.home != null)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.folder_open_rounded),
+                      label: Text('View Files'),
+                      onPressed: () {
+                        context.read<PhylumRouterDelegate>().go(
+                          ExplorerRoute(
+                            location: ExplorerLocationFolder(
+                              folderId: user.home!,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
               ],
             ),
           ),
