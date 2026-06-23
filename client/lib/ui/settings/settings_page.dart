@@ -36,7 +36,7 @@ class _SettingsPageState extends State<SettingsPage> {
   void initState() {
     super.initState();
     items = _buildItems();
-    selected = widget.selected;
+    selected = items.contains(widget.selected) ? widget.selected : null;
   }
 
   @override
