@@ -38,7 +38,7 @@ class PhylumRouteInformationParser
         : null;
     final nextRoute = nextUri == null ? null : parseUri(nextUri);
     return SynchronousFuture(
-      PhylumRouteConfig._(stack: [route], next: nextRoute),
+      PhylumRouteConfig._(route: route, next: nextRoute),
     );
   }
 

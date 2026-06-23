@@ -39,12 +39,15 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
       key: navigatorKey,
       pages: pages,
       onDidRemovePage: (page) {
-        if (_current.stack.length > 1) {
-          _current = PhylumRouteConfig._(
-            stack: List.of(_current.stack)..removeLast(),
-          );
-          _rebuildPages();
+        if (_current.route.stackable) {
+          go(_current.base ?? const HomeRoute());
         }
+        // if (_current.stack.length > 1) {
+        //   _current = PhylumRouteConfig._(
+        //     stack: List.of(_current.stack)..removeLast(),
+        //   );
+        //   _rebuildPages();
+        // }
       },
       // onGenerateRoute: (settings) =>
       //     MaterialPageRoute(builder: (context) => const AccountSelector()),
@@ -53,15 +56,20 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
 
   @override
   Future<void> setNewRoutePath(PhylumRouteConfig configuration) {
-    go(configuration.stack.last, next: configuration.next);
+    go(configuration.route, next: configuration.next);
     return SynchronousFuture(null);
   }
 
   void go(PhylumRoute route, {PhylumRoute? next}) {
-    if (_current.stack.last != route) {
+    if (_current.route != route) {
       _current = PhylumRouteConfig._(
-        stack: route.stackable ? [..._current.stack, route] : [route],
+        route: route,
         next: next ?? _current.next,
+        base: route.stackable
+            ? _current.route.stackable
+                  ? _current.base
+                  : _current.route
+            : null,
       );
       normalizeConfig();
     }
@@ -77,19 +85,19 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
     if (_accountManagerState.status != AccountManagerStatus.ready ||
         _accountManagerState.invalidAccounts.isNotEmpty) {
       config = PhylumRouteConfig._(
-        stack: [const _AccountManagerRoute()],
-        next: config.stack.last,
+        route: const _AccountManagerRoute(),
+        next: config.route,
       );
     } else {
       if (config.next != null) {
-        config = PhylumRouteConfig._(stack: [config.next!]);
+        config = PhylumRouteConfig._(route: config.next!);
       }
       final account = _accountManagerState.selectedAccount;
       if (account == null) {
-        if (config.stack.last is LoggedInRoute) {
+        if (config.route is LoggedInRoute) {
           config = PhylumRouteConfig._(
-            stack: [const LoginRoute()],
-            next: config.stack.last,
+            route: const LoginRoute(),
+            next: config.route,
           );
         }
       }
@@ -102,8 +110,12 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
 
   void _rebuildPages() {
     final account = _accountManagerState.selectedAccount;
-    pages = _current.stack
-        .map((e) => MaterialPage(child: e.buildPage(account)))
-        .toList(growable: false);
+    pages = [
+      if (_current.route.stackable)
+        MaterialPage(
+          child: (_current.base ?? const HomeRoute()).buildPage(account),
+        ),
+      MaterialPage(child: _current.route.buildPage(account)),
+    ];
   }
 }

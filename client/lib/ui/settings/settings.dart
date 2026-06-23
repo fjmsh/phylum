@@ -47,7 +47,7 @@ abstract class Settings extends SettingsItem {
 
   Widget buildWithScaffold(BuildContext context) => Scaffold(
     appBar: AppBar(title: Text(title)),
-    body: buildWithScaffold(context),
+    body: buildWithoutScaffold(context),
   );
 
   Widget buildWithoutScaffold(BuildContext context);
