@@ -54,6 +54,10 @@ class PhylumRouteInformationParser
       return ExplorerRoute(
         location: ExplorerLocationFolder(folderId: segments[1]),
       );
+    } else if (segments[0] == 'settings') {
+      return SettingsRoute(
+        selected: Settings.parseSlug(segments.length >= 2 ? segments[1] : ''),
+      );
     }
 
     return UnknownRoute(uri: uri);

@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:phylum/ui/settings/account/account_settings.dart';
+import 'package:phylum/ui/settings/downloads/downloads_settings.dart';
+import 'package:phylum/ui/settings/logs/logs_settings.dart';
+import 'package:phylum/ui/settings/security/sessions_keys_settings.dart';
 import 'package:phylum/ui/settings/settings_controller.dart';
+import 'package:phylum/ui/settings/sync/sync_settings.dart';
+import 'package:phylum/ui/settings/user_list/users_settings.dart';
 import 'package:provider/provider.dart';
 
 sealed class SettingsItem {
@@ -45,4 +51,16 @@ abstract class Settings extends SettingsItem {
   );
 
   Widget buildWithoutScaffold(BuildContext context);
+
+  static Settings? parseSlug(String? slug) {
+    final map = {
+      const AccountSettings().slug: AccountSettings(),
+      const SesssionsKeysSettings().slug: SesssionsKeysSettings(),
+      const SyncSettings().slug: SyncSettings(),
+      const DownloadsSettings().slug: DownloadsSettings(),
+      const LogsSettings().slug: LogsSettings(),
+      const UsersSettings().slug: UsersSettings(),
+    };
+    return map[slug];
+  }
 }

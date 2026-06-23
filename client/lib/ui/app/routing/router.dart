@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:path/path.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/account_selector.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
