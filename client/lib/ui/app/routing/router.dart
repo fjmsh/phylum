@@ -11,7 +11,6 @@ import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/settings/settings.dart';
 import 'package:phylum/ui/settings/settings_page.dart';
 import 'package:phylum/ui/setup/setup_page.dart';
-import 'package:phylum/util/logging/logging.dart';
 
 part 'route_config.dart';
 part 'route_information_parser.dart';
@@ -81,18 +80,18 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
         stack: [const _AccountManagerRoute()],
         next: config.stack.last,
       );
-    }
-    if (config.next != null) {
-      Log.fine('Going to next: ${config.next}');
-      config = PhylumRouteConfig._(stack: [config.next!]);
-    }
-    final account = _accountManagerState.selectedAccount;
-    if (account == null) {
-      if (config.stack.last is LoggedInRoute) {
-        config = PhylumRouteConfig._(
-          stack: [const LoginRoute()],
-          next: config.stack.last,
-        );
+    } else {
+      if (config.next != null) {
+        config = PhylumRouteConfig._(stack: [config.next!]);
+      }
+      final account = _accountManagerState.selectedAccount;
+      if (account == null) {
+        if (config.stack.last is LoggedInRoute) {
+          config = PhylumRouteConfig._(
+            stack: [const LoginRoute()],
+            next: config.stack.last,
+          );
+        }
       }
     }
 
