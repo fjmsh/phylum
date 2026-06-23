@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/ui/common/logo_row.dart';
@@ -65,7 +66,7 @@ class ExplorerLayoutExpanded extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      const DownloadsIconButton(),
+                      if (!kIsWeb) const DownloadsIconButton(),
                       const SyncStatusButton(),
                       ProfileView(onTap: () => ProfileDialog.show(context)),
                     ],
