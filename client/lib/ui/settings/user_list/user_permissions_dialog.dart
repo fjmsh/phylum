@@ -135,18 +135,10 @@ class _UserPermissionsDialogState extends State<UserPermissionsDialog> {
     if (selected.contains(userPermissionSU)) {
       return perm != userPermissionSU;
     }
-    return switch (perm) {
-      userPermissionFilesRead ||
-      userPermissionFilesWrite ||
-      userPermissionFilesShare => selected.contains(userPermissionFilesAll),
-      userPermissionUsersList ||
-      userPermissionUsersCreate ||
-      userPermissionUsersPermissions => selected.contains(
-        userPermissionUsersAll,
-      ),
-      // Do not allow selecting permissions we don't have ourselvese
-      _ => !widget.account.user.hasPermission(perm),
-    };
+    for (final p in selected) {
+      if (perm.startsWith('$p:')) return true;
+    }
+    return !widget.account.user.hasPermission(perm);
   }
 
   void done(BuildContext context) async {
