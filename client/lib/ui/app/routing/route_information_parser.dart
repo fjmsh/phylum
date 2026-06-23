@@ -14,6 +14,9 @@ final _staticPaths = <String, PhylumRoute Function(Uri)>{
       token: uri.queryParameters['token'],
     ),
   ),
+  '/setup': (uri) => uri.queryParameters.containsKey('instance')
+      ? SetupRoute(instanceUrl: uri.queryParameters['instance']!)
+      : const HomeRoute(),
   '/home': (uri) => const ExplorerRoute(location: ExplorerLocationHome()),
   '/recents': (uri) => const ExplorerRoute(location: ExplorerLocationRecents()),
   '/shared': (uri) => const ExplorerRoute(location: ExplorerLocationShared()),

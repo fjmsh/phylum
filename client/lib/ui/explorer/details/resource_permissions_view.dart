@@ -8,6 +8,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/user_permission.dart';
 import 'package:phylum/ui/common/new_user_details_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/logging/logging.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:phylum/util/user_display_name.dart';
 import 'package:provider/provider.dart';
@@ -98,6 +99,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                       await (account.db.users.select()
                             ..where((u) => u.id.equals(e.key)))
                           .getSingleOrNull();
+                  Log.warn('User not found: ${e.key}');
                   if (user == null) return;
 
                   account.addAction(
