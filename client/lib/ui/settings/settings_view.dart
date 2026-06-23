@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/ui/settings/settings.dart';
-import 'package:phylum/ui/settings/settings_controller.dart';
 import 'package:provider/provider.dart';
 
 class SettingsView extends StatelessWidget {
   final List<SettingsItem> items;
+  final Settings? selected;
 
-  const SettingsView({super.key, required this.items});
+  const SettingsView({super.key, required this.items, required this.selected});
 
   @override
   Widget build(BuildContext context) {
@@ -15,17 +16,14 @@ class SettingsView extends StatelessWidget {
     if (width > minViewportWidthMedium) {
       return buildMasterDetail(context, width);
     }
-    final selected = context.select<SettingsState, Settings?>(
-      (state) => state.selected,
-    );
     if (selected != null) {
       return PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
           if (didPop) return;
-          context.read<SettingsController>().updateSelected(null);
+          context.read<PhylumRouterDelegate>().go(SettingsRoute());
         },
-        child: selected.buildWithScaffold(context),
+        child: selected!.buildWithScaffold(context),
       );
     }
 
@@ -40,8 +38,7 @@ class SettingsView extends StatelessWidget {
 
   Widget buildMasterDetail(BuildContext context, double width) {
     final selected =
-        context.select<SettingsState, Settings?>((state) => state.selected) ??
-        items.firstWhere((s) => s is Settings) as Settings;
+        this.selected ?? items.firstWhere((s) => s is Settings) as Settings;
 
     return Scaffold(
       appBar: AppBar(title: Text(selected.title), leading: CloseButton()),

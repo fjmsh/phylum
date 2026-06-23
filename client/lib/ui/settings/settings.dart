@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/settings/account/account_settings.dart';
 import 'package:phylum/ui/settings/downloads/downloads_settings.dart';
 import 'package:phylum/ui/settings/logs/logs_settings.dart';
 import 'package:phylum/ui/settings/security/sessions_keys_settings.dart';
-import 'package:phylum/ui/settings/settings_controller.dart';
 import 'package:phylum/ui/settings/sync/sync_settings.dart';
 import 'package:phylum/ui/settings/user_list/users_settings.dart';
 import 'package:provider/provider.dart';
@@ -42,7 +42,8 @@ abstract class Settings extends SettingsItem {
     leading: Icon(icon),
     title: Text(title),
     selected: selected,
-    onTap: () => context.read<SettingsController>().updateSelected(this),
+    onTap: () =>
+        context.read<PhylumRouterDelegate>().go(SettingsRoute(selected: this)),
   );
 
   Widget buildWithScaffold(BuildContext context) => Scaffold(

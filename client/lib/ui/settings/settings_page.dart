@@ -9,7 +9,6 @@ import 'package:phylum/ui/settings/downloads/downloads_settings.dart';
 import 'package:phylum/ui/settings/logs/logs_settings.dart';
 import 'package:phylum/ui/settings/security/sessions_keys_settings.dart';
 import 'package:phylum/ui/settings/settings.dart';
-import 'package:phylum/ui/settings/settings_controller.dart';
 import 'package:phylum/ui/settings/settings_view.dart';
 import 'package:phylum/ui/settings/sync/sync_settings.dart';
 import 'package:phylum/ui/settings/user_list/users_settings.dart';
@@ -55,12 +54,9 @@ class _SettingsPageState extends State<SettingsPage> {
           ApiActionQueue<PhylumAccount>,
           ApiActionQueueState<PhylumAccount>
         >.value(value: widget.account.actionQueue),
-        StateNotifierProvider<SettingsController, SettingsState>(
-          create: (context) => SettingsController(selected),
-        ),
         ...items.whereType<Settings>().map((s) => s.providers).flattened,
       ],
-      child: SettingsView(items: items),
+      child: SettingsView(items: items, selected: selected),
     );
   }
 
