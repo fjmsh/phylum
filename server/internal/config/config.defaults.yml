@@ -27,7 +27,11 @@ storage:
     #     prefix: /phylum-data
 
 core: 
-  users:              # Config for new users
+  disallow_invites: false # Disallow all users to invite others. Can still be
+                          # granted to individual users via the
+                          # `users:create:invite` permission.
+                          # Note: Invites require a working mail setup.
+  users:                  # Config for new users
     basedir: /home
     permissions:
   publinks:
@@ -51,10 +55,10 @@ core:
 ## https://pushsecurity.com/blog/cross-idp-impersonation/ for more details.
 auth:
   suppress_multi_provider_warning: false
-  magic_links: false      # requires mail config
+  magic_links: false      # requires mail setup
   password:
     backend: crypt        # one of crypt, ldap, none
-    reset_enabled: false  # requires mail config, only supported by crypt backend
+    reset_enabled: false  # requires mail setup, only supported by crypt backend
     crypt:
       # kdf is either argon2 or pbkdf2
       kdf: argon2

@@ -6,9 +6,10 @@ import (
 )
 
 type Config struct {
-	User     UserConfig     `koanf:"users,omitempty"`
-	Publinks PublinksConfig `koanf:"publinks,omitempty"`
-	Img      img.Config     `koanf:"img,omitempty"`
+	User            UserConfig     `koanf:"users,omitempty"`
+	Publinks        PublinksConfig `koanf:"publinks,omitempty"`
+	DisallowInvites bool           `koanf:"disallow_invites,omitempty"`
+	Img             img.Config     `koanf:"img,omitempty"`
 }
 
 type PublinksConfig struct {

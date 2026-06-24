@@ -18,6 +18,9 @@ var userConfig UserConfig
 var publinksPasswordHasher crypt.PasswordHasher
 var fsPathRoot pgtype.UUID
 
+// Not sure where else this should go
+var disallowInvites bool
+
 func Initialize(db db.Handler, cfg Config) error {
 	pg = goqu.New("postgres", nil)
 	goqu.SetDefaultPrepared(true)
@@ -27,6 +30,7 @@ func Initialize(db db.Handler, cfg Config) error {
 	} else {
 		fsPathRoot = pgtype.UUID{Bytes: rootID, Valid: true}
 	}
+	disallowInvites = cfg.DisallowInvites
 	userConfig = cfg.User
 	if c, err := crypt.NewPasswordHasher(cfg.Publinks.Password); err != nil {
 		return err
@@ -38,6 +42,10 @@ func Initialize(db db.Handler, cfg Config) error {
 	}
 
 	return nil
+}
+
+func DisallowInvites() bool {
+	return disallowInvites
 }
 
 // filesystem_readonly.go
