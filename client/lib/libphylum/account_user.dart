@@ -101,7 +101,7 @@ class AccountUser {
       email: map['email'],
       name: map['name'],
       home: map['home'],
-      permissions: (map['permissions'] as List).cast<String>(),
+      permissions: (map['permissions'] as List?)?.cast() ?? const [],
     );
   }
 

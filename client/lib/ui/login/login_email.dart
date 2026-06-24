@@ -227,7 +227,7 @@ class _EmailLoginState extends State<EmailLogin> {
       ).showSnackBar(SnackBar(content: Text(message)));
       return;
     }
-    context.read<LoginController>().selectedMethod = TokenLoginMethod('');
+    context.read<LoginController>().selectedMethod = TokenLoginMethod(null);
   }
 
   Future<void> _performLogin(BuildContext context) async {
