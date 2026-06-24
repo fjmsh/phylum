@@ -1,10 +1,12 @@
 class ServerConfig {
   final String publinkPath;
+  final bool allowInvites;
   final PasswordConfig password;
   final MailConfig mail;
 
   ServerConfig({
     required this.publinkPath,
+    required this.allowInvites,
     required this.password,
     required this.mail,
   });
@@ -12,6 +14,7 @@ class ServerConfig {
   factory ServerConfig.fromMap(Map<String, dynamic> data) {
     return ServerConfig(
       publinkPath: data['publink_path'] ?? '/pub',
+      allowInvites: data['allow_invites'] ?? true,
       password: PasswordConfig.fromMap((data['password'] as Map?)?.cast()),
       mail: MailConfig.fromMap((data['mail'] as Map?)?.cast()),
     );
@@ -20,6 +23,7 @@ class ServerConfig {
   Map<String, dynamic> toMap() {
     return {
       'publink_path': publinkPath,
+      'allow_invites': allowInvites,
       'password': password.toMap(),
       'mail': mail.toMap(),
     };
@@ -29,6 +33,7 @@ class ServerConfig {
   bool operator ==(Object other) {
     return other is ServerConfig &&
         publinkPath == other.publinkPath &&
+        allowInvites == other.allowInvites &&
         password == other.password &&
         mail == other.mail;
   }
