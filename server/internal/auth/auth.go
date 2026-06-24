@@ -34,6 +34,10 @@ func PasswordAuthEnabled() bool {
 	return passwordBackend != nil
 }
 
+func PasswordBackendSupportsUpdate() bool {
+	return passwordBackend != nil && passwordBackend.SupportsPasswordUpdate()
+}
+
 func PasswordResetEnabled() bool {
 	return passwordResetEnabled
 }

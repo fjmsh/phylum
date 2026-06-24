@@ -81,7 +81,7 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (aut
 }
 
 func VerifyAndChangeUserPassword(db db.Handler, email, oldPassword, newPassword string) error {
-	if passwordBackend == nil || !passwordBackend.SupportsPasswordUpdate() {
+	if !PasswordBackendSupportsUpdate() {
 		return errors.New("password update not supported")
 	}
 	if ok, err := passwordBackend.VerifyUserPassword(db, email, oldPassword); err != nil {
@@ -97,6 +97,9 @@ func VerifyAndChangeUserPassword(db db.Handler, email, oldPassword, newPassword 
 }
 
 func UpdateUserPassword(db db.TxHandler, email, password string) error {
+	if !PasswordBackendSupportsUpdate() {
+		return errors.New("password update not supported")
+	}
 	if err := checkPasswordStrength(password); err != nil {
 		return err
 	}

@@ -94,6 +94,13 @@ func handleFinalize(c *gin.Context) {
 		})
 		return
 	}
+	if params.User.Password != "" && !auth.PasswordBackendSupportsUpdate() {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"error":   "Attempting to set password when backend doesn't support it",
+		})
+		return
+	}
 	if m, err := mail.CreateMailer(cfg.Mail, logger); err != nil {
 		if !errors.Is(err, mail.ErrEmailNotConfigured) {
 			c.JSON(http.StatusOK, gin.H{
@@ -112,6 +119,7 @@ func handleFinalize(c *gin.Context) {
 			return err
 		} else {
 			if params.User.Password != "" {
+				// Already checked that the password backend supports update
 				if err := auth.UpdateUserPassword(db, params.User.Email, params.User.Password); err != nil {
 					return err
 				}

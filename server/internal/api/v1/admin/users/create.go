@@ -31,7 +31,7 @@ func handleCreateRequest(c *gin.Context) {
 	}
 
 	a := authenticator.GetAuth(c)
-	if !a.HasScope("admin:users:create") {
+	if !a.HasScope("admin:" + core.UserPermissionUsersCreate) {
 		panic(core.ErrInsufficientScope)
 	}
 	if !a.UserPermissions().HasPermission(core.UserPermissionUsersCreate) {
@@ -43,7 +43,7 @@ func handleCreateRequest(c *gin.Context) {
 		if u, err = core.CreateUser(db, params.Email, params.Name, params.NoCreateHome); err != nil {
 			return err
 		}
-		if auth.PasswordAuthEnabled() {
+		if auth.PasswordAuthEnabled() && auth.PasswordBackendSupportsUpdate() {
 			if params.Password != "" {
 				if err := auth.UpdateUserPassword(db, params.Email, params.Password); err != nil {
 					return err
