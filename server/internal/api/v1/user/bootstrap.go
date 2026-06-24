@@ -12,14 +12,22 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
+	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
 )
 
 var bootstrapConfig map[string]any
 
 func InitBootstrapConfig(publinkPath string) {
-	bootstrapConfig = map[string]any{
+	bootstrapConfig = gin.H{
 		"publink_path": publinkPath,
+		"password": gin.H{
+			"enabled":         auth.PasswordAuthEnabled(),
+			"supports_update": auth.PasswordBackendSupportsUpdate(),
+		},
+		"mail": gin.H{
+			"enabled": mail.Configured(),
+		},
 	}
 }
 
