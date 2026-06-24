@@ -10,18 +10,38 @@ import 'ldap.dart';
 import 'openid.dart';
 import 'password.dart';
 
-class SetupAuthFragment extends StatelessWidget {
-  final formKey = GlobalKey<FormState>();
+class SetupAuthFragment extends StatefulWidget {
   final String instanceUrl;
   final void Function() onPrevPress;
   final void Function() onNextPress;
 
-  SetupAuthFragment({
+  const SetupAuthFragment({
     super.key,
     required this.instanceUrl,
     required this.onPrevPress,
     required this.onNextPress,
   });
+
+  @override
+  State<SetupAuthFragment> createState() => _SetupAuthFragmentState();
+}
+
+class _SetupAuthFragmentState extends State<SetupAuthFragment> {
+  final formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (!context.read<MailConfig>().enabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<AuthController>().passwordlessLoginEnabled = false;
+        context.read<AuthController>().passwordConfig = context
+            .read<AuthConfig>()
+            .passwordConfig
+            .copyWith(resetEnabled: false);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +57,7 @@ class SetupAuthFragment extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TextButton(onPressed: onPrevPress, child: Text('PREV')),
+              TextButton(onPressed: widget.onPrevPress, child: Text('PREV')),
               TextButton(
                 onPressed: () => validateAndNext(context),
                 child: Text('NEXT'),
@@ -173,7 +193,7 @@ class SetupAuthFragment extends StatelessWidget {
               final cryptConfig = await configureKDF(
                 context,
                 config.cryptConfig,
-                instanceUrl,
+                widget.instanceUrl,
               );
               if (cryptConfig == null || !context.mounted) return;
               context.read<AuthController>().passwordConfig = config.copyWith(
@@ -227,6 +247,6 @@ class SetupAuthFragment extends StatelessWidget {
       );
       return;
     }
-    onNextPress();
+    widget.onNextPress();
   }
 }
