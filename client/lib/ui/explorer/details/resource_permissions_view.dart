@@ -28,7 +28,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
   String? resourceName;
   Map<int, Permission>? permissions;
   Map<int, Permission>? grants;
-  Permission? userPermission;
+  late Permission userPermission;
 
   StreamSubscription? sub;
 
@@ -36,12 +36,14 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
   void initState() {
     super.initState();
     final account = context.read<PhylumAccount>();
+    userPermission = account.user.filesPermissions;
     sub = account.db.watchPermissions(widget.resourceId).listen((data) {
+      if (data == null) return;
       setState(() {
-        resourceName = data?.name;
-        userPermission = data?.userPermission;
-        permissions = data?.inheritedPermissions.parsePermissionMap();
-        grants = data?.grants.parsePermissionMap();
+        resourceName = data.name;
+        userPermission = account.user.filesPermissions | data.userPermission;
+        permissions = data.inheritedPermissions.parsePermissionMap();
+        grants = data.grants.parsePermissionMap();
       });
     });
   }
@@ -77,11 +79,11 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
     return DropdownButtonHideUnderline(
       child: Column(
         children: [
-          if (userPermission! & permissionShare != 0)
+          if (userPermission & permissionShare != 0)
             Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: ElevatedButton.icon(
-                label: Text('Add Permission Grant'),
+                label: Text('Grant Access'),
                 icon: Icon(Icons.person_add),
                 onPressed: () => addUser(context),
               ),
@@ -113,7 +115,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                 },
                 icon: Icon(Icons.close),
               ),
-              onTap: (userPermission! & permissionShare) == 0
+              onTap: (userPermission & permissionShare) == 0
                   ? null
                   : () async {
                       final permission = await _showPermissionsPicker(context);
@@ -185,7 +187,9 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
               title: Text(user.displayName),
               subtitle: Text(user.email),
             ),
-      buildLastItem: account.user.hasPermission(userPermissionUsersCreateInvite)
+      buildLastItem:
+          account.config.mail.enabled &&
+              account.user.hasPermission(userPermissionUsersCreateInvite)
           ? (_) => ListTile(
               leading: Icon(Icons.person_add),
               title: Text('Invite'),

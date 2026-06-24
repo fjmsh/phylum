@@ -64,7 +64,11 @@ class UserListView extends StatelessWidget {
             itemBuilder: (context, i) => UserDetailsItem(users[i]),
             itemCount: users.length,
           ),
-          if (account.user.hasPermission(userPermissionUsersCreateInvite))
+          if ((account.config.mail.enabled &&
+                  account.user.hasPermission(
+                    userPermissionUsersCreateInvite,
+                  )) ||
+              account.user.hasPermission(userPermissionUsersCreate))
             Align(
               alignment: Alignment.bottomRight,
               child: Padding(
