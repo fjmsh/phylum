@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/user_permission.dart';
 import 'package:phylum/ui/settings/account/account_settings.dart';
 import 'package:phylum/ui/settings/downloads/downloads_settings.dart';
 import 'package:phylum/ui/settings/logs/logs_settings.dart';
@@ -71,8 +72,10 @@ class _SettingsPageState extends State<SettingsPage> {
     ];
 
     final adminSettings = <SettingsItem>[
-      if (widget.account.user.hasPermission('users:list')) UsersSettings(),
-      if (widget.account.user.hasPermission('mail:configure')) MailSettings(),
+      if (widget.account.user.hasPermission(userPermissionUsersList))
+        UsersSettings(),
+      if (widget.account.user.hasPermission(userPermissionMailRead))
+        MailSettings(),
     ];
 
     if (adminSettings.isNotEmpty) {

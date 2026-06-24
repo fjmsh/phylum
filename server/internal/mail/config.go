@@ -1,19 +1,21 @@
 package mail
 
 type Config struct {
-	SMTP     SMTPConfig `koanf:"smtp" json:"smtp"`
-	From     FromConfig `koanf:"from" json:"from"`
-	Instance string     `koanf:"instance" json:"instance"`
+	Enabled          bool       `koanf:"enabled,omitempty" json:"enabled"`
+	OmitStartupCheck bool       `koanf:"omit_startup_check,omitempty" json:"omit_startup_check"`
+	SMTP             SMTPConfig `koanf:"smtp,omitempty" json:"smtp"`
+	From             FromConfig `koanf:"from,omitempty" json:"from"`
+	Instance         string     `koanf:"instance,omitempty" json:"instance"`
 }
 
 type SMTPConfig struct {
-	Host     string `koanf:"host" json:"host"`
-	Port     int    `koanf:"port" json:"port"`
-	Username string `koanf:"username" json:"username"`
-	Password string `koanf:"password" json:"password"`
+	Host     string `koanf:"host,omitempty" json:"host"`
+	Port     int    `koanf:"port,omitempty" json:"port"`
+	Username string `koanf:"username,omitempty" json:"username"`
+	Password string `koanf:"password,omitempty" json:"password"`
 }
 
 type FromConfig struct {
-	Name  string `koanf:"name" json:"name"`
-	Email string `koanf:"email" json:"email"`
+	Name  string `koanf:"name,omitempty" json:"name"`
+	Email string `koanf:"email,omitempty" json:"email"`
 }

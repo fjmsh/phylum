@@ -1,5 +1,13 @@
 typedef UserPermission = String;
 
+const UserPermission userPermissionSU = '*';
+const UserPermission userPermissionFilesAll = 'files';
+const UserPermission userPermissionFilesRead = 'files:read';
+const UserPermission userPermissionFilesWrite = 'files:write';
+const UserPermission userPermissionFilesShare = 'files:share';
+const UserPermission userPermissionMailAll = 'mail';
+const UserPermission userPermissionMailRead = 'mail:read';
+const UserPermission userPermissionMailUpdate = 'mail:update';
 const UserPermission userPermissionUsersAll = 'users';
 const UserPermission userPermissionUsersList = 'users:list';
 const UserPermission userPermissionUsersCreate = 'users:create';
@@ -7,11 +15,6 @@ const UserPermission userPermissionUsersCreateInvite = 'users:create:invite';
 const UserPermission userPermissionUsersPermissions = 'users:permissions';
 const UserPermission userPermissionUsersAuthPasswordUpdate =
     'users:auth:password:update';
-const UserPermission userPermissionFilesAll = 'files';
-const UserPermission userPermissionFilesRead = 'files:read';
-const UserPermission userPermissionFilesWrite = 'files:write';
-const UserPermission userPermissionFilesShare = 'files:share';
-const UserPermission userPermissionSU = '*';
 
 extension PermissionName on UserPermission {
   String get readableName => switch (this) {

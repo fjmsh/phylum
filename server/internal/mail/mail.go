@@ -27,16 +27,24 @@ func SetDefaultMailer(mailer Mailer) {
 
 func CreateMailer(cfg Config, l zerolog.Logger) (Mailer, error) {
 	var mailer Mailer
-	mailer.logger = l.With().Str("mod", "email").Logger()
-	if cfg.SMTP.Host == "" {
-		return Mailer{}, ErrEmailNotConfigured
-	}
-
-	mailer.dialer = gomail.NewDialer(cfg.SMTP.Host, cfg.SMTP.Port, cfg.SMTP.Username, cfg.SMTP.Password)
-	mailer.from = cfg.From
-	mailer.instance = cfg.Instance
 	mailer.cfg = cfg
 	mailer.cfg.SMTP.Password = ""
+	mailer.logger = l.With().Str("mod", "email").Logger()
+	if !cfg.Enabled {
+		return Mailer{}, nil
+	}
+
+	dialer := gomail.NewDialer(cfg.SMTP.Host, cfg.SMTP.Port, cfg.SMTP.Username, cfg.SMTP.Password)
+	if !cfg.OmitStartupCheck {
+		if s, err := dialer.Dial(); err != nil {
+			return mailer, err
+		} else if err := s.Close(); err != nil {
+			l.Warn().Err(err).Msg("Error closing dialer")
+		}
+	}
+	mailer.dialer = dialer
+	mailer.from = cfg.From
+	mailer.instance = cfg.Instance
 
 	return mailer, nil
 }
