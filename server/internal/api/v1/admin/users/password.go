@@ -12,18 +12,18 @@ import (
 
 func handlePasswordChangeRequest(c *gin.Context) {
 	var params struct {
-		Email       string `json:"email" form:"email"`
-		NewPassword string `json:"new_password" form:"new_password"`
+		Email       string `json:"email" form:"email" binding:"required"`
+		NewPassword string `json:"new_password" form:"new_password" binding:"required"`
 	}
 	err := c.Bind(&params)
 	if err != nil {
 		panic(err)
 	}
 	a := authenticator.GetAuth(c)
-	if !a.HasScope("admin:" + core.UserPermissionUsersAuthPasswordUpdate) {
+	if !a.HasScope("admin:" + core.UserPermissionUsersAuthPasswordChange) {
 		panic(core.ErrInsufficientScope)
 	}
-	if !a.UserPermissions().HasPermission(core.UserPermissionUsersAuthPasswordUpdate) {
+	if !a.UserPermissions().HasPermission(core.UserPermissionUsersAuthPasswordChange) {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to change user passwords"))
 	}
 
@@ -36,6 +36,9 @@ func handlePasswordChangeRequest(c *gin.Context) {
 		}
 		return nil
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	c.JSON(200, gin.H{})
 }
