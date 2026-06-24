@@ -1,39 +1,40 @@
 class ServerConfig {
   final String publinkPath;
-  final PasswordConfig passwordConfig;
-  final MailConfig mailConfig;
+  final PasswordConfig password;
+  final MailConfig mail;
 
   ServerConfig({
     required this.publinkPath,
-    required this.passwordConfig,
-    required this.mailConfig,
+    required this.password,
+    required this.mail,
   });
 
   factory ServerConfig.fromMap(Map<String, dynamic> data) {
     return ServerConfig(
       publinkPath: data['publink_path'] ?? '/pub',
-      passwordConfig: PasswordConfig.fromMap(
-        (data['password'] as Map?)?.cast(),
-      ),
-      mailConfig: MailConfig.fromMap((data['mail'] as Map?)?.cast()),
+      password: PasswordConfig.fromMap((data['password'] as Map?)?.cast()),
+      mail: MailConfig.fromMap((data['mail'] as Map?)?.cast()),
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'publink_path': publinkPath,
-      'password': passwordConfig.toMap(),
-      'mail': mailConfig.toMap(),
+      'password': password.toMap(),
+      'mail': mail.toMap(),
     };
   }
 
   @override
   bool operator ==(Object other) {
-    return other is ServerConfig && publinkPath == other.publinkPath;
+    return other is ServerConfig &&
+        publinkPath == other.publinkPath &&
+        password == other.password &&
+        mail == other.mail;
   }
 
   @override
-  int get hashCode => publinkPath.hashCode;
+  int get hashCode => publinkPath.hashCode ^ password.hashCode ^ mail.hashCode;
 }
 
 class PasswordConfig {
@@ -51,6 +52,16 @@ class PasswordConfig {
   Map<String, dynamic> toMap() {
     return {'enabled': enabled, 'supports_update': supportsUpdate};
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PasswordConfig &&
+        other.enabled == enabled &&
+        other.supportsUpdate == supportsUpdate;
+  }
+
+  @override
+  int get hashCode => enabled.hashCode ^ supportsUpdate.hashCode;
 }
 
 class MailConfig {
@@ -64,4 +75,12 @@ class MailConfig {
   Map<String, dynamic> toMap() {
     return {'enabled': enabled};
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MailConfig && other.enabled == enabled;
+  }
+
+  @override
+  int get hashCode => enabled.hashCode;
 }

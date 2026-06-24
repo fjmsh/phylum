@@ -140,8 +140,10 @@ class UserDetailsItem extends StatelessWidget {
                     ),
                   ),
                 if (account.user.hasPermission(
-                  userPermissionUsersAuthPasswordUpdate,
-                ))
+                      userPermissionUsersAuthPasswordUpdate,
+                    ) &&
+                    account.config.password.enabled &&
+                    account.config.password.supportsUpdate)
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton.icon(

@@ -33,6 +33,12 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
   bool requestInFlight = false;
 
   @override
+  void initState() {
+    sendEmail = widget.account.config.mail.enabled;
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Create User'),
@@ -74,11 +80,13 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
             SwitchListTile(
               title: Text('Send Welcome Email'),
               value: sendEmail,
-              onChanged: (value) {
-                setState(() {
-                  sendEmail = value;
-                });
-              },
+              onChanged: widget.account.config.mail.enabled
+                  ? (value) {
+                      setState(() {
+                        sendEmail = value;
+                      });
+                    }
+                  : null,
             ),
             SwitchListTile(
               title: Text('Create Home Directory'),

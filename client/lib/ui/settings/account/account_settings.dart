@@ -68,11 +68,13 @@ class AccountSettingsPane extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 spacing: 18,
                 children: [
-                  ElevatedButton.icon(
-                    icon: Icon(Icons.password),
-                    label: Text('Change Password'),
-                    onPressed: () => changePassword(context),
-                  ),
+                  if (account.config.password.enabled &&
+                      account.config.password.supportsUpdate)
+                    ElevatedButton.icon(
+                      icon: Icon(Icons.password),
+                      label: Text('Change Password'),
+                      onPressed: () => changePassword(context),
+                    ),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.error,
