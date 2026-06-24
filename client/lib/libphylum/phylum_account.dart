@@ -10,6 +10,7 @@ import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_version_repository.dart';
 import 'package:phylum/libphylum/repositories/trash_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
+import 'package:phylum/libphylum/server_config.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/logging/logging.dart';
 import 'package:state_notifier/state_notifier.dart';
@@ -64,21 +65,20 @@ class PhylumAccount extends Account<PhylumAccount> {
     persist(_persistKeyBootstrapUntil, value);
   }
 
-  late BootstrapConfig _config;
-  BootstrapConfig get config => _config;
-  set config(BootstrapConfig value) {
+  late ServerConfig _config;
+  ServerConfig get config => _config;
+  set config(ServerConfig value) {
     if (value != _config) {
       _config = value;
-      persist(_persistKeyConfig, value.toJson());
+      persist(_persistKeyConfig, jsonEncode(value.toMap()));
     }
   }
 
   PhylumAccount._create({
     required super.serverUrl,
-    required String apiToken,
+    required String this._apiToken,
     required AccountUser user,
-  }) : _apiToken = apiToken,
-       _initialUser = user,
+  }) : _initialUser = user,
        super.create();
 
   PhylumAccount.restore({required super.id}) : super.restore();
@@ -115,7 +115,7 @@ class PhylumAccount extends Account<PhylumAccount> {
     } else {
       _userNotifier = AccountUserNotifier.fromAccount(this);
     }
-    _config = BootstrapConfig.parse(
+    _config = ServerConfig.fromMap(
       jsonDecode(getPersisted(_persistKeyConfig) ?? '{}'),
     );
 

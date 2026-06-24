@@ -3,7 +3,7 @@ part of 'responses.dart';
 class BootstrapLoginResponse extends PhylumApiSuccessResponse {
   final String? apiToken;
   final AccountUser user;
-  final BootstrapConfig config;
+  final ServerConfig config;
   final Iterable<Bookmark> bookmarks;
   final Iterable<User> users;
   final bool clear;
@@ -29,7 +29,7 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
     return BootstrapLoginResponse._(
       apiToken: data['api_token'],
       user: AccountUser.fromJson(data['user'].cast<String, dynamic>()),
-      config: BootstrapConfig.parse(data['config']),
+      config: ServerConfig.fromMap(data['config']),
       bookmarks: bookmarks,
       users: users,
       until: data['until'],
@@ -77,26 +77,4 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
       await account.datastore.get<User>().replaceRemoteData(u.id.toString(), u);
     }
   }
-}
-
-class BootstrapConfig {
-  final String publinkPath;
-
-  BootstrapConfig({required this.publinkPath});
-
-  factory BootstrapConfig.parse(Map data) {
-    return BootstrapConfig(publinkPath: data['publink_path'] ?? '/pub');
-  }
-
-  String toJson() {
-    return jsonEncode({'publink_path': publinkPath});
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is BootstrapConfig && publinkPath == other.publinkPath;
-  }
-
-  @override
-  int get hashCode => publinkPath.hashCode;
 }
