@@ -10,13 +10,12 @@ import (
 	gomail "gopkg.in/mail.v2"
 )
 
-var initialized = false
-
 type Mailer struct {
 	dialer   *gomail.Dialer
 	instance string
 	from     FromConfig
 	logger   zerolog.Logger
+	cfg      Config
 }
 
 var ErrEmailNotConfigured = errors.New("email not configured")
@@ -36,12 +35,18 @@ func CreateMailer(cfg Config, l zerolog.Logger) (Mailer, error) {
 	mailer.dialer = gomail.NewDialer(cfg.SMTP.Host, cfg.SMTP.Port, cfg.SMTP.Username, cfg.SMTP.Password)
 	mailer.from = cfg.From
 	mailer.instance = cfg.Instance
+	mailer.cfg = cfg
+	mailer.cfg.SMTP.Password = ""
 
 	return mailer, nil
 }
 
 func Configured() bool {
 	return m.dialer != nil
+}
+
+func Configuration() Config {
+	return m.cfg
 }
 
 func (m Mailer) SendTestEmail(email string) error {

@@ -11,16 +11,19 @@ type UserPermissions []UserPermission
 type UserPermission = string
 
 const (
+	UserPermissionFilesAll                = UserPermission("files")
+	UserPermissionFilesRead               = UserPermission("files:read")
+	UserPermissionFilesWrite              = UserPermission("files:write")
+	UserPermissionFilesShare              = UserPermission("files:share")
+	UserPermissionMailAll                 = UserPermission("mail")
+	UserPermissionMailRead                = UserPermission("mail:read")
+	UserPermissionMailUpdate              = UserPermission("mail:read")
 	UserPermissionUsersAll                = UserPermission("users")
 	UserPermissionUsersList               = UserPermission("users:list")
 	UserPermissionUsersCreate             = UserPermission("users:create")
 	UserPermissionUsersCreateInvite       = UserPermission("users:create:invite")
 	UserPermissionUsersPermissions        = UserPermission("users:permissions")
 	UserPermissionUsersAuthPasswordChange = UserPermission("users:create:auth:password:change")
-	UserPermissionFilesAll                = UserPermission("files")
-	UserPermissionFilesRead               = UserPermission("files:read")
-	UserPermissionFilesWrite              = UserPermission("files:write")
-	UserPermissionFilesShare              = UserPermission("files:share")
 	UserPermissionSU                      = UserPermission("*")
 )
 
