@@ -4,6 +4,7 @@ import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/settings/account/account_settings.dart';
 import 'package:phylum/ui/settings/downloads/downloads_settings.dart';
 import 'package:phylum/ui/settings/logs/logs_settings.dart';
+import 'package:phylum/ui/settings/mail/mail_settings.dart';
 import 'package:phylum/ui/settings/security/sessions_keys_settings.dart';
 import 'package:phylum/ui/settings/sync/sync_settings.dart';
 import 'package:phylum/ui/settings/user_list/users_settings.dart';
@@ -61,6 +62,7 @@ abstract class Settings extends SettingsItem {
       const DownloadsSettings().slug: DownloadsSettings(),
       const LogsSettings().slug: LogsSettings(),
       const UsersSettings().slug: UsersSettings(),
+      const MailSettings().slug: MailSettings(),
     };
     return map[slug];
   }

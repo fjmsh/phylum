@@ -7,6 +7,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/settings/account/account_settings.dart';
 import 'package:phylum/ui/settings/downloads/downloads_settings.dart';
 import 'package:phylum/ui/settings/logs/logs_settings.dart';
+import 'package:phylum/ui/settings/mail/mail_settings.dart';
 import 'package:phylum/ui/settings/security/sessions_keys_settings.dart';
 import 'package:phylum/ui/settings/settings.dart';
 import 'package:phylum/ui/settings/settings_view.dart';
@@ -71,6 +72,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final adminSettings = <SettingsItem>[
       if (widget.account.user.hasPermission('users:list')) UsersSettings(),
+      if (widget.account.user.hasPermission('mail:configure')) MailSettings(),
     ];
 
     if (adminSettings.isNotEmpty) {
