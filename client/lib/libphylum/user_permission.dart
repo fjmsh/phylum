@@ -5,6 +5,8 @@ const UserPermission userPermissionUsersList = 'users:list';
 const UserPermission userPermissionUsersCreate = 'users:create';
 const UserPermission userPermissionUsersCreateInvite = 'users:create:invite';
 const UserPermission userPermissionUsersPermissions = 'users:permissions';
+const UserPermission userPermissionUsersAuthPasswordUpdate =
+    'users:auth:password:update';
 const UserPermission userPermissionFilesAll = 'files';
 const UserPermission userPermissionFilesRead = 'files:read';
 const UserPermission userPermissionFilesWrite = 'files:write';
@@ -23,6 +25,7 @@ extension PermissionName on UserPermission {
     userPermissionUsersCreate => 'Create Users',
     userPermissionUsersList => 'List Users',
     userPermissionUsersPermissions => 'Update Permissions',
+    userPermissionUsersAuthPasswordUpdate => 'Set Password',
     _ => this,
   };
 }

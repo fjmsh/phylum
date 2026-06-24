@@ -4,6 +4,7 @@ import 'package:phylum/libphylum/responses/user_details.dart';
 import 'package:phylum/libphylum/user_permission.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/routing/router.dart';
+import 'package:phylum/ui/settings/user_list/password_change_dialog.dart';
 import 'package:phylum/ui/settings/user_list/user_list_controller.dart';
 import 'package:phylum/ui/settings/user_list/user_permissions_dialog.dart';
 import 'package:provider/provider.dart';
@@ -136,6 +137,18 @@ class UserDetailsItem extends StatelessWidget {
                           ),
                         );
                       },
+                    ),
+                  ),
+                if (account.user.hasPermission(
+                  userPermissionUsersAuthPasswordUpdate,
+                ))
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.password),
+                      label: Text('Change Password'),
+                      onPressed: () =>
+                          PasswordChangeDialog.show(context, account, user),
                     ),
                   ),
               ],

@@ -52,6 +52,7 @@ class _UserPermissionsDialogState extends State<UserPermissionsDialog> {
       userPermissionUsersCreateInvite,
       userPermissionUsersCreate,
       userPermissionUsersPermissions,
+      userPermissionUsersAuthPasswordUpdate,
     ];
     selected = widget.user.permissions.toSet();
     final extra = widget.user.permissions.toSet()..removeAll(options);
@@ -158,7 +159,7 @@ class _UserPermissionsDialogState extends State<UserPermissionsDialog> {
     } else {
       showAlertDialog(
         context,
-        title: 'Error Creating User',
+        title: 'Error Updating Permissions',
         message: result.description,
       );
     }

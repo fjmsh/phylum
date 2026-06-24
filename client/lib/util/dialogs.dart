@@ -120,6 +120,7 @@ Future<String?> showInputDialog(
   int maxLines = 1,
   bool autocorrect = false,
   TextInputType keyboardType = TextInputType.text,
+  bool obscureText = false,
   bool Function(String)? validate,
   List<TextInputFormatter>? formatters,
 }) {
@@ -145,6 +146,7 @@ Future<String?> showInputDialog(
               autocorrect: autocorrect,
               minLines: minLines,
               maxLines: maxLines,
+              obscureText: obscureText,
               keyboardType: keyboardType,
               inputFormatters: formatters,
               textInputAction: TextInputAction.go,
