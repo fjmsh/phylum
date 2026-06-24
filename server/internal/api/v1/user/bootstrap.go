@@ -28,6 +28,7 @@ func InitBootstrapConfig(publinkPath string) {
 		"mail": gin.H{
 			"enabled": mail.Configured(),
 		},
+		"allow_invites": core.AllowInvites(),
 	}
 }
 

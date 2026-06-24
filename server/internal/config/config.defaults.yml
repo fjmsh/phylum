@@ -27,13 +27,13 @@ storage:
     #     prefix: /phylum-data
 
 core: 
-  disallow_invites: false # Disallow all users to invite others. Can still be
-                          # granted to individual users via the
-                          # `users:create:invite` permission.
-                          # Note: Invites require a working mail setup.
+  # By default, users can invite new users (given a working email setup).
+  # Setting `no_default_invite_permission` to `true` will prevent that behavior.
+  # Permission to invite users can still be granted using `users:create:invite`.
+  no_default_invite_permission: false 
   users:                  # Config for new users
     basedir: /home
-    permissions:
+    permissions:          # list of permissions to be granted by default
   publinks:
     password:
       # hash is either argon2 or pbkdf2
