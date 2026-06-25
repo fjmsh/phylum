@@ -23,6 +23,7 @@ class UserListView extends StatelessWidget {
       if (state.error != null) {
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          spacing: 18,
           children: [
             Text('Error loading User List: ${state.error}'),
             ElevatedButton(

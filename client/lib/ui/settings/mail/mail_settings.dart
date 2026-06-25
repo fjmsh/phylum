@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:phylum/ui/settings/mail/mail_config_controller.dart';
 import 'package:phylum/ui/settings/mail/mail_pane.dart';
 import 'package:phylum/ui/settings/settings.dart';
 
@@ -14,7 +15,11 @@ class MailSettings extends Settings {
   String get slug => 'mail';
 
   @override
-  List<StateNotifierProvider> get providers => const [];
+  List<StateNotifierProvider> get providers => [
+    StateNotifierProvider<MailConfigController, MailConfigState>(
+      create: (context) => MailConfigController(context),
+    ),
+  ];
 
   const MailSettings();
 
