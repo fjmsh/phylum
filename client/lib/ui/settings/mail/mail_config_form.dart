@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/config/mail_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/settings/mail/api/update_request.dart';
 import 'package:phylum/ui/settings/mail/api/validate_request.dart';
 import 'package:phylum/ui/settings/mail/mail_config_controller.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -230,12 +231,12 @@ class _MailConfigFormState extends State<MailConfigForm> {
             mainAxisAlignment: MainAxisAlignment.end,
             spacing: 18,
             children: [
-              TextButton(
-                onPressed: _enabled && !requestInFlight
-                    ? () => validate(context)
-                    : null,
-                child: Text('Check Configuration'),
-              ),
+              // TextButton(
+              //   onPressed: _enabled && !requestInFlight
+              //       ? () => validate(context)
+              //       : null,
+              //   child: Text('Check Configuration'),
+              // ),
               ElevatedButton(
                 onPressed: requestInFlight ? null : () => save(context),
                 child: Text('Save'),
@@ -273,7 +274,31 @@ class _MailConfigFormState extends State<MailConfigForm> {
     }
   }
 
-  void save(BuildContext context) {}
+  void save(BuildContext context) async {
+    if (requestInFlight) return;
+
+    setState(() => requestInFlight = true);
+    final result = await context.read<PhylumAccount>().apiClient.sendRequest(
+      UpdateMailConfigRequest(config: getConfig()),
+    );
+    if (!context.mounted) return;
+    setState(() => requestInFlight = false);
+
+    if (result is ApiSuccessResponse) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Mail Config Updated'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      showAlertDialog(
+        context,
+        title: 'Failed to update SMTP Config',
+        message: result.description,
+      );
+    }
+  }
 
   MailConfig getConfig() {
     return MailConfig(
