@@ -8,8 +8,6 @@ import 'package:phylum/ui/explorer/scaffold/nav_list.dart';
 import 'package:phylum/ui/explorer/scaffold/reactive_resource_info_view.dart';
 import 'package:phylum/ui/explorer/scaffold/search/search.dart';
 import 'package:phylum/ui/explorer/scaffold/sync/sync_status_button.dart';
-import 'package:phylum/ui/profile/profile_dialog.dart';
-import 'package:phylum/ui/profile/profile_view.dart';
 
 class ExplorerLayoutExpanded extends StatelessWidget {
   const ExplorerLayoutExpanded({super.key});
@@ -68,7 +66,7 @@ class ExplorerLayoutExpanded extends StatelessWidget {
                     children: [
                       if (!kIsWeb) const DownloadsIconButton(),
                       const SyncStatusButton(),
-                      ProfileView(onTap: () => ProfileDialog.show(context)),
+                      // ProfileView(onTap: () => ProfileDialog.show(context)),
                     ],
                   ),
                 ),
