@@ -21,17 +21,13 @@ type Mailer struct {
 var ErrEmailNotConfigured = errors.New("email not configured")
 var m Mailer
 
-func SetDefaultMailer(mailer Mailer) {
-	m = mailer
-}
-
 func CreateMailer(cfg Config, l zerolog.Logger) (Mailer, error) {
 	var mailer Mailer
 	mailer.cfg = cfg
 	mailer.cfg.SMTP.Password = ""
 	mailer.logger = l.With().Str("mod", "email").Logger()
 	if !cfg.Enabled {
-		return Mailer{}, nil
+		return mailer, nil
 	}
 
 	dialer := gomail.NewDialer(cfg.SMTP.Host, cfg.SMTP.Port, cfg.SMTP.Username, cfg.SMTP.Password)
@@ -47,6 +43,10 @@ func CreateMailer(cfg Config, l zerolog.Logger) (Mailer, error) {
 	mailer.instance = cfg.Instance
 
 	return mailer, nil
+}
+
+func SetDefaultMailer(mailer Mailer) {
+	m = mailer
 }
 
 func Enabled() bool {
