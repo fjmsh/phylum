@@ -285,6 +285,8 @@ class _MailConfigFormState extends State<MailConfigForm> {
     setState(() => requestInFlight = false);
 
     if (result is ApiSuccessResponse) {
+      final account = context.read<PhylumAccount>();
+      account.config = account.config.copyWith(mail: _enabled);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Mail Config Updated'),

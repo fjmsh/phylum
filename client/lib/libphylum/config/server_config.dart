@@ -23,6 +23,14 @@ class ServerConfig {
     );
   }
 
+  ServerConfig copyWith({bool? mail}) => ServerConfig(
+    allowInvites: allowInvites,
+    mail: mail ?? this.mail,
+    passwordUpdate: passwordUpdate,
+    publinkPath: publinkPath,
+    version: version,
+  );
+
   Map<String, dynamic> toMap() {
     return {
       'allow_invites': allowInvites,
