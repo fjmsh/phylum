@@ -18,10 +18,10 @@ func SetupRoutes(r *gin.RouterGroup) {
 
 func handleSettingsRequest(c *gin.Context) {
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("admin:" + core.UserPermissionMailRead) {
+	if !auth.HasScope("admin:" + core.UserPermissionConfigMailRead) {
 		panic(core.ErrInsufficientScope)
 	}
-	if !auth.UserPermissions().HasPermission(core.UserPermissionMailRead) {
+	if !auth.UserPermissions().HasPermission(core.UserPermissionConfigMailRead) {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to change user passwords"))
 	}
 
