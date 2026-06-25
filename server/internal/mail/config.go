@@ -1,7 +1,7 @@
 package mail
 
 type Config struct {
-	Enabled          bool       `koanf:"enabled,omitempty" json:"enabled"`
+	Enabled          bool       `koanf:"enabled" json:"enabled"`
 	OmitStartupCheck bool       `koanf:"omit_startup_check,omitempty" json:"omit_startup_check"`
 	SMTP             SMTPConfig `koanf:"smtp,omitempty" json:"smtp"`
 	From             FromConfig `koanf:"from,omitempty" json:"from"`
