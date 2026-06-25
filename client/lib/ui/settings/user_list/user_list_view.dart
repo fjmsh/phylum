@@ -64,7 +64,7 @@ class UserListView extends StatelessWidget {
             itemBuilder: (context, i) => UserDetailsItem(users[i]),
             itemCount: users.length,
           ),
-          if ((account.config.mail.enabled &&
+          if ((account.config.mail &&
                   (account.config.allowInvites ||
                       account.user.hasPermission(
                         userPermissionUsersCreateInvite,

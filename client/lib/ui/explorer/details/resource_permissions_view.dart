@@ -188,7 +188,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
               subtitle: Text(user.email),
             ),
       buildLastItem:
-          account.config.mail.enabled &&
+          account.config.mail &&
               (account.config.allowInvites ||
                   account.user.hasPermission(userPermissionUsersCreateInvite))
           ? (_) => ListTile(

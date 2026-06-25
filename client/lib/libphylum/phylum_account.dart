@@ -10,7 +10,7 @@ import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/repositories/resource_version_repository.dart';
 import 'package:phylum/libphylum/repositories/trash_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
-import 'package:phylum/libphylum/server_config.dart';
+import 'package:phylum/libphylum/config/server_config.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/logging/logging.dart';
 import 'package:state_notifier/state_notifier.dart';

@@ -34,7 +34,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
 
   @override
   void initState() {
-    sendEmail = widget.account.config.mail.enabled;
+    sendEmail = widget.account.config.mail;
     super.initState();
   }
 
@@ -80,7 +80,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
             SwitchListTile(
               title: Text('Send Welcome Email'),
               value: sendEmail,
-              onChanged: widget.account.config.mail.enabled
+              onChanged: widget.account.config.mail
                   ? (value) {
                       setState(() {
                         sendEmail = value;
