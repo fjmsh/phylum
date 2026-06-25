@@ -32,7 +32,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        archivesBaseName = "phylum-" + versionName
+        base.archivesName = "phylum-" + versionName
     }
 
     signingConfigs {
@@ -50,7 +50,7 @@ android {
             versionNameSuffix "-DEV"
         }
         release {
-            signingConfig = signingConfigs.release
+            signingConfig signingConfigs.release
         }
     }
 }
@@ -64,12 +64,6 @@ project(':receive_sharing_intent').afterEvaluate {
         kotlinOptions {
             jvmTarget = JavaVersion.VERSION_1_8
         }
-    }
-}
-
-project(':flutter_keyboard_visibility').afterEvaluate {
-    project(':flutter_keyboard_visibility').android {
-        compileSdkVersion flutter.compileSdkVersion
     }
 }
 
