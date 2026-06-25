@@ -92,7 +92,7 @@ class AccountUser {
     "email": email,
     "name": name,
     "home": home,
-    "permissions": permissions,
+    "permission_list": permissions,
   };
 
   factory AccountUser.fromJson(Map<String, dynamic> map) {
@@ -101,7 +101,7 @@ class AccountUser {
       email: map['email'],
       name: map['name'],
       home: map['home'],
-      permissions: (map['permissions'] as List?)?.cast() ?? const [],
+      permissions: (map['permission_list'] as List?)?.cast() ?? const [],
     );
   }
 
