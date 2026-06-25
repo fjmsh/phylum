@@ -29,7 +29,7 @@ import (
 func SetupCommand() {
 	var cmd = &cobra.Command{
 		Use:     path.Base(os.Args[0]),
-		Version: "0.8.0",
+		Version: config.Version,
 	}
 	flags := cmd.PersistentFlags()
 	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()

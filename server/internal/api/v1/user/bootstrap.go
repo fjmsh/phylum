@@ -10,6 +10,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/users"
 	"codeberg.org/shroff/phylum/server/internal/auth"
+	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
@@ -20,6 +21,7 @@ var bootstrapConfig map[string]any
 
 func InitBootstrapConfig(publinkPath string) {
 	bootstrapConfig = gin.H{
+		"version":         config.Version,
 		"publink_path":    publinkPath,
 		"password_update": auth.PasswordBackendSupportsUpdate(),
 		"mail":            mail.Enabled(),
