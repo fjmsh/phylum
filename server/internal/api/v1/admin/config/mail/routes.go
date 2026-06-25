@@ -71,6 +71,8 @@ func handleValidateRequest(c *gin.Context) {
 			response = core.NewError(http.StatusBadRequest, "smtp_connection_refused", "SMTP Connection Refused")
 		} else if errors.Is(err, mail.ErrIOTimeout) {
 			response = core.NewError(http.StatusBadRequest, "smtp_io_timeout", "SMTP I/O Timeout")
+		} else if errors.Is(err, mail.ErrAuthFailure) {
+			response = core.NewError(http.StatusBadRequest, "smtp_auth_failure", "SMTP Auth Failure")
 		} else {
 			response = core.NewErrorWithDetails(http.StatusBadRequest, "failed_to_create_mailer", "Failed To Create Mailer", err.Error())
 		}
@@ -82,6 +84,8 @@ func handleValidateRequest(c *gin.Context) {
 				response = core.NewError(http.StatusBadRequest, "smtp_connection_refused", "SMTP Connection Refused")
 			} else if errors.Is(err, mail.ErrIOTimeout) {
 				response = core.NewError(http.StatusBadRequest, "smtp_io_timeout", "SMTP I/O Timeout")
+			} else if errors.Is(err, mail.ErrAuthFailure) {
+				response = core.NewError(http.StatusBadRequest, "smtp_auth_failure", "SMTP Auth Failure")
 			} else {
 				response = core.NewErrorWithDetails(http.StatusBadRequest, "failed_to_send_mail", "Failed to Send Mail", err.Error())
 			}

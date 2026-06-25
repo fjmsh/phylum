@@ -21,6 +21,7 @@ type Mailer struct {
 var ErrEmailNotConfigured = errors.New("email not configured")
 var ErrNoSuchHost = errors.New("no such host")
 var ErrConnectionRefused = errors.New("connection refused")
+var ErrAuthFailure = errors.New("auth failure")
 var ErrIOTimeout = errors.New("i/o timeout")
 var m Mailer
 
@@ -42,6 +43,8 @@ func CreateMailer(cfg Config, l zerolog.Logger) (Mailer, error) {
 				err = ErrConnectionRefused
 			} else if strings.Contains(err.Error(), "timeout") {
 				err = ErrIOTimeout
+			} else if strings.Contains(err.Error(), "auth") {
+				err = ErrAuthFailure
 			}
 
 			return mailer, err
