@@ -1,10 +1,10 @@
 #!/bin/bash
 
-trap exit INT
-set -eux
+set -eu
 
-VERSION="0.8.0"
+VERSION="0.9.0"
 SRC_URL="https://codeberg.org/shroff/phylum/archive/releases/v$VERSION.tar.gz"
+SRC_URL="local"
 tag="localhost/phylum:$VERSION"
 REGISTRY="docker.io"
 IMAGE_NAME="shroff12/phylum"
@@ -14,8 +14,15 @@ build_server() {
   arch=$2
   c=$(buildah from --platform linux/${arch} docker.io/golang:alpine)
   buildah config --workingdir /src "$c"
-  buildah run $c -- wget "$SRC_URL" -O src.tar.gz
-  buildah run $c -- tar -zxf src.tar.gz
+  if [ $SRC_URL = "local" ]; then
+    echo "Copying source"
+    buildah run $c -- mkdir phylum/
+    buildah copy $c ./server phylum/server
+  else
+    echo "Downloading source from $SRC_URL"
+    buildah run $c -- wget "$SRC_URL" -O src.tar.gz
+    buildah run $c -- tar -zxf src.tar.gz
+  fi
   buildah config --workingdir /src/phylum/server "$c"
   buildah run --env GOOS=linux --env GOARCH=${arch} $c -- go build -o /bin/phylum cmd/phylum.go
   container=$c
@@ -25,8 +32,15 @@ build_webapp() {
   declare -n container="$1"
   c=$(buildah from ghcr.io/cirruslabs/flutter:stable)
   buildah config --workingdir /src "$c"
-  buildah run $c -- wget "$SRC_URL" -O src.tar.gz
-  buildah run $c -- tar -zxf src.tar.gz
+  if [ $SRC_URL = "local" ]; then
+    echo "Copying source"
+    buildah run $c -- mkdir phylum/
+    buildah copy $c ./client phylum/client
+  else
+    echo "Downloading source from $SRC_URL"
+    buildah run $c -- wget "$SRC_URL" -O src.tar.gz
+    buildah run $c -- tar -zxf src.tar.gz
+  fi
   buildah config --workingdir /src/phylum/client "$c"
   buildah run $c -- flutter pub get
   buildah run $c -- flutter build web --wasm
@@ -80,6 +94,17 @@ build_phylum() {
   podman manifest add $tag $image
 }
 
+cleanup() {
+    echo "Script interrupted. Cleaning up..."
+    exit 1
+}
+
+######################
+#### BEGIN SCRIPT ####
+######################
+
+# Trap SIGINT (Ctrl+C) and SIGTERM
+trap cleanup INT TERM
 
 echo "Creating Manifest $tag"
 podman manifest create --amend $tag
