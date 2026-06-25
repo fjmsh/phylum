@@ -20,15 +20,10 @@ var bootstrapConfig map[string]any
 
 func InitBootstrapConfig(publinkPath string) {
 	bootstrapConfig = gin.H{
-		"publink_path": publinkPath,
-		"password": gin.H{
-			"enabled":         auth.PasswordAuthEnabled(),
-			"supports_update": auth.PasswordBackendSupportsUpdate(),
-		},
-		"mail": gin.H{
-			"enabled": mail.Configured(),
-		},
-		"allow_invites": core.AllowInvites(),
+		"publink_path":    publinkPath,
+		"password_update": auth.PasswordBackendSupportsUpdate(),
+		"mail":            mail.Enabled(),
+		"allow_invites":   core.AllowInvites(),
 	}
 }
 

@@ -52,7 +52,7 @@ func handleCreateRequest(c *gin.Context) {
 		} else if params.Password != "" {
 			panic(core.NewError(http.StatusBadRequest, "password_auth_disabled", "Attempting to set password when password auth is disabled"))
 		}
-		if mail.Configured() && !params.NoSendEmail {
+		if mail.Enabled() && !params.NoSendEmail {
 			// TODO: #jobs #mail
 			go func() {
 				mail.SendWelcomeEmail(u)

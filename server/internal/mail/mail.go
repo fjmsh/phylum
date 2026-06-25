@@ -49,8 +49,8 @@ func CreateMailer(cfg Config, l zerolog.Logger) (Mailer, error) {
 	return mailer, nil
 }
 
-func Configured() bool {
-	return m.dialer != nil
+func Enabled() bool {
+	return m.cfg.Enabled
 }
 
 func Configuration() Config {

@@ -33,7 +33,7 @@ func SetupRoutes(r *gin.RouterGroup, logger *zerolog.Logger) {
 		group.POST("/password/change", handlePasswordChange)
 	}
 	if auth.PasswordResetEnabled() {
-		if mail.Configured() {
+		if mail.Enabled() {
 			ConfigResponse.PasswordReset = true
 			group.POST("/password/request-reset", handlePasswordRequestReset)
 			group.POST("/password/reset", handlePasswordReset)
@@ -44,7 +44,7 @@ func SetupRoutes(r *gin.RouterGroup, logger *zerolog.Logger) {
 
 	group.POST("/token/login", handleTokenLogin)
 	if auth.MagicLinksEnabled() {
-		if mail.Configured() {
+		if mail.Enabled() {
 			ConfigResponse.MagicLink = true
 			group.POST("/token/request", handleTokenRequest)
 		} else {

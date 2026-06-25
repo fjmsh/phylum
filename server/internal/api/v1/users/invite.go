@@ -42,7 +42,7 @@ func handleInviteRequest(c *gin.Context) {
 			return err
 		} else {
 			user = u
-			if mail.Configured() && !params.NoSendEmail {
+			if mail.Enabled() && !params.NoSendEmail {
 				// TODO: #jobs #mail
 				go func() {
 					mail.SendWelcomeEmail(u)
