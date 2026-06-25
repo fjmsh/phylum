@@ -43,14 +43,15 @@ class _UserPermissionsDialogState extends State<UserPermissionsDialog> {
     readOnly = widget.user.id == widget.account.user.id;
     options = [
       userPermissionSU,
+      userPermissionConfigMailAll,
       userPermissionFilesAll,
       userPermissionFilesRead,
       userPermissionFilesWrite,
       userPermissionFilesShare,
       userPermissionUsersAll,
       userPermissionUsersList,
-      userPermissionUsersCreateInvite,
       userPermissionUsersCreate,
+      userPermissionUsersCreateInvite,
       userPermissionUsersPermissions,
       userPermissionUsersAuthPasswordUpdate,
     ];

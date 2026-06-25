@@ -74,7 +74,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final adminSettings = <SettingsItem>[
       if (widget.account.user.hasPermission(userPermissionUsersList))
         UsersSettings(),
-      if (widget.account.user.hasPermission(userPermissionMailRead))
+      if (widget.account.user.hasPermission(userPermissionConfigMailRead))
         MailSettings(),
     ];
 

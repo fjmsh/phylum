@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/setup/setup_mail_fragment.dart';
+import 'package:phylum/libphylum/config/mail_config.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 

@@ -4,6 +4,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
+import 'package:phylum/libphylum/config/mail_config.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
@@ -313,7 +314,7 @@ class SetupMailFragment extends StatelessWidget {
 }
 
 class MailController extends StateNotifier<MailConfig> {
-  MailController() : super(MailConfig.defaults());
+  MailController() : super(MailConfig.defaults(webAppBaseUri?.toString()));
 
   set enabled(bool value) {
     state = state.copyWith(enabled: value);
@@ -346,73 +347,4 @@ class MailController extends StateNotifier<MailConfig> {
   set instanceUrl(String value) {
     state = state.copyWith(instanceUrl: value);
   }
-}
-
-class MailConfig {
-  final bool enabled;
-  final String smtpHost;
-  final int smtpPort;
-  final String smtpUsername;
-  final String smtpPassword;
-  final String fromName;
-  final String fromEmail;
-  final String instanceUrl;
-
-  const MailConfig({
-    required this.enabled,
-    required this.smtpHost,
-    required this.smtpPort,
-    required this.smtpUsername,
-    required this.smtpPassword,
-    required this.fromName,
-    required this.fromEmail,
-    required this.instanceUrl,
-  });
-
-  MailConfig.defaults()
-    : this(
-        enabled: false,
-        smtpHost: '',
-        smtpPort: 587,
-        smtpUsername: '',
-        smtpPassword: '',
-        fromEmail: '',
-        fromName: '',
-        instanceUrl: webAppBaseUri?.toString() ?? '',
-      );
-
-  MailConfig copyWith({
-    bool? enabled,
-    String? smtpHost,
-    int? smtpPort,
-    String? smtpUsername,
-    String? smtpPassword,
-    String? fromName,
-    String? fromEmail,
-    String? instanceUrl,
-  }) {
-    return MailConfig(
-      enabled: enabled ?? this.enabled,
-      smtpHost: smtpHost ?? this.smtpHost,
-      smtpPort: smtpPort ?? this.smtpPort,
-      smtpUsername: smtpUsername ?? this.smtpUsername,
-      smtpPassword: smtpPassword ?? this.smtpPassword,
-      fromName: fromName ?? this.fromName,
-      fromEmail: fromEmail ?? this.fromEmail,
-      instanceUrl: instanceUrl ?? this.instanceUrl,
-    );
-  }
-
-  Map<String, dynamic> toMap() => enabled
-      ? {
-          'smtp': {
-            'host': smtpHost,
-            'port': smtpPort,
-            'username': smtpUsername,
-            'password': smtpPassword,
-          },
-          'from': {'name': fromName, 'email': fromEmail},
-          'instance': instanceUrl,
-        }
-      : const {};
 }
