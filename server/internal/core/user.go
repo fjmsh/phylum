@@ -23,7 +23,7 @@ const (
 	UserPermissionUsersCreate             = UserPermission("users:create")
 	UserPermissionUsersCreateInvite       = UserPermission("users:create:invite")
 	UserPermissionUsersPermissions        = UserPermission("users:permissions")
-	UserPermissionUsersAuthPasswordChange = UserPermission("users:create:auth:password:change")
+	UserPermissionUsersAuthPasswordUpdate = UserPermission("users:create:auth:password:update")
 	UserPermissionSU                      = UserPermission("*")
 )
 

@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handlePasswordChangeRequest(c *gin.Context) {
+func handlePasswordUpdateRequest(c *gin.Context) {
 	var params struct {
 		Email       string `json:"email" form:"email" binding:"required"`
 		NewPassword string `json:"new_password" form:"new_password" binding:"required"`
@@ -20,11 +20,11 @@ func handlePasswordChangeRequest(c *gin.Context) {
 		panic(err)
 	}
 	a := authenticator.GetAuth(c)
-	if !a.HasScope("admin:" + core.UserPermissionUsersAuthPasswordChange) {
+	if !a.HasScope("admin:" + core.UserPermissionUsersAuthPasswordUpdate) {
 		panic(core.ErrInsufficientScope)
 	}
-	if !a.UserPermissions().HasPermission(core.UserPermissionUsersAuthPasswordChange) {
-		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to change user passwords"))
+	if !a.UserPermissions().HasPermission(core.UserPermissionUsersAuthPasswordUpdate) {
+		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to update user passwords"))
 	}
 
 	err = db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
