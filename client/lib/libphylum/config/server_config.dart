@@ -1,47 +1,53 @@
 class ServerConfig {
-  final String publinkPath;
   final bool allowInvites;
-  final bool passwordUpdate;
   final bool mail;
+  final bool passwordUpdate;
+  final String publinkPath;
+  final String version;
 
   ServerConfig({
-    required this.publinkPath,
     required this.allowInvites,
-    required this.passwordUpdate,
     required this.mail,
+    required this.passwordUpdate,
+    required this.publinkPath,
+    required this.version,
   });
 
   factory ServerConfig.fromMap(Map<String, dynamic> data) {
     return ServerConfig(
-      publinkPath: data['publink_path'] ?? '/pub',
       allowInvites: data['allow_invites'] ?? true,
-      passwordUpdate: data['password_update'] ?? true,
       mail: data['mail'] ?? true,
+      passwordUpdate: data['password_update'] ?? true,
+      publinkPath: data['publink_path'] ?? '/pub',
+      version: data['version'] ?? '0.0.0',
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'publink_path': publinkPath,
       'allow_invites': allowInvites,
-      'password_update': passwordUpdate,
       'mail': mail,
+      'password_update': passwordUpdate,
+      'publink_path': publinkPath,
+      'version': version,
     };
   }
 
   @override
   bool operator ==(Object other) {
     return other is ServerConfig &&
-        publinkPath == other.publinkPath &&
         allowInvites == other.allowInvites &&
+        mail == other.mail &&
         passwordUpdate == other.passwordUpdate &&
-        mail == other.mail;
+        publinkPath == other.publinkPath &&
+        version == other.version;
   }
 
   @override
   int get hashCode =>
-      publinkPath.hashCode ^
       allowInvites.hashCode ^
+      mail.hashCode ^
       passwordUpdate.hashCode ^
-      mail.hashCode;
+      publinkPath.hashCode ^
+      version.hashCode;
 }

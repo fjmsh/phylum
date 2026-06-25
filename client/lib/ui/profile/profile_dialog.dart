@@ -132,6 +132,7 @@ class ProfileDialog extends StatelessWidget {
   }
 
   void _showAboutDialog(BuildContext context) async {
+    final account = context.read<PhylumAccount>();
     final packageInfo = await PackageInfo.fromPlatform();
     if (!context.mounted) return;
     showAboutDialog(
@@ -143,14 +144,10 @@ class ProfileDialog extends StatelessWidget {
         fit: BoxFit.contain,
       ),
       applicationVersion:
-          '${packageInfo.packageName} - ${packageInfo.version} (${packageInfo.buildNumber})',
+          '${packageInfo.version} (Server Version ${account.config.version})',
       children: [
         SizedBox(
           width: 360,
-          // child: Text(
-          //   'Phylum is Free Software offered under the GNU AGPL V3.0',
-          //   style: TextStyle(fontSize: 18),
-          // ),
           child: RichText(
             text: TextSpan(
               children: [
