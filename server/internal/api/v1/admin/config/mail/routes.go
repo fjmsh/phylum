@@ -14,6 +14,7 @@ var errInvalidParams = core.NewError(http.StatusBadRequest, "invalid_parameters"
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/mail")
 	group.GET("/read", handleReadRequest)
+	group.POST("/update", handleUpdateRequest)
 	group.POST("/validate", handleValidateRequest)
 }
 

@@ -138,4 +138,5 @@ mail:
   from:
     name: Phylum Drive
     email:                      # phylum-noreply@example.com
-  instance: https://phylum.example.com  # No trailing slash
+  # Instance URL to send in emails
+  instance: # https://phylum.example.com  # No trailing slash

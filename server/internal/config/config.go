@@ -75,6 +75,12 @@ func MergeSub(path string, cfg *koanf.Koanf) *koanf.Koanf {
 	return sub
 }
 
+func MergeWithYaml(cfg *koanf.Koanf, path string) *koanf.Koanf {
+	result := ymlConfig.Copy()
+	result.MergeAt(cfg, path)
+	return result
+}
+
 func HasOverrides(path string, cfg *koanf.Koanf) (overriden []string) {
 	overrides := overrides.Cut(path)
 	for k, _ := range cfg.All() {
