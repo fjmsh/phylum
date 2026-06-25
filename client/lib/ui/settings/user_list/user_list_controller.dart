@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/requests/admin_user_list_request.dart';
-import 'package:phylum/libphylum/responses/admin_user_list_response.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/libphylum/responses/user_details.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
+
+part 'user_list_request.dart';
+part 'user_list_response.dart';
 
 class UserListState {
   final bool loading;
@@ -26,8 +29,8 @@ class UserListController extends StateNotifier<UserListState> {
 
   void fetch() async {
     if (state.loading) return;
-    final result = await _apiClient.sendRequest(AdminUserListRequest());
-    if (result is AdminUserListResponse) {
+    final result = await _apiClient.sendRequest(_UserListRequest());
+    if (result is _UserListResponse) {
       _users = result.users.toList(growable: false);
       refilter();
     } else {
