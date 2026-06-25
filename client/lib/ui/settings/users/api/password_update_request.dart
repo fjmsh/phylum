@@ -5,11 +5,11 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
-class AdminUserPasswordRequest extends ApiRequest<PhylumAccount> {
+class PasswordUpdateRequest extends ApiRequest<PhylumAccount> {
   final String email;
   final String password;
 
-  AdminUserPasswordRequest({required this.email, required this.password});
+  PasswordUpdateRequest({required this.email, required this.password});
 
   @override
   BaseRequest createRequest(ApiClient api, {Blob? data}) {

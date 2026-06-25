@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/settings/settings.dart';
-import 'package:phylum/ui/settings/user_list/user_list_page.dart';
+import 'package:phylum/ui/settings/users/users_page.dart';
 
 import 'user_list_controller.dart';
-import 'user_list_panel.dart';
+import 'users_pane.dart';
 
 class UsersSettings extends Settings {
   @override
@@ -26,8 +26,8 @@ class UsersSettings extends Settings {
   const UsersSettings();
 
   @override
-  Widget buildWithScaffold(BuildContext context) => const UserListPage();
+  Widget buildWithScaffold(BuildContext context) => const UsersPage();
 
   @override
-  Widget buildWithoutScaffold(BuildContext context) => const UserListPanel();
+  Widget buildWithoutScaffold(BuildContext context) => const UsersPane();
 }

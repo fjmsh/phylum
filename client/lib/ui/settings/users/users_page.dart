@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phylum/ui/settings/user_list/user_list_controller.dart';
-import 'package:phylum/ui/settings/user_list/user_list_view.dart';
+import 'package:phylum/ui/settings/users/user_list_controller.dart';
+import 'package:phylum/ui/settings/users/user_list_view.dart';
 import 'package:provider/provider.dart';
 
-class UserListPage extends StatefulWidget {
-  const UserListPage({super.key});
+class UsersPage extends StatefulWidget {
+  const UsersPage({super.key});
 
   @override
-  State<UserListPage> createState() => _UserListPageState();
+  State<UsersPage> createState() => _UsersPageState();
 }
 
-class _UserListPageState extends State<UserListPage> {
+class _UsersPageState extends State<UsersPage> {
   bool _filtering = false;
 
   @override

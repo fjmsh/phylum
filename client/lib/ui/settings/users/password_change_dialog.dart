@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/requests/admin_user_password_update_request.dart';
+import 'package:phylum/ui/settings/users/api/password_update_request.dart';
 import 'package:phylum/libphylum/responses/user_details.dart';
 import 'package:phylum/libphylum/user_permission.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -78,7 +78,7 @@ class _PasswordChangeDialogState extends State<PasswordChangeDialog> {
 
     setState(() => requestInFlight = true);
     final result = await widget.account.apiClient.sendRequest(
-      AdminUserPasswordRequest(
+      PasswordUpdateRequest(
         email: widget.user.email,
         password: _controller.text,
       ),

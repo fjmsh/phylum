@@ -3,7 +3,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/user_permission.dart';
 import 'package:phylum/ui/common/create_user_dialog.dart';
 import 'package:phylum/ui/common/new_user_details_dialog.dart';
-import 'package:phylum/ui/settings/user_list/user_details_item.dart';
+import 'package:phylum/ui/settings/users/user_details_item.dart';
 import 'package:provider/provider.dart';
 
 import 'user_list_controller.dart';

@@ -7,14 +7,11 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/libphylum/responses/user_details.dart';
 import 'package:phylum/libphylum/user_permission.dart';
 
-class AdminUserPermissionsRequest extends ApiRequest<PhylumAccount> {
+class PermissionsRequest extends ApiRequest<PhylumAccount> {
   final int userId;
   final List<UserPermission> permissions;
 
-  AdminUserPermissionsRequest({
-    required this.userId,
-    required this.permissions,
-  });
+  PermissionsRequest({required this.userId, required this.permissions});
 
   @override
   BaseRequest createRequest(ApiClient api, {Blob? data}) {

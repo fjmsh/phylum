@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/requests/admin_user_permissions_request.dart';
+import 'package:phylum/ui/settings/users/api/permissions_request.dart';
 import 'package:phylum/libphylum/responses/user_details.dart';
 import 'package:phylum/libphylum/user_permission.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -148,7 +148,7 @@ class _UserPermissionsDialogState extends State<UserPermissionsDialog> {
 
     setState(() => requestInFlight = true);
     final result = await widget.account.apiClient.sendRequest(
-      AdminUserPermissionsRequest(
+      PermissionsRequest(
         userId: widget.user.id,
         permissions: selected.toList(growable: false),
       ),

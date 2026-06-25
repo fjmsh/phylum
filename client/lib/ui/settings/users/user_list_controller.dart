@@ -7,8 +7,8 @@ import 'package:phylum/libphylum/responses/user_details.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-part 'user_list_request.dart';
-part 'user_list_response.dart';
+part 'api/user_list_request.dart';
+part 'api/user_list_response.dart';
 
 class UserListState {
   final bool loading;

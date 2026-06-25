@@ -13,7 +13,7 @@ import 'package:phylum/ui/settings/security/sessions_keys_settings.dart';
 import 'package:phylum/ui/settings/settings.dart';
 import 'package:phylum/ui/settings/settings_view.dart';
 import 'package:phylum/ui/settings/sync/sync_settings.dart';
-import 'package:phylum/ui/settings/user_list/users_settings.dart';
+import 'package:phylum/ui/settings/users/users_settings.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {

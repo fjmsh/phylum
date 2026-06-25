@@ -1,4 +1,4 @@
-part of 'user_list_controller.dart';
+part of '../user_list_controller.dart';
 
 class _UserListRequest extends ApiRequest<PhylumAccount> {
   const _UserListRequest();

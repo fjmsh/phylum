@@ -7,7 +7,7 @@ import 'package:phylum/ui/settings/logs/logs_settings.dart';
 import 'package:phylum/ui/settings/mail/mail_settings.dart';
 import 'package:phylum/ui/settings/security/sessions_keys_settings.dart';
 import 'package:phylum/ui/settings/sync/sync_settings.dart';
-import 'package:phylum/ui/settings/user_list/users_settings.dart';
+import 'package:phylum/ui/settings/users/users_settings.dart';
 import 'package:provider/provider.dart';
 
 sealed class SettingsItem {

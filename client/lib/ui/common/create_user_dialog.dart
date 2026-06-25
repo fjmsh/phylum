@@ -1,7 +1,7 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/requests/admin_user_create_request.dart';
+import 'package:phylum/ui/settings/users/api/create_request.dart';
 import 'package:phylum/libphylum/responses/user_details.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
