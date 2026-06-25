@@ -1,4 +1,4 @@
-part of 'mail_config_controller.dart';
+part of '../mail_config_controller.dart';
 
 class _ConfigReadRequest extends ApiRequest<PhylumAccount> {
   const _ConfigReadRequest();

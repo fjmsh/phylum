@@ -57,9 +57,17 @@ class SettingsView extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: selected.buildWithoutScaffold(context),
+                child: FocusScope(
+                  // onKeyEvent: (node, event) {
+                  //   if (event.logicalKey == LogicalKeyboardKey.escape) {
+                  //     return KeyEventResult.handled;
+                  //   }
+                  //   return KeyEventResult.ignored;
+                  // },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: selected.buildWithoutScaffold(context),
+                  ),
                 ),
               ),
             ],

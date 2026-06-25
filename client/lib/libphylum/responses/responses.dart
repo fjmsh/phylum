@@ -70,6 +70,7 @@ class PhylumApiErrorResponse extends ApiErrorResponse<PhylumAccount> {
   final bool serverError;
   final String code;
   final String message;
+  final String? details;
 
   @override
   String get description => 'Server Error: $message';
@@ -78,6 +79,7 @@ class PhylumApiErrorResponse extends ApiErrorResponse<PhylumAccount> {
     required this.serverError,
     required this.code,
     required this.message,
+    required this.details,
   });
 
   factory PhylumApiErrorResponse.fromResponseBody(String body) {
@@ -87,6 +89,7 @@ class PhylumApiErrorResponse extends ApiErrorResponse<PhylumAccount> {
       serverError: statusCode >= 500,
       code: map['code'] ?? 'server_error',
       message: map['msg'] ?? 'Server Error',
+      details: map['details'],
     );
   }
 }

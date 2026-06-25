@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/settings/mail/mail_config_controller.dart';
+import 'package:phylum/ui/settings/mail/mail_config_form.dart';
 import 'package:provider/provider.dart';
 
 class MailPane extends StatefulWidget {
@@ -19,7 +19,6 @@ class _MailPaneState extends State<MailPane> {
 
   @override
   Widget build(BuildContext context) {
-    final account = context.read<PhylumAccount>();
     final state = context.watch<MailConfigState>();
     final config = state.config;
     if (config == null) {
@@ -45,6 +44,6 @@ class _MailPaneState extends State<MailPane> {
         ],
       );
     }
-    return Placeholder();
+    return const MailConfigForm();
   }
 }

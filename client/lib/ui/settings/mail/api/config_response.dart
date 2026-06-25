@@ -1,4 +1,4 @@
-part of 'mail_config_controller.dart';
+part of '../mail_config_controller.dart';
 
 class _ConfigResponse extends PhylumApiSuccessResponse {
   final MailConfig config;

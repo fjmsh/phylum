@@ -7,8 +7,8 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-part 'config_read_request.dart';
-part 'config_response.dart';
+part 'api/config_read_request.dart';
+part 'api/config_response.dart';
 
 class MailConfigState {
   final bool loading;
