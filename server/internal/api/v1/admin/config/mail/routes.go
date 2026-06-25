@@ -1,4 +1,4 @@
-package users
+package mail
 
 import (
 	"net/http"
@@ -12,11 +12,11 @@ import (
 var errInvalidParams = core.NewError(http.StatusBadRequest, "invalid_parameters", "Invalid Request Parameters")
 
 func SetupRoutes(r *gin.RouterGroup) {
-	group := r.Group("/users")
-	group.GET("/settings", handleSettingsRequest)
+	group := r.Group("/mail")
+	group.GET("/read", handleReadRequest)
 }
 
-func handleSettingsRequest(c *gin.Context) {
+func handleReadRequest(c *gin.Context) {
 	auth := authenticator.GetAuth(c)
 	if !auth.HasScope("admin:" + core.UserPermissionConfigMailRead) {
 		panic(core.ErrInsufficientScope)
