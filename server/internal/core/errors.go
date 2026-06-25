@@ -9,13 +9,23 @@ type Error struct {
 	Status  int    `json:"status"`
 	Code    string `json:"code"`
 	Message string `json:"msg"`
+	Details string `json:"details,omitempty"`
 }
 
-func NewError(httpStatus int, code, msg string) error {
+func NewError(httpStatus int, code, msg string) *Error {
 	return &Error{
 		Status:  httpStatus,
 		Code:    code,
 		Message: msg,
+	}
+}
+
+func NewErrorWithDetails(httpStatus int, code, msg, details string) *Error {
+	return &Error{
+		Status:  httpStatus,
+		Code:    code,
+		Message: msg,
+		Details: details,
 	}
 }
 

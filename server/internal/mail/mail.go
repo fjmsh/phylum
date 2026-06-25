@@ -19,6 +19,9 @@ type Mailer struct {
 }
 
 var ErrEmailNotConfigured = errors.New("email not configured")
+var ErrNoSuchHost = errors.New("no such host")
+var ErrConnectionRefused = errors.New("connection refused")
+var ErrIOTimeout = errors.New("i/o timeout")
 var m Mailer
 
 func CreateMailer(cfg Config, l zerolog.Logger) (Mailer, error) {
@@ -33,6 +36,14 @@ func CreateMailer(cfg Config, l zerolog.Logger) (Mailer, error) {
 	dialer := gomail.NewDialer(cfg.SMTP.Host, cfg.SMTP.Port, cfg.SMTP.Username, cfg.SMTP.Password)
 	if !cfg.OmitStartupCheck {
 		if s, err := dialer.Dial(); err != nil {
+			if strings.Contains(err.Error(), "no such host") {
+				err = ErrNoSuchHost
+			} else if strings.Contains(err.Error(), "connection refused") {
+				err = ErrConnectionRefused
+			} else if strings.Contains(err.Error(), "timeout") {
+				err = ErrIOTimeout
+			}
+
 			return mailer, err
 		} else if err := s.Close(); err != nil {
 			l.Warn().Err(err).Msg("Error closing dialer")
@@ -115,6 +126,13 @@ func (m Mailer) send(e Email, rcpt core.User, params map[string]any) error {
 	})
 	err := m.dialer.DialAndSend(msg)
 	if err != nil {
+		if strings.Contains(err.Error(), "no such host") {
+			err = ErrNoSuchHost
+		} else if strings.Contains(err.Error(), "connection refused") {
+			err = ErrConnectionRefused
+		} else if strings.Contains(err.Error(), "timeout") {
+			err = ErrIOTimeout
+		}
 		m.logger.Warn().Err(err).Msg("failed to send email")
 	}
 	return err

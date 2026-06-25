@@ -17,6 +17,7 @@ const (
 	UserPermissionFilesShare              = UserPermission("files:share")
 	UserPermissionConfigMailAll           = UserPermission("config:mail")
 	UserPermissionConfigMailRead          = UserPermission("config:mail:read")
+	UserPermissionConfigMailValidate      = UserPermission("config:mail:validate")
 	UserPermissionConfigMailUpdate        = UserPermission("config:mail:update")
 	UserPermissionUsersAll                = UserPermission("users")
 	UserPermissionUsersList               = UserPermission("users:list")
