@@ -14,6 +14,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
+import 'package:phylum/util/logging/logging.dart';
 import 'package:provider/provider.dart';
 
 final slashChar = '/'.runes.first;
@@ -56,18 +57,20 @@ Future<void> createDirectory(
 }
 
 Future<void> pickAndUploadFiles(BuildContext context, String folderId) async {
-  final result = await FilePicker.pickFiles(allowMultiple: true);
+  final result = await FilePicker.pickFiles(
+    allowMultiple: true,
+    withReadStream: true,
+  );
   if (!context.mounted || result == null) return;
 
-  final files = result.files.map(
-    (e) => UploadFile(
-      size: e.size,
-      stream: kIsWeb
-          ? ByteStream.fromBytes(e.bytes!).cast<Uint8List>()
-          : File(e.path!).openRead().cast<Uint8List>(),
-      path: e.name,
-    ),
-  );
+  final files = result.files.map((e) {
+    final stream = e.readStream;
+    if (stream == null) {
+      Log.warn('Read Stream for ${e.name} is null');
+      return null;
+    }
+    return UploadFile(size: e.size, stream: stream.cast(), path: e.name);
+  }).whereType<UploadFile>();
   return uploadFiles(context, folderId, files);
 }
 
