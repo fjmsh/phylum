@@ -152,24 +152,12 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
   }
 
   Future<InstanceInfo?> findInfo(Uri url) async {
-    // _url == null ? null : (value) => widget.onSubmitted(_url!),
-    List<String> segments = url.pathSegments;
-    while (true) {
-      final builder = UriBuilder.fromUri(url);
-      builder.path = segments.join('/');
-      final config = await fetchInfo(builder.build());
-      if (config != null) {
-        return config;
-      }
-      if (segments.isEmpty) {
-        return null;
-      }
-      segments = segments.sublist(0, segments.length - 1);
-    }
-  }
-
-  Future<InstanceInfo?> fetchInfo(Uri url) async {
     final builder = UriBuilder.fromUri(url);
+    // Strip trailing slash
+    if (builder.path.endsWith('/')) {
+      builder.path = builder.path.substring(0, builder.path.length - 1);
+      url = builder.build();
+    }
     builder.path = '${builder.path}/api/v1/info';
     final result = await sendRequest(Request('GET', builder.build()));
     if (result is SuccessResponse) {

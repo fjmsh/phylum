@@ -8,6 +8,7 @@ import 'package:phylum/ui/login/login_reset_password.dart';
 
 import 'package:phylum/util/base_uri/base_uri_stub.dart'
     if (dart.library.js_interop) 'package:phylum/util/base_uri/base_uri_web.dart';
+import 'package:uri/uri.dart';
 
 const bool instanceUrlFixed = kIsWeb && !kDebugMode;
 
@@ -48,10 +49,19 @@ class LoginState {
   });
 
   factory LoginState.create({Uri? instanceUrl, LoginMethod? selectedMethod}) {
+    if (instanceUrlFixed || instanceUrl == null) {
+      instanceUrl = webAppBaseUri;
+    }
+
+    // Strip trailing slash
+    if (instanceUrl?.path.endsWith('/') == true) {
+      final builder = UriBuilder.fromUri(instanceUrl!);
+      builder.path = builder.path.substring(0, builder.path.length - 1);
+      instanceUrl = builder.build();
+    }
+
     return LoginState._(
-      instanceUrl: instanceUrlFixed
-          ? webAppBaseUri
-          : instanceUrl ?? webAppBaseUri,
+      instanceUrl: instanceUrl,
       selectedMethod: selectedMethod,
     );
   }
