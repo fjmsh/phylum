@@ -17,7 +17,7 @@ class SyncStatusButton extends StatelessWidget {
       onPressed: () {
         Scaffold.maybeOf(context)?.closeDrawer();
         context.read<PhylumRouterDelegate>().go(
-          SettingsRoute(selected: SyncSettings()),
+          SettingsRoute(selected: const SyncSettings()),
         );
       },
     );

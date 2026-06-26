@@ -80,7 +80,7 @@ class _DownloadsIconButtonState extends State<DownloadsIconButton> {
       onPressed: () {
         Scaffold.maybeOf(context)?.closeDrawer();
         context.read<PhylumRouterDelegate>().go(
-          SettingsRoute(selected: DownloadsSettings()),
+          SettingsRoute(selected: const DownloadsSettings()),
         );
       },
     );
