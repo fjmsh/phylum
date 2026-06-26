@@ -28,11 +28,13 @@ android {
 
     defaultConfig {
         applicationId = "cloud.phylum.drive"
-        minSdkVersion flutter.minSdkVersion
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        base.archivesName = "phylum-" + versionName
+        base {
+            archivesName = "phylum-" + versionName
+        }
     }
 
     signingConfigs {

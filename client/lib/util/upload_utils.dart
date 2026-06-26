@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 import 'package:file_picker/file_picker.dart';
