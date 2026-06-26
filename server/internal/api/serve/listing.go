@@ -22,7 +22,6 @@ func init() {
 	funcMap := template.FuncMap{
 		"isNotLast": func(index, length int) bool { return index != length-1 },
 		"parentPath": func(u string, length, index int) string {
-			fmt.Println("parentPath " + u)
 			arr := make([]string, length-index)
 			for i := range arr {
 				arr[i] = ".."

@@ -2,6 +2,7 @@ package serve
 
 import (
 	"context"
+	"embed"
 	"errors"
 	"net/http"
 	"os"
@@ -29,6 +30,9 @@ const trashRetainDuration = 30 * 24 * time.Hour
 
 var Cfg Config
 var NeedsConfig bool
+
+//go:embed __static/**
+var staticFS embed.FS
 
 func SetupCommand() *cobra.Command {
 	var cmd = &cobra.Command{
@@ -127,6 +131,12 @@ func setupWebApp(r gin.IRoutes, webAppSrcDir string) {
 	fileserver := http.FileServer(fs)
 	indexFilePath := path.Join(webAppSrcDir, "index.html")
 
+	staticFS, err := static.EmbedFolder(staticFS, ".")
+	if err != nil {
+		panic(err)
+	}
+	staticFileSserver := http.FileServer(staticFS)
+
 	webdavPath := Cfg.WebDAV.Path
 	if !strings.HasSuffix(webdavPath, "/'") {
 		webdavPath += "/"
@@ -139,6 +149,11 @@ func setupWebApp(r gin.IRoutes, webAppSrcDir string) {
 
 	staticFileHandler := func(c *gin.Context) {
 		path := c.Request.URL.Path
+		if staticFS.Exists("/", c.Request.URL.Path) {
+			staticFileSserver.ServeHTTP(c.Writer, c.Request)
+			return
+		}
+
 		if c.Request.Method == "GET" &&
 			!strings.HasPrefix(path, "/api") &&
 			!strings.HasPrefix(path, webdavPath) &&
