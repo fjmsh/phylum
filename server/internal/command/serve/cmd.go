@@ -149,7 +149,7 @@ func setupWebApp(r gin.IRoutes, webAppSrcDir string) {
 
 	staticFileHandler := func(c *gin.Context) {
 		path := c.Request.URL.Path
-		if staticFS.Exists("/", c.Request.URL.Path) {
+		if strings.HasPrefix(path, "/__static") && staticFS.Exists("/", c.Request.URL.Path) {
 			staticFileSserver.ServeHTTP(c.Writer, c.Request)
 			return
 		}
