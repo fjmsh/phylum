@@ -100,6 +100,8 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
             next: config.route,
           );
         }
+      } else if (config.route is LoggedOutRoute) {
+        config = PhylumRouteConfig._(route: const HomeRoute());
       }
     }
 
