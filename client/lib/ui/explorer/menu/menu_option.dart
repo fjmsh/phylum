@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:open_file/open_file.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
 import 'package:phylum/libphylum/actions/action_resource_restore.dart';
@@ -14,22 +16,16 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/trash_empty_request.dart';
-import 'package:phylum/ui/explorer/shortcuts/intents.dart';
-import 'package:phylum/ui/common/responsive_dialog.dart';
 import 'package:phylum/ui/explorer/destination_picker/destination_picker.dart';
-import 'package:phylum/ui/explorer/details/resource_info_view.dart';
-import 'package:phylum/ui/explorer/details/resource_permissions_view.dart';
-import 'package:phylum/ui/explorer/details/resource_publinks_view.dart';
+import 'package:phylum/ui/explorer/properties/resource_properties_dialog.dart';
+import 'package:phylum/ui/explorer/shortcuts/intents.dart';
 import 'package:phylum/util/dialogs.dart';
-import 'package:phylum/util/upload_utils.dart';
-import 'package:provider/provider.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
-import 'package:share_plus/share_plus.dart';
-
 import 'package:phylum/util/pick_directory_stub.dart'
     if (dart.library.js_interop) 'package:phylum/util/pick_directory_web.dart'
     if (dart.library.ffi) 'package:phylum/util/pick_directory_vm.dart';
+import 'package:phylum/util/upload_utils.dart';
+import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 enum MenuOption {
   details(Icons.info_outline, 'Details', isSingle),
@@ -232,26 +228,13 @@ void handleOption(
     case MenuOption.details:
       final resource = resources.firstOrNull;
       if (resource == null) return;
-      showReponsiveDialog(
-        context,
-        resource.name,
-        (context) => ResourceInfoView(resource: resource),
-      );
-      break;
+      ResourcePropertiesDialog.show(context, resources.first, tabPermissions);
     case MenuOption.permissions:
-      showReponsiveDialog(
-        context,
-        'Permissions for ${resources.first.name}',
-        (context) => ResourcePermissionsView(resourceId: resources.first.id),
-      );
+      ResourcePropertiesDialog.show(context, resources.first, tabPermissions);
     case MenuOption.publinks:
       final resource = resources.firstOrNull;
       if (resource == null) return;
-      showReponsiveDialog(
-        context,
-        'Public Shares',
-        (context) => ResourcePublinksView(resource: resource),
-      );
+      ResourcePropertiesDialog.show(context, resource, tabPublinks);
       break;
     case MenuOption.download:
       for (final r in resources) {

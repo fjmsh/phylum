@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:phylum/libphylum/actions/action_resource_publink_create.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/explorer/details/create_publink_view.dart';
+import 'package:phylum/ui/explorer/properties/create_publink_view.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:provider/provider.dart';
 

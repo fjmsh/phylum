@@ -13,8 +13,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_contents_request.dart';
 import 'package:phylum/libphylum/requests/resource_img_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/ui/common/responsive_dialog.dart';
-import 'package:phylum/ui/explorer/details/resource_info_view.dart';
+import 'package:phylum/ui/explorer/properties/resource_properties_dialog.dart';
 import 'package:phylum/ui/file_viewer/versioned_resource.dart';
 import 'package:provider/provider.dart';
 
@@ -101,11 +100,8 @@ class _FileViewerState extends State<FileViewer> {
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
-            onPressed: () => showReponsiveDialog(
-              context,
-              _resource.r.name,
-              (context) => ResourceInfoView(resource: _resource.r),
-            ),
+            onPressed: () =>
+                ResourcePropertiesDialog.show(context, _resource.r),
           ),
           IconButton(
             onPressed: (_resource.r.dir)

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
-import 'package:phylum/ui/explorer/details/resource_info_view.dart';
+import 'package:phylum/ui/explorer/properties/resource_details_view.dart';
 import 'package:provider/provider.dart';
 
 class ReactiveResourceInfoView extends StatelessWidget {

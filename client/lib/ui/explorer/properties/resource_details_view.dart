@@ -8,19 +8,15 @@ import 'package:phylum/libphylum/actions/action_resource.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
-import 'package:phylum/ui/common/responsive_dialog.dart';
-import 'package:phylum/ui/explorer/util/mime_type_names.dart';
-import 'package:phylum/ui/explorer/details/resource_permissions_view.dart';
-import 'package:phylum/ui/explorer/details/resource_publinks_view.dart';
+import 'package:phylum/ui/explorer/properties/resource_properties_dialog.dart';
 import 'package:phylum/ui/explorer/resource_sync_state.dart';
-import 'package:phylum/ui/explorer/details/resource_versions_view.dart';
+import 'package:phylum/ui/explorer/util/icon_extensions.dart';
+import 'package:phylum/ui/explorer/util/mime_type_names.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/permissions.dart';
 import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
-
-import '../util/icon_extensions.dart';
 
 class ResourceInfoView extends StatelessWidget {
   final Resource resource;
@@ -76,10 +72,10 @@ class ResourceInfoView extends StatelessWidget {
             leading: const Icon(Icons.people),
             title: const Text('Others with Access'),
             subtitle: other.isEmpty ? const Text('--') : Text(other),
-            onTap: () => showReponsiveDialog(
+            onTap: () => ResourcePropertiesDialog.show(
               context,
-              'Permissions for ${resource.name}',
-              (context) => ResourcePermissionsView(resourceId: resource.id),
+              resource,
+              tabPermissions,
             ),
           ),
           StreamBuilder<int>(
@@ -97,10 +93,10 @@ class ResourceInfoView extends StatelessWidget {
                 subtitle: count == 0
                     ? const Text('--')
                     : Text(count.toString()),
-                onTap: () => showReponsiveDialog(
+                onTap: () => ResourcePropertiesDialog.show(
                   context,
-                  'Public Shares',
-                  (context) => ResourcePublinksView(resource: resource),
+                  resource,
+                  tabPublinks,
                 ),
               );
             },
@@ -176,11 +172,10 @@ class ResourceInfoView extends StatelessWidget {
                       subtitle: Text(
                         '$availableVersions / ${versions.length - 1} available',
                       ),
-                      onTap: () => showReponsiveDialog(
+                      onTap: () => ResourcePropertiesDialog.show(
                         context,
-                        'Version History',
-                        (context) =>
-                            ResourceVersionsView(resourceId: resource.id),
+                        resource,
+                        tabVersions,
                       ),
                     ),
                 ],
