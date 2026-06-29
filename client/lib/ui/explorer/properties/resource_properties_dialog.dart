@@ -8,7 +8,7 @@ import 'package:phylum/ui/explorer/properties/resource_publinks_view.dart';
 import 'package:phylum/ui/explorer/properties/resource_versions_view.dart';
 import 'package:provider/provider.dart';
 
-const tabOverview = 1;
+const tabDetails = 0;
 const tabPermissions = 1;
 const tabPublinks = 2;
 const tabVersions = 3;
@@ -21,7 +21,7 @@ class ResourcePropertiesDialog extends StatelessWidget {
   static void show(
     BuildContext context,
     Resource resource, [
-    int selectedTab = tabOverview,
+    int selectedTab = tabDetails,
   ]) {
     final account = context.read<PhylumAccount>();
     showDialog(
@@ -32,7 +32,7 @@ class ResourcePropertiesDialog extends StatelessWidget {
           Provider.value(value: account.actionQueue),
         ],
         child: DefaultTabController(
-          length: 4,
+          length: resource.dir ? 3 : 4,
           initialIndex: selectedTab,
           child: ResourcePropertiesDialog(resource: resource),
         ),
@@ -70,7 +70,24 @@ class ResourcePropertiesDialog extends StatelessWidget {
                       child: TabBarView(
                         children: [
                           SingleChildScrollView(
-                            child: ResourceInfoView(resource: resource),
+                            child: ResourceInfoView(
+                              resource: resource,
+                              onPermissionsTap: () {
+                                DefaultTabController.of(
+                                  context,
+                                ).animateTo(tabPermissions);
+                              },
+                              onPublinksTap: () {
+                                DefaultTabController.of(
+                                  context,
+                                ).animateTo(tabPublinks);
+                              },
+                              onVersionsTap: () {
+                                DefaultTabController.of(
+                                  context,
+                                ).animateTo(tabVersions);
+                              },
+                            ),
                           ),
                           SingleChildScrollView(
                             child: ResourcePermissionsView(
@@ -80,11 +97,12 @@ class ResourcePropertiesDialog extends StatelessWidget {
                           SingleChildScrollView(
                             child: ResourcePublinksView(resource: resource),
                           ),
-                          SingleChildScrollView(
-                            child: ResourceVersionsView(
-                              resourceId: resource.id,
+                          if (!resource.dir)
+                            SingleChildScrollView(
+                              child: ResourceVersionsView(
+                                resourceId: resource.id,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -120,7 +138,7 @@ class ResourcePropertiesDialog extends StatelessWidget {
         Tab(child: Text('Overview')),
         Tab(child: Text('Permissions')),
         Tab(child: Text('Publinks')),
-        Tab(child: Text('Versions')),
+        if (!resource.dir) Tab(child: Text('Versions')),
       ],
     );
   }

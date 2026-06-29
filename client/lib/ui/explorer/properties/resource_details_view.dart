@@ -20,9 +20,16 @@ import 'package:state_notifier/state_notifier.dart';
 
 class ResourceInfoView extends StatelessWidget {
   final Resource resource;
+  final void Function()? onPermissionsTap;
+  final void Function()? onPublinksTap;
+  final void Function()? onVersionsTap;
 
-  ResourceInfoView({required this.resource})
-    : super(key: ValueKey(resource.id));
+  ResourceInfoView({
+    required this.resource,
+    this.onPermissionsTap,
+    this.onPublinksTap,
+    this.onVersionsTap,
+  }) : super(key: ValueKey(resource.id));
 
   @override
   Widget build(BuildContext context) {
@@ -72,11 +79,13 @@ class ResourceInfoView extends StatelessWidget {
             leading: const Icon(Icons.people),
             title: const Text('Others with Access'),
             subtitle: other.isEmpty ? const Text('--') : Text(other),
-            onTap: () => ResourcePropertiesDialog.show(
-              context,
-              resource,
-              tabPermissions,
-            ),
+            onTap: () => onPermissionsTap == null
+                ? ResourcePropertiesDialog.show(
+                    context,
+                    resource,
+                    tabPermissions,
+                  )
+                : onPermissionsTap!(),
           ),
           StreamBuilder<int>(
             stream: context
@@ -93,11 +102,13 @@ class ResourceInfoView extends StatelessWidget {
                 subtitle: count == 0
                     ? const Text('--')
                     : Text(count.toString()),
-                onTap: () => ResourcePropertiesDialog.show(
-                  context,
-                  resource,
-                  tabPublinks,
-                ),
+                onTap: () => onPublinksTap == null
+                    ? ResourcePropertiesDialog.show(
+                        context,
+                        resource,
+                        tabPublinks,
+                      )
+                    : onPublinksTap!(),
               );
             },
           ),
@@ -172,11 +183,13 @@ class ResourceInfoView extends StatelessWidget {
                       subtitle: Text(
                         '$availableVersions / ${versions.length - 1} available',
                       ),
-                      onTap: () => ResourcePropertiesDialog.show(
-                        context,
-                        resource,
-                        tabVersions,
-                      ),
+                      onTap: () => onVersionsTap == null
+                          ? ResourcePropertiesDialog.show(
+                              context,
+                              resource,
+                              tabVersions,
+                            )
+                          : onVersionsTap!(),
                     ),
                 ],
               );

@@ -228,7 +228,7 @@ void handleOption(
     case MenuOption.details:
       final resource = resources.firstOrNull;
       if (resource == null) return;
-      ResourcePropertiesDialog.show(context, resources.first, tabPermissions);
+      ResourcePropertiesDialog.show(context, resources.first, tabDetails);
     case MenuOption.permissions:
       ResourcePropertiesDialog.show(context, resources.first, tabPermissions);
     case MenuOption.publinks:
