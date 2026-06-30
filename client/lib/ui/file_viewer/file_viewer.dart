@@ -91,9 +91,7 @@ class _FileViewerState extends State<FileViewer> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: widget.transparent
-          ? Colors.black45
-          : Colors.blueGrey[900],
+      backgroundColor: widget.transparent ? Colors.black45 : Colors.green[900],
       appBar: AppBar(
         foregroundColor: theme.colorScheme.onInverseSurface,
         leading: const CloseButton(),

@@ -6,6 +6,7 @@ import 'package:phylum/ui/app/account_selector.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/common/dialog_scaffold.dart';
 import 'package:phylum/ui/explorer/scaffold/explorer_page.dart';
+import 'package:phylum/ui/file_viewer/file_viewer_page.dart';
 import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/settings/settings.dart';
@@ -39,7 +40,7 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
       key: navigatorKey,
       pages: pages,
       onDidRemovePage: (page) {
-        if (_current.route.stackable) {
+        if (_current.route.dialog) {
           go(_current.base ?? const HomeRoute());
         }
         // if (_current.stack.length > 1) {
@@ -65,8 +66,8 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
       _current = PhylumRouteConfig._(
         route: route,
         next: next ?? _current.next,
-        base: route.stackable
-            ? _current.route.stackable
+        base: route.dialog
+            ? _current.route.dialog
                   ? _current.base
                   : _current.route
             : null,
@@ -112,12 +113,29 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
 
   void _rebuildPages() {
     final account = _accountManagerState.selectedAccount;
-    pages = [
-      if (_current.route.stackable)
-        MaterialPage(
-          child: (_current.base ?? const HomeRoute()).buildPage(account),
-        ),
-      MaterialPage(child: _current.route.buildPage(account)),
-    ];
+    pages = _current.route.dialog
+        ? [
+            MaterialPage(
+              child: (_current.base ?? const HomeRoute()).buildPage(account),
+            ),
+            _DialogPage(child: _current.route.buildPage(account)),
+          ]
+        : [MaterialPage(child: _current.route.buildPage(account))];
+  }
+}
+
+class _DialogPage<T> extends Page<T> {
+  final Widget child;
+
+  const _DialogPage({super.key, required this.child});
+
+  @override
+  Route<T> createRoute(BuildContext context) {
+    return DialogRoute(
+      settings: this,
+      context: context,
+      builder: (context) => child,
+      fullscreenDialog: false,
+    );
   }
 }

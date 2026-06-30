@@ -3,7 +3,7 @@ part of 'router.dart';
 sealed class PhylumRoute {
   Uri get uri;
 
-  bool get stackable => false;
+  bool get dialog => false;
 
   const PhylumRoute();
 
@@ -74,7 +74,7 @@ class SetupRoute extends LoggedOutRoute {
   Uri get uri => Uri(path: '/setup');
 
   @override
-  bool get stackable => true;
+  bool get dialog => true;
 
   final String instanceUrl;
 
@@ -85,20 +85,6 @@ class SetupRoute extends LoggedOutRoute {
     return SetupPage(instanceUrl: instanceUrl);
   }
 }
-
-// class FilePreviewRoute extends LoggedInRoute {
-//   final String fileId;
-
-//   @override
-//   Uri get uri => Uri(path: '/file/$fileId');
-
-//   const FilePreviewRoute({required this.fileId}) : super();
-
-//   @override
-//   Widget buildAccountPage(PhylumAccount account) {
-//     return FilePreviewPage.create(account: account, resourceId: fileId);
-//   }
-// }
 
 abstract class LoggedInRoute extends PhylumRoute {
   const LoggedInRoute();
@@ -127,12 +113,29 @@ class SettingsRoute extends LoggedInRoute {
       : Uri(path: '/settings/${selected!.slug}');
 
   @override
-  bool get stackable => true;
+  bool get dialog => true;
 
   SettingsRoute({this.selected});
 
   @override
   Widget buildPage(PhylumAccount? account) {
     return SettingsPage(account: account!, selected: selected);
+  }
+}
+
+class FilePreviewRoute extends LoggedInRoute {
+  final String fileId;
+
+  @override
+  Uri get uri => Uri(path: '/file/$fileId');
+
+  @override
+  bool get dialog => true;
+
+  const FilePreviewRoute({required this.fileId}) : super();
+
+  @override
+  Widget buildPage(PhylumAccount? account) {
+    return FilePreviewPage.create(account: account!, resourceId: fileId);
   }
 }

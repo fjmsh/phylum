@@ -51,8 +51,8 @@ class PhylumRouteInformationParser
     }
 
     final segments = uri.pathSegments;
-    if (segments[0] == 'file') {
-      // return SynchronousFuture(FileP(fileId: segments[1]));
+    if (segments[0] == 'file' && segments.length == 2) {
+      return FilePreviewRoute(fileId: segments[1]);
     } else if (segments[0] == 'folder' && segments.length == 2) {
       return ExplorerRoute(
         location: ExplorerLocationFolder(folderId: segments[1]),
