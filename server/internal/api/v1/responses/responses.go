@@ -53,7 +53,7 @@ type Publink struct {
 	Accessed    int32     `json:"accessed"`
 	AccessLimit int32     `json:"access_limit"`
 	Protected   bool      `json:"protected"`
-	Expires     int64     `json:"expires"`
+	Expires     int64     `json:"expires,omitempty"`
 }
 
 type Login struct {

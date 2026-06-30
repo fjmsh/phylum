@@ -68,10 +68,14 @@ func handleCreateRequest(c *gin.Context) {
 	if err := fs.CreatePublink(r, params.ID, params.Password, expires, params.AccessLimit); err != nil {
 		panic(err)
 	}
+	var expiresS int64
+	if expires.Valid {
+		expiresS = expires.Time.Unix()
+	}
 	response := responses.Publink{
 		ID:          params.ID,
 		Created:     time.Now().Unix(),
-		Expires:     expires.Time.Unix(),
+		Expires:     expiresS,
 		Root:        r.ID(),
 		AccessLimit: int32(params.AccessLimit),
 		Protected:   params.Password != "",
