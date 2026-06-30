@@ -63,9 +63,9 @@ class ExplorerHistoryController extends StateNotifier<ExplorerHistory> {
   bool goForward() {
     if (state.forward.isEmpty) return false;
     state = ExplorerHistory(
-      location: state.forward.first,
+      location: state.forward.last,
       back: [...state.back, state.location],
-      forward: List.of(state.forward)..removeAt(0),
+      forward: List.of(state.forward)..removeLast(),
     );
     return true;
   }
