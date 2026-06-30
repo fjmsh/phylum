@@ -39,51 +39,50 @@ class ResourceVersionsView extends StatelessWidget {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ...versions.mapIndexed(
-                (i, v) => ListTile(
-                  title: Text(
-                    v.sha256.isEmpty ? 'Unknown' : v.sha256.substring(0, 12),
-                  ),
+              ...versions.mapIndexed((i, v) {
+                final sha = v.sha256.isEmpty
+                    ? 'Unknown'
+                    : v.sha256.substring(0, 12);
+                return ListTile(
+                  title: i == 0
+                      ? Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(text: sha),
+                              TextSpan(
+                                text: ' \u2022 Current',
+                                style: TextStyle(fontStyle: .italic),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Text(sha),
                   subtitle: Text(
-                    '${v.created.formatShort()} \u2022 ${v.size.formatForDisplay()}',
+                    '${v.created.formatLong()} \u2022 ${v.size.formatForDisplay()}',
                   ),
                   trailing: v.deleted
                       ? Text(
                           'Deleted',
                           style: TextStyle(fontStyle: FontStyle.italic),
                         )
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.remove_red_eye),
-                              onPressed: () async {
-                                final resource = await account.db.getResource(
-                                  resourceId,
-                                );
-                                if (resource == null || !context.mounted)
-                                  return;
-                                FilePreviewDialog.showVersions(
-                                  context,
-                                  resource,
-                                  versions,
-                                  i,
-                                );
-                              },
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.download),
-                              onPressed: () async {
+                      : PopupMenuButton(
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              onTap: () async {
                                 final r = await account.db.getResource(
                                   resourceId,
                                 );
                                 if (r == null || !context.mounted) return;
                                 downloadResource(context, r, version: v);
                               },
+                              child: ListTile(
+                                leading: Icon(Icons.download),
+                                title: Text('Download'),
+                              ),
                             ),
-                            IconButton(
-                              icon: Icon(Icons.delete_forever),
-                              onPressed: () async {
+                            PopupMenuItem(
+                              enabled: i != 0,
+                              onTap: () async {
                                 final r = await account.db.getResource(
                                   resourceId,
                                 );
@@ -95,11 +94,25 @@ class ResourceVersionsView extends StatelessWidget {
                                   ),
                                 );
                               },
+                              child: ListTile(
+                                leading: Icon(Icons.delete_forever),
+                                title: Text('Delete'),
+                              ),
                             ),
                           ],
                         ),
-                ),
-              ),
+                  onTap: () async {
+                    final resource = await account.db.getResource(resourceId);
+                    if (resource == null || !context.mounted) return;
+                    FilePreviewDialog.showVersions(
+                      context,
+                      resource,
+                      versions,
+                      i,
+                    );
+                  },
+                );
+              }),
             ],
           );
         },
