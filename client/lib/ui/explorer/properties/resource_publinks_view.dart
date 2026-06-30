@@ -139,6 +139,7 @@ class _ResourcePublinksViewState extends State<ResourcePublinksView> {
                           ),
                         );
                       },
+                      tooltip: 'Create New Link',
                       child: Icon(Icons.link),
                     ),
                   ),

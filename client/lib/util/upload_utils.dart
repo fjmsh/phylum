@@ -130,6 +130,50 @@ Future<void> uploadFiles(
   }
 }
 
+Future<void> pickAndUploadVersion(
+  BuildContext context,
+  Resource resource,
+) async {
+  final account = context.read<PhylumAccount>();
+  final result = await FilePicker.pickFiles(
+    allowMultiple: false,
+    withReadStream: true,
+  );
+  if (result == null || !result.isSinglePick) return;
+
+  final pickedFile = result.files[0];
+  final stream = pickedFile.readStream;
+  if (stream == null) {
+    Log.warn('Read Stream for $pickedFile.name} is null');
+    return;
+  }
+  final file = UploadFile(
+    size: pickedFile.size,
+    stream: stream.cast(),
+    path: pickedFile.name,
+  );
+
+  try {
+    account.resourceRepository.uploadVersion(
+      resource: resource,
+      contents: file.stream,
+      size: file.size,
+      userPermission: resource.userPermission,
+    );
+  } on PermissionException {
+    if (context.mounted) {
+      await showAlertDialog(
+        context,
+        title: 'Permissions Error',
+        message:
+            'You do not have permissions to upload a new version of this file.',
+        positiveText: 'Okay',
+        negativeText: 'Try Anyway',
+      );
+    }
+  }
+}
+
 Future<void> uploadPath(
   BuildContext context,
   String folderId,

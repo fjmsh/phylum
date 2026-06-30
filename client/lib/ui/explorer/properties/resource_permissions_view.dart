@@ -115,8 +115,9 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
                             final permission = await _showPermissionsPicker(
                               context,
                             );
-                            if (permission == null || permission == e.value)
+                            if (permission == null || permission == e.value) {
                               return;
+                            }
                             final user =
                                 await (account.db.users.select()
                                       ..where((u) => u.id.equals(e.key)))
@@ -160,6 +161,7 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
               padding: const EdgeInsetsGeometry.all(16),
               child: FloatingActionButton(
                 onPressed: () => grantPermission(context),
+                tooltip: 'Grant Permissions',
                 child: Icon(Icons.person_add),
               ),
             ),

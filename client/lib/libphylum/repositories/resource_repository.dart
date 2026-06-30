@@ -210,6 +210,41 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     return id;
   }
 
+  Future<void> uploadVersion({
+    required Resource resource,
+    required Permission userPermission,
+    required Stream<Uint8List> contents,
+    required int size,
+    bool ensurePermission = true,
+  }) async {
+    String localName = resource.name;
+    if (performLocalChecks) {
+      if (ensurePermission &&
+          userPermission & permissionWrite == 0 &&
+          !_user.hasPermission(userPermissionFilesWrite)) {
+        throw PermissionException();
+      }
+    }
+
+    await _account.addAction(
+      ResourceUploadAction(
+        resourceId: resource.id,
+        parent: resource.parent ?? '',
+        resourceName: resource.name,
+        conflictResolution: nameConflictOverwrite,
+        timestamp: DateTime.now(),
+        size: size,
+        contentType:
+            lookupMimeType(resource.name) ?? 'application/octet-stream',
+        localName: localName,
+        deletedId: null,
+        userPermission: userPermission,
+        versionId: generateUuid(),
+      ),
+      data: contents,
+    );
+  }
+
   Future<String> move({
     required Resource resource,
     required String name,
