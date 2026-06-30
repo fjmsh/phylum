@@ -18,7 +18,7 @@ import 'package:phylum/util/time.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-class ResourceInfoView extends StatelessWidget {
+class ResourceInfoView extends StatefulWidget {
   final Resource resource;
   final void Function()? onPermissionsTap;
   final void Function()? onPublinksTap;
@@ -32,10 +32,40 @@ class ResourceInfoView extends StatelessWidget {
   }) : super(key: ValueKey(resource.id));
 
   @override
+  State<ResourceInfoView> createState() => _ResourceInfoViewState();
+}
+
+class _ResourceInfoViewState extends State<ResourceInfoView> {
+  late final StreamSubscription _sub;
+  ResourceVersion? _latest;
+  bool showHumanSize = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _sub = context
+        .read<PhylumAccount>()
+        .db
+        .latestVersion(widget.resource.id)
+        .watchSingleOrNull()
+        .listen(
+          (version) => setState(() {
+            _latest = version;
+          }),
+        );
+  }
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final account = context.read<PhylumAccount>();
-    final p = resource.inheritedPermissions.parsePermissionMap()
-      ..addAll(resource.grants.parsePermissionMap());
+    final p = widget.resource.inheritedPermissions.parsePermissionMap()
+      ..addAll(widget.resource.grants.parsePermissionMap());
     final myPermission = p.remove(account.user.id) ?? 0;
     final repository = context.read<PhylumAccount>().userRepository;
     final entries = p.entries.toList(growable: false)
@@ -52,23 +82,45 @@ class ResourceInfoView extends StatelessWidget {
       ),
       child: Column(
         children: [
-          PendingActionsTile(resourceId: resource.id),
-          resource.dir
+          PendingActionsTile(resourceId: widget.resource.id),
+          widget.resource.dir
               ? const ListTile(
                   leading: Icon(folderIcon),
                   title: Text('Type'),
                   subtitle: Text('Folder'),
                 )
-              : LatestVersionInfoView(resourceId: resource.id),
+              : _latest == null
+              ? const ListTile(
+                  leading: Icon(defaultFileIcon),
+                  title: Text('Type'),
+                  subtitle: Text(''),
+                )
+              : ListTile(
+                  leading: _latest?.getIcon(),
+                  title: Text('Type'),
+                  subtitle: Text(mimeTypeName(_latest!.mimeType)),
+                ),
+          if (!widget.resource.dir)
+            ListTile(
+              leading: const Icon(Icons.storage),
+              title: const Text('Size'),
+              onTap: () => setState(() => showHumanSize = !showHumanSize),
+              subtitle: Text(
+                (showHumanSize
+                        ? _latest?.size.formatForDisplay()
+                        : '${_latest?.size} B') ??
+                    '--',
+              ),
+            ),
           ListTile(
             leading: const Icon(Icons.event),
             title: const Text('Created'),
-            subtitle: Text(resource.created?.formatLong() ?? '--'),
+            subtitle: Text(widget.resource.created?.formatLong() ?? '--'),
           ),
           ListTile(
             leading: const Icon(Icons.edit_calendar),
             title: const Text('Modified'),
-            subtitle: Text(resource.modified?.formatLong() ?? '--'),
+            subtitle: Text(widget.resource.modified?.formatLong() ?? '--'),
           ),
           ListTile(
             leading: const Icon(Icons.account_circle),
@@ -79,19 +131,19 @@ class ResourceInfoView extends StatelessWidget {
             leading: const Icon(Icons.people),
             title: const Text('Others with Access'),
             subtitle: other.isEmpty ? const Text('--') : Text(other),
-            onTap: () => onPermissionsTap == null
+            onTap: () => widget.onPermissionsTap == null
                 ? ResourcePropertiesDialog.show(
                     context,
-                    resource,
+                    widget.resource,
                     tabPermissions,
                   )
-                : onPermissionsTap!(),
+                : widget.onPermissionsTap!(),
           ),
           StreamBuilder<int>(
             stream: context
                 .read<PhylumAccount>()
                 .db
-                .countPublinks(resource.id)
+                .countPublinks(widget.resource.id)
                 .watchSingle(),
             initialData: 0,
             builder: (context, snapshot) {
@@ -102,20 +154,20 @@ class ResourceInfoView extends StatelessWidget {
                 subtitle: count == 0
                     ? const Text('--')
                     : Text(count.toString()),
-                onTap: () => onPublinksTap == null
+                onTap: () => widget.onPublinksTap == null
                     ? ResourcePropertiesDialog.show(
                         context,
-                        resource,
+                        widget.resource,
                         tabPublinks,
                       )
-                    : onPublinksTap!(),
+                    : widget.onPublinksTap!(),
               );
             },
           ),
           StreamBuilder<List<ResourceVersion>>(
             stream:
                 (account.db.resourceVersions.select()
-                      ..where((v) => v.resourceId.equals(resource.id)))
+                      ..where((v) => v.resourceId.equals(widget.resource.id)))
                     .watch(),
             initialData: <ResourceVersion>[],
             builder: (context, snapshot) {
@@ -132,23 +184,9 @@ class ResourceInfoView extends StatelessWidget {
                 -1,
                 (acc, e) => acc + (e.deleted ? 0 : 1),
               );
-              bool showHumanSize = true;
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  StatefulBuilder(
-                    builder: (context, setState) => ListTile(
-                      leading: const Icon(Icons.storage),
-                      title: const Text('Size'),
-                      onTap: () =>
-                          setState(() => showHumanSize = !showHumanSize),
-                      subtitle: Text(
-                        showHumanSize
-                            ? latestVersion.size.formatForDisplay()
-                            : '${latestVersion.size} B',
-                      ),
-                    ),
-                  ),
                   ListTile(
                     leading: const Icon(Icons.shield),
                     title: const Text('SHA-256'),
@@ -183,13 +221,13 @@ class ResourceInfoView extends StatelessWidget {
                       subtitle: Text(
                         '$availableVersions / ${versions.length - 1} available',
                       ),
-                      onTap: () => onVersionsTap == null
+                      onTap: () => widget.onVersionsTap == null
                           ? ResourcePropertiesDialog.show(
                               context,
-                              resource,
+                              widget.resource,
                               tabVersions,
                             )
-                          : onVersionsTap!(),
+                          : widget.onVersionsTap!(),
                     ),
                 ],
               );
@@ -228,9 +266,7 @@ class LatestVersionInfoView extends StatelessWidget {
         return ListTile(
           leading: data.getIcon(),
           title: Text('Type'),
-          subtitle: Text(
-            '${mimeTypeName(data.mimeType)} \u2022 ${data.size.formatForDisplay()}',
-          ),
+          subtitle: Text(mimeTypeName(data.mimeType)),
         );
       },
     );
