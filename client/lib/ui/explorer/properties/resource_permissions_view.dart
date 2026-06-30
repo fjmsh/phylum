@@ -82,6 +82,14 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
           child: SingleChildScrollView(
             child: Column(
               children: [
+                if (grantEntries.isEmpty)
+                  ListTile(
+                    dense: true,
+                    title: Text(
+                      'No additional permission grants.',
+                      style: TextStyle(fontStyle: .italic),
+                    ),
+                  ),
                 for (final e in grantEntries)
                   ListTile(
                     visualDensity: VisualDensity.adaptivePlatformDensity,
