@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/shortcuts/intents.dart';
-import 'package:phylum/ui/file_viewer/file_viewer.dart';
+import 'package:phylum/ui/file_viewer/file_viewer_scaffold.dart';
 import 'package:phylum/ui/file_viewer/versioned_resource.dart';
 import 'package:provider/provider.dart';
+
+import 'file_viewer.dart';
 
 class FilePreviewDialog extends StatefulWidget {
   final List<VersionedResource> resources;
@@ -73,7 +75,6 @@ class FilePreviewDialog extends StatefulWidget {
 
 class _FilePreviewDialogState extends State<FilePreviewDialog> {
   late int index;
-  final _focusNode = FocusNode();
 
   @override
   void initState() {
@@ -82,47 +83,39 @@ class _FilePreviewDialogState extends State<FilePreviewDialog> {
   }
 
   @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Actions(
-      actions: {
-        DismissIntent: CallbackAction<DismissIntent>(
-          onInvoke: (i) => Navigator.of(context).pop(),
-        ),
-        FocusLeftIntent: CallbackAction<FocusLeftIntent>(
-          onInvoke: (FocusLeftIntent i) {
-            return setState(() {
-              if (index <= 0) {
-                index = widget.resources.length;
-              }
-              index--;
-            });
-          },
-        ),
-        FocusRightIntent: CallbackAction<FocusRightIntent>(
-          onInvoke: (FocusRightIntent i) {
-            return setState(() {
-              index++;
-              if (index >= widget.resources.length) {
-                index = 0;
-              }
-            });
-          },
-        ),
-      },
-      child: GestureDetector(
-        onTap: () => Navigator.of(context).pop(),
+    return FocusScope(
+      child: Actions(
+        actions: {
+          DismissIntent: CallbackAction<DismissIntent>(
+            onInvoke: (i) => Navigator.of(context).pop(),
+          ),
+          FocusLeftIntent: CallbackAction<FocusLeftIntent>(
+            onInvoke: (FocusLeftIntent i) {
+              return setState(() {
+                if (index <= 0) {
+                  index = widget.resources.length;
+                }
+                index--;
+              });
+            },
+          ),
+          FocusRightIntent: CallbackAction<FocusRightIntent>(
+            onInvoke: (FocusRightIntent i) {
+              return setState(() {
+                index++;
+                if (index >= widget.resources.length) {
+                  index = 0;
+                }
+              });
+            },
+          ),
+        },
         child: Focus(
-          focusNode: _focusNode,
           autofocus: true,
-          child: FileViewer(
-            transparent: true,
+          child: FileViewerScaffold(
             resource: widget.resources[index],
+            body: FileViewer(resource: widget.resources[index]),
           ),
         ),
       ),

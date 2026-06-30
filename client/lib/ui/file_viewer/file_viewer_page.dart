@@ -5,6 +5,7 @@ import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/file_viewer/file_viewer.dart';
+import 'package:phylum/ui/file_viewer/file_viewer_scaffold.dart';
 import 'package:phylum/ui/file_viewer/versioned_resource.dart';
 import 'package:provider/provider.dart';
 
@@ -70,20 +71,26 @@ class _ResourcePreviewDialogState extends State<FilePreviewPage> {
 
   @override
   Widget build(BuildContext context) {
+    VersionedResource? res;
     if (resource != null && version != null) {
-      return FileViewer(
-        transparent: true,
-        resource: VersionedResource(
-          r: resource!,
-          v: version!,
-          showTimestamp: false,
-        ),
-      );
+      res = VersionedResource(r: resource!, v: version!, showTimestamp: false);
     }
-
-    return Scaffold(
-      body: Center(
-        child: error == null ? _buildLoading(context) : _buildError(context),
+    return Actions(
+      actions: {
+        DismissIntent: CallbackAction<DismissIntent>(
+          onInvoke: (i) => Navigator.of(context).pop(),
+        ),
+      },
+      child: FocusScope(
+        autofocus: true,
+        child: FileViewerScaffold(
+          resource: res,
+          body: res != null
+              ? FileViewer(resource: res)
+              : error == null
+              ? _buildLoading(context)
+              : _buildError(context),
+        ),
       ),
     );
   }

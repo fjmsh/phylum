@@ -6,14 +6,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/db/imgres.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/resource_contents_request.dart';
 import 'package:phylum/libphylum/requests/resource_img_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/ui/explorer/properties/resource_properties_dialog.dart';
 import 'package:phylum/ui/file_viewer/versioned_resource.dart';
 import 'package:provider/provider.dart';
 
@@ -29,13 +27,9 @@ const _applicationTextSubtypes = {
 };
 
 class FileViewer extends StatefulWidget {
-  final bool transparent;
-  final VersionedResource resource;
-  const FileViewer({
-    super.key,
-    required this.transparent,
-    required this.resource,
-  });
+  final VersionedResource _resource;
+
+  const FileViewer({super.key, required this._resource});
 
   @override
   State<FileViewer> createState() => _FileViewerState();
@@ -50,14 +44,14 @@ class _FileViewerState extends State<FileViewer> {
   @override
   void initState() {
     super.initState();
-    _updateResource(widget.resource);
+    _updateResource(widget._resource);
   }
 
   @override
   void didUpdateWidget(covariant FileViewer oldWidget) {
     super.didUpdateWidget(oldWidget);
     setState(() {
-      _updateResource(widget.resource);
+      _updateResource(widget._resource);
     });
   }
 
@@ -89,51 +83,22 @@ class _FileViewerState extends State<FileViewer> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: widget.transparent ? Colors.black45 : Colors.green[900],
-      appBar: AppBar(
-        foregroundColor: theme.colorScheme.onInverseSurface,
-        leading: const CloseButton(),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: () =>
-                ResourcePropertiesDialog.show(context, _resource.r),
-          ),
-          IconButton(
-            onPressed: (_resource.r.dir)
-                ? null
-                : () => downloadResource(
-                    context,
-                    _resource.r,
-                    version: _resource.v,
-                  ),
-            icon: const Icon(Icons.download),
-          ),
-        ],
-        title: Text(_resource.name),
-        backgroundColor: Colors.transparent,
-      ),
-      body: Center(
-        child: _buildViewer == null
-            ? Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    _error ?? 'Unknown error',
-                    style: TextStyle(fontSize: 18),
-                  ),
-                ),
-              )
-            : ResourceLoader(
-                resourceId: _resource.r.id,
-                versionId: _resource.v.id,
-                buildViewer: _buildViewer!,
-                loadPreview: _loadPreview,
+    return _buildViewer == null
+        ? Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                _error ?? 'Unknown error',
+                style: TextStyle(fontSize: 18),
               ),
-      ),
-    );
+            ),
+          )
+        : ResourceLoader(
+            resourceId: _resource.r.id,
+            versionId: _resource.v.id,
+            buildViewer: _buildViewer!,
+            loadPreview: _loadPreview,
+          );
   }
 }
 

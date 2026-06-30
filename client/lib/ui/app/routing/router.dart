@@ -43,15 +43,7 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
         if (_current.route.dialog) {
           go(_current.base ?? const HomeRoute());
         }
-        // if (_current.stack.length > 1) {
-        //   _current = PhylumRouteConfig._(
-        //     stack: List.of(_current.stack)..removeLast(),
-        //   );
-        //   _rebuildPages();
-        // }
       },
-      // onGenerateRoute: (settings) =>
-      //     MaterialPageRoute(builder: (context) => const AccountSelector()),
     );
   }
 
