@@ -14,12 +14,10 @@ abstract class ResourceBindAction extends ResourceAction {
 
   ResourceBindAction({
     required super.resourceId,
-    required String parent,
-    required String resourceName,
-    NameConflictResolution conflictResolution = nameConflictError,
-  }) : _parent = parent,
-       _resourceName = resourceName,
-       _conflictResolution = conflictResolution;
+    required this._parent,
+    required this._resourceName,
+    this._conflictResolution = nameConflictError,
+  });
 
   Future<void> updateConflictResolution(
     NameConflictResolution conflictResolution,

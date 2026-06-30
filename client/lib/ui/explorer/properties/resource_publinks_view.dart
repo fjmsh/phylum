@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phylum/libphylum/actions/action_resource_publink_create.dart';
+import 'package:phylum/libphylum/actions/action_resource_publink_delete.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/properties/create_publink_view.dart';
@@ -85,7 +86,7 @@ class _ResourcePublinksViewState extends State<ResourcePublinksView> {
                         );
                         if (info == null) return;
                         account.addAction(
-                          ResourcePublinkCreateAction(
+                          PublinkCreateAction(
                             resourceId: widget.resource.id,
                             publinkId: info.id,
                             password: info.password,
@@ -161,13 +162,9 @@ class _ResourcePublinksViewState extends State<ResourcePublinksView> {
                     ),
                     label: Text('Delete'),
                     icon: const Icon(Icons.delete),
-                    onPressed: () {},
-                  ),
-                if (hasSharePermission)
-                  TextButton.icon(
-                    label: Text('Edit'),
-                    icon: const Icon(Icons.edit),
-                    onPressed: () {},
+                    onPressed: () {
+                      account.addAction(PublinkDeleteAction(publinkId: l.id));
+                    },
                   ),
                 TextButton.icon(
                   label: Text('Copy URL'),

@@ -140,7 +140,7 @@ class ActionView extends StatelessWidget {
               icon: const Icon(Icons.edit),
               tooltip: 'Rename',
               onPressed: () async {
-                if (action is! ResourcePublinkCreateAction) return;
+                if (action is! PublinkCreateAction) return;
                 final name = await showInputDialog(
                   context,
                   title: 'Edit ID',

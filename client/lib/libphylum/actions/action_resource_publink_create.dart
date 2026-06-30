@@ -1,6 +1,6 @@
-import 'package:http/src/streamed_response.dart';
+import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/actions/action_resource_create.dart';
+import 'package:phylum/libphylum/actions/action_publink.dart';
 import 'package:phylum/libphylum/actions/changes/create_publink_change.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
@@ -8,7 +8,8 @@ import 'package:phylum/libphylum/responses/responses.dart';
 
 import 'action_resource.dart';
 
-class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
+class PublinkCreateAction extends ResourceAction
+    with JsonApiAction, PublinkAction {
   static const kActionName = 'publinkCreate';
   @override
   String get actionName => kActionName;
@@ -54,25 +55,25 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
   };
 
   String _publinkId;
+  @override
   String get publinkId => _publinkId;
   final String password;
   final DateTime? expires;
   final int accessLimit;
   final DateTime timestamp;
 
-  ResourcePublinkCreateAction({
+  PublinkCreateAction({
     required super.resourceId,
-    required String publinkId,
+    required this._publinkId,
     required this.password,
     required DateTime? expires,
     required this.accessLimit,
     DateTime? timestamp,
-  }) : _publinkId = publinkId,
-       expires = expires?.toUtc(),
+  }) : expires = expires?.toUtc(),
        timestamp = timestamp ?? DateTime.now();
 
-  factory ResourcePublinkCreateAction.fromMap(Map<String, dynamic> map) {
-    return ResourcePublinkCreateAction(
+  factory PublinkCreateAction.fromMap(Map<String, dynamic> map) {
+    return PublinkCreateAction(
       resourceId: map['resourceId'],
       publinkId: map['publinkId'],
       password: map['password'],
@@ -91,16 +92,24 @@ class ResourcePublinkCreateAction extends ResourceAction with JsonApiAction {
 
   @override
   bool dependsOn(PhylumAction action) =>
-      action is ResourceAction &&
-      (action is ResourceCreateAction ||
-          action is ResourcePublinkCreateAction) &&
-      action.resourceId == resourceId;
+      (action is ResourceAction && action.resourceId == resourceId) ||
+      (action is PublinkAction && action.publinkId == publinkId);
 
   Future<void> updatePublinkId(String publinkId) {
+    // return account.actionQueue.updateActions(
+    //   (action) => action == this,
+    //   (action) =>
+    //       (action as ResourcePublinkCreateAction)._publinkId = publinkId,
+    // );
     return account.actionQueue.updateActions(
-      (action) => action == this,
-      (action) =>
-          (action as ResourcePublinkCreateAction)._publinkId = publinkId,
+      (PhylumAction action) =>
+          action is PublinkAction && action.publinkId == publinkId,
+      (action) => (action as PublinkAction).setPublinkId(publinkId),
     );
+  }
+
+  @override
+  void setPublinkId(String publinkId) {
+    _publinkId = publinkId;
   }
 }
