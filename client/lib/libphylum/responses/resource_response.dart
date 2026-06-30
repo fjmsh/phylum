@@ -8,11 +8,11 @@ class ResourceResponse extends PhylumApiSuccessResponse {
   final Map<String, Permission> permissions;
 
   ResourceResponse({
-    required Resource resource,
+    required this._resource,
     required this.versions,
     required this.publinks,
     required this.permissions,
-  }) : _resource = resource;
+  });
 
   factory ResourceResponse.fromResponse(
     Map<String, dynamic> data, {
