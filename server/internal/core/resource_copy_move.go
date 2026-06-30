@@ -170,7 +170,7 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 	var tree []Resource
 	if recursive && src.dir {
 		var err error
-		tree, err = f.ReadDir(src, true)
+		tree, err = f.ReadDirExtended(src, true, false, true)
 		if err != nil {
 			return Resource{}, false, err
 		}
