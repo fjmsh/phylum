@@ -43,92 +43,105 @@ class _ResourcePublinksViewState extends State<ResourcePublinksView> {
         initialData: const [],
         builder: (context, snapshot) {
           final publinks = snapshot.data ?? const [];
-          return Column(
-            spacing: 18,
+          return Stack(
             children: [
-              ExpansionPanelList(
-                expansionCallback: (i, expanded) => setState(
-                  () => expanded
-                      ? this.expanded.add(publinks[i].id)
-                      : this.expanded.remove(publinks[i].id),
-                ),
-                children: publinks
-                    .map((l) {
-                      return ExpansionPanel(
-                        isExpanded: expanded.contains(l.id),
-                        canTapOnHeader: true,
-                        headerBuilder: (context, expanded) =>
-                            ListTile(title: Text(l.id)),
-                        body: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            mainAxisAlignment: .end,
-                            children: [
-                              if (hasSharePermission)
-                                TextButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    // backgroundColor: Theme.of(
-                                    //   context,
-                                    // ).colorScheme.onError,
-                                    foregroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.error,
-                                  ),
-                                  label: Text('Delete'),
-                                  icon: const Icon(Icons.delete),
-                                  onPressed: () {},
-                                ),
-                              if (hasSharePermission)
-                                TextButton.icon(
-                                  label: Text('Edit'),
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () {},
-                                ),
-                              TextButton.icon(
-                                label: Text('Copy URL'),
-                                icon: const Icon(Icons.copy),
-                                onPressed: () {
-                                  final publinkPath = context
-                                      .read<PhylumAccount>()
-                                      .config
-                                      .publinkPath;
-                                  Clipboard.setData(
-                                    ClipboardData(
-                                      text: account.apiClient
-                                          .createUri('$publinkPath/${l.id}')
-                                          .toString(),
+              SingleChildScrollView(
+                child: Column(
+                  spacing: 18,
+                  children: [
+                    ExpansionPanelList(
+                      expansionCallback: (i, expanded) => setState(
+                        () => expanded
+                            ? this.expanded.add(publinks[i].id)
+                            : this.expanded.remove(publinks[i].id),
+                      ),
+                      children: publinks
+                          .map((l) {
+                            return ExpansionPanel(
+                              isExpanded: expanded.contains(l.id),
+                              canTapOnHeader: true,
+                              headerBuilder: (context, expanded) =>
+                                  ListTile(title: Text(l.id)),
+                              body: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  mainAxisAlignment: .end,
+                                  children: [
+                                    if (hasSharePermission)
+                                      TextButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          // backgroundColor: Theme.of(
+                                          //   context,
+                                          // ).colorScheme.onError,
+                                          foregroundColor: Theme.of(
+                                            context,
+                                          ).colorScheme.error,
+                                        ),
+                                        label: Text('Delete'),
+                                        icon: const Icon(Icons.delete),
+                                        onPressed: () {},
+                                      ),
+                                    if (hasSharePermission)
+                                      TextButton.icon(
+                                        label: Text('Edit'),
+                                        icon: const Icon(Icons.edit),
+                                        onPressed: () {},
+                                      ),
+                                    TextButton.icon(
+                                      label: Text('Copy URL'),
+                                      icon: const Icon(Icons.copy),
+                                      onPressed: () {
+                                        final publinkPath = context
+                                            .read<PhylumAccount>()
+                                            .config
+                                            .publinkPath;
+                                        Clipboard.setData(
+                                          ClipboardData(
+                                            text: account.apiClient
+                                                .createUri(
+                                                  '$publinkPath/${l.id}',
+                                                )
+                                                .toString(),
+                                          ),
+                                        );
+                                      },
                                     ),
-                                  );
-                                },
+                                  ],
+                                ),
                               ),
-                            ],
-                          ),
-                        ),
-                      );
-                    })
-                    .toList(growable: false),
+                            );
+                          })
+                          .toList(growable: false),
+                    ),
+                  ],
+                ),
               ),
               if (hasSharePermission)
-                ElevatedButton.icon(
-                  icon: Icon(Icons.add),
-                  label: Text('Add'),
-                  onPressed: () async {
-                    final account = context.read<PhylumAccount>();
-                    final info = await CreatePublinkView.show(
-                      context,
-                      widget.resource.id,
-                    );
-                    if (info == null) return;
-                    account.addAction(
-                      ResourcePublinkCreateAction(
-                        resourceId: widget.resource.id,
-                        publinkId: info.id,
-                        password: info.password,
-                        expires: info.expiration,
-                        accessLimit: info.accessLimit,
-                      ),
-                    );
-                  },
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: FloatingActionButton(
+                      onPressed: () async {
+                        final account = context.read<PhylumAccount>();
+                        final info = await CreatePublinkView.show(
+                          context,
+                          widget.resource.id,
+                        );
+                        if (info == null) return;
+                        account.addAction(
+                          ResourcePublinkCreateAction(
+                            resourceId: widget.resource.id,
+                            publinkId: info.id,
+                            password: info.password,
+                            expires: info.expiration,
+                            accessLimit: info.accessLimit,
+                          ),
+                        );
+                      },
+                      child: Icon(Icons.link),
+                    ),
+                  ),
                 ),
             ],
           );

@@ -90,9 +90,7 @@ class ResourcePropertiesDialog extends StatelessWidget {
                             ),
                           ),
                           ResourcePermissionsView(resourceId: resource.id),
-                          SingleChildScrollView(
-                            child: ResourcePublinksView(resource: resource),
-                          ),
+                          ResourcePublinksView(resource: resource),
                           if (!resource.dir)
                             SingleChildScrollView(
                               child: ResourceVersionsView(
