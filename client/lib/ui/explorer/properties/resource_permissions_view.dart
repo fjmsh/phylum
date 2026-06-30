@@ -70,94 +70,105 @@ class _ResourcePermissionsViewState extends State<ResourcePermissionsView> {
             ? a.key.compareTo(b.key)
             : a.value.compareTo(b.value);
       }));
-    final permissionEntries = permissions.entries.toList(growable: false)
+    final inheritedPermissions = permissions.entries.toList(growable: false)
       ..sort(((a, b) {
         return a.value == b.value
             ? a.key.compareTo(b.key)
             : a.value.compareTo(b.value);
       }));
-    return DropdownButtonHideUnderline(
-      child: Column(
-        children: [
-          if (userPermission & permissionShare != 0)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: ElevatedButton.icon(
-                label: Text('Grant Access'),
-                icon: Icon(Icons.person_add),
-                onPressed: () => addUser(context),
-              ),
-            ),
-          for (final e in grantEntries)
-            ListTile(
-              visualDensity: VisualDensity.adaptivePlatformDensity,
-              leading: Icon(e.value.icon),
-              title: Text(repository.getUserDisplayName(e.key)),
-              subtitle: Text(e.value.text),
-              trailing: IconButton(
-                onPressed: () async {
-                  final permission = permissionSetNone;
-                  final user =
-                      await (account.db.users.select()
-                            ..where((u) => u.id.equals(e.key)))
-                          .getSingleOrNull();
-                  Log.warn('User not found: ${e.key}');
-                  if (user == null) return;
+    return Stack(
+      children: [
+        DropdownButtonHideUnderline(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                for (final e in grantEntries)
+                  ListTile(
+                    visualDensity: VisualDensity.adaptivePlatformDensity,
+                    leading: Icon(e.value.icon),
+                    title: Text(repository.getUserDisplayName(e.key)),
+                    subtitle: Text(e.value.text),
+                    trailing: IconButton(
+                      onPressed: () async {
+                        final permission = permissionSetNone;
+                        final user =
+                            await (account.db.users.select()
+                                  ..where((u) => u.id.equals(e.key)))
+                                .getSingleOrNull();
+                        Log.warn('User not found: ${e.key}');
+                        if (user == null) return;
 
-                  account.addAction(
-                    ResourceShareAction(
-                      resourceId: widget.resourceId,
-                      resourceName: resourceName!,
-                      user: user,
-                      permission: permission,
+                        account.addAction(
+                          ResourceShareAction(
+                            resourceId: widget.resourceId,
+                            resourceName: resourceName!,
+                            user: user,
+                            permission: permission,
+                          ),
+                        );
+                      },
+                      icon: Icon(Icons.close),
                     ),
-                  );
-                },
-                icon: Icon(Icons.close),
-              ),
-              onTap: (userPermission & permissionShare) == 0
-                  ? null
-                  : () async {
-                      final permission = await _showPermissionsPicker(context);
-                      if (permission == null || permission == e.value) return;
-                      final user =
-                          await (account.db.users.select()
-                                ..where((u) => u.id.equals(e.key)))
-                              .getSingleOrNull();
-                      if (user == null) return;
+                    onTap: (userPermission & permissionShare) == 0
+                        ? null
+                        : () async {
+                            final permission = await _showPermissionsPicker(
+                              context,
+                            );
+                            if (permission == null || permission == e.value)
+                              return;
+                            final user =
+                                await (account.db.users.select()
+                                      ..where((u) => u.id.equals(e.key)))
+                                    .getSingleOrNull();
+                            if (user == null) return;
 
-                      account.addAction(
-                        ResourceShareAction(
-                          resourceId: widget.resourceId,
-                          resourceName: resourceName!,
-                          user: user,
-                          permission: permission,
-                        ),
-                      );
-                    },
-            ),
-          ListTile(
-            key: ValueKey('inherited'),
-            visualDensity: VisualDensity.compact,
-            dense: true,
-            title: const Text(
-              'Inherited Permissions',
-              style: TextStyle(fontWeight: FontWeight.bold),
+                            account.addAction(
+                              ResourceShareAction(
+                                resourceId: widget.resourceId,
+                                resourceName: resourceName!,
+                                user: user,
+                                permission: permission,
+                              ),
+                            );
+                          },
+                  ),
+                ListTile(
+                  key: ValueKey('inherited'),
+                  visualDensity: VisualDensity.compact,
+                  dense: true,
+                  title: const Text(
+                    'Inherited Permissions',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                for (final e in inheritedPermissions)
+                  ListTile(
+                    visualDensity: VisualDensity.adaptivePlatformDensity,
+                    leading: Icon(e.value.icon),
+                    title: Text(repository.getUserDisplayName(e.key)),
+                    subtitle: Text(e.value.text),
+                  ),
+              ],
             ),
           ),
-          for (final e in permissionEntries)
-            ListTile(
-              visualDensity: VisualDensity.adaptivePlatformDensity,
-              leading: Icon(e.value.icon),
-              title: Text(repository.getUserDisplayName(e.key)),
-              subtitle: Text(e.value.text),
+        ),
+        if (userPermission & permissionShare != 0)
+          Align(
+            alignment: AlignmentGeometry.bottomRight,
+            child: Padding(
+              padding: const EdgeInsetsGeometry.all(16),
+              child: FloatingActionButton(
+                onPressed: () => grantPermission(context),
+                child: Icon(Icons.person_add),
+              ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
-  Future<void> addUser(BuildContext context) async {
+  Future<void> grantPermission(BuildContext context) async {
     final account = context.read<PhylumAccount>();
     final allUsers =
         await (account.db.users.select()
