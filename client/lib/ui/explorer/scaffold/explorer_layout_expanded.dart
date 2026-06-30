@@ -10,7 +10,9 @@ import 'package:phylum/ui/explorer/scaffold/search/search.dart';
 import 'package:phylum/ui/explorer/scaffold/sync/sync_status_button.dart';
 
 class ExplorerLayoutExpanded extends StatelessWidget {
-  const ExplorerLayoutExpanded({super.key});
+  final FocusNode _explorerFocusNode;
+
+  const ExplorerLayoutExpanded({super.key, required this._explorerFocusNode});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +38,7 @@ class ExplorerLayoutExpanded extends StatelessWidget {
                   child: const LogoRow(),
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Card(
                   elevation: 0,
                   margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -52,7 +54,11 @@ class ExplorerLayoutExpanded extends StatelessWidget {
                           padding: EdgeInsets.only(right: 16.0),
                           child: Icon(Icons.search),
                         ),
-                        Expanded(child: SearchField()),
+                        Expanded(
+                          child: SearchField(
+                            explorerFocusNode: _explorerFocusNode,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -92,7 +98,7 @@ class ExplorerLayoutExpanded extends StatelessWidget {
                       right: 16,
                       bottom: 16,
                     ),
-                    child: const ExplorerView(),
+                    child: ExplorerView(explorerFocusNode: _explorerFocusNode),
                   ),
                 ),
                 if (rightBarWidth != 0)
@@ -101,7 +107,9 @@ class ExplorerLayoutExpanded extends StatelessWidget {
                     child: Card(
                       elevation: 0,
                       margin: const EdgeInsets.only(right: 16, bottom: 16),
-                      child: ReactiveResourceInfoView(),
+                      child: ExcludeFocusTraversal(
+                        child: const ReactiveResourceInfoView(),
+                      ),
                     ),
                   ),
               ],

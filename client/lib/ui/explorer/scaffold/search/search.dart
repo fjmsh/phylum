@@ -45,7 +45,8 @@ class SearchFieldController with ChangeNotifier {
 }
 
 class SearchField extends StatefulWidget {
-  const SearchField({super.key});
+  final FocusNode _explorerFocusNode;
+  const SearchField({super.key, required this._explorerFocusNode});
 
   @override
   State<SearchField> createState() => _SearchFieldState();
@@ -107,7 +108,11 @@ class _SearchFieldState extends State<SearchField> {
     return Actions(
       actions: {
         DismissIntent: CallbackAction<DismissIntent>(
-          onInvoke: (i) => context.read<SearchFieldController>().active = false,
+          onInvoke: (i) {
+            context.read<SearchFieldController>().active = false;
+            widget._explorerFocusNode.requestFocus();
+            return null;
+          },
         ),
       },
       child: Focus(

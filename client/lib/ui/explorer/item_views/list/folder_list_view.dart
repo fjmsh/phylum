@@ -9,7 +9,8 @@ import 'package:provider/provider.dart';
 import '../../explorer_controller.dart';
 
 class FolderListView extends StatefulWidget {
-  const FolderListView({super.key});
+  final FocusNode _node;
+  const FolderListView({super.key, required this._node});
 
   @override
   State<FolderListView> createState() => _FolderListViewState();
@@ -94,6 +95,7 @@ class _FolderListViewState extends State<FolderListView> {
         ),
       },
       child: Focus(
+        focusNode: widget._node,
         autofocus: true,
         descendantsAreFocusable: false,
         child: LayoutBuilder(

@@ -17,6 +17,7 @@ import '../explorer_controller.dart';
 import 'intents.dart';
 
 class ExplorerActions extends StatelessWidget {
+  final FocusNode _explorerFocusNode;
   final GlobalKey<RefreshIndicatorState> refreshKey;
   final Widget child;
 
@@ -24,6 +25,7 @@ class ExplorerActions extends StatelessWidget {
     super.key,
     required this.child,
     required this.refreshKey,
+    required this._explorerFocusNode,
   });
 
   @override
@@ -61,11 +63,15 @@ class ExplorerActions extends StatelessWidget {
           ),
         ),
         DismissIntent: CallbackAction<DismissIntent>(
-          onInvoke: (i) => context.read<ExplorerController>().updateSelection(
-            (i) => i,
-            SelectionMode.none,
-            true,
-          ),
+          onInvoke: (i) {
+            context.read<ExplorerController>().updateSelection(
+              (i) => i,
+              SelectionMode.none,
+              true,
+            );
+            _explorerFocusNode.requestFocus();
+            return null;
+          },
         ),
         ToggleSelectionIntent: CallbackAction<ToggleSelectionIntent>(
           onInvoke: (i) => context.read<ExplorerController>().updateSelection(

@@ -29,7 +29,9 @@ import 'item_views/grid/folder_grid_view.dart';
 import 'item_views/list/folder_list_view.dart';
 
 class ExplorerView extends StatefulWidget {
-  const ExplorerView({super.key});
+  final FocusNode _explorerFocusNode;
+
+  const ExplorerView({super.key, required this._explorerFocusNode});
 
   @override
   State<ExplorerView> createState() => _ExplorerViewState();
@@ -149,6 +151,7 @@ class _ExplorerViewState extends State<ExplorerView> {
     return Shortcuts(
       shortcuts: shortcutsMap,
       child: ExplorerActions(
+        explorerFocusNode: widget._explorerFocusNode,
         refreshKey: _refreshKey,
         child: ChangeNotifierProvider(
           create: (context) => FolderViewNotifier(context),
@@ -200,7 +203,7 @@ class _ExplorerViewState extends State<ExplorerView> {
       key: _refreshKey,
       onRefresh: context.read<ExplorerController>().refresh,
       child: switch (viewType) {
-        FolderViewType.list => const FolderListView(),
+        FolderViewType.list => FolderListView(node: widget._explorerFocusNode),
         FolderViewType.gridSmall => const FolderGridView(iconSize: 180),
         FolderViewType.gridLarge => const FolderGridView(iconSize: 240),
       },

@@ -10,7 +10,9 @@ import 'package:phylum/ui/explorer/menu/bottom_sheet.dart';
 import 'package:provider/provider.dart';
 
 class ExplorerLayoutCollapsed extends StatelessWidget {
-  const ExplorerLayoutCollapsed({super.key});
+  final FocusNode _explorerFocusNode;
+
+  const ExplorerLayoutCollapsed({super.key, required this._explorerFocusNode});
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +33,7 @@ class ExplorerLayoutCollapsed extends StatelessWidget {
               child: Icon(Icons.add),
             )
           : null,
-      body: const ExplorerView(),
+      body: ExplorerView(explorerFocusNode: _explorerFocusNode),
     );
   }
 
@@ -41,7 +43,7 @@ class ExplorerLayoutCollapsed extends StatelessWidget {
     int selected,
   ) {
     if (searching) {
-      return AppBar(title: SearchField());
+      return AppBar(title: SearchField(explorerFocusNode: _explorerFocusNode));
     }
     if (selected != 0) {
       return AppBar(

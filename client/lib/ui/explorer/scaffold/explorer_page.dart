@@ -31,6 +31,8 @@ class ExplorerPage extends StatefulWidget {
 
 class _ExplorerPageState extends State<ExplorerPage> {
   late final ExplorerHistoryController _historyController;
+  final FocusNode _explorerFocusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +46,12 @@ class _ExplorerPageState extends State<ExplorerPage> {
   void didUpdateWidget(ExplorerPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     _historyController.update(widget.location);
+  }
+
+  @override
+  void dispose() {
+    _explorerFocusNode.dispose();
+    super.dispose();
   }
 
   @override
@@ -95,8 +103,8 @@ class _ExplorerPageState extends State<ExplorerPage> {
   Widget buildPage(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final layout = width < maxViewportWidthSmall
-        ? const ExplorerLayoutCollapsed()
-        : const ExplorerLayoutExpanded();
+        ? ExplorerLayoutCollapsed(explorerFocusNode: _explorerFocusNode)
+        : ExplorerLayoutExpanded(explorerFocusNode: _explorerFocusNode);
     return ExternalDropRegion(
       buildItem: (context, dropTargetActive) {
         final child = (dropTargetActive)
