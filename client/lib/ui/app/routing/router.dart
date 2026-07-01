@@ -105,29 +105,12 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
 
   void _rebuildPages() {
     final account = _accountManagerState.selectedAccount;
-    pages = _current.route.dialog
-        ? [
-            MaterialPage(
-              child: (_current.base ?? const HomeRoute()).buildPage(account),
-            ),
-            _DialogPage(child: _current.route.buildPage(account)),
-          ]
-        : [MaterialPage(child: _current.route.buildPage(account))];
-  }
-}
-
-class _DialogPage<T> extends Page<T> {
-  final Widget child;
-
-  const _DialogPage({super.key, required this.child});
-
-  @override
-  Route<T> createRoute(BuildContext context) {
-    return DialogRoute(
-      settings: this,
-      context: context,
-      builder: (context) => child,
-      fullscreenDialog: false,
-    );
+    pages = [
+      if (_current.route.dialog)
+        MaterialPage(
+          child: (_current.base ?? const HomeRoute()).buildPage(account),
+        ),
+      MaterialPage(child: _current.route.buildPage(account)),
+    ];
   }
 }

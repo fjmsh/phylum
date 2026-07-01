@@ -84,6 +84,7 @@ class _ResourcePreviewDialogState extends State<FilePreviewPage> {
       child: FocusScope(
         autofocus: true,
         child: FileViewerScaffold(
+          transparent: false,
           resource: res,
           body: res != null
               ? FileViewer(resource: res)

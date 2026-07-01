@@ -7,11 +7,13 @@ import 'versioned_resource.dart';
 class FileViewerScaffold extends StatelessWidget {
   final VersionedResource? _resource;
   final Widget _body;
+  final bool _transparent;
 
   const FileViewerScaffold({
     super.key,
     required this._resource,
     required this._body,
+    this._transparent = true,
   });
 
   @override
@@ -19,7 +21,9 @@ class FileViewerScaffold extends StatelessWidget {
     return GestureDetector(
       onTap: () => Navigator.of(context).pop(),
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: _transparent
+            ? Colors.transparent
+            : Theme.of(context).colorScheme.inverseSurface,
         appBar: AppBar(
           foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
           leading: const CloseButton(),
