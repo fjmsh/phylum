@@ -75,8 +75,12 @@ Map<ShortcutActivator, Intent> _createShortcuts() {
       SingleActivator(LogicalKeyboardKey.arrowUp, meta: true): NavUpIntent(),
       SingleActivator(LogicalKeyboardKey.keyH, meta: true): NavHomeIntent(),
       SingleActivator(LogicalKeyboardKey.keyF, meta: true): FocusSearchIntent(),
+      SingleActivator(LogicalKeyboardKey.arrowLeft, meta: true):
+          NavBackIntent(),
       SingleActivator(LogicalKeyboardKey.bracketLeft, meta: true):
           NavBackIntent(),
+      SingleActivator(LogicalKeyboardKey.arrowRight, meta: true):
+          NavForwardIntent(),
       SingleActivator(LogicalKeyboardKey.bracketRight, meta: true):
           NavForwardIntent(),
 
