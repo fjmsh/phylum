@@ -285,30 +285,21 @@ class _SessionsKeysViewState extends State<SessionsKeysView> {
         context: context,
         builder: (context) => AlertDialog(
           title: Text('API Key Generated'),
+          scrollable: true,
           content: SizedBox(
             width: 480,
             child: Column(
+              mainAxisSize: .min,
+              spacing: 12,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6.0),
-                  child: Text(
-                    'Key ID and Key can be used as the username and password in HTTP Basic auth',
-                  ),
+                Text(
+                  'Please note down the details as it will not be possible to retreive once it is dismissed.',
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6.0),
-                  child: Text(
-                    'Access Token can be used as a Bearer token, or with HTTP Basic auth by leaving the '
-                    'username empty',
-                  ),
+                Text(
+                  'Key ID and Key can be used as the username and password in HTTP Basic auth',
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6.0),
-                  child: Text(
-                    'Please note down the details as it will not be possible to retreive once it is dismissed.',
-                  ),
-                ),
+                const Divider(),
                 TextFormField(
                   decoration: InputDecoration(
                     label: Text('Key ID'),
@@ -333,6 +324,11 @@ class _SessionsKeysViewState extends State<SessionsKeysView> {
                   ),
                   initialValue: response.key,
                   readOnly: true,
+                ),
+                const Divider(),
+                Text(
+                  'Access Token can be used as a Bearer token, or with HTTP Basic auth by leaving the '
+                  'username empty',
                 ),
                 TextFormField(
                   decoration: InputDecoration(
