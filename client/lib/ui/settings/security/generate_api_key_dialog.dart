@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/ui/explorer/destination_picker/destination_picker.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/time.dart';
@@ -49,114 +50,156 @@ class _GenerateApiKeyDialogState extends State<GenerateApiKeyDialog> {
 
   @override
   Widget build(BuildContext context) {
-    // MediaQuery.sizeOf(context).width
-    return AlertDialog(
-      title: Text('Generate API Key'),
-      scrollable: true,
-      content: SizedBox(
-        width: 480,
-        child: Column(
-          mainAxisSize: .min,
-          spacing: 18,
-          crossAxisAlignment: CrossAxisAlignment.start,
+    if (MediaQuery.sizeOf(context).width > maxViewportWidthXSmall) {
+      return AlertDialog(
+        title: Text('New API Key'),
+        scrollable: true,
+        content: SizedBox(width: 560, child: buildContents(context)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: scopes.isEmpty
+                ? null
+                : () => Navigator.of(context).pop(
+                    ApiKeyParams(
+                      description: description,
+                      expires: expires,
+                      scopes: scopes,
+                    ),
+                  ),
+            child: Text('Generate'),
+          ),
+        ],
+      );
+    }
+
+    return Dialog.fullscreen(
+      child: Scaffold(
+        appBar: AppBar(title: Text('New API Key')),
+        body: Column(
           children: [
-            TextField(
-              decoration: InputDecoration(
-                label: Text('Description'),
-                hintText: 'Generated via API',
-              ),
-              onChanged: (value) => description = value,
-              autocorrect: true,
-              autofocus: true,
-            ),
-            TextField(
-              decoration: InputDecoration(
-                label: Text('Expires'),
-                suffixIcon: expires == null
-                    ? IconButton(
-                        icon: Icon(Icons.calendar_month),
-                        onPressed: () => pickDate(context),
-                      )
-                    : IconButton(
-                        icon: Icon(Icons.close),
-                        onPressed: () {
-                          expires = null;
-                          expiresController.text = 'Never';
-                        },
-                      ),
-              ),
-              controller: expiresController,
-              readOnly: true,
-              onSubmitted: (value) => pickDate(context),
-              onTap: () => pickDate(context),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ListTile(
-                  title: Text(
-                    'Scopes',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  dense: true,
-                  visualDensity: VisualDensity.compact,
-                  trailing: IconButton(
-                    onPressed: () => addScope(context),
-                    icon: Icon(Icons.add),
-                  ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: buildContents(context),
                 ),
-                if (scopes.isEmpty)
-                  const Text(
-                    'None',
-                    style: TextStyle(fontStyle: FontStyle.italic),
-                    maxLines: 1,
-                    overflow: TextOverflow.fade,
-                    softWrap: false,
-                  )
-                else
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      for (final scope in scopes)
-                        Chip(
-                          label: Text(
-                            scope,
-                            maxLines: 1,
-                            overflow: TextOverflow.fade,
-                            softWrap: false,
-                          ),
-                          deleteIcon: Icon(Icons.close),
-                          onDeleted: () => setState(
-                            () => scopes.removeWhere((e) => e == scope),
-                          ),
-                        ),
-                    ],
+              ),
+            ),
+            const Divider(height: 1, thickness: 1),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                mainAxisAlignment: .end,
+                spacing: 12,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(null),
+                    child: Text('Cancel'),
                   ),
-              ],
+                  TextButton(
+                    onPressed: scopes.isEmpty
+                        ? null
+                        : () => Navigator.of(context).pop(
+                            ApiKeyParams(
+                              description: description,
+                              expires: expires,
+                              scopes: scopes,
+                            ),
+                          ),
+                    child: Text('Generate'),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          child: Text(
-            'Cancel',
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
+    );
+  }
+
+  Widget buildContents(BuildContext context) {
+    return Column(
+      mainAxisSize: .min,
+      spacing: 18,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          decoration: InputDecoration(
+            label: Text('Description'),
+            hintText: 'Generated via API',
           ),
-          onPressed: () => Navigator.of(context).pop(null),
+          onChanged: (value) => description = value,
+          autocorrect: true,
+          autofocus: true,
         ),
-        ElevatedButton(
-          onPressed: scopes.isEmpty
-              ? null
-              : () => Navigator.of(context).pop(
-                  ApiKeyParams(
-                    description: description,
-                    expires: expires,
-                    scopes: scopes,
+        TextField(
+          decoration: InputDecoration(
+            label: Text('Expires'),
+            suffixIcon: expires == null
+                ? IconButton(
+                    icon: Icon(Icons.calendar_month),
+                    onPressed: () => pickDate(context),
+                  )
+                : IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () {
+                      expires = null;
+                      expiresController.text = 'Never';
+                    },
                   ),
-                ),
-          child: Text('Generate'),
+          ),
+          controller: expiresController,
+          readOnly: true,
+          onSubmitted: (value) => pickDate(context),
+          onTap: () => pickDate(context),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTile(
+              title: Text(
+                'Scopes',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              dense: true,
+              visualDensity: VisualDensity.compact,
+              trailing: IconButton(
+                onPressed: () => addScope(context),
+                icon: Icon(Icons.add),
+              ),
+            ),
+            if (scopes.isEmpty)
+              const Text(
+                'None',
+                style: TextStyle(fontStyle: FontStyle.italic),
+                maxLines: 1,
+                overflow: TextOverflow.fade,
+                softWrap: false,
+              )
+            else
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final scope in scopes)
+                    Chip(
+                      label: Text(
+                        scope,
+                        maxLines: 1,
+                        overflow: TextOverflow.fade,
+                        softWrap: false,
+                      ),
+                      deleteIcon: Icon(Icons.close),
+                      onDeleted: () =>
+                          setState(() => scopes.removeWhere((e) => e == scope)),
+                    ),
+                ],
+              ),
+          ],
         ),
       ],
     );
