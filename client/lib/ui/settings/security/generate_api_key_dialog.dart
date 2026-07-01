@@ -49,15 +49,16 @@ class _GenerateApiKeyDialogState extends State<GenerateApiKeyDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // MediaQuery.sizeOf(context).width
     return AlertDialog(
       title: Text('Generate API Key'),
       scrollable: true,
       content: SizedBox(
-        width: 360,
+        width: 480,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: .min,
           spacing: 18,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
               decoration: InputDecoration(
@@ -111,27 +112,25 @@ class _GenerateApiKeyDialogState extends State<GenerateApiKeyDialog> {
                     maxLines: 1,
                     overflow: TextOverflow.fade,
                     softWrap: false,
-                  ),
-                for (final scope in scopes)
-                  Row(
-                    mainAxisSize: MainAxisSize.max,
+                  )
+                else
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
                     children: [
-                      Expanded(
-                        child: Text(
-                          scope,
-                          maxLines: 1,
-                          overflow: TextOverflow.fade,
-                          softWrap: false,
+                      for (final scope in scopes)
+                        Chip(
+                          label: Text(
+                            scope,
+                            maxLines: 1,
+                            overflow: TextOverflow.fade,
+                            softWrap: false,
+                          ),
+                          deleteIcon: Icon(Icons.close),
+                          onDeleted: () => setState(
+                            () => scopes.removeWhere((e) => e == scope),
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.close, size: 24),
-                        padding: EdgeInsets.all(3),
-                        onPressed: () => setState(
-                          () => scopes.removeWhere((e) => e == scope),
-                        ),
-                        constraints: const BoxConstraints(),
-                      ),
                     ],
                   ),
               ],
