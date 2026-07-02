@@ -43,7 +43,7 @@ RUN apk add vips-tools vips-poppler font-noto libreoffice
 ENV PATH="$PATH:/app"
 ENV PHYLUM_SERVER_WEBAPPSRC="/app/web"
 COPY --from=api_builder /bin/phylum /app/phylum
-COPY --from=webapp_builder /src/build/web /app/web
+#COPY --from=webapp_builder /src/build/web /app/web
 WORKDIR /var/lib/phylum
 ENTRYPOINT ["phylum"]
 CMD ["serve", "--debug"]
