@@ -76,7 +76,7 @@ func SetupCommand() *cobra.Command {
 			setupTrashCompactor(logger)
 		}
 
-		setupWebApp(engine, Cfg.WebAppSrc)
+		setupWebApp(engine, logger, Cfg.WebAppSrc)
 
 		listen := Cfg.Host + ":" + strconv.Itoa(Cfg.Port)
 		server := http.Server{
@@ -126,9 +126,16 @@ func SetupCommand() *cobra.Command {
 	return cmd
 }
 
-func setupWebApp(r gin.IRoutes, webAppSrcDir string) {
+func setupWebApp(r gin.IRoutes, logger *zerolog.Logger, webAppSrcDir string) {
 	fs := static.LocalFile(webAppSrcDir, false)
 	fileserver := http.FileServer(fs)
+
+	if !fs.Exists("/", "/index.html") {
+		logger.Warn().Msg("Unable to locate Web App at `" + webAppSrcDir + "`. " +
+			"It may not be built or be configured incorrectly.")
+		fs = nil
+		fileserver = nil
+	}
 	indexFilePath := path.Join(webAppSrcDir, "index.html")
 
 	staticFS, err := static.EmbedFolder(staticFS, ".")
@@ -154,7 +161,7 @@ func setupWebApp(r gin.IRoutes, webAppSrcDir string) {
 			return
 		}
 
-		if c.Request.Method == "GET" &&
+		if fs != nil && c.Request.Method == "GET" &&
 			!strings.HasPrefix(path, "/api") &&
 			!strings.HasPrefix(path, webdavPath) &&
 			!strings.HasPrefix(path, publinkPath) {
