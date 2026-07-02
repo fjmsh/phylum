@@ -83,12 +83,23 @@ func MergeWithYaml(cfg *koanf.Koanf, path string) *koanf.Koanf {
 
 func HasOverrides(path string, cfg *koanf.Koanf) (overriden []string) {
 	overrides := overrides.Cut(path)
-	for k, _ := range cfg.All() {
+	for k := range cfg.All() {
 		if overrides.Get(k) != nil {
 			overriden = append(overriden, k)
 		}
 	}
 	return overriden
+}
+
+func OverrideKeys(paths []string) []string {
+	result := koanf.New(".")
+	for _, p := range paths {
+		o := overrides.Cut(p)
+		if len(o.Keys()) != 0 {
+			result.MergeAt(overrides.Cut(p), p)
+		}
+	}
+	return result.Keys()
 }
 
 func LoadOverrides(cmd *cobra.Command) (*koanf.Koanf, error) {

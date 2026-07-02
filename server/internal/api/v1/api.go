@@ -12,6 +12,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/v1/trash"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/user"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/users"
+	"codeberg.org/shroff/phylum/server/internal/config"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 )
@@ -40,6 +41,7 @@ func SetupConfig(r *gin.RouterGroup, logger *zerolog.Logger) {
 	r.GET("/info", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"needs_config": true,
+			"overrides":    config.OverrideKeys([]string{"db", "mail", "auth"}),
 		})
 	})
 
