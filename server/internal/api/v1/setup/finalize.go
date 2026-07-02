@@ -23,7 +23,10 @@ type finalizeParams struct {
 }
 
 type configOverrides struct {
-	DB   db.Config   `koanf:"db" json:"db"`
+	DB struct {
+		db.Config
+		Wipe bool `json:"wipe"`
+	} `koanf:"db" json:"db"`
 	Mail mail.Config `koanf:"mail,omitempty" json:"mail"`
 	Auth auth.Config `koanf:"auth" json:"auth"`
 	Core core.Config `koanf:"core,omitempty"`
@@ -46,39 +49,56 @@ func handleFinalize(c *gin.Context) {
 	inCfg.Load(structs.Provider(params.Config, "koanf"), nil)
 	fullCfg := config.MergeSub("", inCfg)
 
-	var cfg configOverrides
-	fullCfg.Unmarshal("", &cfg)
+	var dbConfig db.Config
+	var mailConfig mail.Config
+	var authConfig auth.Config
+	var coreConfig core.Config
+	fullCfg.Unmarshal("db", &dbConfig)
+	fullCfg.Unmarshal("mail", &mailConfig)
+	fullCfg.Unmarshal("auth", &authConfig)
+	fullCfg.Unmarshal("core", &coreConfig)
 
 	defer func() {
 		syscall.Kill(os.Getpid(), syscall.SIGINT)
 	}()
 
 	logger := zerolog.Logger{}
-	if _, err := db.Initialize(c.Request.Context(), cfg.DB, &logger); err != nil {
+	if params.Config.DB.Wipe {
+		dbConfig.NoMigrate = true
+	}
+
+	if pool, err := db.Initialize(c.Request.Context(), dbConfig, &logger); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"error":   "Failed to initialize DB",
 			"details": err.Error(),
 		})
 		return
+	} else if params.Config.DB.Wipe {
+		if err := db.ResetSchema(c.Request.Context(), pool); err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"error":   "Failed to Reset DB Schema",
+				"details": err.Error(),
+			})
+
+		} else if schemaInfo, err := db.GetSchemaInfo(c.Request.Context(), pool); err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"error":   "Failed get DB Schema Info",
+				"details": err.Error(),
+			})
+		} else if err := schemaInfo.MigrateTo(c.Request.Context(), schemaInfo.LatestVersion); err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"error":   "Failed migrate DB Schema",
+				"details": err.Error(),
+			})
+		}
 	}
 	d := db.Get(c.Request.Context())
-	if users, err := core.ListUsers(d, 0); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"error":   "Failed to list users",
-			"details": err.Error(),
-		})
-		return
-	} else if len(users) != 0 {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"error":   "Database not empty",
-		})
-		return
-	}
 
-	if err := core.Initialize(d, cfg.Core); err != nil {
+	if err := core.Initialize(d, coreConfig); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"error":   "Failed to initialize core",
@@ -86,7 +106,7 @@ func handleFinalize(c *gin.Context) {
 		})
 		return
 	}
-	if err := auth.Initialize(cfg.Auth, logger); err != nil {
+	if err := auth.Initialize(authConfig, logger); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"error":   "Failed to initialize auth",
@@ -101,7 +121,7 @@ func handleFinalize(c *gin.Context) {
 		})
 		return
 	}
-	if m, err := mail.CreateMailer(cfg.Mail, logger); err != nil {
+	if m, err := mail.CreateMailer(mailConfig, logger); err != nil {
 		if !errors.Is(err, mail.ErrEmailNotConfigured) {
 			c.JSON(http.StatusOK, gin.H{
 				"success": false,

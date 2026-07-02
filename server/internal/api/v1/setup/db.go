@@ -41,7 +41,7 @@ func handleValidateDBRequest(c *gin.Context) {
 			"msg":     "Failed to Initialize Connection",
 			"details": err.Error(),
 		}
-	} else if _, err := db.GetSchemaInfo(c.Request.Context(), pool); err != nil {
+	} else if schema, err := db.GetSchemaInfo(c.Request.Context(), pool); err != nil {
 		if strings.Contains(err.Error(), "no such host") {
 			response["error"] = gin.H{
 				"code": "no_such_host",
@@ -67,6 +67,11 @@ func handleValidateDBRequest(c *gin.Context) {
 				"msg":     "Failed to Connect to Database",
 				"details": err.Error(),
 			}
+		}
+	} else if schema.CurrentVersion != 0 {
+		response["warning"] = gin.H{
+			"code": "not_empty",
+			"msg":  "Database is not empty",
 		}
 	}
 	c.JSON(http.StatusOK, response)

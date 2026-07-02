@@ -19,18 +19,18 @@ func Initialize(ctx context.Context, cfg Config, log *zerolog.Logger) (*pgxpool.
 
 	if p, err := Connect(ctx, cfg, log); err != nil {
 		return nil, errors.New("failed to initialize db pool: " + err.Error())
+	} else if err := p.Ping(ctx); err != nil {
+		return nil, errors.New("failed to connect to db: " + err.Error())
 	} else {
 		pool = p
 	}
 
 	// Migrate schema
-	if s, err := GetSchemaInfo(ctx, pool); err != nil {
-		pool = nil
-		return nil, errors.New("failed to get schema info: " + err.Error())
-	} else if s.CurrentVersion != s.LatestVersion {
-		if cfg.NoMigrate {
-			log.Warn().Int32("current", s.CurrentVersion).Int32("latest", s.LatestVersion).Msg("Database schema is not at current version")
-		} else {
+	if !cfg.NoMigrate {
+		if s, err := GetSchemaInfo(ctx, pool); err != nil {
+			pool = nil
+			return nil, errors.New("failed to get schema info: " + err.Error())
+		} else if s.CurrentVersion != s.LatestVersion {
 			log.Info().Int32("current", s.CurrentVersion).Int32("latest", s.LatestVersion).Msg("Performing schema migration")
 			if err := s.MigrateTo(ctx, int32(s.LatestVersion)); err != nil {
 				pool = nil
