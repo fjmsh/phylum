@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:http/http.dart';
 import 'package:phylum/libphylum/config/mail_config.dart';
-import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/ui/setup/auth/setup_auth_fragment.dart';
@@ -150,9 +149,7 @@ class _SetupPageState extends State<SetupPage> {
     if (responseMap["success"]) {
       await showAlertDialog(context, title: 'Instance configured');
       if (!context.mounted) return;
-      context.read<PhylumRouterDelegate>().go(
-        ExplorerRoute(location: ExplorerLocationHome()),
-      );
+      context.read<PhylumRouterDelegate>().go(const HomeRoute());
     } else {
       await showAlertDialog(
         context,
