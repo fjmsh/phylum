@@ -7,7 +7,7 @@ type Config struct {
 }
 
 type MountConfig struct {
-	MountPoint string            `koanf:"mount_point"`
-	Driver     string            `koanf:"driver"`
-	Params     map[string]string `koanf:"params"`
+	MountPoints []string          `koanf:"mount_points"`
+	Driver      string            `koanf:"driver"`
+	Params      map[string]string `koanf:"params"`
 }

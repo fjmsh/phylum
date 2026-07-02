@@ -113,13 +113,15 @@ func InsertBackend(d db.Handler, name string, driver Driver, params map[string]s
 func restoreBackends(mounts map[string]MountConfig) (map[string]Backend, error) {
 	backends := map[string]Backend{}
 	for name, m := range mounts {
-		if id, err := uuid.Parse(m.MountPoint); err != nil {
-			return nil, fmt.Errorf("failed to parse mount point for `%s`: %s", name, err.Error())
-		} else if backend, err := m.open(name); err != nil {
-			return nil, fmt.Errorf("failed to open `%s`: %s", name, err.Error())
-		} else {
-			backends[name] = backend
-			mountPoints[id] = name
+		for _, mp := range m.MountPoints {
+			if id, err := uuid.Parse(mp); err != nil {
+				return nil, fmt.Errorf("failed to parse mount point `%s` for `%s`: %s", mp, name, err.Error())
+			} else if backend, err := m.open(name); err != nil {
+				return nil, fmt.Errorf("failed to open backend `%s`: %s", name, err.Error())
+			} else {
+				backends[name] = backend
+				mountPoints[id] = name
+			}
 		}
 	}
 	return backends, nil

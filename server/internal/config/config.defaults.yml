@@ -12,12 +12,14 @@ storage:
   temp: tmp           # relative to root, or absolute
   mounts:
     # home:
-    #   mount_point: <uuid>
+    #   mount_points: 
+    #     - <uuid>
+    #     - <uuid>
     #   driver: local
     #   params:
     #     root: home  # relative to root, or absolute
     # data:
-    #   mount_point: <uuid>
+    #   mount_points: ["<uuid>"]
     #   driver: minio
     #   params:
     #     endpoint:
