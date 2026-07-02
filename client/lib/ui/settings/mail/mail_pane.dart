@@ -25,23 +25,28 @@ class _MailPaneState extends State<MailPane> {
       if (state.loading) {
         return const Center(child: CircularProgressIndicator());
       }
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        spacing: 18,
-        children: [
-          if (state.error != null)
-            Text('Error loading Mail Config: ${state.error}'),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+      return Center(
+        child: Column(
+          mainAxisAlignment: .center,
+          crossAxisAlignment: .center,
+          spacing: 18,
+          children: [
+            if (state.error != null)
+              Text('Error loading Mail Config: ${state.error}'),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                foregroundColor: Theme.of(
+                  context,
+                ).colorScheme.onPrimaryContainer,
+              ),
+              onPressed: () {
+                context.read<MailConfigController>().fetch();
+              },
+              child: Text(state.error == null ? 'Load Mail Config' : 'Retry'),
             ),
-            onPressed: () {
-              context.read<MailConfigController>().fetch();
-            },
-            child: Text(state.error == null ? 'Load Mail Config' : 'Retry'),
-          ),
-        ],
+          ],
+        ),
       );
     }
     return const MailConfigForm();

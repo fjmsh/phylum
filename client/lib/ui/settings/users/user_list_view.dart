@@ -21,24 +21,29 @@ class UserListView extends StatelessWidget {
         return const Center(child: CircularProgressIndicator());
       }
       if (state.error != null) {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          spacing: 18,
-          children: [
-            Text('Error loading User List: ${state.error}'),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                foregroundColor: Theme.of(
-                  context,
-                ).colorScheme.onPrimaryContainer,
+        return Center(
+          child: Column(
+            mainAxisAlignment: .center,
+            crossAxisAlignment: .center,
+            spacing: 18,
+            children: [
+              Text('Error loading User List: ${state.error}'),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer,
+                  foregroundColor: Theme.of(
+                    context,
+                  ).colorScheme.onPrimaryContainer,
+                ),
+                onPressed: () {
+                  context.read<UserListController>().fetch();
+                },
+                child: Text('Retry'),
               ),
-              onPressed: () {
-                context.read<UserListController>().fetch();
-              },
-              child: Text('Retry'),
-            ),
-          ],
+            ],
+          ),
         );
       }
       return Center(
