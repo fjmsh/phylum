@@ -40,8 +40,9 @@ func Setup(r *gin.RouterGroup, logger *zerolog.Logger) {
 func SetupConfig(r *gin.RouterGroup, logger *zerolog.Logger) {
 	r.GET("/info", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"needs_config": true,
-			"overrides":    config.OverrideKeys([]string{"db", "mail", "auth"}),
+			"setup": gin.H{
+				"overrides": config.OverrideKeys([]string{"db", "mail", "auth"}),
+			},
 		})
 	})
 
