@@ -2,9 +2,11 @@ import 'dart:math';
 import 'dart:typed_data';
 
 final _random = Random();
-const _range = 1 << 32 - 1; // Issue with web
-
-int _lastTimestamp = 0;
+const _max8 = 1 << 8;
+const _max12 = 1 << 12;
+final _max32 = pow(2, 32).toInt();
+int _lastMs = 0;
+int _lastUs = 0;
 
 final List<String> _byteToHex = List<String>.generate(256, (i) {
   return i.toRadixString(16).padLeft(2, '0');
@@ -18,12 +20,10 @@ String generateUuid() {
   var buf = Uint8List(16);
   final (ms, seq) = _getV7Time();
 
-  // Workaround for JS web:
-  // final msHigh = (ms / pow(2, 32)).toInt();
-  // buf[0] = msHigh >> 8;
-  // buf[1] = msHigh;
-  buf[0] = ms >> 40;
-  buf[1] = ms >> 32;
+  // Workaround for web:
+  final msHigh = (ms / _max32).toInt();
+  buf[0] = msHigh >> 8;
+  buf[1] = msHigh;
   buf[2] = ms >> 24;
   buf[3] = ms >> 16;
   buf[4] = ms >> 8;
@@ -40,21 +40,28 @@ String generateUuid() {
 (int, int) _getV7Time() {
   final time = DateTime.now();
   int ms = time.millisecondsSinceEpoch;
-  int us = time.microsecond;
-  int now = (ms << 10) + us;
-  if (ms < _lastTimestamp) {
-    now = _lastTimestamp + 1;
-    ms = now >> 10;
-    us = now & 0x3ff;
+  int us = 0;
+
+  if (ms <= _lastMs) {
+    ms = _lastMs;
+    us = _lastUs + _random.nextInt(_max8);
+    // us is more than 12 bits
+    if ((us & 0xfffffc00) != 0) {
+      ms += 1;
+      us = us & 0x3ff;
+    }
+  } else {
+    us = _random.nextInt(_max12);
   }
-  _lastTimestamp = now;
+  _lastMs = ms;
+  _lastUs = us;
 
   return (ms, us);
 }
 
-_populateRandomBytes4(Uint8List buf, int offset, int count) {
+Uint8List _populateRandomBytes4(Uint8List buf, int offset, int count) {
   for (var i = offset; i < offset + count; i += 4) {
-    var k = _random.nextInt(_range);
+    var k = _random.nextInt(_max32);
     buf[i] = k;
     buf[i + 1] = k >> 8;
     buf[i + 2] = k >> 16;
