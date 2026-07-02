@@ -10,6 +10,9 @@ services:
       - .env
     environment:
       PHYLUM_DB_HOST: db
+      PHYLUM_DB_PORT: 5432
+      PHYLUM_DB_NAME: ${PHYLUM_DB_NAME:-phylum}
+      PHYLUM_DB_USER: ${PHYLUM_DB_USER:-phylum}
     ports:
       - '2448:2448'
     depends_on:
@@ -26,8 +29,8 @@ services:
       POSTGRES_PASSWORD: ${PHYLUM_DB_PASSWORD}
     volumes:
       - ${DATA_ROOT:-./data}/${PG_DATA_LOCATION:-postgres}:/var/lib/postgresql/data
-    ports:
-      - '5432:5432'
+    expose:
+      - 5432
     healthcheck:
       test: "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
       interval: 30s
