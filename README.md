@@ -35,48 +35,32 @@ Phylum may be for you if you want:
 - [File version history](https://codeberg.org/shroff/phylum/wiki/Version-History)
 - [Remote storage backends](https://codeberg.org/shroff/phylum/wiki/Content-Storage)
 - [Auth backends (LDAP, OIDC)](https://codeberg.org/shroff/phylum/wiki/User-Authentication)
-- [WebDAV access](wiki/WebDAV)
+- [WebDAV access](https://codeberg.org/shroff/phylum/wiki/WebDAV)
 - Publicly share files/folders
 
-*: Not yet built/tested on MacOS, iOS, and Windows. 
+*: Not tested on Windows
 
 ## Quick-Start
 
 ```
-# download compose.yml
-wget https://codeberg.org/shroff/phylum/raw/branch/main/compose.yml 
-# create a new DB password and put it into .env
+curl -O https://codeberg.org/shroff/phylum/raw/branch/main/compose.yml 
 echo "PHYLUM_DB_PASSWORD=$(head -c 32 /dev/urandom | md5sum | cut -d ' ' -f 1)" > .env
-# Create data/config.yml
-mkdir -p data && touch data/config.yml
-# Spin it up and show logs
 docker compose up -d && docker compose logs -f
 ```
 
-Once the server is up and running (it may take a minute or so the first time), create a user using the CLI
-```
-docker exec -it phylum_server phylum admin user create
-```
+Open `https://localhost:2448` to continue setup.
 
-Finally, go to `http://localhost:2448`
-
-It is highly recommended to take a look at `config.defaults.yml` to see a full list of configuration options.
-
-
-## CLI
-The CLI is a powerful way to interact with and manage a locally running phylum instance. It also enables many advanced admin use-cases that are not yet possible using the app or API yet. You can run it on docker using
-```
-$ docker exec -it phylum_server phylum <cmd>
-```
-
-Use the `help` command (or leave out the command) to get a list of options
-
-Please note that for `fs` operations, `<path>`s can have a `<uuid>:` prefix to make the path relative to that UUID. This also means that if you know the UUID of the resource, you can simply use `<uuid>:` as the path. If no `<uuid>:` prefix is specified then the path is relative to the root directory, or the home directory of the user if one is specified using the `--user-email` flag.
+Take a look at [Configuration and Management](https://codeberg.org/shroff/phylum/wiki/Configuration-and-Management) for more details about configuration.
 
 
 ## Help and Contributing
 Reach out on Matrix at [#phylum_cloud:matrix.org](https://matrix.to/#/#phylum_cloud:matrix.org) if you need help to get set up, or want to contribute.
 
+
+## Configuration and Management
+Configuration is read from from `config.yml` file in the `data/phylum` directory.
+
+It is highly recommended to take a look at `config.defaults.yml` to see a full list of configuration options.
 
 ## Screenshots
 
