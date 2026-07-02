@@ -84,14 +84,14 @@ class _SingleInstanceWebState extends State<SingleInstanceWeb> {
       );
     });
 
-    channel.postMessage('request|$requestId'.toJS);
+    postMessage('request|$requestId');
     retryRequestTimer = Timer.periodic(const Duration(milliseconds: 100), (t) {
       if (retriesLeft-- > 0) {
         if (!requestAccepted) {
-          channel.postMessage('request|$requestId'.toJS);
+          postMessage('request|$requestId');
         }
       } else {
-        channel.postMessage('hijack|$requestId'.toJS);
+        postMessage('hijack|$requestId');
         retryRequestTimer?.cancel();
         retryRequestTimer = null;
         requestId = null;
@@ -103,6 +103,10 @@ class _SingleInstanceWebState extends State<SingleInstanceWeb> {
     requestAccepted = false;
   }
 
+  void postMessage(String message) {
+    channel.postMessage(message.toJS);
+  }
+
   void processMessage(web.MessageEvent event) {
     final data = event.data.toString();
     final msg = data.split('|');
@@ -110,20 +114,23 @@ class _SingleInstanceWebState extends State<SingleInstanceWeb> {
       Log.warn('Unrecognized message: $data');
     }
 
-    if (msg[0] == 'request') {
-      final id = msg[1];
-      if (accountManager.status == AccountManagerStatus.ready) {
-        channel.postMessage('accept|$id'.toJS);
-        accountManager.close().then((v) {
-          channel.postMessage('success|$id'.toJS);
-          setPrimary(false.toJS);
-        });
-      } else {
-        channel.postMessage('reject|$id'.toJS);
+    if (isPrimary()) {
+      if (msg[0] == 'request') {
+        final id = msg[1];
+        if (accountManager.status == AccountManagerStatus.ready) {
+          postMessage('accept|$id');
+          accountManager.close().then((v) {
+            postMessage('success|$id');
+            setPrimary(false.toJS);
+          });
+        } else {
+          postMessage('reject|$id');
+        }
       }
-    }
-    if (msg[0] == 'hijack') {
-      setPrimary(false.toJS);
+      if (msg[0] == 'hijack') {
+        accountManager.close();
+        setPrimary(false.toJS);
+      }
     }
 
     // Process responses, but make sure the id matches
