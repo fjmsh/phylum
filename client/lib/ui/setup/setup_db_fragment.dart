@@ -189,16 +189,35 @@ class SetupDbFragment extends StatelessWidget {
         .cast<String, dynamic>();
 
     final error = (responseMap['error'] as Map?)?.cast<String, dynamic>();
+    final warning = (responseMap['warning'] as Map?)?.cast<String, dynamic>();
 
-    if (error == null) {
-      onNextPress();
-    } else {
+    if (error != null) {
       String details = error['details'] ?? '';
       showAlertDialog(
         context,
         title: error['msg'],
         message: details.isEmpty ? null : details,
       );
+    } else {
+      final controller = context.read<DbController>();
+      bool wipe = false;
+      if (warning != null) {
+        if (warning["code"] == "not_empty") {
+          final response = await showAlertDialog(
+            context,
+            title: 'Warning',
+            message: "The database is not empty.",
+            positiveText: 'Continue anyway',
+            negativeText: 'Wipe Data',
+          );
+          if (response == null) return;
+          if (!response) {
+            wipe = true;
+          }
+        }
+      }
+      controller.wipe = wipe;
+      onNextPress();
     }
   }
 }
@@ -225,6 +244,10 @@ class DbController extends StateNotifier<DbConfig> {
   set password(String value) {
     state = state.copyWith(password: value);
   }
+
+  set wipe(bool value) {
+    state = state.copyWith(wipe: value);
+  }
 }
 
 class DbConfig {
@@ -234,6 +257,7 @@ class DbConfig {
   final String name;
   final String user;
   final String password;
+  final bool wipe;
 
   const DbConfig._({
     required this.overrides,
@@ -242,6 +266,7 @@ class DbConfig {
     required this.name,
     required this.user,
     required this.password,
+    required this.wipe,
   });
 
   DbConfig(Set<String> overrides)
@@ -251,7 +276,8 @@ class DbConfig {
         port: 5432,
         name: 'phylum',
         user: 'phylum',
-        password: 'phylum',
+        password: '',
+        wipe: false,
       );
 
   DbConfig copyWith({
@@ -260,6 +286,7 @@ class DbConfig {
     String? name,
     String? user,
     String? password,
+    bool? wipe,
   }) {
     return DbConfig._(
       overrides: overrides,
@@ -268,6 +295,7 @@ class DbConfig {
       name: name ?? this.name,
       user: user ?? this.user,
       password: password ?? this.password,
+      wipe: wipe ?? this.wipe,
     );
   }
 
@@ -278,6 +306,7 @@ class DbConfig {
       'name': name,
       'user': user,
       'password': password,
+      if (wipe) 'wipe': wipe,
     };
     map.removeWhere((k, v) => overrides.contains(k));
     return map;

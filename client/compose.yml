@@ -1,0 +1,40 @@
+name: phylum
+
+services:
+  server:
+    container_name: phylum_server
+    image: docker.io/shroff12/phylum:${PHYLUM_IMAGE_TAG:-latest}
+    volumes:
+      - ${DATA_ROOT:-./data}/${PHYLUM_DATA_LOCATION:-phylum}:/var/lib/phylum/
+    env_file:
+      - .env
+    environment:
+      PHYLUM_DB_HOST: db
+      PHYLUM_DB_PORT: 5432
+      PHYLUM_DB_NAME: ${PHYLUM_DB_NAME:-phylum}
+      PHYLUM_DB_USER: ${PHYLUM_DB_USER:-phylum}
+    ports:
+      - '2448:2448'
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+  db:
+    container_name: phylum_db
+    image: docker.io/postgres:17
+    environment:
+      POSTGRES_DB: ${PHYLUM_DB_NAME:-phylum}
+      POSTGRES_USER: ${PHYLUM_DB_USER:-phylum}
+      POSTGRES_PASSWORD: ${PHYLUM_DB_PASSWORD}
+    volumes:
+      - ${DATA_ROOT:-./data}/${PG_DATA_LOCATION:-postgres}:/var/lib/postgresql/data
+    expose:
+      - 5432
+    healthcheck:
+      test: "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: always
