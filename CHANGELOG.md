@@ -1,3 +1,42 @@
+v0.9
+====
+This is a major release that addresses many quality of life issues for setting up and using Phylum as a daily driver.
+
+> [!WARNING]
+> There are breaking changes in this release. Please look at the release notes before upgrading.
+
+Of notable mention:
+- Instance setup on first-run
+- In-app user management
+- User permissions
+- Improved login flow
+- Restyled public shares page
+- Better properties dialog
+- Fixed UUID generation on web
+
+
+v0.8
+====
+This release focuses primarily on feature stability.
+
+Among the issues fixed are:
+- Deleting bookmarks when the associated resources are deleted
+- Restoring from trash
+- Emptying trash
+- Thumbnail generation
+- Auto-renaming files
+
+
+v0.7
+====
+- arm64 server build
+- Add support for chunked/resumable uploads
+- [android] Don't crash on uploading large files
+- [web] Upload folders (Chrome only)
+- [linux] Provide AppImage binary and PKGBUILD for ArchLinux
+- [linux] OAuth
+
+
 v0.6
 ====
 
