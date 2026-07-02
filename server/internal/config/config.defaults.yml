@@ -118,6 +118,10 @@ jobs:
 server:
   host:
   port: 2448
+  # Location of the built web-app to serve.
+  # Note that this directory will be served as-is without further checks,
+  # so make sure it doesn't point anywhere unreasonable like `/`
+  webappsrc: web
   publinkpath: /pub
   webdav:
     enabled: true

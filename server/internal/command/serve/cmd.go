@@ -76,7 +76,7 @@ func SetupCommand() *cobra.Command {
 			setupTrashCompactor(logger)
 		}
 
-		setupWebApp(engine, "web")
+		setupWebApp(engine, Cfg.WebAppSrc)
 
 		listen := Cfg.Host + ":" + strconv.Itoa(Cfg.Port)
 		server := http.Server{
