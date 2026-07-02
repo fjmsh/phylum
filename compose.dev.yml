@@ -8,8 +8,7 @@ services:
       dockerfile: Containerfile.dev
       target: server
     volumes:
-      - ${DATA_ROOT:-./data}/${STORAGE_LOCATION:-storage}:/app/storage
-      - ${DATA_ROOT:-./data}/${CONFIG_LOCATION:-config.yml}:/app/config.yml
+      - ${DATA_ROOT:-./data}/${PHYLUM_DATA_LOCATION:-phylum}:/var/lib/phylum/
     env_file:
       - .env
     environment:
@@ -19,6 +18,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # entrypoint: ["/bin/sh", "-c", "while ! nc -z db 5432; do echo \"Waiting for DB\"; sleep 1; done; phylum -W data serve --debug"]
     restart: always
 
   db:

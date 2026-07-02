@@ -24,7 +24,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 # ============================================
 # Stage: Build the Web App
 # ============================================
-FROM ghcr.io/cirruslabs/flutter:stable AS webapp_builder
+FROM ghcr.io/cirruslabs/flutter:latest AS webapp_builder
 WORKDIR /src
 RUN flutter precache --no-universal --web
 COPY client/web ./web
@@ -32,19 +32,18 @@ COPY client/assets ./assets
 COPY client/pubspec.yaml client/pubspec.lock .
 RUN --mount=type=cache,target=/root/.pub-cache flutter pub get
 COPY client/lib ./lib
-RUN --mount=type=cache,target=/root/.pub-cache flutter build web --wasm --debug
+RUN --mount=type=cache,target=/root/.pub-cache flutter build web --debug
 
 
 # ============================================
 # Final Stage: Server
 # ============================================
 FROM docker.io/alpine:latest AS server
-COPY --from=docker.io/shroff12/libreoffice-nogui /libreoffice.apk /tmp/libreoffice.apk
-RUN apk add vips-tools vips-poppler font-noto
-RUN apk add --allow-untrusted /tmp/libreoffice.apk && rm /tmp/libreoffice.apk
-WORKDIR /app
-ENV PATH="/app:$PATH"
+RUN apk add vips-tools vips-poppler font-noto libreoffice
+ENV PATH="$PATH:/app"
+ENV PHYLUM_SERVER_WEBAPPSRC="/app/web"
 COPY --from=api_builder /bin/phylum /app/phylum
 COPY --from=webapp_builder /src/build/web /app/web
+WORKDIR /var/lib/phylum
 ENTRYPOINT ["phylum"]
-CMD ["serve"]
+CMD ["serve", "--debug"]

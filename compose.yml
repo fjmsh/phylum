@@ -5,8 +5,7 @@ services:
     container_name: phylum_server
     image: docker.io/shroff12/phylum:${PHYLUM_IMAGE_TAG:-latest}
     volumes:
-      - ${DATA_ROOT:-./data}/${STORAGE_LOCATION:-storage}:/app/storage
-      - ${DATA_ROOT:-./data}/${CONFIG_LOCATION:-config.yml}:/app/config.yml
+      - ${DATA_ROOT:-./data}/${PHYLUM_DATA_LOCATION:-phylum}:/var/lib/phylum/
     env_file:
       - .env
     environment:
