@@ -74,6 +74,7 @@ class SetupDbFragment extends StatelessWidget {
               hint: Text('localhost'),
               prefixIcon: Icon(Icons.lan),
             ),
+            enabled: !config.overrides.contains('host'),
             autofocus: true,
             autocorrect: false,
             keyboardType: TextInputType.url,
@@ -97,6 +98,7 @@ class SetupDbFragment extends StatelessWidget {
               hint: Text('5432'),
               prefixIcon: Icon(Icons.cable),
             ),
+            enabled: !config.overrides.contains('port'),
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             keyboardType: TextInputType.number,
             initialValue: config.port == 0 ? '' : config.port.toString(),
@@ -124,6 +126,7 @@ class SetupDbFragment extends StatelessWidget {
               hint: Text('phylum'),
               prefixIcon: Icon(Icons.storage),
             ),
+            enabled: !config.overrides.contains('name'),
             autocorrect: false,
             initialValue: config.name,
             onChanged: (value) => context.read<DbController>().name = value,
@@ -145,6 +148,7 @@ class SetupDbFragment extends StatelessWidget {
               hint: Text('phylum'),
               prefixIcon: Icon(Icons.person),
             ),
+            enabled: !config.overrides.contains('user'),
             autocorrect: false,
             initialValue: config.user,
             onChanged: (value) => context.read<DbController>().user = value,
@@ -155,6 +159,7 @@ class SetupDbFragment extends StatelessWidget {
               label: Text('Password'),
               prefixIcon: Icon(Icons.password),
             ),
+            enabled: !config.overrides.contains('password'),
             autocorrect: false,
             obscureText: true,
             initialValue: config.password,
@@ -182,26 +187,13 @@ class SetupDbFragment extends StatelessWidget {
     if (responseString == null || !context.mounted) return;
     final responseMap = (jsonDecode(responseString) as Map)
         .cast<String, dynamic>();
-    final overrides = (responseMap["overrides"] as List?)?.cast<String>();
-    final overrideNote = (overrides?.isNotEmpty ?? false)
-        ? "Note: The following settings were overridden by environment variables or command line flags:\n\n${overrides!.join("\n")}"
-        : "";
 
     final error = (responseMap['error'] as Map?)?.cast<String, dynamic>();
 
     if (error == null) {
-      if (overrideNote.isNotEmpty) {
-        await showAlertDialog(context, message: overrideNote);
-      }
       onNextPress();
     } else {
       String details = error['details'] ?? '';
-      if (overrideNote.isNotEmpty) {
-        if (details.isNotEmpty) {
-          details += '\n\n';
-        }
-        details += overrideNote;
-      }
       showAlertDialog(
         context,
         title: error['msg'],
@@ -212,7 +204,7 @@ class SetupDbFragment extends StatelessWidget {
 }
 
 class DbController extends StateNotifier<DbConfig> {
-  DbController() : super(DbConfig.defaults());
+  DbController(Set<String> overrides) : super(DbConfig(overrides));
 
   set host(String value) {
     state = state.copyWith(host: value);
@@ -236,13 +228,15 @@ class DbController extends StateNotifier<DbConfig> {
 }
 
 class DbConfig {
+  final Set<String> overrides;
   final String host;
   final int port;
   final String name;
   final String user;
   final String password;
 
-  const DbConfig({
+  const DbConfig._({
+    required this.overrides,
     required this.host,
     required this.port,
     required this.name,
@@ -250,8 +244,9 @@ class DbConfig {
     required this.password,
   });
 
-  const DbConfig.defaults()
-    : this(
+  DbConfig(Set<String> overrides)
+    : this._(
+        overrides: overrides,
         host: 'localhost',
         port: 5432,
         name: 'phylum',
@@ -266,7 +261,8 @@ class DbConfig {
     String? user,
     String? password,
   }) {
-    return DbConfig(
+    return DbConfig._(
+      overrides: overrides,
       host: host ?? this.host,
       port: port ?? this.port,
       name: name ?? this.name,
@@ -275,21 +271,15 @@ class DbConfig {
     );
   }
 
-  DbConfig withError(String error) {
-    return DbConfig(
-      host: host,
-      port: port,
-      name: name,
-      user: user,
-      password: password,
-    );
+  Map<String, dynamic> toMap() {
+    final map = {
+      'host': host,
+      'port': port,
+      'name': name,
+      'user': user,
+      'password': password,
+    };
+    map.removeWhere((k, v) => overrides.contains(k));
+    return map;
   }
-
-  Map<String, dynamic> toMap() => {
-    'host': host,
-    'port': port,
-    'name': name,
-    'user': user,
-    'password': password,
-  };
 }

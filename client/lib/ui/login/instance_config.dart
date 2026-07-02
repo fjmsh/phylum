@@ -2,12 +2,12 @@ import 'dart:convert';
 
 class InstanceInfo {
   final Uri url;
-  final bool needsSetup;
+  final SetupConfig? setupConfig;
   final AuthConfig? authConfig;
 
   InstanceInfo({
     required this.url,
-    required this.needsSetup,
+    required this.setupConfig,
     required this.authConfig,
   });
 
@@ -15,16 +15,32 @@ class InstanceInfo {
     final config = (jsonDecode(responseString) as Map).cast<String, dynamic>();
     return InstanceInfo(
       url: url,
-      needsSetup: config['needs_config'],
+      setupConfig: config.containsKey('setup')
+          ? SetupConfig.fromMap(config['setup'].cast<String, dynamic>())
+          : null,
       authConfig: config.containsKey('auth')
-          ? AuthConfig.fromResponse(config['auth'].cast<String, dynamic>())
+          ? AuthConfig.fromMap(config['auth'].cast<String, dynamic>())
           : null,
     );
   }
 
   @override
   String toString() {
-    return 'Instance at $url${needsSetup ? '(needs config)' : ''}${authConfig ?? ''}';
+    return 'Instance at $url${setupConfig != null ? '(needs config)' : ''}${authConfig ?? ''}';
+  }
+}
+
+class SetupConfig {
+  final List<String> overrides;
+
+  SetupConfig._({required this.overrides});
+
+  factory SetupConfig.fromMap(Map<String, dynamic> data) {
+    return SetupConfig._(overrides: (data['overrides'] as List).cast());
+  }
+
+  Map<String, dynamic> toMap() {
+    return {'overrides': overrides};
   }
 }
 
@@ -36,19 +52,19 @@ class AuthConfig {
 
   bool get email => password || magicLinks;
 
-  AuthConfig({
+  AuthConfig._({
     required this.password,
     required this.passwordReset,
     required this.magicLinks,
     required this.openIDProviders,
   });
 
-  factory AuthConfig.fromResponse(Map<String, dynamic> configMap) {
-    final providers = (configMap['openid_providers'] as List).cast<Map>();
-    return AuthConfig(
-      password: configMap['password'],
-      passwordReset: configMap['password_reset'],
-      magicLinks: configMap['magic_links'],
+  factory AuthConfig.fromMap(Map<String, dynamic> map) {
+    final providers = (map['openid_providers'] as List).cast<Map>();
+    return AuthConfig._(
+      password: map['password'],
+      passwordReset: map['password_reset'],
+      magicLinks: map['magic_links'],
       openIDProviders: providers
           .map((e) => OpenIDProvider.fromResponse(e.cast<String, dynamic>()))
           .toList(growable: false),

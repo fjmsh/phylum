@@ -9,6 +9,8 @@ class PhylumRouteConfig {
     },
   );
 
+  Object? get state => route.state;
+
   final PhylumRoute route;
   final PhylumRoute? base;
   final PhylumRoute? next;

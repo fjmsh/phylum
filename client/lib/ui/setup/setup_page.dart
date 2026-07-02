@@ -22,8 +22,13 @@ enum SetupStep { database, mail, auth, user }
 
 class SetupPage extends StatefulWidget {
   final String instanceUrl;
+  final List<String> overrides;
 
-  const SetupPage({super.key, required this.instanceUrl});
+  const SetupPage({
+    super.key,
+    required this.instanceUrl,
+    required this.overrides,
+  });
 
   @override
   State<SetupPage> createState() => _SetupPageState();
@@ -42,7 +47,7 @@ class _SetupPageState extends State<SetupPage> {
     return MultiProvider(
       providers: [
         StateNotifierProvider<DbController, DbConfig>(
-          create: (_) => DbController(),
+          create: (_) => DbController(_subOverrides(widget.overrides, "db")),
         ),
         StateNotifierProvider<MailController, MailConfig>(
           create: (_) => MailController(),
@@ -158,4 +163,11 @@ class _SetupPageState extends State<SetupPage> {
       );
     }
   }
+}
+
+Set<String> _subOverrides(List<String> overrides, String prefix) {
+  return overrides
+      .where((o) => o.startsWith("$prefix."))
+      .map((o) => o.replaceFirst("$prefix.", ""))
+      .toSet();
 }

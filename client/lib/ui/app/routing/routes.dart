@@ -5,6 +5,8 @@ sealed class PhylumRoute {
 
   bool get dialog => false;
 
+  Object? get state => null;
+
   const PhylumRoute();
 
   Widget buildPage(PhylumAccount? account);
@@ -76,13 +78,18 @@ class SetupRoute extends LoggedOutRoute {
   @override
   bool get dialog => true;
 
+  @override
+  Object? get state => _config.toMap();
+
   final String instanceUrl;
 
-  SetupRoute({required this.instanceUrl});
+  final SetupConfig _config;
+
+  SetupRoute({required this.instanceUrl, required this._config});
 
   @override
   Widget buildPage(PhylumAccount? account) {
-    return SetupPage(instanceUrl: instanceUrl);
+    return SetupPage(instanceUrl: instanceUrl, overrides: _config.overrides);
   }
 }
 

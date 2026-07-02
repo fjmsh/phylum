@@ -1,28 +1,33 @@
 part of 'router.dart';
 
-final _staticPaths = <String, PhylumRoute Function(Uri)>{
-  '/': (uri) => const HomeRoute(),
-  '/login': (uri) => const LoginRoute(),
-  '/login/token': (uri) => LoginRoute(
-    instanceUrl: uri.queryParameters['instance'],
-    loginMethod: TokenLoginMethod(uri.queryParameters['token']),
+final _staticPaths = <String, PhylumRoute Function(RouteInformation)>{
+  '/': (_) => const HomeRoute(),
+  '/login': (_) => const LoginRoute(),
+  '/login/token': (info) => LoginRoute(
+    instanceUrl: info.uri.queryParameters['instance'],
+    loginMethod: TokenLoginMethod(info.uri.queryParameters['token']),
   ),
-  '/login/reset_password': (uri) => LoginRoute(
-    instanceUrl: uri.queryParameters['instance'],
+  '/login/reset_password': (info) => LoginRoute(
+    instanceUrl: info.uri.queryParameters['instance'],
     loginMethod: ResetPasswordMethod(
-      email: uri.queryParameters['email'],
-      token: uri.queryParameters['token'],
+      email: info.uri.queryParameters['email'],
+      token: info.uri.queryParameters['token'],
     ),
   ),
-  '/setup': (uri) => uri.queryParameters.containsKey('instance')
-      ? SetupRoute(instanceUrl: uri.queryParameters['instance']!)
+  '/setup': (info) => info.uri.queryParameters.containsKey('instance')
+      ? SetupRoute(
+          instanceUrl: info.uri.queryParameters['instance']!,
+          config: SetupConfig.fromMap(info.state as Map<String, dynamic>),
+        )
       : const HomeRoute(),
-  '/home': (uri) => const ExplorerRoute(location: ExplorerLocationHome()),
-  '/recents': (uri) => const ExplorerRoute(location: ExplorerLocationRecents()),
-  '/shared': (uri) => const ExplorerRoute(location: ExplorerLocationShared()),
-  '/trash': (uri) => const ExplorerRoute(location: ExplorerLocationTrash()),
-  '/search': (uri) => ExplorerRoute(
-    location: ExplorerLocationSearch(query: uri.queryParameters['q'] ?? ''),
+  '/home': (_) => const ExplorerRoute(location: ExplorerLocationHome()),
+  '/recents': (_) => const ExplorerRoute(location: ExplorerLocationRecents()),
+  '/shared': (_) => const ExplorerRoute(location: ExplorerLocationShared()),
+  '/trash': (_) => const ExplorerRoute(location: ExplorerLocationTrash()),
+  '/search': (info) => ExplorerRoute(
+    location: ExplorerLocationSearch(
+      query: info.uri.queryParameters['q'] ?? '',
+    ),
   ),
 };
 
@@ -34,20 +39,23 @@ class PhylumRouteInformationParser
   Future<PhylumRouteConfig> parseRouteInformation(
     RouteInformation routeInformation,
   ) {
+    final route = parseUri(routeInformation);
     final uri = routeInformation.uri;
-    final route = parseUri(uri);
     final nextUri = uri.queryParameters.containsKey('next')
         ? Uri.tryParse(uri.queryParameters['next']!)
         : null;
-    final nextRoute = nextUri == null ? null : parseUri(nextUri);
+    final nextRoute = nextUri == null
+        ? null
+        : parseUri(RouteInformation(uri: nextUri));
     return SynchronousFuture(
       PhylumRouteConfig._(route: route, next: nextRoute),
     );
   }
 
-  PhylumRoute parseUri(Uri uri) {
+  PhylumRoute parseUri(RouteInformation info) {
+    final uri = info.uri;
     if (_staticPaths.containsKey(uri.path)) {
-      return _staticPaths[uri.path]!.call(uri);
+      return _staticPaths[uri.path]!.call(info);
     }
 
     final segments = uri.pathSegments;
@@ -68,7 +76,7 @@ class PhylumRouteInformationParser
 
   @override
   RouteInformation? restoreRouteInformation(PhylumRouteConfig configuration) {
-    return RouteInformation(uri: configuration.uri);
+    return RouteInformation(uri: configuration.uri, state: configuration.state);
   }
 
   ExplorerLocation? parseExplorerLocation(Uri uri) {

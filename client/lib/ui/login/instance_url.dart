@@ -75,7 +75,7 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
         else
           ValueListenableBuilder(
             valueListenable: _instanceUrlController,
-            builder: (_, instanceUrl, __) {
+            builder: (_, instanceUrl, _) {
               final uri = Uri.tryParse(instanceUrl.text);
               final uriValid = uri != null && uri.hasScheme && uri.hasAuthority;
               return ElevatedButton.icon(
@@ -119,7 +119,8 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
           context,
         ).showSnackBar(SnackBar(content: Text('No server found at $uri')));
       } else {
-        if (info.needsSetup) {
+        final setupConfig = info.setupConfig;
+        if (setupConfig != null) {
           final delegate = context.read<PhylumRouterDelegate>();
           final confirm =
               await showAlertDialog(
@@ -131,7 +132,9 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
               ) ??
               false;
           if (!confirm) return;
-          delegate.go(SetupRoute(instanceUrl: info.url.toString()));
+          delegate.go(
+            SetupRoute(instanceUrl: info.url.toString(), config: setupConfig),
+          );
         } else {
           context.read<LoginController>().instanceInfo = info;
         }
