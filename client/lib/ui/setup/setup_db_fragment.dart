@@ -177,7 +177,7 @@ class SetupDbFragment extends StatelessWidget {
     final builder = UriBuilder.fromUri(Uri.parse(instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/db/validate';
     final request = Request('post', builder.build());
-    request.body = jsonEncode(context.read<DbConfig>().toMap());
+    request.body = jsonEncode(context.read<DbConfig>().configToMap());
 
     final responseString = await sendRequestDialog(
       context,
@@ -299,16 +299,19 @@ class DbConfig {
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> configToMap() {
     final map = {
       'host': host,
       'port': port,
       'name': name,
       'user': user,
       'password': password,
-      if (wipe) 'wipe': wipe,
     };
     map.removeWhere((k, v) => overrides.contains(k));
     return map;
+  }
+
+  Map<String, dynamic> optionsToMap() {
+    return {'wipe': true};
   }
 }

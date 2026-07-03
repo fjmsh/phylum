@@ -128,11 +128,12 @@ class _SetupPageState extends State<SetupPage> {
     final request = Request('post', builder.build());
     final data = {
       'config': {
-        'db': context.read<DbConfig>().toMap(),
+        'db': context.read<DbConfig>().configToMap(),
         'mail': context.read<MailConfig>().toMap(),
         'auth': context.read<AuthConfig>().toMap(),
       },
       'user': context.read<UserConfig>().toMap(),
+      'options': {'db': context.read<DbConfig>().optionsToMap()},
     };
 
     request.body = jsonEncode(data);
