@@ -59,7 +59,7 @@ build_phylum() {
   echo "Building phylum image"
   c=$(buildah from --platform linux/${arch} docker.io/alpine)
   imagepath=$(buildah run $c printenv PATH)
-  buildah config --workingdir /app \
+  buildah config --workingdir /var/lib/phylum \
 	  --entrypoint '["phylum"]' \
 	  --cmd "serve" \
 	  --env PATH="$imagepath:/app" \
