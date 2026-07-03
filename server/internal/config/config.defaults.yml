@@ -1,9 +1,9 @@
 db:
-  host: localhost
-  port: 5432
-  name: phylum
-  user: phylum
-  password: phylum    # Probably need to change this
+  host:
+  port:
+  name:
+  user:
+  password:
   nomigrate: false    # Do not auto-migrate schema (dev)
   trace: false        # Trace queries (dev)
 

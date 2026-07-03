@@ -17,29 +17,25 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type finalizeParams struct {
-	Config configOverrides `json:"config"`
-	User   userConfig      `json:"user"`
-}
-
-type configOverrides struct {
-	DB struct {
-		db.Config
-		Wipe bool `json:"wipe"`
-	} `koanf:"db" json:"db"`
-	Mail mail.Config `koanf:"mail,omitempty" json:"mail"`
-	Auth auth.Config `koanf:"auth" json:"auth"`
-	Core core.Config `koanf:"core,omitempty"`
-}
-
-type userConfig struct {
-	Email    string `json:"email"`
-	Name     string `json:"name"`
-	Password string `json:"password"`
-}
-
 func handleFinalize(c *gin.Context) {
-	var params finalizeParams
+	var params struct {
+		Config struct {
+			DB   db.Config   `koanf:"db,omitempty" json:"db"`
+			Mail mail.Config `koanf:"mail,omitempty" json:"mail"`
+			Auth auth.Config `koanf:"auth,omitempty" json:"auth"`
+			Core core.Config `koanf:"core,omitempty"`
+		} `json:"config"`
+		User struct {
+			Email    string `json:"email"`
+			Name     string `json:"name"`
+			Password string `json:"password"`
+		} `json:"user"`
+		Options struct {
+			DB struct {
+				Wipe bool `json:"wipe"`
+			} `json:"db"`
+		}
+	}
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
 		panic(errInvalidParams)
@@ -63,7 +59,7 @@ func handleFinalize(c *gin.Context) {
 	}()
 
 	logger := zerolog.Logger{}
-	if params.Config.DB.Wipe {
+	if params.Options.DB.Wipe {
 		dbConfig.NoMigrate = true
 	}
 
@@ -74,7 +70,7 @@ func handleFinalize(c *gin.Context) {
 			"details": err.Error(),
 		})
 		return
-	} else if params.Config.DB.Wipe {
+	} else if params.Options.DB.Wipe {
 		if err := db.ResetSchema(c.Request.Context(), pool); err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"success": false,
