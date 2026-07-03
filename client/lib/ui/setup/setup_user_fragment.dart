@@ -107,6 +107,9 @@ class SetupUserFragment extends StatelessWidget {
             initialValue: config.name,
             onChanged: (value) => context.read<UserController>().name = value,
             validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+            onFieldSubmitted: passwordRequired
+                ? null
+                : (_) => validateAndNext(context),
           ),
           if (passwordRequired)
             TextFormField(
@@ -130,6 +133,7 @@ class SetupUserFragment extends StatelessWidget {
               onChanged: (value) =>
                   context.read<UserController>().password = value,
               validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+              onFieldSubmitted: (_) => validateAndNext(context),
             ),
         ],
       ),

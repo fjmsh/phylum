@@ -117,9 +117,10 @@ class AuthConfig {
           'backend': 'none',
       },
       'magic_links': passwordlessLoginEnabled,
-      'openid': {
-        'clients': {...clients},
-      },
+      if (clients.isNotEmpty)
+        'openid': {
+          'clients': {...clients},
+        },
     };
   }
 }
