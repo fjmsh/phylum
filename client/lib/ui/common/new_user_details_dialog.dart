@@ -1,6 +1,5 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/db/db.dart';
 
 class NewUserDetails {
   final String email;
@@ -15,8 +14,8 @@ class NewUserDetailsDialog extends StatefulWidget {
   @override
   State<NewUserDetailsDialog> createState() => _NewUserDetailsDialogState();
 
-  static Future<User?> show(BuildContext context) async {
-    return showDialog<User>(
+  static Future<NewUserDetails?> show(BuildContext context) async {
+    return showDialog<NewUserDetails>(
       context: context,
       barrierDismissible: true,
       builder: (context) => const NewUserDetailsDialog._(),
