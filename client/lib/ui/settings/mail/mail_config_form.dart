@@ -231,12 +231,6 @@ class _MailConfigFormState extends State<MailConfigForm> {
             mainAxisAlignment: MainAxisAlignment.end,
             spacing: 18,
             children: [
-              // TextButton(
-              //   onPressed: _enabled && !requestInFlight
-              //       ? () => validate(context)
-              //       : null,
-              //   child: Text('Check Configuration'),
-              // ),
               ElevatedButton(
                 onPressed: requestInFlight ? null : () => save(context),
                 child: Text('Save'),

@@ -11,9 +11,6 @@ import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 import 'package:uri/uri.dart';
 
-import 'package:phylum/util/base_uri/base_uri_stub.dart'
-    if (dart.library.js_interop) 'package:phylum/util/base_uri/base_uri_web.dart';
-
 class SetupMailFragment extends StatelessWidget {
   final formKey = GlobalKey<FormState>();
   final String instanceUrl;
@@ -314,7 +311,7 @@ class SetupMailFragment extends StatelessWidget {
 }
 
 class MailController extends StateNotifier<MailConfig> {
-  MailController() : super(MailConfig.defaults(webAppBaseUri?.toString()));
+  MailController(String instanceUrl) : super(MailConfig.defaults(instanceUrl));
 
   set enabled(bool value) {
     state = state.copyWith(enabled: value);
