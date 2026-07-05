@@ -9,6 +9,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/requests/bootstrap_request.dart';
 import 'package:phylum/ui/explorer/destination_picker/destination_picker.dart';
+import 'package:phylum/ui/explorer/menu/bottom_sheet.dart';
 import 'package:phylum/ui/explorer/shortcuts/actions.dart';
 import 'package:phylum/ui/explorer/folder_gesture_handler.dart';
 import 'package:phylum/ui/explorer/item_views/folder_view_type.dart';
@@ -30,8 +31,13 @@ import 'item_views/list/folder_list_view.dart';
 
 class ExplorerView extends StatefulWidget {
   final FocusNode _explorerFocusNode;
+  final bool _showSelectedItems;
 
-  const ExplorerView({super.key, required this._explorerFocusNode});
+  const ExplorerView({
+    super.key,
+    required this._explorerFocusNode,
+    required this._showSelectedItems,
+  });
 
   @override
   State<ExplorerView> createState() => _ExplorerViewState();
@@ -148,6 +154,9 @@ class _ExplorerViewState extends State<ExplorerView> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
+    final selected = context.select<ExplorerState, int>(
+      (state) => state.selected.length,
+    );
     return Shortcuts(
       shortcuts: shortcutsMap,
       child: ExplorerActions(
@@ -158,17 +167,43 @@ class _ExplorerViewState extends State<ExplorerView> {
           child: FolderGestureHandler(
             child: Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: PathView(small: width < maxViewportWidthSmall),
-                    ),
-                    width < maxViewportWidthLarge
-                        ? const FolderViewIconButton()
-                        : const FolderViewToggleButton(),
-                  ],
-                ),
+                selected == 0 || !widget._showSelectedItems
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: PathView(
+                              small: width < maxViewportWidthSmall,
+                            ),
+                          ),
+                          width < maxViewportWidthLarge
+                              ? const FolderViewIconButton()
+                              : const FolderViewToggleButton(),
+                        ],
+                      )
+                    : ListTile(
+                        title: Text('$selected Selected'),
+                        leading: IconButton(
+                          icon: Icon(Icons.close),
+                          onPressed: () {
+                            context.read<ExplorerController>().clearSelection();
+                          },
+                        ),
+                        trailing: IconButton(
+                          onPressed: () {
+                            final state = context.read<ExplorerState>();
+                            final selected = state.selected;
+                            var options =
+                                state.location.selectedResourceOptions;
+                            showMenuOptionsBottomSheet(
+                              context,
+                              options,
+                              selected,
+                            );
+                          },
+                          icon: Icon(Icons.adaptive.more),
+                        ),
+                      ),
                 Expanded(child: Builder(builder: buildPage)),
               ],
             ),

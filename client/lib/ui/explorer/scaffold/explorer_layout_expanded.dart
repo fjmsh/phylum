@@ -98,7 +98,10 @@ class ExplorerLayoutExpanded extends StatelessWidget {
                       right: 16,
                       bottom: 16,
                     ),
-                    child: ExplorerView(explorerFocusNode: _explorerFocusNode),
+                    child: ExplorerView(
+                      explorerFocusNode: _explorerFocusNode,
+                      showSelectedItems: true,
+                    ),
                   ),
                 ),
                 if (rightBarWidth != 0)

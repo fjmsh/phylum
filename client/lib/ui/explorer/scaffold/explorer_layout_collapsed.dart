@@ -33,7 +33,10 @@ class ExplorerLayoutCollapsed extends StatelessWidget {
               child: Icon(Icons.add),
             )
           : null,
-      body: ExplorerView(explorerFocusNode: _explorerFocusNode),
+      body: ExplorerView(
+        explorerFocusNode: _explorerFocusNode,
+        showSelectedItems: false,
+      ),
     );
   }
 
