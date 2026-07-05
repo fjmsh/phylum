@@ -74,20 +74,19 @@ func GetGenerator(mimeType string) func(string) (uint8, error) {
 		return func(path string) (uint8, error) { return processText(path) }
 	}
 	if subType, ok := strings.CutPrefix(mimeType, "application/"); ok {
-		if _, ok := applicationImageTypes[subType]; ok {
-			return func(path string) (uint8, error) { return processImage(path, true) }
+		if fn, ok := applicationTypes[subType]; ok {
+			return fn
 		}
-		if _, ok := applicationTextTypes[subType]; ok {
-			return func(path string) (uint8, error) { return processText(path) }
-		}
+
 		if strings.HasSuffix("+json", subType) || strings.HasSuffix("+xml", subType) {
-			return func(path string) (uint8, error) { return processText(path) }
-		}
-		if _, ok := applicationDocumentTypes[subType]; ok {
-			return func(path string) (uint8, error) { return processDocument(path) }
+			return processText
 		}
 	}
 	return nil
+}
+
+func processApplicationImage(path string) (Res, error) {
+	return processImage(path, true)
 }
 
 // processImage generates preview + thumbnail for images (and PDF).

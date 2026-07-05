@@ -12,27 +12,24 @@ var imageTypes = map[string]bool{
 	"x-icon":  true,
 }
 
-var applicationTextTypes = map[string]bool{
-	"json":  true,
-	"yaml":  true,
-	"toml":  true,
-	"x-sh":  true,
-	"x-sql": true,
-	"xml":   true,
-}
-var applicationImageTypes = map[string]bool{
-	"pdf":        true,
-	"postscript": true,
-}
+var applicationTypes = map[string]func(string) (Res, error){
+	"json":  processText,
+	"yaml":  processText,
+	"toml":  processText,
+	"x-sh":  processText,
+	"x-sql": processText,
+	"xml":   processText,
 
-var applicationDocumentTypes = map[string]bool{
-	"msword":                              true,
-	"vnd.ms-excel":                        true,
-	"vnd.ms-powerpoint":                   true,
-	"vnd.oasis.opendocument.presentation": true,
-	"vnd.oasis.opendocument.spreadsheet":  true,
-	"vnd.oasis.opendocument.text":         true,
-	"vnd.openxmlformats-officedocument.presentationml.presentation": true,
-	"vnd.openxmlformats-officedocument.spreadsheetml.sheet":         true,
-	"vnd.openxmlformats-officedocument.wordprocessingml.document":   true,
+	"pdf":        processApplicationImage,
+	"postscript": processApplicationImage,
+
+	"msword":                              processDocument,
+	"vnd.ms-excel":                        processDocument,
+	"vnd.ms-powerpoint":                   processDocument,
+	"vnd.oasis.opendocument.presentation": processDocument,
+	"vnd.oasis.opendocument.spreadsheet":  processDocument,
+	"vnd.oasis.opendocument.text":         processDocument,
+	"vnd.openxmlformats-officedocument.presentationml.presentation": processDocument,
+	"vnd.openxmlformats-officedocument.spreadsheetml.sheet":         processDocument,
+	"vnd.openxmlformats-officedocument.wordprocessingml.document":   processDocument,
 }
