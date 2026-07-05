@@ -20,6 +20,7 @@ class MailConfigForm extends StatefulWidget {
 class _MailConfigFormState extends State<MailConfigForm> {
   final formKey = GlobalKey<FormState>();
   bool _enabled = false;
+  bool _smtpUsernameMatchesFromEmail = false;
   final _smtpHostController = TextEditingController();
   final _smtpPortController = TextEditingController();
   final _smtpUsernameController = TextEditingController();
@@ -43,6 +44,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
     _fromNameController.text = config.fromName;
     _fromEmailController.text = config.fromEmail;
     _instanceController.text = config.instanceUrl;
+    _smtpUsernameMatchesFromEmail = config.smtpUsername == config.fromEmail;
   }
 
   @override
@@ -134,6 +136,14 @@ class _MailConfigFormState extends State<MailConfigForm> {
             ),
             readOnly: !_enabled,
             autocorrect: false,
+            onChanged: (value) {
+              if (_smtpUsernameMatchesFromEmail) {
+                _fromEmailController.text = value;
+              } else {
+                _smtpUsernameMatchesFromEmail =
+                    value == _fromEmailController.text;
+              }
+            },
             controller: _smtpUsernameController,
             validator: (value) =>
                 _enabled && (value?.isEmpty ?? true) ? 'Required' : null,
@@ -190,6 +200,10 @@ class _MailConfigFormState extends State<MailConfigForm> {
             readOnly: !_enabled,
             autocorrect: false,
             controller: _fromEmailController,
+            onChanged: (value) {
+              _smtpUsernameMatchesFromEmail =
+                  value == _smtpUsernameController.text;
+            },
             validator: (value) => !_enabled
                 ? null
                 : value?.isEmpty ?? true

@@ -49,7 +49,7 @@ class _SetupPageState extends State<SetupPage> {
           create: (_) => DbController(_subOverrides(widget.overrides, "db")),
         ),
         StateNotifierProvider<MailController, MailConfig>(
-          create: (_) => MailController(),
+          create: (_) => MailController(widget.instanceUrl),
         ),
         StateNotifierProvider<AuthController, AuthConfig>(
           create: (_) => AuthController(),

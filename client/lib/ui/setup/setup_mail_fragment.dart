@@ -155,8 +155,9 @@ class SetupMailFragment extends StatelessWidget {
             ),
             autocorrect: false,
             initialValue: config.smtpUsername,
-            onChanged: (value) =>
-                context.read<MailController>().smtpUsername = value,
+            onChanged: (value) {
+              context.read<MailController>().smtpUsername = value;
+            },
             validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
           ),
           TextFormField(
@@ -326,7 +327,10 @@ class MailController extends StateNotifier<MailConfig> {
   }
 
   set smtpUsername(String value) {
-    state = state.copyWith(smtpUsername: value);
+    state = state.copyWith(
+      smtpUsername: value,
+      fromEmail: state.smtpUsername == state.fromEmail ? value : null,
+    );
   }
 
   set smtpPassword(String value) {
