@@ -27,6 +27,7 @@ class MailConfigController extends StateNotifier<MailConfigState> {
 
   void fetch() async {
     if (state.loading) return;
+    state = MailConfigState(loading: true);
     final result = await _apiClient.sendRequest(_ConfigReadRequest());
     if (result is _ConfigResponse) {
       state = MailConfigState(

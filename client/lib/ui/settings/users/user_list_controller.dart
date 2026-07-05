@@ -29,6 +29,7 @@ class UserListController extends StateNotifier<UserListState> {
 
   void fetch() async {
     if (state.loading) return;
+    state = UserListState(loading: true);
     final result = await _apiClient.sendRequest(_UserListRequest());
     if (result is _UserListResponse) {
       _users = result.users.toList(growable: false);
