@@ -1,3 +1,10 @@
+v0.10 (Unreleased)
+=====
+
+Fixes:
+- Fix proerties not showing on small screens
+- Show selected items on large screens
+
 v0.9
 ====
 This is a major release that addresses many quality of life issues for setting up and using Phylum as a daily driver.
