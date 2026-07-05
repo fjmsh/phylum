@@ -22,7 +22,7 @@ class HomeRoute extends PhylumRoute {
 
   @override
   Widget buildPage(PhylumAccount? account) => account == null
-      ? LoginPage.create(instanceUrl: Uri.tryParse(instanceUrl ?? ''))
+      ? LoginPage(instanceUri: Uri.tryParse(instanceUrl ?? ''))
       : ExplorerPage(account: account, location: ExplorerLocationHome());
 }
 
@@ -35,7 +35,7 @@ class UnknownRoute extends PhylumRoute {
   @override
   Widget buildPage(PhylumAccount? account) => account == null
       // TODO: #implement UnknownRoutePage
-      ? LoginPage.create()
+      ? LoginPage()
       : ExplorerPage(account: account, location: ExplorerLocationHome());
 }
 
@@ -66,9 +66,9 @@ class LoginRoute extends LoggedOutRoute {
 
   @override
   Widget buildPage(PhylumAccount? account) {
-    return LoginPage.create(
-      instanceUrl: Uri.tryParse(instanceUrl ?? ''),
-      method: loginMethod,
+    return LoginPage(
+      instanceUri: Uri.tryParse(instanceUrl ?? ''),
+      selectedMethod: loginMethod,
     );
   }
 }

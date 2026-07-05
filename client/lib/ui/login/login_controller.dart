@@ -15,8 +15,8 @@ const bool instanceUrlFixed = kIsWeb && !kDebugMode;
 class LoginController extends StateNotifier<LoginState> {
   LoginController(super.state);
 
-  void reset() {
-    state = LoginState._(instanceUrl: state.instanceUrl);
+  void reset([LoginState? newState]) {
+    state = newState ?? LoginState._(instanceUrl: state.instanceUrl);
   }
 
   set instanceUrl(Uri? value) {

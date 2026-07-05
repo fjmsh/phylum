@@ -8,29 +8,48 @@ import 'package:phylum/ui/login/login_selector.dart';
 import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final Uri? instanceUri;
+  final LoginMethod? selectedMethod;
+
+  const LoginPage({super.key, this.instanceUri, this.selectedMethod});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
-
-  static Widget create({
-    Uri? instanceUrl,
-    LoginMethod? method,
-    String? email,
-    String? token,
-  }) {
-    return StateNotifierProvider<LoginController, LoginState>(
-      create: (_) => LoginController(
-        LoginState.create(instanceUrl: instanceUrl, selectedMethod: method),
-      ),
-      child: LoginPage(),
-    );
-  }
 }
 
 class _LoginPageState extends State<LoginPage> {
+  late final LoginController _loginController;
+  @override
+  void initState() {
+    super.initState();
+    _loginController = LoginController(
+      LoginState.create(
+        instanceUrl: widget.instanceUri,
+        selectedMethod: widget.selectedMethod,
+      ),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant LoginPage oldWidget) {
+    _loginController.reset(
+      LoginState.create(
+        instanceUrl: widget.instanceUri,
+        selectedMethod: widget.selectedMethod,
+      ),
+    );
+    super.didUpdateWidget(oldWidget);
+  }
+
   @override
   Widget build(BuildContext context) {
+    return StateNotifierProvider<LoginController, LoginState>.value(
+      value: _loginController,
+      builder: (context, child) => buildPage(context),
+    );
+  }
+
+  Widget buildPage(BuildContext context) {
     return Scaffold(
       body: Center(
         child: Card(
