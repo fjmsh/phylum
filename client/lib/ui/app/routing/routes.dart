@@ -16,11 +16,13 @@ class HomeRoute extends PhylumRoute {
   @override
   Uri get uri => Uri.parse('/');
 
-  const HomeRoute();
+  final String? instanceUrl;
+
+  const HomeRoute({this.instanceUrl});
 
   @override
   Widget buildPage(PhylumAccount? account) => account == null
-      ? LoginPage.create()
+      ? LoginPage.create(instanceUrl: Uri.tryParse(instanceUrl ?? ''))
       : ExplorerPage(account: account, location: ExplorerLocationHome());
 }
 
