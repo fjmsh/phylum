@@ -1,8 +1,9 @@
 part of 'router.dart';
 
 final _staticPaths = <String, PhylumRoute Function(RouteInformation)>{
-  '/': (_) => const HomeRoute(),
-  '/login': (_) => const LoginRoute(),
+  '/': (info) => HomeRoute(instanceUrl: info.uri.queryParameters['instance']),
+  '/login': (info) =>
+      LoginRoute(instanceUrl: info.uri.queryParameters['instance']),
   '/login/token': (info) => LoginRoute(
     instanceUrl: info.uri.queryParameters['instance'],
     loginMethod: TokenLoginMethod(info.uri.queryParameters['token']),
