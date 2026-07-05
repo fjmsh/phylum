@@ -29,7 +29,13 @@ class MailConfigController extends StateNotifier<MailConfigState> {
     if (state.loading) return;
     final result = await _apiClient.sendRequest(_ConfigReadRequest());
     if (result is _ConfigResponse) {
-      state = MailConfigState(config: result.config);
+      state = MailConfigState(
+        config: result.config.instanceUrl.isEmpty
+            ? result.config.copyWith(
+                instanceUrl: _apiClient.serverUrl.toString(),
+              )
+            : result.config,
+      );
     } else {
       state = MailConfigState(error: result.description);
     }
