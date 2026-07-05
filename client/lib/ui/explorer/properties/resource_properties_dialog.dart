@@ -50,10 +50,11 @@ class ResourcePropertiesDialog extends StatelessWidget {
         child: Dialog(
           child: SizedBox(
             width: 560,
+            height: 900,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Column(
-                mainAxisSize: .min,
+                mainAxisSize: .max,
                 crossAxisAlignment: .start,
                 children: [
                   Padding(
@@ -66,7 +67,7 @@ class ResourcePropertiesDialog extends StatelessWidget {
                   buildTabs(context),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(12),
                       child: TabBarView(
                         children: [
                           SingleChildScrollView(
@@ -118,6 +119,27 @@ class ResourcePropertiesDialog extends StatelessWidget {
     }
     return Scaffold(
       appBar: AppBar(title: Text(resource.name), bottom: buildTabs(context)),
+      body: TabBarView(
+        children: [
+          SingleChildScrollView(
+            child: ResourceInfoView(
+              resource: resource,
+              onPermissionsTap: () {
+                DefaultTabController.of(context).animateTo(tabPermissions);
+              },
+              onPublinksTap: () {
+                DefaultTabController.of(context).animateTo(tabPublinks);
+              },
+              onVersionsTap: () {
+                DefaultTabController.of(context).animateTo(tabVersions);
+              },
+            ),
+          ),
+          ResourcePermissionsView(resourceId: resource.id),
+          ResourcePublinksView(resource: resource),
+          if (!resource.dir) ResourceVersionsView(resourceId: resource.id),
+        ],
+      ),
       // body: buildTabs(context),
     );
   }
