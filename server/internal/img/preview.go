@@ -112,7 +112,7 @@ func processImage(input string, forcePreview bool) (Res, error) {
 		generated |= ResLarge
 	}
 
-	if _, err := resizeVips(src, dir, base, quality, ResThumbnail); err != nil {
+	if _, err := generateThumbnail(src, dir, base, quality); err != nil {
 		return 0, err
 	}
 	generated |= ResThumbnail
@@ -131,7 +131,7 @@ func processText(input string) (Res, error) {
 	src := filepath.Join(tmp, base+".webp")
 	defer os.Remove(src)
 
-	if _, err := resizeVips(src, dir, base, quality, ResThumbnail); err != nil {
+	if _, err := generateThumbnail(src, dir, base, quality); err != nil {
 		return 0, err
 	}
 	return ResThumbnail, nil
@@ -154,7 +154,7 @@ func processEpub(path string) (Res, error) {
 		} else {
 			f.Close()
 			generated |= ResLarge
-			if _, err := resizeVips(large, dir, base, quality, ResThumbnail); err != nil {
+			if _, err := generateThumbnail(large, dir, base, quality); err != nil {
 				return 0, err
 			}
 			generated |= ResThumbnail
@@ -175,7 +175,7 @@ func processDocument(input string) (Res, error) {
 		return 0, errors.New("failed to rename document preview: " + err.Error())
 	}
 
-	if _, err := resizeVips(src, dir, base, quality, ResThumbnail); err != nil {
+	if _, err := generateThumbnail(src, dir, base, quality); err != nil {
 		return 0, err
 	}
 	return ResLarge | ResThumbnail, nil

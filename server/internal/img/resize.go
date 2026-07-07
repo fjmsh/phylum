@@ -3,9 +3,12 @@ package img
 import (
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
+
+	"github.com/davidbyttow/govips/v2/vips"
 )
 
 type Res = uint8
@@ -41,4 +44,20 @@ func resizeVips(input, outdir, basename string, quality uint8, size Res) (string
 		return "", errors.New("failed to resize image using vips: " + err.Error())
 	}
 	return output, nil
+}
+
+func generateThumbnail(input, outdir, basename string, quality uint8) (string, error) {
+	size := resolutions[ResThumbnail]
+	output := filepath.Join(outdir, basename+"-"+resSuffixes[ResThumbnail]+".webp")
+	if img, err := vips.LoadImageFromFile(input, vips.NewImportParams()); err != nil {
+		return "", errors.New("failed to load image: " + err.Error())
+	} else if err := img.Thumbnail(int(size), int(size), vips.InterestingAttention); err != nil {
+		return "", errors.New("failed to create thumbnail: " + err.Error())
+	} else if b, _, err := img.ExportWebp(&vips.WebpExportParams{Quality: int(quality)}); err != nil {
+		return "", errors.New("failed to export to webp: " + err.Error())
+	} else if err := os.WriteFile(output, b, 0600); err != nil {
+		return "", errors.New("failed to write thumbnail file: " + err.Error())
+	} else {
+		return output, nil
+	}
 }

@@ -4,6 +4,9 @@ v0.10 (Unreleased)
 Features
 - Generate thumbnails for epub files
 
+Improvements
+- Use vips bindings to generate thumbnails instead of spawning a new process
+
 Fixes:
 - Fix proerties not showing on small screens
 - Show selected items on large screens
