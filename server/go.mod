@@ -3,6 +3,9 @@ module codeberg.org/shroff/phylum/server
 go 1.25.8
 
 require (
+	github.com/HugoSmits86/nativewebp v1.3.0
+	github.com/abema/go-mp4 v1.7.1
+	github.com/davidbyttow/govips/v2 v2.18.0
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/gabriel-vasile/mimetype v1.4.8
 	github.com/gin-contrib/cors v1.5.0
@@ -21,6 +24,8 @@ require (
 	github.com/mileusna/useragent v1.3.5
 	github.com/minio/minio-go/v7 v7.0.69
 	github.com/pquerna/cachecontrol v0.2.0
+	github.com/raitucarp/epub v0.2.7
+	github.com/rogpeppe/go-internal v1.12.0
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.6
@@ -30,19 +35,13 @@ require (
 
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
-	github.com/HugoSmits86/nativewebp v1.3.0 // indirect
 	github.com/JohannesKaufmann/dom v0.2.0 // indirect
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.4.0 // indirect
-	github.com/abema/go-mp4 v1.7.1 // indirect
-	github.com/davidbyttow/govips/v2 v2.18.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/renameio v1.0.1 // indirect
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/raitucarp/epub v0.2.7 // indirect
-	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	golang.org/x/image v0.38.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 )
