@@ -12,7 +12,7 @@ import (
 	"github.com/raitucarp/epub"
 )
 
-const maxImageSizeNoPreview = 1024 * 1024
+const maxImageSizeNoPreview = 256 * 1024
 
 var quality uint8
 var dir string
@@ -104,7 +104,7 @@ func processImage(input string, forcePreview bool) (Res, error) {
 	base := filepath.Base(input)
 	src := input
 	if forcePreview || stat.Size() > maxImageSizeNoPreview {
-		if o, err := resizeVips(src, dir, base, quality, ResLarge); err != nil {
+		if o, err := generateImagePreview(src, dir, base, quality); err != nil {
 			return 0, err
 		} else {
 			src = o

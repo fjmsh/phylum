@@ -5,7 +5,7 @@ Features
 - Generate thumbnails for epub files
 
 Improvements
-- Use vips bindings to generate thumbnails instead of spawning a new process
+- Use vips bindings to generate thumbnails and image previews instead of spawning a new process
 
 Fixes:
 - Fix proerties not showing on small screens
