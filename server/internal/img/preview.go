@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/storage"
+	"github.com/HugoSmits86/nativewebp"
+	"github.com/raitucarp/epub"
 )
 
 const maxImageSizeNoPreview = 1024 * 1024
@@ -133,6 +135,32 @@ func processText(input string) (Res, error) {
 		return 0, err
 	}
 	return ResThumbnail, nil
+}
+
+func processEpub(path string) (Res, error) {
+	if r, err := epub.OpenReader(path); err != nil {
+		return 0, err
+	} else if cover := r.Cover(); cover == nil {
+		return 0, nil
+	} else {
+		base := filepath.Base(path)
+		large := filepath.Join(dir, base+"-"+resSuffixes[ResLarge]+".webp")
+		var generated Res
+		if f, err := os.Create(large); err != nil {
+			return 0, err
+		} else if err := nativewebp.Encode(f, *cover, nil); err != nil {
+			f.Close()
+			return 0, err
+		} else {
+			f.Close()
+			generated |= ResLarge
+			if _, err := resizeVips(large, dir, base, quality, ResThumbnail); err != nil {
+				return 0, err
+			}
+			generated |= ResThumbnail
+			return generated, nil
+		}
+	}
 }
 
 // Generate preview and thumbnail for office documents.

@@ -1,6 +1,9 @@
 v0.10 (Unreleased)
 =====
 
+Features
+- Generate thumbnails for epub files
+
 Fixes:
 - Fix proerties not showing on small screens
 - Show selected items on large screens

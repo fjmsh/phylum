@@ -32,4 +32,6 @@ var applicationTypes = map[string]func(string) (Res, error){
 	"vnd.openxmlformats-officedocument.presentationml.presentation": processDocument,
 	"vnd.openxmlformats-officedocument.spreadsheetml.sheet":         processDocument,
 	"vnd.openxmlformats-officedocument.wordprocessingml.document":   processDocument,
+
+	"epub+zip": processEpub,
 }
