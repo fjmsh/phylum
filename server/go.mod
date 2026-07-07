@@ -33,6 +33,7 @@ require (
 	github.com/HugoSmits86/nativewebp v1.3.0 // indirect
 	github.com/JohannesKaufmann/dom v0.2.0 // indirect
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.4.0 // indirect
+	github.com/abema/go-mp4 v1.7.1 // indirect
 	github.com/davidbyttow/govips/v2 v2.18.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667 // indirect

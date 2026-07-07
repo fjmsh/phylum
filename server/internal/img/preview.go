@@ -137,6 +137,11 @@ func processText(input string) (Res, error) {
 	return ResThumbnail, nil
 }
 
+func processVideo(path string) (Res, error) {
+
+	return 0, nil
+}
+
 func processEpub(path string) (Res, error) {
 	if r, err := epub.OpenReader(path); err != nil {
 		return 0, err

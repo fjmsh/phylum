@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"hash"
 	"io"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"codeberg.org/shroff/phylum/server/internal/storage"
+	"github.com/abema/go-mp4"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -25,6 +27,8 @@ const (
 	ResourceBindConflictResolutionOverwrite = ResourceBindConflictResolution(3) // Delete existing resource only if type mismatch (preserves props). Path preserved, ID may change
 	ResourceBindConflictResolutionDelete    = ResourceBindConflictResolution(4) // Delete existing resource before creating. ID and path preserved
 )
+
+var boxTypeSoun = mp4.StrToBoxType("soun")
 
 func CheckResourceNameInvalid(s string) bool {
 	return s == "" || s == "." || s == ".." || strings.ContainsFunc(s, func(r rune) bool {
@@ -65,8 +69,9 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 	if dest, err := backend.OpenWrite(versionID.String()); err != nil {
 		return nil, err
 	} else {
-		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
+		return computeProps(dest, func(size int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
+			mimeType = fixMimeType(mimeType, versionID.String())
 			err = f.runInTx(func(f txFileSystem) error {
 				if r, err := f.createMemberResource(parent, name, requestedID, false, conflictResolution); err != nil {
 					return err
@@ -75,7 +80,7 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 					requestedID = r.id
 				}
 
-				if err := insertResourceVersion(f.db, requestedID, versionID, int64(len), mimeType, sum); err != nil {
+				if err := insertResourceVersion(f.db, requestedID, versionID, int64(size), mimeType, sum); err != nil {
 					return err
 				}
 				if err := updateResourceModified(f.db, requestedID); err != nil {
@@ -112,6 +117,7 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 	} else {
 		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
 			sum := hex.EncodeToString(hash.Sum(nil))
+			mimeType = fixMimeType(mimeType, versionID.String())
 			err := f.db.RunInTx(func(db db.TxHandler) error {
 				if err := insertResourceVersion(db, r.id, versionID, int64(len), mimeType, sum); err != nil {
 					return err
@@ -132,6 +138,31 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 			return nil
 		}), nil
 	}
+}
+
+func fixMimeType(mimeType, name string) string {
+	if mimeType == "video/mp4" {
+		backend := storage.DefaultBackend()
+		if r, err := backend.OpenRead(name, 0, -1); err == nil {
+			if f, ok := r.(io.ReadSeekCloser); ok {
+				println("readseekcloser")
+				if box, err := mp4.ExtractBoxWithPayload(f, nil, mp4.BoxPath{
+					mp4.BoxTypeMoov(),
+					mp4.BoxTypeTrak(),
+					mp4.BoxTypeMdia(),
+					mp4.BoxTypeHdlr(),
+				}); err == nil && len(box) == 1 {
+					hdlr := box[0].Payload.(*mp4.Hdlr)
+					fmt.Println(hdlr.HandlerType)
+					if hdlr.HandlerType == boxTypeSoun {
+						return "audio/mp4"
+					}
+				}
+			}
+			r.Close()
+		}
+	}
+	return mimeType
 }
 
 func (f txFileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {

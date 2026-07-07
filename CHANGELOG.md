@@ -10,6 +10,7 @@ Improvements
 Fixes:
 - Fix proerties not showing on small screens
 - Show selected items on large screens
+- mp4 audio files incorrectly tagged as video/mp4
 
 v0.9
 ====
