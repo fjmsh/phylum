@@ -2,42 +2,70 @@ package img
 
 import (
 	"errors"
+	"os"
 	"os/exec"
+	"path/filepath"
 )
 
-func generateDocumentPreview(input, outdir string) error {
-	args := []string{
-		"--headless",
-		"--convert-to",
-		"webp",
-		"--outdir",
-		outdir,
-		input,
+// Generate preview and thumbnail for office documents.
+func processDocument(input string) (Res, error) {
+	if err := exportLibreOffice(input, dir, false); err != nil {
+		return 0, err
+	}
+	base := filepath.Base(input)
+	out := filepath.Join(dir, base+".webp")
+	preview := filepath.Join(dir, base+"-"+params[ResLarge].suffix+".webp")
+	if err := os.Rename(out, preview); err != nil {
+		return 0, errors.New("failed to rename document preview: " + err.Error())
 	}
 
-	cmd := exec.Command("soffice", args...)
-
-	if err := cmd.Run(); err != nil {
-		return errors.New("failed to generate LibreOffice Document preview: " + err.Error())
+	if err := generateThumbnailFromFile(preview, base); err != nil {
+		os.Remove(preview)
+		return 0, errors.New("failed to generate thumbnail: " + err.Error())
 	}
-	return nil
+	return ResLarge | ResThumbnail, nil
 }
 
-func generateTextPreview(input, outdir string) error {
+// Generate thumbnail only for text using LibreOffice
+// A temporary document preview must be generated and then resized down
+func processText(input string) (Res, error) {
+	if err := exportLibreOffice(input, tmp, true); err != nil {
+		return 0, err
+	}
+	// No need to keep the full generated preview since we'll render
+	// the text directly on the client using file contents
+	base := filepath.Base(input)
+	preview := filepath.Join(tmp, base+".webp")
+	defer os.Remove(preview)
+
+	if err := generateThumbnailFromFile(preview, base); err != nil {
+		return 0, errors.New("failed to generate thumbnail: " + err.Error())
+	}
+	return ResThumbnail, nil
+}
+
+func exportLibreOffice(input, outdir string, text bool) error {
 	args := []string{
 		"--headless",
 		"--convert-to",
-		"webp:writer_webp_Export",
-		"--infilter=\"Text (encoded):UTF8,LF,Noto Sans,en-US\"", // TOOO: change font? locale?
+	}
+	if text {
+		args = append(args,
+			"webp:writer_webp_Export",
+			"--infilter=\"Text (encoded):UTF8,LF,Noto Sans,en-US\"", // TOOO: change font? locale?
+			"--outdir")
+	} else {
+		args = append(args, "--webp")
+	}
+	args = append(args,
 		"--outdir",
 		outdir,
-		input,
-	}
+		input)
 
 	cmd := exec.Command("soffice", args...)
 
 	if err := cmd.Run(); err != nil {
-		return errors.New("failed to generate LibreOffice Text preview: " + err.Error())
+		return errors.New("failed to generate preview using LibreOffice: " + err.Error())
 	}
 	return nil
 }

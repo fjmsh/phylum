@@ -32,14 +32,14 @@ func processAV(path string) (Res, error) {
 			(is.DispositionFlags()&astiav.DispositionFlags(astiav.DispositionFlagAttachedPic) != 0) {
 			stream = is
 			if codec = astiav.FindDecoder(is.CodecParameters().CodecID()); codec == nil {
-				return 0, errors.New("failed to find decoder")
+				return 0, errors.New("failed to find decoder for attached pic")
 			}
 		}
 	}
 
 	if stream == nil {
 		if s, c, err := formatContext.FindBestStream(astiav.MediaTypeVideo, -1, -1); err != nil {
-			return 0, errors.New("failed to find video stream: " + err.Error())
+			return 0, nil
 		} else {
 			stream = s
 			codec = c
@@ -71,15 +71,10 @@ func processAV(path string) (Res, error) {
 	f := astiav.AllocFrame()
 	defer f.Free()
 
-	var generated Res
 	for {
 		if stop, err := func() (bool, error) {
 			if err := formatContext.ReadFrame(pkt); err != nil {
-				if errors.Is(err, astiav.ErrEof) {
-					// Stream finished (and no suitable frames found)
-					err = nil
-					err = errors.New("TODO (remove): file finished")
-				} else {
+				if !errors.Is(err, astiav.ErrEof) {
 					err = errors.New("failed to read frame: " + err.Error())
 				}
 				return true, err
@@ -109,26 +104,20 @@ func processAV(path string) (Res, error) {
 				return true, errors.New("failed to guess image format: " + err.Error())
 			} else if err := f.Data().ToImage(img); err != nil {
 				return true, errors.New("failed to convert to image: " + err.Error())
-			} else if vipsImg, err := vips.NewImageFromGoImage(img); err != nil {
-				return true, errors.New("failed to create vips image")
+			} else if v, err := vips.NewImageFromGoImage(img); err != nil {
+				return true, errors.New("failed to create vips image: " + err.Error())
 			} else {
-				defer vipsImg.Close()
-				base := filepath.Base(path)
-
-				if preview, err := scaleAndSaveImage(vipsImg, dir, base, quality, ResLarge, vips.InterestingAll); err != nil {
-					return true, errors.New("failed to save preview image: " + err.Error())
-				} else {
-					generated |= ResLarge
-					if _, err := generateThumbnail(preview, dir, base, quality); err != nil {
-						return true, err
-					}
-					generated |= ResThumbnail
-					return true, nil
-				}
+				defer v.Close()
+				return true, scaleAndSaveImages(v, filepath.Base(path), ResAll)
 			}
-
 		}(); stop {
-			return generated, err
+			if err != nil {
+				if errors.Is(err, astiav.ErrEof) {
+					err = nil
+				}
+				return 0, err
+			}
+			return ResAll, nil
 		}
 	}
 }

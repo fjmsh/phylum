@@ -2,6 +2,7 @@ package img
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -13,51 +14,74 @@ type Res = uint8
 const (
 	ResThumbnail Res = 1
 	ResLarge     Res = 2
+	ResAll       Res = ResLarge | ResThumbnail
 )
 
-var resSuffixes = map[Res]string{
-	ResThumbnail: "t",
-	ResLarge:     "l",
+type resParams struct {
+	suffix      string
+	width       int
+	interesting vips.Interesting
 }
 
-var resolutions = map[Res]int{
-	ResThumbnail: 240,
-	ResLarge:     1200,
+var params = map[Res]resParams{
+	ResThumbnail: resParams{
+		suffix:      "t",
+		width:       240,
+		interesting: vips.InterestingAttention,
+	},
+	ResLarge: resParams{
+		suffix:      "l",
+		width:       1200,
+		interesting: vips.InterestingNone,
+	},
 }
 
-func generateImagePreview(input, outdir, basename string, quality uint8) (string, error) {
+var interesting = map[Res]vips.Interesting{
+	ResThumbnail: vips.InterestingAttention,
+	ResLarge:     vips.InterestingNone,
+}
+
+func generateThumbnailFromFile(input, basename string) error {
 	if img, err := vips.LoadImageFromFile(input, vips.NewImportParams()); err != nil {
-		return "", errors.New("failed to load image: " + err.Error())
+		return errors.New("failed to load image: " + err.Error())
 	} else {
 		defer img.Close()
-		return scaleAndSaveImage(img, outdir, basename, quality, ResLarge, vips.InterestingNone)
+		return scaleAndSaveImage(img, basename, ResThumbnail)
 	}
 }
 
-func generateThumbnail(input, outdir, basename string, quality uint8) (string, error) {
-	// density := vips.IntParameter{}
-	// density.Set(300)
-	if img, err := vips.LoadImageFromFile(input, vips.NewImportParams()); err != nil {
-		return "", errors.New("failed to load image: " + err.Error())
-	} else {
-		defer img.Close()
-		return scaleAndSaveImage(img, outdir, basename, quality, ResThumbnail, vips.InterestingAttention)
-	}
-}
-
-func scaleAndSaveImage(img *vips.ImageRef, outdir, basename string, quality uint8, res Res, interesting vips.Interesting) (string, error) {
-	width := resolutions[res]
-	height := width * img.Height() / img.Width()
-	output := filepath.Join(outdir, basename+"-"+resSuffixes[res]+".webp")
-	if err := img.Thumbnail(width, height, interesting); err != nil {
-		return "", errors.New("failed to create image preiew: " + err.Error())
-	} else {
-		if b, _, err := img.ExportWebp(&vips.WebpExportParams{Quality: int(quality)}); err != nil {
-			return "", errors.New("failed to export image preview to webp: " + err.Error())
-		} else if err := os.WriteFile(output, b, 0600); err != nil {
-			return "", errors.New("failed to write image preview file: " + err.Error())
-		} else {
-			return output, nil
+func scaleAndSaveImages(img *vips.ImageRef, name string, res Res) (err error) {
+	// Res is uint8
+	for i := 7; i >= 0; i-- {
+		r := Res(1 << uint(i))
+		if res&(r) != 0 {
+			if err := scaleAndSaveImage(img, name, r); err != nil {
+				return fmt.Errorf("failed to save image for res %d: %s", r, err.Error())
+			}
 		}
+	}
+	return nil
+}
+
+func scaleAndSaveImage(img *vips.ImageRef, basename string, res Res) error {
+	params, ok := params[res]
+	if !ok {
+		return fmt.Errorf("unknown image resolution: %d", res)
+	}
+	output := filepath.Join(dir, basename+"-"+params.suffix+".webp")
+
+	if params.width < img.Width() {
+		height := params.width * img.Height() / img.Width()
+		if err := img.Thumbnail(params.width, height, params.interesting); err != nil {
+			return errors.New("failed to create image preiew: " + err.Error())
+		}
+	}
+
+	if b, _, err := img.ExportWebp(&vips.WebpExportParams{Quality: int(quality)}); err != nil {
+		return errors.New("failed to export image preview to webp: " + err.Error())
+	} else if err := os.WriteFile(output, b, 0600); err != nil {
+		return errors.New("failed to write image preview file: " + err.Error())
+	} else {
+		return nil
 	}
 }

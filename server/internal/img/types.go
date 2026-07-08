@@ -1,15 +1,16 @@
 package img
 
-var imageTypes = map[string]bool{
-	"bmp":     true,
-	"gif":     true,
-	"heic":    true,
-	"heif":    true,
-	"jpeg":    true,
-	"png":     true,
-	"svg+xml": true,
-	"webp":    true,
-	"x-icon":  true,
+var nativeImageTypes = map[string]bool{
+	"bmp":  true,
+	"gif":  true,
+	"jpeg": true,
+	"png":  true,
+	"webp": true,
+}
+
+var otherImageTypes = map[string]bool{
+	"application/pdf":        true,
+	"application/postscript": true,
 }
 
 var applicationTypes = map[string]func(string) (Res, error){
@@ -19,9 +20,6 @@ var applicationTypes = map[string]func(string) (Res, error){
 	"x-sh":  processText,
 	"x-sql": processText,
 	"xml":   processText,
-
-	"pdf":        processApplicationImage,
-	"postscript": processApplicationImage,
 
 	"msword":                              processDocument,
 	"vnd.ms-excel":                        processDocument,
