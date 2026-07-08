@@ -3,7 +3,6 @@ package core
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"hash"
 	"io"
 	"strings"
@@ -145,7 +144,6 @@ func fixMimeType(mimeType, name string) string {
 		backend := storage.DefaultBackend()
 		if r, err := backend.OpenRead(name, 0, -1); err == nil {
 			if f, ok := r.(io.ReadSeekCloser); ok {
-				println("readseekcloser")
 				if box, err := mp4.ExtractBoxWithPayload(f, nil, mp4.BoxPath{
 					mp4.BoxTypeMoov(),
 					mp4.BoxTypeTrak(),
@@ -153,7 +151,6 @@ func fixMimeType(mimeType, name string) string {
 					mp4.BoxTypeHdlr(),
 				}); err == nil && len(box) == 1 {
 					hdlr := box[0].Payload.(*mp4.Hdlr)
-					fmt.Println(hdlr.HandlerType)
 					if hdlr.HandlerType == boxTypeSoun {
 						return "audio/mp4"
 					}
