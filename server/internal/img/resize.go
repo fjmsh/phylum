@@ -26,39 +26,37 @@ var resolutions = map[Res]int{
 }
 
 func generateImagePreview(input, outdir, basename string, quality uint8) (string, error) {
-	size := resolutions[ResLarge]
-	output := filepath.Join(outdir, basename+"-"+resSuffixes[ResLarge]+".webp")
 	if img, err := vips.LoadImageFromFile(input, vips.NewImportParams()); err != nil {
 		return "", errors.New("failed to load image: " + err.Error())
 	} else {
 		defer img.Close()
-		if err := img.ThumbnailWithSize(int(size), int(size), vips.InterestingNone, vips.SizeDown); err != nil {
-			return "", errors.New("failed to create image preiew: " + err.Error())
-		} else if b, _, err := img.ExportWebp(&vips.WebpExportParams{Quality: int(quality)}); err != nil {
-			return "", errors.New("failed to export image preview to webp: " + err.Error())
-		} else if err := os.WriteFile(output, b, 0600); err != nil {
-			return "", errors.New("failed to write image preview file: " + err.Error())
-		} else {
-			return output, nil
-		}
+		return scaleAndSaveImage(img, outdir, basename, quality, ResLarge, vips.InterestingNone)
 	}
 }
 
 func generateThumbnail(input, outdir, basename string, quality uint8) (string, error) {
-	size := resolutions[ResThumbnail]
-	output := filepath.Join(outdir, basename+"-"+resSuffixes[ResThumbnail]+".webp")
+	// density := vips.IntParameter{}
+	// density.Set(300)
 	if img, err := vips.LoadImageFromFile(input, vips.NewImportParams()); err != nil {
 		return "", errors.New("failed to load image: " + err.Error())
 	} else {
 		defer img.Close()
-		if err := img.Thumbnail(int(size), int(size), vips.InterestingAttention); err != nil {
-			return "", errors.New("failed to create thumbnail: " + err.Error())
-		} else if b, _, err := img.ExportWebp(&vips.WebpExportParams{Quality: int(quality)}); err != nil {
-			return "", errors.New("failed to export thumbnail to webp: " + err.Error())
+		return scaleAndSaveImage(img, outdir, basename, quality, ResThumbnail, vips.InterestingAttention)
+	}
+}
+
+func scaleAndSaveImage(img *vips.ImageRef, outdir, basename string, quality uint8, res Res, interesting vips.Interesting) (string, error) {
+	width := resolutions[res]
+	height := width * img.Height() / img.Width()
+	output := filepath.Join(outdir, basename+"-"+resSuffixes[res]+".webp")
+	if err := img.Thumbnail(width, height, interesting); err != nil {
+		return "", errors.New("failed to create image preiew: " + err.Error())
+	} else {
+		if b, _, err := img.ExportWebp(&vips.WebpExportParams{Quality: int(quality)}); err != nil {
+			return "", errors.New("failed to export image preview to webp: " + err.Error())
 		} else if err := os.WriteFile(output, b, 0600); err != nil {
-			return "", errors.New("failed to write thumbnail file: " + err.Error())
+			return "", errors.New("failed to write image preview file: " + err.Error())
 		} else {
-			img.Close()
 			return output, nil
 		}
 	}
