@@ -6,6 +6,7 @@ import (
 )
 
 func main() {
+	vips.LoggingSettings(nil, vips.LogLevelWarning)
 	vips.Startup(nil)
 	defer vips.Shutdown()
 	command.SetupCommand()
