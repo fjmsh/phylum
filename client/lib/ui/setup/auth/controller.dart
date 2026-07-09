@@ -110,17 +110,9 @@ class AuthConfig {
       clients[id] = config.toMap();
     }
     return {
-      'password': {
-        if (passwordLoginEnabled)
-          ...passwordConfig.toMap()
-        else
-          'backend': 'none',
-      },
-      'magic_links': passwordlessLoginEnabled,
-      if (clients.isNotEmpty)
-        'openid': {
-          'clients': {...clients},
-        },
+      if (passwordLoginEnabled) 'password': passwordConfig.toMap(),
+      if (passwordlessLoginEnabled) 'magic_links': passwordlessLoginEnabled,
+      if (clients.isNotEmpty) 'openid': {'clients': clients},
     };
   }
 }
