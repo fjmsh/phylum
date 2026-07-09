@@ -16,6 +16,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
+const trashRetainDuration = 30 * 24 * time.Hour
+
 func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error) {
 	t := goqu.T("trash")
 	r := goqu.T("resources").As("r")
@@ -79,6 +81,17 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 		}
 		return res, cursor, nil
 	}
+}
+
+func SetupTrashCompactor(logger *zerolog.Logger) {
+	ticker := time.NewTimer(24 * time.Hour)
+	go func() {
+		for {
+			<-ticker.C
+			TrashCompact(context.Background(), logger, trashRetainDuration)
+		}
+	}()
+	TrashCompact(context.Background(), logger, trashRetainDuration)
 }
 
 func TrashCompact(ctx context.Context, logger *zerolog.Logger, duration time.Duration) {

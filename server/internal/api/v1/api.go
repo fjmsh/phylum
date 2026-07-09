@@ -17,13 +17,24 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func Setup(r *gin.RouterGroup, logger *zerolog.Logger) {
-	r.GET("/info", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"needs_config": false,
-			"auth":         auth.ConfigResponse,
+func Setup(r *gin.RouterGroup, needsSetup bool, logger *zerolog.Logger) {
+	if needsSetup {
+		r.GET("/info", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"setup": gin.H{
+					"overrides": config.OverrideKeys([]string{"db", "mail", "auth"}),
+				},
+			})
 		})
-	})
+		setup.SetupRoutes(r)
+	} else {
+		r.GET("/info", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"needs_config": false,
+				"auth":         auth.ConfigResponse,
+			})
+		})
+	}
 	// Unauthenticated routes
 	auth.SetupRoutes(r, logger)
 
@@ -35,16 +46,4 @@ func Setup(r *gin.RouterGroup, logger *zerolog.Logger) {
 	trash.SetupRoutes(r)
 	users.SetupRoutes(r)
 	admin.SetupRoutes(r)
-}
-
-func SetupConfig(r *gin.RouterGroup, logger *zerolog.Logger) {
-	r.GET("/info", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"setup": gin.H{
-				"overrides": config.OverrideKeys([]string{"db", "mail", "auth"}),
-			},
-		})
-	})
-
-	setup.SetupRoutes(r)
 }
