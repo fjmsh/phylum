@@ -2,7 +2,7 @@ v0.10 (Unreleased)
 =====
 
 Features
-- Generate thumbnails for epub files
+- Generate thumbnails for audios (if present) videos and epubs
 
 Improvements
 - Use vips bindings to generate thumbnails and image previews instead of spawning a new process
@@ -11,6 +11,7 @@ Fixes:
 - Fix proerties not showing on small screens
 - Show selected items on large screens
 - mp4 audio files incorrectly tagged as video/mp4
+- Fix LDAP config during setup
 
 v0.9
 ====
