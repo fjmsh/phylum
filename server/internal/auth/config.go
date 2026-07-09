@@ -7,7 +7,7 @@ import (
 )
 
 type Config struct {
-	SuppressMultiProviderWarning bool           `koanf:"suppress_multi_provider_warning,omitempty"`
+	SuppressMultiProviderWarning bool           `koanf:"suppress_multi_provider_warning,omitempty" json:"-"`
 	Password                     PasswordConfig `koanf:"password" json:"password"`
 	MagicLinks                   bool           `koanf:"magic_links,omitempty" json:"magic_links"`
 	OpenID                       openid.Config  `koanf:"openid,omitempty" json:"openid"`

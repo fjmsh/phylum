@@ -16,22 +16,22 @@ import (
 )
 
 type Config struct {
-	Debug           bool         `koanf:"debug"`
-	URL             string       `koanf:"url"`
-	StartTLS        bool         `koanf:"starttls"`
-	ConnectTimeout  string       `koanf:"connect_timeout"`
-	RequestTimeout  string       `koanf:"request_timeout"`
-	UseFilter       bool         `koanf:"use_filter"`
-	DNTemplate      string       `koanf:"dn_template"`
-	Filter          FilterConfig `koanf:"filter"`
-	AutoCreateUsers bool         `koanf:"auto_create_users"`
+	Debug           bool         `koanf:"debug,omitempty" json:"-"`
+	URL             string       `koanf:"url" json:"url"`
+	StartTLS        bool         `koanf:"starttls" json:"starttls"`
+	ConnectTimeout  string       `koanf:"connect_timeout,omitempty" json:"-"`
+	RequestTimeout  string       `koanf:"request_timeout,omitempty" json:"-"`
+	UseFilter       bool         `koanf:"use_filter,omitempty" json:"use_filter"`
+	DNTemplate      string       `koanf:"dn_template,omitempty" json:"dn_template"`
+	Filter          FilterConfig `koanf:"filter,omitempty" json:"filter"`
+	AutoCreateUsers bool         `koanf:"auto_create_users,omitempty" json:"auto_create_users"`
 }
 
 type FilterConfig struct {
-	BindDN       string `koanf:"bind_dn"`
-	BindPassword string `koanf:"bind_password"`
-	BaseDN       string `koanf:"base_dn"`
-	Template     string `koanf:"template"`
+	BindDN       string `koanf:"bind_dn" json:"bind_dn"`
+	BindPassword string `koanf:"bind_password" json:"bind_password"`
+	BaseDN       string `koanf:"base_dn" json:"base_dn"`
+	Template     string `koanf:"template" json:"template"`
 }
 
 type Auth struct {
