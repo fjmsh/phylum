@@ -59,7 +59,7 @@ auth:
   suppress_multi_provider_warning: false
   magic_links: false      # requires mail setup
   password:
-    backend: crypt        # one of crypt, ldap, none
+    backend: none         # one of crypt, ldap, none
     reset_enabled: false  # requires mail setup, only supported by crypt backend
     crypt:
       # kdf is either argon2 or pbkdf2
