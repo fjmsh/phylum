@@ -18,6 +18,8 @@ var passwordBackend PasswordBackend
 var magicLinksEnabled bool
 var passwordResetEnabled bool
 
+var adminConfig Config
+
 const apiKeyLength = 15
 const resetTokenLength = 15
 const loginTokenLength = 15
@@ -48,6 +50,10 @@ func MagicLinksEnabled() bool {
 
 func OpenIDProviders() []openid.Provider {
 	return openid.Providers()
+}
+
+func Configuration() Config {
+	return adminConfig
 }
 
 func Initialize(cfg Config, log zerolog.Logger) error {
@@ -91,6 +97,15 @@ func Initialize(cfg Config, log zerolog.Logger) error {
 	if methods > 1 && !cfg.SuppressMultiProviderWarning {
 		log.Warn().Msg("Using multiple login providers can lead to cross-provider impersonation " +
 			"if email addresses are not guaranteed to belong to the same user across the different providers")
+	}
+
+	adminConfig = cfg
+	adminConfig.Password.LDAP.Filter.BindPassword = ""
+	clients := cfg.OpenID.Clients
+	adminConfig.OpenID.Clients = make(map[string]openid.ClientConfig)
+	for k, c := range clients {
+		c.ClientSecret = ""
+		adminConfig.OpenID.Clients[k] = c
 	}
 
 	return openid.Init(cfg.OpenID, log)
