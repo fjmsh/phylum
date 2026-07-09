@@ -279,13 +279,16 @@ class LdapConfig {
     return {
       'url': url,
       'starttls': starttls,
-      'auto_create_users': autoCreateUsers,
       'use_filter': useFilter,
       'dn_template': dnTemplate,
-      'bind_dn': bindDn,
-      'bind_password': bindPassword,
-      'base_dn': baseDn,
-      'filter_template': filterTemplate,
+      if (useFilter)
+        'filter': {
+          'bind_dn': bindDn,
+          'bind_password': bindPassword,
+          'base_dn': baseDn,
+          'template': filterTemplate,
+        },
+      'auto_create_users': autoCreateUsers,
     };
   }
 
