@@ -60,19 +60,22 @@ func Initialize(cfg Config, log zerolog.Logger) error {
 	passwordRequirements = cfg.Password.Requirements
 	magicLinksEnabled = cfg.MagicLinks
 
-	if cfg.Password.Backend == "crypt" {
+	switch cfg.Password.Backend {
+	case "crypt":
 		if crypt, err := crypt.New(cfg.Password.Crypt); err != nil {
 			return errors.New("failed to create crypt password backend: " + err.Error())
 		} else {
 			passwordBackend = crypt
 		}
-	} else if cfg.Password.Backend == "ldap" {
+	case "ldap":
 		if ldap, err := ldap.NewAuth(cfg.Password.LDAP, log); err != nil {
 			return errors.New("failed to create ldap password backend: " + err.Error())
 		} else {
 			passwordBackend = ldap
 		}
-	} else if cfg.Password.Backend != "none" && cfg.Password.Backend != "" {
+	case "none", "":
+		// No password backend configured
+	default:
 		return errors.New("password backend not recognized: " + cfg.Password.Backend)
 	}
 

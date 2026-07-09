@@ -26,14 +26,17 @@ func (e PasswordRequirementsError) Error() string {
 	sb := strings.Builder{}
 	sb.WriteString("password must")
 	if e.missingRequirements != nil {
-		sb.WriteString(" have at least " + strings.Join(e.missingRequirements, ", "))
+		sb.WriteString(" have at least ")
+		sb.WriteString(strings.Join(e.missingRequirements, ", "))
 
 		if e.minimumLength != 0 {
 			sb.WriteString(", and")
 		}
 	}
 	if e.minimumLength != 0 {
-		sb.WriteString(" be at least " + strconv.Itoa(e.minimumLength) + " characters long")
+		sb.WriteString(" be at least ")
+		sb.WriteString(strconv.Itoa(e.minimumLength))
+		sb.WriteString(" characters long")
 	}
 	return sb.String()
 }
