@@ -66,15 +66,14 @@ class MailConfig {
     );
   }
 
-  Map<String, dynamic> toMap({bool populateFullMap = false}) =>
-      enabled || populateFullMap
+  Map<String, dynamic> toMap() => enabled
       ? {
           'enabled': enabled,
           'smtp': {
             'host': smtpHost,
             'port': smtpPort,
             'username': smtpUsername,
-            'password': smtpPassword,
+            if (smtpPassword.isNotEmpty) 'password': smtpPassword,
           },
           'from': {'name': fromName, 'email': fromEmail},
           'instance': instanceUrl,
