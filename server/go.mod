@@ -42,6 +42,7 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/knadh/koanf/parsers/json v1.0.0 // indirect
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	golang.org/x/image v0.38.0 // indirect
