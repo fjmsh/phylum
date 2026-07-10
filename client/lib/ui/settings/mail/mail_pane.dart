@@ -49,6 +49,6 @@ class _MailPaneState extends State<MailPane> {
         ),
       );
     }
-    return const MailConfigForm();
+    return SingleChildScrollView(child: MailConfigForm());
   }
 }

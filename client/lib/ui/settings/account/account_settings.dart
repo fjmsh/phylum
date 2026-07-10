@@ -34,74 +34,76 @@ class AccountSettingsPane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final account = context.watch<PhylumAccount>();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 12,
-      children: [
-        Column(
-          children: [
-            ListTile(
-              leading: Icon(Icons.storage),
-              title: Text('Server'),
-              subtitle: Text(account.apiClient.serverUrl.toString()),
-            ),
-            ListTile(
-              leading: Icon(Icons.email),
-              title: Text('Email'),
-              subtitle: Text(account.user.email),
-            ),
-            StateNotifierBuilder(
-              builder: (context, state, child) {
-                return ListTile(
-                  leading: Icon(Icons.badge),
-                  title: Text('Name'),
-                  subtitle: Text(context.read<PhylumAccount>().user.name),
-                  trailing: Icon(Icons.edit),
-                  onTap: () => editName(context),
-                );
-              },
-              stateNotifier: account.userNotifier,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                spacing: 18,
-                children: [
-                  if (account.config.passwordUpdate)
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.password),
-                      label: Text('Change Password'),
-                      onPressed: () => changePassword(context),
-                    ),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                      foregroundColor: Theme.of(context).colorScheme.onError,
-                    ),
-                    icon: Icon(Icons.logout),
-                    label: Text('Log Out'),
-                    onPressed: () async {
-                      final abort =
-                          await showAlertDialog(
-                            context,
-                            title: 'Log Out?',
-                            message: 'Are you sure you want to log out?',
-                            positiveText: 'No',
-                            negativeText: 'Yes',
-                          ) ??
-                          true;
-                      if (abort || !context.mounted) return;
-                      Navigator.of(context).pop();
-                      context.read<PhylumAccount>().close(clearData: true);
-                    },
-                  ),
-                ],
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 12,
+        children: [
+          Column(
+            children: [
+              ListTile(
+                leading: Icon(Icons.storage),
+                title: Text('Server'),
+                subtitle: Text(account.apiClient.serverUrl.toString()),
               ),
-            ),
-          ],
-        ),
-      ],
+              ListTile(
+                leading: Icon(Icons.email),
+                title: Text('Email'),
+                subtitle: Text(account.user.email),
+              ),
+              StateNotifierBuilder(
+                builder: (context, state, child) {
+                  return ListTile(
+                    leading: Icon(Icons.badge),
+                    title: Text('Name'),
+                    subtitle: Text(context.read<PhylumAccount>().user.name),
+                    trailing: Icon(Icons.edit),
+                    onTap: () => editName(context),
+                  );
+                },
+                stateNotifier: account.userNotifier,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  spacing: 18,
+                  children: [
+                    if (account.config.passwordUpdate)
+                      ElevatedButton.icon(
+                        icon: Icon(Icons.password),
+                        label: Text('Change Password'),
+                        onPressed: () => changePassword(context),
+                      ),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                        foregroundColor: Theme.of(context).colorScheme.onError,
+                      ),
+                      icon: Icon(Icons.logout),
+                      label: Text('Log Out'),
+                      onPressed: () async {
+                        final abort =
+                            await showAlertDialog(
+                              context,
+                              title: 'Log Out?',
+                              message: 'Are you sure you want to log out?',
+                              positiveText: 'No',
+                              negativeText: 'Yes',
+                            ) ??
+                            true;
+                        if (abort || !context.mounted) return;
+                        Navigator.of(context).pop();
+                        context.read<PhylumAccount>().close(clearData: true);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

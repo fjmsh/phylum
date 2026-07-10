@@ -41,4 +41,57 @@ class AuthConfigController extends StateNotifier<AuthConfigState> {
       fetch();
     }
   }
+
+  set passwordlessLoginEnabled(bool enabled) {
+    state = AuthConfigState(
+      loading: state.loading,
+      error: state.error,
+      config: state.config?.copyWith(passwordlessLoginEnabled: enabled),
+    );
+  }
+
+  set passwordConfig(PasswordConfig config) {
+    state = AuthConfigState(
+      loading: state.loading,
+      error: state.error,
+      config: state.config?.copyWith(passwordConfig: config),
+    );
+  }
+
+  void addOpenIDConfig(OpenIDConfig config) {
+    state = AuthConfigState(
+      loading: state.loading,
+      error: state.error,
+      config: state.config?.copyWith(
+        openIdConfigs: [
+          ...state.config!.openIdConfigs,
+          config,
+        ].toList(growable: false),
+      ),
+    );
+  }
+
+  void replaceOpenIDConfig(OpenIDConfig old, OpenIDConfig config) {
+    state = AuthConfigState(
+      loading: state.loading,
+      error: state.error,
+      config: state.config?.copyWith(
+        openIdConfigs: state.config!.openIdConfigs
+            .map((e) => e == old ? config : e)
+            .toList(growable: false),
+      ),
+    );
+  }
+
+  void removeOpenIDConfig(OpenIDConfig config) {
+    state = AuthConfigState(
+      loading: state.loading,
+      error: state.error,
+      config: state.config?.copyWith(
+        openIdConfigs: state.config!.openIdConfigs
+            .where((e) => e.id != config.id)
+            .toList(growable: false),
+      ),
+    );
+  }
 }
