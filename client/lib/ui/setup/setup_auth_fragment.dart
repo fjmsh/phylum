@@ -1,14 +1,14 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/config/auth_config.dart';
 import 'package:phylum/libphylum/config/mail_config.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
+import 'package:state_notifier/state_notifier.dart';
 
-import 'controller.dart';
-import 'crypt.dart';
-import 'ldap.dart';
-import 'openid.dart';
-import 'password.dart';
+import '../settings/auth/util/crypt.dart';
+import '../settings/auth/util/ldap.dart';
+import '../settings/auth/util/openid.dart';
 
 class SetupAuthFragment extends StatefulWidget {
   final String instanceUrl;
@@ -103,7 +103,10 @@ class _SetupAuthFragmentState extends State<SetupAuthFragment> {
           secondary: Icon(Icons.password),
           value: config.passwordLoginEnabled,
           onChanged: (value) =>
-              context.read<AuthController>().passwordLoginEnabled = value,
+              context.read<AuthController>().passwordConfig = context
+                  .read<AuthConfig>()
+                  .passwordConfig
+                  .copyWith(backend: PasswordBackend.crypt),
           // subtitle:
           //     config.passwordConfig != null ? Text(config.toString()) : null,
         ),
@@ -248,5 +251,39 @@ class _SetupAuthFragmentState extends State<SetupAuthFragment> {
       return;
     }
     widget.onNextPress();
+  }
+}
+
+class AuthController extends StateNotifier<AuthConfig> {
+  AuthController() : super(AuthConfig.defaults());
+
+  set passwordlessLoginEnabled(bool enabled) {
+    state = state.copyWith(passwordlessLoginEnabled: enabled);
+  }
+
+  set passwordConfig(PasswordConfig config) {
+    state = state.copyWith(passwordConfig: config);
+  }
+
+  void addOpenIDConfig(OpenIDConfig config) {
+    state = state.copyWith(
+      openIdConfigs: [...state.openIdConfigs, config].toList(growable: false),
+    );
+  }
+
+  void replaceOpenIDConfig(OpenIDConfig old, OpenIDConfig config) {
+    state = state.copyWith(
+      openIdConfigs: state.openIdConfigs
+          .map((e) => e == old ? config : e)
+          .toList(growable: false),
+    );
+  }
+
+  void removeOpenIDConfig(OpenIDConfig config) {
+    state = state.copyWith(
+      openIdConfigs: state.openIdConfigs
+          .whereNot((e) => e == config)
+          .toList(growable: false),
+    );
   }
 }

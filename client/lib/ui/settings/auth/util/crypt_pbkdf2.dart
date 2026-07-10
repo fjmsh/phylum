@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:phylum/libphylum/config/auth_config.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/request.dart';
 import 'package:uri/uri.dart';
@@ -12,7 +13,7 @@ Future<Pbkdf2Config?> configurePbkdf2(
   String instanceUrl,
 ) async {
   var iterations = config.iterations;
-  var hash = config.hash;
+  var hash = config.function;
   return showDialog<Pbkdf2Config>(
     context: context,
     builder: (context) => StatefulBuilder(
@@ -67,7 +68,7 @@ Future<Pbkdf2Config?> configurePbkdf2(
           ElevatedButton(
             onPressed: () => Navigator.of(
               context,
-            ).pop(Pbkdf2Config(hash: hash, iterations: iterations)),
+            ).pop(Pbkdf2Config(function: hash, iterations: iterations)),
             child: Text('OK'),
           ),
         ],
@@ -118,34 +119,4 @@ Future<void> testPbkdf2Params(
       message: "${responseMap["error"]}",
     );
   }
-}
-
-class Pbkdf2Config {
-  final int iterations;
-  final HashFunction hash;
-
-  const Pbkdf2Config({required this.iterations, required this.hash});
-
-  const Pbkdf2Config.defaults()
-    : this(iterations: 600_000, hash: HashFunction.sha256);
-
-  Map<String, dynamic> toMap() {
-    return {'hash': hash.name, 'iterations': iterations};
-  }
-
-  @override
-  String toString() {
-    return 'hash=${hash.descriptor},iterations=$iterations';
-  }
-}
-
-enum HashFunction {
-  sha1('sha-1', 'SHA-1'),
-  sha256('sha-256', 'SHA-256'),
-  sha512('sha-512', 'SHA-512');
-
-  final String name;
-  final String descriptor;
-
-  const HashFunction(this.name, this.descriptor);
 }

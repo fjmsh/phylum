@@ -41,20 +41,7 @@ class _UserPermissionsDialogState extends State<UserPermissionsDialog> {
   void initState() {
     super.initState();
     readOnly = widget.user.id == widget.account.user.id;
-    options = [
-      userPermissionSU,
-      userPermissionConfigMailAll,
-      userPermissionFilesAll,
-      userPermissionFilesRead,
-      userPermissionFilesWrite,
-      userPermissionFilesShare,
-      userPermissionUsersAll,
-      userPermissionUsersList,
-      userPermissionUsersCreate,
-      userPermissionUsersCreateInvite,
-      userPermissionUsersPermissions,
-      userPermissionUsersAuthPasswordUpdate,
-    ];
+    options = List.of(userPermissionList);
     selected = widget.user.permissions.toSet();
     final extra = widget.user.permissions.toSet()..removeAll(options);
     options.addAll(extra);

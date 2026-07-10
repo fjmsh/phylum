@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:phylum/libphylum/config/auth_config.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
 import 'package:phylum/util/request.dart';
@@ -140,33 +141,5 @@ Future<void> testArgon2Params(
       title: 'Could not test argon2 params',
       message: "${responseMap["error"]}",
     );
-  }
-}
-
-class Argon2Config {
-  final int memory;
-  final int parallelism;
-  final int iterations;
-
-  const Argon2Config({
-    required this.memory,
-    required this.parallelism,
-    required this.iterations,
-  });
-
-  const Argon2Config.defaults()
-    : this(memory: 16, parallelism: 2, iterations: 4);
-
-  Map<String, dynamic> toMap() {
-    return {
-      'memory': memory,
-      'parallelism': parallelism,
-      'iterations': iterations,
-    };
-  }
-
-  @override
-  String toString() {
-    return 'm=$memory,t=$iterations,p=$parallelism';
   }
 }

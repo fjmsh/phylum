@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/config/auth_config.dart';
 
 class OidcDialog extends StatefulWidget {
   final OpenIDConfig config;
@@ -164,6 +165,7 @@ class _OidcDialogState extends State<OidcDialog> {
             if (!formKey.currentState!.validate()) return;
             Navigator.of(context).pop(
               OpenIDConfig(
+                id: widget.config.id,
                 name: name,
                 issuerUrl: issuerUrl,
                 clientId: clientId,
@@ -178,57 +180,4 @@ class _OidcDialogState extends State<OidcDialog> {
       ],
     );
   }
-}
-
-class OpenIDConfig {
-  final String name;
-  final String issuerUrl;
-  final String clientId;
-  final String clientSecret;
-  final bool allowUnverifiedEmails;
-  final bool autoCreateUsers;
-
-  const OpenIDConfig({
-    required this.name,
-    required this.issuerUrl,
-    required this.clientId,
-    required this.clientSecret,
-    required this.allowUnverifiedEmails,
-    required this.autoCreateUsers,
-  });
-
-  const OpenIDConfig.empty()
-    : this(
-        name: '',
-        issuerUrl: '',
-        clientId: '',
-        clientSecret: '',
-        allowUnverifiedEmails: false,
-        autoCreateUsers: false,
-      );
-
-  OpenIDConfig copyWith({
-    String? name,
-    String? issuerUrl,
-    String? clientId,
-    String? clientSecret,
-    bool? allowUnverifiedEmails,
-    bool? autoCreateUsers,
-  }) => OpenIDConfig(
-    name: name ?? this.name,
-    issuerUrl: issuerUrl ?? this.issuerUrl,
-    clientId: clientId ?? this.clientId,
-    clientSecret: clientSecret ?? this.clientSecret,
-    allowUnverifiedEmails: allowUnverifiedEmails ?? this.allowUnverifiedEmails,
-    autoCreateUsers: autoCreateUsers ?? this.autoCreateUsers,
-  );
-
-  Map<String, dynamic> toMap() => {
-    'name': name,
-    'issuer_url': issuerUrl,
-    'client_id': clientId,
-    'client_secret': clientSecret,
-    'allow_unverified_emails': allowUnverifiedEmails,
-    'auto_create_users': autoCreateUsers,
-  };
 }
