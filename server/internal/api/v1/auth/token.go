@@ -21,7 +21,7 @@ func handleTokenLogin(c *gin.Context) {
 	}
 
 	loginAndSendResponse(c, func(db db.TxHandler) (*auth.Auth, string, error) {
-		return auth.PerformTokenLogin(db, params.Token)
+		return auth.Get().PerformTokenLogin(db, params.Token)
 	})
 }
 
@@ -35,7 +35,7 @@ func handleTokenRequest(c *gin.Context) {
 	}
 
 	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
-		if user, token, err := auth.CreateLoginToken(db, params.Email); err != nil {
+		if user, token, err := auth.Get().CreateLoginToken(db, params.Email); err != nil {
 			// Do not indicate that there was an error if no user was found
 			if !errors.Is(err, core.ErrUserNotFound) {
 				return err

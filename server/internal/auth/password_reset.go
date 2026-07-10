@@ -12,13 +12,13 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) {
-	if !passwordBackend.SupportsPasswordUpdate() {
+func (h *Handler) CreateResetToken(db db.TxHandler, email string) (core.User, string, error) {
+	if !h.passwordBackend.SupportsPasswordUpdate() {
 		return core.User{}, "", errors.New("password update not supported")
 	}
 	email = strings.TrimSpace(strings.ToLower(email))
 	user, err := core.UserByEmail(db, email)
-	if errors.Is(err, core.ErrUserNotFound) && passwordBackend.AutoCreateUsers() {
+	if errors.Is(err, core.ErrUserNotFound) && h.passwordBackend.AutoCreateUsers() {
 		user, err = core.CreateUser(db, email, "", false)
 	}
 
@@ -26,7 +26,7 @@ func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) 
 		return core.User{}, "", err
 	}
 
-	if token, err := insertResetToken(db, user.ID); err != nil {
+	if token, err := h.insertResetToken(db, user.ID); err != nil {
 		return core.User{}, "", err
 	} else {
 		return user, token, nil
@@ -34,8 +34,8 @@ func CreateResetToken(db db.TxHandler, email string) (core.User, string, error) 
 
 }
 
-func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (auth *Auth, apiToken string, err error) {
-	if passwordBackend == nil || !passwordBackend.SupportsPasswordUpdate() {
+func (h *Handler) ResetUserPassword(db db.TxHandler, email, resetToken, password string) (auth *Auth, apiToken string, err error) {
+	if h.passwordBackend == nil || !h.passwordBackend.SupportsPasswordUpdate() {
 		err = errors.New("password update not supported")
 		return
 	}
@@ -47,7 +47,7 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (aut
 	// UpdateUserPassword will ensure the password strength
 	// Not incorrect to do this before token verification because we are in a transaction.
 	// TODO: Are there perf implications for this in case of malicious actors?
-	err = UpdateUserPassword(db, email, password)
+	err = h.UpdateUserPassword(db, email, password)
 	if err != nil {
 		return
 	}
@@ -80,33 +80,33 @@ func ResetUserPassword(db db.TxHandler, email, resetToken, password string) (aut
 	return
 }
 
-func VerifyAndChangeUserPassword(db db.Handler, email, oldPassword, newPassword string) error {
-	if !PasswordBackendSupportsUpdate() {
+func (h *Handler) VerifyAndChangeUserPassword(db db.Handler, email, oldPassword, newPassword string) error {
+	if !h.PasswordBackendSupportsUpdate() {
 		return errors.New("password update not supported")
 	}
-	if ok, err := passwordBackend.VerifyUserPassword(db, email, oldPassword); err != nil {
+	if ok, err := h.passwordBackend.VerifyUserPassword(db, email, oldPassword); err != nil {
 		return err
 	} else if !ok {
 		return ErrCredentialsInvalid
 	}
 
-	if err := checkPasswordStrength(newPassword); err != nil {
+	if err := h.checkPasswordStrength(newPassword); err != nil {
 		return err
 	}
-	return passwordBackend.UpdateUserPassword(db, email, newPassword)
+	return h.passwordBackend.UpdateUserPassword(db, email, newPassword)
 }
 
-func UpdateUserPassword(db db.TxHandler, email, password string) error {
-	if !PasswordBackendSupportsUpdate() {
+func (h *Handler) UpdateUserPassword(db db.TxHandler, email, password string) error {
+	if !h.PasswordBackendSupportsUpdate() {
 		return errors.New("password update not supported")
 	}
-	if err := checkPasswordStrength(password); err != nil {
+	if err := h.checkPasswordStrength(password); err != nil {
 		return err
 	}
-	return passwordBackend.UpdateUserPassword(db, email, password)
+	return h.passwordBackend.UpdateUserPassword(db, email, password)
 }
 
-func insertResetToken(db db.TxHandler, userID int32) (string, error) {
+func (h *Handler) insertResetToken(db db.TxHandler, userID int32) (string, error) {
 	const q = `INSERT INTO reset_tokens(user_id, token_hash, expires) VALUES (@user_id, @token_hash, @expires)
 ON CONFLICT(user_id) DO UPDATE SET token_hash = @token_hash, expires = @expires`
 	key := generateSecureKey(resetTokenLength)

@@ -56,7 +56,7 @@ func setupCreateCommand() *cobra.Command {
 				}
 
 				if !noPassword {
-					if err := auth.UpdateUserPassword(db, email, password); err != nil {
+					if err := auth.Get().UpdateUserPassword(db, email, password); err != nil {
 						return err
 					}
 				}

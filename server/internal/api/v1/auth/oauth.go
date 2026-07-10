@@ -27,7 +27,7 @@ func handleOAuthStart(c *gin.Context) {
 		}
 	}
 	db := db.Get(c.Request.Context())
-	if authURL, err := auth.OpenIDStart(db, provider, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect"), clientType, loopbackPort); err != nil {
+	if authURL, err := auth.Get().OpenIDStart(db, provider, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect"), clientType, loopbackPort); err != nil {
 		panic(err)
 	} else {
 		c.Redirect(http.StatusFound, authURL)
@@ -40,7 +40,7 @@ func handleOAuthRedirect(c *gin.Context) {
 	authCode := c.Query("code")
 	state := c.Query("state")
 
-	if clientType, loopbackPort, err := auth.OpenIDValidateAuthCode(db, state, authCode, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect")); err != nil {
+	if clientType, loopbackPort, err := auth.Get().OpenIDValidateAuthCode(db, state, authCode, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect")); err != nil {
 		panic(err)
 	} else {
 		var clientURI url.URL

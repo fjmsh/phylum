@@ -6,25 +6,24 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/shroff/phylum/server/internal/auth/openid"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
-func PerformTokenLogin(db db.TxHandler, encodedToken string) (*Auth, string, error) {
+func (h *Handler) PerformTokenLogin(db db.TxHandler, encodedToken string) (*Auth, string, error) {
 	if b, err := b32Encoder.DecodeString(encodedToken); err != nil {
 		return nil, "", ErrCredentialsInvalid
 	} else if len(b) < 16 {
 		return nil, "", ErrCredentialsInvalid
 	} else {
 		tokenID, _ := uuid.FromBytes(b[:16])
-		return performTokenLogin(db, tokenID, b[16:])
+		return h.performTokenLogin(db, tokenID, b[16:])
 	}
 }
 
-func CreateLoginToken(db db.TxHandler, email string) (core.User, string, error) {
+func (h *Handler) CreateLoginToken(db db.TxHandler, email string) (core.User, string, error) {
 	email = strings.TrimSpace(strings.ToLower(email))
 	user, err := core.UserByEmail(db, email)
 	if errors.Is(err, core.ErrUserNotFound) {
@@ -53,7 +52,7 @@ func CreateLoginToken(db db.TxHandler, email string) (core.User, string, error) 
 	return user, b32Encoder.EncodeToString(append(tokenID[:], token...)), nil
 }
 
-func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (auth *Auth, apiToken string, err error) {
+func (h *Handler) performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (auth *Auth, apiToken string, err error) {
 	const q = "DELETE FROM pending_logins WHERE token_id = @token_id AND token_hash = @token_hash AND user_id IS NOT NULL RETURNING user_id, expires, oidc_provider"
 	hash := sha256.Sum256([]byte(token))
 	args := pgx.NamedArgs{
@@ -80,7 +79,7 @@ func performTokenLogin(db db.TxHandler, tokenID uuid.UUID, token []byte) (auth *
 		auth = NewSUAuth(user)
 		description := "Magic Link Login"
 		if oidcProvider != "" {
-			if c, err := openid.GetClientConfig(oidcProvider); err != nil {
+			if c, err := h.openIDHandler.GetClientConfig(oidcProvider); err != nil {
 				return nil, "", err
 			} else {
 				description = "OAuth Login (via " + c.Name + ")"

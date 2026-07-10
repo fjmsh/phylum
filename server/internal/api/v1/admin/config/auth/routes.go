@@ -12,6 +12,7 @@ import (
 func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/auth")
 	group.GET("/read", handleReadRequest)
+	group.POST("/update", handleUpdateRequest)
 }
 
 func handleReadRequest(c *gin.Context) {
@@ -23,5 +24,5 @@ func handleReadRequest(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to read auth config"))
 	}
 
-	c.JSON(http.StatusOK, auth.Configuration())
+	c.JSON(http.StatusOK, auth.Get().Configuration())
 }

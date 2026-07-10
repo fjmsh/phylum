@@ -33,7 +33,7 @@ func setupPasswdCommand() *cobra.Command {
 			}
 
 			if err := db.RunInTx(context.Background(), func(db db.TxHandler) error {
-				return auth.UpdateUserPassword(db, email, password)
+				return auth.Get().UpdateUserPassword(db, email, password)
 			}); err != nil {
 				fmt.Println("could not change password: " + err.Error())
 				os.Exit(1)

@@ -15,15 +15,15 @@ type PasswordBackend interface {
 	AutoCreateUsers() bool
 }
 
-func VerifyUserPassword(d db.Handler, email, password string) (*Auth, error) {
+func (h *Handler) VerifyUserPassword(d db.Handler, email, password string) (*Auth, error) {
 	email = strings.ToLower(email)
-	if b, err := passwordBackend.VerifyUserPassword(d, email, password); err != nil {
+	if b, err := h.passwordBackend.VerifyUserPassword(d, email, password); err != nil {
 		return nil, err
 	} else if !b {
 		return nil, ErrCredentialsInvalid
 	}
 	user, err := core.UserByEmail(d, email)
-	if errors.Is(err, core.ErrUserNotFound) && passwordBackend.AutoCreateUsers() {
+	if errors.Is(err, core.ErrUserNotFound) && h.passwordBackend.AutoCreateUsers() {
 		err = d.RunInTx(func(db db.TxHandler) error {
 			user, err = core.CreateUser(db, email, "", false)
 			return err
@@ -32,8 +32,8 @@ func VerifyUserPassword(d db.Handler, email, password string) (*Auth, error) {
 	return NewSUAuth(user), err
 }
 
-func PerformPasswordLogin(db db.TxHandler, email, password string) (auth *Auth, apiToken string, err error) {
-	if auth, err = VerifyUserPassword(db, email, password); err != nil {
+func (h *Handler) PerformPasswordLogin(db db.TxHandler, email, password string) (auth *Auth, apiToken string, err error) {
+	if auth, err = h.VerifyUserPassword(db, email, password); err != nil {
 		return
 	} else {
 		_, _, apiToken, err = GenerateAPIKey(db, auth, "Password Login")

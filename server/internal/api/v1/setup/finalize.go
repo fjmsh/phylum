@@ -110,7 +110,7 @@ func handleFinalize(c *gin.Context) {
 		})
 		return
 	}
-	if params.User.Password != "" && !auth.PasswordBackendSupportsUpdate() {
+	if params.User.Password != "" && !auth.Get().PasswordBackendSupportsUpdate() {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"error":   "Attempting to set password when backend doesn't support it",
@@ -136,7 +136,7 @@ func handleFinalize(c *gin.Context) {
 		} else {
 			if params.User.Password != "" {
 				// Already checked that the password backend supports update
-				if err := auth.UpdateUserPassword(db, params.User.Email, params.User.Password); err != nil {
+				if err := auth.Get().UpdateUserPassword(db, params.User.Email, params.User.Password); err != nil {
 					return err
 				}
 			}

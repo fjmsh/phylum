@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/shroff/phylum/server/internal/auth/openid"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
@@ -25,8 +24,8 @@ const (
 	OpenIDClientLoopback
 )
 
-func OpenIDStart(db db.Handler, providerName, redirectURI string, clientType OpenIDClientType, loopbackPort int) (string, error) {
-	if clientID, endpoint, err := openid.GetClientDetails(providerName); err != nil {
+func (h *Handler) OpenIDStart(db db.Handler, providerName, redirectURI string, clientType OpenIDClientType, loopbackPort int) (string, error) {
+	if clientID, endpoint, err := h.openIDHandler.GetClientDetails(providerName); err != nil {
 		return "", err
 	} else {
 		codeVerifier, codeChallenge := generateOpenIDPKCEChallenge()
@@ -67,7 +66,7 @@ VALUES (@token_id, @expires, @token_hash, @oidc_provider, @oidc_client_type, @lo
 	}
 }
 
-func OpenIDValidateAuthCode(d db.Handler, state, authCode, redirectURI string) (OpenIDClientType, int, error) {
+func (h *Handler) OpenIDValidateAuthCode(d db.Handler, state, authCode, redirectURI string) (OpenIDClientType, int, error) {
 	const q = "SELECT oidc_provider, oidc_client_type, loopback_port, oidc_code_verifier FROM pending_logins WHERE token_id = token_id AND token_hash = @token_hash AND user_id IS NULL AND expires >= NOW()"
 
 	var tokenID uuid.UUID
@@ -96,12 +95,12 @@ func OpenIDValidateAuthCode(d db.Handler, state, authCode, redirectURI string) (
 			err = ErrTokenInvalid
 		}
 		return OpenIDClientNone, 0, err
-	} else if idToken, err := openid.GetUserInfo(providerName, authCode, redirectURI, codeVerifier); err != nil {
+	} else if idToken, err := h.openIDHandler.GetUserInfo(providerName, authCode, redirectURI, codeVerifier); err != nil {
 		return OpenIDClientNone, 0, err
 	} else {
 		email := strings.ToLower(idToken.Email)
 		user, err := core.UserByEmail(d, email)
-		c, _ := openid.GetClientConfig(providerName)
+		c, _ := h.openIDHandler.GetClientConfig(providerName)
 		err = d.RunInTx(func(db db.TxHandler) error {
 			if errors.Is(err, core.ErrUserNotFound) && c.AutoCreateUsers {
 				name := idToken.Name

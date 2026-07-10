@@ -23,7 +23,7 @@ func InitBootstrapConfig(publinkPath string) {
 	bootstrapConfig = gin.H{
 		"version":         config.Version,
 		"publink_path":    publinkPath,
-		"password_update": auth.PasswordBackendSupportsUpdate(),
+		"password_update": auth.Get().PasswordBackendSupportsUpdate(),
 		"mail":            mail.Enabled(),
 		"allow_invites":   core.AllowInvites(),
 	}

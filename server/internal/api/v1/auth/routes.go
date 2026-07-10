@@ -27,12 +27,12 @@ var ConfigResponse struct {
 func SetupRoutes(r *gin.RouterGroup, logger *zerolog.Logger) {
 	group := r.Group("/auth")
 
-	if auth.PasswordAuthEnabled() {
+	if auth.Get().PasswordAuthEnabled() {
 		ConfigResponse.Password = true
 		group.POST("/password/login", handlePasswordLogin)
 		group.POST("/password/change", handlePasswordChange)
 	}
-	if auth.PasswordResetEnabled() {
+	if auth.Get().PasswordResetEnabled() {
 		if mail.Enabled() {
 			ConfigResponse.PasswordReset = true
 			group.POST("/password/request-reset", handlePasswordRequestReset)
@@ -43,7 +43,7 @@ func SetupRoutes(r *gin.RouterGroup, logger *zerolog.Logger) {
 	}
 
 	group.POST("/token/login", handleTokenLogin)
-	if auth.MagicLinksEnabled() {
+	if auth.Get().MagicLinksEnabled() {
 		if mail.Enabled() {
 			ConfigResponse.MagicLink = true
 			group.POST("/token/request", handleTokenRequest)
@@ -52,7 +52,7 @@ func SetupRoutes(r *gin.RouterGroup, logger *zerolog.Logger) {
 		}
 	}
 
-	ConfigResponse.OpenIDProviders = auth.OpenIDProviders()
+	ConfigResponse.OpenIDProviders = auth.Get().OpenIDProviders()
 	group.GET("/oauth/start", handleOAuthStart)
 	group.GET("/oauth/redirect", handleOAuthRedirect)
 

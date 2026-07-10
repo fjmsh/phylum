@@ -43,9 +43,9 @@ func handleCreateRequest(c *gin.Context) {
 		if u, err = core.CreateUser(db, params.Email, params.Name, params.NoCreateHome); err != nil {
 			return err
 		}
-		if auth.PasswordAuthEnabled() && auth.PasswordBackendSupportsUpdate() {
+		if auth.Get().PasswordAuthEnabled() && auth.Get().PasswordBackendSupportsUpdate() {
 			if params.Password != "" {
-				if err := auth.UpdateUserPassword(db, params.Email, params.Password); err != nil {
+				if err := auth.Get().UpdateUserPassword(db, params.Email, params.Password); err != nil {
 					return err
 				}
 			}

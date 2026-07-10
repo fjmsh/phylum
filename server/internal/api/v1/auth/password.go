@@ -28,7 +28,7 @@ func handlePasswordLogin(c *gin.Context) {
 	}
 
 	loginAndSendResponse(c, func(db db.TxHandler) (*auth.Auth, string, error) {
-		return auth.PerformPasswordLogin(db, params.Email, params.Password)
+		return auth.Get().PerformPasswordLogin(db, params.Email, params.Password)
 	})
 }
 
@@ -39,7 +39,7 @@ func handlePasswordChange(c *gin.Context) {
 		panic(err)
 	}
 
-	if err := auth.VerifyAndChangeUserPassword(db.Get(c.Request.Context()), params.Email, params.OldPassword, params.NewPassword); err != nil {
+	if err := auth.Get().VerifyAndChangeUserPassword(db.Get(c.Request.Context()), params.Email, params.OldPassword, params.NewPassword); err != nil {
 		if errors.Is(err, auth.ErrCredentialsInvalid) {
 			panic(core.NewError(http.StatusBadRequest, "password_incorrect", "current password is incorrect"))
 		}
@@ -62,7 +62,7 @@ func handlePasswordRequestReset(c *gin.Context) {
 	}
 
 	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
-		if user, token, err := auth.CreateResetToken(db, params.Email); err != nil {
+		if user, token, err := auth.Get().CreateResetToken(db, params.Email); err != nil {
 			// Do not indicate that there was an error if no user was found
 			if !errors.Is(err, core.ErrUserNotFound) {
 				return err
@@ -93,6 +93,6 @@ func handlePasswordReset(c *gin.Context) {
 	}
 
 	loginAndSendResponse(c, func(db db.TxHandler) (*auth.Auth, string, error) {
-		return auth.ResetUserPassword(db, params.Email, params.Token, params.Password)
+		return auth.Get().ResetUserPassword(db, params.Email, params.Token, params.Password)
 	})
 }

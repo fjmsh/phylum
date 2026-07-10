@@ -56,28 +56,28 @@ func init() {
 	}
 }
 
-func checkPasswordStrength(password string) error {
+func (h *Handler) checkPasswordStrength(password string) error {
 	var minimumLength int
 	var errors []string
-	if len(password) < passwordRequirements.Length {
-		minimumLength = passwordRequirements.Length
+	if len(password) < h.passwordRequirements.Length {
+		minimumLength = h.passwordRequirements.Length
 	}
 	count := map[charType]int{}
 	for _, c := range password {
 		count[charTypes[c]]++
 	}
 
-	if count[charTypeLower] < passwordRequirements.Lower {
-		errors = append(errors, strconv.Itoa(passwordRequirements.Lower)+" lower case characters")
+	if count[charTypeLower] < h.passwordRequirements.Lower {
+		errors = append(errors, strconv.Itoa(h.passwordRequirements.Lower)+" lower case characters")
 	}
-	if count[charTypeUpper] < passwordRequirements.Upper {
-		errors = append(errors, strconv.Itoa(passwordRequirements.Upper)+" upper case characters")
+	if count[charTypeUpper] < h.passwordRequirements.Upper {
+		errors = append(errors, strconv.Itoa(h.passwordRequirements.Upper)+" upper case characters")
 	}
-	if count[charTypeNumeric] < passwordRequirements.Numeric {
-		errors = append(errors, strconv.Itoa(passwordRequirements.Numeric)+" numbers")
+	if count[charTypeNumeric] < h.passwordRequirements.Numeric {
+		errors = append(errors, strconv.Itoa(h.passwordRequirements.Numeric)+" numbers")
 	}
-	if count[charTypeSymbol] < passwordRequirements.Symbols {
-		errors = append(errors, strconv.Itoa(passwordRequirements.Symbols)+" symbols")
+	if count[charTypeSymbol] < h.passwordRequirements.Symbols {
+		errors = append(errors, strconv.Itoa(h.passwordRequirements.Symbols)+" symbols")
 	}
 	if minimumLength != 0 || errors != nil {
 		return &PasswordRequirementsError{

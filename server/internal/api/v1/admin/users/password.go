@@ -28,7 +28,7 @@ func handlePasswordUpdateRequest(c *gin.Context) {
 	}
 
 	err = db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
-		if err := auth.UpdateUserPassword(db, params.Email, params.NewPassword); err != nil {
+		if err := auth.Get().UpdateUserPassword(db, params.Email, params.NewPassword); err != nil {
 			if e, ok := err.(*auth.PasswordRequirementsError); ok {
 				return core.NewError(http.StatusBadRequest, "new_password_invalid", e.Error())
 			}

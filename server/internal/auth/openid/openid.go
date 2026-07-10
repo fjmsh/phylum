@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,26 +14,27 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var clients = make(map[string]ClientConfig)
+type Handler struct {
+	clients map[string]ClientConfig
+	log     zerolog.Logger
+}
 
 type Provider struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
-var log zerolog.Logger
-
-func Init(cfg Config, l zerolog.Logger) error {
-	log = l.With().Str("mod", "auth.openid").Logger()
-	for k, c := range cfg.Clients {
-		clients[k] = c
-	}
-	return nil
+func CreateHandler(cfg Config, l zerolog.Logger) Handler {
+	h := Handler{}
+	h.log = l.With().Str("mod", "auth.openid").Logger()
+	h.clients = make(map[string]ClientConfig)
+	maps.Copy(h.clients, cfg.Clients)
+	return h
 }
 
-func Providers() []Provider {
-	p := make([]Provider, 0, len(clients))
-	for k, c := range clients {
+func (h Handler) Providers() []Provider {
+	p := make([]Provider, 0, len(h.clients))
+	for k, c := range h.clients {
 		p = append(p, Provider{
 			ID:   k,
 			Name: c.Name,
@@ -41,16 +43,16 @@ func Providers() []Provider {
 	return p
 }
 
-func GetClientConfig(providerName string) (ClientConfig, error) {
-	if c, ok := clients[providerName]; !ok {
+func (h Handler) GetClientConfig(providerName string) (ClientConfig, error) {
+	if c, ok := h.clients[providerName]; !ok {
 		return ClientConfig{}, errors.New("OpenID provider not registered: " + providerName)
 	} else {
 		return c, nil
 	}
 }
 
-func GetClientDetails(providerName string) (string, string, error) {
-	if c, err := GetClientConfig(providerName); err != nil {
+func (h Handler) GetClientDetails(providerName string) (string, string, error) {
+	if c, err := h.GetClientConfig(providerName); err != nil {
 		return "", "", err
 	} else if config, err := getProviderConfig(c.IssuerURL); err != nil {
 		return "", "", err
@@ -59,8 +61,8 @@ func GetClientDetails(providerName string) (string, string, error) {
 	}
 }
 
-func GetUserInfo(providerName, authCode, redirectURI, codeVerifier string) (UserInfo, error) {
-	if c, ok := clients[providerName]; !ok {
+func (h Handler) GetUserInfo(providerName, authCode, redirectURI, codeVerifier string) (UserInfo, error) {
+	if c, ok := h.clients[providerName]; !ok {
 		return UserInfo{}, errors.New("OpenID provider not registered: " + providerName)
 	} else if config, err := getProviderConfig(c.IssuerURL); err != nil {
 		return UserInfo{}, err
