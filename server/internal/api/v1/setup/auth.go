@@ -12,19 +12,12 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
-type argon2Config struct {
-	Memory      uint8  `json:"memory" form:"memory" koanf:"memory,omitempty"`
-	Iterations  uint32 `json:"iterations" form:"iterations" koanf:"iterations,omitempty"`
-	Parallelism uint8  `json:"parallelism" form:"parallelism" koanf:"parallelism,omitempty"`
-}
-
-type pbkdf2Config struct {
-	Function   string `json:"function" form:"function" koanf:"function,omitempty"`
-	Iterations int    `json:"iterations" form:"iterations" koanf:"iterations,omitempty"`
-}
-
 func handleTestArgon2Params(c *gin.Context) {
-	var params argon2Config
+	var params struct {
+		Memory      uint8  `json:"memory" form:"memory" koanf:"memory,omitempty"`
+		Iterations  uint32 `json:"iterations" form:"iterations" koanf:"iterations,omitempty"`
+		Parallelism uint8  `json:"parallelism" form:"parallelism" koanf:"parallelism,omitempty"`
+	}
 	err := c.ShouldBind(&params)
 	if err != nil {
 		panic(errInvalidParams)
@@ -55,7 +48,10 @@ func handleTestArgon2Params(c *gin.Context) {
 }
 
 func handleTestPBKDF2Params(c *gin.Context) {
-	var params pbkdf2Config
+	var params struct {
+		Function   string `json:"function" form:"function" koanf:"function,omitempty"`
+		Iterations int    `json:"iterations" form:"iterations" koanf:"iterations,omitempty"`
+	}
 	err := c.ShouldBind(&params)
 	if err != nil {
 		panic(errInvalidParams)

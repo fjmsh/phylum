@@ -13,6 +13,8 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/auth")
 	group.GET("/read", handleReadRequest)
 	group.POST("/update", handleUpdateRequest)
+	group.POST("/test/argon2", handleTestArgon2Params)
+	group.POST("/test/pbkdf2", handleTestPBKDF2Params)
 }
 
 func handleReadRequest(c *gin.Context) {
