@@ -1,26 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/settings/mail/mail_config_controller.dart';
-import 'package:phylum/ui/settings/mail/mail_config_form.dart';
+import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 import 'package:provider/provider.dart';
 
-class MailPane extends StatefulWidget {
-  const MailPane({super.key});
+class RemoteConfigPane<T> extends StatefulWidget {
+  final Widget child;
+
+  const RemoteConfigPane({super.key, required this.child});
 
   @override
-  State<MailPane> createState() => _MailPaneState();
+  State<RemoteConfigPane<T>> createState() => _RemoteConfigPaneState();
 }
 
-class _MailPaneState extends State<MailPane> {
+class _RemoteConfigPaneState<T> extends State<RemoteConfigPane<T>> {
+  late Widget child;
+
   @override
   void initState() {
     super.initState();
-    context.read<MailConfigController>().maybeFetch();
+    child = widget.child;
+    context.read<RemoteConfigController<T>>().maybeFetch();
+  }
+
+  @override
+  void didUpdateWidget(covariant RemoteConfigPane<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    child = widget.child;
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<MailConfigState>();
+    final state = context.watch<RemoteConfigState<T>>();
     final config = state.config;
+
     if (config == null) {
       if (state.loading) {
         return const Center(child: CircularProgressIndicator());
@@ -41,14 +52,14 @@ class _MailPaneState extends State<MailPane> {
                 ).colorScheme.onPrimaryContainer,
               ),
               onPressed: () {
-                context.read<MailConfigController>().fetch();
+                context.read<RemoteConfigController<T>>().fetch();
               },
-              child: Text(state.error == null ? 'Load Mail Config' : 'Retry'),
+              child: Text(state.error == null ? 'Load Config' : 'Retry'),
             ),
           ],
         ),
       );
     }
-    return SingleChildScrollView(child: MailConfigForm());
+    return SingleChildScrollView(child: child);
   }
 }

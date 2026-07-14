@@ -4,9 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/config/mail_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 import 'package:phylum/ui/settings/mail/api/update_request.dart';
 import 'package:phylum/ui/settings/mail/api/validate_request.dart';
-import 'package:phylum/ui/settings/mail/mail_config_controller.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
@@ -34,7 +34,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
   @override
   void initState() {
     super.initState();
-    final config = context.read<MailConfigState>().config!;
+    final config = context.read<RemoteConfigState<MailConfig>>().config!;
     _enabled = config.enabled;
     _smtpHostController.text = config.smtpHost;
     _smtpPortController.text = config.smtpPort == 0

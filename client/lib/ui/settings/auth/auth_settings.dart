@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:phylum/ui/settings/auth/auth_config_controller.dart';
+import 'package:phylum/libphylum/config/auth_config.dart';
+import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 import 'package:phylum/ui/settings/settings.dart';
 
 import 'auth_pane.dart';
@@ -17,8 +18,15 @@ class AuthSettings extends Settings {
 
   @override
   List<StateNotifierProvider> get providers => [
-    StateNotifierProvider<AuthConfigController, AuthConfigState>(
-      create: (context) => AuthConfigController(context),
+    StateNotifierProvider<
+      RemoteConfigController<AuthConfig>,
+      RemoteConfigState<AuthConfig>
+    >(
+      create: (context) => RemoteConfigController(
+        context,
+        endpoint: '/api/v1/admin/config/auth/read',
+        parseConfig: AuthConfig.fromMap,
+      ),
     ),
   ];
 

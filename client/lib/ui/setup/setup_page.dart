@@ -129,7 +129,7 @@ class _SetupPageState extends State<SetupPage> {
       'config': {
         'db': context.read<DbConfig>().configToMap(),
         'mail': context.read<MailConfig>().toMap(),
-        'auth': context.read<AuthConfig>().toMap(),
+        'auth': context.read<AuthConfig>().toMap(AuthConfig.defaults()),
       },
       'user': context.read<UserConfig>().toMap(),
       'options': {'db': context.read<DbConfig>().optionsToMap()},
