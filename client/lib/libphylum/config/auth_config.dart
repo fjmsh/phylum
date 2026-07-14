@@ -56,7 +56,7 @@ class AuthConfig {
 
   factory AuthConfig.fromMap(Map<String, dynamic> data) {
     final clients = data['openid']?['clients'];
-    return AuthConfig(
+    final config = AuthConfig(
       passwordlessLoginEnabled: data['magic_links'],
       passwordConfig: data.containsKey('password')
           ? PasswordConfig.fromMap((data['password'] as Map).cast())
@@ -71,13 +71,14 @@ class AuthConfig {
                 )
                 .toList(growable: false),
     );
+    return config;
   }
 
   Map<String, dynamic> toMap(AuthConfig old) {
     final clients = <String, dynamic>{};
     for (final config in openIdConfigs) {
       assert(config.id != '');
-      clients[config.id] = config.toMap(
+      clients[config.id] = config.toMapDiff(
         old.openIdConfigs.firstWhereOrNull((c) => c.id == config.id) ??
             OpenIDConfig.empty(),
       );
@@ -88,6 +89,29 @@ class AuthConfig {
       'openid': {'clients': clients},
     };
   }
+
+  @override
+  String toString() {
+    return 'AuthConfig(passwordlessLoginEnabled: $passwordlessLoginEnabled, passwordConfig: $passwordConfig, openIdConfigs: $openIdConfigs)';
+  }
+
+  @override
+  bool operator ==(covariant AuthConfig other) {
+    if (identical(this, other)) return true;
+
+    return other.passwordlessLoginEnabled == passwordlessLoginEnabled &&
+        other.passwordConfig == passwordConfig &&
+        (const DeepCollectionEquality()).equals(
+          other.openIdConfigs,
+          openIdConfigs,
+        );
+  }
+
+  @override
+  int get hashCode =>
+      passwordlessLoginEnabled.hashCode ^
+      passwordConfig.hashCode ^
+      openIdConfigs.hashCode;
 }
 
 class PasswordConfig {
@@ -153,6 +177,29 @@ class PasswordConfig {
       },
     };
   }
+
+  @override
+  String toString() {
+    return 'PasswordConfig(backend: $backend, cryptConfig: $cryptConfig, ldapConfig: $ldapConfig, resetEnabled: $resetEnabled)';
+  }
+
+  @override
+  bool operator ==(covariant PasswordConfig other) {
+    if (identical(this, other)) return true;
+
+    return other.backend == backend &&
+        other.cryptConfig == cryptConfig &&
+        other.ldapConfig == ldapConfig &&
+        other.resetEnabled == resetEnabled;
+  }
+
+  @override
+  int get hashCode {
+    return backend.hashCode ^
+        cryptConfig.hashCode ^
+        ldapConfig.hashCode ^
+        resetEnabled.hashCode;
+  }
 }
 
 enum PasswordBackend {
@@ -216,10 +263,26 @@ class CryptConfig {
   };
 
   @override
-  String toString() => switch (kdf) {
-    CryptKDF.argon2 => 'Argon2 ($argon2Config)',
-    CryptKDF.pbkdf2 => 'PBKDF2 ($pbkdf2Config)',
+  String toString() =>
+      'CryptConfig(kdf: $kdf, argon2Config: $argon2Config, pbkdf2Config: $pbkdf2Config)';
+
+  String get description => switch (kdf) {
+    CryptKDF.argon2 => 'Argon2 (${argon2Config.description})',
+    CryptKDF.pbkdf2 => 'PBKDF2 (${pbkdf2Config.description})',
   };
+
+  @override
+  bool operator ==(covariant CryptConfig other) {
+    if (identical(this, other)) return true;
+
+    return other.kdf == kdf &&
+        other.argon2Config == argon2Config &&
+        other.pbkdf2Config == pbkdf2Config;
+  }
+
+  @override
+  int get hashCode =>
+      kdf.hashCode ^ argon2Config.hashCode ^ pbkdf2Config.hashCode;
 }
 
 enum CryptKDF {
@@ -262,18 +325,30 @@ class Argon2Config {
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'memory': memory,
-      'parallelism': parallelism,
-      'iterations': iterations,
-    };
+  Map<String, dynamic> toMap() => {
+    'memory': memory,
+    'parallelism': parallelism,
+    'iterations': iterations,
+  };
+
+  String get description => 'm=$memory,p=$parallelism,t=$iterations';
+
+  @override
+  String toString() =>
+      'Argon2Config(memory: $memory, parallelism: $parallelism, iterations: $iterations)';
+
+  @override
+  bool operator ==(covariant Argon2Config other) {
+    if (identical(this, other)) return true;
+
+    return other.memory == memory &&
+        other.parallelism == parallelism &&
+        other.iterations == iterations;
   }
 
   @override
-  String toString() {
-    return 'm=$memory,t=$iterations,p=$parallelism';
-  }
+  int get hashCode =>
+      memory.hashCode ^ parallelism.hashCode ^ iterations.hashCode;
 }
 
 class Pbkdf2Config {
@@ -293,13 +368,23 @@ class Pbkdf2Config {
   }
 
   Map<String, dynamic> toMap() {
-    return {'hash': function.name, 'iterations': iterations};
+    return {'function': function.name, 'iterations': iterations};
+  }
+
+  String get description => '${function.descriptor} - $iterations iterations';
+
+  @override
+  String toString() => 'Pbkdf2Config(iterations: $iterations, hash: $function)';
+
+  @override
+  bool operator ==(covariant Pbkdf2Config other) {
+    if (identical(this, other)) return true;
+
+    return other.iterations == iterations && other.function == function;
   }
 
   @override
-  String toString() {
-    return 'hash=${function.descriptor},iterations=$iterations';
-  }
+  int get hashCode => iterations.hashCode ^ function.hashCode;
 }
 
 enum HashFunction {
@@ -348,20 +433,20 @@ class LdapConfig {
   const LdapConfig.defaults()
     : this(
         url: '',
-        starttls: true,
+        starttls: false,
         autoCreateUsers: false,
         useFilter: false,
         dnTemplate: '',
         bindDn: '',
         bindPassword: '',
         baseDn: '',
-        filterTemplate: '(mail={email})',
+        filterTemplate: '',
       );
 
   factory LdapConfig.fromMap(Map<String, dynamic> data) {
     return LdapConfig(
       url: data['url'] ?? '',
-      starttls: data['starttls'] ?? '',
+      starttls: data['starttls'] ?? false,
       autoCreateUsers: data['auto_create_users'] ?? false,
       useFilter: data['use_filter'] ?? false,
       dnTemplate: data['dn_template'] ?? '',
@@ -373,25 +458,74 @@ class LdapConfig {
   }
 
   Map<String, dynamic> toMap() {
-    return {
+    return <String, dynamic>{
       'url': url,
       'starttls': starttls,
-      'use_filter': useFilter,
-      'dn_template': dnTemplate,
-      if (useFilter)
-        'filter': {
-          'bind_dn': bindDn,
-          'bind_password': bindPassword,
-          'base_dn': baseDn,
-          'template': filterTemplate,
-        },
-      'auto_create_users': autoCreateUsers,
+      'autoCreateUsers': autoCreateUsers,
+      'useFilter': useFilter,
+      'dnTemplate': dnTemplate,
+      'bindDn': bindDn,
+      'bindPassword': bindPassword,
+      'baseDn': baseDn,
+      'filterTemplate': filterTemplate,
     };
   }
 
   @override
   String toString() {
-    return url;
+    return 'LdapConfig(url: $url, starttls: $starttls, autoCreateUsers: $autoCreateUsers, useFilter: $useFilter, dnTemplate: $dnTemplate, bindDn: $bindDn, bindPassword: $bindPassword, baseDn: $baseDn, filterTemplate: $filterTemplate)';
+  }
+
+  LdapConfig copyWith({
+    String? url,
+    bool? starttls,
+    bool? autoCreateUsers,
+    bool? useFilter,
+    String? dnTemplate,
+    String? bindDn,
+    String? bindPassword,
+    String? baseDn,
+    String? filterTemplate,
+  }) {
+    return LdapConfig(
+      url: url ?? this.url,
+      starttls: starttls ?? this.starttls,
+      autoCreateUsers: autoCreateUsers ?? this.autoCreateUsers,
+      useFilter: useFilter ?? this.useFilter,
+      dnTemplate: dnTemplate ?? this.dnTemplate,
+      bindDn: bindDn ?? this.bindDn,
+      bindPassword: bindPassword ?? this.bindPassword,
+      baseDn: baseDn ?? this.baseDn,
+      filterTemplate: filterTemplate ?? this.filterTemplate,
+    );
+  }
+
+  @override
+  bool operator ==(covariant LdapConfig other) {
+    if (identical(this, other)) return true;
+
+    return other.url == url &&
+        other.starttls == starttls &&
+        other.autoCreateUsers == autoCreateUsers &&
+        other.useFilter == useFilter &&
+        other.dnTemplate == dnTemplate &&
+        other.bindDn == bindDn &&
+        other.bindPassword == bindPassword &&
+        other.baseDn == baseDn &&
+        other.filterTemplate == filterTemplate;
+  }
+
+  @override
+  int get hashCode {
+    return url.hashCode ^
+        starttls.hashCode ^
+        autoCreateUsers.hashCode ^
+        useFilter.hashCode ^
+        dnTemplate.hashCode ^
+        bindDn.hashCode ^
+        bindPassword.hashCode ^
+        baseDn.hashCode ^
+        filterTemplate.hashCode;
   }
 }
 
@@ -455,7 +589,7 @@ class OpenIDConfig {
     autoCreateUsers: autoCreateUsers ?? this.autoCreateUsers,
   );
 
-  Map<String, dynamic> toMap(OpenIDConfig old) => {
+  Map<String, dynamic> toMapDiff(OpenIDConfig old) => {
     if (name != old.name) 'name': name,
     if (issuerUrl != old.issuerUrl) 'issuer_url': issuerUrl,
     if (clientId != old.clientId) 'client_id': clientId,
@@ -465,4 +599,44 @@ class OpenIDConfig {
     if (autoCreateUsers != old.autoCreateUsers)
       'auto_create_users': autoCreateUsers,
   };
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'id': _id,
+      'name': name,
+      'issuerUrl': issuerUrl,
+      'clientId': clientId,
+      'clientSecret': clientSecret,
+      'allowUnverifiedEmails': allowUnverifiedEmails,
+      'autoCreateUsers': autoCreateUsers,
+    };
+  }
+
+  @override
+  String toString() {
+    return 'OpenIDConfig(_id: $_id, name: $name, issuerUrl: $issuerUrl, clientId: $clientId, clientSecret: $clientSecret, allowUnverifiedEmails: $allowUnverifiedEmails, autoCreateUsers: $autoCreateUsers)';
+  }
+
+  @override
+  bool operator ==(covariant OpenIDConfig other) {
+    if (identical(this, other)) return true;
+
+    return other._id == _id &&
+        other.name == name &&
+        other.issuerUrl == issuerUrl &&
+        other.clientId == clientId &&
+        other.clientSecret == clientSecret &&
+        other.allowUnverifiedEmails == allowUnverifiedEmails &&
+        other.autoCreateUsers == autoCreateUsers;
+  }
+
+  @override
+  int get hashCode =>
+      _id.hashCode ^
+      name.hashCode ^
+      issuerUrl.hashCode ^
+      clientId.hashCode ^
+      clientSecret.hashCode ^
+      allowUnverifiedEmails.hashCode ^
+      autoCreateUsers.hashCode;
 }

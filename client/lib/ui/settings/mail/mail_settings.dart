@@ -34,5 +34,7 @@ class MailSettings extends Settings {
 
   @override
   Widget buildWithoutScaffold(BuildContext context) =>
-      const RemoteConfigPane<MailConfig>(child: MailConfigForm());
+      RemoteConfigPane<MailConfig>(
+        builder: (context, config) => MailConfigForm(initialConfig: config),
+      );
 }

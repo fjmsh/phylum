@@ -4,14 +4,15 @@ import 'package:flutter/services.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/config/mail_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 import 'package:phylum/ui/settings/mail/api/update_request.dart';
 import 'package:phylum/ui/settings/mail/api/validate_request.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
 class MailConfigForm extends StatefulWidget {
-  const MailConfigForm({super.key});
+  final MailConfig initialConfig;
+
+  const MailConfigForm({super.key, required this.initialConfig});
 
   @override
   State<MailConfigForm> createState() => _MailConfigFormState();
@@ -34,17 +35,17 @@ class _MailConfigFormState extends State<MailConfigForm> {
   @override
   void initState() {
     super.initState();
-    final config = context.read<RemoteConfigState<MailConfig>>().config!;
-    _enabled = config.enabled;
-    _smtpHostController.text = config.smtpHost;
-    _smtpPortController.text = config.smtpPort == 0
+    _enabled = widget.initialConfig.enabled;
+    _smtpHostController.text = widget.initialConfig.smtpHost;
+    _smtpPortController.text = widget.initialConfig.smtpPort == 0
         ? ''
-        : config.smtpPort.toString();
-    _smtpUsernameController.text = config.smtpUsername;
-    _fromNameController.text = config.fromName;
-    _fromEmailController.text = config.fromEmail;
-    _instanceController.text = config.instanceUrl;
-    _smtpUsernameMatchesFromEmail = config.smtpUsername == config.fromEmail;
+        : widget.initialConfig.smtpPort.toString();
+    _smtpUsernameController.text = widget.initialConfig.smtpUsername;
+    _fromNameController.text = widget.initialConfig.fromName;
+    _fromEmailController.text = widget.initialConfig.fromEmail;
+    _instanceController.text = widget.initialConfig.instanceUrl;
+    _smtpUsernameMatchesFromEmail =
+        widget.initialConfig.smtpUsername == widget.initialConfig.fromEmail;
   }
 
   @override

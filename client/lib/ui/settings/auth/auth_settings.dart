@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/libphylum/config/auth_config.dart';
 import 'package:phylum/ui/settings/config/remote_config_controller.dart';
+import 'package:phylum/ui/settings/config/remote_config_pane.dart';
 import 'package:phylum/ui/settings/settings.dart';
 
-import 'auth_pane.dart';
+import 'auth_config_pane.dart';
 
 class AuthSettings extends Settings {
   @override
@@ -33,5 +34,8 @@ class AuthSettings extends Settings {
   const AuthSettings();
 
   @override
-  Widget buildWithoutScaffold(BuildContext context) => const AuthPane();
+  Widget buildWithoutScaffold(BuildContext context) =>
+      RemoteConfigPane<AuthConfig>(
+        builder: (context, config) => AuthConfigPane(initialConfig: config),
+      );
 }

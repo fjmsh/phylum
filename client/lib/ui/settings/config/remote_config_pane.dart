@@ -2,29 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 import 'package:provider/provider.dart';
 
-class RemoteConfigPane<T> extends StatefulWidget {
-  final Widget child;
+typedef ConfigWidgetBuilder<T> =
+    Widget Function(BuildContext context, T config);
 
-  const RemoteConfigPane({super.key, required this.child});
+class RemoteConfigPane<T> extends StatefulWidget {
+  final ConfigWidgetBuilder<T> builder;
+
+  const RemoteConfigPane({super.key, required this.builder});
 
   @override
   State<RemoteConfigPane<T>> createState() => _RemoteConfigPaneState();
 }
 
 class _RemoteConfigPaneState<T> extends State<RemoteConfigPane<T>> {
-  late Widget child;
+  late ConfigWidgetBuilder<T> builder;
 
   @override
   void initState() {
     super.initState();
-    child = widget.child;
+    builder = widget.builder;
     context.read<RemoteConfigController<T>>().maybeFetch();
   }
 
   @override
   void didUpdateWidget(covariant RemoteConfigPane<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    child = widget.child;
+    builder = widget.builder;
   }
 
   @override
@@ -60,6 +63,6 @@ class _RemoteConfigPaneState<T> extends State<RemoteConfigPane<T>> {
         ),
       );
     }
-    return SingleChildScrollView(child: child);
+    return SingleChildScrollView(child: builder(context, config));
   }
 }

@@ -1,128 +1,129 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:offtheline/offtheline.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/libphylum/config/auth_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/settings/auth/api/update_request.dart';
 import 'package:phylum/ui/settings/auth/auth_config_controller.dart';
 import 'package:phylum/ui/settings/auth/util/crypt.dart';
 import 'package:phylum/ui/settings/auth/util/ldap.dart';
 import 'package:phylum/ui/settings/auth/util/openid.dart';
 import 'package:phylum/util/dialogs.dart';
-import 'package:provider/provider.dart';
 
-class AuthConfigForm extends StatefulWidget {
-  const AuthConfigForm({super.key});
+class AuthConfigForm extends StatelessWidget {
+  final AuthConfigFormCubit bloc;
 
-  @override
-  State<AuthConfigForm> createState() => _AuthConfigFormState();
-}
+  const AuthConfigForm({super.key, required this.bloc});
 
-class _AuthConfigFormState extends State<AuthConfigForm> {
-  bool requestInFlight = false;
   @override
   Widget build(BuildContext context) {
-    final config = context.select<AuthConfigState, AuthConfig>(
-      (s) => s.config!,
-    );
-    final mailEnabled = context.watch<PhylumAccount>().config.mail;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 18,
       children: [
-        SwitchListTile(
-          title: Text('Enable Passwordless Email Login'),
-          subtitle: mailEnabled ? null : Text('Requires Email'),
-          secondary: Icon(Icons.email),
-          value: mailEnabled && config.passwordlessLoginEnabled,
-          onChanged: mailEnabled
-              ? (value) =>
-                    context
-                            .read<AuthConfigController>()
-                            .passwordlessLoginEnabled =
-                        value
-              : null,
-        ),
-        const SizedBox(height: 18),
+        PasswordlessLoginSwitch(bloc: bloc),
+        PasswordAuthForm(bloc: bloc),
+        OpenIDConfigList(bloc: bloc),
+      ],
+    );
+  }
+}
+
+class PasswordlessLoginSwitch extends StatelessWidget {
+  final AuthConfigFormCubit bloc;
+
+  const PasswordlessLoginSwitch({super.key, required this.bloc});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
         ListTile(
           dense: true,
           title: Text(
-            'Password Auth',
+            'Passwordless Login',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
-        SwitchListTile(
-          title: Text('Enable Password Auth'),
-          secondary: Icon(Icons.password),
-          value: config.passwordLoginEnabled,
-          onChanged: (value) =>
-              context.read<AuthConfigController>().passwordConfig = config
-                  .passwordConfig
-                  .copyWith(backend: PasswordBackend.crypt),
-          // subtitle:
-          //     config.passwordConfig != null ? Text(config.toString()) : null,
-        ),
-        if (config.passwordLoginEnabled)
-          buildPasswordAuthSection(context, config.passwordConfig),
-        const SizedBox(height: 18),
-        ListTile(
-          dense: true,
-          title: Text(
-            'OpenID Login',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          trailing: IconButton(
-            onPressed: () async {
-              final openIDConfig = await OidcDialog.show(
-                context,
-                OpenIDConfig.empty(),
-              );
-              if (openIDConfig == null || !context.mounted) return;
-              context.read<AuthConfigController>().addOpenIDConfig(
-                openIDConfig,
-              );
-            },
-            icon: Icon(Icons.add),
-            tooltip: 'Add OpenID Login Provider',
-          ),
-        ),
-        ...config.openIdConfigs.mapIndexed(
-          (i, cfg) => ListTile(
-            title: Text(cfg.name),
-            subtitle: Text(cfg.issuerUrl),
-            onTap: () async {
-              final openIDConfig = await OidcDialog.show(context, cfg);
-              if (openIDConfig == null || !context.mounted) return;
-              context.read<AuthConfigController>().replaceOpenIDConfig(
-                cfg,
-                openIDConfig,
-              );
-            },
-            trailing: IconButton(
-              onPressed: () =>
-                  context.read<AuthConfigController>().removeOpenIDConfig(cfg),
-              icon: Icon(Icons.delete),
-            ),
-          ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          spacing: 18,
-          children: [
-            ElevatedButton(
-              onPressed: requestInFlight ? null : () => save(context),
-              child: Text('Save'),
-            ),
-          ],
+        BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
+          bloc: bloc,
+          builder: (context, state) {
+            return SwitchListTile(
+              title: Text('Enable Passwordless Email Login'),
+              subtitle: bloc.state.mailEnabled ? null : Text('Requires Email'),
+              secondary: Icon(Icons.email),
+              value: state.mailEnabled && state.config.passwordlessLoginEnabled,
+              onChanged: state.mailEnabled
+                  ? (value) => bloc.passwordlessLoginEnabled = value
+                  : null,
+            );
+          },
+          buildWhen: (previous, current) {
+            return previous.mailEnabled != current.mailEnabled ||
+                previous.config.passwordlessLoginEnabled !=
+                    current.config.passwordlessLoginEnabled;
+          },
         ),
       ],
     );
   }
+}
 
-  Widget buildPasswordAuthSection(BuildContext context, PasswordConfig config) {
+class PasswordAuthForm extends StatelessWidget {
+  final AuthConfigFormCubit bloc;
+
+  const PasswordAuthForm({super.key, required this.bloc});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
+      bloc: bloc,
+      builder: (context, state) {
+        if (state.config.passwordConfig.backend == PasswordBackend.none) {
+          return Container();
+        }
+        return buildForm(context, state.config.passwordConfig);
+      },
+      buildWhen: (previous, current) =>
+          previous.mailEnabled != current.mailEnabled ||
+          (previous.config.passwordConfig.backend == PasswordBackend.none) !=
+              (current.config.passwordConfig.backend == PasswordBackend.none) ||
+          previous.config.passwordConfig != current.config.passwordConfig,
+    );
+  }
+
+  Widget buildForm(BuildContext context, PasswordConfig config) {
     final mailEnabled = context.watch<PhylumAccount>().config.mail;
     return Column(
       children: [
+        ListTile(
+          dense: true,
+          title: Text(
+            'Password Login',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
+          bloc: bloc,
+          builder: (context, state) {
+            return SwitchListTile(
+              title: Text('Enable Password Login'),
+              secondary: Icon(Icons.password),
+              value: state.config.passwordLoginEnabled,
+              onChanged: (value) =>
+                  bloc.passwordConfig = state.config.passwordConfig.copyWith(
+                    backend: value
+                        ? PasswordBackend.crypt
+                        : PasswordBackend.none,
+                  ),
+              // subtitle:
+              //     config.passwordConfig != null ? Text(config.toString()) : null,
+            );
+          },
+          buildWhen: (previous, current) =>
+              previous.config.passwordLoginEnabled !=
+              current.config.passwordLoginEnabled,
+        ),
         ListTile(
           title: Text('Backend'),
           leading: Icon(Icons.storage),
@@ -137,22 +138,26 @@ class _AuthConfigFormState extends State<AuthConfigForm> {
             if (backend == null || !context.mounted) return;
 
             config = config.copyWith(backend: backend);
-            if (backend == PasswordBackend.ldap) {
+            if (backend == PasswordBackend.ldap &&
+                config.ldapConfig == LdapConfig.defaults()) {
               final ldapConfig = await LdapConfigDialog.show(
                 context,
                 config.ldapConfig,
               );
               if (ldapConfig == null || !context.mounted) return;
-              config = config.copyWith(ldapConfig: ldapConfig);
+              config = config.copyWith(
+                backend: PasswordBackend.ldap,
+                ldapConfig: ldapConfig,
+              );
             }
 
-            context.read<AuthConfigController>().passwordConfig = config;
+            bloc.passwordConfig = config;
           },
         ),
         if (config.backend == PasswordBackend.crypt)
           ListTile(
             title: Text('KDF'),
-            subtitle: Text(config.cryptConfig.toString()),
+            subtitle: Text(config.cryptConfig.description),
             leading: Icon(Icons.key),
             onTap: () async {
               final cryptConfig = await configureKDF(
@@ -161,14 +166,13 @@ class _AuthConfigFormState extends State<AuthConfigForm> {
                 context.read<PhylumAccount>().apiClient.serverUrl.toString(),
               );
               if (cryptConfig == null || !context.mounted) return;
-              context.read<AuthConfigController>().passwordConfig = config
-                  .copyWith(cryptConfig: cryptConfig);
+              bloc.passwordConfig = config.copyWith(cryptConfig: cryptConfig);
             },
-          )
-        else if (config.backend == PasswordBackend.ldap)
+          ),
+        if (config.backend == PasswordBackend.ldap)
           ListTile(
             title: Text('LDAP Configuration'),
-            subtitle: Text(config.ldapConfig.toString()),
+            subtitle: Text('Server: ${config.ldapConfig.url}'),
             leading: Icon(Icons.key),
             onTap: () async {
               final ldapConfig = await LdapConfigDialog.show(
@@ -176,7 +180,7 @@ class _AuthConfigFormState extends State<AuthConfigForm> {
                 config.ldapConfig,
               );
               if (ldapConfig == null || !context.mounted) return;
-              config = config.copyWith(ldapConfig: ldapConfig);
+              bloc.passwordConfig = config.copyWith(ldapConfig: ldapConfig);
             },
           ),
         SwitchListTile(
@@ -191,51 +195,71 @@ class _AuthConfigFormState extends State<AuthConfigForm> {
               ? config.resetEnabled
               : false,
           onChanged: mailEnabled && config.backend == PasswordBackend.crypt
-              ? (value) => context.read<AuthConfigController>().passwordConfig =
-                    config.copyWith(resetEnabled: value)
+              ? (value) =>
+                    bloc.passwordConfig = config.copyWith(resetEnabled: value)
               : null,
         ),
       ],
     );
   }
+}
 
-  Future<void> save(BuildContext context) async {
-    final config = context.read<AuthConfigState>().config!;
-    if (!config.passwordLoginEnabled &&
-        !config.passwordlessLoginEnabled &&
-        config.openIdConfigs.isEmpty) {
-      showAlertDialog(
-        context,
-        message: 'You must set up at least 1 login method',
-      );
-      return;
-    }
+class OpenIDConfigList extends StatelessWidget {
+  final AuthConfigFormCubit bloc;
+  const OpenIDConfigList({super.key, required this.bloc});
 
-    if (requestInFlight) return;
-
-    setState(() => requestInFlight = true);
-    final result = await context.read<PhylumAccount>().apiClient.sendRequest(
-      UpdateAuthConfigRequest(
-        old: AuthConfig.defaults(), // TODO: Fix
-        config: config,
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
+      bloc: bloc,
+      builder: (context, state) {
+        return buildList(context, state.config.openIdConfigs);
+      },
+      buildWhen: (previous, current) => !DeepCollectionEquality().equals(
+        previous.config.openIdConfigs,
+        current.config.openIdConfigs,
       ),
     );
-    if (!context.mounted) return;
-    setState(() => requestInFlight = false);
+  }
 
-    if (result is ApiSuccessResponse) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Auth Config Updated'),
-          duration: Duration(seconds: 2),
+  Widget buildList(BuildContext context, List<OpenIDConfig> openIdConfigs) {
+    return Column(
+      children: [
+        ListTile(
+          dense: true,
+          title: Text(
+            'OpenID Login',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          trailing: IconButton(
+            onPressed: () async {
+              final openIDConfig = await OidcDialog.show(
+                context,
+                OpenIDConfig.empty(),
+              );
+              if (openIDConfig == null || !context.mounted) return;
+              bloc.addOpenIDConfig(openIDConfig);
+            },
+            icon: Icon(Icons.add),
+            tooltip: 'Add OpenID Login Provider',
+          ),
         ),
-      );
-    } else {
-      showAlertDialog(
-        context,
-        title: 'Failed to update Auth Config',
-        message: result.description,
-      );
-    }
+        ...openIdConfigs.mapIndexed(
+          (i, cfg) => ListTile(
+            title: Text(cfg.name),
+            subtitle: Text(cfg.issuerUrl),
+            onTap: () async {
+              final openIDConfig = await OidcDialog.show(context, cfg);
+              if (openIDConfig == null || !context.mounted) return;
+              bloc.replaceOpenIDConfig(cfg, openIDConfig);
+            },
+            trailing: IconButton(
+              onPressed: () => bloc.removeOpenIDConfig(cfg),
+              icon: Icon(Icons.delete),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
