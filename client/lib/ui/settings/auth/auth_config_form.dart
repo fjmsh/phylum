@@ -1,7 +1,9 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/config/auth_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/settings/auth/api/update_request.dart';
 import 'package:phylum/ui/settings/auth/auth_config_controller.dart';
 import 'package:phylum/ui/settings/auth/util/crypt.dart';
 import 'package:phylum/ui/settings/auth/util/ldap.dart';
@@ -212,25 +214,28 @@ class _AuthConfigFormState extends State<AuthConfigForm> {
     if (requestInFlight) return;
 
     setState(() => requestInFlight = true);
-    // final result = await context.read<PhylumAccount>().apiClient.sendRequest(
-    //   UpdateMailConfigRequest(config: getConfig()),
-    // );
+    final result = await context.read<PhylumAccount>().apiClient.sendRequest(
+      UpdateAuthConfigRequest(
+        old: AuthConfig.defaults(), // TODO: Fix
+        config: config,
+      ),
+    );
     if (!context.mounted) return;
     setState(() => requestInFlight = false);
 
-    // if (result is ApiSuccessResponse) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     SnackBar(
-    //       content: Text('Auth Config Updated'),
-    //       duration: Duration(seconds: 2),
-    //     ),
-    //   );
-    // } else {
-    //   showAlertDialog(
-    //     context,
-    //     title: 'Failed to update Auth Config',
-    //     message: result.description,
-    //   );
-    // }
+    if (result is ApiSuccessResponse) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Auth Config Updated'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      showAlertDialog(
+        context,
+        title: 'Failed to update Auth Config',
+        message: result.description,
+      );
+    }
   }
 }

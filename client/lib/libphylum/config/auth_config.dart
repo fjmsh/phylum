@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 class AuthConfig {
   final bool passwordlessLoginEnabled;
   final PasswordConfig passwordConfig;
@@ -71,16 +73,19 @@ class AuthConfig {
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toMap(AuthConfig old) {
     final clients = <String, dynamic>{};
     for (final config in openIdConfigs) {
       assert(config.id != '');
-      clients[config.id] = config.toMap();
+      clients[config.id] = config.toMap(
+        old.openIdConfigs.firstWhereOrNull((c) => c.id == config.id) ??
+            OpenIDConfig.empty(),
+      );
     }
     return {
-      if (passwordLoginEnabled) 'password': passwordConfig.toMap(),
-      if (passwordlessLoginEnabled) 'magic_links': passwordlessLoginEnabled,
-      if (clients.isNotEmpty) 'openid': {'clients': clients},
+      'password': passwordConfig.toMap(),
+      'magic_links': passwordlessLoginEnabled,
+      'openid': {'clients': clients},
     };
   }
 }
@@ -135,7 +140,7 @@ class PasswordConfig {
 
   Map<String, dynamic> toMap() {
     return switch (backend) {
-      .none => {'backend': 'crypt'},
+      .none => {'backend': 'none'},
       .crypt => {
         'backend': 'crypt',
         'crypt': cryptConfig.toMap(),
@@ -450,12 +455,14 @@ class OpenIDConfig {
     autoCreateUsers: autoCreateUsers ?? this.autoCreateUsers,
   );
 
-  Map<String, dynamic> toMap() => {
-    'name': name,
-    'issuer_url': issuerUrl,
-    'client_id': clientId,
-    'client_secret': clientSecret,
-    'allow_unverified_emails': allowUnverifiedEmails,
-    'auto_create_users': autoCreateUsers,
+  Map<String, dynamic> toMap(OpenIDConfig old) => {
+    if (name != old.name) 'name': name,
+    if (issuerUrl != old.issuerUrl) 'issuer_url': issuerUrl,
+    if (clientId != old.clientId) 'client_id': clientId,
+    if (clientSecret != old.clientSecret) 'client_secret': clientSecret,
+    if (allowUnverifiedEmails != old.allowUnverifiedEmails)
+      'allow_unverified_emails': allowUnverifiedEmails,
+    if (autoCreateUsers != old.autoCreateUsers)
+      'auto_create_users': autoCreateUsers,
   };
 }
