@@ -36,12 +36,15 @@ class _AuthConfigPaneState extends State<AuthConfigPane> {
               bloc: bloc,
               builder: (context, AuthConfigFormState state) {
                 return ElevatedButton(
-                  onPressed: state.requestInFlight ? null : () => bloc.save(),
+                  onPressed: state.requestInFlight || !state.config.valid
+                      ? null
+                      : () => bloc.save(),
                   child: Text('Save'),
                 );
               },
               buildWhen: (previous, current) =>
-                  previous.requestInFlight != current.requestInFlight,
+                  previous.requestInFlight != current.requestInFlight ||
+                  previous.config.valid != current.config.valid,
             ),
           ],
         ),
