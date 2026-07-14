@@ -6,7 +6,6 @@ import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
-import '../settings/auth/util/crypt.dart';
 import '../settings/auth/util/ldap.dart';
 import '../settings/auth/util/openid.dart';
 

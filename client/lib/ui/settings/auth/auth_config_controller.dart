@@ -1,14 +1,11 @@
-import 'dart:convert';
-
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/config/auth_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/util/request.dart';
+import 'package:phylum/libphylum/responses/responses.dart';
+import 'package:phylum/ui/settings/auth/api/test_params_request.dart';
 import 'package:provider/provider.dart';
-import 'package:uri/uri.dart';
 
 import 'api/update_request.dart';
 
@@ -182,11 +179,11 @@ class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
     int parallelism,
   ) async {
     return testParams(
-      endpoint: '/api/v1/setup/auth/test_argon2_params',
+      kdf: .argon2,
       params: {
-        "memory": memory.toString(),
-        "iterations": iterations.toString(),
-        "parallelism": parallelism.toString(),
+        "memory": memory,
+        "iterations": iterations,
+        "parallelism": parallelism,
       },
     );
   }
@@ -196,40 +193,41 @@ class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
     int iterations,
   ) async {
     return testParams(
-      endpoint: '/api/v1/setup/auth/test_pbkdf2_params',
-      params: {"function": hash.name, "iterations": iterations.toString()},
+      kdf: .pbkdf2,
+      params: {"function": hash.name, "iterations": iterations},
     );
   }
 
   Future<KDFTestResult> testParams({
-    required String endpoint,
-    required Map<String, String> params,
+    required CryptKDF kdf,
+    required Map<String, dynamic> params,
   }) async {
-    final builder = UriBuilder.fromUri(_apiClient.serverUrl);
-    builder.path = '${builder.path}$endpoint';
-    builder.queryParameters = params;
-    final request = Request('get', builder.build());
+    final result = await _apiClient.sendRequest(
+      TestParamsRequest(kdf: kdf, params: params),
+    );
 
-    final response = await sendRequest(request);
-    switch (response) {
-      case ServerOffline():
-        return KDFTestFailure(title: response.title);
-      case ClientError() || ErrorResponse():
-        return KDFTestFailure(title: response.title, details: response.details);
-      case SuccessResponse():
-        final responseMap = (jsonDecode(response.responseString) as Map)
-            .cast<String, dynamic>();
-
-        if (responseMap["success"]) {
-          return KDFTestSuccess(
-            duration: Duration(microseconds: responseMap["time"]),
-          );
-        } else {
-          return KDFTestFailure(
-            title: 'Failed to test params',
-            details: responseMap['error'],
-          );
+    switch (result) {
+      case ApiUnreachableError():
+        return KDFTestFailure(title: 'Server Unreachable');
+      case ApiClientError():
+        return KDFTestFailure(
+          title: 'Client Error',
+          details: result.ex.toString(),
+        );
+      case PhylumApiErrorResponse():
+        return KDFTestFailure(title: 'Server Error', details: result.message);
+      case TestParamsResponse():
+        if (result.duration != null) {
+          return KDFTestSuccess(duration: result.duration!);
         }
+        return KDFTestFailure(
+          title: 'Failed to test params',
+          details: result.error,
+        );
+      case ApiSuccessResponse<PhylumAccount>():
+        throw UnimplementedError();
+      case ApiErrorResponse<PhylumAccount>():
+        throw UnimplementedError();
     }
   }
 }

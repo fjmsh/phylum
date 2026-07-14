@@ -185,7 +185,10 @@ Future<Pbkdf2Config?> showPbkdf2ConfigDialog(
               },
             ),
             ElevatedButton(
-              onPressed: () => bloc.testPbkdf2Params(hash, iterations),
+              onPressed: () => testParams(
+                context,
+                () => bloc.testPbkdf2Params(hash, iterations),
+              ),
               child: Text('Test Parameters'),
             ),
           ],
