@@ -178,8 +178,8 @@ class PasswordAuthForm extends StatelessWidget {
           onTap: () async {
             final cryptConfig = await configureKDF(
               context,
+              bloc,
               config.cryptConfig,
-              context.read<PhylumAccount>().apiClient.serverUrl.toString(),
             );
             if (cryptConfig == null || !context.mounted) return;
             bloc.passwordConfig = config.copyWith(cryptConfig: cryptConfig);

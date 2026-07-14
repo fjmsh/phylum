@@ -1,9 +1,14 @@
+import 'dart:convert';
+
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/config/auth_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
+import 'package:uri/uri.dart';
 
 import 'api/update_request.dart';
 
@@ -170,4 +175,79 @@ class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
       // );
     }
   }
+
+  Future<KDFTestResult> testArgon2Params(
+    int memory,
+    int iterations,
+    int parallelism,
+  ) async {
+    return testParams(
+      endpoint: '/api/v1/setup/auth/test_argon2_params',
+      params: {
+        "memory": memory.toString(),
+        "iterations": iterations.toString(),
+        "parallelism": parallelism.toString(),
+      },
+    );
+  }
+
+  Future<KDFTestResult> testPbkdf2Params(
+    HashFunction hash,
+    int iterations,
+  ) async {
+    return testParams(
+      endpoint: '/api/v1/setup/auth/test_pbkdf2_params',
+      params: {"function": hash.name, "iterations": iterations.toString()},
+    );
+  }
+
+  Future<KDFTestResult> testParams({
+    required String endpoint,
+    required Map<String, String> params,
+  }) async {
+    final builder = UriBuilder.fromUri(_apiClient.serverUrl);
+    builder.path = '${builder.path}$endpoint';
+    builder.queryParameters = params;
+    final request = Request('get', builder.build());
+
+    final response = await sendRequest(request);
+    switch (response) {
+      case ServerOffline():
+        return KDFTestFailure(title: response.title);
+      case ClientError() || ErrorResponse():
+        return KDFTestFailure(title: response.title, details: response.details);
+      case SuccessResponse():
+        final responseMap = (jsonDecode(response.responseString) as Map)
+            .cast<String, dynamic>();
+
+        if (responseMap["success"]) {
+          return KDFTestSuccess(
+            duration: Duration(microseconds: responseMap["time"]),
+          );
+        } else {
+          return KDFTestFailure(
+            title: 'Failed to test params',
+            details: responseMap['error'],
+          );
+        }
+    }
+  }
+}
+
+sealed class KDFTestResult {
+  const KDFTestResult();
+}
+
+class KDFTestFailure extends KDFTestResult {
+  final String title;
+
+  final String? details;
+
+  const KDFTestFailure({required this.title, this.details});
+}
+
+class KDFTestSuccess extends KDFTestResult {
+  final Duration duration;
+
+  const KDFTestSuccess({required this.duration});
 }

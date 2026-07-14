@@ -50,10 +50,7 @@ class SuccessResponse extends RequestResult {
   String get title => 'Success';
 }
 
-Future<RequestResult> sendRequest(
-  BaseRequest request, {
-  String? message,
-}) async {
+Future<RequestResult> sendRequest(BaseRequest request) async {
   try {
     final response = await Client().send(request);
     final responseString = await response.stream.bytesToString();

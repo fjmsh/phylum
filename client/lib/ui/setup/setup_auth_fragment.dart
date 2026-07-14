@@ -193,15 +193,16 @@ class _SetupAuthFragmentState extends State<SetupAuthFragment> {
             subtitle: Text(config.cryptConfig.toString()),
             leading: Icon(Icons.key),
             onTap: () async {
-              final cryptConfig = await configureKDF(
-                context,
-                config.cryptConfig,
-                widget.instanceUrl,
-              );
-              if (cryptConfig == null || !context.mounted) return;
-              context.read<AuthController>().passwordConfig = config.copyWith(
-                cryptConfig: cryptConfig,
-              );
+              // TODO: FIX
+              // final cryptConfig = await configureKDF(
+              //   context,
+              //   config.cryptConfig,
+              //   widget.instanceUrl,
+              // );
+              // if (cryptConfig == null || !context.mounted) return;
+              // context.read<AuthController>().passwordConfig = config.copyWith(
+              //   cryptConfig: cryptConfig,
+              // );
             },
           )
         else if (config.backend == PasswordBackend.ldap)
