@@ -87,7 +87,7 @@ class AccountUser {
       home.hashCode ^
       permissions.hashCode;
 
-  Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toMap() => {
     "id": id,
     "email": email,
     "name": name,
@@ -95,7 +95,7 @@ class AccountUser {
     "permission_list": permissions,
   };
 
-  factory AccountUser.fromJson(Map<String, dynamic> map) {
+  factory AccountUser.fromMap(Map<String, dynamic> map) {
     return AccountUser(
       id: map['id'],
       email: map['email'],
@@ -117,7 +117,7 @@ class AccountUser {
 
   @override
   String toString() {
-    return jsonEncode(toJson());
+    return jsonEncode(toMap());
   }
 }
 
@@ -129,7 +129,7 @@ class AccountUserNotifier extends StateNotifier<AccountUser> {
 
   AccountUserNotifier._(this._account, super.state) {
     stream.listen((user) {
-      _account.persist(_persistKeyUser, jsonEncode(user.toJson()));
+      _account.persist(_persistKeyUser, jsonEncode(user.toMap()));
     });
   }
 
@@ -137,12 +137,12 @@ class AccountUserNotifier extends StateNotifier<AccountUser> {
     PhylumAccount account,
     AccountUser user,
   ) {
-    account.persist(_persistKeyUser, jsonEncode(user.toJson()));
+    account.persist(_persistKeyUser, jsonEncode(user.toMap()));
     return AccountUserNotifier._(account, user);
   }
 
   factory AccountUserNotifier.fromAccount(PhylumAccount account) {
-    final user = AccountUser.fromJson(
+    final user = AccountUser.fromMap(
       jsonDecode(account.getPersisted(_persistKeyUser)),
     );
     return AccountUserNotifier._(account, user);

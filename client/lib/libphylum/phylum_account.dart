@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -17,7 +16,6 @@ import 'package:state_notifier/state_notifier.dart';
 
 const _persistKeyApiToken = 'apiToken';
 const _persistKeyBootstrapUntil = 'bootstrapUntil';
-const _persistKeyConfig = 'config';
 
 class PhylumAccount extends Account<PhylumAccount> {
   late final db = AppDatabase(accountId: id);
@@ -44,6 +42,7 @@ class PhylumAccount extends Account<PhylumAccount> {
   Dispatcher dispatcher = HttpClientDispatcher();
 
   AccountUser? _initialUser;
+  ServerConfig? _initialConfig;
 
   String? _apiToken;
   set apiKey(String value) {
@@ -65,20 +64,20 @@ class PhylumAccount extends Account<PhylumAccount> {
     persist(_persistKeyBootstrapUntil, value);
   }
 
-  late ServerConfig _config;
-  ServerConfig get config => _config;
+  late ServerConfigNotifier _configNotifier;
+  StateNotifier<ServerConfig> get configNotifier => _configNotifier;
+  ServerConfig get config => _configNotifier.config;
   set config(ServerConfig value) {
-    if (value != _config) {
-      _config = value;
-      persist(_persistKeyConfig, jsonEncode(value.toMap()));
-    }
+    _configNotifier.config = value;
   }
 
   PhylumAccount._create({
     required super.serverUrl,
     required String this._apiToken,
     required AccountUser user,
+    required ServerConfig config,
   }) : _initialUser = user,
+       _initialConfig = config,
        super.create();
 
   PhylumAccount.restore({required super.id}) : super.restore();
@@ -87,11 +86,13 @@ class PhylumAccount extends Account<PhylumAccount> {
     required Uri serverUrl,
     required String apiToken,
     required AccountUser user,
+    required ServerConfig config,
   }) async {
     final account = PhylumAccount._create(
       serverUrl: serverUrl,
       apiToken: apiToken,
       user: user,
+      config: config,
     );
     await account.setup();
     return account;
@@ -115,9 +116,11 @@ class PhylumAccount extends Account<PhylumAccount> {
     } else {
       _userNotifier = AccountUserNotifier.fromAccount(this);
     }
-    _config = ServerConfig.fromMap(
-      jsonDecode(getPersisted(_persistKeyConfig) ?? '{}'),
-    );
+    if (_initialConfig != null) {
+      _configNotifier = ServerConfigNotifier.fromConfig(this, _initialConfig!);
+    } else {
+      _configNotifier = ServerConfigNotifier.fromAccount(this);
+    }
 
     final dispatcherOverride = const String.fromEnvironment('dispatcher');
     dispatcher = switch (dispatcherOverride) {

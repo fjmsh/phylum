@@ -30,6 +30,7 @@ Future<void> login(BuildContext context, BaseRequest request) async {
       serverUrl: instanceUrl,
       apiToken: response.apiToken!,
       user: response.user,
+      config: response.config,
     );
     await response.process(account);
     await accountManager.addAccount(account);
