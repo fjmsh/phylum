@@ -56,15 +56,19 @@ class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
   final AuthConfig _initialConfig;
   late final ApiClient<PhylumAccount> _apiClient;
   late final void Function() _removeConfigListener;
+  final void Function(AuthConfig) _onConfigUpdated;
 
-  AuthConfigFormCubit(BuildContext context, this._initialConfig)
-    : super(
-        AuthConfigFormState(
-          config: _initialConfig,
-          mailEnabled: false,
-          requestInFlight: false,
-        ),
-      ) {
+  AuthConfigFormCubit(
+    BuildContext context, {
+    required this._initialConfig,
+    required this._onConfigUpdated,
+  }) : super(
+         AuthConfigFormState(
+           config: _initialConfig,
+           mailEnabled: false,
+           requestInFlight: false,
+         ),
+       ) {
     _removeConfigListener = context
         .read<PhylumAccount>()
         .configNotifier
@@ -152,6 +156,8 @@ class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
     );
 
     emit(state.copyWith(requestInFlight: false));
+
+    _onConfigUpdated(config);
 
     return (result is ApiSuccessResponse) ? null : result.description;
   }

@@ -3,7 +3,7 @@ import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 import 'package:provider/provider.dart';
 
 typedef ConfigWidgetBuilder<T> =
-    Widget Function(BuildContext context, T config);
+    Widget Function(BuildContext, T, void Function(T));
 
 class RemoteConfigPane<T> extends StatefulWidget {
   final ConfigWidgetBuilder<T> builder;
@@ -63,6 +63,12 @@ class _RemoteConfigPaneState<T> extends State<RemoteConfigPane<T>> {
         ),
       );
     }
-    return SingleChildScrollView(child: builder(context, config));
+    return SingleChildScrollView(
+      child: builder(
+        context,
+        config,
+        (config) => context.read<RemoteConfigController<T>>().update(config),
+      ),
+    );
   }
 }

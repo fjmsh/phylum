@@ -11,8 +11,13 @@ import 'package:provider/provider.dart';
 
 class MailConfigForm extends StatefulWidget {
   final MailConfig initialConfig;
+  final void Function(MailConfig) onConfigUpdated;
 
-  const MailConfigForm({super.key, required this.initialConfig});
+  const MailConfigForm({
+    super.key,
+    required this.initialConfig,
+    required this.onConfigUpdated,
+  });
 
   @override
   State<MailConfigForm> createState() => _MailConfigFormState();
@@ -287,13 +292,15 @@ class _MailConfigFormState extends State<MailConfigForm> {
     if (requestInFlight) return;
 
     setState(() => requestInFlight = true);
+    final config = getConfig();
     final result = await context.read<PhylumAccount>().apiClient.sendRequest(
-      UpdateMailConfigRequest(config: getConfig()),
+      UpdateMailConfigRequest(config: config),
     );
     if (!context.mounted) return;
     setState(() => requestInFlight = false);
 
     if (result is ApiSuccessResponse) {
+      widget.onConfigUpdated(config);
       final account = context.read<PhylumAccount>();
       account.config = account.config.copyWith(mail: _enabled);
       ScaffoldMessenger.of(context).showSnackBar(

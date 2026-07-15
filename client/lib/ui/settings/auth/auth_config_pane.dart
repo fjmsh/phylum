@@ -8,15 +8,24 @@ import 'auth_config_form.dart';
 
 class AuthConfigPane extends StatefulWidget {
   final AuthConfig initialConfig;
+  final Function(AuthConfig) onConfigUpdated;
 
-  const AuthConfigPane({super.key, required this.initialConfig});
+  const AuthConfigPane({
+    super.key,
+    required this.initialConfig,
+    required this.onConfigUpdated,
+  });
 
   @override
   State<AuthConfigPane> createState() => _AuthConfigPaneState();
 }
 
 class _AuthConfigPaneState extends State<AuthConfigPane> {
-  late final bloc = AuthConfigFormCubit(context, widget.initialConfig);
+  late final bloc = AuthConfigFormCubit(
+    context,
+    initialConfig: widget.initialConfig,
+    onConfigUpdated: widget.onConfigUpdated,
+  );
 
   @override
   void initState() {

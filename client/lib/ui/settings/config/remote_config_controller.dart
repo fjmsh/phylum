@@ -48,4 +48,12 @@ class RemoteConfigController<T> extends StateNotifier<RemoteConfigState<T>> {
       fetch();
     }
   }
+
+  void update(T config) {
+    state = RemoteConfigState(
+      loading: state.loading,
+      error: state.error,
+      config: config,
+    );
+  }
 }
