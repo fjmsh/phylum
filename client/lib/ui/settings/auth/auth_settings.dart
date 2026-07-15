@@ -36,7 +36,8 @@ class AuthSettings extends Settings {
   @override
   Widget buildWithoutScaffold(BuildContext context) =>
       RemoteConfigPane<AuthConfig>(
-        builder: (context, config, onConfigUpdated) => AuthConfigPane(
+        builder: (context, config, onConfigUpdated) => AuthConfigPane.create(
+          context,
           initialConfig: config,
           onConfigUpdated: onConfigUpdated,
         ),

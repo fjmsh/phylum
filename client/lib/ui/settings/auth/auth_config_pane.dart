@@ -1,35 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/libphylum/config/auth_config.dart';
-import 'package:phylum/ui/settings/auth/auth_config_controller.dart';
+import 'package:phylum/ui/settings/auth/form/auth_config_form_cubit.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:provider/provider.dart';
 
-import 'auth_config_form.dart';
+import 'auth_config_pane_cubit.dart';
+import 'form/auth_config_form.dart';
 
-class AuthConfigPane extends StatefulWidget {
-  final AuthConfig initialConfig;
-  final Function(AuthConfig) onConfigUpdated;
+class AuthConfigPane extends StatelessWidget {
+  const AuthConfigPane._();
 
-  const AuthConfigPane({
-    super.key,
-    required this.initialConfig,
-    required this.onConfigUpdated,
-  });
+  static Widget create(
+    BuildContext context, {
+    required AuthConfig initialConfig,
+    required void Function(AuthConfig) onConfigUpdated,
+  }) {
+    late final configBloc = AuthConfigPaneCubit(
+      context.read(),
+      initialConfig: initialConfig,
+    );
 
-  @override
-  State<AuthConfigPane> createState() => _AuthConfigPaneState();
-}
-
-class _AuthConfigPaneState extends State<AuthConfigPane> {
-  late final bloc = AuthConfigFormCubit(
-    context,
-    initialConfig: widget.initialConfig,
-    onConfigUpdated: widget.onConfigUpdated,
-  );
-
-  @override
-  void initState() {
-    super.initState();
+    late final saveBloc = AuthConfigSaveCubit(
+      account: context.read(),
+      initialConfig: initialConfig,
+      onConfigUpdated: onConfigUpdated,
+    );
+    return MultiProvider(
+      providers: [
+        BlocProvider<AuthConfigFormCubit>.value(value: configBloc),
+        BlocProvider.value(value: saveBloc),
+      ],
+      builder: (context, child) => const AuthConfigPane._(),
+    );
   }
 
   @override
@@ -37,19 +40,32 @@ class _AuthConfigPaneState extends State<AuthConfigPane> {
     return Column(
       spacing: 18,
       children: [
-        AuthConfigForm(bloc: bloc),
+        AuthConfigForm(bloc: context.read()),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           spacing: 18,
           children: [
-            BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
-              bloc: bloc,
-              builder: (context, AuthConfigFormState state) {
+            Builder(
+              builder: (context) {
+                final configValid = context.select<AuthConfigFormCubit, bool>(
+                  (bloc) => bloc.state.config.valid,
+                );
+                final requestInFlight = context
+                    .select<AuthConfigSaveCubit, bool>(
+                      (bloc) => bloc.state.requestInFlight,
+                    );
                 return ElevatedButton(
-                  onPressed: state.requestInFlight || !state.config.valid
+                  onPressed: requestInFlight || !configValid
                       ? null
                       : () async {
-                          final error = await bloc.save();
+                          final config = context
+                              .read<AuthConfigFormCubit>()
+                              .state
+                              .config;
+
+                          final error = await context
+                              .read<AuthConfigSaveCubit>()
+                              .save(config);
                           if (!context.mounted) return;
                           if (error == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -69,9 +85,6 @@ class _AuthConfigPaneState extends State<AuthConfigPane> {
                   child: Text('Save'),
                 );
               },
-              buildWhen: (previous, current) =>
-                  previous.requestInFlight != current.requestInFlight ||
-                  previous.config.valid != current.config.valid,
             ),
           ],
         ),

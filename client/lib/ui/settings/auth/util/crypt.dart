@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/config/auth_config.dart';
-import 'package:phylum/ui/settings/auth/auth_config_controller.dart';
+import 'package:phylum/ui/settings/auth/form/auth_config_form_cubit.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
 
