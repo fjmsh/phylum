@@ -45,19 +45,23 @@ class _LogsPaneState extends State<LogsPane> {
     super.initState();
     records.addAll(Log.records);
     sub = Logger.root.onRecord.listen((record) {
-      setState(() {
-        records.add(record);
-      });
-      if (_scrollController.position.pixels >=
-          _scrollController.position.maxScrollExtent - 12) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scrollController.hasClients) {
-            _scrollController.jumpTo(
-              _scrollController.position.maxScrollExtent,
-            );
-          }
+      final scroll =
+          _scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 12;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          records.add(record);
         });
-      }
+        if (scroll) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_scrollController.hasClients) {
+              _scrollController.jumpTo(
+                _scrollController.position.maxScrollExtent,
+              );
+            }
+          });
+        }
+      });
     });
     WidgetsBinding.instance.addPostFrameCallback(
       (_) =>
@@ -83,12 +87,21 @@ class _LogsPaneState extends State<LogsPane> {
           return InkWell(
             child: LogRecordSummary(record: record),
             onTap: () {
+              String? body = record.error?.toString();
+              if (record.stackTrace != null) {
+                if (body == null) {
+                  body = '';
+                } else {
+                  body += '\n\n';
+                }
+                body += cleanupStackTrace(record.stackTrace!);
+              }
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
                   title: Text('Log Entry'),
                   content: SizedBox(
-                    width: 360,
+                    width: 560,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -99,8 +112,6 @@ class _LogsPaneState extends State<LogsPane> {
                               : stringifyMessage(record.object),
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
-                        if (record.error != null) Text(record.error.toString()),
-                        SizedBox(height: 6),
                         Text(
                           record.level.name,
                           style: Theme.of(context).textTheme.bodyMedium,
@@ -115,18 +126,15 @@ class _LogsPaneState extends State<LogsPane> {
                           maxLines: 1,
                           overflow: TextOverflow.fade,
                         ),
-                        if (record.stackTrace != null)
-                          ConstrainedBox(
-                            constraints: BoxConstraints(maxHeight: 360),
+                        if (body != null)
+                          Flexible(
                             child: TextFormField(
                               decoration: InputDecoration(
                                 border: InputBorder.none,
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
                               ),
-                              initialValue: cleanupStackTrace(
-                                record.stackTrace!,
-                              ),
+                              initialValue: body,
                               readOnly: true,
                               expands: true,
                               maxLines: null,
@@ -151,9 +159,9 @@ class _LogsPaneState extends State<LogsPane> {
                       },
                       child: Text('Copy'),
                     ),
-                    ElevatedButton(
+                    TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: Text('Okay'),
+                      child: Text('Close'),
                     ),
                   ],
                 ),

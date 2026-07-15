@@ -97,7 +97,7 @@ String stringifyRecord(LogRecord record, [bool truncate = false]) {
 
   if (record.stackTrace != null) {
     output +=
-        '\n${cleanupStackTrace(record.stackTrace!, methodCount: truncate ? 6 : null)}';
+        '\n${cleanupStackTrace(record.stackTrace!, methodCount: truncate ? 8 : null)}';
   }
 
   return output;
