@@ -117,24 +117,10 @@ class _OidcDialogState extends State<OidcDialog> {
                     value?.isEmpty ?? true ? 'Required' : null,
               ),
               TextFormField(
-                decoration: const InputDecoration(
-                  label: Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(text: 'Client Secret '),
-                        TextSpan(
-                          text: '*',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                decoration: const InputDecoration(label: Text('Client Secret')),
                 obscureText: true,
                 initialValue: clientSecret,
                 onChanged: (value) => setState(() => clientSecret = value),
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Required' : null,
               ),
               SwitchListTile(
                 value: allowUnverifiedEmails,
