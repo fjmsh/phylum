@@ -136,18 +136,14 @@ class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
     );
   }
 
-  Future<void> save() async {
-    if (state.requestInFlight) return;
+  Future<String?> save() async {
+    if (state.requestInFlight) return null;
 
     final config = state.config;
     if (!config.passwordLoginEnabled &&
         !config.passwordlessLoginEnabled &&
         config.openIdConfigs.isEmpty) {
-      // showAlertDialog(
-      //   context,
-      //   message: 'You must set up at least 1 login method',
-      // );
-      return;
+      return 'You must configure at least 1 login method';
     }
 
     emit(state.copyWith(requestInFlight: true));
@@ -157,20 +153,7 @@ class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
 
     emit(state.copyWith(requestInFlight: false));
 
-    if (result is ApiSuccessResponse) {
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   SnackBar(
-      //     content: Text('Auth Config Updated'),
-      //     duration: Duration(seconds: 2),
-      //   ),
-      // );
-    } else {
-      // showAlertDialog(
-      //   context,
-      //   title: 'Failed to update Auth Config',
-      //   message: result.description,
-      // );
-    }
+    return (result is ApiSuccessResponse) ? null : result.description;
   }
 
   Future<KDFTestResult> testArgon2Params(
