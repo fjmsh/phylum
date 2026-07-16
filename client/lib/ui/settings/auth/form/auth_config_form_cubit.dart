@@ -1,7 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:phylum/libphylum/config/auth_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:provider/provider.dart';
 
 class AuthConfigFormState {
   final AuthConfig config;
