@@ -31,12 +31,11 @@ class AuthConfigFormState {
 }
 
 abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
+  final AuthConfig _initialConfig;
   late final void Function() _removeConfigListener;
 
-  AuthConfigFormCubit(
-    PhylumAccount account, {
-    required AuthConfig initialConfig,
-  }) : super(AuthConfigFormState(config: initialConfig, mailEnabled: false)) {
+  AuthConfigFormCubit(PhylumAccount account, {required this._initialConfig})
+    : super(AuthConfigFormState(config: _initialConfig, mailEnabled: false)) {
     _removeConfigListener = account.configNotifier.addListener((config) {
       if (config.mail != state.mailEnabled) {
         emit(state.copyWith(mailEnabled: config.mail));
@@ -53,6 +52,10 @@ abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
   Future<void> close() async {
     _removeConfigListener();
     await super.close();
+  }
+
+  void reset() {
+    emit(state.copyWith(config: _initialConfig));
   }
 
   set passwordlessLoginEnabled(bool enabled) {

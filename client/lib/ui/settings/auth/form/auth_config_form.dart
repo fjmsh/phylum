@@ -84,36 +84,40 @@ class PasswordAuthForm extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
-        BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
-          bloc: bloc,
-          builder: (context, state) {
-            return SwitchListTile(
-              title: Text('Enable Password Login'),
-              secondary: Icon(Icons.password),
-              value: state.config.passwordLoginEnabled,
-              onChanged: (value) =>
-                  bloc.passwordConfig = state.config.passwordConfig.copyWith(
-                    backend: value
-                        ? PasswordBackend.crypt
-                        : PasswordBackend.none,
-                  ),
-            );
-          },
-          buildWhen: (previous, current) =>
-              previous.config.passwordLoginEnabled !=
-              current.config.passwordLoginEnabled,
-        ),
+        // BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
+        //   bloc: bloc,
+        //   builder: (context, state) {
+        //     return SwitchListTile(
+        //       title: Text('Enable Password Login'),
+        //       secondary: Icon(Icons.password),
+        //       value: state.config.passwordLoginEnabled,
+        //       onChanged: (value) =>
+        //           bloc.passwordConfig = state.config.passwordConfig.copyWith(
+        //             backend: value
+        //                 ? PasswordBackend.crypt
+        //                 : PasswordBackend.none,
+        //           ),
+        //     );
+        //   },
+        //   buildWhen: (previous, current) =>
+        //       previous.config.passwordLoginEnabled !=
+        //       current.config.passwordLoginEnabled,
+        // ),
         BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
           bloc: bloc,
           builder: (context, state) => ListTile(
-            title: Text('Backend'),
-            leading: Icon(Icons.search),
+            title: Text('Password Login'),
+            leading: Icon(Icons.password),
             subtitle: Text(state.config.passwordConfig.backend.descriptor),
             onTap: () async {
               final backend = await showOptionsDialog(
                 context,
-                titleText: 'Password Auth Backend',
-                [PasswordBackend.crypt, PasswordBackend.ldap],
+                titleText: 'Password Login',
+                [
+                  PasswordBackend.none,
+                  PasswordBackend.crypt,
+                  PasswordBackend.ldap,
+                ],
                 (item) => ListTile(title: Text(item.descriptor)),
               );
               if (backend == null || !context.mounted) return;

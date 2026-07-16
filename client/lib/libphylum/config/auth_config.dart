@@ -203,7 +203,7 @@ class PasswordConfig {
 }
 
 enum PasswordBackend {
-  none('none', 'None'),
+  none('none', 'Disabled'),
   crypt('crypt', 'Crypt (Local DB)'),
   ldap('ldap', 'LDAP');
 

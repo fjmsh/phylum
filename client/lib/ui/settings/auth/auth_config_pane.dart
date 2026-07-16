@@ -47,6 +47,20 @@ class AuthConfigPane extends StatelessWidget {
           children: [
             Builder(
               builder: (context) {
+                final requestInFlight = context
+                    .select<AuthConfigSaveCubit, bool>(
+                      (bloc) => bloc.state.requestInFlight,
+                    );
+                return TextButton(
+                  onPressed: requestInFlight
+                      ? null
+                      : () => context.read<AuthConfigFormCubit>().reset(),
+                  child: Text('Reset'),
+                );
+              },
+            ),
+            Builder(
+              builder: (context) {
                 final configValid = context.select<AuthConfigFormCubit, bool>(
                   (bloc) => bloc.state.config.valid,
                 );
@@ -54,7 +68,7 @@ class AuthConfigPane extends StatelessWidget {
                     .select<AuthConfigSaveCubit, bool>(
                       (bloc) => bloc.state.requestInFlight,
                     );
-                return ElevatedButton(
+                return TextButton(
                   onPressed: requestInFlight || !configValid
                       ? null
                       : () async {
