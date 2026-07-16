@@ -3,7 +3,7 @@ import 'package:collection/collection.dart';
 class AuthConfig {
   final bool passwordlessLoginEnabled;
   final PasswordConfig passwordConfig;
-  final List<OpenIDConfig> openIdConfigs;
+  final Map<String, OpenIDConfig> openIdConfigs;
 
   bool get passwordLoginEnabled =>
       passwordConfig.backend != PasswordBackend.none;
@@ -18,7 +18,7 @@ class AuthConfig {
     : this(
         passwordlessLoginEnabled: false,
         passwordConfig: PasswordConfig.defaults(),
-        openIdConfigs: const [],
+        openIdConfigs: const {},
       );
 
   bool get valid =>
@@ -29,23 +29,8 @@ class AuthConfig {
   AuthConfig copyWith({
     PasswordConfig? passwordConfig,
     bool? passwordlessLoginEnabled,
-    List<OpenIDConfig>? openIdConfigs,
+    Map<String, OpenIDConfig>? openIdConfigs,
   }) {
-    final re = RegExp(r'[^a-z0-9]+');
-    if (openIdConfigs != null) {
-      for (final c in openIdConfigs) {
-        if (c.id == '') {
-          final originalId = c.name.toLowerCase().replaceAll(re, '-');
-          String id = originalId;
-          int i = 2;
-          while (openIdConfigs.any((e) => e.id == id)) {
-            id = '$originalId-$i';
-            i++;
-          }
-          c._id = id;
-        }
-      }
-    }
     return AuthConfig(
       passwordlessLoginEnabled:
           passwordlessLoginEnabled ?? this.passwordlessLoginEnabled,
@@ -62,27 +47,29 @@ class AuthConfig {
           ? PasswordConfig.fromMap((data['password'] as Map).cast())
           : PasswordConfig.defaults(),
       openIdConfigs: clients == null
-          ? const []
-          : (clients as Map)
-                .cast<String, dynamic>()
-                .entries
-                .map<OpenIDConfig>(
-                  (e) => OpenIDConfig.fromMap(e.key, (e.value as Map).cast()),
-                )
-                .toList(growable: false),
+          ? const {}
+          : Map.fromEntries(
+              (clients as Map)
+                  .cast<String, dynamic>()
+                  .entries
+                  .map<MapEntry<String, OpenIDConfig>>(
+                    (e) => MapEntry(
+                      e.key,
+                      OpenIDConfig.fromMap(e.key, (e.value as Map).cast()),
+                    ),
+                  ),
+            ),
     );
     return config;
   }
 
-  Map<String, dynamic> toMap(AuthConfig old) {
-    final clients = <String, dynamic>{};
-    for (final config in openIdConfigs) {
-      assert(config.id != '');
-      clients[config.id] = config.toMapDiff(
-        old.openIdConfigs.firstWhereOrNull((c) => c.id == config.id) ??
-            OpenIDConfig.empty(),
+  Map<String, dynamic> toMapDiff(AuthConfig old) {
+    final clients = openIdConfigs.map((key, value) {
+      return MapEntry(
+        key,
+        value.toMapDiff(old.openIdConfigs[key] ?? OpenIDConfig.empty()),
       );
-    }
+    });
     return {
       'password': passwordConfig.toMap(),
       'magic_links': passwordlessLoginEnabled,
@@ -530,8 +517,6 @@ class LdapConfig {
 }
 
 class OpenIDConfig {
-  String _id;
-  String get id => _id;
   final String name;
   final String issuerUrl;
   final String clientId;
@@ -540,7 +525,6 @@ class OpenIDConfig {
   final bool autoCreateUsers;
 
   OpenIDConfig({
-    required this._id,
     required this.name,
     required this.issuerUrl,
     required this.clientId,
@@ -551,7 +535,6 @@ class OpenIDConfig {
 
   OpenIDConfig.empty()
     : this(
-        id: '',
         name: '',
         issuerUrl: '',
         clientId: '',
@@ -562,7 +545,6 @@ class OpenIDConfig {
 
   factory OpenIDConfig.fromMap(String id, Map<String, dynamic> data) {
     return OpenIDConfig(
-      id: id,
       name: data['name'],
       issuerUrl: data['issuer_url'],
       clientId: data['client_id'],
@@ -580,7 +562,6 @@ class OpenIDConfig {
     bool? allowUnverifiedEmails,
     bool? autoCreateUsers,
   }) => OpenIDConfig(
-    id: id,
     name: name ?? this.name,
     issuerUrl: issuerUrl ?? this.issuerUrl,
     clientId: clientId ?? this.clientId,
@@ -601,8 +582,7 @@ class OpenIDConfig {
   };
 
   Map<String, dynamic> toMap() {
-    return <String, dynamic>{
-      'id': _id,
+    return {
       'name': name,
       'issuerUrl': issuerUrl,
       'clientId': clientId,
@@ -614,15 +594,14 @@ class OpenIDConfig {
 
   @override
   String toString() {
-    return 'OpenIDConfig(_id: $_id, name: $name, issuerUrl: $issuerUrl, clientId: $clientId, clientSecret: $clientSecret, allowUnverifiedEmails: $allowUnverifiedEmails, autoCreateUsers: $autoCreateUsers)';
+    return 'OpenIDConfig(name: $name, issuerUrl: $issuerUrl, clientId: $clientId, clientSecret: $clientSecret, allowUnverifiedEmails: $allowUnverifiedEmails, autoCreateUsers: $autoCreateUsers)';
   }
 
   @override
   bool operator ==(covariant OpenIDConfig other) {
     if (identical(this, other)) return true;
 
-    return other._id == _id &&
-        other.name == name &&
+    return other.name == name &&
         other.issuerUrl == issuerUrl &&
         other.clientId == clientId &&
         other.clientSecret == clientSecret &&
@@ -632,7 +611,6 @@ class OpenIDConfig {
 
   @override
   int get hashCode =>
-      _id.hashCode ^
       name.hashCode ^
       issuerUrl.hashCode ^
       clientId.hashCode ^

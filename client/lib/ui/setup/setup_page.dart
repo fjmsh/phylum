@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:http/http.dart';
-import 'package:phylum/libphylum/config/auth_config.dart';
+import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/libphylum/config/mail_config.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
@@ -129,7 +129,7 @@ class _SetupPageState extends State<SetupPage> {
       'config': {
         'db': context.read<DbConfig>().configToMap(),
         'mail': context.read<MailConfig>().toMap(),
-        'auth': context.read<AuthConfig>().toMap(AuthConfig.defaults()),
+        'auth': context.read<AuthConfig>().toMapDiff(AuthConfig.defaults()),
       },
       'user': context.read<UserConfig>().toMap(),
       'options': {'db': context.read<DbConfig>().optionsToMap()},

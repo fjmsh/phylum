@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/config/auth_config.dart';
+import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
@@ -18,7 +18,7 @@ class UpdateAuthConfigRequest extends ApiRequest<PhylumAccount> {
 
     final request = Request('post', uri.build());
     request.headers['Content-Type'] = 'application/json';
-    request.body = jsonEncode({'config': config.toMap(old)});
+    request.body = jsonEncode({'config': config.toMapDiff(old)});
     return request;
   }
 

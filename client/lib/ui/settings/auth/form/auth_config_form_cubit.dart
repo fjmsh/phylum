@@ -1,5 +1,5 @@
 import 'package:bloc/bloc.dart';
-import 'package:phylum/libphylum/config/auth_config.dart';
+import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 
 class AuthConfigFormState {
@@ -71,40 +71,29 @@ abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
   }
 
   void addOpenIDConfig(OpenIDConfig config) {
-    emit(
-      state.copyWith(
-        config: state.config.copyWith(
-          openIdConfigs: [
-            ...state.config.openIdConfigs,
-            config,
-          ].toList(growable: false),
-        ),
-      ),
-    );
+    final re = RegExp(r'[^a-z0-9]+');
+    final originalId = config.name.toLowerCase().replaceAll(re, '-');
+    String id = originalId;
+    int i = 2;
+    while (state.config.openIdConfigs.containsKey(id)) {
+      id = '$originalId-$i';
+      i++;
+    }
+    final configs = Map.of(state.config.openIdConfigs);
+    configs[id] = config;
+    emit(state.copyWith(config: state.config.copyWith(openIdConfigs: configs)));
   }
 
-  void replaceOpenIDConfig(OpenIDConfig old, OpenIDConfig config) {
-    emit(
-      state.copyWith(
-        config: state.config.copyWith(
-          openIdConfigs: state.config.openIdConfigs
-              .map((e) => e == old ? config : e)
-              .toList(growable: false),
-        ),
-      ),
-    );
+  void replaceOpenIDConfig(String id, OpenIDConfig config) {
+    final configs = Map.of(state.config.openIdConfigs);
+    configs[id] = config;
+    emit(state.copyWith(config: state.config.copyWith(openIdConfigs: configs)));
   }
 
-  void removeOpenIDConfig(OpenIDConfig config) {
-    emit(
-      state.copyWith(
-        config: state.config.copyWith(
-          openIdConfigs: state.config.openIdConfigs
-              .where((e) => e.id != config.id)
-              .toList(growable: false),
-        ),
-      ),
-    );
+  void removeOpenIDConfig(String id) {
+    final configs = Map.of(state.config.openIdConfigs);
+    configs.remove(id);
+    emit(state.copyWith(config: state.config.copyWith(openIdConfigs: configs)));
   }
 
   Future<KDFTestResult> testArgon2Params(

@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/config/auth_config.dart';
+import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/settings/auth/api/update_request.dart';

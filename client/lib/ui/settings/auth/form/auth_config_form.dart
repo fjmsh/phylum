@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phylum/libphylum/config/auth_config.dart';
+import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/ui/settings/auth/form/auth_config_form_cubit.dart';
 import 'package:phylum/ui/settings/auth/util/crypt.dart';
 import 'package:phylum/ui/settings/auth/util/ldap.dart';
@@ -243,7 +243,10 @@ class OpenIDConfigList extends StatelessWidget {
     );
   }
 
-  Widget buildList(BuildContext context, List<OpenIDConfig> openIdConfigs) {
+  Widget buildList(
+    BuildContext context,
+    Map<String, OpenIDConfig> openIdConfigs,
+  ) {
     return Column(
       children: [
         ListTile(
@@ -254,28 +257,28 @@ class OpenIDConfigList extends StatelessWidget {
           ),
           trailing: IconButton(
             onPressed: () async {
-              final openIDConfig = await OidcDialog.show(
+              final config = await OidcDialog.show(
                 context,
                 OpenIDConfig.empty(),
               );
-              if (openIDConfig == null || !context.mounted) return;
-              bloc.addOpenIDConfig(openIDConfig);
+              if (config == null || !context.mounted) return;
+              bloc.addOpenIDConfig(config);
             },
             icon: Icon(Icons.add),
             tooltip: 'Add OpenID Login Provider',
           ),
         ),
-        ...openIdConfigs.mapIndexed(
-          (i, cfg) => ListTile(
-            title: Text(cfg.name),
-            subtitle: Text(cfg.issuerUrl),
+        ...openIdConfigs.entries.map(
+          (e) => ListTile(
+            title: Text(e.value.name),
+            subtitle: Text(e.value.issuerUrl),
             onTap: () async {
-              final openIDConfig = await OidcDialog.show(context, cfg);
-              if (openIDConfig == null || !context.mounted) return;
-              bloc.replaceOpenIDConfig(cfg, openIDConfig);
+              final config = await OidcDialog.show(context, e.value);
+              if (config == null || !context.mounted) return;
+              bloc.replaceOpenIDConfig(e.key, config);
             },
             trailing: IconButton(
-              onPressed: () => bloc.removeOpenIDConfig(cfg),
+              onPressed: () => bloc.removeOpenIDConfig(e.key),
               icon: Icon(Icons.delete),
             ),
           ),

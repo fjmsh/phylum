@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/config/auth_config.dart';
+import 'package:phylum/ui/settings/auth/auth_config.dart';
 
 class LdapConfigDialog extends StatefulWidget {
   final LdapConfig config;

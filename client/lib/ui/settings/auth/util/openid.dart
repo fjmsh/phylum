@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/config/auth_config.dart';
+import 'package:phylum/ui/settings/auth/auth_config.dart';
 
 class OidcDialog extends StatefulWidget {
   final OpenIDConfig config;
@@ -151,7 +151,6 @@ class _OidcDialogState extends State<OidcDialog> {
             if (!formKey.currentState!.validate()) return;
             Navigator.of(context).pop(
               OpenIDConfig(
-                id: widget.config.id,
                 name: name,
                 issuerUrl: issuerUrl,
                 clientId: clientId,

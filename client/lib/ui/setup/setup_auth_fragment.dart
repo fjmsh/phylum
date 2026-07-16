@@ -1,6 +1,5 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/config/auth_config.dart';
+import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/libphylum/config/mail_config.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
@@ -131,21 +130,21 @@ class _SetupAuthFragmentState extends State<SetupAuthFragment> {
             tooltip: 'Add OpenID Login Provider',
           ),
         ),
-        ...config.openIdConfigs.mapIndexed(
-          (i, cfg) => ListTile(
-            title: Text(cfg.name),
-            subtitle: Text(cfg.issuerUrl),
+        ...config.openIdConfigs.entries.map(
+          (e) => ListTile(
+            title: Text(e.value.name),
+            subtitle: Text(e.value.issuerUrl),
             onTap: () async {
-              final openIDConfig = await OidcDialog.show(context, cfg);
+              final openIDConfig = await OidcDialog.show(context, e.value);
               if (openIDConfig == null || !context.mounted) return;
               context.read<AuthController>().replaceOpenIDConfig(
-                cfg,
+                e.value,
                 openIDConfig,
               );
             },
             trailing: IconButton(
               onPressed: () =>
-                  context.read<AuthController>().removeOpenIDConfig(cfg),
+                  context.read<AuthController>().removeOpenIDConfig(e.value),
               icon: Icon(Icons.delete),
             ),
           ),
