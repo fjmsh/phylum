@@ -30,6 +30,8 @@ class RemoteConfigController<T> extends StateNotifier<RemoteConfigState<T>> {
     _apiClient = context.read<PhylumAccount>().apiClient;
   }
 
+  T? get config => state.config;
+
   void fetch() async {
     if (state.loading) return;
     state = RemoteConfigState(loading: true);

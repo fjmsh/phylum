@@ -1,6 +1,5 @@
 import 'package:bloc/bloc.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 
 class AuthConfigFormState {
   final AuthConfig config;
@@ -31,31 +30,11 @@ class AuthConfigFormState {
 }
 
 abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
-  final AuthConfig _initialConfig;
-  late final void Function() _removeConfigListener;
+  AuthConfigFormCubit({required AuthConfig initialConfig})
+    : super(AuthConfigFormState(config: initialConfig, mailEnabled: false));
 
-  AuthConfigFormCubit(PhylumAccount account, {required this._initialConfig})
-    : super(AuthConfigFormState(config: _initialConfig, mailEnabled: false)) {
-    _removeConfigListener = account.configNotifier.addListener((config) {
-      if (config.mail != state.mailEnabled) {
-        emit(state.copyWith(mailEnabled: config.mail));
-      }
-    });
-  }
-
-  @override
-  void onChange(Change<AuthConfigFormState> change) {
-    super.onChange(change);
-  }
-
-  @override
-  Future<void> close() async {
-    _removeConfigListener();
-    await super.close();
-  }
-
-  void reset() {
-    emit(state.copyWith(config: _initialConfig));
+  set mailEnabled(bool enabled) {
+    emit(state.copyWith(mailEnabled: enabled));
   }
 
   set passwordlessLoginEnabled(bool enabled) {

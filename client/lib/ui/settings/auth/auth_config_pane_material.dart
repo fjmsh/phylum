@@ -1,39 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phylum/ui/settings/auth/auth_config.dart';
-import 'package:phylum/ui/settings/auth/form/auth_config_form_cubit.dart';
 import 'package:phylum/util/dialogs.dart';
-import 'package:provider/provider.dart';
 
 import 'auth_config_pane_cubit.dart';
 import 'form/auth_config_form.dart';
+import 'form/auth_config_form_cubit.dart';
 
-class AuthConfigPane extends StatelessWidget {
-  const AuthConfigPane._();
+class MaterialAuthConfigPane extends StatelessWidget {
+  final AuthConfigPaneCubit _configBloc;
+  final AuthConfigSaveCubit _saveBloc;
 
-  static Widget create(
-    BuildContext context, {
-    required AuthConfig initialConfig,
-    required void Function(AuthConfig) onConfigUpdated,
-  }) {
-    late final configBloc = AuthConfigPaneCubit(
-      context.read(),
-      initialConfig: initialConfig,
-    );
-
-    late final saveBloc = AuthConfigSaveCubit(
-      account: context.read(),
-      initialConfig: initialConfig,
-      onConfigUpdated: onConfigUpdated,
-    );
-    return MultiProvider(
-      providers: [
-        BlocProvider<AuthConfigFormCubit>.value(value: configBloc),
-        BlocProvider.value(value: saveBloc),
-      ],
-      builder: (context, child) => const AuthConfigPane._(),
-    );
-  }
+  const MaterialAuthConfigPane({
+    super.key,
+    required this._configBloc,
+    required this._saveBloc,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -45,19 +26,20 @@ class AuthConfigPane extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           spacing: 18,
           children: [
-            Builder(
-              builder: (context) {
+            BlocBuilder<AuthConfigSaveCubit, AuthConfigSaveState>(
+              bloc: _saveBloc,
+              builder: (context, state) {
                 final requestInFlight = context
                     .select<AuthConfigSaveCubit, bool>(
                       (bloc) => bloc.state.requestInFlight,
                     );
                 return TextButton(
-                  onPressed: requestInFlight
-                      ? null
-                      : () => context.read<AuthConfigFormCubit>().reset(),
+                  onPressed: requestInFlight ? null : () => _configBloc.reset(),
                   child: Text('Reset'),
                 );
               },
+              buildWhen: (previous, current) =>
+                  previous.requestInFlight != current.requestInFlight,
             ),
             Builder(
               builder: (context) {
@@ -79,7 +61,7 @@ class AuthConfigPane extends StatelessWidget {
 
                           final error = await context
                               .read<AuthConfigSaveCubit>()
-                              .save(config);
+                              .save(config: config);
                           if (!context.mounted) return;
                           if (error == null) {
                             ScaffoldMessenger.of(context).showSnackBar(

@@ -4,18 +4,30 @@ import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/settings/auth/api/update_request.dart';
+import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 
 import 'api/test_params_request.dart';
 import 'form/auth_config_form_cubit.dart';
 
 class AuthConfigPaneCubit extends AuthConfigFormCubit {
   late ApiClient<PhylumAccount> _apiClient;
+  final RemoteConfigController<AuthConfig> _remoteConfigController;
 
-  AuthConfigPaneCubit(
-    PhylumAccount account, {
-    required AuthConfig initialConfig,
-  }) : super(account, initialConfig: initialConfig) {
+  AuthConfigPaneCubit({
+    required PhylumAccount account,
+    required this._remoteConfigController,
+  }) : super(
+         initialConfig: _remoteConfigController.config ?? AuthConfig.defaults(),
+       ) {
     _apiClient = account.apiClient;
+  }
+
+  void reset() {
+    emit(
+      state.copyWith(
+        config: _remoteConfigController.config ?? AuthConfig.defaults(),
+      ),
+    );
   }
 
   @override
@@ -61,18 +73,16 @@ class AuthConfigSaveState {
 
 class AuthConfigSaveCubit extends Cubit<AuthConfigSaveState> {
   late final ApiClient _apiClient;
-  final AuthConfig _initialConfig;
-  final void Function(AuthConfig) _onConfigUpdated;
+  final RemoteConfigController<AuthConfig> _remoteConfigController;
 
   AuthConfigSaveCubit({
     required PhylumAccount account,
-    required this._initialConfig,
-    required this._onConfigUpdated,
+    required this._remoteConfigController,
   }) : super(AuthConfigSaveState(requestInFlight: false)) {
     _apiClient = account.apiClient;
   }
 
-  Future<String?> save(AuthConfig config) async {
+  Future<String?> save({required AuthConfig config}) async {
     if (state.requestInFlight) return null;
 
     if (!config.passwordLoginEnabled &&
@@ -83,12 +93,15 @@ class AuthConfigSaveCubit extends Cubit<AuthConfigSaveState> {
 
     emit(AuthConfigSaveState(requestInFlight: true));
     final result = await _apiClient.sendRequest(
-      UpdateAuthConfigRequest(old: _initialConfig, config: config),
+      UpdateAuthConfigRequest(
+        old: _remoteConfigController.config ?? AuthConfig.defaults(),
+        config: config,
+      ),
     );
 
     emit(AuthConfigSaveState(requestInFlight: false));
 
-    _onConfigUpdated(config);
+    _remoteConfigController.update(config);
 
     return (result is ApiSuccessResponse) ? null : result.description;
   }

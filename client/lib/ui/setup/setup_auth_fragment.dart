@@ -25,8 +25,6 @@ class SetupAuthFragment extends StatefulWidget {
 }
 
 class _SetupAuthFragmentState extends State<SetupAuthFragment> {
-  final formKey = GlobalKey<FormState>();
-
   @override
   void initState() {
     super.initState();
@@ -238,7 +236,6 @@ class _SetupAuthFragmentState extends State<SetupAuthFragment> {
   }
 
   Future<void> validateAndNext(BuildContext context) async {
-    if (formKey.currentState?.validate() == false) return;
     final config = context.read<AuthConfig>();
     if (!config.passwordLoginEnabled &&
         !config.passwordlessLoginEnabled &&
@@ -265,24 +262,24 @@ class AuthController extends StateNotifier<AuthConfig> {
   }
 
   void addOpenIDConfig(OpenIDConfig config) {
-    state = state.copyWith(
-      openIdConfigs: [...state.openIdConfigs, config].toList(growable: false),
-    );
+    // state = state.copyWith(
+    //   openIdConfigs: [...state.openIdConfigs, config].toList(growable: false),
+    // );
   }
 
   void replaceOpenIDConfig(OpenIDConfig old, OpenIDConfig config) {
-    state = state.copyWith(
-      openIdConfigs: state.openIdConfigs
-          .map((e) => e == old ? config : e)
-          .toList(growable: false),
-    );
+    // state = state.copyWith(
+    //   openIdConfigs: state.openIdConfigs
+    //       .map((e) => e == old ? config : e)
+    //       .toList(growable: false),
+    // );
   }
 
   void removeOpenIDConfig(OpenIDConfig config) {
-    state = state.copyWith(
-      openIdConfigs: state.openIdConfigs
-          .whereNot((e) => e == config)
-          .toList(growable: false),
-    );
+    // state = state.copyWith(
+    //   openIdConfigs: state.openIdConfigs
+    //       .whereNot((e) => e == config)
+    //       .toList(growable: false),
+    // );
   }
 }

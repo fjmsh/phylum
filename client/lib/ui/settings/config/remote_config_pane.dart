@@ -15,19 +15,10 @@ class RemoteConfigPane<T> extends StatefulWidget {
 }
 
 class _RemoteConfigPaneState<T> extends State<RemoteConfigPane<T>> {
-  late ConfigWidgetBuilder<T> builder;
-
   @override
   void initState() {
     super.initState();
-    builder = widget.builder;
     context.read<RemoteConfigController<T>>().maybeFetch();
-  }
-
-  @override
-  void didUpdateWidget(covariant RemoteConfigPane<T> oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    builder = widget.builder;
   }
 
   @override
@@ -64,7 +55,7 @@ class _RemoteConfigPaneState<T> extends State<RemoteConfigPane<T>> {
       );
     }
     return SingleChildScrollView(
-      child: builder(
+      child: widget.builder(
         context,
         config,
         (config) => context.read<RemoteConfigController<T>>().update(config),
