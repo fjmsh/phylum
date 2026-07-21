@@ -68,6 +68,7 @@ class MailConfig implements Config {
     );
   }
 
+  @override
   Map<String, dynamic> toMap() => enabled
       ? {
           'enabled': enabled,
@@ -81,4 +82,29 @@ class MailConfig implements Config {
           'instance': instanceUrl,
         }
       : const {'enabled': false};
+
+  @override
+  bool operator ==(covariant MailConfig other) {
+    if (identical(this, other)) return true;
+
+    return other.enabled == enabled &&
+        other.smtpHost == smtpHost &&
+        other.smtpPort == smtpPort &&
+        other.smtpUsername == smtpUsername &&
+        other.smtpPassword == smtpPassword &&
+        other.fromEmail == fromEmail &&
+        other.fromName == fromName &&
+        other.instanceUrl == instanceUrl;
+  }
+
+  @override
+  int get hashCode =>
+      enabled.hashCode ^
+      smtpHost.hashCode ^
+      smtpPort.hashCode ^
+      smtpUsername.hashCode ^
+      smtpPassword.hashCode ^
+      fromEmail.hashCode ^
+      fromName.hashCode ^
+      instanceUrl.hashCode;
 }

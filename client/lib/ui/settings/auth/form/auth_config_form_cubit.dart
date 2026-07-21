@@ -33,6 +33,10 @@ abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
   AuthConfigFormCubit({required AuthConfig initialConfig})
     : super(AuthConfigFormState(config: initialConfig, mailEnabled: false));
 
+  void reset(AuthConfig config) {
+    emit(state.copyWith(config: config));
+  }
+
   set mailEnabled(bool enabled) {
     emit(state.copyWith(mailEnabled: enabled));
   }

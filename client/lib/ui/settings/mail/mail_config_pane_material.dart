@@ -1,0 +1,91 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:phylum/ui/settings/config/remote_config_controller.dart';
+import 'package:phylum/util/dialogs.dart';
+
+import 'mail_config.dart';
+import 'form/mail_config_form.dart';
+import 'form/mail_config_form_cubit.dart';
+
+class MaterialMailConfigPane extends StatelessWidget {
+  const MaterialMailConfigPane({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      spacing: 18,
+      children: [
+        MailConfigForm(
+          onFormSubmitted: (context) {
+            if (!isSaving(context)) {
+              save(context);
+            }
+          },
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          spacing: 18,
+          children: [
+            Builder(
+              builder: (context) {
+                return TextButton(
+                  onPressed: isSaving(context)
+                      ? null
+                      : () {
+                          final state = context
+                              .read<RemoteConfigState<MailConfig>>();
+                          if (state is RemoteConfigStateLoaded<MailConfig>) {
+                            context.read<MailConfigFormCubit>().reset(
+                              state.config,
+                            );
+                          }
+                        },
+                  child: Text('Reset'),
+                );
+              },
+            ),
+            Builder(
+              builder: (context) {
+                return TextButton(
+                  onPressed: isSaving(context) ? null : () => save(context),
+                  child: Text('Save'),
+                );
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  bool isSaving(BuildContext context) {
+    return context.select<RemoteConfigState<MailConfig>, bool>(
+      (state) => state is RemoteConfigStateLoaded<MailConfig> && state.saving,
+    );
+  }
+
+  void save(BuildContext context) async {
+    final config = context.read<MailConfigFormCubit>().validate();
+
+    if (config == null) return;
+
+    final error = await context.read<RemoteConfigController<MailConfig>>().save(
+      config: config,
+    );
+    if (!context.mounted) return;
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Auth Config Updated'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      showAlertDialog(
+        context,
+        title: 'Failed to update Auth Config',
+        message: error,
+      );
+    }
+  }
+}

@@ -14,10 +14,6 @@ class AuthConfigPaneCubit extends AuthConfigFormCubit {
     required super.initialConfig,
   }) : _apiClient = account.apiClient;
 
-  void reset(AuthConfig config) {
-    emit(state.copyWith(config: config));
-  }
-
   @override
   Future<KDFTestResult> testParams({
     required CryptKDF kdf,
