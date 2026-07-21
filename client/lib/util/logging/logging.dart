@@ -128,8 +128,7 @@ String stringifyMessage(dynamic message) {
 }
 
 Future<Level> _getLevel() async {
-  final prefs = await Prefs.get();
-  final level = prefs.getInt(_keyLogLevel);
+  final level = Prefs.get().getInt(_keyLogLevel);
   if (level != null) {
     for (final l in Level.LEVELS) {
       if (l.value == level) {

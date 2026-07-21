@@ -13,6 +13,7 @@ import 'package:phylum/libphylum/actions/deserializers.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/util/logging/logging.dart';
+import 'package:phylum/util/prefs/prefs.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'ui/app/app.dart';
@@ -32,6 +33,7 @@ void main() async {
 void run() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
+  await Prefs.init();
   await Log.init();
   Log.info('App Start');
 
