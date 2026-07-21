@@ -7,6 +7,7 @@ import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/app/theme.dart';
+import 'package:phylum/ui/app/theme_mode_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'dbus.dart';
@@ -24,13 +25,17 @@ class PhylumApp extends StatefulWidget {
       (id) => PhylumAccount.restore(id: id),
       autoInitialize: isPrimary(),
     );
-    return StateNotifierProvider<
-      AccountManager<PhylumAccount>,
-      AccountManagerState<PhylumAccount>
-    >.value(
-      value: accountManager,
+    return MultiProvider(
+      providers: [
+        StateNotifierProvider<
+          AccountManager<PhylumAccount>,
+          AccountManagerState<PhylumAccount>
+        >.value(value: accountManager),
+        StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
+          create: (context) => ThemeModeNotifier(),
+        ),
+      ],
       builder: (context, child) => buildSingleInstance(const PhylumApp()),
-      child: const PhylumApp(),
     );
   }
 }
@@ -64,6 +69,7 @@ class _PhylumAppState extends State<PhylumApp> {
           debugShowCheckedModeBanner: false,
           theme: generateAppTheme(Brightness.light),
           darkTheme: generateAppTheme(Brightness.dark),
+          themeMode: context.read<ThemeMode>(),
           routeInformationParser: const PhylumRouteInformationParser(),
           routerDelegate: routerDelegate,
           shortcuts: const {
