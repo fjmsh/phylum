@@ -17,7 +17,71 @@ external bool isPrimary();
 @JS()
 external void setPrimary(JSBoolean value);
 
-Widget buildSingleInstance(Widget child) => SingleInstanceWeb(child: child);
+@JS()
+external void preserveLoader();
+
+@JS()
+external JSPromise removeLoader();
+
+final _loaderKey = GlobalKey<_WebLoaderState>();
+
+Widget buildSingleInstance(Widget child) => WebLoader(
+  key: _loaderKey,
+  child: SingleInstanceWeb(child: child),
+);
+
+AccountManager<PhylumAccount> createAccountManager() {
+  final accountManager = AccountManager(
+    (id) => PhylumAccount.restore(id: id),
+    autoInitialize: isPrimary(),
+  );
+  WidgetsBinding.instance.deferFirstFrame();
+  if (isPrimary()) {
+    late void Function() removeListener;
+    removeListener = accountManager.addListener((state) async {
+      if (state.status != .initializing) {
+        Future.microtask(removeListener);
+        fadeInApp();
+      }
+    });
+  } else {
+    fadeInApp();
+  }
+  return accountManager;
+}
+
+void fadeInApp() async {
+  await removeLoader().toDart;
+  WidgetsBinding.instance.allowFirstFrame();
+  _loaderKey.currentState?.show();
+}
+
+class WebLoader extends StatefulWidget {
+  final Widget child;
+  const WebLoader({super.key, required this.child});
+
+  @override
+  State<WebLoader> createState() => _WebLoaderState();
+}
+
+class _WebLoaderState extends State<WebLoader> {
+  bool ready = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: ready ? 1.0 : 0.0,
+      duration: Duration(milliseconds: 400),
+      child: widget.child,
+    );
+  }
+
+  void show() {
+    setState(() {
+      ready = true;
+    });
+  }
+}
 
 class SingleInstanceWeb extends StatefulWidget {
   final Widget child;
@@ -51,12 +115,11 @@ class _SingleInstanceWebState extends State<SingleInstanceWeb> {
 
   @override
   Widget build(BuildContext context) {
-    final ready = context.select<AccountManagerState<PhylumAccount>, bool>(
-      (state) => state.status != .closed,
+    final closed = context.select<AccountManagerState<PhylumAccount>, bool>(
+      (state) => state.status == .closed,
     );
-    return ready
-        ? widget.child
-        : MaterialApp(
+    return closed
+        ? MaterialApp(
             theme: generateAppTheme(Brightness.light),
             darkTheme: generateAppTheme(Brightness.dark),
             themeMode: context.read<ThemeMode>(),
@@ -73,7 +136,8 @@ class _SingleInstanceWebState extends State<SingleInstanceWeb> {
                 ],
               ),
             ),
-          );
+          )
+        : widget.child;
   }
 
   void requestHandoff() {
