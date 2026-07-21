@@ -18,7 +18,9 @@ class _RemoteConfigPaneState<T extends Config>
   @override
   void initState() {
     super.initState();
-    context.read<RemoteConfigController<T>>().maybeFetch();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => context.read<RemoteConfigController<T>>().maybeFetch(),
+    );
   }
 
   @override

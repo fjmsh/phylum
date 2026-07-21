@@ -14,7 +14,9 @@ class _UsersPaneState extends State<UsersPane> {
   @override
   void initState() {
     super.initState();
-    context.read<UserListController>().maybeFetch();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => context.read<UserListController>().maybeFetch(),
+    );
   }
 
   @override
