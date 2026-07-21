@@ -25,17 +25,31 @@ class PhylumApp extends StatefulWidget {
       (id) => PhylumAccount.restore(id: id),
       autoInitialize: isPrimary(),
     );
-    return MultiProvider(
-      providers: [
-        StateNotifierProvider<
-          AccountManager<PhylumAccount>,
-          AccountManagerState<PhylumAccount>
-        >.value(value: accountManager),
-        StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
-          create: (context) => ThemeModeNotifier(),
-        ),
-      ],
-      builder: (context, child) => buildSingleInstance(const PhylumApp()),
+    double opacity = 0.0;
+    return StatefulBuilder(
+      builder: (context, setState) {
+        if (opacity == 0.0) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => setState(() => opacity = 1.0),
+          );
+        }
+        return AnimatedOpacity(
+          opacity: opacity,
+          duration: Duration(milliseconds: 400),
+          child: MultiProvider(
+            providers: [
+              StateNotifierProvider<
+                AccountManager<PhylumAccount>,
+                AccountManagerState<PhylumAccount>
+              >.value(value: accountManager),
+              StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
+                create: (context) => ThemeModeNotifier(),
+              ),
+            ],
+            builder: (context, child) => buildSingleInstance(const PhylumApp()),
+          ),
+        );
+      },
     );
   }
 }
