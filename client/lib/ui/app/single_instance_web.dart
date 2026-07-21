@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/app/theme.dart';
 import 'package:phylum/ui/common/dialog_scaffold.dart';
 import 'package:phylum/util/logging/logging.dart';
 import 'package:provider/provider.dart';
@@ -56,6 +57,8 @@ class _SingleInstanceWebState extends State<SingleInstanceWeb> {
     return ready
         ? widget.child
         : MaterialApp(
+            theme: generateAppTheme(Brightness.light),
+            darkTheme: generateAppTheme(Brightness.dark),
             builder: (context, child) => PhylumDialogScaffold(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
