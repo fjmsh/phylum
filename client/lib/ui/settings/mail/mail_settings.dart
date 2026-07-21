@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:phylum/libphylum/config/mail_config.dart';
+import 'package:phylum/ui/settings/mail/mail_config.dart';
 import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 import 'package:phylum/ui/settings/config/remote_config_pane.dart';
 import 'package:phylum/ui/settings/mail/mail_config_form.dart';
 import 'package:phylum/ui/settings/settings.dart';
+import 'package:provider/provider.dart';
 
 class MailSettings extends Settings {
   @override
@@ -24,7 +25,7 @@ class MailSettings extends Settings {
     >(
       create: (context) => RemoteConfigController<MailConfig>(
         context,
-        endpoint: '/api/v1/admin/config/mail/read',
+        baseRoute: '/api/v1/admin/config/mail',
         parseConfig: MailConfig.fromMap,
       ),
     ),
@@ -33,11 +34,16 @@ class MailSettings extends Settings {
   const MailSettings();
 
   @override
-  Widget buildWithoutScaffold(BuildContext context) =>
-      RemoteConfigPane<MailConfig>(
-        builder: (context, config, onConfigUpdated) => MailConfigForm(
-          initialConfig: config,
-          onConfigUpdated: onConfigUpdated,
-        ),
-      );
+  Widget buildWithoutScaffold(BuildContext context) {
+    final remoteConfigController = context
+        .read<RemoteConfigController<MailConfig>>();
+    return RemoteConfigPane<MailConfig>(
+      child: MailConfigForm(
+        initialConfig:
+            remoteConfigController.config ??
+            MailConfig.defaults(defaultInstanceUrl),
+        onConfigUpdated: onConfigUpdated,
+      ),
+    );
+  }
 }

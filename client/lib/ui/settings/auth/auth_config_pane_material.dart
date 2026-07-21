@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 import 'package:phylum/util/dialogs.dart';
 
+import 'auth_config.dart';
 import 'auth_config_pane_cubit.dart';
 import 'form/auth_config_form.dart';
 import 'form/auth_config_form_cubit.dart';
 
 class MaterialAuthConfigPane extends StatelessWidget {
   final AuthConfigPaneCubit _configBloc;
-  final AuthConfigSaveCubit _saveBloc;
 
-  const MaterialAuthConfigPane({
-    super.key,
-    required this._configBloc,
-    required this._saveBloc,
-  });
+  const MaterialAuthConfigPane({super.key, required this._configBloc});
 
   @override
   Widget build(BuildContext context) {
@@ -26,20 +23,27 @@ class MaterialAuthConfigPane extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           spacing: 18,
           children: [
-            BlocBuilder<AuthConfigSaveCubit, AuthConfigSaveState>(
-              bloc: _saveBloc,
-              builder: (context, state) {
+            Builder(
+              builder: (context) {
                 final requestInFlight = context
-                    .select<AuthConfigSaveCubit, bool>(
-                      (bloc) => bloc.state.requestInFlight,
+                    .select<RemoteConfigState<AuthConfig>, bool>(
+                      (state) =>
+                          state is RemoteConfigStateLoaded<AuthConfig> &&
+                          state.saving,
                     );
                 return TextButton(
-                  onPressed: requestInFlight ? null : () => _configBloc.reset(),
+                  onPressed: requestInFlight
+                      ? null
+                      : () {
+                          final state = context
+                              .read<RemoteConfigState<AuthConfig>>();
+                          if (state is RemoteConfigStateLoaded<AuthConfig>) {
+                            _configBloc.reset(state.config);
+                          }
+                        },
                   child: Text('Reset'),
                 );
               },
-              buildWhen: (previous, current) =>
-                  previous.requestInFlight != current.requestInFlight,
             ),
             Builder(
               builder: (context) {
@@ -47,8 +51,10 @@ class MaterialAuthConfigPane extends StatelessWidget {
                   (bloc) => bloc.state.config.valid,
                 );
                 final requestInFlight = context
-                    .select<AuthConfigSaveCubit, bool>(
-                      (bloc) => bloc.state.requestInFlight,
+                    .select<RemoteConfigState<AuthConfig>, bool>(
+                      (state) =>
+                          state is RemoteConfigStateLoaded<AuthConfig> &&
+                          state.saving,
                     );
                 return TextButton(
                   onPressed: requestInFlight || !configValid
@@ -60,7 +66,7 @@ class MaterialAuthConfigPane extends StatelessWidget {
                               .config;
 
                           final error = await context
-                              .read<AuthConfigSaveCubit>()
+                              .read<RemoteConfigController<AuthConfig>>()
                               .save(config: config);
                           if (!context.mounted) return;
                           if (error == null) {

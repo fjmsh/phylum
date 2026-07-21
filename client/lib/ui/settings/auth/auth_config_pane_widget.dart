@@ -10,36 +10,29 @@ import 'auth_config_pane_material.dart';
 import 'form/auth_config_form_cubit.dart';
 
 class AuthConfigPane extends StatefulWidget {
-  final RemoteConfigController<AuthConfig> _remoteConfigController;
-
-  const AuthConfigPane({super.key, required this._remoteConfigController});
+  const AuthConfigPane({super.key});
 
   @override
   State<AuthConfigPane> createState() => _AuthConfigPaneState();
 }
 
 class _AuthConfigPaneState extends State<AuthConfigPane> {
+  late final RemoteConfigController<AuthConfig> _remoteConfigController;
   late final AuthConfigPaneCubit configBloc;
-  late final AuthConfigSaveCubit saveBloc;
   late final void Function() _removeServerConfigListener;
 
   @override
   void initState() {
     super.initState();
+    _remoteConfigController = context.read();
+    final account = context.read<PhylumAccount>();
     configBloc = AuthConfigPaneCubit(
-      account: context.read(),
-      remoteConfigController: widget._remoteConfigController,
+      account: account,
+      initialConfig: _remoteConfigController.config ?? AuthConfig.defaults(),
     );
-    saveBloc = AuthConfigSaveCubit(
-      account: context.read(),
-      remoteConfigController: widget._remoteConfigController,
-    );
-    _removeServerConfigListener = context
-        .read<PhylumAccount>()
-        .configNotifier
-        .addListener((config) {
-          configBloc.mailEnabled = config.mail;
-        });
+    _removeServerConfigListener = account.configNotifier.addListener((config) {
+      configBloc.mailEnabled = config.mail;
+    });
   }
 
   @override
@@ -51,14 +44,8 @@ class _AuthConfigPaneState extends State<AuthConfigPane> {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [
-        BlocProvider<AuthConfigFormCubit>.value(value: configBloc),
-        BlocProvider.value(value: saveBloc),
-      ],
-      child: MaterialAuthConfigPane(
-        configBloc: configBloc,
-        saveBloc: saveBloc,
-      ), //TODO #uilibrary
+      providers: [BlocProvider<AuthConfigFormCubit>.value(value: configBloc)],
+      child: MaterialAuthConfigPane(configBloc: configBloc), //TODO #uilibrary
     );
   }
 }

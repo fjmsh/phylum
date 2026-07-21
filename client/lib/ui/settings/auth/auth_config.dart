@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
+import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 
-class AuthConfig {
+class AuthConfig implements Config {
   final bool passwordlessLoginEnabled;
   final PasswordConfig passwordConfig;
   final Map<String, OpenIDConfig> openIdConfigs;
@@ -61,6 +62,18 @@ class AuthConfig {
             ),
     );
     return config;
+  }
+
+  @override
+  Map<String, dynamic> toMap() {
+    final clients = openIdConfigs.map((key, value) {
+      return MapEntry(key, value.toMap());
+    });
+    return {
+      'password': passwordConfig.toMap(),
+      'magic_links': passwordlessLoginEnabled,
+      'openid': {'clients': clients},
+    };
   }
 
   Map<String, dynamic> toMapDiff(AuthConfig old) {
@@ -584,11 +597,11 @@ class OpenIDConfig {
   Map<String, dynamic> toMap() {
     return {
       'name': name,
-      'issuerUrl': issuerUrl,
-      'clientId': clientId,
-      'clientSecret': clientSecret,
-      'allowUnverifiedEmails': allowUnverifiedEmails,
-      'autoCreateUsers': autoCreateUsers,
+      'issuer_url': issuerUrl,
+      'client_id': clientId,
+      if (clientSecret != '') 'client_secret': clientSecret,
+      'allow_unverified_emails': allowUnverifiedEmails,
+      'auto_create_users': autoCreateUsers,
     };
   }
 

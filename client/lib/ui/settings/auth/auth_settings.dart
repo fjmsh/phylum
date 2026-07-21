@@ -26,7 +26,7 @@ class AuthSettings extends Settings {
     >(
       create: (context) => RemoteConfigController(
         context,
-        endpoint: '/api/v1/admin/config/auth/read',
+        baseRoute: '/api/v1/admin/config/auth',
         parseConfig: AuthConfig.fromMap,
       ),
     ),
@@ -36,8 +36,5 @@ class AuthSettings extends Settings {
 
   @override
   Widget buildWithoutScaffold(BuildContext context) =>
-      RemoteConfigPane<AuthConfig>(
-        builder: (context, config, _) =>
-            AuthConfigPane(remoteConfigController: context.read()),
-      );
+      const RemoteConfigPane<AuthConfig>(child: AuthConfigPane());
 }

@@ -1,4 +1,6 @@
-class MailConfig {
+import 'package:phylum/ui/settings/config/remote_config_controller.dart';
+
+class MailConfig implements Config {
   final bool enabled;
   final String smtpHost;
   final int smtpPort;

@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/config/mail_config.dart';
+import 'package:phylum/ui/settings/mail/mail_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 

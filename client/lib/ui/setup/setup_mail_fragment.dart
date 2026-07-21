@@ -4,7 +4,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
-import 'package:phylum/libphylum/config/mail_config.dart';
+import 'package:phylum/ui/settings/mail/mail_config.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';

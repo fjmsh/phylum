@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 import 'package:provider/provider.dart';
+import 'package:provider/single_child_widget.dart';
 
-typedef ConfigWidgetBuilder<T> =
-    Widget Function(BuildContext, T, void Function(T));
+typedef ConfigWidgetBuilder<T extends Config> =
+    Widget Function(BuildContext, T);
 
-class RemoteConfigPane<T> extends StatefulWidget {
-  final ConfigWidgetBuilder<T> builder;
-
-  const RemoteConfigPane({super.key, required this.builder});
+class RemoteConfigPane<T extends Config> extends SingleChildStatefulWidget {
+  const RemoteConfigPane({super.key, required super.child});
 
   @override
   State<RemoteConfigPane<T>> createState() => _RemoteConfigPaneState();
 }
 
-class _RemoteConfigPaneState<T> extends State<RemoteConfigPane<T>> {
+class _RemoteConfigPaneState<T extends Config>
+    extends SingleChildState<RemoteConfigPane<T>> {
   @override
   void initState() {
     super.initState();
@@ -22,43 +22,42 @@ class _RemoteConfigPaneState<T> extends State<RemoteConfigPane<T>> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildWithChild(BuildContext context, Widget? child) {
     final state = context.watch<RemoteConfigState<T>>();
-    final config = state.config;
 
-    if (config == null) {
-      if (state.loading) {
-        return const Center(child: CircularProgressIndicator());
-      }
-      return Center(
-        child: Column(
-          mainAxisAlignment: .center,
-          crossAxisAlignment: .center,
-          spacing: 18,
-          children: [
-            if (state.error != null)
-              Text('Error loading Mail Config: ${state.error}'),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                foregroundColor: Theme.of(
-                  context,
-                ).colorScheme.onPrimaryContainer,
-              ),
-              onPressed: () {
-                context.read<RemoteConfigController<T>>().fetch();
-              },
-              child: Text(state.error == null ? 'Load Config' : 'Retry'),
-            ),
-          ],
-        ),
-      );
+    if (state is RemoteConfigStateLoading<T>) {
+      return const Center(child: CircularProgressIndicator());
     }
-    return SingleChildScrollView(
-      child: widget.builder(
-        context,
-        config,
-        (config) => context.read<RemoteConfigController<T>>().update(config),
+
+    return switch (state) {
+      RemoteConfigStateWaiting<T>() => buildWaiting(context, state),
+      RemoteConfigStateLoading<T>() => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      RemoteConfigStateLoaded<T>() => SingleChildScrollView(child: child),
+    };
+  }
+
+  Widget buildWaiting(BuildContext context, RemoteConfigStateWaiting<T> state) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: .center,
+        crossAxisAlignment: .center,
+        spacing: 18,
+        children: [
+          if (state.error != null)
+            Text('Error loading Mail Config: ${state.error}'),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+            ),
+            onPressed: () {
+              context.read<RemoteConfigController<T>>().fetch();
+            },
+            child: Text(state.error == null ? 'Load Config' : 'Retry'),
+          ),
+        ],
       ),
     );
   }

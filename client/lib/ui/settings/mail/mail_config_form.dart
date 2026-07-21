@@ -2,7 +2,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/libphylum/config/mail_config.dart';
+import 'package:phylum/ui/settings/mail/mail_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/settings/mail/api/update_request.dart';
 import 'package:phylum/ui/settings/mail/api/validate_request.dart';
