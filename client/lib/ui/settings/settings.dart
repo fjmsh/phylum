@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/settings/account/account_settings.dart';
+import 'package:phylum/ui/settings/auth/auth_settings.dart';
 import 'package:phylum/ui/settings/downloads/downloads_settings.dart';
 import 'package:phylum/ui/settings/logs/logs_settings.dart';
 import 'package:phylum/ui/settings/mail/mail_settings.dart';
@@ -62,6 +63,7 @@ abstract class Settings extends SettingsItem {
       const DownloadsSettings().slug: DownloadsSettings(),
       const LogsSettings().slug: LogsSettings(),
       const UsersSettings().slug: UsersSettings(),
+      const AuthSettings().slug: AuthSettings(),
       const MailSettings().slug: MailSettings(),
     };
     return map[slug];
