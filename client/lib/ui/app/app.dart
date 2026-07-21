@@ -6,6 +6,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/integrations/download_manager.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/routing/router.dart';
+import 'package:phylum/ui/app/theme.dart';
 import 'package:provider/provider.dart';
 
 import 'dbus.dart';
@@ -57,33 +58,12 @@ class _PhylumAppState extends State<PhylumApp> {
           ),
       ],
       builder: (context, child) {
-        const seedColor = Color(0xff769e57);
-        final colorScheme = ColorScheme.fromSeed(
-          seedColor: seedColor,
-          dynamicSchemeVariant: DynamicSchemeVariant.neutral,
-        );
-        final border = const BorderRadius.all(Radius.circular(8.0));
-        final theme = ThemeData(
-          colorScheme: colorScheme,
-          inputDecorationTheme: InputDecorationThemeData(
-            border: OutlineInputBorder(borderRadius: border),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: border,
-              borderSide: BorderSide(color: Colors.grey.shade400, width: 1.0),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: border,
-              borderSide: BorderSide(color: colorScheme.primary, width: 1.0),
-            ),
-          ),
-        );
-
         // return const PhylumApp();
         return MaterialApp.router(
           title: 'Phylum',
           debugShowCheckedModeBanner: false,
-          theme: theme,
-          darkTheme: theme.copyWith(brightness: Brightness.dark),
+          theme: generateAppTheme(Brightness.light),
+          darkTheme: generateAppTheme(Brightness.dark),
           routeInformationParser: const PhylumRouteInformationParser(),
           routerDelegate: routerDelegate,
           shortcuts: const {
