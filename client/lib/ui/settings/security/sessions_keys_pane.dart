@@ -43,7 +43,7 @@ class _SessionsKeysViewState extends State<SessionsKeysView> {
 
     return ListTileTheme(
       data: ListTileThemeData(
-        tileColor: Theme.of(context).colorScheme.surfaceBright,
+        // tileColor: Theme.of(context).colorScheme.surfaceBright,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,

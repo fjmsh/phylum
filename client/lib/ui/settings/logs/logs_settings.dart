@@ -79,13 +79,21 @@ class _LogsPaneState extends State<LogsPane> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Theme(
-      data: ThemeData(fontFamily: 'RobotoMono'),
-      child: ListView.builder(
+      data: theme.copyWith(
+        textTheme: theme.textTheme.apply(fontFamily: 'RobotoMono'),
+        listTileTheme: theme.listTileTheme.copyWith(
+          dense: true,
+          visualDensity: VisualDensity.compact,
+        ),
+      ),
+      child: ListView.separated(
+        separatorBuilder: (context, index) => const Divider(height: 1),
         itemBuilder: (context, i) {
           final record = records[i];
-          return InkWell(
-            child: LogRecordSummary(record: record),
+          return LogRecordSummary(
+            record: record,
             onTap: () {
               String? body = record.error?.toString();
               if (record.stackTrace != null) {
@@ -170,7 +178,7 @@ class _LogsPaneState extends State<LogsPane> {
             },
           );
         },
-        prototypeItem: LogRecordSummary(record: prototypeRecord),
+        // prototypeItem: LogRecordSummary(record: prototypeRecord),
         itemCount: records.length,
         controller: _scrollController,
       ),
@@ -181,8 +189,9 @@ class _LogsPaneState extends State<LogsPane> {
 class LogRecordSummary extends StatelessWidget {
   final LogRecord record;
   final bool standalone;
+  final void Function()? onTap;
 
-  LogRecordSummary({required this.record, this.standalone = true})
+  LogRecordSummary({required this.record, this.standalone = true, this.onTap})
     : super(key: ValueKey(record));
 
   @override
@@ -193,51 +202,47 @@ class LogRecordSummary extends StatelessWidget {
     if (standalone && record.error != null) {
       message += ' \u2022 ${record.error}';
     }
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
-      child: Row(
-        spacing: 12,
-        children: [
-          Icon(_getIcon(record.level)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return ListTile(
+      // padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 12),
+      leading: Icon(_getIcon(record.level)),
+      title: Text(
+        message,
+        // style: Theme.of(context).textTheme.bodyLarge,
+        softWrap: false,
+        maxLines: 1,
+        overflow: TextOverflow.fade,
+      ),
+      subtitle: Text(
+        '${dateFormat.format(record.time)} | ${record.level.name}',
+        // style: Theme.of(context).textTheme.bodyMedium,
+        softWrap: false,
+        maxLines: 1,
+        overflow: TextOverflow.fade,
+      ),
+      trailing: standalone
+          ? null
+          : Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  message,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  softWrap: false,
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                ),
-                Text(
-                  '${dateFormat.format(record.time)} | ${record.level.name}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  softWrap: false,
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
+                if (record.error != null || record.stackTrace != null)
+                  Icon(Icons.warning_amber_rounded),
+                IconButton(
+                  onPressed: () {
+                    Clipboard.setData(
+                      ClipboardData(text: stringifyRecord(record)),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Copied to Clipboard'),
+                        duration: Duration(milliseconds: 1000),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.copy),
                 ),
               ],
             ),
-          ),
-          if (standalone && (record.error != null || record.stackTrace != null))
-            Icon(Icons.warning_amber_rounded),
-          if (standalone)
-            IconButton(
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: stringifyRecord(record)));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Copied to Clipboard'),
-                    duration: Duration(milliseconds: 1000),
-                  ),
-                );
-              },
-              icon: Icon(Icons.copy),
-            ),
-        ],
-      ),
+      onTap: onTap,
     );
   }
 
