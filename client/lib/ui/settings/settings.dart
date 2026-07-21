@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/settings/account/account_settings.dart';
+import 'package:phylum/ui/settings/appearance/appearance_settings.dart';
 import 'package:phylum/ui/settings/auth/auth_settings.dart';
 import 'package:phylum/ui/settings/downloads/downloads_settings.dart';
 import 'package:phylum/ui/settings/logs/logs_settings.dart';
@@ -58,6 +59,7 @@ abstract class Settings extends SettingsItem {
   static Settings? parseSlug(String? slug) {
     final map = {
       const AccountSettings().slug: AccountSettings(),
+      const AppearanceSettings().slug: AppearanceSettings(),
       const SesssionsKeysSettings().slug: SesssionsKeysSettings(),
       const SyncSettings().slug: SyncSettings(),
       const DownloadsSettings().slug: DownloadsSettings(),

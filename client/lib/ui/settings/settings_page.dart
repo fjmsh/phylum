@@ -6,6 +6,7 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/user_permission.dart';
 import 'package:phylum/ui/settings/account/account_settings.dart';
+import 'package:phylum/ui/settings/appearance/appearance_settings.dart';
 import 'package:phylum/ui/settings/auth/auth_settings.dart';
 import 'package:phylum/ui/settings/downloads/downloads_settings.dart';
 import 'package:phylum/ui/settings/logs/logs_settings.dart';
@@ -71,6 +72,7 @@ class _SettingsPageState extends State<SettingsPage> {
   List<SettingsItem> _buildItems() {
     final list = <SettingsItem>[
       AccountSettings(),
+      AppearanceSettings(),
       SesssionsKeysSettings(),
       SyncSettings(),
       if (!kIsWeb) DownloadsSettings(),

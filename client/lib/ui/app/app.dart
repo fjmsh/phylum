@@ -66,7 +66,7 @@ class _PhylumAppState extends State<PhylumApp> {
           debugShowCheckedModeBanner: false,
           theme: generateAppTheme(Brightness.light),
           darkTheme: generateAppTheme(Brightness.dark),
-          themeMode: context.read<ThemeMode>(),
+          themeMode: context.watch<ThemeMode>(),
           routeInformationParser: const PhylumRouteInformationParser(),
           routerDelegate: routerDelegate,
           shortcuts: const {

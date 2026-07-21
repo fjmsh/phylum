@@ -122,7 +122,7 @@ class _SingleInstanceWebState extends State<SingleInstanceWeb> {
         ? MaterialApp(
             theme: generateAppTheme(Brightness.light),
             darkTheme: generateAppTheme(Brightness.dark),
-            themeMode: context.read<ThemeMode>(),
+            themeMode: context.watch<ThemeMode>(),
             builder: (context, child) => PhylumDialogScaffold(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
