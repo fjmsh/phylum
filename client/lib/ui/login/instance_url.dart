@@ -126,7 +126,7 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
               await showAlertDialog(
                 context,
                 title: 'Configure Server?',
-                message: 'The server at $uri is needs to be set up.',
+                message: 'The server at $uri is awaiting setup.',
                 positiveText: 'Yes',
                 negativeText: 'No',
               ) ??
