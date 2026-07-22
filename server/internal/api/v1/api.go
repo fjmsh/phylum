@@ -34,16 +34,17 @@ func Setup(r *gin.RouterGroup, needsSetup bool, logger *zerolog.Logger) {
 				"auth":         auth.ConfigResponse,
 			})
 		})
-	}
-	// Unauthenticated routes
-	auth.SetupRoutes(r, logger)
 
-	// Authenticated routes
-	r.Use(authenticator.Require)
-	fs.SetupRoutes(r)
-	user.SetupRoutes(r)
-	publinks.SetupRoutes(r)
-	trash.SetupRoutes(r)
-	users.SetupRoutes(r)
-	admin.SetupRoutes(r)
+		// Unauthenticated routes
+		auth.SetupRoutes(r, logger)
+
+		// Authenticated routes
+		r.Use(authenticator.Require)
+		fs.SetupRoutes(r)
+		user.SetupRoutes(r)
+		publinks.SetupRoutes(r)
+		trash.SetupRoutes(r)
+		users.SetupRoutes(r)
+		admin.SetupRoutes(r)
+	}
 }
