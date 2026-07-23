@@ -143,6 +143,6 @@ mail:
     password:
   from:
     name: Phylum Drive
-    email:                      # phylum-noreply@example.com
+    email:                      # Defaults to smtp.username if empty
   # Instance URL to send in emails
   instance: # https://phylum.example.com  # No trailing slash

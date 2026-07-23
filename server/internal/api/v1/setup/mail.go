@@ -14,21 +14,18 @@ import (
 )
 
 type mailConfig struct {
-	SMTP   smtpConfig `json:"smtp" form:"smtp" koanf:"smtp"`
-	From   fromConfig `json:"from" form:"from" koanf:"from"`
-	SendTo string     `json:"send_to" form:"send_to" koanf:"-"`
-}
-
-type smtpConfig struct {
-	Host     string `json:"host" form:"host" koanf:"host"`
-	Port     int    `json:"port" form:"port" koanf:"port,omitempty"`
-	Username string `json:"username" form:"username" koanf:"username"`
-	Password string `json:"password" form:"password" koanf:"password"`
-}
-
-type fromConfig struct {
-	Name  string `json:"name" form:"name" koanf:"name,omitempty"`
-	Email string `json:"email" form:"email" koanf:"email,omitempty"`
+	SMTP struct {
+		Host     string `json:"host" form:"host" koanf:"host"`
+		Port     int    `json:"port" form:"port" koanf:"port,omitempty"`
+		Username string `json:"username" form:"username" koanf:"username"`
+		Password string `json:"password" form:"password" koanf:"password"`
+	} `json:"smtp" form:"smtp" koanf:"smtp"`
+	From struct {
+		Name  string `json:"name" form:"name" koanf:"name,omitempty"`
+		Email string `json:"email" form:"email" koanf:"email,omitempty"`
+	} `json:"from" form:"from" koanf:"from"`
+	Instance string `json:"instance" form:"instance" koanf:"instance"`
+	SendTo   string `json:"send_to" form:"send_to" koanf:"-"`
 }
 
 func handleSendTestEmailRequest(c *gin.Context) {
@@ -38,9 +35,6 @@ func handleSendTestEmailRequest(c *gin.Context) {
 		panic(errInvalidParams)
 	}
 	paramsCfg := koanf.New(".")
-	if params.From.Email == "" {
-		params.From.Email = params.SMTP.Username
-	}
 	paramsCfg.Load(structs.Provider(params, "koanf"), nil)
 
 	var cfg mail.Config

@@ -34,27 +34,20 @@ func CreateMailer(cfg Config, l zerolog.Logger) (Mailer, error) {
 		return mailer, nil
 	}
 
-	dialer := gomail.NewDialer(cfg.SMTP.Host, cfg.SMTP.Port, cfg.SMTP.Username, cfg.SMTP.Password)
-	if !cfg.OmitStartupCheck {
-		if s, err := dialer.Dial(); err != nil {
-			if strings.Contains(err.Error(), "no such host") {
-				err = ErrNoSuchHost
-			} else if strings.Contains(err.Error(), "connection refused") {
-				err = ErrConnectionRefused
-			} else if strings.Contains(err.Error(), "timeout") {
-				err = ErrIOTimeout
-			} else if strings.Contains(err.Error(), "auth") {
-				err = ErrAuthFailure
-			}
+	mailer.dialer = gomail.NewDialer(cfg.SMTP.Host, cfg.SMTP.Port, cfg.SMTP.Username, cfg.SMTP.Password)
+	mailer.from = cfg.From
+	if mailer.from.Email == "" {
+		mailer.from.Email = cfg.SMTP.Username
+	}
+	mailer.instance = cfg.Instance
 
-			return mailer, err
+	if !cfg.OmitStartupCheck {
+		if s, err := mailer.dialer.Dial(); err != nil {
+			return mailer, transformError(err)
 		} else if err := s.Close(); err != nil {
 			l.Warn().Err(err).Msg("Error closing dialer")
 		}
 	}
-	mailer.dialer = dialer
-	mailer.from = cfg.From
-	mailer.instance = cfg.Instance
 
 	return mailer, nil
 }
@@ -129,14 +122,20 @@ func (m Mailer) send(e Email, rcpt core.User, params map[string]any) error {
 	})
 	err := m.dialer.DialAndSend(msg)
 	if err != nil {
-		if strings.Contains(err.Error(), "no such host") {
-			err = ErrNoSuchHost
-		} else if strings.Contains(err.Error(), "connection refused") {
-			err = ErrConnectionRefused
-		} else if strings.Contains(err.Error(), "timeout") {
-			err = ErrIOTimeout
-		}
-		m.logger.Warn().Err(err).Msg("failed to send email")
+		m.logger.Warn().Err(transformError(err)).Msg("failed to send email")
+	}
+	return err
+}
+
+func transformError(err error) error {
+	if strings.Contains(err.Error(), "no such host") {
+		return ErrNoSuchHost
+	} else if strings.Contains(err.Error(), "connection refused") {
+		return ErrConnectionRefused
+	} else if strings.Contains(err.Error(), "auth") {
+		return ErrAuthFailure
+	} else if strings.Contains(err.Error(), "timeout") {
+		return ErrIOTimeout
 	}
 	return err
 }
