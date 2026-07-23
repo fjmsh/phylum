@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
@@ -34,6 +35,7 @@ class SetupPage extends StatefulWidget {
 
 class _SetupPageState extends State<SetupPage> {
   SetupStep _currentStep = SetupStep.database;
+  final AuthConfigSetupCubit _authBloc = AuthConfigSetupCubit();
 
   @override
   void initState() {
@@ -49,9 +51,6 @@ class _SetupPageState extends State<SetupPage> {
         ),
         StateNotifierProvider<MailController, MailConfig>(
           create: (_) => MailController(widget.instanceUrl),
-        ),
-        StateNotifierProvider<AuthController, AuthConfig>(
-          create: (_) => AuthController(),
         ),
         StateNotifierProvider<UserController, UserConfig>(
           create: (_) => UserController(),
@@ -92,12 +91,13 @@ class _SetupPageState extends State<SetupPage> {
         onNextPress: nextStep,
       ),
       SetupStep.auth => SetupAuthFragment(
-        instanceUrl: widget.instanceUrl,
+        authBloc: _authBloc,
         onPrevPress: previousStep,
         onNextPress: nextStep,
       ),
       SetupStep.user => SetupUserFragment(
         instanceUrl: widget.instanceUrl,
+        authBloc: _authBloc,
         onPrevPress: previousStep,
         onFinish: finalize,
       ),

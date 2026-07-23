@@ -1,18 +1,21 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
+import 'package:phylum/ui/setup/setup_auth_fragment.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
 class SetupUserFragment extends StatelessWidget {
   final formKey = GlobalKey<FormState>();
   final String instanceUrl;
+  final AuthConfigSetupCubit _authBloc;
   final void Function() onPrevPress;
   final void Function(BuildContext) onFinish;
 
   SetupUserFragment({
     super.key,
     required this.instanceUrl,
+    required this._authBloc,
     required this.onPrevPress,
     required this.onFinish,
   });
@@ -45,9 +48,7 @@ class SetupUserFragment extends StatelessWidget {
 
   Widget buildContents(BuildContext context) {
     final config = context.watch<UserConfig>();
-    final passwordRequired = context.select<AuthConfig, bool>(
-      (config) => config.passwordLoginEnabled,
-    );
+    final passwordRequired = _authBloc.state.config.passwordLoginEnabled;
 
     return Form(
       key: formKey,
