@@ -1,16 +1,20 @@
 v0.10 (Unreleased)
 =====
 
-Features
+> [!WARNING]
+> Breaking changes:
+> - Fix config overrides not working for keys with underscores (breaking: use `__` instead of `_` to delimit env vars, and `.` instead of `_` to delimit command line flags)
+
+Features:
 - Generate thumbnails for audios (if present) videos and epubs
 - Better web loading
 - Auth config
 
-Improvements
+Improvements:
 - Use vips bindings to generate thumbnails and image previews instead of spawning a new process
 
 Fixes:
-- Proerties not showing on small screens
+- Properties not showing on small screens
 - Show selected items on large screens
 - mp4 audio files sometimes incorrectly tagged as video/mp4
 - LDAP config during setup
@@ -82,4 +86,3 @@ v0.5
 - Edit Display Name
 - Change Password
 - Better Login UI
-
