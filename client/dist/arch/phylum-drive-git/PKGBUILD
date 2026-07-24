@@ -10,7 +10,7 @@ conflicts=('phylum-drive')
 provides=('phylum-drive')
 source=("git+$url.git")
 sha256sums=('SKIP')
- 
+
 pkgver() {
 	cd phylum/client
 	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
@@ -44,4 +44,3 @@ package() {
     install -dm755 "$pkgdir/usr/bin/"
     ln -s "/opt/$pkgname/phylum" "$pkgdir/usr/bin/phylum-drive"
 }
-
