@@ -24,4 +24,3 @@ $ go run -C server cmd/phylum.go -W ../data <cmd>
 
 ### API
 An OpenAPI document is a work in progress. If you do intend to look around, note that almost all `<path>`s can have a `<uuid>:` prefix to make the path relative to that UUID. This also means that if you know the UUID of the resource, you can simply use `<uuid>:` as the path. This is the recommended way, and is the way the client app uses the API.
-

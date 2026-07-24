@@ -64,4 +64,3 @@ script:
   - cp -r /src/linux/x64/release/bundle AppDir
   - mkdir -p AppDir/usr/share/icons/hicolor/512x512/apps/
   - cp phylum-drive.png AppDir/usr/share/icons/hicolor/512x512/apps/
-

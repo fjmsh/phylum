@@ -12,7 +12,7 @@ storage:
   temp: tmp           # relative to root, or absolute
   mounts:
     # home:
-    #   mount_points: 
+    #   mount_points:
     #     - <uuid>
     #     - <uuid>
     #   driver: local
@@ -28,11 +28,11 @@ storage:
     #     bucket_name:
     #     prefix: /phylum-data
 
-core: 
+core:
   # By default, users can invite new users (given a working email setup).
   # Setting `no_default_invite_permission` to `true` will prevent that behavior.
   # Permission to invite users can still be granted using `users:create:invite`.
-  no_default_invite_permission: false 
+  no_default_invite_permission: false
   users:                  # Config for new users
     basedir: /home
     permissions:          # list of permissions to be granted by default
@@ -40,7 +40,7 @@ core:
     password:
       # hash is either argon2 or pbkdf2
       kdf: pbkdf2
-      pbkdf2: 
+      pbkdf2:
         function: sha-256
         iterations: 600000
         salt: 32
@@ -64,13 +64,13 @@ auth:
     crypt:
       # kdf is either argon2 or pbkdf2
       kdf: argon2
-      argon2: 
+      argon2:
         memory: 16        # 2 ^ 16 = 64M
         iterations: 4
         parallelism: 2
         salt: 32          # 32 Bytes = 256-bit
         key: 32           # 32 Bytes = 256-bit
-      pbkdf2: 
+      pbkdf2:
         function: sha-256
         iterations: 600000
         salt: 32          # 32 Bytes = 256-bit
@@ -112,8 +112,8 @@ auth:
   #       allow_unverified_emails: false
   #       auto_create_users: false
 
-      
-jobs: 
+
+jobs:
   workers: 5
   timeout: 0          # In seconds
 
