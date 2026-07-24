@@ -51,7 +51,7 @@ enum MenuOption {
     isSingle,
   ),
   share(Icons.share, 'Share', isFilesOnly),
-  openWith(Icons.open_with, 'Open With', isSingle);
+  openFile(Icons.file_open, 'Open', isSingle);
 
   const MenuOption(this.icon, this.text, this.filter);
 
@@ -272,7 +272,7 @@ void handleOption(
       );
       SharePlus.instance.share(params);
       break;
-    case MenuOption.openWith:
+    case MenuOption.openFile:
       if (kIsWeb || resources.isEmpty) return;
       final r = resources.first;
       final p = await downloadResourceSync(context, r);

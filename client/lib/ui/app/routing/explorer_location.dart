@@ -30,7 +30,7 @@ sealed class ExplorerLocation {
     [
       MenuOption.download,
       if (!kIsWeb && Platform.isAndroid) MenuOption.share,
-      MenuOption.openWith,
+      if (!kIsWeb) MenuOption.openFile,
     ],
     [MenuOption.rename, MenuOption.move, MenuOption.copy, MenuOption.delete],
     [
