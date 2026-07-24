@@ -29,7 +29,7 @@ class MailConfig implements Config {
         smtpUsername: '',
         smtpPassword: '',
         fromEmail: '',
-        fromName: '',
+        fromName: 'Phylum Drive',
         instanceUrl: defaultInstanceUrl ?? '',
       );
 

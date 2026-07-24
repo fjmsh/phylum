@@ -22,7 +22,10 @@ class _MailConfigPaneState extends State<MailConfigPane> {
   void initState() {
     super.initState();
     _remoteConfigController = context.read();
-    _bloc = MailConfigFormCubit(config: _remoteConfigController.config!);
+    _bloc = MailConfigFormCubit(
+      config: _remoteConfigController.config!,
+      overrides: const {},
+    );
   }
 
   @override

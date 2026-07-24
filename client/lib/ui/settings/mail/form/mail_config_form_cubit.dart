@@ -1,9 +1,11 @@
 import 'package:bloc/bloc.dart';
+import 'package:collection/collection.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:phylum/ui/settings/mail/mail_config.dart';
 
 class MailConfigFormState {
   final bool enabled;
+  final Set<String> _overrides;
   final String smtpHost;
   final String smtpPort;
   final String smtpUsername;
@@ -20,6 +22,7 @@ class MailConfigFormState {
 
   MailConfigFormState({
     required this.enabled,
+    required this._overrides,
     required this.smtpHost,
     required this.smtpPort,
     required this.smtpUsername,
@@ -34,6 +37,40 @@ class MailConfigFormState {
     this.fromEmailError,
     this.instanceUrlError,
   });
+
+  factory MailConfigFormState.createWithOverrides({
+    required bool enabled,
+    required Set<String> overrides,
+    required String smtpHost,
+    required String smtpPort,
+    required String smtpUsername,
+    required String smtpPassword,
+    required String fromName,
+    required String fromEmail,
+    required String instanceUrl,
+  }) {
+    var config = MailConfigFormState(
+      enabled: enabled,
+      overrides: overrides,
+      smtpHost: smtpHost,
+      smtpPort: smtpPort,
+      smtpUsername: smtpUsername,
+      smtpPassword: smtpPassword,
+      fromName: fromName,
+      fromEmail: fromEmail,
+      instanceUrl: instanceUrl,
+    );
+    return config.copyWith(
+      smtpHost: config.hasSmtpHostOverride() ? '<fixed>' : null,
+      smtpPort: config.hasSmtpPortOverride() ? '<fixed>' : null,
+      smtpUsername: config.hasSmtpUsernameOverride() ? '<fixed>' : null,
+      smtpPassword: config.hasSmtpPasswordOverride() ? '<fixed>' : null,
+      fromName: config.hasFromNameOverride() ? '<fixed>' : null,
+      fromEmail: config.hasFromEmailOverride() ? '<fixed>' : null,
+      instanceUrl: config.hasInstanceOverride() ? '<fixed>' : null,
+    );
+  }
+
   MailConfigFormState copyWith({
     bool? enabled,
     String? smtpHost,
@@ -46,6 +83,7 @@ class MailConfigFormState {
   }) {
     return MailConfigFormState(
       enabled: enabled ?? this.enabled,
+      overrides: _overrides,
       smtpHost: smtpHost ?? this.smtpHost,
       smtpPort: smtpPort ?? this.smtpPort,
       smtpUsername: smtpUsername ?? this.smtpUsername,
@@ -53,12 +91,6 @@ class MailConfigFormState {
       fromName: fromName ?? this.fromName,
       fromEmail: fromEmail ?? this.fromEmail,
       instanceUrl: instanceUrl ?? this.instanceUrl,
-      // smtpHostError: smtpHostError,
-      // smtpPortError: smtpPortError,
-      // smtpUsernameError: smtpUsernameError,
-      // fromNameError: fromNameError,
-      // fromEmailError: fromEmailError,
-      // instanceUrlError: instanceUrlError,
     );
   }
 
@@ -72,6 +104,7 @@ class MailConfigFormState {
   }) {
     return MailConfigFormState(
       enabled: enabled,
+      overrides: _overrides,
       smtpHost: smtpHost,
       smtpPort: smtpPort,
       smtpUsername: smtpUsername,
@@ -87,6 +120,15 @@ class MailConfigFormState {
       instanceUrlError: instanceUrlError,
     );
   }
+
+  bool hasEnabledOverride() => _overrides.contains("enabled");
+  bool hasSmtpHostOverride() => _overrides.contains("smtp.host");
+  bool hasSmtpPortOverride() => _overrides.contains("smtp.port");
+  bool hasSmtpUsernameOverride() => _overrides.contains("smtp.username");
+  bool hasSmtpPasswordOverride() => _overrides.contains("smtp.password");
+  bool hasFromNameOverride() => _overrides.contains("smtp.from.name");
+  bool hasFromEmailOverride() => _overrides.contains("smtp.from.email");
+  bool hasInstanceOverride() => _overrides.contains("instance");
 
   @override
   String toString() {
@@ -112,6 +154,7 @@ class MailConfigFormState {
     if (identical(this, other)) return true;
 
     return other.enabled == enabled &&
+        (const SetEquality()).equals(other._overrides, _overrides) &&
         other.smtpHost == smtpHost &&
         other.smtpHostError == smtpHostError &&
         other.smtpPort == smtpPort &&
@@ -147,24 +190,28 @@ class MailConfigFormState {
 }
 
 class MailConfigFormCubit extends Cubit<MailConfigFormState> {
-  MailConfigFormCubit({required MailConfig config})
-    : super(
-        MailConfigFormState(
-          enabled: config.enabled,
-          smtpHost: config.smtpHost,
-          smtpPort: config.smtpPort.toString(),
-          smtpUsername: config.smtpUsername,
-          smtpPassword: config.smtpPassword,
-          fromName: config.fromName,
-          fromEmail: config.fromEmail,
-          instanceUrl: config.instanceUrl,
-        ),
-      );
+  MailConfigFormCubit({
+    required MailConfig config,
+    required Set<String> overrides,
+  }) : super(
+         MailConfigFormState.createWithOverrides(
+           enabled: config.enabled,
+           overrides: overrides,
+           smtpHost: config.smtpHost,
+           smtpPort: config.smtpPort.toString(),
+           smtpUsername: config.smtpUsername,
+           smtpPassword: config.smtpPassword,
+           fromName: config.fromName,
+           fromEmail: config.fromEmail,
+           instanceUrl: config.instanceUrl,
+         ),
+       );
 
   void reset(MailConfig config) {
     emit(
       MailConfigFormState(
         enabled: config.enabled,
+        overrides: state._overrides,
         smtpHost: config.smtpHost,
         smtpPort: config.smtpPort.toString(),
         smtpUsername: config.smtpUsername,
@@ -216,20 +263,37 @@ class MailConfigFormCubit extends Cubit<MailConfigFormState> {
   MailConfig? validate() {
     final newState = state.enabled
         ? state.withErrors(
-            smtpHostError: state.smtpHost == '' ? 'Required' : null,
-            smtpPortError: state.smtpPort.isEmpty
+            smtpHostError: state.hasSmtpHostOverride()
+                ? null
+                : state.smtpHost == ''
+                ? 'Required'
+                : null,
+            smtpPortError: state.hasSmtpPortOverride()
+                ? null
+                : state.smtpPort.isEmpty
                 ? 'Required'
                 : (int.tryParse(state.smtpPort) ?? 0) == 0
                 ? 'Invalid Port'
                 : null,
-            smtpUsernameError: state.smtpUsername == '' ? 'Required' : null,
-            fromNameError: state.fromName == '' ? 'Required' : null,
-            fromEmailError: state.fromEmail.isEmpty
+            smtpUsernameError: state.hasSmtpUsernameOverride()
+                ? null
+                : state.smtpUsername == ''
                 ? 'Required'
-                : EmailValidator.validate(state.fromEmail)
+                : null,
+            fromNameError: state.hasFromNameOverride()
+                ? null
+                : state.fromName == ''
+                ? 'Required'
+                : null,
+            fromEmailError:
+                state.hasFromEmailOverride() ||
+                    state.fromEmail.isEmpty ||
+                    EmailValidator.validate(state.fromEmail)
                 ? null
                 : 'Invalid Email Address',
-            instanceUrlError: state.instanceUrl.isEmpty
+            instanceUrlError: state.hasInstanceOverride()
+                ? null
+                : state.instanceUrl.isEmpty
                 ? 'Required'
                 : Uri.tryParse(state.instanceUrl) == null
                 ? 'Invalid URL'
@@ -243,14 +307,14 @@ class MailConfigFormCubit extends Cubit<MailConfigFormState> {
         newState.fromEmailError == null &&
         newState.instanceUrlError == null) {
       return MailConfig(
-        enabled: state.enabled,
-        smtpHost: state.smtpHost,
-        smtpPort: int.parse(state.smtpPort),
-        smtpUsername: state.smtpUsername,
-        smtpPassword: state.smtpPassword,
-        fromName: state.fromName,
-        fromEmail: state.fromEmail,
-        instanceUrl: state.instanceUrl,
+        enabled: state.hasEnabledOverride() ? false : state.enabled,
+        smtpHost: state.hasSmtpHostOverride() ? '' : state.smtpHost,
+        smtpPort: state.hasSmtpPortOverride() ? 0 : int.parse(state.smtpPort),
+        smtpUsername: state.hasSmtpUsernameOverride() ? '' : state.smtpUsername,
+        smtpPassword: state.hasSmtpPasswordOverride() ? '' : state.smtpPassword,
+        fromName: state.hasFromNameOverride() ? '' : state.fromName,
+        fromEmail: state.hasFromEmailOverride() ? '' : state.fromEmail,
+        instanceUrl: state.hasInstanceOverride() ? '' : state.instanceUrl,
       );
     } else {
       emit(newState);

@@ -36,6 +36,7 @@ class _SetupPageState extends State<SetupPage> {
   SetupStep _currentStep = SetupStep.database;
   late final MailConfigSetupCubit _mailBloc = MailConfigSetupCubit(
     instanceUrl: widget.instanceUrl,
+    overrides: _subOverrides(widget.overrides, "mail"),
   );
   final AuthConfigSetupCubit _authBloc = AuthConfigSetupCubit();
 

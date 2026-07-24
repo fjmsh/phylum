@@ -86,7 +86,7 @@ class SetupMailFragment extends StatelessWidget {
 class MailConfigSetupCubit extends MailConfigFormCubit {
   final String instanceUrl;
 
-  MailConfigSetupCubit({required this.instanceUrl})
+  MailConfigSetupCubit({required this.instanceUrl, required super.overrides})
     : super(config: MailConfig.defaults(instanceUrl));
 
   Future<String?> checkConfig(MailConfig config) async {

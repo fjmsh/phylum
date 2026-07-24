@@ -43,9 +43,11 @@ class _MailConfigFormState extends State<MailConfigForm> {
             builder: (context, state) => SwitchListTile(
               title: Text('Enable'),
               value: state.enabled,
-              onChanged: (value) {
-                widget._bloc.enabled = value;
-              },
+              onChanged: state.hasEnabledOverride()
+                  ? null
+                  : (value) {
+                      widget._bloc.enabled = value;
+                    },
             ),
             buildWhen: (previous, current) =>
                 previous.enabled != current.enabled,
@@ -58,10 +60,11 @@ class _MailConfigFormState extends State<MailConfigForm> {
                   TextSpan(
                     children: [
                       TextSpan(text: 'SMTP Host '),
-                      TextSpan(
-                        text: '*',
-                        style: TextStyle(color: Colors.red),
-                      ),
+                      if (!state.hasSmtpHostOverride())
+                        TextSpan(
+                          text: '*',
+                          style: TextStyle(color: Colors.red),
+                        ),
                     ],
                   ),
                 ),
@@ -69,7 +72,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 errorText: state.smtpHostError,
                 prefixIcon: Icon(Icons.lan),
               ),
-              enabled: state.enabled,
+              enabled: state.enabled && !state.hasSmtpHostOverride(),
               autofocus: true,
               autocorrect: false,
               keyboardType: TextInputType.url,
@@ -90,10 +93,11 @@ class _MailConfigFormState extends State<MailConfigForm> {
                   TextSpan(
                     children: [
                       TextSpan(text: 'SMTP Port '),
-                      TextSpan(
-                        text: '*',
-                        style: TextStyle(color: Colors.red),
-                      ),
+                      if (!state.hasSmtpPortOverride())
+                        TextSpan(
+                          text: '*',
+                          style: TextStyle(color: Colors.red),
+                        ),
                     ],
                   ),
                 ),
@@ -101,7 +105,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 errorText: state.smtpPortError,
                 prefixIcon: Icon(Icons.cable),
               ),
-              enabled: state.enabled,
+              enabled: state.enabled && !state.hasSmtpPortOverride(),
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               keyboardType: TextInputType.number,
               initialValue: state.smtpPort,
@@ -119,10 +123,11 @@ class _MailConfigFormState extends State<MailConfigForm> {
                   TextSpan(
                     children: [
                       TextSpan(text: 'SMTP Username '),
-                      TextSpan(
-                        text: '*',
-                        style: TextStyle(color: Colors.red),
-                      ),
+                      if (!state.hasSmtpUsernameOverride())
+                        TextSpan(
+                          text: '*',
+                          style: TextStyle(color: Colors.red),
+                        ),
                     ],
                   ),
                 ),
@@ -130,7 +135,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 errorText: state.smtpUsernameError,
                 prefixIcon: Icon(Icons.person),
               ),
-              enabled: state.enabled,
+              enabled: state.enabled && !state.hasSmtpUsernameOverride(),
               autocorrect: false,
               initialValue: state.smtpUsername,
               onChanged: (value) => widget._bloc.smtpUsername = value,
@@ -149,7 +154,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 hintText: '<unchanged>',
                 prefixIcon: Icon(Icons.password),
               ),
-              enabled: state.enabled,
+              enabled: state.enabled && !state.hasSmtpPasswordOverride(),
               autocorrect: false,
               obscureText: true,
               initialValue: state.smtpPassword,
@@ -166,10 +171,11 @@ class _MailConfigFormState extends State<MailConfigForm> {
                   TextSpan(
                     children: [
                       TextSpan(text: 'Mail From Name '),
-                      TextSpan(
-                        text: '*',
-                        style: TextStyle(color: Colors.red),
-                      ),
+                      if (!state.hasFromNameOverride())
+                        TextSpan(
+                          text: '*',
+                          style: TextStyle(color: Colors.red),
+                        ),
                     ],
                   ),
                 ),
@@ -177,7 +183,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 errorText: state.fromNameError,
                 prefixIcon: Icon(Icons.contact_mail),
               ),
-              enabled: state.enabled,
+              enabled: state.enabled && !state.hasFromNameOverride(),
               autocorrect: false,
               initialValue: state.fromName,
               onChanged: (value) => widget._bloc.fromName = value,
@@ -200,21 +206,13 @@ class _MailConfigFormState extends State<MailConfigForm> {
               builder: (context, state) => TextFormField(
                 decoration: InputDecoration(
                   label: Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(text: 'Mail From Email '),
-                        TextSpan(
-                          text: '*',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      ],
-                    ),
+                    TextSpan(children: [TextSpan(text: 'Mail From Email')]),
                   ),
                   hint: Text('phylum@example.com'),
                   errorText: state.fromEmailError,
                   prefixIcon: Icon(Icons.alternate_email),
                 ),
-                enabled: state.enabled,
+                enabled: state.enabled && !state.hasFromEmailOverride(),
                 autocorrect: false,
                 controller: _fromEmailController,
                 onChanged: (value) => widget._bloc.fromEmail = value,
@@ -232,10 +230,11 @@ class _MailConfigFormState extends State<MailConfigForm> {
                   TextSpan(
                     children: [
                       TextSpan(text: 'Instance URL '),
-                      TextSpan(
-                        text: '*',
-                        style: TextStyle(color: Colors.red),
-                      ),
+                      if (!state.hasInstanceOverride())
+                        TextSpan(
+                          text: '*',
+                          style: TextStyle(color: Colors.red),
+                        ),
                     ],
                   ),
                 ),
@@ -243,7 +242,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 errorText: state.instanceUrlError,
                 prefixIcon: Icon(Icons.link),
               ),
-              enabled: state.enabled,
+              enabled: state.enabled && !state.hasInstanceOverride(),
               autocorrect: false,
               keyboardType: TextInputType.url,
               initialValue: state.instanceUrl,
