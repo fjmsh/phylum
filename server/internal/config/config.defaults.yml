@@ -135,11 +135,11 @@ server:
 
 mail:
   enabled: false
-  omit_startup_check: false
+  connection_check_fatal: false
   smtp:
     host:
     port: 587
-    username:                   # phylum-noreply@example.com
+    username:
     password:
   from:
     name: Phylum Drive

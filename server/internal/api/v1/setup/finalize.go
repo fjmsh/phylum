@@ -1,7 +1,6 @@
 package setup
 
 import (
-	"errors"
 	"net/http"
 	"os"
 	"syscall"
@@ -117,17 +116,15 @@ func handleFinalize(c *gin.Context) {
 		})
 		return
 	}
-	if m, err := mail.CreateMailer(mailConfig, logger); err != nil {
-		if !errors.Is(err, mail.ErrEmailNotConfigured) {
+	m := mail.CreateMailer(mailConfig, logger)
+	mail.SetDefaultMailer(m)
+	if m.Enabled() && mailConfig.ConnectionCheckFatal {
+		if err := m.CheckConnection(); err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"success": false,
-				"error":   "Failed to initialize mail",
-				"details": err.Error(),
+				"error":   "Failed to connect to SMTP server: " + err.Error(),
 			})
-			return
 		}
-	} else {
-		mail.SetDefaultMailer(m)
 	}
 
 	err = d.RunInTx(func(db db.TxHandler) error {

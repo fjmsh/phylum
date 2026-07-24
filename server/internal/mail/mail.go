@@ -25,13 +25,13 @@ var ErrAuthFailure = errors.New("auth failure")
 var ErrIOTimeout = errors.New("i/o timeout")
 var m Mailer
 
-func CreateMailer(cfg Config, l zerolog.Logger) (Mailer, error) {
+func CreateMailer(cfg Config, l zerolog.Logger) Mailer {
 	var mailer Mailer
 	mailer.cfg = cfg
 	mailer.cfg.SMTP.Password = ""
 	mailer.logger = l.With().Str("mod", "email").Logger()
 	if !cfg.Enabled {
-		return mailer, nil
+		return mailer
 	}
 
 	mailer.dialer = gomail.NewDialer(cfg.SMTP.Host, cfg.SMTP.Port, cfg.SMTP.Username, cfg.SMTP.Password)
@@ -41,15 +41,7 @@ func CreateMailer(cfg Config, l zerolog.Logger) (Mailer, error) {
 	}
 	mailer.instance = cfg.Instance
 
-	if !cfg.OmitStartupCheck {
-		if s, err := mailer.dialer.Dial(); err != nil {
-			return mailer, transformError(err)
-		} else if err := s.Close(); err != nil {
-			l.Warn().Err(err).Msg("Error closing dialer")
-		}
-	}
-
-	return mailer, nil
+	return mailer
 }
 
 func SetDefaultMailer(mailer Mailer) {
@@ -58,6 +50,22 @@ func SetDefaultMailer(mailer Mailer) {
 
 func Enabled() bool {
 	return m.cfg.Enabled
+}
+func (m Mailer) Enabled() bool {
+	return m.cfg.Enabled
+}
+
+func (m Mailer) CheckConnection() error {
+	if m.dialer == nil {
+		return nil
+	}
+
+	s, err := m.dialer.Dial()
+	if err != nil {
+		return transformError(err)
+	}
+	s.Close()
+	return nil
 }
 
 func Configuration() Config {

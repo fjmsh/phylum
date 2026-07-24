@@ -1,11 +1,11 @@
 package mail
 
 type Config struct {
-	Enabled          bool       `koanf:"enabled" json:"enabled"`
-	OmitStartupCheck bool       `koanf:"omit_startup_check,omitempty" json:"omit_startup_check"`
-	SMTP             SMTPConfig `koanf:"smtp,omitempty" json:"smtp"`
-	From             FromConfig `koanf:"from,omitempty" json:"from"`
-	Instance         string     `koanf:"instance,omitempty" json:"instance"`
+	Enabled              bool       `koanf:"enabled" json:"enabled"`
+	SMTP                 SMTPConfig `koanf:"smtp,omitempty" json:"smtp"`
+	From                 FromConfig `koanf:"from,omitempty" json:"from"`
+	Instance             string     `koanf:"instance,omitempty" json:"instance"`
+	ConnectionCheckFatal bool       `koanf:"connection_check_fatal,omitempty" json:"connection_check_fatal"`
 }
 
 type SMTPConfig struct {

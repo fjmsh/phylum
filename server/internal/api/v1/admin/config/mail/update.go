@@ -49,7 +49,8 @@ func handleUpdateRequest(c *gin.Context) {
 		fmt.Println(err)
 	}
 	var response *core.Error
-	if _, err := mail.CreateMailer(cfg, *zerolog.Ctx(c.Request.Context())); err != nil {
+	mailer := mail.CreateMailer(cfg, *zerolog.Ctx(c.Request.Context()))
+	if err := mailer.CheckConnection(); err != nil {
 		if errors.Is(err, mail.ErrNoSuchHost) {
 			response = core.NewError(http.StatusBadRequest, "smtp_host_not_found", "SMTP Host Not Found")
 		} else if errors.Is(err, mail.ErrConnectionRefused) {

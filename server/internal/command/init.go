@@ -145,8 +145,8 @@ func readMailConfig(defaultConfig mail.Config, logger zerolog.Logger) *koanf.Koa
 		panic(err)
 	}
 	var err error
-	var mailer mail.Mailer
-	if mailer, err = mail.CreateMailer(config, logger); err != nil {
+	mailer := mail.CreateMailer(config, logger)
+	if err = mailer.CheckConnection(); err != nil {
 		fmt.Println("Unable to connect to the mail server")
 		fmt.Println(err.Error())
 

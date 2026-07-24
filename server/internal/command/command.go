@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"errors"
 	"os"
 	"path"
 
@@ -116,14 +115,20 @@ func SetupCommand() {
 		if err := core.Initialize(db.Get(ctx), cfg.Core); err != nil {
 			logger.Fatal().Err(err).Msg("failed to initialize core")
 		}
-		if m, err := mail.CreateMailer(cfg.Mail, logger); err != nil {
-			if errors.Is(err, mail.ErrEmailNotConfigured) {
-				logger.Info().Msg("mail not configured")
+		m := mail.CreateMailer(cfg.Mail, logger)
+		mail.SetDefaultMailer(m)
+		if m.Enabled() {
+			if cfg.Mail.ConnectionCheckFatal {
+				if err := m.CheckConnection(); err != nil {
+					logger.Fatal().Err(err).Msg("mail connection check failed")
+				}
 			} else {
-				logger.Fatal().Err(err).Msg("failed to initialize mail")
+				go func() {
+					if err := m.CheckConnection(); err != nil {
+						logger.Warn().Err(err).Msg("mail connection check failed")
+					}
+				}()
 			}
-		} else {
-			mail.SetDefaultMailer(m)
 		}
 		if err := auth.Initialize(cfg.Auth, logger); err != nil {
 			logger.Fatal().Err(err)

@@ -3,7 +3,6 @@ package setup
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/mail"
@@ -24,11 +23,9 @@ type mailConfig struct {
 		Name  string `json:"name" form:"name" koanf:"name,omitempty"`
 		Email string `json:"email" form:"email" koanf:"email,omitempty"`
 	} `json:"from" form:"from" koanf:"from"`
-	Instance string `json:"instance" form:"instance" koanf:"instance"`
-	SendTo   string `json:"send_to" form:"send_to" koanf:"-"`
 }
 
-func handleSendTestEmailRequest(c *gin.Context) {
+func handleValidateRequest(c *gin.Context) {
 	var params mailConfig
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
@@ -45,34 +42,10 @@ func handleSendTestEmailRequest(c *gin.Context) {
 	response := gin.H{
 		"overrides": overrides,
 	}
-	if mailer, err := mail.CreateMailer(cfg, *zerolog.Ctx(c.Request.Context())); err != nil {
+	mailer := mail.CreateMailer(cfg, *zerolog.Ctx(c.Request.Context()))
+	if err := mailer.CheckConnection(); err != nil {
 		response["error"] = gin.H{
-			"code":    "generic",
-			"msg":     "Failed to Create Mailer",
-			"details": err.Error(),
-		}
-	} else if err := mailer.SendTestEmail(params.SendTo); err != nil {
-		if strings.Contains(err.Error(), "no such host") {
-			response["error"] = gin.H{
-				"code": "no_such_host",
-				"msg":  "No Such Host",
-			}
-		} else if strings.Contains(err.Error(), "connection refused") {
-			response["error"] = gin.H{
-				"code": "connection_refused",
-				"msg":  "Connection Refused",
-			}
-		} else if strings.Contains(err.Error(), "timeout") {
-			response["error"] = gin.H{
-				"code": "io_timeout",
-				"msg":  "I/O Timeout",
-			}
-		} else {
-			response["error"] = gin.H{
-				"code":    "generic",
-				"msg":     "Failed to Send Mail",
-				"details": err.Error(),
-			}
+			"msg": "Failed to connect to SMTP server: " + err.Error(),
 		}
 	}
 	c.JSON(http.StatusOK, response)
