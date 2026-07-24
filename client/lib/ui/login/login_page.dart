@@ -6,6 +6,11 @@ import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/login_email.dart';
 import 'package:phylum/ui/login/login_selector.dart';
 import 'package:provider/provider.dart';
+import 'package:uri/uri.dart';
+
+import 'oauth_stub.dart'
+    if (dart.library.js_interop) 'oauth_web.dart'
+    if (dart.library.ffi) 'oauth_vm.dart';
 
 class LoginPage extends StatefulWidget {
   final Uri? instanceUri;
@@ -96,10 +101,19 @@ class _LoginPageState extends State<LoginPage> {
       return const LoginInstanceUrl(display: false);
     }
 
-    final authConfig = state.instanceInfo!.authConfig!;
+    final authConfig = instanceInfo.authConfig!;
     if (authConfig.openIDProviders.isEmpty) {
       return const EmailLogin();
     }
+
+    if (!authConfig.email && authConfig.openIDProviders.length == 1) {
+      final builder = UriBuilder.fromUri(instanceInfo.url);
+      builder.path += '/api/v1/auth/oauth/start';
+      final provider = authConfig.openIDProviders.first;
+      builder.queryParameters['provider'] = provider.id;
+      startOAuthFlow(context, builder, provider.name);
+    }
+
     return const LoginSelector();
   }
 }
