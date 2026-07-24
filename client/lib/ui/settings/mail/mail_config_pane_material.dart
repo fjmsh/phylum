@@ -8,7 +8,8 @@ import 'form/mail_config_form.dart';
 import 'form/mail_config_form_cubit.dart';
 
 class MaterialMailConfigPane extends StatelessWidget {
-  const MaterialMailConfigPane({super.key});
+  final MailConfigFormCubit _bloc;
+  const MaterialMailConfigPane({super.key, required this._bloc});
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +17,7 @@ class MaterialMailConfigPane extends StatelessWidget {
       spacing: 18,
       children: [
         MailConfigForm(
+          bloc: _bloc,
           onFormSubmitted: (context) {
             if (!isSaving(context)) {
               save(context);
@@ -65,7 +67,7 @@ class MaterialMailConfigPane extends StatelessWidget {
   }
 
   void save(BuildContext context) async {
-    final config = context.read<MailConfigFormCubit>().validate();
+    final config = _bloc.validate();
 
     if (config == null) return;
 

@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/ui/settings/auth/form/auth_config_form.dart';
 import 'package:phylum/ui/settings/auth/form/auth_config_form_cubit.dart';
-import 'package:phylum/ui/settings/mail/mail_config.dart';
+import 'package:phylum/ui/setup/setup_mail_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
-import 'package:provider/provider.dart';
 
 class SetupAuthFragment extends StatefulWidget {
   final AuthConfigSetupCubit _authBloc;
+  final MailConfigSetupCubit _mailBloc;
   final void Function() onPrevPress;
   final void Function() onNextPress;
 
   const SetupAuthFragment({
     super.key,
     required this._authBloc,
+    required this._mailBloc,
     required this.onPrevPress,
     required this.onNextPress,
   });
@@ -27,7 +28,8 @@ class _SetupAuthFragmentState extends State<SetupAuthFragment> {
   void initState() {
     super.initState();
 
-    if (!context.read<MailConfig>().enabled) {
+    widget._authBloc.mailEnabled = widget._mailBloc.state.enabled;
+    if (!widget._mailBloc.state.enabled) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         widget._authBloc.passwordlessLoginEnabled = false;
         widget._authBloc.passwordConfig = widget

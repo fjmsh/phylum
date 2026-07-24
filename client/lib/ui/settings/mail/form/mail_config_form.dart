@@ -4,9 +4,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/ui/settings/mail/form/mail_config_form_cubit.dart';
 
 class MailConfigForm extends StatefulWidget {
+  final MailConfigFormCubit _bloc;
   final void Function(BuildContext) _onFormSubmitted;
 
-  const MailConfigForm({super.key, required this._onFormSubmitted});
+  const MailConfigForm({
+    super.key,
+    required this._bloc,
+    required this._onFormSubmitted,
+  });
 
   @override
   State<MailConfigForm> createState() => _MailConfigFormState();
@@ -18,10 +23,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
   @override
   void initState() {
     super.initState();
-    _fromEmailController.text = context
-        .read<MailConfigFormCubit>()
-        .state
-        .fromEmail;
+    _fromEmailController.text = widget._bloc.state.fromEmail;
   }
 
   @override
@@ -37,17 +39,19 @@ class _MailConfigFormState extends State<MailConfigForm> {
         spacing: 18.0,
         children: [
           BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+            bloc: widget._bloc,
             builder: (context, state) => SwitchListTile(
               title: Text('Enable'),
               value: state.enabled,
               onChanged: (value) {
-                context.read<MailConfigFormCubit>().enabled = value;
+                widget._bloc.enabled = value;
               },
             ),
             buildWhen: (previous, current) =>
                 previous.enabled != current.enabled,
           ),
           BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+            bloc: widget._bloc,
             builder: (context, state) => TextFormField(
               decoration: InputDecoration(
                 label: Text.rich(
@@ -70,8 +74,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
               autocorrect: false,
               keyboardType: TextInputType.url,
               initialValue: state.smtpHost,
-              onChanged: (value) =>
-                  context.read<MailConfigFormCubit>().smtpHost = value,
+              onChanged: (value) => widget._bloc.smtpHost = value,
               validator: (value) =>
                   (value?.isEmpty ?? true) ? 'Required' : null,
             ),
@@ -80,6 +83,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 previous.smtpHostError != current.smtpHostError,
           ),
           BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+            bloc: widget._bloc,
             builder: (context, state) => TextFormField(
               decoration: InputDecoration(
                 label: Text.rich(
@@ -101,14 +105,14 @@ class _MailConfigFormState extends State<MailConfigForm> {
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               keyboardType: TextInputType.number,
               initialValue: state.smtpPort,
-              onChanged: (value) =>
-                  context.read<MailConfigFormCubit>().smtpPort = value,
+              onChanged: (value) => widget._bloc.smtpPort = value,
             ),
             buildWhen: (previous, current) =>
                 previous.enabled != current.enabled ||
                 previous.smtpPortError != current.smtpPortError,
           ),
           BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+            bloc: widget._bloc,
             builder: (context, state) => TextFormField(
               decoration: InputDecoration(
                 label: Text.rich(
@@ -129,8 +133,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
               enabled: state.enabled,
               autocorrect: false,
               initialValue: state.smtpUsername,
-              onChanged: (value) =>
-                  context.read<MailConfigFormCubit>().smtpUsername = value,
+              onChanged: (value) => widget._bloc.smtpUsername = value,
               validator: (value) =>
                   (value?.isEmpty ?? true) ? 'Required' : null,
             ),
@@ -139,6 +142,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 previous.smtpUsernameError != current.smtpUsernameError,
           ),
           BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+            bloc: widget._bloc,
             builder: (context, state) => TextFormField(
               decoration: InputDecoration(
                 label: Text('SMTP Password'),
@@ -149,13 +153,13 @@ class _MailConfigFormState extends State<MailConfigForm> {
               autocorrect: false,
               obscureText: true,
               initialValue: state.smtpPassword,
-              onChanged: (value) =>
-                  context.read<MailConfigFormCubit>().smtpPassword = value,
+              onChanged: (value) => widget._bloc.smtpPassword = value,
             ),
             buildWhen: (previous, current) =>
                 previous.enabled != current.enabled,
           ),
           BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+            bloc: widget._bloc,
             builder: (context, state) => TextFormField(
               decoration: InputDecoration(
                 label: Text.rich(
@@ -176,8 +180,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
               enabled: state.enabled,
               autocorrect: false,
               initialValue: state.fromName,
-              onChanged: (value) =>
-                  context.read<MailConfigFormCubit>().fromName = value,
+              onChanged: (value) => widget._bloc.fromName = value,
               validator: (value) =>
                   (value?.isEmpty ?? true) ? 'Required' : null,
             ),
@@ -186,12 +189,14 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 previous.fromNameError != current.fromNameError,
           ),
           BlocListener<MailConfigFormCubit, MailConfigFormState>(
+            bloc: widget._bloc,
             listener: (BuildContext context, MailConfigFormState state) {
               if (state.fromEmail != _fromEmailController.text) {
                 _fromEmailController.text = state.fromEmail;
               }
             },
             child: BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+              bloc: widget._bloc,
               builder: (context, state) => TextFormField(
                 decoration: InputDecoration(
                   label: Text.rich(
@@ -212,8 +217,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 enabled: state.enabled,
                 autocorrect: false,
                 controller: _fromEmailController,
-                onChanged: (value) =>
-                    context.read<MailConfigFormCubit>().fromEmail = value,
+                onChanged: (value) => widget._bloc.fromEmail = value,
               ),
               buildWhen: (previous, current) =>
                   previous.enabled != current.enabled ||
@@ -221,6 +225,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
             ),
           ),
           BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+            bloc: widget._bloc,
             builder: (context, state) => TextFormField(
               decoration: InputDecoration(
                 label: Text.rich(
@@ -242,8 +247,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
               autocorrect: false,
               keyboardType: TextInputType.url,
               initialValue: state.instanceUrl,
-              onChanged: (value) =>
-                  context.read<MailConfigFormCubit>().instanceUrl = value,
+              onChanged: (value) => widget._bloc.instanceUrl = value,
               onFieldSubmitted: (value) => widget._onFormSubmitted(context),
             ),
             buildWhen: (previous, current) =>

@@ -16,13 +16,13 @@ class MailConfigPane extends StatefulWidget {
 
 class _MailConfigPaneState extends State<MailConfigPane> {
   late final RemoteConfigController<MailConfig> _remoteConfigController;
-  late final MailConfigFormCubit bloc;
+  late final MailConfigFormCubit _bloc;
 
   @override
   void initState() {
     super.initState();
     _remoteConfigController = context.read();
-    bloc = MailConfigFormCubit(config: _remoteConfigController.config!);
+    _bloc = MailConfigFormCubit(config: _remoteConfigController.config!);
   }
 
   @override
@@ -32,9 +32,6 @@ class _MailConfigPaneState extends State<MailConfigPane> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [BlocProvider<MailConfigFormCubit>.value(value: bloc)],
-      child: const MaterialMailConfigPane(), //TODO #uilibrary
-    );
+    return MaterialMailConfigPane(bloc: _bloc);
   }
 }
