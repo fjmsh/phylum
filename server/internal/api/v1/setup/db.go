@@ -1,13 +1,17 @@
 package setup
 
 import (
+	"io"
 	"net/http"
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/config"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
-	"github.com/knadh/koanf/providers/structs"
+	"github.com/go-viper/mapstructure/v2"
+	"github.com/knadh/koanf/parsers/json"
+	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/knadh/koanf/v2"
 )
 
@@ -20,18 +24,23 @@ type dbConfig struct {
 }
 
 func handleValidateDBRequest(c *gin.Context) {
-	var params dbConfig
-	err := c.ShouldBindJSON(&params)
-	if err != nil {
-		panic(errInvalidParams)
+	params := koanf.New(".")
+	decoderConfig := &mapstructure.DecoderConfig{
+		ErrorUnused:      true,
+		WeaklyTypedInput: true,
+		Result:           &db.Config{},
+	}
+	if body, err := io.ReadAll(c.Request.Body); err != nil {
+		panic(core.NewError(http.StatusBadRequest, "no_request_body", "failed to read request parameters from body: "+err.Error()))
+	} else if err := params.Load(rawbytes.Provider(body), json.Parser()); err != nil {
+		panic(core.NewError(http.StatusBadRequest, "parse_failed", "failed to parse request parameters from body: "+err.Error()))
+	} else if err := params.UnmarshalWithConf("config", nil, koanf.UnmarshalConf{DecoderConfig: decoderConfig}); err != nil {
+		panic(core.NewError(http.StatusBadRequest, "validate_failed", "failed to validate request parameters from body: "+err.Error()))
 	}
 
-	paramsCfg := koanf.New(".")
-	paramsCfg.Load(structs.Provider(params, "koanf"), nil)
-
 	var cfg db.Config
-	config.MergeSub("db", paramsCfg).Unmarshal("", &cfg)
-	overrides := config.HasOverrides("db", paramsCfg)
+	config.MergeSub("db", params).Unmarshal("", &cfg)
+	overrides := config.HasOverrides("db", params)
 	response := gin.H{
 		"overrides": overrides,
 	}
