@@ -35,7 +35,7 @@ func Initialize(cmd *cobra.Command) (bool, error) {
 	}
 
 	// config.yml
-	configFile, _ = cmd.Flags().GetString("config-file")
+	configFile, _ = cmd.Flags().GetString("config")
 	ymlConfig, err = LoadFile(configFile)
 	exists := true
 	if err != nil {

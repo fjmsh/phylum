@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path"
+	"slices"
 
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/command/admin"
@@ -19,6 +20,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/pubsub"
 	"codeberg.org/shroff/phylum/server/internal/steve"
 	"codeberg.org/shroff/phylum/server/internal/storage"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/google/uuid"
 	"github.com/knadh/koanf/v2"
 	"github.com/rs/zerolog"
@@ -36,7 +38,7 @@ func SetupCommand() {
 
 	// Flags only. Not part of config file
 	flags.StringP("workdir", "W", "", "Working Directory")
-	flags.StringP("config-file", "c", "config.yml", "Config File Path")
+	flags.StringP("config", "c", "config.yml", "Config File Path")
 
 	flags.Bool("debug", false, "Debug mode")
 	flags.MarkHidden("debug")
@@ -77,12 +79,26 @@ func SetupCommand() {
 		}
 
 		var cfg Config
-		config.Full.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "koanf"})
+		var md mapstructure.Metadata
+		err := config.Full.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "koanf", DecoderConfig: &mapstructure.DecoderConfig{
+			Result:           &cfg,
+			WeaklyTypedInput: true,
+			Metadata:         &md,
+		}})
+		if err != nil {
+			panic(err)
+		}
 
 		if cfg.Debug {
 			logger = logger.Level(zerolog.TraceLevel)
 			logger.Debug().Msg("Running in debug mode")
 			cfg.Server.Debug = true
+		}
+		unused := slices.DeleteFunc(md.Unused, func(e string) bool {
+			return e == "workdir" || e == "config" || e == "image_tag"
+		})
+		if len(md.Unused) != 0 {
+			logger.Warn().Strs("keys", unused).Msg("Unused keys in config")
 		}
 		cmd.SetContext(logger.WithContext(cmd.Context()))
 
