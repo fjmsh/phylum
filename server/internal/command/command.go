@@ -97,7 +97,7 @@ func SetupCommand() {
 		unused := slices.DeleteFunc(md.Unused, func(e string) bool {
 			return e == "workdir" || e == "config" || e == "image_tag"
 		})
-		if len(md.Unused) != 0 {
+		if len(unused) != 0 {
 			logger.Warn().Strs("keys", unused).Msg("Unused keys in config")
 		}
 		cmd.SetContext(logger.WithContext(cmd.Context()))
