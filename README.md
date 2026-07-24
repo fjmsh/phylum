@@ -44,11 +44,11 @@ Phylum may be for you if you want:
 
 ```
 curl -O https://codeberg.org/shroff/phylum/raw/branch/main/compose.yml 
-echo "PHYLUM_DB_PASSWORD=$(head -c 32 /dev/urandom | md5sum | cut -d ' ' -f 1)" > .env
+echo "PHYLUM_DB__PASSWORD=$(head -c 32 /dev/urandom | md5sum | cut -d ' ' -f 1)" >> .env
 docker compose up -d && docker compose logs -f
 ```
 
-Open `https://localhost:2448` to continue setup.
+Open `http://localhost:2448` to continue setup.
 
 Take a look at [Configuration and Management](https://codeberg.org/shroff/phylum/wiki/Configuration-and-Management) for more details about configuration.
 
@@ -67,4 +67,3 @@ It is highly recommended to take a look at `config.defaults.yml` to see a full l
 ![Desktop Screnshot](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/desktop.png)
 
 ![Mobile Screenshot](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/mobile.png)
-

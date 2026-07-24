@@ -63,7 +63,7 @@ build_phylum() {
 	  --entrypoint '["phylum"]' \
 	  --cmd "serve" \
 	  --env PATH="$imagepath:/app" \
-	  --env PHYLUM_SERVER_WEBAPPSRC="/app/web" \
+	  --env PHYLUM_SERVER__WEBAPPSRC="/app/web" \
 	  $c
   echo "Installing Packages"
   buildah run $c -- apk add vips-tools vips-poppler font-noto

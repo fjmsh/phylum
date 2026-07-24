@@ -27,17 +27,17 @@ func SetupCommand() *cobra.Command {
 
 	flags := cmd.Flags()
 
-	flags.Bool("db_trace", false, "Trace Database Queries")
-	flags.MarkHidden("db_trace")
+	flags.Bool("db.trace", false, "Trace Database Queries")
+	flags.MarkHidden("db.trace")
 
-	flags.String("server_host", "", "Server Host")
-	flags.String("server_port", "", "Server Port")
-	flags.String("server_webappsrc", "", "Web App Source Directory")
-	flags.String("server_publinkpath", "", "Public Share path prefix")
-	flags.String("server_webdavpath", "", "WebDAV path prefix")
-	flags.Bool("server_cors_enabled", false, "Enable CORS")
-	flags.StringSlice("server_cors_origins", nil, "CORS origins")
-	flags.Bool("server_logbody", false, "Log Response Body (Must be used with --debug)")
+	flags.String("server.host", "", "Server Host")
+	flags.String("server.port", "", "Server Port")
+	flags.String("server.webappsrc", "", "Web App Source Directory")
+	flags.String("server.publinkpath", "", "Public Share path prefix")
+	flags.String("server.webdavpath", "", "WebDAV path prefix")
+	flags.Bool("server.cors.enabled", false, "Enable CORS")
+	flags.StringSlice("server.cors.origins", nil, "CORS origins")
+	flags.Bool("server.logbody", false, "Log Response Body (Must be used with --debug)")
 
 	cmd.Run = func(cmd *cobra.Command, args []string) {
 		if !Cfg.Debug {

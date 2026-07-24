@@ -108,13 +108,12 @@ func LoadOverrides(cmd *cobra.Command) (*koanf.Koanf, error) {
 		if !f.Changed {
 			return "", ""
 		}
-		k, v := strings.ReplaceAll(f.Name, "_", "."), posflag.FlagVal(cmd.Flags(), f)
+		k, v := f.Name, posflag.FlagVal(cmd.Flags(), f)
 		return k, v
 	}), nil)
 
-	k.Load(env.Provider("PHYLUM_", ".", func(s string) string {
-		return strings.Replace(strings.ToLower(
-			strings.TrimPrefix(s, "PHYLUM_")), "_", ".", -1)
+	k.Load(env.Provider("PHYLUM_", "__", func(s string) string {
+		return strings.ToLower(strings.TrimPrefix(s, "PHYLUM_"))
 	}), nil)
 
 	return k, err

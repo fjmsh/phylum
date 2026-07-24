@@ -41,11 +41,11 @@ func SetupCommand() {
 	flags.Bool("debug", false, "Debug mode")
 	flags.MarkHidden("debug")
 
-	flags.Bool("db_trace", false, "Trace Database Queries")
-	flags.MarkHidden("db_trace")
+	flags.Bool("db.trace", false, "Trace Database Queries")
+	flags.MarkHidden("db.trace")
 
-	flags.Bool("db_nomigrate", false, "Skip Database Migrations")
-	flags.MarkHidden("db_nomigrate")
+	flags.Bool("db.nomigrate", false, "Skip Database Migrations")
+	flags.MarkHidden("db.nomigrate")
 
 	uuid.EnableRandPool()
 	cmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
