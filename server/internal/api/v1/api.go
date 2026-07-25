@@ -22,7 +22,7 @@ func Setup(r *gin.RouterGroup, needsSetup bool, logger *zerolog.Logger) {
 		r.GET("/info", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{
 				"setup": gin.H{
-					"overrides": config.OverrideKeys([]string{"db", "mail", "auth"}),
+					"overrides": config.Overrides([]string{"db", "mail", "auth"}),
 				},
 			})
 		})

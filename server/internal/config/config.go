@@ -94,15 +94,21 @@ func HasOverrides(path string, cfg *koanf.Koanf) (overriden []string) {
 	return overriden
 }
 
-func OverrideKeys(paths []string) []string {
+func Overrides(paths []string) map[string]any {
 	result := koanf.New(".")
 	for _, p := range paths {
 		o := overrides.Cut(p)
 		if len(o.Keys()) != 0 {
-			result.MergeAt(overrides.Cut(p), p)
+			result.MergeAt(o, p)
 		}
 	}
-	return result.Keys()
+	result.Keys()
+	for _, k := range result.Keys() {
+		if strings.Contains(k, "client_secret") || strings.Contains(k, "password") {
+			result.Delete(k)
+		}
+	}
+	return result.Raw()
 }
 
 func LoadOverrides(cmd *cobra.Command) (*koanf.Koanf, error) {
