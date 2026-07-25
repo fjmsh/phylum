@@ -1,23 +1,23 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-import 'package:phylum/ui/login/instance_config.dart';
+import 'package:phylum/ui/login/instance_info.dart';
 import 'package:phylum/ui/login/instance_url_field.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
-import 'login_controller.dart';
-import 'login_request.dart';
+import '../login_controller.dart';
+import '../util/login.dart';
 
-class EmailLogin extends StatefulWidget {
-  const EmailLogin({super.key});
+class EmailLoginScreen extends StatefulWidget {
+  const EmailLoginScreen({super.key});
 
   @override
-  State<EmailLogin> createState() => _EmailLoginState();
+  State<EmailLoginScreen> createState() => _EmailLoginScreenState();
 }
 
-class _EmailLoginState extends State<EmailLogin> {
+class _EmailLoginScreenState extends State<EmailLoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _forcePassword = false;

@@ -4,12 +4,12 @@ import 'package:phylum/ui/login/login_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
-import 'oauth_stub.dart'
-    if (dart.library.js_interop) 'oauth_web.dart'
-    if (dart.library.ffi) 'oauth_vm.dart';
+import '../util/oauth_stub.dart'
+    if (dart.library.js_interop) '../utiloauth_web.dart'
+    if (dart.library.ffi) '../util/oauth_vm.dart';
 
-class LoginSelector extends StatelessWidget {
-  const LoginSelector({super.key});
+class LoginSelectorScreen extends StatelessWidget {
+  const LoginSelectorScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

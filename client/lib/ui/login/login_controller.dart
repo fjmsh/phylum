@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:phylum/ui/login/instance_config.dart';
-import 'package:phylum/ui/login/login_email.dart';
-import 'package:phylum/ui/login/login_token.dart';
-import 'package:phylum/ui/login/login_reset_password.dart';
+import 'package:phylum/ui/login/instance_info.dart';
+import 'package:phylum/ui/login/screens/email_login.dart';
+import 'package:phylum/ui/login/screens/token_login.dart';
+import 'package:phylum/ui/login/screens/reset_password.dart';
 
 import 'package:phylum/util/base_uri/base_uri_stub.dart'
     if (dart.library.js_interop) 'package:phylum/util/base_uri/base_uri_web.dart';
@@ -88,7 +88,7 @@ sealed class LoginMethod {
 class EmailLoginMethod extends LoginMethod {
   const EmailLoginMethod();
   @override
-  Widget build() => const EmailLogin();
+  Widget build() => const EmailLoginScreen();
 }
 
 class TokenLoginMethod extends LoginMethod {
@@ -97,7 +97,7 @@ class TokenLoginMethod extends LoginMethod {
   const TokenLoginMethod(this.token);
 
   @override
-  Widget build() => TokenLogin(token: token);
+  Widget build() => TokenLoginScreen(token: token);
 }
 
 class ResetPasswordMethod extends LoginMethod {
@@ -107,5 +107,5 @@ class ResetPasswordMethod extends LoginMethod {
   const ResetPasswordMethod({required this.email, required this.token});
 
   @override
-  Widget build() => ResetPasswordLogin(email: email, token: token);
+  Widget build() => ResetPasswordScreen(email: email, token: token);
 }

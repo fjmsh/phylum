@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/common/logo_row.dart';
-import 'package:phylum/ui/login/instance_url.dart';
+import 'package:phylum/ui/login/screens/instance_url.dart';
 import 'package:phylum/ui/login/login_controller.dart';
-import 'package:phylum/ui/login/login_email.dart';
-import 'package:phylum/ui/login/login_selector.dart';
+import 'package:phylum/ui/login/screens/email_login.dart';
+import 'package:phylum/ui/login/screens/login_selector.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
-import 'oauth_stub.dart'
-    if (dart.library.js_interop) 'oauth_web.dart'
-    if (dart.library.ffi) 'oauth_vm.dart';
+import 'util/oauth_stub.dart'
+    if (dart.library.js_interop) 'util/oauth_web.dart'
+    if (dart.library.ffi) 'util/oauth_vm.dart';
 
 class LoginPage extends StatefulWidget {
   final Uri? instanceUri;
@@ -98,7 +98,7 @@ class _LoginPageState extends State<LoginPage> {
     }
     final instanceInfo = state.instanceInfo;
     if (instanceInfo == null) {
-      return LoginInstanceUrl(
+      return InstanceUrlScreen(
         onInstanceConnected: (info) {
           final authConfig = info.authConfig;
           if (authConfig == null) return;
@@ -115,9 +115,9 @@ class _LoginPageState extends State<LoginPage> {
 
     final authConfig = instanceInfo.authConfig!;
     if (authConfig.openIDProviders.isEmpty) {
-      return const EmailLogin();
+      return const EmailLoginScreen();
     }
 
-    return const LoginSelector();
+    return const LoginSelectorScreen();
   }
 }

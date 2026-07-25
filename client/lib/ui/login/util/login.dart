@@ -9,7 +9,7 @@ import 'package:phylum/util/logging/logging.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 
-import 'login_controller.dart';
+import '../login_controller.dart';
 
 Future<void> login(BuildContext context, BaseRequest request) async {
   final result = await sendRequest(request);

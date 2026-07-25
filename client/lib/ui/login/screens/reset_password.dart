@@ -6,24 +6,24 @@ import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
-import 'login_controller.dart';
-import 'login_request.dart';
+import '../login_controller.dart';
+import '../util/login.dart';
 
-class ResetPasswordLogin extends StatefulWidget {
+class ResetPasswordScreen extends StatefulWidget {
   final String? email;
   final String? token;
 
-  const ResetPasswordLogin({
+  const ResetPasswordScreen({
     super.key,
     required this.email,
     required this.token,
   });
 
   @override
-  State<ResetPasswordLogin> createState() => _ResetPasswordLoginState();
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   late final _emailController = TextEditingController(text: widget.email);
   late final _tokenController = TextEditingController(text: widget.token);
   late final _passwordController = TextEditingController();

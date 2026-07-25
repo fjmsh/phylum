@@ -4,22 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/login/instance_url_field.dart';
-import 'package:phylum/ui/login/login_request.dart';
+import 'package:phylum/ui/login/util/login.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
-import 'login_controller.dart';
+import '../login_controller.dart';
 
-class TokenLogin extends StatefulWidget {
+class TokenLoginScreen extends StatefulWidget {
   final String? token;
 
-  const TokenLogin({super.key, required this.token});
+  const TokenLoginScreen({super.key, required this.token});
 
   @override
-  State<TokenLogin> createState() => _TokenLoginState();
+  State<TokenLoginScreen> createState() => _TokenLoginScreenState();
 }
 
-class _TokenLoginState extends State<TokenLogin> {
+class _TokenLoginScreenState extends State<TokenLoginScreen> {
   late final tokenController = TextEditingController(text: widget.token);
   bool _requestInFlight = false;
 

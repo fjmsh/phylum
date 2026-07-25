@@ -3,24 +3,24 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/app/routing/router.dart';
-import 'package:phylum/ui/login/instance_config.dart';
+import 'package:phylum/ui/login/instance_info.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
-import 'login_controller.dart';
+import '../login_controller.dart';
 
-class LoginInstanceUrl extends StatefulWidget {
+class InstanceUrlScreen extends StatefulWidget {
   final void Function(InstanceInfo) onInstanceConnected;
 
-  const LoginInstanceUrl({super.key, required this.onInstanceConnected});
+  const InstanceUrlScreen({super.key, required this.onInstanceConnected});
 
   @override
-  State<LoginInstanceUrl> createState() => _LoginInstanceUrlState();
+  State<InstanceUrlScreen> createState() => _InstanceUrlScreenState();
 }
 
-class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
+class _InstanceUrlScreenState extends State<InstanceUrlScreen> {
   final _instanceUrlController = TextEditingController();
   bool connecting = false;
 
