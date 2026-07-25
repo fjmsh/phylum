@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  gtk
   irondash_engine_context
   open_file_linux
   screen_retriever_linux

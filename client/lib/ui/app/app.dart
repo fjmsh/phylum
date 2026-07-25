@@ -1,3 +1,4 @@
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/app/theme.dart';
 import 'package:phylum/ui/app/theme_mode_provider.dart';
+import 'package:phylum/util/logging/logging.dart';
 import 'package:provider/provider.dart';
 
 import 'dbus.dart';
@@ -47,6 +49,12 @@ class _PhylumAppState extends State<PhylumApp> {
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.linux) {
       ensureSingleClientDBus();
     }
+    AppLinks().uriLinkStream.listen((uri) async {
+      final info = await const PhylumRouteInformationParser()
+          .parseRouteInformation(RouteInformation(uri: uri));
+      Log.fine('Opening link $uri');
+      routerDelegate.setNewRoutePath(info);
+    });
   }
 
   @override

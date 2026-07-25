@@ -1,6 +1,6 @@
 name: phylum
 description: Self-hosted cloud file browser
-publish_to: 'none'
+publish_to: "none"
 version: 0.9.0+90
 
 environment:
@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   flutter_web_plugins:
     sdk: flutter
+  app_links:
   bloc:
   cached_network_image: ^3.4.1
   cached_network_image_platform_interface:
@@ -29,7 +30,7 @@ dependencies:
   background_downloader:
   hive_ce: ^2.10.0
   http:
-  http_parser: 
+  http_parser:
   intl:
   moment_dart:
   mime:
@@ -76,7 +77,6 @@ flutter:
     - family: RobotoMono
       fonts:
         - asset: assets/fonts/RobotoMono-Regular.ttf
-
 
 dependency_overrides:
   flutter_typeahead:
