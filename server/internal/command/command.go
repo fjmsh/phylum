@@ -10,7 +10,6 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/command/admin"
 	"codeberg.org/shroff/phylum/server/internal/command/admin/schema"
 	"codeberg.org/shroff/phylum/server/internal/command/fs"
-	"codeberg.org/shroff/phylum/server/internal/command/serve"
 	"codeberg.org/shroff/phylum/server/internal/command/user"
 	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/core"
@@ -18,6 +17,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/jobs"
 	"codeberg.org/shroff/phylum/server/internal/mail"
 	"codeberg.org/shroff/phylum/server/internal/pubsub"
+	"codeberg.org/shroff/phylum/server/internal/server"
 	"codeberg.org/shroff/phylum/server/internal/steve"
 	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/go-viper/mapstructure/v2"
@@ -67,12 +67,11 @@ func SetupCommand() {
 			return
 		}
 
-		if exists, err := config.Initialize(cmd); err != nil {
+		if err := config.Initialize(cmd); err != nil {
 			logger.Fatal().Err(err).Msg("Failed to load config")
-		} else if !exists {
+		} else if config.NeedsSetup() {
 			if isCmd(cmd, "serve") {
 				logger.Info().Msg("Server not yet configured")
-				serve.NeedsConfig = true
 			} else {
 				logger.Fatal().Msg("Server is not yet configured. Please initialize using `init` or via web interface")
 			}
@@ -102,10 +101,10 @@ func SetupCommand() {
 		}
 		cmd.SetContext(logger.WithContext(cmd.Context()))
 
-		serve.Cfg = cfg.Server
 		schema.DBConfig = cfg.DB
+		server.Initialize(cfg.Server, logger, config.NeedsSetup())
 
-		if serve.NeedsConfig || isCmd(cmd, "schema") {
+		if config.NeedsSetup() || isCmd(cmd, "schema") {
 			// No need to do further setup
 			return
 		}
@@ -159,7 +158,7 @@ func SetupCommand() {
 		admin.SetupCommand(),
 		fs.SetupCommand(),
 		user.SetupCommand(),
-		serve.SetupCommand(),
+		setupServeCommand(),
 		setupInitCommand(),
 	)
 	cmd.AddGroup(&cobra.Group{ID: "misc", Title: "Misc"})

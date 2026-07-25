@@ -26,37 +26,40 @@ var defaults = koanf.New(".")
 var ymlConfig = koanf.New(".")
 var overrides = koanf.New(".")
 
-func Initialize(cmd *cobra.Command) (bool, error) {
+var needsSetup = true
+
+func Initialize(cmd *cobra.Command) error {
 	// Default config
 	var err error
 	defaults, err = LoadDefaults()
 	if err != nil {
-		return false, errors.New("Failed to load default config: " + err.Error())
+		return errors.New("Failed to load default config: " + err.Error())
 	}
 
 	// config.yml
 	configFile, _ = cmd.Flags().GetString("config")
 	ymlConfig, err = LoadFile(configFile)
-	exists := true
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			exists = false
-		} else {
-			return false, errors.New("failed to load config: " + err.Error())
-		}
+	needsSetup = errors.Is(err, os.ErrNotExist)
+
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return errors.New("failed to load config: " + err.Error())
 	}
 
 	// Overrides - Flags and env vars
 	overrides, err = LoadOverrides(cmd)
 	if err != nil {
-		return true, errors.New("Failed to load flags: " + err.Error())
+		return errors.New("Failed to load flags: " + err.Error())
 	}
 
 	Full = defaults.Copy()
 	Full.Merge(ymlConfig)
 	Full.Merge(overrides)
 
-	return exists, nil
+	return nil
+}
+
+func NeedsSetup() bool {
+	return needsSetup
 }
 
 func WriteConfig(cfg *koanf.Koanf) error {

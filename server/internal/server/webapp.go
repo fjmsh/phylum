@@ -1,26 +1,29 @@
-package serve
+package server
 
 import (
+	"embed"
 	"net/http"
 	"path"
 	"strings"
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog"
 )
 
-func setupWebApp(engine *gin.Engine, logger *zerolog.Logger, webAppSrcDir string) {
-	fs := static.LocalFile(webAppSrcDir, false)
+//go:embed __static/**
+var staticFS embed.FS
+
+func (s *server) setupWebApp() {
+	fs := static.LocalFile(s.cfg.WebAppSrc, false)
 	fileserver := http.FileServer(fs)
 
 	if !fs.Exists("/", "/index.html") {
-		logger.Warn().Msg("Unable to locate Web App at `" + webAppSrcDir + "`. " +
+		s.logger.Warn().Msg("Unable to locate Web App at `" + s.cfg.WebAppSrc + "`. " +
 			"It may not be built or be configured incorrectly.")
 		fs = nil
 		fileserver = nil
 	}
-	indexFilePath := path.Join(webAppSrcDir, "index.html")
+	indexFilePath := path.Join(s.cfg.WebAppSrc, "index.html")
 
 	staticFS, err := static.EmbedFolder(staticFS, ".")
 	if err != nil {
@@ -28,12 +31,12 @@ func setupWebApp(engine *gin.Engine, logger *zerolog.Logger, webAppSrcDir string
 	}
 	staticFileSserver := http.FileServer(staticFS)
 
-	webdavPath := Cfg.WebDAV.Path
+	webdavPath := s.cfg.WebDAV.Path
 	if !strings.HasSuffix(webdavPath, "/'") {
 		webdavPath += "/"
 	}
 
-	publinkPath := Cfg.PublinkPath
+	publinkPath := s.cfg.PublinkPath
 	if !strings.HasSuffix(webdavPath, "/'") {
 		publinkPath += "/"
 	}
@@ -64,5 +67,5 @@ func setupWebApp(engine *gin.Engine, logger *zerolog.Logger, webAppSrcDir string
 			})
 		}
 	}
-	engine.NoRoute(staticFileHandler)
+	s.engine.NoRoute(staticFileHandler)
 }

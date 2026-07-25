@@ -1,4 +1,4 @@
-package serve
+package server
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ func (w logBodyWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-func createLogBodyMiddleware(logger *zerolog.Logger) func(*gin.Context) {
+func createLogBodyMiddleware(logger zerolog.Logger) func(*gin.Context) {
 	l := logger.With().Str("mod", "server.trace").Logger().Level(zerolog.TraceLevel)
 	return func(c *gin.Context) {
 		logBodyWriter := &logBodyWriter{
