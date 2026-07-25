@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"strconv"
@@ -30,11 +31,16 @@ func Initialize(cfg Config, logger zerolog.Logger, needsSetup bool) {
 	s = &server{cfg: cfg, logger: logger.With().Str("mod", "server").Logger(), needsSetup: needsSetup}
 }
 
-func Run() error {
+func Run() {
 	s.initializeEngine()
 	s.setupRoutes()
 	s.setupWebApp()
-	return s.listen()
+	err := s.listen()
+	if errors.Is(err, http.ErrServerClosed) {
+		s.logger.Info().Msg("Closed")
+	} else {
+		s.logger.Fatal().Err(err).Msg("Stopped Unexpectedly")
+	}
 }
 
 func Shutdown(ctx context.Context) error {
@@ -67,7 +73,7 @@ func (s *server) listen() error {
 	if err != nil {
 		s.logger.Fatal().Err(err).Str("address", listen).Msg("Failed to listen")
 	}
-	s.logger.Info().Str("address", listen).Msg("Listening")
+	s.logger.Info().Str("address", listen).Msg("HTTP Server Listening")
 
 	return s.server.Serve(ln)
 }

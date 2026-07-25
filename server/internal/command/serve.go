@@ -2,8 +2,6 @@ package command
 
 import (
 	"context"
-	"errors"
-	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -45,29 +43,14 @@ func setupServeCommand() *cobra.Command {
 		closeWG := &sync.WaitGroup{}
 
 		if !config.NeedsSetup() {
-			closeWG.Add(1)
-			go func() {
-				defer closeWG.Done()
-				if err := steve.Get().Run(context.Background()); err != nil {
-					if errors.Is(err, steve.ErrShutdown) {
-						logger.Info().Msg("HTTP server stopped")
-					} else {
-						logger.Fatal().Err(err).Msg("failed to start jobs")
-					}
-				}
-			}()
+			closeWG.Go(func() {
+				steve.Get().Run(context.Background())
+			})
 		}
 
-		closeWG.Add(1)
-		go func() {
-			defer closeWG.Done()
-			err := server.Run()
-			if errors.Is(err, http.ErrServerClosed) {
-				logger.Info().Msg("Stopped processing jobs")
-			} else {
-				logger.Fatal().Err(err).Msg("Server stopped unexpectedly")
-			}
-		}()
+		closeWG.Go(func() {
+			server.Run()
+		})
 
 		<-sigChan
 

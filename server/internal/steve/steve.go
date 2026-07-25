@@ -16,7 +16,6 @@ import (
 
 const channelName = "job_inserted"
 
-var ErrShutdown = errors.New("shutdown")
 var errWaiting = errors.New("waiting for jobs")
 
 var instance *Client
@@ -73,7 +72,29 @@ func RegisterWorker[T JobArgs](client *Client, worker Worker[T]) {
 	client.factories[kind] = &typedWorkUnitFactory[T]{worker: worker}
 }
 
-func (c *Client) Run(ctx context.Context) error {
+func (c *Client) Run(ctx context.Context) {
+	if err := c.prepare(); err != nil {
+		c.logger.Fatal().Err(err).Msg("Failed to start jobs")
+	}
+
+	c.availableWorkers = make(chan struct{}, c.cfg.Workers)
+	c.jobAvailable = make(chan struct{})
+	c.defaultTimeout = time.Duration(c.cfg.Timeout) * time.Second
+
+	c.logger.Info().Int("workers", c.cfg.Workers).Msg("Running jobs")
+	c.done = make(chan struct{})
+
+	var listenCtx, runCtx, workCtx context.Context
+	listenCtx, c.cancelListen = context.WithCancel(ctx)
+	runCtx, c.cancelRun = context.WithCancel(ctx)
+	workCtx, c.cancelWork = context.WithCancel(ctx)
+	go c.produceJobs(listenCtx, pubsub.Get())
+	go c.readyJobs(listenCtx)
+	c.consumeJobs(runCtx, workCtx)
+	c.logger.Info().Msg("Finished jobs")
+}
+
+func (c *Client) prepare() error {
 	if c.cfg.Workers <= 0 {
 		return errors.New("workers must be a positive integer")
 	}
@@ -86,22 +107,7 @@ func (c *Client) Run(ctx context.Context) error {
 	if _, err := readyBlockedJobs(c.db); err != nil {
 		return err
 	}
-
-	c.availableWorkers = make(chan struct{}, c.cfg.Workers)
-	c.jobAvailable = make(chan struct{})
-	c.defaultTimeout = time.Duration(c.cfg.Timeout) * time.Second
-
-	c.logger.Info().Int("workers", c.cfg.Workers).Msg("Running Jobs")
-	c.done = make(chan struct{})
-
-	var listenCtx, runCtx, workCtx context.Context
-	listenCtx, c.cancelListen = context.WithCancel(ctx)
-	runCtx, c.cancelRun = context.WithCancel(ctx)
-	workCtx, c.cancelWork = context.WithCancel(ctx)
-	go c.produceJobs(listenCtx, pubsub.Get())
-	go c.readyJobs(listenCtx)
-	c.consumeJobs(runCtx, workCtx)
-	return ErrShutdown
+	return nil
 }
 
 func (c *Client) Triage() (int, error) {
