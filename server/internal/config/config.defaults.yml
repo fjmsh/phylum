@@ -4,12 +4,12 @@ db:
   name:
   user:
   password:
-  nomigrate: false    # Do not auto-migrate schema (dev)
-  trace: false        # Trace queries (dev)
+  nomigrate: false # Do not auto-migrate schema (dev)
+  trace: false # Trace queries (dev)
 
 storage:
   root: storage
-  temp: tmp           # relative to root, or absolute
+  temp: tmp # relative to root, or absolute
   mounts:
     # home:
     #   mount_points:
@@ -33,9 +33,9 @@ core:
   # Setting `no_default_invite_permission` to `true` will prevent that behavior.
   # Permission to invite users can still be granted using `users:create:invite`.
   no_default_invite_permission: false
-  users:                  # Config for new users
+  users: # Config for new users
     basedir: /home
-    permissions:          # list of permissions to be granted by default
+    permissions: # list of permissions to be granted by default
   publinks:
     password:
       # hash is either argon2 or pbkdf2
@@ -46,7 +46,7 @@ core:
         salt: 32
         key: 32
   img:
-    dir: previews     # relative to storage.root, or absolute
+    dir: previews # relative to storage.root, or absolute
     quality: 80
 
 ## Warning: it is recommended to avoid using a combination of email-based
@@ -57,25 +57,25 @@ core:
 ## https://pushsecurity.com/blog/cross-idp-impersonation/ for more details.
 auth:
   suppress_multi_provider_warning: false
-  magic_links: false      # requires mail setup
+  magic_links: false # requires mail setup
   password:
-    backend: none         # one of crypt, ldap, none
-    reset_enabled: false  # requires mail setup, only supported by crypt backend
+    backend: none # one of crypt, ldap, none
+    reset_enabled: false # requires mail setup, only supported by crypt backend
     crypt:
       # kdf is either argon2 or pbkdf2
       kdf: argon2
       argon2:
-        memory: 16        # 2 ^ 16 = 64M
+        memory: 16 # 2 ^ 16 = 64M
         iterations: 4
         parallelism: 2
-        salt: 32          # 32 Bytes = 256-bit
-        key: 32           # 32 Bytes = 256-bit
+        salt: 32 # 32 Bytes = 256-bit
+        key: 32 # 32 Bytes = 256-bit
       pbkdf2:
         function: sha-256
         iterations: 600000
-        salt: 32          # 32 Bytes = 256-bit
-        key: 32           # 32 Bytes = 256-bit
-    requirements:         # only supported by crypt backend
+        salt: 32 # 32 Bytes = 256-bit
+        key: 32 # 32 Bytes = 256-bit
+    requirements: # only supported by crypt backend
       length: # 8
       lower: # 0
       upper: # 0
@@ -112,10 +112,9 @@ auth:
   #       allow_unverified_emails: false
   #       auto_create_users: false
 
-
 jobs:
   workers: 5
-  timeout: 0          # In seconds
+  timeout: 0 # In seconds
 
 server:
   host:
@@ -123,8 +122,8 @@ server:
   # Location of the built web-app to serve.
   # Note that this directory will be served as-is without further checks,
   # so make sure it doesn't point anywhere unreasonable like `/`
-  webappsrc: web
-  publinkpath: /pub
+  web_app_src: web
+  publink_path: /pub
   webdav:
     enabled: true
     path: /webdav
@@ -143,6 +142,6 @@ mail:
     password:
   from:
     name: Phylum Drive
-    email:                      # Defaults to smtp.username if empty
+    email: # Defaults to smtp.username if empty
   # Instance URL to send in emails
   instance: # https://phylum.example.com  # No trailing slash

@@ -4,6 +4,10 @@ v0.10 (Unreleased)
 > [!WARNING]
 > Breaking changes:
 > - Fix config overrides not working for keys with underscores (breaking: use `__` instead of `_` to delimit env vars, and `.` instead of `_` to delimit command line flags)
+> - Update some config keys
+>   - server.webappsrc => server.web_app_src
+>   - server.publinkpath => server.publink_path
+>   - server.logbody => server.log_body
 
 Features:
 - Generate thumbnails for audios (if present) videos and epubs

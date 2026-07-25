@@ -32,12 +32,12 @@ func SetupCommand() *cobra.Command {
 
 	flags.String("server.host", "", "Server Host")
 	flags.String("server.port", "", "Server Port")
-	flags.String("server.webappsrc", "", "Web App Source Directory")
-	flags.String("server.publinkpath", "", "Public Share path prefix")
-	flags.String("server.webdavpath", "", "WebDAV path prefix")
+	flags.String("server.web_app_src", "", "Web App Source Directory")
+	flags.String("server.publink_path", "", "Public Share path prefix")
+	flags.String("server.webdav.path", "", "WebDAV path prefix")
 	flags.Bool("server.cors.enabled", false, "Enable CORS")
 	flags.StringSlice("server.cors.origins", nil, "CORS origins")
-	flags.Bool("server.logbody", false, "Log Response Body (Must be used with --debug)")
+	flags.Bool("server.log_body", false, "Log Response Body (Must be used with --debug)")
 
 	cmd.Run = func(cmd *cobra.Command, args []string) {
 		if !Cfg.Debug {
