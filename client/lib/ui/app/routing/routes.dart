@@ -80,8 +80,8 @@ class SetupRoute extends LoggedOutRoute {
   @override
   bool get dialog => true;
 
-  @override
-  Object? get state => _config.toMap();
+  // @override
+  // Object? get state => _config.toMap();
 
   final String instanceUrl;
 
@@ -91,7 +91,7 @@ class SetupRoute extends LoggedOutRoute {
 
   @override
   Widget buildPage(PhylumAccount? account) {
-    return SetupPage(instanceUrl: instanceUrl, overrides: _config.overrides);
+    return SetupPage(instanceUrl: instanceUrl, config: _config);
   }
 }
 

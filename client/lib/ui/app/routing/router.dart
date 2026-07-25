@@ -12,6 +12,7 @@ import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/settings/settings.dart';
 import 'package:phylum/ui/settings/settings_page.dart';
+import 'package:phylum/ui/setup/setup_config.dart';
 import 'package:phylum/ui/setup/setup_page.dart';
 
 part 'route_config.dart';

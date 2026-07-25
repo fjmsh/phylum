@@ -8,6 +8,7 @@ import 'package:phylum/ui/settings/mail/mail_config.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/ui/setup/setup_auth_fragment.dart';
+import 'package:phylum/ui/setup/setup_config.dart';
 import 'package:phylum/ui/setup/setup_db_fragment.dart';
 import 'package:phylum/ui/setup/setup_mail_fragment.dart';
 import 'package:phylum/ui/setup/setup_user_fragment.dart';
@@ -20,13 +21,9 @@ enum SetupStep { database, mail, auth, user }
 
 class SetupPage extends StatefulWidget {
   final String instanceUrl;
-  final List<String> overrides;
+  final SetupConfig config;
 
-  const SetupPage({
-    super.key,
-    required this.instanceUrl,
-    required this.overrides,
-  });
+  const SetupPage({super.key, required this.instanceUrl, required this.config});
 
   @override
   State<SetupPage> createState() => _SetupPageState();
@@ -36,7 +33,7 @@ class _SetupPageState extends State<SetupPage> {
   SetupStep _currentStep = SetupStep.database;
   late final MailConfigSetupCubit _mailBloc = MailConfigSetupCubit(
     instanceUrl: widget.instanceUrl,
-    overrides: _subOverrides(widget.overrides, "mail"),
+    overrides: {},
   );
   final AuthConfigSetupCubit _authBloc = AuthConfigSetupCubit();
 
@@ -50,7 +47,7 @@ class _SetupPageState extends State<SetupPage> {
     return MultiProvider(
       providers: [
         StateNotifierProvider<DbController, DbConfig>(
-          create: (_) => DbController(_subOverrides(widget.overrides, "db")),
+          create: (_) => DbController({}),
         ),
         StateNotifierProvider<UserController, UserConfig>(
           create: (_) => UserController(),

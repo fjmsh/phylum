@@ -1,3 +1,4 @@
+import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 
 class MailConfig implements Config {
@@ -107,4 +108,35 @@ class MailConfig implements Config {
       fromEmail.hashCode ^
       fromName.hashCode ^
       instanceUrl.hashCode;
+}
+
+class MailConfigFields {
+  static const fieldEnabled = FieldDef(path: "enabled", defaultValue: true);
+  static const fieldSmtpHost = FieldDef(path: "smtp.host", defaultValue: "");
+  static const fieldSmtpPort = FieldDef(path: "smtp.port", defaultValue: 587);
+  static const fieldSmtpUsername = FieldDef(
+    path: "smtp.username",
+    defaultValue: "",
+  );
+  static const fieldSmtpPassword = FieldDef(
+    path: "smtp.password",
+    defaultValue: "",
+  );
+  static const fieldFromName = FieldDef(
+    path: "from.name",
+    defaultValue: "Phylum Drive",
+  );
+  static const fieldFromEmail = FieldDef(path: "from.email", defaultValue: "");
+  static const fieldInstance = FieldDef(path: "instance", defaultValue: "");
+
+  static const fields = [
+    fieldEnabled,
+    fieldSmtpHost,
+    fieldSmtpPort,
+    fieldSmtpUsername,
+    fieldSmtpPassword,
+    fieldFromName,
+    fieldFromEmail,
+    fieldInstance,
+  ];
 }

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:phylum/ui/setup/setup_config.dart';
+
 class InstanceInfo {
   final Uri url;
   final SetupConfig? setupConfig;
@@ -27,20 +29,6 @@ class InstanceInfo {
   @override
   String toString() {
     return 'Instance at $url${setupConfig != null ? '(needs config)' : ''}${authConfig ?? ''}';
-  }
-}
-
-class SetupConfig {
-  final List<String> overrides;
-
-  SetupConfig._({required this.overrides});
-
-  factory SetupConfig.fromMap(Map<String, dynamic> data) {
-    return SetupConfig._(overrides: (data['overrides'] as List).cast());
-  }
-
-  Map<String, dynamic> toMap() {
-    return {'overrides': overrides};
   }
 }
 
