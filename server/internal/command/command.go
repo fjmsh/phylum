@@ -59,7 +59,7 @@ func SetupCommand() {
 
 		dir, _ := cmd.Flags().GetString("workdir")
 		if dir != "" && dir != "." {
-			logger.Info().Str("dir", dir).Msg("Changing working directory")
+			logger.Debug().Str("dir", dir).Msg("Changing working directory")
 			os.Chdir(dir)
 		}
 

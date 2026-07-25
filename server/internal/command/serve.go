@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/server"
 	"codeberg.org/shroff/phylum/server/internal/steve"
 	"github.com/rs/zerolog"
@@ -42,12 +41,9 @@ func setupServeCommand() *cobra.Command {
 		signal.Notify(sigChan, syscall.SIGINT)
 		closeWG := &sync.WaitGroup{}
 
-		if !config.NeedsSetup() {
-			closeWG.Go(func() {
-				steve.Get().Run(context.Background())
-			})
-		}
-
+		closeWG.Go(func() {
+			steve.Get().Run(context.Background())
+		})
 		closeWG.Go(func() {
 			server.Run()
 		})
@@ -59,9 +55,7 @@ func setupServeCommand() *cobra.Command {
 		defer cancel()
 
 		go server.Shutdown(ctx)
-		if !config.NeedsSetup() {
-			go steve.Get().Shutdown(ctx)
-		}
+		go steve.Get().Shutdown(ctx)
 
 		closeWG.Wait()
 	}

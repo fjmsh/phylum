@@ -73,6 +73,9 @@ func RegisterWorker[T JobArgs](client *Client, worker Worker[T]) {
 }
 
 func (c *Client) Run(ctx context.Context) {
+	if c == nil {
+		return
+	}
 	if err := c.prepare(); err != nil {
 		c.logger.Fatal().Err(err).Msg("Failed to start jobs")
 	}
@@ -201,6 +204,9 @@ func (c *Client) RunJob(ctx context.Context, id int32) error {
 }
 
 func (c *Client) Shutdown(ctx context.Context) error {
+	if c == nil {
+		return nil
+	}
 	c.cancelListen()
 	c.cancelRun()
 	close(c.jobAvailable)
