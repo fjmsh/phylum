@@ -3,6 +3,7 @@ package serve
 import (
 	"context"
 	"errors"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,25 +19,9 @@ import (
 
 func run(engine *gin.Engine, logger *zerolog.Logger) {
 	listen := Cfg.Host + ":" + strconv.Itoa(Cfg.Port)
-	server := http.Server{
-		Addr:              listen,
-		Handler:           engine,
-		ReadHeaderTimeout: 10 * time.Second,
-	}
-
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT)
 	closeWG := &sync.WaitGroup{}
-
-	closeWG.Add(1)
-	go func() {
-		defer closeWG.Done()
-		if err := server.ListenAndServe(); err != nil {
-			if !errors.Is(err, http.ErrServerClosed) {
-				logger.Fatal().Err(err).Msg("failed to start server")
-			}
-		}
-	}()
 
 	if !NeedsConfig {
 		closeWG.Add(1)
@@ -49,6 +34,29 @@ func run(engine *gin.Engine, logger *zerolog.Logger) {
 			}
 		}()
 	}
+
+	server := http.Server{
+		Addr:              listen,
+		Handler:           engine,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+	closeWG.Add(1)
+	go func() {
+		defer closeWG.Done()
+
+		ln, err := net.Listen("tcp", listen)
+		if err != nil {
+			logger.Fatal().Err(err).Str("address", listen).Msg("Failed to listen")
+		}
+		logger.Info().Str("address", listen).Msg("Listening")
+
+		server.ListenAndServe()
+		if err := server.Serve(ln); err != nil {
+			if !errors.Is(err, http.ErrServerClosed) {
+				logger.Fatal().Err(err).Msg("Server stopped unexpectedly")
+			}
+		}
+	}()
 
 	<-sigChan
 	logger.Info().Msg("Shutting Down")

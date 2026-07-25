@@ -91,7 +91,7 @@ func (c *Client) Run(ctx context.Context) error {
 	c.jobAvailable = make(chan struct{})
 	c.defaultTimeout = time.Duration(c.cfg.Timeout) * time.Second
 
-	c.logger.Info().Int("workers", c.cfg.Workers).Msg("Starting")
+	c.logger.Info().Int("workers", c.cfg.Workers).Msg("Running Jobs")
 	c.done = make(chan struct{})
 
 	var listenCtx, runCtx, workCtx context.Context
