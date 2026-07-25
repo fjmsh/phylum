@@ -51,7 +51,7 @@ class _ResetPasswordLoginState extends State<ResetPasswordLogin> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 18,
       children: [
-        LoginInstanceUrl(display: true),
+        const LoginInstanceUrl(),
         TextFormField(
           decoration: InputDecoration(label: Text('Email')),
           controller: _emailController,

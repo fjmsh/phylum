@@ -98,20 +98,25 @@ class _LoginPageState extends State<LoginPage> {
     }
     final instanceInfo = state.instanceInfo;
     if (instanceInfo == null) {
-      return const LoginInstanceUrl(display: false);
+      return LoginInstanceUrl(
+        onInstanceInfoUpdated: (info) {
+          context.read<LoginController>().instanceInfo = info;
+          final authConfig = info.authConfig;
+          if (authConfig == null) return;
+          if (!authConfig.email && authConfig.openIDProviders.length == 1) {
+            final builder = UriBuilder.fromUri(info.url);
+            builder.path += '/api/v1/auth/oauth/start';
+            final provider = authConfig.openIDProviders.first;
+            builder.queryParameters['provider'] = provider.id;
+            startOAuthFlow(context, builder, provider.name);
+          }
+        },
+      );
     }
 
     final authConfig = instanceInfo.authConfig!;
     if (authConfig.openIDProviders.isEmpty) {
       return const EmailLogin();
-    }
-
-    if (!authConfig.email && authConfig.openIDProviders.length == 1) {
-      final builder = UriBuilder.fromUri(instanceInfo.url);
-      builder.path += '/api/v1/auth/oauth/start';
-      final provider = authConfig.openIDProviders.first;
-      builder.queryParameters['provider'] = provider.id;
-      startOAuthFlow(context, builder, provider.name);
     }
 
     return const LoginSelector();

@@ -44,7 +44,7 @@ class _EmailLoginState extends State<EmailLogin> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 18,
         children: [
-          LoginInstanceUrl(display: true),
+          const LoginInstanceUrl(),
           if (magicLinkLogin)
             buildMagicLinkLogin(context, authConfig)
           else

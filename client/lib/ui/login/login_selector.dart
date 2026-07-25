@@ -19,7 +19,7 @@ class LoginSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 18,
       children: [
-        LoginInstanceUrl(display: true),
+        const LoginInstanceUrl(),
         if (authConfig.email)
           ElevatedButton.icon(
             onPressed: () => context.read<LoginController>().selectedMethod =

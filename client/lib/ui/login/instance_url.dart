@@ -12,9 +12,9 @@ import 'package:uri/uri.dart';
 import 'login_controller.dart';
 
 class LoginInstanceUrl extends StatefulWidget {
-  final bool display;
+  final void Function(InstanceInfo)? onInstanceInfoUpdated;
 
-  const LoginInstanceUrl({super.key, required this.display});
+  const LoginInstanceUrl({super.key, this.onInstanceInfoUpdated});
 
   @override
   State<LoginInstanceUrl> createState() => _LoginInstanceUrlState();
@@ -24,15 +24,15 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
   final _instanceUrlController = TextEditingController();
   bool connecting = false;
 
-  bool get readonly => widget.display || instanceUrlFixed;
-
   @override
   void initState() {
     super.initState();
     final instanceUrl = context.read<LoginState>().instanceUrl;
     _instanceUrlController.text = instanceUrl?.toString() ?? '';
 
-    if (instanceUrlFixed && instanceUrl != null && !widget.display) {
+    if (instanceUrlFixed &&
+        instanceUrl != null &&
+        widget.onInstanceInfoUpdated != null) {
       WidgetsBinding.instance.addPostFrameCallback((d) {
         connect(context);
       });
@@ -41,9 +41,11 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
 
   @override
   Widget build(BuildContext context) {
+    final readonly = (widget.onInstanceInfoUpdated == null) || instanceUrlFixed;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: widget.display ? 6 : 18,
+      spacing: widget.onInstanceInfoUpdated == null ? 6 : 18,
       children: [
         TextFormField(
           key: ValueKey('instanceUrl'),
@@ -51,7 +53,8 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
             label: const Text('Instance URL'),
             hintText: 'https://phylum.example.com',
             prefixIcon: Icon(Icons.storage),
-            suffixIcon: widget.display && !instanceUrlFixed
+            suffixIcon:
+                widget.onInstanceInfoUpdated == null && !instanceUrlFixed
                 ? IconButton(
                     onPressed: () => context.read<LoginController>().reset(),
                     padding: EdgeInsets.zero,
@@ -67,7 +70,7 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
           controller: _instanceUrlController,
           onFieldSubmitted: (value) => connect(context),
         ),
-        if (widget.display)
+        if (widget.onInstanceInfoUpdated == null)
           const Padding(
             padding: EdgeInsets.only(left: 48, right: 48),
             child: Divider(),
@@ -136,7 +139,7 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
             SetupRoute(instanceUrl: info.url.toString(), config: setupConfig),
           );
         } else {
-          context.read<LoginController>().instanceInfo = info;
+          widget.onInstanceInfoUpdated?.call(info);
         }
       }
     } catch (e) {

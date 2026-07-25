@@ -46,7 +46,7 @@ class _TokenLoginState extends State<TokenLogin> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 18,
       children: [
-        LoginInstanceUrl(display: true),
+        const LoginInstanceUrl(),
         TextField(
           decoration: InputDecoration(
             label: Text('Login Token'),
