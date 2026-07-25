@@ -99,8 +99,7 @@ class _LoginPageState extends State<LoginPage> {
     final instanceInfo = state.instanceInfo;
     if (instanceInfo == null) {
       return LoginInstanceUrl(
-        onInstanceInfoUpdated: (info) {
-          context.read<LoginController>().instanceInfo = info;
+        onInstanceConnected: (info) {
           final authConfig = info.authConfig;
           if (authConfig == null) return;
           if (!authConfig.email && authConfig.openIDProviders.length == 1) {

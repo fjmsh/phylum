@@ -2,11 +2,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/login/instance_config.dart';
+import 'package:phylum/ui/login/instance_url_field.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
-import 'instance_url.dart';
 import 'login_controller.dart';
 import 'login_request.dart';
 
@@ -44,7 +44,7 @@ class _EmailLoginState extends State<EmailLogin> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 18,
         children: [
-          const LoginInstanceUrl(),
+          const InstanceUrlField(),
           if (magicLinkLogin)
             buildMagicLinkLogin(context, authConfig)
           else

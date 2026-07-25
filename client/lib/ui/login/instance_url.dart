@@ -12,9 +12,9 @@ import 'package:uri/uri.dart';
 import 'login_controller.dart';
 
 class LoginInstanceUrl extends StatefulWidget {
-  final void Function(InstanceInfo)? onInstanceInfoUpdated;
+  final void Function(InstanceInfo) onInstanceConnected;
 
-  const LoginInstanceUrl({super.key, this.onInstanceInfoUpdated});
+  const LoginInstanceUrl({super.key, required this.onInstanceConnected});
 
   @override
   State<LoginInstanceUrl> createState() => _LoginInstanceUrlState();
@@ -30,9 +30,7 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
     final instanceUrl = context.read<LoginState>().instanceUrl;
     _instanceUrlController.text = instanceUrl?.toString() ?? '';
 
-    if (instanceUrlFixed &&
-        instanceUrl != null &&
-        widget.onInstanceInfoUpdated != null) {
+    if (instanceUrlFixed && instanceUrl != null) {
       WidgetsBinding.instance.addPostFrameCallback((d) {
         connect(context);
       });
@@ -41,11 +39,9 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
 
   @override
   Widget build(BuildContext context) {
-    final readonly = (widget.onInstanceInfoUpdated == null) || instanceUrlFixed;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: widget.onInstanceInfoUpdated == null ? 6 : 18,
+      spacing: 18,
       children: [
         TextFormField(
           key: ValueKey('instanceUrl'),
@@ -53,56 +49,41 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
             label: const Text('Instance URL'),
             hintText: 'https://phylum.example.com',
             prefixIcon: Icon(Icons.storage),
-            suffixIcon:
-                widget.onInstanceInfoUpdated == null && !instanceUrlFixed
-                ? IconButton(
-                    onPressed: () => context.read<LoginController>().reset(),
-                    padding: EdgeInsets.zero,
-                    icon: Icon(Icons.edit),
-                    iconSize: 18,
-                  )
-                : null,
           ),
-          readOnly: readonly || connecting,
-          autofocus: !readonly,
+          readOnly: instanceUrlFixed || connecting,
+          autofocus: !instanceUrlFixed,
           autofillHints: const [AutofillHints.url],
           keyboardType: TextInputType.url,
           controller: _instanceUrlController,
           onFieldSubmitted: (value) => connect(context),
         ),
-        if (widget.onInstanceInfoUpdated == null)
-          const Padding(
-            padding: EdgeInsets.only(left: 48, right: 48),
-            child: Divider(),
-          )
-        else
-          ValueListenableBuilder(
-            valueListenable: _instanceUrlController,
-            builder: (_, instanceUrl, _) {
-              final uri = Uri.tryParse(instanceUrl.text);
-              final uriValid = uri != null && uri.hasScheme && uri.hasAuthority;
-              return ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                ),
-                label: Text(connecting ? 'Getting Configuration' : 'Login'),
-                icon: connecting
-                    ? SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
-                    : Icon(Icons.arrow_forward),
-                iconAlignment: IconAlignment.end,
-                onPressed: connecting || !uriValid
-                    ? null
-                    : () => connect(context),
-              );
-            },
-          ),
+        ValueListenableBuilder(
+          valueListenable: _instanceUrlController,
+          builder: (_, instanceUrl, _) {
+            final uri = Uri.tryParse(instanceUrl.text);
+            final uriValid = uri != null && uri.hasScheme && uri.hasAuthority;
+            return ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              ),
+              label: Text(connecting ? 'Getting Configuration' : 'Login'),
+              icon: connecting
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : Icon(Icons.arrow_forward),
+              iconAlignment: IconAlignment.end,
+              onPressed: connecting || !uriValid
+                  ? null
+                  : () => connect(context),
+            );
+          },
+        ),
       ],
     );
   }
@@ -139,7 +120,8 @@ class _LoginInstanceUrlState extends State<LoginInstanceUrl> {
             SetupRoute(instanceUrl: info.url.toString(), config: setupConfig),
           );
         } else {
-          widget.onInstanceInfoUpdated?.call(info);
+          context.read<LoginController>().instanceInfo = info;
+          widget.onInstanceConnected(info);
         }
       }
     } catch (e) {

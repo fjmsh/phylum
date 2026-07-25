@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
+import 'package:phylum/ui/login/instance_url_field.dart';
 import 'package:phylum/ui/login/login_request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
-import 'instance_url.dart';
 import 'login_controller.dart';
 
 class TokenLogin extends StatefulWidget {
@@ -46,7 +46,7 @@ class _TokenLoginState extends State<TokenLogin> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 18,
       children: [
-        const LoginInstanceUrl(),
+        const InstanceUrlField(),
         TextField(
           decoration: InputDecoration(
             label: Text('Login Token'),
