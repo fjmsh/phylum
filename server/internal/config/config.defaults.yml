@@ -1,9 +1,9 @@
 db:
-  host:
-  port:
-  name:
-  user:
-  password:
+  host: ""
+  port: 5432
+  name: ""
+  user: ""
+  password: ""
   nomigrate: false # Do not auto-migrate schema (dev)
   trace: false # Trace queries (dev)
 
@@ -144,4 +144,4 @@ mail:
     name: Phylum Drive
     email: # Defaults to smtp.username if empty
   # Instance URL to send in emails
-  instance: # https://phylum.example.com  # No trailing slash
+  instance: "" # https://phylum.example.com  # No trailing slash
