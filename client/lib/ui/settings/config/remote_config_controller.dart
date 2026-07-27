@@ -5,6 +5,8 @@ import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
+import 'package:phylum/ui/settings/config/local_config_updates.dart';
+import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
 
@@ -16,22 +18,25 @@ abstract class Config {
   Map<String, dynamic> toMap();
 }
 
-sealed class RemoteConfigState<T extends Config> {
+sealed class RemoteConfigState<T extends ConfigFields> {
   const RemoteConfigState();
 }
 
-class RemoteConfigStateWaiting<T extends Config> extends RemoteConfigState<T> {
+class RemoteConfigStateWaiting<T extends ConfigFields>
+    extends RemoteConfigState<T> {
   final String? error;
 
   const RemoteConfigStateWaiting({this.error});
 }
 
-class RemoteConfigStateLoading<T extends Config> extends RemoteConfigState<T> {
+class RemoteConfigStateLoading<T extends ConfigFields>
+    extends RemoteConfigState<T> {
   const RemoteConfigStateLoading();
 }
 
-class RemoteConfigStateLoaded<T extends Config> extends RemoteConfigState<T> {
-  final T config;
+class RemoteConfigStateLoaded<T extends ConfigFields>
+    extends RemoteConfigState<T> {
+  final RemoteConfig<T> config;
   final DateTime timestamp;
   final bool saving;
 
@@ -42,10 +47,10 @@ class RemoteConfigStateLoaded<T extends Config> extends RemoteConfigState<T> {
   });
 }
 
-class RemoteConfigController<T extends Config>
+class RemoteConfigController<T extends ConfigFields>
     extends StateNotifier<RemoteConfigState<T>> {
   final String _baseRoute;
-  final T Function(Map<String, dynamic>) _parseConfig;
+  final RemoteConfig<T> Function(Map<String, dynamic>) _parseConfig;
   late final ApiClient<PhylumAccount> _apiClient;
 
   RemoteConfigController(
@@ -56,7 +61,7 @@ class RemoteConfigController<T extends Config>
     _apiClient = context.read<PhylumAccount>().apiClient;
   }
 
-  T? get config => (state is RemoteConfigStateLoaded<T>)
+  RemoteConfig<T>? get config => (state is RemoteConfigStateLoaded<T>)
       ? (state as RemoteConfigStateLoaded<T>).config
       : null;
 
@@ -83,7 +88,7 @@ class RemoteConfigController<T extends Config>
     }
   }
 
-  Future<String?> save({required T config}) async {
+  Future<String?> save({required LocalConfigUpdates<T> config}) async {
     final state = this.state;
     if (state is! RemoteConfigStateLoaded<T>) return null;
     if (state.saving) return null;
@@ -94,12 +99,16 @@ class RemoteConfigController<T extends Config>
       saving: true,
     );
     final result = await _apiClient.sendRequest(
-      _ConfigUpdateRequest(baseRoute: _baseRoute, config: config),
+      _ConfigUpdateRequest(
+        baseRoute: _baseRoute,
+        remoteConfig: state.config,
+        config: config,
+      ),
     );
 
     this.state = result is ApiSuccessResponse
         ? RemoteConfigStateLoaded<T>(
-            config: config,
+            config: state.config.apply(config),
             timestamp: DateTime.now(),
             saving: true,
           )

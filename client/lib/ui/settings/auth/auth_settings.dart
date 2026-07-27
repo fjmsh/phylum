@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
+import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 import 'package:phylum/ui/settings/config/remote_config_pane.dart';
 import 'package:phylum/ui/settings/settings.dart';
@@ -20,13 +21,13 @@ class AuthSettings extends Settings {
   @override
   List<StateNotifierProvider> get providers => [
     StateNotifierProvider<
-      RemoteConfigController<AuthConfig>,
-      RemoteConfigState<AuthConfig>
+      RemoteConfigController<AuthConfigFields>,
+      RemoteConfigState<AuthConfigFields>
     >(
       create: (context) => RemoteConfigController(
         context,
         baseRoute: '/api/v1/admin/config/auth',
-        parseConfig: AuthConfig.fromMap,
+        parseConfig: (data) => RemoteConfig.fromMap(AuthConfigFields(), data),
       ),
     ),
   ];
@@ -35,5 +36,5 @@ class AuthSettings extends Settings {
 
   @override
   Widget buildWithoutScaffold(BuildContext context) =>
-      const RemoteConfigPane<AuthConfig>(child: AuthConfigPane());
+      const RemoteConfigPane<AuthConfigFields>(child: AuthConfigPane());
 }

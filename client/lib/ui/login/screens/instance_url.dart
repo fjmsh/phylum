@@ -5,6 +5,7 @@ import 'package:http/http.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/login/instance_info.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/logging/logging.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
@@ -124,7 +125,7 @@ class _InstanceUrlScreenState extends State<InstanceUrlScreen> {
           widget.onInstanceConnected(info);
         }
       }
-    } catch (e) {
+    } catch (e, stack) {
       if (context.mounted) {
         showAlertDialog(
           context,
@@ -132,6 +133,7 @@ class _InstanceUrlScreenState extends State<InstanceUrlScreen> {
           message: e.toString(),
         );
       }
+      Log.warn('Error Parsing Response', e, stack);
     } finally {
       setState(() {
         connecting = false;

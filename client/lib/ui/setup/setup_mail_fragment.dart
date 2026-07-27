@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:phylum/ui/settings/config/local_config_updates.dart';
+import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:phylum/ui/settings/mail/form/mail_config_form.dart';
 import 'package:phylum/ui/settings/mail/form/mail_config_form_cubit.dart';
 import 'package:phylum/ui/settings/mail/mail_config.dart';
@@ -58,7 +60,8 @@ class SetupMailFragment extends StatelessWidget {
   Future<void> validateAndNext(BuildContext context) async {
     final config = _bloc.validate();
     if (config == null) return;
-    if (!config.enabled) {
+
+    if (!config.get(MailConfigFields.fieldEnabled)) {
       onNextPress();
       return;
     }
@@ -84,13 +87,16 @@ class SetupMailFragment extends StatelessWidget {
 }
 
 class MailConfigSetupCubit extends MailConfigFormCubit {
+  final RemoteConfig<MailConfigFields> _remoteConfig;
   final String instanceUrl;
 
-  MailConfigSetupCubit({required this.instanceUrl, required super.overrides})
-    : super(config: MailConfig.defaults(instanceUrl));
+  MailConfigSetupCubit({required this._remoteConfig, required this.instanceUrl})
+    : super(remoteConfig: _remoteConfig, instanceUrl: instanceUrl);
 
-  Future<String?> checkConfig(MailConfig config) async {
-    if (!config.enabled) {
+  Future<String?> checkConfig(
+    LocalConfigUpdates<MailConfigFields> config,
+  ) async {
+    if (!config.get(MailConfigFields.fieldEnabled)) {
       return null;
     }
 
@@ -98,7 +104,10 @@ class MailConfigSetupCubit extends MailConfigFormCubit {
     builder.path = '${builder.path}/api/v1/setup/mail/validate';
     final request = Request('post', builder.build());
     request.headers['Content-Type'] = 'application/json';
-    request.body = jsonEncode(config.toMap());
+    request.body = jsonEncode(config.toMapDiff(_remoteConfig));
+    if (4 < 5) {
+      return request.body;
+    }
 
     final result = await sendRequest(request);
     if (result is SuccessResponse) {

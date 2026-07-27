@@ -32,10 +32,12 @@ class SetupPage extends StatefulWidget {
 class _SetupPageState extends State<SetupPage> {
   SetupStep _currentStep = SetupStep.database;
   late final MailConfigSetupCubit _mailBloc = MailConfigSetupCubit(
+    remoteConfig: widget.config.mailConfig,
     instanceUrl: widget.instanceUrl,
-    overrides: {},
   );
-  final AuthConfigSetupCubit _authBloc = AuthConfigSetupCubit();
+  late final AuthConfigSetupCubit _authBloc = AuthConfigSetupCubit(
+    remoteConfig: widget.config.authConfig,
+  );
 
   @override
   void initState() {

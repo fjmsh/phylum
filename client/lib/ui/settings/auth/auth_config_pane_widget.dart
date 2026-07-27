@@ -17,7 +17,7 @@ class AuthConfigPane extends StatefulWidget {
 }
 
 class _AuthConfigPaneState extends State<AuthConfigPane> {
-  late final RemoteConfigController<AuthConfig> _remoteConfigController;
+  late final RemoteConfigController<AuthConfigFields> _remoteConfigController;
   late final AuthConfigPaneCubit configBloc;
   late final void Function() _removeServerConfigListener;
 
@@ -28,7 +28,7 @@ class _AuthConfigPaneState extends State<AuthConfigPane> {
     final account = context.read<PhylumAccount>();
     configBloc = AuthConfigPaneCubit(
       account: account,
-      initialConfig: _remoteConfigController.config ?? AuthConfig.defaults(),
+      remoteConfig: _remoteConfigController.config!,
     );
     _removeServerConfigListener = account.configNotifier.addListener((config) {
       configBloc.mailEnabled = config.mail;

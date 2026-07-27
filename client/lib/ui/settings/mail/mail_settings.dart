@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 import 'package:phylum/ui/settings/config/remote_config_pane.dart';
 import 'package:phylum/ui/settings/mail/mail_config.dart';
@@ -19,13 +20,14 @@ class MailSettings extends Settings {
   @override
   List<StateNotifierProvider> get providers => [
     StateNotifierProvider<
-      RemoteConfigController<MailConfig>,
-      RemoteConfigState<MailConfig>
+      RemoteConfigController<MailConfigFields>,
+      RemoteConfigState<MailConfigFields>
     >(
-      create: (context) => RemoteConfigController<MailConfig>(
+      create: (context) => RemoteConfigController<MailConfigFields>(
         context,
         baseRoute: '/api/v1/admin/config/mail',
-        parseConfig: MailConfig.fromMap,
+        parseConfig: (data) =>
+            RemoteConfig.fromMap(const MailConfigFields(), data),
       ),
     ),
   ];
@@ -34,5 +36,5 @@ class MailSettings extends Settings {
 
   @override
   Widget buildWithoutScaffold(BuildContext context) =>
-      const RemoteConfigPane<MailConfig>(child: MailConfigPane());
+      const RemoteConfigPane<MailConfigFields>(child: MailConfigPane());
 }

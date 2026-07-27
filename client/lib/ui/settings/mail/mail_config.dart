@@ -1,7 +1,7 @@
+import 'package:phylum/ui/settings/config/local_config_updates.dart';
 import 'package:phylum/ui/settings/config/remote_config.dart';
-import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 
-class MailConfig implements Config {
+class MailConfig extends LocalConfigUpdates<MailConfigFields> {
   final bool enabled;
   final String smtpHost;
   final int smtpPort;
@@ -11,7 +11,7 @@ class MailConfig implements Config {
   final String fromEmail;
   final String instanceUrl;
 
-  const MailConfig({
+  MailConfig({
     required this.enabled,
     required this.smtpHost,
     required this.smtpPort,
@@ -21,40 +21,6 @@ class MailConfig implements Config {
     required this.fromEmail,
     required this.instanceUrl,
   });
-
-  MailConfig.defaults(String? defaultInstanceUrl)
-    : this(
-        enabled: false,
-        smtpHost: '',
-        smtpPort: 587,
-        smtpUsername: '',
-        smtpPassword: '',
-        fromEmail: '',
-        fromName: 'Phylum Drive',
-        instanceUrl: defaultInstanceUrl ?? '',
-      );
-
-  MailConfig copyWith({
-    bool? enabled,
-    String? smtpHost,
-    int? smtpPort,
-    String? smtpUsername,
-    String? smtpPassword,
-    String? fromName,
-    String? fromEmail,
-    String? instanceUrl,
-  }) {
-    return MailConfig(
-      enabled: enabled ?? this.enabled,
-      smtpHost: smtpHost ?? this.smtpHost,
-      smtpPort: smtpPort ?? this.smtpPort,
-      smtpUsername: smtpUsername ?? this.smtpUsername,
-      smtpPassword: smtpPassword ?? this.smtpPassword,
-      fromName: fromName ?? this.fromName,
-      fromEmail: fromEmail ?? this.fromEmail,
-      instanceUrl: instanceUrl ?? this.instanceUrl,
-    );
-  }
 
   factory MailConfig.fromMap(Map<String, dynamic> map) {
     return MailConfig(
@@ -110,7 +76,7 @@ class MailConfig implements Config {
       instanceUrl.hashCode;
 }
 
-class MailConfigFields {
+class MailConfigFields extends ConfigFields {
   static const fieldEnabled = FieldDef(path: "enabled", defaultValue: true);
   static const fieldSmtpHost = FieldDef(path: "smtp.host", defaultValue: "");
   static const fieldSmtpPort = FieldDef(path: "smtp.port", defaultValue: 587);
@@ -129,7 +95,10 @@ class MailConfigFields {
   static const fieldFromEmail = FieldDef(path: "from.email", defaultValue: "");
   static const fieldInstance = FieldDef(path: "instance", defaultValue: "");
 
-  static const fields = [
+  const MailConfigFields();
+
+  @override
+  List<FieldDef> get fields => const [
     fieldEnabled,
     fieldSmtpHost,
     fieldSmtpPort,

@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
-typedef ConfigWidgetBuilder<T extends Config> =
+typedef ConfigWidgetBuilder<T extends ConfigFields> =
     Widget Function(BuildContext, T);
 
-class RemoteConfigPane<T extends Config> extends SingleChildStatefulWidget {
+class RemoteConfigPane<T extends ConfigFields>
+    extends SingleChildStatefulWidget {
   const RemoteConfigPane({super.key, required super.child});
 
   @override
   State<RemoteConfigPane<T>> createState() => _RemoteConfigPaneState();
 }
 
-class _RemoteConfigPaneState<T extends Config>
+class _RemoteConfigPaneState<T extends ConfigFields>
     extends SingleChildState<RemoteConfigPane<T>> {
   @override
   void initState() {

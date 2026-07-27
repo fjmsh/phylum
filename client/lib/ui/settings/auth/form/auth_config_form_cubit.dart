@@ -1,11 +1,26 @@
 import 'package:bloc/bloc.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
+import 'package:phylum/ui/settings/config/local_config_updates.dart';
+import 'package:phylum/ui/settings/config/remote_config.dart';
 
 class AuthConfigFormState {
   final AuthConfig config;
   final bool mailEnabled;
 
   AuthConfigFormState({required this.config, required this.mailEnabled});
+
+  factory AuthConfigFormState.createFromRemoteConfig({
+    required RemoteConfig<AuthConfigFields> config,
+    required bool mailEnabled,
+  }) {
+    final overrides = Set.of(
+      config.values.entries.where((e) => e.value.fixed).map((e) => e.key),
+    );
+    return AuthConfigFormState(
+      config: AuthConfig.defaults(),
+      mailEnabled: mailEnabled,
+    );
+  }
 
   AuthConfigFormState copyWith({AuthConfig? config, bool? mailEnabled}) {
     return AuthConfigFormState(
@@ -30,11 +45,21 @@ class AuthConfigFormState {
 }
 
 abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
-  AuthConfigFormCubit({required AuthConfig initialConfig})
-    : super(AuthConfigFormState(config: initialConfig, mailEnabled: false));
+  AuthConfigFormCubit({required RemoteConfig<AuthConfigFields> remoteConfig})
+    : super(
+        AuthConfigFormState.createFromRemoteConfig(
+          config: remoteConfig,
+          mailEnabled: false,
+        ),
+      );
 
-  void reset(AuthConfig config) {
-    emit(state.copyWith(config: config));
+  void reset(RemoteConfig<AuthConfigFields> config) {
+    emit(
+      AuthConfigFormState.createFromRemoteConfig(
+        config: config,
+        mailEnabled: state.mailEnabled,
+      ),
+    );
   }
 
   set mailEnabled(bool enabled) {
@@ -77,6 +102,10 @@ abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
     final configs = Map.of(state.config.openIdConfigs);
     configs.remove(id);
     emit(state.copyWith(config: state.config.copyWith(openIdConfigs: configs)));
+  }
+
+  LocalConfigUpdates<AuthConfigFields>? validate() {
+    return null;
   }
 
   Future<KDFTestResult> testArgon2Params(

@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 
 class AuthConfig implements Config {
@@ -630,4 +631,10 @@ class OpenIDConfig {
       clientSecret.hashCode ^
       allowUnverifiedEmails.hashCode ^
       autoCreateUsers.hashCode;
+}
+
+class AuthConfigFields extends ConfigFields {
+  const AuthConfigFields();
+  @override
+  List<FieldDef> get fields => [];
 }

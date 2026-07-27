@@ -1,41 +1,32 @@
-class RemoteConfig {
-  final Map<FieldDef, RemoteValue?> values;
+import 'package:phylum/ui/settings/config/local_config_updates.dart';
+
+abstract class ConfigFields {
+  List<FieldDef> get fields;
+
+  const ConfigFields();
+}
+
+class RemoteConfig<C extends ConfigFields> {
+  final Map<FieldDef, RemoteValue> values;
 
   RemoteConfig({required this.values});
 
-  factory RemoteConfig.fromMap(
-    Map<String, dynamic> map,
-    Set<String> fixed,
-    List<FieldDef> fields,
-  ) {
-    final values = <FieldDef, RemoteValue?>{};
-    for (final field in fields) {
-      values[field] = RemoteValue.create(map, fixed, field);
-      print('Parsed ${field.path}: ${values[field]}');
+  factory RemoteConfig.fromMap(C configDef, Map<String, dynamic> map) {
+    final data = (map['config'] as Map).cast<String, dynamic>();
+    final fixed = Set.of((map['overrides'] as List).cast<String>());
+    final values = <FieldDef, RemoteValue>{};
+    for (final field in configDef.fields) {
+      values[field] = RemoteValue.create(data, fixed, field);
     }
     return RemoteConfig(values: values);
   }
 
-  Map<String, dynamic> toMap() {
-    final result = <String, dynamic>{};
-    for (final entry in values.entries) {
-      String path = entry.key.path;
-      Map<String, dynamic> map = result;
-      while (path.contains(".")) {
-        final i = path.indexOf(".");
-        final key = path.substring(0, i);
-        if (map[key] == null) {
-          final m = <String, dynamic>{};
-          map[key] = m;
-          map = m;
-        } else if (map[key] is Map<String, dynamic>) {
-          map = map[key];
-        } else {}
-        path = path.substring(i + 1);
-      }
-      map[path] = entry.value?.value;
-    }
-    return result;
+  T getValue<T>(FieldDef<T> field) {
+    return (values[field]?.value as T?) ?? field.defaultValue;
+  }
+
+  RemoteConfig<C> apply(LocalConfigUpdates<C> updates) {
+    throw UnimplementedError('Not implemented');
   }
 }
 
@@ -44,6 +35,17 @@ class FieldDef<T> {
   final T defaultValue;
 
   const FieldDef({required this.path, required this.defaultValue});
+
+  @override
+  bool operator ==(covariant FieldDef other) {
+    if (identical(this, other)) return true;
+    return path == other.path &&
+        defaultValue.runtimeType == other.defaultValue.runtimeType &&
+        defaultValue == other.defaultValue;
+  }
+
+  @override
+  int get hashCode => path.hashCode ^ defaultValue.hashCode;
 }
 
 class RemoteValue<T> {

@@ -35,8 +35,9 @@ class MaterialMailConfigPane extends StatelessWidget {
                       ? null
                       : () {
                           final state = context
-                              .read<RemoteConfigState<MailConfig>>();
-                          if (state is RemoteConfigStateLoaded<MailConfig>) {
+                              .read<RemoteConfigState<MailConfigFields>>();
+                          if (state
+                              is RemoteConfigStateLoaded<MailConfigFields>) {
                             context.read<MailConfigFormCubit>().reset(
                               state.config,
                             );
@@ -61,8 +62,9 @@ class MaterialMailConfigPane extends StatelessWidget {
   }
 
   bool isSaving(BuildContext context) {
-    return context.select<RemoteConfigState<MailConfig>, bool>(
-      (state) => state is RemoteConfigStateLoaded<MailConfig> && state.saving,
+    return context.select<RemoteConfigState<MailConfigFields>, bool>(
+      (state) =>
+          state is RemoteConfigStateLoaded<MailConfigFields> && state.saving,
     );
   }
 
@@ -71,9 +73,9 @@ class MaterialMailConfigPane extends StatelessWidget {
 
     if (config == null) return;
 
-    final error = await context.read<RemoteConfigController<MailConfig>>().save(
-      config: config,
-    );
+    final error = await context
+        .read<RemoteConfigController<MailConfigFields>>()
+        .save(config: config);
     if (!context.mounted) return;
     if (error == null) {
       ScaffoldMessenger.of(context).showSnackBar(

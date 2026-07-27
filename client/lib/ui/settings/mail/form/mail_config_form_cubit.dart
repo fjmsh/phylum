@@ -1,11 +1,13 @@
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:phylum/ui/settings/config/local_config_updates.dart';
+import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:phylum/ui/settings/mail/mail_config.dart';
 
 class MailConfigFormState {
+  final Set<FieldDef> _overrides;
   final bool enabled;
-  final Set<String> _overrides;
   final String smtpHost;
   final String smtpPort;
   final String smtpUsername;
@@ -38,36 +40,29 @@ class MailConfigFormState {
     this.instanceUrlError,
   });
 
-  factory MailConfigFormState.createWithOverrides({
-    required bool enabled,
-    required Set<String> overrides,
-    required String smtpHost,
-    required String smtpPort,
-    required String smtpUsername,
-    required String smtpPassword,
-    required String fromName,
-    required String fromEmail,
-    required String instanceUrl,
-  }) {
-    var config = MailConfigFormState(
-      enabled: enabled,
-      overrides: overrides,
-      smtpHost: smtpHost,
-      smtpPort: smtpPort,
-      smtpUsername: smtpUsername,
-      smtpPassword: smtpPassword,
-      fromName: fromName,
-      fromEmail: fromEmail,
-      instanceUrl: instanceUrl,
+  factory MailConfigFormState.createFromRemoteConfig(
+    RemoteConfig<MailConfigFields> config,
+    String instanceUrl,
+  ) {
+    final overrides = Set.of(
+      config.values.entries.where((e) => e.value.fixed).map((e) => e.key),
     );
-    return config.copyWith(
-      smtpHost: config.hasSmtpHostOverride() ? '<fixed>' : null,
-      smtpPort: config.hasSmtpPortOverride() ? '<fixed>' : null,
-      smtpUsername: config.hasSmtpUsernameOverride() ? '<fixed>' : null,
-      smtpPassword: config.hasSmtpPasswordOverride() ? '<fixed>' : null,
-      fromName: config.hasFromNameOverride() ? '<fixed>' : null,
-      fromEmail: config.hasFromEmailOverride() ? '<fixed>' : null,
-      instanceUrl: config.hasInstanceOverride() ? '<fixed>' : null,
+
+    final remoteInstanceUrl = config.getValue(MailConfigFields.fieldInstance);
+    return MailConfigFormState(
+      overrides: overrides,
+      enabled: config.getValue(MailConfigFields.fieldEnabled),
+      smtpHost: config.getValue(MailConfigFields.fieldSmtpHost),
+      smtpPort: config.getValue(MailConfigFields.fieldSmtpPort).toString(),
+      smtpUsername: config.getValue(MailConfigFields.fieldSmtpUsername),
+      smtpPassword: config.getValue(MailConfigFields.fieldSmtpPassword),
+      fromName: config.getValue(MailConfigFields.fieldFromName),
+      fromEmail: config.getValue(MailConfigFields.fieldFromEmail),
+      instanceUrl:
+          remoteInstanceUrl.isEmpty &&
+              !config.values[MailConfigFields.fieldInstance]!.fixed
+          ? instanceUrl
+          : remoteInstanceUrl,
     );
   }
 
@@ -121,14 +116,22 @@ class MailConfigFormState {
     );
   }
 
-  bool hasEnabledOverride() => _overrides.contains("enabled");
-  bool hasSmtpHostOverride() => _overrides.contains("smtp.host");
-  bool hasSmtpPortOverride() => _overrides.contains("smtp.port");
-  bool hasSmtpUsernameOverride() => _overrides.contains("smtp.username");
-  bool hasSmtpPasswordOverride() => _overrides.contains("smtp.password");
-  bool hasFromNameOverride() => _overrides.contains("smtp.from.name");
-  bool hasFromEmailOverride() => _overrides.contains("smtp.from.email");
-  bool hasInstanceOverride() => _overrides.contains("instance");
+  bool hasEnabledOverride() =>
+      _overrides.contains(MailConfigFields.fieldEnabled);
+  bool hasSmtpHostOverride() =>
+      _overrides.contains(MailConfigFields.fieldSmtpHost);
+  bool hasSmtpPortOverride() =>
+      _overrides.contains(MailConfigFields.fieldSmtpPort);
+  bool hasSmtpUsernameOverride() =>
+      _overrides.contains(MailConfigFields.fieldSmtpUsername);
+  bool hasSmtpPasswordOverride() =>
+      _overrides.contains(MailConfigFields.fieldSmtpPassword);
+  bool hasFromNameOverride() =>
+      _overrides.contains(MailConfigFields.fieldFromName);
+  bool hasFromEmailOverride() =>
+      _overrides.contains(MailConfigFields.fieldFromEmail);
+  bool hasInstanceOverride() =>
+      _overrides.contains(MailConfigFields.fieldInstance);
 
   @override
   String toString() {
@@ -191,36 +194,14 @@ class MailConfigFormState {
 
 class MailConfigFormCubit extends Cubit<MailConfigFormState> {
   MailConfigFormCubit({
-    required MailConfig config,
-    required Set<String> overrides,
+    required RemoteConfig<MailConfigFields> remoteConfig,
+    required String instanceUrl,
   }) : super(
-         MailConfigFormState.createWithOverrides(
-           enabled: config.enabled,
-           overrides: overrides,
-           smtpHost: config.smtpHost,
-           smtpPort: config.smtpPort.toString(),
-           smtpUsername: config.smtpUsername,
-           smtpPassword: config.smtpPassword,
-           fromName: config.fromName,
-           fromEmail: config.fromEmail,
-           instanceUrl: config.instanceUrl,
-         ),
+         MailConfigFormState.createFromRemoteConfig(remoteConfig, instanceUrl),
        );
 
-  void reset(MailConfig config) {
-    emit(
-      MailConfigFormState(
-        enabled: config.enabled,
-        overrides: state._overrides,
-        smtpHost: config.smtpHost,
-        smtpPort: config.smtpPort.toString(),
-        smtpUsername: config.smtpUsername,
-        smtpPassword: config.smtpPassword,
-        fromName: config.fromName,
-        fromEmail: config.fromEmail,
-        instanceUrl: config.instanceUrl,
-      ),
-    );
+  void reset(RemoteConfig<MailConfigFields> config) {
+    emit(MailConfigFormState.createFromRemoteConfig(config, state.instanceUrl));
   }
 
   set enabled(bool val) {
@@ -260,7 +241,7 @@ class MailConfigFormCubit extends Cubit<MailConfigFormState> {
     emit(state.copyWith(instanceUrl: val));
   }
 
-  MailConfig? validate() {
+  LocalConfigUpdates<MailConfigFields>? validate() {
     final newState = state.enabled
         ? state.withErrors(
             smtpHostError: state.hasSmtpHostOverride()

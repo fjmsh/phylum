@@ -11,7 +11,7 @@ class AuthConfigPaneCubit extends AuthConfigFormCubit {
 
   AuthConfigPaneCubit({
     required PhylumAccount account,
-    required super.initialConfig,
+    required super.remoteConfig,
   }) : _apiClient = account.apiClient;
 
   @override

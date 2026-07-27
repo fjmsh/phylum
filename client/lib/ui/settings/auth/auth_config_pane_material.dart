@@ -26,9 +26,9 @@ class MaterialAuthConfigPane extends StatelessWidget {
             Builder(
               builder: (context) {
                 final requestInFlight = context
-                    .select<RemoteConfigState<AuthConfig>, bool>(
+                    .select<RemoteConfigState<AuthConfigFields>, bool>(
                       (state) =>
-                          state is RemoteConfigStateLoaded<AuthConfig> &&
+                          state is RemoteConfigStateLoaded<AuthConfigFields> &&
                           state.saving,
                     );
                 return TextButton(
@@ -36,8 +36,9 @@ class MaterialAuthConfigPane extends StatelessWidget {
                       ? null
                       : () {
                           final state = context
-                              .read<RemoteConfigState<AuthConfig>>();
-                          if (state is RemoteConfigStateLoaded<AuthConfig>) {
+                              .read<RemoteConfigState<AuthConfigFields>>();
+                          if (state
+                              is RemoteConfigStateLoaded<AuthConfigFields>) {
                             _configBloc.reset(state.config);
                           }
                         },
@@ -51,9 +52,9 @@ class MaterialAuthConfigPane extends StatelessWidget {
                   (bloc) => bloc.state.config.valid,
                 );
                 final requestInFlight = context
-                    .select<RemoteConfigState<AuthConfig>, bool>(
+                    .select<RemoteConfigState<AuthConfigFields>, bool>(
                       (state) =>
-                          state is RemoteConfigStateLoaded<AuthConfig> &&
+                          state is RemoteConfigStateLoaded<AuthConfigFields> &&
                           state.saving,
                     );
                 return TextButton(
@@ -62,11 +63,14 @@ class MaterialAuthConfigPane extends StatelessWidget {
                       : () async {
                           final config = context
                               .read<AuthConfigFormCubit>()
-                              .state
-                              .config;
+                              .validate();
+
+                          if (config == null) {
+                            return;
+                          }
 
                           final error = await context
-                              .read<RemoteConfigController<AuthConfig>>()
+                              .read<RemoteConfigController<AuthConfigFields>>()
                               .save(config: config);
                           if (!context.mounted) return;
                           if (error == null) {
