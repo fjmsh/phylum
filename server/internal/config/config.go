@@ -11,6 +11,7 @@ import (
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/providers/posflag"
 	"github.com/knadh/koanf/providers/rawbytes"
+	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
 	"github.com/rogpeppe/go-internal/renameio"
 	"github.com/spf13/cobra"
@@ -28,7 +29,7 @@ var overrides = koanf.New(".")
 
 var needsSetup = true
 
-func Initialize(cmd *cobra.Command) error {
+func Initialize[T any](cmd *cobra.Command) error {
 	// Default config
 	var err error
 	defaults, err = LoadDefaults()
@@ -46,7 +47,7 @@ func Initialize(cmd *cobra.Command) error {
 	}
 
 	// Overrides - Flags and env vars
-	overrides, err = LoadOverrides(cmd)
+	overrides, err = LoadOverrides[T](cmd)
 	if err != nil {
 		return errors.New("Failed to load flags: " + err.Error())
 	}
@@ -119,7 +120,7 @@ func ConfigMap(paths []string) map[string]any {
 	return config
 }
 
-func LoadOverrides(cmd *cobra.Command) (*koanf.Koanf, error) {
+func LoadOverrides[T any](cmd *cobra.Command) (*koanf.Koanf, error) {
 	k := koanf.New(".")
 	err := k.Load(posflag.ProviderWithFlag(cmd.Flags(), ".", nil, func(f *pflag.Flag) (string, interface{}) {
 		if !f.Changed {
@@ -132,6 +133,14 @@ func LoadOverrides(cmd *cobra.Command) (*koanf.Koanf, error) {
 	k.Load(env.Provider("PHYLUM_", "__", func(s string) string {
 		return strings.ToLower(strings.TrimPrefix(s, "PHYLUM_"))
 	}), nil)
+
+	config := new(T)
+	k.Unmarshal("", config)
+	sanitized := koanf.New(".")
+	sanitized.Load(structs.Provider(*config, "koanf"), nil)
+	for _, key := range k.Keys() {
+		k.Set(key, sanitized.Get(key))
+	}
 
 	return k, err
 }

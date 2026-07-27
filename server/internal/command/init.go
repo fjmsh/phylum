@@ -41,7 +41,7 @@ func setupInitCommand() *cobra.Command {
 	cmd.Run = func(cmd *cobra.Command, args []string) {
 		logger := zerolog.Ctx(cmd.Context())
 
-		if err := config.Initialize(cmd); err != nil {
+		if err := config.Initialize[Config](cmd); err != nil {
 			fatal("failed to load config: " + err.Error())
 		} else if !config.NeedsSetup() {
 			fmt.Println("Server config already exists")

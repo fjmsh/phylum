@@ -67,7 +67,7 @@ func SetupCommand() {
 			return
 		}
 
-		if err := config.Initialize(cmd); err != nil {
+		if err := config.Initialize[Config](cmd); err != nil {
 			logger.Fatal().Err(err).Msg("Failed to load config")
 		} else if config.NeedsSetup() {
 			if isCmd(cmd, "serve") {
