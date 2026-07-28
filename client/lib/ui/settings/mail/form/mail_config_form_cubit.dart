@@ -1,8 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:email_validator/email_validator.dart';
-import 'package:phylum/ui/settings/config/local_config.dart';
-import 'package:phylum/ui/settings/config/remote_config.dart';
+import 'package:phylum/ui/settings/config/config.dart';
 import 'package:phylum/ui/settings/mail/mail_config.dart';
 
 class MailConfigFormState {

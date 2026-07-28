@@ -2,8 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-import 'package:phylum/ui/settings/config/local_config.dart';
-import 'package:phylum/ui/settings/config/remote_config.dart';
+import 'package:phylum/ui/settings/config/config.dart';
 import 'package:phylum/ui/settings/mail/form/mail_config_form.dart';
 import 'package:phylum/ui/settings/mail/form/mail_config_form_cubit.dart';
 import 'package:phylum/ui/settings/mail/mail_config.dart';

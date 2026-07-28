@@ -1,7 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
-import 'package:phylum/ui/settings/config/local_config.dart';
-import 'package:phylum/ui/settings/config/remote_config.dart';
+import 'package:phylum/ui/settings/config/config.dart';
 
 class AuthConfigFormState {
   final AuthConfig config;

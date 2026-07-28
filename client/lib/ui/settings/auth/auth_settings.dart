@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
-import 'package:phylum/ui/settings/config/remote_config.dart';
+import 'package:phylum/ui/settings/config/config.dart';
 import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 import 'package:phylum/ui/settings/config/remote_config_pane.dart';
 import 'package:phylum/ui/settings/settings.dart';

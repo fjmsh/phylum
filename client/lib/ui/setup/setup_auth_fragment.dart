@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/ui/settings/auth/form/auth_config_form.dart';
 import 'package:phylum/ui/settings/auth/form/auth_config_form_cubit.dart';
-import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:phylum/ui/setup/setup_mail_fragment.dart';
 import 'package:phylum/util/dialogs.dart';
 

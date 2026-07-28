@@ -5,10 +5,10 @@ import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/ui/settings/config/local_config.dart';
-import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
+
+import 'config.dart';
 
 part 'config_read_request.dart';
 part 'config_response.dart';

@@ -1,5 +1,5 @@
 import 'package:collection/collection.dart';
-import 'package:phylum/ui/settings/config/remote_config.dart';
+import 'package:phylum/ui/settings/config/config.dart';
 import 'package:phylum/ui/settings/config/remote_config_controller.dart';
 
 class AuthConfig implements Config {

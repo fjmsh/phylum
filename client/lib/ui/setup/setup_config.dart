@@ -1,7 +1,5 @@
-import 'dart:convert';
-
 import 'package:phylum/ui/settings/auth/auth_config.dart';
-import 'package:phylum/ui/settings/config/remote_config.dart';
+import 'package:phylum/ui/settings/config/config.dart';
 import 'package:phylum/ui/settings/mail/mail_config.dart';
 import 'package:phylum/ui/setup/db/db_config.dart';
 

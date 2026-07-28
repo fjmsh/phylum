@@ -1,4 +1,4 @@
-import 'package:phylum/ui/settings/config/local_config.dart';
+part of 'config.dart';
 
 class RemoteConfig<C extends ConfigFields> {
   final C schema;
@@ -23,7 +23,6 @@ class RemoteConfig<C extends ConfigFields> {
   ) {
     data = (data as Map).cast<String, dynamic>();
     for (final entry in field.fields.entries) {
-      if (!data.containsKey(entry.key)) continue;
       final fieldPath = path.isEmpty ? entry.key : "$path.${entry.key}";
       final field = entry.value;
       final fieldData = data[entry.key];
@@ -58,36 +57,6 @@ class RemoteConfig<C extends ConfigFields> {
   }
 }
 
-abstract class ConfigFields {
-  ObjectField get root;
-
-  const ConfigFields();
-}
-
-sealed class ConfigField {
-  const ConfigField();
-}
-
-class ObjectField extends ConfigField {
-  final Map<String, ConfigField> fields;
-
-  const ObjectField({required this.fields});
-}
-
-class PrimitiveField<T> extends ConfigField {
-  final T defaultValue;
-
-  const PrimitiveField(this.defaultValue);
-
-  RemoteValue<T> ensureType(dynamic value, bool fixed) {
-    return RemoteValue._(value: value, fixed: fixed);
-  }
-}
-
-class MapField<T extends ConfigField> extends ConfigField {
-  const MapField();
-}
-
 class FieldDef<T> {
   final String path;
   final T defaultValue;
@@ -107,7 +76,7 @@ class FieldDef<T> {
 }
 
 class RemoteValue<T> {
-  final T value;
+  final T? value;
   final bool fixed;
 
   RemoteValue._({required this.value, required this.fixed});

@@ -3,8 +3,7 @@ import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:http/http.dart';
-import 'package:phylum/ui/settings/config/local_config.dart';
-import 'package:phylum/ui/settings/config/remote_config.dart';
+import 'package:phylum/ui/settings/config/config.dart';
 import 'package:phylum/ui/setup/db/db_config.dart';
 import 'package:phylum/util/request.dart';
 import 'package:uri/uri.dart';
@@ -70,8 +69,8 @@ class DbConfigFormState {
   }
 
   DbConfigFormState withErrors({
-    String? smtpHostError,
-    String? smtpPortError,
+    String? hostError,
+    String? portError,
     String? dbNameError,
     String? userError,
   }) {
@@ -82,10 +81,10 @@ class DbConfigFormState {
       user: user,
       password: password,
       dbName: dbName,
-      hostError: smtpHostError,
-      portError: smtpPortError,
-      dbNameError: dbNameError,
-      userError: userError,
+      hostError: hostError ?? this.hostError,
+      portError: portError ?? this.portError,
+      dbNameError: dbNameError ?? this.dbNameError,
+      userError: userError ?? this.userError,
     );
   }
 
@@ -168,41 +167,45 @@ class DbConfigFormCubit extends Cubit<DbConfigFormState> {
   }
 
   LocalConfig<DbConfigFields>? validate() {
-    final newState = state.withErrors(
-      smtpHostError: state.hasHostOverride()
-          ? null
-          : state.host == ''
-          ? 'Required'
-          : null,
-      smtpPortError: state.hasPortOverride()
-          ? null
-          : state.port.isEmpty
-          ? 'Required'
-          : (int.tryParse(state.port) ?? 0) == 0
-          ? 'Invalid Port'
-          : null,
-      dbNameError: state.hasDbNameOverride()
-          ? null
-          : state.dbName == ''
-          ? 'Required'
-          : null,
-      userError: state.hasUserOverride()
-          ? null
-          : state.user == ''
-          ? 'Required'
-          : null,
-    );
-    if (newState.hostError == null &&
-        newState.portError == null &&
-        newState.userError == null &&
-        newState.dbNameError == null) {
-      final updates = LocalConfig<DbConfigFields>();
-      updates.set(DbConfigFields.fieldHost, state.host);
-      updates.set(DbConfigFields.fieldPort, state.port);
-      updates.set(DbConfigFields.fieldDbName, state.dbName);
-      updates.set(DbConfigFields.fieldUser, state.user);
-      updates.set(DbConfigFields.fieldPassword, state.password);
-      return updates;
+    var newState = state;
+    final config = LocalConfig<DbConfigFields>();
+
+    if (!state.hasHostOverride()) {
+      newState = newState.withErrors(
+        hostError: state.host == '' ? 'Required' : null,
+      );
+      config.set<String>(DbConfigFields.fieldHost, state.host);
+    }
+
+    if (!state.hasPortOverride()) {
+      final port = int.tryParse(state.port) ?? 0;
+      newState = newState.withErrors(
+        portError: state.port.isEmpty
+            ? 'Required'
+            : port == 0
+            ? 'Invalid Port'
+            : null,
+      );
+      config.set<int>(DbConfigFields.fieldPort, port);
+    }
+
+    if (!state.hasDbNameOverride()) {
+      newState = newState.withErrors(
+        dbNameError: state.dbName == '' ? 'Required' : null,
+      );
+      config.set<String>(DbConfigFields.fieldDbName, state.dbName);
+    }
+
+    if (!state.hasUserOverride()) {
+      newState = newState.withErrors(
+        userError: state.user == '' ? 'Required' : null,
+      );
+      config.set<String>(DbConfigFields.fieldUser, state.user);
+    }
+    config.set<String>(DbConfigFields.fieldPassword, state.password);
+
+    if (state == newState) {
+      return config;
     } else {
       emit(newState);
       return null;
