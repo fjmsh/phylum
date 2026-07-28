@@ -18,7 +18,7 @@ class _ConfigUpdateRequest<T extends ConfigFields>
 
     final request = Request('post', uri.build());
     request.headers['Content-Type'] = 'application/json';
-    request.body = jsonEncode({'config': _config.toMapDiff(_remoteConfig)});
+    request.body = jsonEncode({'config': _config.toMapDiff()});
     return request;
   }
 

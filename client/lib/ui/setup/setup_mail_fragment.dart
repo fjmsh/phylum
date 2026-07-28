@@ -104,7 +104,7 @@ class MailConfigSetupCubit extends MailConfigFormCubit {
     builder.path = '${builder.path}/api/v1/setup/mail/validate';
     final request = Request('post', builder.build());
     request.headers['Content-Type'] = 'application/json';
-    request.body = jsonEncode(config.toMapDiff(_remoteConfig));
+    request.body = jsonEncode(config.toMapDiff());
     if (4 < 5) {
       return request.body;
     }

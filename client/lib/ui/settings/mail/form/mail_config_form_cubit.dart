@@ -6,7 +6,7 @@ import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:phylum/ui/settings/mail/mail_config.dart';
 
 class MailConfigFormState {
-  final Set<FieldDef> _overrides;
+  final Set<PrimitiveField> _overrides;
   final bool enabled;
   final String smtpHost;
   final String smtpPort;

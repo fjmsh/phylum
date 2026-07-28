@@ -77,35 +77,35 @@ class MailConfig extends LocalConfigUpdates<MailConfigFields> {
 }
 
 class MailConfigFields extends ConfigFields {
-  static const fieldEnabled = FieldDef(path: "enabled", defaultValue: true);
-  static const fieldSmtpHost = FieldDef(path: "smtp.host", defaultValue: "");
-  static const fieldSmtpPort = FieldDef(path: "smtp.port", defaultValue: 587);
-  static const fieldSmtpUsername = FieldDef(
-    path: "smtp.username",
-    defaultValue: "",
-  );
-  static const fieldSmtpPassword = FieldDef(
-    path: "smtp.password",
-    defaultValue: "",
-  );
-  static const fieldFromName = FieldDef(
-    path: "from.name",
-    defaultValue: "Phylum Drive",
-  );
-  static const fieldFromEmail = FieldDef(path: "from.email", defaultValue: "");
-  static const fieldInstance = FieldDef(path: "instance", defaultValue: "");
+  static final fieldEnabled = PrimitiveField(false);
+  static final fieldSmtpHost = PrimitiveField("");
+  static final fieldSmtpPort = PrimitiveField(587);
+  static final fieldSmtpUsername = PrimitiveField("");
+  static final fieldSmtpPassword = PrimitiveField("");
+  static final fieldFromName = PrimitiveField("Phylum Drive");
+  static final fieldFromEmail = PrimitiveField("");
+  static final fieldInstance = PrimitiveField("");
 
-  const MailConfigFields();
+  static MailConfigFields instance = MailConfigFields._();
+
+  MailConfigFields._();
 
   @override
-  List<FieldDef> get fields => const [
-    fieldEnabled,
-    fieldSmtpHost,
-    fieldSmtpPort,
-    fieldSmtpUsername,
-    fieldSmtpPassword,
-    fieldFromName,
-    fieldFromEmail,
-    fieldInstance,
-  ];
+  final ObjectField root = ObjectField(
+    fields: {
+      "enabled": PrimitiveField(false),
+      "smtp": ObjectField(
+        fields: {
+          "host": fieldSmtpHost,
+          "port": fieldSmtpPort,
+          "username": fieldSmtpUsername,
+          "password": fieldSmtpPassword,
+        },
+      ),
+      "from": ObjectField(
+        fields: {"name": fieldFromName, "email": fieldFromEmail},
+      ),
+      "instance": fieldInstance,
+    },
+  );
 }

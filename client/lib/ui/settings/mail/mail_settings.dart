@@ -27,7 +27,7 @@ class MailSettings extends Settings {
         context,
         baseRoute: '/api/v1/admin/config/mail',
         parseConfig: (data) =>
-            RemoteConfig.fromMap(const MailConfigFields(), data),
+            RemoteConfig.fromMap(MailConfigFields.instance, data),
       ),
     ),
   ];

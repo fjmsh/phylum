@@ -12,7 +12,7 @@ class SetupConfig {
     final config = (data['config'] as Map).cast<String, dynamic>();
     return SetupConfig._(
       mailConfig: RemoteConfig.fromMap(
-        const MailConfigFields(),
+        MailConfigFields.instance,
         (config['mail'] as Map).cast(),
       ),
       authConfig: RemoteConfig.fromMap(

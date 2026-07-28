@@ -635,6 +635,7 @@ class OpenIDConfig {
 
 class AuthConfigFields extends ConfigFields {
   const AuthConfigFields();
+
   @override
-  List<FieldDef> get fields => [];
+  ObjectField get root => const ObjectField(fields: {});
 }
