@@ -44,7 +44,13 @@ class RemoteConfig<C extends ConfigFields> {
   }
 
   T getValue<T>(PrimitiveField<T> field) {
-    return (values[field]?.value as T?) ?? field.defaultValue;
+    final remoteValue = values[field];
+    final val = (remoteValue?.value as T?) ?? field.defaultValue;
+    if (remoteValue?.fixed == false &&
+        (val == "" || val == 0 || val == false)) {
+      return field.defaultValue;
+    }
+    return val;
   }
 
   RemoteConfig<C> apply(LocalConfig<C> updates) {
@@ -74,7 +80,7 @@ class PrimitiveField<T> extends ConfigField {
   const PrimitiveField(this.defaultValue);
 
   RemoteValue<T> ensureType(dynamic value, bool fixed) {
-    return RemoteValue._(value: value ?? defaultValue, fixed: fixed);
+    return RemoteValue._(value: value, fixed: fixed);
   }
 }
 

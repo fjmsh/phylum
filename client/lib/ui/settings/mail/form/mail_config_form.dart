@@ -78,8 +78,6 @@ class _MailConfigFormState extends State<MailConfigForm> {
               keyboardType: TextInputType.url,
               initialValue: state.smtpHost,
               onChanged: (value) => widget._bloc.smtpHost = value,
-              validator: (value) =>
-                  (value?.isEmpty ?? true) ? 'Required' : null,
             ),
             buildWhen: (previous, current) =>
                 previous.enabled != current.enabled ||
@@ -139,8 +137,6 @@ class _MailConfigFormState extends State<MailConfigForm> {
               autocorrect: false,
               initialValue: state.smtpUsername,
               onChanged: (value) => widget._bloc.smtpUsername = value,
-              validator: (value) =>
-                  (value?.isEmpty ?? true) ? 'Required' : null,
             ),
             buildWhen: (previous, current) =>
                 previous.enabled != current.enabled ||
@@ -187,8 +183,6 @@ class _MailConfigFormState extends State<MailConfigForm> {
               autocorrect: false,
               initialValue: state.fromName,
               onChanged: (value) => widget._bloc.fromName = value,
-              validator: (value) =>
-                  (value?.isEmpty ?? true) ? 'Required' : null,
             ),
             buildWhen: (previous, current) =>
                 previous.enabled != current.enabled ||

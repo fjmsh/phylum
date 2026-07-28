@@ -1,22 +1,19 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart';
+import 'package:phylum/ui/setup/db/db_config.dart';
+import 'package:phylum/ui/setup/db/db_config_form.dart';
+import 'package:phylum/ui/setup/db/db_config_form_cubit.dart';
 import 'package:phylum/util/dialogs.dart';
-import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
-import 'package:uri/uri.dart';
 
 class SetupDbFragment extends StatelessWidget {
-  final String instanceUrl;
+  final DbConfigFormCubit _bloc;
   final void Function() onNextPress;
-  final formKey = GlobalKey<FormState>();
 
-  SetupDbFragment({
+  const SetupDbFragment({
     super.key,
-    required this.instanceUrl,
+    required this._bloc,
     required this.onNextPress,
   });
 
@@ -24,7 +21,11 @@ class SetupDbFragment extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Expanded(child: SingleChildScrollView(child: buildContents(context))),
+        Expanded(
+          child: SingleChildScrollView(
+            child: DbConfigForm(bloc: _bloc, onFormSubmitted: validateAndNext),
+          ),
+        ),
         TextButtonTheme(
           data: TextButtonThemeData(
             style: TextButton.styleFrom(
@@ -50,7 +51,6 @@ class SetupDbFragment extends StatelessWidget {
     final config = context.watch<DbConfig>();
 
     return Form(
-      key: formKey,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,53 +171,65 @@ class SetupDbFragment extends StatelessWidget {
     );
   }
 
-  void validateAndNext(BuildContext context) async {
-    if (formKey.currentState?.validate() == false) return;
+  Future<void> validateAndNext(BuildContext context) async {
+    final config = _bloc.validate();
+    if (config == null) return;
 
-    final builder = UriBuilder.fromUri(Uri.parse(instanceUrl));
-    builder.path = '${builder.path}/api/v1/setup/db/validate';
-    final request = Request('post', builder.build());
-    request.body = jsonEncode(context.read<DbConfig>().configToMap());
+    final nav = Navigator.of(context);
+    showProgressDialog(context, message: 'Checking Email Config');
+    final result = await _bloc.checkConfig(config);
+    nav.pop();
 
-    final responseString = await sendRequestDialog(
-      context,
-      request,
-      message: 'Validating Database Config',
-    );
-    if (responseString == null || !context.mounted) return;
-    final responseMap = (jsonDecode(responseString) as Map)
-        .cast<String, dynamic>();
+    if (!context.mounted) return;
 
-    final error = (responseMap['error'] as Map?)?.cast<String, dynamic>();
-    final warning = (responseMap['warning'] as Map?)?.cast<String, dynamic>();
-
-    if (error != null) {
-      String details = error['details'] ?? '';
-      showAlertDialog(
-        context,
-        title: error['msg'],
-        message: details.isEmpty ? null : details,
-      );
-    } else {
-      final controller = context.read<DbController>();
-      bool wipe = false;
-      if (warning != null) {
-        if (warning["code"] == "not_empty") {
-          final response = await showAlertDialog(
-            context,
-            title: 'Warning',
-            message: "The database is not empty.",
-            positiveText: 'Continue anyway',
-            negativeText: 'Wipe Data',
-          );
-          if (response == null) return;
-          if (!response) {
-            wipe = true;
-          }
+    switch (result) {
+      case DbConfigCheckSuccess():
+        onNextPress();
+      case DbConfigCheckWarningNotEmpty():
+        final response = await showAlertDialog(
+          context,
+          title: 'Warning',
+          message: "The database is not empty.",
+          positiveText: 'Continue anyway',
+          negativeText: 'Wipe Data',
+        );
+        if (response == null) return;
+        if (!response) {
+          config.set(DbConfigFields.fieldWipe, true);
         }
-      }
-      controller.wipe = wipe;
-      onNextPress();
+        onNextPress();
+      case DbConfigCheckFailed():
+        final remain = await showAlertDialog(
+          context,
+          title: 'Config Check Failed',
+          message: result.error,
+          negativeText: 'Continue Anyway',
+        );
+        if (remain == false) {
+          onNextPress();
+        }
+      case DbConfigCheckError():
+        final remain = await showAlertDialog(
+          context,
+          title: result.title,
+          message: result.message,
+          negativeText: 'Continue Anyway',
+        );
+        if (remain == false) {
+          onNextPress();
+        }
+      case DbConfigCheckUnknownWarning():
+        final remain = await showAlertDialog(
+          context,
+          title: 'Warning',
+          message:
+              'The server returned a warning when trying to check the configuration.\n\n'
+              'Warning code: ${result.code}',
+          negativeText: 'Continue Anyway',
+        );
+        if (remain == false) {
+          onNextPress();
+        }
     }
   }
 }

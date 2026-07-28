@@ -6,6 +6,7 @@ import 'package:http/http.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
+import 'package:phylum/ui/setup/db/db_config_form_cubit.dart';
 import 'package:phylum/ui/setup/setup_auth_fragment.dart';
 import 'package:phylum/ui/setup/setup_config.dart';
 import 'package:phylum/ui/setup/setup_db_fragment.dart';
@@ -30,6 +31,10 @@ class SetupPage extends StatefulWidget {
 
 class _SetupPageState extends State<SetupPage> {
   SetupStep _currentStep = SetupStep.database;
+  late final DbConfigFormCubit _dbBloc = DbConfigFormCubit(
+    remoteConfig: widget.config.dbConfig,
+    instanceUrl: widget.instanceUrl,
+  );
   late final MailConfigSetupCubit _mailBloc = MailConfigSetupCubit(
     remoteConfig: widget.config.mailConfig,
     instanceUrl: widget.instanceUrl,
@@ -75,7 +80,7 @@ class _SetupPageState extends State<SetupPage> {
   Widget _buildBody(BuildContext context) {
     final page = switch (_currentStep) {
       SetupStep.database => SetupDbFragment(
-        instanceUrl: widget.instanceUrl,
+        bloc: _dbBloc,
         onNextPress: nextStep,
       ),
       SetupStep.mail => SetupMailFragment(
