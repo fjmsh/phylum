@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-import 'package:phylum/ui/settings/config/local_config_updates.dart';
+import 'package:phylum/ui/settings/config/local_config.dart';
 import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:phylum/ui/settings/mail/form/mail_config_form.dart';
 import 'package:phylum/ui/settings/mail/form/mail_config_form_cubit.dart';
@@ -93,9 +93,7 @@ class MailConfigSetupCubit extends MailConfigFormCubit {
   MailConfigSetupCubit({required this._remoteConfig, required this.instanceUrl})
     : super(remoteConfig: _remoteConfig, instanceUrl: instanceUrl);
 
-  Future<String?> checkConfig(
-    LocalConfigUpdates<MailConfigFields> config,
-  ) async {
+  Future<String?> checkConfig(LocalConfig<MailConfigFields> config) async {
     if (!config.get(MailConfigFields.fieldEnabled)) {
       return null;
     }
@@ -104,10 +102,10 @@ class MailConfigSetupCubit extends MailConfigFormCubit {
     builder.path = '${builder.path}/api/v1/setup/mail/validate';
     final request = Request('post', builder.build());
     request.headers['Content-Type'] = 'application/json';
-    request.body = jsonEncode(config.toMapDiff());
-    if (4 < 5) {
-      return request.body;
-    }
+    request.body = jsonEncode(config.toMap(_remoteConfig));
+    // if (4 < 5) {
+    //   return request.body;
+    // }
 
     final result = await sendRequest(request);
     if (result is SuccessResponse) {

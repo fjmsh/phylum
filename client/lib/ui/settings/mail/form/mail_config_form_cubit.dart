@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:email_validator/email_validator.dart';
-import 'package:phylum/ui/settings/config/local_config_updates.dart';
+import 'package:phylum/ui/settings/config/local_config.dart';
 import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:phylum/ui/settings/mail/mail_config.dart';
 
@@ -241,7 +241,7 @@ class MailConfigFormCubit extends Cubit<MailConfigFormState> {
     emit(state.copyWith(instanceUrl: val));
   }
 
-  LocalConfigUpdates<MailConfigFields>? validate() {
+  LocalConfig<MailConfigFields>? validate() {
     final newState = state.enabled
         ? state.withErrors(
             smtpHostError: state.hasSmtpHostOverride()
@@ -287,16 +287,16 @@ class MailConfigFormCubit extends Cubit<MailConfigFormState> {
         newState.fromNameError == null &&
         newState.fromEmailError == null &&
         newState.instanceUrlError == null) {
-      return MailConfig(
-        enabled: state.hasEnabledOverride() ? false : state.enabled,
-        smtpHost: state.hasSmtpHostOverride() ? '' : state.smtpHost,
-        smtpPort: state.hasSmtpPortOverride() ? 0 : int.parse(state.smtpPort),
-        smtpUsername: state.hasSmtpUsernameOverride() ? '' : state.smtpUsername,
-        smtpPassword: state.hasSmtpPasswordOverride() ? '' : state.smtpPassword,
-        fromName: state.hasFromNameOverride() ? '' : state.fromName,
-        fromEmail: state.hasFromEmailOverride() ? '' : state.fromEmail,
-        instanceUrl: state.hasInstanceOverride() ? '' : state.instanceUrl,
-      );
+      final updates = LocalConfig<MailConfigFields>();
+      updates.set(MailConfigFields.fieldEnabled, state.enabled);
+      updates.set(MailConfigFields.fieldSmtpHost, state.smtpHost);
+      updates.set(MailConfigFields.fieldSmtpPort, state.smtpPort);
+      updates.set(MailConfigFields.fieldSmtpUsername, state.smtpUsername);
+      updates.set(MailConfigFields.fieldSmtpPassword, state.smtpPassword);
+      updates.set(MailConfigFields.fieldFromEmail, state.fromEmail);
+      updates.set(MailConfigFields.fieldFromName, state.fromName);
+      updates.set(MailConfigFields.fieldInstance, state.instanceUrl);
+      return updates;
     } else {
       emit(newState);
       return null;

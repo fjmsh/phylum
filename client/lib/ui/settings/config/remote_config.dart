@@ -1,4 +1,4 @@
-import 'package:phylum/ui/settings/config/local_config_updates.dart';
+import 'package:phylum/ui/settings/config/local_config.dart';
 
 class RemoteConfig<C extends ConfigFields> {
   final C schema;
@@ -25,14 +25,14 @@ class RemoteConfig<C extends ConfigFields> {
     for (final entry in field.fields.entries) {
       if (!data.containsKey(entry.key)) continue;
       final fieldPath = path.isEmpty ? entry.key : "$path.${entry.key}";
-      final fieldType = entry.value;
+      final field = entry.value;
       final fieldData = data[entry.key];
-      switch (fieldType) {
+      switch (field) {
         case ObjectField():
-          parseObject(values, fixed, fieldPath, fieldType, fieldData);
+          parseObject(values, fixed, fieldPath, field, fieldData);
           break;
         case PrimitiveField():
-          values[fieldType] = fieldType.checkType(
+          values[field] = field.ensureType(
             fieldData,
             fixed.contains(fieldPath),
           );
@@ -40,7 +40,6 @@ class RemoteConfig<C extends ConfigFields> {
         case MapField<ConfigField>():
           throw UnimplementedError();
       }
-      // values[field] = RemoteValue.create(data, fixed, field);
     }
   }
 
@@ -48,7 +47,7 @@ class RemoteConfig<C extends ConfigFields> {
     return (values[field]?.value as T?) ?? field.defaultValue;
   }
 
-  RemoteConfig<C> apply(LocalConfigUpdates<C> updates) {
+  RemoteConfig<C> apply(LocalConfig<C> updates) {
     throw UnimplementedError('Not implemented');
   }
 }
@@ -61,24 +60,12 @@ abstract class ConfigFields {
 
 sealed class ConfigField {
   const ConfigField();
-
-  ConfigField find(String path);
 }
 
 class ObjectField extends ConfigField {
   final Map<String, ConfigField> fields;
 
   const ObjectField({required this.fields});
-
-  @override
-  ConfigField find(String path) {
-    final index = path.indexOf(".");
-    if (index == -1) {
-      return fields[path]!;
-    } else {
-      return fields[path.substring(0, index)]!.find(path.substring(index + 1));
-    }
-  }
 }
 
 class PrimitiveField<T> extends ConfigField {
@@ -86,23 +73,13 @@ class PrimitiveField<T> extends ConfigField {
 
   const PrimitiveField(this.defaultValue);
 
-  @override
-  ConfigField find(String path) {
-    throw UnimplementedError();
-  }
-
-  RemoteValue<T> checkType(dynamic value, bool fixed) {
+  RemoteValue<T> ensureType(dynamic value, bool fixed) {
     return RemoteValue._(value: value ?? defaultValue, fixed: fixed);
   }
 }
 
 class MapField<T extends ConfigField> extends ConfigField {
   const MapField();
-
-  @override
-  ConfigField find(String path) {
-    throw UnimplementedError();
-  }
 }
 
 class FieldDef<T> {

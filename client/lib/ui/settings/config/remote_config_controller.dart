@@ -5,7 +5,7 @@ import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/ui/settings/config/local_config_updates.dart';
+import 'package:phylum/ui/settings/config/local_config.dart';
 import 'package:phylum/ui/settings/config/remote_config.dart';
 import 'package:provider/provider.dart';
 import 'package:state_notifier/state_notifier.dart';
@@ -88,7 +88,7 @@ class RemoteConfigController<T extends ConfigFields>
     }
   }
 
-  Future<String?> save({required LocalConfigUpdates<T> config}) async {
+  Future<String?> save({required LocalConfig<T> config}) async {
     final state = this.state;
     if (state is! RemoteConfigStateLoaded<T>) return null;
     if (state.saving) return null;

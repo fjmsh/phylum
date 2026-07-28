@@ -4,7 +4,7 @@ class _ConfigUpdateRequest<T extends ConfigFields>
     extends ApiRequest<PhylumAccount> {
   final String _baseRoute;
   final RemoteConfig<T> _remoteConfig;
-  final LocalConfigUpdates<T> _config;
+  final LocalConfig<T> _config;
 
   const _ConfigUpdateRequest({
     required this._baseRoute,
@@ -18,7 +18,7 @@ class _ConfigUpdateRequest<T extends ConfigFields>
 
     final request = Request('post', uri.build());
     request.headers['Content-Type'] = 'application/json';
-    request.body = jsonEncode({'config': _config.toMapDiff()});
+    request.body = jsonEncode({'config': _config.toMap(_remoteConfig)});
     return request;
   }
 

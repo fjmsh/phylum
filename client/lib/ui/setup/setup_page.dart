@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
-import 'package:phylum/ui/settings/mail/mail_config.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/ui/setup/setup_auth_fragment.dart';
@@ -38,11 +37,6 @@ class _SetupPageState extends State<SetupPage> {
   late final AuthConfigSetupCubit _authBloc = AuthConfigSetupCubit(
     remoteConfig: widget.config.authConfig,
   );
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +122,7 @@ class _SetupPageState extends State<SetupPage> {
     final data = {
       'config': {
         'db': context.read<DbConfig>().configToMap(),
-        'mail': context.read<MailConfig>().toMap(),
+        // 'mail': context.read<MailConfig>().toMap(),
         'auth': context.read<AuthConfig>().toMapDiff(AuthConfig.defaults()),
       },
       'user': context.read<UserConfig>().toMap(),
@@ -160,11 +154,4 @@ class _SetupPageState extends State<SetupPage> {
       );
     }
   }
-}
-
-Set<String> _subOverrides(List<String> overrides, String prefix) {
-  return overrides
-      .where((o) => o.startsWith("$prefix."))
-      .map((o) => o.replaceFirst("$prefix.", ""))
-      .toSet();
 }

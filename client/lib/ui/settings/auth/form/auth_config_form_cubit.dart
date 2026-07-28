@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
-import 'package:phylum/ui/settings/config/local_config_updates.dart';
+import 'package:phylum/ui/settings/config/local_config.dart';
 import 'package:phylum/ui/settings/config/remote_config.dart';
 
 class AuthConfigFormState {
@@ -13,9 +13,6 @@ class AuthConfigFormState {
     required RemoteConfig<AuthConfigFields> config,
     required bool mailEnabled,
   }) {
-    final overrides = Set.of(
-      config.values.entries.where((e) => e.value.fixed).map((e) => e.key),
-    );
     return AuthConfigFormState(
       config: AuthConfig.defaults(),
       mailEnabled: mailEnabled,
@@ -104,7 +101,7 @@ abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
     emit(state.copyWith(config: state.config.copyWith(openIdConfigs: configs)));
   }
 
-  LocalConfigUpdates<AuthConfigFields>? validate() {
+  LocalConfig<AuthConfigFields>? validate() {
     return null;
   }
 
