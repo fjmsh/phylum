@@ -16,8 +16,8 @@ type Config struct {
 	Memory      uint8  `koanf:"memory" json:"memory"`
 	Iterations  uint32 `koanf:"iterations" json:"iterations"`
 	Parallelism uint8  `koanf:"parallelism" json:"parallelism"`
-	Salt        uint32 `koanf:"salt,omitempty" json:"salt"`
-	Key         uint32 `koanf:"key,omitempty" json:"key"`
+	Salt        uint32 `koanf:"salt" json:"salt"`
+	Key         uint32 `koanf:"key" json:"key"`
 }
 
 type argon struct {

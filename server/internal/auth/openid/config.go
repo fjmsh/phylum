@@ -1,7 +1,7 @@
 package openid
 
 type Config struct {
-	Clients map[string]ClientConfig `koanf:"clients,omitempty" json:"clients"`
+	Clients map[string]ClientConfig `koanf:"clients" json:"clients"`
 }
 
 type ClientConfig struct {

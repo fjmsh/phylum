@@ -6,17 +6,15 @@ import (
 )
 
 type Config struct {
-	User                      UserConfig     `koanf:"users,omitempty"`
-	Publinks                  PublinksConfig `koanf:"publinks,omitempty"`
-	NoDefaultInvitePermission bool           `koanf:"no_default_invite_permission,omitempty"`
-	Img                       img.Config     `koanf:"img,omitempty"`
-}
-
-type PublinksConfig struct {
-	Password crypt.Config `koanf:"password,omitempty"`
+	User     UserConfig `koanf:"users"`
+	Publinks struct {
+		Password crypt.Config `koanf:"password"`
+	} `koanf:"publinks"`
+	NoDefaultInvitePermission bool       `koanf:"no_default_invite_permission"`
+	Img                       img.Config `koanf:"img"`
 }
 
 type UserConfig struct {
-	BaseDir     string          `koanf:"basedir,omitempty"`
-	Permissions UserPermissions `koanf:"permissions,omitempty"`
+	BaseDir     string          `koanf:"basedir"`
+	Permissions UserPermissions `koanf:"permissions"`
 }

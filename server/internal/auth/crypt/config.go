@@ -7,6 +7,6 @@ import (
 
 type Config struct {
 	KDF    string        `koanf:"kdf" json:"kdf"`
-	Argon2 argon2.Config `koanf:"argon2,omitempty" json:"argon2"`
-	PBKDF2 pbkdf2.Config `koanf:"pbkdf2,omitempty" json:"pbkdf2"`
+	Argon2 argon2.Config `koanf:"argon2" json:"argon2"`
+	PBKDF2 pbkdf2.Config `koanf:"pbkdf2" json:"pbkdf2"`
 }

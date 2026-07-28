@@ -17,8 +17,8 @@ import (
 type Config struct {
 	Function   string `koanf:"function" json:"function"`
 	Iterations int    `koanf:"iterations" json:"iterations"`
-	Salt       uint32 `koanf:"salt,omitempty" json:"salt"`
-	Key        int    `koanf:"key,omitempty" json:"key"`
+	Salt       uint32 `koanf:"salt" json:"salt"`
+	Key        int    `koanf:"key" json:"key"`
 }
 
 type pbkdf struct {

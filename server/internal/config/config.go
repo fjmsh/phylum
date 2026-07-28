@@ -32,7 +32,7 @@ var needsSetup = true
 func Initialize[T any](cmd *cobra.Command) error {
 	// Default config
 	var err error
-	defaults, err = LoadDefaults()
+	defaults, err = LoadDefaults[T]()
 	if err != nil {
 		return errors.New("Failed to load default config: " + err.Error())
 	}
@@ -151,12 +151,20 @@ func LoadFile(path string) (*koanf.Koanf, error) {
 	return k, err
 }
 
-func LoadDefaults() (*koanf.Koanf, error) {
+func LoadDefaults[T any]() (*koanf.Koanf, error) {
 	if bytes, err := defaultConfig.ReadFile("config.defaults.yml"); err != nil {
 		return nil, err
 	} else {
 		k := koanf.New(".")
 		err := k.Load(rawbytes.Provider(bytes), yaml.Parser())
+		config := new(T)
+		k.Unmarshal("", config)
+
+		sanitized := koanf.New(".")
+		sanitized.Load(structs.Provider(*config, "koanf"), nil)
+		for _, key := range k.Keys() {
+			k.Set(key, sanitized.Get(key))
+		}
 		return k, err
 	}
 }
