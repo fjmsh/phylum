@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"path"
-	"slices"
 
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/command/admin"
@@ -20,9 +19,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/server"
 	"codeberg.org/shroff/phylum/server/internal/steve"
 	"codeberg.org/shroff/phylum/server/internal/storage"
-	"github.com/go-viper/mapstructure/v2"
 	"github.com/google/uuid"
-	"github.com/knadh/koanf/v2"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
@@ -67,8 +64,14 @@ func SetupCommand() {
 			return
 		}
 
-		if err := config.Initialize[Config](cmd); err != nil {
-			logger.Fatal().Err(err).Msg("Failed to load config")
+		var err error
+		var cfg *Config
+		if cfg, err = config.Initialize[Config](cmd); err != nil {
+			if e, ok := err.(config.ConfigFieldsUnusedError); ok {
+				logger.Warn().Strs("keys", e.Fields).Msg("Unused keys in config")
+			} else {
+				logger.Fatal().Err(err).Msg("Failed to load config")
+			}
 		} else if config.NeedsSetup() {
 			if isCmd(cmd, "serve") {
 				logger.Info().Msg("Server not yet configured")
@@ -77,27 +80,10 @@ func SetupCommand() {
 			}
 		}
 
-		var cfg Config
-		var md mapstructure.Metadata
-		err := config.Full.UnmarshalWithConf("", &cfg, koanf.UnmarshalConf{Tag: "koanf", DecoderConfig: &mapstructure.DecoderConfig{
-			Result:           &cfg,
-			WeaklyTypedInput: true,
-			Metadata:         &md,
-		}})
-		if err != nil {
-			panic(err)
-		}
-
 		if cfg.Debug {
 			logger = logger.Level(zerolog.TraceLevel)
 			logger.Debug().Msg("Running in debug mode")
 			cfg.Server.Debug = true
-		}
-		unused := slices.DeleteFunc(md.Unused, func(e string) bool {
-			return e == "workdir" || e == "config" || e == "image_tag"
-		})
-		if len(unused) != 0 {
-			logger.Warn().Strs("keys", unused).Msg("Unused keys in config")
 		}
 		cmd.SetContext(logger.WithContext(cmd.Context()))
 
@@ -159,7 +145,6 @@ func SetupCommand() {
 		fs.SetupCommand(),
 		user.SetupCommand(),
 		setupServeCommand(),
-		setupInitCommand(),
 	)
 	cmd.AddGroup(&cobra.Group{ID: "misc", Title: "Misc"})
 	cmd.SetHelpCommandGroupID("misc")

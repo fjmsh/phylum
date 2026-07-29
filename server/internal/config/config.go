@@ -4,8 +4,10 @@ import (
 	"embed"
 	"errors"
 	"os"
+	"slices"
 	"strings"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/file"
@@ -29,12 +31,20 @@ var overrides = koanf.New(".")
 
 var needsSetup = true
 
-func Initialize[T any](cmd *cobra.Command) error {
+type ConfigFieldsUnusedError struct {
+	Fields []string
+}
+
+func (c ConfigFieldsUnusedError) Error() string {
+	return "Found unused config fields: " + strings.Join(c.Fields, ", ")
+}
+
+func Initialize[T any](cmd *cobra.Command) (*T, error) {
 	// Default config
 	var err error
 	defaults, err = LoadDefaults[T]()
 	if err != nil {
-		return errors.New("Failed to load default config: " + err.Error())
+		return nil, errors.New("Failed to load default config: " + err.Error())
 	}
 
 	// config.yml
@@ -43,20 +53,37 @@ func Initialize[T any](cmd *cobra.Command) error {
 	needsSetup = errors.Is(err, os.ErrNotExist)
 
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return errors.New("failed to load config: " + err.Error())
+		return nil, errors.New("failed to load config: " + err.Error())
 	}
 
 	// Overrides - Flags and env vars
 	overrides, err = LoadOverrides[T](cmd)
 	if err != nil {
-		return errors.New("Failed to load flags: " + err.Error())
+		return nil, errors.New("Failed to load flags: " + err.Error())
 	}
 
 	Full = defaults.Copy()
 	Full.Merge(ymlConfig)
 	Full.Merge(overrides)
 
-	return nil
+	md := mapstructure.Metadata{}
+	cfg := new(T)
+	uc := koanf.UnmarshalConf{Tag: "koanf", DecoderConfig: &mapstructure.DecoderConfig{
+		Result:           cfg,
+		WeaklyTypedInput: false,
+		Metadata:         &md,
+	}}
+	if err := Full.UnmarshalWithConf("", cfg, uc); err != nil {
+		return nil, err
+	}
+	unused := slices.DeleteFunc(md.Unused, func(e string) bool {
+		return e == "workdir" || e == "config" || e == "image_tag"
+	})
+	if len(unused) != 0 {
+		return cfg, ConfigFieldsUnusedError{Fields: unused}
+	}
+
+	return cfg, nil
 }
 
 func NeedsSetup() bool {
@@ -140,7 +167,7 @@ func LoadOverrides[T any](cmd *cobra.Command) (*koanf.Koanf, error) {
 		return nil, err
 	}
 
-	return fixTypes[T](k)
+	return fixTypes[T](k, true)
 }
 
 func LoadFile[T any](path string) (*koanf.Koanf, error) {
@@ -148,7 +175,7 @@ func LoadFile[T any](path string) (*koanf.Koanf, error) {
 	if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
 		return k, err
 	}
-	return fixTypes[T](k)
+	return fixTypes[T](k, false)
 }
 
 func LoadDefaults[T any]() (*koanf.Koanf, error) {
@@ -160,13 +187,25 @@ func LoadDefaults[T any]() (*koanf.Koanf, error) {
 		if err != nil {
 			return nil, err
 		}
-		return fixTypes[T](k)
+		return fixTypes[T](k, false)
 	}
 }
 
-func fixTypes[T any](k *koanf.Koanf) (*koanf.Koanf, error) {
+func fixTypes[T any](k *koanf.Koanf, weaklyTypedInput bool) (*koanf.Koanf, error) {
 	config := new(T)
-	k.Unmarshal("", config)
+	uc := koanf.UnmarshalConf{
+		DecoderConfig: &mapstructure.DecoderConfig{
+			DecodeHook: mapstructure.ComposeDecodeHookFunc(
+				mapstructure.StringToTimeDurationHookFunc(),
+				mapstructure.TextUnmarshallerHookFunc()),
+			Metadata:         nil,
+			Result:           config,
+			WeaklyTypedInput: weaklyTypedInput,
+		},
+	}
+	if err := k.UnmarshalWithConf("", config, uc); err != nil {
+		return nil, err
+	}
 	kTyped := koanf.New(".")
 	if err := kTyped.Load(structs.Provider(*config, "koanf"), nil); err != nil {
 		return nil, err
