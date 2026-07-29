@@ -9,7 +9,7 @@ import 'package:phylum/util/request.dart';
 import 'package:uri/uri.dart';
 
 class DbConfigFormState {
-  final Set<PrimitiveField> _overrides;
+  final Set<PrimitiveField> _fixed;
   final String host;
   final String port;
   final String dbName;
@@ -21,7 +21,7 @@ class DbConfigFormState {
   final String? userError;
 
   DbConfigFormState({
-    required this._overrides,
+    required this._fixed,
     required this.host,
     required this.port,
     required this.dbName,
@@ -36,12 +36,8 @@ class DbConfigFormState {
   factory DbConfigFormState.createFromRemoteConfig(
     RemoteConfig<DbConfigFields> config,
   ) {
-    final overrides = Set.of(
-      config.values.entries.where((e) => e.value.fixed).map((e) => e.key),
-    );
-
     return DbConfigFormState(
-      overrides: overrides,
+      fixed: config.fixed,
       host: config.getValue(DbConfigFields.fieldHost),
       port: config.getValue(DbConfigFields.fieldPort).toString(),
       dbName: config.getValue(DbConfigFields.fieldDbName),
@@ -59,7 +55,7 @@ class DbConfigFormState {
     String? password,
   }) {
     return DbConfigFormState(
-      overrides: _overrides,
+      fixed: _fixed,
       host: host ?? this.host,
       port: port ?? this.port,
       dbName: dbName ?? this.dbName,
@@ -75,7 +71,7 @@ class DbConfigFormState {
     String? userError,
   }) {
     return DbConfigFormState(
-      overrides: _overrides,
+      fixed: _fixed,
       host: host,
       port: port,
       user: user,
@@ -88,12 +84,11 @@ class DbConfigFormState {
     );
   }
 
-  bool hasHostOverride() => _overrides.contains(DbConfigFields.fieldHost);
-  bool hasPortOverride() => _overrides.contains(DbConfigFields.fieldPort);
-  bool hasDbNameOverride() => _overrides.contains(DbConfigFields.fieldDbName);
-  bool hasUserOverride() => _overrides.contains(DbConfigFields.fieldUser);
-  bool hasPasswordOverride() =>
-      _overrides.contains(DbConfigFields.fieldPassword);
+  bool hasHostOverride() => _fixed.contains(DbConfigFields.fieldHost);
+  bool hasPortOverride() => _fixed.contains(DbConfigFields.fieldPort);
+  bool hasDbNameOverride() => _fixed.contains(DbConfigFields.fieldDbName);
+  bool hasUserOverride() => _fixed.contains(DbConfigFields.fieldUser);
+  bool hasPasswordOverride() => _fixed.contains(DbConfigFields.fieldPassword);
 
   @override
   String toString() {
@@ -113,7 +108,7 @@ class DbConfigFormState {
   bool operator ==(covariant DbConfigFormState other) {
     if (identical(this, other)) return true;
 
-    return (const SetEquality()).equals(other._overrides, _overrides) &&
+    return (const SetEquality()).equals(other._fixed, _fixed) &&
         other.host == host &&
         other.hostError == hostError &&
         other.port == port &&

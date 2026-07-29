@@ -5,7 +5,7 @@ import 'package:phylum/ui/settings/config/config.dart';
 import 'package:phylum/ui/settings/mail/mail_config.dart';
 
 class MailConfigFormState {
-  final Set<PrimitiveField> _overrides;
+  final Set<PrimitiveField> _fixed;
   final bool enabled;
   final String smtpHost;
   final String smtpPort;
@@ -23,7 +23,7 @@ class MailConfigFormState {
 
   MailConfigFormState({
     required this.enabled,
-    required this._overrides,
+    required this._fixed,
     required this.smtpHost,
     required this.smtpPort,
     required this.smtpUsername,
@@ -43,13 +43,9 @@ class MailConfigFormState {
     RemoteConfig<MailConfigFields> config,
     String instanceUrl,
   ) {
-    final overrides = Set.of(
-      config.values.entries.where((e) => e.value.fixed).map((e) => e.key),
-    );
-
     final remoteInstanceUrl = config.getValue(MailConfigFields.fieldInstance);
     return MailConfigFormState(
-      overrides: overrides,
+      fixed: config.fixed,
       enabled: config.getValue(MailConfigFields.fieldEnabled),
       smtpHost: config.getValue(MailConfigFields.fieldSmtpHost),
       smtpPort: config.getValue(MailConfigFields.fieldSmtpPort).toString(),
@@ -59,7 +55,7 @@ class MailConfigFormState {
       fromEmail: config.getValue(MailConfigFields.fieldFromEmail),
       instanceUrl:
           remoteInstanceUrl.isEmpty &&
-              !config.values[MailConfigFields.fieldInstance]!.fixed
+              !config.fixed.contains(MailConfigFields.fieldInstance)
           ? instanceUrl
           : remoteInstanceUrl,
     );
@@ -77,7 +73,7 @@ class MailConfigFormState {
   }) {
     return MailConfigFormState(
       enabled: enabled ?? this.enabled,
-      overrides: _overrides,
+      fixed: _fixed,
       smtpHost: smtpHost ?? this.smtpHost,
       smtpPort: smtpPort ?? this.smtpPort,
       smtpUsername: smtpUsername ?? this.smtpUsername,
@@ -98,7 +94,7 @@ class MailConfigFormState {
   }) {
     return MailConfigFormState(
       enabled: enabled,
-      overrides: _overrides,
+      fixed: _fixed,
       smtpHost: smtpHost,
       smtpPort: smtpPort,
       smtpUsername: smtpUsername,
@@ -115,22 +111,16 @@ class MailConfigFormState {
     );
   }
 
-  bool hasEnabledOverride() =>
-      _overrides.contains(MailConfigFields.fieldEnabled);
-  bool hasSmtpHostOverride() =>
-      _overrides.contains(MailConfigFields.fieldSmtpHost);
-  bool hasSmtpPortOverride() =>
-      _overrides.contains(MailConfigFields.fieldSmtpPort);
-  bool hasSmtpUsernameOverride() =>
-      _overrides.contains(MailConfigFields.fieldSmtpUsername);
-  bool hasSmtpPasswordOverride() =>
-      _overrides.contains(MailConfigFields.fieldSmtpPassword);
-  bool hasFromNameOverride() =>
-      _overrides.contains(MailConfigFields.fieldFromName);
-  bool hasFromEmailOverride() =>
-      _overrides.contains(MailConfigFields.fieldFromEmail);
-  bool hasInstanceOverride() =>
-      _overrides.contains(MailConfigFields.fieldInstance);
+  bool isEnabledFixed() => _fixed.contains(MailConfigFields.fieldEnabled);
+  bool isSmtpHostFixed() => _fixed.contains(MailConfigFields.fieldSmtpHost);
+  bool isSmtpPortFixed() => _fixed.contains(MailConfigFields.fieldSmtpPort);
+  bool isSmtpUsernameFixed() =>
+      _fixed.contains(MailConfigFields.fieldSmtpUsername);
+  bool isSmtpPasswordFixed() =>
+      _fixed.contains(MailConfigFields.fieldSmtpPassword);
+  bool isFromNameFixed() => _fixed.contains(MailConfigFields.fieldFromName);
+  bool isFromEmailFixed() => _fixed.contains(MailConfigFields.fieldFromEmail);
+  bool isInstanceFixed() => _fixed.contains(MailConfigFields.fieldInstance);
 
   @override
   String toString() {
@@ -156,7 +146,7 @@ class MailConfigFormState {
     if (identical(this, other)) return true;
 
     return other.enabled == enabled &&
-        (const SetEquality()).equals(other._overrides, _overrides) &&
+        (const SetEquality()).equals(other._fixed, _fixed) &&
         other.smtpHost == smtpHost &&
         other.smtpHostError == smtpHostError &&
         other.smtpPort == smtpPort &&
@@ -243,35 +233,35 @@ class MailConfigFormCubit extends Cubit<MailConfigFormState> {
   LocalConfig<MailConfigFields>? validate() {
     final newState = state.enabled
         ? state.withErrors(
-            smtpHostError: state.hasSmtpHostOverride()
+            smtpHostError: state.isSmtpHostFixed()
                 ? null
                 : state.smtpHost == ''
                 ? 'Required'
                 : null,
-            smtpPortError: state.hasSmtpPortOverride()
+            smtpPortError: state.isSmtpPortFixed()
                 ? null
                 : state.smtpPort.isEmpty
                 ? 'Required'
                 : (int.tryParse(state.smtpPort) ?? 0) == 0
                 ? 'Invalid Port'
                 : null,
-            smtpUsernameError: state.hasSmtpUsernameOverride()
+            smtpUsernameError: state.isSmtpUsernameFixed()
                 ? null
                 : state.smtpUsername == ''
                 ? 'Required'
                 : null,
-            fromNameError: state.hasFromNameOverride()
+            fromNameError: state.isFromNameFixed()
                 ? null
                 : state.fromName == ''
                 ? 'Required'
                 : null,
             fromEmailError:
-                state.hasFromEmailOverride() ||
+                state.isFromEmailFixed() ||
                     state.fromEmail.isEmpty ||
                     EmailValidator.validate(state.fromEmail)
                 ? null
                 : 'Invalid Email Address',
-            instanceUrlError: state.hasInstanceOverride()
+            instanceUrlError: state.isInstanceFixed()
                 ? null
                 : state.instanceUrl.isEmpty
                 ? 'Required'

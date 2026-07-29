@@ -14,6 +14,10 @@ class LocalConfig<C extends ConfigFields> {
   }
 
   Map<String, dynamic> toMap(RemoteConfig<C> config) {
+    final values = Map.of(this.values);
+    for (final field in config.fixed) {
+      values[field] = null;
+    }
     return config.schema.root.toMap(config.values, values) ?? {};
   }
 }

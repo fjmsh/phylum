@@ -17,7 +17,7 @@ sealed class ConfigField {
   });
 
   dynamic toMap(
-    Map<PrimitiveField, RemoteValue> remoteValues,
+    Map<PrimitiveField, dynamic> remoteValues,
     Map<PrimitiveField, dynamic> localValues,
   );
 }
@@ -47,7 +47,7 @@ class ObjectField extends ConfigField {
 
   @override
   Map<String, dynamic>? toMap(
-    Map<PrimitiveField, RemoteValue> remoteValues,
+    Map<PrimitiveField, dynamic> remoteValues,
     Map<PrimitiveField, dynamic> localValues,
   ) {
     final map = Map.fromEntries(
@@ -80,21 +80,20 @@ class PrimitiveField<T> extends ConfigField {
     required String path,
     required dynamic data,
   }) {
-    config.values[this] = RemoteValue._(
-      value: fromPrimitive?.call(data) ?? data,
-      fixed: fixed.contains(path),
-    );
+    config.values[this] = fromPrimitive?.call(data) ?? data;
+    if (fixed.contains(path)) {
+      config.fixed.add(this);
+    }
   }
 
   @override
   dynamic toMap(
-    Map<PrimitiveField, RemoteValue> remoteValues,
+    Map<PrimitiveField, dynamic> remoteValues,
     Map<PrimitiveField, dynamic> localValues,
   ) {
     final remote = remoteValues[this];
     final local = localValues[this];
-    if (remote?.fixed == true) return null;
-    if (remote?.value == local) return null;
+    if (local == null || local == remote) return null;
     return toPrimitive?.call(local) ?? local;
   }
 }
@@ -128,7 +127,7 @@ class MapField<C extends ConfigFields> extends ConfigField {
 
   @override
   dynamic toMap(
-    Map<PrimitiveField, RemoteValue> remoteValues,
+    Map<PrimitiveField, dynamic> remoteValues,
     Map<PrimitiveField, dynamic> localValues,
   ) => throw UnimplementedError();
 }

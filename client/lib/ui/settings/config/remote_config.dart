@@ -2,7 +2,8 @@ part of 'config.dart';
 
 class RemoteConfig<C extends ConfigFields> {
   final C schema;
-  final values = <PrimitiveField, RemoteValue>{};
+  final values = <PrimitiveField, dynamic>{};
+  final fixed = <PrimitiveField>{};
   final maps = <MapField, Map<String, RemoteConfig>>{};
 
   RemoteConfig._({required this.schema});
@@ -27,13 +28,12 @@ class RemoteConfig<C extends ConfigFields> {
   }
 
   T getValue<T>(PrimitiveField<T> field) {
-    final remoteValue = values[field];
-    final val = (remoteValue?.value as T?) ?? field.defaultValue;
-    if (remoteValue?.fixed == false &&
-        (val == "" || val == 0 || val == false)) {
+    final value = (values[field] as T?) ?? field.defaultValue;
+    if (!fixed.contains(field) &&
+        (value == "" || value == 0 || value == false)) {
       return field.defaultValue;
     }
-    return val;
+    return value;
   }
 
   RemoteConfig<C> apply(LocalConfig<C> updates) {
@@ -57,16 +57,4 @@ class FieldDef<T> {
 
   @override
   int get hashCode => path.hashCode ^ defaultValue.hashCode;
-}
-
-class RemoteValue<T> {
-  final T? value;
-  final bool fixed;
-
-  RemoteValue._({required this.value, required this.fixed});
-
-  @override
-  String toString() {
-    return 'RemoteValue (value: $value, fixed: $fixed)';
-  }
 }
