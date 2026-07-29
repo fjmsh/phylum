@@ -637,22 +637,22 @@ class AuthConfigFields extends ConfigFields {
   static final fieldMagicLinks = PrimitiveField(false);
   static final fieldPasswordBackend = PrimitiveField(
     PasswordBackend.crypt,
-    serialize: (val) => val.name,
-    parse: (val) => PasswordBackend.fromString(val),
+    toPrimitive: (val) => val.name,
+    fromPrimitive: (val) => PasswordBackend.fromString(val),
   );
   static final fieldPasswordResetEnabled = PrimitiveField(false);
   static final fieldPasswordCryptKdf = PrimitiveField(
     CryptKDF.argon2,
-    serialize: (val) => val.name,
-    parse: (val) => CryptKDF.fromString(val),
+    toPrimitive: (val) => val.name,
+    fromPrimitive: (val) => CryptKDF.fromString(val),
   );
   static final fieldPasswordCryptArgon2Memory = PrimitiveField(16);
   static final fieldPasswordCryptArgon2Iterations = PrimitiveField(4);
   static final fieldPasswordCryptArgon2Parallelism = PrimitiveField(2);
   static final fieldPasswordCryptPbkdf2Hash = PrimitiveField(
     HashFunction.sha256,
-    serialize: (val) => val.name,
-    parse: (val) => HashFunction.fromString(val),
+    toPrimitive: (val) => val.name,
+    fromPrimitive: (val) => HashFunction.fromString(val),
   );
   static final fieldPasswordCryptPbkdf2Iterations = PrimitiveField(600_000);
   static final fieldPasswordRequirementsLength = PrimitiveField(8);

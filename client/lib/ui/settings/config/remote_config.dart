@@ -2,44 +2,16 @@ part of 'config.dart';
 
 class RemoteConfig<C extends ConfigFields> {
   final C schema;
-  final Map<PrimitiveField, RemoteValue> values;
+  final values = <PrimitiveField, RemoteValue>{};
 
-  RemoteConfig({required this.schema, required this.values});
+  RemoteConfig._({required this.schema});
 
   factory RemoteConfig.fromMap(C schema, Map<String, dynamic> map) {
     final data = (map['config'] as Map).cast<String, dynamic>();
     final fixed = Set.of((map['overrides'] as List).cast<String>());
-    final values = <PrimitiveField, RemoteValue>{};
-    parseObject(values, fixed, "", schema.root, data);
-    return RemoteConfig(schema: schema, values: values);
-  }
-
-  static void parseObject(
-    Map<PrimitiveField, RemoteValue> values,
-    Set<String> fixed,
-    String path,
-    ObjectField field,
-    dynamic data,
-  ) {
-    data = (data as Map).cast<String, dynamic>();
-    for (final entry in field.fields.entries) {
-      final fieldPath = path.isEmpty ? entry.key : "$path.${entry.key}";
-      final field = entry.value;
-      final fieldData = data[entry.key];
-      switch (field) {
-        case ObjectField():
-          parseObject(values, fixed, fieldPath, field, fieldData);
-          break;
-        case PrimitiveField():
-          values[field] = field.ensureType(
-            fieldData,
-            fixed.contains(fieldPath),
-          );
-          break;
-        case MapField<ConfigField>():
-          throw UnimplementedError();
-      }
-    }
+    final config = RemoteConfig._(schema: schema);
+    schema.root.parse(config: config, fixed: fixed, path: "", data: data);
+    return config;
   }
 
   T getValue<T>(PrimitiveField<T> field) {

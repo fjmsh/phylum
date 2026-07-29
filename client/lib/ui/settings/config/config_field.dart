@@ -9,6 +9,13 @@ abstract class ConfigFields {
 sealed class ConfigField {
   const ConfigField();
 
+  void parse({
+    required RemoteConfig config,
+    required Set<String> fixed,
+    required String path,
+    required dynamic data,
+  });
+
   dynamic toMap(
     Map<PrimitiveField, RemoteValue> remoteValues,
     Map<PrimitiveField, dynamic> localValues,
@@ -19,6 +26,24 @@ class ObjectField extends ConfigField {
   final Map<String, ConfigField> fields;
 
   const ObjectField({required this.fields});
+
+  @override
+  void parse({
+    required RemoteConfig config,
+    required Set<String> fixed,
+    required String path,
+    required dynamic data,
+  }) {
+    data = (data as Map).cast<String, dynamic>();
+    for (final entry in fields.entries) {
+      entry.value.parse(
+        config: config,
+        fixed: fixed,
+        path: path.isEmpty ? entry.key : "$path.${entry.key}",
+        data: data[entry.key],
+      );
+    }
+  }
 
   @override
   Map<String, dynamic>? toMap(
@@ -43,13 +68,22 @@ class ObjectField extends ConfigField {
 
 class PrimitiveField<T> extends ConfigField {
   final T defaultValue;
-  final dynamic Function(T)? serialize;
-  final T Function(dynamic)? parse;
+  final dynamic Function(T)? toPrimitive;
+  final T Function(dynamic)? fromPrimitive;
 
-  PrimitiveField(this.defaultValue, {this.serialize, this.parse});
+  PrimitiveField(this.defaultValue, {this.toPrimitive, this.fromPrimitive});
 
-  RemoteValue<T> ensureType(dynamic value, bool fixed) {
-    return RemoteValue._(value: parse?.call(value) ?? value, fixed: fixed);
+  @override
+  void parse({
+    required RemoteConfig config,
+    required Set<String> fixed,
+    required String path,
+    required dynamic data,
+  }) {
+    config.values[this] = RemoteValue._(
+      value: fromPrimitive?.call(data) ?? data,
+      fixed: fixed.contains(path),
+    );
   }
 
   @override
@@ -61,12 +95,21 @@ class PrimitiveField<T> extends ConfigField {
     final local = localValues[this];
     if (remote?.fixed == true) return null;
     if (remote?.value == local) return null;
-    return serialize?.call(local) ?? local;
+    return toPrimitive?.call(local) ?? local;
   }
 }
 
 class MapField<T extends ConfigField> extends ConfigField {
   const MapField();
+
+  @override
+  void parse({
+    required RemoteConfig config,
+    required Set<String> fixed,
+    required String path,
+    required dynamic data,
+  }) => throw UnimplementedError();
+
   @override
   dynamic toMap(
     Map<PrimitiveField, RemoteValue> remoteValues,
