@@ -16,15 +16,15 @@ import (
 )
 
 type Config struct {
-	Debug           bool         `koanf:"debug,omitempty" json:"-"`
-	URL             string       `koanf:"url" json:"url"`
-	StartTLS        bool         `koanf:"starttls" json:"starttls"`
-	ConnectTimeout  string       `koanf:"connect_timeout,omitempty" json:"-"`
-	RequestTimeout  string       `koanf:"request_timeout,omitempty" json:"-"`
-	UseFilter       bool         `koanf:"use_filter,omitempty" json:"use_filter"`
-	DNTemplate      string       `koanf:"dn_template,omitempty" json:"dn_template"`
-	Filter          FilterConfig `koanf:"filter,omitempty" json:"filter"`
-	AutoCreateUsers bool         `koanf:"auto_create_users,omitempty" json:"auto_create_users"`
+	Debug           bool          `koanf:"debug" json:"-"`
+	URL             string        `koanf:"url" json:"url"`
+	StartTLS        bool          `koanf:"starttls" json:"starttls"`
+	ConnectTimeout  time.Duration `koanf:"connect_timeout" json:"-"`
+	ReadTimeout     time.Duration `koanf:"read_timeout" json:"-"`
+	UseFilter       bool          `koanf:"use_filter" json:"use_filter"`
+	DNTemplate      string        `koanf:"dn_template" json:"dn_template"`
+	Filter          FilterConfig  `koanf:"filter" json:"filter"`
+	AutoCreateUsers bool          `koanf:"auto_create_users" json:"auto_create_users"`
 }
 
 type FilterConfig struct {
@@ -77,21 +77,29 @@ func NewAuth(cfg Config, logger zerolog.Logger) (*Auth, error) {
 		a.hostName = strings.Split(parsedURL.Host, ":")[0]
 	}
 
-	if cfg.ConnectTimeout == "" {
-		a.connectTimeout = 60 * time.Second
-	} else if d, err := time.ParseDuration(cfg.ConnectTimeout); err != nil {
-		return nil, errors.New("failed to parse connect timeout: " + err.Error())
-	} else {
-		a.connectTimeout = d
+	if cfg.ConnectTimeout.Seconds() < 1 {
+		cfg.ConnectTimeout = time.Second
 	}
+	if cfg.ReadTimeout.Seconds() < 1 {
+		cfg.ReadTimeout = time.Second
+	}
+	a.connectTimeout = cfg.ConnectTimeout
+	a.readTimeout = cfg.ReadTimeout
+	// if cfg.ConnectTimeout == "" {
+	// 	a.connectTimeout = 60 * time.Second
+	// } else if d, err := time.ParseDuration(cfg.ConnectTimeout); err != nil {
+	// 	return nil, errors.New("failed to parse connect timeout: " + err.Error())
+	// } else {
+	// 	a.connectTimeout = d
+	// }
 
-	if cfg.RequestTimeout == "" {
-		a.readTimeout = 60 * time.Second
-	} else if d, err := time.ParseDuration(cfg.RequestTimeout); err != nil {
-		return nil, errors.New("failed to parse read timeout: " + err.Error())
-	} else {
-		a.readTimeout = d
-	}
+	// if cfg.RequestTimeout == "" {
+	// 	a.readTimeout = 60 * time.Second
+	// } else if d, err := time.ParseDuration(cfg.RequestTimeout); err != nil {
+	// 	return nil, errors.New("failed to parse read timeout: " + err.Error())
+	// } else {
+	// 	a.readTimeout = d
+	// }
 
 	var err error
 	a.conn, err = a.newConn()
