@@ -39,7 +39,7 @@ func Initialize[T any](cmd *cobra.Command) error {
 
 	// config.yml
 	configFile, _ = cmd.Flags().GetString("config")
-	ymlConfig, err = LoadFile(configFile)
+	ymlConfig, err = LoadFile[T](configFile)
 	needsSetup = errors.Is(err, os.ErrNotExist)
 
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -104,7 +104,7 @@ func ConfigMap(paths []string) map[string]any {
 		}
 	}
 	for _, k := range result.Keys() {
-		if strings.Contains(k, "client_secret") || strings.Contains(k, "password") {
+		if strings.HasSuffix(k, "secret") || strings.HasSuffix(k, "password") {
 			result.Set(k, "")
 		}
 	}
@@ -129,26 +129,26 @@ func LoadOverrides[T any](cmd *cobra.Command) (*koanf.Koanf, error) {
 		k, v := f.Name, posflag.FlagVal(cmd.Flags(), f)
 		return k, v
 	}), nil)
-
-	k.Load(env.Provider("PHYLUM_", "__", func(s string) string {
-		return strings.ToLower(strings.TrimPrefix(s, "PHYLUM_"))
-	}), nil)
-
-	config := new(T)
-	k.Unmarshal("", config)
-	sanitized := koanf.New(".")
-	sanitized.Load(structs.Provider(*config, "koanf"), nil)
-	for _, key := range k.Keys() {
-		k.Set(key, sanitized.Get(key))
+	if err != nil {
+		return nil, err
 	}
 
-	return k, err
+	err = k.Load(env.Provider("PHYLUM_", "__", func(s string) string {
+		return strings.ToLower(strings.TrimPrefix(s, "PHYLUM_"))
+	}), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return fixTypes[T](k)
 }
 
-func LoadFile(path string) (*koanf.Koanf, error) {
+func LoadFile[T any](path string) (*koanf.Koanf, error) {
 	k := koanf.New(".")
-	err := k.Load(file.Provider(path), yaml.Parser())
-	return k, err
+	if err := k.Load(file.Provider(path), yaml.Parser()); err != nil {
+		return k, err
+	}
+	return fixTypes[T](k)
 }
 
 func LoadDefaults[T any]() (*koanf.Koanf, error) {
@@ -157,14 +157,23 @@ func LoadDefaults[T any]() (*koanf.Koanf, error) {
 	} else {
 		k := koanf.New(".")
 		err := k.Load(rawbytes.Provider(bytes), yaml.Parser())
-		config := new(T)
-		k.Unmarshal("", config)
-
-		sanitized := koanf.New(".")
-		sanitized.Load(structs.Provider(*config, "koanf"), nil)
-		for _, key := range k.Keys() {
-			k.Set(key, sanitized.Get(key))
+		if err != nil {
+			return nil, err
 		}
-		return k, err
+		return fixTypes[T](k)
 	}
+}
+
+func fixTypes[T any](k *koanf.Koanf) (*koanf.Koanf, error) {
+	config := new(T)
+	k.Unmarshal("", config)
+	kTyped := koanf.New(".")
+	if err := kTyped.Load(structs.Provider(*config, "koanf"), nil); err != nil {
+		return nil, err
+	}
+	for _, key := range k.Keys() {
+		k.Set(key, kTyped.Get(key))
+	}
+
+	return k, nil
 }
