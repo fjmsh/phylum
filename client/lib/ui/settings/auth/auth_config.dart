@@ -736,6 +736,34 @@ class AuthConfigFields extends ConfigFields {
           ),
         },
       ),
+      "openid": ObjectField(
+        fields: {"clients": MapField(schema: OidcConfigFields.instance)},
+      ),
+    },
+  );
+}
+
+class OidcConfigFields extends ConfigFields {
+  static final fieldName = PrimitiveField("");
+  static final fieldIssuerUrl = PrimitiveField("");
+  static final fieldClientId = PrimitiveField("");
+  static final fieldClientSecret = PrimitiveField("");
+  static final fieldAllowUnverifiedEmails = PrimitiveField(false);
+  static final fieldAutoCreateUsers = PrimitiveField(false);
+
+  static OidcConfigFields instance = OidcConfigFields._();
+
+  OidcConfigFields._();
+
+  @override
+  ObjectField get root => ObjectField(
+    fields: {
+      "name": fieldName,
+      "issuer_url": fieldIssuerUrl,
+      "client_id": fieldClientId,
+      "client_secret": fieldClientSecret,
+      "allow_unverified_emails": fieldAllowUnverifiedEmails,
+      "auto_create_users": fieldAutoCreateUsers,
     },
   );
 }

@@ -3,6 +3,7 @@ part of 'config.dart';
 class RemoteConfig<C extends ConfigFields> {
   final C schema;
   final values = <PrimitiveField, RemoteValue>{};
+  final maps = <MapField, Map<String, RemoteConfig>>{};
 
   RemoteConfig._({required this.schema});
 
@@ -11,6 +12,17 @@ class RemoteConfig<C extends ConfigFields> {
     final fixed = Set.of((map['overrides'] as List).cast<String>());
     final config = RemoteConfig._(schema: schema);
     schema.root.parse(config: config, fixed: fixed, path: "", data: data);
+    return config;
+  }
+
+  factory RemoteConfig.fromDataFixed(
+    C schema,
+    Map<String, dynamic> data,
+    Set<String> fixed,
+    String path,
+  ) {
+    final config = RemoteConfig._(schema: schema);
+    schema.root.parse(config: config, fixed: fixed, path: path, data: data);
     return config;
   }
 

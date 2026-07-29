@@ -99,8 +99,10 @@ class PrimitiveField<T> extends ConfigField {
   }
 }
 
-class MapField<T extends ConfigField> extends ConfigField {
-  const MapField();
+class MapField<C extends ConfigFields> extends ConfigField {
+  final C schema;
+
+  MapField({required this.schema});
 
   @override
   void parse({
@@ -108,7 +110,21 @@ class MapField<T extends ConfigField> extends ConfigField {
     required Set<String> fixed,
     required String path,
     required dynamic data,
-  }) => throw UnimplementedError();
+  }) {
+    data = (data as Map).cast<String, dynamic>();
+
+    for (final entry in data.entries) {
+      config.maps.putIfAbsent(
+        this,
+        () => {},
+      )[entry.key] = RemoteConfig.fromDataFixed(
+        schema,
+        entry.value,
+        fixed,
+        path.isEmpty ? entry.key : "$path.${entry.key}",
+      );
+    }
+  }
 
   @override
   dynamic toMap(
