@@ -4,8 +4,8 @@ db:
   name: ""
   user: ""
   password: ""
-  nomigrate: false # Do not auto-migrate schema (dev)
-  trace: false # Trace queries (dev)
+  nomigrate: false      # Do not auto-migrate schema (dev)
+  trace: false          # Trace queries (dev)
 
 storage:
   root: storage
@@ -22,10 +22,10 @@ storage:
     #   mount_points: ["<uuid>"]
     #   driver: minio
     #   params:
-    #     endpoint:
-    #     key_id:
-    #     key:
-    #     bucket_name:
+    #     endpoint: ""
+    #     key_id: ""
+    #     key: ""
+    #     bucket_name: ""
     #     prefix: /phylum-data
 
 core:
@@ -35,18 +35,17 @@ core:
   no_default_invite_permission: false
   users: # Config for new users
     basedir: /home
-    permissions: # list of permissions to be granted by default
+    permissions: []     # list of permissions to be granted by default
   publinks:
     password:
-      # hash is either argon2 or pbkdf2
-      kdf: pbkdf2
+      kdf: pbkdf2       # either "argon2" or "pbkdf2"
       pbkdf2:
         function: sha-256
         iterations: 600000
         salt: 32
         key: 32
   img:
-    dir: previews # relative to storage.root, or absolute
+    dir: previews       # relative to storage.root, or absolute
     quality: 80
 
 ## Warning: it is recommended to avoid using a combination of email-based
@@ -59,68 +58,69 @@ auth:
   suppress_multi_provider_warning: false
   magic_links: false # requires mail setup
   password:
-    backend: none # one of crypt, ldap, none
-    reset_enabled: false # requires mail setup, only supported by crypt backend
+    backend: none       # one of crypt, ldap, none
+    # password reset requires mail setup, only supported by crypt backend
+    reset_enabled: false 
     crypt:
       # kdf is either argon2 or pbkdf2
       kdf: argon2
       argon2:
-        memory: 16 # 2 ^ 16 = 64M
+        memory: 16      # 2 ^ 16 = 64M
         iterations: 4
         parallelism: 2
-        salt: 32 # 32 Bytes = 256-bit
-        key: 32 # 32 Bytes = 256-bit
+        salt: 32        # 32 Bytes = 256-bit
+        key: 32         # 32 Bytes = 256-bit
       pbkdf2:
         function: sha-256
         iterations: 600000
-        salt: 32 # 32 Bytes = 256-bit
-        key: 32 # 32 Bytes = 256-bit
-    requirements: # only supported by crypt backend
-      length: # 8
-      lower: # 0
-      upper: # 0
-      numeric: # 0
-      symbols: # 0
+        salt: 32        # 32 Bytes = 256-bit
+        key: 32         # 32 Bytes = 256-bit
+    requirements:       # only supported by crypt backend
+      length: 0
+      lower: 0
+      upper: 0
+      numeric: 0
+      symbols: 0
     ldap:
       debug: false
-      url: # ldap://ldap.example.com:1389
+      url: ""           # e.g. ldap://ldap.example.com:1389
       starttls: false
       connect_timeout: 30s
-      request_timeout: 30s
+      read_timeout: 30s
       use_filter: false
-      dn_template: # uid={email},ou=people,dc=example,dc=com
+      dn_template: ""   # e.g. uid={email},ou=people,dc=example,dc=com
       filter:
-        bind_dn: # uid=phylumbind,ou=people,dc=example,dc=com
-        bind_password: # ldap_password_for_phylumbind
-        base_dn: # dc=example,dc=com
-        template: # (mail={email})
+        bind_dn: ""     # e.g. uid=phylumbind,ou=people,dc=example,dc=com
+        bind_password: ""
+        base_dn: ""     # e.g. dc=example,dc=com
+        template: ""    # e.g. (mail={email})
       auto_create_users: false
-  # openid:
-  #   clients:
-  #     authelia:           # arbitrary
-  #       name: Authelia    # to be displayed to the user as 'Log In with <name>'
-  #       issuer_url: https://auth.example.com
-  #       client_id:
-  #       client_secret:
-  #       allow_unverified_emails: false
-  #       auto_create_users: true
-  #     google:             # arbitrary
-  #       name: Google      # to be displayed to the user as 'Log In with <name>'
-  #       issuer_url: https://accounts.google.com/
-  #       client_id:
-  #       client_secret:
-  #       allow_unverified_emails: false
-  #       auto_create_users: false
+  openid:
+    clients: {}
+  #   authelia:         # arbitrary
+  #     name: Authelia  # to be displayed to the user as 'Log In with <name>'
+  #     issuer_url: https://auth.example.com
+  #     client_id: phylum
+  #     client_secret:  ""
+  #     allow_unverified_emails: false
+  #     auto_create_users: true
+  #   google:           # arbitrary
+  #     name: Google    # to be displayed to the user as 'Log In with <name>'
+  #     issuer_url: https://accounts.google.com/
+  #     client_id: ""
+  #     client_secret: ""
+  #     allow_unverified_emails: false
+  #     auto_create_users: false
 
 jobs:
   workers: 5
-  timeout: 0 # In seconds
+  timeout: 0            # In seconds
 
 server:
   host:
   port: 2448
   # Location of the built web-app to serve.
-  # Note that this directory will be served as-is without further checks,
+  # Note that this directory will be served as-is with very rudimentary checks,
   # so make sure it doesn't point anywhere unreasonable like `/`
   web_app_src: web
   publink_path: /pub
@@ -136,12 +136,11 @@ mail:
   enabled: false
   connection_check_fatal: false
   smtp:
-    host:
+    host: ""
     port: 587
-    username:
-    password:
+    username: ""
+    password: ""
   from:
     name: Phylum Drive
-    email: # Defaults to smtp.username if empty
-  # Instance URL to send in emails
-  instance: "" # https://phylum.example.com  # No trailing slash
+    email:              # Defaults to smtp.username if empty
+  instance: "" # e.g. https://phylum.example.com. Instance URL to send in emails
