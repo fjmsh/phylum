@@ -26,7 +26,7 @@ class SetupConfig {
         (config['mail'] as Map).cast(),
       ),
       authConfig: RemoteConfig.fromMap(
-        const AuthConfigFields(),
+        AuthConfigFields.instance,
         (config['auth'] as Map).cast(),
       ),
     );

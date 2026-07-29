@@ -27,7 +27,8 @@ class AuthSettings extends Settings {
       create: (context) => RemoteConfigController(
         context,
         baseRoute: '/api/v1/admin/config/auth',
-        parseConfig: (data) => RemoteConfig.fromMap(AuthConfigFields(), data),
+        parseConfig: (data) =>
+            RemoteConfig.fromMap(AuthConfigFields.instance, data),
       ),
     ),
   ];

@@ -43,11 +43,13 @@ class ObjectField extends ConfigField {
 
 class PrimitiveField<T> extends ConfigField {
   final T defaultValue;
+  final dynamic Function(T)? serialize;
+  final T Function(dynamic)? parse;
 
-  const PrimitiveField(this.defaultValue);
+  PrimitiveField(this.defaultValue, {this.serialize, this.parse});
 
   RemoteValue<T> ensureType(dynamic value, bool fixed) {
-    return RemoteValue._(value: value, fixed: fixed);
+    return RemoteValue._(value: parse?.call(value) ?? value, fixed: fixed);
   }
 
   @override
@@ -55,9 +57,11 @@ class PrimitiveField<T> extends ConfigField {
     Map<PrimitiveField, RemoteValue> remoteValues,
     Map<PrimitiveField, dynamic> localValues,
   ) {
-    if (remoteValues[this]?.fixed == true) return null;
-    if (remoteValues[this]?.value == localValues[this]) return null;
-    return localValues[this];
+    final remote = remoteValues[this];
+    final local = localValues[this];
+    if (remote?.fixed == true) return null;
+    if (remote?.value == local) return null;
+    return serialize?.call(local) ?? local;
   }
 }
 

@@ -364,7 +364,7 @@ class Pbkdf2Config {
   factory Pbkdf2Config.fromMap(Map<String, dynamic> data) {
     return Pbkdf2Config(
       iterations: data['iterations'],
-      function: HashFunction.fromSring(data['function']),
+      function: HashFunction.fromString(data['function']),
     );
   }
 
@@ -398,7 +398,7 @@ enum HashFunction {
 
   const HashFunction(this.name, this.descriptor);
 
-  static HashFunction fromSring(String s) {
+  static HashFunction fromString(String s) {
     for (final h in HashFunction.values) {
       if (h.name == s) {
         return h;
@@ -634,8 +634,108 @@ class OpenIDConfig {
 }
 
 class AuthConfigFields extends ConfigFields {
-  const AuthConfigFields();
+  static final fieldMagicLinks = PrimitiveField(false);
+  static final fieldPasswordBackend = PrimitiveField(
+    PasswordBackend.crypt,
+    serialize: (val) => val.name,
+    parse: (val) => PasswordBackend.fromString(val),
+  );
+  static final fieldPasswordResetEnabled = PrimitiveField(false);
+  static final fieldPasswordCryptKdf = PrimitiveField(
+    CryptKDF.argon2,
+    serialize: (val) => val.name,
+    parse: (val) => CryptKDF.fromString(val),
+  );
+  static final fieldPasswordCryptArgon2Memory = PrimitiveField(16);
+  static final fieldPasswordCryptArgon2Iterations = PrimitiveField(4);
+  static final fieldPasswordCryptArgon2Parallelism = PrimitiveField(2);
+  static final fieldPasswordCryptPbkdf2Hash = PrimitiveField(
+    HashFunction.sha256,
+    serialize: (val) => val.name,
+    parse: (val) => HashFunction.fromString(val),
+  );
+  static final fieldPasswordCryptPbkdf2Iterations = PrimitiveField(600_000);
+  static final fieldPasswordRequirementsLength = PrimitiveField(8);
+  static final fieldPasswordRequirementsUpper = PrimitiveField(0);
+  static final fieldPasswordRequirementsLower = PrimitiveField(0);
+  static final fieldPasswordRequirementsNumeric = PrimitiveField(0);
+  static final fieldPasswordRequirementsSymbols = PrimitiveField(0);
+  static final fieldPasswordLdapDebug = PrimitiveField(false);
+  static final fieldPasswordLdapUrl = PrimitiveField("");
+  static final fieldPasswordLdapStarttls = PrimitiveField(false);
+  static final fieldPasswordLdapUseFilter = PrimitiveField(false);
+  static final fieldPasswordLdapDnTemplate = PrimitiveField(
+    "uid={email},ou=people,dc=example,dc=com",
+  );
+  static final fieldPasswordLdapFilterBindDn = PrimitiveField('');
+  static final fieldPasswordLdapFilterBindPassword = PrimitiveField('');
+  static final fieldPasswordLdapFilterBaseDn = PrimitiveField(
+    'dc=example,dc-com',
+  );
+  static final fieldPasswordLdapFilterTemplate = PrimitiveField(
+    '(mail={email})',
+  );
+  static final fieldPasswordLdapAutoCreateUsers = PrimitiveField(false);
+
+  static AuthConfigFields instance = AuthConfigFields._();
+
+  AuthConfigFields._();
 
   @override
-  ObjectField get root => const ObjectField(fields: {});
+  final ObjectField root = ObjectField(
+    fields: {
+      "magic_links": fieldMagicLinks,
+      "password": ObjectField(
+        fields: {
+          "backend": fieldPasswordBackend,
+          "reset_enabled": fieldPasswordResetEnabled,
+          "crypt": ObjectField(
+            fields: {
+              "kdf": fieldPasswordCryptKdf,
+              "argon2": ObjectField(
+                fields: {
+                  "memory": fieldPasswordCryptArgon2Memory,
+                  "iterations": fieldPasswordCryptArgon2Iterations,
+                  "parallelism": fieldPasswordCryptArgon2Parallelism,
+                },
+              ),
+              "pbkdf2": ObjectField(
+                fields: {
+                  "function": fieldPasswordCryptPbkdf2Hash,
+                  "iterations": fieldPasswordCryptPbkdf2Iterations,
+                },
+              ),
+            },
+          ),
+          "ldap": ObjectField(
+            fields: {
+              "debug": fieldPasswordLdapDebug,
+              "url": fieldPasswordLdapUrl,
+              "starttls": fieldPasswordLdapStarttls,
+              "use_filter": fieldPasswordLdapUseFilter,
+              "dn_template": fieldPasswordLdapUrl,
+              "filter": ObjectField(
+                fields: {
+                  "bind_dn": fieldPasswordLdapFilterBindDn,
+                  "bind_password": fieldPasswordLdapFilterBindPassword,
+                  "base_dn": fieldPasswordLdapFilterBaseDn,
+                  "template": fieldPasswordLdapDnTemplate,
+                },
+              ),
+              "auto_create_users": fieldPasswordLdapAutoCreateUsers,
+            },
+          ),
+          "requirements": ObjectField(
+            fields: {
+              "length": fieldPasswordRequirementsLength,
+              "upper": fieldPasswordRequirementsUpper,
+              "lower": fieldPasswordRequirementsLower,
+              "numeric": fieldPasswordRequirementsNumeric,
+              "symbols": fieldPasswordRequirementsSymbols,
+            },
+          ),
+        },
+      ),
+    },
+  );
 }
