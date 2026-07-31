@@ -32,12 +32,7 @@ class _SetupAuthFragmentState extends State<SetupAuthFragment> {
     if (!widget._mailBloc.state.enabled) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         widget._authBloc.passwordlessLoginEnabled = false;
-        widget._authBloc.passwordConfig = widget
-            ._authBloc
-            .state
-            .config
-            .passwordConfig
-            .copyWith(resetEnabled: false);
+        widget._authBloc.cryptBloc.resetEnabled = false;
       });
     }
   }
@@ -73,7 +68,9 @@ class _SetupAuthFragmentState extends State<SetupAuthFragment> {
   }
 
   Future<void> validateAndNext(BuildContext context) async {
-    if (!widget._authBloc.state.config.valid) {
+    if (!widget._authBloc.state.passwordlessLoginEnabled &&
+        widget._authBloc.state.passwordBackend == PasswordBackend.none &&
+        widget._authBloc.state.openIdConfigs.isEmpty) {
       showAlertDialog(
         context,
         message: 'You must set up at least 1 login method',
@@ -85,7 +82,7 @@ class _SetupAuthFragmentState extends State<SetupAuthFragment> {
 }
 
 class AuthConfigSetupCubit extends AuthConfigFormCubit {
-  AuthConfigSetupCubit({required super.remoteConfig});
+  AuthConfigSetupCubit({required super.remote});
 
   @override
   Future<KDFTestResult> testParams({

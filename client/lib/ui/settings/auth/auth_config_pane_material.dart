@@ -48,9 +48,9 @@ class MaterialAuthConfigPane extends StatelessWidget {
             ),
             Builder(
               builder: (context) {
-                final configValid = context.select<AuthConfigFormCubit, bool>(
-                  (bloc) => bloc.state.config.valid,
-                );
+                // final configValid = context.select<AuthConfigFormCubit, bool>(
+                //   (bloc) => bloc.state.valid,
+                // );
                 final requestInFlight = context
                     .select<RemoteConfigState<AuthConfigFields>, bool>(
                       (state) =>
@@ -58,7 +58,7 @@ class MaterialAuthConfigPane extends StatelessWidget {
                           state.saving,
                     );
                 return TextButton(
-                  onPressed: requestInFlight || !configValid
+                  onPressed: requestInFlight
                       ? null
                       : () async {
                           final config = context

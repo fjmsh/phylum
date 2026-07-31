@@ -40,7 +40,7 @@ class _SetupPageState extends State<SetupPage> {
     instanceUrl: widget.instanceUrl,
   );
   late final AuthConfigSetupCubit _authBloc = AuthConfigSetupCubit(
-    remoteConfig: widget.config.authConfig,
+    remote: widget.config.authConfig,
   );
 
   @override

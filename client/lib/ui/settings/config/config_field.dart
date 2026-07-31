@@ -116,7 +116,7 @@ class MapField<C extends ConfigFields> extends ConfigField {
       config.maps.putIfAbsent(
         this,
         () => {},
-      )[entry.key] = RemoteConfig.fromDataFixed(
+      )[entry.key] = RemoteConfig<C>.fromDataFixed(
         schema,
         entry.value,
         fixed,

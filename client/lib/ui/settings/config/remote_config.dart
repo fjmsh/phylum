@@ -36,6 +36,12 @@ class RemoteConfig<C extends ConfigFields> {
     return value;
   }
 
+  Map<String, RemoteConfig<FC>> getMap<FC extends ConfigFields>(
+    MapField<FC> field,
+  ) {
+    return maps[field]?.cast() ?? const {};
+  }
+
   RemoteConfig<C> apply(LocalConfig<C> updates) {
     throw UnimplementedError('Not implemented');
   }

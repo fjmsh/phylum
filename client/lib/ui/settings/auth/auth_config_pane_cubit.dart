@@ -9,10 +9,8 @@ import 'form/auth_config_form_cubit.dart';
 class AuthConfigPaneCubit extends AuthConfigFormCubit {
   final ApiClient<PhylumAccount> _apiClient;
 
-  AuthConfigPaneCubit({
-    required PhylumAccount account,
-    required super.remoteConfig,
-  }) : _apiClient = account.apiClient;
+  AuthConfigPaneCubit({required PhylumAccount account, required super.remote})
+    : _apiClient = account.apiClient;
 
   @override
   Future<KDFTestResult> testParams({

@@ -1,77 +1,138 @@
 import 'package:bloc/bloc.dart';
+import 'package:collection/collection.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
+import 'package:phylum/ui/settings/auth/form/crypt_config_cubit.dart';
+import 'package:phylum/ui/settings/auth/form/ldap_config_cubit.dart';
 import 'package:phylum/ui/settings/config/config.dart';
 
 class AuthConfigFormState {
-  final AuthConfig config;
   final bool mailEnabled;
+  final bool passwordlessLoginEnabled;
+  final PasswordBackend passwordBackend;
+  final Map<String, OpenIDConfig> openIdConfigs;
 
-  AuthConfigFormState({required this.config, required this.mailEnabled});
+  AuthConfigFormState({
+    required this.mailEnabled,
+    required this.passwordlessLoginEnabled,
+    required this.passwordBackend,
+    required this.openIdConfigs,
+  });
 
   factory AuthConfigFormState.createFromRemoteConfig({
-    required RemoteConfig<AuthConfigFields> config,
     required bool mailEnabled,
+    required RemoteConfig<AuthConfigFields> config,
   }) {
+    final map = config.getMap(AuthConfigFields.fieldOpenidClients);
+    print("Map:");
+    print(map);
+    print("Runtime Type:");
+    print(map.runtimeType);
+    print("First Runtime Type:");
+    print(map.values.first.runtimeType);
+    final openIdConfigs = config
+        .getMap(AuthConfigFields.fieldOpenidClients)
+        .map((id, config) {
+          return MapEntry(
+            id,
+            OpenIDConfig(
+              name: config.getValue(OidcConfigFields.fieldName),
+              issuerUrl: config.getValue(OidcConfigFields.fieldIssuerUrl),
+              clientId: config.getValue(OidcConfigFields.fieldClientId),
+              clientSecret: config.getValue(OidcConfigFields.fieldClientSecret),
+              allowUnverifiedEmails: config.getValue(
+                OidcConfigFields.fieldAllowUnverifiedEmails,
+              ),
+              autoCreateUsers: config.getValue(
+                OidcConfigFields.fieldAutoCreateUsers,
+              ),
+            ),
+          );
+        });
     return AuthConfigFormState(
-      config: AuthConfig.defaults(),
       mailEnabled: mailEnabled,
+      passwordlessLoginEnabled: config.getValue(
+        AuthConfigFields.fieldMagicLinks,
+      ),
+      passwordBackend: config.getValue(AuthConfigFields.fieldPasswordBackend),
+      openIdConfigs: openIdConfigs,
     );
   }
 
-  AuthConfigFormState copyWith({AuthConfig? config, bool? mailEnabled}) {
-    return AuthConfigFormState(
-      config: config ?? this.config,
-      mailEnabled: mailEnabled ?? this.mailEnabled,
-    );
-  }
+  AuthConfigFormState copyWith({
+    bool? mailEnabled,
+    bool? passwordlessLoginEnabled,
+    PasswordBackend? passwordBackend,
+    Map<String, OpenIDConfig>? openIdConfigs,
+  }) => AuthConfigFormState(
+    mailEnabled: mailEnabled ?? this.mailEnabled,
+    passwordlessLoginEnabled:
+        passwordlessLoginEnabled ?? this.passwordlessLoginEnabled,
+    passwordBackend: passwordBackend ?? this.passwordBackend,
+    openIdConfigs: openIdConfigs ?? this.openIdConfigs,
+  );
 
   @override
   String toString() =>
-      'AuthConfigFormState(config: $config, mailEnabled: $mailEnabled)';
+      'AuthConfigFormState('
+      'mailEnabled: $mailEnabled, '
+      'passwordlessLoginEnabled: $passwordlessLoginEnabled'
+      'passwordBackend: $passwordBackend,'
+      'openIdConfigs: $openIdConfigs,'
+      ')';
 
   @override
   bool operator ==(covariant AuthConfigFormState other) {
     if (identical(this, other)) return true;
 
-    return other.config == config && other.mailEnabled == mailEnabled;
+    return other.mailEnabled == mailEnabled &&
+        other.passwordlessLoginEnabled == passwordlessLoginEnabled &&
+        other.passwordBackend == passwordBackend &&
+        const MapEquality().equals(other.openIdConfigs, openIdConfigs);
   }
 
   @override
-  int get hashCode => config.hashCode ^ mailEnabled.hashCode;
+  int get hashCode =>
+      mailEnabled.hashCode & passwordlessLoginEnabled.hashCode ^
+      passwordBackend.hashCode ^
+      const MapEquality().hash(openIdConfigs);
 }
 
 abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
-  AuthConfigFormCubit({required RemoteConfig<AuthConfigFields> remoteConfig})
+  late final CryptConfigCubit cryptBloc;
+  late final LdapConfigCubit ldapBloc;
+
+  AuthConfigFormCubit({required RemoteConfig<AuthConfigFields> remote})
     : super(
         AuthConfigFormState.createFromRemoteConfig(
-          config: remoteConfig,
+          config: remote,
           mailEnabled: false,
         ),
-      );
+      ) {
+    cryptBloc = CryptConfigCubit(remote: remote);
+    ldapBloc = LdapConfigCubit(remote: remote);
+  }
 
-  void reset(RemoteConfig<AuthConfigFields> config) {
+  void reset(RemoteConfig<AuthConfigFields> remote) {
     emit(
       AuthConfigFormState.createFromRemoteConfig(
-        config: config,
+        config: remote,
         mailEnabled: state.mailEnabled,
       ),
     );
+    cryptBloc.reset(remote);
+    ldapBloc.reset(remote);
   }
 
-  set mailEnabled(bool enabled) {
-    emit(state.copyWith(mailEnabled: enabled));
+  set mailEnabled(bool val) {
+    emit(state.copyWith(mailEnabled: val));
   }
 
-  set passwordlessLoginEnabled(bool enabled) {
-    emit(
-      state.copyWith(
-        config: state.config.copyWith(passwordlessLoginEnabled: enabled),
-      ),
-    );
+  set passwordlessLoginEnabled(bool val) {
+    emit(state.copyWith(passwordlessLoginEnabled: val));
   }
 
-  set passwordConfig(PasswordConfig config) {
-    emit(state.copyWith(config: state.config.copyWith(passwordConfig: config)));
+  set passwordBackend(PasswordBackend val) {
+    emit(state.copyWith(passwordBackend: val));
   }
 
   void addOpenIDConfig(OpenIDConfig config) {
@@ -79,25 +140,25 @@ abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
     final originalId = config.name.toLowerCase().replaceAll(re, '-');
     String id = originalId;
     int i = 2;
-    while (state.config.openIdConfigs.containsKey(id)) {
+    while (state.openIdConfigs.containsKey(id)) {
       id = '$originalId-$i';
       i++;
     }
-    final configs = Map.of(state.config.openIdConfigs);
+    final configs = Map.of(state.openIdConfigs);
     configs[id] = config;
-    emit(state.copyWith(config: state.config.copyWith(openIdConfigs: configs)));
+    emit(state.copyWith(openIdConfigs: configs));
   }
 
   void replaceOpenIDConfig(String id, OpenIDConfig config) {
-    final configs = Map.of(state.config.openIdConfigs);
+    final configs = Map.of(state.openIdConfigs);
     configs[id] = config;
-    emit(state.copyWith(config: state.config.copyWith(openIdConfigs: configs)));
+    emit(state.copyWith(openIdConfigs: configs));
   }
 
   void removeOpenIDConfig(String id) {
-    final configs = Map.of(state.config.openIdConfigs);
+    final configs = Map.of(state.openIdConfigs);
     configs.remove(id);
-    emit(state.copyWith(config: state.config.copyWith(openIdConfigs: configs)));
+    emit(state.copyWith(openIdConfigs: configs));
   }
 
   LocalConfig<AuthConfigFields>? validate() {

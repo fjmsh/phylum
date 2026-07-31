@@ -676,6 +676,7 @@ class AuthConfigFields extends ConfigFields {
     '(mail={email})',
   );
   static final fieldPasswordLdapAutoCreateUsers = PrimitiveField(false);
+  static final fieldOpenidClients = MapField(schema: OidcConfigFields.instance);
 
   static AuthConfigFields instance = AuthConfigFields._();
 
@@ -736,9 +737,7 @@ class AuthConfigFields extends ConfigFields {
           ),
         },
       ),
-      "openid": ObjectField(
-        fields: {"clients": MapField(schema: OidcConfigFields.instance)},
-      ),
+      "openid": ObjectField(fields: {"clients": fieldOpenidClients}),
     },
   );
 }

@@ -171,6 +171,10 @@ class LdapConfigCubit extends Cubit<LdapConfigState> {
   LdapConfigCubit({required RemoteConfig<AuthConfigFields> remote})
     : super(LdapConfigState.createFromRemoteConfig(remote));
 
+  void reset(RemoteConfig<AuthConfigFields> remote) {
+    emit(LdapConfigState.createFromRemoteConfig(remote));
+  }
+
   set serverUrl(String val) {
     emit(state.copyWith(serverUrl: val));
   }

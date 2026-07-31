@@ -28,7 +28,7 @@ class _AuthConfigPaneState extends State<AuthConfigPane> {
     final account = context.read<PhylumAccount>();
     configBloc = AuthConfigPaneCubit(
       account: account,
-      remoteConfig: _remoteConfigController.config!,
+      remote: _remoteConfigController.config!,
     );
     _removeServerConfigListener = account.configNotifier.addListener((config) {
       configBloc.mailEnabled = config.mail;

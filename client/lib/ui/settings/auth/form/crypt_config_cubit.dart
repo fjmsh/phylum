@@ -4,6 +4,7 @@ import 'package:phylum/ui/settings/config/config.dart';
 
 class CryptConfigState {
   final Set<PrimitiveField> _fixed;
+  final bool shouldAllowKdfSelection;
   final CryptKDF kdf;
   final bool resetEnabled;
   final int argon2Memory;
@@ -14,6 +15,7 @@ class CryptConfigState {
 
   CryptConfigState({
     required this._fixed,
+    required this.shouldAllowKdfSelection,
     required this.kdf,
     required this.resetEnabled,
     required this.argon2Memory,
@@ -26,9 +28,11 @@ class CryptConfigState {
   factory CryptConfigState.createFromRemoteConfig(
     RemoteConfig<AuthConfigFields> remote,
   ) {
+    final kdf = remote.getValue(AuthConfigFields.fieldPasswordCryptKdf);
     return CryptConfigState(
       fixed: remote.fixed,
-      kdf: remote.getValue(AuthConfigFields.fieldPasswordCryptKdf),
+      shouldAllowKdfSelection: kdf != CryptKDF.argon2,
+      kdf: kdf,
       resetEnabled: remote.getValue(AuthConfigFields.fieldPasswordResetEnabled),
       argon2Memory: remote.getValue(
         AuthConfigFields.fieldPasswordCryptArgon2Memory,
@@ -58,6 +62,7 @@ class CryptConfigState {
     int? pbkdf2Iterations,
   }) => CryptConfigState(
     fixed: _fixed,
+    shouldAllowKdfSelection: shouldAllowKdfSelection,
     kdf: kdf ?? this.kdf,
     resetEnabled: resetEnabled ?? this.resetEnabled,
     argon2Memory: argon2Memory ?? this.argon2Memory,
@@ -107,6 +112,10 @@ class CryptConfigState {
 class CryptConfigCubit extends Cubit<CryptConfigState> {
   CryptConfigCubit({required RemoteConfig<AuthConfigFields> remote})
     : super(CryptConfigState.createFromRemoteConfig(remote));
+
+  void reset(RemoteConfig<AuthConfigFields> remote) {
+    emit(CryptConfigState.createFromRemoteConfig(remote));
+  }
 
   set kdf(CryptKDF val) {
     emit(state.copyWith(kdf: val));

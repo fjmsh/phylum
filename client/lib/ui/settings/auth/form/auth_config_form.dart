@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/ui/settings/auth/form/auth_config_form_cubit.dart';
-import 'package:phylum/ui/settings/auth/util/crypt.dart';
-import 'package:phylum/ui/settings/auth/util/ldap.dart';
 import 'package:phylum/ui/settings/auth/util/openid.dart';
 import 'package:phylum/util/dialogs.dart';
+
+import 'crypt_config_form.dart';
+import 'ldap_config_form.dart';
 
 class AuthConfigForm extends StatelessWidget {
   final AuthConfigFormCubit bloc;
@@ -51,7 +52,7 @@ class PasswordlessLoginSwitch extends StatelessWidget {
               title: Text('Enable Passwordless Email Login'),
               subtitle: bloc.state.mailEnabled ? null : Text('Requires Email'),
               secondary: Icon(Icons.email),
-              value: state.mailEnabled && state.config.passwordlessLoginEnabled,
+              value: state.mailEnabled && state.passwordlessLoginEnabled,
               onChanged: state.mailEnabled
                   ? (value) => bloc.passwordlessLoginEnabled = value
                   : null,
@@ -59,8 +60,8 @@ class PasswordlessLoginSwitch extends StatelessWidget {
           },
           buildWhen: (previous, current) {
             return previous.mailEnabled != current.mailEnabled ||
-                previous.config.passwordlessLoginEnabled !=
-                    current.config.passwordlessLoginEnabled;
+                previous.passwordlessLoginEnabled !=
+                    current.passwordlessLoginEnabled;
           },
         ),
       ],
@@ -84,31 +85,12 @@ class PasswordAuthForm extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
-        // BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
-        //   bloc: bloc,
-        //   builder: (context, state) {
-        //     return SwitchListTile(
-        //       title: Text('Enable Password Login'),
-        //       secondary: Icon(Icons.password),
-        //       value: state.config.passwordLoginEnabled,
-        //       onChanged: (value) =>
-        //           bloc.passwordConfig = state.config.passwordConfig.copyWith(
-        //             backend: value
-        //                 ? PasswordBackend.crypt
-        //                 : PasswordBackend.none,
-        //           ),
-        //     );
-        //   },
-        //   buildWhen: (previous, current) =>
-        //       previous.config.passwordLoginEnabled !=
-        //       current.config.passwordLoginEnabled,
-        // ),
         BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
           bloc: bloc,
           builder: (context, state) => ListTile(
             title: Text('Password Login'),
             leading: Icon(Icons.password),
-            subtitle: Text(state.config.passwordConfig.backend.descriptor),
+            subtitle: Text(state.passwordBackend.descriptor),
             onTap: () async {
               final backend = await showOptionsDialog(
                 context,
@@ -122,105 +104,27 @@ class PasswordAuthForm extends StatelessWidget {
               );
               if (backend == null || !context.mounted) return;
 
-              var config = state.config.passwordConfig.copyWith(
-                backend: backend,
-              );
-              if (backend == PasswordBackend.ldap &&
-                  config.ldapConfig == LdapConfig.defaults()) {
-                final ldapConfig = await LdapConfigDialog.show(
-                  context,
-                  config.ldapConfig,
-                );
-                if (ldapConfig == null || !context.mounted) return;
-                config = config.copyWith(
-                  backend: PasswordBackend.ldap,
-                  ldapConfig: ldapConfig,
-                );
-              }
-
-              bloc.passwordConfig = config;
+              bloc.passwordBackend = backend;
             },
           ),
         ),
         BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
           bloc: bloc,
           builder: (context, state) {
-            return switch (state.config.passwordConfig.backend) {
-              .crypt => buildCryptFields(
-                context,
-                state.config.passwordConfig,
-                state.mailEnabled,
+            return switch (state.passwordBackend) {
+              .crypt => CryptConfigForm(
+                mailEnabled: state.mailEnabled,
+                bloc: bloc.cryptBloc,
               ),
-              .ldap => buildLdapFields(context, state.config.passwordConfig),
+              .ldap => LdapConfigForm(bloc: bloc.ldapBloc),
               _ => Container(),
             };
           },
           buildWhen: (previous, current) =>
               previous.mailEnabled != current.mailEnabled ||
-              (previous.config.passwordConfig.backend ==
-                      PasswordBackend.none) !=
-                  (current.config.passwordConfig.backend ==
-                      PasswordBackend.none) ||
-              previous.config.passwordConfig != current.config.passwordConfig,
+              previous.passwordBackend != current.passwordBackend,
         ),
       ],
-    );
-  }
-
-  Widget buildCryptFields(
-    BuildContext context,
-    PasswordConfig config,
-    bool mailEnabled,
-  ) {
-    return Column(
-      children: [
-        ListTile(
-          title: Text('KDF'),
-          subtitle: Text(config.cryptConfig.description),
-          leading: Icon(Icons.key),
-          onTap: () async {
-            final cryptConfig = await configureKDF(
-              context,
-              bloc,
-              config.cryptConfig,
-            );
-            if (cryptConfig == null || !context.mounted) return;
-            bloc.passwordConfig = config.copyWith(cryptConfig: cryptConfig);
-          },
-        ),
-        SwitchListTile(
-          title: Text('Self-Serve Password Reset'),
-          subtitle: !mailEnabled
-              ? const Text('Requires Email')
-              : config.backend != PasswordBackend.crypt
-              ? const Text('Only supported for DB backend')
-              : null,
-          secondary: Icon(Icons.refresh),
-          value: mailEnabled && config.backend == PasswordBackend.crypt
-              ? config.resetEnabled
-              : false,
-          onChanged: mailEnabled && config.backend == PasswordBackend.crypt
-              ? (value) =>
-                    bloc.passwordConfig = config.copyWith(resetEnabled: value)
-              : null,
-        ),
-      ],
-    );
-  }
-
-  Widget buildLdapFields(BuildContext context, PasswordConfig config) {
-    return ListTile(
-      title: Text('LDAP Configuration'),
-      subtitle: Text('Server: ${config.ldapConfig.url}'),
-      leading: Icon(Icons.storage),
-      onTap: () async {
-        final ldapConfig = await LdapConfigDialog.show(
-          context,
-          config.ldapConfig,
-        );
-        if (ldapConfig == null || !context.mounted) return;
-        bloc.passwordConfig = config.copyWith(ldapConfig: ldapConfig);
-      },
     );
   }
 }
@@ -234,11 +138,11 @@ class OpenIDConfigList extends StatelessWidget {
     return BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
       bloc: bloc,
       builder: (context, state) {
-        return buildList(context, state.config.openIdConfigs);
+        return buildList(context, state.openIdConfigs);
       },
-      buildWhen: (previous, current) => !DeepCollectionEquality().equals(
-        previous.config.openIdConfigs,
-        current.config.openIdConfigs,
+      buildWhen: (previous, current) => !const DeepCollectionEquality().equals(
+        previous.openIdConfigs,
+        current.openIdConfigs,
       ),
     );
   }
