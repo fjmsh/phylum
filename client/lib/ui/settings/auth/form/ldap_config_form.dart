@@ -91,28 +91,25 @@ class DnTemplateInputField extends StatelessWidget {
     return BlocBuilder<LdapConfigCubit, LdapConfigState>(
       bloc: _bloc,
       builder: (context, state) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16.0),
-          child: TextFormField(
-            decoration: InputDecoration(
-              label: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(text: 'DN Template '),
-                    TextSpan(
-                      text: '*',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ],
-                ),
+        return TextFormField(
+          decoration: InputDecoration(
+            label: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: 'DN Template '),
+                  TextSpan(
+                    text: '*',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ],
               ),
-              hint: Text('uid={email},ou=people,dc=example,dc=com'),
-              errorText: state.dnTemplateError,
             ),
-            initialValue: state.dnTemplate,
-            key: ValueKey('dn_template'),
-            onChanged: (value) => _bloc.dnTemplate = value,
+            hint: Text('uid={email},ou=people,dc=example,dc=com'),
+            errorText: state.dnTemplateError,
           ),
+          initialValue: state.dnTemplate,
+          key: ValueKey('dn_template'),
+          onChanged: (value) => _bloc.dnTemplate = value,
         );
       },
     );

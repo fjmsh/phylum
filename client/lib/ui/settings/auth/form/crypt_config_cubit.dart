@@ -7,9 +7,12 @@ class CryptConfigState {
   final bool shouldAllowKdfSelection;
   final CryptKDF kdf;
   final bool resetEnabled;
-  final int argon2Memory;
-  final int argon2Iterations;
-  final int argon2Parallelism;
+  final String argon2Memory;
+  final String argon2Iterations;
+  final String argon2Parallelism;
+  final String? argon2MemoryError;
+  final String? argon2IterationsError;
+  final String? argon2ParallelismError;
   final HashFunction pbkdf2Hash;
   final int pbkdf2Iterations;
 
@@ -21,6 +24,9 @@ class CryptConfigState {
     required this.argon2Memory,
     required this.argon2Iterations,
     required this.argon2Parallelism,
+    required this.argon2MemoryError,
+    required this.argon2IterationsError,
+    required this.argon2ParallelismError,
     required this.pbkdf2Hash,
     required this.pbkdf2Iterations,
   });
@@ -34,15 +40,18 @@ class CryptConfigState {
       shouldAllowKdfSelection: kdf != CryptKDF.argon2,
       kdf: kdf,
       resetEnabled: remote.getValue(AuthConfigFields.fieldPasswordResetEnabled),
-      argon2Memory: remote.getValue(
-        AuthConfigFields.fieldPasswordCryptArgon2Memory,
-      ),
-      argon2Iterations: remote.getValue(
-        AuthConfigFields.fieldPasswordCryptArgon2Iterations,
-      ),
-      argon2Parallelism: remote.getValue(
-        AuthConfigFields.fieldPasswordCryptArgon2Parallelism,
-      ),
+      argon2Memory: remote
+          .getValue(AuthConfigFields.fieldPasswordCryptArgon2Memory)
+          .toString(),
+      argon2Iterations: remote
+          .getValue(AuthConfigFields.fieldPasswordCryptArgon2Iterations)
+          .toString(),
+      argon2Parallelism: remote
+          .getValue(AuthConfigFields.fieldPasswordCryptArgon2Parallelism)
+          .toString(),
+      argon2MemoryError: null,
+      argon2IterationsError: null,
+      argon2ParallelismError: null,
       pbkdf2Hash: remote.getValue(
         AuthConfigFields.fieldPasswordCryptPbkdf2Hash,
       ),
@@ -55,9 +64,9 @@ class CryptConfigState {
   CryptConfigState copyWith({
     CryptKDF? kdf,
     bool? resetEnabled,
-    int? argon2Memory,
-    int? argon2Iterations,
-    int? argon2Parallelism,
+    String? argon2Memory,
+    String? argon2Iterations,
+    String? argon2Parallelism,
     HashFunction? pbkdf2Hash,
     int? pbkdf2Iterations,
   }) => CryptConfigState(
@@ -68,8 +77,30 @@ class CryptConfigState {
     argon2Memory: argon2Memory ?? this.argon2Memory,
     argon2Iterations: argon2Iterations ?? this.argon2Iterations,
     argon2Parallelism: argon2Parallelism ?? this.argon2Parallelism,
+    argon2MemoryError: null,
+    argon2IterationsError: null,
+    argon2ParallelismError: null,
     pbkdf2Hash: pbkdf2Hash ?? this.pbkdf2Hash,
     pbkdf2Iterations: pbkdf2Iterations ?? this.pbkdf2Iterations,
+  );
+
+  CryptConfigState copyWithErrors({
+    String? argon2MemoryError,
+    String? argon2IterationsError,
+    String? argon2ParallelismError,
+  }) => CryptConfigState(
+    fixed: _fixed,
+    shouldAllowKdfSelection: shouldAllowKdfSelection,
+    kdf: kdf,
+    resetEnabled: resetEnabled,
+    argon2Memory: argon2Memory,
+    argon2Iterations: argon2Iterations,
+    argon2Parallelism: argon2Parallelism,
+    argon2MemoryError: argon2MemoryError,
+    argon2IterationsError: argon2IterationsError,
+    argon2ParallelismError: argon2ParallelismError,
+    pbkdf2Hash: pbkdf2Hash,
+    pbkdf2Iterations: pbkdf2Iterations,
   );
 
   bool isKdfFixed() => _fixed.contains(AuthConfigFields.fieldPasswordCryptKdf);
@@ -94,6 +125,9 @@ class CryptConfigState {
         argon2Memory == other.argon2Memory &&
         argon2Iterations == other.argon2Iterations &&
         argon2Parallelism == other.argon2Parallelism &&
+        argon2MemoryError == other.argon2MemoryError &&
+        argon2IterationsError == other.argon2IterationsError &&
+        argon2ParallelismError == other.argon2ParallelismError &&
         pbkdf2Hash == other.pbkdf2Hash &&
         pbkdf2Iterations == other.pbkdf2Iterations;
   }
@@ -105,6 +139,9 @@ class CryptConfigState {
       argon2Memory.hashCode ^
       argon2Iterations.hashCode ^
       argon2Parallelism.hashCode ^
+      argon2MemoryError.hashCode ^
+      argon2IterationsError.hashCode ^
+      argon2ParallelismError.hashCode ^
       pbkdf2Hash.hashCode ^
       pbkdf2Iterations.hashCode;
 }
@@ -125,15 +162,15 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
     emit(state.copyWith(resetEnabled: val));
   }
 
-  set argon2Memory(int val) {
+  set argon2Memory(String val) {
     emit(state.copyWith(argon2Memory: val));
   }
 
-  set argon2Iterations(int val) {
+  set argon2Iterations(String val) {
     emit(state.copyWith(argon2Iterations: val));
   }
 
-  set argon2Parallelism(int val) {
+  set argon2Parallelism(String val) {
     emit(state.copyWith(argon2Parallelism: val));
   }
 
@@ -146,23 +183,51 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
   }
 
   LocalConfig<AuthConfigFields>? validate() {
+    final argon2Memory = int.tryParse(state.argon2Memory);
+    final argon2Iterations = int.tryParse(state.argon2Iterations);
+    final argon2Parallelism = int.tryParse(state.argon2Parallelism);
+
+    final newState = state.copyWithErrors(
+      argon2MemoryError: state.argon2Memory.isEmpty
+          ? 'Required'
+          : argon2Memory == null
+          ? 'Must be a number'
+          : argon2Memory < 8 || argon2Memory > 32
+          ? 'Out of Bounds'
+          : null,
+      argon2IterationsError: state.argon2Iterations.isEmpty
+          ? 'Required'
+          : argon2Iterations == null
+          ? 'Must be a number'
+          : argon2Iterations < 1
+          ? 'Out of Bounds'
+          : null,
+      argon2ParallelismError: state.argon2Parallelism.isEmpty
+          ? 'Required'
+          : argon2Parallelism == null
+          ? 'Must be a number'
+          : argon2Parallelism < 1
+          ? 'Out of Bounds'
+          : null,
+    );
+    if (newState != state) {
+      emit(newState);
+      return null;
+    }
     return LocalConfig<AuthConfigFields>()
       ..set<CryptKDF>(AuthConfigFields.fieldPasswordCryptKdf, state.kdf)
       ..set<bool>(
         AuthConfigFields.fieldPasswordResetEnabled,
         state.resetEnabled,
       )
-      ..set<int>(
-        AuthConfigFields.fieldPasswordCryptArgon2Memory,
-        state.argon2Memory,
-      )
+      ..set<int>(AuthConfigFields.fieldPasswordCryptArgon2Memory, argon2Memory!)
       ..set<int>(
         AuthConfigFields.fieldPasswordCryptArgon2Iterations,
-        state.argon2Iterations,
+        argon2Iterations!,
       )
       ..set<int>(
         AuthConfigFields.fieldPasswordCryptArgon2Parallelism,
-        state.argon2Parallelism,
+        argon2Parallelism!,
       )
       ..set<HashFunction>(
         AuthConfigFields.fieldPasswordCryptPbkdf2Hash,
