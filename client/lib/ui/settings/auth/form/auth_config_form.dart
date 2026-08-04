@@ -19,11 +19,26 @@ class AuthConfigForm extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 18,
+      spacing: 6,
       children: [
-        PasswordlessLoginSwitch(bloc: bloc),
-        PasswordAuthForm(bloc: bloc),
-        OpenIDConfigList(bloc: bloc),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: PasswordlessLoginSwitch(bloc: bloc),
+          ),
+        ),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: PasswordAuthForm(bloc: bloc),
+          ),
+        ),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: OpenIDConfigList(bloc: bloc),
+          ),
+        ),
       ],
     );
   }
@@ -112,11 +127,17 @@ class PasswordAuthForm extends StatelessWidget {
           bloc: bloc,
           builder: (context, state) {
             return switch (state.passwordBackend) {
-              .crypt => CryptConfigForm(
-                mailEnabled: state.mailEnabled,
-                bloc: bloc.cryptBloc,
+              .crypt => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: CryptConfigForm(
+                  mailEnabled: state.mailEnabled,
+                  bloc: bloc.cryptBloc,
+                ),
               ),
-              .ldap => LdapConfigForm(bloc: bloc.ldapBloc),
+              .ldap => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: LdapConfigForm(bloc: bloc.ldapBloc),
+              ),
               _ => Container(),
             };
           },

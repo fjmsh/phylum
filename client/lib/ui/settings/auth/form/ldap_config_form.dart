@@ -12,6 +12,7 @@ class LdapConfigForm extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       spacing: 12,
       children: [
+        const ListTile(title: Text('LDAP Configuration'), dense: true),
         BlocBuilder<LdapConfigCubit, LdapConfigState>(
           bloc: _bloc,
           builder: (context, state) => TextFormField(
