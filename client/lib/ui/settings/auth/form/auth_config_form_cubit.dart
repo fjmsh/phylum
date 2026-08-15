@@ -3,6 +3,7 @@ import 'package:collection/collection.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/ui/settings/auth/form/crypt_config_cubit.dart';
 import 'package:phylum/ui/settings/auth/form/ldap_config_cubit.dart';
+import 'package:phylum/ui/settings/auth/form/openid_config_cubit.dart';
 import 'package:phylum/ui/settings/config/config.dart';
 
 class AuthConfigFormState {
@@ -22,31 +23,10 @@ class AuthConfigFormState {
     required bool mailEnabled,
     required RemoteConfig<AuthConfigFields> config,
   }) {
-    final map = config.getMap(AuthConfigFields.fieldOpenidClients);
-    print("Map:");
-    print(map);
-    print("Runtime Type:");
-    print(map.runtimeType);
-    print("First Runtime Type:");
-    print(map.values.first.runtimeType);
     final openIdConfigs = config
         .getMap(AuthConfigFields.fieldOpenidClients)
         .map((id, config) {
-          return MapEntry(
-            id,
-            OpenIDConfig(
-              name: config.getValue(OidcConfigFields.fieldName),
-              issuerUrl: config.getValue(OidcConfigFields.fieldIssuerUrl),
-              clientId: config.getValue(OidcConfigFields.fieldClientId),
-              clientSecret: config.getValue(OidcConfigFields.fieldClientSecret),
-              allowUnverifiedEmails: config.getValue(
-                OidcConfigFields.fieldAllowUnverifiedEmails,
-              ),
-              autoCreateUsers: config.getValue(
-                OidcConfigFields.fieldAutoCreateUsers,
-              ),
-            ),
-          );
+          return MapEntry(id, OpenIDConfig.createFromConfig(config));
         });
     return AuthConfigFormState(
       mailEnabled: mailEnabled,

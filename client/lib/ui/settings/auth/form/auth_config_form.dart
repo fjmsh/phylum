@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/ui/settings/auth/form/auth_config_form_cubit.dart';
-import 'package:phylum/ui/settings/auth/util/openid.dart';
+import 'package:phylum/ui/settings/auth/form/openid_config_cubit.dart';
+import 'package:phylum/ui/settings/auth/form/openid_config_dialog.dart';
+import 'package:phylum/ui/settings/config/config.dart';
 import 'package:phylum/util/dialogs.dart';
 
 import 'crypt_config_form.dart';
@@ -182,9 +184,11 @@ class OpenIDConfigList extends StatelessWidget {
           ),
           trailing: IconButton(
             onPressed: () async {
-              final config = await OidcDialog.show(
+              final config = await OpenIDConfigDialog.show(
                 context,
-                OpenIDConfig.empty(),
+                config: OpenIDConfig.createFromConfig(
+                  RemoteConfig.empty(OidcConfigFields.instance),
+                ),
               );
               if (config == null || !context.mounted) return;
               bloc.addOpenIDConfig(config);
@@ -198,7 +202,10 @@ class OpenIDConfigList extends StatelessWidget {
             title: Text(e.value.name),
             subtitle: Text(e.value.issuerUrl),
             onTap: () async {
-              final config = await OidcDialog.show(context, e.value);
+              final config = await OpenIDConfigDialog.show(
+                context,
+                config: e.value,
+              );
               if (config == null || !context.mounted) return;
               bloc.replaceOpenIDConfig(e.key, config);
             },

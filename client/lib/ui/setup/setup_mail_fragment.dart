@@ -60,7 +60,7 @@ class SetupMailFragment extends StatelessWidget {
     final config = _bloc.validate();
     if (config == null) return;
 
-    if (!config.get(MailConfigFields.fieldEnabled)) {
+    if (!config.getValue(MailConfigFields.fieldEnabled)) {
       onNextPress();
       return;
     }
@@ -93,7 +93,7 @@ class MailConfigSetupCubit extends MailConfigFormCubit {
     : super(remoteConfig: _remoteConfig, instanceUrl: instanceUrl);
 
   Future<String?> checkConfig(LocalConfig<MailConfigFields> config) async {
-    if (!config.get(MailConfigFields.fieldEnabled)) {
+    if (!config.getValue(MailConfigFields.fieldEnabled)) {
       return null;
     }
 

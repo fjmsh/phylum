@@ -276,16 +276,16 @@ class MailConfigFormCubit extends Cubit<MailConfigFormState> {
         newState.fromNameError == null &&
         newState.fromEmailError == null &&
         newState.instanceUrlError == null) {
-      final updates = LocalConfig<MailConfigFields>();
-      updates.set(MailConfigFields.fieldEnabled, state.enabled);
-      updates.set(MailConfigFields.fieldSmtpHost, state.smtpHost);
-      updates.set(MailConfigFields.fieldSmtpPort, state.smtpPort);
-      updates.set(MailConfigFields.fieldSmtpUsername, state.smtpUsername);
-      updates.set(MailConfigFields.fieldSmtpPassword, state.smtpPassword);
-      updates.set(MailConfigFields.fieldFromEmail, state.fromEmail);
-      updates.set(MailConfigFields.fieldFromName, state.fromName);
-      updates.set(MailConfigFields.fieldInstance, state.instanceUrl);
-      return updates;
+      final local = LocalConfig<MailConfigFields>();
+      local.setValue(MailConfigFields.fieldEnabled, state.enabled);
+      local.setValue(MailConfigFields.fieldSmtpHost, state.smtpHost);
+      local.setValue(MailConfigFields.fieldSmtpPort, state.smtpPort);
+      local.setValue(MailConfigFields.fieldSmtpUsername, state.smtpUsername);
+      local.setValue(MailConfigFields.fieldSmtpPassword, state.smtpPassword);
+      local.setValue(MailConfigFields.fieldFromEmail, state.fromEmail);
+      local.setValue(MailConfigFields.fieldFromName, state.fromName);
+      local.setValue(MailConfigFields.fieldInstance, state.instanceUrl);
+      return local;
     } else {
       emit(newState);
       return null;

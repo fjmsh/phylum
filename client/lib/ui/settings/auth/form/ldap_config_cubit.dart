@@ -214,33 +214,39 @@ class LdapConfigCubit extends Cubit<LdapConfigState> {
   LocalConfig<AuthConfigFields>? validate() {
     final local = LocalConfig<AuthConfigFields>();
 
-    local.set<String>(AuthConfigFields.fieldPasswordLdapUrl, state.serverUrl);
-    local.set<bool>(AuthConfigFields.fieldPasswordLdapStarttls, state.starttls);
-    local.set<bool>(
+    local.setValue<String>(
+      AuthConfigFields.fieldPasswordLdapUrl,
+      state.serverUrl,
+    );
+    local.setValue<bool>(
+      AuthConfigFields.fieldPasswordLdapStarttls,
+      state.starttls,
+    );
+    local.setValue<bool>(
       AuthConfigFields.fieldPasswordLdapAutoCreateUsers,
       state.autoCreateUsers,
     );
-    local.set<bool>(
+    local.setValue<bool>(
       AuthConfigFields.fieldPasswordLdapUseFilter,
       state.useFilter,
     );
-    local.set<String>(
+    local.setValue<String>(
       AuthConfigFields.fieldPasswordLdapDnTemplate,
       state.dnTemplate,
     );
-    local.set<String>(
+    local.setValue<String>(
       AuthConfigFields.fieldPasswordLdapFilterBindDn,
       state.filterBindDn,
     );
-    local.set<String>(
+    local.setValue<String>(
       AuthConfigFields.fieldPasswordLdapFilterBindPassword,
       state.filterBindPassword,
     );
-    local.set<String>(
+    local.setValue<String>(
       AuthConfigFields.fieldPasswordLdapFilterBaseDn,
       state.filterBaseDn,
     );
-    local.set<String>(
+    local.setValue<String>(
       AuthConfigFields.fieldPasswordLdapFilterTemplate,
       state.filterTemplate,
     );

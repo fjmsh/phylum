@@ -169,7 +169,7 @@ class DbConfigFormCubit extends Cubit<DbConfigFormState> {
       newState = newState.withErrors(
         hostError: state.host == '' ? 'Required' : null,
       );
-      config.set<String>(DbConfigFields.fieldHost, state.host);
+      config.setValue<String>(DbConfigFields.fieldHost, state.host);
     }
 
     if (!state.hasPortOverride()) {
@@ -181,23 +181,23 @@ class DbConfigFormCubit extends Cubit<DbConfigFormState> {
             ? 'Invalid Port'
             : null,
       );
-      config.set<int>(DbConfigFields.fieldPort, port);
+      config.setValue<int>(DbConfigFields.fieldPort, port);
     }
 
     if (!state.hasDbNameOverride()) {
       newState = newState.withErrors(
         dbNameError: state.dbName == '' ? 'Required' : null,
       );
-      config.set<String>(DbConfigFields.fieldDbName, state.dbName);
+      config.setValue<String>(DbConfigFields.fieldDbName, state.dbName);
     }
 
     if (!state.hasUserOverride()) {
       newState = newState.withErrors(
         userError: state.user == '' ? 'Required' : null,
       );
-      config.set<String>(DbConfigFields.fieldUser, state.user);
+      config.setValue<String>(DbConfigFields.fieldUser, state.user);
     }
-    config.set<String>(DbConfigFields.fieldPassword, state.password);
+    config.setValue<String>(DbConfigFields.fieldPassword, state.password);
 
     if (state == newState) {
       return config;

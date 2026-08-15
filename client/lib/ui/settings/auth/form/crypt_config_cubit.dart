@@ -215,25 +215,28 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
       return null;
     }
     return LocalConfig<AuthConfigFields>()
-      ..set<CryptKDF>(AuthConfigFields.fieldPasswordCryptKdf, state.kdf)
-      ..set<bool>(
+      ..setValue<CryptKDF>(AuthConfigFields.fieldPasswordCryptKdf, state.kdf)
+      ..setValue<bool>(
         AuthConfigFields.fieldPasswordResetEnabled,
         state.resetEnabled,
       )
-      ..set<int>(AuthConfigFields.fieldPasswordCryptArgon2Memory, argon2Memory!)
-      ..set<int>(
+      ..setValue<int>(
+        AuthConfigFields.fieldPasswordCryptArgon2Memory,
+        argon2Memory!,
+      )
+      ..setValue<int>(
         AuthConfigFields.fieldPasswordCryptArgon2Iterations,
         argon2Iterations!,
       )
-      ..set<int>(
+      ..setValue<int>(
         AuthConfigFields.fieldPasswordCryptArgon2Parallelism,
         argon2Parallelism!,
       )
-      ..set<HashFunction>(
+      ..setValue<HashFunction>(
         AuthConfigFields.fieldPasswordCryptPbkdf2Hash,
         state.pbkdf2Hash,
       )
-      ..set<int>(
+      ..setValue<int>(
         AuthConfigFields.fieldPasswordCryptPbkdf2Iterations,
         state.pbkdf2Iterations,
       );

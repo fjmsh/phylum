@@ -5,11 +5,11 @@ class LocalConfig<C extends ConfigFields> {
 
   LocalConfig();
 
-  void set<T>(PrimitiveField<T> field, T value) {
+  void setValue<T>(PrimitiveField<T> field, T value) {
     values[field] = value;
   }
 
-  T get<T>(PrimitiveField<T> field) {
+  T getValue<T>(PrimitiveField<T> field) {
     return values[field] ?? field.defaultValue;
   }
 

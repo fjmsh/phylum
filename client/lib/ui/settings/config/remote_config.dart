@@ -2,18 +2,25 @@ part of 'config.dart';
 
 class RemoteConfig<C extends ConfigFields> {
   final C schema;
-  final values = <PrimitiveField, dynamic>{};
-  final fixed = <PrimitiveField>{};
-  final maps = <MapField, Map<String, RemoteConfig>>{};
+  final Map<PrimitiveField, dynamic> values;
+  final Set<PrimitiveField> fixed;
+  final Map<MapField, Map<String, RemoteConfig>> maps;
 
-  RemoteConfig._({required this.schema});
+  RemoteConfig._({
+    required this.schema,
+    required this.values,
+    required this.fixed,
+    required this.maps,
+  });
+
+  factory RemoteConfig.empty(C schema) {
+    return RemoteConfig._(schema: schema, values: {}, fixed: {}, maps: {});
+  }
 
   factory RemoteConfig.fromMap(C schema, Map<String, dynamic> map) {
     final data = (map['config'] as Map).cast<String, dynamic>();
     final fixed = Set.of((map['overrides'] as List).cast<String>());
-    final config = RemoteConfig._(schema: schema);
-    schema.root.parse(config: config, fixed: fixed, path: "", data: data);
-    return config;
+    return RemoteConfig.fromDataFixed(schema, data, fixed, "");
   }
 
   factory RemoteConfig.fromDataFixed(
@@ -22,7 +29,7 @@ class RemoteConfig<C extends ConfigFields> {
     Set<String> fixed,
     String path,
   ) {
-    final config = RemoteConfig._(schema: schema);
+    final config = RemoteConfig.empty(schema);
     schema.root.parse(config: config, fixed: fixed, path: path, data: data);
     return config;
   }
@@ -36,10 +43,52 @@ class RemoteConfig<C extends ConfigFields> {
     return value;
   }
 
+  void setValue<T>(PrimitiveField<T> field, T value) {
+    values[field] = value;
+  }
+
   Map<String, RemoteConfig<FC>> getMap<FC extends ConfigFields>(
     MapField<FC> field,
   ) {
     return maps[field]?.cast() ?? const {};
+  }
+
+  Iterable<String> getMapKeys<FC extends ConfigFields>(MapField<FC> field) {
+    return getMap(field).keys;
+  }
+
+  RemoteConfig<FC>? getMapValue<FC extends ConfigFields>(
+    MapField<FC> field, {
+
+    required String key,
+  }) {
+    return getMap(field)[key];
+  }
+
+  void setMapValue<FC extends ConfigFields>(
+    MapField<FC> field, {
+    required String key,
+    required RemoteConfig<FC> value,
+  }) {
+    maps.putIfAbsent(field, () => <String, RemoteConfig<FC>>{})[key] = value;
+  }
+
+  void deleteMapEntry<FC extends ConfigFields>(
+    MapField<FC> field, {
+    required String key,
+  }) {
+    maps.putIfAbsent(field, () => <String, RemoteConfig<FC>>{}).remove(key);
+  }
+
+  RemoteConfig<C> copy() {
+    return RemoteConfig._(
+      schema: schema,
+      values: Map.of(values),
+      fixed: Set.of(fixed),
+      maps: maps.map(
+        (k, v) => MapEntry(k, v.map((k, v) => MapEntry(k, v.copy()))),
+      ),
+    );
   }
 
   RemoteConfig<C> apply(LocalConfig<C> updates) {

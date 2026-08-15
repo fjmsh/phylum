@@ -1,3 +1,4 @@
+import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
 import 'package:phylum/ui/settings/config/config.dart';
@@ -29,9 +30,7 @@ class OpenIDConfig {
     this.clientSecretError,
   });
 
-  factory OpenIDConfig.creteFromRemoteConfig(
-    RemoteConfig<OidcConfigFields> remote,
-  ) {
+  factory OpenIDConfig.createFromConfig(RemoteConfig<OidcConfigFields> remote) {
     return OpenIDConfig._(
       fixed: remote.fixed,
       name: remote.getValue(OidcConfigFields.fieldName),
@@ -81,14 +80,25 @@ class OpenIDConfig {
     clientSecretError: clientSecretError,
   );
 
+  bool get isNameFixed => _fixed.contains(OidcConfigFields.fieldName);
+  bool get isIssuerUrlFixed => _fixed.contains(OidcConfigFields.fieldIssuerUrl);
+  bool get isClientIdFixed => _fixed.contains(OidcConfigFields.fieldClientId);
+  bool get isClientSecretFixed =>
+      _fixed.contains(OidcConfigFields.fieldClientSecret);
+  bool get isAllowUnverifiedEmailsFixed =>
+      _fixed.contains(OidcConfigFields.fieldAllowUnverifiedEmails);
+  bool get isAutoCreateUsersFixed =>
+      _fixed.contains(OidcConfigFields.fieldAutoCreateUsers);
+
   @override
   String toString() {
-    return 'OpenIDConfig(name: $name, '
-        'issuerUrl: $issuerUrl, '
-        'clientId: $clientId, '
-        'clientSecret: $clientSecret, '
-        'allowUnverifiedEmails: $allowUnverifiedEmails, '
-        'autoCreateUsers: $autoCreateUsers)';
+    return 'OpenIDConfig('
+        'name: $name ($isNameFixed), '
+        'issuerUrl: $issuerUrl ($isIssuerUrlFixed), '
+        'clientId: $clientId ($isClientIdFixed), '
+        'clientSecret: $clientSecret ($isClientSecretFixed), '
+        'allowUnverifiedEmails: $allowUnverifiedEmails ($isAllowUnverifiedEmailsFixed), '
+        'autoCreateUsers: $autoCreateUsers ($isAutoCreateUsersFixed))';
   }
 
   @override
@@ -121,4 +131,78 @@ class OpenIDConfig {
       issuerUrlError.hashCode ^
       clientIdError.hashCode ^
       clientSecret.hashCode;
+}
+
+class OpenIDConfigFormCubit extends Cubit<OpenIDConfig> {
+  OpenIDConfigFormCubit({required OpenIDConfig config}) : super(config);
+
+  set name(String val) {
+    emit(state.copyWith(name: val));
+  }
+
+  set issuerUrl(String val) {
+    emit(state.copyWith(issuerUrl: val));
+  }
+
+  set clientId(String val) {
+    emit(state.copyWith(clientId: val));
+  }
+
+  set clientSecret(String val) {
+    emit(state.copyWith(clientSecret: val));
+  }
+
+  set allowUnverifiedEmails(bool val) {
+    emit(state.copyWith(allowUnverifiedEmails: val));
+  }
+
+  set autoCreateUsers(bool val) {
+    emit(state.copyWith(autoCreateUsers: val));
+  }
+
+  RemoteConfig<OidcConfigFields>? validate() {
+    final issuerUrl = Uri.tryParse(state.issuerUrl);
+
+    final newState = state.copyWithErrors(
+      nameError: state.isNameFixed
+          ? null
+          : state.name.isEmpty
+          ? 'Required'
+          : null,
+      issuerUrlError: state.isIssuerUrlFixed
+          ? null
+          : state.issuerUrl.isEmpty
+          ? 'Required'
+          : issuerUrl == null || !issuerUrl.hasScheme || !issuerUrl.hasAuthority
+          ? 'Invalid URL'
+          : null,
+      clientIdError: state.isClientIdFixed
+          ? null
+          : state.clientId.isEmpty
+          ? 'Required'
+          : null,
+      clientSecretError: state.isClientSecretFixed
+          ? null
+          : state.clientSecret.isEmpty
+          ? 'Required'
+          : null,
+    );
+    if (newState != state) {
+      emit(newState);
+      return null;
+    }
+    return RemoteConfig.empty(OidcConfigFields.instance)
+      ..setValue<String>(OidcConfigFields.fieldName, state.name)
+      ..setValue<String>(OidcConfigFields.fieldIssuerUrl, state.issuerUrl)
+      ..setValue<String>(OidcConfigFields.fieldClientId, state.clientId)
+      ..setValue<String>(OidcConfigFields.fieldClientSecret, state.clientSecret)
+      ..setValue<bool>(
+        OidcConfigFields.fieldAllowUnverifiedEmails,
+        state.allowUnverifiedEmails,
+      )
+      ..setValue<bool>(
+        OidcConfigFields.fieldAutoCreateUsers,
+        state.autoCreateUsers,
+      );
+  }
 }

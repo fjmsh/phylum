@@ -195,7 +195,7 @@ class SetupDbFragment extends StatelessWidget {
         );
         if (response == null) return;
         if (!response) {
-          config.set(DbConfigFields.fieldWipe, true);
+          config.setValue(DbConfigFields.fieldWipe, true);
         }
         onNextPress();
       case DbConfigCheckFailed():
