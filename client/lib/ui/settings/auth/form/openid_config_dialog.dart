@@ -51,11 +51,10 @@ class OpenIDConfigDialog extends StatelessWidget {
                   TextSpan(
                     children: [
                       TextSpan(text: 'Name '),
-                      if (!state.isNameFixed)
-                        TextSpan(
-                          text: '*',
-                          style: TextStyle(color: Colors.red),
-                        ),
+                      TextSpan(
+                        text: '*',
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ],
                   ),
                 ),
@@ -82,11 +81,10 @@ class OpenIDConfigDialog extends StatelessWidget {
                   TextSpan(
                     children: [
                       TextSpan(text: 'Issuer URL '),
-                      if (!state.isIssuerUrlFixed)
-                        TextSpan(
-                          text: '*',
-                          style: TextStyle(color: Colors.red),
-                        ),
+                      TextSpan(
+                        text: '*',
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ],
                   ),
                 ),
@@ -111,11 +109,10 @@ class OpenIDConfigDialog extends StatelessWidget {
                   TextSpan(
                     children: [
                       TextSpan(text: 'Client ID '),
-                      if (!state.isClientIdFixed)
-                        TextSpan(
-                          text: '*',
-                          style: TextStyle(color: Colors.red),
-                        ),
+                      TextSpan(
+                        text: '*',
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ],
                   ),
                 ),
@@ -140,11 +137,10 @@ class OpenIDConfigDialog extends StatelessWidget {
                   TextSpan(
                     children: [
                       TextSpan(text: 'Client Secret '),
-                      if (!state.isClientSecretFixed)
-                        TextSpan(
-                          text: '*',
-                          style: TextStyle(color: Colors.red),
-                        ),
+                      TextSpan(
+                        text: '*',
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ],
                   ),
                 ),

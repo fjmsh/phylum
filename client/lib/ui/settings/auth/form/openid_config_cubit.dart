@@ -80,6 +80,7 @@ class OpenIDConfig {
     clientSecretError: clientSecretError,
   );
 
+  bool get hasFixedFields => _fixed.isNotEmpty;
   bool get isNameFixed => _fixed.contains(OidcConfigFields.fieldName);
   bool get isIssuerUrlFixed => _fixed.contains(OidcConfigFields.fieldIssuerUrl);
   bool get isClientIdFixed => _fixed.contains(OidcConfigFields.fieldClientId);

@@ -210,7 +210,9 @@ class OpenIDConfigList extends StatelessWidget {
               bloc.replaceOpenIDConfig(e.key, config);
             },
             trailing: IconButton(
-              onPressed: () => bloc.removeOpenIDConfig(e.key),
+              onPressed: e.value.hasFixedFields
+                  ? null
+                  : () => bloc.removeOpenIDConfig(e.key),
               icon: Icon(Icons.delete),
             ),
           ),

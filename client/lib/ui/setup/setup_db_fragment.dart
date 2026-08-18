@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/setup/db/db_config.dart';
 import 'package:phylum/ui/setup/db/db_config_form.dart';
 import 'package:phylum/ui/setup/db/db_config_form_cubit.dart';
 import 'package:phylum/util/dialogs.dart';
