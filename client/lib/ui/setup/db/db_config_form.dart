@@ -121,7 +121,7 @@ class DbConfigForm extends StatelessWidget {
                   ],
                 ),
               ),
-              hint: Text('phylum@example.com'),
+              hint: Text('phylum'),
               errorText: state.userError,
               prefixIcon: Icon(Icons.person),
             ),

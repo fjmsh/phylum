@@ -6,7 +6,6 @@ class DbConfigFields extends ConfigFields {
   static final fieldDbName = PrimitiveField("phylum");
   static final fieldUser = PrimitiveField("phylum");
   static final fieldPassword = PrimitiveField("");
-  static final fieldWipe = PrimitiveField(false);
 
   static DbConfigFields instance = DbConfigFields._();
 
@@ -20,7 +19,6 @@ class DbConfigFields extends ConfigFields {
       "name": fieldDbName,
       "user": fieldUser,
       "password": fieldPassword,
-      "wipe": fieldWipe,
     },
   );
 }

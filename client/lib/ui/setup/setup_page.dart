@@ -46,9 +46,6 @@ class _SetupPageState extends State<SetupPage> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        StateNotifierProvider<DbController, DbConfig>(
-          create: (_) => DbController({}),
-        ),
         StateNotifierProvider<UserController, UserConfig>(
           create: (_) => UserController(),
         ),
@@ -125,12 +122,14 @@ class _SetupPageState extends State<SetupPage> {
     final request = Request('post', builder.build());
     final data = {
       'config': {
-        'db': context.read<DbConfig>().configToMap(),
+        // 'db': context.read<DbConfig>().configToMap(),
         // 'mail': context.read<MailConfig>().toMap(),
         // 'auth': context.read<AuthConfig>().toMapDiff(AuthConfig.defaults()),
       },
       'user': context.read<UserConfig>().toMap(),
-      'options': {'db': context.read<DbConfig>().optionsToMap()},
+      'options': {
+        // 'db': context.read<DbConfig>().optionsToMap()
+      },
     };
 
     request.body = jsonEncode(data);
