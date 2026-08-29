@@ -14,7 +14,8 @@ class CryptConfigState {
   final String? argon2IterationsError;
   final String? argon2ParallelismError;
   final HashFunction pbkdf2Hash;
-  final int pbkdf2Iterations;
+  final String pbkdf2Iterations;
+  final String? pbkdf2IterationsError;
 
   CryptConfigState({
     required this._fixed,
@@ -29,6 +30,7 @@ class CryptConfigState {
     required this.argon2ParallelismError,
     required this.pbkdf2Hash,
     required this.pbkdf2Iterations,
+    required this.pbkdf2IterationsError,
   });
 
   factory CryptConfigState.createFromRemoteConfig(
@@ -55,9 +57,10 @@ class CryptConfigState {
       pbkdf2Hash: remote.getValue(
         AuthConfigFields.fieldPasswordCryptPbkdf2Hash,
       ),
-      pbkdf2Iterations: remote.getValue(
-        AuthConfigFields.fieldPasswordCryptPbkdf2Iterations,
-      ),
+      pbkdf2Iterations: remote
+          .getValue(AuthConfigFields.fieldPasswordCryptPbkdf2Iterations)
+          .toString(),
+      pbkdf2IterationsError: null,
     );
   }
 
@@ -68,7 +71,7 @@ class CryptConfigState {
     String? argon2Iterations,
     String? argon2Parallelism,
     HashFunction? pbkdf2Hash,
-    int? pbkdf2Iterations,
+    String? pbkdf2Iterations,
   }) => CryptConfigState(
     fixed: _fixed,
     shouldAllowKdfSelection: shouldAllowKdfSelection,
@@ -82,12 +85,14 @@ class CryptConfigState {
     argon2ParallelismError: null,
     pbkdf2Hash: pbkdf2Hash ?? this.pbkdf2Hash,
     pbkdf2Iterations: pbkdf2Iterations ?? this.pbkdf2Iterations,
+    pbkdf2IterationsError: null,
   );
 
   CryptConfigState copyWithErrors({
     String? argon2MemoryError,
     String? argon2IterationsError,
     String? argon2ParallelismError,
+    String? pbkdf2IterationsError,
   }) => CryptConfigState(
     fixed: _fixed,
     shouldAllowKdfSelection: shouldAllowKdfSelection,
@@ -101,6 +106,7 @@ class CryptConfigState {
     argon2ParallelismError: argon2ParallelismError,
     pbkdf2Hash: pbkdf2Hash,
     pbkdf2Iterations: pbkdf2Iterations,
+    pbkdf2IterationsError: pbkdf2IterationsError,
   );
 
   bool isKdfFixed() => _fixed.contains(AuthConfigFields.fieldPasswordCryptKdf);
@@ -178,11 +184,35 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
     emit(state.copyWith(pbkdf2Hash: val));
   }
 
-  set pbkdf2Iterations(int val) {
+  set pbkdf2Iterations(String val) {
     emit(state.copyWith(pbkdf2Iterations: val));
   }
 
   LocalConfig<AuthConfigFields>? validate() {
+    final config = LocalConfig<AuthConfigFields>();
+    config.setValue<CryptKDF>(
+      AuthConfigFields.fieldPasswordCryptKdf,
+      state.kdf,
+    );
+    config.setValue<bool>(
+      AuthConfigFields.fieldPasswordResetEnabled,
+      state.resetEnabled,
+    );
+
+    final kdfConfig = switch (state.kdf) {
+      CryptKDF.argon2 => _validateArgon2(),
+      CryptKDF.pbkdf2 => _validatePbkdf2(),
+    };
+    if (kdfConfig == null) {
+      return null;
+    }
+
+    config.values.addAll(kdfConfig.values);
+
+    return config;
+  }
+
+  LocalConfig<AuthConfigFields>? _validateArgon2() {
     final argon2Memory = int.tryParse(state.argon2Memory);
     final argon2Iterations = int.tryParse(state.argon2Iterations);
     final argon2Parallelism = int.tryParse(state.argon2Parallelism);
@@ -214,12 +244,8 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
       emit(newState);
       return null;
     }
-    return LocalConfig<AuthConfigFields>()
-      ..setValue<CryptKDF>(AuthConfigFields.fieldPasswordCryptKdf, state.kdf)
-      ..setValue<bool>(
-        AuthConfigFields.fieldPasswordResetEnabled,
-        state.resetEnabled,
-      )
+
+    return LocalConfig()
       ..setValue<int>(
         AuthConfigFields.fieldPasswordCryptArgon2Memory,
         argon2Memory!,
@@ -231,14 +257,33 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
       ..setValue<int>(
         AuthConfigFields.fieldPasswordCryptArgon2Parallelism,
         argon2Parallelism!,
-      )
+      );
+  }
+
+  LocalConfig<AuthConfigFields>? _validatePbkdf2() {
+    final pbkdf2Iterations = int.tryParse(state.pbkdf2Iterations);
+
+    final newState = state.copyWithErrors(
+      pbkdf2IterationsError: state.argon2Iterations.isEmpty
+          ? 'Required'
+          : pbkdf2Iterations == null
+          ? 'Must be a number'
+          : pbkdf2Iterations < 1
+          ? 'Out of Bounds'
+          : null,
+    );
+    if (newState != state) {
+      emit(newState);
+      return null;
+    }
+    return LocalConfig()
       ..setValue<HashFunction>(
         AuthConfigFields.fieldPasswordCryptPbkdf2Hash,
         state.pbkdf2Hash,
       )
       ..setValue<int>(
         AuthConfigFields.fieldPasswordCryptPbkdf2Iterations,
-        state.pbkdf2Iterations,
+        pbkdf2Iterations!,
       );
   }
 }

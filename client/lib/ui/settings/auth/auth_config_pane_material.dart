@@ -61,31 +61,36 @@ class MaterialAuthConfigPane extends StatelessWidget {
                   onPressed: requestInFlight
                       ? null
                       : () async {
-                          final config = context
+                          final result = await context
                               .read<AuthConfigFormCubit>()
-                              .validate();
+                              .checkConfig();
 
-                          if (config == null) {
-                            return;
-                          }
-
-                          final error = await context
-                              .read<RemoteConfigController<AuthConfigFields>>()
-                              .save(config: config);
                           if (!context.mounted) return;
-                          if (error == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Auth Config Updated'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          } else {
-                            showAlertDialog(
-                              context,
-                              title: 'Failed to update Auth Config',
-                              message: error,
-                            );
+
+                          switch (result) {
+                            case AuthConfigInvalid():
+                              return;
+                            case AuthConfigValid():
+                              final error = await context
+                                  .read<
+                                    RemoteConfigController<AuthConfigFields>
+                                  >()
+                                  .save(config: result.config);
+                              if (!context.mounted) return;
+                              if (error == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Auth Config Updated'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              } else {
+                                showAlertDialog(
+                                  context,
+                                  title: 'Failed to update Auth Config',
+                                  message: error,
+                                );
+                              }
                           }
                         },
                   child: Text('Save'),

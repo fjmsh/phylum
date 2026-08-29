@@ -208,12 +208,12 @@ class DbConfigFormCubit extends Cubit<DbConfigFormState> {
   }
 
   Future<DbConfigCheckResult> checkConfig(
-    LocalConfig<DbConfigFields> config,
+    LocalConfig<DbConfigFields> local,
   ) async {
     final builder = UriBuilder.fromUri(Uri.parse(_instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/db/validate';
     final request = Request('post', builder.build());
-    request.body = jsonEncode(config.toMap(_remoteConfig));
+    request.body = jsonEncode(local.toMap(_remoteConfig));
 
     final result = await sendRequest(request);
     if (result is SuccessResponse) {

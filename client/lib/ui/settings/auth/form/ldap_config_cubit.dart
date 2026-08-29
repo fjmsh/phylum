@@ -230,26 +230,29 @@ class LdapConfigCubit extends Cubit<LdapConfigState> {
       AuthConfigFields.fieldPasswordLdapUseFilter,
       state.useFilter,
     );
-    local.setValue<String>(
-      AuthConfigFields.fieldPasswordLdapDnTemplate,
-      state.dnTemplate,
-    );
-    local.setValue<String>(
-      AuthConfigFields.fieldPasswordLdapFilterBindDn,
-      state.filterBindDn,
-    );
-    local.setValue<String>(
-      AuthConfigFields.fieldPasswordLdapFilterBindPassword,
-      state.filterBindPassword,
-    );
-    local.setValue<String>(
-      AuthConfigFields.fieldPasswordLdapFilterBaseDn,
-      state.filterBaseDn,
-    );
-    local.setValue<String>(
-      AuthConfigFields.fieldPasswordLdapFilterTemplate,
-      state.filterTemplate,
-    );
+    if (state.useFilter) {
+      local.setValue<String>(
+        AuthConfigFields.fieldPasswordLdapFilterBindDn,
+        state.filterBindDn,
+      );
+      local.setValue<String>(
+        AuthConfigFields.fieldPasswordLdapFilterBindPassword,
+        state.filterBindPassword,
+      );
+      local.setValue<String>(
+        AuthConfigFields.fieldPasswordLdapFilterBaseDn,
+        state.filterBaseDn,
+      );
+      local.setValue<String>(
+        AuthConfigFields.fieldPasswordLdapFilterTemplate,
+        state.filterTemplate,
+      );
+    } else {
+      local.setValue<String>(
+        AuthConfigFields.fieldPasswordLdapDnTemplate,
+        state.dnTemplate,
+      );
+    }
 
     final serverUri = Uri.tryParse(state.serverUrl);
     final serverUrlError = state.isServerUrlFixed()

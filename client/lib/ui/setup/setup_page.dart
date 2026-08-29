@@ -1,19 +1,23 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
+import 'package:phylum/ui/settings/auth/form/auth_config_form.dart';
+import 'package:phylum/ui/settings/auth/form/auth_config_form_cubit.dart';
+import 'package:phylum/ui/settings/mail/form/mail_config_form.dart';
+import 'package:phylum/ui/settings/mail/mail_config.dart';
+import 'package:phylum/ui/setup/db/db_config_form.dart';
 import 'package:phylum/ui/setup/db/db_config_form_cubit.dart';
-import 'package:phylum/ui/setup/setup_auth_fragment.dart';
 import 'package:phylum/ui/setup/setup_config.dart';
-import 'package:phylum/ui/setup/setup_db_fragment.dart';
-import 'package:phylum/ui/setup/setup_mail_fragment.dart';
-import 'package:phylum/ui/setup/setup_user_fragment.dart';
+import 'package:phylum/ui/setup/setup_cubit.dart';
+import 'package:phylum/ui/setup/user/user_config_form.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
+import 'package:provider/single_child_widget.dart';
 import 'package:uri/uri.dart';
 
 enum SetupStep { database, mail, auth, user }
@@ -29,91 +33,215 @@ class SetupPage extends StatefulWidget {
 }
 
 class _SetupPageState extends State<SetupPage> {
-  SetupStep _currentStep = SetupStep.database;
-  late final DbConfigFormCubit _dbBloc = DbConfigFormCubit(
-    remoteConfig: widget.config.dbConfig,
+  late final _bloc = SetupCubit(
     instanceUrl: widget.instanceUrl,
-  );
-  late final MailConfigSetupCubit _mailBloc = MailConfigSetupCubit(
-    remoteConfig: widget.config.mailConfig,
-    instanceUrl: widget.instanceUrl,
-  );
-  late final AuthConfigSetupCubit _authBloc = AuthConfigSetupCubit(
-    remote: widget.config.authConfig,
+    config: widget.config,
   );
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        StateNotifierProvider<UserController, UserConfig>(
-          create: (_) => UserController(),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Instance Setup'),
+        leading: CloseButton(
+          onPressed: () async {
+            final remain =
+                await showAlertDialog(
+                  context,
+                  title: 'Abort configuration?',
+                  positiveText: 'No',
+                  negativeText: 'Yes',
+                ) ??
+                true;
+            if (remain || !context.mounted) return;
+            context.read<PhylumRouterDelegate>().go(HomeRoute());
+          },
         ),
-      ],
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Instance Setup'),
-          leading: CloseButton(
-            onPressed: () async {
-              final remain =
-                  await showAlertDialog(
-                    context,
-                    title: 'Abort configuration?',
-                    positiveText: 'No',
-                    negativeText: 'Yes',
-                  ) ??
-                  true;
-              if (remain || !context.mounted) return;
-              context.read<PhylumRouterDelegate>().go(HomeRoute());
-            },
-          ),
+      ),
+      body: ResponsiveViewport(
+        child: Column(
+          children: [
+            Expanded(
+              child: BlocBuilder<SetupCubit, SetupState>(
+                bloc: _bloc,
+                builder: (context, state) {
+                  return SingleChildScrollView(
+                    child: _buildBody(context, state),
+                  );
+                },
+                buildWhen: (previous, current) =>
+                    previous.runtimeType != current.runtimeType,
+              ),
+            ),
+            TextButtonTheme(
+              data: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                ),
+              ),
+              child: BlocBuilder<SetupCubit, SetupState>(
+                bloc: _bloc,
+                builder: (context, state) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: state.hasPrevious
+                            ? () => _bloc.previousStep()
+                            : null,
+                        child: Text('PREV'),
+                      ),
+                      TextButton(
+                        onPressed: () => _next(context),
+                        child: state.hasNext
+                            ? const Text('NEXT')
+                            : const Text('FINISH'),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-        body: _buildBody(context),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context) {
-    final page = switch (_currentStep) {
-      SetupStep.database => SetupDbFragment(
-        bloc: _dbBloc,
-        onNextPress: nextStep,
+  Widget _buildBody(BuildContext context, SetupState state) {
+    return switch (state) {
+      SetupStateDb() => DbConfigForm(
+        bloc: _bloc.dbBloc,
+        onFormSubmitted: _next,
       ),
-      SetupStep.mail => SetupMailFragment(
-        bloc: _mailBloc,
-        onPrevPress: previousStep,
-        onNextPress: nextStep,
+      SetupStateMail() => MailConfigForm(
+        bloc: _bloc.mailBloc,
+        onFormSubmitted: _next,
       ),
-      SetupStep.auth => SetupAuthFragment(
-        authBloc: _authBloc,
-        mailBloc: _mailBloc,
-        onPrevPress: previousStep,
-        onNextPress: nextStep,
-      ),
-      SetupStep.user => SetupUserFragment(
-        instanceUrl: widget.instanceUrl,
-        authBloc: _authBloc,
-        onPrevPress: previousStep,
-        onFinish: finalize,
+      SetupStateAuth() => AuthConfigForm(bloc: _bloc.authBloc),
+      SetupStateUser() => UserConfigForm(
+        bloc: _bloc.userBloc,
+        onFormSubmitted: _next,
       ),
     };
+  }
 
-    if (MediaQuery.sizeOf(context).width > maxViewportWidthSmall) {
-      return Center(child: SizedBox(width: 640, child: page));
+  void _next(BuildContext context) {
+    switch (_bloc.state) {
+      case SetupStateDb():
+        onDbNext(context);
+      case SetupStateMail():
+        onMailNext(context);
+      case SetupStateAuth():
+        onAuthNext(context);
+      case SetupStateUser():
+        finalize(context);
     }
-    return Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: page);
   }
 
-  void nextStep() {
-    setState(() {
-      _currentStep = SetupStep.values[_currentStep.index + 1];
-    });
+  Future<void> onDbNext(BuildContext context) async {
+    final dbConfig = _bloc.dbBloc.validate();
+    if (dbConfig == null) return;
+
+    final nav = Navigator.of(context);
+    showProgressDialog(context, message: 'Checking Database Config');
+    final result = await _bloc.dbBloc.checkConfig(dbConfig);
+    nav.pop();
+
+    if (!context.mounted) return;
+
+    switch (result) {
+      case DbConfigCheckSuccess():
+        _bloc.configureDb(dbConfig: dbConfig, wipeDb: false);
+      case DbConfigCheckWarningNotEmpty():
+        final notWipe = await showAlertDialog(
+          context,
+          title: 'Warning',
+          message: "The database is not empty.",
+          positiveText: 'Continue anyway',
+          negativeText: 'Wipe Data',
+        );
+        if (notWipe == null) return;
+        _bloc.configureDb(dbConfig: dbConfig, wipeDb: !notWipe);
+      case DbConfigCheckFailed():
+        final remain = await showAlertDialog(
+          context,
+          title: 'Config Check Failed',
+          message: result.error,
+          negativeText: 'Continue Anyway',
+        );
+        if (remain == false) {
+          _bloc.configureDb(dbConfig: dbConfig, wipeDb: false);
+        }
+      case DbConfigCheckError():
+        final remain = await showAlertDialog(
+          context,
+          title: result.title,
+          message: result.message,
+          negativeText: 'Continue Anyway',
+        );
+        if (remain == false) {
+          _bloc.configureDb(dbConfig: dbConfig, wipeDb: false);
+        }
+      case DbConfigCheckUnknownWarning():
+        final remain = await showAlertDialog(
+          context,
+          title: 'Warning',
+          message:
+              'The server returned a warning when trying to check the configuration.\n\n'
+              'Warning code: ${result.code}',
+          negativeText: 'Continue Anyway',
+        );
+        if (remain == false) {
+          _bloc.configureDb(dbConfig: dbConfig, wipeDb: false);
+        }
+    }
   }
 
-  void previousStep() {
-    setState(() {
-      _currentStep = SetupStep.values[_currentStep.index - 1];
-    });
+  Future<void> onMailNext(BuildContext context) async {
+    final mailConfig = _bloc.mailBloc.validate();
+    if (mailConfig == null) return;
+
+    if (!mailConfig.getValue(MailConfigFields.fieldEnabled)) {
+      _bloc.configureMail(mailConfig: mailConfig);
+      return;
+    }
+    final nav = Navigator.of(context);
+    showProgressDialog(context, message: 'Checking Email Config');
+    final error = await _bloc.mailBloc.checkConfig(mailConfig);
+    nav.pop();
+    if (error == null) {
+      _bloc.configureMail(mailConfig: mailConfig);
+    } else {
+      if (!context.mounted) return;
+      final remain = await showAlertDialog(
+        context,
+        title: 'Config Check Failed',
+        message: error,
+        negativeText: 'Continue Anyway',
+      );
+      if (remain == false) {
+        _bloc.configureMail(mailConfig: mailConfig);
+      }
+    }
+  }
+
+  Future<void> onAuthNext(BuildContext context) async {
+    final nav = Navigator.of(context);
+    showProgressDialog(context, message: 'Checking Database Config');
+
+    final authConfigCheckResult = await _bloc.authBloc.checkConfig();
+    nav.pop();
+    if (!context.mounted) return;
+
+    switch (authConfigCheckResult) {
+      case AuthConfigInvalid():
+        showAlertDialog(context, message: authConfigCheckResult.error);
+        break;
+      case AuthConfigValid():
+        _bloc.configureAuth(authConfig: authConfigCheckResult.config);
+        break;
+    }
   }
 
   void finalize(BuildContext context) async {
@@ -126,7 +254,7 @@ class _SetupPageState extends State<SetupPage> {
         // 'mail': context.read<MailConfig>().toMap(),
         // 'auth': context.read<AuthConfig>().toMapDiff(AuthConfig.defaults()),
       },
-      'user': context.read<UserConfig>().toMap(),
+      // 'user': context.read<UserConfig>().toMap(),
       'options': {
         // 'db': context.read<DbConfig>().optionsToMap()
       },
@@ -156,5 +284,17 @@ class _SetupPageState extends State<SetupPage> {
             : responseMap['error'],
       );
     }
+  }
+}
+
+class ResponsiveViewport extends SingleChildStatelessWidget {
+  const ResponsiveViewport({super.key, super.child});
+
+  @override
+  Widget buildWithChild(BuildContext context, Widget? child) {
+    if (MediaQuery.sizeOf(context).width > maxViewportWidthSmall) {
+      return Center(child: SizedBox(width: 640, child: child));
+    }
+    return Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: child);
   }
 }

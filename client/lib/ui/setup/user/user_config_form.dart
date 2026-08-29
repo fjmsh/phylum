@@ -61,7 +61,7 @@ class UserConfigForm extends StatelessWidget {
                   ],
                 ),
               ),
-              errorText: state.name,
+              errorText: state.nameError,
               prefixIcon: Icon(Icons.person),
             ),
             keyboardType: TextInputType.name,
