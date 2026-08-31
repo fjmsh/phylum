@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/core"
@@ -55,7 +56,36 @@ func handleValidateRequest(c *gin.Context) {
 	}
 	mailer := mail.CreateMailer(cfg, *zerolog.Ctx(c.Request.Context()))
 	if err := mailer.CheckConnection(); err != nil {
-		response["error"] = "Failed to connect to SMTP server: " + err.Error()
+		if strings.Contains(err.Error(), "no such host") {
+			response["error"] = gin.H{
+				"code":    "no_such_host",
+				"msg":     "Failed to connect to SMTP Server",
+				"details": "No Such Host",
+			}
+		} else if strings.Contains(err.Error(), "connection refused") {
+			response["error"] = gin.H{
+				"code":    "connection_refused",
+				"msg":     "Failed to connect to SMTP Server",
+				"details": "Connection Refused",
+			}
+		} else if strings.Contains(err.Error(), "auth failure") {
+			response["error"] = gin.H{
+				"code":    "auth_failure",
+				"msg":     "Failed to connect to SMTP Server",
+				"details": "Auth Failure",
+			}
+		} else if strings.Contains(err.Error(), "timeout") {
+			response["error"] = gin.H{
+				"code":    "io_timeout",
+				"msg":     "Failed to connect to SMTP Server",
+				"details": "I/O Timeout",
+			}
+		} else {
+			response["error"] = gin.H{
+				"msg":     "Failed to connect to SMTP Server",
+				"details": err.Error(),
+			}
+		}
 	}
 	c.JSON(http.StatusOK, response)
 

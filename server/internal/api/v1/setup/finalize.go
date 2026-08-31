@@ -64,30 +64,34 @@ func handleFinalize(c *gin.Context) {
 
 	if pool, err := db.Initialize(c.Request.Context(), dbConfig, &logger); err != nil {
 		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"error":   "Failed to initialize DB",
-			"details": err.Error(),
+			"error": gin.H{
+				"msg":     "Failed to initialize DB",
+				"details": err.Error(),
+			},
 		})
 		return
 	} else if params.Options.DB.Wipe {
 		if err := db.ResetSchema(c.Request.Context(), pool); err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"success": false,
-				"error":   "Failed to Reset DB Schema",
-				"details": err.Error(),
+				"error": gin.H{
+					"msg":     "Failed to Reset DB Schema",
+					"details": err.Error(),
+				},
 			})
 
 		} else if schemaInfo, err := db.GetSchemaInfo(c.Request.Context(), pool); err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"success": false,
-				"error":   "Failed get DB Schema Info",
-				"details": err.Error(),
+				"error": gin.H{
+					"msg":     "Failed get DB Schema Info",
+					"details": err.Error(),
+				},
 			})
 		} else if err := schemaInfo.MigrateTo(c.Request.Context(), schemaInfo.LatestVersion); err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"success": false,
-				"error":   "Failed migrate DB Schema",
-				"details": err.Error(),
+				"error": gin.H{
+					"msg":     "Failed migrate DB Schema",
+					"details": err.Error(),
+				},
 			})
 		}
 	}
@@ -95,24 +99,27 @@ func handleFinalize(c *gin.Context) {
 
 	if err := core.Initialize(d, coreConfig); err != nil {
 		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"error":   "Failed to initialize core",
-			"details": err.Error(),
+			"error": gin.H{
+				"msg":     "Failed to initialize core",
+				"details": err.Error(),
+			},
 		})
 		return
 	}
 	if err := auth.Initialize(authConfig, logger); err != nil {
 		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"error":   "Failed to initialize auth",
-			"details": err.Error(),
+			"error": gin.H{
+				"msg":     "Failed to initialize auth",
+				"details": err.Error(),
+			},
 		})
 		return
 	}
 	if params.User.Password != "" && !auth.Get().PasswordBackendSupportsUpdate() {
 		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"error":   "Attempting to set password when backend doesn't support it",
+			"error": gin.H{
+				"msg": "Attempting to set password when backend doesn't support it",
+			},
 		})
 		return
 	}
@@ -121,8 +128,10 @@ func handleFinalize(c *gin.Context) {
 	if m.Enabled() && mailConfig.ConnectionCheckFatal {
 		if err := m.CheckConnection(); err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"success": false,
-				"error":   "Failed to connect to SMTP server: " + err.Error(),
+				"error": gin.H{
+					"msg":     "Failed to connect to SMTP server",
+					"details": err.Error(),
+				},
 			})
 		}
 	}
@@ -143,9 +152,10 @@ func handleFinalize(c *gin.Context) {
 	})
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"error":   "Failed to create user",
-			"details": err.Error(),
+			"error": gin.H{
+				"msg":     "Failed to create user",
+				"details": err.Error(),
+			},
 		})
 		return
 	}
