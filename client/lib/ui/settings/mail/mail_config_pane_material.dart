@@ -69,27 +69,27 @@ class MaterialMailConfigPane extends StatelessWidget {
   }
 
   void save(BuildContext context) async {
-    final config = _bloc.validate();
+    // final config = _bloc.validateConfig();
 
-    if (config == null) return;
+    // if (config == null) return;
 
-    final error = await context
-        .read<RemoteConfigController<MailConfigFields>>()
-        .save(config: config);
-    if (!context.mounted) return;
-    if (error == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Auth Config Updated'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } else {
-      showAlertDialog(
-        context,
-        title: 'Failed to update Auth Config',
-        message: error,
-      );
-    }
+    // final error = await context
+    //     .read<RemoteConfigController<MailConfigFields>>()
+    //     .save(config: config);
+    // if (!context.mounted) return;
+    // if (error == null) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(
+    //       content: Text('Auth Config Updated'),
+    //       duration: Duration(seconds: 2),
+    //     ),
+    //   );
+    // } else {
+    //   showAlertDialog(
+    //     context,
+    //     title: 'Failed to update Auth Config',
+    //     message: error,
+    //   );
+    // }
   }
 }

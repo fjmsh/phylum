@@ -1,13 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart';
 import 'package:phylum/ui/settings/auth/auth_config.dart';
-import 'package:phylum/ui/settings/config/config.dart';
-import 'package:phylum/ui/settings/mail/mail_config.dart';
 import 'package:phylum/ui/setup/auth_cubit.dart';
-import 'package:phylum/ui/setup/db/db_config.dart';
 import 'package:phylum/ui/setup/db/db_config_form_cubit.dart';
 import 'package:phylum/ui/setup/setup_config.dart';
 import 'package:phylum/ui/setup/mail_cubit.dart';
 import 'package:phylum/ui/setup/user/user_config_form_cubit.dart';
+import 'package:phylum/util/request.dart';
+import 'package:uri/uri.dart';
 
 sealed class SetupState {
   const SetupState();
@@ -29,7 +31,7 @@ class SetupStateDb extends SetupState {
 }
 
 class SetupStateMail extends SetupState {
-  final LocalConfig<DbConfigFields> dbConfig;
+  final Map<String, dynamic> dbConfig;
   final bool wipeDb;
 
   SetupStateMail({required this.dbConfig, required this.wipeDb});
@@ -39,9 +41,9 @@ class SetupStateMail extends SetupState {
 }
 
 class SetupStateAuth extends SetupState {
-  final LocalConfig<DbConfigFields> dbConfig;
+  final Map<String, dynamic> dbConfig;
   final bool wipeDb;
-  final LocalConfig<MailConfigFields> mailConfig;
+  final Map<String, dynamic> mailConfig;
 
   SetupStateAuth({
     required this.dbConfig,
@@ -55,10 +57,10 @@ class SetupStateAuth extends SetupState {
 }
 
 class SetupStateUser extends SetupState {
-  final LocalConfig<DbConfigFields> dbConfig;
+  final Map<String, dynamic> dbConfig;
   final bool wipeDb;
-  final LocalConfig<MailConfigFields> mailConfig;
-  final LocalConfig<AuthConfigFields> authConfig;
+  final Map<String, dynamic> mailConfig;
+  final Map<String, dynamic> authConfig;
 
   SetupStateUser({
     required this.dbConfig,
@@ -105,22 +107,22 @@ class SetupCubit extends Cubit<SetupState> {
   }
 
   void configureDb({
-    required LocalConfig<DbConfigFields> dbConfig,
+    required Map<String, dynamic> config,
     required bool wipeDb,
   }) {
     if (state is SetupStateDb) {
-      emit(SetupStateMail(dbConfig: dbConfig, wipeDb: wipeDb));
+      emit(SetupStateMail(dbConfig: config, wipeDb: wipeDb));
     }
   }
 
-  void configureMail({required LocalConfig<MailConfigFields> mailConfig}) {
+  void configureMail({required Map<String, dynamic> config}) {
     final state = this.state;
     if (state is SetupStateMail) {
       emit(
         SetupStateAuth(
           dbConfig: state.dbConfig,
           wipeDb: state.wipeDb,
-          mailConfig: mailConfig,
+          mailConfig: config,
         ),
       );
       authBloc.passwordlessLoginEnabled = mailBloc.state.enabled;
@@ -128,7 +130,7 @@ class SetupCubit extends Cubit<SetupState> {
     }
   }
 
-  void configureAuth({required LocalConfig<AuthConfigFields> authConfig}) {
+  void configureAuth({required Map<String, dynamic> config}) {
     final state = this.state;
     if (state is SetupStateAuth) {
       emit(
@@ -136,11 +138,75 @@ class SetupCubit extends Cubit<SetupState> {
           dbConfig: state.dbConfig,
           wipeDb: state.wipeDb,
           mailConfig: state.mailConfig,
-          authConfig: authConfig,
+          authConfig: config,
         ),
       );
       userBloc.passwordRequired =
           authBloc.state.passwordBackend == PasswordBackend.crypt;
     }
   }
+
+  Future<FinalizeResult> configureUser({
+    required Map<String, dynamic> userConfig,
+  }) async {
+    final state = this.state;
+    if (state is! SetupStateUser) {
+      return const FinalizeError(title: 'Not at the right step');
+    }
+
+    final builder = UriBuilder.fromUri(Uri.parse(_instanceUrl));
+    builder.path = '${builder.path}/api/v1/setup/finalize';
+    final request = Request('post', builder.build());
+    final data = {
+      'config': {
+        'db': state.dbConfig,
+        'mail': state.mailConfig,
+        'auth': state.authConfig,
+      },
+      'user': userConfig,
+      'options': {
+        'db': {'wipe': state.wipeDb},
+      },
+    };
+    print(JsonEncoder.withIndent(' ').convert(data));
+    if (4 < 5) {
+      return FinalizeError(title: 'Aborted');
+    }
+
+    request.body = jsonEncode(data);
+
+    final result = await sendRequest(request);
+    switch (result) {
+      case ServerOffline():
+        return const FinalizeError(title: 'Unable to reach server');
+      case ClientError(error: String err):
+        return FinalizeError(title: 'Client Erorr', message: err);
+      case ErrorResponse(error: String err):
+        return FinalizeError(title: 'Server Erorr', message: err);
+      case SuccessResponse():
+        final responseMap = (jsonDecode(result.responseString) as Map)
+            .cast<String, dynamic>();
+
+        final error = (responseMap['error'] as Map?)?.cast<String, dynamic>();
+        if (error != null) {
+          return FinalizeError(title: error['msg'], message: error['details']);
+        }
+        return const FinalizeSuccess();
+    }
+  }
+}
+
+sealed class FinalizeResult {
+  const FinalizeResult();
+}
+
+class FinalizeSuccess extends FinalizeResult {
+  const FinalizeSuccess();
+}
+
+class FinalizeError extends FinalizeResult {
+  final String title;
+  final String? message;
+
+  const FinalizeError({required this.title, this.message});
 }

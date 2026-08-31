@@ -182,11 +182,12 @@ class MailConfigFormState {
 }
 
 class MailConfigFormCubit extends Cubit<MailConfigFormState> {
+  final RemoteConfig<MailConfigFields> _remoteConfig;
   MailConfigFormCubit({
-    required RemoteConfig<MailConfigFields> remoteConfig,
+    required this._remoteConfig,
     required String instanceUrl,
   }) : super(
-         MailConfigFormState.createFromRemoteConfig(remoteConfig, instanceUrl),
+         MailConfigFormState.createFromRemoteConfig(_remoteConfig, instanceUrl),
        );
 
   void reset(RemoteConfig<MailConfigFields> config) {
@@ -230,7 +231,7 @@ class MailConfigFormCubit extends Cubit<MailConfigFormState> {
     emit(state.copyWith(instanceUrl: val));
   }
 
-  LocalConfig<MailConfigFields>? validate() {
+  Map<String, dynamic>? validateConfig() {
     final newState = state.enabled
         ? state.withErrors(
             smtpHostError: state.isSmtpHostFixed()
@@ -278,14 +279,16 @@ class MailConfigFormCubit extends Cubit<MailConfigFormState> {
         newState.instanceUrlError == null) {
       final local = LocalConfig<MailConfigFields>();
       local.setValue(MailConfigFields.fieldEnabled, state.enabled);
-      local.setValue(MailConfigFields.fieldSmtpHost, state.smtpHost);
-      local.setValue(MailConfigFields.fieldSmtpPort, state.smtpPort);
-      local.setValue(MailConfigFields.fieldSmtpUsername, state.smtpUsername);
-      local.setValue(MailConfigFields.fieldSmtpPassword, state.smtpPassword);
-      local.setValue(MailConfigFields.fieldFromEmail, state.fromEmail);
-      local.setValue(MailConfigFields.fieldFromName, state.fromName);
-      local.setValue(MailConfigFields.fieldInstance, state.instanceUrl);
-      return local;
+      if (state.enabled) {
+        local.setValue(MailConfigFields.fieldSmtpHost, state.smtpHost);
+        local.setValue(MailConfigFields.fieldSmtpPort, state.smtpPort);
+        local.setValue(MailConfigFields.fieldSmtpUsername, state.smtpUsername);
+        local.setValue(MailConfigFields.fieldSmtpPassword, state.smtpPassword);
+        local.setValue(MailConfigFields.fieldFromEmail, state.fromEmail);
+        local.setValue(MailConfigFields.fieldFromName, state.fromName);
+        local.setValue(MailConfigFields.fieldInstance, state.instanceUrl);
+      }
+      return local.toMap(_remoteConfig);
     } else {
       emit(newState);
       return null;

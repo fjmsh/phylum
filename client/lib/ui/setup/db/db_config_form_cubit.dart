@@ -4,6 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/settings/config/config.dart';
+import 'package:phylum/ui/setup/config_check_result.dart';
 import 'package:phylum/ui/setup/db/db_config.dart';
 import 'package:phylum/util/request.dart';
 import 'package:uri/uri.dart';
@@ -161,7 +162,7 @@ class DbConfigFormCubit extends Cubit<DbConfigFormState> {
     emit(state.copyWith(password: val));
   }
 
-  LocalConfig<DbConfigFields>? validate() {
+  Map<String, dynamic>? validateConfig() {
     var newState = state;
     final config = LocalConfig<DbConfigFields>();
 
@@ -200,20 +201,21 @@ class DbConfigFormCubit extends Cubit<DbConfigFormState> {
     config.setValue<String>(DbConfigFields.fieldPassword, state.password);
 
     if (state == newState) {
-      return config;
+      return config.toMap(_remoteConfig);
     } else {
       emit(newState);
       return null;
     }
   }
 
-  Future<DbConfigCheckResult> checkConfig(
-    LocalConfig<DbConfigFields> local,
-  ) async {
+  Future<ConfigCheckResult> checkConfig() async {
+    final config = validateConfig();
+    if (config == null) return const ConfigInvalid();
+
     final builder = UriBuilder.fromUri(Uri.parse(_instanceUrl));
     builder.path = '${builder.path}/api/v1/setup/db/validate';
     final request = Request('post', builder.build());
-    request.body = jsonEncode(local.toMap(_remoteConfig));
+    request.body = jsonEncode(config);
 
     final result = await sendRequest(request);
     if (result is SuccessResponse) {
@@ -223,50 +225,17 @@ class DbConfigFormCubit extends Cubit<DbConfigFormState> {
       final error = (responseMap['error'] as Map?)?.cast<String, dynamic>();
       final warning = (responseMap['warning'] as Map?)?.cast<String, dynamic>();
       if (error != null) {
-        return DbConfigCheckError(
+        return ConfigCheckError(
+          config: config,
           title: error['msg'],
           message: error['details'],
         );
       } else if (warning != null) {
-        if (warning['code'] == 'not_empty') {
-          return const DbConfigCheckWarningNotEmpty();
-        } else {
-          return DbConfigCheckUnknownWarning(code: warning['code']);
-        }
+        return ConfigCheckWarning(config: config, code: warning['code']);
       }
-      return const DbConfigCheckSuccess();
+      return ConfigCheckSuccess(config: config);
     } else {
-      return DbConfigCheckFailed(error: result.toString());
+      return ConfigCheckError(config: config, message: result.toString());
     }
   }
-}
-
-sealed class DbConfigCheckResult {
-  const DbConfigCheckResult();
-}
-
-class DbConfigCheckSuccess extends DbConfigCheckResult {
-  const DbConfigCheckSuccess();
-}
-
-class DbConfigCheckFailed extends DbConfigCheckResult {
-  final String error;
-
-  DbConfigCheckFailed({required this.error});
-}
-
-class DbConfigCheckError extends DbConfigCheckResult {
-  final String title;
-  final String? message;
-
-  DbConfigCheckError({required this.title, required this.message});
-}
-
-class DbConfigCheckWarningNotEmpty extends DbConfigCheckResult {
-  const DbConfigCheckWarningNotEmpty();
-}
-
-class DbConfigCheckUnknownWarning extends DbConfigCheckResult {
-  final String code;
-  const DbConfigCheckUnknownWarning({required this.code});
 }

@@ -1,7 +1,5 @@
 import 'package:bloc/bloc.dart';
 import 'package:email_validator/email_validator.dart';
-import 'package:phylum/ui/settings/config/config.dart';
-import 'package:phylum/ui/setup/user/user_config.dart';
 
 class UserConfigFormState {
   final String email;
@@ -116,7 +114,7 @@ class UserConfigFormCubit extends Cubit<UserConfigFormState> {
     emit(state.copyWith(password: val));
   }
 
-  LocalConfig<UserConfigFields>? validate() {
+  Map<String, dynamic>? validateConfig() {
     final newState = state.copyWithErrors(
       emailError: state.email.isEmpty
           ? 'Required'
@@ -130,12 +128,10 @@ class UserConfigFormCubit extends Cubit<UserConfigFormState> {
       emit(newState);
       return null;
     }
-    final config = LocalConfig<UserConfigFields>()
-      ..setValue<String>(UserConfigFields.fieldName, state.name)
-      ..setValue<String>(UserConfigFields.fieldEmail, state.email);
-    if (state.passwordRequired) {
-      config.setValue<String>(UserConfigFields.fieldPassword, state.password);
-    }
-    return config;
+    return {
+      'name': state.name,
+      if (state.passwordRequired) 'password': state.password,
+      'email': state.email,
+    };
   }
 }

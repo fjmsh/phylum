@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/ui/settings/config/remote_config_controller.dart';
+import 'package:phylum/ui/setup/config_check_result.dart';
 import 'package:phylum/util/dialogs.dart';
 
 import 'auth_config.dart';
@@ -68,29 +69,32 @@ class MaterialAuthConfigPane extends StatelessWidget {
                           if (!context.mounted) return;
 
                           switch (result) {
-                            case AuthConfigInvalid():
+                            case ConfigInvalid():
                               return;
-                            case AuthConfigValid():
-                              final error = await context
-                                  .read<
-                                    RemoteConfigController<AuthConfigFields>
-                                  >()
-                                  .save(config: result.config);
-                              if (!context.mounted) return;
-                              if (error == null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Auth Config Updated'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              } else {
-                                showAlertDialog(
-                                  context,
-                                  title: 'Failed to update Auth Config',
-                                  message: error,
-                                );
-                              }
+                            case ConfigCheckSuccess():
+                            // final error = await context
+                            //     .read<
+                            //       RemoteConfigController<AuthConfigFields>
+                            //     >()
+                            //     .save(config: result.config);
+                            // if (!context.mounted) return;
+                            // if (error == null) {
+                            //   ScaffoldMessenger.of(context).showSnackBar(
+                            //     SnackBar(
+                            //       content: Text('Auth Config Updated'),
+                            //       duration: Duration(seconds: 2),
+                            //     ),
+                            //   );
+                            // } else {
+                            //   showAlertDialog(
+                            //     context,
+                            //     title: 'Failed to update Auth Config',
+                            //     message: error,
+                            //   );
+                            // }
+                            case ConfigCheckError():
+                            case ConfigCheckWarning():
+                              throw UnimplementedError();
                           }
                         },
                   child: Text('Save'),

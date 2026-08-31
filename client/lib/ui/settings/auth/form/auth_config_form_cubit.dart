@@ -5,6 +5,7 @@ import 'package:phylum/ui/settings/auth/form/crypt_config_cubit.dart';
 import 'package:phylum/ui/settings/auth/form/ldap_config_cubit.dart';
 import 'package:phylum/ui/settings/auth/form/openid_config_cubit.dart';
 import 'package:phylum/ui/settings/config/config.dart';
+import 'package:phylum/ui/setup/config_check_result.dart';
 
 class AuthConfigFormState {
   final bool mailEnabled;
@@ -78,21 +79,20 @@ class AuthConfigFormState {
 }
 
 abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
-  late final CryptConfigCubit cryptBloc;
-  late final LdapConfigCubit ldapBloc;
+  RemoteConfig<AuthConfigFields> _remote;
+  late final cryptBloc = CryptConfigCubit(remote: _remote);
+  late final LdapConfigCubit ldapBloc = LdapConfigCubit(remote: _remote);
 
-  AuthConfigFormCubit({required RemoteConfig<AuthConfigFields> remote})
+  AuthConfigFormCubit({required this._remote})
     : super(
         AuthConfigFormState.createFromRemoteConfig(
-          config: remote,
+          config: _remote,
           mailEnabled: false,
         ),
-      ) {
-    cryptBloc = CryptConfigCubit(remote: remote);
-    ldapBloc = LdapConfigCubit(remote: remote);
-  }
+      );
 
   void reset(RemoteConfig<AuthConfigFields> remote) {
+    _remote = remote;
     emit(
       AuthConfigFormState.createFromRemoteConfig(
         config: remote,
@@ -141,14 +141,7 @@ abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
     emit(state.copyWith(openIdConfigs: configs));
   }
 
-  Future<AuthConfigCheckResult> checkConfig() async {
-    if (!state.passwordlessLoginEnabled &&
-        state.passwordBackend == PasswordBackend.none &&
-        state.openIdConfigs.isEmpty) {
-      return AuthConfigInvalid(
-        error: 'You must enable at least 1 login method',
-      );
-    }
+  Map<String, dynamic>? validateConfig() {
     final config = LocalConfig<AuthConfigFields>()
       ..setValue(
         AuthConfigFields.fieldMagicLinks,
@@ -159,16 +152,14 @@ abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
       case PasswordBackend.crypt:
         final cryptConfig = cryptBloc.validate();
         if (cryptConfig == null) {
-          return AuthConfigInvalid(
-            error: 'Error with Crypt Password Storage Configuration',
-          );
+          return null;
         }
         config.values.addAll(cryptConfig.values);
         break;
       case PasswordBackend.ldap:
         final ldapConfig = ldapBloc.validate();
         if (ldapConfig == null) {
-          return AuthConfigInvalid(error: 'Error with LDAP Configuration');
+          return null;
         }
         config.values.addAll(ldapConfig.values);
         break;
@@ -176,7 +167,20 @@ abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
         // Do nothing
         break;
     }
-    return AuthConfigValid(config: config);
+    return config.toMap(_remote);
+  }
+
+  Future<ConfigCheckResult> checkConfig() async {
+    if (!state.passwordlessLoginEnabled &&
+        state.passwordBackend == PasswordBackend.none &&
+        state.openIdConfigs.isEmpty) {
+      return ConfigInvalid(error: 'You must enable at least 1 login method');
+    }
+    final config = validateConfig();
+    if (config == null) {
+      return ConfigInvalid(error: 'Unknown Error while validating config');
+    }
+    return ConfigCheckSuccess(config: config);
   }
 
   Future<KDFTestResult> testArgon2Params(
@@ -226,20 +230,4 @@ class KDFTestSuccess extends KDFTestResult {
   final Duration duration;
 
   const KDFTestSuccess({required this.duration});
-}
-
-sealed class AuthConfigCheckResult {
-  const AuthConfigCheckResult();
-}
-
-class AuthConfigInvalid extends AuthConfigCheckResult {
-  final String error;
-
-  const AuthConfigInvalid({required this.error});
-}
-
-class AuthConfigValid extends AuthConfigCheckResult {
-  final LocalConfig<AuthConfigFields> config;
-
-  const AuthConfigValid({required this.config});
 }
