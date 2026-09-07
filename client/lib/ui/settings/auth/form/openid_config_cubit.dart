@@ -33,14 +33,18 @@ class OpenIDConfig {
   factory OpenIDConfig.createFromConfig(RemoteConfig<OidcConfigFields> remote) {
     return OpenIDConfig._(
       fixed: remote.fixed,
-      name: remote.getValue(OidcConfigFields.fieldName),
-      issuerUrl: remote.getValue(OidcConfigFields.fieldIssuerUrl),
-      clientId: remote.getValue(OidcConfigFields.fieldClientId),
-      clientSecret: remote.getValue(OidcConfigFields.fieldClientSecret),
-      allowUnverifiedEmails: remote.getValue(
+      name: remote.getValueOrDefault(OidcConfigFields.fieldName),
+      issuerUrl: remote.getValueOrDefault(OidcConfigFields.fieldIssuerUrl),
+      clientId: remote.getValueOrDefault(OidcConfigFields.fieldClientId),
+      clientSecret: remote.getValueOrDefault(
+        OidcConfigFields.fieldClientSecret,
+      ),
+      allowUnverifiedEmails: remote.getValueOrDefault(
         OidcConfigFields.fieldAllowUnverifiedEmails,
       ),
-      autoCreateUsers: remote.getValue(OidcConfigFields.fieldAutoCreateUsers),
+      autoCreateUsers: remote.getValueOrDefault(
+        OidcConfigFields.fieldAutoCreateUsers,
+      ),
     );
   }
 
@@ -79,6 +83,19 @@ class OpenIDConfig {
     clientIdError: clientIdError,
     clientSecretError: clientSecretError,
   );
+
+  LocalConfig<OidcConfigFields> toLocalConfig() {
+    return LocalConfig()
+      ..setValue<String>(OidcConfigFields.fieldName, name)
+      ..setValue<String>(OidcConfigFields.fieldIssuerUrl, issuerUrl)
+      ..setValue<String>(OidcConfigFields.fieldClientId, clientId)
+      ..setValue<String>(OidcConfigFields.fieldClientSecret, clientSecret)
+      ..setValue<bool>(
+        OidcConfigFields.fieldAllowUnverifiedEmails,
+        allowUnverifiedEmails,
+      )
+      ..setValue<bool>(OidcConfigFields.fieldAutoCreateUsers, autoCreateUsers);
+  }
 
   bool get hasFixedFields => _fixed.isNotEmpty;
   bool get isNameFixed => _fixed.contains(OidcConfigFields.fieldName);
@@ -161,7 +178,7 @@ class OpenIDConfigFormCubit extends Cubit<OpenIDConfig> {
     emit(state.copyWith(autoCreateUsers: val));
   }
 
-  RemoteConfig<OidcConfigFields>? validate() {
+  LocalConfig<OidcConfigFields>? validate() {
     final issuerUrl = Uri.tryParse(state.issuerUrl);
 
     final newState = state.copyWithErrors(
@@ -192,18 +209,6 @@ class OpenIDConfigFormCubit extends Cubit<OpenIDConfig> {
       emit(newState);
       return null;
     }
-    return RemoteConfig.empty(OidcConfigFields.instance)
-      ..setValue<String>(OidcConfigFields.fieldName, state.name)
-      ..setValue<String>(OidcConfigFields.fieldIssuerUrl, state.issuerUrl)
-      ..setValue<String>(OidcConfigFields.fieldClientId, state.clientId)
-      ..setValue<String>(OidcConfigFields.fieldClientSecret, state.clientSecret)
-      ..setValue<bool>(
-        OidcConfigFields.fieldAllowUnverifiedEmails,
-        state.allowUnverifiedEmails,
-      )
-      ..setValue<bool>(
-        OidcConfigFields.fieldAutoCreateUsers,
-        state.autoCreateUsers,
-      );
+    return state.toLocalConfig();
   }
 }

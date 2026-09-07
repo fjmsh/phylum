@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/ui/settings/config/remote_config_controller.dart';
-import 'package:phylum/util/dialogs.dart';
 
 import 'mail_config.dart';
 import 'form/mail_config_form.dart';

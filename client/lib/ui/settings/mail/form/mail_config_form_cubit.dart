@@ -43,16 +43,24 @@ class MailConfigFormState {
     RemoteConfig<MailConfigFields> config,
     String instanceUrl,
   ) {
-    final remoteInstanceUrl = config.getValue(MailConfigFields.fieldInstance);
+    final remoteInstanceUrl = config.getValueOrDefault(
+      MailConfigFields.fieldInstance,
+    );
     return MailConfigFormState(
       fixed: config.fixed,
-      enabled: config.getValue(MailConfigFields.fieldEnabled),
-      smtpHost: config.getValue(MailConfigFields.fieldSmtpHost),
-      smtpPort: config.getValue(MailConfigFields.fieldSmtpPort).toString(),
-      smtpUsername: config.getValue(MailConfigFields.fieldSmtpUsername),
-      smtpPassword: config.getValue(MailConfigFields.fieldSmtpPassword),
-      fromName: config.getValue(MailConfigFields.fieldFromName),
-      fromEmail: config.getValue(MailConfigFields.fieldFromEmail),
+      enabled: config.getValueOrDefault(MailConfigFields.fieldEnabled),
+      smtpHost: config.getValueOrDefault(MailConfigFields.fieldSmtpHost),
+      smtpPort: config
+          .getValueOrDefault(MailConfigFields.fieldSmtpPort)
+          .toString(),
+      smtpUsername: config.getValueOrDefault(
+        MailConfigFields.fieldSmtpUsername,
+      ),
+      smtpPassword: config.getValueOrDefault(
+        MailConfigFields.fieldSmtpPassword,
+      ),
+      fromName: config.getValueOrDefault(MailConfigFields.fieldFromName),
+      fromEmail: config.getValueOrDefault(MailConfigFields.fieldFromEmail),
       instanceUrl:
           remoteInstanceUrl.isEmpty &&
               !config.fixed.contains(MailConfigFields.fieldInstance)
@@ -232,6 +240,7 @@ class MailConfigFormCubit extends Cubit<MailConfigFormState> {
   }
 
   Map<String, dynamic>? validateConfig() {
+    final smtpPort = int.tryParse(state.smtpPort) ?? 0;
     final newState = state.enabled
         ? state.withErrors(
             smtpHostError: state.isSmtpHostFixed()
@@ -243,7 +252,7 @@ class MailConfigFormCubit extends Cubit<MailConfigFormState> {
                 ? null
                 : state.smtpPort.isEmpty
                 ? 'Required'
-                : (int.tryParse(state.smtpPort) ?? 0) == 0
+                : smtpPort == 0
                 ? 'Invalid Port'
                 : null,
             smtpUsernameError: state.isSmtpUsernameFixed()
@@ -278,15 +287,27 @@ class MailConfigFormCubit extends Cubit<MailConfigFormState> {
         newState.fromEmailError == null &&
         newState.instanceUrlError == null) {
       final local = LocalConfig<MailConfigFields>();
-      local.setValue(MailConfigFields.fieldEnabled, state.enabled);
+      local.setValue<bool>(MailConfigFields.fieldEnabled, state.enabled);
       if (state.enabled) {
-        local.setValue(MailConfigFields.fieldSmtpHost, state.smtpHost);
-        local.setValue(MailConfigFields.fieldSmtpPort, state.smtpPort);
-        local.setValue(MailConfigFields.fieldSmtpUsername, state.smtpUsername);
-        local.setValue(MailConfigFields.fieldSmtpPassword, state.smtpPassword);
-        local.setValue(MailConfigFields.fieldFromEmail, state.fromEmail);
-        local.setValue(MailConfigFields.fieldFromName, state.fromName);
-        local.setValue(MailConfigFields.fieldInstance, state.instanceUrl);
+        local.setValue<String>(MailConfigFields.fieldSmtpHost, state.smtpHost);
+        local.setValue<int>(MailConfigFields.fieldSmtpPort, smtpPort);
+        local.setValue<String>(
+          MailConfigFields.fieldSmtpUsername,
+          state.smtpUsername,
+        );
+        local.setValue<String>(
+          MailConfigFields.fieldSmtpPassword,
+          state.smtpPassword,
+        );
+        local.setValue<String>(
+          MailConfigFields.fieldFromEmail,
+          state.fromEmail,
+        );
+        local.setValue<String>(MailConfigFields.fieldFromName, state.fromName);
+        local.setValue<String>(
+          MailConfigFields.fieldInstance,
+          state.instanceUrl,
+        );
       }
       return local.toMap(_remoteConfig);
     } else {

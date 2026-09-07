@@ -16,9 +16,9 @@ sealed class ConfigField {
     required dynamic data,
   });
 
-  dynamic toMap(
-    Map<PrimitiveField, dynamic> remoteValues,
-    Map<PrimitiveField, dynamic> localValues,
+  dynamic toMap<C extends ConfigFields>(
+    RemoteConfig<C> remote,
+    LocalConfig<C> local,
   );
 }
 
@@ -46,14 +46,14 @@ class ObjectField extends ConfigField {
   }
 
   @override
-  Map<String, dynamic>? toMap(
-    Map<PrimitiveField, dynamic> remoteValues,
-    Map<PrimitiveField, dynamic> localValues,
+  Map<String, dynamic>? toMap<C extends ConfigFields>(
+    RemoteConfig<C> remote,
+    LocalConfig<C> local,
   ) {
     final map = Map.fromEntries(
       fields.entries
           .map((e) {
-            final sub = e.value.toMap(remoteValues, localValues);
+            final sub = e.value.toMap(remote, local);
             if (sub == null) {
               return null;
             }
@@ -87,19 +87,19 @@ class PrimitiveField<T> extends ConfigField {
   }
 
   @override
-  dynamic toMap(
-    Map<PrimitiveField, dynamic> remoteValues,
-    Map<PrimitiveField, dynamic> localValues,
+  dynamic toMap<C extends ConfigFields>(
+    RemoteConfig<C> remote,
+    LocalConfig<C> local,
   ) {
-    final remote = remoteValues[this];
-    final local = localValues[this];
-    if (local == null || local == remote) return null;
-    return toPrimitive?.call(local) ?? local;
+    final remoteValue = remote.getValue(this);
+    final localValue = local.getValue(this);
+    if (localValue == null || localValue == remoteValue) return null;
+    return toPrimitive?.call(localValue) ?? localValue;
   }
 }
 
-class MapField<C extends ConfigFields> extends ConfigField {
-  final C schema;
+class MapField<Cfg extends ConfigFields> extends ConfigField {
+  final Cfg schema;
 
   MapField({required this.schema});
 
@@ -116,18 +116,40 @@ class MapField<C extends ConfigFields> extends ConfigField {
       config.maps.putIfAbsent(
         this,
         () => {},
-      )[entry.key] = RemoteConfig<C>.fromDataFixed(
+      )[entry.key] = RemoteConfig<Cfg>.fromDataFixed(
         schema,
-        entry.value,
-        fixed,
-        path.isEmpty ? entry.key : "$path.${entry.key}",
+        fixed: fixed,
+        data: entry.value,
+        path: path.isEmpty ? entry.key : "$path.${entry.key}",
       );
     }
   }
 
   @override
-  dynamic toMap(
-    Map<PrimitiveField, dynamic> remoteValues,
-    Map<PrimitiveField, dynamic> localValues,
-  ) => throw UnimplementedError();
+  Map<String, dynamic>? toMap<C extends ConfigFields>(
+    RemoteConfig<C> remote,
+    LocalConfig<C> local,
+  ) {
+    final remoteMap = remote.maps[this] ?? const {};
+    final localMap = local.maps[this] ?? const {};
+    final keys = Set.of(localMap.keys)..addAll(remoteMap.keys);
+    final map = Map.fromEntries(
+      keys.map((k) {
+        final remote = remoteMap[k] ?? RemoteConfig<Cfg>.empty(schema);
+        final local = localMap[k] ?? LocalConfig<Cfg>();
+        return MapEntry(k, local.toMap(remote));
+      }).whereType<MapEntry<String, dynamic>>(),
+      // localMap.entries
+      //     .map((e) {
+      //       final sub = e.value.toMap(remote, local);
+      //       if (sub == null) {
+      //         return null;
+      //       }
+      //       return MapEntry(e.key, sub);
+      //     })
+      //     .whereType<MapEntry<String, dynamic>>()
+      //     .toList(growable: false),
+    );
+    return map.isEmpty ? null : map;
+  }
 }

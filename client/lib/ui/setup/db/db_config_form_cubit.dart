@@ -39,11 +39,11 @@ class DbConfigFormState {
   ) {
     return DbConfigFormState(
       fixed: config.fixed,
-      host: config.getValue(DbConfigFields.fieldHost),
-      port: config.getValue(DbConfigFields.fieldPort).toString(),
-      dbName: config.getValue(DbConfigFields.fieldDbName),
-      user: config.getValue(DbConfigFields.fieldUser),
-      password: config.getValue(DbConfigFields.fieldPassword),
+      host: config.getValueOrDefault(DbConfigFields.fieldHost),
+      port: config.getValueOrDefault(DbConfigFields.fieldPort).toString(),
+      dbName: config.getValueOrDefault(DbConfigFields.fieldDbName),
+      user: config.getValueOrDefault(DbConfigFields.fieldUser),
+      password: config.getValueOrDefault(DbConfigFields.fieldPassword),
     );
   }
 

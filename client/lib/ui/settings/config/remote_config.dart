@@ -2,39 +2,48 @@ part of 'config.dart';
 
 class RemoteConfig<C extends ConfigFields> {
   final C schema;
-  final Map<PrimitiveField, dynamic> values;
   final Set<PrimitiveField> fixed;
+  final Map<PrimitiveField, dynamic> values;
   final Map<MapField, Map<String, RemoteConfig>> maps;
 
   RemoteConfig._({
     required this.schema,
-    required this.values,
     required this.fixed,
+    required this.values,
     required this.maps,
   });
 
   factory RemoteConfig.empty(C schema) {
-    return RemoteConfig._(schema: schema, values: {}, fixed: {}, maps: {});
+    return RemoteConfig._(schema: schema, fixed: {}, values: {}, maps: {});
   }
 
   factory RemoteConfig.fromMap(C schema, Map<String, dynamic> map) {
     final data = (map['config'] as Map).cast<String, dynamic>();
     final fixed = Set.of((map['overrides'] as List).cast<String>());
-    return RemoteConfig.fromDataFixed(schema, data, fixed, "");
+    return RemoteConfig.fromDataFixed(
+      schema,
+      fixed: fixed,
+      data: data,
+      path: "",
+    );
   }
 
   factory RemoteConfig.fromDataFixed(
-    C schema,
-    Map<String, dynamic> data,
-    Set<String> fixed,
-    String path,
-  ) {
+    C schema, {
+    required Set<String> fixed,
+    required Map<String, dynamic> data,
+    required String path,
+  }) {
     final config = RemoteConfig.empty(schema);
     schema.root.parse(config: config, fixed: fixed, path: path, data: data);
     return config;
   }
 
-  T getValue<T>(PrimitiveField<T> field) {
+  T? getValue<T>(PrimitiveField<T> field) {
+    return values[field] as T?;
+  }
+
+  T getValueOrDefault<T>(PrimitiveField<T> field) {
     final value = (values[field] as T?) ?? field.defaultValue;
     if (!fixed.contains(field) &&
         (value == "" || value == 0 || value == false)) {

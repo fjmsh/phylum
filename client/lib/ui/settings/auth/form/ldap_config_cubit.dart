@@ -42,23 +42,31 @@ class LdapConfigState {
   ) {
     return LdapConfigState(
       fixed: remote.fixed,
-      serverUrl: remote.getValue(AuthConfigFields.fieldPasswordLdapUrl),
-      starttls: remote.getValue(AuthConfigFields.fieldPasswordLdapStarttls),
-      autoCreateUsers: remote.getValue(
+      serverUrl: remote.getValueOrDefault(
+        AuthConfigFields.fieldPasswordLdapUrl,
+      ),
+      starttls: remote.getValueOrDefault(
+        AuthConfigFields.fieldPasswordLdapStarttls,
+      ),
+      autoCreateUsers: remote.getValueOrDefault(
         AuthConfigFields.fieldPasswordLdapAutoCreateUsers,
       ),
-      useFilter: remote.getValue(AuthConfigFields.fieldPasswordLdapUseFilter),
-      dnTemplate: remote.getValue(AuthConfigFields.fieldPasswordLdapDnTemplate),
-      filterBindDn: remote.getValue(
+      useFilter: remote.getValueOrDefault(
+        AuthConfigFields.fieldPasswordLdapUseFilter,
+      ),
+      dnTemplate: remote.getValueOrDefault(
+        AuthConfigFields.fieldPasswordLdapDnTemplate,
+      ),
+      filterBindDn: remote.getValueOrDefault(
         AuthConfigFields.fieldPasswordLdapFilterBindDn,
       ),
-      filterBindPassword: remote.getValue(
+      filterBindPassword: remote.getValueOrDefault(
         AuthConfigFields.fieldPasswordLdapFilterBindPassword,
       ),
-      filterBaseDn: remote.getValue(
+      filterBaseDn: remote.getValueOrDefault(
         AuthConfigFields.fieldPasswordLdapFilterBaseDn,
       ),
-      filterTemplate: remote.getValue(
+      filterTemplate: remote.getValueOrDefault(
         AuthConfigFields.fieldPasswordLdapFilterTemplate,
       ),
     );

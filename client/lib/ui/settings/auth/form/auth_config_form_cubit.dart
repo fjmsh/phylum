@@ -31,10 +31,12 @@ class AuthConfigFormState {
         });
     return AuthConfigFormState(
       mailEnabled: mailEnabled,
-      passwordlessLoginEnabled: config.getValue(
+      passwordlessLoginEnabled: config.getValueOrDefault(
         AuthConfigFields.fieldMagicLinks,
       ),
-      passwordBackend: config.getValue(AuthConfigFields.fieldPasswordBackend),
+      passwordBackend: config.getValueOrDefault(
+        AuthConfigFields.fieldPasswordBackend,
+      ),
       openIdConfigs: openIdConfigs,
     );
   }
@@ -167,6 +169,13 @@ abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
         // Do nothing
         break;
     }
+    state.openIdConfigs.forEach((key, openidConfig) {
+      config.addMapEntry(
+        AuthConfigFields.fieldOpenidClients,
+        key,
+        openidConfig.toLocalConfig(),
+      );
+    });
     return config.toMap(_remote);
   }
 

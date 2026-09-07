@@ -233,7 +233,7 @@ class _SetupPageState extends State<SetupPage> {
         );
         return null;
       case ConfigCheckSuccess(config: Map<String, dynamic> config):
-        _bloc.configureAuth(config: config);
+        return config;
       case ConfigCheckError(config: Map<String, dynamic> config):
         final remain = await showAlertDialog(
           context,

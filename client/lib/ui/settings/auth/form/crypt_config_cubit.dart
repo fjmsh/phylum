@@ -36,29 +36,39 @@ class CryptConfigState {
   factory CryptConfigState.createFromRemoteConfig(
     RemoteConfig<AuthConfigFields> remote,
   ) {
-    final kdf = remote.getValue(AuthConfigFields.fieldPasswordCryptKdf);
+    final kdf = remote.getValueOrDefault(
+      AuthConfigFields.fieldPasswordCryptKdf,
+    );
     return CryptConfigState(
       fixed: remote.fixed,
       shouldAllowKdfSelection: kdf != CryptKDF.argon2,
       kdf: kdf,
-      resetEnabled: remote.getValue(AuthConfigFields.fieldPasswordResetEnabled),
+      resetEnabled: remote.getValueOrDefault(
+        AuthConfigFields.fieldPasswordResetEnabled,
+      ),
       argon2Memory: remote
-          .getValue(AuthConfigFields.fieldPasswordCryptArgon2Memory)
+          .getValueOrDefault(AuthConfigFields.fieldPasswordCryptArgon2Memory)
           .toString(),
       argon2Iterations: remote
-          .getValue(AuthConfigFields.fieldPasswordCryptArgon2Iterations)
+          .getValueOrDefault(
+            AuthConfigFields.fieldPasswordCryptArgon2Iterations,
+          )
           .toString(),
       argon2Parallelism: remote
-          .getValue(AuthConfigFields.fieldPasswordCryptArgon2Parallelism)
+          .getValueOrDefault(
+            AuthConfigFields.fieldPasswordCryptArgon2Parallelism,
+          )
           .toString(),
       argon2MemoryError: null,
       argon2IterationsError: null,
       argon2ParallelismError: null,
-      pbkdf2Hash: remote.getValue(
+      pbkdf2Hash: remote.getValueOrDefault(
         AuthConfigFields.fieldPasswordCryptPbkdf2Hash,
       ),
       pbkdf2Iterations: remote
-          .getValue(AuthConfigFields.fieldPasswordCryptPbkdf2Iterations)
+          .getValueOrDefault(
+            AuthConfigFields.fieldPasswordCryptPbkdf2Iterations,
+          )
           .toString(),
       pbkdf2IterationsError: null,
     );
