@@ -119,6 +119,12 @@ class CryptConfigState {
     pbkdf2IterationsError: pbkdf2IterationsError,
   );
 
+  bool get hasErrors =>
+      argon2MemoryError != null ||
+      argon2IterationsError != null ||
+      argon2ParallelismError != null ||
+      pbkdf2IterationsError != null;
+
   bool isKdfFixed() => _fixed.contains(AuthConfigFields.fieldPasswordCryptKdf);
   bool isResetEnabledFixed() =>
       _fixed.contains(AuthConfigFields.fieldPasswordResetEnabled);
@@ -282,7 +288,7 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
           ? 'Out of Bounds'
           : null,
     );
-    if (newState != state) {
+    if (newState.hasErrors) {
       emit(newState);
       return null;
     }

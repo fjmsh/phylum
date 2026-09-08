@@ -119,6 +119,14 @@ class MailConfigFormState {
     );
   }
 
+  bool get hasErrors =>
+      smtpHostError != null ||
+      smtpPortError != null ||
+      smtpUsernameError != null ||
+      fromNameError != null ||
+      fromEmailError != null ||
+      instanceUrlError != null;
+
   bool isEnabledFixed() => _fixed.contains(MailConfigFields.fieldEnabled);
   bool isSmtpHostFixed() => _fixed.contains(MailConfigFields.fieldSmtpHost);
   bool isSmtpPortFixed() => _fixed.contains(MailConfigFields.fieldSmtpPort);
@@ -280,39 +288,29 @@ class MailConfigFormCubit extends Cubit<MailConfigFormState> {
                 : null,
           )
         : state;
-    if (newState.smtpHostError == null &&
-        newState.smtpPortError == null &&
-        newState.smtpUsernameError == null &&
-        newState.fromNameError == null &&
-        newState.fromEmailError == null &&
-        newState.instanceUrlError == null) {
-      final local = LocalConfig<MailConfigFields>();
-      local.setValue<bool>(MailConfigFields.fieldEnabled, state.enabled);
-      if (state.enabled) {
-        local.setValue<String>(MailConfigFields.fieldSmtpHost, state.smtpHost);
-        local.setValue<int>(MailConfigFields.fieldSmtpPort, smtpPort);
-        local.setValue<String>(
-          MailConfigFields.fieldSmtpUsername,
-          state.smtpUsername,
-        );
-        local.setValue<String>(
-          MailConfigFields.fieldSmtpPassword,
-          state.smtpPassword,
-        );
-        local.setValue<String>(
-          MailConfigFields.fieldFromEmail,
-          state.fromEmail,
-        );
-        local.setValue<String>(MailConfigFields.fieldFromName, state.fromName);
-        local.setValue<String>(
-          MailConfigFields.fieldInstance,
-          state.instanceUrl,
-        );
-      }
-      return local.toMap(_remoteConfig);
-    } else {
+
+    if (newState.hasErrors) {
       emit(newState);
       return null;
     }
+
+    final local = LocalConfig<MailConfigFields>();
+    local.setValue<bool>(MailConfigFields.fieldEnabled, state.enabled);
+    if (state.enabled) {
+      local.setValue<String>(MailConfigFields.fieldSmtpHost, state.smtpHost);
+      local.setValue<int>(MailConfigFields.fieldSmtpPort, smtpPort);
+      local.setValue<String>(
+        MailConfigFields.fieldSmtpUsername,
+        state.smtpUsername,
+      );
+      local.setValue<String>(
+        MailConfigFields.fieldSmtpPassword,
+        state.smtpPassword,
+      );
+      local.setValue<String>(MailConfigFields.fieldFromEmail, state.fromEmail);
+      local.setValue<String>(MailConfigFields.fieldFromName, state.fromName);
+      local.setValue<String>(MailConfigFields.fieldInstance, state.instanceUrl);
+    }
+    return local.toMap(_remoteConfig);
   }
 }

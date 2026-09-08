@@ -85,6 +85,12 @@ class DbConfigFormState {
     );
   }
 
+  bool get hasErrors =>
+      hostError != null ||
+      portError != null ||
+      dbNameError != null ||
+      userError != null;
+
   bool hasHostOverride() => _fixed.contains(DbConfigFields.fieldHost);
   bool hasPortOverride() => _fixed.contains(DbConfigFields.fieldPort);
   bool hasDbNameOverride() => _fixed.contains(DbConfigFields.fieldDbName);
@@ -200,12 +206,11 @@ class DbConfigFormCubit extends Cubit<DbConfigFormState> {
     }
     config.setValue<String>(DbConfigFields.fieldPassword, state.password);
 
-    if (state == newState) {
-      return config.toMap(_remoteConfig);
-    } else {
+    if (newState.hasErrors) {
       emit(newState);
       return null;
     }
+    return config.toMap(_remoteConfig);
   }
 
   Future<ConfigCheckResult> checkConfig() async {

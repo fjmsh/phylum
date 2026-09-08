@@ -84,6 +84,12 @@ class OpenIDConfig {
     clientSecretError: clientSecretError,
   );
 
+  bool get hasErrors =>
+      nameError != null ||
+      issuerUrlError != null ||
+      clientIdError != null ||
+      clientSecretError != null;
+
   LocalConfig<OidcConfigFields> toLocalConfig() {
     return LocalConfig()
       ..setValue<String>(OidcConfigFields.fieldName, name)
@@ -205,7 +211,7 @@ class OpenIDConfigFormCubit extends Cubit<OpenIDConfig> {
           ? 'Required'
           : null,
     );
-    if (newState != state) {
+    if (newState.hasErrors) {
       emit(newState);
       return null;
     }

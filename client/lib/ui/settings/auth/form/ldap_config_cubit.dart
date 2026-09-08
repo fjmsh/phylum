@@ -119,6 +119,13 @@ class LdapConfigState {
     filterTemplateError: filterTemplateError ?? this.filterTemplateError,
   );
 
+  bool get hasErrors =>
+      serverUrlError != null ||
+      dnTemplateError != null ||
+      filterBindDnError != null ||
+      filterBaseDnError != null ||
+      filterTemplateError != null;
+
   bool isServerUrlFixed() =>
       _fixed.contains(AuthConfigFields.fieldPasswordLdapUrl);
   bool isStarttlsFixed() =>
@@ -305,11 +312,10 @@ class LdapConfigCubit extends Cubit<LdapConfigState> {
       filterTemplateError: filterTemplateError,
     );
 
-    if (state == newState) {
-      return local;
-    } else {
+    if (newState.hasErrors) {
       emit(newState);
       return null;
     }
+    return local;
   }
 }
