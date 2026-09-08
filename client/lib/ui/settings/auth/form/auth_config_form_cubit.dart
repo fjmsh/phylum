@@ -187,7 +187,7 @@ abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
     }
     final config = validateConfig();
     if (config == null) {
-      return ConfigInvalid(error: 'Unknown Error while validating config');
+      return ConfigInvalid();
     }
     return ConfigCheckSuccess(config: config);
   }

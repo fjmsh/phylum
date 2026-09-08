@@ -280,25 +280,33 @@ class LdapConfigCubit extends Cubit<LdapConfigState> {
         ? 'Scheme must be ldap:// or ldaps://'
         : null;
 
-    final dnTemplateError = state.isDnTemplateFixed()
+    final dnTemplateError = state.useFilter
+        ? null
+        : state.isDnTemplateFixed()
         ? null
         : state.dnTemplate.isEmpty
         ? 'Required'
         : null;
 
-    final filterBindDnError = state.isFilterBindDnFixed()
+    final filterBindDnError = !state.useFilter
+        ? null
+        : state.isFilterBindDnFixed()
         ? null
         : state.filterBindDn.isEmpty
         ? 'Required'
         : null;
 
-    final filterBaseDnError = state.isFilterBaseDnFixed()
+    final filterBaseDnError = !state.useFilter
+        ? null
+        : state.isFilterBaseDnFixed()
         ? null
         : state.filterBaseDn.isEmpty
         ? 'Required'
         : null;
 
-    final filterTemplateError = state.isFilterTemplateFixed()
+    final filterTemplateError = !state.useFilter
+        ? null
+        : state.isFilterTemplateFixed()
         ? null
         : state.filterTemplate.isEmpty
         ? 'Required'
