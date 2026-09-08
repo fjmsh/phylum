@@ -15,14 +15,6 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
-type dbConfig struct {
-	Host     string `json:"host" form:"host" koanf:"host,omitempty"`
-	Port     int    `json:"port" form:"port" koanf:"port,omitempty"`
-	DBName   string `json:"name" form:"name" koanf:"name,omitempty"`
-	User     string `json:"user" form:"user" koanf:"user,omitempty"`
-	Password string `json:"password" form:"password" koanf:"password,omitempty"`
-}
-
 func handleValidateDBRequest(c *gin.Context) {
 	params := koanf.New(".")
 	decoderConfig := &mapstructure.DecoderConfig{

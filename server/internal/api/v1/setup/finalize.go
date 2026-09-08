@@ -1,6 +1,7 @@
 package setup
 
 import (
+	"io"
 	"net/http"
 	"os"
 	"syscall"
@@ -11,7 +12,9 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
-	"github.com/knadh/koanf/providers/structs"
+	"github.com/go-viper/mapstructure/v2"
+	"github.com/knadh/koanf/parsers/json"
+	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/knadh/koanf/v2"
 	"github.com/rs/zerolog"
 )
@@ -35,24 +38,34 @@ func handleFinalize(c *gin.Context) {
 			} `json:"db"`
 		}
 	}
-	err := c.ShouldBindJSON(&params)
-	if err != nil {
-		panic(errInvalidParams)
+
+	k := koanf.New(".")
+	if body, err := io.ReadAll(c.Request.Body); err != nil {
+		panic(core.NewError(http.StatusBadRequest, "no_request_body", "failed to read request parameters from body: "+err.Error()))
+	} else if err := k.Load(rawbytes.Provider(body), json.Parser()); err != nil {
+		panic(core.NewError(http.StatusBadRequest, "parse_failed", "failed to parse request parameters from body: "+err.Error()))
+	} else if err := k.UnmarshalWithConf("", nil, koanf.UnmarshalConf{
+		DecoderConfig: &mapstructure.DecoderConfig{
+			ErrorUnused: true,
+			Result:      &params,
+		},
+	}); err != nil {
+		panic(core.NewError(http.StatusBadRequest, "validate_failed", "failed to validate request parameters from body: "+err.Error()))
 	}
 
-	inCfg := koanf.New(".")
-	inCfg.Load(structs.Provider(params.Config, "koanf"), nil)
-	fullCfg := config.MergeSub("", inCfg)
+	cfg := config.MergeSub("", k.Cut("config"))
 
 	var dbConfig db.Config
 	var mailConfig mail.Config
 	var authConfig auth.Config
 	var coreConfig core.Config
-	fullCfg.Unmarshal("db", &dbConfig)
-	fullCfg.Unmarshal("mail", &mailConfig)
-	fullCfg.Unmarshal("auth", &authConfig)
-	fullCfg.Unmarshal("core", &coreConfig)
+	cfg.Unmarshal("db", &dbConfig)
+	cfg.Unmarshal("mail", &mailConfig)
+	cfg.Unmarshal("auth", &authConfig)
+	cfg.Unmarshal("core", &coreConfig)
+	cfg.Print()
 
+	var err error
 	defer func() {
 		syscall.Kill(os.Getpid(), syscall.SIGINT)
 	}()
@@ -160,7 +173,7 @@ func handleFinalize(c *gin.Context) {
 		return
 	}
 
-	config.WriteConfig(inCfg)
+	config.WriteConfig(k.Cut("config"))
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
