@@ -139,16 +139,6 @@ class MapField<Cfg extends ConfigFields> extends ConfigField {
         final local = localMap[k] ?? LocalConfig<Cfg>();
         return MapEntry(k, local.toMap(remote));
       }).whereType<MapEntry<String, dynamic>>(),
-      // localMap.entries
-      //     .map((e) {
-      //       final sub = e.value.toMap(remote, local);
-      //       if (sub == null) {
-      //         return null;
-      //       }
-      //       return MapEntry(e.key, sub);
-      //     })
-      //     .whereType<MapEntry<String, dynamic>>()
-      //     .toList(growable: false),
     );
     return map.isEmpty ? null : map;
   }

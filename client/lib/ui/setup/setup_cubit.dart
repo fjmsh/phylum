@@ -125,6 +125,7 @@ class SetupCubit extends Cubit<SetupState> {
           mailConfig: config,
         ),
       );
+      authBloc.mailEnabled = mailBloc.state.enabled;
       authBloc.passwordlessLoginEnabled = mailBloc.state.enabled;
       authBloc.cryptBloc.resetEnabled = mailBloc.state.enabled;
     }
@@ -168,10 +169,6 @@ class SetupCubit extends Cubit<SetupState> {
         'db': {'wipe': state.wipeDb},
       },
     };
-    print(JsonEncoder.withIndent(' ').convert(data));
-    if (4 < 5) {
-      return FinalizeError(title: 'Aborted');
-    }
 
     request.body = jsonEncode(data);
 
