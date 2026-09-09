@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/ui/config/remote_config_controller.dart';
+import 'package:phylum/util/dialogs.dart';
 
 import 'mail_config.dart';
 import 'form/mail_config_form.dart';
@@ -66,27 +67,27 @@ class MaterialMailConfigPane extends StatelessWidget {
   }
 
   void save(BuildContext context) async {
-    // final config = _bloc.validateConfig();
+    final config = _bloc.validateConfig();
 
-    // if (config == null) return;
+    if (config == null) return;
 
-    // final error = await context
-    //     .read<RemoteConfigController<MailConfigFields>>()
-    //     .save(config: config);
-    // if (!context.mounted) return;
-    // if (error == null) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     SnackBar(
-    //       content: Text('Auth Config Updated'),
-    //       duration: Duration(seconds: 2),
-    //     ),
-    //   );
-    // } else {
-    //   showAlertDialog(
-    //     context,
-    //     title: 'Failed to update Auth Config',
-    //     message: error,
-    //   );
-    // }
+    final error = await context
+        .read<RemoteConfigController<MailConfigFields>>()
+        .save(config: config);
+    if (!context.mounted) return;
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Auth Config Updated'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      showAlertDialog(
+        context,
+        title: 'Failed to update Mail Config',
+        message: error,
+      );
+    }
   }
 }

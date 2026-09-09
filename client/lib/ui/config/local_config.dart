@@ -2,7 +2,7 @@ part of 'config.dart';
 
 class LocalConfig<C extends ConfigFields> {
   final Map<PrimitiveField, dynamic> values = {};
-  final Map<MapField, LocalConfig> objects = {};
+  final Map<ObjectField, LocalConfig> objects = {};
   final Map<MapField, Map<String, LocalConfig>> maps = {};
 
   LocalConfig();

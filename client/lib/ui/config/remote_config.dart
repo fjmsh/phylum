@@ -4,7 +4,7 @@ class RemoteConfig<C extends ConfigFields> {
   final C schema;
   final Set<PrimitiveField> fixed;
   final Map<PrimitiveField, dynamic> values;
-  final Map<ProxyObjectField, RemoteConfig> objects;
+  final Map<ObjectField, RemoteConfig> objects;
   final Map<MapField, Map<String, RemoteConfig>> maps;
 
   RemoteConfig._({
@@ -97,9 +97,7 @@ class RemoteConfig<C extends ConfigFields> {
     maps.putIfAbsent(field, () => <String, RemoteConfig<FC>>{}).remove(key);
   }
 
-  RemoteConfig<FC> getObject<FC extends ConfigFields>(
-    ProxyObjectField<FC> field,
-  ) {
+  RemoteConfig<FC> getObject<FC extends ConfigFields>(ObjectField<FC> field) {
     return objects[field]! as RemoteConfig<FC>;
   }
 

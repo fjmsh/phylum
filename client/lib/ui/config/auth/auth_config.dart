@@ -11,7 +11,7 @@ class AuthConfigFields extends ConfigFields {
     fromPrimitive: (val) => PasswordBackend.fromString(val),
   );
 
-  static final fieldPasswordCrypt = ProxyObjectField(
+  static final fieldPasswordCrypt = ObjectField(
     schema: CryptConfigFields.instance,
   );
   static final fieldPasswordResetEnabled = PrimitiveField(false);
@@ -45,46 +45,36 @@ class AuthConfigFields extends ConfigFields {
   AuthConfigFields._();
 
   @override
-  final ObjectField root = ObjectField(
-    fields: {
-      "magic_links": fieldMagicLinks,
-      "password": ObjectField(
-        fields: {
-          "backend": fieldPasswordBackend,
-          "reset_enabled": fieldPasswordResetEnabled,
-          "crypt": fieldPasswordCrypt,
-          "ldap": ObjectField(
-            fields: {
-              "debug": fieldPasswordLdapDebug,
-              "url": fieldPasswordLdapUrl,
-              "starttls": fieldPasswordLdapStarttls,
-              "use_filter": fieldPasswordLdapUseFilter,
-              "dn_template": fieldPasswordLdapUrl,
-              "filter": ObjectField(
-                fields: {
-                  "bind_dn": fieldPasswordLdapFilterBindDn,
-                  "bind_password": fieldPasswordLdapFilterBindPassword,
-                  "base_dn": fieldPasswordLdapFilterBaseDn,
-                  "template": fieldPasswordLdapDnTemplate,
-                },
-              ),
-              "auto_create_users": fieldPasswordLdapAutoCreateUsers,
-            },
-          ),
-          "requirements": ObjectField(
-            fields: {
-              "length": fieldPasswordRequirementsLength,
-              "upper": fieldPasswordRequirementsUpper,
-              "lower": fieldPasswordRequirementsLower,
-              "numeric": fieldPasswordRequirementsNumeric,
-              "symbols": fieldPasswordRequirementsSymbols,
-            },
-          ),
-        },
-      ),
-      "openid": ObjectField(fields: {"clients": fieldOpenidClients}),
-    },
-  );
+  final AnonymousObjectField root = AnonymousObjectField({
+    "magic_links": fieldMagicLinks,
+    "password": AnonymousObjectField({
+      "backend": fieldPasswordBackend,
+      "reset_enabled": fieldPasswordResetEnabled,
+      "crypt": fieldPasswordCrypt,
+      "ldap": AnonymousObjectField({
+        "debug": fieldPasswordLdapDebug,
+        "url": fieldPasswordLdapUrl,
+        "starttls": fieldPasswordLdapStarttls,
+        "use_filter": fieldPasswordLdapUseFilter,
+        "dn_template": fieldPasswordLdapUrl,
+        "filter": AnonymousObjectField({
+          "bind_dn": fieldPasswordLdapFilterBindDn,
+          "bind_password": fieldPasswordLdapFilterBindPassword,
+          "base_dn": fieldPasswordLdapFilterBaseDn,
+          "template": fieldPasswordLdapDnTemplate,
+        }),
+        "auto_create_users": fieldPasswordLdapAutoCreateUsers,
+      }),
+      "requirements": AnonymousObjectField({
+        "length": fieldPasswordRequirementsLength,
+        "upper": fieldPasswordRequirementsUpper,
+        "lower": fieldPasswordRequirementsLower,
+        "numeric": fieldPasswordRequirementsNumeric,
+        "symbols": fieldPasswordRequirementsSymbols,
+      }),
+    }),
+    "openid": AnonymousObjectField({"clients": fieldOpenidClients}),
+  });
 }
 
 enum PasswordBackend {

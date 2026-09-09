@@ -13,14 +13,12 @@ class OpenidConfigFields extends ConfigFields {
   OpenidConfigFields._();
 
   @override
-  ObjectField get root => ObjectField(
-    fields: {
-      "name": fieldName,
-      "issuer_url": fieldIssuerUrl,
-      "client_id": fieldClientId,
-      "client_secret": fieldClientSecret,
-      "allow_unverified_emails": fieldAllowUnverifiedEmails,
-      "auto_create_users": fieldAutoCreateUsers,
-    },
-  );
+  AnonymousObjectField get root => AnonymousObjectField({
+    "name": fieldName,
+    "issuer_url": fieldIssuerUrl,
+    "client_id": fieldClientId,
+    "client_secret": fieldClientSecret,
+    "allow_unverified_emails": fieldAllowUnverifiedEmails,
+    "auto_create_users": fieldAutoCreateUsers,
+  });
 }

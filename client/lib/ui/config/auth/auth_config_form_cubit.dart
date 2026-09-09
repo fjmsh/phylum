@@ -158,7 +158,7 @@ abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
         if (cryptConfig == null) {
           return null;
         }
-        config.values.addAll(cryptConfig.values);
+        config.objects[AuthConfigFields.fieldPasswordCrypt] = cryptConfig;
         break;
       case PasswordBackend.ldap:
         final ldapConfig = ldapBloc.validate();

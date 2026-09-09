@@ -12,13 +12,11 @@ class DbConfigFields extends ConfigFields {
   DbConfigFields._();
 
   @override
-  final ObjectField root = ObjectField(
-    fields: {
-      "host": fieldHost,
-      "port": fieldPort,
-      "name": fieldDbName,
-      "user": fieldUser,
-      "password": fieldPassword,
-    },
-  );
+  final AnonymousObjectField root = AnonymousObjectField({
+    "host": fieldHost,
+    "port": fieldPort,
+    "name": fieldDbName,
+    "user": fieldUser,
+    "password": fieldPassword,
+  });
 }

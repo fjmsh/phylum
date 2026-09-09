@@ -21,24 +21,18 @@ class CryptConfigFields extends ConfigFields {
   CryptConfigFields._();
 
   @override
-  ObjectField get root => ObjectField(
-    fields: {
-      "kdf": fieldKdf,
-      "argon2": ObjectField(
-        fields: {
-          "memory": fieldArgon2Memory,
-          "iterations": fieldArgon2Iterations,
-          "parallelism": fieldArgon2Parallelism,
-        },
-      ),
-      "pbkdf2": ObjectField(
-        fields: {
-          "function": fieldPbkdf2Hash,
-          "iterations": fieldPbkdf2Iterations,
-        },
-      ),
-    },
-  );
+  AnonymousObjectField get root => AnonymousObjectField({
+    "kdf": fieldKdf,
+    "argon2": AnonymousObjectField({
+      "memory": fieldArgon2Memory,
+      "iterations": fieldArgon2Iterations,
+      "parallelism": fieldArgon2Parallelism,
+    }),
+    "pbkdf2": AnonymousObjectField({
+      "function": fieldPbkdf2Hash,
+      "iterations": fieldPbkdf2Iterations,
+    }),
+  });
 }
 
 enum CryptKDF {

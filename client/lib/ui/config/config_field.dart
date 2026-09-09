@@ -1,7 +1,7 @@
 part of 'config.dart';
 
 abstract class ConfigFields {
-  ObjectField get root;
+  AnonymousObjectField get root;
 
   const ConfigFields();
 }
@@ -22,10 +22,10 @@ sealed class ConfigField {
   );
 }
 
-class ObjectField extends ConfigField {
+class AnonymousObjectField extends ConfigField {
   final Map<String, ConfigField> fields;
 
-  const ObjectField({required this.fields});
+  const AnonymousObjectField(this.fields);
 
   @override
   void parse({
@@ -144,10 +144,10 @@ class MapField<Cfg extends ConfigFields> extends ConfigField {
   }
 }
 
-class ProxyObjectField<Cfg extends ConfigFields> extends ConfigField {
+class ObjectField<Cfg extends ConfigFields> extends ConfigField {
   final Cfg schema;
 
-  const ProxyObjectField({required this.schema});
+  const ObjectField({required this.schema});
 
   @override
   void parse({

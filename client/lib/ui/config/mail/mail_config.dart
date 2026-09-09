@@ -15,21 +15,18 @@ class MailConfigFields extends ConfigFields {
   MailConfigFields._();
 
   @override
-  final ObjectField root = ObjectField(
-    fields: {
-      "enabled": fieldEnabled,
-      "smtp": ObjectField(
-        fields: {
-          "host": fieldSmtpHost,
-          "port": fieldSmtpPort,
-          "username": fieldSmtpUsername,
-          "password": fieldSmtpPassword,
-        },
-      ),
-      "from": ObjectField(
-        fields: {"name": fieldFromName, "email": fieldFromEmail},
-      ),
-      "instance": fieldInstance,
-    },
-  );
+  final AnonymousObjectField root = AnonymousObjectField({
+    "enabled": fieldEnabled,
+    "smtp": AnonymousObjectField({
+      "host": fieldSmtpHost,
+      "port": fieldSmtpPort,
+      "username": fieldSmtpUsername,
+      "password": fieldSmtpPassword,
+    }),
+    "from": AnonymousObjectField({
+      "name": fieldFromName,
+      "email": fieldFromEmail,
+    }),
+    "instance": fieldInstance,
+  });
 }
