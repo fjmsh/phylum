@@ -93,16 +93,16 @@ abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
         ),
       );
 
-  void reset(RemoteConfig<AuthConfigFields> remote) {
-    _remote = remote;
+  void reset([RemoteConfig<AuthConfigFields>? remote]) {
+    _remote = remote ?? _remote;
     emit(
       AuthConfigFormState.createFromRemoteConfig(
-        config: remote,
+        config: _remote,
         mailEnabled: state.mailEnabled,
       ),
     );
-    cryptBloc.reset(remote);
-    ldapBloc.reset(remote);
+    cryptBloc.reset(_remote);
+    ldapBloc.reset(_remote);
   }
 
   set mailEnabled(bool val) {

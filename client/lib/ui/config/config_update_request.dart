@@ -1,15 +1,14 @@
 part of 'remote_config_controller.dart';
 
-class _ConfigUpdateRequest<T extends ConfigFields>
-    extends ApiRequest<PhylumAccount> {
+class _ConfigUpdateRequest<T> extends ApiRequest<PhylumAccount> {
   final String _baseRoute;
-  final RemoteConfig<T> _remoteConfig;
-  final LocalConfig<T> _config;
+  final Map<String, dynamic> _config;
+  final T Function(Map<String, dynamic>) _parseConfig;
 
   const _ConfigUpdateRequest({
     required this._baseRoute,
-    required this._remoteConfig,
     required this._config,
+    required this._parseConfig,
   });
 
   @override
@@ -18,12 +17,15 @@ class _ConfigUpdateRequest<T extends ConfigFields>
 
     final request = Request('post', uri.build());
     request.headers['Content-Type'] = 'application/json';
-    request.body = jsonEncode({'config': _config.toMap(_remoteConfig)});
+    request.body = jsonEncode({'config': _config});
     return request;
   }
 
   @override
   Future<ApiResponse<PhylumAccount>> parseResponse(StreamedResponse response) {
-    return parseJsonMapResponse(response, EmptyResponse.fromResponse);
+    return parseJsonMapResponse(
+      response,
+      (response) => _ConfigResponse.fromResponse(response, _parseConfig),
+    );
   }
 }

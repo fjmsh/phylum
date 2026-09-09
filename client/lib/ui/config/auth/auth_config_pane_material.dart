@@ -19,7 +19,7 @@ class MaterialAuthConfigPane extends StatelessWidget {
     return Column(
       spacing: 18,
       children: [
-        AuthConfigForm(bloc: context.read()),
+        AuthConfigForm(bloc: _configBloc),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           spacing: 18,
@@ -40,7 +40,7 @@ class MaterialAuthConfigPane extends StatelessWidget {
                               .read<RemoteConfigState<AuthConfigFields>>();
                           if (state
                               is RemoteConfigStateLoaded<AuthConfigFields>) {
-                            _configBloc.reset(state.config);
+                            _configBloc.reset();
                           }
                         },
                   child: Text('Reset'),
@@ -72,26 +72,27 @@ class MaterialAuthConfigPane extends StatelessWidget {
                             case ConfigInvalid():
                               return;
                             case ConfigCheckSuccess():
-                            // final error = await context
-                            //     .read<
-                            //       RemoteConfigController<AuthConfigFields>
-                            //     >()
-                            //     .save(config: result.config);
-                            // if (!context.mounted) return;
-                            // if (error == null) {
-                            //   ScaffoldMessenger.of(context).showSnackBar(
-                            //     SnackBar(
-                            //       content: Text('Auth Config Updated'),
-                            //       duration: Duration(seconds: 2),
-                            //     ),
-                            //   );
-                            // } else {
-                            //   showAlertDialog(
-                            //     context,
-                            //     title: 'Failed to update Auth Config',
-                            //     message: error,
-                            //   );
-                            // }
+                              final error = await context
+                                  .read<
+                                    RemoteConfigController<AuthConfigFields>
+                                  >()
+                                  .save(config: result.config);
+                              if (!context.mounted) return;
+                              if (error == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Auth Config Updated'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              } else {
+                                showAlertDialog(
+                                  context,
+                                  title: 'Failed to update Auth Config',
+                                  message: error,
+                                );
+                              }
+                              break;
                             case ConfigCheckError():
                             case ConfigCheckWarning():
                               throw UnimplementedError();

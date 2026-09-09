@@ -88,7 +88,7 @@ class RemoteConfigController<T extends ConfigFields>
     }
   }
 
-  Future<String?> save({required LocalConfig<T> config}) async {
+  Future<String?> save({required Map<String, dynamic> config}) async {
     final state = this.state;
     if (state is! RemoteConfigStateLoaded<T>) return null;
     if (state.saving) return null;
@@ -101,16 +101,16 @@ class RemoteConfigController<T extends ConfigFields>
     final result = await _apiClient.sendRequest(
       _ConfigUpdateRequest(
         baseRoute: _baseRoute,
-        remoteConfig: state.config,
         config: config,
+        parseConfig: _parseConfig,
       ),
     );
 
-    this.state = result is ApiSuccessResponse
+    this.state = result is _ConfigResponse
         ? RemoteConfigStateLoaded<T>(
-            config: state.config.apply(config),
+            config: result.config,
             timestamp: DateTime.now(),
-            saving: true,
+            saving: false,
           )
         : state;
 
