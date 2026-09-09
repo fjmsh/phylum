@@ -9,10 +9,10 @@ import 'auth_config_pane_cubit.dart';
 import 'form/auth_config_form.dart';
 import 'form/auth_config_form_cubit.dart';
 
-class MaterialAuthConfigPane extends StatelessWidget {
+class MaterialAuthSettingsPane extends StatelessWidget {
   final AuthConfigPaneCubit _configBloc;
 
-  const MaterialAuthConfigPane({super.key, required this._configBloc});
+  const MaterialAuthSettingsPane({super.key, required this._configBloc});
 
   @override
   Widget build(BuildContext context) {
