@@ -1,12 +1,12 @@
 import 'package:offtheline/offtheline.dart';
-import 'package:phylum/ui/settings/auth/auth_config.dart';
+import 'package:phylum/ui/config/auth/auth_config.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
 import 'api/test_params_request.dart';
 import 'form/auth_config_form_cubit.dart';
 
-class AuthConfigPaneCubit extends AuthConfigFormCubit {
+class AuthConfigPaneCubit extends AuthConfigCubit {
   final ApiClient<PhylumAccount> _apiClient;
 
   AuthConfigPaneCubit({required PhylumAccount account, required super.remote})

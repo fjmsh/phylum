@@ -1,18 +1,18 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phylum/ui/settings/auth/auth_config.dart';
-import 'package:phylum/ui/settings/auth/form/auth_config_form_cubit.dart';
-import 'package:phylum/ui/settings/auth/form/openid_config_cubit.dart';
-import 'package:phylum/ui/settings/auth/form/openid_config_dialog.dart';
-import 'package:phylum/ui/settings/config/config.dart';
+import 'package:phylum/ui/config/auth/auth_config.dart';
+import 'package:phylum/ui/config/auth/form/auth_config_form_cubit.dart';
+import 'package:phylum/ui/config/auth/form/openid_config_cubit.dart';
+import 'package:phylum/ui/config/auth/form/openid_config_dialog.dart';
+import 'package:phylum/ui/config/config.dart';
 import 'package:phylum/util/dialogs.dart';
 
 import 'crypt_config_form.dart';
 import 'ldap_config_form.dart';
 
 class AuthConfigForm extends StatelessWidget {
-  final AuthConfigFormCubit bloc;
+  final AuthConfigCubit bloc;
 
   const AuthConfigForm({super.key, required this.bloc});
 
@@ -47,7 +47,7 @@ class AuthConfigForm extends StatelessWidget {
 }
 
 class PasswordlessLoginSwitch extends StatelessWidget {
-  final AuthConfigFormCubit bloc;
+  final AuthConfigCubit bloc;
 
   const PasswordlessLoginSwitch({super.key, required this.bloc});
 
@@ -62,7 +62,7 @@ class PasswordlessLoginSwitch extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
-        BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
+        BlocBuilder<AuthConfigCubit, AuthConfigFormState>(
           bloc: bloc,
           builder: (context, state) {
             return SwitchListTile(
@@ -87,7 +87,7 @@ class PasswordlessLoginSwitch extends StatelessWidget {
 }
 
 class PasswordAuthForm extends StatelessWidget {
-  final AuthConfigFormCubit bloc;
+  final AuthConfigCubit bloc;
 
   const PasswordAuthForm({super.key, required this.bloc});
 
@@ -102,7 +102,7 @@ class PasswordAuthForm extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
-        BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
+        BlocBuilder<AuthConfigCubit, AuthConfigFormState>(
           bloc: bloc,
           builder: (context, state) => ListTile(
             title: Text('Password Login'),
@@ -125,7 +125,7 @@ class PasswordAuthForm extends StatelessWidget {
             },
           ),
         ),
-        BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
+        BlocBuilder<AuthConfigCubit, AuthConfigFormState>(
           bloc: bloc,
           builder: (context, state) {
             return switch (state.passwordBackend) {
@@ -153,12 +153,12 @@ class PasswordAuthForm extends StatelessWidget {
 }
 
 class OpenIDConfigList extends StatelessWidget {
-  final AuthConfigFormCubit bloc;
+  final AuthConfigCubit bloc;
   const OpenIDConfigList({super.key, required this.bloc});
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthConfigFormCubit, AuthConfigFormState>(
+    return BlocBuilder<AuthConfigCubit, AuthConfigFormState>(
       bloc: bloc,
       builder: (context, state) {
         return buildList(context, state.openIdConfigs);

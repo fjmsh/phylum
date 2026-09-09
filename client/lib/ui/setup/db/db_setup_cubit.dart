@@ -3,13 +3,13 @@ import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:http/http.dart';
-import 'package:phylum/ui/settings/config/config.dart';
-import 'package:phylum/ui/setup/config_check_result.dart';
+import 'package:phylum/ui/config/config.dart';
+import 'package:phylum/ui/config/config_check_result.dart';
 import 'package:phylum/ui/setup/db/db_config.dart';
 import 'package:phylum/util/request.dart';
 import 'package:uri/uri.dart';
 
-class DbConfigFormState {
+class DbConfigState {
   final Set<PrimitiveField> _fixed;
   final String host;
   final String port;
@@ -21,7 +21,7 @@ class DbConfigFormState {
   final String? dbNameError;
   final String? userError;
 
-  DbConfigFormState({
+  DbConfigState({
     required this._fixed,
     required this.host,
     required this.port,
@@ -34,10 +34,10 @@ class DbConfigFormState {
     this.userError,
   });
 
-  factory DbConfigFormState.createFromRemoteConfig(
+  factory DbConfigState.createFromRemoteConfig(
     RemoteConfig<DbConfigFields> config,
   ) {
-    return DbConfigFormState(
+    return DbConfigState(
       fixed: config.fixed,
       host: config.getValueOrDefault(DbConfigFields.fieldHost),
       port: config.getValueOrDefault(DbConfigFields.fieldPort).toString(),
@@ -47,7 +47,7 @@ class DbConfigFormState {
     );
   }
 
-  DbConfigFormState copyWith({
+  DbConfigState copyWith({
     bool? enabled,
     String? host,
     String? port,
@@ -55,7 +55,7 @@ class DbConfigFormState {
     String? user,
     String? password,
   }) {
-    return DbConfigFormState(
+    return DbConfigState(
       fixed: _fixed,
       host: host ?? this.host,
       port: port ?? this.port,
@@ -65,13 +65,13 @@ class DbConfigFormState {
     );
   }
 
-  DbConfigFormState withErrors({
+  DbConfigState withErrors({
     String? hostError,
     String? portError,
     String? dbNameError,
     String? userError,
   }) {
-    return DbConfigFormState(
+    return DbConfigState(
       fixed: _fixed,
       host: host,
       port: port,
@@ -112,7 +112,7 @@ class DbConfigFormState {
   }
 
   @override
-  bool operator ==(covariant DbConfigFormState other) {
+  bool operator ==(covariant DbConfigState other) {
     if (identical(this, other)) return true;
 
     return (const SetEquality()).equals(other._fixed, _fixed) &&
@@ -141,12 +141,12 @@ class DbConfigFormState {
   }
 }
 
-class DbConfigFormCubit extends Cubit<DbConfigFormState> {
+class DbSetupCubit extends Cubit<DbConfigState> {
   final String _instanceUrl;
   final RemoteConfig<DbConfigFields> _remoteConfig;
 
-  DbConfigFormCubit({required this._remoteConfig, required this._instanceUrl})
-    : super(DbConfigFormState.createFromRemoteConfig(_remoteConfig));
+  DbSetupCubit({required this._remoteConfig, required this._instanceUrl})
+    : super(DbConfigState.createFromRemoteConfig(_remoteConfig));
 
   set host(String val) {
     emit(state.copyWith(host: val));

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
-import 'package:phylum/ui/settings/config/config.dart';
-import 'package:phylum/ui/settings/config/remote_config_controller.dart';
-import 'package:phylum/ui/settings/config/remote_config_pane.dart';
-import 'package:phylum/ui/settings/mail/mail_config.dart';
-import 'package:phylum/ui/settings/mail/mail_config_pane_widget.dart';
+import 'package:phylum/ui/config/config.dart';
+import 'package:phylum/ui/config/remote_config_controller.dart';
+import 'package:phylum/ui/config/remote_config_pane.dart';
+import 'package:phylum/ui/config/mail/mail_config.dart';
+import 'package:phylum/ui/config/mail/mail_config_pane_widget.dart';
 import 'package:phylum/ui/settings/settings.dart';
 
 class MailSettings extends Settings {

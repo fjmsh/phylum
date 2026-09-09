@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phylum/ui/settings/config/remote_config_controller.dart';
+import 'package:phylum/ui/config/remote_config_controller.dart';
 
 import 'mail_config.dart';
 import 'form/mail_config_form.dart';
 import 'form/mail_config_form_cubit.dart';
 
 class MaterialMailConfigPane extends StatelessWidget {
-  final MailConfigFormCubit _bloc;
+  final MailConfigCubit _bloc;
   const MaterialMailConfigPane({super.key, required this._bloc});
 
   @override
@@ -37,9 +37,7 @@ class MaterialMailConfigPane extends StatelessWidget {
                               .read<RemoteConfigState<MailConfigFields>>();
                           if (state
                               is RemoteConfigStateLoaded<MailConfigFields>) {
-                            context.read<MailConfigFormCubit>().reset(
-                              state.config,
-                            );
+                            context.read<MailConfigCubit>().reset(state.config);
                           }
                         },
                   child: Text('Reset'),

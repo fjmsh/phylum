@@ -1,11 +1,11 @@
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
-import 'package:phylum/ui/settings/auth/auth_config.dart';
-import 'package:phylum/ui/settings/auth/form/crypt_config_cubit.dart';
-import 'package:phylum/ui/settings/auth/form/ldap_config_cubit.dart';
-import 'package:phylum/ui/settings/auth/form/openid_config_cubit.dart';
-import 'package:phylum/ui/settings/config/config.dart';
-import 'package:phylum/ui/setup/config_check_result.dart';
+import 'package:phylum/ui/config/auth/auth_config.dart';
+import 'package:phylum/ui/config/auth/form/crypt_config_cubit.dart';
+import 'package:phylum/ui/config/auth/form/ldap_config_cubit.dart';
+import 'package:phylum/ui/config/auth/form/openid_config_cubit.dart';
+import 'package:phylum/ui/config/config.dart';
+import 'package:phylum/ui/config/config_check_result.dart';
 
 class AuthConfigFormState {
   final bool mailEnabled;
@@ -80,12 +80,12 @@ class AuthConfigFormState {
       const MapEquality().hash(openIdConfigs);
 }
 
-abstract class AuthConfigFormCubit extends Cubit<AuthConfigFormState> {
+abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
   RemoteConfig<AuthConfigFields> _remote;
   late final cryptBloc = CryptConfigCubit(remote: _remote);
   late final LdapConfigCubit ldapBloc = LdapConfigCubit(remote: _remote);
 
-  AuthConfigFormCubit({required this._remote})
+  AuthConfigCubit({required this._remote})
     : super(
         AuthConfigFormState.createFromRemoteConfig(
           config: _remote,

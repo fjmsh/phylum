@@ -1,8 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:email_validator/email_validator.dart';
-import 'package:phylum/ui/settings/config/config.dart';
-import 'package:phylum/ui/settings/mail/mail_config.dart';
+import 'package:phylum/ui/config/config.dart';
+import 'package:phylum/ui/config/mail/mail_config.dart';
 
 class MailConfigFormState {
   final Set<PrimitiveField> _fixed;
@@ -197,14 +197,12 @@ class MailConfigFormState {
   }
 }
 
-class MailConfigFormCubit extends Cubit<MailConfigFormState> {
+class MailConfigCubit extends Cubit<MailConfigFormState> {
   final RemoteConfig<MailConfigFields> _remoteConfig;
-  MailConfigFormCubit({
-    required this._remoteConfig,
-    required String instanceUrl,
-  }) : super(
-         MailConfigFormState.createFromRemoteConfig(_remoteConfig, instanceUrl),
-       );
+  MailConfigCubit({required this._remoteConfig, required String instanceUrl})
+    : super(
+        MailConfigFormState.createFromRemoteConfig(_remoteConfig, instanceUrl),
+      );
 
   void reset(RemoteConfig<MailConfigFields> config) {
     emit(MailConfigFormState.createFromRemoteConfig(config, state.instanceUrl));

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phylum/ui/settings/mail/form/mail_config_form_cubit.dart';
+import 'package:phylum/ui/config/mail/form/mail_config_form_cubit.dart';
 
 class MailConfigForm extends StatefulWidget {
-  final MailConfigFormCubit _bloc;
+  final MailConfigCubit _bloc;
   final void Function(BuildContext) _onFormSubmitted;
 
   const MailConfigForm({
@@ -38,7 +38,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
       child: Column(
         spacing: 18.0,
         children: [
-          BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+          BlocBuilder<MailConfigCubit, MailConfigFormState>(
             bloc: widget._bloc,
             builder: (context, state) => SwitchListTile(
               title: Text('Enable'),
@@ -52,7 +52,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
             buildWhen: (previous, current) =>
                 previous.enabled != current.enabled,
           ),
-          BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+          BlocBuilder<MailConfigCubit, MailConfigFormState>(
             bloc: widget._bloc,
             builder: (context, state) => TextFormField(
               decoration: InputDecoration(
@@ -83,7 +83,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 previous.enabled != current.enabled ||
                 previous.smtpHostError != current.smtpHostError,
           ),
-          BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+          BlocBuilder<MailConfigCubit, MailConfigFormState>(
             bloc: widget._bloc,
             builder: (context, state) => TextFormField(
               decoration: InputDecoration(
@@ -113,7 +113,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 previous.enabled != current.enabled ||
                 previous.smtpPortError != current.smtpPortError,
           ),
-          BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+          BlocBuilder<MailConfigCubit, MailConfigFormState>(
             bloc: widget._bloc,
             builder: (context, state) => TextFormField(
               decoration: InputDecoration(
@@ -142,7 +142,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 previous.enabled != current.enabled ||
                 previous.smtpUsernameError != current.smtpUsernameError,
           ),
-          BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+          BlocBuilder<MailConfigCubit, MailConfigFormState>(
             bloc: widget._bloc,
             builder: (context, state) => TextFormField(
               decoration: InputDecoration(
@@ -159,7 +159,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
             buildWhen: (previous, current) =>
                 previous.enabled != current.enabled,
           ),
-          BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+          BlocBuilder<MailConfigCubit, MailConfigFormState>(
             bloc: widget._bloc,
             builder: (context, state) => TextFormField(
               decoration: InputDecoration(
@@ -188,14 +188,14 @@ class _MailConfigFormState extends State<MailConfigForm> {
                 previous.enabled != current.enabled ||
                 previous.fromNameError != current.fromNameError,
           ),
-          BlocListener<MailConfigFormCubit, MailConfigFormState>(
+          BlocListener<MailConfigCubit, MailConfigFormState>(
             bloc: widget._bloc,
             listener: (BuildContext context, MailConfigFormState state) {
               if (state.fromEmail != _fromEmailController.text) {
                 _fromEmailController.text = state.fromEmail;
               }
             },
-            child: BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+            child: BlocBuilder<MailConfigCubit, MailConfigFormState>(
               bloc: widget._bloc,
               builder: (context, state) => TextFormField(
                 decoration: InputDecoration(
@@ -216,7 +216,7 @@ class _MailConfigFormState extends State<MailConfigForm> {
                   previous.fromEmailError != current.fromEmailError,
             ),
           ),
-          BlocBuilder<MailConfigFormCubit, MailConfigFormState>(
+          BlocBuilder<MailConfigCubit, MailConfigFormState>(
             bloc: widget._bloc,
             builder: (context, state) => TextFormField(
               decoration: InputDecoration(

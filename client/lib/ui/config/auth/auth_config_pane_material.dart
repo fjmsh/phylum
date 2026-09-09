@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phylum/ui/settings/config/remote_config_controller.dart';
-import 'package:phylum/ui/setup/config_check_result.dart';
+import 'package:phylum/ui/config/remote_config_controller.dart';
+import 'package:phylum/ui/config/config_check_result.dart';
 import 'package:phylum/util/dialogs.dart';
 
 import 'auth_config.dart';
@@ -63,7 +63,7 @@ class MaterialAuthConfigPane extends StatelessWidget {
                       ? null
                       : () async {
                           final result = await context
-                              .read<AuthConfigFormCubit>()
+                              .read<AuthConfigCubit>()
                               .checkConfig();
 
                           if (!context.mounted) return;

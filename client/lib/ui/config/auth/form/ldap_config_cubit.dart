@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
-import 'package:phylum/ui/settings/auth/auth_config.dart';
-import 'package:phylum/ui/settings/config/config.dart';
+import 'package:phylum/ui/config/auth/auth_config.dart';
+import 'package:phylum/ui/config/config.dart';
 
 class LdapConfigState {
   final Set<PrimitiveField> _fixed;

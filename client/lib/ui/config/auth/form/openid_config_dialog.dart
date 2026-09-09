@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phylum/ui/settings/auth/form/openid_config_cubit.dart';
+import 'package:phylum/ui/config/auth/form/openid_config_cubit.dart';
 
 class OpenIDConfigDialog extends StatelessWidget {
   final OpenIDConfigFormCubit _bloc;

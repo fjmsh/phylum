@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/ui/settings/config/config.dart';
-import 'package:phylum/ui/settings/config/remote_config_controller.dart';
+import 'package:phylum/ui/config/config.dart';
+import 'package:phylum/ui/config/remote_config_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 

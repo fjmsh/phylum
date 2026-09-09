@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'db_config_form_cubit.dart';
+import 'db_setup_cubit.dart';
 
 class DbConfigForm extends StatelessWidget {
-  final DbConfigFormCubit _bloc;
+  final DbSetupCubit _bloc;
   final void Function(BuildContext) _onFormSubmitted;
 
   const DbConfigForm({
@@ -18,7 +18,7 @@ class DbConfigForm extends StatelessWidget {
     return Column(
       spacing: 18.0,
       children: [
-        BlocBuilder<DbConfigFormCubit, DbConfigFormState>(
+        BlocBuilder<DbSetupCubit, DbConfigState>(
           bloc: _bloc,
           builder: (context, state) => TextFormField(
             decoration: InputDecoration(
@@ -48,7 +48,7 @@ class DbConfigForm extends StatelessWidget {
           buildWhen: (previous, current) =>
               previous.hostError != current.hostError,
         ),
-        BlocBuilder<DbConfigFormCubit, DbConfigFormState>(
+        BlocBuilder<DbSetupCubit, DbConfigState>(
           bloc: _bloc,
           builder: (context, state) => TextFormField(
             decoration: InputDecoration(
@@ -77,7 +77,7 @@ class DbConfigForm extends StatelessWidget {
           buildWhen: (previous, current) =>
               previous.portError != current.portError,
         ),
-        BlocBuilder<DbConfigFormCubit, DbConfigFormState>(
+        BlocBuilder<DbSetupCubit, DbConfigState>(
           bloc: _bloc,
           builder: (context, state) => TextFormField(
             decoration: InputDecoration(
@@ -105,7 +105,7 @@ class DbConfigForm extends StatelessWidget {
           buildWhen: (previous, current) =>
               previous.dbNameError != current.dbNameError,
         ),
-        BlocBuilder<DbConfigFormCubit, DbConfigFormState>(
+        BlocBuilder<DbSetupCubit, DbConfigState>(
           bloc: _bloc,
           builder: (context, state) => TextFormField(
             decoration: InputDecoration(

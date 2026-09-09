@@ -1,18 +1,16 @@
 import 'dart:convert';
 
 import 'package:http/http.dart';
-import 'package:phylum/ui/settings/mail/form/mail_config_form_cubit.dart';
-import 'package:phylum/ui/setup/config_check_result.dart';
+import 'package:phylum/ui/config/mail/form/mail_config_form_cubit.dart';
+import 'package:phylum/ui/config/config_check_result.dart';
 import 'package:phylum/util/request.dart';
 import 'package:uri/uri.dart';
 
-class MailConfigSetupCubit extends MailConfigFormCubit {
+class MailSetupCubit extends MailConfigCubit {
   final String _instanceUrl;
 
-  MailConfigSetupCubit({
-    required this._instanceUrl,
-    required super.remoteConfig,
-  }) : super(instanceUrl: _instanceUrl);
+  MailSetupCubit({required this._instanceUrl, required super.remoteConfig})
+    : super(instanceUrl: _instanceUrl);
 
   Future<ConfigCheckResult> checkConfig() async {
     final config = validateConfig();

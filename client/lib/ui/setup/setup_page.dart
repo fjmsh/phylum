@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
-import 'package:phylum/ui/settings/auth/form/auth_config_form.dart';
-import 'package:phylum/ui/settings/mail/form/mail_config_form.dart';
+import 'package:phylum/ui/config/auth/form/auth_config_form.dart';
+import 'package:phylum/ui/config/mail/form/mail_config_form.dart';
 import 'package:phylum/ui/setup/db/db_config_form.dart';
 import 'package:phylum/ui/setup/setup_config.dart';
 import 'package:phylum/ui/setup/setup_cubit.dart';
@@ -11,7 +11,7 @@ import 'package:phylum/ui/setup/user/user_config_form.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/single_child_widget.dart';
 
-import 'config_check_result.dart';
+import '../config/config_check_result.dart';
 
 enum SetupStep { database, mail, auth, user }
 

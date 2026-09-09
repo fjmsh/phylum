@@ -2,11 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart';
-import 'package:phylum/ui/settings/auth/auth_config.dart';
-import 'package:phylum/ui/setup/auth_cubit.dart';
-import 'package:phylum/ui/setup/db/db_config_form_cubit.dart';
+import 'package:phylum/ui/config/auth/auth_config.dart';
+import 'package:phylum/ui/setup/auth_setup_cubit.dart';
+import 'package:phylum/ui/setup/db/db_setup_cubit.dart';
 import 'package:phylum/ui/setup/setup_config.dart';
-import 'package:phylum/ui/setup/mail_cubit.dart';
+import 'package:phylum/ui/setup/mail_setup_cubit.dart';
 import 'package:phylum/ui/setup/user/user_config_form_cubit.dart';
 import 'package:phylum/util/request.dart';
 import 'package:uri/uri.dart';
@@ -83,22 +83,22 @@ class SetupStateUser extends SetupState {
 class SetupCubit extends Cubit<SetupState> {
   final String _instanceUrl;
   final SetupConfig _config;
-  late final DbConfigFormCubit dbBloc;
-  late final MailConfigSetupCubit mailBloc;
-  late final AuthConfigSetupCubit authBloc;
+  late final DbSetupCubit dbBloc;
+  late final MailSetupCubit mailBloc;
+  late final AuthSetupCubit authBloc;
   late final UserConfigFormCubit userBloc;
 
   SetupCubit({required this._instanceUrl, required this._config})
     : super(const SetupStateDb()) {
-    dbBloc = DbConfigFormCubit(
+    dbBloc = DbSetupCubit(
       instanceUrl: _instanceUrl,
       remoteConfig: _config.dbConfig,
     );
-    mailBloc = MailConfigSetupCubit(
+    mailBloc = MailSetupCubit(
       instanceUrl: _instanceUrl,
       remoteConfig: _config.mailConfig,
     );
-    authBloc = AuthConfigSetupCubit(remote: _config.authConfig);
+    authBloc = AuthSetupCubit(remote: _config.authConfig);
     userBloc = UserConfigFormCubit();
   }
 

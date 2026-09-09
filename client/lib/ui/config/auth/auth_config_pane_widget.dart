@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/settings/config/remote_config_controller.dart';
+import 'package:phylum/ui/config/remote_config_controller.dart';
 import 'package:provider/provider.dart';
 
 import 'auth_config.dart';
@@ -44,7 +44,7 @@ class _AuthConfigPaneState extends State<AuthConfigPane> {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [BlocProvider<AuthConfigFormCubit>.value(value: configBloc)],
+      providers: [BlocProvider<AuthConfigCubit>.value(value: configBloc)],
       child: MaterialAuthConfigPane(configBloc: configBloc), //TODO #uilibrary
     );
   }

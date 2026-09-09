@@ -1,4 +1,4 @@
-import 'package:phylum/ui/settings/config/config.dart';
+import 'package:phylum/ui/config/config.dart';
 
 class DbConfigFields extends ConfigFields {
   static final fieldHost = PrimitiveField("localhost");
