@@ -4,10 +4,10 @@ import 'package:phylum/ui/config/remote_config_controller.dart';
 import 'package:phylum/ui/config/config_check_result.dart';
 import 'package:phylum/util/dialogs.dart';
 
-import 'auth_config.dart';
-import 'auth_config_pane_cubit.dart';
-import 'form/auth_config_form.dart';
-import 'form/auth_config_form_cubit.dart';
+import '../../config/auth/auth_config.dart';
+import 'auth_settings_pane_cubit.dart';
+import '../../config/auth/auth_config_form.dart';
+import '../../config/auth/auth_config_form_cubit.dart';
 
 class MaterialAuthSettingsPane extends StatelessWidget {
   final AuthConfigPaneCubit _configBloc;

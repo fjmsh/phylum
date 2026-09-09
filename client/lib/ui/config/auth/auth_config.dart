@@ -1,4 +1,7 @@
+import 'package:phylum/ui/config/auth/openid/openid_config_fields.dart';
 import 'package:phylum/ui/config/config.dart';
+
+import 'crypt/crypt_config.dart';
 
 class AuthConfigFields extends ConfigFields {
   static final fieldMagicLinks = PrimitiveField(false);
@@ -8,20 +11,6 @@ class AuthConfigFields extends ConfigFields {
     fromPrimitive: (val) => PasswordBackend.fromString(val),
   );
   static final fieldPasswordResetEnabled = PrimitiveField(false);
-  static final fieldPasswordCryptKdf = PrimitiveField(
-    CryptKDF.argon2,
-    toPrimitive: (val) => val.name,
-    fromPrimitive: (val) => CryptKDF.fromString(val),
-  );
-  static final fieldPasswordCryptArgon2Memory = PrimitiveField(16);
-  static final fieldPasswordCryptArgon2Iterations = PrimitiveField(4);
-  static final fieldPasswordCryptArgon2Parallelism = PrimitiveField(2);
-  static final fieldPasswordCryptPbkdf2Hash = PrimitiveField(
-    HashFunction.sha256,
-    toPrimitive: (val) => val.name,
-    fromPrimitive: (val) => HashFunction.fromString(val),
-  );
-  static final fieldPasswordCryptPbkdf2Iterations = PrimitiveField(600_000);
   static final fieldPasswordRequirementsLength = PrimitiveField(8);
   static final fieldPasswordRequirementsUpper = PrimitiveField(0);
   static final fieldPasswordRequirementsLower = PrimitiveField(0);
@@ -43,7 +32,9 @@ class AuthConfigFields extends ConfigFields {
     '(mail={email})',
   );
   static final fieldPasswordLdapAutoCreateUsers = PrimitiveField(false);
-  static final fieldOpenidClients = MapField(schema: OidcConfigFields.instance);
+  static final fieldOpenidClients = MapField(
+    schema: OpenidConfigFields.instance,
+  );
 
   static AuthConfigFields instance = AuthConfigFields._();
 
@@ -59,18 +50,18 @@ class AuthConfigFields extends ConfigFields {
           "reset_enabled": fieldPasswordResetEnabled,
           "crypt": ObjectField(
             fields: {
-              "kdf": fieldPasswordCryptKdf,
+              "kdf": CryptConfigFields.fieldKdf,
               "argon2": ObjectField(
                 fields: {
-                  "memory": fieldPasswordCryptArgon2Memory,
-                  "iterations": fieldPasswordCryptArgon2Iterations,
-                  "parallelism": fieldPasswordCryptArgon2Parallelism,
+                  "memory": CryptConfigFields.fieldArgon2Memory,
+                  "iterations": CryptConfigFields.fieldArgon2Iterations,
+                  "parallelism": CryptConfigFields.fieldArgon2Parallelism,
                 },
               ),
               "pbkdf2": ObjectField(
                 fields: {
-                  "function": fieldPasswordCryptPbkdf2Hash,
-                  "iterations": fieldPasswordCryptPbkdf2Iterations,
+                  "function": CryptConfigFields.fieldPbkdf2Hash,
+                  "iterations": CryptConfigFields.fieldPbkdf2Iterations,
                 },
               ),
             },
@@ -109,31 +100,6 @@ class AuthConfigFields extends ConfigFields {
   );
 }
 
-class OidcConfigFields extends ConfigFields {
-  static final fieldName = PrimitiveField("");
-  static final fieldIssuerUrl = PrimitiveField("");
-  static final fieldClientId = PrimitiveField("");
-  static final fieldClientSecret = PrimitiveField("");
-  static final fieldAllowUnverifiedEmails = PrimitiveField(false);
-  static final fieldAutoCreateUsers = PrimitiveField(false);
-
-  static OidcConfigFields instance = OidcConfigFields._();
-
-  OidcConfigFields._();
-
-  @override
-  ObjectField get root => ObjectField(
-    fields: {
-      "name": fieldName,
-      "issuer_url": fieldIssuerUrl,
-      "client_id": fieldClientId,
-      "client_secret": fieldClientSecret,
-      "allow_unverified_emails": fieldAllowUnverifiedEmails,
-      "auto_create_users": fieldAutoCreateUsers,
-    },
-  );
-}
-
 enum PasswordBackend {
   none('none', 'Disabled'),
   crypt('crypt', 'Crypt (Local DB)'),
@@ -150,43 +116,5 @@ enum PasswordBackend {
       'ldap' => .ldap,
       _ => .none,
     };
-  }
-}
-
-enum CryptKDF {
-  argon2('argon2', 'Argon2'),
-  pbkdf2('pbkdf2', 'PBKDF2');
-
-  final String name;
-  final String descriptor;
-
-  const CryptKDF(this.name, this.descriptor);
-
-  static CryptKDF fromString(String s) {
-    return switch (s) {
-      'argon2' => .argon2,
-      'pbkdf2' => .pbkdf2,
-      _ => .argon2,
-    };
-  }
-}
-
-enum HashFunction {
-  sha1('sha-1', 'SHA-1'),
-  sha256('sha-256', 'SHA-256'),
-  sha512('sha-512', 'SHA-512');
-
-  final String name;
-  final String descriptor;
-
-  const HashFunction(this.name, this.descriptor);
-
-  static HashFunction fromString(String s) {
-    for (final h in HashFunction.values) {
-      if (h.name == s) {
-        return h;
-      }
-    }
-    return .sha256;
   }
 }

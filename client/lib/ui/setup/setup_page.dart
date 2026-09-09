@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
-import 'package:phylum/ui/config/auth/form/auth_config_form.dart';
+import 'package:phylum/ui/config/auth/auth_config_form.dart';
 import 'package:phylum/ui/config/mail/form/mail_config_form.dart';
 import 'package:phylum/ui/setup/db/db_config_form.dart';
 import 'package:phylum/ui/setup/setup_config.dart';

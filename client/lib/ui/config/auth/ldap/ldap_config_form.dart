@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phylum/ui/config/auth/form/ldap_config_cubit.dart';
+import 'package:phylum/ui/config/auth/ldap/ldap_config_cubit.dart';
 
 class LdapConfigForm extends StatelessWidget {
   final LdapConfigCubit _bloc;

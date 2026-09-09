@@ -2,14 +2,15 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/ui/config/auth/auth_config.dart';
-import 'package:phylum/ui/config/auth/form/auth_config_form_cubit.dart';
-import 'package:phylum/ui/config/auth/form/openid_config_cubit.dart';
-import 'package:phylum/ui/config/auth/form/openid_config_dialog.dart';
+import 'package:phylum/ui/config/auth/auth_config_form_cubit.dart';
+import 'package:phylum/ui/config/auth/openid/openid_config_cubit.dart';
+import 'package:phylum/ui/config/auth/openid/openid_config_dialog.dart';
+import 'package:phylum/ui/config/auth/openid/openid_config_fields.dart';
 import 'package:phylum/ui/config/config.dart';
 import 'package:phylum/util/dialogs.dart';
 
-import 'crypt_config_form.dart';
-import 'ldap_config_form.dart';
+import 'crypt/crypt_config_form.dart';
+import 'ldap/ldap_config_form.dart';
 
 class AuthConfigForm extends StatelessWidget {
   final AuthConfigCubit bloc;
@@ -187,7 +188,7 @@ class OpenIDConfigList extends StatelessWidget {
               final config = await OpenIDConfigDialog.show(
                 context,
                 config: OpenIDConfig.createFromConfig(
-                  RemoteConfig.empty(OidcConfigFields.instance),
+                  RemoteConfig.empty(OpenidConfigFields.instance),
                 ),
               );
               if (config == null || !context.mounted) return;

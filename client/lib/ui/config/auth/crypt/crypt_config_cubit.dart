@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
-import 'package:phylum/ui/config/auth/auth_config.dart';
 import 'package:phylum/ui/config/config.dart';
+
+import 'crypt_config.dart';
 
 class CryptConfigState {
   final Set<PrimitiveField> _fixed;
@@ -34,41 +35,31 @@ class CryptConfigState {
   });
 
   factory CryptConfigState.createFromRemoteConfig(
-    RemoteConfig<AuthConfigFields> remote,
+    RemoteConfig<CryptConfigFields> remote,
   ) {
-    final kdf = remote.getValueOrDefault(
-      AuthConfigFields.fieldPasswordCryptKdf,
-    );
+    final kdf = remote.getValueOrDefault(CryptConfigFields.fieldKdf);
     return CryptConfigState(
       fixed: remote.fixed,
       shouldAllowKdfSelection: kdf != CryptKDF.argon2,
       kdf: kdf,
       resetEnabled: remote.getValueOrDefault(
-        AuthConfigFields.fieldPasswordResetEnabled,
+        CryptConfigFields.fieldPasswordResetEnabled,
       ),
       argon2Memory: remote
-          .getValueOrDefault(AuthConfigFields.fieldPasswordCryptArgon2Memory)
+          .getValueOrDefault(CryptConfigFields.fieldArgon2Memory)
           .toString(),
       argon2Iterations: remote
-          .getValueOrDefault(
-            AuthConfigFields.fieldPasswordCryptArgon2Iterations,
-          )
+          .getValueOrDefault(CryptConfigFields.fieldArgon2Iterations)
           .toString(),
       argon2Parallelism: remote
-          .getValueOrDefault(
-            AuthConfigFields.fieldPasswordCryptArgon2Parallelism,
-          )
+          .getValueOrDefault(CryptConfigFields.fieldArgon2Parallelism)
           .toString(),
       argon2MemoryError: null,
       argon2IterationsError: null,
       argon2ParallelismError: null,
-      pbkdf2Hash: remote.getValueOrDefault(
-        AuthConfigFields.fieldPasswordCryptPbkdf2Hash,
-      ),
+      pbkdf2Hash: remote.getValueOrDefault(CryptConfigFields.fieldPbkdf2Hash),
       pbkdf2Iterations: remote
-          .getValueOrDefault(
-            AuthConfigFields.fieldPasswordCryptPbkdf2Iterations,
-          )
+          .getValueOrDefault(CryptConfigFields.fieldPbkdf2Iterations)
           .toString(),
       pbkdf2IterationsError: null,
     );
@@ -125,19 +116,19 @@ class CryptConfigState {
       argon2ParallelismError != null ||
       pbkdf2IterationsError != null;
 
-  bool isKdfFixed() => _fixed.contains(AuthConfigFields.fieldPasswordCryptKdf);
+  bool isKdfFixed() => _fixed.contains(CryptConfigFields.fieldKdf);
   bool isResetEnabledFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordResetEnabled);
+      _fixed.contains(CryptConfigFields.fieldPasswordResetEnabled);
   bool isArgon2MemoryFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordCryptArgon2Memory);
+      _fixed.contains(CryptConfigFields.fieldArgon2Memory);
   bool isArgon2IterationsFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordCryptArgon2Iterations);
+      _fixed.contains(CryptConfigFields.fieldArgon2Iterations);
   bool isArgon2ParallelismFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordCryptArgon2Parallelism);
+      _fixed.contains(CryptConfigFields.fieldArgon2Parallelism);
   bool isPbkdf2HashFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordCryptPbkdf2Hash);
+      _fixed.contains(CryptConfigFields.fieldPbkdf2Hash);
   bool isPbkdf2IterationsFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordCryptPbkdf2Iterations);
+      _fixed.contains(CryptConfigFields.fieldPbkdf2Iterations);
 
   @override
   bool operator ==(covariant CryptConfigState other) {
@@ -169,10 +160,10 @@ class CryptConfigState {
 }
 
 class CryptConfigCubit extends Cubit<CryptConfigState> {
-  CryptConfigCubit({required RemoteConfig<AuthConfigFields> remote})
+  CryptConfigCubit({required RemoteConfig<CryptConfigFields> remote})
     : super(CryptConfigState.createFromRemoteConfig(remote));
 
-  void reset(RemoteConfig<AuthConfigFields> remote) {
+  void reset(RemoteConfig<CryptConfigFields> remote) {
     emit(CryptConfigState.createFromRemoteConfig(remote));
   }
 
@@ -204,16 +195,13 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
     emit(state.copyWith(pbkdf2Iterations: val));
   }
 
-  LocalConfig<AuthConfigFields>? validate() {
-    final config = LocalConfig<AuthConfigFields>();
-    config.setValue<CryptKDF>(
-      AuthConfigFields.fieldPasswordCryptKdf,
-      state.kdf,
-    );
-    config.setValue<bool>(
-      AuthConfigFields.fieldPasswordResetEnabled,
-      state.resetEnabled,
-    );
+  LocalConfig<CryptConfigFields>? validate() {
+    final config = LocalConfig<CryptConfigFields>();
+    config.setValue<CryptKDF>(CryptConfigFields.fieldKdf, state.kdf);
+    // config.setValue<bool>(
+    //   AuthConfigFields.fieldPasswordResetEnabled,
+    //   state.resetEnabled,
+    // );
 
     final kdfConfig = switch (state.kdf) {
       CryptKDF.argon2 => _validateArgon2(),
@@ -228,7 +216,7 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
     return config;
   }
 
-  LocalConfig<AuthConfigFields>? _validateArgon2() {
+  LocalConfig<CryptConfigFields>? _validateArgon2() {
     final argon2Memory = int.tryParse(state.argon2Memory);
     final argon2Iterations = int.tryParse(state.argon2Iterations);
     final argon2Parallelism = int.tryParse(state.argon2Parallelism);
@@ -262,25 +250,22 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
     }
 
     return LocalConfig()
+      ..setValue<int>(CryptConfigFields.fieldArgon2Memory, argon2Memory!)
       ..setValue<int>(
-        AuthConfigFields.fieldPasswordCryptArgon2Memory,
-        argon2Memory!,
-      )
-      ..setValue<int>(
-        AuthConfigFields.fieldPasswordCryptArgon2Iterations,
+        CryptConfigFields.fieldArgon2Iterations,
         argon2Iterations!,
       )
       ..setValue<int>(
-        AuthConfigFields.fieldPasswordCryptArgon2Parallelism,
+        CryptConfigFields.fieldArgon2Parallelism,
         argon2Parallelism!,
       );
   }
 
-  LocalConfig<AuthConfigFields>? _validatePbkdf2() {
+  LocalConfig<CryptConfigFields>? _validatePbkdf2() {
     final pbkdf2Iterations = int.tryParse(state.pbkdf2Iterations);
 
     final newState = state.copyWithErrors(
-      pbkdf2IterationsError: state.argon2Iterations.isEmpty
+      pbkdf2IterationsError: state.pbkdf2Iterations.isEmpty
           ? 'Required'
           : pbkdf2Iterations == null
           ? 'Must be a number'
@@ -294,12 +279,60 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
     }
     return LocalConfig()
       ..setValue<HashFunction>(
-        AuthConfigFields.fieldPasswordCryptPbkdf2Hash,
+        CryptConfigFields.fieldPbkdf2Hash,
         state.pbkdf2Hash,
       )
       ..setValue<int>(
-        AuthConfigFields.fieldPasswordCryptPbkdf2Iterations,
+        CryptConfigFields.fieldPbkdf2Iterations,
         pbkdf2Iterations!,
       );
   }
+
+  Future<KDFTestResult> testArgon2Params(
+    int memory,
+    int iterations,
+    int parallelism,
+  ) async {
+    return testParams(
+      kdf: .argon2,
+      params: {
+        "memory": memory,
+        "iterations": iterations,
+        "parallelism": parallelism,
+      },
+    );
+  }
+
+  Future<KDFTestResult> testPbkdf2Params(
+    HashFunction hash,
+    int iterations,
+  ) async {
+    return testParams(
+      kdf: .pbkdf2,
+      params: {"function": hash.name, "iterations": iterations},
+    );
+  }
+
+  Future<KDFTestResult> testParams({
+    required CryptKDF kdf,
+    required Map<String, dynamic> params,
+  }) async => KDFTestFailure(title: 'Unimplemented');
+}
+
+sealed class KDFTestResult {
+  const KDFTestResult();
+}
+
+class KDFTestFailure extends KDFTestResult {
+  final String title;
+
+  final String? details;
+
+  const KDFTestFailure({required this.title, this.details});
+}
+
+class KDFTestSuccess extends KDFTestResult {
+  final Duration duration;
+
+  const KDFTestSuccess({required this.duration});
 }

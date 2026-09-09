@@ -1,9 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:phylum/ui/config/auth/auth_config.dart';
-import 'package:phylum/ui/config/auth/form/crypt_config_cubit.dart';
-import 'package:phylum/ui/config/auth/form/ldap_config_cubit.dart';
-import 'package:phylum/ui/config/auth/form/openid_config_cubit.dart';
+import 'package:phylum/ui/config/auth/crypt/crypt_config_cubit.dart';
+import 'package:phylum/ui/config/auth/ldap/ldap_config_cubit.dart';
+import 'package:phylum/ui/config/auth/openid/openid_config_cubit.dart';
 import 'package:phylum/ui/config/config.dart';
 import 'package:phylum/ui/config/config_check_result.dart';
 
@@ -191,52 +191,4 @@ abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
     }
     return ConfigCheckSuccess(config: config);
   }
-
-  Future<KDFTestResult> testArgon2Params(
-    int memory,
-    int iterations,
-    int parallelism,
-  ) async {
-    return testParams(
-      kdf: .argon2,
-      params: {
-        "memory": memory,
-        "iterations": iterations,
-        "parallelism": parallelism,
-      },
-    );
-  }
-
-  Future<KDFTestResult> testPbkdf2Params(
-    HashFunction hash,
-    int iterations,
-  ) async {
-    return testParams(
-      kdf: .pbkdf2,
-      params: {"function": hash.name, "iterations": iterations},
-    );
-  }
-
-  Future<KDFTestResult> testParams({
-    required CryptKDF kdf,
-    required Map<String, dynamic> params,
-  });
-}
-
-sealed class KDFTestResult {
-  const KDFTestResult();
-}
-
-class KDFTestFailure extends KDFTestResult {
-  final String title;
-
-  final String? details;
-
-  const KDFTestFailure({required this.title, this.details});
-}
-
-class KDFTestSuccess extends KDFTestResult {
-  final Duration duration;
-
-  const KDFTestSuccess({required this.duration});
 }

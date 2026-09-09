@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phylum/ui/config/auth/auth_config.dart';
-import 'package:phylum/ui/config/auth/form/crypt_config_cubit.dart';
 import 'package:phylum/util/dialogs.dart';
+
+import 'crypt_config.dart';
+import 'crypt_config_cubit.dart';
 
 class CryptConfigForm extends StatelessWidget {
   final CryptConfigCubit _bloc;

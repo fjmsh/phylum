@@ -4,10 +4,10 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/config/remote_config_controller.dart';
 import 'package:provider/provider.dart';
 
-import 'auth_config.dart';
+import '../../config/auth/auth_config.dart';
 import 'auth_settings_pane_cubit.dart';
 import 'auth_settings_pane_material.dart';
-import 'form/auth_config_form_cubit.dart';
+import '../../config/auth/auth_config_form_cubit.dart';
 
 class AuthSettingsPane extends StatefulWidget {
   const AuthSettingsPane({super.key});

@@ -6,7 +6,7 @@ import 'package:phylum/ui/config/remote_config_controller.dart';
 import 'package:phylum/ui/config/remote_config_pane.dart';
 import 'package:phylum/ui/settings/settings.dart';
 
-import 'auth_config_pane_widget.dart';
+import 'auth_settings_pane.dart';
 
 class AuthSettings extends Settings {
   @override

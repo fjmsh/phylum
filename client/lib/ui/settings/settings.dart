@@ -3,7 +3,7 @@ import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/settings/account/account_settings.dart';
 import 'package:phylum/ui/settings/appearance/appearance_settings.dart';
-import 'package:phylum/ui/config/auth/auth_settings.dart';
+import 'package:phylum/ui/settings/auth/auth_settings.dart';
 import 'package:phylum/ui/settings/downloads/downloads_settings.dart';
 import 'package:phylum/ui/settings/logs/logs_settings.dart';
 import 'package:phylum/ui/config/mail/mail_settings.dart';
