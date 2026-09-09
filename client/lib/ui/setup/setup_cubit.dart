@@ -127,7 +127,7 @@ class SetupCubit extends Cubit<SetupState> {
       );
       authBloc.mailEnabled = mailBloc.state.enabled;
       authBloc.passwordlessLoginEnabled = mailBloc.state.enabled;
-      authBloc.cryptBloc.resetEnabled = mailBloc.state.enabled;
+      // authBloc.cryptBloc.resetEnabled = mailBloc.state.enabled;
     }
   }
 

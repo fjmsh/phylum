@@ -1,7 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
-import 'package:phylum/ui/config/auth/auth_config.dart';
 import 'package:phylum/ui/config/config.dart';
+
+import 'openid_config_fields.dart';
 
 class OpenIDConfig {
   final Set<PrimitiveField> _fixed;

@@ -10,6 +10,10 @@ class AuthConfigFields extends ConfigFields {
     toPrimitive: (val) => val.name,
     fromPrimitive: (val) => PasswordBackend.fromString(val),
   );
+
+  static final fieldPasswordCrypt = ProxyObjectField(
+    schema: CryptConfigFields.instance,
+  );
   static final fieldPasswordResetEnabled = PrimitiveField(false);
   static final fieldPasswordRequirementsLength = PrimitiveField(8);
   static final fieldPasswordRequirementsUpper = PrimitiveField(0);
@@ -48,24 +52,7 @@ class AuthConfigFields extends ConfigFields {
         fields: {
           "backend": fieldPasswordBackend,
           "reset_enabled": fieldPasswordResetEnabled,
-          "crypt": ObjectField(
-            fields: {
-              "kdf": CryptConfigFields.fieldKdf,
-              "argon2": ObjectField(
-                fields: {
-                  "memory": CryptConfigFields.fieldArgon2Memory,
-                  "iterations": CryptConfigFields.fieldArgon2Iterations,
-                  "parallelism": CryptConfigFields.fieldArgon2Parallelism,
-                },
-              ),
-              "pbkdf2": ObjectField(
-                fields: {
-                  "function": CryptConfigFields.fieldPbkdf2Hash,
-                  "iterations": CryptConfigFields.fieldPbkdf2Iterations,
-                },
-              ),
-            },
-          ),
+          "crypt": fieldPasswordCrypt,
           "ldap": ObjectField(
             fields: {
               "debug": fieldPasswordLdapDebug,

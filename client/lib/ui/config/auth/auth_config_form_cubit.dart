@@ -82,7 +82,9 @@ class AuthConfigFormState {
 
 abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
   RemoteConfig<AuthConfigFields> _remote;
-  late final cryptBloc = CryptConfigCubit(remote: _remote);
+  late final cryptBloc = CryptConfigCubit(
+    remote: _remote.getObject(AuthConfigFields.fieldPasswordCrypt),
+  );
   late final LdapConfigCubit ldapBloc = LdapConfigCubit(remote: _remote);
 
   AuthConfigCubit({required this._remote})
@@ -101,7 +103,7 @@ abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
         mailEnabled: state.mailEnabled,
       ),
     );
-    cryptBloc.reset(_remote);
+    cryptBloc.reset(_remote.getObject(AuthConfigFields.fieldPasswordCrypt));
     ldapBloc.reset(_remote);
   }
 

@@ -143,3 +143,36 @@ class MapField<Cfg extends ConfigFields> extends ConfigField {
     return map.isEmpty ? null : map;
   }
 }
+
+class ProxyObjectField<Cfg extends ConfigFields> extends ConfigField {
+  final Cfg schema;
+
+  const ProxyObjectField({required this.schema});
+
+  @override
+  void parse({
+    required RemoteConfig config,
+    required Set<String> fixed,
+    required String path,
+    required dynamic data,
+  }) {
+    config.objects[this] = RemoteConfig<Cfg>.fromDataFixed(
+      schema,
+      fixed: fixed,
+      data: data,
+      path: path,
+    );
+    // schema.root.parse(config: config, fixed: fixed, path: path, data: data);
+  }
+
+  @override
+  Map<String, dynamic>? toMap<C extends ConfigFields>(
+    RemoteConfig<C> remote,
+    LocalConfig<C> local,
+  ) {
+    return schema.root.toMap(
+      remote.objects[this] ?? RemoteConfig<Cfg>.empty(schema),
+      local.objects[this] ?? LocalConfig<Cfg>(),
+    );
+  }
+}

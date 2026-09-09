@@ -4,17 +4,25 @@ class RemoteConfig<C extends ConfigFields> {
   final C schema;
   final Set<PrimitiveField> fixed;
   final Map<PrimitiveField, dynamic> values;
+  final Map<ProxyObjectField, RemoteConfig> objects;
   final Map<MapField, Map<String, RemoteConfig>> maps;
 
   RemoteConfig._({
     required this.schema,
     required this.fixed,
     required this.values,
+    required this.objects,
     required this.maps,
   });
 
   factory RemoteConfig.empty(C schema) {
-    return RemoteConfig._(schema: schema, fixed: {}, values: {}, maps: {});
+    return RemoteConfig._(
+      schema: schema,
+      fixed: {},
+      values: {},
+      objects: {},
+      maps: {},
+    );
   }
 
   factory RemoteConfig.fromMap(C schema, Map<String, dynamic> map) {
@@ -89,19 +97,22 @@ class RemoteConfig<C extends ConfigFields> {
     maps.putIfAbsent(field, () => <String, RemoteConfig<FC>>{}).remove(key);
   }
 
+  RemoteConfig<FC> getObject<FC extends ConfigFields>(
+    ProxyObjectField<FC> field,
+  ) {
+    return objects[field]! as RemoteConfig<FC>;
+  }
+
   RemoteConfig<C> copy() {
     return RemoteConfig._(
       schema: schema,
       values: Map.of(values),
       fixed: Set.of(fixed),
+      objects: objects.map((k, v) => MapEntry(k, v.copy())),
       maps: maps.map(
         (k, v) => MapEntry(k, v.map((k, v) => MapEntry(k, v.copy()))),
       ),
     );
-  }
-
-  RemoteConfig<C> apply(LocalConfig<C> updates) {
-    throw UnimplementedError('Not implemented');
   }
 }
 
