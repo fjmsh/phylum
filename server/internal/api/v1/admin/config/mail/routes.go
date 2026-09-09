@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
+	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/core"
-	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,5 +26,5 @@ func handleReadRequest(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to read mail config"))
 	}
 
-	c.JSON(http.StatusOK, mail.Configuration())
+	c.JSON(http.StatusOK, config.ConfigMap("mail"))
 }

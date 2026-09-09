@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
-	"codeberg.org/shroff/phylum/server/internal/auth"
+	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
 )
@@ -26,5 +26,5 @@ func handleReadRequest(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to read auth config"))
 	}
 
-	c.JSON(http.StatusOK, auth.Get().Configuration())
+	c.JSON(http.StatusOK, config.ConfigMap("auth"))
 }

@@ -15,7 +15,6 @@ type Mailer struct {
 	instance string
 	from     FromConfig
 	logger   zerolog.Logger
-	cfg      Config
 }
 
 var ErrEmailNotConfigured = errors.New("email not configured")
@@ -27,8 +26,6 @@ var m Mailer
 
 func CreateMailer(cfg Config, l zerolog.Logger) Mailer {
 	var mailer Mailer
-	mailer.cfg = cfg
-	mailer.cfg.SMTP.Password = ""
 	mailer.logger = l.With().Str("mod", "email").Logger()
 	if !cfg.Enabled {
 		return mailer
@@ -49,10 +46,10 @@ func SetDefaultMailer(mailer Mailer) {
 }
 
 func Enabled() bool {
-	return m.cfg.Enabled
+	return m.dialer != nil
 }
 func (m Mailer) Enabled() bool {
-	return m.cfg.Enabled
+	return m.dialer != nil
 }
 
 func (m Mailer) CheckConnection() error {
@@ -66,10 +63,6 @@ func (m Mailer) CheckConnection() error {
 	}
 	s.Close()
 	return nil
-}
-
-func Configuration() Config {
-	return m.cfg
 }
 
 func (m Mailer) SendTestEmail(email string) error {

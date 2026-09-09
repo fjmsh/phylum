@@ -19,7 +19,11 @@ import (
 
 func Setup(r *gin.RouterGroup, needsSetup bool, logger *zerolog.Logger) {
 	if needsSetup {
-		config := config.ConfigMap([]string{"db", "mail", "auth"})
+		config := gin.H{
+			"db":   config.ConfigMap("db"),
+			"mail": config.ConfigMap("mail"),
+			"auth": config.ConfigMap("auth"),
+		}
 		r.GET("/info", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{
 				"setup": gin.H{

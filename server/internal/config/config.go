@@ -122,29 +122,19 @@ func HasOverrides(path string, cfg *koanf.Koanf) (overriden []string) {
 	return overriden
 }
 
-func ConfigMap(paths []string) map[string]any {
-	result := koanf.New(".")
-	for _, p := range paths {
-		c := Full.Cut(p)
-		if len(c.Keys()) != 0 {
-			result.MergeAt(c, p)
-		}
-	}
+func ConfigMap(path string) map[string]any {
+	result := Full.Cut(path)
+
 	for _, k := range result.Keys() {
 		if strings.HasSuffix(k, "secret") || strings.HasSuffix(k, "password") {
 			result.Set(k, "")
 		}
 	}
 
-	config := result.Raw()
-
-	for k, v := range config {
-		config[k] = map[string]any{
-			"config":    v,
-			"overrides": overrides.Cut(k).Keys(),
-		}
+	return map[string]any{
+		"config":    result.Raw(),
+		"overrides": overrides.Cut(path).Keys(),
 	}
-	return config
 }
 
 func LoadOverrides[T any](cmd *cobra.Command) (*koanf.Koanf, error) {

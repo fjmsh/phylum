@@ -18,7 +18,6 @@ type Handler struct {
 	passwordBackend      PasswordBackend
 	magicLinksEnabled    bool
 	passwordResetEnabled bool
-	adminConfig          Config
 	openIDHandler        openid.Handler
 }
 
@@ -58,10 +57,6 @@ func (h *Handler) OpenIDHandler() openid.Handler {
 
 func (h *Handler) OpenIDProviders() []openid.Provider {
 	return h.OpenIDHandler().Providers()
-}
-
-func (h *Handler) Configuration() Config {
-	return h.adminConfig
 }
 
 func Initialize(cfg Config, log zerolog.Logger) error {
@@ -122,15 +117,6 @@ func CreateHandler(cfg Config, log zerolog.Logger) (*Handler, error) {
 	if methods > 1 && !cfg.SuppressMultiProviderWarning {
 		log.Warn().Msg("Using multiple login providers can lead to cross-provider impersonation " +
 			"if email addresses are not guaranteed to belong to the same user across the different providers")
-	}
-
-	h.adminConfig = cfg
-	h.adminConfig.Password.LDAP.Filter.BindPassword = ""
-	clients := cfg.OpenID.Clients
-	h.adminConfig.OpenID.Clients = make(map[string]openid.ClientConfig)
-	for k, c := range clients {
-		c.ClientSecret = ""
-		h.adminConfig.OpenID.Clients[k] = c
 	}
 
 	h.openIDHandler = openid.CreateHandler(cfg.OpenID, log)
