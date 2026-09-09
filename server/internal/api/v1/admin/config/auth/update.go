@@ -42,9 +42,9 @@ func handleUpdateRequest(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to update auth config"))
 	}
 
-	update := params.Cut("config")
+	updates := params.Cut("config")
 	var cfg auth.Config
-	if err := config.MergeSub("auth", update).Unmarshal("", &cfg); err != nil {
+	if err := config.MergeSub("auth", updates).Unmarshal("", &cfg); err != nil {
 		fmt.Println(err)
 	}
 	if _, err := auth.CreateHandler(cfg, *zerolog.Ctx(c.Request.Context())); err != nil {
@@ -54,10 +54,10 @@ func handleUpdateRequest(c *gin.Context) {
 		syscall.Kill(os.Getpid(), syscall.SIGINT)
 	}()
 
-	fullCfg := config.MergeWithYaml(update, "auth")
+	fullCfg := config.MergeWithYaml(updates, "auth")
 	if err := config.WriteConfig(fullCfg); err != nil {
 		panic(core.NewErrorWithDetails(http.StatusInternalServerError, "failed_to_write_config", "Failed to Write Config", err.Error()))
 	}
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusOK, config.ConfigMapWithUpdates("auth", updates))
 
 }

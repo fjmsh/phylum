@@ -137,6 +137,25 @@ func ConfigMap(path string) map[string]any {
 	}
 }
 
+func ConfigMapWithUpdates(path string, updates *koanf.Koanf) map[string]any {
+	overrides := overrides.Cut(path)
+	result := defaults.Cut(path)
+	result.Merge(ymlConfig.Cut(path))
+	result.Merge(updates)
+	result.Merge(overrides)
+
+	for _, k := range result.Keys() {
+		if strings.HasSuffix(k, "secret") || strings.HasSuffix(k, "password") {
+			result.Set(k, "")
+		}
+	}
+
+	return map[string]any{
+		"config":    result.Raw(),
+		"overrides": overrides.Cut(path).Keys(),
+	}
+}
+
 func LoadOverrides[T any](cmd *cobra.Command) (*koanf.Koanf, error) {
 	k := koanf.New(".")
 	err := k.Load(posflag.ProviderWithFlag(cmd.Flags(), ".", nil, func(f *pflag.Flag) (string, interface{}) {

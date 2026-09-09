@@ -43,9 +43,9 @@ func handleUpdateRequest(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to update mail config"))
 	}
 
-	update := params.Cut("config")
+	updates := params.Cut("config")
 	var cfg mail.Config
-	if err := config.MergeSub("mail", update).Unmarshal("", &cfg); err != nil {
+	if err := config.MergeSub("mail", updates).Unmarshal("", &cfg); err != nil {
 		fmt.Println(err)
 	}
 	var response *core.Error
@@ -70,10 +70,10 @@ func handleUpdateRequest(c *gin.Context) {
 		syscall.Kill(os.Getpid(), syscall.SIGINT)
 	}()
 
-	fullCfg := config.MergeWithYaml(update, "mail")
+	fullCfg := config.MergeWithYaml(updates, "mail")
 	if err := config.WriteConfig(fullCfg); err != nil {
 		panic(core.NewErrorWithDetails(http.StatusInternalServerError, "failed_to_write_config", "Failed to Write Config", err.Error()))
 	}
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusOK, config.ConfigMapWithUpdates("mail", updates))
 
 }
