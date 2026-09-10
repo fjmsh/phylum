@@ -1,22 +1,20 @@
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:phylum/ui/config/auth/auth_config.dart';
-import 'package:phylum/ui/config/auth/crypt/crypt_config_cubit.dart';
-import 'package:phylum/ui/config/auth/ldap/ldap_config_cubit.dart';
 import 'package:phylum/ui/config/auth/openid/openid_config_cubit.dart';
+import 'package:phylum/ui/config/auth/password/password_config.dart';
+import 'package:phylum/ui/config/auth/password/password_config_cubit.dart';
 import 'package:phylum/ui/config/config.dart';
 import 'package:phylum/ui/config/config_check_result.dart';
 
 class AuthConfigFormState {
   final bool mailEnabled;
   final bool passwordlessLoginEnabled;
-  final PasswordBackend passwordBackend;
   final Map<String, OpenIDConfig> openIdConfigs;
 
   AuthConfigFormState({
     required this.mailEnabled,
     required this.passwordlessLoginEnabled,
-    required this.passwordBackend,
     required this.openIdConfigs,
   });
 
@@ -34,9 +32,6 @@ class AuthConfigFormState {
       passwordlessLoginEnabled: config.getValueOrDefault(
         AuthConfigFields.fieldMagicLinks,
       ),
-      passwordBackend: config.getValueOrDefault(
-        AuthConfigFields.fieldPasswordBackend,
-      ),
       openIdConfigs: openIdConfigs,
     );
   }
@@ -44,13 +39,11 @@ class AuthConfigFormState {
   AuthConfigFormState copyWith({
     bool? mailEnabled,
     bool? passwordlessLoginEnabled,
-    PasswordBackend? passwordBackend,
     Map<String, OpenIDConfig>? openIdConfigs,
   }) => AuthConfigFormState(
     mailEnabled: mailEnabled ?? this.mailEnabled,
     passwordlessLoginEnabled:
         passwordlessLoginEnabled ?? this.passwordlessLoginEnabled,
-    passwordBackend: passwordBackend ?? this.passwordBackend,
     openIdConfigs: openIdConfigs ?? this.openIdConfigs,
   );
 
@@ -59,7 +52,6 @@ class AuthConfigFormState {
       'AuthConfigFormState('
       'mailEnabled: $mailEnabled, '
       'passwordlessLoginEnabled: $passwordlessLoginEnabled'
-      'passwordBackend: $passwordBackend,'
       'openIdConfigs: $openIdConfigs,'
       ')';
 
@@ -69,24 +61,20 @@ class AuthConfigFormState {
 
     return other.mailEnabled == mailEnabled &&
         other.passwordlessLoginEnabled == passwordlessLoginEnabled &&
-        other.passwordBackend == passwordBackend &&
         const MapEquality().equals(other.openIdConfigs, openIdConfigs);
   }
 
   @override
   int get hashCode =>
-      mailEnabled.hashCode & passwordlessLoginEnabled.hashCode ^
-      passwordBackend.hashCode ^
+      mailEnabled.hashCode ^
+      passwordlessLoginEnabled.hashCode ^
       const MapEquality().hash(openIdConfigs);
 }
 
 abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
   RemoteConfig<AuthConfigFields> _remote;
-  late final cryptBloc = CryptConfigCubit(
-    remote: _remote.getObject(AuthConfigFields.fieldPasswordCrypt),
-  );
-  late final LdapConfigCubit ldapBloc = LdapConfigCubit(
-    remote: _remote.getObject(AuthConfigFields.fieldPasswordLdap),
+  late final passwordBloc = PasswordConfigCubit(
+    remote: _remote.getObject(AuthConfigFields.fieldPassword),
   );
 
   AuthConfigCubit({required this._remote})
@@ -104,20 +92,16 @@ abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
         mailEnabled: state.mailEnabled,
       ),
     );
-    cryptBloc.reset();
-    ldapBloc.reset();
+    passwordBloc.reset();
   }
 
   set mailEnabled(bool val) {
     emit(state.copyWith(mailEnabled: val));
+    passwordBloc.mailEnabled = val;
   }
 
   set passwordlessLoginEnabled(bool val) {
     emit(state.copyWith(passwordlessLoginEnabled: val));
-  }
-
-  set passwordBackend(PasswordBackend val) {
-    emit(state.copyWith(passwordBackend: val));
   }
 
   void addOpenIDConfig(OpenIDConfig config) {
@@ -147,30 +131,14 @@ abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
   }
 
   Map<String, dynamic>? validateConfig() {
-    final config = LocalConfig<AuthConfigFields>()
-      ..setValue(
-        AuthConfigFields.fieldMagicLinks,
-        state.passwordlessLoginEnabled,
-      )
-      ..setValue(AuthConfigFields.fieldPasswordBackend, state.passwordBackend);
-    switch (state.passwordBackend) {
-      case PasswordBackend.crypt:
-        final cryptConfig = cryptBloc.validate();
-        if (cryptConfig == null) {
-          return null;
-        }
-        config.objects[AuthConfigFields.fieldPasswordCrypt] = cryptConfig;
-        break;
-      case PasswordBackend.ldap:
-        final ldapConfig = ldapBloc.validate();
-        if (ldapConfig == null) {
-          return null;
-        }
-        config.objects[AuthConfigFields.fieldPasswordLdap] = ldapConfig;
-        break;
-      case PasswordBackend.none:
-        // Do nothing
-        break;
+    final config = LocalConfig<AuthConfigFields>();
+    config.setValue(
+      AuthConfigFields.fieldMagicLinks,
+      state.passwordlessLoginEnabled,
+    );
+    final passwordConfig = passwordBloc.validate();
+    if (passwordConfig != null) {
+      config.objects[AuthConfigFields.fieldPassword] = passwordConfig;
     }
     state.openIdConfigs.forEach((key, openidConfig) {
       config.addMapEntry(
@@ -184,7 +152,7 @@ abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
 
   Future<ConfigCheckResult> checkConfig() async {
     if (!state.passwordlessLoginEnabled &&
-        state.passwordBackend == PasswordBackend.none &&
+        passwordBloc.state.passwordBackend == PasswordBackend.none &&
         state.openIdConfigs.isEmpty) {
       return ConfigInvalid(error: 'You must enable at least 1 login method');
     }

@@ -1,16 +1,12 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phylum/ui/config/auth/auth_config.dart';
 import 'package:phylum/ui/config/auth/auth_config_form_cubit.dart';
 import 'package:phylum/ui/config/auth/openid/openid_config_cubit.dart';
 import 'package:phylum/ui/config/auth/openid/openid_config_dialog.dart';
 import 'package:phylum/ui/config/auth/openid/openid_config_fields.dart';
+import 'package:phylum/ui/config/auth/password/password_config_form.dart';
 import 'package:phylum/ui/config/config.dart';
-import 'package:phylum/util/dialogs.dart';
-
-import 'crypt/crypt_config_form.dart';
-import 'ldap/ldap_config_form.dart';
 
 class AuthConfigForm extends StatelessWidget {
   final AuthConfigCubit bloc;
@@ -103,51 +99,7 @@ class PasswordAuthForm extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
-        BlocBuilder<AuthConfigCubit, AuthConfigFormState>(
-          bloc: bloc,
-          builder: (context, state) => ListTile(
-            title: Text('Password Login'),
-            leading: Icon(Icons.password),
-            subtitle: Text(state.passwordBackend.descriptor),
-            onTap: () async {
-              final backend = await showOptionsDialog(
-                context,
-                titleText: 'Password Login',
-                [
-                  PasswordBackend.none,
-                  PasswordBackend.crypt,
-                  PasswordBackend.ldap,
-                ],
-                (item) => ListTile(title: Text(item.descriptor)),
-              );
-              if (backend == null || !context.mounted) return;
-
-              bloc.passwordBackend = backend;
-            },
-          ),
-        ),
-        BlocBuilder<AuthConfigCubit, AuthConfigFormState>(
-          bloc: bloc,
-          builder: (context, state) {
-            return switch (state.passwordBackend) {
-              .crypt => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                child: CryptConfigForm(
-                  mailEnabled: state.mailEnabled,
-                  bloc: bloc.cryptBloc,
-                ),
-              ),
-              .ldap => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                child: LdapConfigForm(bloc: bloc.ldapBloc),
-              ),
-              _ => Container(),
-            };
-          },
-          buildWhen: (previous, current) =>
-              previous.mailEnabled != current.mailEnabled ||
-              previous.passwordBackend != current.passwordBackend,
-        ),
+        PasswordConfigForm(bloc: bloc.passwordBloc),
       ],
     );
   }

@@ -8,13 +8,8 @@ import 'crypt_config_cubit.dart';
 
 class CryptConfigForm extends StatelessWidget {
   final CryptConfigCubit _bloc;
-  final bool _mailEnabled;
 
-  const CryptConfigForm({
-    super.key,
-    required this._bloc,
-    required this._mailEnabled,
-  });
+  const CryptConfigForm({super.key, required this._bloc});
 
   @override
   Widget build(BuildContext context) {
@@ -52,20 +47,6 @@ class CryptConfigForm extends StatelessWidget {
           },
           buildWhen: (previous, current) => previous.kdf != current.kdf,
         ),
-        // BlocBuilder<CryptConfigCubit, CryptConfigState>(
-        //   bloc: _bloc,
-        //   builder: (context, state) => SwitchListTile(
-        //     title: Text('Self-Serve Password Reset'),
-        //     subtitle: !_mailEnabled ? const Text('Requires Email') : null,
-        //     secondary: Icon(Icons.refresh),
-        //     value: _mailEnabled ? state.resetEnabled : false,
-        //     onChanged: _mailEnabled
-        //         ? (value) => _bloc.resetEnabled = value
-        //         : null,
-        //   ),
-        //   buildWhen: (previous, current) =>
-        //       previous.resetEnabled != current.resetEnabled,
-        // ),
       ],
     );
   }

@@ -7,7 +7,6 @@ class CryptConfigState {
   final Set<PrimitiveField> _fixed;
   final bool shouldAllowKdfSelection;
   final CryptKDF kdf;
-  // final bool resetEnabled;
   final String argon2Memory;
   final String argon2Iterations;
   final String argon2Parallelism;
@@ -22,7 +21,6 @@ class CryptConfigState {
     required this._fixed,
     required this.shouldAllowKdfSelection,
     required this.kdf,
-    // required this.resetEnabled,
     required this.argon2Memory,
     required this.argon2Iterations,
     required this.argon2Parallelism,
@@ -42,9 +40,6 @@ class CryptConfigState {
       fixed: remote.fixed,
       shouldAllowKdfSelection: kdf != CryptKDF.argon2,
       kdf: kdf,
-      // resetEnabled: remote.getValueOrDefault(
-      //   CryptConfigFields.fieldPasswordResetEnabled,
-      // ),
       argon2Memory: remote
           .getValueOrDefault(CryptConfigFields.fieldArgon2Memory)
           .toString(),
@@ -67,7 +62,6 @@ class CryptConfigState {
 
   CryptConfigState copyWith({
     CryptKDF? kdf,
-    // bool? resetEnabled,
     String? argon2Memory,
     String? argon2Iterations,
     String? argon2Parallelism,
@@ -77,7 +71,6 @@ class CryptConfigState {
     fixed: _fixed,
     shouldAllowKdfSelection: shouldAllowKdfSelection,
     kdf: kdf ?? this.kdf,
-    // resetEnabled: resetEnabled ?? this.resetEnabled,
     argon2Memory: argon2Memory ?? this.argon2Memory,
     argon2Iterations: argon2Iterations ?? this.argon2Iterations,
     argon2Parallelism: argon2Parallelism ?? this.argon2Parallelism,
@@ -98,7 +91,6 @@ class CryptConfigState {
     fixed: _fixed,
     shouldAllowKdfSelection: shouldAllowKdfSelection,
     kdf: kdf,
-    // resetEnabled: resetEnabled,
     argon2Memory: argon2Memory,
     argon2Iterations: argon2Iterations,
     argon2Parallelism: argon2Parallelism,
@@ -134,7 +126,6 @@ class CryptConfigState {
   bool operator ==(covariant CryptConfigState other) {
     if (identical(this, other)) return true;
     return kdf == other.kdf &&
-        // resetEnabled == other.resetEnabled &&
         argon2Memory == other.argon2Memory &&
         argon2Iterations == other.argon2Iterations &&
         argon2Parallelism == other.argon2Parallelism &&
@@ -148,7 +139,6 @@ class CryptConfigState {
   @override
   int get hashCode =>
       kdf.hashCode ^
-      // resetEnabled.hashCode ^
       argon2Memory.hashCode ^
       argon2Iterations.hashCode ^
       argon2Parallelism.hashCode ^
@@ -171,10 +161,6 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
   set kdf(CryptKDF val) {
     emit(state.copyWith(kdf: val));
   }
-
-  // set resetEnabled(bool val) {
-  //   emit(state.copyWith(resetEnabled: val));
-  // }
 
   set argon2Memory(String val) {
     emit(state.copyWith(argon2Memory: val));
@@ -199,10 +185,6 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
   LocalConfig<CryptConfigFields>? validate() {
     final config = LocalConfig<CryptConfigFields>();
     config.setValue<CryptKDF>(CryptConfigFields.fieldKdf, state.kdf);
-    // config.setValue<bool>(
-    //   AuthConfigFields.fieldPasswordResetEnabled,
-    //   state.resetEnabled,
-    // );
 
     final kdfConfig = switch (state.kdf) {
       CryptKDF.argon2 => _validateArgon2(),

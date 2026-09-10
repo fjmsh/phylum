@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart';
-import 'package:phylum/ui/config/auth/auth_config.dart';
+import 'package:phylum/ui/config/auth/password/password_config.dart';
 import 'package:phylum/ui/setup/auth_setup_cubit.dart';
 import 'package:phylum/ui/setup/db/db_setup_cubit.dart';
 import 'package:phylum/ui/setup/setup_config.dart';
@@ -127,7 +127,7 @@ class SetupCubit extends Cubit<SetupState> {
       );
       authBloc.mailEnabled = mailBloc.state.enabled;
       authBloc.passwordlessLoginEnabled = mailBloc.state.enabled;
-      // authBloc.cryptBloc.resetEnabled = mailBloc.state.enabled;
+      authBloc.passwordBloc.resetEnabled = mailBloc.state.enabled;
     }
   }
 
@@ -143,7 +143,7 @@ class SetupCubit extends Cubit<SetupState> {
         ),
       );
       userBloc.passwordRequired =
-          authBloc.state.passwordBackend == PasswordBackend.crypt;
+          authBloc.passwordBloc.state.passwordBackend == PasswordBackend.crypt;
     }
   }
 
