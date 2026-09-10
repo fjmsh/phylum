@@ -85,7 +85,9 @@ abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
   late final cryptBloc = CryptConfigCubit(
     remote: _remote.getObject(AuthConfigFields.fieldPasswordCrypt),
   );
-  late final LdapConfigCubit ldapBloc = LdapConfigCubit(remote: _remote);
+  late final LdapConfigCubit ldapBloc = LdapConfigCubit(
+    remote: _remote.getObject(AuthConfigFields.fieldPasswordLdap),
+  );
 
   AuthConfigCubit({required this._remote})
     : super(
@@ -95,16 +97,15 @@ abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
         ),
       );
 
-  void reset([RemoteConfig<AuthConfigFields>? remote]) {
-    _remote = remote ?? _remote;
+  void reset() {
     emit(
       AuthConfigFormState.createFromRemoteConfig(
         config: _remote,
         mailEnabled: state.mailEnabled,
       ),
     );
-    cryptBloc.reset(_remote.getObject(AuthConfigFields.fieldPasswordCrypt));
-    ldapBloc.reset(_remote);
+    cryptBloc.reset();
+    ldapBloc.reset();
   }
 
   set mailEnabled(bool val) {
@@ -165,7 +166,7 @@ abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
         if (ldapConfig == null) {
           return null;
         }
-        config.values.addAll(ldapConfig.values);
+        config.objects[AuthConfigFields.fieldPasswordLdap] = ldapConfig;
         break;
       case PasswordBackend.none:
         // Do nothing

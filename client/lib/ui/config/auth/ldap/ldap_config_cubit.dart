@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
-import 'package:phylum/ui/config/auth/auth_config.dart';
 import 'package:phylum/ui/config/config.dart';
+
+import 'ldap_config.dart';
 
 class LdapConfigState {
   final Set<PrimitiveField> _fixed;
@@ -38,36 +39,28 @@ class LdapConfigState {
   });
 
   factory LdapConfigState.createFromRemoteConfig(
-    RemoteConfig<AuthConfigFields> remote,
+    RemoteConfig<LdapConfigFields> remote,
   ) {
     return LdapConfigState(
       fixed: remote.fixed,
-      serverUrl: remote.getValueOrDefault(
-        AuthConfigFields.fieldPasswordLdapUrl,
-      ),
-      starttls: remote.getValueOrDefault(
-        AuthConfigFields.fieldPasswordLdapStarttls,
-      ),
+      serverUrl: remote.getValueOrDefault(LdapConfigFields.fieldUrl),
+      starttls: remote.getValueOrDefault(LdapConfigFields.fieldStarttls),
       autoCreateUsers: remote.getValueOrDefault(
-        AuthConfigFields.fieldPasswordLdapAutoCreateUsers,
+        LdapConfigFields.fieldAutoCreateUsers,
       ),
-      useFilter: remote.getValueOrDefault(
-        AuthConfigFields.fieldPasswordLdapUseFilter,
-      ),
-      dnTemplate: remote.getValueOrDefault(
-        AuthConfigFields.fieldPasswordLdapDnTemplate,
-      ),
+      useFilter: remote.getValueOrDefault(LdapConfigFields.fieldUseFilter),
+      dnTemplate: remote.getValueOrDefault(LdapConfigFields.fieldDnTemplate),
       filterBindDn: remote.getValueOrDefault(
-        AuthConfigFields.fieldPasswordLdapFilterBindDn,
+        LdapConfigFields.fieldFilterBindDn,
       ),
       filterBindPassword: remote.getValueOrDefault(
-        AuthConfigFields.fieldPasswordLdapFilterBindPassword,
+        LdapConfigFields.fieldFilterBindPassword,
       ),
       filterBaseDn: remote.getValueOrDefault(
-        AuthConfigFields.fieldPasswordLdapFilterBaseDn,
+        LdapConfigFields.fieldFilterBaseDn,
       ),
       filterTemplate: remote.getValueOrDefault(
-        AuthConfigFields.fieldPasswordLdapFilterTemplate,
+        LdapConfigFields.fieldFilterTemplate,
       ),
     );
   }
@@ -126,24 +119,20 @@ class LdapConfigState {
       filterBaseDnError != null ||
       filterTemplateError != null;
 
-  bool isServerUrlFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordLdapUrl);
-  bool isStarttlsFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordLdapStarttls);
+  bool isServerUrlFixed() => _fixed.contains(LdapConfigFields.fieldUrl);
+  bool isStarttlsFixed() => _fixed.contains(LdapConfigFields.fieldStarttls);
   bool isAutoCreateUsersFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordLdapAutoCreateUsers);
-  bool isUseFilterFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordLdapUseFilter);
-  bool isDnTemplateFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordLdapDnTemplate);
+      _fixed.contains(LdapConfigFields.fieldAutoCreateUsers);
+  bool isUseFilterFixed() => _fixed.contains(LdapConfigFields.fieldUseFilter);
+  bool isDnTemplateFixed() => _fixed.contains(LdapConfigFields.fieldDnTemplate);
   bool isFilterBindDnFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordLdapFilterBindDn);
+      _fixed.contains(LdapConfigFields.fieldFilterBindDn);
   bool isFilterBindPasswordFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordLdapFilterBindPassword);
+      _fixed.contains(LdapConfigFields.fieldFilterBindPassword);
   bool isFilterBaseDnFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordLdapFilterBaseDn);
+      _fixed.contains(LdapConfigFields.fieldFilterBaseDn);
   bool isFilterTemplateFixed() =>
-      _fixed.contains(AuthConfigFields.fieldPasswordLdapFilterTemplate);
+      _fixed.contains(LdapConfigFields.fieldFilterTemplate);
 
   @override
   bool operator ==(covariant LdapConfigState other) {
@@ -183,11 +172,12 @@ class LdapConfigState {
 }
 
 class LdapConfigCubit extends Cubit<LdapConfigState> {
-  LdapConfigCubit({required RemoteConfig<AuthConfigFields> remote})
-    : super(LdapConfigState.createFromRemoteConfig(remote));
+  final RemoteConfig<LdapConfigFields> _remote;
+  LdapConfigCubit({required this._remote})
+    : super(LdapConfigState.createFromRemoteConfig(_remote));
 
-  void reset(RemoteConfig<AuthConfigFields> remote) {
-    emit(LdapConfigState.createFromRemoteConfig(remote));
+  void reset() {
+    emit(LdapConfigState.createFromRemoteConfig(_remote));
   }
 
   set serverUrl(String val) {
@@ -226,45 +216,36 @@ class LdapConfigCubit extends Cubit<LdapConfigState> {
     emit(state.copyWith(filterTemplate: val));
   }
 
-  LocalConfig<AuthConfigFields>? validate() {
-    final local = LocalConfig<AuthConfigFields>();
+  LocalConfig<LdapConfigFields>? validate() {
+    final local = LocalConfig<LdapConfigFields>();
 
-    local.setValue<String>(
-      AuthConfigFields.fieldPasswordLdapUrl,
-      state.serverUrl,
-    );
+    local.setValue<String>(LdapConfigFields.fieldUrl, state.serverUrl);
+    local.setValue<bool>(LdapConfigFields.fieldStarttls, state.starttls);
     local.setValue<bool>(
-      AuthConfigFields.fieldPasswordLdapStarttls,
-      state.starttls,
-    );
-    local.setValue<bool>(
-      AuthConfigFields.fieldPasswordLdapAutoCreateUsers,
+      LdapConfigFields.fieldAutoCreateUsers,
       state.autoCreateUsers,
     );
-    local.setValue<bool>(
-      AuthConfigFields.fieldPasswordLdapUseFilter,
-      state.useFilter,
-    );
+    local.setValue<bool>(LdapConfigFields.fieldUseFilter, state.useFilter);
     if (state.useFilter) {
       local.setValue<String>(
-        AuthConfigFields.fieldPasswordLdapFilterBindDn,
+        LdapConfigFields.fieldFilterBindDn,
         state.filterBindDn,
       );
       local.setValue<String>(
-        AuthConfigFields.fieldPasswordLdapFilterBindPassword,
+        LdapConfigFields.fieldFilterBindPassword,
         state.filterBindPassword,
       );
       local.setValue<String>(
-        AuthConfigFields.fieldPasswordLdapFilterBaseDn,
+        LdapConfigFields.fieldFilterBaseDn,
         state.filterBaseDn,
       );
       local.setValue<String>(
-        AuthConfigFields.fieldPasswordLdapFilterTemplate,
+        LdapConfigFields.fieldFilterTemplate,
         state.filterTemplate,
       );
     } else {
       local.setValue<String>(
-        AuthConfigFields.fieldPasswordLdapDnTemplate,
+        LdapConfigFields.fieldDnTemplate,
         state.dnTemplate,
       );
     }

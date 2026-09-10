@@ -160,11 +160,12 @@ class CryptConfigState {
 }
 
 class CryptConfigCubit extends Cubit<CryptConfigState> {
-  CryptConfigCubit({required RemoteConfig<CryptConfigFields> remote})
-    : super(CryptConfigState.createFromRemoteConfig(remote));
+  final RemoteConfig<CryptConfigFields> _remote;
+  CryptConfigCubit({required this._remote})
+    : super(CryptConfigState.createFromRemoteConfig(_remote));
 
-  void reset(RemoteConfig<CryptConfigFields> remote) {
-    emit(CryptConfigState.createFromRemoteConfig(remote));
+  void reset() {
+    emit(CryptConfigState.createFromRemoteConfig(_remote));
   }
 
   set kdf(CryptKDF val) {
