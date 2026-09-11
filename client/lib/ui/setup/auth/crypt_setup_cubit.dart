@@ -17,11 +17,7 @@ class CryptSetupCubit extends CryptConfigCubit {
     required Map<String, dynamic> params,
   }) async {
     final builder = UriBuilder.fromUri(Uri.parse(_instanceUrl));
-    builder.path =
-        '${builder.path}/api/v1/setup/auth/test/${switch (kdf) {
-          CryptKDF.argon2 => 'argon2',
-          CryptKDF.pbkdf2 => 'pbkdf2',
-        }}';
+    builder.path = '${builder.path}/api/v1/setup/auth/test/${kdf.name}';
     final request = Request('POST', builder.build());
     request.headers['Content-Type'] = 'application/json';
     request.body = jsonEncode(params);

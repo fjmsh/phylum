@@ -48,47 +48,61 @@ class CryptConfigForm extends StatelessWidget {
           },
           buildWhen: (previous, current) => previous.kdf != current.kdf,
         ),
-        TextButton.icon(
-          icon: Icon(Icons.timer),
-          label: Text('Check Parameters'),
-          onPressed: () async {
-            final result = await _bloc.testArgon2Params();
-            if (!context.mounted) return;
-            switch (result) {
-              case KDFTestFailure():
-                showAlertDialog(
-                  context,
-                  title: result.title,
-                  message: result.details,
-                );
-                break;
-              case KDFTestSuccess(duration: Duration duration):
-                switch (duration.inMilliseconds) {
-                  case < 300:
-                    showAlertDialog(
-                      context,
-                      title: 'Sub-optimal parameters',
-                      message:
-                          'Password hashing took only ${duration.inMilliseconds}ms. Recommendation is to take at least 300ms',
-                    );
-                    break;
-                  case > 2000:
-                    showAlertDialog(
-                      context,
-                      title: 'Sub-optimal parameters',
-                      message:
-                          'Password hashing took ${duration.inMilliseconds}ms. This might be too computationally expensive.',
-                    );
-                    break;
-                  default:
-                    showAlertDialog(
-                      context,
-                      message:
-                          'Password hashing took ${duration.inMilliseconds}ms.',
-                    );
-                }
-            }
+        BlocBuilder<CryptConfigCubit, CryptConfigState>(
+          bloc: _bloc,
+          builder: (context, state) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextButton.icon(
+                icon: Icon(Icons.timer),
+                label: state.checkingParams
+                    ? const Text('Checking Params')
+                    : const Text('Check Parameters'),
+                onPressed: state.checkingParams
+                    ? null
+                    : () async {
+                        final result = await _bloc.testArgon2Params();
+                        if (!context.mounted) return;
+                        switch (result) {
+                          case KDFTestFailure():
+                            showAlertDialog(
+                              context,
+                              title: result.title,
+                              message: result.details,
+                            );
+                            break;
+                          case KDFTestSuccess(duration: Duration duration):
+                            switch (duration.inMilliseconds) {
+                              case < 300:
+                                showAlertDialog(
+                                  context,
+                                  title: 'Sub-optimal parameters',
+                                  message:
+                                      'Password hashing took only ${duration.inMilliseconds}ms. Recommendation is to take at least 300ms',
+                                );
+                                break;
+                              case > 2000:
+                                showAlertDialog(
+                                  context,
+                                  title: 'Sub-optimal parameters',
+                                  message:
+                                      'Password hashing took ${duration.inMilliseconds}ms. This might be too computationally expensive.',
+                                );
+                                break;
+                              default:
+                                showAlertDialog(
+                                  context,
+                                  message:
+                                      'Password hashing took ${duration.inMilliseconds}ms.',
+                                );
+                            }
+                        }
+                      },
+              ),
+            );
           },
+          buildWhen: (previous, current) =>
+              previous.checkingParams != current.checkingParams,
         ),
       ],
     );

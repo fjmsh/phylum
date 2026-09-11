@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:meta/meta.dart';
 import 'package:phylum/ui/config/config.dart';
 
 import 'crypt_config.dart';
@@ -16,6 +17,7 @@ class CryptConfigState {
   final HashFunction pbkdf2Hash;
   final String pbkdf2Iterations;
   final String? pbkdf2IterationsError;
+  final bool checkingParams;
 
   CryptConfigState({
     required this._fixed,
@@ -30,6 +32,7 @@ class CryptConfigState {
     required this.pbkdf2Hash,
     required this.pbkdf2Iterations,
     required this.pbkdf2IterationsError,
+    required this.checkingParams,
   });
 
   factory CryptConfigState.createFromRemoteConfig(
@@ -57,6 +60,7 @@ class CryptConfigState {
           .getValueOrDefault(CryptConfigFields.fieldPbkdf2Iterations)
           .toString(),
       pbkdf2IterationsError: null,
+      checkingParams: false,
     );
   }
 
@@ -67,6 +71,7 @@ class CryptConfigState {
     String? argon2Parallelism,
     HashFunction? pbkdf2Hash,
     String? pbkdf2Iterations,
+    bool? checkingParams,
   }) => CryptConfigState(
     fixed: _fixed,
     shouldAllowKdfSelection: shouldAllowKdfSelection,
@@ -80,6 +85,7 @@ class CryptConfigState {
     pbkdf2Hash: pbkdf2Hash ?? this.pbkdf2Hash,
     pbkdf2Iterations: pbkdf2Iterations ?? this.pbkdf2Iterations,
     pbkdf2IterationsError: null,
+    checkingParams: checkingParams ?? this.checkingParams,
   );
 
   CryptConfigState copyWithErrors({
@@ -100,6 +106,7 @@ class CryptConfigState {
     pbkdf2Hash: pbkdf2Hash,
     pbkdf2Iterations: pbkdf2Iterations,
     pbkdf2IterationsError: pbkdf2IterationsError,
+    checkingParams: checkingParams,
   );
 
   bool get hasErrors =>
@@ -131,7 +138,8 @@ class CryptConfigState {
         argon2IterationsError == other.argon2IterationsError &&
         argon2ParallelismError == other.argon2ParallelismError &&
         pbkdf2Hash == other.pbkdf2Hash &&
-        pbkdf2Iterations == other.pbkdf2Iterations;
+        pbkdf2Iterations == other.pbkdf2Iterations &&
+        checkingParams == other.checkingParams;
   }
 
   @override
@@ -144,7 +152,8 @@ class CryptConfigState {
       argon2IterationsError.hashCode ^
       argon2ParallelismError.hashCode ^
       pbkdf2Hash.hashCode ^
-      pbkdf2Iterations.hashCode;
+      pbkdf2Iterations.hashCode ^
+      checkingParams.hashCode;
 }
 
 abstract class CryptConfigCubit extends Cubit<CryptConfigState> {
@@ -154,7 +163,11 @@ abstract class CryptConfigCubit extends Cubit<CryptConfigState> {
     : super(CryptConfigState.createFromRemoteConfig(_remote));
 
   void reset() {
-    emit(CryptConfigState.createFromRemoteConfig(_remote));
+    emit(
+      CryptConfigState.createFromRemoteConfig(
+        _remote,
+      ).copyWith(checkingParams: state.checkingParams),
+    );
   }
 
   set kdf(CryptKDF val) {
@@ -277,7 +290,7 @@ abstract class CryptConfigCubit extends Cubit<CryptConfigState> {
     if (memory == null || iterations == null || parallelism == null) {
       return KDFTestFailure(title: 'Invalid Parameters');
     }
-    return testParams(
+    return _testParams(
       kdf: .argon2,
       params: {
         "memory": memory,
@@ -289,12 +302,26 @@ abstract class CryptConfigCubit extends Cubit<CryptConfigState> {
 
   Future<KDFTestResult> testPbkdf2Params() async {
     final iterations = int.tryParse(state.pbkdf2Iterations);
-    return testParams(
+    return _testParams(
       kdf: .pbkdf2,
       params: {"function": state.pbkdf2Hash.name, "iterations": iterations},
     );
   }
 
+  Future<KDFTestResult> _testParams({
+    required CryptKDF kdf,
+    required Map<String, dynamic> params,
+  }) async {
+    if (state.checkingParams) {
+      return KDFTestFailure(title: 'Already checking params');
+    }
+    emit(state.copyWith(checkingParams: true));
+    final result = await testParams(kdf: kdf, params: params);
+    emit(state.copyWith(checkingParams: false));
+    return result;
+  }
+
+  @protected
   Future<KDFTestResult> testParams({
     required CryptKDF kdf,
     required Map<String, dynamic> params,
