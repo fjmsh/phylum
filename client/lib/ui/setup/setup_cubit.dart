@@ -101,7 +101,8 @@ class SetupCubit extends Cubit<SetupState> {
     );
     authBloc = AuthConfigCubit(
       remote: _config.authConfig,
-      createCryptConfigCubit: (remote) => CryptSetupCubit(remote: remote),
+      createCryptConfigCubit: (remote) =>
+          CryptSetupCubit(instanceUrl: _instanceUrl, remote: remote),
     );
     userBloc = UserConfigFormCubit();
   }
