@@ -1,6 +1,7 @@
 package setup
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
 )
+
+const timeout = 3 * time.Second
 
 func handleTestArgon2Params(c *gin.Context) {
 	var params struct {
@@ -30,8 +33,21 @@ func handleTestArgon2Params(c *gin.Context) {
 	config.MergeSub("auth.password.crypt.argon2", paramsCfg).Unmarshal("", &cfg)
 
 	start := time.Now()
-	_, err = argon2.New(cfg).GenerateEncodedHash("test")
-	hashTime := time.Since(start)
+
+	timeout := time.NewTimer(timeout)
+	errChan := make(chan error)
+	go func() {
+		_, err := argon2.New(cfg).GenerateEncodedHash("test")
+		errChan <- err
+	}()
+
+	select {
+	case <-timeout.C:
+		err = errors.New("Hash generation took too long")
+	case e := <-errChan:
+		err = e
+	}
+
 	var response map[string]interface{}
 	if err != nil {
 		response = gin.H{
@@ -39,6 +55,7 @@ func handleTestArgon2Params(c *gin.Context) {
 			"error":   "failed to generate hash: " + err.Error(),
 		}
 	} else {
+		hashTime := time.Since(start)
 		response = gin.H{
 			"success": true,
 			"time":    hashTime.Microseconds(),
@@ -73,8 +90,20 @@ func handleTestPBKDF2Params(c *gin.Context) {
 		return
 	}
 
-	_, err = p.GenerateEncodedHash("test")
-	hashTime := time.Since(start)
+	timeout := time.NewTimer(timeout)
+	errChan := make(chan error)
+	go func() {
+		_, err := p.GenerateEncodedHash("test")
+		errChan <- err
+	}()
+
+	select {
+	case <-timeout.C:
+		err = errors.New("Hash generation took too long")
+	case e := <-errChan:
+		err = e
+	}
+
 	var response map[string]interface{}
 	if err != nil {
 		response = gin.H{
@@ -82,6 +111,7 @@ func handleTestPBKDF2Params(c *gin.Context) {
 			"error":   "failed to generate hash: " + err.Error(),
 		}
 	} else {
+		hashTime := time.Since(start)
 		response = gin.H{
 			"success": true,
 			"time":    hashTime.Microseconds(),
