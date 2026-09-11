@@ -14,7 +14,7 @@ func SetupRoutes(r *gin.RouterGroup) {
 
 	group.POST("/db/validate", handleValidateDBRequest)
 	group.POST("/mail/validate", handleValidateRequest)
-	group.GET("/auth/test_argon2_params", handleTestArgon2Params)
-	group.GET("/auth/test_pbkdf2_params", handleTestPBKDF2Params)
+	group.POST("/auth/test/argon2", handleTestArgon2Params)
+	group.POST("/auth/test/pbkdf2", handleTestPBKDF2Params)
 	group.POST("/finalize", handleFinalize)
 }
