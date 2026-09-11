@@ -13,29 +13,31 @@ class LdapConfigForm extends StatelessWidget {
       spacing: 12,
       children: [
         const ListTile(title: Text('LDAP Configuration'), dense: true),
-        BlocBuilder<LdapConfigCubit, LdapConfigState>(
-          bloc: _bloc,
-          builder: (context, state) => TextFormField(
-            decoration: InputDecoration(
-              label: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(text: 'LDAP Server URL '),
-                    if (!state.isServerUrlFixed())
-                      TextSpan(
-                        text: '*',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                  ],
+        ListTile(
+          title: BlocBuilder<LdapConfigCubit, LdapConfigState>(
+            bloc: _bloc,
+            builder: (context, state) => TextFormField(
+              decoration: InputDecoration(
+                label: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: 'LDAP Server URL '),
+                      if (!state.isServerUrlFixed())
+                        TextSpan(
+                          text: '*',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                    ],
+                  ),
                 ),
+                prefixIcon: Icon(Icons.lan),
+                errorText: state.serverUrlError,
+                hint: Text('ldap://ldap.example.com:389'),
               ),
-              prefixIcon: Icon(Icons.lan),
-              errorText: state.serverUrlError,
-              hint: Text('ldap://ldap.example.com:389'),
+              keyboardType: TextInputType.url,
+              initialValue: state.serverUrl,
+              onChanged: (value) => _bloc.serverUrl = value,
             ),
-            keyboardType: TextInputType.url,
-            initialValue: state.serverUrl,
-            onChanged: (value) => _bloc.serverUrl = value,
           ),
         ),
         BlocBuilder<LdapConfigCubit, LdapConfigState>(
@@ -89,27 +91,29 @@ class DnTemplateInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<LdapConfigCubit, LdapConfigState>(
-      bloc: _bloc,
-      builder: (context, state) => TextFormField(
-        decoration: InputDecoration(
-          label: Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(text: 'DN Template '),
-                TextSpan(
-                  text: '*',
-                  style: TextStyle(color: Colors.red),
-                ),
-              ],
+    return ListTile(
+      title: BlocBuilder<LdapConfigCubit, LdapConfigState>(
+        bloc: _bloc,
+        builder: (context, state) => TextFormField(
+          decoration: InputDecoration(
+            label: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: 'DN Template '),
+                  TextSpan(
+                    text: '*',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
             ),
+            hint: Text('uid={email},ou=people,dc=example,dc=com'),
+            errorText: state.dnTemplateError,
           ),
-          hint: Text('uid={email},ou=people,dc=example,dc=com'),
-          errorText: state.dnTemplateError,
+          initialValue: state.dnTemplate,
+          key: ValueKey('dn_template'),
+          onChanged: (value) => _bloc.dnTemplate = value,
         ),
-        initialValue: state.dnTemplate,
-        key: ValueKey('dn_template'),
-        onChanged: (value) => _bloc.dnTemplate = value,
       ),
     );
   }
@@ -122,89 +126,96 @@ class DnFilterInputField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      spacing: 12.0,
       mainAxisSize: MainAxisSize.min,
       children: [
-        BlocBuilder<LdapConfigCubit, LdapConfigState>(
-          bloc: _bloc,
-          builder: (context, state) => TextFormField(
-            decoration: InputDecoration(
-              label: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(text: 'Bind DN'),
-                    TextSpan(
-                      text: '*',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ],
+        ListTile(
+          title: BlocBuilder<LdapConfigCubit, LdapConfigState>(
+            bloc: _bloc,
+            builder: (context, state) => TextFormField(
+              decoration: InputDecoration(
+                label: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: 'Bind DN'),
+                      TextSpan(
+                        text: '*',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ],
+                  ),
                 ),
+                hint: Text('uid=phylum,ou=people,dc=example,dc=com'),
+                errorText: _bloc.state.filterBindDnError,
               ),
-              hint: Text('uid=phylum,ou=people,dc=example,dc=com'),
-              errorText: _bloc.state.filterBindDnError,
+              key: ValueKey('bindDn'),
+              initialValue: _bloc.state.filterBindDn,
+              onChanged: (value) => _bloc.filterBindDn = value,
             ),
-            key: ValueKey('bindDn'),
-            initialValue: _bloc.state.filterBindDn,
-            onChanged: (value) => _bloc.filterBindDn = value,
+            buildWhen: (previous, current) =>
+                previous.filterBindDnError != current.filterBindDnError,
           ),
-          buildWhen: (previous, current) =>
-              previous.filterBindDnError != current.filterBindDnError,
         ),
-        TextFormField(
-          decoration: const InputDecoration(label: Text('Bind Password')),
-          obscureText: true,
-          key: ValueKey('bindPassword'),
-          onChanged: (value) => _bloc.filterBindPassword = value,
-        ),
-        BlocBuilder<LdapConfigCubit, LdapConfigState>(
-          bloc: _bloc,
-          builder: (context, state) => TextFormField(
-            decoration: InputDecoration(
-              label: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(text: 'Base DN'),
-                    TextSpan(
-                      text: '*',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ],
-                ),
-              ),
-              hint: Text('dc=example,dc=com'),
-              errorText: _bloc.state.filterBaseDnError,
-            ),
-            key: ValueKey('baseDn'),
-            initialValue: _bloc.state.filterBaseDn,
-            onChanged: (value) => _bloc.filterBaseDn = value,
-          ),
-          buildWhen: (previous, current) =>
-              previous.filterBaseDnError != current.filterBaseDnError,
-        ),
-        BlocBuilder<LdapConfigCubit, LdapConfigState>(
-          bloc: _bloc,
-          builder: (context, state) => TextFormField(
-            decoration: InputDecoration(
-              label: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(text: 'Filter Template'),
-                    TextSpan(
-                      text: '*',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ],
-                ),
-              ),
-              hint: Text('(mail={email})'),
-              errorText: _bloc.state.filterTemplateError,
-            ),
-            initialValue: _bloc.state.filterTemplate,
-            key: ValueKey('filterTemplate'),
+        ListTile(
+          title: TextFormField(
+            decoration: const InputDecoration(label: Text('Bind Password')),
+            obscureText: true,
+            key: ValueKey('bindPassword'),
             onChanged: (value) => _bloc.filterBindPassword = value,
           ),
-          buildWhen: (previous, current) =>
-              previous.filterTemplateError != current.filterTemplateError,
+        ),
+        ListTile(
+          title: BlocBuilder<LdapConfigCubit, LdapConfigState>(
+            bloc: _bloc,
+            builder: (context, state) => TextFormField(
+              decoration: InputDecoration(
+                label: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: 'Base DN'),
+                      TextSpan(
+                        text: '*',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ],
+                  ),
+                ),
+                hint: Text('dc=example,dc=com'),
+                errorText: _bloc.state.filterBaseDnError,
+              ),
+              key: ValueKey('baseDn'),
+              initialValue: _bloc.state.filterBaseDn,
+              onChanged: (value) => _bloc.filterBaseDn = value,
+            ),
+            buildWhen: (previous, current) =>
+                previous.filterBaseDnError != current.filterBaseDnError,
+          ),
+        ),
+        ListTile(
+          title: BlocBuilder<LdapConfigCubit, LdapConfigState>(
+            bloc: _bloc,
+            builder: (context, state) => TextFormField(
+              decoration: InputDecoration(
+                label: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: 'Filter Template'),
+                      TextSpan(
+                        text: '*',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ],
+                  ),
+                ),
+                hint: Text('(mail={email})'),
+                errorText: _bloc.state.filterTemplateError,
+              ),
+              initialValue: _bloc.state.filterTemplate,
+              key: ValueKey('filterTemplate'),
+              onChanged: (value) => _bloc.filterBindPassword = value,
+            ),
+            buildWhen: (previous, current) =>
+                previous.filterTemplateError != current.filterTemplateError,
+          ),
         ),
       ],
     );
