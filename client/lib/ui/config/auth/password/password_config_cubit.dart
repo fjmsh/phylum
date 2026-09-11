@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:phylum/ui/config/auth/crypt/crypt_config.dart';
 import 'package:phylum/ui/config/auth/crypt/crypt_config_cubit.dart';
 import 'package:phylum/ui/config/auth/ldap/ldap_config_cubit.dart';
 import 'package:phylum/ui/config/config.dart';
@@ -65,15 +66,20 @@ class PasswordConfigState {
 
 class PasswordConfigCubit extends Cubit<PasswordConfigState> {
   final RemoteConfig<PasswordConfigFields> _remote;
-  late final cryptBloc = CryptConfigCubit(
-    remote: _remote.getObject(PasswordConfigFields.fieldCrypt),
-  );
-  late final LdapConfigCubit ldapBloc = LdapConfigCubit(
+  late final CryptConfigCubit cryptBloc;
+  late final ldapBloc = LdapConfigCubit(
     remote: _remote.getObject(PasswordConfigFields.fieldLdap),
   );
 
-  PasswordConfigCubit({required this._remote})
-    : super(PasswordConfigState.createFromRemoteConfig(_remote, false));
+  PasswordConfigCubit({
+    required this._remote,
+    required CryptConfigCubit Function(RemoteConfig<CryptConfigFields>)
+    createCryptConfigCubit,
+  }) : super(PasswordConfigState.createFromRemoteConfig(_remote, false)) {
+    cryptBloc = createCryptConfigCubit(
+      _remote.getObject(PasswordConfigFields.fieldCrypt),
+    );
+  }
 
   void reset() {
     emit(

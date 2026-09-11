@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:phylum/ui/config/auth/auth_config_form_cubit.dart';
+import 'package:phylum/ui/config/auth/auth_config_cubit.dart';
 import 'package:phylum/ui/config/auth/openid/openid_config_cubit.dart';
 import 'package:phylum/ui/config/auth/openid/openid_config_dialog.dart';
 import 'package:phylum/ui/config/auth/openid/openid_config_fields.dart';
@@ -59,7 +59,7 @@ class PasswordlessLoginSwitch extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
-        BlocBuilder<AuthConfigCubit, AuthConfigFormState>(
+        BlocBuilder<AuthConfigCubit, AuthConfigState>(
           bloc: bloc,
           builder: (context, state) {
             return SwitchListTile(
@@ -111,7 +111,7 @@ class OpenIDConfigList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthConfigCubit, AuthConfigFormState>(
+    return BlocBuilder<AuthConfigCubit, AuthConfigState>(
       bloc: bloc,
       builder: (context, state) {
         return buildList(context, state.openIdConfigs);

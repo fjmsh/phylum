@@ -2,8 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart';
+import 'package:phylum/ui/config/auth/auth_config_cubit.dart';
 import 'package:phylum/ui/config/auth/password/password_config.dart';
-import 'package:phylum/ui/setup/auth_setup_cubit.dart';
+import 'package:phylum/ui/setup/auth/crypt_setup_cubit.dart';
 import 'package:phylum/ui/setup/db/db_setup_cubit.dart';
 import 'package:phylum/ui/setup/setup_config.dart';
 import 'package:phylum/ui/setup/mail_setup_cubit.dart';
@@ -85,7 +86,7 @@ class SetupCubit extends Cubit<SetupState> {
   final SetupConfig _config;
   late final DbSetupCubit dbBloc;
   late final MailSetupCubit mailBloc;
-  late final AuthSetupCubit authBloc;
+  late final AuthConfigCubit authBloc;
   late final UserConfigFormCubit userBloc;
 
   SetupCubit({required this._instanceUrl, required this._config})
@@ -98,7 +99,10 @@ class SetupCubit extends Cubit<SetupState> {
       instanceUrl: _instanceUrl,
       remoteConfig: _config.mailConfig,
     );
-    authBloc = AuthSetupCubit(remote: _config.authConfig);
+    authBloc = AuthConfigCubit(
+      remote: _config.authConfig,
+      createCryptConfigCubit: (remote) => CryptSetupCubit(remote: remote),
+    );
     userBloc = UserConfigFormCubit();
   }
 

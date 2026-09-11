@@ -109,8 +109,6 @@ class CryptConfigState {
       pbkdf2IterationsError != null;
 
   bool isKdfFixed() => _fixed.contains(CryptConfigFields.fieldKdf);
-  // bool isResetEnabledFixed() =>
-  //     _fixed.contains(CryptConfigFields.fieldPasswordResetEnabled);
   bool isArgon2MemoryFixed() =>
       _fixed.contains(CryptConfigFields.fieldArgon2Memory);
   bool isArgon2IterationsFixed() =>
@@ -149,8 +147,9 @@ class CryptConfigState {
       pbkdf2Iterations.hashCode;
 }
 
-class CryptConfigCubit extends Cubit<CryptConfigState> {
+abstract class CryptConfigCubit extends Cubit<CryptConfigState> {
   final RemoteConfig<CryptConfigFields> _remote;
+
   CryptConfigCubit({required this._remote})
     : super(CryptConfigState.createFromRemoteConfig(_remote));
 
@@ -299,7 +298,7 @@ class CryptConfigCubit extends Cubit<CryptConfigState> {
   Future<KDFTestResult> testParams({
     required CryptKDF kdf,
     required Map<String, dynamic> params,
-  }) async => KDFTestFailure(title: 'Unimplemented');
+  });
 }
 
 sealed class KDFTestResult {

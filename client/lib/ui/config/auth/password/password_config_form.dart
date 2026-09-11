@@ -22,21 +22,23 @@ class PasswordConfigForm extends StatelessWidget {
             title: Text('Password Login'),
             leading: Icon(Icons.password),
             subtitle: Text(state.passwordBackend.descriptor),
-            onTap: () async {
-              final backend = await showOptionsDialog(
-                context,
-                titleText: 'Password Login',
-                [
-                  PasswordBackend.none,
-                  PasswordBackend.crypt,
-                  PasswordBackend.ldap,
-                ],
-                (item) => ListTile(title: Text(item.descriptor)),
-              );
-              if (backend == null || !context.mounted) return;
+            onTap: state.isPasswordBackendFixed()
+                ? null
+                : () async {
+                    final backend = await showOptionsDialog(
+                      context,
+                      titleText: 'Password Auth Backend',
+                      [
+                        PasswordBackend.none,
+                        PasswordBackend.crypt,
+                        PasswordBackend.ldap,
+                      ],
+                      (item) => ListTile(title: Text(item.descriptor)),
+                    );
+                    if (backend == null || !context.mounted) return;
 
-              _bloc.passwordBackend = backend;
-            },
+                    _bloc.passwordBackend = backend;
+                  },
           ),
         ),
         BlocBuilder<PasswordConfigCubit, PasswordConfigState>(
@@ -68,9 +70,9 @@ class PasswordConfigForm extends StatelessWidget {
                       : null,
                   secondary: Icon(Icons.refresh),
                   value: state.mailEnabled ? state.resetEnabled : false,
-                  onChanged: state.mailEnabled
-                      ? (value) => _bloc.resetEnabled = value
-                      : null,
+                  onChanged: state.isResetEnabledFixed() || !state.mailEnabled
+                      ? null
+                      : (value) => _bloc.resetEnabled = value,
                 )
               : Container(),
           buildWhen: (previous, current) =>

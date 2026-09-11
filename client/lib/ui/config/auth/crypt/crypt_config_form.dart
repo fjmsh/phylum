@@ -43,7 +43,7 @@ class CryptConfigForm extends StatelessWidget {
           bloc: _bloc,
           builder: (context, state) => switch (state.kdf) {
             CryptKDF.argon2 => Argon2ConfigForm(bloc: _bloc),
-            CryptKDF.pbkdf2 => throw UnimplementedError(),
+            CryptKDF.pbkdf2 => throw UnimplementedError(), // TODO: implement
           },
           buildWhen: (previous, current) => previous.kdf != current.kdf,
         ),
@@ -70,6 +70,7 @@ class Argon2ConfigForm extends StatelessWidget {
             Flexible(
               flex: 1,
               child: _NumberInput(
+                key: ValueKey('argon2Memory'),
                 initialValue: _bloc.state.argon2Memory,
                 onValueUpdated: (value) => _bloc.argon2Memory = value,
                 label: 'Memory',
@@ -79,6 +80,7 @@ class Argon2ConfigForm extends StatelessWidget {
             Flexible(
               flex: 1,
               child: _NumberInput(
+                key: ValueKey('argon2Iterations'),
                 initialValue: _bloc.state.argon2Iterations,
                 onValueUpdated: (value) => _bloc.argon2Iterations = value,
                 label: 'Iterations',
@@ -88,6 +90,7 @@ class Argon2ConfigForm extends StatelessWidget {
             Flexible(
               flex: 1,
               child: _NumberInput(
+                key: ValueKey('argon2Parallelism'),
                 initialValue: _bloc.state.argon2Parallelism,
                 onValueUpdated: (value) => _bloc.argon2Parallelism = value,
                 label: 'Parallelism',

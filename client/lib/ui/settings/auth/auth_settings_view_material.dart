@@ -5,14 +5,13 @@ import 'package:phylum/ui/config/config_check_result.dart';
 import 'package:phylum/util/dialogs.dart';
 
 import '../../config/auth/auth_config.dart';
-import 'auth_settings_pane_cubit.dart';
 import '../../config/auth/auth_config_form.dart';
-import '../../config/auth/auth_config_form_cubit.dart';
+import '../../config/auth/auth_config_cubit.dart';
 
-class MaterialAuthSettingsPane extends StatelessWidget {
-  final AuthConfigPaneCubit _configBloc;
+class MaterialAuthSettingsView extends StatelessWidget {
+  final AuthConfigCubit _configBloc;
 
-  const MaterialAuthSettingsPane({super.key, required this._configBloc});
+  const MaterialAuthSettingsView({super.key, required this._configBloc});
 
   @override
   Widget build(BuildContext context) {

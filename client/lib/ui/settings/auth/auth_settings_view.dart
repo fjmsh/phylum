@@ -2,23 +2,23 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/config/remote_config_controller.dart';
+import 'package:phylum/ui/settings/auth/crypt_settings_cubit.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/auth/auth_config.dart';
-import 'auth_settings_pane_cubit.dart';
-import 'auth_settings_pane_material.dart';
-import '../../config/auth/auth_config_form_cubit.dart';
+import 'auth_settings_view_material.dart';
+import '../../config/auth/auth_config_cubit.dart';
 
-class AuthSettingsPane extends StatefulWidget {
-  const AuthSettingsPane({super.key});
+class AuthSettingsView extends StatefulWidget {
+  const AuthSettingsView({super.key});
 
   @override
-  State<AuthSettingsPane> createState() => _AuthSettingsPaneState();
+  State<AuthSettingsView> createState() => _AuthSettingsViewState();
 }
 
-class _AuthSettingsPaneState extends State<AuthSettingsPane> {
+class _AuthSettingsViewState extends State<AuthSettingsView> {
   late final RemoteConfigController<AuthConfigFields> _remoteConfigController;
-  late final AuthConfigPaneCubit configBloc;
+  late final AuthConfigCubit configBloc;
   late final void Function() _removeServerConfigListener;
 
   @override
@@ -26,9 +26,10 @@ class _AuthSettingsPaneState extends State<AuthSettingsPane> {
     super.initState();
     _remoteConfigController = context.read();
     final account = context.read<PhylumAccount>();
-    configBloc = AuthConfigPaneCubit(
-      account: account,
+    configBloc = AuthConfigCubit(
       remote: _remoteConfigController.config!,
+      createCryptConfigCubit: (remote) =>
+          CryptSettingsCubit(account: account, remote: remote),
     );
     _removeServerConfigListener = account.configNotifier.addListener((config) {
       configBloc.mailEnabled = config.mail;
@@ -45,7 +46,7 @@ class _AuthSettingsPaneState extends State<AuthSettingsPane> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [BlocProvider<AuthConfigCubit>.value(value: configBloc)],
-      child: MaterialAuthSettingsPane(configBloc: configBloc), //TODO #uilibrary
+      child: MaterialAuthSettingsView(configBloc: configBloc), //TODO #uilibrary
     );
   }
 }

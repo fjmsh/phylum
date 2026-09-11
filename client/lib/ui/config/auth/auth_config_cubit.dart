@@ -1,24 +1,26 @@
 import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:phylum/ui/config/auth/auth_config.dart';
+import 'package:phylum/ui/config/auth/crypt/crypt_config.dart';
+import 'package:phylum/ui/config/auth/crypt/crypt_config_cubit.dart';
 import 'package:phylum/ui/config/auth/openid/openid_config_cubit.dart';
 import 'package:phylum/ui/config/auth/password/password_config.dart';
 import 'package:phylum/ui/config/auth/password/password_config_cubit.dart';
 import 'package:phylum/ui/config/config.dart';
 import 'package:phylum/ui/config/config_check_result.dart';
 
-class AuthConfigFormState {
+class AuthConfigState {
   final bool mailEnabled;
   final bool passwordlessLoginEnabled;
   final Map<String, OpenIDConfig> openIdConfigs;
 
-  AuthConfigFormState({
+  AuthConfigState({
     required this.mailEnabled,
     required this.passwordlessLoginEnabled,
     required this.openIdConfigs,
   });
 
-  factory AuthConfigFormState.createFromRemoteConfig({
+  factory AuthConfigState.createFromRemoteConfig({
     required bool mailEnabled,
     required RemoteConfig<AuthConfigFields> config,
   }) {
@@ -27,7 +29,7 @@ class AuthConfigFormState {
         .map((id, config) {
           return MapEntry(id, OpenIDConfig.createFromConfig(config));
         });
-    return AuthConfigFormState(
+    return AuthConfigState(
       mailEnabled: mailEnabled,
       passwordlessLoginEnabled: config.getValueOrDefault(
         AuthConfigFields.fieldMagicLinks,
@@ -36,11 +38,11 @@ class AuthConfigFormState {
     );
   }
 
-  AuthConfigFormState copyWith({
+  AuthConfigState copyWith({
     bool? mailEnabled,
     bool? passwordlessLoginEnabled,
     Map<String, OpenIDConfig>? openIdConfigs,
-  }) => AuthConfigFormState(
+  }) => AuthConfigState(
     mailEnabled: mailEnabled ?? this.mailEnabled,
     passwordlessLoginEnabled:
         passwordlessLoginEnabled ?? this.passwordlessLoginEnabled,
@@ -56,7 +58,7 @@ class AuthConfigFormState {
       ')';
 
   @override
-  bool operator ==(covariant AuthConfigFormState other) {
+  bool operator ==(covariant AuthConfigState other) {
     if (identical(this, other)) return true;
 
     return other.mailEnabled == mailEnabled &&
@@ -71,23 +73,29 @@ class AuthConfigFormState {
       const MapEquality().hash(openIdConfigs);
 }
 
-abstract class AuthConfigCubit extends Cubit<AuthConfigFormState> {
-  RemoteConfig<AuthConfigFields> _remote;
-  late final passwordBloc = PasswordConfigCubit(
-    remote: _remote.getObject(AuthConfigFields.fieldPassword),
-  );
+class AuthConfigCubit extends Cubit<AuthConfigState> {
+  final RemoteConfig<AuthConfigFields> _remote;
+  late final PasswordConfigCubit passwordBloc;
 
-  AuthConfigCubit({required this._remote})
-    : super(
-        AuthConfigFormState.createFromRemoteConfig(
-          config: _remote,
-          mailEnabled: false,
-        ),
-      );
+  AuthConfigCubit({
+    required this._remote,
+    required CryptConfigCubit Function(RemoteConfig<CryptConfigFields>)
+    createCryptConfigCubit,
+  }) : super(
+         AuthConfigState.createFromRemoteConfig(
+           config: _remote,
+           mailEnabled: false,
+         ),
+       ) {
+    passwordBloc = PasswordConfigCubit(
+      remote: _remote.getObject(AuthConfigFields.fieldPassword),
+      createCryptConfigCubit: createCryptConfigCubit,
+    );
+  }
 
   void reset() {
     emit(
-      AuthConfigFormState.createFromRemoteConfig(
+      AuthConfigState.createFromRemoteConfig(
         config: _remote,
         mailEnabled: state.mailEnabled,
       ),

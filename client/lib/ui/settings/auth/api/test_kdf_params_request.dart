@@ -6,13 +6,13 @@ import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 
-import '../crypt_config.dart';
+import '../../../config/auth/crypt/crypt_config.dart';
 
-class TestParamsRequest extends ApiRequest<PhylumAccount> {
+class TestKDFParamsRequest extends ApiRequest<PhylumAccount> {
   final CryptKDF kdf;
   final Map<String, dynamic> params;
 
-  const TestParamsRequest({required this.kdf, required this.params});
+  const TestKDFParamsRequest({required this.kdf, required this.params});
 
   @override
   BaseRequest createRequest(ApiClient api, {Blob? data}) {

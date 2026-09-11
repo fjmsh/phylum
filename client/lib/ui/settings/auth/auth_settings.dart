@@ -6,7 +6,7 @@ import 'package:phylum/ui/config/remote_config_controller.dart';
 import 'package:phylum/ui/config/remote_config_pane.dart';
 import 'package:phylum/ui/settings/settings.dart';
 
-import 'auth_settings_pane.dart';
+import 'auth_settings_view.dart';
 
 class AuthSettings extends Settings {
   @override
@@ -37,5 +37,5 @@ class AuthSettings extends Settings {
 
   @override
   Widget buildWithoutScaffold(BuildContext context) =>
-      const RemoteConfigPane<AuthConfigFields>(child: AuthSettingsPane());
+      const RemoteConfigPane<AuthConfigFields>(child: AuthSettingsView());
 }
