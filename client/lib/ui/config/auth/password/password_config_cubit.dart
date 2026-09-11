@@ -8,12 +8,14 @@ import 'password_config.dart';
 
 class PasswordConfigState {
   final Set<PrimitiveField> _fixed;
+  final bool enabled;
   final PasswordBackend passwordBackend;
   final bool mailEnabled;
   final bool resetEnabled;
 
   PasswordConfigState({
     required this._fixed,
+    required this.enabled,
     required this.passwordBackend,
     required this.mailEnabled,
     required this.resetEnabled,
@@ -23,11 +25,11 @@ class PasswordConfigState {
     RemoteConfig<PasswordConfigFields> remote,
     bool mailEnabled,
   ) {
+    final backend = remote.getValueOrDefault(PasswordConfigFields.fieldBackend);
     return PasswordConfigState(
       fixed: remote.fixed,
-      passwordBackend: remote.getValueOrDefault(
-        PasswordConfigFields.fieldBackend,
-      ),
+      enabled: backend != PasswordBackend.none,
+      passwordBackend: backend == .none ? .crypt : backend,
       mailEnabled: mailEnabled,
       resetEnabled: remote.getValueOrDefault(
         PasswordConfigFields.fieldResetEnabled,
@@ -36,11 +38,13 @@ class PasswordConfigState {
   }
 
   PasswordConfigState copyWith({
+    bool? enabled,
     PasswordBackend? passwordBackend,
     bool? mailEnabled,
     bool? resetEnabled,
   }) => PasswordConfigState(
     fixed: _fixed,
+    enabled: enabled ?? this.enabled,
     passwordBackend: passwordBackend ?? this.passwordBackend,
     mailEnabled: mailEnabled ?? this.mailEnabled,
     resetEnabled: resetEnabled ?? this.resetEnabled,
@@ -54,14 +58,18 @@ class PasswordConfigState {
   @override
   bool operator ==(covariant PasswordConfigState other) {
     if (identical(this, other)) return true;
-    return passwordBackend == other.passwordBackend &&
+    return enabled == other.enabled &&
+        passwordBackend == other.passwordBackend &&
         mailEnabled == other.mailEnabled &&
         resetEnabled == other.resetEnabled;
   }
 
   @override
   int get hashCode =>
-      passwordBackend.hashCode ^ mailEnabled.hashCode ^ resetEnabled.hashCode;
+      enabled.hashCode ^
+      passwordBackend.hashCode ^
+      mailEnabled.hashCode ^
+      resetEnabled.hashCode;
 }
 
 class PasswordConfigCubit extends Cubit<PasswordConfigState> {
@@ -89,6 +97,10 @@ class PasswordConfigCubit extends Cubit<PasswordConfigState> {
     ldapBloc.reset();
   }
 
+  set enabled(bool val) {
+    emit(state.copyWith(enabled: val));
+  }
+
   set passwordBackend(PasswordBackend val) {
     emit(state.copyWith(passwordBackend: val));
   }
@@ -103,13 +115,16 @@ class PasswordConfigCubit extends Cubit<PasswordConfigState> {
 
   LocalConfig<PasswordConfigFields>? validate() {
     final config = LocalConfig<PasswordConfigFields>();
-    config.setValue(PasswordConfigFields.fieldBackend, state.passwordBackend);
+    final backend = state.enabled
+        ? state.passwordBackend
+        : PasswordBackend.none;
+    config.setValue(PasswordConfigFields.fieldBackend, backend);
     config.setValue<bool>(
       PasswordConfigFields.fieldResetEnabled,
       state.resetEnabled && state.mailEnabled,
     );
 
-    switch (state.passwordBackend) {
+    switch (backend) {
       case PasswordBackend.crypt:
         final cryptConfig = cryptBloc.validate();
         if (cryptConfig == null) {

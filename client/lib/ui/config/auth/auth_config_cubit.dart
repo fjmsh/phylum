@@ -4,7 +4,6 @@ import 'package:phylum/ui/config/auth/auth_config.dart';
 import 'package:phylum/ui/config/auth/crypt/crypt_config.dart';
 import 'package:phylum/ui/config/auth/crypt/crypt_config_cubit.dart';
 import 'package:phylum/ui/config/auth/openid/openid_config_cubit.dart';
-import 'package:phylum/ui/config/auth/password/password_config.dart';
 import 'package:phylum/ui/config/auth/password/password_config_cubit.dart';
 import 'package:phylum/ui/config/config.dart';
 import 'package:phylum/ui/config/config_check_result.dart';
@@ -160,7 +159,7 @@ class AuthConfigCubit extends Cubit<AuthConfigState> {
 
   Future<ConfigCheckResult> checkConfig() async {
     if (!state.passwordlessLoginEnabled &&
-        passwordBloc.state.passwordBackend == PasswordBackend.none &&
+        !passwordBloc.state.enabled &&
         state.openIdConfigs.isEmpty) {
       return ConfigInvalid(error: 'You must enable at least 1 login method');
     }
