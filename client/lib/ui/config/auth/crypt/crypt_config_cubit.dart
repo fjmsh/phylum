@@ -270,11 +270,13 @@ abstract class CryptConfigCubit extends Cubit<CryptConfigState> {
       );
   }
 
-  Future<KDFTestResult> testArgon2Params(
-    int memory,
-    int iterations,
-    int parallelism,
-  ) async {
+  Future<KDFTestResult> testArgon2Params() async {
+    final memory = int.tryParse(state.argon2Memory);
+    final iterations = int.tryParse(state.argon2Iterations);
+    final parallelism = int.tryParse(state.argon2Parallelism);
+    if (memory == null || iterations == null || parallelism == null) {
+      return KDFTestFailure(title: 'Invalid Parameters');
+    }
     return testParams(
       kdf: .argon2,
       params: {
@@ -285,13 +287,11 @@ abstract class CryptConfigCubit extends Cubit<CryptConfigState> {
     );
   }
 
-  Future<KDFTestResult> testPbkdf2Params(
-    HashFunction hash,
-    int iterations,
-  ) async {
+  Future<KDFTestResult> testPbkdf2Params() async {
+    final iterations = int.tryParse(state.pbkdf2Iterations);
     return testParams(
       kdf: .pbkdf2,
-      params: {"function": hash.name, "iterations": iterations},
+      params: {"function": state.pbkdf2Hash.name, "iterations": iterations},
     );
   }
 

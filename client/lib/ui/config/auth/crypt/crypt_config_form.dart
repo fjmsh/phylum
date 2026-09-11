@@ -14,6 +14,7 @@ class CryptConfigForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: .end,
       children: [
         BlocBuilder<CryptConfigCubit, CryptConfigState>(
           bloc: _bloc,
@@ -25,7 +26,7 @@ class CryptConfigForm extends StatelessWidget {
                   onTap: () async {
                     final kdf = await showOptionsDialog(
                       context,
-                      titleText: 'Password Login',
+                      titleText: 'Select KDF',
                       [CryptKDF.argon2, CryptKDF.pbkdf2],
                       (item) => ListTile(title: Text(item.descriptor)),
                     );
@@ -46,6 +47,48 @@ class CryptConfigForm extends StatelessWidget {
             CryptKDF.pbkdf2 => throw UnimplementedError(), // TODO: implement
           },
           buildWhen: (previous, current) => previous.kdf != current.kdf,
+        ),
+        TextButton.icon(
+          icon: Icon(Icons.timer),
+          label: Text('Check Parameters'),
+          onPressed: () async {
+            final result = await _bloc.testArgon2Params();
+            if (!context.mounted) return;
+            switch (result) {
+              case KDFTestFailure():
+                showAlertDialog(
+                  context,
+                  title: result.title,
+                  message: result.details,
+                );
+                break;
+              case KDFTestSuccess(duration: Duration duration):
+                switch (duration.inMilliseconds) {
+                  case < 300:
+                    showAlertDialog(
+                      context,
+                      title: 'Sub-optimal parameters',
+                      message:
+                          'Password hashing took only ${duration.inMilliseconds}ms. Recommendation is to take at least 300ms',
+                    );
+                    break;
+                  case > 2000:
+                    showAlertDialog(
+                      context,
+                      title: 'Sub-optimal parameters',
+                      message:
+                          'Password hashing took ${duration.inMilliseconds}ms. This might be too computationally expensive.',
+                    );
+                    break;
+                  default:
+                    showAlertDialog(
+                      context,
+                      message:
+                          'Password hashing took ${duration.inMilliseconds}ms.',
+                    );
+                }
+            }
+          },
         ),
       ],
     );
