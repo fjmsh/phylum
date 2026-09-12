@@ -20,16 +20,7 @@ class MaterialAuthSettingsView extends StatelessWidget {
         AuthConfigForm(bloc: _bloc),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
-          spacing: 18,
           children: [
-            Builder(
-              builder: (context) {
-                return TextButton(
-                  onPressed: isSaving(context) ? null : () => _bloc.reset(),
-                  child: Text('Reset'),
-                );
-              },
-            ),
             Builder(
               builder: (context) {
                 return TextButton(
