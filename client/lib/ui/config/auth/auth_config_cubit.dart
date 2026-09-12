@@ -156,17 +156,4 @@ class AuthConfigCubit extends Cubit<AuthConfigState> {
     });
     return config.toMap(_remote);
   }
-
-  Future<ConfigCheckResult> checkConfig() async {
-    if (!state.passwordlessLoginEnabled &&
-        !passwordBloc.state.enabled &&
-        state.openIdConfigs.isEmpty) {
-      return ConfigInvalid(error: 'You must enable at least 1 login method');
-    }
-    final config = validateConfig();
-    if (config == null) {
-      return ConfigInvalid();
-    }
-    return ConfigCheckSuccess(config: config);
-  }
 }
