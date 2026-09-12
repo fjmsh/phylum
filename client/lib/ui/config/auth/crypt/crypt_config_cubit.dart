@@ -139,6 +139,7 @@ class CryptConfigState {
         argon2ParallelismError == other.argon2ParallelismError &&
         pbkdf2Hash == other.pbkdf2Hash &&
         pbkdf2Iterations == other.pbkdf2Iterations &&
+        pbkdf2IterationsError == other.pbkdf2IterationsError &&
         checkingParams == other.checkingParams;
   }
 
@@ -153,6 +154,7 @@ class CryptConfigState {
       argon2ParallelismError.hashCode ^
       pbkdf2Hash.hashCode ^
       pbkdf2Iterations.hashCode ^
+      pbkdf2IterationsError.hashCode ^
       checkingParams.hashCode;
 }
 
@@ -199,8 +201,8 @@ abstract class CryptConfigCubit extends Cubit<CryptConfigState> {
     config.setValue<CryptKDF>(CryptConfigFields.fieldKdf, state.kdf);
 
     final kdfConfig = switch (state.kdf) {
-      CryptKDF.argon2 => _validateArgon2(),
-      CryptKDF.pbkdf2 => _validatePbkdf2(),
+      .argon2 => _validateArgon2(),
+      .pbkdf2 => _validatePbkdf2(),
     };
     if (kdfConfig == null) {
       return null;
@@ -270,6 +272,7 @@ abstract class CryptConfigCubit extends Cubit<CryptConfigState> {
     );
     if (newState.hasErrors) {
       emit(newState);
+      print(state.pbkdf2IterationsError);
       return null;
     }
     return LocalConfig()
@@ -283,42 +286,44 @@ abstract class CryptConfigCubit extends Cubit<CryptConfigState> {
       );
   }
 
-  Future<KDFTestResult> testArgon2Params() async {
-    final memory = int.tryParse(state.argon2Memory);
-    final iterations = int.tryParse(state.argon2Iterations);
-    final parallelism = int.tryParse(state.argon2Parallelism);
-    if (memory == null || iterations == null || parallelism == null) {
-      return KDFTestFailure(title: 'Invalid Parameters');
-    }
-    return _testParams(
-      kdf: .argon2,
-      params: {
-        "memory": memory,
-        "iterations": iterations,
-        "parallelism": parallelism,
-      },
-    );
-  }
-
-  Future<KDFTestResult> testPbkdf2Params() async {
-    final iterations = int.tryParse(state.pbkdf2Iterations);
-    return _testParams(
-      kdf: .pbkdf2,
-      params: {"function": state.pbkdf2Hash.name, "iterations": iterations},
-    );
-  }
-
-  Future<KDFTestResult> _testParams({
-    required CryptKDF kdf,
-    required Map<String, dynamic> params,
-  }) async {
+  Future<KDFTestResult> testKdfParams() async {
     if (state.checkingParams) {
       return KDFTestFailure(title: 'Already checking params');
     }
     emit(state.copyWith(checkingParams: true));
-    final result = await testParams(kdf: kdf, params: params);
-    emit(state.copyWith(checkingParams: false));
-    return result;
+    try {
+      switch (state.kdf) {
+        case .argon2:
+          final memory = int.tryParse(state.argon2Memory);
+          final iterations = int.tryParse(state.argon2Iterations);
+          final parallelism = int.tryParse(state.argon2Parallelism);
+          if (memory == null || iterations == null || parallelism == null) {
+            return KDFTestFailure(title: 'Invalid Parameters');
+          }
+          return await testParams(
+            kdf: .argon2,
+            params: {
+              "memory": memory,
+              "iterations": iterations,
+              "parallelism": parallelism,
+            },
+          );
+        case .pbkdf2:
+          final iterations = int.tryParse(state.pbkdf2Iterations);
+          if (iterations == null) {
+            return KDFTestFailure(title: 'Invalid Parameters');
+          }
+          return await testParams(
+            kdf: .pbkdf2,
+            params: {
+              "function": state.pbkdf2Hash.name,
+              "iterations": iterations,
+            },
+          );
+      }
+    } finally {
+      emit(state.copyWith(checkingParams: false));
+    }
   }
 
   @protected

@@ -125,21 +125,21 @@ class PasswordConfigCubit extends Cubit<PasswordConfigState> {
     );
 
     switch (backend) {
-      case PasswordBackend.crypt:
+      case .crypt:
         final cryptConfig = cryptBloc.validate();
         if (cryptConfig == null) {
           return null;
         }
         config.objects[PasswordConfigFields.fieldCrypt] = cryptConfig;
         break;
-      case PasswordBackend.ldap:
+      case .ldap:
         final ldapConfig = ldapBloc.validate();
         if (ldapConfig == null) {
           return null;
         }
         config.objects[PasswordConfigFields.fieldLdap] = ldapConfig;
         break;
-      case PasswordBackend.none:
+      case .none:
         // Do nothing
         break;
     }

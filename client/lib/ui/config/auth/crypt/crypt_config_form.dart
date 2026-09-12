@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,7 +19,8 @@ class CryptConfigForm extends StatelessWidget {
       children: [
         BlocBuilder<CryptConfigCubit, CryptConfigState>(
           bloc: _bloc,
-          builder: (context, state) => state.shouldAllowKdfSelection
+          builder: (context, state) =>
+              kDebugMode || state.shouldAllowKdfSelection
               ? ListTile(
                   title: Text('KDF'),
                   subtitle: Text(state.kdf.descriptor),
@@ -40,28 +42,21 @@ class CryptConfigForm extends StatelessWidget {
               previous.shouldAllowKdfSelection !=
                   current.shouldAllowKdfSelection,
         ),
-        BlocBuilder<CryptConfigCubit, CryptConfigState>(
-          bloc: _bloc,
-          builder: (context, state) => switch (state.kdf) {
-            CryptKDF.argon2 => Argon2ConfigForm(bloc: _bloc),
-            CryptKDF.pbkdf2 => throw UnimplementedError(), // TODO: implement
-          },
-          buildWhen: (previous, current) => previous.kdf != current.kdf,
-        ),
-        BlocBuilder<CryptConfigCubit, CryptConfigState>(
-          bloc: _bloc,
-          builder: (context, state) {
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextButton.icon(
+        ListTile(
+          dense: true,
+          title: const Text('KDF Parameters'),
+          trailing: BlocBuilder<CryptConfigCubit, CryptConfigState>(
+            bloc: _bloc,
+            builder: (context, state) {
+              return IconButton(
                 icon: Icon(Icons.timer),
-                label: state.checkingParams
-                    ? const Text('Checking Params')
-                    : const Text('Check Parameters'),
+                tooltip: state.checkingParams
+                    ? 'Checking Params'
+                    : 'Check Parameters',
                 onPressed: state.checkingParams
                     ? null
                     : () async {
-                        final result = await _bloc.testArgon2Params();
+                        final result = await _bloc.testKdfParams();
                         if (!context.mounted) return;
                         switch (result) {
                           case KDFTestFailure():
@@ -98,11 +93,19 @@ class CryptConfigForm extends StatelessWidget {
                             }
                         }
                       },
-              ),
-            );
+              );
+            },
+            buildWhen: (previous, current) =>
+                previous.checkingParams != current.checkingParams,
+          ),
+        ),
+        BlocBuilder<CryptConfigCubit, CryptConfigState>(
+          bloc: _bloc,
+          builder: (context, state) => switch (state.kdf) {
+            .argon2 => Argon2ConfigForm(bloc: _bloc),
+            .pbkdf2 => Pbkdf2ConfigForm(bloc: _bloc),
           },
-          buildWhen: (previous, current) =>
-              previous.checkingParams != current.checkingParams,
+          buildWhen: (previous, current) => previous.kdf != current.kdf,
         ),
       ],
     );
@@ -118,44 +121,140 @@ class Argon2ConfigForm extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       dense: true,
-      title: const Text('Argon2 Parameters'),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 16.0),
-        child: Row(
-          spacing: 12,
-          children: [
-            Flexible(
-              flex: 1,
-              child: _NumberInput(
-                key: ValueKey('argon2Memory'),
-                initialValue: _bloc.state.argon2Memory,
-                onValueUpdated: (value) => _bloc.argon2Memory = value,
-                label: 'Memory',
-                error: _bloc.state.argon2MemoryError,
-              ),
+      contentPadding: EdgeInsets.only(bottom: 12),
+      title: Row(
+        spacing: 12,
+        crossAxisAlignment: .start,
+        children: [
+          Flexible(
+            flex: 1,
+            child: BlocBuilder<CryptConfigCubit, CryptConfigState>(
+              bloc: _bloc,
+              builder: (context, state) {
+                return _NumberInput(
+                  key: ValueKey('argon2Memory'),
+                  initialValue: _bloc.state.argon2Memory,
+                  onValueUpdated: (value) => _bloc.argon2Memory = value,
+                  label: 'Memory',
+                  error: _bloc.state.argon2MemoryError,
+                  min: 1,
+                  max: 32,
+                );
+              },
+              buildWhen: (previous, current) =>
+                  previous.argon2MemoryError != current.argon2MemoryError,
             ),
-            Flexible(
-              flex: 1,
-              child: _NumberInput(
-                key: ValueKey('argon2Iterations'),
-                initialValue: _bloc.state.argon2Iterations,
-                onValueUpdated: (value) => _bloc.argon2Iterations = value,
-                label: 'Iterations',
-                error: _bloc.state.argon2IterationsError,
-              ),
+          ),
+          Flexible(
+            flex: 1,
+            child: BlocBuilder<CryptConfigCubit, CryptConfigState>(
+              bloc: _bloc,
+              builder: (context, state) {
+                return _NumberInput(
+                  key: ValueKey('argon2Iterations'),
+                  initialValue: _bloc.state.argon2Iterations,
+                  onValueUpdated: (value) => _bloc.argon2Iterations = value,
+                  label: 'Iterations',
+                  error: _bloc.state.argon2IterationsError,
+                  min: 1,
+                );
+              },
+              buildWhen: (previous, current) =>
+                  previous.argon2IterationsError !=
+                  current.argon2IterationsError,
             ),
-            Flexible(
-              flex: 1,
-              child: _NumberInput(
-                key: ValueKey('argon2Parallelism'),
-                initialValue: _bloc.state.argon2Parallelism,
-                onValueUpdated: (value) => _bloc.argon2Parallelism = value,
-                label: 'Parallelism',
-                error: _bloc.state.argon2ParallelismError,
-              ),
+          ),
+          Flexible(
+            flex: 1,
+            child: BlocBuilder<CryptConfigCubit, CryptConfigState>(
+              bloc: _bloc,
+              builder: (context, state) {
+                return _NumberInput(
+                  key: ValueKey('argon2Parallelism'),
+                  initialValue: _bloc.state.argon2Parallelism,
+                  onValueUpdated: (value) => _bloc.argon2Parallelism = value,
+                  label: 'Parallelism',
+                  error: _bloc.state.argon2ParallelismError,
+                  min: 1,
+                );
+              },
+              buildWhen: (previous, current) =>
+                  previous.argon2ParallelismError !=
+                  current.argon2ParallelismError,
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class Pbkdf2ConfigForm extends StatelessWidget {
+  final CryptConfigCubit _bloc;
+
+  const Pbkdf2ConfigForm({super.key, required this._bloc});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.only(bottom: 12),
+      title: Row(
+        spacing: 12,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Flexible(
+            flex: 1,
+            child: DropdownButtonFormField<HashFunction>(
+              decoration: InputDecoration(
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade400,
+                    width: 1.0,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 1.0,
+                  ),
+                ),
+                label: const Text('Hash Function'),
+              ),
+              isExpanded: true,
+              items: HashFunction.values
+                  .map(
+                    (f) =>
+                        DropdownMenuItem(value: f, child: Text(f.descriptor)),
+                  )
+                  .toList(growable: false),
+              initialValue: _bloc.state.pbkdf2Hash,
+              onChanged: (value) => _bloc.pbkdf2Hash = value ?? .sha256,
+            ),
+          ),
+          Flexible(
+            flex: 2,
+            child: BlocBuilder<CryptConfigCubit, CryptConfigState>(
+              bloc: _bloc,
+              builder: (context, state) {
+                return _NumberInput(
+                  key: ValueKey('pbkdf2Iterations'),
+                  initialValue: _bloc.state.pbkdf2Iterations,
+                  onValueUpdated: (value) => _bloc.pbkdf2Iterations = value,
+                  label: 'Iterations',
+                  error: _bloc.state.pbkdf2IterationsError,
+                  step: 100000,
+                  min: 100000,
+                );
+              },
+              buildWhen: (previous, current) =>
+                  previous.pbkdf2IterationsError !=
+                  current.pbkdf2IterationsError,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -166,6 +265,9 @@ class _NumberInput extends StatefulWidget {
   final void Function(String) onValueUpdated;
   final String? label;
   final String? error;
+  final int step;
+  final int? min;
+  final int? max;
 
   const _NumberInput({
     super.key,
@@ -173,6 +275,9 @@ class _NumberInput extends StatefulWidget {
     required this.onValueUpdated,
     required this.label,
     required this.error,
+    this.step = 1,
+    this.min,
+    this.max,
   });
 
   @override
@@ -197,9 +302,15 @@ class __NumberInputState extends State<_NumberInput> {
         prefixIcon: IconButton(
           icon: Icon(Icons.remove),
           onPressed: () {
-            final value = int.tryParse(_controller.text);
-            if (value == null) return;
-            final str = (value - 1).toString();
+            final value = int.tryParse(_controller.text) ?? 0;
+            int newValue = value - widget.step;
+            if (widget.min != null && newValue < widget.min!) {
+              newValue = widget.min!;
+            }
+            if (widget.max != null && newValue > widget.max!) {
+              newValue = widget.max!;
+            }
+            final str = (newValue).toString();
             _controller.text = str;
             widget.onValueUpdated(str);
           },
@@ -207,9 +318,15 @@ class __NumberInputState extends State<_NumberInput> {
         suffixIcon: IconButton(
           icon: Icon(Icons.add),
           onPressed: () {
-            final value = int.tryParse(_controller.text);
-            if (value == null) return;
-            final str = (value + 1).toString();
+            final value = int.tryParse(_controller.text) ?? 0;
+            int newValue = value + widget.step;
+            if (widget.min != null && newValue < widget.min!) {
+              newValue = widget.min!;
+            }
+            if (widget.max != null && newValue > widget.max!) {
+              newValue = widget.max!;
+            }
+            final str = newValue.toString();
             _controller.text = str;
             widget.onValueUpdated(str);
           },

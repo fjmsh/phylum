@@ -144,9 +144,8 @@ class AuthConfigCubit extends Cubit<AuthConfigState> {
       state.passwordlessLoginEnabled,
     );
     final passwordConfig = passwordBloc.validate();
-    if (passwordConfig != null) {
-      config.objects[AuthConfigFields.fieldPassword] = passwordConfig;
-    }
+    if (passwordConfig == null) return null;
+    config.objects[AuthConfigFields.fieldPassword] = passwordConfig;
     state.openIdConfigs.forEach((key, openidConfig) {
       config.addMapEntry(
         AuthConfigFields.fieldOpenidClients,
