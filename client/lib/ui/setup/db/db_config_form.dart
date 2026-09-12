@@ -18,6 +18,7 @@ class DbConfigForm extends StatelessWidget {
     return Column(
       spacing: 18.0,
       children: [
+        const SizedBox(height: 6),
         BlocBuilder<DbSetupCubit, DbConfigState>(
           bloc: _bloc,
           builder: (context, state) => TextFormField(

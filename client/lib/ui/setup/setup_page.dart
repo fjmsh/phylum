@@ -35,7 +35,12 @@ class _SetupPageState extends State<SetupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Instance Setup'),
+        title: BlocBuilder<SetupCubit, SetupState>(
+          bloc: _bloc,
+          builder: (context, state) {
+            return Text(_title(state));
+          },
+        ),
         leading: CloseButton(
           onPressed: () async {
             final remain =
@@ -99,6 +104,15 @@ class _SetupPageState extends State<SetupPage> {
         ),
       ),
     );
+  }
+
+  String _title(SetupState state) {
+    return switch (state) {
+      SetupStateDb() => 'Database Config',
+      SetupStateMail() => 'Mail Config',
+      SetupStateAuth() => 'Auth Config',
+      SetupStateUser() => 'Admin User',
+    };
   }
 
   Widget _buildBody(BuildContext context, SetupState state) {

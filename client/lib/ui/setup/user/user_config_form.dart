@@ -18,6 +18,7 @@ class UserConfigForm extends StatelessWidget {
     return Column(
       spacing: 18.0,
       children: [
+        const SizedBox(height: 6),
         BlocBuilder<UserConfigFormCubit, UserConfigFormState>(
           bloc: _bloc,
           builder: (context, state) => TextFormField(

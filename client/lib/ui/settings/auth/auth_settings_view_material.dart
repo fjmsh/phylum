@@ -47,9 +47,6 @@ class MaterialAuthSettingsView extends StatelessWidget {
             ),
             Builder(
               builder: (context) {
-                // final configValid = context.select<AuthConfigFormCubit, bool>(
-                //   (bloc) => bloc.state.valid,
-                // );
                 final requestInFlight = context
                     .select<RemoteConfigState<AuthConfigFields>, bool>(
                       (state) =>
