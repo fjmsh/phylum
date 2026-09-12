@@ -198,14 +198,14 @@ class MailConfigFormState {
 }
 
 class MailConfigCubit extends Cubit<MailConfigFormState> {
-  final RemoteConfig<MailConfigFields> _remoteConfig;
-  MailConfigCubit({required this._remoteConfig, required String instanceUrl})
-    : super(
-        MailConfigFormState.createFromRemoteConfig(_remoteConfig, instanceUrl),
-      );
+  final RemoteConfig<MailConfigFields> _remote;
+  MailConfigCubit({required this._remote, required String instanceUrl})
+    : super(MailConfigFormState.createFromRemoteConfig(_remote, instanceUrl));
 
-  void reset(RemoteConfig<MailConfigFields> config) {
-    emit(MailConfigFormState.createFromRemoteConfig(config, state.instanceUrl));
+  void reset() {
+    emit(
+      MailConfigFormState.createFromRemoteConfig(_remote, state.instanceUrl),
+    );
   }
 
   set enabled(bool val) {
@@ -309,6 +309,6 @@ class MailConfigCubit extends Cubit<MailConfigFormState> {
       local.setValue<String>(MailConfigFields.fieldFromName, state.fromName);
       local.setValue<String>(MailConfigFields.fieldInstance, state.instanceUrl);
     }
-    return local.toMap(_remoteConfig);
+    return local.toMap(_remote);
   }
 }

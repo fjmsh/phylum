@@ -98,7 +98,7 @@ class SetupCubit extends Cubit<SetupState> {
     );
     mailBloc = MailSetupCubit(
       instanceUrl: _instanceUrl,
-      remoteConfig: _config.mailConfig,
+      remote: _config.mailConfig,
     );
     authBloc = AuthSetupCubit(
       instanceUrl: _instanceUrl,

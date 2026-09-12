@@ -3,13 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:phylum/ui/config/remote_config_controller.dart';
 import 'package:phylum/util/dialogs.dart';
 
-import 'mail_config.dart';
-import 'form/mail_config_form.dart';
-import 'form/mail_config_form_cubit.dart';
+import '../../config/mail/mail_config.dart';
+import '../../config/mail/form/mail_config_form.dart';
+import '../../config/mail/form/mail_config_form_cubit.dart';
 
-class MaterialMailConfigPane extends StatelessWidget {
+class MaterialMailSettingsView extends StatelessWidget {
   final MailConfigCubit _bloc;
-  const MaterialMailConfigPane({super.key, required this._bloc});
+
+  const MaterialMailSettingsView({super.key, required this._bloc});
 
   @override
   Widget build(BuildContext context) {
@@ -31,16 +32,7 @@ class MaterialMailConfigPane extends StatelessWidget {
             Builder(
               builder: (context) {
                 return TextButton(
-                  onPressed: isSaving(context)
-                      ? null
-                      : () {
-                          final state = context
-                              .read<RemoteConfigState<MailConfigFields>>();
-                          if (state
-                              is RemoteConfigStateLoaded<MailConfigFields>) {
-                            context.read<MailConfigCubit>().reset(state.config);
-                          }
-                        },
+                  onPressed: isSaving(context) ? null : () => _bloc.reset(),
                   child: Text('Reset'),
                 );
               },
@@ -78,7 +70,7 @@ class MaterialMailConfigPane extends StatelessWidget {
     if (error == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Auth Config Updated'),
+          content: Text('Mail Config Updated'),
           duration: Duration(seconds: 2),
         ),
       );

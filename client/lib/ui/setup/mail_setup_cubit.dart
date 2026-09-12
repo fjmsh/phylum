@@ -9,7 +9,7 @@ import 'package:uri/uri.dart';
 class MailSetupCubit extends MailConfigCubit {
   final String _instanceUrl;
 
-  MailSetupCubit({required this._instanceUrl, required super.remoteConfig})
+  MailSetupCubit({required this._instanceUrl, required super.remote})
     : super(instanceUrl: _instanceUrl);
 
   Future<ConfigCheckResult> checkConfig() async {

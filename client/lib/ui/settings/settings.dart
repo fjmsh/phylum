@@ -6,7 +6,7 @@ import 'package:phylum/ui/settings/appearance/appearance_settings.dart';
 import 'package:phylum/ui/settings/auth/auth_settings.dart';
 import 'package:phylum/ui/settings/downloads/downloads_settings.dart';
 import 'package:phylum/ui/settings/logs/logs_settings.dart';
-import 'package:phylum/ui/config/mail/mail_settings.dart';
+import 'package:phylum/ui/settings/mail/mail_settings.dart';
 import 'package:phylum/ui/settings/security/sessions_keys_settings.dart';
 import 'package:phylum/ui/settings/sync/sync_settings.dart';
 import 'package:phylum/ui/settings/users/users_settings.dart';

@@ -8,78 +8,32 @@ import '../../config/auth/auth_config_form.dart';
 import '../../config/auth/auth_config_cubit.dart';
 
 class MaterialAuthSettingsView extends StatelessWidget {
-  final AuthConfigCubit _configBloc;
+  final AuthConfigCubit _bloc;
 
-  const MaterialAuthSettingsView({super.key, required this._configBloc});
+  const MaterialAuthSettingsView({super.key, required this._bloc});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       spacing: 18,
       children: [
-        AuthConfigForm(bloc: _configBloc),
+        AuthConfigForm(bloc: _bloc),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           spacing: 18,
           children: [
             Builder(
               builder: (context) {
-                final requestInFlight = context
-                    .select<RemoteConfigState<AuthConfigFields>, bool>(
-                      (state) =>
-                          state is RemoteConfigStateLoaded<AuthConfigFields> &&
-                          state.saving,
-                    );
                 return TextButton(
-                  onPressed: requestInFlight
-                      ? null
-                      : () {
-                          final state = context
-                              .read<RemoteConfigState<AuthConfigFields>>();
-                          if (state
-                              is RemoteConfigStateLoaded<AuthConfigFields>) {
-                            _configBloc.reset();
-                          }
-                        },
+                  onPressed: isSaving(context) ? null : () => _bloc.reset(),
                   child: Text('Reset'),
                 );
               },
             ),
             Builder(
               builder: (context) {
-                final requestInFlight = context
-                    .select<RemoteConfigState<AuthConfigFields>, bool>(
-                      (state) =>
-                          state is RemoteConfigStateLoaded<AuthConfigFields> &&
-                          state.saving,
-                    );
                 return TextButton(
-                  onPressed: requestInFlight
-                      ? null
-                      : () async {
-                          final config = _configBloc.validateConfig();
-
-                          if (config == null) return;
-
-                          final error = await context
-                              .read<RemoteConfigController<AuthConfigFields>>()
-                              .save(config: config);
-                          if (!context.mounted) return;
-                          if (error == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Auth Config Updated'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          } else {
-                            showAlertDialog(
-                              context,
-                              title: 'Failed to update Auth Config',
-                              message: error,
-                            );
-                          }
-                        },
+                  onPressed: isSaving(context) ? null : () => save(context),
                   child: Text('Save'),
                 );
               },
@@ -88,5 +42,37 @@ class MaterialAuthSettingsView extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  bool isSaving(BuildContext context) {
+    return context.select<RemoteConfigState<AuthConfigFields>, bool>(
+      (state) =>
+          state is RemoteConfigStateLoaded<AuthConfigFields> && state.saving,
+    );
+  }
+
+  void save(BuildContext context) async {
+    final config = _bloc.validateConfig();
+
+    if (config == null) return;
+
+    final error = await context
+        .read<RemoteConfigController<AuthConfigFields>>()
+        .save(config: config);
+    if (!context.mounted) return;
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Auth Config Updated'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      showAlertDialog(
+        context,
+        title: 'Failed to update Auth Config',
+        message: error,
+      );
+    }
   }
 }

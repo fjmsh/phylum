@@ -46,7 +46,7 @@ class _AuthSettingsViewState extends State<AuthSettingsView> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [BlocProvider<AuthConfigCubit>.value(value: configBloc)],
-      child: MaterialAuthSettingsView(configBloc: configBloc), //TODO #uilibrary
+      child: MaterialAuthSettingsView(bloc: configBloc), //TODO #uilibrary
     );
   }
 }

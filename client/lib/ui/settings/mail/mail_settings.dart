@@ -4,7 +4,7 @@ import 'package:phylum/ui/config/config.dart';
 import 'package:phylum/ui/config/remote_config_controller.dart';
 import 'package:phylum/ui/config/remote_config_pane.dart';
 import 'package:phylum/ui/config/mail/mail_config.dart';
-import 'package:phylum/ui/config/mail/mail_config_pane_widget.dart';
+import 'package:phylum/ui/settings/mail/mail_settings_view_widget.dart';
 import 'package:phylum/ui/settings/settings.dart';
 
 class MailSettings extends Settings {
@@ -36,5 +36,5 @@ class MailSettings extends Settings {
 
   @override
   Widget buildWithoutScaffold(BuildContext context) =>
-      const RemoteConfigPane<MailConfigFields>(child: MailConfigPane());
+      const RemoteConfigPane<MailConfigFields>(child: MailSettingsView());
 }
