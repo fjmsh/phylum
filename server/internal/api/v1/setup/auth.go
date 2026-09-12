@@ -2,20 +2,28 @@ package setup
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 
+	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt/argon2"
 	"codeberg.org/shroff/phylum/server/internal/auth/crypt/pbkdf2"
 	"codeberg.org/shroff/phylum/server/internal/config"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
+	"github.com/go-viper/mapstructure/v2"
+	"github.com/knadh/koanf/parsers/json"
+	"github.com/knadh/koanf/providers/rawbytes"
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
+	"github.com/rs/zerolog"
 )
 
 const timeout = 3 * time.Second
 
-func handleTestArgon2Params(c *gin.Context) {
+func handleAuthTestArgon2(c *gin.Context) {
 	var params struct {
 		Memory      uint8  `json:"memory" form:"memory" koanf:"memory,omitempty"`
 		Iterations  uint32 `json:"iterations" form:"iterations" koanf:"iterations,omitempty"`
@@ -64,7 +72,7 @@ func handleTestArgon2Params(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func handleTestPBKDF2Params(c *gin.Context) {
+func handleAuthTestPBKDF2(c *gin.Context) {
 	var params struct {
 		Function   string `json:"function" form:"function" koanf:"function,omitempty"`
 		Iterations int    `json:"iterations" form:"iterations" koanf:"iterations,omitempty"`
@@ -115,6 +123,35 @@ func handleTestPBKDF2Params(c *gin.Context) {
 		response = gin.H{
 			"success": true,
 			"time":    hashTime.Microseconds(),
+		}
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+func handleAuthValidate(c *gin.Context) {
+	params := koanf.New(".")
+	decoderConfig := &mapstructure.DecoderConfig{
+		ErrorUnused:      true,
+		WeaklyTypedInput: true,
+		Result:           &auth.Config{},
+	}
+	if body, err := io.ReadAll(c.Request.Body); err != nil {
+		panic(core.NewError(http.StatusBadRequest, "read_failed", "Failed to read request parameters: "+err.Error()))
+	} else if err := params.Load(rawbytes.Provider(body), json.Parser()); err != nil {
+		panic(core.NewError(http.StatusBadRequest, "parse_failed", "Failed to parse request parameters: "+err.Error()))
+	} else if err := params.UnmarshalWithConf("config", nil, koanf.UnmarshalConf{DecoderConfig: decoderConfig}); err != nil {
+		panic(core.NewError(http.StatusBadRequest, "validate_failed", "Failed to validate request parameters: "+err.Error()))
+	}
+
+	var cfg auth.Config
+	if err := config.MergeSub("auth", params).Unmarshal("", &cfg); err != nil {
+		fmt.Println(err)
+	}
+	response := gin.H{}
+	if _, err := auth.CreateHandler(cfg, *zerolog.Ctx(c.Request.Context())); err != nil {
+		response["error"] = gin.H{
+			"msg":     "Invalid Auth Configuration",
+			"details": err.Error(),
 		}
 	}
 	c.JSON(http.StatusOK, response)

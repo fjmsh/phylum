@@ -116,6 +116,7 @@ func (a *Auth) newConn() (*ldap.Conn, error) {
 	conn, err := ldap.DialURL(a.cfg.URL, ldap.DialWithDialer(dialer), ldap.DialWithTLSConfig(tlsCfg))
 	if err != nil {
 		a.logger.Error().Err(err).Str("url", a.cfg.URL).Msg("cannot contact directory server")
+		return nil, fmt.Errorf("auth.ldap: %w", err)
 	}
 
 	if a.readTimeout != 0 {

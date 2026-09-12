@@ -17,20 +17,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type mailConfig struct {
-	SMTP struct {
-		Host     string `json:"host" form:"host" koanf:"host"`
-		Port     int    `json:"port" form:"port" koanf:"port,omitempty"`
-		Username string `json:"username" form:"username" koanf:"username"`
-		Password string `json:"password" form:"password" koanf:"password"`
-	} `json:"smtp" form:"smtp" koanf:"smtp"`
-	From struct {
-		Name  string `json:"name" form:"name" koanf:"name,omitempty"`
-		Email string `json:"email" form:"email" koanf:"email,omitempty"`
-	} `json:"from" form:"from" koanf:"from"`
-}
-
-func handleValidateRequest(c *gin.Context) {
+func handleMailValidate(c *gin.Context) {
 	params := koanf.New(".")
 	decoderConfig := &mapstructure.DecoderConfig{
 		ErrorUnused:      true,

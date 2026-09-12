@@ -15,7 +15,7 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
-func handleValidateDBRequest(c *gin.Context) {
+func handleDBValidate(c *gin.Context) {
 	params := koanf.New(".")
 	decoderConfig := &mapstructure.DecoderConfig{
 		ErrorUnused:      true,

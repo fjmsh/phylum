@@ -87,6 +87,8 @@ func CreateHandler(cfg Config, log zerolog.Logger) (*Handler, error) {
 	case "ldap":
 		if ldap, err := ldap.NewAuth(cfg.Password.LDAP, log); err != nil {
 			return nil, errors.New("failed to create ldap password backend: " + err.Error())
+		} else if _, err := ldap.VerifyUserPassword(nil, "email@example.com", "password"); err != nil {
+			return nil, errors.New("failed to connect to ldap backend: " + err.Error())
 		} else {
 			h.passwordBackend = ldap
 		}
@@ -111,7 +113,7 @@ func CreateHandler(cfg Config, log zerolog.Logger) (*Handler, error) {
 		methods += 1
 	}
 	if methods < 1 {
-		return nil, errors.New("no login method configured")
+		return nil, errors.New("No login method configured")
 	}
 
 	if methods > 1 && !cfg.SuppressMultiProviderWarning {
