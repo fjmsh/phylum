@@ -3,6 +3,7 @@ package admin
 import (
 	"codeberg.org/shroff/phylum/server/internal/command/admin/config"
 	"codeberg.org/shroff/phylum/server/internal/command/admin/jobs"
+	"codeberg.org/shroff/phylum/server/internal/command/admin/migrate"
 	"codeberg.org/shroff/phylum/server/internal/command/admin/schema"
 	"codeberg.org/shroff/phylum/server/internal/command/admin/storage"
 	"codeberg.org/shroff/phylum/server/internal/command/admin/user"
@@ -20,6 +21,7 @@ func SetupCommand() *cobra.Command {
 		schema.SetupCommand(),
 		storage.SetupCommand(),
 		jobs.SetupCommand(),
+		migrate.SetupCommand(),
 	}...)
 
 	return cmd
