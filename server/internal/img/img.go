@@ -32,16 +32,26 @@ func Initialize(cfg Config) error {
 	return nil
 }
 
+func mkdirs(name string, res Res) error {
+	return os.MkdirAll(filepath.Join(dir, params[res].dir, name[len(name)-2:]), 0o700)
+}
+
+func path(name string, res Res) string {
+	return filepath.Join(dir, params[res].dir, name[len(name)-2:], name[:len(name)-2]+".webp")
+}
+
 func Open(name string, res Res) (io.ReadCloser, error) {
-	return os.Open(filepath.Join(dir, name) + "-" + params[res].suffix + ".webp")
+	return os.Open(path(name, res))
 }
 
 func Copy(src, dest string, imgRes Res) error {
-	for res, p := range params {
+	for res := range params {
 		if imgRes&res != 0 {
-			if in, err := os.Open(filepath.Join(dir, src) + "-" + p.suffix + ".webp"); err != nil {
+			if in, err := os.Open(path(src, res)); err != nil {
 				return err
-			} else if out, err := os.Create(filepath.Join(dir, dest) + "-" + p.suffix + ".webp"); err != nil {
+			} else if err := mkdirs(dest, res); err != nil {
+				return err
+			} else if out, err := os.Create(path(dest, res)); err != nil {
 				return err
 			} else if _, err := io.Copy(out, in); err != nil {
 				return err
@@ -52,9 +62,9 @@ func Copy(src, dest string, imgRes Res) error {
 }
 
 func Delete(name string, imgRes Res) error {
-	for res, p := range params {
+	for res := range params {
 		if imgRes&res != 0 {
-			if err := os.Remove(filepath.Join(dir, name) + "-" + p.suffix + ".webp"); err != nil {
+			if err := os.Remove(path(name, res)); err != nil {
 				return err
 			}
 		}

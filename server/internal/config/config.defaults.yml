@@ -45,7 +45,7 @@ core:
         salt: 32
         key: 32
   img:
-    dir: previews       # relative to storage.root, or absolute
+    dir: img            # relative to storage.root, or absolute
     quality: 80
 
 ## Warning: it is recommended to avoid using a combination of email-based

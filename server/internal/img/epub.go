@@ -7,8 +7,8 @@ import (
 	"github.com/raitucarp/epub"
 )
 
-func processEpub(name, path string) (Res, error) {
-	if r, err := epub.OpenReader(path); err != nil {
+func processEpub(name, in string) (Res, error) {
+	if r, err := epub.OpenReader(in); err != nil {
 		return 0, err
 	} else if cover := r.Cover(); cover == nil {
 		return 0, nil

@@ -7,14 +7,14 @@ import (
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
-func processAV(name, path string) (Res, error) {
+func processAV(name, in string) (Res, error) {
 	formatContext := astiav.AllocFormatContext()
 	if formatContext == nil {
 		return 0, errors.New("failed to allocate format context")
 	}
 	defer formatContext.Free()
 
-	if err := formatContext.OpenInput(path, nil, nil); err != nil {
+	if err := formatContext.OpenInput(in, nil, nil); err != nil {
 		return 0, errors.New("failed to open input: " + err.Error())
 	}
 	defer formatContext.CloseInput()

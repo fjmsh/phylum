@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/davidbyttow/govips/v2/vips"
 )
@@ -18,19 +17,20 @@ const (
 )
 
 type resParams struct {
-	suffix      string
+	// suffix      string
+	dir         string
 	width       int
 	interesting vips.Interesting
 }
 
 var params = map[Res]resParams{
 	ResThumbnail: {
-		suffix:      "t",
+		dir:         "thumbs",
 		width:       240,
 		interesting: vips.InterestingAttention,
 	},
 	ResLarge: {
-		suffix:      "l",
+		dir:         "previews",
 		width:       1200,
 		interesting: vips.InterestingNone,
 	},
@@ -63,7 +63,7 @@ func scaleAndSaveImage(img *vips.ImageRef, basename string, res Res) error {
 	if !ok {
 		return fmt.Errorf("unknown image resolution: %d", res)
 	}
-	output := filepath.Join(dir, basename+"-"+params.suffix+".webp")
+	output := path(basename, res)
 
 	if params.width < img.Width() {
 		height := params.width * img.Height() / img.Width()
@@ -74,6 +74,8 @@ func scaleAndSaveImage(img *vips.ImageRef, basename string, res Res) error {
 
 	if b, _, err := img.ExportWebp(&vips.WebpExportParams{Quality: int(quality)}); err != nil {
 		return errors.New("failed to export image preview to webp: " + err.Error())
+	} else if err := mkdirs(basename, res); err != nil {
+		return errors.New("failed to create directory: " + err.Error())
 	} else if err := os.WriteFile(output, b, 0600); err != nil {
 		return errors.New("failed to write image preview file: " + err.Error())
 	} else {

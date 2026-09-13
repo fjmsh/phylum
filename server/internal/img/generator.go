@@ -8,11 +8,11 @@ import (
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
-func GetGenerator(mimeType string) func(name, path string) (uint8, error) {
+func GetGenerator(mimeType string) func(name, in string) (uint8, error) {
 	if imageType, ok := strings.CutPrefix(mimeType, "image/"); ok || otherImageTypes[mimeType] {
-		return func(name, path string) (Res, error) {
+		return func(name, in string) (Res, error) {
 			allowNoPreviewImage := nativeImageTypes[imageType]
-			return processImage(name, path, !allowNoPreviewImage)
+			return processImage(name, in, !allowNoPreviewImage)
 		}
 	}
 
@@ -44,16 +44,16 @@ func GetGenerator(mimeType string) func(name, path string) (uint8, error) {
 // Preview is only generated if the image size is larger than 1M
 // or if forcePreview is set to true (typically for non-image formats)
 // like PDF and PS
-func processImage(name, path string, forceSavePreview bool) (Res, error) {
+func processImage(name, in string, forceSavePreview bool) (Res, error) {
 	res := ResThumbnail
 	if forceSavePreview {
 		res |= ResLarge
-	} else if stat, err := os.Stat(path); err != nil {
+	} else if stat, err := os.Stat(in); err != nil {
 		return 0, err
 	} else if stat.Size() > 512*1024 {
 		res |= ResLarge
 	}
-	if img, err := vips.LoadImageFromFile(path, vips.NewImportParams()); err != nil {
+	if img, err := vips.LoadImageFromFile(in, vips.NewImportParams()); err != nil {
 		return 0, errors.New("failed to load image file: " + err.Error())
 	} else {
 		defer img.Close()
