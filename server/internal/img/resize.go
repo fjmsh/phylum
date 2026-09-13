@@ -24,21 +24,16 @@ type resParams struct {
 }
 
 var params = map[Res]resParams{
-	ResThumbnail: resParams{
+	ResThumbnail: {
 		suffix:      "t",
 		width:       240,
 		interesting: vips.InterestingAttention,
 	},
-	ResLarge: resParams{
+	ResLarge: {
 		suffix:      "l",
 		width:       1200,
 		interesting: vips.InterestingNone,
 	},
-}
-
-var interesting = map[Res]vips.Interesting{
-	ResThumbnail: vips.InterestingAttention,
-	ResLarge:     vips.InterestingNone,
 }
 
 func generateThumbnailFromFile(input, basename string) error {

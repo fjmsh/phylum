@@ -3,16 +3,17 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 type localStorage struct {
 	name string
 	root string
+	tmp  string
 }
 
 func createLocalBackend(name string, params map[string]string) (LocalBackend, error) {
@@ -27,21 +28,18 @@ func createLocalBackend(name string, params map[string]string) (LocalBackend, er
 	l := localStorage{
 		name: name,
 		root: root,
+		tmp:  filepath.Join(root, "tmp"),
 	}
 
-	if err := os.MkdirAll(l.root, 0700); err != nil {
-		return nil, errors.New("failed to create root directory: " + err.Error())
+	if err := os.MkdirAll(l.root, 0o700); err != nil {
+		return nil, fmt.Errorf("failed to create root directory for storage backend `%s`: %w", name, err)
 	}
-	if entries, err := os.ReadDir(l.root); err != nil {
-		return nil, err
-	} else {
-		for _, e := range entries {
-			if strings.HasPrefix(e.Name(), "upload-") {
-				if err := os.Remove(e.Name()); err != nil {
-					return nil, err
-				}
-			}
-		}
+
+	if err := os.RemoveAll(l.tmp); err != nil {
+		return nil, fmt.Errorf("failed to clear temp directory for storage backend `%s`: %w", name, err)
+	}
+	if err := os.MkdirAll(l.tmp, 0o700); err != nil {
+		return nil, fmt.Errorf("failed to create temp directory for storage backend `%s`: %w", name, err)
 	}
 
 	return l, nil
@@ -63,12 +61,16 @@ func (l localStorage) OpenRead(name string, start, length int) (io.ReadCloser, e
 }
 
 func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
-	f, err := os.CreateTemp(l.root, "upload-*")
+	f, err := os.CreateTemp(l.tmp, "upload-*")
 	if err != nil {
 		return nil, err
 	}
 	return &callbackWriteCloser{dest: f, closeCallback: func(err error) error {
 		if err != nil {
+			os.Remove(f.Name())
+			return err
+		}
+		if err := l.mkdirs(name); err != nil {
 			os.Remove(f.Name())
 			return err
 		}
@@ -113,8 +115,16 @@ func (l localStorage) DeleteAll(names []string) []error {
 	return errs
 }
 
-func (l localStorage) Path(name string) string {
+func (l localStorage) oldPath(name string) string {
 	return filepath.Join(l.root, name)
+}
+
+func (l localStorage) mkdirs(name string) error {
+	return os.MkdirAll(filepath.Join(l.root, name[len(name)-2:]), 0o700)
+}
+
+func (l localStorage) Path(name string) string {
+	return filepath.Join(l.root, name[len(name)-2:], name[0:len(name)-2])
 }
 
 func (l localStorage) String() string {

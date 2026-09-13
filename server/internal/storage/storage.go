@@ -39,7 +39,7 @@ func Initialize(cfg Config, logger zerolog.Logger) error {
 		if err := os.RemoveAll(tempDir); err != nil {
 			return errors.New("failed to clear temp directory: " + err.Error())
 		}
-		if err := os.MkdirAll(tempDir, 0700); err != nil {
+		if err := os.MkdirAll(tempDir, 0o700); err != nil {
 			return errors.New("failed to create temp directory: " + err.Error())
 		}
 	}
