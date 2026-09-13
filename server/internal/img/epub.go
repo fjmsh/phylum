@@ -2,13 +2,12 @@ package img
 
 import (
 	"errors"
-	"path/filepath"
 
 	"github.com/davidbyttow/govips/v2/vips"
 	"github.com/raitucarp/epub"
 )
 
-func processEpub(path string) (Res, error) {
+func processEpub(name, path string) (Res, error) {
 	if r, err := epub.OpenReader(path); err != nil {
 		return 0, err
 	} else if cover := r.Cover(); cover == nil {
@@ -17,6 +16,6 @@ func processEpub(path string) (Res, error) {
 		return 0, errors.New("failed to create vips image from epub cover")
 	} else {
 		defer img.Close()
-		return ResAll, scaleAndSaveImages(img, filepath.Base(path), ResAll)
+		return ResAll, scaleAndSaveImages(img, name, ResAll)
 	}
 }

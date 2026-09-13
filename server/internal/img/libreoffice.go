@@ -8,18 +8,17 @@ import (
 )
 
 // Generate preview and thumbnail for office documents.
-func processDocument(input string) (Res, error) {
-	if err := exportLibreOffice(input, dir, false); err != nil {
+func processDocument(name, path string) (Res, error) {
+	if err := exportLibreOffice(path, dir, false); err != nil {
 		return 0, err
 	}
-	base := filepath.Base(input)
-	out := filepath.Join(dir, base+".webp")
-	preview := filepath.Join(dir, base+"-"+params[ResLarge].suffix+".webp")
+	out := filepath.Join(dir, filepath.Base(path)+".webp")
+	preview := filepath.Join(dir, name+"-"+params[ResLarge].suffix+".webp")
 	if err := os.Rename(out, preview); err != nil {
 		return 0, errors.New("failed to rename document preview: " + err.Error())
 	}
 
-	if err := generateThumbnailFromFile(preview, base); err != nil {
+	if err := generateThumbnailFromFile(preview, name); err != nil {
 		os.Remove(preview)
 		return 0, errors.New("failed to generate thumbnail: " + err.Error())
 	}
@@ -28,17 +27,16 @@ func processDocument(input string) (Res, error) {
 
 // Generate thumbnail only for text using LibreOffice
 // A temporary document preview must be generated and then resized down
-func processText(input string) (Res, error) {
-	if err := exportLibreOffice(input, tmp, true); err != nil {
+func processText(name, path string) (Res, error) {
+	if err := exportLibreOffice(path, tmp, true); err != nil {
 		return 0, err
 	}
 	// No need to keep the full generated preview since we'll render
 	// the text directly on the client using file contents
-	base := filepath.Base(input)
-	preview := filepath.Join(tmp, base+".webp")
+	preview := filepath.Join(tmp, filepath.Base(path)+".webp")
 	defer os.Remove(preview)
 
-	if err := generateThumbnailFromFile(preview, base); err != nil {
+	if err := generateThumbnailFromFile(preview, name); err != nil {
 		return 0, errors.New("failed to generate thumbnail: " + err.Error())
 	}
 	return ResThumbnail, nil

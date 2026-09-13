@@ -13,7 +13,7 @@ var otherImageTypes = map[string]bool{
 	"application/postscript": true,
 }
 
-var applicationTypes = map[string]func(string) (Res, error){
+var applicationTypes = map[string]func(string, string) (Res, error){
 	"json":  processText,
 	"yaml":  processText,
 	"toml":  processText,

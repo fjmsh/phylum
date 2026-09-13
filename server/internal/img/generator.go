@@ -3,17 +3,16 @@ package img
 import (
 	"errors"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
-func GetGenerator(mimeType string) func(string) (uint8, error) {
+func GetGenerator(mimeType string) func(name, path string) (uint8, error) {
 	if imageType, ok := strings.CutPrefix(mimeType, "image/"); ok || otherImageTypes[mimeType] {
-		return func(path string) (Res, error) {
+		return func(name, path string) (Res, error) {
 			allowNoPreviewImage := nativeImageTypes[imageType]
-			return processImage(path, !allowNoPreviewImage)
+			return processImage(name, path, !allowNoPreviewImage)
 		}
 	}
 
@@ -45,7 +44,7 @@ func GetGenerator(mimeType string) func(string) (uint8, error) {
 // Preview is only generated if the image size is larger than 1M
 // or if forcePreview is set to true (typically for non-image formats)
 // like PDF and PS
-func processImage(path string, forceSavePreview bool) (Res, error) {
+func processImage(name, path string, forceSavePreview bool) (Res, error) {
 	res := ResThumbnail
 	if forceSavePreview {
 		res |= ResLarge
@@ -58,6 +57,6 @@ func processImage(path string, forceSavePreview bool) (Res, error) {
 		return 0, errors.New("failed to load image file: " + err.Error())
 	} else {
 		defer img.Close()
-		return res, scaleAndSaveImages(img, filepath.Base(path), res)
+		return res, scaleAndSaveImages(img, name, res)
 	}
 }

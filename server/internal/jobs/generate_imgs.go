@@ -39,8 +39,9 @@ func (w *GenerateImgsWorker) Work(ctx context.Context, job *steve.Job[GenerateIm
 	if backend, err := getCurrentStorage(db, job.Args.VersionID); err != nil {
 		return errors.New("Failed to get src storage: " + err.Error())
 	} else if local, ok := backend.(storage.LocalBackend); ok {
-		path := local.Path(job.Args.VersionID.String())
-		if generated, err := generator(path); err != nil {
+		name := job.Args.VersionID.String()
+		path := local.Path(name)
+		if generated, err := generator(name, path); err != nil {
 			return errors.New("Failed to generating imgs: " + err.Error())
 		} else if err := updateResourceVersionImgres(db, job.Args.VersionID, generated); err != nil {
 			return errors.New("Failed to update resource version: " + err.Error())

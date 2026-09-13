@@ -2,13 +2,12 @@ package img
 
 import (
 	"errors"
-	"path/filepath"
 
 	"github.com/asticode/go-astiav"
 	"github.com/davidbyttow/govips/v2/vips"
 )
 
-func processAV(path string) (Res, error) {
+func processAV(name, path string) (Res, error) {
 	formatContext := astiav.AllocFormatContext()
 	if formatContext == nil {
 		return 0, errors.New("failed to allocate format context")
@@ -108,7 +107,7 @@ func processAV(path string) (Res, error) {
 				return true, errors.New("failed to create vips image: " + err.Error())
 			} else {
 				defer v.Close()
-				return true, scaleAndSaveImages(v, filepath.Base(path), ResAll)
+				return true, scaleAndSaveImages(v, name, ResAll)
 			}
 		}(); stop {
 			if err != nil {
