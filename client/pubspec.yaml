@@ -19,7 +19,7 @@ dependencies:
   collection:
   dbus:
   device_info_plus: ^11.5.0
-  drift: ^2.19.1+1
+  drift: 2.35.0
   drift_flutter: ^0.3.0
   email_validator:
   file_picker: ^11.0.2

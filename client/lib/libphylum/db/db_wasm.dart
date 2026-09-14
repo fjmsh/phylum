@@ -13,8 +13,8 @@ QueryExecutor openDatabase({
     Future(() async {
       final result = await WasmDatabase.open(
         databaseName: _dbName(id),
-        sqlite3Uri: Uri.parse('sqlite3.wasm'),
-        driftWorkerUri: Uri.parse('drift_worker.js'),
+        sqlite3Uri: Uri.parse('sqlite3.13d3f11d.wasm'),
+        driftWorkerUri: Uri.parse('drift_worker.df0066e7.js'),
       );
 
       if (result.missingFeatures.isNotEmpty) {
@@ -37,8 +37,8 @@ Future<void> deleteDatabase({
   required String id,
 }) async {
   final probe = await WasmDatabase.probe(
-    sqlite3Uri: Uri.parse('sqlite3.wasm'),
-    driftWorkerUri: Uri.parse('drift_worker.js'),
+    sqlite3Uri: Uri.parse('sqlite3.13d3f11d.wasm'),
+    driftWorkerUri: Uri.parse('drift_worker.df0066e7.js'),
     databaseName: _dbName(id),
   );
   for (final db in probe.existingDatabases) {

@@ -4,7 +4,6 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
-  connectivity_plus
   irondash_engine_context
   permission_handler_windows
   screen_retriever_windows
