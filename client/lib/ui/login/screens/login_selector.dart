@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
 
 import '../util/oauth_stub.dart'
-    if (dart.library.js_interop) '../utiloauth_web.dart'
+    if (dart.library.js_interop) '../util/oauth_web.dart'
     if (dart.library.ffi) '../util/oauth_vm.dart';
 
 class LoginSelectorScreen extends StatelessWidget {
