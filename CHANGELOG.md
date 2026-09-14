@@ -8,11 +8,16 @@ v0.10 (Unreleased)
 >   - server.webappsrc => server.web_app_src
 >   - server.publinkpath => server.publink_path
 >   - server.logbody => server.log_body
+> - Change storage structure for files and image previews (requires manual migration for existing data - See notes below)
 
 Features:
 - Generate thumbnails for audios (if present) videos and epubs
-- Better web loading
+- Better web loading screen
+- Working Dark theme
 - Auth config
+- Setup and app settings config respects preset and fixed values (via environment vars)
+- OIDC auto login if only one method is configured
+
 
 Improvements:
 - Use vips bindings to generate thumbnails and image previews instead of spawning a new process
