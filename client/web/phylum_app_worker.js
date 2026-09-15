@@ -2,16 +2,16 @@ const CACHE_NAME = "phylum-app-cache";
 
 const CACHED_URLS = [
   "/",
-  "/manifest.json",
+  "/phylum.webmanifest",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
 
-const EXCLUDED_URLS = [
+const ASSET_URLS = [
   /^\/drift_worker(\.[0-9abcdef]+)?\.js$/,
   /^\/sqlite3(\.[0-9abcdef]+)?\.wasm$/,
   /^\/main.dart(\.[0-9abcdef]+)?\.(js|mjs|wasm)$/,
-  /^\/manifest.json$/,
+  /^\/phylum(\.[0-9abcdef]+)?\.webmanifest$/,
 ];
 
 self.addEventListener("install", (event) => {
@@ -46,7 +46,7 @@ self.addEventListener("fetch", (event) => {
   if (event.request.mode === "navigate") {
     const path = new URL(event.request.url).pathname;
 
-    if (EXCLUDED_URLS.some((rx) => rx.test(path))) {
+    if (ASSET_URLS.some((rx) => rx.test(path))) {
       return;
     }
 
