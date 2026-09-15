@@ -2,6 +2,7 @@ package server
 
 import (
 	"embed"
+	"fmt"
 	"net/http"
 	"path"
 	"regexp"
@@ -14,7 +15,12 @@ import (
 //go:embed __static/**
 var staticFS embed.FS
 
-var immutableResources = regexp.MustCompile(`^/((flutter_bootstrap)|(main.dart)|(phylum_app_worker)|(drift_worker)|(sqlite3)).[0-9abcdef]{8}.((js)|(mjs)|(wasm))$`)
+var immutableResources = []*regexp.Regexp{
+	regexp.MustCompile(`^/main.dart.[0-9abcdef]{8}.((js)|(mjs)|(wasm))$`),
+	regexp.MustCompile(`^/sqlite3.[0-9abcdef]{8}.wasm$`),
+	regexp.MustCompile(`^/((flutter_bootstrap)|(phylum_app_worker)|(drift_worker)|).[0-9abcdef]{8}.js$`),
+	regexp.MustCompile(`^/phylum.[0-9abcdef]{8}.webmanifest$`),
+}
 
 func (s *server) setupWebApp() {
 	fs := static.LocalFile(s.cfg.WebAppSrc, false)
@@ -58,8 +64,12 @@ func (s *server) setupWebApp() {
 			c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
 			c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
 			if fs.Exists("/", c.Request.URL.Path) {
-				if immutableResources.MatchString(c.Request.URL.Path) {
-					c.Writer.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+				fmt.Println(c.Request.URL.Path)
+				for _, r := range immutableResources {
+					if r.MatchString(c.Request.URL.Path) {
+						fmt.Println("Match")
+						c.Writer.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+					}
 				}
 				fileserver.ServeHTTP(c.Writer, c.Request)
 			} else {
