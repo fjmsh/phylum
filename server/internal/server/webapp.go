@@ -4,6 +4,7 @@ import (
 	"embed"
 	"net/http"
 	"path"
+	"regexp"
 	"strings"
 
 	"github.com/gin-contrib/static"
@@ -12,6 +13,8 @@ import (
 
 //go:embed __static/**
 var staticFS embed.FS
+
+var immutableResources = regexp.MustCompile(`^/((flutter_bootstrap)|(main.dart)|(phylum_app_worker)|(drift_worker)|(sqlite3)).[0-9abcdef]{8}.((js)|(mjs)|(wasm))$`)
 
 func (s *server) setupWebApp() {
 	fs := static.LocalFile(s.cfg.WebAppSrc, false)
@@ -55,6 +58,9 @@ func (s *server) setupWebApp() {
 			c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
 			c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
 			if fs.Exists("/", c.Request.URL.Path) {
+				if immutableResources.MatchString(c.Request.URL.Path) {
+					c.Writer.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+				}
 				fileserver.ServeHTTP(c.Writer, c.Request)
 			} else {
 				http.ServeFile(c.Writer, c.Request, indexFilePath)
