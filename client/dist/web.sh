@@ -3,6 +3,40 @@
 # Build the web app
 builddir="build/web"
 declare -A versioned_names
+build=false
+use_fvm=false
+
+usage() {
+ echo "Usage: $0 [OPTIONS]"
+ echo "Options:"
+ echo " -h, --help      Display this help message"
+ echo " -b, --build     Build the app"
+ echo " -f, --use-fvm   Use FVM to build the app (only with -b)"
+}
+
+# Function to handle options and arguments
+handle_options() {
+  while [ $# -gt 0 ]; do
+    case $1 in
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      -b | --build)
+        build=true
+        ;;
+      -f | --use-fvm)
+        use_fvm=true
+        ;;
+      *)
+        echo "Invalid option: $1" >&2
+        usage
+        exit 1
+        ;;
+    esac
+    shift
+  done
+}
 
 version_file() {
     name=$1
@@ -30,12 +64,21 @@ use_versioned() {
     done
 }
 
-echo "Building App"
-rm -rf $builddir
-fvm flutter build web --wasm
+handle_options "$@"
+
+if [ "$build" = true ]; then
+    rm -rf $builddir
+    if [ "$use_fvm" = true ]; then
+        echo "Building App with FVM"
+        fvm flutter build web --wasm
+    else
+        echo "Building App"
+        flutter build web --wasm
+    fi
+fi
+
 cd $builddir
 
-echo
 echo "Versioning Assets"
 version_file "phylum.webmanifest"
 use_versioned "phylum_app_worker.js"
