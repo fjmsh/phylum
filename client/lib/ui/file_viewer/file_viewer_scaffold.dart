@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/integrations/download_manager_vm.dart';
+import 'package:phylum/ui/app/theme.dart';
 import 'package:phylum/ui/explorer/properties/resource_properties_dialog.dart';
 
 import 'versioned_resource.dart';
@@ -18,14 +19,15 @@ class FileViewerScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = PhylumTheme.dark.colorScheme;
     return GestureDetector(
       onTap: () => Navigator.of(context).pop(),
       child: Scaffold(
         backgroundColor: _transparent
             ? Colors.transparent
-            : Theme.of(context).colorScheme.inverseSurface,
+            : colorScheme.surface,
         appBar: AppBar(
-          foregroundColor: Theme.of(context).colorScheme.onInverseSurface,
+          foregroundColor: colorScheme.onSurface,
           leading: const CloseButton(),
           actions: _resource == null
               ? null

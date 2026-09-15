@@ -72,8 +72,8 @@ class _PhylumAppState extends State<PhylumApp> {
         return MaterialApp.router(
           title: 'Phylum',
           debugShowCheckedModeBanner: false,
-          theme: generateAppTheme(Brightness.light),
-          darkTheme: generateAppTheme(Brightness.dark),
+          theme: PhylumTheme.light,
+          darkTheme: PhylumTheme.dark,
           themeMode: context.watch<ThemeMode>(),
           routeInformationParser: const PhylumRouteInformationParser(),
           routerDelegate: routerDelegate,

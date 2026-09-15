@@ -2,7 +2,17 @@ import 'package:flutter/material.dart';
 
 const seedColor = Color(0xff769e57);
 
-ThemeData generateAppTheme(Brightness brightness) {
+sealed class PhylumTheme {
+  static final _light = _generateAppTheme(Brightness.light);
+  static ThemeData get light => _light;
+
+  static final _dark = _generateAppTheme(Brightness.dark);
+  static ThemeData get dark => _dark;
+
+  const PhylumTheme._();
+}
+
+ThemeData _generateAppTheme(Brightness brightness) {
   final colorScheme = ColorScheme.fromSeed(
     seedColor: seedColor,
     dynamicSchemeVariant: DynamicSchemeVariant.neutral,

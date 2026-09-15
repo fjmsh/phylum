@@ -57,6 +57,7 @@ class FilePreviewDialog extends StatefulWidget {
     final account = context.read<PhylumAccount>();
     return showDialog(
       context: context,
+      barrierColor: Colors.black87,
       builder: (context) => MultiProvider(
         providers: [
           Provider.value(value: account),
