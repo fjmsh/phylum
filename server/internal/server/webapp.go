@@ -2,7 +2,7 @@ package server
 
 import (
 	"embed"
-	"fmt"
+	"mime"
 	"net/http"
 	"path"
 	"regexp"
@@ -50,6 +50,7 @@ func (s *server) setupWebApp() {
 		publinkPath += "/"
 	}
 
+	mime.AddExtensionType(".webmanifest", "application/manifest+json")
 	staticFileHandler := func(c *gin.Context) {
 		path := c.Request.URL.Path
 		if strings.HasPrefix(path, "/__static") && staticFS.Exists("/", c.Request.URL.Path) {
@@ -64,10 +65,8 @@ func (s *server) setupWebApp() {
 			c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
 			c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
 			if fs.Exists("/", c.Request.URL.Path) {
-				fmt.Println(c.Request.URL.Path)
 				for _, r := range immutableResources {
 					if r.MatchString(c.Request.URL.Path) {
-						fmt.Println("Match")
 						c.Writer.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 					}
 				}
