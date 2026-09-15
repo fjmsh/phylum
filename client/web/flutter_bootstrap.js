@@ -15,3 +15,16 @@ _flutter.loader.load({
     await appRunner.runApp();
   },
 });
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("phylum_app_worker.js", { scope: "/" })
+      .then(
+        (registration) => {},
+        (err) => {
+          console.error("ServiceWorker registration failed", err);
+        },
+      );
+  });
+}

@@ -1,11 +1,7 @@
 #!/bin/bash
 
 # Build the web app
-fvm flutter build web --wasm
-
-dir="build/web"
-cd $dir
-
+builddir="build/web"
 declare -A versioned_names
 
 version_file() {
@@ -39,7 +35,11 @@ use_versioned() {
     done
 }
 
-srcs=("main.dart.js" "main.dart.mjs" "main.dart.wasm")
+rm -rf $builddir
+fvm flutter build web --wasm
+cd $builddir
+
+srcs=("main.dart.js" "main.dart.mjs" "main.dart.wasm" "phylum_app_worker.js")
 use_versioned "flutter_bootstrap.js" srcs
 
 srcs=("flutter_bootstrap.js")
