@@ -2,7 +2,7 @@
 
 set -eu
 
-VERSION="0.9.0"
+VERSION="0.10.0"
 SRC_URL="https://codeberg.org/shroff/phylum/archive/releases/v$VERSION.tar.gz"
 SRC_URL="local"
 tag="localhost/phylum:$VERSION"
@@ -30,7 +30,7 @@ build_server() {
 
 build_webapp() {
   declare -n container="$1"
-  c=$(buildah from ghcr.io/cirruslabs/flutter:stable)
+  c=$(buildah from "ghcr.io/gmeligio/flutter-web:3.47.3")
   buildah config --workingdir /src "$c"
   if [ $SRC_URL = "local" ]; then
     echo "Copying source"
@@ -43,7 +43,7 @@ build_webapp() {
   fi
   buildah config --workingdir /src/phylum/client "$c"
   buildah run $c -- flutter pub get
-  buildah run $c -- flutter build web --wasm
+  buildah run $c -- bash dist/web.sh
   container=$c
 }
 
