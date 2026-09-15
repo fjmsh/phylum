@@ -2,9 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:phylum/ui/explorer/shortcuts/intents.dart';
-import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
 
 Map<ShortcutActivator, Intent>? _shortcutsMap;
 
@@ -21,164 +19,102 @@ Map<ShortcutActivator, Intent> _createShortcuts() {
       (!kIsWeb && (Platform.isMacOS || Platform.isIOS));
   final shortcuts = {
     // Focus / Selection
-    // Up
-    SingleActivator(LogicalKeyboardKey.arrowUp): FocusUpIntent(
-      SelectionMode.single,
-    ),
-    SingleActivator(LogicalKeyboardKey.arrowUp, shift: true): FocusUpIntent(
-      SelectionMode.range,
-    ),
+    SingleActivator(.arrowUp): FocusUpIntent(.single),
+    SingleActivator(.arrowDown): FocusDownIntent(.single),
+    SingleActivator(.arrowLeft): FocusLeftIntent(.single),
+    SingleActivator(.arrowRight): FocusRightIntent(.single),
+    SingleActivator(.home): FocusFirstIntent(.single),
+    SingleActivator(.end): FocusLastIntent(.single),
+    SingleActivator(.space): ActivateIntent(),
 
-    // Down
-    SingleActivator(LogicalKeyboardKey.arrowDown): FocusDownIntent(
-      SelectionMode.single,
-    ),
-    SingleActivator(LogicalKeyboardKey.arrowDown, shift: true): FocusDownIntent(
-      SelectionMode.range,
-    ),
+    SingleActivator(.arrowUp, shift: true): FocusUpIntent(.range),
+    SingleActivator(.arrowDown, shift: true): FocusDownIntent(.range),
+    SingleActivator(.arrowLeft, shift: true): FocusLeftIntent(.range),
+    SingleActivator(.arrowRight, shift: true): FocusRightIntent(.range),
+    SingleActivator(.home, shift: true): FocusFirstIntent(.range),
+    SingleActivator(.end, shift: true): FocusLastIntent(.range),
+    SingleActivator(.space, shift: true): ToggleSelectionIntent(),
 
-    // Left
-    SingleActivator(LogicalKeyboardKey.arrowLeft): FocusLeftIntent(
-      SelectionMode.single,
-    ),
-    SingleActivator(LogicalKeyboardKey.arrowLeft, shift: true): FocusLeftIntent(
-      SelectionMode.range,
-    ),
-
-    // Right
-    SingleActivator(LogicalKeyboardKey.arrowRight): FocusRightIntent(
-      SelectionMode.single,
-    ),
-    SingleActivator(LogicalKeyboardKey.arrowRight, shift: true):
-        FocusRightIntent(SelectionMode.range),
-
-    // Home
-    SingleActivator(LogicalKeyboardKey.home): FocusFirstIntent(
-      SelectionMode.single,
-    ),
-    SingleActivator(LogicalKeyboardKey.home, shift: true): FocusFirstIntent(
-      SelectionMode.range,
-    ),
-
-    // End
-    SingleActivator(LogicalKeyboardKey.end): FocusLastIntent(
-      SelectionMode.single,
-    ),
-    SingleActivator(LogicalKeyboardKey.end, shift: true): FocusLastIntent(
-      SelectionMode.range,
-    ),
+    SingleActivator(.enter): ActivateIntent(),
+    SingleActivator(.space): ActivateIntent(),
+    SingleActivator(.f2): RenameIntent(),
+    SingleActivator(.f5): RefreshIntent(),
   };
 
   if (isApple) {
     shortcuts.addAll({
+      // Selection
+      SingleActivator(.arrowUp, meta: true): FocusUpIntent(.noChange),
+      SingleActivator(.arrowDown, meta: true): FocusDownIntent(.noChange),
+      SingleActivator(.arrowLeft, meta: true): FocusLeftIntent(.noChange),
+      SingleActivator(.arrowRight, meta: true): FocusRightIntent(.noChange),
+      SingleActivator(.home, meta: true): FocusFirstIntent(.noChange),
+      SingleActivator(.end, meta: true): FocusLastIntent(.noChange),
+      SingleActivator(.space, meta: true): ToggleSelectionIntent(),
+
       // Navigation
-      SingleActivator(LogicalKeyboardKey.arrowUp, meta: true): NavUpIntent(),
-      SingleActivator(LogicalKeyboardKey.keyH, meta: true): NavHomeIntent(),
-      SingleActivator(LogicalKeyboardKey.keyF, meta: true): FocusSearchIntent(),
-      SingleActivator(LogicalKeyboardKey.arrowLeft, meta: true):
-          NavBackIntent(),
-      SingleActivator(LogicalKeyboardKey.bracketLeft, meta: true):
-          NavBackIntent(),
-      SingleActivator(LogicalKeyboardKey.arrowRight, meta: true):
-          NavForwardIntent(),
-      SingleActivator(LogicalKeyboardKey.bracketRight, meta: true):
-          NavForwardIntent(),
+      // SingleActivator(.arrowUp, meta: true): NavUpIntent(),
+      // SingleActivator(.arrowDown, meta: true): ActivateIntent(),
+      // SingleActivator(.arrowLeft, meta: true): NavBackIntent(),
+      // SingleActivator(.arrowRight, meta: true): NavForwardIntent(),
+      SingleActivator(.bracketLeft, meta: true): NavBackIntent(),
+      SingleActivator(.bracketRight, meta: true): NavForwardIntent(),
+      SingleActivator(.keyH, meta: true): NavHomeIntent(),
+      SingleActivator(.keyF, meta: true): FocusSearchIntent(),
 
       // Creation in parent folder
-      SingleActivator(LogicalKeyboardKey.keyN, meta: true, shift: true):
-          NewFolderIntent(),
-      SingleActivator(LogicalKeyboardKey.keyU, meta: true): UploadFilesIntent(),
-      SingleActivator(LogicalKeyboardKey.keyU, meta: true, shift: true):
-          UploadFolderIntent(),
+      SingleActivator(.keyN, meta: true, shift: true): NewFolderIntent(),
+      SingleActivator(.keyU, meta: true): UploadFilesIntent(),
+      SingleActivator(.keyU, meta: true, shift: true): UploadFolderIntent(),
 
       // Selection
-      SingleActivator(LogicalKeyboardKey.keyA, meta: true): SelectAllIntent(),
-      SingleActivator(LogicalKeyboardKey.arrowDown, meta: true):
-          ActivateIntent(),
-      // TODO: show properties
-      SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
-      SingleActivator(LogicalKeyboardKey.enter): RenameIntent(),
-      SingleActivator(LogicalKeyboardKey.delete, meta: true): DeleteIntent(
-        false,
-      ),
-      SingleActivator(LogicalKeyboardKey.delete, meta: true, shift: true):
-          DeleteIntent(true),
+      SingleActivator(.keyA, meta: true): SelectAllIntent(),
+      SingleActivator(.delete, meta: true): DeleteIntent(false),
+      SingleActivator(.delete, meta: true, shift: true): DeleteIntent(true),
 
       // Clipboard
-      SingleActivator(LogicalKeyboardKey.keyC, meta: true):
-          CopyToClipboardIntent(false),
-      SingleActivator(LogicalKeyboardKey.keyX, meta: true):
-          CopyToClipboardIntent(true),
-      SingleActivator(LogicalKeyboardKey.keyV, meta: true):
-          PasteFromClipboardIntent(),
+      SingleActivator(.keyC, meta: true): CopyToClipboardIntent(false),
+      SingleActivator(.keyX, meta: true): CopyToClipboardIntent(true),
+      SingleActivator(.keyV, meta: true): PasteFromClipboardIntent(),
 
       // Misc
-      SingleActivator(LogicalKeyboardKey.f5): RefreshIntent(),
-      SingleActivator(LogicalKeyboardKey.keyR, meta: true): RefreshIntent(),
+      SingleActivator(.keyR, meta: true): RefreshIntent(),
     });
   } else {
-    // Disjoint multi-select
     shortcuts.addAll({
-      SingleActivator(LogicalKeyboardKey.arrowUp, control: true): FocusUpIntent(
-        SelectionMode.noChange,
-      ),
-      SingleActivator(LogicalKeyboardKey.arrowDown, control: true):
-          FocusDownIntent(SelectionMode.noChange),
-      SingleActivator(LogicalKeyboardKey.arrowLeft, control: true):
-          FocusLeftIntent(SelectionMode.noChange),
-      SingleActivator(LogicalKeyboardKey.arrowRight, control: true):
-          FocusRightIntent(SelectionMode.noChange),
-      SingleActivator(LogicalKeyboardKey.home, control: true): FocusFirstIntent(
-        SelectionMode.noChange,
-      ),
-      SingleActivator(LogicalKeyboardKey.end, control: true): FocusLastIntent(
-        SelectionMode.noChange,
-      ),
-      SingleActivator(LogicalKeyboardKey.space, control: true):
-          ToggleSelectionIntent(),
-    });
+      // Selection
+      SingleActivator(.arrowUp, control: true): FocusUpIntent(.noChange),
+      SingleActivator(.arrowDown, control: true): FocusDownIntent(.noChange),
+      SingleActivator(.arrowLeft, control: true): FocusLeftIntent(.noChange),
+      SingleActivator(.arrowRight, control: true): FocusRightIntent(.noChange),
+      SingleActivator(.home, control: true): FocusFirstIntent(.noChange),
+      SingleActivator(.end, control: true): FocusLastIntent(.noChange),
+      SingleActivator(.space, control: true): ToggleSelectionIntent(),
 
-    shortcuts.addAll({
       // Navigation
-      SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): NavUpIntent(),
-      SingleActivator(LogicalKeyboardKey.keyH, control: true): NavHomeIntent(),
-      SingleActivator(LogicalKeyboardKey.keyF, control: true):
-          FocusSearchIntent(),
-      SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): NavBackIntent(),
-      SingleActivator(LogicalKeyboardKey.arrowRight, alt: true):
-          NavForwardIntent(),
+      SingleActivator(.arrowUp, alt: true): NavUpIntent(),
+      SingleActivator(.arrowLeft, alt: true): NavBackIntent(),
+      SingleActivator(.arrowRight, alt: true): NavForwardIntent(),
+      SingleActivator(.keyH, control: true): NavHomeIntent(),
+      SingleActivator(.keyF, control: true): FocusSearchIntent(),
 
       // Creation in parent folder
-      SingleActivator(LogicalKeyboardKey.keyN, control: true):
-          NewFolderIntent(),
-      SingleActivator(LogicalKeyboardKey.keyU, control: true):
-          UploadFilesIntent(),
-      SingleActivator(LogicalKeyboardKey.keyU, control: true, shift: true):
-          UploadFolderIntent(),
+      SingleActivator(.keyN, control: true): NewFolderIntent(),
+      SingleActivator(.keyU, control: true): UploadFilesIntent(),
+      SingleActivator(.keyU, control: true, shift: true): UploadFolderIntent(),
 
       // Selection
-      SingleActivator(LogicalKeyboardKey.keyA, control: true):
-          SelectAllIntent(),
-      SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
-      SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
-      SingleActivator(LogicalKeyboardKey.keyE, control: true): RenameIntent(),
-      SingleActivator(LogicalKeyboardKey.f2): RenameIntent(),
-      SingleActivator(LogicalKeyboardKey.delete): DeleteIntent(false),
-      SingleActivator(LogicalKeyboardKey.delete, shift: true): DeleteIntent(
-        true,
-      ),
+      SingleActivator(.keyA, control: true): SelectAllIntent(),
+      SingleActivator(.delete): DeleteIntent(false),
+      SingleActivator(.delete, shift: true): DeleteIntent(true),
 
       // Clipboard
-      SingleActivator(LogicalKeyboardKey.keyC, control: true):
-          CopyToClipboardIntent(false),
-      SingleActivator(LogicalKeyboardKey.keyX, control: true):
-          CopyToClipboardIntent(true),
-      SingleActivator(LogicalKeyboardKey.keyV, control: true):
-          PasteFromClipboardIntent(),
+      SingleActivator(.keyC, control: true): CopyToClipboardIntent(false),
+      SingleActivator(.keyX, control: true): CopyToClipboardIntent(true),
+      SingleActivator(.keyV, control: true): PasteFromClipboardIntent(),
 
       // Misc
-      SingleActivator(LogicalKeyboardKey.f5): RefreshIntent(),
-      SingleActivator(LogicalKeyboardKey.keyR, control: true): RefreshIntent(),
+      SingleActivator(.keyR, control: true): RefreshIntent(),
     });
   }
   return shortcuts;
