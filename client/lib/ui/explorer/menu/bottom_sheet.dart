@@ -13,32 +13,74 @@ void showMenuOptionsBottomSheet(
   Iterable<Resource> resources,
 ) async {
   final account = context.read<PhylumAccount>();
-  final items = await buildPopupMenuItems(account, options, resources);
+  final items = (await buildPopupMenuItems(
+    account,
+    options,
+    resources,
+  )).toList(growable: false);
   if (!context.mounted) return;
   final selected = await showModalBottomSheet(
+    showDragHandle: true,
     context: context,
-    builder: (context) => ListView(
-      shrinkWrap: true,
-      children: [
-        DecoratedBox(
-          position: DecorationPosition.foreground,
-          decoration: BoxDecoration(
-            border: Border(bottom: Divider.createBorderSide(context)),
-          ),
-          child: resources.length == 1
-              ? ListTile(
-                  leading: resources.first.getIcon(account),
-                  title: Text(
-                    resources.first.name,
-                    softWrap: false,
-                    overflow: TextOverflow.fade,
-                    maxLines: 1,
+    isScrollControlled: true,
+    builder: (context) => DraggableScrollableSheet(
+      initialChildSize: 0.4,
+      minChildSize: 0.2,
+      maxChildSize: 1.0,
+      expand: false,
+      snap: true,
+      snapSizes: [0.4, 1.0],
+      builder: (context, controller) {
+        return SafeArea(
+          child: CustomScrollView(
+            controller: controller,
+            slivers: [
+              PinnedHeaderSliver(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    // border: Border(bottom: Divider.createBorderSide(context)),
+                    color: Theme.of(context).colorScheme.surfaceContainerLow,
                   ),
-                )
-              : ListTile(title: Text('${resources.length} items')),
-        ),
-        ...items,
-      ],
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      left: 16.0,
+                      right: 16,
+                      bottom: 8,
+                    ),
+                    child: Row(
+                      spacing: 16,
+                      children: [
+                        if (resources.length == 1)
+                          IconTheme(
+                            data: IconThemeData(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                            child: resources.first.getIcon(account),
+                          ),
+                        resources.length == 1
+                            ? Text(
+                                resources.first.name,
+                                softWrap: false,
+                                overflow: TextOverflow.fade,
+                                maxLines: 1,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              )
+                            : Text(
+                                '${resources.length} items',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SliverList(delegate: SliverChildListDelegate(items)),
+            ],
+          ),
+        );
+      },
     ),
   );
 
