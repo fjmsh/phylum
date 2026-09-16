@@ -6,43 +6,61 @@ import 'menu_option.dart';
 
 typedef MenuOptionGroups = Iterable<Iterable<MenuOption>>;
 
-Future<Iterable<PopupMenuEntry<MenuOption>>> buildPopupMenuItems(
+Future<List<Iterable<MenuOption>>> getEnabledOptions(
   PhylumAccount account,
-  MenuOptionGroups options,
-  Iterable<Resource> resources, {
-  bool hideDisabled = true,
-  void Function(MenuOption)? onTap,
-}) async {
-  final availableOptions = await Future.wait(
-    options.map(
+  MenuOptionGroups groups,
+  Iterable<Resource> resources,
+) async {
+  return Future.wait(
+    // Filter out disabled options
+    groups.map(
       (group) async => Future.wait(
-        group.map((o) async {
-          final enabled = await o.filter(account, resources);
-          return hideDisabled && !enabled
-              ? null
-              : PopupMenuItem(
-                  onTap: onTap == null ? null : () => onTap(o),
-                  value: o,
-                  enabled: enabled,
-                  child: ListTile(
-                    visualDensity: VisualDensity.adaptivePlatformDensity,
-                    leading: Icon(o.icon),
-                    title: Text(o.text),
-                  ),
-                );
+        group.map((option) async {
+          return await option.filter(account, resources) ? option : null;
         }),
-      ).then((items) => items.whereType<PopupMenuEntry<MenuOption>>()),
+      ).then((options) => options.whereType<MenuOption>()),
     ),
   );
+}
 
-  final m = availableOptions.fold(<PopupMenuEntry<MenuOption>>[], (acc, e) {
-    if (e.isEmpty) {
-      return acc;
-    }
-    if (acc.isEmpty) {
-      return e.toList(growable: false);
-    }
-    return [...acc, const PopupMenuDivider(), ...e];
-  });
-  return m;
+Future<Iterable<Widget>> buildPopupMenuItems(
+  PhylumAccount account,
+  MenuOptionGroups groups,
+  Iterable<Resource> resources, {
+  required void Function(MenuOption)? onTap,
+}) async {
+  return Future.wait(
+        // Filter out disabled options
+        groups.map(
+          (group) async => Future.wait(
+            group.map((option) async {
+              return await option.filter(account, resources) ? option : null;
+            }),
+          ).then((options) => options.whereType<MenuOption>()),
+        ),
+      )
+      .then(
+        // Create Widgets
+        (groups) => groups.map(
+          (group) => group.map(
+            (option) => ListTile(
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+              leading: Icon(option.icon),
+              title: Text(option.text),
+            ),
+          ),
+        ),
+      )
+      .then(
+        // Flatten with dividers
+        (items) => items.fold<Iterable<Widget>>([], (acc, e) {
+          if (e.isEmpty) {
+            return acc;
+          }
+          if (acc.isEmpty) {
+            return e.toList(growable: false);
+          }
+          return [...acc, const Divider(), ...e];
+        }),
+      );
 }

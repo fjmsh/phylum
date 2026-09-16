@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
+import 'package:phylum/ui/explorer/menu/context_menu_helper.dart';
 import 'package:phylum/ui/explorer/menu/menu_option.dart';
 import 'package:phylum/ui/explorer/menu/option_groups.dart';
 import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
@@ -30,28 +30,26 @@ class FolderGestureHandler extends StatelessWidget {
         final state = context.read<ExplorerState>();
         final options = state.location.folderOptions;
         final resource = state.folder;
-        if (options == null) return;
-        final position = RelativeRect.fromLTRB(
-          details.globalPosition.dx,
-          details.globalPosition.dy,
-          details.globalPosition.dx,
-          details.globalPosition.dy,
-        );
-        final resources = [if (resource != null) resource];
-        final items = await buildPopupMenuItems(
-          context.read<PhylumAccount>(),
+        if (options == null || resource == null) return;
+
+        final resources = [resource];
+
+        final groups = await getEnabledOptions(
+          context.read(),
           options,
           resources,
         );
         if (!context.mounted) return;
-        final selection = await showMenu(
+        ContextMenuHelper.show(
           context: context,
-          position: position,
-          items: items.toList(growable: false),
+          position: details.globalPosition,
+          groups: groups,
+          onOptionSelected: (option) {
+            if (context.mounted) {
+              handleOption(context, resources, option);
+            }
+          },
         );
-        if (context.mounted && selection != null) {
-          handleOption(context, resources, selection);
-        }
       },
       child: child,
     );

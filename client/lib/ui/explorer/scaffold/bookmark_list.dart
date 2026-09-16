@@ -6,9 +6,8 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
+import 'package:phylum/ui/explorer/menu/context_menu_helper.dart';
 import 'package:phylum/ui/explorer/shortcuts/intents.dart';
-import 'package:phylum/ui/explorer/menu/menu_option.dart';
-import 'package:phylum/ui/explorer/menu/option_groups.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:provider/provider.dart';
 
@@ -104,47 +103,41 @@ class BookmarkItem extends StatelessWidget {
 
   void showBookmarkDialog(
     BuildContext context,
-    Offset offset,
+    Offset position,
     SelectBookmarksResult bookmark,
   ) async {
-    final position = RelativeRect.fromLTRB(
-      offset.dx,
-      offset.dy,
-      offset.dx,
-      offset.dy,
-    );
     final account = context.read<PhylumAccount>();
-    final items = await buildPopupMenuItems(account, [
-      [MenuOption.bookmarkEdit, MenuOption.bookmarkRemove],
-    ], []);
-    if (!context.mounted) return;
-    final selection = await showMenu(
+
+    ContextMenuHelper.show(
       context: context,
       position: position,
-      items: items.toList(growable: false),
-    );
-    if (context.mounted && selection != null) {
-      if (selection == MenuOption.bookmarkEdit) {
-        final name = await showInputDialog(
-          context,
-          autocorrect: false,
-          title: 'Edit Bookmark',
-          labelText: 'Name',
-          preset: bookmark.name,
-        );
-        if (name == null || name.trim().isEmpty || name == bookmark.name) {
-          return;
+      groups: [
+        [.bookmarkEdit, .bookmarkRemove],
+      ],
+      onOptionSelected: (option) async {
+        if (option == .bookmarkEdit) {
+          if (!context.mounted) return;
+          final name = await showInputDialog(
+            context,
+            autocorrect: false,
+            title: 'Edit Bookmark',
+            labelText: 'Name',
+            preset: bookmark.name,
+          );
+          if (name == null || name.trim().isEmpty || name == bookmark.name) {
+            return;
+          }
+          account.bookmarkRepository.addBookmarkDirect(
+            resourceId: bookmark.resourceId,
+            dir: bookmark.dir,
+            name: name,
+          );
+        } else if (option == .bookmarkRemove) {
+          account.bookmarkRepository.removeBookmark(
+            resourceId: bookmark.resourceId,
+          );
         }
-        account.bookmarkRepository.addBookmarkDirect(
-          resourceId: bookmark.resourceId,
-          dir: bookmark.dir,
-          name: name,
-        );
-      } else if (selection == MenuOption.bookmarkRemove) {
-        account.bookmarkRepository.removeBookmark(
-          resourceId: bookmark.resourceId,
-        );
-      }
-    }
+      },
+    );
   }
 }
