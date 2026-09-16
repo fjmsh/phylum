@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/ui/explorer/menu/context_menu_helper.dart';
 import 'package:phylum/ui/explorer/util/clipboard.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/libphylum/actions/action_resource_delete.dart';
@@ -58,18 +59,26 @@ class ExplorerActions extends StatelessWidget {
         SelectAllIntent: CallbackAction<SelectAllIntent>(
           onInvoke: (i) => context.read<ExplorerController>().updateSelection(
             (i) => i,
-            SelectionMode.all,
+            .all,
             true,
           ),
         ),
         DismissIntent: CallbackAction<DismissIntent>(
           onInvoke: (i) {
+            if (ContextMenuHelper.remove()) {
+              _explorerFocusNode.requestFocus();
+              context.read<ExplorerController>().updateSelection(
+                (i) => i,
+                .noChange,
+                true,
+              );
+              return;
+            }
             context.read<ExplorerController>().updateSelection(
               (i) => i,
-              SelectionMode.none,
+              .none,
               true,
             );
-            _explorerFocusNode.requestFocus();
             return null;
           },
         ),
