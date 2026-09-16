@@ -124,22 +124,30 @@ class _MouseGestureHandlerState extends State<_MouseGestureHandler> {
   Widget build(BuildContext context) {
     return RawGestureDetector(
       gestures: {
+        TapGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+              () => TapGestureRecognizer(
+                supportedDevices: {.mouse, .trackpad},
+                allowedButtonsFilter: (buttons) => buttons == kSecondaryButton,
+              ),
+              (recognizer) {
+                recognizer.onSecondaryTapUp = (details) {
+                  if (HardwareKeyboard.instance.isShiftPressed ||
+                      HardwareKeyboard.instance.isControlPressed ||
+                      HardwareKeyboard.instance.isMetaPressed) {
+                    return;
+                  }
+                  _showContextMenu(context, details.globalPosition);
+                };
+              },
+            ),
         SerialTapGestureRecognizer:
             GestureRecognizerFactoryWithHandlers<SerialTapGestureRecognizer>(
               () => SerialTapGestureRecognizer(
                 supportedDevices: {.mouse, .trackpad},
+                allowedButtonsFilter: (buttons) => buttons == kPrimaryButton,
               ),
               (recognizer) {
-                recognizer.onSerialTapDown = (details) {
-                  if (details.buttons == kSecondaryButton) {
-                    if (HardwareKeyboard.instance.isShiftPressed ||
-                        HardwareKeyboard.instance.isControlPressed ||
-                        HardwareKeyboard.instance.isMetaPressed) {
-                      return;
-                    }
-                    _showContextMenu(context, details.globalPosition);
-                  }
-                };
                 recognizer.onSerialTapUp = (details) {
                   if (details.count == 1) {
                     Focus.maybeOf(context)?.requestFocus();
@@ -180,17 +188,18 @@ class _MouseGestureHandlerState extends State<_MouseGestureHandler> {
   void _showContextMenu(BuildContext context, Offset offset) async {
     final state = context.read<ExplorerState>();
     var resources = state.selected;
+
     if (!state.isSelected(widget.resourceId)) {
       context.read<ExplorerController>().updateSelection(
         (i) => widget.resourceIndex,
-        SelectionMode.single,
+        .single,
         false,
       );
       resources = context.read<ExplorerState>().selected;
     } else {
       context.read<ExplorerController>().updateSelection(
         null,
-        SelectionMode.noChange,
+        .noChange,
         false,
       );
     }
