@@ -1,5 +1,7 @@
-import 'dart:ui';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phylum/libphylum/db/db.dart';
@@ -11,6 +13,12 @@ import 'package:phylum/ui/explorer/menu/menu_option.dart';
 import 'package:phylum/ui/explorer/menu/option_groups.dart';
 import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
 import 'package:provider/provider.dart';
+
+final isApple =
+    (kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.macOS ||
+            defaultTargetPlatform == TargetPlatform.iOS)) ||
+    (!kIsWeb && (Platform.isMacOS || Platform.isIOS));
 
 class ResourceItemGestureHandler extends StatefulWidget {
   final int index;
@@ -91,114 +99,116 @@ class _TouchGestureHandler extends StatelessWidget {
                 false,
               );
             },
+      child: child,
     );
   }
 }
 
-class _MouseGestureHandler extends StatefulWidget {
+class _MouseGestureHandler extends StatelessWidget {
   final int resourceIndex;
   final String resourceId;
   final Widget child;
 
   const _MouseGestureHandler({
-    required this.resourceIndex,
     required this.resourceId,
+    required this.resourceIndex,
     required this.child,
-  }) : super();
-
-  @override
-  State<_MouseGestureHandler> createState() => _MouseGestureHandlerState();
-}
-
-class _MouseGestureHandlerState extends State<_MouseGestureHandler> {
-  bool deferHandling = false;
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      supportedDevices: {PointerDeviceKind.mouse, PointerDeviceKind.trackpad},
-      onTapDown: (details) {
-        Focus.maybeOf(context)?.requestFocus();
-        final mode = HardwareKeyboard.instance.isControlPressed
-            ? SelectionMode.toggle
-            : HardwareKeyboard.instance.isShiftPressed
-            ? SelectionMode.range
-            : SelectionMode.single;
-        if (context.read<ExplorerState>().isSelected(widget.resourceId) &&
-            mode == SelectionMode.single) {
-          deferHandling = true;
-          context.read<ExplorerController>().updateSelection(
-            (_) => widget.resourceIndex,
-            SelectionMode.noChange,
-            false,
-          );
-        } else {
-          deferHandling = false;
-          context.read<ExplorerController>().updateSelection(
-            (_) => widget.resourceIndex,
-            mode,
-            false,
-          );
-        }
+    return RawGestureDetector(
+      gestures: {
+        SerialTapGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<SerialTapGestureRecognizer>(
+              () => SerialTapGestureRecognizer(
+                supportedDevices: {.mouse, .trackpad},
+              ),
+              (recognizer) {
+                recognizer.onSerialTapDown = (details) {
+                  if (details.buttons == kSecondaryButton) {
+                    if (HardwareKeyboard.instance.isShiftPressed ||
+                        HardwareKeyboard.instance.isControlPressed ||
+                        HardwareKeyboard.instance.isMetaPressed) {
+                      return;
+                    }
+                    showContextMenu(context, details.globalPosition);
+                  }
+                };
+                recognizer.onSerialTapUp = (details) {
+                  if (details.count == 1) {
+                    Focus.maybeOf(context)?.requestFocus();
+
+                    if (isApple && HardwareKeyboard.instance.isControlPressed) {
+                      if (HardwareKeyboard.instance.isShiftPressed ||
+                          HardwareKeyboard.instance.isMetaPressed) {
+                        return;
+                      }
+                      showContextMenu(context, details.globalPosition);
+                      return;
+                    }
+
+                    final mode =
+                        ((isApple && HardwareKeyboard.instance.isMetaPressed) ||
+                            (!isApple &&
+                                HardwareKeyboard.instance.isControlPressed))
+                        ? SelectionMode.toggle
+                        : HardwareKeyboard.instance.isShiftPressed
+                        ? SelectionMode.range
+                        : SelectionMode.single;
+                    context.read<ExplorerController>().updateSelection(
+                      (_) => resourceIndex,
+                      mode,
+                      false,
+                    );
+                  } else if (details.count == 2) {
+                    _openResource(context, resourceIndex);
+                  }
+                };
+              },
+            ),
       },
-      onTap: () {
-        if (deferHandling) {
-          deferHandling = false;
-          context.read<ExplorerController>().updateSelection(
-            (_) => widget.resourceIndex,
-            SelectionMode.single,
-            false,
-          );
-        }
-      },
-      onSecondaryTapUp: (details) async {
-        ExplorerState state = context.read<ExplorerState>();
-        if (!state.isSelected(widget.resourceId)) {
-          final mode =
-              HardwareKeyboard.instance.isShiftPressed ||
-                  HardwareKeyboard.instance.isControlPressed
-              ? SelectionMode.add
-              : SelectionMode.single;
-          context.read<ExplorerController>().updateSelection(
-            (i) => widget.resourceIndex,
-            mode,
-            false,
-          );
-          state = context.read<ExplorerState>();
-        } else {
-          context.read<ExplorerController>().updateSelection(
-            null,
-            SelectionMode.noChange,
-            false,
-          );
-        }
-        final position = RelativeRect.fromLTRB(
-          details.globalPosition.dx,
-          details.globalPosition.dy,
-          details.globalPosition.dx,
-          details.globalPosition.dy,
-        );
-        final resources = state.selected;
-        final options = state.location.selectedResourceOptions;
-        final items = await buildPopupMenuItems(
-          context.read<PhylumAccount>(),
-          options,
-          resources,
-        );
-        if (!context.mounted) return;
-        final selection = await showMenu(
-          context: context,
-          position: position,
-          items: items.toList(growable: false),
-        );
-        if (context.mounted && selection != null) {
-          handleOption(context, resources, selection);
-        }
-      },
-      onDoubleTap: () => _openResource(context, widget.resourceIndex),
-      child: widget.child,
+      child: child,
     );
+  }
+
+  void showContextMenu(BuildContext context, Offset offset) async {
+    final state = context.read<ExplorerState>();
+    var selected = state.selected;
+    if (!state.isSelected(resourceId)) {
+      context.read<ExplorerController>().updateSelection(
+        (i) => resourceIndex,
+        SelectionMode.single,
+        false,
+      );
+      selected = context.read<ExplorerState>().selected;
+    } else {
+      context.read<ExplorerController>().updateSelection(
+        null,
+        SelectionMode.noChange,
+        false,
+      );
+    }
+    final position = RelativeRect.fromLTRB(
+      offset.dx,
+      offset.dy,
+      offset.dx,
+      offset.dy,
+    );
+    final items = await buildPopupMenuItems(
+      context.read<PhylumAccount>(),
+      state.location.selectedResourceOptions,
+      selected,
+    );
+    if (!context.mounted) return;
+    final selection = await showMenu(
+      context: context,
+      position: position,
+      items: items.toList(growable: false),
+    );
+    if (context.mounted && selection != null) {
+      handleOption(context, selected, selection);
+    }
   }
 }
 
