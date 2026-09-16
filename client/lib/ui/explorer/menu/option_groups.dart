@@ -9,9 +9,10 @@ typedef MenuOptionGroups = Iterable<Iterable<MenuOption>>;
 Future<Iterable<PopupMenuEntry<MenuOption>>> buildPopupMenuItems(
   PhylumAccount account,
   MenuOptionGroups options,
-  Iterable<Resource> resources, [
+  Iterable<Resource> resources, {
   bool hideDisabled = true,
-]) async {
+  void Function(MenuOption)? onTap,
+}) async {
   final availableOptions = await Future.wait(
     options.map(
       (group) async => Future.wait(
@@ -20,6 +21,7 @@ Future<Iterable<PopupMenuEntry<MenuOption>>> buildPopupMenuItems(
           return hideDisabled && !enabled
               ? null
               : PopupMenuItem(
+                  onTap: onTap == null ? null : () => onTap(o),
                   value: o,
                   enabled: enabled,
                   child: ListTile(
@@ -40,7 +42,7 @@ Future<Iterable<PopupMenuEntry<MenuOption>>> buildPopupMenuItems(
     if (acc.isEmpty) {
       return e.toList(growable: false);
     }
-    return [...acc, PopupMenuDivider(), ...e];
+    return [...acc, const PopupMenuDivider(), ...e];
   });
   return m;
 }

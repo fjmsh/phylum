@@ -17,6 +17,9 @@ void showMenuOptionsBottomSheet(
     account,
     options,
     resources,
+    onTap: (selection) {
+      Navigator.of(context).pop(selection);
+    },
   )).toList(growable: false);
   if (!context.mounted) return;
   final selected = await showModalBottomSheet(

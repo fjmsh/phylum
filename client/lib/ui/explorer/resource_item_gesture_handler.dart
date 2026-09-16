@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -104,7 +105,7 @@ class _TouchGestureHandler extends StatelessWidget {
   }
 }
 
-class _MouseGestureHandler extends StatelessWidget {
+class _MouseGestureHandler extends StatefulWidget {
   final int resourceIndex;
   final String resourceId;
   final Widget child;
@@ -114,6 +115,13 @@ class _MouseGestureHandler extends StatelessWidget {
     required this.resourceIndex,
     required this.child,
   });
+
+  @override
+  State<_MouseGestureHandler> createState() => _MouseGestureHandlerState();
+}
+
+class _MouseGestureHandlerState extends State<_MouseGestureHandler> {
+  final _contextMenuController = ContextMenuController();
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +140,7 @@ class _MouseGestureHandler extends StatelessWidget {
                         HardwareKeyboard.instance.isMetaPressed) {
                       return;
                     }
-                    showContextMenu(context, details.globalPosition);
+                    _showContextMenu(context, details.globalPosition);
                   }
                 };
                 recognizer.onSerialTapUp = (details) {
@@ -144,7 +152,7 @@ class _MouseGestureHandler extends StatelessWidget {
                           HardwareKeyboard.instance.isMetaPressed) {
                         return;
                       }
-                      showContextMenu(context, details.globalPosition);
+                      _showContextMenu(context, details.globalPosition);
                       return;
                     }
 
@@ -157,27 +165,27 @@ class _MouseGestureHandler extends StatelessWidget {
                         ? SelectionMode.range
                         : SelectionMode.single;
                     context.read<ExplorerController>().updateSelection(
-                      (_) => resourceIndex,
+                      (_) => widget.resourceIndex,
                       mode,
                       false,
                     );
                   } else if (details.count == 2) {
-                    _openResource(context, resourceIndex);
+                    _openResource(context, widget.resourceIndex);
                   }
                 };
               },
             ),
       },
-      child: child,
+      child: widget.child,
     );
   }
 
-  void showContextMenu(BuildContext context, Offset offset) async {
+  void _showContextMenu(BuildContext context, Offset offset) async {
     final state = context.read<ExplorerState>();
     var selected = state.selected;
-    if (!state.isSelected(resourceId)) {
+    if (!state.isSelected(widget.resourceId)) {
       context.read<ExplorerController>().updateSelection(
-        (i) => resourceIndex,
+        (i) => widget.resourceIndex,
         SelectionMode.single,
         false,
       );
@@ -189,26 +197,66 @@ class _MouseGestureHandler extends StatelessWidget {
         false,
       );
     }
-    final position = RelativeRect.fromLTRB(
-      offset.dx,
-      offset.dy,
-      offset.dx,
-      offset.dy,
-    );
-    final items = await buildPopupMenuItems(
+    // final position = RelativeRect.fromLTRB(
+    //   offset.dx,
+    //   offset.dy,
+    //   offset.dx,
+    //   offset.dy,
+    // );
+    final items = (await buildPopupMenuItems(
       context.read<PhylumAccount>(),
       state.location.selectedResourceOptions,
       selected,
-    );
+      onTap: (option) {
+        _contextMenuController.remove();
+        handleOption(context, selected, option);
+      },
+    )).toList(growable: false);
+    ContextMenuController.removeAny();
+
     if (!context.mounted) return;
-    final selection = await showMenu(
+
+    final size = MediaQuery.sizeOf(context);
+    final midY = size.height / 2;
+    final width = 300.0;
+    final height = min(midY, items.fold(0.0, (acc, e) => acc + e.height));
+
+    _contextMenuController.show(
       context: context,
-      position: position,
-      items: items.toList(growable: false),
+      contextMenuBuilder: (context) {
+        final x = min(offset.dx, size.width - width);
+        // final y = min(offset.dy, size.height - height);
+        return Positioned(
+          left: x,
+          top: offset.dy < midY ? offset.dy : null,
+          bottom: offset.dy >= midY ? (size.height - offset.dy) : null,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: width,
+              maxWidth: width,
+              maxHeight: height,
+            ),
+            child: TapRegion(
+              onTapOutside: (event) => _contextMenuController.remove(),
+              child: Material(
+                elevation: 4.0,
+                borderRadius: BorderRadius.circular(8),
+                child: ListView(shrinkWrap: true, children: items),
+              ),
+            ),
+          ),
+        );
+      },
     );
-    if (context.mounted && selection != null) {
-      handleOption(context, selected, selection);
-    }
+
+    // final selection = await showMenu(
+    //   context: context,
+    //   position: position,
+    //   items: items.toList(growable: false),
+    // );
+    // if (context.mounted && selection != null) {
+    //   handleOption(context, selected, selection);
+    // }
   }
 }
 
