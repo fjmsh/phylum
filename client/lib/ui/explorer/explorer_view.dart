@@ -10,6 +10,9 @@ import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/requests/bootstrap_request.dart';
 import 'package:phylum/ui/explorer/destination_picker/destination_picker.dart';
 import 'package:phylum/ui/explorer/menu/bottom_sheet.dart';
+import 'package:phylum/ui/explorer/menu/context_menu_helper.dart';
+import 'package:phylum/ui/explorer/menu/option_groups.dart';
+import 'package:phylum/ui/explorer/menu/option_handler.dart';
 import 'package:phylum/ui/explorer/shortcuts/actions.dart';
 import 'package:phylum/ui/explorer/folder_gesture_handler.dart';
 import 'package:phylum/ui/explorer/item_views/folder_view_type.dart';
@@ -45,6 +48,7 @@ class ExplorerView extends StatefulWidget {
 
 class _ExplorerViewState extends State<ExplorerView> {
   final _refreshKey = GlobalKey<RefreshIndicatorState>();
+  final _selectedResourcesOptionsButtonKey = GlobalKey();
   late final AppLifecycleListener _listener;
   StreamSubscription? _intentSub;
 
@@ -190,15 +194,38 @@ class _ExplorerViewState extends State<ExplorerView> {
                           },
                         ),
                         trailing: IconButton(
-                          onPressed: () {
+                          key: _selectedResourcesOptionsButtonKey,
+                          onPressed: () async {
                             final state = context.read<ExplorerState>();
-                            final selected = state.selected;
-                            var options =
-                                state.location.selectedResourceOptions;
-                            showMenuOptionsBottomSheet(
-                              context,
-                              options,
-                              selected,
+                            final resources = state.selected;
+                            final renderBox =
+                                _selectedResourcesOptionsButtonKey
+                                        .currentContext
+                                        ?.findRenderObject()
+                                    as RenderBox?;
+
+                            final height = renderBox?.size.height ?? 0.0;
+
+                            final position =
+                                renderBox?.localToGlobal(Offset.zero) ??
+                                Offset.zero;
+
+                            final groups = await getEnabledOptions(
+                              context.read(),
+                              state.location.selectedResourceOptions,
+                              resources,
+                            );
+
+                            if (!context.mounted) return;
+                            ContextMenuHelper.show(
+                              context: context,
+                              position: position.translate(0, height),
+                              groups: groups,
+                              onOptionSelected: (option) {
+                                if (context.mounted) {
+                                  handleOption(context, resources, option);
+                                }
+                              },
                             );
                           },
                           icon: Icon(Icons.adaptive.more),
