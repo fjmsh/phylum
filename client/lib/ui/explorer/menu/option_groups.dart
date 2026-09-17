@@ -16,7 +16,7 @@ Future<List<Iterable<MenuOption>>> getEnabledOptions(
     groups.map(
       (group) async => Future.wait(
         group.map((option) async {
-          return await option.filter(account, resources) ? option : null;
+          return await option.enabled(account, resources) ? option : null;
         }),
       ).then((options) => options.whereType<MenuOption>()),
     ),
@@ -34,7 +34,7 @@ Future<Iterable<Widget>> buildPopupMenuItems(
         groups.map(
           (group) async => Future.wait(
             group.map((option) async {
-              return await option.filter(account, resources) ? option : null;
+              return await option.enabled(account, resources) ? option : null;
             }),
           ).then((options) => options.whereType<MenuOption>()),
         ),

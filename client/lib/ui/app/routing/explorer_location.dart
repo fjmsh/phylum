@@ -9,7 +9,6 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/requests/search_request.dart';
 import 'package:phylum/libphylum/requests/shared_resources_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
-import 'package:phylum/ui/explorer/menu/menu_option.dart';
 import 'package:phylum/ui/explorer/menu/option_groups.dart';
 
 sealed class ExplorerLocation {
@@ -26,19 +25,16 @@ sealed class ExplorerLocation {
   Stream<List<Resource>> items(PhylumAccount account);
 
   MenuOptionGroups get selectedResourceOptions => [
-    [MenuOption.details, MenuOption.copyURL],
     [
-      MenuOption.download,
-      if (!kIsWeb && Platform.isAndroid) MenuOption.share,
-      if (!kIsWeb) MenuOption.openFile,
+      .details,
+      .download,
+      if (!kIsWeb && Platform.isAndroid) .share,
+      if (!kIsWeb) .openFile,
+      .bookmarkAdd,
+      .bookmarkRemove,
     ],
-    [MenuOption.rename, MenuOption.move, MenuOption.copy, MenuOption.delete],
-    [
-      MenuOption.bookmarkAdd,
-      MenuOption.bookmarkRemove,
-      MenuOption.permissions,
-      MenuOption.publinks,
-    ],
+    [.rename, .move, .copy, .delete],
+    [.permissions, .publinks, .copyURL],
   ];
 
   MenuOptionGroups? get folderOptions;
@@ -82,14 +78,9 @@ class ExplorerLocationFolder extends ExplorerLocation {
 
   @override
   MenuOptionGroups get folderOptions => const [
-    [MenuOption.details, MenuOption.copyURL],
-    [MenuOption.newFolder, MenuOption.uploadFiles, MenuOption.uploadFolders],
-    [
-      MenuOption.bookmarkAdd,
-      MenuOption.bookmarkRemove,
-      MenuOption.permissions,
-      MenuOption.publinks,
-    ],
+    [.details, .bookmarkAdd, .bookmarkRemove],
+    [.newFolder, .uploadFiles, .uploadFolders],
+    [.permissions, .publinks, .copyURL],
   ];
 }
 
@@ -139,13 +130,13 @@ class ExplorerLocationTrash extends ExplorerLocation {
 
   @override
   MenuOptionGroups get selectedResourceOptions => const [
-    [MenuOption.details],
-    [MenuOption.restore, MenuOption.deleteForever],
+    [.details],
+    [.restore, .deleteForever],
   ];
 
   @override
   MenuOptionGroups? get folderOptions => [
-    [MenuOption.emptyTrash],
+    [.emptyTrash],
   ];
 }
 

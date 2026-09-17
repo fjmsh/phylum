@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/menu/context_menu_helper.dart';
-import 'package:phylum/ui/explorer/menu/menu_option.dart';
 import 'package:phylum/ui/explorer/menu/option_groups.dart';
+import 'package:phylum/ui/explorer/menu/option_handler.dart';
 import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
 import 'package:provider/provider.dart';
 

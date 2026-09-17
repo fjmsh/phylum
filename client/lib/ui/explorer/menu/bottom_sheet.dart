@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/ui/explorer/menu/option_handler.dart';
 import 'package:phylum/ui/explorer/util/icon_extensions.dart';
-import 'package:phylum/ui/explorer/menu/menu_option.dart';
 import 'package:provider/provider.dart';
 
 import 'option_groups.dart';
