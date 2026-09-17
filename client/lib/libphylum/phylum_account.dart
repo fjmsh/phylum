@@ -10,6 +10,7 @@ import 'package:phylum/libphylum/repositories/resource_version_repository.dart';
 import 'package:phylum/libphylum/repositories/trash_repository.dart';
 import 'package:phylum/libphylum/repositories/user_repository.dart';
 import 'package:phylum/libphylum/config/server_config.dart';
+import 'package:phylum/libphylum/requests/bootstrap_request.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/util/logging/logging.dart';
 import 'package:state_notifier/state_notifier.dart';
@@ -80,7 +81,15 @@ class PhylumAccount extends Account<PhylumAccount> {
        _initialConfig = config,
        super.create();
 
-  PhylumAccount.restore({required super.id}) : super.restore();
+  PhylumAccount.restore({required super.id}) : super.restore() {
+    late final void Function() removeListener;
+    removeListener = addListener((state) {
+      if (state == .ready) {
+        apiClient.sendRequest(BootstrapRequest(since: bootstrapUntil));
+        Future.microtask(removeListener);
+      }
+    });
+  }
 
   static Future<PhylumAccount> create({
     required Uri serverUrl,
