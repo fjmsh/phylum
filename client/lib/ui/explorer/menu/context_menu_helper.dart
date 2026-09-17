@@ -18,14 +18,24 @@ sealed class ContextMenuHelper {
     final items = groups
         .map(
           (group) => group.map(
-            (option) => ListTile(
-              visualDensity: VisualDensity.adaptivePlatformDensity,
-              leading: Icon(option.icon),
-              title: Text(option.text),
+            (option) => InkWell(
               onTap: () {
                 _controller.remove();
                 onOptionSelected(option);
               },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 6,
+                  horizontal: 12,
+                ),
+                child: Row(
+                  spacing: 12,
+                  children: [
+                    Icon(option.icon, size: 18.0),
+                    Text(option.text, style: const TextStyle(fontSize: 14)),
+                  ],
+                ),
+              ),
             ),
           ),
         )
@@ -36,10 +46,15 @@ sealed class ContextMenuHelper {
           if (acc.isEmpty) {
             return e.toList(growable: false);
           }
-          return [...acc, const Divider(), ...e];
+          return [...acc, const Divider(height: 12.0), ...e];
         })
         .toList(growable: false);
-    final list = ListView(shrinkWrap: true, children: items);
+    final list = ListView(
+      shrinkWrap: true,
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      physics: ClampingScrollPhysics(),
+      children: items,
+    );
     _controller.show(
       context: context,
       contextMenuBuilder: (context) {
@@ -121,12 +136,13 @@ class _PositionedContextMenuState extends State<PositionedContextMenu> {
         ),
         child: TapRegion(
           onTapOutside: (event) => _controller.remove(),
-          child: Material(
-            elevation: 4.0,
-            borderRadius: BorderRadius.circular(8),
-            child: Offstage(
-              offstage: _offstage,
-              child: Material(key: _offstageKey, child: widget.child),
+          child: Offstage(
+            offstage: _offstage,
+            child: Material(
+              key: _offstageKey,
+              elevation: 4.0,
+              borderRadius: BorderRadius.circular(8),
+              child: widget.child,
             ),
           ),
         ),
