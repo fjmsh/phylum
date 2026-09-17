@@ -3,13 +3,13 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/libphylum/requests/bootstrap_request.dart';
 import 'package:phylum/ui/explorer/destination_picker/destination_picker.dart';
-import 'package:phylum/ui/explorer/menu/bottom_sheet.dart';
 import 'package:phylum/ui/explorer/menu/context_menu_helper.dart';
 import 'package:phylum/ui/explorer/menu/option_groups.dart';
 import 'package:phylum/ui/explorer/menu/option_handler.dart';
@@ -48,7 +48,6 @@ class ExplorerView extends StatefulWidget {
 
 class _ExplorerViewState extends State<ExplorerView> {
   final _refreshKey = GlobalKey<RefreshIndicatorState>();
-  final _selectedResourcesOptionsButtonKey = GlobalKey();
   late final AppLifecycleListener _listener;
   StreamSubscription? _intentSub;
 
@@ -158,9 +157,10 @@ class _ExplorerViewState extends State<ExplorerView> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final selected = context.select<ExplorerState, int>(
-      (state) => state.selected.length,
+    final selected = context.select<ExplorerState, Iterable<Resource>>(
+      (state) => state.selected,
     );
+    final collapsed = width < maxViewportWidthSmall;
     return Shortcuts(
       shortcuts: shortcutsMap,
       child: ExplorerActions(
@@ -171,66 +171,22 @@ class _ExplorerViewState extends State<ExplorerView> {
           child: FolderGestureHandler(
             child: Column(
               children: [
-                selected == 0 || !widget._showSelectedItems
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: PathView(
-                              small: width < maxViewportWidthSmall,
-                            ),
-                          ),
-                          width < maxViewportWidthLarge
-                              ? const FolderViewIconButton()
-                              : const FolderViewToggleButton(),
-                        ],
-                      )
-                    : ListTile(
-                        title: Text('$selected Selected'),
-                        leading: IconButton(
-                          icon: Icon(Icons.close),
-                          onPressed: () {
-                            context.read<ExplorerController>().clearSelection();
-                          },
+                Padding(
+                  padding: collapsed
+                      ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+                      : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: widget._showSelectedItems && selected.isNotEmpty
+                      ? SelectedResourceView(resources: selected)
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(child: PathView(small: collapsed)),
+                            width < maxViewportWidthLarge
+                                ? const FolderViewIconButton()
+                                : const FolderViewToggleButton(),
+                          ],
                         ),
-                        trailing: IconButton(
-                          key: _selectedResourcesOptionsButtonKey,
-                          onPressed: () async {
-                            final state = context.read<ExplorerState>();
-                            final resources = state.selected;
-                            final renderBox =
-                                _selectedResourcesOptionsButtonKey
-                                        .currentContext
-                                        ?.findRenderObject()
-                                    as RenderBox?;
-
-                            final height = renderBox?.size.height ?? 0.0;
-
-                            final position =
-                                renderBox?.localToGlobal(Offset.zero) ??
-                                Offset.zero;
-
-                            final groups = await getEnabledOptions(
-                              context.read(),
-                              state.location.selectedResourceOptions,
-                              resources,
-                            );
-
-                            if (!context.mounted) return;
-                            ContextMenuHelper.show(
-                              context: context,
-                              position: position.translate(0, height),
-                              groups: groups,
-                              onOptionSelected: (option) {
-                                if (context.mounted) {
-                                  handleOption(context, resources, option);
-                                }
-                              },
-                            );
-                          },
-                          icon: Icon(Icons.adaptive.more),
-                        ),
-                      ),
+                ),
                 Expanded(child: Builder(builder: buildPage)),
               ],
             ),
@@ -269,6 +225,89 @@ class _ExplorerViewState extends State<ExplorerView> {
         FolderViewType.gridSmall => const FolderGridView(iconSize: 180),
         FolderViewType.gridLarge => const FolderGridView(iconSize: 240),
       },
+    );
+  }
+}
+
+class SelectedResourceView extends StatefulWidget {
+  final Iterable<Resource> resources;
+
+  const SelectedResourceView({super.key, required this.resources});
+
+  @override
+  State<SelectedResourceView> createState() => _SelectedResourceViewState();
+}
+
+class _SelectedResourceViewState extends State<SelectedResourceView> {
+  final _selectedResourcesOptionsButtonKey = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: IconButtonTheme(
+        data: IconButtonThemeData(
+          style: IconButton.styleFrom(
+            padding: const EdgeInsets.all(6),
+            iconSize: 20.0,
+            minimumSize: Size.zero,
+          ),
+        ),
+        child: Row(
+          spacing: 16.0,
+          children: [
+            IconButton(
+              icon: Icon(Icons.close),
+              onPressed: () {
+                context.read<ExplorerController>().clearSelection();
+              },
+            ),
+            Text(
+              '${widget.resources.length} selected',
+              style: TextStyle(fontSize: 15),
+            ),
+            IconButton(
+              key: _selectedResourcesOptionsButtonKey,
+              onPressed: () async {
+                final state = context.read<ExplorerState>();
+                final resources = state.selected;
+                final renderBox =
+                    _selectedResourcesOptionsButtonKey.currentContext
+                            ?.findRenderObject()
+                        as RenderBox?;
+
+                final height = renderBox?.size.height ?? 0.0;
+
+                final position =
+                    renderBox?.localToGlobal(Offset.zero) ?? Offset.zero;
+
+                final groups = await getEnabledOptions(
+                  context.read(),
+                  state.location.selectedResourceOptions,
+                  resources,
+                );
+
+                if (!context.mounted) return;
+                ContextMenuHelper.show(
+                  context: context,
+                  position: position.translate(0, height),
+                  groups: groups,
+                  onOptionSelected: (option) {
+                    if (context.mounted) {
+                      handleOption(context, resources, option);
+                    }
+                  },
+                );
+              },
+              icon: Icon(Icons.adaptive.more),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
