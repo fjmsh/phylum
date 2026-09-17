@@ -66,6 +66,7 @@ type Bookmark struct {
 	Name       string    `json:"name"`
 	Dir        bool      `json:"dir"`
 	Created    int64     `json:"created"`
+	MimeType   string    `json:"mime"`
 }
 
 type Bootstrap struct {

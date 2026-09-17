@@ -7,6 +7,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Bookmark struct {
@@ -14,19 +15,21 @@ type Bookmark struct {
 	Name       string
 	Dir        bool
 	Created    time.Time
+	MimeType   pgtype.Text
 }
 
 func scanBookmark(row pgx.CollectableRow) (Bookmark, error) {
-	var p Bookmark
+	var b Bookmark
 	if err := row.Scan(
-		&p.ResourceID,
-		&p.Name,
-		&p.Dir,
-		&p.Created,
+		&b.ResourceID,
+		&b.Name,
+		&b.Dir,
+		&b.Created,
+		&b.MimeType,
 	); err != nil {
 		return Bookmark{}, err
 	}
-	return p, nil
+	return b, nil
 }
 
 func AddBookmark(db db.TxHandler, userID int32, resource Resource, name string) (Bookmark, error) {
@@ -64,8 +67,13 @@ func RemoveBookmark(db db.TxHandler, userID int32, id uuid.UUID) error {
 
 func ListBookmarks(db db.Handler, userID int32, since int64) ([]Bookmark, error) {
 	sb := strings.Builder{}
-	sb.WriteString(`SELECT resource_id, name, dir, created
+	sb.WriteString(`SELECT b.resource_id, b.name, b.dir, b.created, v.mime_type
 FROM bookmarks b
+LEFT JOIN LATERAL
+(SELECT mime_type FROM resource_versions v
+	WHERE b.resource_id = v.resource_id
+	ORDER BY v.created LIMIT 1) v
+ON TRUE
 WHERE user_id = @user_id::INT
 `)
 	// The delta approach currently isn't able to handle hard deletes, which happens when

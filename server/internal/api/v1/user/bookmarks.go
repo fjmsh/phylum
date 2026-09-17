@@ -124,6 +124,7 @@ func ListBookmarks(ctx context.Context, userID int32, since int64) ([]responses.
 				Name:       b.Name,
 				Dir:        b.Dir,
 				Created:    b.Created.UnixMilli(),
+				MimeType:   b.MimeType.String,
 			}
 		}
 		return bookmarks, nil
