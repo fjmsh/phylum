@@ -225,8 +225,8 @@ class _ExplorerViewState extends State<ExplorerView> {
       onRefresh: context.read<ExplorerController>().refresh,
       child: switch (viewType) {
         FolderViewType.list => FolderListView(node: widget._explorerFocusNode),
-        FolderViewType.gridSmall => const FolderGridView(iconSize: 180),
-        FolderViewType.gridLarge => const FolderGridView(iconSize: 240),
+        FolderViewType.gridSmall => const FolderGridView(itemWidth: 160),
+        FolderViewType.gridLarge => const FolderGridView(itemWidth: 240),
       },
     );
   }

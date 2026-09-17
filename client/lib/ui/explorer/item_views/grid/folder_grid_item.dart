@@ -1,5 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cached_network_image_platform_interface/cached_network_image_platform_interface.dart';
 import 'package:drift/drift.dart' show TableOrViewStatements;
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/actions/action_resource.dart';
@@ -31,10 +30,10 @@ class FolderGridItem extends StatelessWidget {
     final showBorder = context.select<ExplorerState, bool>(
       (state) => state.focusId == resource.id && state.showFocus,
     );
-    final highlight = context.select<ExplorerState, bool>(
+    final selected = context.select<ExplorerState, bool>(
       (state) => state.isSelected(resource.id),
     );
-    final dim = context.select<ExplorerState, bool>(
+    final dragging = context.select<ExplorerState, bool>(
       (state) => state.isSelected(resource.id) && state.dragging,
     );
 
@@ -59,12 +58,14 @@ class FolderGridItem extends StatelessWidget {
         ? BorderSide(color: colorScheme.primary, width: 2.0)
         : const BorderSide(color: Colors.transparent, width: 2.0);
 
-    final color = highlight
-        ? dim
-              ? colorScheme.primaryContainer.withAlpha(192)
-              : colorScheme.primaryContainer
+    final color = selected
+        ? colorScheme.primaryContainer.withAlpha(dragging ? 192 : 255)
         : dropTargetActive
         ? colorScheme.secondaryContainer
+        : colorScheme.surfaceContainerHighest;
+
+    final textColor = selected
+        ? colorScheme.primary.withAlpha(dragging ? 192 : 255)
         : null;
 
     return IconTheme(
@@ -76,7 +77,7 @@ class FolderGridItem extends StatelessWidget {
         shape: dropTargetActive || showBorder
             ? RoundedRectangleBorder(
                 side: border,
-                borderRadius: BorderRadius.circular(12.0),
+                borderRadius: const BorderRadius.all(Radius.circular(12.0)),
               )
             : null,
         child: Column(
@@ -105,25 +106,35 @@ class FolderGridItem extends StatelessWidget {
                                 .build()
                                 .toString();
                       }
-                      return CachedNetworkImage(
-                        imageUrl: imageUrl,
-                        alignment: const Alignment(0.0, -0.75),
-                        fit: BoxFit.cover,
-                        httpHeaders: account.apiClient.requestHeaders,
-                        placeholder: (context, url) => FittedBox(
-                          fit: BoxFit.contain,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: resource.getIcon(account),
+                      return Container(
+                        margin: const EdgeInsets.all(4.0),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainer,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(8),
+                            topRight: Radius.circular(8),
                           ),
                         ),
-                        imageRenderMethodForWeb:
-                            ImageRenderMethodForWeb.HttpGet,
-                        errorWidget: (context, url, err) => FittedBox(
-                          fit: BoxFit.contain,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: resource.getIcon(account),
+                        clipBehavior: Clip.antiAlias,
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          alignment: const Alignment(0.0, -0.75),
+                          fit: .cover,
+                          httpHeaders: account.apiClient.requestHeaders,
+                          placeholder: (context, url) => FittedBox(
+                            fit: .contain,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: resource.getIcon(account),
+                            ),
+                          ),
+                          imageRenderMethodForWeb: .HttpGet,
+                          errorWidget: (context, url, err) => FittedBox(
+                            fit: .contain,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: resource.getIcon(account),
+                            ),
                           ),
                         ),
                       );
@@ -133,33 +144,27 @@ class FolderGridItem extends StatelessWidget {
               ),
             ),
             Container(
-              decoration: BoxDecoration(
-                color:
-                    color ?? Theme.of(context).colorScheme.surfaceContainerLow,
-              ),
+              decoration: BoxDecoration(color: color),
               padding: const EdgeInsets.symmetric(
                 vertical: 6.0,
                 horizontal: 12.0,
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: .stretch,
                 children: [
                   Text(
                     resource.name,
                     maxLines: 1,
                     softWrap: false,
                     overflow: TextOverflow.fade,
-                    style: theme.textTheme.bodyLarge!.copyWith(
-                      color: highlight
-                          ? dim
-                                ? colorScheme.primary.withAlpha(192)
-                                : colorScheme.primary
-                          : colorScheme.onSurface,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: textColor ?? colorScheme.onSurface,
                     ),
                   ),
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: .center,
+                    mainAxisSize: .min,
                     children: [
                       if (sync != ResourceSyncState.none)
                         Padding(
@@ -265,12 +270,10 @@ class FolderGridItem extends StatelessWidget {
                               maxLines: 1,
                               softWrap: false,
                               overflow: TextOverflow.fade,
-                              style: theme.textTheme.bodyMedium!.copyWith(
-                                color: highlight
-                                    ? dim
-                                          ? colorScheme.primary.withAlpha(192)
-                                          : colorScheme.primary
-                                    : colorScheme.onSurfaceVariant,
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                color:
+                                    textColor ?? colorScheme.onSurfaceVariant,
                               ),
                             );
                           },
