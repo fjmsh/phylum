@@ -11,9 +11,9 @@ import '../../explorer_controller.dart';
 const _rowSpacing = 12.0;
 
 class FolderGridView extends StatefulWidget {
-  final int iconSize;
+  final int itemWidth;
 
-  const FolderGridView({super.key, required this.iconSize});
+  const FolderGridView({super.key, required this.itemWidth});
 
   @override
   State<FolderGridView> createState() => _FolderGridViewState();
@@ -56,7 +56,7 @@ class _FolderGridViewState extends State<FolderGridView> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           _viewportHeight = constraints.maxHeight;
-          final idealCount = constraints.maxWidth / widget.iconSize;
+          final idealCount = constraints.maxWidth / widget.itemWidth;
           _crossAxisCount = idealCount.toInt();
           if (idealCount - _crossAxisCount > 0.75) {
             _crossAxisCount++;
