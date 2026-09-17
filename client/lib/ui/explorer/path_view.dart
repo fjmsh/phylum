@@ -114,15 +114,7 @@ class PathView extends StatelessWidget {
       target: null,
       last: true,
     );
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Padding(
-        padding: small
-            ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
-            : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(children: [PathItem(info, small: small)]),
-      ),
-    );
+    return Row(children: [PathItem(info, small: small)]);
   }
 }
 
