@@ -17,7 +17,7 @@ class ExplorerLayoutExpanded extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final leftBarWidth = width >= minViewportWidthXLarge ? 288.0 : 240.0;
+    final leftBarWidth = 240.0;
     final rightBarWidth = width >= minViewportWidthXLarge
         ? 360.0
         : width >= minViewportWidthLarge
