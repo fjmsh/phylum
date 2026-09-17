@@ -3,7 +3,7 @@ import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
 import 'package:phylum/ui/explorer/scaffold/create_action.dart';
-import 'package:phylum/ui/explorer/scaffold/nav_list.dart';
+import 'package:phylum/ui/explorer/scaffold/nav_drawer.dart';
 import 'package:phylum/ui/explorer/scaffold/search/search.dart';
 import 'package:phylum/ui/explorer/scaffold/sync/sync_status_button.dart';
 import 'package:phylum/ui/explorer/menu/bottom_sheet.dart';
@@ -24,7 +24,7 @@ class ExplorerLayoutCollapsed extends StatelessWidget {
     );
     return Scaffold(
       appBar: _buildAppBar(context, searching, selected),
-      drawer: selected == 0 ? const Drawer(child: NavList(drawer: true)) : null,
+      drawer: selected == 0 ? const NavDrawer() : null,
       floatingActionButton: selected == 0
           ? FloatingActionButton(
               onPressed: () {

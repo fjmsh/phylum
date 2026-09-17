@@ -4,7 +4,7 @@ import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/scaffold/downloads_icon_button.dart';
-import 'package:phylum/ui/explorer/scaffold/nav_list.dart';
+import 'package:phylum/ui/explorer/scaffold/nav_sidebar.dart';
 import 'package:phylum/ui/explorer/scaffold/reactive_resource_info_view.dart';
 import 'package:phylum/ui/explorer/scaffold/search/search.dart';
 import 'package:phylum/ui/explorer/scaffold/sync/sync_status_button.dart';
@@ -84,11 +84,7 @@ class ExplorerLayoutExpanded extends StatelessWidget {
               children: [
                 SizedBox(
                   width: leftBarWidth,
-                  child: Card(
-                    elevation: 0,
-                    margin: const EdgeInsets.only(left: 16, bottom: 16),
-                    child: ExcludeFocusTraversal(child: NavList(drawer: false)),
-                  ),
+                  child: ExcludeFocusTraversal(child: const NavSidebar()),
                 ),
                 Expanded(
                   child: Card(
