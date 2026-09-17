@@ -175,17 +175,20 @@ class _ExplorerViewState extends State<ExplorerView> {
                   padding: collapsed
                       ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
                       : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: widget._showSelectedItems && selected.isNotEmpty
-                      ? SelectedResourceView(resources: selected)
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(child: PathView(small: collapsed)),
-                            width < maxViewportWidthLarge
-                                ? const FolderViewIconButton()
-                                : const FolderViewToggleButton(),
-                          ],
-                        ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 150),
+                    child: widget._showSelectedItems && selected.isNotEmpty
+                        ? SelectedResourceView(resources: selected)
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(child: PathView(small: collapsed)),
+                              width < maxViewportWidthLarge
+                                  ? const FolderViewIconButton()
+                                  : const FolderViewToggleButton(),
+                            ],
+                          ),
+                  ),
                 ),
                 Expanded(child: Builder(builder: buildPage)),
               ],
