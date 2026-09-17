@@ -31,7 +31,7 @@ class AppDatabase extends _$AppDatabase {
   }) : super(executor);
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -75,6 +75,10 @@ class AppDatabase extends _$AppDatabase {
         await m.drop(resourceVersions);
         await m.create(resources);
         await m.create(resourceVersions);
+      }
+      if (from < 16) {
+        await m.drop(bookmarks);
+        await m.create(bookmarks);
       }
     },
   );

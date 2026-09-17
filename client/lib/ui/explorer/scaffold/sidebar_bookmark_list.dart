@@ -54,7 +54,7 @@ class BookmarkItem extends StatelessWidget {
             showBookmarkDialog(context, details.globalPosition, bookmark),
         child: TextButton.icon(
           label: Text(bookmark.name, maxLines: 1, overflow: .ellipsis),
-          icon: Icon(null),
+          icon: _getIcon(bookmark.dir, bookmark.mimeType ?? ''),
           onPressed: () async {
             Scaffold.maybeOf(context)?.closeDrawer();
             if (bookmark.dir) {
@@ -135,4 +135,21 @@ class BookmarkItem extends StatelessWidget {
       },
     );
   }
+}
+
+Icon _getIcon(bool dir, String mimeType) {
+  if (dir) {
+    return const Icon(Icons.folder);
+  }
+
+  if (mimeType.startsWith("image")) {
+    return const Icon(Icons.image);
+  } else if (mimeType.startsWith("video")) {
+    return const Icon(Icons.movie);
+  } else if (mimeType.startsWith("audio")) {
+    return const Icon(Icons.headphones);
+  } else if (mimeType.startsWith("text")) {
+    return const Icon(Icons.article);
+  }
+  return const Icon(Icons.insert_drive_file);
 }

@@ -20,12 +20,15 @@ class BootstrapLoginResponse extends PhylumApiSuccessResponse {
   });
 
   factory BootstrapLoginResponse.fromResponse(Map<String, dynamic> data) {
-    final bookmarks = (data["bookmarks"] as List).cast<Map>().map(
-      (u) => parseBookmark(u.cast<String, dynamic>()),
-    );
-    final users = (data["users"] as List).cast<Map>().map(
-      (u) => parseUser(u.cast<String, dynamic>()),
-    );
+    final bookmarks = (data["bookmarks"] as List)
+        .cast<Map>()
+        .map((u) => parseBookmark(u.cast<String, dynamic>()))
+        .toList(growable: false);
+    final users = (data["users"] as List)
+        .cast<Map>()
+        .map((u) => parseUser(u.cast<String, dynamic>()))
+        .toList(growable: false);
+
     return BootstrapLoginResponse._(
       apiToken: data['api_token'],
       user: AccountUser.fromMap(data['user'].cast<String, dynamic>()),

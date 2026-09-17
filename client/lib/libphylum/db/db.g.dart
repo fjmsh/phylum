@@ -2538,6 +2538,17 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL CHECK (deleted IN (0, 1))',
   );
+  static const VerificationMeta _mimeTypeMeta = const VerificationMeta(
+    'mimeType',
+  );
+  late final GeneratedColumn<String> mimeType = GeneratedColumn<String>(
+    'mime_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   @override
   List<GeneratedColumn> get $columns => [
     resourceId,
@@ -2545,6 +2556,7 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
     dir,
     created,
     deleted,
+    mimeType,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2598,6 +2610,12 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
     } else if (isInserting) {
       context.missing(_deletedMeta);
     }
+    if (data.containsKey('mime_type')) {
+      context.handle(
+        _mimeTypeMeta,
+        mimeType.isAcceptableOrUnknown(data['mime_type']!, _mimeTypeMeta),
+      );
+    }
     return context;
   }
 
@@ -2627,6 +2645,10 @@ class Bookmarks extends Table with TableInfo<Bookmarks, Bookmark> {
         DriftSqlType.bool,
         data['${effectivePrefix}deleted'],
       )!,
+      mimeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mime_type'],
+      ),
     );
   }
 
@@ -2645,12 +2667,14 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
   final bool dir;
   final int created;
   final bool deleted;
+  final String? mimeType;
   const Bookmark({
     required this.resourceId,
     required this.name,
     required this.dir,
     required this.created,
     required this.deleted,
+    this.mimeType,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2660,6 +2684,9 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
     map['dir'] = Variable<bool>(dir);
     map['created'] = Variable<int>(created);
     map['deleted'] = Variable<bool>(deleted);
+    if (!nullToAbsent || mimeType != null) {
+      map['mime_type'] = Variable<String>(mimeType);
+    }
     return map;
   }
 
@@ -2670,6 +2697,9 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
       dir: Value(dir),
       created: Value(created),
       deleted: Value(deleted),
+      mimeType: mimeType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mimeType),
     );
   }
 
@@ -2684,6 +2714,7 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
       dir: serializer.fromJson<bool>(json['dir']),
       created: serializer.fromJson<int>(json['created']),
       deleted: serializer.fromJson<bool>(json['deleted']),
+      mimeType: serializer.fromJson<String?>(json['mime_type']),
     );
   }
   @override
@@ -2695,6 +2726,7 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
       'dir': serializer.toJson<bool>(dir),
       'created': serializer.toJson<int>(created),
       'deleted': serializer.toJson<bool>(deleted),
+      'mime_type': serializer.toJson<String?>(mimeType),
     };
   }
 
@@ -2704,12 +2736,14 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
     bool? dir,
     int? created,
     bool? deleted,
+    Value<String?> mimeType = const Value.absent(),
   }) => Bookmark(
     resourceId: resourceId ?? this.resourceId,
     name: name ?? this.name,
     dir: dir ?? this.dir,
     created: created ?? this.created,
     deleted: deleted ?? this.deleted,
+    mimeType: mimeType.present ? mimeType.value : this.mimeType,
   );
   Bookmark copyWithCompanion(BookmarksCompanion data) {
     return Bookmark(
@@ -2720,6 +2754,7 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
       dir: data.dir.present ? data.dir.value : this.dir,
       created: data.created.present ? data.created.value : this.created,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
+      mimeType: data.mimeType.present ? data.mimeType.value : this.mimeType,
     );
   }
 
@@ -2730,13 +2765,15 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
           ..write('name: $name, ')
           ..write('dir: $dir, ')
           ..write('created: $created, ')
-          ..write('deleted: $deleted')
+          ..write('deleted: $deleted, ')
+          ..write('mimeType: $mimeType')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(resourceId, name, dir, created, deleted);
+  int get hashCode =>
+      Object.hash(resourceId, name, dir, created, deleted, mimeType);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2745,7 +2782,8 @@ class Bookmark extends DataClass implements Insertable<Bookmark> {
           other.name == this.name &&
           other.dir == this.dir &&
           other.created == this.created &&
-          other.deleted == this.deleted);
+          other.deleted == this.deleted &&
+          other.mimeType == this.mimeType);
 }
 
 class BookmarksCompanion extends UpdateCompanion<Bookmark> {
@@ -2754,6 +2792,7 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
   final Value<bool> dir;
   final Value<int> created;
   final Value<bool> deleted;
+  final Value<String?> mimeType;
   final Value<int> rowid;
   const BookmarksCompanion({
     this.resourceId = const Value.absent(),
@@ -2761,6 +2800,7 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
     this.dir = const Value.absent(),
     this.created = const Value.absent(),
     this.deleted = const Value.absent(),
+    this.mimeType = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   BookmarksCompanion.insert({
@@ -2769,6 +2809,7 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
     required bool dir,
     required int created,
     required bool deleted,
+    this.mimeType = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : resourceId = Value(resourceId),
        name = Value(name),
@@ -2781,6 +2822,7 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
     Expression<bool>? dir,
     Expression<int>? created,
     Expression<bool>? deleted,
+    Expression<String>? mimeType,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2789,6 +2831,7 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
       if (dir != null) 'dir': dir,
       if (created != null) 'created': created,
       if (deleted != null) 'deleted': deleted,
+      if (mimeType != null) 'mime_type': mimeType,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2799,6 +2842,7 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
     Value<bool>? dir,
     Value<int>? created,
     Value<bool>? deleted,
+    Value<String?>? mimeType,
     Value<int>? rowid,
   }) {
     return BookmarksCompanion(
@@ -2807,6 +2851,7 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
       dir: dir ?? this.dir,
       created: created ?? this.created,
       deleted: deleted ?? this.deleted,
+      mimeType: mimeType ?? this.mimeType,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2829,6 +2874,9 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
     if (deleted.present) {
       map['deleted'] = Variable<bool>(deleted.value);
     }
+    if (mimeType.present) {
+      map['mime_type'] = Variable<String>(mimeType.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2843,6 +2891,7 @@ class BookmarksCompanion extends UpdateCompanion<Bookmark> {
           ..write('dir: $dir, ')
           ..write('created: $created, ')
           ..write('deleted: $deleted, ')
+          ..write('mimeType: $mimeType, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2880,23 +2929,23 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     return customSelect(
       'SELECT r.* FROM trashed_resources AS t JOIN resources AS r ON t.id = r.id ORDER BY r.deleted DESC',
       variables: [],
-      readsFrom: {trashedResources, resources},
-    ).asyncMap(resources.mapFromRow);
+      readsFrom: {this.trashedResources, this.resources},
+    ).asyncMap(this.resources.mapFromRow);
   }
 
   Selectable<Resource> selectShared() {
     return customSelect(
       'SELECT r.* FROM shared AS s LEFT JOIN resources AS r ON s.resource_id = r.id ORDER BY s.seq',
       variables: [],
-      readsFrom: {shared, resources},
-    ).asyncMap(resources.mapFromRow);
+      readsFrom: {this.shared, this.resources},
+    ).asyncMap(this.resources.mapFromRow);
   }
 
   Selectable<ParentsResult> parents(String id) {
     return customSelect(
       'WITH RECURSIVE parents (id, parent, name, deleted, user_permission) AS (SELECT id, parent, name, deleted, user_permission FROM resources WHERE id = ?1 UNION SELECT r.id, r.parent, r.name, r.deleted, r.user_permission FROM resources AS r JOIN parents AS p ON r.id = p.parent) SELECT id, name, deleted, user_permission FROM parents',
       variables: [Variable<String>(id)],
-      readsFrom: {resources},
+      readsFrom: {this.resources},
     ).map(
       (QueryRow row) => ParentsResult(
         id: row.read<String>('id'),
@@ -2911,7 +2960,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     return customSelect(
       'SELECT name, inherited_permissions, grants, user_permission FROM resources WHERE id = ?1',
       variables: [Variable<String>(id)],
-      readsFrom: {resources},
+      readsFrom: {this.resources},
     ).map(
       (QueryRow row) => PermissionsResult(
         name: row.read<String>('name'),
@@ -2926,15 +2975,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     return customSelect(
       'SELECT * FROM resource_versions WHERE resource_id = ?1 ORDER BY created DESC LIMIT 1',
       variables: [Variable<String>(id)],
-      readsFrom: {resourceVersions},
-    ).asyncMap(resourceVersions.mapFromRow);
+      readsFrom: {this.resourceVersions},
+    ).asyncMap(this.resourceVersions.mapFromRow);
   }
 
   Selectable<int> availableVersions(String id) {
     return customSelect(
       'SELECT COUNT(*) AS _c0 FROM resource_versions WHERE resource_id = ?1 AND deleted = 0',
       variables: [Variable<String>(id)],
-      readsFrom: {resourceVersions},
+      readsFrom: {this.resourceVersions},
     ).map((QueryRow row) => row.read<int>('_c0'));
   }
 
@@ -2942,15 +2991,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     return customSelect(
       'SELECT r.* FROM recents AS h INNER JOIN resources AS r ON h.resource_id = r.id WHERE r.deleted IS NULL AND r.parent IS NOT NULL ORDER BY h.accessed DESC',
       variables: [],
-      readsFrom: {recents, resources},
-    ).asyncMap(resources.mapFromRow);
+      readsFrom: {this.recents, this.resources},
+    ).asyncMap(this.resources.mapFromRow);
   }
 
   Selectable<int> countPublinks(String root) {
     return customSelect(
       'SELECT COUNT(*) AS _c0 FROM publinks WHERE root = ?1',
       variables: [Variable<String>(root)],
-      readsFrom: {publinks},
+      readsFrom: {this.publinks},
     ).map((QueryRow row) => row.read<int>('_c0'));
   }
 
@@ -2958,21 +3007,22 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     return customSelect(
       'SELECT * FROM publinks WHERE root = ?1',
       variables: [Variable<String>(root)],
-      readsFrom: {publinks},
-    ).asyncMap(publinks.mapFromRow);
+      readsFrom: {this.publinks},
+    ).asyncMap(this.publinks.mapFromRow);
   }
 
   Selectable<SelectBookmarksResult> selectBookmarks() {
     return customSelect(
-      'SELECT resource_id, name, dir, created FROM bookmarks WHERE deleted = 0 ORDER BY created ASC',
+      'SELECT resource_id, name, dir, created, mime_type FROM bookmarks WHERE deleted = 0 ORDER BY created ASC',
       variables: [],
-      readsFrom: {bookmarks},
+      readsFrom: {this.bookmarks},
     ).map(
       (QueryRow row) => SelectBookmarksResult(
         resourceId: row.read<String>('resource_id'),
         name: row.read<String>('name'),
         dir: row.read<bool>('dir'),
         created: row.read<int>('created'),
+        mimeType: row.readNullable<String>('mime_type'),
       ),
     );
   }
@@ -3132,7 +3182,12 @@ class $UsersTableManager
                 required String name,
               }) => UsersCompanion.insert(id: id, email: email, name: name),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<Users, User>(table),
+                  BaseReferences<_$AppDatabase, Users, User>(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -3188,11 +3243,28 @@ final class $ResourcesReferences
     extends BaseReferences<_$AppDatabase, Resources, Resource> {
   $ResourcesReferences(super.$_db, super.$_table, super.$_typedResult);
 
+  static Resources _parentTable(_$AppDatabase db) =>
+      db.resources.createAlias('resources__parent__resources__id');
+
+  $ResourcesProcessedTableManager? get parent {
+    final $_column = $_itemColumn<String>('parent');
+    if ($_column == null) return null;
+    final manager = $ResourcesTableManager(
+      $_db,
+      $_db.resources,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_parentTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
   static MultiTypedResultKey<Shared, List<SharedData>> _sharedRefsTable(
     _$AppDatabase db,
   ) => MultiTypedResultKey.fromTable(
     db.shared,
-    aliasName: $_aliasNameGenerator(db.resources.id, db.shared.resourceId),
+    aliasName: 'resources__id__shared__resource_id',
   );
 
   $SharedProcessedTableManager get sharedRefs {
@@ -3210,10 +3282,7 @@ final class $ResourcesReferences
   static MultiTypedResultKey<ResourceVersions, List<ResourceVersion>>
   _resourceVersionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.resourceVersions,
-    aliasName: $_aliasNameGenerator(
-      db.resources.id,
-      db.resourceVersions.resourceId,
-    ),
+    aliasName: 'resources__id__resource_versions__resource_id',
   );
 
   $ResourceVersionsProcessedTableManager get resourceVersionsRefs {
@@ -3234,7 +3303,7 @@ final class $ResourcesReferences
     _$AppDatabase db,
   ) => MultiTypedResultKey.fromTable(
     db.recents,
-    aliasName: $_aliasNameGenerator(db.resources.id, db.recents.resourceId),
+    aliasName: 'resources__id__recents__resource_id',
   );
 
   $RecentsProcessedTableManager get recentsRefs {
@@ -3253,7 +3322,7 @@ final class $ResourcesReferences
     _$AppDatabase db,
   ) => MultiTypedResultKey.fromTable(
     db.publinks,
-    aliasName: $_aliasNameGenerator(db.resources.id, db.publinks.root),
+    aliasName: 'resources__id__publinks__root',
   );
 
   $PublinksProcessedTableManager get publinksRefs {
@@ -3272,7 +3341,7 @@ final class $ResourcesReferences
     _$AppDatabase db,
   ) => MultiTypedResultKey.fromTable(
     db.bookmarks,
-    aliasName: $_aliasNameGenerator(db.resources.id, db.bookmarks.resourceId),
+    aliasName: 'resources__id__bookmarks__resource_id',
   );
 
   $BookmarksProcessedTableManager get bookmarksRefs {
@@ -3298,11 +3367,6 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
   });
   ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get parent => $composableBuilder(
-    column: $table.parent,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3350,6 +3414,29 @@ class $ResourcesFilterComposer extends Composer<_$AppDatabase, Resources> {
     column: $table.lastRefresh,
     builder: (column) => ColumnFilters(column),
   );
+
+  $ResourcesFilterComposer get parent {
+    final $ResourcesFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.parent,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesFilterComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 
   Expression<bool> sharedRefs(
     Expression<bool> Function($SharedFilterComposer f) f,
@@ -3490,11 +3577,6 @@ class $ResourcesOrderingComposer extends Composer<_$AppDatabase, Resources> {
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get parent => $composableBuilder(
-    column: $table.parent,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get name => $composableBuilder(
     column: $table.name,
     builder: (column) => ColumnOrderings(column),
@@ -3539,6 +3621,29 @@ class $ResourcesOrderingComposer extends Composer<_$AppDatabase, Resources> {
     column: $table.lastRefresh,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $ResourcesOrderingComposer get parent {
+    final $ResourcesOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.parent,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesOrderingComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
@@ -3551,9 +3656,6 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
   });
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get parent =>
-      $composableBuilder(column: $table.parent, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
@@ -3587,6 +3689,29 @@ class $ResourcesAnnotationComposer extends Composer<_$AppDatabase, Resources> {
     column: $table.lastRefresh,
     builder: (column) => column,
   );
+
+  $ResourcesAnnotationComposer get parent {
+    final $ResourcesAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.parent,
+      referencedTable: $db.resources,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $ResourcesAnnotationComposer(
+            $db: $db,
+            $table: $db.resources,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 
   Expression<T> sharedRefs<T extends Object>(
     Expression<T> Function($SharedAnnotationComposer a) f,
@@ -3728,6 +3853,7 @@ class $ResourcesTableManager
           (Resource, $ResourcesReferences),
           Resource,
           PrefetchHooks Function({
+            bool parent,
             bool sharedRefs,
             bool resourceVersionsRefs,
             bool recentsRefs,
@@ -3804,11 +3930,15 @@ class $ResourcesTableManager
               ),
           withReferenceMapper: (p0) => p0
               .map(
-                (e) => (e.readTable(table), $ResourcesReferences(db, table, e)),
+                (e) => (
+                  e.readTable<Resources, Resource>(table),
+                  $ResourcesReferences(db, table, e),
+                ),
               )
               .toList(),
           prefetchHooksCallback:
               ({
+                parent = false,
                 sharedRefs = false,
                 resourceVersionsRefs = false,
                 recentsRefs = false,
@@ -3824,7 +3954,38 @@ class $ResourcesTableManager
                     if (publinksRefs) db.publinks,
                     if (bookmarksRefs) db.bookmarks,
                   ],
-                  addJoins: null,
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (parent) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.parent,
+                                    referencedTable: $ResourcesReferences
+                                        ._parentTable(db),
+                                    referencedColumn: $ResourcesReferences
+                                        ._parentTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
                   getPrefetchedDataCallback: (items) async {
                     return [
                       if (sharedRefs)
@@ -3928,6 +4089,7 @@ typedef $ResourcesProcessedTableManager =
       (Resource, $ResourcesReferences),
       Resource,
       PrefetchHooks Function({
+        bool parent,
         bool sharedRefs,
         bool resourceVersionsRefs,
         bool recentsRefs,
@@ -4021,7 +4183,16 @@ class $TrashedResourcesTableManager
               ({required String id, Value<int> rowid = const Value.absent()}) =>
                   TrashedResourcesCompanion.insert(id: id, rowid: rowid),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<TrashedResources, TrashedResource>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    TrashedResources,
+                    TrashedResource
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -4062,8 +4233,8 @@ final class $SharedReferences
     extends BaseReferences<_$AppDatabase, Shared, SharedData> {
   $SharedReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static Resources _resourceIdTable(_$AppDatabase db) => db.resources
-      .createAlias($_aliasNameGenerator(db.shared.resourceId, db.resources.id));
+  static Resources _resourceIdTable(_$AppDatabase db) =>
+      db.resources.createAlias('shared__resource_id__resources__id');
 
   $ResourcesProcessedTableManager get resourceId {
     final $_column = $_itemColumn<String>('resource_id')!;
@@ -4236,7 +4407,12 @@ class $SharedTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), $SharedReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<Shared, SharedData>(table),
+                  $SharedReferences(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: ({resourceId = false}) {
             return PrefetchHooks(
@@ -4327,9 +4503,7 @@ final class $ResourceVersionsReferences
   $ResourceVersionsReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static Resources _resourceIdTable(_$AppDatabase db) =>
-      db.resources.createAlias(
-        $_aliasNameGenerator(db.resourceVersions.resourceId, db.resources.id),
-      );
+      db.resources.createAlias('resource_versions__resource_id__resources__id');
 
   $ResourcesProcessedTableManager get resourceId {
     final $_column = $_itemColumn<String>('resource_id')!;
@@ -4609,7 +4783,7 @@ class $ResourceVersionsTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<ResourceVersions, ResourceVersion>(table),
                   $ResourceVersionsReferences(db, table, e),
                 ),
               )
@@ -4691,9 +4865,7 @@ final class $RecentsReferences
   $RecentsReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static Resources _resourceIdTable(_$AppDatabase db) =>
-      db.resources.createAlias(
-        $_aliasNameGenerator(db.recents.resourceId, db.resources.id),
-      );
+      db.resources.createAlias('recents__resource_id__resources__id');
 
   $ResourcesProcessedTableManager get resourceId {
     final $_column = $_itemColumn<String>('resource_id')!;
@@ -4867,7 +5039,10 @@ class $RecentsTableManager
               ),
           withReferenceMapper: (p0) => p0
               .map(
-                (e) => (e.readTable(table), $RecentsReferences(db, table, e)),
+                (e) => (
+                  e.readTable<Recents, Recent>(table),
+                  $RecentsReferences(db, table, e),
+                ),
               )
               .toList(),
           prefetchHooksCallback: ({resourceId = false}) {
@@ -4956,9 +5131,8 @@ final class $PublinksReferences
     extends BaseReferences<_$AppDatabase, Publinks, Publink> {
   $PublinksReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static Resources _rootTable(_$AppDatabase db) => db.resources.createAlias(
-    $_aliasNameGenerator(db.publinks.root, db.resources.id),
-  );
+  static Resources _rootTable(_$AppDatabase db) =>
+      db.resources.createAlias('publinks__root__resources__id');
 
   $ResourcesProcessedTableManager get root {
     final $_column = $_itemColumn<String>('root')!;
@@ -5219,7 +5393,10 @@ class $PublinksTableManager
               ),
           withReferenceMapper: (p0) => p0
               .map(
-                (e) => (e.readTable(table), $PublinksReferences(db, table, e)),
+                (e) => (
+                  e.readTable<Publinks, Publink>(table),
+                  $PublinksReferences(db, table, e),
+                ),
               )
               .toList(),
           prefetchHooksCallback: ({root = false}) {
@@ -5289,6 +5466,7 @@ typedef $BookmarksCreateCompanionBuilder =
       required bool dir,
       required int created,
       required bool deleted,
+      Value<String?> mimeType,
       Value<int> rowid,
     });
 typedef $BookmarksUpdateCompanionBuilder =
@@ -5298,6 +5476,7 @@ typedef $BookmarksUpdateCompanionBuilder =
       Value<bool> dir,
       Value<int> created,
       Value<bool> deleted,
+      Value<String?> mimeType,
       Value<int> rowid,
     });
 
@@ -5306,9 +5485,7 @@ final class $BookmarksReferences
   $BookmarksReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static Resources _resourceIdTable(_$AppDatabase db) =>
-      db.resources.createAlias(
-        $_aliasNameGenerator(db.bookmarks.resourceId, db.resources.id),
-      );
+      db.resources.createAlias('bookmarks__resource_id__resources__id');
 
   $ResourcesProcessedTableManager get resourceId {
     final $_column = $_itemColumn<String>('resource_id')!;
@@ -5350,6 +5527,11 @@ class $BookmarksFilterComposer extends Composer<_$AppDatabase, Bookmarks> {
 
   ColumnFilters<bool> get deleted => $composableBuilder(
     column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5405,6 +5587,11 @@ class $BookmarksOrderingComposer extends Composer<_$AppDatabase, Bookmarks> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $ResourcesOrderingComposer get resourceId {
     final $ResourcesOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -5448,6 +5635,9 @@ class $BookmarksAnnotationComposer extends Composer<_$AppDatabase, Bookmarks> {
 
   GeneratedColumn<bool> get deleted =>
       $composableBuilder(column: $table.deleted, builder: (column) => column);
+
+  GeneratedColumn<String> get mimeType =>
+      $composableBuilder(column: $table.mimeType, builder: (column) => column);
 
   $ResourcesAnnotationComposer get resourceId {
     final $ResourcesAnnotationComposer composer = $composerBuilder(
@@ -5506,6 +5696,7 @@ class $BookmarksTableManager
                 Value<bool> dir = const Value.absent(),
                 Value<int> created = const Value.absent(),
                 Value<bool> deleted = const Value.absent(),
+                Value<String?> mimeType = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => BookmarksCompanion(
                 resourceId: resourceId,
@@ -5513,6 +5704,7 @@ class $BookmarksTableManager
                 dir: dir,
                 created: created,
                 deleted: deleted,
+                mimeType: mimeType,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -5522,6 +5714,7 @@ class $BookmarksTableManager
                 required bool dir,
                 required int created,
                 required bool deleted,
+                Value<String?> mimeType = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => BookmarksCompanion.insert(
                 resourceId: resourceId,
@@ -5529,11 +5722,15 @@ class $BookmarksTableManager
                 dir: dir,
                 created: created,
                 deleted: deleted,
+                mimeType: mimeType,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
-                (e) => (e.readTable(table), $BookmarksReferences(db, table, e)),
+                (e) => (
+                  e.readTable<Bookmarks, Bookmark>(table),
+                  $BookmarksReferences(db, table, e),
+                ),
               )
               .toList(),
           prefetchHooksCallback: ({resourceId = false}) {
@@ -5645,10 +5842,12 @@ class SelectBookmarksResult {
   final String name;
   final bool dir;
   final int created;
+  final String? mimeType;
   SelectBookmarksResult({
     required this.resourceId,
     required this.name,
     required this.dir,
     required this.created,
+    this.mimeType,
   });
 }
