@@ -12,38 +12,43 @@
 # Stage: Build the API server
 # ============================================
 FROM docker.io/golang:alpine AS api_builder
+RUN apk update && apk add --no-cache build-base ffmpeg-dev vips-dev
 WORKDIR /src
 COPY server/go.mod server/go.sum .
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY server/ .
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    go build -o /bin/phylum cmd/phylum.go
+    CGO_ENABLED=1 go build -o /bin/phylum cmd/phylum.go
 
 
 # ============================================
 # Stage: Build the Web App
 # ============================================
-FROM ghcr.io/cirruslabs/flutter:latest AS webapp_builder
+#
+# We first need to build the flutter image using
+# ```
+# podman build . --build-arg FLUTTER_VERSION=3.47.3 -t localhost/flutter-web:3.47.3
+# ```
+FROM localhost/flutter-web:3.47.3 AS webapp_builder
 WORKDIR /src
-RUN flutter precache --no-universal --web
 COPY client/web ./web
 COPY client/assets ./assets
 COPY client/pubspec.yaml client/pubspec.lock .
 RUN --mount=type=cache,target=/root/.pub-cache flutter pub get
 COPY client/lib ./lib
-RUN --mount=type=cache,target=/root/.pub-cache flutter build web --debug
+RUN --mount=type=cache,target=/root/.pub-cache flutter build web --wasm
 
 
 # ============================================
 # Final Stage: Server
 # ============================================
 FROM docker.io/alpine:latest AS server
-RUN apk add vips-tools vips-poppler font-noto libreoffice
+RUN apk add --no-cache ffmpeg-dev vips-tools vips-poppler font-noto libreoffice
 ENV PATH="$PATH:/app"
-ENV PHYLUM_SERVER__WEBAPPSRC="/app/web"
+ENV PHYLUM_SERVER__WEB_APP_SRC="/app/web"
 COPY --from=api_builder /bin/phylum /app/phylum
-#COPY --from=webapp_builder /src/build/web /app/web
+COPY --from=webapp_builder /src/build/web /app/web
 WORKDIR /var/lib/phylum
 ENTRYPOINT ["phylum"]
 CMD ["serve", "--debug"]
