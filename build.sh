@@ -13,6 +13,7 @@ build_server() {
   declare -n container="$1"
   arch=$2
   c=$(buildah from --platform linux/${arch} docker.io/golang:alpine)
+  buildah run apk update && apk add --no-cache build-base ffmpeg-dev vips-dev
   buildah config --workingdir /src "$c"
   if [ $SRC_URL = "local" ]; then
     echo "Copying source"
@@ -24,7 +25,11 @@ build_server() {
     buildah run $c -- tar -zxf src.tar.gz
   fi
   buildah config --workingdir /src/phylum/server "$c"
-  buildah run --env GOOS=linux --env GOARCH=${arch} $c -- go build -o /bin/phylum cmd/phylum.go
+  buildah run --env CGO_ENABLED=1 \
+	  --env GOOS=linux \
+	  --env GOARCH=${arch} \
+	  $c -- \
+	  go build -o /bin/phylum cmd/phylum.go
   container=$c
 }
 
@@ -66,7 +71,7 @@ build_phylum() {
 	  --env PHYLUM_SERVER__WEBAPPSRC="/app/web" \
 	  $c
   echo "Installing Packages"
-  buildah run $c -- apk add vips-tools vips-poppler font-noto
+  buildah run $c -- apk add ffmpeg-dev vips-tools vips-poppler font-noto
 
   if [ $libreoffice_minimal = true ]; then
     echo "Installing Minimal LibreOffice"
