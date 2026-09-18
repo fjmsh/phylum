@@ -48,7 +48,7 @@ build_webapp() {
   fi
   buildah config --workingdir /src/phylum/client "$c"
   buildah run $c -- flutter pub get
-  buildah run $c -- bash dist/web.sh
+  buildah run $c -- bash dist/web.sh -b
   container=$c
 }
 
