@@ -65,13 +65,18 @@ func (s *server) setupWebApp() {
 			c.Writer.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
 			c.Writer.Header().Set("Cross-Origin-Opener-Policy", "same-origin")
 			if fs.Exists("/", c.Request.URL.Path) {
-				for _, r := range immutableResources {
-					if r.MatchString(c.Request.URL.Path) {
-						c.Writer.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+				if c.Request.URL.Path == "/" {
+					c.Writer.Header().Set("Cache-Control", "no-store")
+				} else {
+					for _, r := range immutableResources {
+						if r.MatchString(c.Request.URL.Path) {
+							c.Writer.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+						}
 					}
 				}
 				fileserver.ServeHTTP(c.Writer, c.Request)
 			} else {
+				c.Writer.Header().Set("Cache-Control", "no-store")
 				http.ServeFile(c.Writer, c.Request, indexFilePath)
 			}
 		} else {
