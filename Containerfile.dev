@@ -22,22 +22,21 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=1 go build -o /bin/phylum cmd/phylum.go
 
 
+
 # ============================================
 # Stage: Build the Web App
 # ============================================
 #
-# We first need to build the flutter image using
-# ```
-# podman build . --build-arg FLUTTER_VERSION=3.47.3 -t localhost/flutter-web:3.47.3
-# ```
-FROM localhost/flutter-web:3.47.3 AS webapp_builder
+# ghcr.io/gmeligi/flutter-web is only available for amd64, not aarch64.
+# If you are on Apple Silicon, then please build the flutter_web image first
+FROM ghcr.io/gmeligio/flutter-web:3.47.3 AS webapp_builder
 WORKDIR /src
 COPY client/web ./web
 COPY client/assets ./assets
 COPY client/pubspec.yaml client/pubspec.lock .
 RUN --mount=type=cache,target=/root/.pub-cache flutter pub get
 COPY client/lib ./lib
-RUN --mount=type=cache,target=/root/.pub-cache flutter build web --wasm
+RUN --mount=type=cache,target=/root/.pub-cache dist/web.sh -b
 
 
 # ============================================
@@ -52,3 +51,37 @@ COPY --from=webapp_builder /src/build/web /app/web
 WORKDIR /var/lib/phylum
 ENTRYPOINT ["phylum"]
 CMD ["serve", "--debug"]
+
+
+# ============================================
+# Flutter Web 
+# ============================================
+#
+# Build instructions
+# ```
+# podman build -f Containerfile.dev --target flutter_web --build-arg FLUTTER_VERSION=3.47.3 -t ghcr.io/gmeligio/flutter-web:3.47.3
+# ```
+FROM ubuntu:24.04 AS flutter_web
+
+ARG FLUTTER_VERSION
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    FLUTTER_HOME=/opt/flutter \
+    PATH=/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:/root/.pub-cache/bin:$PATH
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        file \
+        git \
+        jq \
+        unzip \
+        xz-utils \
+        zip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --depth 1 --branch "$FLUTTER_VERSION" https://github.com/flutter/flutter.git "$FLUTTER_HOME" \
+    && flutter config --no-analytics \
+    && flutter precache --web \
+    && flutter doctor -v
