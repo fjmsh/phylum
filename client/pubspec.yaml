@@ -76,7 +76,7 @@ flutter:
   fonts:
     - family: RobotoMono
       fonts:
-        - asset: assets/fonts/RobotoMono-Regular.ttf
+        - asset: fonts/RobotoMono-Regular.ttf
 
 dependency_overrides:
   flutter_typeahead:
