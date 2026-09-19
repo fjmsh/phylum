@@ -39,7 +39,7 @@ android {
         create("release") {
             keyAlias = releaseProperties["keyAlias"] as String
             keyPassword = releaseProperties["keyPassword"] as String
-            storeFile = releaseProperties["storeFile"]?.let { file(it) }
+            storeFile = releaseProperties["storeFile"]?.let { rootProject.file(it) }
             storePassword = releaseProperties["storePassword"] as String
         }
     }
@@ -64,27 +64,3 @@ kotlin {
 flutter {
     source = "../.."
 }
-
-// project(':receive_sharing_intent').afterEvaluate {
-//     project(':receive_sharing_intent').android {
-//         compileOptions {
-//             sourceCompatibility JavaVersion.VERSION_1_8
-//             targetCompatibility JavaVersion.VERSION_1_8
-//         }
-//         kotlinOptions {
-//             jvmTarget = JavaVersion.VERSION_1_8
-//         }
-//     }
-// }
-
-// project(':irondash_engine_context').afterEvaluate {
-//     project(':irondash_engine_context').android {
-//         compileSdkVersion flutter.compileSdkVersion
-//     }
-// }
-
-// project(':super_native_extensions').afterEvaluate {
-//     project(':super_native_extensions').android {
-//         compileSdkVersion flutter.compileSdkVersion
-//     }
-// }
