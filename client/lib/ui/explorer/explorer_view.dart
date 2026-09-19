@@ -17,7 +17,6 @@ import 'package:phylum/ui/explorer/shortcuts/actions.dart';
 import 'package:phylum/ui/explorer/folder_gesture_handler.dart';
 import 'package:phylum/ui/explorer/item_views/folder_view_type.dart';
 import 'package:phylum/ui/explorer/shortcuts/shortcuts.dart';
-import 'package:phylum/ui/explorer/util/paste_helpers.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
 import 'package:phylum/util/dialogs.dart';
@@ -25,7 +24,6 @@ import 'package:phylum/util/upload_utils.dart';
 import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-import 'package:super_clipboard/super_clipboard.dart';
 
 import 'explorer_controller.dart';
 import 'folder_empty_view.dart';
@@ -81,27 +79,30 @@ class _ExplorerViewState extends State<ExplorerView> {
         ).then((value) => ReceiveSharingIntent.instance.reset());
       });
     }
-    ClipboardEvents.instance?.registerPasteEventListener(_handlePaste);
+    // TODO: #clipboard
+    // ClipboardEvents.instance?.registerPasteEventListener(_handlePaste);
   }
 
   @override
   void dispose() {
     _listener.dispose();
     _intentSub?.cancel();
-    ClipboardEvents.instance?.unregisterPasteEventListener(_handlePaste);
+    // TODO: #clipboard
+    // ClipboardEvents.instance?.unregisterPasteEventListener(_handlePaste);
     super.dispose();
   }
 
-  void _handlePaste(ClipboardReadEvent event) async {
-    final folderId = context.read<ExplorerState>().folderId;
-    if (folderId == null) {
-      showAlertDialog(context, title: 'Cannot paste here');
-      return;
-    }
-    final reader = await event.getClipboardReader();
-    if (!mounted) return;
-    processPasteItems(context, folderId, reader.items);
-  }
+  // TODO: #clipboard
+  // void _handlePaste(ClipboardReadEvent event) async {
+  //   final folderId = context.read<ExplorerState>().folderId;
+  //   if (folderId == null) {
+  //     showAlertDialog(context, title: 'Cannot paste here');
+  //     return;
+  //   }
+  //   final reader = await event.getClipboardReader();
+  //   if (!mounted) return;
+  //   processPasteItems(context, folderId, reader.items);
+  // }
 
   Future<void> handleShareIntent(List<SharedMediaFile> shared) async {
     shared.removeWhere(

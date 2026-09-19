@@ -12,7 +12,6 @@ import 'package:phylum/ui/file_viewer/file_viewer_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
-import 'package:super_clipboard/super_clipboard.dart';
 
 import '../explorer_controller.dart';
 import 'intents.dart';
@@ -45,14 +44,15 @@ class ExplorerActions extends StatelessWidget {
             final folderId = context.read<ExplorerState>().folderId;
             if (folderId == null) return;
 
-            final clipboard = SystemClipboard.instance;
-            if (clipboard == null) return;
+            // TODO: #clipboard
+            // final clipboard = SystemClipboard.instance;
+            // if (clipboard == null) return;
 
-            final reader = await clipboard.read();
-            if (!context.mounted) return;
-            processPasteItems(context, folderId, reader.items);
+            // final reader = await clipboard.read();
+            // if (!context.mounted) return;
+            // processPasteItems(context, folderId, reader.items);
 
-            await SystemClipboard.instance?.write([]);
+            // await SystemClipboard.instance?.write([]);
             return null;
           },
         ),
@@ -153,17 +153,21 @@ class ExplorerActions extends StatelessWidget {
             final account = context.read<PhylumAccount>();
             final selected = context.read<ExplorerState>().selected;
             if (selected.isEmpty) return;
+            // TODO: #clipboard
             final items = selected.map((r) {
               final uri = account.apiClient.createUriBuilder(
                 r.dir ? '/folder/${r.id}' : '/file/${r.id}',
               );
-              final uriData = Formats.uri(NamedUri(uri.build(), name: r.name));
-              return DataWriterItem(suggestedName: r.name)..add(uriData);
+              // final uriData = Formats.uri(NamedUri(uri.build(), name: r.name));
+              // return DataWriterItem(suggestedName: r.name)..add(uriData);
             });
 
             context.read<CutToClipboard>().ids = i.cut
                 ? selected.map((r) => r.id).toList(growable: false)
                 : const [];
+
+            // TODO: #clipboard
+            // await SystemClipboard.instance?.write(items);
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -172,7 +176,7 @@ class ExplorerActions extends StatelessWidget {
                 ),
               ),
             );
-            await SystemClipboard.instance?.write(items);
+
             return null;
           },
         ),

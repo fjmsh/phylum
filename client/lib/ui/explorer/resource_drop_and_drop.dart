@@ -6,12 +6,10 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
-import 'package:phylum/ui/explorer/util/paste_helpers.dart';
 import 'package:phylum/ui/explorer/util/icon_extensions.dart';
 import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
-import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 @pragma('vm:platform-const')
 final bool _useSuperNative =
@@ -104,35 +102,36 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
   }
 
   Widget buildDropRegion(BuildContext context) {
-    return DropRegion(
-      formats: Formats.standardFormats,
-      child: widget.buildItem(context, dropTargetActive),
-      onDropOver: (event) {
-        if (event.session.items.isEmpty) return DropOperation.none;
-        if (context.read<ExplorerState>().folderId == null)
-          return DropOperation.none;
-        for (final item in event.session.items) {
-          if (kIsWeb || item.canProvide(Formats.fileUri)) {
-            return DropOperation.copy;
-          }
-        }
-        return DropOperation.none;
-      },
-      onDropEnter: (event) => setState(() => dropTargetActive = true),
-      onDropLeave: (event) => setState(() => dropTargetActive = false),
-      onPerformDrop: (event) async {
-        final folderId = context.read<ExplorerState>().folderId;
-        if (folderId == null) return;
-        if (!mounted) return;
-        processPasteItems(
-          context,
-          folderId,
-          event.session.items.map((item) => item.dataReader).whereType(),
-        );
+    return widget.buildItem(context, dropTargetActive);
+    // return DropRegion(
+    //   formats: Formats.standardFormats,
+    //   child: widget.buildItem(context, dropTargetActive),
+    //   onDropOver: (event) {
+    //     if (event.session.items.isEmpty) return DropOperation.none;
+    //     if (context.read<ExplorerState>().folderId == null)
+    //       return DropOperation.none;
+    //     for (final item in event.session.items) {
+    //       if (kIsWeb || item.canProvide(Formats.fileUri)) {
+    //         return DropOperation.copy;
+    //       }
+    //     }
+    //     return DropOperation.none;
+    //   },
+    //   onDropEnter: (event) => setState(() => dropTargetActive = true),
+    //   onDropLeave: (event) => setState(() => dropTargetActive = false),
+    //   onPerformDrop: (event) async {
+    //     final folderId = context.read<ExplorerState>().folderId;
+    //     if (folderId == null) return;
+    //     if (!mounted) return;
+    //     processPasteItems(
+    //       context,
+    //       folderId,
+    //       event.session.items.map((item) => item.dataReader).whereType(),
+    //     );
 
-        setState(() => dropTargetActive = false);
-      },
-    );
+    //     setState(() => dropTargetActive = false);
+    //   },
+    // );
   }
 }
 
