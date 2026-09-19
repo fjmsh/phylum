@@ -13,7 +13,6 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/file_size.dart';
-import 'package:phylum/util/logging/logging.dart';
 import 'package:provider/provider.dart';
 
 final slashChar = '/'.runes.first;
@@ -56,19 +55,16 @@ Future<void> createDirectory(
 }
 
 Future<void> pickAndUploadFiles(BuildContext context, String folderId) async {
-  final result = await FilePicker.pickFiles(
-    allowMultiple: true,
-    withReadStream: true,
-  );
-  if (!context.mounted || result == null) return;
+  final result = await FilePicker.pickFiles();
+  if (!context.mounted || result.isEmpty) return;
 
-  final files = result.files.map((e) {
-    final stream = e.readStream;
-    if (stream == null) {
-      Log.warn('Read Stream for ${e.name} is null');
-      return null;
-    }
-    return UploadFile(size: e.size, stream: stream.cast(), path: e.name);
+  final files = result.map((e) {
+    final stream = e.readAsByteStream();
+    return UploadFile(
+      size: e.lengthSync() ?? 0,
+      stream: stream.cast(),
+      path: e.name,
+    );
   }).whereType<UploadFile>();
   return uploadFiles(context, folderId, files);
 }
@@ -135,20 +131,13 @@ Future<void> pickAndUploadVersion(
   Resource resource,
 ) async {
   final account = context.read<PhylumAccount>();
-  final result = await FilePicker.pickFiles(
-    allowMultiple: false,
-    withReadStream: true,
-  );
-  if (result == null || !result.isSinglePick) return;
+  final result = await FilePicker.pickFile();
+  if (result == null) return;
 
-  final pickedFile = result.files[0];
-  final stream = pickedFile.readStream;
-  if (stream == null) {
-    Log.warn('Read Stream for $pickedFile.name} is null');
-    return;
-  }
+  final pickedFile = result;
+  final stream = pickedFile.readAsByteStream();
   final file = UploadFile(
-    size: pickedFile.size,
+    size: pickedFile.lengthSync() ?? 0,
     stream: stream.cast(),
     path: pickedFile.name,
   );
