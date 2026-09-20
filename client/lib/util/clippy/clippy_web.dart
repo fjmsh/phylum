@@ -69,15 +69,17 @@ extension on web.DataTransfer {
       return PasteFilesData(files: files);
     }
 
-    final urls = getData(
-      'text/plain',
-    ).split('\n').map((str) => Uri.tryParse(str));
+    final lines = getData('text/plain').split('\n');
+    final ids = lines
+        .map((s) => Uri.tryParse(s))
+        .map((uri) => uri == null ? null : Clippy.extractResourceId(uri))
+        .toList(growable: false);
 
-    if (urls.any((u) => u == null)) return null;
-
-    urls.whereType<Uri>().toList(growable: false);
-    // TODO: Extract resource ids from uris
-
+    if (ids.length == lines.length) {
+      return PasteResourcesData(
+        ids: ids.whereType<String>().toList(growable: false),
+      );
+    }
     return null;
   }
 }

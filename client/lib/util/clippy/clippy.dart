@@ -8,6 +8,12 @@ import 'clippy_stub.dart'
     if (dart.library.ffi) 'clippy_io.dart';
 
 class Clippy {
+  static Uri _serverUri = Uri();
+
+  static set serverUri(Uri val) {
+    _serverUri = val;
+  }
+
   static final ClippyInterface _instance = createInterface();
 
   static Future<PasteData?> read() => _instance.read();
@@ -16,6 +22,18 @@ class Clippy {
 
   static void setPasteHandler(void Function(PasteData)? listener) =>
       _instance.setPasteHandler(listener);
+
+  static String? extractResourceId(Uri uri) {
+    if (uri.isScheme(_serverUri.scheme) &&
+        uri.authority == _serverUri.authority) {
+      final segments = uri.pathSegments;
+      if (segments.length == 2 &&
+          (segments[0] == 'file' || segments[0] == 'folder')) {
+        return segments[1];
+      }
+    }
+    return null;
+  }
 }
 
 abstract class ClippyInterface {

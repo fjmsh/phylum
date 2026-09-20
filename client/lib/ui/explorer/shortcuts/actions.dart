@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pasteboard/pasteboard.dart';
 import 'package:phylum/ui/explorer/menu/context_menu_helper.dart';
 import 'package:phylum/ui/explorer/util/clipboard.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
@@ -46,21 +45,13 @@ class ExplorerActions extends StatelessWidget {
             final folderId = context.read<ExplorerState>().folderId;
             if (folderId == null) return;
 
-            // TODO: #clipboard
-            // final files = await Clippy.read();
-            // print(files.length);
-            // for (final file in files) {
-            //   print(file);
-            // }
+            final data = await Clippy.read();
 
-            // final clipboard = SystemClipboard.instance;
-            // if (clipboard == null) return;
+            if (data == null || !context.mounted) return;
+            pasteItems(context, folderId, data);
 
-            // final reader = await clipboard.read();
-            // if (!context.mounted) return;
-            // processPasteItems(context, folderId, reader.items);
-
-            // await SystemClipboard.instance?.write([]);
+            // Clear clipboard
+            Clippy.write(const []);
             return null;
           },
         ),
@@ -161,21 +152,22 @@ class ExplorerActions extends StatelessWidget {
             final account = context.read<PhylumAccount>();
             final selected = context.read<ExplorerState>().selected;
             if (selected.isEmpty) return;
-            // TODO: #clipboard
-            final items = selected.map((r) {
-              final uri = account.apiClient.createUriBuilder(
-                r.dir ? '/folder/${r.id}' : '/file/${r.id}',
-              );
-              // final uriData = Formats.uri(NamedUri(uri.build(), name: r.name));
-              // return DataWriterItem(suggestedName: r.name)..add(uriData);
-            });
+
+            final items = selected
+                .map((r) {
+                  return account.apiClient
+                      .createUriBuilder(
+                        r.dir ? '/folder/${r.id}' : '/file/${r.id}',
+                      )
+                      .build();
+                })
+                .toList(growable: false);
 
             context.read<CutToClipboard>().ids = i.cut
                 ? selected.map((r) => r.id).toList(growable: false)
                 : const [];
 
-            // TODO: #clipboard
-            // await SystemClipboard.instance?.write(items);
+            Clippy.write(items);
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
