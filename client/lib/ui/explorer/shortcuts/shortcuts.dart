@@ -75,7 +75,8 @@ Map<ShortcutActivator, Intent> _createShortcuts() {
       // Clipboard
       SingleActivator(.keyC, meta: true): CopyToClipboardIntent(false),
       SingleActivator(.keyX, meta: true): CopyToClipboardIntent(true),
-      SingleActivator(.keyV, meta: true): PasteFromClipboardIntent(),
+      if (!kIsWeb)
+        SingleActivator(.keyV, meta: true): PasteFromClipboardIntent(),
 
       // Misc
       SingleActivator(.keyR, meta: true): RefreshIntent(),
@@ -111,7 +112,8 @@ Map<ShortcutActivator, Intent> _createShortcuts() {
       // Clipboard
       SingleActivator(.keyC, control: true): CopyToClipboardIntent(false),
       SingleActivator(.keyX, control: true): CopyToClipboardIntent(true),
-      SingleActivator(.keyV, control: true): PasteFromClipboardIntent(),
+      if (!kIsWeb)
+        SingleActivator(.keyV, control: true): PasteFromClipboardIntent(),
 
       // Misc
       SingleActivator(.keyR, control: true): RefreshIntent(),

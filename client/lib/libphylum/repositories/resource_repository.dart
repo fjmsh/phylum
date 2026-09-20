@@ -426,7 +426,11 @@ class UploadFile {
   final int size;
   final Stream<Uint8List> stream;
 
-  UploadFile({required this.path, required this.size, required this.stream});
+  const UploadFile({
+    required this.path,
+    required this.size,
+    required this.stream,
+  });
 
   String getMimeType(String path) {
     return lookupMimeType(path) ?? 'application/octet-stream';

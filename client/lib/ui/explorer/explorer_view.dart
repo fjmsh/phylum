@@ -19,6 +19,8 @@ import 'package:phylum/ui/explorer/item_views/folder_view_type.dart';
 import 'package:phylum/ui/explorer/shortcuts/shortcuts.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
 import 'package:phylum/ui/common/breakpoints.dart';
+import 'package:phylum/ui/explorer/util/paste_helpers.dart';
+import 'package:phylum/util/clippy/clippy.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:path/path.dart' as p;
@@ -79,30 +81,23 @@ class _ExplorerViewState extends State<ExplorerView> {
         ).then((value) => ReceiveSharingIntent.instance.reset());
       });
     }
-    // TODO: #clipboard
-    // ClipboardEvents.instance?.registerPasteEventListener(_handlePaste);
+    Clippy.setPasteHandler((data) {
+      final folderId = context.read<ExplorerState>().folderId;
+      if (folderId == null) {
+        showAlertDialog(context, title: 'Cannot paste here');
+        return;
+      }
+      pasteItems(context, folderId, data);
+    });
   }
 
   @override
   void dispose() {
     _listener.dispose();
     _intentSub?.cancel();
-    // TODO: #clipboard
-    // ClipboardEvents.instance?.unregisterPasteEventListener(_handlePaste);
+    Clippy.setPasteHandler(null);
     super.dispose();
   }
-
-  // TODO: #clipboard
-  // void _handlePaste(ClipboardReadEvent event) async {
-  //   final folderId = context.read<ExplorerState>().folderId;
-  //   if (folderId == null) {
-  //     showAlertDialog(context, title: 'Cannot paste here');
-  //     return;
-  //   }
-  //   final reader = await event.getClipboardReader();
-  //   if (!mounted) return;
-  //   processPasteItems(context, folderId, reader.items);
-  // }
 
   Future<void> handleShareIntent(List<SharedMediaFile> shared) async {
     shared.removeWhere(

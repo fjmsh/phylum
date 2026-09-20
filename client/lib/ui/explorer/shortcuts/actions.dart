@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:phylum/ui/explorer/menu/context_menu_helper.dart';
 import 'package:phylum/ui/explorer/util/clipboard.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
@@ -9,6 +10,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/util/paste_helpers.dart';
 import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
 import 'package:phylum/ui/file_viewer/file_viewer_dialog.dart';
+import 'package:phylum/util/clippy/clippy.dart';
 import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload_utils.dart';
 import 'package:provider/provider.dart';
@@ -45,6 +47,12 @@ class ExplorerActions extends StatelessWidget {
             if (folderId == null) return;
 
             // TODO: #clipboard
+            // final files = await Clippy.read();
+            // print(files.length);
+            // for (final file in files) {
+            //   print(file);
+            // }
+
             // final clipboard = SystemClipboard.instance;
             // if (clipboard == null) return;
 
