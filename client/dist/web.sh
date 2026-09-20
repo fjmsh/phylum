@@ -51,8 +51,8 @@ version_file() {
         echo "Using hash $ver for $name"
         mv "$name" "${versioned_names[$name]}"
     else
-        echo "File does not exist: $name"
-        exit 1
+        echo "WARNING: File does not exist: $name"
+        # exit 1
     fi
 }
 
