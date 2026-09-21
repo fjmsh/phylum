@@ -55,72 +55,24 @@ Future<void> pickAndUploadFiles(BuildContext context, String folderId) async {
   final result = await FilePicker.pickFiles();
   if (!context.mounted || result.isEmpty) return;
 
-  final files = result.map((e) {
-    final stream = e.readAsByteStream();
-    return UploadFile(
-      size: e.lengthSync() ?? 0,
-      stream: stream.cast(),
-      path: e.name,
-    );
-  }).whereType<UploadFile>();
-  return uploadFiles(context, folderId, files);
-}
+  final files = result
+      .map((e) {
+        final stream = e.readAsByteStream();
+        return UploadFile(
+          size: e.lengthSync() ?? 0,
+          stream: stream.cast(),
+          path: e.name,
+        );
+      })
+      .whereType<UploadFile>()
+      .toList(growable: false);
 
-Future<void> uploadFiles(
-  BuildContext context,
-  String folderId,
-  Iterable<UploadFile> files,
-) async {
-  if (files.isEmpty) return;
-  final account = context.read<PhylumAccount>();
-  final size = files.map((f) => f.size).fold(0, (acc, s) => acc + s);
-  if (!context.mounted) return;
-  final confirm =
-      await showAlertDialog(
-        context,
-        title: 'Upload ${files.length} Files?',
-        message: 'Total Upload Size: ${size.formatForDisplay()}',
-        positiveText: 'YES',
-        negativeText: 'NO',
-      ) ??
-      false;
-  final userPermission =
-      await account.db.getResource(folderId).then((r) => r?.userPermission) ??
-      0;
-  if (!confirm || !context.mounted) return;
-  for (final file in files) {
-    String? id;
-    ensurefile:
-    while (id == null) {
-      id = await handleLocalErrors(
-        // ignore: use_build_context_synchronously
-        context,
-        p.basename(file.path),
-        overwriteFn: (r) => r.dir ? nameConflictDelete : nameConflictOverwrite,
-        (name, conflictResolution, ensurePermission) =>
-            account.resourceRepository.upload(
-              parent: folderId,
-              name: name,
-              contents: file.stream,
-              size: file.size,
-              userPermission: userPermission,
-              conflictResolution: conflictResolution,
-              ensurePermission: ensurePermission,
-            ),
-      );
-      if (id == null && context.mounted) {
-        final confirm =
-            await showAlertDialog(
-              context,
-              title: 'Skip file?',
-              positiveText: 'No',
-              negativeText: 'Yes',
-            ) ??
-            false;
-        if (!confirm) break ensurefile;
-      }
-    }
-  }
+  final tree = DirTree(
+    totalSize: files.map((f) => f.size).fold(0, (acc, s) => acc + s),
+    files: files,
+    dirs: const [],
+  );
+  return uploadDirTree(context, folderId, tree);
 }
 
 Future<void> pickAndUploadVersion(
@@ -165,21 +117,29 @@ Future<void> uploadDirTree(
   String folderId,
   DirTree tree,
 ) async {
-  final account = context.read<PhylumAccount>();
+  if (tree.files.isEmpty && tree.dirs.isEmpty) return;
+  final title = tree.files.length == 1
+      ? 'Upload File?'
+      : 'Upload ${tree.files.length} files?';
+  String message = '${tree.totalSize.formatForDisplay()} will be uploaded.';
+  if (tree.dirs.isNotEmpty) {
+    message += '\n\n${tree.dirs.length} directories will be created.';
+  }
   final confirm =
       await showAlertDialog(
         context,
-        title: 'Upload Files?',
-        message:
-            'Found ${tree.files.length} files and ${tree.dirs.length} directories.\n\nTotal Upload Size: ${tree.totalSize.formatForDisplay()}',
+        title: title,
+        message: message,
         positiveText: 'YES',
         negativeText: 'NO',
       ) ??
       false;
+  if (!confirm || !context.mounted) return;
+
+  final account = context.read<PhylumAccount>();
   final userPermission =
       await account.db.getResource(folderId).then((r) => r?.userPermission) ??
       0;
-  if (!confirm || !context.mounted) return;
   final dirIds = <String, String>{};
   for (final path in tree.dirs) {
     final parent = dirIds[p.dirname(path)] ?? folderId;

@@ -20,8 +20,7 @@ Future<void> pasteItems(
       showAlertDialog(context, title: error, message: details);
       break;
     case PasteFilesData():
-      await uploadFiles(context, folderId, data.files);
-      await uploadDirectories(context, folderId, data.directoryPaths);
+      await uploadDirTree(context, folderId, data.tree);
       break;
     case PasteResourcesData():
       final account = context.read<PhylumAccount>();

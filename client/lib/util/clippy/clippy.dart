@@ -2,6 +2,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
+import 'package:phylum/util/upload/upload_utils.dart';
 
 import 'clippy_stub.dart'
     if (dart.library.js_interop) 'clippy_web.dart'
@@ -56,10 +57,9 @@ class PasteError extends PasteData {
 }
 
 class PasteFilesData extends PasteData {
-  final List<UploadFile> files;
-  final List<String> directoryPaths;
+  final DirTree tree;
 
-  const PasteFilesData({required this.files, required this.directoryPaths});
+  const PasteFilesData({required this.tree});
 }
 
 class PasteResourcesData extends PasteData {

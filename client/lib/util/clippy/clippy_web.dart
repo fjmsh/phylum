@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/util/clippy/clippy.dart';
+import 'package:phylum/util/upload/upload_utils.dart';
 import 'package:web/web.dart' as web;
 import 'dart:js_interop';
 
@@ -66,7 +67,10 @@ extension on web.DataTransfer {
     });
 
     if (files.isNotEmpty) {
-      return PasteFilesData(files: files, directoryPaths: const []);
+      final size = files.fold(0, (acc, e) => acc + e.size);
+      return PasteFilesData(
+        tree: DirTree(totalSize: size, files: files, dirs: const []),
+      );
     }
 
     final lines = getData('text/plain').split('\n');
