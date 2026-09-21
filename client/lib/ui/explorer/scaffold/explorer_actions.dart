@@ -10,8 +10,8 @@ import 'package:phylum/util/upload/upload_utils.dart';
 import 'package:provider/provider.dart';
 
 import 'package:phylum/util/upload/pick_directory_stub.dart'
-    if (dart.library.js_interop) 'package:phylum/util/pick_directory_web.dart'
-    if (dart.library.ffi) 'package:phylum/util/pick_directory_vm.dart';
+    if (dart.library.js_interop) 'package:phylum/util/upload/pick_directory_web.dart'
+    if (dart.library.ffi) 'package:phylum/util/upload/pick_directory_vm.dart';
 
 class ExplorerActions extends StatelessWidget {
   final Widget child;

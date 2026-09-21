@@ -1,7 +1,7 @@
+import 'package:flutter/widgets.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/util/upload/upload_utils.dart';
 
 import 'clippy_stub.dart'
@@ -17,7 +17,8 @@ class Clippy {
 
   static final ClippyInterface _instance = createInterface();
 
-  static Future<PasteData?> read() => _instance.read();
+  static Future<PasteData?> read(BuildContext context) =>
+      _instance.read(context);
 
   static void write(List<Uri> resourceUrls) => _instance.write(resourceUrls);
 
@@ -38,7 +39,7 @@ class Clippy {
 }
 
 abstract class ClippyInterface {
-  Future<PasteData?> read();
+  Future<PasteData?> read(BuildContext context);
 
   void write(List<Uri> resourceUrls);
 

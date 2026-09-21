@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:flutter/widgets.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/util/clippy/clippy.dart';
 import 'package:phylum/util/upload/upload_utils.dart';
@@ -17,7 +18,8 @@ class _ClippyWeb extends ClippyInterface {
   }
 
   @override
-  Future<PasteData?> read() async => throw UnimplementedError();
+  Future<PasteData?> read(BuildContext context) async =>
+      throw UnimplementedError();
 
   @override
   void write(List<Uri> resourceUrls) {

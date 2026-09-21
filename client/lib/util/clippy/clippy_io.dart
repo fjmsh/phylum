@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:phylum/util/clippy/clippy.dart';
 import 'package:phylum/util/logging/logging.dart';
+import 'package:phylum/util/upload/filesystem_io.dart';
 
 const _platform = MethodChannel('cloud.phylum.drive/clippy');
 
@@ -11,11 +13,14 @@ class _ClippyNative extends ClippyInterface {
   void setPasteHandler(void Function(PasteData)? _) {}
 
   @override
-  Future<PasteData?> read() async {
+  Future<PasteData?> read(BuildContext context) async {
     try {
       final result = await _platform.invokeMethod<List>('files');
       final paths = result?.cast<String>() ?? const [];
-      // TODO: implement
+      if (context.mounted) {
+        final tree = await enumerateDirectories(context, paths);
+        return PasteFilesData(tree: tree);
+      }
       return null;
     } on PlatformException catch (e) {
       Log.warn('Failed to get files from clippy: ', e);
@@ -25,6 +30,6 @@ class _ClippyNative extends ClippyInterface {
 
   @override
   void write(List<Uri> resourceUrls) {
-    // TODO: implement
+    Clipboard.setData(ClipboardData(text: ''));
   }
 }

@@ -45,7 +45,7 @@ class ExplorerActions extends StatelessWidget {
             final folderId = context.read<ExplorerState>().folderId;
             if (folderId == null) return;
 
-            final data = await Clippy.read();
+            final data = await Clippy.read(context);
 
             if (data == null || !context.mounted) return;
             pasteItems(context, folderId, data);
