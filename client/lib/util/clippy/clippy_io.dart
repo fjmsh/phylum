@@ -16,10 +16,19 @@ class _ClippyNative extends ClippyInterface {
   Future<PasteData?> read(BuildContext context) async {
     try {
       final result = await _platform.invokeMethod<List>('files');
-      final paths = result?.cast<String>() ?? const [];
-      if (context.mounted) {
-        final tree = await enumerateDirectories(context, paths);
-        return PasteFilesData(tree: tree);
+      if (result?.isNotEmpty == true) {
+        final paths = result?.cast<String>() ?? const [];
+        if (context.mounted) {
+          final tree = await enumerateDirectories(context, paths);
+          return PasteFilesData(tree: tree);
+        }
+      } else {
+        final data = await Clipboard.getData('text/plain');
+        final ids = Clippy.extractResourceIdsFromUrls(data?.text ?? '');
+
+        if (ids.isNotEmpty) {
+          return PasteResourcesData(ids: ids);
+        }
       }
       return null;
     } on PlatformException catch (e) {
@@ -30,6 +39,6 @@ class _ClippyNative extends ClippyInterface {
 
   @override
   void write(List<Uri> resourceUrls) {
-    Clipboard.setData(ClipboardData(text: ''));
+    Clipboard.setData(ClipboardData(text: resourceUrls.join('\n')));
   }
 }

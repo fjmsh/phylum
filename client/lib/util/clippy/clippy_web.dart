@@ -75,16 +75,10 @@ extension on web.DataTransfer {
       );
     }
 
-    final lines = getData('text/plain').split('\n');
-    final ids = lines
-        .map((s) => Uri.tryParse(s))
-        .map((uri) => uri == null ? null : Clippy.extractResourceId(uri))
-        .toList(growable: false);
+    final ids = Clippy.extractResourceIdsFromUrls(getData('text/plain'));
 
-    if (ids.length == lines.length) {
-      return PasteResourcesData(
-        ids: ids.whereType<String>().toList(growable: false),
-      );
+    if (ids.isNotEmpty) {
+      return PasteResourcesData(ids: ids);
     }
     return null;
   }

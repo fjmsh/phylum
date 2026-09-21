@@ -8,7 +8,7 @@ import 'clippy_stub.dart'
     if (dart.library.js_interop) 'clippy_web.dart'
     if (dart.library.ffi) 'clippy_io.dart';
 
-class Clippy {
+abstract class Clippy {
   static Uri _serverUri = Uri();
 
   static set serverUri(Uri val) {
@@ -25,7 +25,20 @@ class Clippy {
   static void setPasteHandler(void Function(PasteData)? listener) =>
       _instance.setPasteHandler(listener);
 
-  static String? extractResourceId(Uri uri) {
+  static List<String> extractResourceIdsFromUrls(String text) {
+    final lines = text.split('\n');
+    final ids = lines
+        .map((s) => Uri.tryParse(s))
+        .map((uri) => uri == null ? null : _extractResourceId(uri))
+        .toList(growable: false);
+
+    if (ids.length == lines.length) {
+      return ids.whereType<String>().toList(growable: false);
+    }
+    return const [];
+  }
+
+  static String? _extractResourceId(Uri uri) {
     if (uri.isScheme(_serverUri.scheme) &&
         uri.authority == _serverUri.authority) {
       final segments = uri.pathSegments;
