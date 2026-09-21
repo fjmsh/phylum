@@ -350,4 +350,18 @@ class DirTree {
       dirs: List.of(dirs)..addAll(other.dirs),
     );
   }
+
+  @override
+  String toString() {
+    final sb = StringBuffer('DirTree(totalSize: $totalSize)\n');
+    sb.write('${dirs.length} dirs:\n');
+    for (final dir in dirs) {
+      sb.write('$dir\n');
+    }
+    sb.write('${files.length} files:\n');
+    for (final file in files) {
+      sb.write('${file.path}\n');
+    }
+    return sb.toString();
+  }
 }

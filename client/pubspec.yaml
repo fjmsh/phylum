@@ -17,6 +17,7 @@ dependencies:
   cached_network_image_platform_interface:
   collection:
   dbus:
+  desktop_drop:
   device_info_plus: ^13.2.0
   drift: 2.35.0
   drift_flutter: ^0.3.0

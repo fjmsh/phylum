@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
+import 'package:phylum/libphylum/repositories/resource_repository.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/util/icon_extensions.dart';
 import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
@@ -102,36 +106,67 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
   }
 
   Widget buildDropRegion(BuildContext context) {
-    return widget.buildItem(context, dropTargetActive);
-    // return DropRegion(
-    //   formats: Formats.standardFormats,
-    //   child: widget.buildItem(context, dropTargetActive),
-    //   onDropOver: (event) {
-    //     if (event.session.items.isEmpty) return DropOperation.none;
-    //     if (context.read<ExplorerState>().folderId == null)
-    //       return DropOperation.none;
-    //     for (final item in event.session.items) {
-    //       if (kIsWeb || item.canProvide(Formats.fileUri)) {
-    //         return DropOperation.copy;
-    //       }
-    //     }
-    //     return DropOperation.none;
-    //   },
-    //   onDropEnter: (event) => setState(() => dropTargetActive = true),
-    //   onDropLeave: (event) => setState(() => dropTargetActive = false),
-    //   onPerformDrop: (event) async {
-    //     final folderId = context.read<ExplorerState>().folderId;
-    //     if (folderId == null) return;
-    //     if (!mounted) return;
-    //     processPasteItems(
-    //       context,
-    //       folderId,
-    //       event.session.items.map((item) => item.dataReader).whereType(),
-    //     );
+    // return widget.buildItem(context, dropTargetActive);
+    return DropTarget(
+      onDragEntered: (details) => setState(() => dropTargetActive = true),
+      onDragExited: (details) => setState(() => dropTargetActive = false),
+      onDragDone: (details) async {
+        final folderId = context.read<ExplorerState>().folderId;
+        if (folderId == null) return;
+        DirTree tree = DirTree.empty();
+        for (final item in details.files) {
+          final bookmark = item.extraAppleBookmark;
+          if (bookmark != null) {
+            DesktopDrop.instance.startAccessingSecurityScopedResource(
+              bookmark: bookmark,
+            );
+          }
+          tree = tree.mergeWith(await _enumerateDrop(item));
+          if (bookmark != null) {
+            DesktopDrop.instance.stopAccessingSecurityScopedResource(
+              bookmark: bookmark,
+            );
+          }
+        }
+        if (!context.mounted) return;
+        uploadDirTree(context, folderId, tree);
+      },
+      child: widget.buildItem(context, dropTargetActive),
+    );
+  }
 
-    //     setState(() => dropTargetActive = false);
-    //   },
-    // );
+  Future<DirTree> _enumerateDrop(DropItem item, [String prefix = '']) async {
+    if (item is DropItemFile) {
+      final size = await item.length();
+      return Future.value(
+        DirTree(
+          totalSize: size,
+          files: [
+            UploadFile(
+              size: size,
+              stream: item.openRead(),
+              path: '$prefix${item.name}',
+            ),
+          ],
+          dirs: const [],
+        ),
+      );
+    }
+    if (item is DropItemDirectory) {
+      DirTree tree = DirTree(
+        totalSize: 0,
+        dirs: ['$prefix${item.name}'],
+        files: const [],
+      );
+
+      prefix = '$prefix${item.name}/';
+      for (final file in item.children) {
+        tree = tree.mergeWith(await _enumerateDrop(file, prefix));
+      }
+
+      return tree;
+    }
+    throw 'Unrecognized DropItem: $item';
   }
 }
 
