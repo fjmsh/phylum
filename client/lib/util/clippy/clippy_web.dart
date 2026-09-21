@@ -66,7 +66,7 @@ extension on web.DataTransfer {
     });
 
     if (files.isNotEmpty) {
-      return PasteFilesData(files: files);
+      return PasteFilesData(files: files, directoryPaths: const []);
     }
 
     final lines = getData('text/plain').split('\n');

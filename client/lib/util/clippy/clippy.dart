@@ -57,8 +57,9 @@ class PasteError extends PasteData {
 
 class PasteFilesData extends PasteData {
   final List<UploadFile> files;
+  final List<String> directoryPaths;
 
-  const PasteFilesData({required this.files});
+  const PasteFilesData({required this.files, required this.directoryPaths});
 }
 
 class PasteResourcesData extends PasteData {

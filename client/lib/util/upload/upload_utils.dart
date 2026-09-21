@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart';
-import 'package:mime/mime.dart';
-import 'package:path/path.dart' as p;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
 import 'package:phylum/libphylum/local_upload_errors.dart';
@@ -161,25 +158,6 @@ Future<void> pickAndUploadVersion(
       );
     }
   }
-}
-
-Future<void> uploadPath(
-  BuildContext context,
-  String folderId,
-  Iterable<String> paths,
-) async {
-  showProgressDialog(context, message: 'Counting Files');
-  DirTree? tree;
-  for (final path in paths) {
-    final stat = await enumeratePath(path);
-    tree = tree?.mergeWith(stat) ?? stat;
-  }
-
-  if (!context.mounted) return;
-  Navigator.of(context).pop();
-
-  if (tree == null) return;
-  return uploadDirTree(context, folderId, tree);
 }
 
 Future<void> uploadDirTree(
@@ -392,64 +370,18 @@ Future<String?> handleLocalErrors(
   return null;
 }
 
-String getMimeType(String path) {
-  return lookupMimeType(path) ?? 'application/octet-stream';
-}
-
-Future<DirTree> enumeratePath(String path) {
-  final s = FileStat.statSync(path);
-  if (s.type == FileSystemEntityType.file) {
-    return Future.value(
-      DirTree(
-        totalSize: s.size,
-        files: [
-          UploadFile(
-            size: s.size,
-            stream: File(path).openRead().cast<Uint8List>(),
-            path: p.basename(path),
-          ),
-        ],
-        dirs: const [],
-      ),
-    );
-  }
-  final dir = Directory(path);
-  final completer = Completer<DirTree>();
-  final files = <UploadFile>[];
-  final dirs = <String>[p.basename(path)];
-  int totalSize = 0;
-
-  final prefixLen = p.dirname(path).length + 1;
-
-  dir.list(recursive: true).listen(
-    (file) {
-      if (file is File) {
-        totalSize += file.lengthSync();
-        files.add(
-          UploadFile(
-            size: file.lengthSync(),
-            stream: File(file.path).openRead().cast<Uint8List>(),
-            path: file.path.substring(prefixLen),
-          ),
-        );
-      }
-      if (file is Directory) {
-        dirs.add(file.path.substring(prefixLen));
-      }
-    },
-    onDone: () => completer.complete(
-      DirTree(totalSize: totalSize, files: files, dirs: dirs),
-    ),
-  );
-  return completer.future;
-}
-
 class DirTree {
   final int totalSize;
   final List<UploadFile> files;
   final List<String> dirs;
 
-  DirTree({required this.totalSize, required this.files, required this.dirs});
+  const DirTree({
+    required this.totalSize,
+    required this.files,
+    required this.dirs,
+  });
+
+  const DirTree.empty() : this(totalSize: 0, files: const [], dirs: const []);
 
   DirTree mergeWith(DirTree other) {
     return DirTree(

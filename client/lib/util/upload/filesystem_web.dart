@@ -1,29 +1,26 @@
-import 'dart:async';
 import 'dart:js_interop';
-import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:phylum/libphylum/repositories/resource_repository.dart';
-import 'package:phylum/util/upload_utils.dart';
+import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/upload/upload_utils.dart';
 import 'package:web/web.dart' as web;
 
-bool _folderUploadSupported = web.window.has('showDirectoryPicker');
-bool get folderUploadSupported => _folderUploadSupported;
-
-Future<void> pickAndUploadDirectory(
+Future<DirTree> enumerateDirectory(
   BuildContext context,
-  String folderId,
+  web.FileSystemDirectoryHandle dir,
 ) async {
-  final dir =
-      await (web.window.callMethod('showDirectoryPicker'.toJS)
-              as JSPromise<web.FileSystemDirectoryHandle>)
-          .toDart;
-  final tree = await enumerateDir(dir, '');
-  uploadDirTree(context, folderId, tree);
+  final nav = Navigator.of(context);
+  showProgressDialog(context, message: 'Counting Files');
+
+  final tree = await _enumerateDirectory(dir, '');
+
+  nav.pop();
+  return tree;
 }
 
-Future<DirTree> enumerateDir(
+Future<DirTree> _enumerateDirectory(
   web.FileSystemDirectoryHandle dir,
   String prefix,
 ) async {
@@ -39,7 +36,7 @@ Future<DirTree> enumerateDir(
     final handle = result.value.toDart;
 
     if (handle[1].isA<web.FileSystemDirectoryHandle>()) {
-      final subtree = await enumerateDir(
+      final subtree = await _enumerateDirectory(
         handle[1] as web.FileSystemDirectoryHandle,
         '$prefix${dir.name}',
       );

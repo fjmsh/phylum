@@ -21,7 +21,7 @@ import 'package:phylum/ui/explorer/menu/menu_option.dart';
 import 'package:phylum/ui/explorer/properties/resource_properties_dialog.dart';
 import 'package:phylum/ui/explorer/shortcuts/intents.dart';
 import 'package:phylum/util/dialogs.dart';
-import 'package:phylum/util/upload_utils.dart';
+import 'package:phylum/util/upload/upload_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 

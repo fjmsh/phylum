@@ -7,7 +7,7 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/util/clipboard.dart';
 import 'package:phylum/util/clippy/clippy.dart';
 import 'package:phylum/util/dialogs.dart';
-import 'package:phylum/util/upload_utils.dart';
+import 'package:phylum/util/upload/upload_utils.dart';
 import 'package:provider/provider.dart';
 
 Future<void> pasteItems(
@@ -21,6 +21,7 @@ Future<void> pasteItems(
       break;
     case PasteFilesData():
       await uploadFiles(context, folderId, data.files);
+      await uploadDirectories(context, folderId, data.directoryPaths);
       break;
     case PasteResourcesData():
       final account = context.read<PhylumAccount>();

@@ -10,7 +10,7 @@ import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/util/icon_extensions.dart';
 import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
-import 'package:phylum/util/upload_utils.dart';
+import 'package:phylum/util/upload/upload_utils.dart';
 import 'package:provider/provider.dart';
 
 part 'action_handler.dart';
