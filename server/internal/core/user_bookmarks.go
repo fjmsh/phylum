@@ -40,15 +40,23 @@ func AddBookmark(db db.TxHandler, userID int32, resource Resource, name string) 
 		return Bookmark{}, ErrResourceNameInvalid
 	}
 
-	const q = `INSERT INTO bookmarks(user_id, resource_id, name, dir)
-VALUES ($1::INT, $2::UUID, $3::TEXT, $4::BOOLEAN)
-ON CONFLICT(user_id, resource_id) DO UPDATE
-SET
-    created = CASE WHEN bookmarks.deleted IS NULL THEN CURRENT_TIMESTAMP ELSE bookmarks.created END,
-    modified = CURRENT_TIMESTAMP,
-    deleted = NULL,
-    name = $3::TEXT
-RETURNING resource_id, name, dir, created`
+	const q = `WITH inserted AS (
+	INSERT INTO bookmarks(user_id, resource_id, name, dir)
+	VALUES ($1::INT, $2::UUID, $3::TEXT, $4::BOOLEAN)
+	ON CONFLICT(user_id, resource_id) DO UPDATE
+	SET
+		created = CASE WHEN bookmarks.deleted IS NULL THEN CURRENT_TIMESTAMP ELSE bookmarks.created END,
+		modified = CURRENT_TIMESTAMP,
+		deleted = NULL,
+		name = $3::TEXT
+	RETURNING resource_id, name, dir, created
+) SELECT i.*, v.mime_type 
+FROM inserted i
+LEFT JOIN LATERAL
+(SELECT mime_type FROM resource_versions v
+	WHERE i.resource_id = v.resource_id
+	ORDER BY v.created LIMIT 1) v
+ON TRUE`
 
 	if rows, err := db.Query(q, userID, resource.ID(), name, resource.Dir()); err != nil {
 		return Bookmark{}, err
