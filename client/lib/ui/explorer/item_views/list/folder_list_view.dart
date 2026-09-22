@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:phylum/ui/explorer/gesture_handlers/drag_target.dart';
 import 'package:phylum/ui/explorer/shortcuts/intents.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/ui/explorer/item_views/list/folder_list_item.dart';
-import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
-import 'package:phylum/ui/explorer/resource_item_gesture_handler.dart';
+import 'package:phylum/ui/explorer/gesture_handlers/item_gesture_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../explorer_controller.dart';

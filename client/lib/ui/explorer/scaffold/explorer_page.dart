@@ -5,8 +5,8 @@ import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/phylum_api_types.dart';
 import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
+import 'package:phylum/ui/explorer/gesture_handlers/external_drop_region.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
-import 'package:phylum/ui/explorer/resource_drop_and_drop.dart';
 import 'package:phylum/ui/explorer/scaffold/account_state_page.dart';
 import 'package:phylum/ui/explorer/scaffold/explorer_actions.dart';
 import 'package:phylum/ui/explorer/scaffold/explorer_layout_expanded.dart';
@@ -109,7 +109,7 @@ class _ExplorerPageState extends State<ExplorerPage> {
         : ExplorerLayoutExpanded(explorerFocusNode: _explorerFocusNode);
     return ExternalDropRegion(
       buildItem: (context, dropTargetActive) {
-        final child = (dropTargetActive)
+        final child = dropTargetActive
             ? Stack(
                 children: [
                   layout,

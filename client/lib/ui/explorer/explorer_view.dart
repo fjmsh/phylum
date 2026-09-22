@@ -14,7 +14,7 @@ import 'package:phylum/ui/explorer/menu/context_menu_helper.dart';
 import 'package:phylum/ui/explorer/menu/option_groups.dart';
 import 'package:phylum/ui/explorer/menu/option_handler.dart';
 import 'package:phylum/ui/explorer/shortcuts/actions.dart';
-import 'package:phylum/ui/explorer/folder_gesture_handler.dart';
+import 'package:phylum/ui/explorer/gesture_handlers/folder_gesture_handler.dart';
 import 'package:phylum/ui/explorer/item_views/folder_view_type.dart';
 import 'package:phylum/ui/explorer/shortcuts/shortcuts.dart';
 import 'package:phylum/ui/explorer/path_view.dart';
