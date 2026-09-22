@@ -205,7 +205,7 @@ class BookmarkItem extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       supportedDevices: {PointerDeviceKind.mouse, PointerDeviceKind.trackpad},
       onTap: () => _handleTap(context),
-      onSecondaryTapUp: (details) =>
+      onSecondaryTapDown: (details) =>
           _showBookmarkDialog(context, details.globalPosition, bookmark),
       child: TextButton.icon(
         label: Text(bookmark.name, maxLines: 1, overflow: .ellipsis),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
+import 'package:phylum/ui/explorer/menu/bottom_sheet.dart';
 import 'package:phylum/ui/explorer/menu/context_menu_helper.dart';
 import 'package:phylum/ui/explorer/menu/option_groups.dart';
 import 'package:phylum/ui/explorer/menu/option_handler.dart';
@@ -14,6 +15,7 @@ class FolderGestureHandler extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      supportedDevices: {.touch, .stylus, .invertedStylus, .unknown},
       onTap: () {
         context.read<ExplorerController>().updateSelection(
           (i) => i,
@@ -21,7 +23,7 @@ class FolderGestureHandler extends StatelessWidget {
           false,
         );
       },
-      onSecondaryTapUp: (details) async {
+      onLongPress: () async {
         context.read<ExplorerController>().updateSelection(
           (i) => i,
           SelectionMode.none,
@@ -36,14 +38,14 @@ class FolderGestureHandler extends StatelessWidget {
 
         final groups = await getEnabledOptions(
           context.read(),
-          options,
+          state.location.folderOptions ?? const [],
           resources,
         );
         if (!context.mounted) return;
-        ContextMenuHelper.show(
+        showMenuOptionsBottomSheet(
           context: context,
-          position: details.globalPosition,
           groups: groups,
+          resources: resources,
           onOptionSelected: (option) {
             if (context.mounted) {
               handleOption(context, resources, option);
@@ -51,7 +53,46 @@ class FolderGestureHandler extends StatelessWidget {
           },
         );
       },
-      child: child,
+      child: GestureDetector(
+        supportedDevices: {.mouse, .trackpad},
+        onTap: () {
+          context.read<ExplorerController>().updateSelection(
+            (i) => i,
+            SelectionMode.none,
+            false,
+          );
+        },
+        onSecondaryTapDown: (details) async {
+          context.read<ExplorerController>().updateSelection(
+            (i) => i,
+            SelectionMode.none,
+            false,
+          );
+          final state = context.read<ExplorerState>();
+          final options = state.location.folderOptions;
+          if (options == null) return;
+
+          final resources = [?state.folder];
+
+          final groups = await getEnabledOptions(
+            context.read(),
+            options,
+            resources,
+          );
+          if (!context.mounted) return;
+          ContextMenuHelper.show(
+            context: context,
+            position: details.globalPosition,
+            groups: groups,
+            onOptionSelected: (option) {
+              if (context.mounted) {
+                handleOption(context, resources, option);
+              }
+            },
+          );
+        },
+        child: child,
+      ),
     );
   }
 }
