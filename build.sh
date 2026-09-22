@@ -35,7 +35,7 @@ build_server() {
 
 build_webapp() {
   declare -n container="$1"
-  c=$(buildah from "ghcr.io/gmeligio/flutter-web:3.47.3")
+  c=$(buildah from "docker.io/shroff12/flutter-web:3.47.3")
   buildah config --workingdir /src "$c"
   if [ $SRC_URL = "local" ]; then
     echo "Copying source"
