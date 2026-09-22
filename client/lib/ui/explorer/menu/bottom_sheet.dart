@@ -1,28 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
-import 'package:phylum/ui/explorer/menu/option_handler.dart';
+import 'package:phylum/ui/explorer/menu/menu_option.dart';
 import 'package:phylum/ui/explorer/util/icon_extensions.dart';
 import 'package:provider/provider.dart';
 
 import 'option_groups.dart';
 
-void showMenuOptionsBottomSheet(
-  BuildContext context,
-  MenuOptionGroups options,
-  Iterable<Resource> resources,
-) async {
+void showMenuOptionsBottomSheet({
+  required BuildContext context,
+  required MenuOptionGroups groups,
+  required Iterable<Resource> resources,
+  required void Function(MenuOption option) onOptionSelected,
+}) async {
   final account = context.read<PhylumAccount>();
-  final items = (await buildPopupMenuItems(
-    account,
-    options,
-    resources,
-    onTap: (selection) {
-      Navigator.of(context).pop(selection);
-    },
-  )).toList(growable: false);
+  final items = groups
+      .map(
+        (group) => group.map(
+          (option) => ListTile(
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+            leading: Icon(option.icon),
+            title: Text(option.text),
+            onTap: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ),
+      )
+      .fold<Iterable<Widget>>([], (acc, e) {
+        if (e.isEmpty) {
+          return acc;
+        }
+        if (acc.isEmpty) {
+          return e;
+        }
+        return [...acc, const Divider(), ...e];
+      })
+      .toList(growable: false);
+
   if (!context.mounted) return;
-  final selected = await showModalBottomSheet(
+  showModalBottomSheet(
     showDragHandle: true,
     context: context,
     isScrollControlled: true,
@@ -86,9 +103,4 @@ void showMenuOptionsBottomSheet(
       },
     ),
   );
-
-  if (!context.mounted || selected == null) {
-    return;
-  }
-  handleOption(context, resources, selected);
 }

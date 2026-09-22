@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/db/db.dart';
 import 'package:phylum/libphylum/db/resource_helpers.dart';
@@ -10,10 +11,12 @@ import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/common/logo_row.dart';
 import 'package:phylum/ui/explorer/menu/context_menu_helper.dart';
+import 'package:phylum/ui/explorer/menu/menu_option.dart';
 import 'package:phylum/ui/explorer/scaffold/create_action.dart';
 import 'package:phylum/ui/explorer/shortcuts/intents.dart';
 import 'package:phylum/ui/explorer/util/about_dialog.dart';
 import 'package:phylum/util/dialogs.dart';
+import 'package:phylum/util/platform.dart';
 import 'package:provider/provider.dart';
 
 class NavList extends StatelessWidget {
@@ -199,101 +202,125 @@ class BookmarkItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      supportedDevices: {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.stylus,
-        PointerDeviceKind.invertedStylus,
-        PointerDeviceKind.unknown,
-      },
-      onLongPressEnd: (details) =>
-          showBookmarkDialog(context, details.globalPosition, bookmark),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        supportedDevices: {PointerDeviceKind.mouse, PointerDeviceKind.trackpad},
-        onSecondaryTapUp: (details) =>
-            showBookmarkDialog(context, details.globalPosition, bookmark),
-        child: TextButton.icon(
-          label: Text(bookmark.name, maxLines: 1, overflow: .ellipsis),
-          icon: _getIcon(bookmark.dir, bookmark.mimeType ?? ''),
-          onPressed: () async {
-            Scaffold.maybeOf(context)?.closeDrawer();
-            if (bookmark.dir) {
-              Actions.maybeInvoke(
-                context,
-                NavIntent(
-                  target: ExplorerLocationFolder(folderId: bookmark.resourceId),
-                ),
-              );
-              return;
-            }
-            final account = context.read<PhylumAccount>();
-            final resource = await account.db.getResource(bookmark.resourceId);
-            if (!context.mounted) return;
-            if (resource == null) {
-              final nav = Navigator.of(context);
-              showProgressDialog(
-                context,
-                title: 'Getting Details',
-                message: bookmark.name,
-              );
-              final success = await account.resourceRepository
-                  .requestResource(bookmark.resourceId)
-                  .then((result) => result is ApiSuccessResponse);
-              nav.pop();
-              if (!success) {
-                if (context.mounted) {
-                  showAlertDialog(context, title: 'Unable to get file info');
-                }
-                return;
-              }
-            }
-            if (resource != null && context.mounted) {
-              Actions.maybeInvoke(context, OpenResourceIntent(resource));
-            }
-          },
-        ),
+      behavior: HitTestBehavior.opaque,
+      supportedDevices: {PointerDeviceKind.mouse, PointerDeviceKind.trackpad},
+      onTap: () => _handleTap(context),
+      onSecondaryTapUp: (details) =>
+          _showBookmarkDialog(context, details.globalPosition, bookmark),
+      child: TextButton.icon(
+        label: Text(bookmark.name, maxLines: 1, overflow: .ellipsis),
+        icon: _getIcon(bookmark.dir, bookmark.mimeType ?? ''),
+        onPressed: () => _handleTap(context),
+        onLongPress: () => _showBookmarkDialog(context, null, bookmark),
       ),
     );
   }
 
-  void showBookmarkDialog(
+  void _handleTap(BuildContext context) async {
+    if (isApple && HardwareKeyboard.instance.isControlPressed) {
+      _showBookmarkDialog(context, null, bookmark);
+      return;
+    }
+    Scaffold.maybeOf(context)?.closeDrawer();
+    if (bookmark.dir) {
+      Actions.maybeInvoke(
+        context,
+        NavIntent(
+          target: ExplorerLocationFolder(folderId: bookmark.resourceId),
+        ),
+      );
+      return;
+    }
+    final account = context.read<PhylumAccount>();
+    final resource = await account.db.getResource(bookmark.resourceId);
+    if (!context.mounted) return;
+    if (resource == null) {
+      final nav = Navigator.of(context);
+      showProgressDialog(
+        context,
+        title: 'Getting Details',
+        message: bookmark.name,
+      );
+      final success = await account.resourceRepository
+          .requestResource(bookmark.resourceId)
+          .then((result) => result is ApiSuccessResponse);
+      nav.pop();
+      if (!success) {
+        if (context.mounted) {
+          showAlertDialog(context, title: 'Unable to get file info');
+        }
+        return;
+      }
+    }
+    if (resource != null && context.mounted) {
+      Actions.maybeInvoke(context, OpenResourceIntent(resource));
+    }
+  }
+
+  void _showBookmarkDialog(
     BuildContext context,
-    Offset position,
+    Offset? position,
     SelectBookmarksResult bookmark,
   ) async {
-    final account = context.read<PhylumAccount>();
+    if (position == null) {
+      final options = [MenuOption.bookmarkEdit, MenuOption.bookmarkRemove];
+      final option = await showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          final items = options
+              .map(
+                (option) => ListTile(
+                  visualDensity: VisualDensity.adaptivePlatformDensity,
+                  leading: Icon(option.icon),
+                  title: Text(option.text),
+                  onTap: () {
+                    Navigator.of(context).pop(option);
+                  },
+                ),
+              )
+              .toList(growable: false);
+          return ListView(shrinkWrap: true, children: items);
+        },
+      );
+      if (context.mounted && option != null) {
+        _onOptionSelected(context, option);
+      }
+    } else {
+      ContextMenuHelper.show(
+        context: context,
+        position: position,
+        groups: [
+          [.bookmarkEdit, .bookmarkRemove],
+        ],
+        onOptionSelected: (option) => _onOptionSelected(context, option),
+      );
+    }
+  }
 
-    ContextMenuHelper.show(
-      context: context,
-      position: position,
-      groups: [
-        [.bookmarkEdit, .bookmarkRemove],
-      ],
-      onOptionSelected: (option) async {
-        if (option == .bookmarkEdit) {
-          if (!context.mounted) return;
-          final name = await showInputDialog(
-            context,
-            autocorrect: false,
-            title: 'Edit Bookmark',
-            labelText: 'Name',
-            preset: bookmark.name,
-          );
-          if (name == null || name.trim().isEmpty || name == bookmark.name) {
-            return;
-          }
-          account.bookmarkRepository.addBookmarkDirect(
-            resourceId: bookmark.resourceId,
-            dir: bookmark.dir,
-            name: name,
-          );
-        } else if (option == .bookmarkRemove) {
-          account.bookmarkRepository.removeBookmark(
-            resourceId: bookmark.resourceId,
-          );
-        }
-      },
-    );
+  void _onOptionSelected(BuildContext context, MenuOption option) async {
+    final account = context.read<PhylumAccount>();
+    if (option == .bookmarkEdit) {
+      if (!context.mounted) return;
+      final name = await showInputDialog(
+        context,
+        autocorrect: false,
+        title: 'Edit Bookmark',
+        labelText: 'Name',
+        preset: bookmark.name,
+      );
+      if (name == null || name.trim().isEmpty || name == bookmark.name) {
+        return;
+      }
+      account.bookmarkRepository.addBookmarkDirect(
+        resourceId: bookmark.resourceId,
+        dir: bookmark.dir,
+        name: name,
+      );
+    } else if (option == .bookmarkRemove) {
+      account.bookmarkRepository.removeBookmark(
+        resourceId: bookmark.resourceId,
+      );
+    }
   }
 }
 

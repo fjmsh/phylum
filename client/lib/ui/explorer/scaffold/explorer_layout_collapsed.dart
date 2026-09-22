@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/explorer_view.dart';
 import 'package:phylum/ui/explorer/menu/bottom_sheet.dart';
+import 'package:phylum/ui/explorer/menu/option_groups.dart';
+import 'package:phylum/ui/explorer/menu/option_handler.dart';
 import 'package:phylum/ui/explorer/scaffold/create_action.dart';
 import 'package:phylum/ui/explorer/scaffold/nav_list.dart';
 import 'package:phylum/ui/explorer/scaffold/search/search.dart';
@@ -71,11 +73,25 @@ class ExplorerLayoutCollapsed extends StatelessWidget {
         title: Text('$selected selected'),
         actions: [
           IconButton(
-            onPressed: () {
+            onPressed: () async {
               final state = context.read<ExplorerState>();
-              final selected = state.selected;
-              var options = state.location.selectedResourceOptions;
-              showMenuOptionsBottomSheet(context, options, selected);
+              final resources = state.selected;
+              final groups = await getEnabledOptions(
+                context.read(),
+                state.location.selectedResourceOptions,
+                resources,
+              );
+              if (!context.mounted) return;
+              showMenuOptionsBottomSheet(
+                context: context,
+                groups: groups,
+                resources: resources,
+                onOptionSelected: (option) {
+                  if (context.mounted) {
+                    handleOption(context, resources, option);
+                  }
+                },
+              );
             },
             icon: Icon(Icons.adaptive.more),
           ),

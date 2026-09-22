@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
@@ -10,13 +7,8 @@ import 'package:phylum/ui/explorer/menu/option_groups.dart';
 import 'package:phylum/ui/explorer/menu/option_handler.dart';
 import 'package:phylum/ui/explorer/shortcuts/intents.dart';
 import 'package:phylum/ui/explorer/shortcuts/selection_mode.dart';
+import 'package:phylum/util/platform.dart';
 import 'package:provider/provider.dart';
-
-final isApple =
-    (kIsWeb &&
-        (defaultTargetPlatform == TargetPlatform.macOS ||
-            defaultTargetPlatform == TargetPlatform.iOS)) ||
-    (!kIsWeb && (Platform.isMacOS || Platform.isIOS));
 
 class ItemMouseGestureHandler extends StatelessWidget {
   final int resourceIndex;
