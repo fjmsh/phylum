@@ -7,11 +7,17 @@ const CACHED_URLS = [
   "/icons/icon-512.png",
 ];
 
-const ASSET_URLS = [
-  /^\/drift_worker(\.[0-9abcdef]+)?\.js$/,
-  /^\/sqlite3(\.[0-9abcdef]+)?\.wasm$/,
-  /^\/main.dart(\.[0-9abcdef]+)?\.(js|mjs|wasm)$/,
-  /^\/phylum(\.[0-9abcdef]+)?\.webmanifest$/,
+const APP_ROUTES = [
+  /^\/accounts/,
+  /^\/login/,
+  /^\/setup/,
+  /^\/home/,
+  /^\/recents/,
+  /^\/shared/,
+  /^\/settings/,
+  /^\/trash/,
+  /^\/file/,
+  /^\/folder/,
 ];
 
 self.addEventListener("install", (event) => {
@@ -46,21 +52,19 @@ self.addEventListener("fetch", (event) => {
   if (event.request.mode === "navigate") {
     const path = new URL(event.request.url).pathname;
 
-    if (ASSET_URLS.some((rx) => rx.test(path))) {
-      return;
+    if (APP_ROUTES.some((rx) => rx.test(path))) {
+      const request = new Request("/", {
+        method: event.request.method,
+        headers: event.request.headers,
+        mode: "same-origin",
+        credentials: event.request.credentials,
+        redirect: "follow",
+      });
+      event.respondWith(
+        fetch(request).catch(() => {
+          return caches.match("/");
+        }),
+      );
     }
-
-    const request = new Request("/", {
-      method: event.request.method,
-      headers: event.request.headers,
-      mode: "same-origin",
-      credentials: event.request.credentials,
-      redirect: "follow",
-    });
-    event.respondWith(
-      fetch(request).catch(() => {
-        return caches.match("/");
-      }),
-    );
   }
 });
