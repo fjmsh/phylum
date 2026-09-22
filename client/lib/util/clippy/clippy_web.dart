@@ -54,8 +54,7 @@ extension on web.DataTransfer {
       }
       if (item.type == '') {
         return PasteError(
-          error: 'Cannot paste ${item.name}',
-          details: 'Pasting folders is not supported on web clients',
+          error: 'Pasting folders is not supported on web clients',
         );
       }
     }

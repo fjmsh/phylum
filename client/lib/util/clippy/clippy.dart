@@ -64,10 +64,9 @@ sealed class PasteData {
 }
 
 class PasteError extends PasteData {
-  final String? error;
-  final String? details;
+  final String error;
 
-  const PasteError({this.error, this.details});
+  const PasteError({required this.error});
 }
 
 class PasteFilesData extends PasteData {

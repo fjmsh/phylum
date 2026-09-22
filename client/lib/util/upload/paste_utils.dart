@@ -6,7 +6,6 @@ import 'package:phylum/libphylum/local_upload_errors.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/explorer/util/clipboard.dart';
 import 'package:phylum/util/clippy/clippy.dart';
-import 'package:phylum/util/dialogs.dart';
 import 'package:phylum/util/upload/upload_utils.dart';
 import 'package:provider/provider.dart';
 
@@ -16,8 +15,10 @@ Future<void> pasteItems(
   PasteData data,
 ) async {
   switch (data) {
-    case PasteError(error: String? error, details: String? details):
-      showAlertDialog(context, title: error, message: details);
+    case PasteError(error: String error):
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), duration: Duration(seconds: 2)),
+      );
       break;
     case PasteFilesData():
       await uploadDirTree(context, folderId, data.tree);

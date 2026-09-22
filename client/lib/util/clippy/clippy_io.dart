@@ -4,7 +4,7 @@ import 'package:phylum/util/clippy/clippy.dart';
 import 'package:phylum/util/logging/logging.dart';
 import 'package:phylum/util/upload/filesystem_io.dart';
 
-const _platform = MethodChannel('cloud.phylum.drive/clippy');
+const _platform = OptionalMethodChannel('cloud.phylum.drive/clippy');
 
 ClippyInterface createInterface() => _ClippyNative();
 
@@ -16,8 +16,13 @@ class _ClippyNative extends ClippyInterface {
   Future<PasteData?> read(BuildContext context) async {
     try {
       final result = await _platform.invokeMethod<List>('files');
-      if (result?.isNotEmpty == true) {
-        final paths = result?.cast<String>() ?? const [];
+      if (result == null) {
+        return PasteError(
+          error: 'Pasting from clipboard is not yet supported on this platform',
+        );
+      }
+      if (result.isNotEmpty == true) {
+        final paths = result.cast<String>();
         if (context.mounted) {
           final tree = await enumerateDirectories(context, paths);
           return PasteFilesData(tree: tree);
