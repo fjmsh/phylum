@@ -78,9 +78,9 @@ use_versioned() {
     echo "Pinning versions in $target"
     for name in "${!versioned_names[@]}"; do
         if [ $dry_run = "true" ]; then
-            echo sed -E -i '' "s:$name\":${versioned_names[$name]}\":g" "$target"
+            echo sed -E -i.bak "s:$name\":${versioned_names[$name]}\":g" "$target" \&\& rm "$target.bak"
         else
-            sed -E -i '' "s:$name\":${versioned_names[$name]}\":g" "$target"
+            sed -E -i.bak "s:$name\":${versioned_names[$name]}\":g" "$target" && rm "$target.bak"
         fi
     done
 }
