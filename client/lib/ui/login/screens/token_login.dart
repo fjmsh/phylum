@@ -33,12 +33,14 @@ class _TokenLoginScreenState extends State<TokenLoginScreen> {
       });
     }
     if (widget.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.error!),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((d) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.error!),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      });
     }
   }
 
