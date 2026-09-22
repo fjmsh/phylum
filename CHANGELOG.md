@@ -3,8 +3,8 @@ v0.10 (Unreleased)
 
 > [!WARNING]
 > Breaking changes:
-> - Fix config overrides not working for keys with underscores (breaking: use `__` instead of `_` to delimit env vars, and `.` instead of `_` to delimit command line flags)
-> - Update some config keys
+> - Use `__` instead of `_` to separate config via env vars, and `.` instead of `_` to delimit command line flags
+> - Update config keys
 >   - server.webappsrc => server.web_app_src
 >   - server.publinkpath => server.publink_path
 >   - server.logbody => server.log_body
@@ -21,6 +21,7 @@ Features:
 
 Improvements:
 - Use vips bindings to generate thumbnails and image previews instead of spawning a new process
+- Tons uf UI polish
 
 Fixes:
 - Properties not showing on small screens
@@ -28,6 +29,29 @@ Fixes:
 - mp4 audio files sometimes incorrectly tagged as video/mp4
 - LDAP config during setup
 - System theme (light/dark) not being respected
+
+### Migrations
+
+#### Migrate Directory Structure
+The directory structure of storage and previews has changed. Run the `admin migrate img <dir>`
+and `admin migrate localstorage` commands to migrate data to this new structure. If you are using
+podman (or docker), you can use the following commands:
+```
+podman-compose run --rm server admin migrate img previews
+podman-compose run --rm server admin migrate localstorage
+```
+
+#### Get new `compose.yml`
+Because of the change in environment variable naming scheme, `compose.yml` has been updated. Get the
+latest from [](https://codeberg.org/shroff/phylum/releases/download/releases%2Fv0.10.0/compose.yml)
+
+#### Update `.env`
+Use `__` instead of `_` to separate environment variable names. At the very least, rename
+`PHYLUM_DB_PASSWORD` => `PHYLUM_DB__PASSWORD`.
+
+
+
+
 
 
 v0.9
