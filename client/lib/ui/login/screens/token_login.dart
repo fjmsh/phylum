@@ -12,8 +12,9 @@ import '../login_controller.dart';
 
 class TokenLoginScreen extends StatefulWidget {
   final String? token;
+  final String? error;
 
-  const TokenLoginScreen({super.key, required this.token});
+  const TokenLoginScreen({super.key, required this.token, required this.error});
 
   @override
   State<TokenLoginScreen> createState() => _TokenLoginScreenState();
@@ -30,6 +31,14 @@ class _TokenLoginScreenState extends State<TokenLoginScreen> {
       WidgetsBinding.instance.addPostFrameCallback((d) {
         _performLogin(context);
       });
+    }
+    if (widget.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(widget.error!),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -116,7 +125,7 @@ class _TokenLoginScreenState extends State<TokenLoginScreen> {
   }
 
   Future<void> _performLogin(BuildContext context) async {
-    if (_requestInFlight) return;
+    if (_requestInFlight || tokenController.text.isEmpty) return;
     final instanceUrl = context.read<LoginState>().instanceUrl!;
     final builder = UriBuilder.fromUri(instanceUrl);
     builder.path = '${builder.path}/api/v1/auth/token/login';

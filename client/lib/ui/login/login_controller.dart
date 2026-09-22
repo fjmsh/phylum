@@ -93,11 +93,12 @@ class EmailLoginMethod extends LoginMethod {
 
 class TokenLoginMethod extends LoginMethod {
   final String? token;
+  final String? error;
 
-  const TokenLoginMethod(this.token);
+  const TokenLoginMethod({this.token, this.error});
 
   @override
-  Widget build() => TokenLoginScreen(token: token);
+  Widget build() => TokenLoginScreen(token: token, error: error);
 }
 
 class ResetPasswordMethod extends LoginMethod {

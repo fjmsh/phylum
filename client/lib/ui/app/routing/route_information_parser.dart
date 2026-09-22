@@ -6,7 +6,10 @@ final _staticPaths = <String, PhylumRoute Function(RouteInformation)>{
       LoginRoute(instanceUrl: info.uri.queryParameters['instance']),
   '/login/token': (info) => LoginRoute(
     instanceUrl: info.uri.queryParameters['instance'],
-    loginMethod: TokenLoginMethod(info.uri.queryParameters['token']),
+    loginMethod: TokenLoginMethod(
+      token: info.uri.queryParameters['token'],
+      error: info.uri.queryParameters['error'],
+    ),
   ),
   '/login/reset_password': (info) => LoginRoute(
     instanceUrl: info.uri.queryParameters['instance'],
