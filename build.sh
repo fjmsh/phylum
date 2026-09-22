@@ -13,7 +13,7 @@ build_server() {
   declare -n container="$1"
   arch=$2
   c=$(buildah from --platform linux/${arch} docker.io/golang:alpine)
-  buildah run apk update && apk add --no-cache build-base ffmpeg-dev vips-dev
+  buildah run $c -- sh -c 'apk update && apk add --no-cache build-base ffmpeg-dev vips-dev'
   buildah config --workingdir /src "$c"
   if [ $SRC_URL = "local" ]; then
     echo "Copying source"
@@ -68,7 +68,7 @@ build_phylum() {
 	  --entrypoint '["phylum"]' \
 	  --cmd "serve" \
 	  --env PATH="$imagepath:/app" \
-	  --env PHYLUM_SERVER__WEBAPPSRC="/app/web" \
+	  --env PHYLUM_SERVER__WEB_APP_SRC="/app/web" \
 	  $c
   echo "Installing Packages"
   buildah run $c -- apk add ffmpeg-dev vips-tools vips-poppler font-noto
