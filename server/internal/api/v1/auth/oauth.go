@@ -40,24 +40,27 @@ func handleOAuthRedirect(c *gin.Context) {
 	authCode := c.Query("code")
 	state := c.Query("state")
 
-	if clientType, loopbackPort, err := auth.Get().OpenIDValidateAuthCode(db, state, authCode, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect")); err != nil {
+	clientType, loopbackPort, err := auth.Get().OpenIDValidateAuthCode(db, state, authCode, getInstanceURL(c.Request, "/api/v1/auth/oauth/redirect"))
+	var clientURI url.URL
+	switch clientType {
+	case auth.OpenIDClientNone:
 		panic(err)
-	} else {
-		var clientURI url.URL
-		switch clientType {
-		case auth.OpenIDClientWeb:
-			clientURI = *c.Request.URL
-			clientURI.RawQuery = ""
-		case auth.OpenIDClientLoopback:
-			clientURI = url.URL{Scheme: "http", Host: fmt.Sprintf("localhost:%d", loopbackPort)}
-		case auth.OpenIDClientNative:
-			clientURI = url.URL{Scheme: "cloud.phylum.drive"}
-		}
-		clientURI.Path = "/login/token"
-		q := url.Values{}
-		q.Add("token", state)
-		q.Add("instance", getInstanceURL(c.Request, ""))
-		clientURI.RawQuery = q.Encode()
-		c.Redirect(http.StatusFound, clientURI.String())
+	case auth.OpenIDClientWeb:
+		clientURI = *c.Request.URL
+		clientURI.RawQuery = ""
+	case auth.OpenIDClientLoopback:
+		clientURI = url.URL{Scheme: "http", Host: fmt.Sprintf("localhost:%d", loopbackPort)}
+	case auth.OpenIDClientNative:
+		clientURI = url.URL{Scheme: "cloud.phylum.drive"}
 	}
+	clientURI.Path = "/login/token"
+	q := url.Values{}
+	if err == nil {
+		q.Add("token", state)
+	} else {
+		q.Add("error", err.Error())
+	}
+	q.Add("instance", getInstanceURL(c.Request, ""))
+	clientURI.RawQuery = q.Encode()
+	c.Redirect(http.StatusFound, clientURI.String())
 }

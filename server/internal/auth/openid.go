@@ -96,12 +96,12 @@ func (h *Handler) OpenIDValidateAuthCode(d db.Handler, state, authCode, redirect
 		}
 		return OpenIDClientNone, 0, err
 	} else if idToken, err := h.openIDHandler.GetUserInfo(providerName, authCode, redirectURI, codeVerifier); err != nil {
-		return OpenIDClientNone, 0, err
+		return clientType, loopbackPort, err
 	} else {
 		email := strings.ToLower(idToken.Email)
-		user, err := core.UserByEmail(d, email)
 		c, _ := h.openIDHandler.GetClientConfig(providerName)
-		err = d.RunInTx(func(db db.TxHandler) error {
+		err := d.RunInTx(func(db db.TxHandler) error {
+			user, err := core.UserByEmail(d, email)
 			if errors.Is(err, core.ErrUserNotFound) && c.AutoCreateUsers {
 				name := idToken.Name
 				if name == "" {
@@ -119,7 +119,7 @@ func (h *Handler) OpenIDValidateAuthCode(d db.Handler, state, authCode, redirect
 		if err != nil {
 			// This session ID is no longer valid, since we've already used the auth code once
 			d.Exec("DELETE FROM pending_logins WHERE token_id = $1", tokenID)
-			return OpenIDClientNone, 0, err
+			return clientType, loopbackPort, err
 		}
 		return clientType, loopbackPort, nil
 	}
