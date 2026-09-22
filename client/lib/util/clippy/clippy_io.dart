@@ -1,10 +1,9 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:phylum/util/clippy/clippy.dart';
 import 'package:phylum/util/logging/logging.dart';
 import 'package:phylum/util/upload/filesystem_io.dart';
-
-const _platform = OptionalMethodChannel('cloud.phylum.drive/clippy');
 
 ClippyInterface createInterface() => _ClippyNative();
 
@@ -15,26 +14,21 @@ class _ClippyNative extends ClippyInterface {
   @override
   Future<PasteData?> read(BuildContext context) async {
     try {
-      final result = await _platform.invokeMethod<List>('files');
-      if (result == null) {
-        return PasteError(
-          error: 'Pasting from clipboard is not yet supported on this platform',
-        );
-      }
-      if (result.isNotEmpty == true) {
-        final paths = result.cast<String>();
+      final files = await Pasteboard.files();
+      if (files.isNotEmpty) {
         if (context.mounted) {
-          final tree = await enumerateDirectories(context, paths);
+          final tree = await enumerateDirectories(context, files);
           return PasteFilesData(tree: tree);
         }
-      } else {
-        final data = await Clipboard.getData('text/plain');
-        final ids = Clippy.extractResourceIdsFromUrls(data?.text ?? '');
-
-        if (ids.isNotEmpty) {
-          return PasteResourcesData(ids: ids);
-        }
       }
+      final ids = Clippy.extractResourceIdsFromUrls(
+        await Pasteboard.text ?? '',
+      );
+
+      if (ids.isNotEmpty) {
+        return PasteResourcesData(ids: ids);
+      }
+
       return null;
     } on PlatformException catch (e) {
       Log.warn('Failed to get files from clippy: ', e);

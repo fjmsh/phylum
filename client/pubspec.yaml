@@ -42,6 +42,7 @@ dependencies:
   package_info_plus:
   path:
   path_provider:
+  pasteboard:
   permission_handler:
   provider:
   receive_sharing_intent:
