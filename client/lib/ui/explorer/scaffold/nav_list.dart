@@ -10,6 +10,7 @@ import 'package:phylum/ui/app/routing/explorer_history_controller.dart';
 import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/ui/common/logo_row.dart';
+import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/menu/context_menu_helper.dart';
 import 'package:phylum/ui/explorer/menu/menu_option.dart';
 import 'package:phylum/ui/explorer/scaffold/create_action.dart';
@@ -149,14 +150,41 @@ class NavList extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 16),
-                    TextButton.icon(
-                      icon: const Icon(Icons.delete),
-                      label: const Text('Trash'),
-                      onPressed: () {
-                        Scaffold.maybeOf(context)?.closeDrawer();
-                        context.read<ExplorerHistoryController>().go(
-                          const ExplorerLocationTrash(),
-                        );
+                    DragTarget(
+                      builder: (context, candidate, rejected) =>
+                          TextButton.icon(
+                            icon: const Icon(Icons.delete),
+                            label: const Text('Trash'),
+                            onPressed: () {
+                              Scaffold.maybeOf(context)?.closeDrawer();
+                              context.read<ExplorerHistoryController>().go(
+                                const ExplorerLocationTrash(),
+                              );
+                            },
+                          ),
+                      onWillAcceptWithDetails: (details) {
+                        // setState(() => dropTargetActive = true);
+                        return true;
+                      },
+                      onLeave: (data) {
+                        // setState(() => dropTargetActive = false);
+                      },
+                      onAcceptWithDetails: (details) async {
+                        final account = context.read<PhylumAccount>();
+                        final selected = context.read<ExplorerState>().selected;
+                        context.read<ExplorerController>().clearSelection();
+                        final confirm =
+                            await showAlertDialog(
+                              context,
+                              message:
+                                  '${selected.length} resources will be deleted',
+                              negativeText: 'Cancel',
+                            ) ??
+                            false;
+                        if (!confirm) return;
+                        for (final r in selected) {
+                          account.resourceRepository.delete(r.id);
+                        }
                       },
                     ),
                     const SizedBox(height: 16),
