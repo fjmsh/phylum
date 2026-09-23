@@ -39,6 +39,7 @@ Map<ShortcutActivator, Intent> _createShortcuts() {
     SingleActivator(.space): ActivateIntent(),
     SingleActivator(.f2): RenameIntent(),
     SingleActivator(.f5): RefreshIntent(),
+    CharacterActivator('#'): DeleteIntent(false),
   };
 
   if (isApple) {
@@ -69,8 +70,8 @@ Map<ShortcutActivator, Intent> _createShortcuts() {
 
       // Selection
       SingleActivator(.keyA, meta: true): SelectAllIntent(),
-      SingleActivator(.delete, meta: true): DeleteIntent(false),
-      SingleActivator(.delete, meta: true, shift: true): DeleteIntent(true),
+      SingleActivator(.backspace, meta: true): DeleteIntent(false),
+      SingleActivator(.backspace, meta: true, shift: true): DeleteIntent(true),
 
       // Clipboard
       SingleActivator(.keyC, meta: true): CopyToClipboardIntent(false),
