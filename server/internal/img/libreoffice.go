@@ -54,7 +54,7 @@ func exportLibreOffice(input, outdir string, text bool) error {
 		args = append(args,
 			"webp:writer_webp_Export",
 			"--infilter=\"Text (encoded):UTF8,LF,Noto Sans,en-US\"", // TOOO: change font? locale?
-			"--outdir")
+		)
 	} else {
 		args = append(args, "--webp")
 	}
