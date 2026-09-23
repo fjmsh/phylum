@@ -5,7 +5,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 )
+
+var m = sync.Mutex{}
 
 // Generate preview and thumbnail for office documents.
 func processDocument(name, in string) (Res, error) {
@@ -65,8 +68,10 @@ func exportLibreOffice(input, outdir string, text bool) error {
 
 	cmd := exec.Command("soffice", args...)
 
+	m.Lock()
 	if err := cmd.Run(); err != nil {
 		return errors.New("failed to generate preview using LibreOffice: " + err.Error())
 	}
+	m.Unlock()
 	return nil
 }
