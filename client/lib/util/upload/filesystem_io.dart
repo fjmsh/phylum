@@ -17,7 +17,7 @@ Future<DirTree> enumerateDirectories(
 
   DirTree tree = DirTree.empty();
   for (final path in paths) {
-    final stat = await _enumerateDirectory(path);
+    final stat = await enumerateDirectory(path);
     tree = tree.mergeWith(stat);
   }
 
@@ -25,7 +25,7 @@ Future<DirTree> enumerateDirectories(
   return tree;
 }
 
-Future<DirTree> _enumerateDirectory(String path) {
+Future<DirTree> enumerateDirectory(String path) {
   final s = FileStat.statSync(path);
   if (s.type == FileSystemEntityType.file) {
     return Future.value(

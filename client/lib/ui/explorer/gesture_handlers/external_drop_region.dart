@@ -7,6 +7,9 @@ import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/util/upload/upload_utils.dart';
 import 'package:provider/provider.dart';
 
+import 'external_drop_handler_stub.dart'
+    if (dart.library.ffi) 'external_drop_handler_io.dart';
+
 class ExternalDropRegion extends StatefulWidget {
   final Function(BuildContext context, bool active) buildItem;
 
@@ -35,7 +38,7 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
               bookmark: bookmark,
             );
           }
-          tree = tree.mergeWith(await _enumerateDrop(item));
+          tree = tree.mergeWith(await enumerateDropItemPlatform(item));
           if (bookmark != null) {
             DesktopDrop.instance.stopAccessingSecurityScopedResource(
               bookmark: bookmark,
@@ -48,38 +51,38 @@ class _ExternalDropRegionState extends State<ExternalDropRegion> {
       child: widget.buildItem(context, dropTargetActive),
     );
   }
+}
 
-  Future<DirTree> _enumerateDrop(DropItem item, [String prefix = '']) async {
-    if (item is DropItemFile) {
-      final size = await item.length();
-      return Future.value(
-        DirTree(
-          totalSize: size,
-          files: [
-            UploadFile(
-              size: size,
-              stream: item.openRead(),
-              path: '$prefix${item.name}',
-            ),
-          ],
-          dirs: const [],
-        ),
-      );
-    }
-    if (item is DropItemDirectory) {
-      DirTree tree = DirTree(
-        totalSize: 0,
-        dirs: ['$prefix${item.name}'],
-        files: const [],
-      );
-
-      prefix = '$prefix${item.name}/';
-      for (final file in item.children) {
-        tree = tree.mergeWith(await _enumerateDrop(file, prefix));
-      }
-
-      return tree;
-    }
-    throw 'Unrecognized DropItem: $item';
+Future<DirTree> enumerateDropItem(DropItem item, String prefix) async {
+  if (item is DropItemFile) {
+    final size = await item.length();
+    return Future.value(
+      DirTree(
+        totalSize: size,
+        files: [
+          UploadFile(
+            size: size,
+            stream: item.openRead(),
+            path: '$prefix${item.name}',
+          ),
+        ],
+        dirs: const [],
+      ),
+    );
   }
+  if (item is DropItemDirectory) {
+    DirTree tree = DirTree(
+      totalSize: 0,
+      dirs: ['$prefix${item.name}'],
+      files: const [],
+    );
+
+    prefix = '$prefix${item.name}/';
+    for (final file in item.children) {
+      tree = tree.mergeWith(await enumerateDropItem(file, prefix));
+    }
+
+    return tree;
+  }
+  throw 'Unrecognized DropItem: $item';
 }
