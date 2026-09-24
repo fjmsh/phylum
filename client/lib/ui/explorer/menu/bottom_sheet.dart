@@ -22,6 +22,7 @@ void showMenuOptionsBottomSheet({
             leading: Icon(option.icon),
             title: Text(option.text),
             onTap: () {
+              onOptionSelected(option);
               Navigator.of(context).pop();
             },
           ),
