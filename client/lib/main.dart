@@ -47,14 +47,12 @@ void run() async {
   if (kIsWeb) {
     Hive.init(null, backendPreference: HiveStorageBackendPreference.webWorker);
   } else {
-    final appDir = (Platform.isLinux)
-        ? Directory(
-            path.join(
-              (await getApplicationSupportDirectory()).path,
-              storageDir.isNotEmpty ? storageDir : 'data',
-            ),
-          )
-        : await getApplicationDocumentsDirectory();
+    final appDir = Directory(
+      path.join(
+        (await getApplicationSupportDirectory()).path,
+        storageDir.isNotEmpty ? storageDir : 'data',
+      ),
+    );
     AppDatabase.storageDir = appDir;
     blobStorageRoot = appDir.path;
     AppDatabase.tmpDir = await getTemporaryDirectory();
