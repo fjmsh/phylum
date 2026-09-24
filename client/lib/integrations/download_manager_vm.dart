@@ -42,10 +42,13 @@ class DownloadManager with ChangeNotifier {
       taskNotificationTapCallback: (task, notificationType) async {
         if (task.group == 'immediate') return;
         if (notificationType == NotificationType.complete) {
-          final path = await _downloader.pathInSharedStorage(
-            await task.filePath(),
-            SharedStorage.downloads,
-          );
+          String? path = await task.filePath();
+          if (!Platform.isIOS) {
+            path = await _downloader.pathInSharedStorage(
+              path,
+              SharedStorage.downloads,
+            );
+          }
 
           if (path != null) {
             _downloader.openFile(filePath: path);
@@ -73,11 +76,13 @@ class DownloadManager with ChangeNotifier {
         if (task.group == 'immediate') return;
         if (task is DownloadTask) {
           if (update.status == TaskStatus.complete) {
-            _downloader.moveToSharedStorage(
-              task,
-              SharedStorage.downloads,
-              mimeType: task.metaData,
-            );
+            if (!Platform.isIOS) {
+              _downloader.moveToSharedStorage(
+                task,
+                SharedStorage.downloads,
+                mimeType: task.metaData,
+              );
+            }
           }
           if (!_tasks.containsKey(task.taskId)) {
             _tasks[task.taskId] = DownloadTaskStatusNotifier(
