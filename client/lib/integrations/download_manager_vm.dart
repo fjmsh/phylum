@@ -100,7 +100,7 @@ class DownloadManager with ChangeNotifier {
     ResourceVersion? version,
   }) async {
     await _downloader.ready;
-    if (Platform.isAndroid || Platform.isAndroid) {
+    if (Platform.isAndroid || Platform.isIOS) {
       await Permission.notification.request();
     }
     final uri = account.apiClient.createUriBuilder(
