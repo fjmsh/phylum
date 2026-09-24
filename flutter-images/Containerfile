@@ -1,9 +1,23 @@
-FROM ubuntu:24.04 AS flutter-web
+FROM debian:forky-slim AS flutter
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    FLUTTER_HOME=/opt/flutter \
-    PATH=/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:/root/.pub-cache/bin:$PATH \
-    TAR_OPTIONS="--no-same-owner"
+ENV LANG=C.UTF-8 \
+    DEBIAN_FRONTEND=noninteractive \
+    TAR_OPTIONS="--no-same-owner" \
+    HOME=/home/flutter
+
+ENV SDK_ROOT="$HOME/sdks"
+ENV FLUTTER_HOME="$SDK_ROOT/flutter"
+
+# The Github runner clones the repository with uid 1001 and gid 1001. This uid 1001 needs to be the set to the container user to give ownership to the repository folder.
+# See https://github.com/actions/checkout/issues/766
+RUN groupadd --gid 1001 flutter \
+    && useradd --create-home \
+    --shell /bin/bash \
+    --uid 1001 \
+    --gid flutter \
+    flutter
+
+ENV PATH="${FLUTTER_HOME}/bin:/opt/flutter/bin/cache/dart-sdk/bin:$PATH"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -11,15 +25,123 @@ RUN apt-get update \
         curl \
         file \
         git \
-        jq \
         unzip \
         xz-utils \
-        zip \
     && rm -rf /var/lib/apt/lists/*
 
-ARG FLUTTER_VERSION
+# After finishing with root user, set the HOME folder for the non-root user
+USER flutter:flutter
+WORKDIR "$HOME"
 
-RUN git clone --depth 1 --branch "$FLUTTER_VERSION" https://github.com/flutter/flutter.git "$FLUTTER_HOME" \
-    && flutter config --no-analytics \
-    && flutter precache --web \
-    && flutter doctor -v
+ARG flutter_version
+
+RUN git clone --depth 1 --branch "$flutter_version" https://github.com/flutter/flutter.git "$FLUTTER_HOME" \
+    && chown -R flutter:flutter "$FLUTTER_HOME" \
+    && dart --disable-analytics \
+    && flutter config \
+        --no-cli-animations \
+        --no-analytics \
+        --no-enable-android \
+        --no-enable-web \
+        --no-enable-linux-desktop \
+        --no-enable-windows-desktop \
+        --no-enable-fuchsia \
+        --no-enable-custom-devices \
+        --no-enable-ios \
+        --no-enable-macos-desktop \
+    && flutter doctor
+
+
+#########
+## Web ##
+#########
+FROM flutter AS web
+
+RUN flutter config --enable-web \
+    && flutter precache --web
+
+###########
+## Linux ##
+###########
+FROM flutter AS linux
+
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        clang \
+        cmake \
+        ninja-build \
+        pkg-config \
+        libgtk-3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+USER flutter:flutter
+WORKDIR "$HOME"
+
+# Predownload the Linux engine and compile the generated app once so a broken
+# or incomplete desktop toolchain fails while the image is built.
+RUN flutter config --enable-linux-desktop \
+    && flutter precache --linux
+
+RUN flutter create build_app \
+    && cd build_app \
+    && flutter build linux \
+    && cd .. \
+    && rm -rf build_app
+
+
+
+#############
+## Android ##
+#############
+FROM flutter AS android
+
+ARG TARGETARCH
+
+ENV ANDROID_HOME="$SDK_ROOT/android" \
+    JAVA_HOME=/usr/lib/jvm/java-21-openjdk-$TARGETARCH
+ENV PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools"
+
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    openjdk-21-jdk-headless \
+    && rm -rf /var/lib/apt/lists/*
+
+USER flutter:flutter
+WORKDIR "$HOME"
+
+ARG cmdline_tools_version="15859902"
+ARG cmdline_tools_checksum="4e4c464f145a7512b57d088ac6c278c03c9eea610886b35a5e0804e74eedf583"
+
+ARG android_build_tools_version=37.0.0
+ARG android_platform_versions=""
+ARG android_ndk_version=""
+ARG cmake_version="36 37.2"
+
+RUN mkdir -p "$ANDROID_HOME" \
+    && chown -R flutter:flutter "$ANDROID_HOME" \
+    && curl -o tools.zip https://dl.google.com/android/repository/commandlinetools-linux-${cmdline_tools_version}_latest.zip \
+    && if ! [ "$cmdline_tools_checksum" = "" ]; then echo "$cmdline_tools_checksum ./tools.zip" | sha256sum -c; fi \
+    && mkdir -p "$ANDROID_HOME/cmdline-tools/" \
+    && unzip -q tools.zip -d "$ANDROID_HOME/cmdline-tools/" \
+    && mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest" \
+    && rm tools.zip
+
+RUN yes | sdkmanager --licenses \
+    && sdkmanager --update \
+    && yes | sdkmanager "platform-tools" "build-tools;$android_build_tools_version" \
+    && if ! [ "$android_ndk_version" = "" ]; then yes | sdkmanager "ndk;$android_ndk_version"; fi \
+    && if ! [ "$cmake_version" = "" ]; then yes | sdkmanager "cmake;$cmake_version"; fi \
+    && for version in $android_platform_versions; do yes | sdkmanager "platforms;android-$version"; done
+
+RUN flutter config --enable-android \
+    && yes | flutter doctor --android-licenses \
+    && flutter precache --android
+
+RUN flutter create build_app \
+    && cd build_app \
+    && flutter build apk --debug --verbose \
+    && cd .. \
+    && rm -rf build_app
+
