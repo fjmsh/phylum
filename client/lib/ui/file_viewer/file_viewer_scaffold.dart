@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:phylum/integrations/download_manager_vm.dart';
 import 'package:phylum/ui/app/theme.dart';
 import 'package:phylum/ui/explorer/properties/resource_properties_dialog.dart';
 
 import 'versioned_resource.dart';
+import 'package:phylum/integrations/download_manager.dart'
+    if (dart.library.ffi) 'package:phylum/integrations/download_manager_vm.dart'
+    if (dart.library.js_interop) 'package:phylum/integrations/download_manager_web.dart';
 
 class FileViewerScaffold extends StatelessWidget {
   final VersionedResource? _resource;
