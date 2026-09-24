@@ -272,7 +272,6 @@ abstract class CryptConfigCubit extends Cubit<CryptConfigState> {
     );
     if (newState.hasErrors) {
       emit(newState);
-      print(state.pbkdf2IterationsError);
       return null;
     }
     return LocalConfig()

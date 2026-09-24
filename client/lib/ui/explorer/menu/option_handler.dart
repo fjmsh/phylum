@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:background_downloader/background_downloader.dart';
 import 'package:drift/drift.dart';
@@ -236,6 +237,7 @@ void handleOption(
     case MenuOption.openFile:
       if (kIsWeb || resources.isEmpty) return;
       final r = resources.first;
+
       final p = await downloadResourceSync(context, r);
       if (p == null || !context.mounted) return;
       final version = await context
@@ -243,7 +245,11 @@ void handleOption(
           .db
           .latestVersion(r.id)
           .getSingleOrNull();
-      OpenFile.open(p, type: version?.mimeType);
+      OpenFile.open(
+        p,
+        isIOSAppOpen: !kIsWeb && Platform.isIOS,
+        type: version?.mimeType,
+      );
       break;
     case MenuOption.bookmarkEdit:
     case MenuOption.bookmarkAdd:
@@ -296,14 +302,14 @@ Future<String?> downloadResourceSync(BuildContext context, Resource r) async {
     updates: Updates.progress,
   );
   final downloadStreamController = StreamController<double?>();
-  bool dialogVisivle = true;
+  bool dialogVisible = true;
   showProgresIndicatorDialog(
     context,
     title: r.name,
     barrierDismissible: true,
     progress: downloadStreamController.stream,
   ).then((value) {
-    dialogVisivle = false;
+    dialogVisible = false;
     if (value != true) {
       // Task cancelled
       FileDownloader().cancelTaskWithId(task.taskId);
@@ -316,7 +322,7 @@ Future<String?> downloadResourceSync(BuildContext context, Resource r) async {
     },
   );
   downloadStreamController.close();
-  if (context.mounted && dialogVisivle) Navigator.of(context).pop(true);
+  if (context.mounted && dialogVisible) Navigator.of(context).pop(true);
   if (status.status == TaskStatus.complete) {
     final directory = await getTemporaryDirectory();
     return path.join(directory.path, task.filename);
