@@ -19,7 +19,7 @@ podman build \
     .
 
 podman build \
-    --platform linux/amd64,linux/arm64 \
+    --platform linux/amd64 \
     --manifest localhost/flutter-android:${FLUTTER_VERSION} \
     --build-arg flutter_version=${FLUTTER_VERSION} \
     --target android \
