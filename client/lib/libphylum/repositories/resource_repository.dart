@@ -252,7 +252,7 @@ class ResourceRepository extends Repository<PhylumAccount, Resource> {
     required NameConflictResolution conflictResolution,
     bool ensurePermission = true,
   }) async {
-    if (resource.parent == parent) return resource.id;
+    if (resource.parent == parent && resource.name == name) return resource.id;
     String localName = name;
     String? deletedId;
     if (performLocalChecks) {
