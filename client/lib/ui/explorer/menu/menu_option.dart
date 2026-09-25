@@ -29,6 +29,7 @@ enum MenuOption {
     isSingle,
   ),
   share(Icons.share, 'Share', isFilesOnly),
+  iosShare(Icons.ios_share, 'Share', isFilesOnly),
   openFile(Icons.file_open, 'Open', isSingleFile);
 
   const MenuOption(this.icon, this.text, this.enabled);

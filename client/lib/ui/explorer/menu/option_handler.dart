@@ -213,6 +213,7 @@ void handleOption(
         '/${resource.dir ? 'folder' : 'file'}/${resource.id}',
       );
       await Clipboard.setData(ClipboardData(text: url.toString()));
+    case MenuOption.iosShare:
     case MenuOption.share:
       if (kIsWeb) return;
       final List<String> downloaded = [];
