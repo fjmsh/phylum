@@ -8,6 +8,7 @@ const CACHED_URLS = [
 ];
 
 const APP_ROUTES = [
+  /^\/$/,
   /^\/accounts/,
   /^\/login/,
   /^\/setup/,
