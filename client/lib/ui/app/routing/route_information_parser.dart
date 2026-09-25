@@ -18,12 +18,14 @@ final _staticPaths = <String, PhylumRoute Function(RouteInformation)>{
       token: info.uri.queryParameters['token'],
     ),
   ),
-  '/setup': (info) => info.uri.queryParameters.containsKey('instance')
-      ? SetupRoute(
-          instanceUrl: info.uri.queryParameters['instance']!,
-          config: SetupConfig.fromMap(info.state as Map<String, dynamic>),
-        )
-      : const HomeRoute(),
+  '/setup': (info) =>
+      LoginRoute(instanceUrl: info.uri.queryParameters['instance']),
+  // '/setup': (info) => info.uri.queryParameters.containsKey('instance')
+  //     ? SetupRoute(
+  //         instanceUrl: info.uri.queryParameters['instance']!,
+  //         config: SetupConfig.fromMap(info.state as Map<String, dynamic>),
+  //       )
+  //     : const HomeRoute(),
   '/home': (_) => const ExplorerRoute(location: ExplorerLocationHome()),
   '/recents': (_) => const ExplorerRoute(location: ExplorerLocationRecents()),
   '/shared': (_) => const ExplorerRoute(location: ExplorerLocationShared()),

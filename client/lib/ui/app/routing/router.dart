@@ -7,7 +7,6 @@ import 'package:phylum/ui/app/routing/explorer_location.dart';
 import 'package:phylum/ui/common/dialog_scaffold.dart';
 import 'package:phylum/ui/explorer/scaffold/explorer_page.dart';
 import 'package:phylum/ui/file_viewer/file_viewer_page.dart';
-import 'package:phylum/ui/login/instance_info.dart';
 import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/login_page.dart';
 import 'package:phylum/ui/settings/settings.dart';
@@ -95,8 +94,8 @@ class PhylumRouterDelegate extends RouterDelegate<PhylumRouteConfig>
             next: config.route,
           );
         }
-      } else if (config.route is LoggedOutRoute) {
-        config = PhylumRouteConfig._(route: const HomeRoute());
+        // } else if (config.route is LoggedOutRoute) {
+        //   config = PhylumRouteConfig._(route: const HomeRoute());
       }
     }
 

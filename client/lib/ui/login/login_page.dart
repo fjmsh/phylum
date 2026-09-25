@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
+import 'package:offtheline/offtheline.dart';
+import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/ui/common/logo_row.dart';
+import 'package:phylum/ui/login/screens/existing_login.dart';
 import 'package:phylum/ui/login/screens/instance_url.dart';
 import 'package:phylum/ui/login/login_controller.dart';
 import 'package:phylum/ui/login/screens/email_login.dart';
@@ -88,6 +91,14 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildBody(BuildContext context) {
+    final accounts = context
+        .select<AccountManagerState<PhylumAccount>, Map<String, PhylumAccount>>(
+          (state) => state.accounts,
+        );
+    if (accounts.isNotEmpty) {
+      return ExistingLoginScreen(accounts: accounts);
+    }
+
     final state = context.watch<LoginState>();
     final instanceUrl = state.instanceUrl;
     if (instanceUrl != null &&
