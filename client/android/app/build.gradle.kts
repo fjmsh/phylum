@@ -16,7 +16,7 @@ if (releasePropertiesFile.exists()) {
 
 android {
     namespace = "cloud.phylum.drive"
-    compileSdk = 37
+    compileSdk = "37.2"
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
