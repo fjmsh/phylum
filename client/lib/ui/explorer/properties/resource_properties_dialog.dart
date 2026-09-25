@@ -145,12 +145,49 @@ class ResourcePropertiesDialog extends StatelessWidget {
   }
 
   TabBar buildTabs(BuildContext context) {
+    final scrollable = MediaQuery.sizeOf(context).width < maxViewportWidthSmall;
     return TabBar.secondary(
+      isScrollable: scrollable,
+      tabAlignment: scrollable ? TabAlignment.center : TabAlignment.fill,
       tabs: [
-        Tab(child: Text('Overview')),
-        Tab(child: Text('Permissions')),
-        Tab(child: Text('Publinks')),
-        if (!resource.dir) Tab(child: Text('Versions')),
+        const Tab(
+          child: Row(
+            mainAxisSize: .min,
+            spacing: 6,
+            children: [Icon(Icons.info_outline, size: 16), Text('Overview')],
+          ),
+        ),
+        const Tab(
+          child: Row(
+            mainAxisSize: .min,
+            spacing: 6,
+            children: [
+              Icon(Icons.people_alt_outlined, size: 16),
+              Text('Permissions'),
+            ],
+          ),
+        ),
+        const Tab(
+          child: Row(
+            mainAxisSize: .min,
+            spacing: 6,
+            children: [
+              Icon(Icons.public_outlined, size: 16),
+              Text('Public Share'),
+            ],
+          ),
+        ),
+        if (!resource.dir)
+          const Tab(
+            child: Row(
+              mainAxisSize: .min,
+              spacing: 6,
+              children: [
+                Icon(Icons.history_outlined, size: 16),
+                Text('Versions'),
+              ],
+            ),
+          ),
       ],
     );
   }
