@@ -16,7 +16,7 @@ if (releasePropertiesFile.exists()) {
 
 android {
     namespace = "cloud.phylum.drive"
-    compileSdk = "37.2"
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -50,7 +50,14 @@ android {
             versionNameSuffix = "-DEV"
         }
         release {
-            signingConfig = signingConfigs.getByName("release")
+            val hasSigningConfig = signingConfigs["release"]?.storeFile != null &&
+                                   signingConfigs["release"]?.keyAlias != null
+
+            if (hasSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = null
+            }    
         }
     }
 }
