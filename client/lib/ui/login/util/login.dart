@@ -5,6 +5,7 @@ import 'package:http/http.dart';
 import 'package:offtheline/offtheline.dart';
 import 'package:phylum/libphylum/phylum_account.dart';
 import 'package:phylum/libphylum/responses/responses.dart';
+import 'package:phylum/ui/app/routing/router.dart';
 import 'package:phylum/util/logging/logging.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
@@ -28,6 +29,7 @@ Future<void> login(BuildContext context, BaseRequest request) async {
     final response = BootstrapLoginResponse.fromResponse(
       (jsonDecode(result.responseString) as Map).cast<String, dynamic>(),
     );
+    final router = context.read<PhylumRouterDelegate>();
     final instanceUrl = context.read<LoginState>().instanceUrl!;
     final account = await PhylumAccount.create(
       serverUrl: instanceUrl,
@@ -37,6 +39,7 @@ Future<void> login(BuildContext context, BaseRequest request) async {
     );
     await response.process(account);
     await accountManager.addAccount(account);
+    router.go(router.currentConfiguration.next ?? const HomeRoute());
   } catch (e, stack) {
     if (context.mounted) {
       ScaffoldMessenger.of(
