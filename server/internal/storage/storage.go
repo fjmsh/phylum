@@ -131,6 +131,16 @@ func (c MountConfig) open(name string) (Backend, error) {
 	if driver, err := FindDriver(c.Driver); err != nil {
 		return nil, err
 	} else {
-		return driver.Create(name, c.Params)
+		params := make(map[string]string)
+		for k, v := range c.Params {
+			switch cur := v.(type) {
+			case string:
+				params[k] = cur
+			default:
+				params[k] = fmt.Sprintf("%s", cur)
+
+			}
+		}
+		return driver.Create(name, params)
 	}
 }
