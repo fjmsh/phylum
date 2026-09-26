@@ -14,8 +14,14 @@ var drivers = map[string]Driver{
 	"minio": {
 		Name:        "minio",
 		Description: "MinIO (S3-compatible)",
-		Params:      []string{"endpoint", "key_id", "key", "bucket_name", "prefix"},
+		Params:      []string{"endpoint", "region", "key_id", "key", "bucket_name", "prefix"},
 		Create:      createMinioBackend,
+	},
+	"s3": {
+		Name:        "s3",
+		Description: "S3 (compatible)",
+		Params:      []string{"endpoint", "region", "key_id", "key", "bucket_name", "prefix"},
+		Create:      createS3Backend,
 	},
 }
 
