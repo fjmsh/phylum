@@ -12,7 +12,7 @@
       "x": 155,
       "y": 270,
       "type": "file",
-      "path": "../../build/macos/Build/Products/Release/Phylum Drive.app"
+      "path": "Phylum Drive.app"
     }
   ],
   "code-sign": {
