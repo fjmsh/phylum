@@ -34,6 +34,7 @@ func createMinioBackend(name string, params map[string]string) (Backend, error) 
 
 	client, err := minio.New(params["endpoint"], &minio.Options{
 		Creds:  credentials.NewStaticV4(params["key_id"], params["key"], ""),
+		Region: params["region"],
 		Secure: true,
 	})
 	if err != nil {
