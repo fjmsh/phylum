@@ -11,6 +11,7 @@ Phylum may be for you if you want:
 - [x] A file browser with selective sync
 - [x] A fast file manager with native apps - nothing more, nothing less
 - [x] To support free software without mixed-licensing or paywalls
+- [x] AI-free software
 - [x] Something like Immich, but for files
 - [ ] Something that is fully baked
 
@@ -64,6 +65,10 @@ It is highly recommended to take a look at `config.defaults.yml` to see a full l
 
 ## Screenshots
 
-![Desktop Screnshot](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/desktop.png)
+![Expanded Light](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/ipad-3-light-menu.png)
 
-![Mobile Screenshot](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/mobile.png)
+![Expanded Dark](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/ipad-3-dark-menu.png)
+
+![Collapsed Light](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/iphone-large-1-light-home.png)
+
+![Collapsed Dark](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/iphone-large-4-dark-sidebar.png)
