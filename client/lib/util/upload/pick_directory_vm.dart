@@ -5,7 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:phylum/util/upload/filesystem_io.dart';
 import 'package:phylum/util/upload/upload_utils.dart';
 
-bool get folderUploadSupported => !Platform.isAndroid;
+bool get folderUploadSupported => !Platform.isAndroid && !Platform.isIOS;
 
 Future<void> pickAndUploadDirectory(
   BuildContext context,
