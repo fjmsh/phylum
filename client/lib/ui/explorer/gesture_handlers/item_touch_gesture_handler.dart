@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:phylum/ui/explorer/explorer_controller.dart';
 import 'package:phylum/ui/explorer/shortcuts/intents.dart';
@@ -38,18 +39,13 @@ class ItemTouchGestureHandler extends StatelessWidget {
           );
         }
       },
-      onLongPress:
-          context.select<ExplorerState, bool>(
-            (state) => state.selected.isNotEmpty,
-          )
-          ? null
-          : () {
-              context.read<ExplorerController>().updateSelection(
-                (_) => resourceIndex,
-                SelectionMode.single,
-                false,
-              );
-            },
+      onLongPress: () {
+        context.read<ExplorerController>().updateSelection(
+          (_) => resourceIndex,
+          .add,
+          false,
+        );
+      },
       child: child,
     );
   }
