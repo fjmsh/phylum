@@ -64,11 +64,30 @@ Configuration is read from from `config.yml` file in the `data/phylum` directory
 It is highly recommended to take a look at `config.defaults.yml` to see a full list of configuration options.
 
 ## Screenshots
+<figure>
+  <a href="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/ipad-3-light-menu.png">
+    <img src="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/ipad-3-light-menu.png" width="720px" alt="Desktop/Web/Tablet - Light">
+  </a>
+  <figcaption>Desktop/Web/Tablet - Light</figcaption>
+</figure>
 
-![Expanded Light](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/ipad-3-light-menu.png)
+<figure>
+  <a href="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/ipad-3-dark-menu.png">
+    <img src="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/ipad-3-dark-menu.png" width="720px" alt="Desktop/Web/Tablet - Dark">
+  </a>
+  <figcaption>Desktop/Web/Tablet - Dark</figcaption>
+</figure>
 
-![Expanded Dark](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/ipad-3-dark-menu.png)
+<figure>
+  <a href="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/iphone-large-1-light-home.png">
+    <img src="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/iphone-large-1-light-home.png" width="300px" alt="Mobile - Light">
+  </a>
+  <figcaption>Mobile - Light</figcaption>
+</figure>
 
-![Collapsed Light](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/iphone-large-1-light-home.png)
-
-![Collapsed Dark](https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/iphone-large-4-dark-sidebar.png)
+<figure>
+  <a href="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/iphone-large-4-dark-sidebar.png">
+    <img src="https://codeberg.org/shroff/phylum/raw/branch/main/screenshots/iphone-large-4-dark-sidebar.png" width="300px" alt="Mobile - Dark">
+  </a>
+  <figcaption>Mobile - Dark</figcaption>
+</figure>
