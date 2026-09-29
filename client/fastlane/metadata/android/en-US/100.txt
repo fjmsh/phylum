@@ -1,0 +1,7 @@
+
+- Generate thumbnails for video, audio (if present), and epub files
+- Working Dark theme, and switcher
+- Configure auth settings from within the app
+- OIDC auto login if only one method is configured
+- Setup and app config respects preset and fixed values (via environment vars)
+- Tons uf UI polish

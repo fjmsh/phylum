@@ -1,0 +1,1 @@
+Self-hosted Cloud File Storage & Sync Platform with offline-first clients
