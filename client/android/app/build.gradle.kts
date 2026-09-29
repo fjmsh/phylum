@@ -50,11 +50,11 @@ android {
             versionNameSuffix = "-DEV"
         }
         release {
-            val hasSigningConfig = signingConfigs["release"]?.storeFile != null &&
-                                   signingConfigs["release"]?.keyAlias != null
+            val hasSigningConfig = signingConfigs.findByName("release")?.storeFile != null &&
+                                   signingConfigs.findByName("release")?.keyAlias != null
 
             if (hasSigningConfig) {
-                signingConfig = signingConfigs.getByName("release")
+                signingConfig = signingConfigs.findByName("release")
             } else {
                 signingConfig = null
             }    
