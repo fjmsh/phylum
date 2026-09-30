@@ -60,6 +60,36 @@ android {
             }    
         }
     }
+
+    splits {
+        abi {
+            reset()
+            isEnable = true
+            isUniversalApk = true
+            include("armeabi-v7a", "arm64-v8a", "x86_64")
+        }
+    }
+
+    val abiCodes = mapOf(
+        "x86_64" to 1,
+        "armeabi-v7a" to 2,
+        "arm64-v8a" to 3
+    )
+
+    androidComponents {
+        onVariants { variant ->
+            variant.outputs.forEach { output ->
+                val abiFilter = output.filters.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }
+                val abiName = abiFilter?.identifier
+
+                val baseAbiCode = abiCodes[abiName] ?: 0
+                val newVersionCode = (output.versionCode.get() ?: 0) * 10 + baseAbiCode
+                output.versionCode.set(newVersionCode)
+            }
+        }
+    }
+
+
 }
 
 kotlin {
