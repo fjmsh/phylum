@@ -1,0 +1,20 @@
+Phylum es una plataforma autoalojada de almacenamiento de archivos que cuenta con clientes web y nativos con enfoque *offline-first* (prioridad al funcionamiento sin conexión), diseñada para reemplazar a Google Drive, Dropbox, etc. Se distribuye bajo la licencia GNU Affero GPL 3.0 y su objetivo es permanecer siempre gratuita y sin fines comerciales.
+
+Características:
+📱 Clientes nativos diseñados para funcionar bien con conexiones a internet inestables o inexistentes
+👥 Gestión de usuarios y permisos
+↺↻ Historial de versiones de archivos
+💿 *Backends* de almacenamiento remoto
+🫆 *Backends* de autenticación (LDAP, OIDC)
+🕸️ Acceso vía WebDAV
+🌍 Compartir archivos o carpetas públicamente
+
+Phylum podría interesarte si buscas:
+
+✅ Ser dueño de tus propios datos
+✅ Un gestor de archivos rápido con aplicaciones nativas: nada más, nada menos
+✅ Apoyar el software libre sin licencias mixtas ni muros de pago (*paywalls*)
+✅ Software libre de IA
+✅ Algo parecido a Immich, pero para archivos
+
+Ten en cuenta que esta aplicación requiere un servidor al cual conectarse. Las instrucciones para configurarlo se encuentran en la <a href="https://codeberg.org/shroff/phylum/">página del proyecto</a>.

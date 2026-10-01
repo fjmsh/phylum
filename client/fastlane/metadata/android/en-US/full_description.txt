@@ -12,11 +12,9 @@ Features:
 Phylum may be for you if you want:
 
 ✅ To own your data
-✅ A file browser with selective sync
 ✅ A fast file manager with native apps - nothing more, nothing less
 ✅ To support free software without mixed-licensing or paywalls
 ✅ AI-free software
 ✅ Something like Immich, but for files
 
-
-Please note that this is a client and requires a running server. Instructions for those can be found on the <a href="https://codeberg.org/shroff/phylum/">Project Page</a>
+Please note that this app requires a server to connect to. Instructions for setting that up can be found on the <a href="https://codeberg.org/shroff/phylum/">Project Page</a>
