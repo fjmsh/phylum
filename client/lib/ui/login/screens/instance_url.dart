@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:phylum/ui/app/routing/router.dart';
@@ -9,6 +10,7 @@ import 'package:phylum/util/logging/logging.dart';
 import 'package:phylum/util/request.dart';
 import 'package:provider/provider.dart';
 import 'package:uri/uri.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../login_controller.dart';
 
@@ -47,7 +49,7 @@ class _InstanceUrlScreenState extends State<InstanceUrlScreen> {
         TextFormField(
           key: ValueKey('instanceUrl'),
           decoration: InputDecoration(
-            label: const Text('Instance URL'),
+            label: const Text('Server URL'),
             hintText: 'https://phylum.example.com',
             prefixIcon: Icon(Icons.storage),
           ),
@@ -68,7 +70,7 @@ class _InstanceUrlScreenState extends State<InstanceUrlScreen> {
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,
               ),
-              label: Text(connecting ? 'Getting Configuration' : 'Login'),
+              label: Text(connecting ? 'Getting Configuration' : 'Connect'),
               icon: connecting
                   ? SizedBox(
                       width: 16,
@@ -84,6 +86,18 @@ class _InstanceUrlScreenState extends State<InstanceUrlScreen> {
                   : () => connect(context),
             );
           },
+        ),
+        Center(
+          child: Text.rich(
+            TextSpan(
+              text: 'Don\'t have a running server?',
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => launchUrl(
+                  Uri.parse('https://codeberg.org/shroff/phylum/#quick-start'),
+                ),
+            ),
+          ),
         ),
       ],
     );
