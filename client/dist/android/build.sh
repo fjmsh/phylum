@@ -3,12 +3,12 @@
 set -euo pipefail
 
 norebuild=false
-builddir="/home/vagrant/build/cloud.phylum.drive/client/"
+builddir=${BUILDDIR:-/build/phylum}/cloud.phylum.drive/client
 
 echo "Removing old build container"
 podman container rm android-build || true
 
-echo "Building"
+echo "Building with root ${builddir}"
 podman run \
         --name android-build \
         -it \
