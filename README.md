@@ -1,12 +1,18 @@
-Phylum
-======
+<div align="center">
+  
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL--3.0--or--later-blue.svg?logo=gnu&style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0)
+[![Matrix Chat](https://img.shields.io/matrix/phylum_cloud%3Amatrix.org?logo=matrix&style=for-the-badge)](https://matrix.to/#/#phylum_cloud:matrix.org)
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Matrix Chat](https://img.shields.io/matrix/phylum_cloud%3Amatrix.org)](https://matrix.to/#/#phylum_cloud:matrix.org)
+<img src="https://codeberg.org/shroff/phylum/raw/branch/main/client/dist/graphics/banner-dark.png" width="360px" alt="Phylum Logo">  
 
-Phylum is a self-hosted file storage platform with offline-first web and native clients, meant as a replacement for Google Drive, Dropbox, etc. It is licensed under GNU Affero GPL 3.0, and is intended to be forever free and non-commercial.
+</div>
 
-Phylum may be for you if you want:
+<br />
+<br/>
+
+Phylum is a self-hosted cloud file storage platform with offline-first web and native clients, meant as a replacement for Google Drive, Dropbox, etc.
+
+It may be for you if you want:
 - [x] To own your data
 - [x] A file browser with selective sync
 - [x] A fast file manager with native apps - nothing more, nothing less
@@ -15,15 +21,15 @@ Phylum may be for you if you want:
 - [x] Something like Immich, but for files
 - [ ] Something that is fully baked
 
+Phylum is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. It is intended to be forever free and non-commercial.
+
 
 > [!WARNING]  
-> This project is under very active development, and no guarantees can be made about stability and backward-compatibility.
-> Don't even think about putting the only copy of any data that you care about.
+> While the server is fairly stable, it remains to be battle tested.
 
 
 - [Features](#features)
 - [Quick Start](#quick-start)
-- [CLI](#cli)
 - [Help and Contributing](#help-and-contributing)
 - [Screenshots](#screenshots)
 
@@ -49,19 +55,16 @@ echo "PHYLUM_DB__PASSWORD=$(head -c 32 /dev/urandom | md5sum | cut -d ' ' -f 1)"
 docker compose up -d && docker compose logs -f
 ```
 
-Open `http://localhost:2448` to continue setup.
+Open `http://localhost:2448` (or connect to it via an app) to continue setup.
 
-Take a look at [Configuration and Management](https://codeberg.org/shroff/phylum/wiki/Configuration-and-Management) for more details about configuration.
+Take a look at [Configuration and Management](https://codeberg.org/shroff/phylum/wiki/Configuration-and-Management) for more details.
 
 
 ## Help and Contributing
+The best way to help is to use the app regularly and report bugs.
+
 Reach out on Matrix at [#phylum_cloud:matrix.org](https://matrix.to/#/#phylum_cloud:matrix.org) if you need help to get set up, or want to contribute.
 
-
-## Configuration and Management
-Configuration is read from from `config.yml` file in the `data/phylum` directory.
-
-It is highly recommended to take a look at `config.defaults.yml` to see a full list of configuration options.
 
 ## Screenshots
 <figure>
