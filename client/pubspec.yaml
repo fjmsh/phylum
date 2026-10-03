@@ -92,3 +92,11 @@ flutter_launcher_icons:
   macos:
     generate: true
     image_path: "assets/images/ic_launcher-playstore.png"
+
+hooks:
+  user_defines:
+    sqlite3:
+      source:
+        android: source
+        default: sqlite3
+      path: sqlite3/sqlite3.c # relative to your workspace root

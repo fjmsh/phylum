@@ -18,7 +18,7 @@ podman run \
         sh -c "\
         mkdir -p $builddir && cd $builddir && chown flutter .\
         && su -c \"sh -c '\
-        cp -R /src/pubspec.* /src/android /src/lib /src/assets /src/fonts . \
+        cp -R /src/pubspec.* /src/android /src/lib /src/assets /src/fonts /src/sqlite3 . \
         && flutter pub get \
         && flutter build apk --no-pub'\" \
         flutter"
