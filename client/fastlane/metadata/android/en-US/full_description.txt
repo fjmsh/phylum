@@ -1,4 +1,6 @@
-Phylum is a self-hosted file storage platform with offline-first web and native clients, meant as a replacement for Google Drive, Dropbox, etc. It is licensed under GNU Affero GPL 3.0, and is intended to be forever free and non-commercial.
+Phylum is a self-hosted cloud file storage platform with offline-first web and native clients, meant as a replacement for Google Drive, Dropbox, etc.
+
+It is licensed under GNU Affero GPL 3.0 (or later), and is intended to be forever free and non-commercial.
 
 Features:
 📱 Native clients which are designed to work well with unreliable/no internet connection

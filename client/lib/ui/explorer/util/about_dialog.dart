@@ -41,6 +41,7 @@ sealed class AboutUtils {
                       ),
                     ),
                 ),
+                TextSpan(text: ' or (at your option) any later version'),
               ],
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,

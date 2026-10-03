@@ -1,4 +1,6 @@
-Phylum es una plataforma autoalojada de almacenamiento de archivos que cuenta con clientes web y nativos con enfoque *offline-first* (prioridad al funcionamiento sin conexión), diseñada para reemplazar a Google Drive, Dropbox, etc. Se distribuye bajo la licencia GNU Affero GPL 3.0 y su objetivo es permanecer siempre gratuita y sin fines comerciales.
+Phylum es una plataforma autoalojada de almacenamiento de archivos que cuenta con clientes web y nativos con enfoque *offline-first* (prioridad al funcionamiento sin conexión), diseñada para reemplazar a Google Drive, Dropbox, etc.
+
+Se distribuye bajo la licencia GNU Affero GPL 3.0 (o cualquier versión posterior) y su objetivo es permanecer siempre gratuita y sin fines comerciales.
 
 Características:
 📱 Clientes nativos diseñados para funcionar bien con conexiones a internet inestables o inexistentes
