@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:phylum/ui/settings/settings.dart';
-
-import 'sync_dialog.dart';
+import 'package:phylum/ui/settings/sync/sliver_actions.dart';
+import 'package:phylum/ui/settings/sync/sliver_paused_unreachable.dart';
 
 class SyncSettings extends Settings {
   @override
@@ -20,5 +20,6 @@ class SyncSettings extends Settings {
   List<StateNotifierProvider> get providers => const [];
 
   @override
-  Widget buildWithoutScaffold(BuildContext context) => SyncDialog();
+  Widget buildWithoutScaffold(BuildContext context) =>
+      const CustomScrollView(slivers: [PausedOfflineSliver(), ActionsSliver()]);
 }
