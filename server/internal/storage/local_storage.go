@@ -60,19 +60,25 @@ func (l localStorage) OpenRead(name string, start, length int) (io.ReadCloser, e
 	return file, nil
 }
 
-func (l localStorage) OpenWrite(name string) (io.WriteCloser, error) {
+func (l localStorage) OpenWrite(name string, writeFinishedCallback func(io.ReadSeeker) error) (io.WriteCloser, error) {
 	f, err := os.CreateTemp(l.tmp, "upload-*")
 	if err != nil {
 		return nil, err
 	}
 	return &callbackWriteCloser{dest: f, closeCallback: func(err error) error {
+		defer os.Remove(f.Name())
 		if err != nil {
-			os.Remove(f.Name())
 			return err
 		}
-		if err := l.mkdirs(name); err != nil {
-			os.Remove(f.Name())
+		if in, err := os.Open(f.Name()); err != nil {
 			return err
+		} else {
+			defer in.Close()
+			if err := writeFinishedCallback(in); err != nil {
+				return err
+			} else if err := l.mkdirs(name); err != nil {
+				return err
+			}
 		}
 		return os.Rename(f.Name(), l.Path(name))
 	}}, nil
@@ -88,7 +94,7 @@ func (l localStorage) Copy(ctx context.Context, src Backend, srcName, destName s
 	}
 	defer in.Close()
 
-	out, err := l.OpenWrite(destName)
+	out, err := l.OpenWrite(destName, func(_ io.ReadSeeker) error { return nil })
 	if err != nil {
 		return err
 	}

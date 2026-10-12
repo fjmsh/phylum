@@ -1,9 +1,7 @@
 package core
 
 import (
-	"encoding/hex"
 	"errors"
-	"hash"
 	"io"
 	"strings"
 
@@ -64,39 +62,35 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 		versionID, _ = uuid.NewV7()
 	}
 
-	backend := storage.DefaultBackend()
-	if dest, err := backend.OpenWrite(versionID.String()); err != nil {
-		return nil, err
-	} else {
-		return computeProps(dest, func(size int, hash hash.Hash, mimeType string) error {
-			sum := hex.EncodeToString(hash.Sum(nil))
-			mimeType = fixMimeType(mimeType, versionID.String())
-			err = f.runInTx(func(f txFileSystem) error {
-				if r, err := f.createMemberResource(parent, name, requestedID, false, conflictResolution); err != nil {
-					return err
-				} else {
-					// ID could be different if we're overwriting an existing resource
-					requestedID = r.id
-				}
+	return storage.DefaultBackend().OpenWrite(versionID.String(), func(contents io.ReadSeeker) error {
+		props, err := computeProps(contents)
+		if err != nil {
+			return err
+		}
+		err = f.runInTx(func(f txFileSystem) error {
+			if r, err := f.createMemberResource(parent, name, requestedID, false, conflictResolution); err != nil {
+				return err
+			} else {
+				// ID could be different if we're overwriting an existing resource
+				requestedID = r.id
+			}
 
-				if err := insertResourceVersion(f.db, requestedID, versionID, int64(size), mimeType, sum); err != nil {
-					return err
-				}
-				if err := updateResourceModified(f.db, requestedID); err != nil {
-					return err
-				}
-				if err := jobs.GenerateImgs(f.db, versionID); err != nil {
-					return err
-				}
-				return jobs.MigrateVersionContents(f.db, versionID)
-			})
-			if err != nil {
-				backend.Delete(versionID.String())
+			if err := insertResourceVersion(f.db, requestedID, versionID, props.size, props.mimeType, props.sha566Sum); err != nil {
 				return err
 			}
-			return nil
-		}), nil
-	}
+			if err := updateResourceModified(f.db, requestedID); err != nil {
+				return err
+			}
+			if err := jobs.GenerateImgs(f.db, versionID); err != nil {
+				return err
+			}
+			return jobs.MigrateVersionContents(f.db, versionID)
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
@@ -110,33 +104,29 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 		versionID, _ = uuid.NewV7()
 	}
 
-	backend := storage.DefaultBackend()
-	if dest, err := backend.OpenWrite(versionID.String()); err != nil {
-		return nil, err
-	} else {
-		return computeProps(dest, func(len int, hash hash.Hash, mimeType string) error {
-			sum := hex.EncodeToString(hash.Sum(nil))
-			mimeType = fixMimeType(mimeType, versionID.String())
-			err := f.db.RunInTx(func(db db.TxHandler) error {
-				if err := insertResourceVersion(db, r.id, versionID, int64(len), mimeType, sum); err != nil {
-					return err
-				}
-				if err := updateResourceModified(db, r.id); err != nil {
-					return err
-				}
-
-				if err := jobs.GenerateImgs(db, versionID); err != nil {
-					return err
-				}
-				return jobs.MigrateVersionContents(db, versionID)
-			})
-			if err != nil {
-				backend.Delete(versionID.String())
+	return storage.DefaultBackend().OpenWrite(versionID.String(), func(contents io.ReadSeeker) error {
+		props, err := computeProps(contents)
+		if err != nil {
+			return err
+		}
+		err = f.db.RunInTx(func(db db.TxHandler) error {
+			if err := insertResourceVersion(db, r.id, versionID, props.size, props.mimeType, props.sha566Sum); err != nil {
 				return err
 			}
-			return nil
-		}), nil
-	}
+			if err := updateResourceModified(db, r.id); err != nil {
+				return err
+			}
+
+			if err := jobs.GenerateImgs(db, versionID); err != nil {
+				return err
+			}
+			return jobs.MigrateVersionContents(db, versionID)
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func fixMimeType(mimeType, name string) string {

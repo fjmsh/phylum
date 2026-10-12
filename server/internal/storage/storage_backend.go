@@ -15,6 +15,6 @@ type Backend interface {
 
 type LocalBackend interface {
 	Backend
-	OpenWrite(name string) (io.WriteCloser, error)
+	OpenWrite(name string, writeFinishedCallback func(io.ReadSeeker) error) (io.WriteCloser, error)
 	Path(name string) string
 }
