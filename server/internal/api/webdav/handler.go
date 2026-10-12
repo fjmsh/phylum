@@ -62,16 +62,20 @@ func (h *handler) HandleRequest(c *gin.Context) {
 			authSuccess = true
 			root := c.Param("root")
 			if root[0] == '~' {
-				id, err := core.UserHome(db, root[1:])
-				if err != nil {
-					if errors.Is(err, core.ErrUserNotFound) {
-						c.AbortWithStatus(http.StatusNotFound)
-						return
-					} else {
-						panic(err)
+				if len(root) == 1 {
+					f = a.GetFileSystem(db, pgtype.UUID{})
+				} else {
+					id, err := core.UserHome(db, root[1:])
+					if err != nil {
+						if errors.Is(err, core.ErrUserNotFound) {
+							c.AbortWithStatus(http.StatusNotFound)
+							return
+						} else {
+							panic(err)
+						}
 					}
+					f = a.GetFileSystem(db, id)
 				}
-				f = a.GetFileSystem(db, id)
 			} else if id, err := uuid.Parse(root); err == nil {
 				f = a.GetFileSystem(db, pgtype.UUID{Bytes: id, Valid: true})
 			} else {

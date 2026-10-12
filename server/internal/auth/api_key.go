@@ -125,9 +125,9 @@ func ReadAPIToken(db db.Handler, encodedKey string, connectionInfo []byte) (*Aut
 
 func ReadAPIKey(db db.Handler, keyIDStr, keyStr string, connectionInfo []byte) (*Auth, error) {
 	if keyID, err := uuid.Parse(keyIDStr); err != nil {
-		return nil, err
+		return nil, ErrCredentialsInvalid
 	} else if key, err := b32Encoder.DecodeString(keyStr); err != nil {
-		return nil, err
+		return nil, ErrCredentialsInvalid
 	} else {
 		return readAPIKey(db, keyID, key, connectionInfo)
 	}
