@@ -295,7 +295,7 @@ class _GenerateApiKeyDialogState extends State<GenerateApiKeyDialog> {
 enum Scope {
   all('All', '*', null),
   files('Files', 'files', ['read', 'write', 'share']),
-  publink('Public Shares', 'publink', ['list', 'create']),
+  publink('Public Shares', 'publinks', ['list', 'create']),
   bookmarks('Bookmarks', 'bookmarks', ['list', 'add', 'remove']),
   keys('API Keys', 'keys', ['list', 'generate', 'revoke']),
   trash('Trash', 'trash', ['list', 'empty', 'restore']);
