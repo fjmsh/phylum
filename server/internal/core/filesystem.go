@@ -96,12 +96,15 @@ func (f *FileSystem) withPathRoot(pathRoot pgtype.UUID) *FileSystem {
 }
 
 func (f *FileSystem) checkPermission(r Resource, p ResourcePermission) error {
+	if f.scopePermissions&p != p {
+		return ErrInsufficientPermissions
+	}
 	fp := f.userPermissions.GetFilesPermissions()
 	p = p & (^fp)
 
 	if up, err := readPermissionFromJson(r.permissions, f.userID); err != nil {
 		return err
-	} else if (up&p != p) || (f.scopePermissions&p != p) {
+	} else if (up|fp)&p != p {
 		return ErrInsufficientPermissions
 	}
 	return nil
