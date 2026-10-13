@@ -96,6 +96,8 @@ func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, 
 		return
 	}
 
+	defer reader.Close()
+
 	w.Header().Set("Accept-Ranges", "bytes")
 	w.Header().Set("Content-Length", strconv.Itoa(contentLength))
 	w.WriteHeader(code)
