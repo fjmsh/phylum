@@ -56,7 +56,7 @@ func handleCreateRequest(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("publink:create") {
+	if !auth.HasScope("publinks:create") {
 		panic(core.ErrInsufficientScope)
 	}
 	fs := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})

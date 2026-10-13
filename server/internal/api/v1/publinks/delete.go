@@ -21,7 +21,7 @@ func handleDeleteRequest(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("publink:delete") {
+	if !auth.HasScope("publinks:delete") {
 		panic(core.ErrInsufficientScope)
 	}
 
