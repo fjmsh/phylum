@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash"
 	"io"
+	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -54,8 +55,8 @@ func (f *FileSystem) PartialUploadOpenWrite(user int32, id uuid.UUID, offset int
 			uploaded = stat.Size()
 		}
 	}
-	if offset > uploaded {
-		return nil, ErrUploadOffsetExceeded
+	if offset > uploaded || offset < 0 {
+		return nil, NewError(http.StatusBadRequest, "upload_offset_exceeded", fmt.Sprintf("Upload Offset Exceeded. Requested %d of %d", offset, uploaded))
 	}
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0o600)
 	if _, err := file.Seek(int64(offset), 0); err != nil {
@@ -65,7 +66,8 @@ func (f *FileSystem) PartialUploadOpenWrite(user int32, id uuid.UUID, offset int
 		id:       id,
 		db:       f.db,
 		dest:     file,
-		maxBytes: int(size - offset),
+		size:     size,
+		offset:   offset,
 		checksum: checksum,
 		hash:     sha256.New(),
 	}
@@ -162,12 +164,12 @@ func queryPartialUpload(db db.Handler, id uuid.UUID) (owner int32, size, uploade
 	return
 }
 
-func updatePartialUpload(db db.Handler, id uuid.UUID, written int) error {
-	const q = `UPDATE partial_uploads SET uploaded = uploaded + @written WHERE id = @id`
+func updatePartialUpload(db db.Handler, id uuid.UUID, uploaded int64) error {
+	const q = `UPDATE partial_uploads SET uploaded = @uploaded WHERE id = @id`
 
 	args := pgx.NamedArgs{
-		"id":      id,
-		"written": written,
+		"id":       id,
+		"uploaded": uploaded,
 	}
 	_, err := db.Exec(q, args)
 	return err
@@ -181,14 +183,15 @@ type contentUploader struct {
 	id       uuid.UUID
 	db       db.Handler
 	dest     io.WriteCloser
-	maxBytes int
-	n        int
+	size     int64
+	offset   int64
+	n        int64
 	checksum string
 	hash     hash.Hash
 }
 
 func (c *contentUploader) Write(p []byte) (n int, err error) {
-	if len(p) > c.maxBytes {
+	if c.offset+c.n+int64(len(p)) > c.size {
 		return 0, ErrUploadLengthExceeded
 	}
 	if c.checksum != "" {
@@ -197,7 +200,7 @@ func (c *contentUploader) Write(p []byte) (n int, err error) {
 		}
 	}
 	n, err = c.dest.Write(p)
-	c.n += n
+	c.n += int64(n)
 	return
 }
 
@@ -208,5 +211,5 @@ func (c *contentUploader) Close() error {
 	if c.checksum != "" && c.checksum != hex.EncodeToString(c.hash.Sum(nil)) {
 		return ErrUploadChecksumMismatch
 	}
-	return updatePartialUpload(c.db, c.id, c.n)
+	return updatePartialUpload(c.db, c.id, c.offset+c.n)
 }
