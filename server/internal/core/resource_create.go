@@ -199,6 +199,9 @@ func (f txFileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, d
 }
 
 func (f txFileSystem) createMemberResource(r Resource, name string, requestedID uuid.UUID, dir bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+	if _, err := f.checkPermission(r, ResourcePermissionWrite); err != nil {
+		return Resource{}, err
+	}
 	if r.deleted.Valid {
 		return Resource{}, ErrResourceDeleted
 	}
@@ -217,9 +220,6 @@ func (f txFileSystem) createMemberResource(r Resource, name string, requestedID 
 	if res, created, _, err = resolveConflictAndInsertResource(f.db, requestedID, r.id, name, dir, r.permissions, conflictResolution); err != nil {
 		return Resource{}, err
 	} else if created {
-		if _, err := f.checkPermission(r, ResourcePermissionWrite); err != nil {
-			return Resource{}, err
-		}
 		if err := recomputePermissions(f.db, requestedID); err != nil {
 			return Resource{}, err
 		}
