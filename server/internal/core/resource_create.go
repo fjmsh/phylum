@@ -129,29 +129,6 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 	})
 }
 
-func fixMimeType(mimeType, name string) string {
-	if mimeType == "video/mp4" {
-		backend := storage.DefaultBackend()
-		if r, err := backend.OpenRead(name, 0, -1); err == nil {
-			if f, ok := r.(io.ReadSeekCloser); ok {
-				if box, err := mp4.ExtractBoxWithPayload(f, nil, mp4.BoxPath{
-					mp4.BoxTypeMoov(),
-					mp4.BoxTypeTrak(),
-					mp4.BoxTypeMdia(),
-					mp4.BoxTypeHdlr(),
-				}); err == nil && len(box) == 1 {
-					hdlr := box[0].Payload.(*mp4.Hdlr)
-					if hdlr.HandlerType == boxTypeSoun {
-						return "audio/mp4"
-					}
-				}
-			}
-			r.Close()
-		}
-	}
-	return mimeType
-}
-
 func (f txFileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	if requestedID == uuid.Nil {
 		requestedID, _ = uuid.NewV7()
@@ -458,7 +435,7 @@ func insertResourceVersionsFast(db db.TxHandler, arg []insertResourceVersionsFas
 type insertResourceVersionsFastParams struct {
 	ID         uuid.UUID
 	ResourceID uuid.UUID
-	Size       int32
+	Size       int64
 	MimeType   string
 	SHA256     string
 	ImgRes     uint8

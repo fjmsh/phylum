@@ -206,7 +206,7 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 		createVersions = append(createVersions, insertResourceVersionsFastParams{
 			ID:         versionID,
 			ResourceID: dest.id,
-			Size:       int32(src.latestVersionInfo.Size),
+			Size:       src.latestVersionInfo.Size,
 			MimeType:   src.latestVersionInfo.MimeType,
 			SHA256:     src.latestVersionInfo.SHA256,
 			ImgRes:     src.latestVersionInfo.ImgRes,
@@ -252,7 +252,7 @@ func (f txFileSystem) Copy(src Resource, target string, requestedID uuid.UUID, r
 			createVersions = append(createVersions, insertResourceVersionsFastParams{
 				ID:         versionID,
 				ResourceID: resourceID,
-				Size:       int32(src.latestVersionInfo.Size),
+				Size:       src.latestVersionInfo.Size,
 				MimeType:   src.latestVersionInfo.MimeType,
 				SHA256:     src.latestVersionInfo.SHA256,
 				ImgRes:     src.latestVersionInfo.ImgRes,
