@@ -25,7 +25,7 @@ class ResourceVersionDeleteAction extends ResourceAction with JsonApiAction {
 
   @override
   List<LocalChange> get localChanges => [
-    UpdateResourceVersionDeletedChange(objectId: resourceId),
+    UpdateResourceVersionDeletedChange(objectId: versionId),
     UpdateResourceModifiedChange(objectId: resourceId, timestamp: timestamp),
   ];
 

@@ -34,7 +34,7 @@ class ResourceMkdirAction extends ResourceCreateAction with JsonApiAction {
       userPermission: userPermission,
     ),
     if (deletedId != null)
-      UpdateResourceDeletedChange(objectId: resourceId, timestamp: timestamp),
+      UpdateResourceDeletedChange(objectId: deletedId!, timestamp: timestamp),
   ];
 
   @override
