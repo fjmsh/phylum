@@ -64,6 +64,7 @@ var (
 	ErrPublinkNameConflict            = NewError(http.StatusPreconditionFailed, "publink_name_conflict", "Another public share with this name already exists")
 	ErrVersionNotFound                = NewError(http.StatusNotFound, "version_not_found", "Version Not Foud")
 	ErrResourceVersionLatest          = NewError(http.StatusPreconditionFailed, "resource_version_latest", "Cannot delete most recent version of a resource")
+	ErrResourceVersionNotFound        = NewError(http.StatusBadRequest, "resource_version_not_found", "Resource Version Not Found")
 	ErrUploadLengthExceeded           = NewError(http.StatusBadRequest, "upload_length_exceeded", "Upload Length Exceeded")
 	ErrUploadChecksumMismatch         = NewError(http.StatusBadRequest, "upload_checksum_mismatch", "Upload Checksum Mismatch")
 	ErrUploadOffsetExceeded           = NewError(http.StatusBadRequest, "upload_offset_exceeded", "Upload Offset Exceeded")

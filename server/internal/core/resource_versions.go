@@ -66,6 +66,9 @@ func (f *FileSystem) DeleteResourceVersion(res Resource, versionID uuid.UUID) (R
 	i := slices.IndexFunc(versions, func(v VersionInfo) bool {
 		return v.ID == versionID
 	})
+	if i < 0 {
+		return res, ErrResourceVersionNotFound
+	}
 	if i == 0 {
 		return res, ErrResourceVersionLatest
 	}
