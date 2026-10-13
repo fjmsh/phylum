@@ -189,19 +189,25 @@ func handlePartialUploadsFinalizeRequest(c *gin.Context) {
 	}
 
 	f := authenticator.GetFileSystem(c)
-	src, err := f.PartialUploadOpenRead(authenticator.GetAuth(c).UserID(), uploadID)
+	err = func() error {
+		src, err := f.PartialUploadOpenRead(authenticator.GetAuth(c).UserID(), uploadID)
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		out, err := f.CreateFileByPath(params.Path, resourceID, versionID, params.Conflict)
+		if err != nil && !errors.Is(err, core.ErrIDConflict) {
+			return err
+		}
+		defer out.Close()
+
+		if _, err := io.Copy(out, src); err != nil {
+			return err
+		}
+		return nil
+	}()
 	if err != nil {
-		panic(err)
-	}
-	defer src.Close()
-
-	out, err := f.CreateFileByPath(params.Path, resourceID, versionID, params.Conflict)
-	if err != nil && !errors.Is(err, core.ErrIDConflict) {
-		panic(err)
-	}
-	defer out.Close()
-
-	if _, err := io.Copy(out, src); err != nil {
 		panic(err)
 	}
 
@@ -211,7 +217,6 @@ func handlePartialUploadsFinalizeRequest(c *gin.Context) {
 		r, err = f.ResourceByPathWithRoot(params.Path)
 	} else {
 		r, err = f.ResourceByID(resourceID)
-
 	}
 	if err != nil {
 		panic(err)

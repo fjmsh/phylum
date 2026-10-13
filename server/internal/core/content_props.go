@@ -50,6 +50,8 @@ func guessMimeType(r io.ReadSeeker) (string, error) {
 			} else {
 				break
 			}
+		} else if r == len(buf) {
+			break
 		} else {
 			buf = buf[r:]
 		}
