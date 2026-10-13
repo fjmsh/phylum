@@ -3,7 +3,10 @@ package publinks
 import (
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/core"
+	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type deleteParams struct {
@@ -21,11 +24,12 @@ func handleDeleteRequest(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("publinks:delete") {
+	if !auth.HasScope("publink:delete") {
 		panic(core.ErrInsufficientScope)
 	}
-
-	if err := core.DeletePublink(c.Request.Context(), params.ID); err != nil {
+	if err := core.DeletePublink(c.Request.Context(), params.ID, func(id uuid.UUID) *core.FileSystem {
+		return auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{Bytes: id, Valid: true})
+	}); err != nil {
 		panic(err)
 	}
 
