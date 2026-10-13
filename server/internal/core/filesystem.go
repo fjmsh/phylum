@@ -45,13 +45,13 @@ func getScopePermissions(scopes []string, id uuid.UUID) (p ResourcePermission) {
 		if len(parts) == 1 || parts[1] == idString || parts[1] == "*" {
 			switch parts[0] {
 			case "*", "":
-				p = ResourcePermissionsAll
+				p |= ResourcePermissionsAll
 			case "read":
-				p = ResourcePermissionRead
+				p |= ResourcePermissionRead
 			case "write":
-				p = ResourcePermissionRead | ResourcePermissionWrite
+				p |= ResourcePermissionRead | ResourcePermissionWrite
 			case "share":
-				p = ResourcePermissionRead | ResourcePermissionWrite | ResourcePermissionShare
+				p |= ResourcePermissionRead | ResourcePermissionWrite | ResourcePermissionShare
 			}
 		}
 	}
