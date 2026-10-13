@@ -54,7 +54,7 @@ ORDER BY created DESC`
 }
 
 func (f *FileSystem) DeleteResourceVersion(res Resource, versionID uuid.UUID) (Resource, error) {
-	if err := f.checkPermission(res, ResourcePermissionWrite); err != nil {
+	if _, err := f.checkPermission(res, ResourcePermissionWrite); err != nil {
 		return res, err
 	}
 

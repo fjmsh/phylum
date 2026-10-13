@@ -121,18 +121,3 @@ func latestVersion(versionsJSON []byte) (VersionInfo, error) {
 	}
 	return versions[0], nil
 }
-
-func readPermissionFromJson(j []byte, userID int32) (ResourcePermission, error) {
-	if j == nil {
-		return ResourcePermissionNone, nil
-	}
-	p := make(map[int32]ResourcePermission)
-	err := json.Unmarshal(j, &p)
-	if err != nil {
-		return ResourcePermissionNone, err
-	}
-	if p, ok := p[userID]; ok {
-		return p, nil
-	}
-	return ResourcePermissionNone, nil
-}

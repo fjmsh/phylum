@@ -16,7 +16,7 @@ import (
 func (f *FileSystem) ResourceByID(id uuid.UUID) (Resource, error) {
 	if r, err := resourceByID(f.db, id, f.userID); err != nil {
 		return Resource{}, err
-	} else if err := f.checkPermission(r, ResourcePermissionRead); err != nil {
+	} else if _, err := f.checkPermission(r, ResourcePermissionRead); err != nil {
 		return Resource{}, err
 	} else {
 		return r, nil
@@ -119,7 +119,7 @@ func resourceByPath(db db.Handler, root uuid.UUID, path string, userID int32, us
 	}
 	// } else if r, err := collectFullResource(rows); err != nil {
 	// 	return Resource{}, err
-	// } else if err := r.checkPermission(f.user, PermissionRead); err != nil {
+	// } else if _, err := r.checkPermission(f.user, PermissionRead); err != nil {
 	// 	return Resource{}, err
 	// } else {
 	// 	return r, nil

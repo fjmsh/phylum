@@ -29,17 +29,11 @@ func (f txFileSystem) UpdatePermissions(r Resource, user User, permission Resour
 	if r.deleted.Valid {
 		return r, ErrResourceDeleted
 	}
-
-	if up, err := readPermissionFromJson(r.permissions, f.userID); err != nil {
+	if p, err := f.checkPermission(r, ResourcePermissionShare); err != nil {
 		return Resource{}, err
 	} else {
-		up |= f.userPermissions.GetFilesPermissions()
-		if up&ResourcePermissionShare == 0 {
-			return Resource{}, ErrInsufficientPermissions
-		} else {
-			// Do not grant more than the user has
-			permission = permission & up
-		}
+		// Do not grant more than the user has
+		permission = permission & p
 	}
 
 	const qUpdate = `

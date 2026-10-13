@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -95,17 +96,33 @@ func (f *FileSystem) withPathRoot(pathRoot pgtype.UUID) *FileSystem {
 	}
 }
 
-func (f *FileSystem) checkPermission(r Resource, p ResourcePermission) error {
+func (f *FileSystem) checkPermission(r Resource, p ResourcePermission) (ResourcePermission, error) {
 	if f.scopePermissions&p != p {
-		return ErrInsufficientPermissions
+		return 0, ErrInsufficientPermissions
 	}
 	fp := f.userPermissions.GetFilesPermissions()
 	p = p & (^fp)
 
-	if up, err := readPermissionFromJson(r.permissions, f.userID); err != nil {
-		return err
+	if up, err := permissionFromJson(r.permissions, f.userID); err != nil {
+		return 0, err
 	} else if (up|fp)&p != p {
-		return ErrInsufficientPermissions
+		return 0, ErrInsufficientPermissions
+	} else {
+		return up | fp, nil
 	}
-	return nil
+}
+
+func permissionFromJson(j []byte, userID int32) (ResourcePermission, error) {
+	if j == nil {
+		return ResourcePermissionNone, nil
+	}
+	p := make(map[int32]ResourcePermission)
+	err := json.Unmarshal(j, &p)
+	if err != nil {
+		return ResourcePermissionNone, err
+	}
+	if p, ok := p[userID]; ok {
+		return p, nil
+	}
+	return ResourcePermissionNone, nil
 }

@@ -88,7 +88,7 @@ func DeletePublink(ctx context.Context, id string) error {
 
 	f := OpenFileSystem(d, pgtype.UUID{Bytes: link.Root, Valid: true}, -1, []UserPermission{UserPermissionFilesAll}, []string{"*"})
 	root, err := f.ResourceByPathWithRoot("")
-	if err := f.checkPermission(root, ResourcePermissionShare); err != nil {
+	if _, err := f.checkPermission(root, ResourcePermissionShare); err != nil {
 		return err
 	}
 
