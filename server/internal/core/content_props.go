@@ -17,7 +17,7 @@ type contentProps struct {
 
 func computeProps(r io.ReadSeeker) (props contentProps, err error) {
 	props.size, err = r.Seek(0, io.SeekEnd)
-	props.sha566Sum, err = calculateSHa256Hash(r)
+	props.sha566Sum, err = computeSha256(r)
 	if err != nil {
 		return
 	}
@@ -28,7 +28,7 @@ func computeProps(r io.ReadSeeker) (props contentProps, err error) {
 	return
 }
 
-func calculateSHa256Hash(r io.ReadSeeker) (string, error) {
+func computeSha256(r io.ReadSeeker) (string, error) {
 	hash := sha256.New()
 	r.Seek(0, io.SeekStart)
 	if _, err := io.Copy(hash, r); err != nil {

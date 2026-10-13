@@ -31,8 +31,8 @@ func (f *FileSystem) PartialUploadCreate(user int32, id uuid.UUID, size int64, c
 	})
 }
 
-func (f *FileSystem) PartialUploadOpenWrite(user int32, id uuid.UUID, offset int64) (io.WriteCloser, error) {
-	owner, size, uploaded, checksum, err := queryPartialUpload(f.db, id)
+func (f *FileSystem) PartialUploadOpenWrite(user int32, id uuid.UUID, offset int64, checksum string) (io.WriteCloser, error) {
+	owner, size, uploaded, _, err := queryPartialUpload(f.db, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = ErrUploadNotFound
@@ -106,7 +106,7 @@ func (f *FileSystem) PartialUploadQuery(user int32, id uuid.UUID) (size, uploade
 }
 
 func (f *FileSystem) PartialUploadOpenRead(user int32, id uuid.UUID) (io.ReadCloser, error) {
-	owner, size, uploaded, _, err := queryPartialUpload(f.db, id)
+	owner, size, uploaded, checksum, err := queryPartialUpload(f.db, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrUploadNotFound
@@ -133,6 +133,15 @@ func (f *FileSystem) PartialUploadOpenRead(user int32, id uuid.UUID) (io.ReadClo
 		return nil, ErrUploadIncomplete
 	}
 	file, err := os.Open(path)
+	if checksum != "" {
+		if sha256, err := computeSha256(file); err != nil {
+			return nil, err
+		} else if sha256 != checksum {
+			return nil, ErrUploadChecksumMismatch
+		}
+		file.Seek(0, io.SeekStart)
+	}
+
 	return file, nil
 }
 

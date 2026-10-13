@@ -133,7 +133,7 @@ func handlePartialUploadsUploadRequest(c *gin.Context) {
 		}
 		defer src.Close()
 
-		out, err := f.PartialUploadOpenWrite(authenticator.GetAuth(c).UserID(), id, uploaded)
+		out, err := f.PartialUploadOpenWrite(authenticator.GetAuth(c).UserID(), id, uploaded, params.SHA256)
 		if err != nil {
 			return err
 		}
@@ -189,27 +189,19 @@ func handlePartialUploadsFinalizeRequest(c *gin.Context) {
 	}
 
 	f := authenticator.GetFileSystem(c)
-	err = func() error {
-		// TODO: #perf disk I/O in tx
-		src, err := f.PartialUploadOpenRead(authenticator.GetAuth(c).UserID(), uploadID)
-		if err != nil {
-			return err
-		}
-		defer src.Close()
+	src, err := f.PartialUploadOpenRead(authenticator.GetAuth(c).UserID(), uploadID)
+	if err != nil {
+		panic(err)
+	}
+	defer src.Close()
 
-		out, err := f.CreateFileByPath(params.Path, resourceID, versionID, params.Conflict)
-		if err != nil {
-			return err
-		}
-
-		if _, err := io.Copy(out, src); err != nil {
-			out.Close()
-			return err
-		} else {
-			return out.Close()
-		}
-	}()
+	out, err := f.CreateFileByPath(params.Path, resourceID, versionID, params.Conflict)
 	if err != nil && !errors.Is(err, core.ErrIDConflict) {
+		panic(err)
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, src); err != nil {
 		panic(err)
 	}
 
