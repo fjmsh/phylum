@@ -84,7 +84,7 @@ func (f *FileSystem) TrashList(cursor string, n uint) ([]Resource, string, error
 }
 
 func SetupTrashCompactor(logger *zerolog.Logger) {
-	ticker := time.NewTimer(24 * time.Hour)
+	ticker := time.NewTicker(24 * time.Hour)
 	go func() {
 		for {
 			<-ticker.C
