@@ -13,8 +13,8 @@ QueryExecutor openDatabase({
     Future(() async {
       final result = await WasmDatabase.open(
         databaseName: _dbName(id),
-        sqlite3Uri: Uri.parse('sqlite3.13d3f11d.wasm'),
-        driftWorkerUri: Uri.parse('drift_worker.df0066e7.js'),
+        sqlite3Uri: Uri.parse('sqlite3.fbcd2e82.wasm'),
+        driftWorkerUri: Uri.parse('drift_worker.191fc9db.js'),
       );
 
       if (result.missingFeatures.isNotEmpty) {
