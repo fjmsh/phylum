@@ -203,9 +203,10 @@ func handlePartialUploadsFinalizeRequest(c *gin.Context) {
 		defer out.Close()
 
 		if _, err := io.Copy(out, src); err != nil {
+			out.Close()
 			return err
 		}
-		return nil
+		return out.Close()
 	}()
 	if err != nil {
 		panic(err)

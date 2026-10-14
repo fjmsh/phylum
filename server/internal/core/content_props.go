@@ -39,23 +39,29 @@ func computeSha256(r io.ReadSeeker) (string, error) {
 
 func guessMimeType(r io.ReadSeeker) (string, error) {
 	const typeDetectBufferSize = 3072
-	contents := make([]byte, 0, typeDetectBufferSize)
+	contents := make([]byte, typeDetectBufferSize)
 
 	r.Seek(0, io.SeekStart)
 	buf := contents
+	n := 0
 	for {
 		if r, err := r.Read(buf); err != nil {
 			if err != io.EOF {
 				return "", err
 			} else {
+				contents = contents[:n+r]
 				break
 			}
-		} else if r == len(buf) {
-			break
 		} else {
-			buf = buf[r:]
+			n += r
+			if r < len(buf) {
+				buf = buf[r:]
+			} else {
+				break
+			}
 		}
 	}
+
 	mimeType := mimetype.Detect(contents).String()
 	if mimeType == "video/mp4" && isMP4Audio(r) {
 		mimeType = "audio/mp4"
