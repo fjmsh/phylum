@@ -28,7 +28,7 @@ sealed class ExplorerLocation {
     [
       .details,
       .download,
-      if (!kIsWeb && Platform.isAndroid || Platform.isWindows) .share,
+      if (!kIsWeb && (Platform.isAndroid || Platform.isWindows)) .share,
       if (!kIsWeb && Platform.isMacOS) .iosShare,
       if (!kIsWeb) .openFile,
       .bookmarkAdd,
