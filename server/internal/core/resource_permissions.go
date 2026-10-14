@@ -36,6 +36,28 @@ func (f txFileSystem) UpdatePermissions(r Resource, user User, permission Resour
 		permission = permission & p
 	}
 
+	if f.IsUser(user.ID) && (permission&ResourcePermissionShare) == 0 {
+		// User is removing their own permission. Check if there is somebody else with access
+		if permissions, err := permissionFromJson(r.permissions); err != nil {
+			return Resource{}, err
+		} else {
+			found := false
+			for id, p := range permissions {
+				if id == user.ID {
+					continue
+				}
+				if p&ResourcePermissionShare == ResourcePermissionShare {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return Resource{}, ErrPermissionsInvalid
+			}
+		}
+
+	}
+
 	const qUpdate = `
 UPDATE resources SET
 	grants[@user_id::INT] = jsonb_build_object('p', @permission::INT, 't', EXTRACT(EPOCH FROM NOW())::INTEGER),

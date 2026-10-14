@@ -23,6 +23,10 @@ type txFileSystem struct {
 	db db.TxHandler
 }
 
+func (f FileSystem) IsUser(userID int32) bool {
+	return f.userID == userID
+}
+
 func (f FileSystem) IsRoot(root uuid.UUID) bool {
 	return f.pathRoot.Valid && f.pathRoot.Bytes == root
 }
@@ -103,26 +107,26 @@ func (f *FileSystem) checkPermission(r Resource, p ResourcePermission) (Resource
 	fp := f.userPermissions.GetFilesPermissions()
 	p = p & (^fp)
 
-	if up, err := permissionFromJson(r.permissions, f.userID); err != nil {
+	if permissions, err := permissionFromJson(r.permissions); err != nil {
 		return 0, err
-	} else if (up|fp)&p != p {
-		return 0, ErrInsufficientPermissions
 	} else {
-		return up | fp, nil
+		up := permissions[f.userID]
+		if (up|fp)&p != p {
+			return 0, ErrInsufficientPermissions
+		} else {
+			return up | fp, nil
+		}
 	}
 }
 
-func permissionFromJson(j []byte, userID int32) (ResourcePermission, error) {
+func permissionFromJson(j []byte) (map[int32]ResourcePermission, error) {
 	if j == nil {
-		return ResourcePermissionNone, nil
+		return nil, nil
 	}
 	p := make(map[int32]ResourcePermission)
 	err := json.Unmarshal(j, &p)
 	if err != nil {
-		return ResourcePermissionNone, err
+		return nil, err
 	}
-	if p, ok := p[userID]; ok {
-		return p, nil
-	}
-	return ResourcePermissionNone, nil
+	return p, nil
 }

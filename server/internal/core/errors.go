@@ -71,4 +71,5 @@ var (
 	ErrUploadIncomplete               = NewError(http.StatusBadRequest, "upload_incomplete", "Upload Incomplete")
 	ErrUploadNotFound                 = NewError(http.StatusBadRequest, "upload_not_found", "Upload Not Found")
 	ErrResourceContentsPending        = NewError(http.StatusConflict, "resource_contents_pending", "Resource Contents Pending")
+	ErrPermissionsInvalid             = NewError(http.StatusConflict, "permissions_invlaid", "Permissions Invalid")
 )
