@@ -15,7 +15,8 @@ import 'package:phylum/libphylum/responses/responses.dart';
 import 'package:phylum/ui/file_viewer/versioned_resource.dart';
 import 'package:provider/provider.dart';
 
-const maxPreviewSize = 1 * 1024 * 1024;
+const _maxTextPreviewSize = 100 * 1024;
+const _maxPreviewSize = 1 * 1024 * 1024;
 
 const _applicationTextSubtypes = {
   'json',
@@ -62,19 +63,24 @@ class _FileViewerState extends State<FileViewer> {
       _error = 'Cannot view directory';
     } else {
       _buildViewer = null;
+      _loadPreview = false;
       context.read<PhylumAccount>().db.markResourceAccess(_resource.r.id);
       final mimeType = MediaType.parse(_resource.v.mimeType);
       if (mimeType.type == 'text' ||
           (mimeType.type == 'application' &&
               _applicationTextSubtypes.contains(mimeType.subtype))) {
         _buildViewer = buildTextPreview;
-        _loadPreview = false;
+        if (_resource.v.size > _maxTextPreviewSize) {
+          _error = 'File contents too large to view';
+        }
       } else if ((_resource.v.imgres & imgResLarge) != 0) {
-        _buildViewer = buildImagePreview;
         _loadPreview = true;
+        _buildViewer = buildImagePreview;
       } else if (mimeType.type == "image") {
         _buildViewer = buildImagePreview;
-        _loadPreview = false;
+        if (_resource.v.size > _maxPreviewSize) {
+          _error = 'File contents too large to view';
+        }
       } else {
         _error = 'Preview not available';
       }
@@ -83,7 +89,7 @@ class _FileViewerState extends State<FileViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return _buildViewer == null
+    return _error != null || _buildViewer == null
         ? Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
