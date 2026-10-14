@@ -3,8 +3,8 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  app_links_linux
   desktop_drop
-  gtk
   open_file_linux
   pasteboard
   screen_retriever_linux
