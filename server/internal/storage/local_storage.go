@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 )
 
+var ErrDuplicateWrite = errors.New("duplicate write")
+
 type localStorage struct {
 	name string
 	root string
@@ -75,6 +77,9 @@ func (l localStorage) OpenWrite(name string, writeFinishedCallback func(io.ReadS
 		} else {
 			defer in.Close()
 			if err := writeFinishedCallback(in); err != nil {
+				if errors.Is(err, ErrDuplicateWrite) {
+					return nil
+				}
 				return err
 			} else if err := l.mkdirs(name); err != nil {
 				return err
