@@ -135,8 +135,10 @@ func (f *FileSystem) PartialUploadOpenRead(user int32, id uuid.UUID) (io.ReadClo
 	file, err := os.Open(path)
 	if checksum != "" {
 		if sha256, err := computeSha256(file); err != nil {
+			file.Close()
 			return nil, err
 		} else if sha256 != checksum {
+			file.Close()
 			return nil, ErrUploadChecksumMismatch
 		}
 		file.Seek(0, io.SeekStart)

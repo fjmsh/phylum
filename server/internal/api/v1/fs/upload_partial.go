@@ -200,7 +200,6 @@ func handlePartialUploadsFinalizeRequest(c *gin.Context) {
 		if err != nil && !errors.Is(err, core.ErrIDConflict) {
 			return err
 		}
-		defer out.Close()
 
 		if _, err := io.Copy(out, src); err != nil {
 			out.Close()
