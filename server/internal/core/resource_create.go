@@ -74,7 +74,7 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 				// ID could be different if we're overwriting an existing resource
 				requestedID = r.id
 				v := r.LatestVersion()
-				if v.SHA256 == props.sha566Sum && v.Size == props.size {
+				if v.Created != 0 && v.SHA256 == props.sha566Sum && v.Size == props.size {
 					return storage.ErrDuplicateWrite
 				}
 			}
