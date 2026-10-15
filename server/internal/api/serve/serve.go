@@ -49,7 +49,7 @@ func ServeResourceVersion(w http.ResponseWriter, r *http.Request, f FileSystem, 
 	}
 
 	w.Header().Set("Etag", "\""+version.SHA256+"\"")
-	w.Header().Set("Last-Modified", time.Unix(int64(version.Created), 0).Format(http.TimeFormat))
+	w.Header().Set("Last-Modified", time.Unix(int64(version.Created), 0).UTC().Format(http.TimeFormat))
 	w.Header().Set("Content-Type", version.MimeType)
 	w.Header().Set("Content-Disposition", "attachment; filename=\""+res.Name()+"\"")
 
