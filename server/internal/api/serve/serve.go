@@ -252,7 +252,7 @@ func scanETag(s string) (etag string, remain string) {
 		// Character values allowed in ETags.
 		case c == 0x21 || c >= 0x23 && c <= 0x7E || c >= 0x80:
 		case c == '"':
-			return s[:i+1], s[i+1:]
+			return s[start+1 : i], s[i+1:]
 		default:
 			return "", ""
 		}
@@ -260,16 +260,10 @@ func scanETag(s string) (etag string, remain string) {
 	return "", ""
 }
 
-// etagStrongMatch reports whether a and b match using strong ETag comparison.
+// etagMatch reports whether a and b match using strong ETag comparison.
 // Assumes a and b are valid ETags.
-func etagStrongMatch(a, b string) bool {
+func etagMatch(a, b string) bool {
 	return a == b && a != "" && a[0] == '"'
-}
-
-// etagWeakMatch reports whether a and b match using weak ETag comparison.
-// Assumes a and b are valid ETags.
-func etagWeakMatch(a, b string) bool {
-	return strings.TrimPrefix(a, "W/") == strings.TrimPrefix(b, "W/")
 }
 
 // condResult is the result of an HTTP request precondition check.
@@ -303,7 +297,7 @@ func checkIfMatch(r *http.Request, v core.VersionInfo) condResult {
 		if etag == "" {
 			break
 		}
-		if etagStrongMatch(etag, v.SHA256) {
+		if etagMatch(etag, v.SHA256) {
 			return condTrue
 		}
 		im = remain
@@ -352,7 +346,7 @@ func checkIfNoneMatch(r *http.Request, v core.VersionInfo) condResult {
 		if etag == "" {
 			break
 		}
-		if etagWeakMatch(etag, v.SHA256) {
+		if etagMatch(etag, v.SHA256) {
 			return condFalse
 		}
 		buf = remain
@@ -390,7 +384,7 @@ func checkIfRange(r *http.Request, v core.VersionInfo) condResult {
 	}
 	etag, _ := scanETag(ir)
 	if etag != "" {
-		if etagStrongMatch(etag, v.SHA256) {
+		if etagMatch(etag, v.SHA256) {
 			return condTrue
 		} else {
 			return condFalse
