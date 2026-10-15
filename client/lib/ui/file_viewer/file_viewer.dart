@@ -58,32 +58,33 @@ class _FileViewerState extends State<FileViewer> {
 
   void _updateResource(VersionedResource resource) {
     _resource = resource;
+    _buildViewer = null;
+    _loadPreview = false;
+    _error = null;
+
     if (_resource.r.dir) {
-      _buildViewer = null;
       _error = 'Cannot view directory';
-    } else {
-      _buildViewer = null;
-      _loadPreview = false;
-      context.read<PhylumAccount>().db.markResourceAccess(_resource.r.id);
-      final mimeType = MediaType.parse(_resource.v.mimeType);
-      if (mimeType.type == 'text' ||
-          (mimeType.type == 'application' &&
-              _applicationTextSubtypes.contains(mimeType.subtype))) {
-        _buildViewer = buildTextPreview;
-        if (_resource.v.size > _maxTextPreviewSize) {
-          _error = 'File contents too large to view';
-        }
-      } else if ((_resource.v.imgres & imgResLarge) != 0) {
-        _loadPreview = true;
-        _buildViewer = buildImagePreview;
-      } else if (mimeType.type == "image") {
-        _buildViewer = buildImagePreview;
-        if (_resource.v.size > _maxPreviewSize) {
-          _error = 'File contents too large to view';
-        }
-      } else {
-        _error = 'Preview not available';
+      return;
+    }
+    context.read<PhylumAccount>().db.markResourceAccess(_resource.r.id);
+    final mimeType = MediaType.parse(_resource.v.mimeType);
+    if (mimeType.type == 'text' ||
+        (mimeType.type == 'application' &&
+            _applicationTextSubtypes.contains(mimeType.subtype))) {
+      _buildViewer = buildTextPreview;
+      if (_resource.v.size > _maxTextPreviewSize) {
+        _error = 'File contents too large to view';
       }
+    } else if ((_resource.v.imgres & imgResLarge) != 0) {
+      _loadPreview = true;
+      _buildViewer = buildImagePreview;
+    } else if (mimeType.type == "image") {
+      _buildViewer = buildImagePreview;
+      if (_resource.v.size > _maxPreviewSize) {
+        _error = 'File contents too large to view';
+      }
+    } else {
+      _error = 'Preview not available';
     }
   }
 
