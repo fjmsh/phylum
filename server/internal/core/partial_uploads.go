@@ -105,16 +105,16 @@ func (f *FileSystem) PartialUploadQuery(user int32, id uuid.UUID) (size, uploade
 	return
 }
 
-func (f *FileSystem) PartialUploadOpenRead(user int32, id uuid.UUID) (io.ReadCloser, error) {
+func (f *FileSystem) PartialUploadOpenRead(user int32, id uuid.UUID) (io.ReadCloser, func(), error) {
 	owner, size, uploaded, checksum, err := queryPartialUpload(f.db, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrUploadNotFound
+			return nil, nil, ErrUploadNotFound
 		}
-		return nil, err
+		return nil, nil, err
 	}
 	if user != owner {
-		return nil, ErrUploadNotFound
+		return nil, nil, ErrUploadNotFound
 	}
 
 	path := uploadFilePath(user, id)
@@ -122,7 +122,7 @@ func (f *FileSystem) PartialUploadOpenRead(user int32, id uuid.UUID) (io.ReadClo
 		if errors.Is(err, os.ErrNotExist) {
 			uploaded = 0
 		} else {
-			return nil, err
+			return nil, nil, err
 		}
 	} else {
 		if stat.Size() < uploaded {
@@ -130,21 +130,26 @@ func (f *FileSystem) PartialUploadOpenRead(user int32, id uuid.UUID) (io.ReadClo
 		}
 	}
 	if size != uploaded {
-		return nil, ErrUploadIncomplete
+		return nil, nil, ErrUploadIncomplete
 	}
 	file, err := os.Open(path)
 	if checksum != "" {
 		if sha256, err := computeSha256(file); err != nil {
 			file.Close()
-			return nil, err
+			return nil, nil, err
 		} else if sha256 != checksum {
 			file.Close()
-			return nil, ErrUploadChecksumMismatch
+			return nil, nil, ErrUploadChecksumMismatch
 		}
 		file.Seek(0, io.SeekStart)
 	}
+	cleanup := func() {
+		// TODO: Log warnings?
+		os.Remove(path)
+		deletePartialUpload(f.db, id)
+	}
 
-	return file, nil
+	return file, cleanup, nil
 }
 
 func insertPartialUpload(db db.TxHandler, id uuid.UUID, owner int32, size int64, checksum string) error {
@@ -181,6 +186,15 @@ func updatePartialUpload(db db.Handler, id uuid.UUID, uploaded int64) error {
 	args := pgx.NamedArgs{
 		"id":       id,
 		"uploaded": uploaded,
+	}
+	_, err := db.Exec(q, args)
+	return err
+}
+func deletePartialUpload(db db.Handler, id uuid.UUID) error {
+	const q = `DELETE FROM partial_uploads WHERE id = @id`
+
+	args := pgx.NamedArgs{
+		"id": id,
 	}
 	_, err := db.Exec(q, args)
 	return err

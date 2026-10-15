@@ -190,7 +190,7 @@ func handlePartialUploadsFinalizeRequest(c *gin.Context) {
 
 	f := authenticator.GetFileSystem(c)
 	err = func() error {
-		src, err := f.PartialUploadOpenRead(authenticator.GetAuth(c).UserID(), uploadID)
+		src, cleanup, err := f.PartialUploadOpenRead(authenticator.GetAuth(c).UserID(), uploadID)
 		if err != nil {
 			return err
 		}
@@ -205,7 +205,11 @@ func handlePartialUploadsFinalizeRequest(c *gin.Context) {
 			out.Close()
 			return err
 		}
-		return out.Close()
+		if err := out.Close(); err != nil {
+			return err
+		}
+		cleanup()
+		return nil
 	}()
 	if err != nil {
 		panic(err)
