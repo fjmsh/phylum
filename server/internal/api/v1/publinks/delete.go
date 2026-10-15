@@ -24,7 +24,7 @@ func handleDeleteRequest(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("publink:delete") {
+	if !auth.HasScope("publinks:delete") {
 		panic(core.ErrInsufficientScope)
 	}
 	if err := core.DeletePublink(c.Request.Context(), params.ID, func(id uuid.UUID) *core.FileSystem {
