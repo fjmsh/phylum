@@ -275,19 +275,18 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 		}
 		return http.StatusInternalServerError, err
 	}
-	_, copyErr := io.Copy(f, r.Body)
-	closeErr := f.Close()
-	if copyErr != nil {
-		if e, ok := copyErr.(*core.Error); ok {
+	if _, err := io.Copy(f, r.Body); err != nil {
+		f.Close()
+		if e, ok := err.(*core.Error); ok {
 			return e.Status, e
 		}
-		return http.StatusInternalServerError, copyErr
+		return http.StatusInternalServerError, err
 	}
-	if closeErr != nil {
-		if e, ok := closeErr.(*core.Error); ok {
+	if err := f.Close(); err != nil {
+		if e, ok := err.(*core.Error); ok {
 			return e.Status, e
 		}
-		return http.StatusNotFound, closeErr
+		return http.StatusNotFound, err
 	}
 
 	fi, statErr := h.FileSystem.ResourceByPath(reqPath)
