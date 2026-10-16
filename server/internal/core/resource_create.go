@@ -33,11 +33,11 @@ func CheckResourceNameInvalid(s string) bool {
 	})
 }
 
-func (f *FileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+func (f *FileSystem) Mkdir(path string, requestedID uuid.UUID, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	var res Resource
 	err := f.runInTx(func(f txFileSystem) error {
 		var err error
-		res, err = f.CreateResourceByPath(path, requestedID, dir, createParents, conflictResolution)
+		res, err = f.Mkdir(path, requestedID, createParents, conflictResolution)
 		return err
 	})
 	return res, err
@@ -133,7 +133,7 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 	})
 }
 
-func (f txFileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, dir, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
+func (f txFileSystem) Mkdir(path string, requestedID uuid.UUID, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
 	if requestedID == uuid.Nil {
 		requestedID, _ = uuid.NewV7()
 	}
@@ -149,7 +149,7 @@ func (f txFileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, d
 		if parent.deleted.Valid {
 			return Resource{}, ErrParentNotFound
 		}
-		return f.createMemberResource(parent, name, requestedID, dir, conflictResolution)
+		return f.createMemberResource(parent, name, requestedID, true, conflictResolution)
 	}
 
 	root, path, err := parseUUIDPrefix(path)
@@ -165,15 +165,13 @@ func (f txFileSystem) CreateResourceByPath(path string, requestedID uuid.UUID, d
 		if err != nil {
 			return Resource{}, err
 		}
-		d := true
 		resourceID, _ := uuid.NewV7()
 		conflict := ResourceBindConflictResolutionEnsure
 		if i == len(segments)-1 {
-			d = dir
 			resourceID = requestedID
 			conflict = conflictResolution
 		}
-		r, err = f.createMemberResource(r, s, resourceID, d, conflict)
+		r, err = f.createMemberResource(r, s, resourceID, true, conflict)
 	}
 
 	return r, err

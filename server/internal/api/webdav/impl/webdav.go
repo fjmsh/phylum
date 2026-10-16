@@ -38,7 +38,7 @@ type Handler struct {
 type FileSystem interface {
 	core.ReadFileSystem
 
-	CreateResourceByPath(name string, id uuid.UUID, dir, recursive bool, conflictResolution core.ResourceBindConflictResolution) (core.Resource, error)
+	Mkdir(name string, id uuid.UUID, recursive bool, conflictResolution core.ResourceBindConflictResolution) (core.Resource, error)
 	CreateFileByPath(path string, id, versionID uuid.UUID, conflictResolution core.ResourceBindConflictResolution) (io.WriteCloser, error)
 	Copy(core.Resource, string, uuid.UUID, bool, core.ResourceBindConflictResolution) (core.Resource, bool, error)
 	Move(core.Resource, string, core.ResourceBindConflictResolution) (core.Resource, bool, error)
@@ -314,7 +314,7 @@ func (h *Handler) handleMkcol(_ http.ResponseWriter, r *http.Request) (status in
 	if r.ContentLength > 0 {
 		return http.StatusUnsupportedMediaType, nil
 	}
-	if _, err := h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, true, false, core.ResourceBindConflictResolutionError); err != nil {
+	if _, err := h.FileSystem.Mkdir(reqPath, uuid.Nil, false, core.ResourceBindConflictResolutionError); err != nil {
 		// The regular status for ErrResourceNameConflict is 412, which is not what is expected here.
 		if errors.Is(err, core.ErrResourceNameConflict) {
 			return http.StatusMethodNotAllowed, err
@@ -395,7 +395,7 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 
 		// Create the resource if it didn't previously exist.
 		if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-			_, err = h.FileSystem.CreateResourceByPath(reqPath, uuid.Nil, false, false, core.ResourceBindConflictResolutionEnsure)
+			_, err = h.FileSystem.CreateFileByPath(reqPath, uuid.Nil, uuid.Nil, core.ResourceBindConflictResolutionEnsure)
 			if err != nil {
 				if e, ok := err.(*core.Error); ok {
 					return e.Status, e

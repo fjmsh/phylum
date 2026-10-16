@@ -20,7 +20,7 @@ func CreateUser(db db.TxHandler, email, name string, noCreateHome bool) (User, e
 	if !noCreateHome {
 		var err error
 		homePath := strings.TrimRight(userConfig.BaseDir, "/") + "/" + email
-		home, err = f.CreateResourceByPath(homePath, uuid.Nil, true, true, ResourceBindConflictResolutionEnsure)
+		home, err = f.Mkdir(homePath, uuid.Nil, true, ResourceBindConflictResolutionEnsure)
 		if err != nil {
 			return User{}, err
 		}

@@ -29,7 +29,7 @@ func setupMkdirCommand() *cobra.Command {
 					conflict = core.ResourceBindConflictResolutionEnsure
 				}
 			}
-			if _, err := f.CreateResourceByPath(path, uuid.Nil, true, recursive, conflict); err != nil {
+			if _, err := f.Mkdir(path, uuid.Nil, recursive, conflict); err != nil {
 				fmt.Println("could not create directory: " + err.Error())
 				os.Exit(1)
 			}
