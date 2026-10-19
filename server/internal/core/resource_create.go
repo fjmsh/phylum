@@ -370,8 +370,17 @@ func updateResourceModified(db db.TxHandler, id uuid.UUID) error {
 }
 
 func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64, mimeType, sha256 string) error {
-	const q = `INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage)
-	VALUES (@version_id, @resource_id, @size, @mime_type, @sha256, @storage)`
+	const q = `WITH ins AS (
+	INSERT INTO resource_versions(id, resource_id, size, mime_type, sha256, storage)
+	VALUES (@version_id, @resource_id, @size, @mime_type, @sha256, @storage)
+    ON CONFLICT (id) DO NOTHING
+    RETURNING resource_id, size, sha256
+)
+SELECT resource_id, size, sha256 FROM ins
+UNION ALL
+SELECT resource_id, size, sha256 FROM resource_versions
+WHERE id = @version_id
+AND NOT EXISTS (SELECT 1 FROM ins)`
 
 	args := pgx.NamedArgs{
 		"resource_id": id,
@@ -381,12 +390,19 @@ func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64,
 		"sha256":      sha256,
 		"storage":     storage.DefaultBackendName,
 	}
-	_, err := db.Exec(q, args)
-	if err != nil && strings.Contains(err.Error(), "resource_versions_pkey") {
-		// TODO: Do not return error if the existing row has the same values
+
+	row := db.QueryRow(q, args)
+	var rowResourceId pgtype.UUID
+	var rowSize int64
+	var rowSHA256 pgtype.Text
+	if err := row.Scan(&rowResourceId, &rowSize, &rowSHA256); err != nil {
+		return err
+	}
+	if id != rowResourceId.Bytes || size != rowSize || sha256 != rowSHA256.String {
 		return ErrIDConflict
 	}
-	return err
+
+	return nil
 }
 
 func insertResourcesFast(db db.TxHandler, arg []insertResourcesFastParams) (int64, error) {
