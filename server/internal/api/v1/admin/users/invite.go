@@ -1,9 +1,6 @@
 package users
 
 import (
-	"net/http"
-
-	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -26,14 +23,6 @@ func handleInviteRequest(c *gin.Context) {
 		if err != nil {
 			panic(errInvalidParams)
 		}
-	}
-
-	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("admin:users:create:invite") {
-		panic(core.ErrInsufficientScope)
-	}
-	if !core.AllowInvites() && !auth.UserPermissions().HasPermission(core.UserPermissionUsersCreateInvite) {
-		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to invite users"))
 	}
 
 	var user core.User

@@ -20,9 +20,6 @@ func handleProfileUpdateRoute(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("user:profile:update") {
-		panic(core.ErrInsufficientScope)
-	}
 
 	var user core.User
 	err = db.Get(c.Request.Context()).RunInTx(func(db db.TxHandler) error {

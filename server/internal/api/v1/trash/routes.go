@@ -34,9 +34,6 @@ func handleListRequest(c *gin.Context) {
 	cursor := c.Request.URL.Query().Get("cursor")
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("trash:list") {
-		panic(core.ErrInsufficientScope)
-	}
 	fs := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})
 	res, cursor, err := fs.TrashList(cursor, trashListLength)
 	if err != nil {
@@ -56,9 +53,6 @@ func handleListRequest(c *gin.Context) {
 
 func handleEmptyRequest(c *gin.Context) {
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("trash:empty") {
-		panic(core.ErrInsufficientScope)
-	}
 	fs := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})
 	err := fs.TrashEmpty()
 	if err != nil {
@@ -77,9 +71,6 @@ func handleRestoreRequest(c *gin.Context) {
 	autoRename := c.Request.URL.Query().Has("auto_rename")
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("trash:restore") {
-		panic(core.ErrInsufficientScope)
-	}
 	fs := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})
 	r, err := fs.ResourceByID(resourceID)
 	if err != nil {

@@ -34,9 +34,6 @@ func setupKeysRoutes(r *gin.RouterGroup) {
 func handleKeysList(c *gin.Context) {
 	includeExpired := c.Request.URL.Query().Has("show_expired")
 	a := authenticator.GetAuth(c)
-	if !a.HasScope("keys:list") {
-		panic(core.ErrInsufficientScope)
-	}
 	if keys, err := auth.ListAPIKeys(db.Get(c.Request.Context()), a.UserID(), includeExpired); err != nil {
 		panic(err)
 	} else {
@@ -78,9 +75,6 @@ func handleKeysGenerate(c *gin.Context) {
 	}
 
 	a := authenticator.GetAuth(c)
-	if !a.HasScope("keys:generate") {
-		panic(core.ErrInsufficientScope)
-	}
 	expires := pgtype.Timestamptz{}
 	if !params.Expires.IsZero() {
 		expires.Time = params.Expires
@@ -109,9 +103,6 @@ func handleKeysRevoke(c *gin.Context) {
 	}
 
 	a := authenticator.GetAuth(c)
-	if !a.HasScope("keys:revoke") {
-		panic(core.ErrInsufficientScope)
-	}
 	if err := auth.RevokeAPIKey(db.Get(c.Request.Context()), a.UserID(), params.ID, params.Delete); err != nil {
 		panic(err)
 	}
@@ -128,9 +119,6 @@ func handleKeysEdit(c *gin.Context) {
 	}
 
 	a := authenticator.GetAuth(c)
-	if !a.HasScope("keys:edit") {
-		panic(core.ErrInsufficientScope)
-	}
 	if err := auth.UpdateAPIKeyDescription(db.Get(c.Request.Context()), a.UserID(), params.ID, params.Description); err != nil {
 		panic(err)
 	}

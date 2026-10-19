@@ -33,10 +33,10 @@ func setupBookmarksRoutes(r *gin.RouterGroup) {
 	group := r.Group("/bookmarks")
 	group.POST("/add", handleBookmarksAddRoute)
 	group.POST("/remove", handleBookmarksRemoveRoute)
-	group.GET("/list", handleBookmarksGetRoute)
+	group.GET("/list", handleBookmarksListRoute)
 }
 
-func handleBookmarksGetRoute(c *gin.Context) {
+func handleBookmarksListRoute(c *gin.Context) {
 	var since int64
 	if s := c.Request.URL.Query().Get("since"); s != "" {
 		var err error
@@ -47,9 +47,6 @@ func handleBookmarksGetRoute(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("user:bookmarks:list") {
-		panic(core.ErrInsufficientScope)
-	}
 	if bookmarks, err := ListBookmarks(c.Request.Context(), auth.UserID(), since); err != nil {
 		panic(err)
 	} else {
@@ -67,9 +64,6 @@ func handleBookmarksAddRoute(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("user:bookmarks:add") {
-		panic(core.ErrInsufficientScope)
-	}
 	userID := auth.UserID()
 	r, err := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{}).ResourceByPathWithRoot(params.Path)
 	if err != nil {
@@ -100,9 +94,6 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("user:bookmarks:remove") {
-		panic(core.ErrInsufficientScope)
-	}
 	if err := db.Get(c.Request.Context()).RunInTx(func(db db.TxHandler) error {
 		return core.RemoveBookmark(db, auth.UserID(), params.ID)
 	}); err != nil {

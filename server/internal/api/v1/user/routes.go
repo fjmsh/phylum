@@ -23,9 +23,6 @@ func SetupRoutes(r *gin.RouterGroup) {
 
 func handleSharedRoute(c *gin.Context) {
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("user:shared:list") {
-		panic(core.ErrInsufficientPermissions)
-	}
 	shared, err := core.SharedResources(db.Get(c.Request.Context()), auth.UserID())
 	if err != nil {
 		panic(err)

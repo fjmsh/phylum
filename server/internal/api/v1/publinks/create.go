@@ -5,7 +5,6 @@ import (
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
-	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -56,9 +55,6 @@ func handleCreateRequest(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("publinks:create") {
-		panic(core.ErrInsufficientScope)
-	}
 	fs := auth.GetFileSystem(db.Get(c.Request.Context()), pgtype.UUID{})
 	r, err := fs.ResourceByPathWithRoot(params.ResourcePath)
 	if err != nil {

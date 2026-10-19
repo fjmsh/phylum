@@ -8,7 +8,6 @@ import (
 	"os"
 	"syscall"
 
-	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/config"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/mail"
@@ -32,14 +31,6 @@ func handleUpdateRequest(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "parse_failed", "failed to parse request parameters from body: "+err.Error()))
 	} else if err := params.UnmarshalWithConf("config", &mail.Config{}, koanf.UnmarshalConf{DecoderConfig: decoderConfig}); err != nil {
 		panic(core.NewError(http.StatusBadRequest, "validate_failed", "failed to validate request parameters from body: "+err.Error()))
-	}
-
-	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("admin:" + core.UserPermissionConfigMailUpdate) {
-		panic(core.ErrInsufficientScope)
-	}
-	if !auth.UserPermissions().HasPermission(core.UserPermissionConfigMailUpdate) {
-		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to update mail config"))
 	}
 
 	updates := params.Cut("config")

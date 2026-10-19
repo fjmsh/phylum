@@ -3,7 +3,6 @@ package user
 import (
 	"net/http"
 
-	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/auth"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -18,13 +17,6 @@ func handleAuthPasswordUpdateRequest(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		panic(err)
-	}
-	a := authenticator.GetAuth(c)
-	if !a.HasScope("admin:" + core.UserPermissionUserAuthPasswordUpdate) {
-		panic(core.ErrInsufficientScope)
-	}
-	if !a.UserPermissions().HasPermission(core.UserPermissionUserAuthPasswordUpdate) {
-		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to update user passwords"))
 	}
 
 	err = db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {

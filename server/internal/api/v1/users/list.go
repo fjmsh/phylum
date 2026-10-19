@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
@@ -16,10 +15,6 @@ var errInvalidParams = core.NewError(http.StatusBadRequest, "invalid_parameters"
 
 func handleUsersListRoute(c *gin.Context) {
 	var since int64
-	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("users:list") {
-		panic(core.ErrInsufficientScope)
-	}
 	if s := c.Request.URL.Query().Get("since"); s != "" {
 		var err error
 		since, err = strconv.ParseInt(s, 10, 64)

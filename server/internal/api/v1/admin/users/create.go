@@ -32,12 +32,6 @@ func handleCreateRequest(c *gin.Context) {
 	}
 
 	a := authenticator.GetAuth(c)
-	if !a.HasScope("admin:" + core.UserPermissionUsersCreate) {
-		panic(core.ErrInsufficientScope)
-	}
-	if !a.UserPermissions().HasPermission(core.UserPermissionUsersCreate) {
-		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to create users"))
-	}
 
 	var u core.User
 	err = db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {

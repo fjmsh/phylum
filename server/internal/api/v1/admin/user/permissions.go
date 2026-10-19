@@ -31,13 +31,6 @@ func handlePermissionsUpdateRequest(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("admin:user:permissions:update") {
-		panic(core.ErrInsufficientScope)
-	}
-	if !auth.UserPermissions().HasPermission(core.UserPermissionUserPermissionsUpdate) {
-		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to update user permissions"))
-	}
-
 	var u core.User
 	if err := db.RunInTx(c.Request.Context(), func(db db.TxHandler) error {
 		if params.ID <= 0 {

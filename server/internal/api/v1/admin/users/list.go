@@ -1,8 +1,6 @@
 package users
 
 import (
-	"net/http"
-
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/responses"
 	"codeberg.org/shroff/phylum/server/internal/core"
@@ -12,12 +10,6 @@ import (
 
 func handleListRequest(c *gin.Context) {
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("admin:users:list") {
-		panic(core.ErrInsufficientScope)
-	}
-	if !auth.UserPermissions().HasPermission(core.UserPermissionUsersList) {
-		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to list users"))
-	}
 
 	includeHome := auth.UserPermissions().HasPermission(core.UserPermissionFilesRead)
 

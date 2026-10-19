@@ -3,9 +3,7 @@ package auth
 import (
 	"net/http"
 
-	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/config"
-	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,13 +16,5 @@ func SetupRoutes(r *gin.RouterGroup) {
 }
 
 func handleReadRequest(c *gin.Context) {
-	a := authenticator.GetAuth(c)
-	if !a.HasScope("admin:" + core.UserPermissionConfigAuthRead) {
-		panic(core.ErrInsufficientScope)
-	}
-	if !a.UserPermissions().HasPermission(core.UserPermissionConfigAuthRead) {
-		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to read auth config"))
-	}
-
 	c.JSON(http.StatusOK, config.ConfigMap("auth"))
 }
