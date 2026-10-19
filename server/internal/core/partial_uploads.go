@@ -10,11 +10,11 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (f *FileSystem) PartialUploadCreate(user int32, id uuid.UUID, size int64, checksum string) error {
@@ -153,8 +153,17 @@ func (f *FileSystem) PartialUploadOpenRead(user int32, id uuid.UUID) (io.ReadClo
 }
 
 func insertPartialUpload(db db.TxHandler, id uuid.UUID, owner int32, size int64, checksum string) error {
-	const q = `INSERT INTO partial_uploads(id, owner, size, uploaded, checksum)
-	VALUES (@id, @owner, @size, 0, @checksum)`
+	const q = `WITH ins AS (
+	INSERT INTO partial_uploads(id, owner, size, uploaded, checksum)
+	VALUES (@id, @owner, @size, 0, @checksum)
+    ON CONFLICT (id) DO NOTHING
+    RETURNING owner, size, checksum
+)
+SELECT owner, size, checksum FROM ins
+UNION ALL
+SELECT owner, size, checksum FROM partial_uploads
+WHERE id = @id
+AND NOT EXISTS (SELECT 1 FROM ins)`
 
 	args := pgx.NamedArgs{
 		"id":       id,
@@ -162,11 +171,18 @@ func insertPartialUpload(db db.TxHandler, id uuid.UUID, owner int32, size int64,
 		"size":     size,
 		"checksum": checksum,
 	}
-	_, err := db.Exec(q, args)
-	if err != nil && strings.Contains(err.Error(), "partial_uploads_pkey") {
+	row := db.QueryRow(q, args)
+	var rowOwner int32
+	var rowSize int64
+	var rowChecksum pgtype.Text
+	if err := row.Scan(&rowOwner, &rowSize, &rowChecksum); err != nil {
+		return err
+	}
+	if owner != rowOwner || size != rowSize || checksum != rowChecksum.String {
 		return ErrIDConflict
 	}
-	return err
+
+	return nil
 }
 
 func queryPartialUpload(db db.Handler, id uuid.UUID) (owner int32, size, uploaded int64, checksum string, err error) {
