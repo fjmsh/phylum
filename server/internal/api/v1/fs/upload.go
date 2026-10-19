@@ -1,8 +1,6 @@
 package fs
 
 import (
-	"errors"
-	"io"
 	"net/http"
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
@@ -64,19 +62,9 @@ func handleUploadRequest(c *gin.Context) {
 		}
 		defer src.Close()
 
-		out, err := f.CreateFileByPath(params.Path, id, versionID, params.Conflict)
-		if err != nil {
-			return err
-		}
-
-		if _, err := io.Copy(out, src); err != nil {
-			out.Close()
-			return err
-		} else {
-			return out.Close()
-		}
+		return f.CreateFileByPath(params.Path, id, versionID, src, params.Conflict)
 	}()
-	if err != nil && !errors.Is(err, core.ErrIDConflict) {
+	if err != nil {
 		panic(err)
 	}
 

@@ -3,7 +3,6 @@ package fs
 import (
 	"errors"
 	"fmt"
-	"io"
 	iofs "io/fs"
 	"os"
 
@@ -114,15 +113,5 @@ func copyContents(f *core.FileSystem, path string, res core.Resource) error {
 	}
 	defer in.Close()
 
-	out, err := f.CreateFileVersion(res, uuid.Nil)
-	if err != nil {
-		return err
-	}
-
-	_, copyErr := io.Copy(out, in)
-	closeErr := out.Close()
-	if copyErr != nil {
-		return copyErr
-	}
-	return closeErr
+	return f.CreateFileVersion(res, uuid.Nil, in)
 }

@@ -43,43 +43,44 @@ func (f *FileSystem) Mkdir(path string, requestedID uuid.UUID, createParents boo
 	return res, err
 }
 
-func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.UUID, conflictResolution ResourceBindConflictResolution) (io.WriteCloser, error) {
+func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.UUID, in io.Reader, conflictResolution ResourceBindConflictResolution) error {
 	name, parent, err := f.targetByPathWithRoot(path, Resource{})
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
 			err = ErrParentNotFound
 		}
-		return nil, err
+		return err
 	}
 	if parent.deleted.Valid {
-		return nil, ErrParentNotFound
+		return ErrParentNotFound
 	}
 
 	if _, err := f.checkPermission(parent, ResourcePermissionWrite); err != nil {
-		return nil, err
+		return err
 	}
 	if versionID == uuid.Nil {
 		versionID, _ = uuid.NewV7()
 	}
 
-	return storage.DefaultBackend().OpenWrite(versionID.String(), func(contents io.ReadSeeker) error {
-		props, err := computeProps(contents)
-		if err != nil {
-			return err
-		}
-		err = f.runInTx(func(f txFileSystem) error {
+	if w, err := storage.DefaultBackend().Write(versionID.String(), in); err != nil {
+		return err
+	} else if mimeType, err := guessMimeType(w); err != nil {
+		w.Delete()
+		return err
+	} else {
+		err := f.runInTx(func(f txFileSystem) error {
 			if r, err := f.createMemberResource(parent, name, requestedID, false, conflictResolution); err != nil {
 				return err
 			} else {
 				// ID could be different if we're overwriting an existing resource
 				requestedID = r.id
 				v := r.LatestVersion()
-				if v.Created != 0 && v.SHA256 == props.sha566Sum && v.Size == props.size {
-					return storage.ErrDuplicateWrite
+				if v.Created != 0 && v.SHA256 == w.SHA256Sum() && v.Size == w.Size() {
+					return nil
 				}
 			}
 
-			if err := insertResourceVersion(f.db, requestedID, versionID, props.size, props.mimeType, props.sha566Sum); err != nil {
+			if err := insertResourceVersion(f.db, requestedID, versionID, w.Size(), mimeType, w.SHA256Sum()); err != nil {
 				return err
 			}
 			if err := updateResourceModified(f.db, requestedID); err != nil {
@@ -91,30 +92,31 @@ func (f *FileSystem) CreateFileByPath(path string, requestedID, versionID uuid.U
 			return jobs.MigrateVersionContents(f.db, versionID)
 		})
 		if err != nil {
-			return err
+			w.Delete()
 		}
-		return nil
-	})
+		return err
+	}
 }
 
-func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.WriteCloser, error) {
+func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID, in io.Reader) error {
 	if _, err := f.checkPermission(r, ResourcePermissionWrite); err != nil {
-		return nil, err
+		return err
 	}
 	if r.deleted.Valid {
-		return nil, ErrResourceDeleted
+		return ErrResourceDeleted
 	}
 	if versionID == uuid.Nil {
 		versionID, _ = uuid.NewV7()
 	}
 
-	return storage.DefaultBackend().OpenWrite(versionID.String(), func(contents io.ReadSeeker) error {
-		props, err := computeProps(contents)
-		if err != nil {
-			return err
-		}
+	if w, err := storage.DefaultBackend().Write(versionID.String(), in); err != nil {
+		return err
+	} else if mimeType, err := guessMimeType(w); err != nil {
+		w.Delete()
+		return err
+	} else {
 		err = f.db.RunInTx(func(db db.TxHandler) error {
-			if err := insertResourceVersion(db, r.id, versionID, props.size, props.mimeType, props.sha566Sum); err != nil {
+			if err := insertResourceVersion(db, r.id, versionID, w.Size(), mimeType, w.SHA256Sum()); err != nil {
 				return err
 			}
 			if err := updateResourceModified(db, r.id); err != nil {
@@ -127,10 +129,10 @@ func (f *FileSystem) CreateFileVersion(r Resource, versionID uuid.UUID) (io.Writ
 			return jobs.MigrateVersionContents(db, versionID)
 		})
 		if err != nil {
-			return err
+			w.Delete()
 		}
-		return nil
-	})
+		return err
+	}
 }
 
 func (f txFileSystem) Mkdir(path string, requestedID uuid.UUID, createParents bool, conflictResolution ResourceBindConflictResolution) (Resource, error) {
@@ -381,6 +383,7 @@ func insertResourceVersion(db db.TxHandler, id, versionID uuid.UUID, size int64,
 	}
 	_, err := db.Exec(q, args)
 	if err != nil && strings.Contains(err.Error(), "resource_versions_pkey") {
+		// TODO: Do not return error if the existing row has the same values
 		return ErrIDConflict
 	}
 	return err

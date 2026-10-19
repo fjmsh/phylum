@@ -5,28 +5,10 @@ import (
 	"encoding/hex"
 	"io"
 
+	"codeberg.org/shroff/phylum/server/internal/storage"
 	"github.com/abema/go-mp4"
 	"github.com/gabriel-vasile/mimetype"
 )
-
-type contentProps struct {
-	size      int64
-	sha566Sum string
-	mimeType  string
-}
-
-func computeProps(r io.ReadSeeker) (props contentProps, err error) {
-	props.size, err = r.Seek(0, io.SeekEnd)
-	props.sha566Sum, err = computeSha256(r)
-	if err != nil {
-		return
-	}
-	props.mimeType, err = guessMimeType(r)
-	if err != nil {
-		return
-	}
-	return
-}
 
 func computeSha256(r io.ReadSeeker) (string, error) {
 	hash := sha256.New()
@@ -37,15 +19,21 @@ func computeSha256(r io.ReadSeeker) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-func guessMimeType(r io.ReadSeeker) (string, error) {
+func guessMimeType(w storage.WrittenFile) (string, error) {
+	in, err := w.OpenRead()
+	if err != nil {
+		return "", err
+	}
+	defer in.Close()
+
 	const typeDetectBufferSize = 3072
 	contents := make([]byte, typeDetectBufferSize)
 
-	r.Seek(0, io.SeekStart)
+	in.Seek(0, io.SeekStart)
 	buf := contents
 	n := 0
 	for {
-		if r, err := r.Read(buf); err != nil {
+		if r, err := in.Read(buf); err != nil {
 			if err != io.EOF {
 				return "", err
 			} else {
@@ -63,7 +51,7 @@ func guessMimeType(r io.ReadSeeker) (string, error) {
 	}
 
 	mimeType := mimetype.Detect(contents).String()
-	if mimeType == "video/mp4" && isMP4Audio(r) {
+	if mimeType == "video/mp4" && isMP4Audio(in) {
 		mimeType = "audio/mp4"
 	}
 

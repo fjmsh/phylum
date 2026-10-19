@@ -1,7 +1,6 @@
 package fs
 
 import (
-	"errors"
 	"io"
 	"net/http"
 
@@ -196,16 +195,7 @@ func handlePartialUploadsFinalizeRequest(c *gin.Context) {
 		}
 		defer src.Close()
 
-		out, err := f.CreateFileByPath(params.Path, resourceID, versionID, params.Conflict)
-		if err != nil && !errors.Is(err, core.ErrIDConflict) {
-			return err
-		}
-
-		if _, err := io.Copy(out, src); err != nil {
-			out.Close()
-			return err
-		}
-		if err := out.Close(); err != nil {
+		if err := f.CreateFileByPath(params.Path, resourceID, versionID, src, params.Conflict); err != nil {
 			return err
 		}
 		cleanup()

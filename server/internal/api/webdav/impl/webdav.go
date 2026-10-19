@@ -6,6 +6,7 @@
 package webdav // import "golang.org/x/net/webdav"
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -39,7 +40,7 @@ type FileSystem interface {
 	core.ReadFileSystem
 
 	Mkdir(name string, id uuid.UUID, recursive bool, conflictResolution core.ResourceBindConflictResolution) (core.Resource, error)
-	CreateFileByPath(path string, id, versionID uuid.UUID, conflictResolution core.ResourceBindConflictResolution) (io.WriteCloser, error)
+	CreateFileByPath(path string, id, versionID uuid.UUID, in io.Reader, conflictResolution core.ResourceBindConflictResolution) error
 	Copy(core.Resource, string, uuid.UUID, bool, core.ResourceBindConflictResolution) (core.Resource, bool, error)
 	Move(core.Resource, string, core.ResourceBindConflictResolution) (core.Resource, bool, error)
 	Delete(core.Resource) (core.Resource, error)
@@ -268,25 +269,12 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	// TODO(rost): Support the If-Match, If-None-Match headers? See bradfitz'
 	// comments in http.checkEtag.
 
-	f, err := h.FileSystem.CreateFileByPath(reqPath, uuid.Nil, uuid.Nil, core.ResourceBindConflictResolutionEnsure)
+	err = h.FileSystem.CreateFileByPath(reqPath, uuid.Nil, uuid.Nil, r.Body, core.ResourceBindConflictResolutionEnsure)
 	if err != nil {
 		if e, ok := err.(*core.Error); ok {
 			return e.Status, e
 		}
 		return http.StatusInternalServerError, err
-	}
-	if _, err := io.Copy(f, r.Body); err != nil {
-		f.Close()
-		if e, ok := err.(*core.Error); ok {
-			return e.Status, e
-		}
-		return http.StatusInternalServerError, err
-	}
-	if err := f.Close(); err != nil {
-		if e, ok := err.(*core.Error); ok {
-			return e.Status, e
-		}
-		return http.StatusNotFound, err
 	}
 
 	fi, statErr := h.FileSystem.ResourceByPath(reqPath)
@@ -395,7 +383,7 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 
 		// Create the resource if it didn't previously exist.
 		if _, err := h.FileSystem.ResourceByPath(reqPath); err != nil {
-			_, err = h.FileSystem.CreateFileByPath(reqPath, uuid.Nil, uuid.Nil, core.ResourceBindConflictResolutionEnsure)
+			err = h.FileSystem.CreateFileByPath(reqPath, uuid.Nil, uuid.Nil, bytes.NewReader(nil), core.ResourceBindConflictResolutionEnsure)
 			if err != nil {
 				if e, ok := err.(*core.Error); ok {
 					return e.Status, e
