@@ -20,7 +20,7 @@ func handleProfileUpdateRoute(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("profile:update") {
+	if !auth.HasScope("user:profile:update") {
 		panic(core.ErrInsufficientScope)
 	}
 

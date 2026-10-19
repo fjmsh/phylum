@@ -47,7 +47,7 @@ func handleBootstrapRoute(c *gin.Context) {
 }
 
 func Bootstrap(ctx context.Context, auth *auth.Auth, since int64) (responses.Bootstrap, error) {
-	if !auth.HasScope("bookmarks:list") || !auth.HasScope("users:list") || !auth.HasScope("profile:read") {
+	if !auth.HasScope("user:bookmarks:list") || !auth.HasScope("users:list") || !auth.HasScope("user:profile:read") {
 		return responses.Bootstrap{}, core.ErrInsufficientScope
 	}
 	if bookmarks, err := ListBookmarks(ctx, auth.UserID(), since); err != nil {
@@ -58,7 +58,7 @@ func Bootstrap(ctx context.Context, auth *auth.Auth, since int64) (responses.Boo
 		return responses.Bootstrap{}, err
 	} else {
 		return responses.Bootstrap{
-			User: responses.LoggedInUser{
+			User: responses.FullUser{
 				User: responses.User{
 					ID:    u.ID,
 					Email: u.Email,

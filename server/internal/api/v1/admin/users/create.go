@@ -10,6 +10,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"codeberg.org/shroff/phylum/server/internal/mail"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type createUserParams struct {
@@ -64,11 +65,11 @@ func handleCreateRequest(c *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	home := ""
+	home := pgtype.UUID{}
 	if a.UserPermissions().HasPermission(core.UserPermissionFilesRead) {
-		home = u.Home.String()
+		home = u.Home
 	}
-	response := user{
+	response := responses.FullUser{
 		User: responses.User{
 			ID:    u.ID,
 			Email: u.Email,

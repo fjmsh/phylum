@@ -40,10 +40,10 @@ type User struct {
 	Name  string `json:"name"`
 }
 
-type LoggedInUser struct {
+type FullUser struct {
 	User
 	Home        pgtype.UUID          `json:"home"`
-	Permissions core.UserPermissions `json:"permission_list"`
+	Permissions core.UserPermissions `json:"permissions"`
 }
 
 type Publink struct {
@@ -70,7 +70,7 @@ type Bookmark struct {
 }
 
 type Bootstrap struct {
-	User      LoggedInUser   `json:"user"`
+	User      FullUser       `json:"user"`
 	Bookmarks []Bookmark     `json:"bookmarks"`
 	Users     []User         `json:"users"`
 	Until     int            `json:"until"`

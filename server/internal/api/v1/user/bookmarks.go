@@ -47,7 +47,7 @@ func handleBookmarksGetRoute(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("bookmarks:list") {
+	if !auth.HasScope("user:bookmarks:list") {
 		panic(core.ErrInsufficientScope)
 	}
 	if bookmarks, err := ListBookmarks(c.Request.Context(), auth.UserID(), since); err != nil {
@@ -67,7 +67,7 @@ func handleBookmarksAddRoute(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("bookmarks:add") {
+	if !auth.HasScope("user:bookmarks:add") {
 		panic(core.ErrInsufficientScope)
 	}
 	userID := auth.UserID()
@@ -100,7 +100,7 @@ func handleBookmarksRemoveRoute(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("bookmarks:remove") {
+	if !auth.HasScope("user:bookmarks:remove") {
 		panic(core.ErrInsufficientScope)
 	}
 	if err := db.Get(c.Request.Context()).RunInTx(func(db db.TxHandler) error {

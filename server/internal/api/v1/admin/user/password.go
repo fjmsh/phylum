@@ -1,4 +1,4 @@
-package users
+package user
 
 import (
 	"net/http"
@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handlePasswordUpdateRequest(c *gin.Context) {
+func handleAuthPasswordUpdateRequest(c *gin.Context) {
 	var params struct {
 		Email       string `json:"email" form:"email" binding:"required"`
 		NewPassword string `json:"new_password" form:"new_password" binding:"required"`
@@ -20,10 +20,10 @@ func handlePasswordUpdateRequest(c *gin.Context) {
 		panic(err)
 	}
 	a := authenticator.GetAuth(c)
-	if !a.HasScope("admin:" + core.UserPermissionUsersAuthPasswordUpdate) {
+	if !a.HasScope("admin:" + core.UserPermissionUserAuthPasswordUpdate) {
 		panic(core.ErrInsufficientScope)
 	}
-	if !a.UserPermissions().HasPermission(core.UserPermissionUsersAuthPasswordUpdate) {
+	if !a.UserPermissions().HasPermission(core.UserPermissionUserAuthPasswordUpdate) {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to update user passwords"))
 	}
 

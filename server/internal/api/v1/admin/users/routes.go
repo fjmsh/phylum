@@ -13,6 +13,5 @@ func SetupRoutes(r *gin.RouterGroup) {
 	group := r.Group("/users")
 	group.GET("/list", handleListRequest)
 	group.POST("/create", handleCreateRequest)
-	group.POST("/permissions", handlePermissionsRequest)
-	group.POST("/auth/password/update", handlePasswordUpdateRequest)
+	group.POST("/create/invite", handleInviteRequest)
 }

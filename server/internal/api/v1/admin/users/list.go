@@ -10,12 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type user struct {
-	responses.User
-	Permissions []string `json:"permissions"`
-	Home        string   `json:"home,omitempty"`
-}
-
 func handleListRequest(c *gin.Context) {
 	auth := authenticator.GetAuth(c)
 	if !auth.HasScope("admin:users:list") {
@@ -30,9 +24,9 @@ func handleListRequest(c *gin.Context) {
 	if res, err := core.ListUsers(db.Get(c.Request.Context()), 0); err != nil {
 		panic(err)
 	} else {
-		users := make([]user, len(res))
+		users := make([]responses.FullUser, len(res))
 		for i, u := range res {
-			users[i] = user{
+			users[i] = responses.FullUser{
 				User: responses.User{
 					ID:    u.ID,
 					Email: u.Email,
@@ -41,7 +35,7 @@ func handleListRequest(c *gin.Context) {
 				Permissions: u.Permissions,
 			}
 			if includeHome && u.Home.Valid {
-				users[i].Home = u.Home.String()
+				users[i].Home = u.Home
 			}
 		}
 		c.JSON(200, gin.H{

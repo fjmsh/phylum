@@ -1,4 +1,4 @@
-package users
+package user
 
 import (
 	"net/http"
@@ -8,6 +8,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/core"
 	"codeberg.org/shroff/phylum/server/internal/db"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type grantParams struct {
@@ -16,7 +17,7 @@ type grantParams struct {
 	Permissions []string `json:"permissions" form:"permissions" binding:"required"`
 }
 
-func handlePermissionsRequest(c *gin.Context) {
+func handlePermissionsUpdateRequest(c *gin.Context) {
 	var params grantParams
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
@@ -30,10 +31,10 @@ func handlePermissionsRequest(c *gin.Context) {
 	}
 
 	auth := authenticator.GetAuth(c)
-	if !auth.HasScope("admin:users:permissions") {
+	if !auth.HasScope("admin:user:permissions:update") {
 		panic(core.ErrInsufficientScope)
 	}
-	if !auth.UserPermissions().HasPermission(core.UserPermissionUsersPermissions) {
+	if !auth.UserPermissions().HasPermission(core.UserPermissionUserPermissionsUpdate) {
 		panic(core.NewError(http.StatusBadRequest, "insufficient_permissions", "You do not have permissions to update user permissions"))
 	}
 
@@ -79,11 +80,11 @@ func handlePermissionsRequest(c *gin.Context) {
 		panic(err)
 	}
 
-	home := ""
+	home := pgtype.UUID{}
 	if auth.UserPermissions().HasPermission(core.UserPermissionFilesRead) {
-		home = u.Home.String()
+		home = u.Home
 	}
-	c.JSON(200, user{
+	c.JSON(200, responses.FullUser{
 		User: responses.User{
 			ID:    u.ID,
 			Email: u.Email,
