@@ -44,12 +44,7 @@ func handleFinalize(c *gin.Context) {
 		panic(core.NewError(http.StatusBadRequest, "no_request_body", "failed to read request parameters from body: "+err.Error()))
 	} else if err := k.Load(rawbytes.Provider(body), json.Parser()); err != nil {
 		panic(core.NewError(http.StatusBadRequest, "parse_failed", "failed to parse request parameters from body: "+err.Error()))
-	} else if err := k.UnmarshalWithConf("", nil, koanf.UnmarshalConf{
-		DecoderConfig: &mapstructure.DecoderConfig{
-			ErrorUnused: true,
-			Result:      &params,
-		},
-	}); err != nil {
+	} else if err := k.UnmarshalWithConf("", &params, koanf.UnmarshalConf{DecoderConfig: &mapstructure.DecoderConfig{ErrorUnused: true}}); err != nil {
 		panic(core.NewError(http.StatusBadRequest, "validate_failed", "failed to validate request parameters from body: "+err.Error()))
 	}
 

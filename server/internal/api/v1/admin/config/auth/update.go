@@ -24,13 +24,12 @@ func handleUpdateRequest(c *gin.Context) {
 	decoderConfig := &mapstructure.DecoderConfig{
 		ErrorUnused:      true,
 		WeaklyTypedInput: true,
-		Result:           &auth.Config{},
 	}
 	if body, err := io.ReadAll(c.Request.Body); err != nil {
 		panic(core.NewError(http.StatusBadRequest, "no_request_body", "failed to read request parameters from body: "+err.Error()))
 	} else if err := params.Load(rawbytes.Provider(body), json.Parser()); err != nil {
 		panic(core.NewError(http.StatusBadRequest, "parse_failed", "failed to parse request parameters from body: "+err.Error()))
-	} else if err := params.UnmarshalWithConf("config", nil, koanf.UnmarshalConf{DecoderConfig: decoderConfig}); err != nil {
+	} else if err := params.UnmarshalWithConf("config", &auth.Config{}, koanf.UnmarshalConf{DecoderConfig: decoderConfig}); err != nil {
 		panic(core.NewError(http.StatusBadRequest, "validate_failed", "failed to validate request parameters from body: "+err.Error()))
 	}
 

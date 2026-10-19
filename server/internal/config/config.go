@@ -69,7 +69,6 @@ func Initialize[T any](cmd *cobra.Command) (*T, error) {
 	md := mapstructure.Metadata{}
 	cfg := new(T)
 	uc := koanf.UnmarshalConf{Tag: "koanf", DecoderConfig: &mapstructure.DecoderConfig{
-		Result:           cfg,
 		WeaklyTypedInput: false,
 		Metadata:         &md,
 	}}
@@ -208,7 +207,6 @@ func fixTypes[T any](k *koanf.Koanf, weaklyTypedInput bool) (*koanf.Koanf, error
 				mapstructure.StringToTimeDurationHookFunc(),
 				mapstructure.TextUnmarshallerHookFunc()),
 			Metadata:         nil,
-			Result:           config,
 			WeaklyTypedInput: weaklyTypedInput,
 		},
 	}

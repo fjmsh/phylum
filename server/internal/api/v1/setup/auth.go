@@ -133,13 +133,12 @@ func handleAuthValidate(c *gin.Context) {
 	decoderConfig := &mapstructure.DecoderConfig{
 		ErrorUnused:      true,
 		WeaklyTypedInput: true,
-		Result:           &auth.Config{},
 	}
 	if body, err := io.ReadAll(c.Request.Body); err != nil {
 		panic(core.NewError(http.StatusBadRequest, "read_failed", "Failed to read request parameters: "+err.Error()))
 	} else if err := params.Load(rawbytes.Provider(body), json.Parser()); err != nil {
 		panic(core.NewError(http.StatusBadRequest, "parse_failed", "Failed to parse request parameters: "+err.Error()))
-	} else if err := params.UnmarshalWithConf("config", nil, koanf.UnmarshalConf{DecoderConfig: decoderConfig}); err != nil {
+	} else if err := params.UnmarshalWithConf("config", &auth.Config{}, koanf.UnmarshalConf{DecoderConfig: decoderConfig}); err != nil {
 		panic(core.NewError(http.StatusBadRequest, "validate_failed", "Failed to validate request parameters: "+err.Error()))
 	}
 
