@@ -91,7 +91,7 @@ class UserDetailsItem extends StatelessWidget {
                             ),
                       onTap:
                           account.user.hasPermission(
-                            userPermissionUsersPermissions,
+                            userPermissionUserPermissionsUpdate,
                           )
                           ? () async {
                               final updatedPermissions =
@@ -140,7 +140,7 @@ class UserDetailsItem extends StatelessWidget {
                     ),
                   ),
                 if (account.user.hasPermission(
-                      userPermissionUsersAuthPasswordUpdate,
+                      userPermissionUserAuthPasswordUpdate,
                     ) &&
                     account.config.passwordUpdate)
                   Padding(

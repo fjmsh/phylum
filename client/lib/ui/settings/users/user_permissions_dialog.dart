@@ -135,7 +135,7 @@ class _UserPermissionsDialogState extends State<UserPermissionsDialog> {
 
     setState(() => requestInFlight = true);
     final result = await widget.account.apiClient.sendRequest(
-      PermissionsRequest(
+      PermissionsUpdateRequest(
         userId: widget.user.id,
         permissions: selected.toList(growable: false),
       ),

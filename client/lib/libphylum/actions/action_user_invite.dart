@@ -15,7 +15,7 @@ class UserInviteAction extends PhylumAction with JsonApiAction {
   String get method => 'POST';
 
   @override
-  String get endpoint => '/api/v1/users/invite';
+  String get endpoint => '/api/v1/admin/users/create/invite';
 
   @override
   Map<String, dynamic>? get requestBody => {'email': email, 'name': userName};
