@@ -230,7 +230,7 @@ class _OneShotUploadRequest extends ApiRequest<PhylumAccount> {
     ApiClient<PhylumAccount> api, {
     Blob? data,
   }) {
-    final uriBuilder = api.createUriBuilder('/api/v1/fs/upload');
+    final uriBuilder = api.createUriBuilder('/api/v1/fs/uploads/single');
     uriBuilder.queryParameters = {
       'path': '$parent:$resourceName',
       'id': resourceId,
@@ -268,7 +268,7 @@ class _PartialStartRequest extends ApiRequest<PhylumAccount> {
     ApiClient<PhylumAccount> api, {
     Blob? data,
   }) {
-    final uriBuilder = api.createUriBuilder('/api/v1/fs/partial_uploads/start');
+    final uriBuilder = api.createUriBuilder('/api/v1/fs/uploads/start');
     return Request('POST', uriBuilder.build())
       ..bodyFields = {
         'id': uploadId,
@@ -307,7 +307,7 @@ class _PartialQueryRequest extends ApiRequest<PhylumAccount> {
     ApiClient<PhylumAccount> api, {
     Blob? data,
   }) {
-    final uriBuilder = api.createUriBuilder('/api/v1/fs/partial_uploads/query');
+    final uriBuilder = api.createUriBuilder('/api/v1/fs/uploads/query');
     uriBuilder.queryParameters = {'id': uploadId};
     return Request('GET', uriBuilder.build());
   }
@@ -358,9 +358,7 @@ class _PartialUploadRequest extends ApiRequest<PhylumAccount> {
     ApiClient<PhylumAccount> api, {
     Blob? data,
   }) {
-    final uriBuilder = api.createUriBuilder(
-      '/api/v1/fs/partial_uploads/upload',
-    );
+    final uriBuilder = api.createUriBuilder('/api/v1/fs/uploads/chunk');
     uriBuilder.queryParameters = {
       'id': uploadId,
       'offset': uploaded.toString(),
@@ -424,9 +422,7 @@ class _PartialFinalizeRequest extends ApiRequest<PhylumAccount> {
     ApiClient<PhylumAccount> api, {
     Blob? data,
   }) {
-    final uriBuilder = api.createUriBuilder(
-      '/api/v1/fs/partial_uploads/finalize',
-    );
+    final uriBuilder = api.createUriBuilder('/api/v1/fs/uploads/finalize');
     return Request('POST', uriBuilder.build())
       ..bodyFields = {
         'upload_id': uploadId,
