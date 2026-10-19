@@ -2,6 +2,7 @@ package apiv1
 
 import (
 	"net/http"
+	"strings"
 
 	"codeberg.org/shroff/phylum/server/internal/api/authenticator"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/admin"
@@ -13,6 +14,7 @@ import (
 	"codeberg.org/shroff/phylum/server/internal/api/v1/user"
 	"codeberg.org/shroff/phylum/server/internal/api/v1/users"
 	"codeberg.org/shroff/phylum/server/internal/config"
+	"codeberg.org/shroff/phylum/server/internal/core"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 )
@@ -46,6 +48,16 @@ func Setup(r *gin.RouterGroup, needsSetup bool, logger *zerolog.Logger) {
 		// Authenticated routes
 		r.Use(authenticator.Require)
 		fs.SetupRoutes(r)
+		prefix := r.BasePath() + "/"
+		r.Use(func(c *gin.Context) {
+			// Check scopes
+			auth := authenticator.GetAuth(c)
+			path, _ := strings.CutPrefix(c.Request.URL.Path, prefix)
+			scope := strings.ReplaceAll(path, "/", ":")
+			if !auth.HasScope(scope) {
+				panic(core.ErrInsufficientScope)
+			}
+		})
 		user.SetupRoutes(r)
 		publinks.SetupRoutes(r)
 		trash.SetupRoutes(r)

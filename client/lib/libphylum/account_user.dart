@@ -92,7 +92,7 @@ class AccountUser {
     "email": email,
     "name": name,
     "home": home,
-    "permission_list": permissions,
+    "permissions": permissions,
   };
 
   factory AccountUser.fromMap(Map<String, dynamic> map) {
@@ -101,7 +101,7 @@ class AccountUser {
       email: map['email'],
       name: map['name'],
       home: map['home'],
-      permissions: (map['permission_list'] as List?)?.cast() ?? const [],
+      permissions: (map['permissions'] as List?)?.cast() ?? const [],
     );
   }
 
