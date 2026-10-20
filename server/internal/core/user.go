@@ -40,6 +40,9 @@ type User struct {
 }
 
 func (u UserPermissions) HasPermission(p UserPermission) bool {
+	if p == UserPermissionUsersCreateInvite && allowInvites {
+		return true
+	}
 	parts := strings.Split(string(p), ":")
 
 outer:
