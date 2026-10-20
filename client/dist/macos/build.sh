@@ -2,11 +2,6 @@
 
 set -eo pipefail
 
-if [ $# -lt 1 ]; then
-	echo "Usage: $0 <version>"
-	exit 1
-fi
-
 echo "Building App"
 pushd ../..
 flutter build macos
@@ -28,7 +23,8 @@ rm -rf app.zip
 xcrun stapler staple Phylum\ Drive.app
 xcrun stapler validate Phylum\ Drive.app
 
-version=$1
+echo "Building DMG v${VERSION}"
+version=$(git describe --tags | sed 's/releases\/v//g')
 dmg="Phylum Drive-${version}.dmg"
 
 echo

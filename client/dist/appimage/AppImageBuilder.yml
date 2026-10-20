@@ -6,7 +6,7 @@ AppDir:
     id: cloud.phylum.drive
     name: Phylum Drive
     icon: phylum-drive
-    version: 0.10.1
+    version: !ENV ${APP_VERSION}
     exec: phylum
     exec_args: $@
   apt:

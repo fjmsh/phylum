@@ -2,7 +2,8 @@
 
 set -eu
 
-VERSION="0.10.0"
+VERSION=$(git describe --tags | sed 's/releases\/v//g')
+echo "Building Server v${VERSION}"
 SRC_URL="https://codeberg.org/shroff/phylum/archive/releases/v$VERSION.tar.gz"
 SRC_URL="local"
 tag="localhost/phylum:$VERSION"
@@ -117,6 +118,7 @@ cleanup() {
 trap cleanup INT TERM
 
 echo "Creating Manifest $tag"
+podman manifest rm $tag || true
 podman manifest create --amend $tag
 
 echo "Building Web App"
