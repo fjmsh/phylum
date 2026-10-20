@@ -1,7 +1,7 @@
 name: phylum
 description: Self-hosted cloud file browser
 publish_to: "none"
-version: 0.10.0+100
+version: 0.10.1+101
 
 environment:
   sdk: ^3.12.0
