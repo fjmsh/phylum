@@ -58,7 +58,6 @@ func handleFinalize(c *gin.Context) {
 	cfg.Unmarshal("mail", &mailConfig)
 	cfg.Unmarshal("auth", &authConfig)
 	cfg.Unmarshal("core", &coreConfig)
-	cfg.Print()
 
 	var err error
 	defer func() {
