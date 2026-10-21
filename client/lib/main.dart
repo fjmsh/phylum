@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:offtheline/offtheline.dart';
+import 'package:offtheline/offtheline.dart' as offtheline;
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:phylum/libphylum/actions/deserializers.dart';
@@ -46,6 +46,7 @@ void run() async {
 
   if (kIsWeb) {
     Hive.init(null, backendPreference: HiveStorageBackendPreference.webWorker);
+    await offtheline.initialize('');
   } else {
     final appDir = Directory(
       path.join(
@@ -53,14 +54,14 @@ void run() async {
         storageDir.isNotEmpty ? storageDir : 'data',
       ),
     );
+    await appDir.create();
+    await offtheline.initialize(appDir.path);
     AppDatabase.storageDir = appDir;
-    blobStorageRoot = appDir.path;
     AppDatabase.tmpDir = await getTemporaryDirectory();
 
-    await appDir.create();
     Hive.init(appDir.path);
   }
-  Hive.registerAdapter(OfflineActionAdapter(actionDeserializers));
+  Hive.registerAdapter(offtheline.OfflineActionAdapter(actionDeserializers));
 
   PhylumAccount.deviceInfo = await getDeviceInfo();
 

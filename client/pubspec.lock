@@ -502,6 +502,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  fs_shim:
+    dependency: transitive
+    description:
+      name: fs_shim
+      sha256: b2b2efa2df90a92858c07db246f6a19566d85f57b192cd8fce763a7c93638e2d
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.6.1"
   glob:
     dependency: transitive
     description:
@@ -558,6 +566,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
+  idb_shim:
+    dependency: transitive
+    description:
+      name: idb_shim
+      sha256: "4f32cd03ce97e2996b57cea03b2d098f5153ac55435a27cf2c89716db571728d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.10.1+1"
   image:
     dependency: transitive
     description:
@@ -754,11 +770,11 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "1cc1c5593012f552ea1a5e84d7b311c0ec71c880"
-      resolved-ref: "1cc1c5593012f552ea1a5e84d7b311c0ec71c880"
+      ref: a1cbdd397500faee79dd77066654e64da176fb05
+      resolved-ref: a1cbdd397500faee79dd77066654e64da176fb05
       url: "https://codeberg.org/shroff/offtheline.git"
     source: git
-    version: "0.16.0"
+    version: "0.17.0"
   open_file:
     dependency: "direct main"
     description:
@@ -1111,6 +1127,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.2"
+  sembast:
+    dependency: transitive
+    description:
+      name: sembast
+      sha256: "05da81104e6d4a1ecbeb9aa92062231620d360c8bd9303b82495842c4d92632b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.9.0"
   share_plus:
     dependency: "direct main"
     description:
