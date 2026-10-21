@@ -83,7 +83,7 @@ func (f *FileSystem) ResourceByPath(path string) (Resource, error) {
 	rec := pg.
 		Select(r.Col("id"), r.Col("parent"), goqu.L("array_remove(string_to_array(?::TEXT, '/', NULL), '')", path), goqu.L("0")).
 		From(r).
-		Where(r.Col("id").Eq(goqu.V(f.pathRoot.Bytes))).
+		Where(r.Col("id").Eq(goqu.V(f.pathRoot.String()))).
 		UnionAll(sub)
 
 	l := goqu.T("publinks").As("l")
