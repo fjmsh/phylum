@@ -18,7 +18,7 @@ func handleSearchRequest(c *gin.Context) {
 	}
 
 	fs := authenticator.GetFileSystem(c)
-	res, err := fs.Search(query, false)
+	res, err := fs.Search(c.Query("root"), query, false)
 	if err != nil {
 		panic(err)
 	}

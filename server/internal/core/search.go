@@ -8,7 +8,17 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (f *FileSystem) Search(query string, includeDeleted bool) ([]Resource, error) {
+func (f *FileSystem) Search(rootPath string, query string, includeDeleted bool) ([]Resource, error) {
+	if rootPath == "" {
+		return f.search(query, includeDeleted)
+	}
+	if root, err := f.ResourceByPathWithRoot(rootPath); err != nil {
+		return nil, err
+	} else {
+		return f.searchWithRoot(root, query, includeDeleted)
+	}
+}
+func (f *FileSystem) search(query string, includeDeleted bool) ([]Resource, error) {
 	qb := strings.Builder{}
 	qb.WriteString(fullResourceQuery)
 	qb.WriteString("WHERE f_prepare_search(r.name) %> @query::TEXT")
@@ -33,7 +43,7 @@ func (f *FileSystem) Search(query string, includeDeleted bool) ([]Resource, erro
 	}
 }
 
-func (f *FileSystem) SearchWithRoot(root Resource, query string, includeDeleted bool) ([]Resource, error) {
+func (f *FileSystem) searchWithRoot(root Resource, query string, includeDeleted bool) ([]Resource, error) {
 	n, qq := selectResourceTree(root.id, includeDeleted)
 	var r exp.AliasedExpression
 	q, r := selectResources(qq, n)
